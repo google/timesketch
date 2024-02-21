@@ -6,9 +6,15 @@
       :id="node.id"
       style="min-width: 280px"
     >
-      <v-icon title="Added a Star to an event" v-if="hasStar" style="float: left" class="mr-1" color="amber darken-2">mdi-star</v-icon>
-      <v-icon title="Added a Comment to an event" v-if="hasComment" style="float: left" class="mr-1">mdi-comment-outline</v-icon>
-      <v-icon title="Added a Label to an event" v-if="hasLabel" style="float: left; margin-right: 10px">mdi-label</v-icon>
+      <v-icon title="Added a Star to an event" v-if="hasStar" style="float: left" class="mr-1" color="amber darken-2"
+        >mdi-star</v-icon
+      >
+      <v-icon title="Added a Comment to an event" v-if="hasComment" style="float: left" class="mr-1"
+        >mdi-comment-outline</v-icon
+      >
+      <v-icon title="Added a Label to an event" v-if="hasLabel" style="float: left; margin-right: 10px"
+        >mdi-label</v-icon
+      >
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
           <div
@@ -21,7 +27,7 @@
             {{ node.query_string }}
           </div>
         </template>
-        <span>{{ node.query_string }}</span>
+        <span>{{ node.query_string }} {{ node }}</span>
       </v-tooltip>
 
       <div class="tag is-light" style="margin-left: 5px; float: right">

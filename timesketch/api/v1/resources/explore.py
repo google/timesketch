@@ -126,7 +126,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if question_id:
             question = InvestigativeQuestion.get_by_id(question_id)
             if question:
-                if question.facet.scenario.sketch_id != sketch.id:
+                if question.sketch_id != sketch.id:
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         "Question is not part of this sketch.",
@@ -382,7 +382,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             # Add DFIQ context
             new_search.scenario = scenario
             new_search.facet = facet
-            new_search.question = question
+            new_search.investigativequestion = question
 
             if previous_search:
                 new_search.parent = previous_search

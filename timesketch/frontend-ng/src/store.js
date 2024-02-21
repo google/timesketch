@@ -96,6 +96,14 @@ export default new Vuex.Store({
       })
     },
     SET_ACTIVE_CONTEXT(state, payload) {
+      localStorage.setItem(
+        'sketchContext' + state.sketch.id.toString(),
+        JSON.stringify({
+          scenarioId: payload.scenarioId,
+          facetId: payload.facetId,
+          questionId: payload.questionId,
+        })
+      )
       Vue.set(state, 'activeContext', payload)
     },
     CLEAR_ACTIVE_CONTEXT(state) {
@@ -321,7 +329,7 @@ export default new Vuex.Store({
         }
         context.commit('SET_ANALYZER_LIST', analyzerList)
       }).catch((e) => {
-        console.log(e)
+        console.error(e)
       })
     },
     updateActiveAnalyses(context, activeAnalyses) {

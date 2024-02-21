@@ -79,6 +79,12 @@ from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
 from .resources.scenarios import ScenarioResource
 from .resources.scenarios import ScenarioStatusResource
+from .resources.scenarios import FacetListResource
+from .resources.scenarios import QuestionOrphanListResource
+from .resources.scenarios import QuestionWithScenarioListResource
+from .resources.scenarios import QuestionWithFacetListResource
+from .resources.scenarios import QuestionListResource
+from .resources.scenarios import QuestionResource
 from .resources.scenarios import QuestionConclusionListResource
 from .resources.scenarios import QuestionConclusionResource
 
@@ -185,20 +191,36 @@ API_ROUTES = [
     (TagMetadataResource, "/intelligence/tagmetadata/"),
     (ContextLinkConfigResource, "/contextlinks/"),
     (UnfurlResource, "/unfurl/"),
-    # Scenarios
+    # Scenario templates
     (ScenarioTemplateListResource, "/scenarios/"),
+    # Scenarios
     (ScenarioListResource, "/sketches/<int:sketch_id>/scenarios/"),
-    (
-        ScenarioResource,
-        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/",
-    ),
+    (ScenarioResource, "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/"),
     (
         ScenarioStatusResource,
         "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/status/",
     ),
+    # Facets
+    (
+        FacetListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/facets/",
+    ),
+    # (FacetResource, "/sketches/<int:sketch_id>/facets/<int:facet_id>/"),
+    # Questions
+    (QuestionOrphanListResource, "/sketches/<int:sketch_id>/questions/"),
+    (
+        QuestionWithScenarioListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/questions/",
+    ),
+    (
+        QuestionWithFacetListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/facets/<int:facet_id>/questions/",
+    ),
+    (QuestionListResource, "/sketches/<int:sketch_id>/questions/"),
+    (QuestionResource, "/sketches/<int:sketch_id>/questions/<int:question_id>/"),
     (
         QuestionConclusionListResource,
-        "/sketches/<int:sketch_id>/questions/<int:question_id>/",
+        "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/",
     ),
     (
         QuestionConclusionResource,

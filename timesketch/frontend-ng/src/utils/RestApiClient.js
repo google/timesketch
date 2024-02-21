@@ -135,7 +135,6 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
   },
-  // Get details about an event
   getEvent(sketchId, searchindexId, eventId) {
     let params = {
       params: {
@@ -144,6 +143,9 @@ export default {
       },
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
+  },
+  countSketchEvents(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/count/')
   },
   saveEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode, remove = false) {
     let formData = {
@@ -215,10 +217,10 @@ export default {
   deleteStory(sketchId, storyId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/stories/' + storyId + '/')
   },
-  // Saved views
   getView(sketchId, viewId) {
     return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId + '/')
   },
+  // Saved searches
   createView(sketchId, viewName, queryString, queryFilter) {
     let formData = {
       name: viewName,
@@ -238,6 +240,13 @@ export default {
   deleteView(sketchId, viewId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/views/' + viewId + '/')
   },
+  // Search templates
+  getSearchTemplates() {
+    return RestApiClient.get('/searchtemplates/')
+  },
+  parseSearchTemplate(searchTemplateId, formData) {
+    return RestApiClient.post('/searchtemplates/' + searchTemplateId + '/parse/', formData)
+  },
   // Search
   search(sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/explore/', formData)
@@ -245,6 +254,13 @@ export default {
   exportSearchResult(sketchId, formData) {
     return RestApiBlobClient.post('/sketches/' + sketchId + '/explore/', formData)
   },
+  getSearchHistory(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/searchhistory/')
+  },
+  getSearchHistoryTree(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/searchhistorytree/')
+  },
+  // Aggregations
   getAggregations(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/')
   },
@@ -267,16 +283,7 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', newFormData)
   },
-  // Misc resources
-  countSketchEvents(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/count/')
-  },
-  uploadTimeline(formData, config) {
-    return RestApiClient.post('/upload/', formData, config)
-  },
-  getSessions(sketchId, timelineIndex) {
-    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex + '/')
-  },
+  // Sharing and authorization
   getUsers() {
     return RestApiClient.get('/users/')
   },
@@ -303,7 +310,7 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/collaborators/', formData)
   },
-
+  // Analyzers
   getAnalyzers(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
   },
@@ -326,9 +333,7 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/', params)
   },
-  getLoggedInUser() {
-    return RestApiClient.get('/users/me/')
-  },
+  // Graphs
   generateGraphFromPlugin(sketchId, graphPlugin, currentIndices, timelineIds, refresh) {
     let formData = {
       plugin: graphPlugin,
@@ -366,12 +371,7 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/graphs/' + graphId + '/', params)
   },
-  getSearchHistory(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/searchhistory/')
-  },
-  getSearchHistoryTree(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/searchhistorytree/')
-  },
+  // Sigma
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarules/')
   },
@@ -400,22 +400,7 @@ export default {
     }
     return RestApiClient.put('/sigmarules/' + id + '/', formData)
   },
-  // SearchTemplates
-  getSearchTemplates() {
-    return RestApiClient.get('/searchtemplates/')
-  },
-  parseSearchTemplate(searchTemplateId, formData) {
-    return RestApiClient.post('/searchtemplates/' + searchTemplateId + '/parse/', formData)
-  },
-  getContextLinkConfig() {
-    return RestApiClient.get('/contextlinks/')
-  },
-  getUnfurlGraph(url) {
-    let formData = {
-      url: url,
-    }
-    return RestApiClient.post('/unfurl/', formData)
-  },
+  // Scenarios
   getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
@@ -440,9 +425,32 @@ export default {
     let formData = { status: status }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/status/', formData)
   },
+  getFacets(sketchId, scenarioId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/facets/')
+  },
+  getOrphanQuestions(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/questions/')
+  },
+  getScenarioQuestions(sketchId, scenarioId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/questions/')
+  },
+  getFacetQuestions(sketchId, scenarioId, facetId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/facets/' + facetId + '/questions/')
+  },
+  getQuestion(sketchId, questionId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/questions/' + questionId + '/')
+  },
+  createQuestion(sketchId, scenarioId, facetId, questionText) {
+    let formData = {
+      scenario_id: scenarioId,
+      facet_id: facetId,
+      question_text: questionText
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/questions/', formData)
+  },
   createQuestionConclusion(sketchId, questionId, conclusionText) {
     let formData = { conclusionText: conclusionText }
-    return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/', formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/', formData)
   },
   editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
     let formData = { conclusionText: conclusionText }
@@ -450,9 +458,27 @@ export default {
   },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
-
   },
+  // Misc resources
   getTagMetadata() {
     return RestApiClient.get('/intelligence/tagmetadata/')
-  }
+  },
+  uploadTimeline(formData, config) {
+    return RestApiClient.post('/upload/', formData, config)
+  },
+  getSessions(sketchId, timelineIndex) {
+    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex + '/')
+  },
+  getLoggedInUser() {
+    return RestApiClient.get('/users/me/')
+  },
+  getContextLinkConfig() {
+    return RestApiClient.get('/contextlinks/')
+  },
+  getUnfurlGraph(url) {
+    let formData = {
+      url: url,
+    }
+    return RestApiClient.post('/unfurl/', formData)
+  },
 }

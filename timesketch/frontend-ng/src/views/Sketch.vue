@@ -245,103 +245,24 @@ limitations under the License.
         <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
       </v-navigation-drawer>
 
+      <!-- Right panel -->
+      <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
+        <template v-slot:prepend>
+          <v-toolbar flat>
+            <v-toolbar-title>Right Side Panel</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn icon @click="showRightSidePanel = false">
+              <v-icon title="Close sidepanel">mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+        </template>
+        <v-container> TODO: Add content here </v-container>
+      </v-navigation-drawer>
+
       <!-- Main (canvas) view -->
       <v-main class="notransition">
-        <!-- DFIQ navigation -->
-        <v-container fluid class="mb-n2 mt-2">
-          <div class="d-flex flex-row ml-4" style="font-size: 0.9em">
-            <!-- Scenario -->
-            <v-menu offset-y>
-              <template v-slot:activator="{ on, attrs }">
-                <div v-bind="attrs" v-on="on" class="d-flex flex-row">
-                  <span
-                    v-if="activeContext.scenario.display_name"
-                    class="truncate-with-ellipsis"
-                    style="max-width: 250px"
-                  >
-                    {{ activeContext.scenario.display_name }}
-                  </span>
-                  <span v-else> Select a scenario </span>
-                  <v-icon small class="ml-1">mdi-chevron-down</v-icon>
-                </div>
-              </template>
-              <v-list>
-                <v-list-item-group>
-                  <v-list-item
-                    v-for="(scenario, index) in activeScenarios"
-                    :key="index"
-                    @click="setActiveScenario(scenario)"
-                  >
-                    <v-list-item-title>{{ scenario.name }}</v-list-item-title>
-                  </v-list-item>
-                </v-list-item-group>
-              </v-list>
-            </v-menu>
-            <!-- Facet -->
-            <v-menu offset-y :disabled="!activeContext.scenario.display_name" v-model="showFacetMenu">
-              <template v-slot:activator="{ on, attrs }">
-                <div v-bind="attrs" v-on="on" class="d-flex flex-row ml-5">
-                  <span v-if="activeContext.facet.display_name" class="truncate-with-ellipsis" style="max-width: 250px">
-                    {{ activeContext.facet.display_name }}
-                  </span>
-                  <span v-else :class="activeContext.scenario.display_name ? '' : 'disabled'"
-                    >Select an investigation</span
-                  >
-                  <v-icon small class="ml-1">mdi-chevron-down</v-icon>
-                </div>
-              </template>
-
-              <v-list style="max-width: 600px">
-                <v-list-item-group>
-                  <v-list-item
-                    v-for="(facet, index) in activeContext.scenario.facets"
-                    :key="index"
-                    @click="setActiveFacet(facet)"
-                  >
-                    <v-list-item-content>
-                      <v-list-item-title>{{ facet.display_name }}</v-list-item-title>
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list-item-group>
-              </v-list>
-            </v-menu>
-            <!-- Question -->
-            <v-menu offset-y :disabled="!activeContext.facet.display_name" v-model="showQuestionMenu">
-              <template v-slot:activator="{ on, attrs }">
-                <div v-bind="attrs" v-on="on" class="d-flex flex-row ml-5">
-                  <span
-                    v-if="activeContext.question.display_name"
-                    class="truncate-with-ellipsis"
-                    style="max-width: 350px"
-                  >
-                    {{ activeContext.question.display_name }}
-                  </span>
-
-                  <span v-else :class="activeContext.facet.display_name ? '' : 'disabled'">
-                    Select a question to answer
-                  </span>
-                  <v-icon small class="ml-1">mdi-chevron-down</v-icon>
-                </div>
-              </template>
-              <v-list style="max-width: 600px">
-                <v-list-item-group>
-                  <v-list-item
-                    v-for="(question, index) in activeContext.facet.questions"
-                    :key="index"
-                    @click="setActiveQuestion(question)"
-                  >
-                    <v-list-item-title>{{ question.display_name }}</v-list-item-title>
-                  </v-list-item>
-                </v-list-item-group>
-              </v-list>
-            </v-menu>
-          </div>
-        </v-container>
-
-        <!-- DFIQ context card -->
-        <v-container fluid>
-          <ts-scenario-context-card class="pt-0" v-if="activeContext.question.display_name"></ts-scenario-context-card>
-        </v-container>
+        <!-- Scenario context -->
+        <ts-scenario-navigation v-if="sketch.status && hasTimelines && !isArchived"></ts-scenario-navigation>
 
         <router-view
           v-if="sketch.status && hasTimelines && !isArchived"
@@ -405,7 +326,6 @@ import ApiClient from '../utils/RestApiClient.js'
 import EventBus from '../event-bus.js'
 import dayjs from '@/plugins/dayjs'
 
-import TsScenario from '../components/Scenarios/Scenario.vue'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches.vue'
 import TsDataTypes from '../components/LeftPanel/DataTypes.vue'
 import TsTags from '../components/LeftPanel/Tags.vue'
@@ -421,12 +341,11 @@ import TsRenameSketch from '../components/RenameSketch.vue'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
-import TsScenarioContextCard from '../components/Scenarios/ContextCard.vue'
+import TsScenarioNavigation from '../components/Scenarios/ScenarioNavigation.vue'
 
 export default {
   props: ['sketchId'],
   components: {
-    TsScenario,
     TsSavedSearches,
     TsDataTypes,
     TsTags,
@@ -442,7 +361,7 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
-    TsScenarioContextCard,
+    TsScenarioNavigation,
   },
   data() {
     return {
@@ -471,6 +390,7 @@ export default {
       contextTimeWindowSeconds: 300,
       showFacetMenu: false,
       showQuestionMenu: false,
+      showRightSidePanel: false,
     }
   },
   mounted() {
@@ -478,7 +398,6 @@ export default {
     this.showLeftPanel = false
     this.$store.dispatch('updateSketch', this.sketchId).then(() => {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
-      this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
@@ -507,29 +426,8 @@ export default {
       }
       return this.sketch.status[0].status === 'archived'
     },
-    scenarios() {
-      return this.$store.state.scenarios
-    },
-    scenarioTemplates() {
-      return this.$store.state.scenarioTemplates
-    },
     currentUser() {
       return this.$store.state.currentUser
-    },
-    activeScenarios() {
-      if (!this.scenarios) {
-        return []
-      }
-      return this.scenarios.filter((scenario) => !scenario.status.length || scenario.status[0].status === 'active')
-    },
-    activeContext() {
-      return this.$store.state.activeContext
-    },
-    hiddenScenarios() {
-      if (!this.scenarios) {
-        return []
-      }
-      return this.scenarios.filter((scenario) => scenario.status.length && scenario.status[0].status === 'hidden')
     },
     hasTimelines() {
       return this.sketch.timelines && this.sketch.timelines.length
@@ -643,14 +541,6 @@ export default {
     switchUI: function () {
       window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
-    addScenario: function (scenarioId) {
-      this.scenarioDialog = false
-      ApiClient.addScenario(this.sketch.id, scenarioId)
-        .then((response) => {
-          this.$store.dispatch('updateScenarios', this.sketch.id)
-        })
-        .catch((e) => {})
-    },
     toggleDrawer: function () {
       this.navigationDrawer.width = 410
       if (this.isMiniDrawer) {
@@ -661,32 +551,6 @@ export default {
         this.navigationDrawer.width = 56
         this.isMiniDrawer = true
       }
-    },
-    setActiveScenario: function (scenario) {
-      let payload = {
-        scenario: scenario,
-        facet: {},
-        question: {},
-      }
-      this.$store.dispatch('setActiveContext', payload)
-      this.showFacetMenu = true
-    },
-    setActiveFacet: function (facet) {
-      let payload = {
-        scenario: this.activeContext.scenario,
-        facet: facet,
-        question: {},
-      }
-      this.$store.dispatch('setActiveContext', payload)
-      this.showQuestionMenu = true
-    },
-    setActiveQuestion: function (question) {
-      let payload = {
-        scenario: this.activeContext.scenario,
-        facet: this.activeContext.facet,
-        question: question,
-      }
-      this.$store.dispatch('setActiveContext', payload)
     },
   },
   watch: {
@@ -701,14 +565,3 @@ export default {
   },
 }
 </script>
-
-<style lang="scss">
-.truncate-with-ellipsis {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.disabled {
-  opacity: 0.3;
-}
-</style>
