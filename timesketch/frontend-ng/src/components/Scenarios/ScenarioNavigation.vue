@@ -285,7 +285,7 @@ export default {
       ApiClient.setScenarioStatus(this.sketch.id, scenarioId, status)
         .then((response) => {
           if (status === 'deleted') {
-            this.scenarioList = this.scenarioList.filter((scenario) => scenario.id != scenarioId)
+            this.scenarioList = this.scenarioList.filter((scenario) => scenario.id !== scenarioId)
           }
           this.fetchScenarioList()
         })

@@ -43,9 +43,6 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
-from timesketch.models.sketch import Scenario
-from timesketch.models.sketch import Facet
-from timesketch.models.sketch import InvestigativeQuestion
 
 
 logger = logging.getLogger("timesketch.sketch_api")
