@@ -215,7 +215,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         if neighbors:
             msg += f'Related entities: {[n["name"] for n in neighbors]}'
 
-        comments = {c.comment for c in event.get_comments()}
+        comments = {comment.comment for comment in event.get_comments()}
         if msg not in comments:
             event.add_comment(msg)
             event.commit()
