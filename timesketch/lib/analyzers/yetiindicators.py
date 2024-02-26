@@ -203,9 +203,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             neighbors: a list of Yeti entities related to the indicator.
         """
         tags = {slugify(tag) for tag in indicator["relevant_tags"]}
-        for n in neighbors:
-            tags.add(slugify(n["name"]))
-            emoji_name = TYPE_TO_EMOJI[n["type"]]
+        for neighbor in neighbors:
+            tags.add(slugify(neighbor["name"]))
+            emoji_name = TYPE_TO_EMOJI[neighbor["type"]]
             event.add_emojis([emojis.get_emoji(emoji_name)])
 
         event.add_tags(list(tags))
@@ -213,7 +213,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
         msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
         if neighbors:
-            msg += f'Related entities: {[n["name"] for n in neighbors]}'
+            msg += f'Related entities: {[neighbor["name"] for neighbor in neighbors]}'
 
         comments = {comment.comment for comment in event.get_comments()}
         if msg not in comments:
