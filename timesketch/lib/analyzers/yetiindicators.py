@@ -275,9 +275,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             A dictionary representing a query DSL.
         """
         field = ""
-        if indicator['location'] == 'registry':
+        if indicator["location"] == "registry":
             field = "key_path.keyword"
-        elif indicator['location'] == 'filesystem':
+        elif indicator["location"] == "filesystem":
             field = "filename.keyword"
         else:
             field = "message.keyword"
