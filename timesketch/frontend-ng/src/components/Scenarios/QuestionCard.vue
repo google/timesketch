@@ -211,6 +211,7 @@ limitations under the License.
                     rows="2"
                     placeholder="Add your conclusion..."
                     style="font-size: 0.9em"
+                    :class="$vuetify.theme.dark ? '' : 'textfield-light-background'"
                   >
                   </v-textarea>
                   <v-card-actions>
@@ -395,12 +396,15 @@ export default {
 }
 
 .context-card-light-grey-background {
-  background-color: #f5f5f5 !important;
+  background-color: #fafafa !important;
 }
 .context-card-light-blue-background {
   background-color: #e3eef9 !important;
 }
 .context-card-dark-blue-background {
   background-color: #00436360 !important;
+}
+.textfield-light-background {
+  background-color: #fff !important;
 }
 </style>
