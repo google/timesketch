@@ -25,8 +25,9 @@
     "vega": "^5.4.0",
     "vega-embed": "^4.2.2",
     "vega-lite": "3.4.0",
-    "vue": "^2.6.12",
-    "vue-apexcharts": "^1.6.1",
+    "vue": "~3.1.5",
+    "@vue/compat": "~3.2.5",
+    "vue-apexcharts": "^1.6.2",
     "vue-dragscroll": "^3.0.0",
     "vue-moment": "^4.0.0",
     "vue-router": "^3.0.2",
@@ -56,7 +57,6 @@
     "sass": "~1.32",
     "sass-loader": "^10.1.1",
     "vite-plugin-vue2": "^2.0.3",
-    "vitest": "~1.0.4",
-    "vue-template-compiler": "^2.6.12"
+    "vitest": "~1.0.4"
   }
 }
