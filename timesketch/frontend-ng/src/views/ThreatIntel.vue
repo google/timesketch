@@ -21,14 +21,8 @@ limitations under the License.
       :tag-info="tagInfo"
       :ioc="indicator"
       @open-dialog="indicatorDialog = true"
-      @close-dialog="
-        indicatorDialog = false
-        currentIndex = -1
-      "
-      @save="
-        saveIntelligence($event)
-        indicatorDialog = false
-      "
+      @close-dialog="indicatorDialog = false; currentIndex = -1"
+      @save="saveIntelligence($event); indicatorDialog = false"
     >
     </ts-indicator-dialog>
 

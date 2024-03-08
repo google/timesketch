@@ -110,10 +110,7 @@ limitations under the License.
             <v-btn
               small
               text
-              @click="
-                conclusionText = ''
-                addConclusion = false
-              "
+              @click="conclusionText = ''; addConclusion = false"
             >
               Cancel
             </v-btn>

@@ -18,10 +18,7 @@ limitations under the License.
     v-if="iconOnly"
     class="pa-4"
     style="cursor: pointer"
-    @click="
-      $emit('toggleDrawer')
-      expanded = true
-    "
+    @click="$emit('toggleDrawer'); expanded = true"
   >
     <v-icon left>mdi-tag-multiple-outline</v-icon>
     <div style="height: 1px"></div>
