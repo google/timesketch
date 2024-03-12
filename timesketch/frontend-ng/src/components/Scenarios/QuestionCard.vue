@@ -30,7 +30,7 @@ limitations under the License.
               </span>
             </strong>
           </span>
-          <v-btn depressed class="text-none" @click="showDropdown = !showDropdown">
+          <v-btn small depressed class="text-none" @click="showDropdown = !showDropdown">
             Change question
             <v-icon small right>mdi-chevron-down</v-icon>
           </v-btn>
