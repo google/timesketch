@@ -265,6 +265,34 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             overwrite=True,
         )
 
+    def build_query_from_indicator(self, indicator: Dict) -> Dict:
+        """Builds a query DSL from a Yeti indicator.
+
+        Args:
+            indicator: a dictionary representing a Yeti indicator object.
+
+        Returns:
+            A dictionary representing a query DSL.
+        """
+        field = ""
+        if indicator["location"] == "registry":
+            field = "key_path.keyword"
+        elif indicator["location"] == "filesystem":
+            field = "filename.keyword"
+        else:
+            field = "message.keyword"
+
+        return {
+            "query": {
+                "regexp": {
+                    field: {
+                        "value": f".*{indicator['pattern']}.*",
+                        "case_insensitive": True,
+                    }
+                }
+            }
+        }
+
     def run(self):
         """Entry point for the analyzer.
 
@@ -289,13 +317,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 entity, max_hops=5, neighbor_types=self._TARGET_NEIGHBOR_TYPE
             )
             for indicator in indicators.values():
-                query_dsl = {
-                    "query": {
-                        "regexp": {
-                            "message.keyword": ".*" + indicator["pattern"] + ".*"
-                        }
-                    }
-                }
+                query_dsl = self.build_query_from_indicator(indicator)
                 events = self.event_stream(
                     query_dsl=query_dsl, return_fields=["message"], scroll=False
                 )
