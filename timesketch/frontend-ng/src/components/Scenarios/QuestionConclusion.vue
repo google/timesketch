@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div @mouseover="showControls = true" @mouseleave="showControls = false" style="position: relative">
-    <div style="font-size: 0.9em" class="mb-2">
+    <div style="font-size: 0.9em" class="mb-4">
       <strong>{{ conclusion.user.username }}</strong>
       <small class="ml-3">{{ conclusion.created_at | shortDateTime }} ({{ conclusion.created_at | timeSince }})</small>
     </div>
@@ -23,17 +23,19 @@ limitations under the License.
     <div v-if="editable">
       <v-textarea
         style="font-size: 0.9em"
+        outlined
+        flat
         hide-details
         auto-grow
-        solo
+        rows="3"
+        clearable
         v-model="conclusionText"
         :value="conclusion.conclusion"
       >
       </v-textarea>
       <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn small text @click="editable = false"> Cancel </v-btn>
         <v-btn small text color="primary" @click="saveConclusion()" :disabled="!conclusionText"> Save </v-btn>
+        <v-btn small text @click="editable = false"> Cancel </v-btn>
       </v-card-actions>
     </div>
     <div v-else style="font-size: 0.9em">{{ conclusion.conclusion }}</div>
@@ -77,7 +79,7 @@ export default {
       this.showControls = false
       ApiClient.editQuestionConclusion(this.sketch.id, this.question.id, this.conclusion.id, this.conclusionText)
         .then((response) => {
-          this.$emit('new-conclusion')
+          this.$emit('save-conclusion')
         })
         .catch((e) => {
           this.editable = true

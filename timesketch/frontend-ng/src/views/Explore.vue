@@ -440,10 +440,17 @@ export default {
       // Preserve user defined item count instead of resetting.
       this.currentQueryFilter.size = this.currentItemsPerPage
       this.currentQueryFilter.terminate_after = this.currentItemsPerPage
+
+      // Run the search
       if (searchEvent.doSearch) {
-        this.search()
+        if (searchEvent.incognito) {
+          this.search(true, true)
+        } else {
+          this.search()
+        }
       }
     },
+
     search: function (resetPagination = true, incognito = false, parent = false) {
       let queryRequest = {}
       queryRequest['queryString'] = this.currentQueryString

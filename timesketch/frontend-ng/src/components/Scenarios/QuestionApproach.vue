@@ -22,11 +22,12 @@ limitations under the License.
     ></div>
 
     <div v-if="opensearchQueries.length" class="pb-4">
+      <strong>Suggested queries</strong>
       <ts-search-chip
         v-for="opensearchQuery in opensearchQueries"
         :key="opensearchQuery.value"
         :searchchip="opensearchQuery"
-        type="chip"
+        type="link"
         class="mb-1"
       ></ts-search-chip>
     </div>

@@ -83,6 +83,7 @@ from .resources.scenarios import FacetListResource
 from .resources.scenarios import QuestionOrphanListResource
 from .resources.scenarios import QuestionWithScenarioListResource
 from .resources.scenarios import QuestionWithFacetListResource
+from .resources.scenarios import QuestionTemplateListResource
 from .resources.scenarios import QuestionListResource
 from .resources.scenarios import QuestionResource
 from .resources.scenarios import QuestionConclusionListResource
@@ -216,6 +217,7 @@ API_ROUTES = [
         QuestionWithFacetListResource,
         "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/facets/<int:facet_id>/questions/",
     ),
+    (QuestionTemplateListResource, "/questions/"),
     (QuestionListResource, "/sketches/<int:sketch_id>/questions/"),
     (QuestionResource, "/sketches/<int:sketch_id>/questions/<int:question_id>/"),
     (

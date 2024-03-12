@@ -42,7 +42,10 @@ RestApiClient.interceptors.response.use(
   },
   function (error) {
     if (error.response.status === 500) {
-      EventBus.$emit('errorSnackBar', 'Server side error. Please contact your server administrator for troubleshooting.')
+      EventBus.$emit(
+        'errorSnackBar',
+        'Server side error. Please contact your server administrator for troubleshooting.'
+      )
     } else {
       EventBus.$emit('errorSnackBar', error.response.data.message)
     }
@@ -254,8 +257,15 @@ export default {
   exportSearchResult(sketchId, formData) {
     return RestApiBlobClient.post('/sketches/' + sketchId + '/explore/', formData)
   },
-  getSearchHistory(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/searchhistory/')
+  getSearchHistory(sketchId, limit = null, question = null) {
+    let params = { params: {} }
+    if (limit) {
+      params.params.limit = limit
+    }
+    if (question) {
+      params.params.question = question
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/searchhistory/', params)
   },
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/searchhistorytree/')
@@ -328,7 +338,7 @@ export default {
   getActiveAnalyzerSessions(sketchId) {
     let params = {
       params: {
-        include_details: "true",
+        include_details: 'true',
       },
     }
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/', params)
@@ -428,6 +438,9 @@ export default {
   getFacets(sketchId, scenarioId) {
     return RestApiClient.get('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/facets/')
   },
+  getQuestionTemplates() {
+    return RestApiClient.get('/questions/')
+  },
   getOrphanQuestions(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/questions/')
   },
@@ -435,16 +448,19 @@ export default {
     return RestApiClient.get('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/questions/')
   },
   getFacetQuestions(sketchId, scenarioId, facetId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/facets/' + facetId + '/questions/')
+    return RestApiClient.get(
+      '/sketches/' + sketchId + '/scenarios/' + scenarioId + '/facets/' + facetId + '/questions/'
+    )
   },
   getQuestion(sketchId, questionId) {
     return RestApiClient.get('/sketches/' + sketchId + '/questions/' + questionId + '/')
   },
-  createQuestion(sketchId, scenarioId, facetId, questionText) {
+  createQuestion(sketchId, scenarioId, facetId, questionText, templateId) {
     let formData = {
       scenario_id: scenarioId,
       facet_id: facetId,
-      question_text: questionText
+      question_text: questionText,
+      template_id: templateId,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/questions/', formData)
   },
@@ -454,10 +470,15 @@ export default {
   },
   editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
     let formData = { conclusionText: conclusionText }
-    return RestApiClient.put('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/', formData)
+    return RestApiClient.put(
+      '/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/',
+      formData
+    )
   },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
-    return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
+    return RestApiClient.delete(
+      '/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/'
+    )
   },
   // Misc resources
   getTagMetadata() {

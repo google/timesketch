@@ -454,6 +454,24 @@ class QuestionWithFacetListResource(resources.ResourceMixin, Resource):
         return self.to_json(questions)
 
 
+class QuestionTemplateListResource(resources.ResourceMixin, Resource):
+    """List all scenarios available."""
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of JSON representations of the scenarios.
+        """
+        dfiq = load_dfiq_from_config()
+        if not dfiq:
+            return jsonify({"objects": []})
+
+        scenarios = [scenario.__dict__ for scenario in dfiq.questions]
+        return jsonify({"objects": scenarios})
+
+
 class QuestionListResource(resources.ResourceMixin, Resource):
     """Create an investigative question."""
 
@@ -465,6 +483,7 @@ class QuestionListResource(resources.ResourceMixin, Resource):
             A JSON representation of the question.
         """
         sketch = Sketch.get_with_acl(sketch_id)
+        dfiq_question = None
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -475,6 +494,7 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         question_text = form.get("question_text")
         scenario_id = form.get("scenario_id")
         facet_id = form.get("facet_id")
+        template_id = form.get("template_id")
 
         scenario = Scenario.get_by_id(scenario_id) if scenario_id else None
         facet = Facet.get_by_id(facet_id) if facet_id else None
@@ -492,14 +512,63 @@ class QuestionListResource(resources.ResourceMixin, Resource):
             if facet.sketch.id != sketch.id:
                 abort(HTTP_STATUS_CODE_FORBIDDEN, "Facet is not part of this sketch.")
 
-        new_question = InvestigativeQuestion.get_or_create(
-            name=question_text,
-            display_name=question_text,
-            sketch=sketch,
-            scenario=scenario,
-            facet=facet,
-            user=current_user,
-        )
+        if template_id:
+            dfiq = load_dfiq_from_config()
+            if not dfiq:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server"
+                )
+            dfiq_question = [
+                question for question in dfiq.questions if question.id == template_id
+            ][0]
+
+        if dfiq_question:
+            new_question = InvestigativeQuestion(
+                dfiq_identifier=dfiq_question.id,
+                name=dfiq_question.name,
+                display_name=dfiq_question.name,
+                description=dfiq_question.description,
+                spec_json=dfiq_question.to_json(),
+                sketch=sketch,
+                user=current_user,
+            )
+            for approach_id in dfiq_question.approaches:
+                approach = next(
+                    (
+                        approach
+                        for approach in dfiq.approaches
+                        if approach.id == approach_id
+                    ),
+                    None,
+                )
+                approach_sql = InvestigativeQuestionApproach(
+                    dfiq_identifier=approach.id,
+                    name=approach.name,
+                    display_name=approach.name,
+                    description=approach.description.get("details", ""),
+                    spec_json=approach.to_json(),
+                    user=current_user,
+                )
+
+                for search_template in approach.search_templates:
+                    search_template_sql = SearchTemplate.query.filter_by(
+                        template_uuid=search_template["value"]
+                    ).first()
+                    if search_template_sql:
+                        approach_sql.search_templates.append(search_template_sql)
+
+                new_question.approaches.append(approach_sql)
+
+        else:
+            new_question = InvestigativeQuestion.get_or_create(
+                name=question_text,
+                display_name=question_text,
+                sketch=sketch,
+                scenario=scenario,
+                facet=facet,
+                user=current_user,
+            )
+
         db_session.add(new_question)
         db_session.commit()
 

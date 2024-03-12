@@ -262,7 +262,8 @@ limitations under the License.
       <!-- Main (canvas) view -->
       <v-main class="notransition">
         <!-- Scenario context -->
-        <ts-scenario-navigation v-if="sketch.status && hasTimelines && !isArchived"></ts-scenario-navigation>
+        <!--<ts-scenario-navigation v-if="sketch.status && hasTimelines && !isArchived"></ts-scenario-navigation>-->
+        <ts-question-card v-if="sketch.status && hasTimelines && !isArchived"></ts-question-card>
 
         <router-view
           v-if="sketch.status && hasTimelines && !isArchived"
@@ -341,7 +342,7 @@ import TsRenameSketch from '../components/RenameSketch.vue'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
-import TsScenarioNavigation from '../components/Scenarios/ScenarioNavigation.vue'
+import TsQuestionCard from '../components/Scenarios/QuestionCard.vue'
 
 export default {
   props: ['sketchId'],
@@ -361,7 +362,7 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
-    TsScenarioNavigation,
+    TsQuestionCard,
   },
   data() {
     return {
