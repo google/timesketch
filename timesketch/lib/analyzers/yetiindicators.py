@@ -3,15 +3,17 @@
 import json
 import re
 
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 
 from flask import current_app
+import logging
 import requests
+import yaml
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib import emojis
-
+from timesketch.lib import sigma_util
 
 TYPE_TO_EMOJI = {
     "malware": "SPIDER",
@@ -57,6 +59,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
     _TARGET_NEIGHBOR_TYPE: List[str] = []
     # If True, will save intelligence to the sketch
     _SAVE_INTELLIGENCE: bool = False
+
+    # Number of hops to traverse from the entity
+    _MAX_HOPS = 5
+    # Direction to traverse the graph
+    _DIRECTION = "outbound"
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the Analyzer.
@@ -139,18 +146,17 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             return NEIGHBOR_CACHE[yeti_object["id"]]
 
         extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
-        results = self._get_neighbors_request(
-            {
-                "count": 0,
-                "source": extended_id,
-                "graph": "links",
-                "min_hops": 1,
-                "max_hops": max_hops,
-                "direction": "outbound",
-                "include_original": False,
-                "target_types": neighbor_types,
-            }
-        )
+        request = {
+            "count": 0,
+            "source": extended_id,
+            "graph": "links",
+            "min_hops": 1,
+            "max_hops": max_hops,
+            "direction": self._DIRECTION,
+            "include_original": False,
+            "target_types": neighbor_types,
+        }
+        results = self._get_neighbors_request(request)
         neighbors = {}
         for neighbor in results.get("vertices", {}).values():
             # Yeti will return all vertices in the graph's path, not just
@@ -265,11 +271,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             overwrite=True,
         )
 
-    def build_query_from_indicator(self, indicator: Dict) -> Dict:
-        """Builds a query DSL from a Yeti indicator.
+    def build_query_from_regexp(self, indicator: Dict) -> Dict:
+        """Builds a query DSL from a Yeti Regex indicator.
 
         Args:
-            indicator: a dictionary representing a Yeti indicator object.
+            indicator: a dictionary representing a Yeti Regex indicator object.
 
         Returns:
             A dictionary representing a query DSL.
@@ -284,14 +290,44 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
         return {
             "query": {
-                "regexp": {
-                    field: {
-                        "value": f".*{indicator['pattern']}.*",
-                        "case_insensitive": True,
-                    }
+                "bool": {
+                    "should": [
+                        {
+                            "regexp": {
+                                field: {
+                                    "value": f".*{indicator['pattern']}.*",
+                                    "case_insensitive": True,
+                                }
+                            }
+                        },
+                        {
+                            "regexp": {
+                                "display_name.keyword": {
+                                    "value": f".*{indicator['pattern']}.*",
+                                    "case_insensitive": True,
+                                }
+                            }
+                        },
+                    ]
                 }
             }
         }
+
+    def build_query_from_sigma(self, indicator: Dict) -> Optional[Dict]:
+        """Builds a query DSL from a Yeti Sigma indicator.
+
+        Args:
+            indicator: a dictionary representing a Yeti Sigma indicator object.
+
+        Returns:
+            A dictionary representing a query DSL.
+        """
+        try:
+            parsed_sigma = sigma_util.parse_sigma_rule_by_text(indicator["pattern"])
+        except yaml.scanner.ScannerError as exception:
+            logging.error(f"Error parsing Sigma rule {indicator['id']}: {exception}")
+            return None
+        return {"query": {"query_string": {"query": parsed_sigma["search_query"]}}}
 
     def run(self):
         """Entry point for the analyzer.
@@ -314,10 +350,17 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         entities = self.get_entities(_type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR)
         for entity in entities.values():
             indicators = self.get_neighbors(
-                entity, max_hops=5, neighbor_types=self._TARGET_NEIGHBOR_TYPE
+                entity,
+                max_hops=self._MAX_HOPS,
+                neighbor_types=self._TARGET_NEIGHBOR_TYPE,
             )
             for indicator in indicators.values():
-                query_dsl = self.build_query_from_indicator(indicator)
+                if indicator["type"] == "regex":
+                    query_dsl = self.build_query_from_regexp(indicator)
+                if indicator["type"] == "sigma":
+                    query_dsl = self.build_query_from_sigma(indicator)
+                if not query_dsl:
+                    continue
                 events = self.event_stream(
                     query_dsl=query_dsl, return_fields=["message"], scroll=False
                 )
@@ -403,5 +446,26 @@ class YetiMalwareIndicators(YetiBaseAnalyzer):
     _SAVE_INTELLIGENCE = True
 
 
+class YetiLOLBASIndicators(YetiBaseAnalyzer):
+    """Analyzer for Yeti LOLBAS rules."""
+
+    NAME = "yetilolbasindicators"
+    DISPLAY_NAME = "Yeti LOLBAS Sigma indicators"
+    DESCRIPTION = (
+        "Mark events that match Yeti Sigma indicators from tools"
+        " that are tagged `lolbas`."
+    )
+
+    DEPENDENCIES = frozenset(["domain"])
+
+    _TAG_SELECTOR = ["lolbas"]
+    _TYPE_SELECTOR = "tool"
+    _TARGET_NEIGHBOR_TYPE = ["sigma"]
+    _SAVE_INTELLIGENCE = True
+    _DIRECTION = "inbound"
+    _MAX_HOPS = 1
+
+
 manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
 manager.AnalysisManager.register_analyzer(YetiMalwareIndicators)
+manager.AnalysisManager.register_analyzer(YetiSigmaIndicators)

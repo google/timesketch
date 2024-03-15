@@ -135,7 +135,13 @@ def get_all_sigma_rules(parse_yaml: bool = False):
 
 
 def _sanitize_query(sigma_rule_query: str) -> str:
-    """Returns a sanitized query
+    """DEPRECATED: Returns a sanitized query.
+
+    DEPRECATION NOTICE: This function requires more thorough testing as it
+    generated OpenSearch queries with an invalid syntax. The Sigma library
+    does a good enough job at generating compatible (albeit maybe inefficient)
+    queries.
+
     Args:
         sigma_rule_query: path to the sigma rule to be parsed
     Returns:
@@ -270,10 +276,7 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
     assert parsed_sigma_rules is not None
 
-    sigma_search_query = ""
-
-    for sigma_rule in parsed_sigma_rules:
-        sigma_search_query = _sanitize_query(sigma_rule)
+    sigma_search_query = parsed_sigma_rules[0].replace("*.keyword:", "message:")
 
     if not isinstance(rule_return.get("title"), str):
         error_msg = "Missing value: 'title' from the YAML data."
