@@ -21,7 +21,7 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
       no-gutters
       class="pa-2 pl-5"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       {{ searchtemplate.name }}
     </v-row>
@@ -32,7 +32,7 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
       no-gutters
       class="pa-2 pl-5"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       {{ searchtemplate.name }}
     </v-row>

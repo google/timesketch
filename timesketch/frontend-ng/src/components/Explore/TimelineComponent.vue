@@ -35,12 +35,12 @@ limitations under the License.
             <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
             <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
               <strong>Number of events: </strong>
-              {{ allIndexedEvents | compactNumber }}
+              {{ this.$filters.compactNumber(allIndexedEvents) }}
             </li>
             <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
             <li>
-              <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-              <small>({{ timeline.created_at | timeSince }})</small>
+              <strong>Created at: </strong>{{ $filters.shortDateTime(timeline.created_at) }}
+              <small>({{ this.$filters.timeSince(timeline.created_at) }})</small>
             </li>
           </ul>
           <br />
@@ -57,14 +57,14 @@ limitations under the License.
             <ul>
               <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
               <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-              <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+              <li><strong>File size:</strong> {{ this.$filters.compactBytes(datasource.file_size) }}</li>
               <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
               <li><strong>Provider:</strong> {{ datasource.provider }}</li>
               <li><strong>Context:</strong> {{ datasource.context }}</li>
               <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
               <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
               <li>
-                <strong>Total File Events:</strong>{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+                <strong>Total File Events:</strong>{{ this.$filters.compactNumber(totalEventsDatasource(datasource.file_on_disk)) }}
               </li>
               <li v-if="dataSourceStatus(datasource) === 'fail'">
                 <strong>Error message:</strong>
@@ -185,12 +185,12 @@ limitations under the License.
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                   <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                     <strong>Number of events: </strong>
-                    {{ allIndexedEvents | compactNumber }}
+                    {{ this.$filters.compactNumber(allIndexedEvents) }}
                   </li>
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
-                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-                    <small>({{ timeline.created_at | timeSince }})</small>
+                    <strong>Created at: </strong>{{ $filters.shortDateTime(timeline.created_at) }}
+                    <small>({{ this.$filters.timeSince(timeline.created_at) }})</small>
                   </li>
                   <li><strong>Number of datasources: </strong>{{ datasources.length }}</li>
                 </ul>
@@ -206,7 +206,7 @@ limitations under the License.
                   <ul style="list-style-type: none">
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
                     <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-                    <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                    <li><strong>File size:</strong> {{ this.$filters.compactBytes(datasource.file_size) }}</li>
                     <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
                     <li><strong>Provider:</strong> {{ datasource.provider }}</li>
                     <li><strong>Context:</strong> {{ datasource.context }}</li>
@@ -214,7 +214,7 @@ limitations under the License.
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
                       <strong>Total File Events: </strong
-                      >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+                      >{{ this.$filters.compactNumber(totalEventsDatasource(datasource.file_on_disk)) }}
                     </li>
                     <li v-if="dataSourceStatus(datasource) === 'fail'">
                       <strong>Error message:</strong>
@@ -261,16 +261,16 @@ limitations under the License.
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                   <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                     <strong>Number of events: </strong>
-                    {{ allIndexedEvents | compactNumber }}
+                    {{ this.$filters.compactNumber(allIndexedEvents) }}
                   </li>
                   <strong>Number of events: </strong>
                   {{
-                    allIndexedEvents | compactNumber
+                    this.$filters.compactNumber(allIndexedEvents)
                   }}
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
-                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-                    <small>({{ timeline.created_at | timeSince }})</small>
+                    <strong>Created at: </strong>{{ this.$filters.shortDateTime(timeline.created_at) }}
+                    <small>({{ this.$filters.timeSince(timeline.created_at) }})</small>
                   </li>
                 </ul>
               </v-card-text>

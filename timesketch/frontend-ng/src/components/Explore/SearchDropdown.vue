@@ -25,9 +25,9 @@ limitations under the License.
             v-on:click="$emit('setActiveView', savedSearch)"
             style="font-size: 0.9em"
           >
-            
+
               {{ savedSearch.name }}
-            
+
           </v-list-item>
         </v-list>
       </v-col>
@@ -42,14 +42,14 @@ limitations under the License.
             v-on:click="searchForDataType(dataType.data_type)"
             style="font-size: 0.9em"
           >
-            
+
               <span
                 >{{ dataType.data_type }}
                 <span class="font-weight-bold" style="font-size: 0.8em"
-                  >({{ dataType.count | compactNumber }})</span
+                  >({{ this.$filters.compactNumber(dataType.count) }})</span
                 ></span
               >
-            
+
           </v-list-item>
         </v-list>
       </v-col>

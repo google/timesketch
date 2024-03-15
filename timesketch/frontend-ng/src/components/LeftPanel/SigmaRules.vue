@@ -28,7 +28,7 @@ limitations under the License.
       :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-sigma-lower</v-icon> Sigma Rules </span>
 

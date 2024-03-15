@@ -28,7 +28,7 @@ limitations under the License.
       :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-content-save-outline</v-icon> Saved Searches </span>
       <span class="float-right" style="margin-right: 10px">
@@ -47,7 +47,7 @@ limitations under the License.
           @mouseleave="c_key = -1"
           style="font-size: 0.9em"
         >
-          <v-row no-gutters class="py-1 pl-5 pr-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+          <v-row no-gutters class="py-1 pl-5 pr-3" :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
             <v-col @click="setView(savedSearch)" style="cursor: pointer"
               ><div class="mt-1">{{ savedSearch.name }}</div></v-col
             >

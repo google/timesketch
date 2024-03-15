@@ -58,10 +58,10 @@ limitations under the License.
         }}</router-link>
       </template>
       <template v-slot:item.created_at="{ item }">
-        {{ item.created_at | shortDateTime }} <small>({{ item.created_at | timeSince }})</small>
+        {{ this.$filters.shortDateTime(item.created_at) }} <small>({{ this.$filters.timeSince(item.created_at) }})</small>
       </template>
       <template v-slot:item.last_activity="{ item }">
-        {{ item.last_activity | timeSince }}
+        {{ this.$filters.timeSince(item.last_activity) }}
       </template>
     </v-data-table>
   </div>

@@ -26,7 +26,7 @@ limitations under the License.
 
       <v-spacer></v-spacer>
       <v-avatar color="grey-lighten-1" size="25" class="ml-3">
-        <span class="text-white">{{ currentUser | initialLetter }}</span>
+        <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
       </v-avatar>
       <v-menu offset-y>
         <template v-slot:activator="{ props }">
@@ -43,17 +43,17 @@ limitations under the License.
                 <v-list-item-icon>
                   <v-icon>mdi-brightness-6</v-icon>
                 </v-list-item-icon>
-                
+
                   <v-list-item-title>Toggle theme</v-list-item-title>
-                
+
               </v-list-item>
               <v-list-item v-on:click="switchUI">
                 <v-list-item-icon>
                   <v-icon>mdi-view-dashboard-outline</v-icon>
                 </v-list-item-icon>
-                
+
                   <v-list-item-title>Use the old UI</v-list-item-title>
-                
+
               </v-list-item>
 
               <a href="/logout/" style="text-decoration: none; color: inherit">
@@ -62,9 +62,9 @@ limitations under the License.
                     <v-icon>mdi-logout</v-icon>
                   </v-list-item-icon>
 
-                  
+
                     <v-list-item-title>Logout</v-list-item-title>
-                  
+
                 </v-list-item>
               </a>
             </v-list-item-group>
@@ -76,7 +76,7 @@ limitations under the License.
     <!-- Main view -->
     <v-main class="notransition">
       <v-container fluid pa-0>
-        <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
+        <v-sheet class="pa-5" :color="this.$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
           <h2>Start new investigation</h2>
           <v-row no-gutters class="mt-5">
             <v-dialog v-model="createSketchDialog" width="500">

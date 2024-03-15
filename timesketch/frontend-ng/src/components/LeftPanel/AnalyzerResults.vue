@@ -28,7 +28,7 @@ limitations under the License.
       class="pa-4"
       :style="!sortedAnalyzerResults.length ? '' : 'cursor: pointer'"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-auto-fix</v-icon> Analyzer Results </span>
       <v-btn

@@ -61,7 +61,7 @@ limitations under the License.
               @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
-             
+
               v-bind="props"
             >
               <template v-slot:append>
@@ -268,7 +268,7 @@ limitations under the License.
                   close-icon="mdi-close"
                   @click:close="removeChip(chip)"
                   @click="copyFilterChip(chip)"
-                 
+
                   v-bind="props"
                 >
                   <v-icon v-if="chip.value === '__ts_star'" start size="small" color="amber">mdi-star</v-icon>
@@ -278,10 +278,10 @@ limitations under the License.
                   }}</v-icon>
                   <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
                     <span style="color: red">NOT </span>
-                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                    {{ this.$filters.formatLabelText(chip.field ? `${chip.field} : ${chip.value}` : chip.value) }}
                   </span>
                   <span v-else class="filter-chip-truncate">
-                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                    {{ this.$filters.formatLabelText(chip.field ? `${chip.field} : ${chip.value}` : chip.value) }}
                   </span>
                 </v-chip>
               </template>

@@ -37,7 +37,7 @@ limitations under the License.
         @click="slotProps.events.toggleTimeline"
         :style="timelineStyle(slotProps.timelineStatus)"
         class="pr-1 timeline-chip"
-        :class="[{ failed: slotProps.timelineFailed }, $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
+        :class="[{ failed: slotProps.timelineFailed }, this.$vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
         :ripple="!slotProps.timelineFailed"
       >
         <div class="chip-content">
@@ -51,7 +51,7 @@ limitations under the License.
               <span
                 class="timeline-name-ellipsis"
                 :class="{ disabled: !isSelected && slotProps.timelineStatus === 'ready' }"
-               
+
                 v-bind="props"
                 >{{ timeline.name }}</span
               >
@@ -65,7 +65,7 @@ limitations under the License.
             </span>
 
             <span v-if="!slotProps.timelineFailed" class="events-count" x-small>
-              {{ eventsCount | compactNumber }}
+              {{ this.$filters.compactNumber(eventsCount) }}
             </span>
             <v-btn class="ma-1" size="x-small" icon v-on="slotProps.events.menuOn">
               <v-icon title="Manage Timeline"> mdi-dots-vertical </v-icon>

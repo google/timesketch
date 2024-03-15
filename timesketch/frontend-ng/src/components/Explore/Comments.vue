@@ -28,16 +28,16 @@ limitations under the License.
       >
         <v-list-item-avatar>
           <v-avatar color="grey-lighten-1">
-            <span class="text-white">{{ comment.user.username | initialLetter }}</span>
+            <span class="text-white">{{ this.$filters.initialLetter(comment.user.username) }}</span>
           </v-avatar>
         </v-list-item-avatar>
 
-        
+
           <v-list-item-title>
             {{ comment.user.username }}
           </v-list-item-title>
           <v-list-item-subtitle>
-            {{ comment.created_at | shortDateTime }} ({{ comment.created_at | timeSince }})
+            {{ this.$filters.shortDateTime(comment.created_at) }} ({{ this.$filters.timeSince(comment.created_at) }})
           </v-list-item-subtitle>
 
           <v-card flat v-if="comment.editable" class="mt-5">
@@ -50,7 +50,7 @@ limitations under the License.
             </v-card-actions>
           </v-card>
           <p v-else style="max-width: 90%" class="text-body-2">{{ comment.comment }}</p>
-        
+
 
         <v-list-item-action
           v-if="comment === selectedComment && meta.permissions.write && currentUser == comment.user.username"

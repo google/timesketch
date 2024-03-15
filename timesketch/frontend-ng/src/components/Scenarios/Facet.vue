@@ -21,7 +21,7 @@ limitations under the License.
       style="cursor: pointer"
       @click="toggleFacet()"
       :class="
-        $vuetify.theme.dark
+        this.$vuetify.theme.dark
           ? expanded
             ? 'dark-highlight'
             : 'dark-hover'

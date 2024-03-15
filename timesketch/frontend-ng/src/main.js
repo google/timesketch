@@ -26,14 +26,17 @@ import vuetify from '@/plugins/vuetify' // path to vuetify export
 require('./assets/main.scss')
 require('./assets/markdown.scss')
 require('./utils/RegisterAppComponents')
-require('./utils/RegisterAppFilters')
+
+import $filters from './utils/GlobalFilters.js';
 
 // Third party
 Vue.use(require('vue-moment'))
 
 // Disable warning during development
 Vue.config.productionTip = false
+Vue.prototype.$filters = $filters;
 
+Vue.prototype.$vuetify = vuetify;
 new Vue({
   router,
   store,

@@ -28,7 +28,7 @@ limitations under the License.
       :style="(tags && tags.length) || (labels && labels.length) ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-tag-multiple-outline</v-icon> Tags </span>
 

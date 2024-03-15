@@ -28,7 +28,7 @@ limitations under the License.
       style="cursor: pointer"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-source-branch</v-icon> Graphs </span>
 
@@ -54,9 +54,9 @@ limitations under the License.
               no-gutters
               @click="setSavedGraph(graph.id)"
               class="pa-2 pl-5"
-              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+              :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
             >
-              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
+              <span :class="this.$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
             </v-row>
           </router-link>
         </div>
@@ -74,9 +74,9 @@ limitations under the License.
               no-gutters
               @click="setGraphPlugin(graph.name)"
               class="pa-2 pl-5"
-              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+              :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
             >
-              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
+              <span :class="this.$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
             </v-row>
           </router-link>
         </div>

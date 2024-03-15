@@ -30,7 +30,7 @@ limitations under the License.
       class="pa-4"
       style="cursor: pointer"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-clock-outline</v-icon> Timelines </span>
       <ts-upload-timeline-form v-if="expanded">
@@ -133,7 +133,7 @@ limitations under the License.
 
                   <span class="float-right">
                     <span v-if="!slotProps.timelineFailed" class="events-count mr-1" x-small>
-                      {{ getCount(item) | compactNumber }}
+                      {{ this.$filters.compactNumber(getCount(item)) }}
                     </span>
                     <v-btn
                       v-if="!slotProps.timelineFailed"

@@ -21,7 +21,7 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
       @click="toggleQuestion()"
       :class="
-        $vuetify.theme.dark
+        this.$vuetify.theme.dark
           ? expanded
             ? 'dark-highlight-selected'
             : 'dark-hover'
@@ -40,7 +40,7 @@ limitations under the License.
       <div
         v-show="expanded"
         :class="
-          $vuetify.theme.dark
+          this.$vuetify.theme.dark
             ? expanded
               ? 'dark-highlight'
               : 'dark-hover'
@@ -100,7 +100,7 @@ limitations under the License.
           >
             <template v-slot:prepend-inner>
               <v-avatar color="grey" class="mt-n2 mr-2" size="28">
-                <span class="text-white">{{ currentUser | initialLetter }}</span>
+                <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
               </v-avatar>
             </template>
           </v-textarea>

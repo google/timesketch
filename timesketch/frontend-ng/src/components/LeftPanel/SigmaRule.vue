@@ -18,7 +18,7 @@ limitations under the License.
     <v-row
       no-gutters
       class="pa-3 pl-1"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
       @click="getSigmaRuleResource(sigmaRule.rule_uuid)"
       style="cursor: pointer; font-size: 0.9em"
     >

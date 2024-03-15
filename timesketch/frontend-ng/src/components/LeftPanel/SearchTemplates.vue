@@ -28,7 +28,7 @@ limitations under the License.
       :style="searchtemplates && searchtemplates.length ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-text-box-search-outline</v-icon> Search Templates </span>
       <span class="float-right" style="margin-right: 10px">

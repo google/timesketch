@@ -18,12 +18,12 @@ limitations under the License.
     <v-progress-linear v-if="loading" color="primary" indeterminate height="2"></v-progress-linear>
     <v-list lines="three">
       <v-list-item @mouseover="showControls = true" @mouseleave="showControls = false">
-        
+
           <v-list-item-title style="font-size: 0.9em">
             <strong>{{ conclusion.user.username }}</strong>
           </v-list-item-title>
           <v-list-item-subtitle>
-            <small>{{ conclusion.created_at | shortDateTime }} ({{ conclusion.created_at | timeSince }})</small>
+            <small>{{ $filters.shortDateTime(conclusion.created_at) }} ({{ this.$filters.timeSince(conclusion.created_at) }})</small>
           </v-list-item-subtitle>
 
           <div v-if="editable">
@@ -43,7 +43,7 @@ limitations under the License.
             </v-card-actions>
           </div>
           <div v-else style="max-width: 90%; font-size: 0.9em">{{ conclusion.conclusion }}</div>
-        
+
 
         <v-list-item-action
           v-if="showControls && currentUser == conclusion.user.username"

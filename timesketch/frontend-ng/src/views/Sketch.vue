@@ -59,9 +59,9 @@ limitations under the License.
         app
         clipped-left
         flat
-        :color="$vuetify.theme.dark ? '#121212' : 'white'"
+        :color="this.$vuetify.theme.dark ? '#121212' : 'white'"
         :style="[
-          $vuetify.theme.dark
+          this.$vuetify.theme.dark
             ? { 'border-bottom': '1px solid hsla(0,0%,100%,.12) !important' }
             : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
         ]"
@@ -114,7 +114,7 @@ limitations under the License.
         </v-dialog>
 
         <v-avatar color="grey-lighten-1" size="25" class="ml-3">
-          <span class="text-white">{{ currentUser | initialLetter }}</span>
+          <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
         </v-avatar>
         <v-menu offset-y>
           <template v-slot:activator="{ props }">
@@ -127,18 +127,18 @@ limitations under the License.
           <v-card>
             <v-list lines="two">
               <v-list-item v-if="sketch.user">
-                
+
                   <v-list-item-title>
-                    <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                    <strong>Created:</strong> {{ this.$filters.shortDateTime(sketch.created_at) }}
                   </v-list-item-title>
                   <v-list-item-subtitle>
-                    <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                    <small>{{ this.$filters.timeSince(sketch.created_at)}} by {{ sketch.user.username }}</small>
                   </v-list-item-subtitle>
-                
+
               </v-list-item>
 
               <v-list-item>
-                
+
                   <v-list-item-title>
                     <strong>Access: </strong>
                     <span v-if="meta.permissions && meta.permissions.public">Public</span>
@@ -150,7 +150,7 @@ limitations under the License.
                     >
                     <small v-else>Only people with access can open</small>
                   </v-list-item-subtitle>
-                
+
               </v-list-item>
             </v-list>
 
@@ -160,45 +160,45 @@ limitations under the License.
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
-                  
+
                     <v-list-item-title>Toggle theme</v-list-item-title>
-                  
+
                 </v-list-item>
 
                 <v-list-item @click="renameSketchDialog = true">
                   <v-list-item-icon>
                     <v-icon>mdi-pencil</v-icon>
                   </v-list-item-icon>
-                  
+
                     <v-list-item-title>Rename sketch</v-list-item-title>
-                  
+
                 </v-list-item>
 
                 <v-list-item @click="archiveSketch()" :disabled="isArchived">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
-                  
+
                     <v-list-item-title>Archive sketch</v-list-item-title>
-                  
+
                 </v-list-item>
 
                 <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
                   <v-list-item-icon>
                     <v-icon>mdi-trash-can-outline</v-icon>
                   </v-list-item-icon>
-                  
+
                     <v-list-item-title>Delete sketch</v-list-item-title>
-                  
+
                 </v-list-item>
 
                 <v-list-item v-on:click="switchUI">
                   <v-list-item-icon>
                     <v-icon>mdi-view-dashboard-outline</v-icon>
                   </v-list-item-icon>
-                  
+
                     <v-list-item-title>Use the old UI</v-list-item-title>
-                  
+
                 </v-list-item>
 
                 <a href="/logout/" style="text-decoration: none; color: inherit">
@@ -207,9 +207,9 @@ limitations under the License.
                       <v-icon>mdi-logout</v-icon>
                     </v-list-item-icon>
 
-                    
+
                       <v-list-item-title>Logout</v-list-item-title>
-                    
+
                   </v-list-item>
                 </a>
               </v-list-item-group>
@@ -357,7 +357,7 @@ limitations under the License.
                 variant="outlined"
                 @click="updateContextQuery(duration)"
               >
-                {{ duration | formatSeconds }}
+                {{ this.$filters.formatSeconds(duration) }}
               </v-btn>
             </v-btn-toggle>
             <v-btn size="small" variant="text" class="ml-5" @click="contextToSearch()">Replace search</v-btn>

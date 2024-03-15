@@ -62,7 +62,7 @@ limitations under the License.
             mode="dateTime"
             ref="picker"
             timezone="UTC"
-            :is-dark="$vuetify.theme.dark"
+            :is-dark="this.$vuetify.theme.dark"
             is24hr
             is-range
             is-expanded

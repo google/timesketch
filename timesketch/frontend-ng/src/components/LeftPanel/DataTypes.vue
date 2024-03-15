@@ -28,7 +28,7 @@ limitations under the License.
       :style="dataTypes && dataTypes.length ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-database-outline</v-icon> Data Types </span>
       <span class="float-right" style="margin-right: 10px">
@@ -67,10 +67,10 @@ limitations under the License.
               @click="setQueryAndFilter(dataType.data_type)"
               style="cursor: pointer; font-size: 0.9em"
             >
-              <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+              <v-row no-gutters class="pa-2 pl-5" :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
                 <span
                   >{{ dataType.data_type }} (<small
-                    ><strong>{{ dataType.count | compactNumber }}</strong></small
+                    ><strong>{{ this.$filters.compactNumber(dataType.count) }}</strong></small
                   >)</span
                 >
               </v-row>

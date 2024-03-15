@@ -679,7 +679,7 @@ export default {
     EventBus.$off('toggleLeftPanel')
   },
   watch: {
-    '$vuetify.theme.dark'() {
+    'this.$vuetify.theme.dark'() {
       this.setTheme()
     },
     graphPluginName() {

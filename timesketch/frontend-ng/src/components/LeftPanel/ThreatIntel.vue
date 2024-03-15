@@ -28,7 +28,7 @@ limitations under the License.
       :style="!(intelligenceData && intelligenceData.length) ? '' : 'cursor: pointer'"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon start>mdi-shield-search</v-icon> Threat Intelligence </span>
       <v-btn

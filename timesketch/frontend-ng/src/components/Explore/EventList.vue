@@ -37,7 +37,7 @@ limitations under the License.
       <v-sheet class="d-flex flex-wrap mt-1 mb-5">
         <v-sheet class="flex-1-0">
           <span style="width: 200px" v-bind:style="getTimelineColor(highlightEvent)" class="datetime-table-cell pa-2">
-            {{ highlightEvent._source.timestamp | formatTimestamp | toISO8601 }}
+            {{ this.$filters.formatTimestamp(this.$filters.toISO8601(highlightEvent._source.timestamp)) }}
           </span>
         </v-sheet>
 
@@ -188,10 +188,10 @@ limitations under the License.
                             </v-radio-group>
                           </v-list-item-action>
 
-                          
+
                             <v-list-item-title>Comfortable</v-list-item-title>
                             <v-list-item-subtitle>More space between rows</v-list-item-subtitle>
-                          
+
                         </template>
                       </v-list-item>
 
@@ -203,10 +203,10 @@ limitations under the License.
                             </v-radio-group>
                           </v-list-item-action>
 
-                          
+
                             <v-list-item-title>Compact</v-list-item-title>
                             <v-list-item-subtitle>Less space between rows</v-list-item-subtitle>
-                          
+
                         </template>
                       </v-list-item>
                     </v-list-item-group>
@@ -219,10 +219,10 @@ limitations under the License.
                           <v-list-item-action>
                             <v-switch density="compact" color="" v-model="displayOptions.showTags"></v-switch>
                           </v-list-item-action>
-                          
+
                             <v-list-item-title>Tags</v-list-item-title>
                             <v-list-item-subtitle>Show tags</v-list-item-subtitle>
-                          
+
                         </v-list-item>
                       </v-list-item-group>
                       <v-list-item-group>
@@ -230,10 +230,10 @@ limitations under the License.
                           <v-list-item-action>
                             <v-switch density="compact" v-model="displayOptions.showEmojis"></v-switch>
                           </v-list-item-action>
-                          
+
                             <v-list-item-title>Emojis</v-list-item-title>
                             <v-list-item-subtitle>Show emojis</v-list-item-subtitle>
-                          
+
                         </v-list-item>
                       </v-list-item-group>
                       <v-list-item-group>
@@ -241,10 +241,10 @@ limitations under the License.
                           <v-list-item-action>
                             <v-switch density="compact" v-model="displayOptions.showTimelineName"></v-switch>
                           </v-list-item-action>
-                          
+
                             <v-list-item-title>Timeline name</v-list-item-title>
                             <v-list-item-subtitle>Show timeline name</v-list-item-subtitle>
-                          
+
                         </v-list-item>
                       </v-list-item-group>
                     </v-list>
@@ -309,7 +309,7 @@ limitations under the License.
               ></div>
               <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
                 <div class="ts-time-bubble-text">
-                  <b>{{ item.deltaDays | compactNumber }}</b> days
+                  <b>{{ this.$filters.deltaDays(item.deltaDays) }}</b> days
                 </div>
               </div>
               <div
@@ -339,7 +339,7 @@ limitations under the License.
         <!-- Datetime field with action buttons -->
         <template v-slot:item._source.timestamp="{ item }">
           <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+            {{ this.$filters.formatTimestamp(this.$filters.toISO8601(item._source.timestamp)) }}
           </div>
         </template>
 

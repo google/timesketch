@@ -28,7 +28,7 @@ limitations under the License.
       v-slot="{ navigate }"
       class="pa-4"
       :class="
-        $vuetify.theme.dark
+        this.$vuetify.theme.dark
           ? isExploreRoute
             ? 'dark-highlight'
             : 'dark-hover'
