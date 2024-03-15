@@ -321,7 +321,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         comments = {}
         if "comment" in return_fields:
-            events = Event.query.filter_by(sketch=sketch).all()
+            events = Event.get_with_comments(sketch=sketch)
             for event in events:
                 for comment in event.comments:
                     comments.setdefault(event.document_id, [])
