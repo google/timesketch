@@ -27,6 +27,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
@@ -222,6 +223,10 @@ class CommentMixin(object):
             ),
         )
         return relationship(self.Comment)
+
+    @classmethod
+    def get_with_comments(cls, **kwargs):
+        return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
 
     def remove_comment(self, comment_id):
         """Remove a comment from an event.
