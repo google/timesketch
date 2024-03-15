@@ -19,7 +19,6 @@ import codecs
 
 import six
 
-from flask import jsonify
 from flask_bcrypt import generate_password_hash
 from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
@@ -127,15 +126,6 @@ class UserProfile(BaseModel):
     picture_filename = Column(Unicode(255))
     settings = Column(UnicodeText(), default="{}")
     user_id = Column(Integer, ForeignKey("user.id"))
-
-    def to_json(self):
-        schema = {"objects": [], "meta": {}}
-        settings_dict = json.loads(self.settings)
-        schema["objects"].append(settings_dict)
-        return jsonify(schema)
-
-    def to_dict(self):
-        return json.loads(self.settings)
 
 
 class Group(LabelMixin, StatusMixin, BaseModel):
