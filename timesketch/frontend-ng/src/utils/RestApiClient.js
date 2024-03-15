@@ -42,7 +42,10 @@ RestApiClient.interceptors.response.use(
   },
   function (error) {
     if (error.response.status === 500) {
-      EventBus.$emit('errorSnackBar', 'Server side error. Please contact your server administrator for troubleshooting.')
+      EventBus.$emit(
+        'errorSnackBar',
+        'Server side error. Please contact your server administrator for troubleshooting.'
+      )
     } else {
       EventBus.$emit('errorSnackBar', error.response.data.message)
     }
@@ -321,7 +324,7 @@ export default {
   getActiveAnalyzerSessions(sketchId) {
     let params = {
       params: {
-        include_details: "true",
+        include_details: 'true',
       },
     }
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/', params)
@@ -446,13 +449,24 @@ export default {
   },
   editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
     let formData = { conclusionText: conclusionText }
-    return RestApiClient.put('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/', formData)
+    return RestApiClient.put(
+      '/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/',
+      formData
+    )
   },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
-    return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
-
+    return RestApiClient.delete(
+      '/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/'
+    )
   },
   getTagMetadata() {
     return RestApiClient.get('/intelligence/tagmetadata/')
-  }
+  },
+  getUserSettings() {
+    return RestApiClient.get('/users/me/settings/')
+  },
+  saveUserSettings(settings) {
+    let formData = { settings: settings }
+    return RestApiClient.post('/users/me/settings/', formData)
+  },
 }

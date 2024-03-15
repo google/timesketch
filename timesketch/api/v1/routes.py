@@ -61,6 +61,7 @@ from .resources.searchindex import SearchIndexResource
 from .resources.session import SessionResource
 from .resources.user import UserListResource
 from .resources.user import UserResource
+from .resources.user import UserSettingsResource
 from .resources.user import GroupListResource
 from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
@@ -171,6 +172,7 @@ API_ROUTES = [
     (SigmaRuleResource, "/sigmarules/<string:rule_uuid>/"),
     (SigmaRuleByTextResource, "/sigmarules/text/"),
     (LoggedInUserResource, "/users/me/"),
+    (UserSettingsResource, "/users/me/settings/"),
     (UserResource, "/users/<int:user_id>/"),
     (GraphListResource, "/sketches/<int:sketch_id>/graphs/"),
     (GraphResource, "/sketches/<int:sketch_id>/graphs/<int:graph_id>/"),
