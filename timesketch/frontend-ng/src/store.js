@@ -76,7 +76,7 @@ export default new Vuex.Store({
       Vue.set(state, 'tags', buckets)
     },
     SET_DATA_TYPES(state, payload) {
-      let buckets = payload.objects[0]['field_bucket']['buckets']
+      const buckets = payload.objects[0].field_bucket.buckets
       Vue.set(state, 'dataTypes', buckets)
     },
     SET_COUNT(state, payload) {
@@ -86,12 +86,12 @@ export default new Vuex.Store({
       Vue.set(state, 'currentSearchNode', payload)
     },
     SET_SIGMA_LIST(state, payload) {
-      Vue.set(state, 'sigmaRuleList', payload['objects'])
-      Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
+      Vue.set(state, 'sigmaRuleList', payload.objects)
+      Vue.set(state, 'sigmaRuleList_count', payload.meta.rules_count)
     },
     SET_ACTIVE_USER(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
-        let currentUser = response.data.objects[0].username
+        const currentUser = response.data.objects[0].username
         Vue.set(state, 'currentUser', currentUser)
       })
     },
@@ -99,7 +99,7 @@ export default new Vuex.Store({
       Vue.set(state, 'activeContext', payload)
     },
     CLEAR_ACTIVE_CONTEXT(state) {
-      let payload = {
+      const payload = {
         scenario: {},
         facet: {},
         question: {}
@@ -117,7 +117,7 @@ export default new Vuex.Store({
     },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
-        let currentUser = response.data.objects[0].username
+        const currentUser = response.data.objects[0].username
         Object.assign(state, defaultState(currentUser))
       })
     },
@@ -221,7 +221,7 @@ export default new Vuex.Store({
       if (!context.state.sketch.active_timelines.length) {
         return
       }
-      let formData = {
+      const formData = {
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'tag',
@@ -230,13 +230,13 @@ export default new Vuex.Store({
       }
       return ApiClient.runAggregator(payload.sketchId, formData)
         .then((response) => {
-          let buckets = response.data.objects[0]['field_bucket']['buckets']
+          const buckets = response.data.objects[0].field_bucket.buckets
           if (payload.tag && payload.num) {
-            let missing = buckets.find(tag => tag.tag === payload.tag) === undefined
+            const missing = buckets.find(tag => tag.tag === payload.tag) === undefined
             if (missing) {
               buckets.push({ tag: payload.tag, count: payload.num })
             } else {
-              let tagIndex = buckets.findIndex(tag => tag.tag === payload.tag)
+              const tagIndex = buckets.findIndex(tag => tag.tag === payload.tag)
               buckets[tagIndex].count += payload.num
             }
           }
@@ -248,7 +248,7 @@ export default new Vuex.Store({
       if (!context.state.sketch.active_timelines.length) {
         return
       }
-      let formData = {
+      const formData = {
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'data_type',
@@ -313,7 +313,7 @@ export default new Vuex.Store({
         sketchId = context.state.sketch.id
       }
       ApiClient.getAnalyzers(sketchId).then((response) => {
-        let analyzerList = {}
+        const analyzerList = {}
         if (response.data !== undefined) {
           response.data.forEach((analyzer) => {
             analyzerList[analyzer.name] = analyzer

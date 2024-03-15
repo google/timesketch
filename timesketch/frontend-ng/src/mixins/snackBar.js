@@ -27,19 +27,19 @@ const defaultSnackBar = {
 Vue.mixin({
     methods: {
         successSnackBar(message) {
-            let snackbar = defaultSnackBar
+            const snackbar = defaultSnackBar
             snackbar.message = message
             snackbar.color = "success"
             this.$store.dispatch('setSnackBar', snackbar)
         },
         errorSnackBar(message) {
-            let snackbar = defaultSnackBar
+            const snackbar = defaultSnackBar
             snackbar.message = message
             snackbar.color = "error"
             this.$store.dispatch('setSnackBar', snackbar)
         },
         infoSnackBar(message) {
-          let snackbar = defaultSnackBar
+          const snackbar = defaultSnackBar
           snackbar.message = message
           snackbar.color = "info"
           snackbar.timeout = 2000

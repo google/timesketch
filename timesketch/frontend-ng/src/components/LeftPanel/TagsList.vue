@@ -22,8 +22,8 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
     >
       <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
-        <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+        <v-icon v-if="label.label === '__ts_star'" start size="small" color="amber">mdi-star</v-icon>
+        <v-icon v-if="label.label === '__ts_comment'" start size="small">mdi-comment-multiple-outline</v-icon>
         <span>
           {{ label.label | formatLabelText }} (<small
             ><strong>{{ label.count | compactNumber }}</strong></small
@@ -38,7 +38,7 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
     >
       <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <v-icon small left :color="getQuickTag(tag.tag).color">{{ getQuickTag(tag.tag).label }}</v-icon>
+        <v-icon size="small" start :color="getQuickTag(tag.tag).color">{{ getQuickTag(tag.tag).label }}</v-icon>
         <span
           >{{ tag.tag }} (<small
             ><strong>{{ tag.count | compactNumber }}</strong></small
@@ -100,10 +100,10 @@ export default {
       return this.quickTags.find((el) => el.tag === tag)
     },
     applyFilterChip(term, termField='', termType='label') {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = '*'
-      let chip = {
+      const chip = {
         field: termField,
         value: term,
         type: termType,

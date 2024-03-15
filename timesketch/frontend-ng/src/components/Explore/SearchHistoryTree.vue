@@ -13,9 +13,9 @@ import EventBus from '../../event-bus.js'
 function findSearchNode(object, key, predicate) {
   if (object.hasOwnProperty(key) && predicate(key, object[key]) === true) return object
   for (let i = 0; i < Object.keys(object).length; i++) {
-    let value = object[Object.keys(object)[i]]
+    const value = object[Object.keys(object)[i]]
     if (typeof value === 'object' && value != null) {
-      let searchNode = findSearchNode(value, key, predicate)
+      const searchNode = findSearchNode(value, key, predicate)
       if (searchNode != null) return searchNode
     }
   }
@@ -48,7 +48,7 @@ export default {
       } else {
         nodeId = nodeFromDropdown.id
       }
-      let node = findSearchNode(this.treeData, 'id', (k, v) => v === nodeId)
+      const node = findSearchNode(this.treeData, 'id', (k, v) => v === nodeId)
       this.$emit('node-click', node)
       this.selectedNode = node
     },
@@ -64,7 +64,7 @@ export default {
         this.fetchHistory()
       }
 
-      let parent = findSearchNode(this.treeData, 'id', (k, v) => v === newNode.parent)
+      const parent = findSearchNode(this.treeData, 'id', (k, v) => v === newNode.parent)
       if (parent) {
         if (parent.children.some((node) => node.id === newNode.id)) {
           return
@@ -74,7 +74,7 @@ export default {
         return
       }
 
-      let node = findSearchNode(this.treeData, 'id', (k, v) => v === newNode.id)
+      const node = findSearchNode(this.treeData, 'id', (k, v) => v === newNode.id)
       if (node) {
         this.selectedNode = node
       }
@@ -98,7 +98,7 @@ export default {
         .then((response) => {
           this.treeData = response.data.objects[0]
           if (!this.selectedNode) {
-            let lastNodeId = response.data.meta['last_node_id']
+            const lastNodeId = response.data.meta.last_node_id
             this.selectedNode = findSearchNode(this.treeData, 'id', (k, v) => v === lastNodeId)
           }
         })

@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card outlined>
+  <v-card variant="outlined">
     <v-toolbar dense flat>
       <v-toolbar-title style="font-size: 1.2em">Comments</v-toolbar-title>
     </v-toolbar>
 
-    <v-list three-line>
+    <v-list lines="three">
       <v-list-item
         v-for="(comment, index) in comments"
         :key="comment.id"
@@ -27,12 +27,12 @@ limitations under the License.
         @mouseleave="unSelectComment()"
       >
         <v-list-item-avatar>
-          <v-avatar color="grey lighten-1">
-            <span class="white--text">{{ comment.user.username | initialLetter }}</span>
+          <v-avatar color="grey-lighten-1">
+            <span class="text-white">{{ comment.user.username | initialLetter }}</span>
           </v-avatar>
         </v-list-item-avatar>
 
-        <v-list-item-content>
+        
           <v-list-item-title>
             {{ comment.user.username }}
           </v-list-item-title>
@@ -41,27 +41,27 @@ limitations under the License.
           </v-list-item-subtitle>
 
           <v-card flat v-if="comment.editable" class="mt-5">
-            <v-textarea v-model="comments[index].comment" hide-details auto-grow filled></v-textarea>
+            <v-textarea v-model="comments[index].comment" hide-details auto-grow variant="filled"></v-textarea>
 
             <v-card-actions v-if="comment.editable">
               <v-spacer></v-spacer>
-              <v-btn text color="primary" v-if="comment.editable" @click="editComment(index, false)"> Cancel </v-btn>
-              <v-btn text color="primary" @click="updateComment(comment, index)"> Save </v-btn>
+              <v-btn variant="text" color="primary" v-if="comment.editable" @click="editComment(index, false)"> Cancel </v-btn>
+              <v-btn variant="text" color="primary" @click="updateComment(comment, index)"> Save </v-btn>
             </v-card-actions>
           </v-card>
-          <p v-else style="max-width: 90%" class="body-2">{{ comment.comment }}</p>
-        </v-list-item-content>
+          <p v-else style="max-width: 90%" class="text-body-2">{{ comment.comment }}</p>
+        
 
         <v-list-item-action
           v-if="comment === selectedComment && meta.permissions.write && currentUser == comment.user.username"
           style="position: absolute; right: 0"
         >
-          <v-chip outlined style="margin-right: 10px">
-            <v-btn icon small @click="editComment(index)">
-              <v-icon title="Edit comment" small>mdi-square-edit-outline</v-icon>
+          <v-chip variant="outlined" style="margin-right: 10px">
+            <v-btn icon size="small" @click="editComment(index)">
+              <v-icon title="Edit comment" size="small">mdi-square-edit-outline</v-icon>
             </v-btn>
-            <v-btn icon small @click="deleteComment(comment.id, index)">
-              <v-icon title="Delete comment" small>mdi-trash-can-outline</v-icon>
+            <v-btn icon size="small" @click="deleteComment(comment.id, index)">
+              <v-icon title="Delete comment" size="small">mdi-trash-can-outline</v-icon>
             </v-btn>
           </v-chip>
         </v-list-item-action>
@@ -73,7 +73,7 @@ limitations under the License.
         v-model="comment"
         hide-details
         auto-grow
-        filled
+        variant="filled"
         class="mx-2 mb-2"
         label="Add comment"
         rows="1"

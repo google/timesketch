@@ -22,17 +22,17 @@ limitations under the License.
         :style="timelineStyle"
         class="timeline-chip"
         :ripple="false"
-        :close="close"
+        :closable="close"
         @click:close="$emit('click:close')"
       >
         <div class="chip-content">
-          <v-icon left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
-          <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="200">
-            <template v-slot:activator="{ on: onTooltip, attrs }">
+          <v-icon start :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
+          <v-tooltip location="bottom" :disabled="timeline.name.length < 30" open-delay="200">
+            <template v-slot:activator="{ props }">
               <span
                 class="timeline-name-ellipsis"
-                v-bind="attrs"
-                v-on="onTooltip"
+               
+                v-bind="props"
                 >{{ timeline.name }}</span
               >
             </template>

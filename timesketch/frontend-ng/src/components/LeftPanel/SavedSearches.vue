@@ -20,7 +20,7 @@ limitations under the License.
     style="cursor: pointer"
     @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-content-save-outline</v-icon>
+    <v-icon start>mdi-content-save-outline</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -30,7 +30,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span>
+      <span> <v-icon start>mdi-content-save-outline</v-icon> Saved Searches </span>
       <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ meta.views.length }}</strong></small
@@ -52,25 +52,25 @@ limitations under the License.
               ><div class="mt-1">{{ savedSearch.name }}</div></v-col
             >
             <v-col cols="auto">
-              <v-btn icon x-small style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
-                <v-icon title="Copy link to this search" small v-show="key == c_key">mdi-link-variant</v-icon>
+              <v-btn icon size="x-small" style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
+                <v-icon title="Copy link to this search" size="small" v-show="key == c_key">mdi-link-variant</v-icon>
               </v-btn>
               <v-menu offset-y>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn small icon v-bind="attrs" v-on="on" class="mr-1">
-                    <v-icon title="More actions" small>mdi-dots-vertical</v-icon>
+                <template v-slot:activator="{ props }">
+                  <v-btn size="small" icon v-bind="props" class="mr-1">
+                    <v-icon title="More actions" size="small">mdi-dots-vertical</v-icon>
                   </v-btn>
                 </template>
-                <v-list dense class="mx-auto">
+                <v-list density="compact" class="mx-auto">
                   <v-list-item style="cursor: pointer" @click="copySavedSearchIdToClipboard(savedSearch.id)">
                     <v-list-item-icon>
-                      <v-icon small>mdi-identifier</v-icon>
+                      <v-icon size="small">mdi-identifier</v-icon>
                     </v-list-item-icon>
                     <v-list-item-title>Copy saved search ID</v-list-item-title>
                   </v-list-item>
                   <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
                     <v-list-item-icon>
-                      <v-icon small>mdi-link-variant</v-icon>
+                      <v-icon size="small">mdi-link-variant</v-icon>
                     </v-list-item-icon>
                     <v-list-item-title>Copy link to this search</v-list-item-title>
                   </v-list-item>
@@ -121,7 +121,7 @@ export default {
     },
     copySavedSearchUrlToClipboard(savedSearchId) {
       try {
-        let searchUrl = window.location.origin + this.$route.path + '?view=' + savedSearchId
+        const searchUrl = window.location.origin + this.$route.path + '?view=' + savedSearchId
         navigator.clipboard.writeText(searchUrl)
         this.infoSnackBar('Saved Search URL copied to clipboard')
       } catch (error) {

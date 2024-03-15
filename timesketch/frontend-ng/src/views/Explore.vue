@@ -17,7 +17,7 @@ limitations under the License.
   <v-container fluid>
     <!-- Right side menu -->
     <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
-    <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
+    <v-navigation-drawer v-if="showRightSidePanel" fixed location="right" width="600" style="box-shadow: 0 10px 15px -3px #888">
       <template v-slot:prepend>
         <v-toolbar flat>
           <v-toolbar-title>Right Side Panel</v-toolbar-title>
@@ -38,22 +38,22 @@ limitations under the License.
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-card class="d-flex align-start mb-1" outlined>
+      <v-card class="d-flex align-start mb-1" variant="outlined">
         <v-sheet class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
         </v-sheet>
 
-        <v-menu v-model="showSearchDropdown" offset-y attach :close-on-content-click="false" :close-on-click="true">
-          <template v-slot:activator="{ on, attrs }">
+        <v-menu v-model="showSearchDropdown" offset-y attach :close-on-content-click="false" :persistent="!(true)">
+          <template v-slot:activator="{ props }">
             <v-text-field
               v-model="currentQueryString"
               hide-details
               label="Search"
               placeholder="Search"
               single-line
-              dense
+              density="compact"
               flat
-              solo
+              variant="solo"
               class="pa-2"
               append-icon="mdi-magnify"
               @click:append="search()"
@@ -61,8 +61,8 @@ limitations under the License.
               @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
-              v-bind="attrs"
-              v-on="on"
+             
+              v-bind="props"
             >
               <template v-slot:append>
                 <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
@@ -87,7 +87,7 @@ limitations under the License.
 
       <!-- Search History -->
       <div class="mt-4">
-        <v-card v-show="showSearchHistory" outlined>
+        <v-card v-show="showSearchHistory" variant="outlined">
           <v-toolbar dense flat>
             <v-toolbar-title>Search history</v-toolbar-title>
             <v-spacer></v-spacer>
@@ -130,16 +130,16 @@ limitations under the License.
       <!-- Timeline picker -->
       <div>
         <v-toolbar flat dense style="background-color: transparent" class="mt-n3">
-          <v-btn small icon @click="showTimelines = !showTimelines">
+          <v-btn size="small" icon @click="showTimelines = !showTimelines">
             <v-icon v-if="showTimelines" title="Hide Timelines">mdi-chevron-up</v-icon>
             <v-icon v-else title="Show Timelines">mdi-chevron-down</v-icon>
           </v-btn>
           <span class="timeline-header">
             <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
             <v-dialog v-model="addManualEvent" width="600">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                  <v-icon left small> mdi-plus </v-icon>
+              <template v-slot:activator="{ props }">
+                <v-btn size="small" variant="text" rounded color="primary" v-bind="props">
+                  <v-icon start size="small"> mdi-plus </v-icon>
                   Add manual event
                 </v-btn>
               </template>
@@ -149,12 +149,12 @@ limitations under the License.
                 :datetimeProp="datetimeManualEvent"
               ></ts-add-manual-event>
             </v-dialog>
-            <v-btn small text rounded color="primary" @click.stop="enableAllTimelines()">
-              <v-icon left small>mdi-eye</v-icon>
+            <v-btn size="small" variant="text" rounded color="primary" @click.stop="enableAllTimelines()">
+              <v-icon start size="small">mdi-eye</v-icon>
               <span>Select all</span>
             </v-btn>
-            <v-btn small text rounded color="primary" @click.stop="disableAllTimelines()">
-              <v-icon left small>mdi-eye-off</v-icon>
+            <v-btn size="small" variant="text" rounded color="primary" @click.stop="disableAllTimelines()">
+              <v-icon start size="small">mdi-eye-off</v-icon>
               <span>Unselect all</span>
             </v-btn>
           </span>
@@ -174,9 +174,9 @@ limitations under the License.
       <div>
         <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
           <v-menu offset-y content-class="menu-with-gap">
-            <template v-slot:activator="{ on }">
-              <v-chip outlined v-on="on">
-                <v-icon left small> mdi-clock-outline </v-icon>
+            <template v-slot:activator="{ props }">
+              <v-chip variant="outlined" v-bind="props">
+                <v-icon start size="small"> mdi-clock-outline </v-icon>
                 <span v-bind:style="[!chip.active ? { 'text-decoration': 'line-through', opacity: '50%' } : '']">
                   <span>{{ chip.value.split(',')[0] }}</span>
                   <span v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]">
@@ -191,14 +191,14 @@ limitations under the License.
                 <v-menu
                   offset-y
                   :close-on-content-click="false"
-                  :close-on-click="true"
+                  :persistent="!(true)"
                   nudge-top="70"
                   content-class="menu-with-gap"
                   allow-overflow
                   style="overflow: visible"
                 >
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-list-item v-bind="attrs" v-on="on">
+                  <template v-slot:activator="{ props }">
+                    <v-list-item v-bind="props">
                       <v-list-item-action>
                         <v-icon>mdi-square-edit-outline</v-icon>
                       </v-list-item-action>
@@ -232,21 +232,21 @@ limitations under the License.
               </v-list>
             </v-card>
           </v-menu>
-          <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">OR</v-btn>
+          <v-btn v-if="index + 1 < timeFilterChips.length" icon size="small" style="margin-top: 2px" class="mr-2">OR</v-btn>
         </span>
         <span>
           <v-menu
             v-model="timeFilterMenu"
             offset-y
             :close-on-content-click="false"
-            :close-on-click="true"
+            :persistent="!(true)"
             content-class="menu-with-gap"
             allow-overflow
             style="overflow: visible"
           >
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                <v-icon left small> mdi-clock-plus-outline </v-icon>
+            <template v-slot:activator="{ props }">
+              <v-btn size="small" variant="text" rounded color="primary" v-bind="props">
+                <v-icon start size="small"> mdi-clock-plus-outline </v-icon>
                 Add timefilter
               </v-btn>
             </template>
@@ -260,20 +260,20 @@ limitations under the License.
       <div v-if="filterChips.length" class="mt-1">
         <v-chip-group column>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-tooltip top :disabled="chip.value.length < 33" open-delay="300">
-              <template v-slot:activator="{ on: onTooltip, attrs }">
+            <v-tooltip location="top" :disabled="chip.value.length < 33" open-delay="300">
+              <template v-slot:activator="{ props }">
                 <v-chip
-                  outlined
-                  close
+                  variant="outlined"
+                  closable
                   close-icon="mdi-close"
                   @click:close="removeChip(chip)"
                   @click="copyFilterChip(chip)"
-                  v-bind="attrs"
-                  v-on="onTooltip"
+                 
+                  v-bind="props"
                 >
-                  <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
-                  <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-                  <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color">{{
+                  <v-icon v-if="chip.value === '__ts_star'" start size="small" color="amber">mdi-star</v-icon>
+                  <v-icon v-if="chip.value === '__ts_comment'" start size="small">mdi-comment-multiple-outline</v-icon>
+                  <v-icon v-if="getQuickTag(chip.value)" start size="small" :color="getQuickTag(chip.value).color">{{
                     getQuickTag(chip.value).label
                   }}</v-icon>
                   <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
@@ -287,7 +287,7 @@ limitations under the License.
               </template>
               <span>{{ chip.value }}</span>
             </v-tooltip>
-            <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
+            <v-btn v-if="index + 1 < timeFilterChips.length" icon size="small" style="margin-top: 2px" class="mr-2">AND</v-btn>
           </span>
         </v-chip-group>
       </div>
@@ -407,7 +407,7 @@ export default {
     },
     activeTimelines() {
       // Sort alphabetically based on timeline name.
-      let timelines = [...this.sketch.active_timelines]
+      const timelines = [...this.sketch.active_timelines]
       return timelines.sort(function (a, b) {
         return a.name.localeCompare(b.name)
       })
@@ -465,12 +465,12 @@ export default {
       }
     },
     search: function (resetPagination = true, incognito = false, parent = false) {
-      let queryRequest = {}
-      queryRequest['queryString'] = this.currentQueryString
-      queryRequest['queryFilter'] = this.currentQueryFilter
-      queryRequest['resetPagination'] = resetPagination
-      queryRequest['incognito'] = incognito
-      queryRequest['parent'] = parent
+      const queryRequest = {}
+      queryRequest.queryString = this.currentQueryString
+      queryRequest.queryFilter = this.currentQueryFilter
+      queryRequest.resetPagination = resetPagination
+      queryRequest.incognito = incognito
+      queryRequest.parent = parent
       this.activeQueryRequest = queryRequest
       this.showSearchDropdown = false
     },
@@ -487,14 +487,14 @@ export default {
 
       ApiClient.getView(this.sketchId, viewId)
         .then((response) => {
-          let view = response.data.objects[0]
+          const view = response.data.objects[0]
           this.currentQueryString = view.query_string
           this.currentQueryFilter = JSON.parse(view.query_filter)
           if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
             this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
           }
           this.selectedFields = this.currentQueryFilter.fields
-          let chips = this.currentQueryFilter.chips
+          const chips = this.currentQueryFilter.chips
           if (chips) {
             for (let i = 0; i < chips.length; i++) {
               if (chips[i].type === 'label') {
@@ -514,23 +514,23 @@ export default {
 
       this.contextEvent = event
       if (!this.originalContext) {
-        let currentQueryStringCopy = JSON.parse(JSON.stringify(this.currentQueryString))
-        let currentQueryFilterCopy = JSON.parse(JSON.stringify(this.currentQueryFilter))
+        const currentQueryStringCopy = JSON.parse(JSON.stringify(this.currentQueryString))
+        const currentQueryFilterCopy = JSON.parse(JSON.stringify(this.currentQueryFilter))
         this.originalContext = { queryString: currentQueryStringCopy, queryFilter: currentQueryFilterCopy }
       }
 
       const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
-      let startDateTimeMoment = this.$moment.utc(this.contextEvent._source.datetime)
-      let newStartDate = startDateTimeMoment.clone().subtract(contextTime, 's').format(dateTimeTemplate)
-      let newEndDate = startDateTimeMoment.clone().add(contextTime, 's').format(dateTimeTemplate)
-      let startChip = {
+      const startDateTimeMoment = this.$moment.utc(this.contextEvent._source.datetime)
+      const newStartDate = startDateTimeMoment.clone().subtract(contextTime, 's').format(dateTimeTemplate)
+      const newEndDate = startDateTimeMoment.clone().add(contextTime, 's').format(dateTimeTemplate)
+      const startChip = {
         field: '',
         value: newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
         type: 'datetime_range',
         operator: 'must',
         active: true,
       }
-      let endChip = {
+      const endChip = {
         field: '',
         value: startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
         type: 'datetime_range',
@@ -542,7 +542,7 @@ export default {
 
       this.currentQueryFilter.chips = [startChip, endChip]
 
-      let isLegacy = this.meta.indices_metadata[this.contextEvent._index].is_legacy
+      const isLegacy = this.meta.indices_metadata[this.contextEvent._index].is_legacy
       if (isLegacy) {
         this.currentQueryFilter.indices = [this.contextEvent._index]
       } else {
@@ -594,7 +594,7 @@ export default {
         })
     },
     removeChip: function (chip, search = true) {
-      let chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
+      const chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (chip.type === 'label') {
         this.selectedLabels = this.selectedLabels.filter((label) => label !== chip.value)
@@ -605,7 +605,7 @@ export default {
     },
     updateChip: function (newChip, oldChip) {
       // Replace the chip at the given index
-      let chipIndex = this.currentQueryFilter.chips.findIndex(
+      const chipIndex = this.currentQueryFilter.chips.findIndex(
         (c) => c.value === oldChip.value && c.type === oldChip.type
       )
       this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
@@ -632,14 +632,14 @@ export default {
       this.addChip(chip)
     },
     toggleLabelChip: function (labelName) {
-      let chip = {
+      const chip = {
         field: '',
         value: labelName,
         type: 'label',
         operator: 'must',
         active: true,
       }
-      let chips = this.currentQueryFilter.chips
+      const chips = this.currentQueryFilter.chips
       if (chips) {
         for (let i = 0; i < chips.length; i++) {
           if (chips[i].value === labelName) {
@@ -654,7 +654,7 @@ export default {
       // Remove all current label chips
       this.currentQueryFilter.chips = this.currentQueryFilter.chips.filter((chip) => chip.type !== 'label')
       this.selectedLabels.forEach((label) => {
-        let chip = {
+        const chip = {
           field: '',
           value: label,
           type: 'label',
@@ -678,9 +678,9 @@ export default {
       }
       this.selectedFields = this.currentQueryFilter.fields
       if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
-        let allIndices = []
+        const allIndices = []
         this.sketch.active_timelines.forEach((timeline) => {
-          let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+          const isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
           if (isLegacy) {
             allIndices.push(timeline.searchindex.index_name)
           } else {
@@ -689,7 +689,7 @@ export default {
         })
         this.currentQueryFilter.indices = allIndices
       }
-      let chips = this.currentQueryFilter.chips
+      const chips = this.currentQueryFilter.chips
       if (chips) {
         for (let i = 0; i < chips.length; i++) {
           if (chips[i].type === 'label') {
@@ -768,11 +768,11 @@ export default {
         this.currentQueryString = '*'
       }
 
-      let timeline = this.sketch.active_timelines.find((timeline) => {
+      const timeline = this.sketch.active_timelines.find((timeline) => {
         return timeline.id === parseInt(this.params.indexName, 10)
       })
 
-      let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+      const isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
       if (isLegacy) {
         this.currentQueryFilter.indices = [timeline.searchindex.index_name]
       } else {

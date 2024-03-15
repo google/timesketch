@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card v-if="activeContext.question" class="mt-3 mx-3 pb-1" outlined>
+  <v-card v-if="activeContext.question" class="mt-3 mx-3 pb-1" variant="outlined">
     <v-toolbar flat dense style="background-color: transparent">
-      <v-btn v-if="activeContext.question.description" small icon @click="expanded = !expanded" class="mr-1">
+      <v-btn v-if="activeContext.question.description" size="small" icon @click="expanded = !expanded" class="mr-1">
         <v-icon v-if="expanded">mdi-chevron-up</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
       </v-btn>
@@ -31,7 +31,7 @@ limitations under the License.
       </h4>
       <v-spacer></v-spacer>
 
-      <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
+      <v-btn size="small" icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
@@ -61,7 +61,7 @@ limitations under the License.
         <!--Approaches-->
         <div v-if="activeContext.question.approaches.length">
           <div class="px-4 pb-4">
-            <v-btn depressed rounded small @click="showApproaches = !showApproaches">
+            <v-btn variant="flat" rounded size="small" @click="showApproaches = !showApproaches">
               <span v-if="!showApproaches">Show {{ activeContext.question.approaches.length }} approaches</span>
               <span v-else>Hide {{ activeContext.question.approaches.length }} approaches</span>
             </v-btn>
@@ -69,17 +69,17 @@ limitations under the License.
           <v-expand-transition>
             <div v-if="showApproaches">
               <v-divider></v-divider>
-              <v-expansion-panels flat accordion hover>
+              <v-expansion-panels flat variant="accordion" hover>
                 <v-expansion-panel
                   v-for="(approach, index) in activeContext.question.approaches"
                   :key="approach.display_name"
                 >
-                  <v-expansion-panel-header>
+                  <v-expansion-panel-title>
                     <span>{{ approach.display_name }}</span>
-                  </v-expansion-panel-header>
-                  <v-expansion-panel-content>
+                  </v-expansion-panel-title>
+                  <v-expansion-panel-text>
                     <ts-context-card-approach :approachJSON="approach"></ts-context-card-approach>
-                  </v-expansion-panel-content>
+                  </v-expansion-panel-text>
                   <v-divider v-if="index != activeContext.question.approaches.length - 1"></v-divider>
                 </v-expansion-panel>
               </v-expansion-panels>
@@ -110,8 +110,8 @@ export default {
       return this.$store.state.activeContext
     },
     opensearchQueries() {
-      let opensearchQueries = []
-      let approaches = this.activeContext.question.approaches.map((approach) => JSON.parse(approach.spec_json))
+      const opensearchQueries = []
+      const approaches = this.activeContext.question.approaches.map((approach) => JSON.parse(approach.spec_json))
       approaches.forEach((approach) => {
         approach._view.processors.forEach((processor) => {
           processor.analysis.forEach((analysis) => {

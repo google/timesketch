@@ -29,8 +29,8 @@ limitations under the License.
       @disableAllOtherTimelines="disableAllOtherTimelines"
     ></ts-timeline-chip>
     <v-btn
-      small
-      text
+      size="small"
+      variant="text"
       rounded
       color="primary"
       v-if="sketch.timelines.length > 20"
@@ -71,7 +71,7 @@ export default {
     },
     activeTimelines() {
       // Sort alphabetically based on timeline name.
-      let timelines = [...this.sketch.active_timelines]
+      const timelines = [...this.sketch.active_timelines]
       return timelines.sort(function (a, b) {
         return a.name.localeCompare(b.name)
       })
@@ -156,15 +156,15 @@ export default {
         this.updateEnabledTimelinesIfChanged(this.activeTimelines.map((tl) => tl.id))
         return
       }
-      let newArray = []
+      const newArray = []
       this.currentQueryFilter.indices.forEach((index) => {
         if (typeof index === 'string') {
-          let timeline = this.activeTimelines.find((t) => {
+          const timeline = this.activeTimelines.find((t) => {
             return t.searchindex.index_name === index
           })
           newArray.push(timeline)
         } else if (typeof index === 'number') {
-          let timeline = this.activeTimelines.find((t) => {
+          const timeline = this.activeTimelines.find((t) => {
             return t.id === index
           })
           newArray.push(timeline)

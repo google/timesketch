@@ -16,12 +16,12 @@ limitations under the License.
 <template>
   <ts-upload-timeline-form>
     <template v-slot="slotProps">
-      <v-btn v-if="btnType === 'small'" small text rounded color="primary" v-bind="slotProps.attrs" v-on="slotProps.on">
-        <v-icon left small> mdi-plus </v-icon>
+      <v-btn v-if="btnType === 'small'" size="small" variant="text" rounded color="primary" v-bind="slotProps.attrs" v-on="slotProps.on">
+        <v-icon start size="small"> mdi-plus </v-icon>
         Add Timeline
       </v-btn>
-      <v-btn v-else rounded depressed color="primary" v-bind="slotProps.attrs" v-on="slotProps.on">
-        <v-icon left> mdi-plus </v-icon>
+      <v-btn v-else rounded variant="flat" color="primary" v-bind="slotProps.attrs" v-on="slotProps.on">
+        <v-icon start> mdi-plus </v-icon>
         Add Timeline
       </v-btn>
     </template>

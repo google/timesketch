@@ -16,19 +16,19 @@ limitations under the License.
 <template>
   <v-container fluid>
     <v-card flat class="pt-0 mt-n6" color="transparent">
-      <v-card class="d-flex align-start mb-1" outlined>
+      <v-card class="d-flex align-start mb-1" variant="outlined">
         <v-text-field
           v-model="filterString"
-          @input="filterGraphByInput"
+          @update:model-value="filterGraphByInput"
           class="pa-2"
           placeholder="Filter nodes and edges"
           label="Filter nodes and edges"
           append-icon="mdi-magnify"
           hide-details
           single-line
-          dense
+          density="compact"
           flat
-          solo
+          variant="solo"
         >
         </v-text-field>
       </v-card>
@@ -49,15 +49,15 @@ limitations under the License.
                 v-model="saveAsName"
                 required
                 placeholder="Name your graph"
-                outlined
-                dense
+                variant="outlined"
+                density="compact"
                 autofocus
                 @focus="$event.target.select()"
               ></v-text-field>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn text @click="saveGraphDialog = false"> Cancel </v-btn>
-                <v-btn color="primary" depressed @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
+                <v-btn variant="text" @click="saveGraphDialog = false"> Cancel </v-btn>
+                <v-btn color="primary" variant="flat" @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -67,15 +67,15 @@ limitations under the License.
           </v-btn>
 
           <!-- Graph settings menu -->
-          <v-menu offset-y :close-on-content-click="false" :close-on-click="true" content-class="menu-with-gap">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn icon :disabled="!currentGraph || !graphPluginName" v-bind="attrs" v-on="on">
+          <v-menu offset-y :close-on-content-click="false" :persistent="!(true)" content-class="menu-with-gap">
+            <template v-slot:activator="{ props }">
+              <v-btn icon :disabled="!currentGraph || !graphPluginName" v-bind="props">
                 <v-icon title="Graph settings">mdi-cog-outline</v-icon>
               </v-btn>
             </template>
             <v-card class="pa-4 pt-5" width="600">
               <h5>Layout type</h5>
-              <v-radio-group row v-model="layoutName">
+              <v-radio-group inline v-model="layoutName">
                 <v-radio
                   v-for="layout in layouts"
                   :key="layout"
@@ -86,7 +86,7 @@ limitations under the License.
               </v-radio-group>
 
               <h5>Edge style</h5>
-              <v-radio-group row v-model="edgeStyle">
+              <v-radio-group inline v-model="edgeStyle">
                 <v-radio
                   v-for="edge in edgeStyles"
                   :key="edge"
@@ -406,11 +406,11 @@ export default {
       }
       ApiClient.getSavedGraph(this.sketch.id, graphId)
         .then((response) => {
-          this.currentGraph = response.data['objects'][0].name
-          let elements = JSON.parse(response.data['objects'][0].graph_elements)
-          let nodes = elements.filter((ele) => ele.group === 'nodes')
-          let edges = elements.filter((ele) => ele.group === 'edges')
-          let orderedElements = []
+          this.currentGraph = response.data.objects[0].name
+          const elements = JSON.parse(response.data.objects[0].graph_elements)
+          const nodes = elements.filter((ele) => ele.group === 'nodes')
+          const edges = elements.filter((ele) => ele.group === 'edges')
+          const orderedElements = []
           nodes.forEach((node) => {
             node.selected = false
             orderedElements.push(node)
@@ -437,7 +437,7 @@ export default {
       this.showTimelineView = false
       this.config.layout.name = this.layoutName
 
-      let edgeStyle = this.config.style.filter((selector) => selector.selector === 'edge')
+      const edgeStyle = this.config.style.filter((selector) => selector.selector === 'edge')
       edgeStyle[0].style['curve-style'] = this.edgeStyle
 
       if (typeof graphPlugin === 'object') {
@@ -448,8 +448,8 @@ export default {
 
       this.elements = []
       this.edgeQuery = ''
-      let currentIndices = []
-      let timelineIds = []
+      const currentIndices = []
+      const timelineIds = []
       if (this.$route.query.timeline) {
         timelineIds.push(parseInt(this.$route.query.timeline))
         refresh = true
@@ -460,19 +460,19 @@ export default {
       }
       ApiClient.generateGraphFromPlugin(this.sketch.id, this.currentGraph, currentIndices, timelineIds, refresh)
         .then((response) => {
-          let graphCache = response.data['objects'][0]
-          let elementsCache = JSON.parse(graphCache.graph_elements)
-          let configCache = JSON.parse(graphCache.graph_config)
-          let elements = []
+          const graphCache = response.data.objects[0]
+          const elementsCache = JSON.parse(graphCache.graph_elements)
+          const configCache = JSON.parse(graphCache.graph_config)
+          const elements = []
           let nodes
           let edges
 
           if ('elements' in elementsCache) {
-            nodes = elementsCache['elements']['nodes']
-            edges = elementsCache['elements']['edges']
+            nodes = elementsCache.elements.nodes
+            edges = elementsCache.elements.edges
           } else {
-            nodes = elementsCache['nodes']
-            edges = elementsCache['edges']
+            nodes = elementsCache.nodes
+            edges = elementsCache.edges
           }
           nodes.forEach((node) => {
             elements.push({ data: node.data, group: 'nodes' })
@@ -501,9 +501,9 @@ export default {
       this.setTheme()
     },
     saveGraph: function () {
-      let selected = this.cy.filter(':selected')
-      let neighborhood = this.buildNeighborhood(selected)
-      let elements = neighborhood.jsons()
+      const selected = this.cy.filter(':selected')
+      const neighborhood = this.buildNeighborhood(selected)
+      const elements = neighborhood.jsons()
       this.elements = elements
       this.currentGraph = this.saveAsName
       ApiClient.saveGraph(this.sketch.id, this.saveAsName, elements)
@@ -523,7 +523,7 @@ export default {
       this.cy.elements().unselect()
 
       // This is the collection of matched nodes/edges
-      let selected = this.cy
+      const selected = this.cy
         .elements()
         .filter((ele) => ele.data('label').toLowerCase().includes(this.filterString.toLowerCase()))
 
@@ -531,7 +531,7 @@ export default {
       this.showNeighborhood(selected, false)
     },
     filterGraphBySelection: function (event) {
-      let selected = this.cy.filter(':selected')
+      const selected = this.cy.filter(':selected')
       this.showNeighborhood(selected)
       this.showTimelineView = true
     },
@@ -553,7 +553,7 @@ export default {
       return neighborhood
     },
     showNeighborhood: function (selected, fetchEvents = true) {
-      let neighborhood = this.buildNeighborhood(selected)
+      const neighborhood = this.buildNeighborhood(selected)
 
       if (selected.length === 0) {
         this.cy.elements().removeClass('faded')
@@ -570,7 +570,7 @@ export default {
         return
       }
 
-      let queryDsl = {
+      const queryDsl = {
         query: {
           bool: {
             should: [],
@@ -581,7 +581,7 @@ export default {
         if (element.group() === 'edges') {
           Object.keys(element.data().events).forEach((index) => {
             this.selectedEdgesCount++
-            let boolMustQuery = {
+            const boolMustQuery = {
               bool: {
                 must: [{ ids: { values: element.data().events[index] } }, { term: { _index: { value: index } } }],
               },
@@ -598,9 +598,9 @@ export default {
         return
       }
 
-      let canvasHeight = this.$refs.graphContainer.clientHeight
-      let canvasWidth = this.$refs.graphContainer.clientWidth
-      let canvas = this.$refs.cy
+      const canvasHeight = this.$refs.graphContainer.clientHeight
+      const canvasWidth = this.$refs.graphContainer.clientWidth
+      const canvas = this.$refs.cy
       canvas.style.minHeight = canvasHeight + 'px'
       canvas.style.height = canvasHeight + 'px'
       canvas.style.minWidth = canvasWidth + 'px'

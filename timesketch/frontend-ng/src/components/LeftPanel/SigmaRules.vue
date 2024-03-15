@@ -20,7 +20,7 @@ limitations under the License.
     style="cursor: pointer"
     @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-sigma-lower</v-icon>
+    <v-icon start>mdi-sigma-lower</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -30,12 +30,12 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules </span>
+      <span> <v-icon start>mdi-sigma-lower</v-icon> Sigma Rules </span>
 
       <v-btn
         v-if="expanded || (sigmaRules && !sigmaRules.length)"
         icon
-        text
+        variant="text"
         class="float-right mt-n1 mr-n1"
         :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""
@@ -67,8 +67,8 @@ limitations under the License.
                   v-model="search"
                   clearable
                   hide-details
-                  outlined
-                  dense
+                  variant="outlined"
+                  density="compact"
                   prepend-inner-icon="mdi-magnify"
                   label="Search for a rule.."
                 ></v-text-field>

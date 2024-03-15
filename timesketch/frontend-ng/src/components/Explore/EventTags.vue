@@ -14,17 +14,17 @@ limitations under the License.
   <span>
     <span v-for="tag in sortedTags" :key="tag">
       <v-chip
-        small
+        size="small"
         class="mr-1"
         :color="tagColor(tag).color"
         :text-color="tagColor(tag).textColor"
       >
-        <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
+        <v-icon v-if="tag in tagConfig" start size="small">{{ tagConfig[tag].label }}</v-icon>
         {{ tag }}
       </v-chip>
     </span>
     <span v-for="label in item._source.label" :key="label">
-      <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
+      <v-chip v-if="!label.startsWith('__ts')" size="small" variant="outlined" class="mr-2">
         {{ label }}
       </v-chip>
     </span>
@@ -41,7 +41,7 @@ export default {
     sortedTags() {
       if (!this.item._source.tag) return []
       // place quickTags first in the array, sort the rest alphabetically
-      let tags = this.item._source.tag
+      const tags = this.item._source.tag
       tags.sort((a, b) => {
         // TODO: refactor when quickTags become configurable.
         if (a === 'bad') {

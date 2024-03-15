@@ -20,7 +20,7 @@ limitations under the License.
     style="cursor: pointer"
     @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-tag-multiple-outline</v-icon>
+    <v-icon start>mdi-tag-multiple-outline</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -30,7 +30,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span>
+      <span> <v-icon start>mdi-tag-multiple-outline</v-icon> Tags </span>
 
       <span class="float-right" style="margin-right: 10px">
         <small

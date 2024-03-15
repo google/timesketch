@@ -17,8 +17,8 @@ limitations under the License.
   <div>
     <v-row>
       <v-col :cols="event.showComments ? 8 : 0">
-        <v-card outlined height="100%">
-          <v-simple-table dense>
+        <v-card variant="outlined" height="100%">
+          <v-table dense>
             <template v-slot:default>
               <tbody>
                 <tr
@@ -34,14 +34,14 @@ limitations under the License.
                       v-if="!ignoredAggregatorFields.has(key)"
                       @click.stop="loadAggregation(key, value)"
                       icon
-                      x-small
+                      size="x-small"
                       class="mr-1"
                     >
                       <v-icon title="Aggregation dialog">mdi-chart-bar</v-icon>
                     </v-btn>
 
                     <!-- Include field:value as filter chip -->
-                    <v-btn @click.stop="applyFilterChip(key, value, 'must')" icon x-small class="mr-1">
+                    <v-btn @click.stop="applyFilterChip(key, value, 'must')" icon size="x-small" class="mr-1">
                       <v-icon title="Filter for value">mdi-filter-plus-outline</v-icon>
                     </v-btn>
 
@@ -49,7 +49,7 @@ limitations under the License.
                     <v-btn
                       @click.stop="applyFilterChip(key, value, 'must_not')"
                       icon
-                      x-small
+                      size="x-small"
                       class="mr-1"
                     >
                       <v-icon title="Filter out value">mdi-filter-minus-outline</v-icon>
@@ -58,12 +58,12 @@ limitations under the License.
                     <!-- Copy field name -->
                     <v-btn
                       icon
-                      x-small
+                      size="x-small"
                       style="cursor: pointer"
                       @click="copyToClipboard(key)"
                       class="pr-1"
                     >
-                      <v-icon title="Copy attribute name" small>mdi-content-copy</v-icon>
+                      <v-icon title="Copy attribute name" size="small">mdi-content-copy</v-icon>
                     </v-btn>
                   </td>
 
@@ -79,17 +79,17 @@ limitations under the License.
                   <!-- Event field value action icons -->
                   <td v-if="checkContextLinkDisplay(key, value) || key == c_key" class="text-right pr-1">
                     <!-- Copy event value -->
-                    <v-btn icon x-small style="cursor: pointer" @click="copyToClipboard(value)" v-show="key == c_key">
-                      <v-icon small title="Copy attribute value">mdi-content-copy</v-icon>
+                    <v-btn icon size="x-small" style="cursor: pointer" @click="copyToClipboard(value)" v-show="key == c_key">
+                      <v-icon size="small" title="Copy attribute value">mdi-content-copy</v-icon>
                     </v-btn>
                     <!-- Context link submenu -->
                     <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
-                      <template v-slot:activator="{ on, attrs }">
-                        <v-btn icon color="primary" x-small style="cursor: pointer" v-bind="attrs" v-on="on">
-                          <v-icon title="Context Lookup" small> mdi-open-in-new </v-icon>
+                      <template v-slot:activator="{ props }">
+                        <v-btn icon color="primary" size="x-small" style="cursor: pointer" v-bind="props">
+                          <v-icon title="Context Lookup" size="small"> mdi-open-in-new </v-icon>
                         </v-btn>
                       </template>
-                      <v-list dense>
+                      <v-list density="compact">
                         <!-- redirect dialog -->
                         <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
                           <ts-link-redirect-warning
@@ -144,7 +144,7 @@ limitations under the License.
                 </tr>
               </tbody>
             </template>
-          </v-simple-table>
+          </v-table>
         </v-card>
       </v-col>
       <v-slide-x-reverse-transition>
@@ -240,8 +240,8 @@ export default {
   },
   methods: {
     getEvent: function () {
-      let searchindexId = this.event._index
-      let eventId = this.event._id
+      const searchindexId = this.event._index
+      const eventId = this.event._id
       ApiClient.getEvent(this.sketch.id, searchindexId, eventId)
         .then((response) => {
           this.fullEvent = response.data.objects
@@ -255,21 +255,21 @@ export default {
         .catch((e) => {})
     },
     getContextLinkItems(key) {
-      let fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
-      let shortNameList = fieldConfList.map((x) => x.short_name)
+      const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
+      const shortNameList = fieldConfList.map((x) => x.short_name)
       return shortNameList
     },
     checkContextLinkDisplay(key, value) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['validation_regex'] !== '' && confItem['validation_regex'] !== undefined) {
-          let validationPattern = confItem['validation_regex']
-          let regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/') + 1)
-          let regexPattern = validationPattern.slice(
+        if (confItem.validation_regex !== '' && confItem.validation_regex !== undefined) {
+          const validationPattern = confItem.validation_regex
+          const regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/') + 1)
+          const regexPattern = validationPattern.slice(
             validationPattern.indexOf('/') + 1,
             validationPattern.lastIndexOf('/')
           )
-          let valueRegex = new RegExp(regexPattern, regexIdentifiers)
+          const valueRegex = new RegExp(regexPattern, regexIdentifiers)
           if (valueRegex.test(value)) {
             return true
           } else {
@@ -284,29 +284,29 @@ export default {
     contextLinkRedirect(key, item, value) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['short_name'] === item) {
-          if (confItem['type'] === 'hardcoded_modules') {
-            if (confItem['module'] === 'xml_formatter') {
+        if (confItem.short_name === item) {
+          if (confItem.type === 'hardcoded_modules') {
+            if (confItem.module === 'xml_formatter') {
               this.formatXMLString = true
               this.contextValue = value
               return
             }
-            if (confItem['module'] === 'unfurl_graph') {
+            if (confItem.module === 'unfurl_graph') {
               this.dfirUnfurlDialog = true
               this.contextValue = value
               return
             }
-            if (confItem['module'] === 'threat_intel') {
+            if (confItem.module === 'threat_intel') {
               EventBus.$emit('addIndicator', value)
               return
             }
           } else {
-            if (confItem['redirect_warning']) {
+            if (confItem.redirect_warning) {
               this.redirectWarnDialog = true
               this.contextValue = value
-              this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value))
+              this.contextUrl = confItem.context_link.replace('<ATTR_VALUE>', encodeURIComponent(value))
             } else {
-              window.open(confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
+              window.open(confItem.context_link.replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
               this.redirectWarnDialog = false
             }
           }
@@ -316,17 +316,17 @@ export default {
     getContextLinkType(key, item) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['short_name'] === item) {
-          return confItem['type']
+        if (confItem.short_name === item) {
+          return confItem.type
         }
       }
     },
     getContextLinkRedirectState(key, item) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['short_name'] === item) {
-          if (confItem['redirect_warning']) {
-            return confItem['redirect_warning']
+        if (confItem.short_name === item) {
+          if (confItem.redirect_warning) {
+            return confItem.redirect_warning
           } else {
             return false
           }
@@ -348,9 +348,9 @@ export default {
       }
     },
     applyFilterChip(key, value, operator) {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
-      let chip = {
+      const chip = {
         field: key,
         value: value,
         type: 'term',

@@ -6,14 +6,14 @@
       :id="node.id"
       style="min-width: 280px"
     >
-      <v-icon title="Added a Star to an event" v-if="hasStar" style="float: left" class="mr-1" color="amber darken-2">mdi-star</v-icon>
+      <v-icon title="Added a Star to an event" v-if="hasStar" style="float: left" class="mr-1" color="amber-darken-2">mdi-star</v-icon>
       <v-icon title="Added a Comment to an event" v-if="hasComment" style="float: left" class="mr-1">mdi-comment-outline</v-icon>
       <v-icon title="Added a Label to an event" v-if="hasLabel" style="float: left; margin-right: 10px">mdi-label</v-icon>
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
+      <v-tooltip location="bottom">
+        <template v-slot:activator="{ props }">
           <div
-            v-bind="attrs"
-            v-on="on"
+           
+            v-bind="props"
             class="query-string"
             :class="[{ 'query-string-active': isSelected }]"
             style="float: left"

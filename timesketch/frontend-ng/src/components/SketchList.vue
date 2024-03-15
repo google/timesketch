@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <v-row no-gutters class="mt-5">
       <v-col cols="9">
-        <v-btn-toggle dense group v-model="toggleStateButton">
+        <v-btn-toggle density="compact" group v-model="toggleStateButton">
           <v-btn style="border-radius: 6px" @click="switchScope('recent')"> Recent </v-btn>
           <v-btn style="border-radius: 6px" @click="switchScope('user')"> My sketches </v-btn>
           <v-btn style="border-radius: 6px" @click="switchScope('shared')"> Shared with me </v-btn>
@@ -26,9 +26,9 @@ limitations under the License.
       </v-col>
       <v-col cols="3">
         <v-text-field
-          outlined
+          variant="outlined"
           flat
-          dense
+          density="compact"
           hide-details
           single-line
           label="Search"

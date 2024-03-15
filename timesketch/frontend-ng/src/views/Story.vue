@@ -20,11 +20,11 @@ limitations under the License.
         <h3>Rename story</h3>
         <br />
         <v-form @submit.prevent="rename()">
-          <v-text-field outlined dense autofocus v-model="titleDraft" @focus="$event.target.select()"> </v-text-field>
+          <v-text-field variant="outlined" density="compact" autofocus v-model="titleDraft" @focus="$event.target.select()"> </v-text-field>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn text @click="renameStoryDialog = false"> Cancel </v-btn>
-            <v-btn color="primary" text @click="rename()"> Save </v-btn>
+            <v-btn variant="text" @click="renameStoryDialog = false"> Cancel </v-btn>
+            <v-btn color="primary" variant="text" @click="rename()"> Save </v-btn>
           </v-card-actions>
         </v-form>
       </v-card>
@@ -33,8 +33,8 @@ limitations under the License.
     <v-hover v-slot="{ hover }">
       <v-toolbar dense flat class="mt-n3" color="transparent">
         <v-toolbar-title @dblclick="renameStoryDialog = true"> {{ title }}</v-toolbar-title>
-        <v-btn v-if="hover" icon small @click="renameStoryDialog = true">
-          <v-icon small>mdi-pencil</v-icon>
+        <v-btn v-if="hover" icon size="small" @click="renameStoryDialog = true">
+          <v-icon size="small">mdi-pencil</v-icon>
         </v-btn>
       </v-toolbar>
     </v-hover>
@@ -44,16 +44,16 @@ limitations under the License.
         <div v-if="!block.componentName">
           <v-hover v-slot="{ hover }">
             <div @dblclick="editTextBlock(block)" @keydown.esc="block.edit = false" style="min-height: 30px">
-              <v-card outlined class="float-right px-2" v-if="hover && !block.edit">
-                <v-btn icon small @click="editTextBlock(block)"><v-icon small>mdi-pencil</v-icon></v-btn>
-                <v-btn icon small @click="deleteBlock(index)"><v-icon small>mdi-trash-can-outline</v-icon></v-btn>
+              <v-card variant="outlined" class="float-right px-2" v-if="hover && !block.edit">
+                <v-btn icon size="small" @click="editTextBlock(block)"><v-icon size="small">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="small" @click="deleteBlock(index)"><v-icon size="small">mdi-trash-can-outline</v-icon></v-btn>
               </v-card>
 
               <!-- Render the markdown content -->
               <div class="markdown-body" v-if="!block.edit" v-html="toHtml(block.content)"></div>
 
               <!-- Edit markdown content. Work will be stored as draft until saved. -->
-              <v-card v-if="block.edit" flat outlined class="mb-2">
+              <v-card v-if="block.edit" flat variant="outlined" class="mb-2">
                 <v-toolbar flat dense>
                   <v-tabs v-model="block.currentTab">
                     <v-tab>Edit</v-tab>
@@ -61,17 +61,17 @@ limitations under the License.
                   </v-tabs>
                   <v-spacer></v-spacer>
                   <v-btn v-if="hasContent" icon @click="deleteBlock(index)">
-                    <v-icon small>mdi-trash-can-outline</v-icon>
+                    <v-icon size="small">mdi-trash-can-outline</v-icon>
                   </v-btn>
                 </v-toolbar>
                 <v-divider></v-divider>
                 <v-tabs-items v-model="block.currentTab">
                   <v-tab-item :transition="false">
                     <v-textarea
-                      solo
+                      variant="solo"
                       flat
-                      :value="block.draft"
-                      @input="updateDraft($event, block)"
+                      :model-value="block.draft"
+                      @update:model-value="updateDraft($event, block)"
                       placeholder="Your story starts here.."
                       rows="5"
                       auto-grow
@@ -85,8 +85,8 @@ limitations under the License.
 
                 <v-divider v-if="block.edit"></v-divider>
                 <v-card-actions v-if="block.edit">
-                  <v-btn text color="primary" @click="save()" :disabled="!block.draft">Save</v-btn>
-                  <v-btn text @click="block.edit = false" :disabled="!hasContent">Cancel</v-btn>
+                  <v-btn variant="text" color="primary" @click="save()" :disabled="!block.draft">Save</v-btn>
+                  <v-btn variant="text" @click="block.edit = false" :disabled="!hasContent">Cancel</v-btn>
                 </v-card-actions>
               </v-card>
             </div>
@@ -97,7 +97,7 @@ limitations under the License.
         <div v-if="block.componentName">
           <!-- Saved Searches -->
           <div>
-            <v-card v-if="block.componentName === 'TsEventList'" outlined class="mb-2">
+            <v-card v-if="block.componentName === 'TsEventList'" variant="outlined" class="mb-2">
               <v-toolbar dense flat>
                 <router-link
                   style="cursor: pointer; text-decoration: none"
@@ -108,7 +108,7 @@ limitations under the License.
 
                 <v-spacer></v-spacer>
                 <v-btn icon @click="deleteBlock(index)">
-                  <v-icon small>mdi-trash-can-outline</v-icon>
+                  <v-icon size="small">mdi-trash-can-outline</v-icon>
                 </v-btn>
               </v-toolbar>
               <v-divider></v-divider>
@@ -116,29 +116,29 @@ limitations under the License.
                 <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
               </v-card-text>
             </v-card>
-            <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
+            <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" variant="outlined" class="mb-2">
               <v-toolbar dense flat
                 >{{ block.componentProps.aggregation_group.name }}
                 <v-spacer></v-spacer>
                 <v-btn icon @click="deleteBlock(index)">
-                  <v-icon small>mdi-trash-can-outline</v-icon>
+                  <v-icon size="small">mdi-trash-can-outline</v-icon>
                 </v-btn>
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>Aggregations are not yet supported</v-card-text>
             </v-card>
-            <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
+            <v-card v-if="block.componentName === 'TsAggregationCompact'" variant="outlined" class="mb-2">
               <v-toolbar dense flat
                 >{{ block.componentProps.aggregation.name }}
                 <v-spacer></v-spacer>
                 <v-btn icon @click="deleteBlock(index)">
-                  <v-icon small>mdi-trash-can-outline</v-icon>
+                  <v-icon size="small">mdi-trash-can-outline</v-icon>
                 </v-btn>
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>Aggregations are not yet supported</v-card-text>
             </v-card>
-            <v-card v-if="block.componentName === 'TsCytoscapePlugin'" outlined class="mb-2">
+            <v-card v-if="block.componentName === 'TsCytoscapePlugin'" variant="outlined" class="mb-2">
               <v-toolbar dense flat>
                 <router-link
                   style="cursor: pointer; text-decoration: none"
@@ -151,7 +151,7 @@ limitations under the License.
 
                 <v-spacer></v-spacer>
                 <v-btn icon @click="deleteBlock(index)">
-                  <v-icon small>mdi-trash-can-outline</v-icon>
+                  <v-icon size="small">mdi-trash-can-outline</v-icon>
                 </v-btn>
               </v-toolbar>
               <v-divider></v-divider>
@@ -159,7 +159,7 @@ limitations under the License.
                 <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
               </v-card-text>
             </v-card>
-            <v-card v-if="block.componentName === 'TsCytoscapeSavedGraph'" outlined class="mb-2">
+            <v-card v-if="block.componentName === 'TsCytoscapeSavedGraph'" variant="outlined" class="mb-2">
               <v-toolbar dense flat>
                 <router-link
                   style="cursor: pointer; text-decoration: none"
@@ -170,7 +170,7 @@ limitations under the License.
 
                 <v-spacer></v-spacer>
                 <v-btn icon @click="deleteBlock(index)">
-                  <v-icon small>mdi-trash-can-outline</v-icon>
+                  <v-icon size="small">mdi-trash-can-outline</v-icon>
                 </v-btn>
               </v-toolbar>
               <v-divider></v-divider>
@@ -190,15 +190,15 @@ limitations under the License.
               }"
             >
               <!-- Text block -->
-              <v-btn v-if="hasContent" class="mr-2" rounded outlined small @click="addTextBlock(index)">
-                <v-icon left small>mdi-plus</v-icon>
+              <v-btn v-if="hasContent" class="mr-2" rounded variant="outlined" size="small" @click="addTextBlock(index)">
+                <v-icon start size="small">mdi-plus</v-icon>
                 Text
               </v-btn>
               <!-- Saved Search selector -->
               <v-menu offset-y v-model="block.showSavedSearchMenu">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn class="mr-2" rounded outlined small :disabled="!meta.views.length" v-bind="attrs" v-on="on">
-                    <v-icon left small>mdi-plus</v-icon>
+                <template v-slot:activator="{ props }">
+                  <v-btn class="mr-2" rounded variant="outlined" size="small" :disabled="!meta.views.length" v-bind="props">
+                    <v-icon start size="small">mdi-plus</v-icon>
                     Saved Search
                   </v-btn>
                 </template>
@@ -215,9 +215,9 @@ limitations under the License.
                 </v-card>
               </v-menu>
               <v-menu offset-y v-model="block.showGraphMenu">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn rounded outlined small :disabled="!graphPlugins.length" v-bind="attrs" v-on="on">
-                    <v-icon left small>mdi-plus</v-icon>
+                <template v-slot:activator="{ props }">
+                  <v-btn rounded variant="outlined" size="small" :disabled="!graphPlugins.length" v-bind="props">
+                    <v-icon start size="small">mdi-plus</v-icon>
                     Graphs
                   </v-btn>
                 </template>
@@ -320,7 +320,7 @@ export default {
         .then((response) => {
           this.title = response.data.objects[0].title
           this.titleDraft = this.title
-          let content = response.data.objects[0].content
+          const content = response.data.objects[0].content
           if (content === '[]') {
             this.blocks = [defaultBlock()]
           } else {
@@ -338,7 +338,7 @@ export default {
     },
     formatBlocks(blocks) {
       // Format block to support backwards compatibility for old style blocks
-      let compat = componentCompatibility()
+      const compat = componentCompatibility()
       blocks.forEach((block) => {
         if (block.componentName in compat) {
           block.componentName = compat[block.componentName]
@@ -350,9 +350,9 @@ export default {
       // Backwards compatibility for old style TsViewEventList props
       if (block.componentName === 'TsEventList' || block.componentName === 'TsViewEventList') {
         const EVENTS_PER_PAGE = 10
-        let queryString = block.componentProps.view.query_string || block.componentProps.view.query
+        const queryString = block.componentProps.view.query_string || block.componentProps.view.query
         let queryFilter = block.componentProps.view.query_filter || block.componentProps.view.filter
-        let queryRequest = {}
+        const queryRequest = {}
 
         // Make sure there is a query filter present
         if (!queryFilter || queryFilter === undefined) {
@@ -363,9 +363,9 @@ export default {
 
         queryFilter.size = EVENTS_PER_PAGE
         queryFilter.terminate_after = EVENTS_PER_PAGE
-        queryRequest['queryString'] = queryString
-        queryRequest['queryFilter'] = queryFilter
-        queryRequest['incognito'] = true
+        queryRequest.queryString = queryString
+        queryRequest.queryFilter = queryFilter
+        queryRequest.incognito = true
         return {
           queryRequest: queryRequest,
           disableSaveSearch: true,
@@ -378,29 +378,29 @@ export default {
       return DOMPurify.sanitize(marked(markdown))
     },
     addTextBlock(index) {
-      let newIndex = index + 1
-      let newBlock = defaultBlock()
+      const newIndex = index + 1
+      const newBlock = defaultBlock()
       this.blocks.splice(newIndex, 0, newBlock)
     },
     addEventListBlock(savedSearch, index) {
-      let newIndex = index + 1
-      let newBlock = defaultBlock()
+      const newIndex = index + 1
+      const newBlock = defaultBlock()
       newBlock.componentName = 'TsEventList'
       newBlock.componentProps = { view: savedSearch }
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
     addGraphPluginBlock(graphPlugin, index) {
-      let newIndex = index + 1
-      let newBlock = defaultBlock()
+      const newIndex = index + 1
+      const newBlock = defaultBlock()
       newBlock.componentName = 'TsCytoscapePlugin'
       newBlock.componentProps = { graphPluginName: graphPlugin.name, canvasHeight: '500px', disableZoom: true }
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
     addSavedGraphBlock(savedGraph, index) {
-      let newIndex = index + 1
-      let newBlock = defaultBlock()
+      const newIndex = index + 1
+      const newBlock = defaultBlock()
       newBlock.componentName = 'TsCytoscapeSavedGraph'
       newBlock.componentProps = { savedGraphId: savedGraph.id, canvasHeight: '400px', disableZoom: true }
       newBlock.graphName = savedGraph.name

@@ -19,7 +19,7 @@ limitations under the License.
       <v-card flat class="pa-5">
         Uploading..
         <br /><br />
-        <v-progress-linear color="light-blue" height="25" :value="percentCompleted"
+        <v-progress-linear color="light-blue" height="25" :model-value="percentCompleted"
           >{{ percentCompleted }}%</v-progress-linear
         >
         <v-divider></v-divider>
@@ -27,8 +27,8 @@ limitations under the License.
     </v-dialog>
 
     <v-dialog v-model="dialog" max-width="1000">
-      <template v-slot:activator="{ on, attrs }">
-        <slot :attrs="attrs" :on="on"></slot>
+      <template v-slot:activator="{ props }">
+        <slot v-bind="props"></slot>
       </template>
       <v-card>
         <v-container class="pa-4">
@@ -36,11 +36,11 @@ limitations under the License.
           <br />
 
           <div v-if="error.length > 0">
-            <v-alert outlined type="error" v-for="(errorMessage, index) in error" :key="index">
+            <v-alert variant="outlined" type="error" v-for="(errorMessage, index) in error" :key="index">
               {{ errorMessage }}
               <br /><br />
               <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
-                <v-simple-table v-if="headers.length > 0">
+                <v-table v-if="headers.length > 0">
                   <template v-slot:default>
                     <thead>
                       <tr>
@@ -59,7 +59,7 @@ limitations under the License.
                               chips
                               hint="Mapped to"
                               persistent-hint
-                              @change="changeHeaderMapping($event, mandatoryHeader.name)"
+                              @update:model-value="changeHeaderMapping($event, mandatoryHeader.name)"
                             ></v-select>
                           </div>
                           <div v-else>
@@ -80,7 +80,7 @@ limitations under the License.
                       </tr>
                     </tbody>
                   </template>
-                </v-simple-table>
+                </v-table>
               </div>
             </v-alert>
           </div>
@@ -88,7 +88,7 @@ limitations under the License.
           <div v-if="fileName">
             <v-text-field
               label="Timeline Name"
-              outlined
+              variant="outlined"
               v-model="form.name"
               clearable
               :rules="timelineNameRules"
@@ -97,7 +97,7 @@ limitations under the License.
               <template v-slot:label>
                 <div>Choose <strong>CSV delimiter</strong></div>
               </template>
-              <v-radio v-for="(v, key) in delimitersList" :value="v" @change="changeCSVDelimiter(v)" :key="key">
+              <v-radio v-for="(v, key) in delimitersList" :value="v" @update:model-value="changeCSVDelimiter(v)" :key="key">
                 <template v-slot:label>
                   <div>{{ key }} ({{ v }})</div>
                 </template>
@@ -106,7 +106,7 @@ limitations under the License.
 
             <v-list v-if="!percentageFlag">
               File info
-              <v-simple-table height="100px">
+              <v-table height="100px">
                 <template v-slot:default>
                   <thead>
                     <tr>
@@ -123,15 +123,15 @@ limitations under the License.
                     </tr>
                   </tbody>
                 </template>
-              </v-simple-table>
+              </v-table>
             </v-list>
           </div>
 
           <div v-else>
             <v-file-input
               label="Select file (Plaso/JSONL/CSV)"
-              outlined
-              dense
+              variant="outlined"
+              density="compact"
               clearable
               multiple
               show-size
@@ -145,11 +145,11 @@ limitations under the License.
         </v-container>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text @click="dialog = false"> Cancel </v-btn>
-          <v-btn v-if="fileName" text @click="clearFormData()"> Select another file </v-btn>
+          <v-btn variant="text" @click="dialog = false"> Cancel </v-btn>
+          <v-btn v-if="fileName" variant="text" @click="clearFormData()"> Select another file </v-btn>
           <v-btn
             color="primary"
-            text
+            variant="text"
             @click="submitForm()"
             v-if="!(error.length > 0 || !fileName)"
             :disabled="!form.name || form.name.length > 255"
@@ -226,19 +226,19 @@ export default {
       return this.mandatoryHeaders.filter((header) => this.headers.indexOf(header.name) < 0).map((h) => h.name)
     },
     listHeadersSelectMenu() {
-      let mandatoryHeaders = new Set(this.mandatoryHeaders.map((h) => h.name))
-      let headers = this.headers.filter((h) => !mandatoryHeaders.has(h))
+      const mandatoryHeaders = new Set(this.mandatoryHeaders.map((h) => h.name))
+      const headers = this.headers.filter((h) => !mandatoryHeaders.has(h))
       headers.unshift('Create New Header')
       return headers
     },
     extension() {
-      let extension = this.fileName.split('.')
+      const extension = this.fileName.split('.')
       if (extension.length > 1) return extension[extension.length - 1].toLowerCase()
       else return null
     },
     numberRows() {
       if (this.extension === 'csv') {
-        let n = this.valuesString.indexOf('')
+        const n = this.valuesString.indexOf('')
         return n < 0 ? this.staticNumberRows : n
       } else if (['json', 'jsonl'].includes(this.extension)) {
         return this.valuesString.length
@@ -266,9 +266,9 @@ export default {
        *  - the key is the header, e.g., "datetime", "file_name"
        *  - the value is an array containing the values of that column
        */
-      let valuesAndHeaders = {}
+      const valuesAndHeaders = {}
       if (this.extension === 'csv') {
-        let values = this.valuesString.map((x) => x.split(this.CSVDelimiter))
+        const values = this.valuesString.map((x) => x.split(this.CSVDelimiter))
         /**
          * values is an array of array (matrix)
          * For example, for a CSV with 3 headers such as datetime, timestamp description and permission
@@ -277,7 +277,7 @@ export default {
          *                | [2022-11-09, file_update, low]  |
          */
         for (let i = 0; i < this.headers.length; i++) {
-          let listValues = []
+          const listValues = []
           for (let j = 0; j < values.length; j++) {
             listValues.push(values[j][i]) // list values aggregate the information on the columns
           }
@@ -285,7 +285,7 @@ export default {
         }
       } else if (['json', 'jsonl'].includes(this.extension)) {
         for (let i = 0; i < this.valuesString.length; i++) {
-          for (let header in this.valuesString[i]) {
+          for (const header in this.valuesString[i]) {
             if (header in valuesAndHeaders) {
               valuesAndHeaders[header].push(this.valuesString[i][header])
             } else {
@@ -296,7 +296,7 @@ export default {
       } else {
         console.error(this.extension + ' file extension not supported for this feature')
       }
-      let checkedHeaders = this.checkedHeaders
+      const checkedHeaders = this.checkedHeaders
       return checkedHeaders.sort().map((header) => {
         let color = '' // CSS property for the displayed column
         let values = [] // values that we will display for the checked header
@@ -313,7 +313,7 @@ export default {
           // case 4: we haven't mapped the header yet
 
           // extract from the headersMapping the user's choice (it may be null if the user has not mapped the header yet)
-          let extractedMapping = this.headersMapping.find((x) => x.target === header)
+          const extractedMapping = this.headersMapping.find((x) => x.target === header)
           if (extractedMapping) {
             if (extractedMapping.source) {
               if (extractedMapping.source.length === 1) {
@@ -321,7 +321,7 @@ export default {
                 values = valuesAndHeaders[extractedMapping.source[0]]
               } else {
                 // case 2
-                let listSources = extractedMapping.source
+                const listSources = extractedMapping.source
                 for (let i = 0; i < this.numberRows; i++) {
                   let concatValue = ''
                   listSources.forEach((source) => {
@@ -363,9 +363,9 @@ export default {
       this.showAddColumnFlag = !this.showAddColumnFlag
     },
     getDefaultValue: function (target) {
-      let obj = this.headersMapping.find((x) => x['target'] === target)
+      const obj = this.headersMapping.find((x) => x.target === target)
       if (obj) {
-        return obj['default_value']
+        return obj.default_value
       } else {
         return null
       }
@@ -373,7 +373,7 @@ export default {
     changeCSVDelimiter: function (value) {
       this.CSVDelimiter = value
       for (let i = 0; i < this.mandatoryHeaders.length; i++) {
-        this.mandatoryHeaders[i]['columnsSelected'] = []
+        this.mandatoryHeaders[i].columnsSelected = []
       }
       this.headersMapping = []
       this.validateFile()
@@ -386,8 +386,8 @@ export default {
        * 2. avoid to map 2 or more missing headers with the same exsiting one,
        * 3. specify a default value in case he chooses to create a new column
        */
-      let lastElementSelected = columnsSelected[columnsSelected.length - 1]
-      let i = this.mandatoryHeaders.findIndex((h) => h.name === target)
+      const lastElementSelected = columnsSelected[columnsSelected.length - 1]
+      const i = this.mandatoryHeaders.findIndex((h) => h.name === target)
       if (lastElementSelected === 'Create New Header') {
         this.mandatoryHeaders[i].columnsSelected = ['Create New Header']
       } else {
@@ -410,7 +410,7 @@ export default {
         sources = this.mandatoryHeaders[i].columnsSelected
       }
 
-      this.headersMapping = this.headersMapping.filter((mapping) => mapping['target'] !== target)
+      this.headersMapping = this.headersMapping.filter((mapping) => mapping.target !== target)
       if (sources === null || sources.length > 0)
         this.headersMapping.push({
           target: target,
@@ -434,7 +434,7 @@ export default {
       this.percentCompleted = 0
 
       for (let i = 0; i < this.mandatoryHeaders.length; i++) {
-        this.mandatoryHeaders[i]['columnsSelected'] = []
+        this.mandatoryHeaders[i].columnsSelected = []
       }
     },
     submitForm: function () {
@@ -442,7 +442,7 @@ export default {
         return
       }
 
-      let formData = new FormData()
+      const formData = new FormData()
       formData.append('file', this.form.file)
       formData.append('name', this.form.name)
       formData.append('provider', 'WebUpload')
@@ -450,11 +450,11 @@ export default {
       formData.append('total_file_size', this.form.file.size)
       formData.append('sketch_id', this.sketch.id)
       if (['csv', 'jsonl', 'json'].includes(this.extension)) {
-        let hMapping = JSON.stringify(this.headersMapping)
+        const hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
         formData.append('delimiter', this.CSVDelimiter)
       }
-      let config = {
+      const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -476,7 +476,7 @@ export default {
       if (this.form.file.size <= 0) {
         this.error.push('Please select a non empty file')
       }
-      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
+      const allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
       if (!allowedExtensions.includes(this.extension)) {
         this.error.push('Please select a file with a valid extension: ' + allowedExtensions.toString())
       }
@@ -486,7 +486,7 @@ export default {
           this.error.push('Missing headers: ' + this.missingHeaders.toString())
         }
         // 2. check for duplicate headers (except from the new header and multiple headers)
-        let duplicates = this.headersMapping.filter((mapping) => mapping['source']).map((e) => e.source)
+        let duplicates = this.headersMapping.filter((mapping) => mapping.source).map((e) => e.source)
         duplicates = duplicates.filter((x) => x.length === 1).map((x) => x[0]) // only mapping 1:1. They will be renamed on the database thus we do not want duplicates
         if (duplicates.length > new Set(duplicates).size) {
           this.error.push(`New headers mapping contains duplicates (${duplicates})`)
@@ -510,7 +510,7 @@ export default {
         Name: fileList[0].name,
         Size: bytesToMegaBytes(fileList[0].size) + ' MB',
       }
-      let fileName = fileList[0].name
+      const fileName = fileList[0].name
       this.headersMapping = []
       this.headersString = ''
       this.valuesString = []
@@ -528,17 +528,17 @@ export default {
       this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name)
     },
     extractCSVHeader: function () {
-      let reader = new FileReader()
-      let file = document.getElementById('datafile').files[0]
+      const reader = new FileReader()
+      const file = document.getElementById('datafile').files[0]
 
       // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
       // Done to prevent JS reading a large CSV file (GBs)
-      let vueJS = this
+      const vueJS = this
       reader.readAsText(file.slice(0, 10000))
       reader.onloadend = function (e) {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
-          let data = e.target.result
+          const data = e.target.result
           vueJS.headersString = data.split('\n')[0].replaceAll('"', '')
           vueJS.valuesString = data.split('\n').slice(1, vueJS.staticNumberRows + 1)
           vueJS.validateFile()
@@ -546,16 +546,16 @@ export default {
       }
     },
     extractJSONLHeader: function () {
-      let reader = new FileReader()
-      let file = document.getElementById('datafile').files[0]
-      let vueJS = this
+      const reader = new FileReader()
+      const file = document.getElementById('datafile').files[0]
+      const vueJS = this
       reader.readAsText(file.slice(0, 10000))
       reader.onloadend = function (e) {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
-          let data = e.target.result
-          let rows = data.split('\n').filter((jsonlLine) => jsonlLine !== '')
-          let i = Math.min(vueJS.staticNumberRows, rows.length)
+          const data = e.target.result
+          const rows = data.split('\n').filter((jsonlLine) => jsonlLine !== '')
+          const i = Math.min(vueJS.staticNumberRows, rows.length)
           try {
             vueJS.headersString = JSON.parse(rows[0])
             vueJS.valuesString = rows.slice(0, i).map((x) => JSON.parse(x))

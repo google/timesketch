@@ -20,20 +20,20 @@ limitations under the License.
 
       <v-row>
         <v-col cols="12">
-          <v-btn class="mr-2" small depressed @click="getDateRange(0, 'days')">Today</v-btn>
-          <v-btn class="mr-2" small depressed @click="getDateRange(7, 'days')">Last 7 days</v-btn>
-          <v-btn class="mr-2" small depressed @click="getDateRange(30, 'days')">Last 30 days</v-btn>
-          <v-btn class="mr-2" small depressed @click="getDateRange(90, 'days')">Last 90 days</v-btn>
-          <v-btn class="mr-2" small depressed @click="getDateRange(1, 'year')">Last 1 year</v-btn>
+          <v-btn class="mr-2" size="small" variant="flat" @click="getDateRange(0, 'days')">Today</v-btn>
+          <v-btn class="mr-2" size="small" variant="flat" @click="getDateRange(7, 'days')">Last 7 days</v-btn>
+          <v-btn class="mr-2" size="small" variant="flat" @click="getDateRange(30, 'days')">Last 30 days</v-btn>
+          <v-btn class="mr-2" size="small" variant="flat" @click="getDateRange(90, 'days')">Last 90 days</v-btn>
+          <v-btn class="mr-2" size="small" variant="flat" @click="getDateRange(1, 'year')">Last 1 year</v-btn>
         </v-col>
       </v-row>
 
       <v-row>
         <v-col cols="6">
           <v-text-field
-            :value="formatStartTime"
+            :model-value="formatStartTime"
             label="From"
-            outlined
+            variant="outlined"
             hide-details
             v-on:click="showPicker = true"
             v-on:change="setStartTime"
@@ -42,14 +42,14 @@ limitations under the License.
         </v-col>
         <v-col cols="6">
           <v-text-field
-            :value="formatEndTime"
+            :model-value="formatEndTime"
             label="To (optional)"
-            outlined
+            variant="outlined"
             hide-details
             v-on:click="showPicker = true"
             v-on:change="setEndTime"
-            :append-outer-icon="showPicker ? 'mdi-calendar-remove' : 'mdi-calendar'"
-            @click:append-outer="showPicker = !showPicker"
+            :append-icon="showPicker ? 'mdi-calendar-remove' : 'mdi-calendar'"
+            @click:append="showPicker = !showPicker"
           >
           </v-text-field>
         </v-col>
@@ -72,8 +72,8 @@ limitations under the License.
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text @click="clearAndCancel"> Cancel </v-btn>
-        <v-btn text color="primary" @click="submit()"> Add filter </v-btn>
+        <v-btn variant="text" @click="clearAndCancel"> Cancel </v-btn>
+        <v-btn variant="text" color="primary" @click="submit()"> Add filter </v-btn>
       </v-card-actions>
     </v-container>
   </v-card>
@@ -105,7 +105,7 @@ export default {
         this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
       },
       get() {
-        let range = {
+        const range = {
           start: this.range.start,
           end: this.range.end,
         }
@@ -130,11 +130,11 @@ export default {
   },
   methods: {
     getDateRange: function (num, resolution) {
-      let now = dayjs.utc()
-      let then = now.subtract(num, resolution)
-      let chipType = 'datetime_range'
-      let chipValue = then.format('YYYY-MM-DD') + ',' + now.format('YYYY-MM-DD')
-      let chip = {
+      const now = dayjs.utc()
+      const then = now.subtract(num, resolution)
+      const chipType = 'datetime_range'
+      const chipValue = then.format('YYYY-MM-DD') + ',' + now.format('YYYY-MM-DD')
+      const chip = {
         field: '',
         type: chipType,
         value: chipValue,
@@ -169,7 +169,7 @@ export default {
     },
     addDateTimeChip: function (chipValue) {
       const chipType = 'datetime_range'
-      let chip = {
+      const chip = {
         field: '',
         type: chipType,
         value: chipValue,
@@ -202,9 +202,9 @@ export default {
       }
 
       if (this.range.start === this.range.end) {
-        let dateTimeArray = this.range.start.split('T')
-        let date = dateTimeArray[0]
-        let chipValue = date + ',' + date
+        const dateTimeArray = this.range.start.split('T')
+        const date = dateTimeArray[0]
+        const chipValue = date + ',' + date
         this.addDateTimeChip(chipValue)
       }
 
@@ -212,9 +212,9 @@ export default {
       }
 
       if (this.range.start !== this.range.end) {
-        let chipType = 'datetime_range'
-        let chipValue = this.range.start + ',' + this.range.end
-        let chip = {
+        const chipType = 'datetime_range'
+        const chipValue = this.range.start + ',' + this.range.end
+        const chip = {
           field: '',
           type: chipType,
           value: chipValue,

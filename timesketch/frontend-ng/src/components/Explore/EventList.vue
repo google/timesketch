@@ -78,8 +78,8 @@ limitations under the License.
               </span>
 
               <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
+                <template v-slot:activator="{ props }">
+                  <v-btn icon v-bind="props">
                     <v-icon title="Save current search">mdi-content-save-outline</v-icon>
                   </v-btn>
                 </template>
@@ -92,8 +92,8 @@ limitations under the License.
                     v-model="saveSearchFormName"
                     required
                     placeholder="Name your saved search"
-                    outlined
-                    dense
+                    variant="outlined"
+                    density="compact"
                     autofocus
                     @focus="$event.target.select()"
                     :rules="saveSearchNameRules"
@@ -101,9 +101,9 @@ limitations under the License.
                   </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+                    <v-btn variant="text" @click="saveSearchMenu = false"> Cancel </v-btn>
                     <v-btn
-                      text
+                      variant="text"
                       color="primary"
                       @click="saveSearch"
                       :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
@@ -121,8 +121,8 @@ limitations under the License.
               </template>
 
               <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
+                <template v-slot:activator="{ props }">
+                  <v-btn icon v-bind="props">
                     <v-icon title="Modify columns">mdi-view-column-outline</v-icon>
                   </v-btn>
                 </template>
@@ -158,8 +158,8 @@ limitations under the License.
 
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn text @click="selectedFields = [{ field: 'message', type: 'text' }]"> Reset </v-btn>
-                    <v-btn text color="primary" @click="columnDialog = false"> Set columns </v-btn>
+                    <v-btn variant="text" @click="selectedFields = [{ field: 'message', type: 'text' }]"> Reset </v-btn>
+                    <v-btn variant="text" color="primary" @click="columnDialog = false"> Set columns </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -169,14 +169,14 @@ limitations under the License.
               </v-btn>
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
+                <template v-slot:activator="{ props }">
+                  <v-btn icon v-bind="props">
                     <v-icon title="View settings">mdi-dots-horizontal</v-icon>
                   </v-btn>
                 </template>
 
-                <v-card outlined max-width="475" class="mx-auto">
-                  <v-list subheader two-line flat dense>
+                <v-card variant="outlined" max-width="475" class="mx-auto">
+                  <v-list subheader lines="two" flat density="compact">
                     <v-subheader>Density</v-subheader>
 
                     <v-list-item-group>
@@ -188,10 +188,10 @@ limitations under the License.
                             </v-radio-group>
                           </v-list-item-action>
 
-                          <v-list-item-content>
+                          
                             <v-list-item-title>Comfortable</v-list-item-title>
                             <v-list-item-subtitle>More space between rows</v-list-item-subtitle>
-                          </v-list-item-content>
+                          
                         </template>
                       </v-list-item>
 
@@ -203,48 +203,48 @@ limitations under the License.
                             </v-radio-group>
                           </v-list-item-action>
 
-                          <v-list-item-content>
+                          
                             <v-list-item-title>Compact</v-list-item-title>
                             <v-list-item-subtitle>Less space between rows</v-list-item-subtitle>
-                          </v-list-item-content>
+                          
                         </template>
                       </v-list-item>
                     </v-list-item-group>
                     <v-divider></v-divider>
 
-                    <v-list subheader two-line flat>
+                    <v-list subheader lines="two" flat>
                       <v-subheader>Misc</v-subheader>
                       <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
-                            <v-switch dense color="" v-model="displayOptions.showTags"></v-switch>
+                            <v-switch density="compact" color="" v-model="displayOptions.showTags"></v-switch>
                           </v-list-item-action>
-                          <v-list-item-content>
+                          
                             <v-list-item-title>Tags</v-list-item-title>
                             <v-list-item-subtitle>Show tags</v-list-item-subtitle>
-                          </v-list-item-content>
+                          
                         </v-list-item>
                       </v-list-item-group>
                       <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
-                            <v-switch dense v-model="displayOptions.showEmojis"></v-switch>
+                            <v-switch density="compact" v-model="displayOptions.showEmojis"></v-switch>
                           </v-list-item-action>
-                          <v-list-item-content>
+                          
                             <v-list-item-title>Emojis</v-list-item-title>
                             <v-list-item-subtitle>Show emojis</v-list-item-subtitle>
-                          </v-list-item-content>
+                          
                         </v-list-item>
                       </v-list-item-group>
                       <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
-                            <v-switch dense v-model="displayOptions.showTimelineName"></v-switch>
+                            <v-switch density="compact" v-model="displayOptions.showTimelineName"></v-switch>
                           </v-list-item-action>
-                          <v-list-item-content>
+                          
                             <v-list-item-title>Timeline name</v-list-item-title>
                             <v-list-item-subtitle>Show timeline name</v-list-item-subtitle>
-                          </v-list-item-content>
+                          
                         </v-list-item>
                       </v-list-item-group>
                     </v-list>
@@ -254,8 +254,8 @@ limitations under the License.
             </div>
             <div v-else>
               <small class="mr-2">Actions:</small>
-              <v-btn x-small outlined @click="toggleMultipleStars()">
-                <v-icon left color="amber">mdi-star</v-icon>
+              <v-btn size="x-small" variant="outlined" @click="toggleMultipleStars()">
+                <v-icon start color="amber">mdi-star</v-icon>
                 Toggle star
               </v-btn>
             </div>
@@ -275,10 +275,10 @@ limitations under the License.
             ></v-data-footer>
           </v-toolbar>
 
-          <v-card v-if="showHistogram" outlined class="my-3">
+          <v-card v-if="showHistogram" variant="outlined" class="my-3">
             <v-toolbar dense flat color="transparent">
               <v-spacer></v-spacer>
-              <v-btn v-if="timeFilterChips.length" text color="primary" @click="removeChips(timeFilterChips)">
+              <v-btn v-if="timeFilterChips.length" variant="text" color="primary" @click="removeChips(timeFilterChips)">
                 reset
               </v-btn>
               <v-btn icon @click="showHistogram = false">
@@ -322,7 +322,7 @@ limitations under the License.
 
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <v-btn small icon @click="toggleStar(item)">
+          <v-btn size="small" icon @click="toggleStar(item)">
             <v-icon title="Toggle star status" v-if="item._source.label.includes('__ts_star')" color="amber"
               >mdi-star</v-icon
             >
@@ -395,9 +395,9 @@ limitations under the License.
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
           <div class="d-inline-block">
-            <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
+            <v-btn icon size="small" @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
               <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
-                <v-icon :title="item['showDetails'] ? 'Close event &amp; comments' : 'Open event &amp; comments'" small>
+                <v-icon :title="item['showDetails'] ? 'Close event &amp; comments' : 'Open event &amp; comments'" size="small">
                   mdi-comment-text-multiple-outline
                 </v-icon>
               </v-badge>
@@ -405,13 +405,13 @@ limitations under the License.
           </div>
 
           <div v-if="item['showDetails'] && !item._source.comment.length && !item.showComments" class="d-inline-block">
-            <v-btn icon small @click="newComment(item)">
+            <v-btn icon size="small" @click="newComment(item)">
               <v-icon title="Add a comment"> mdi-comment-plus-outline </v-icon>
             </v-btn>
           </div>
 
           <div v-if="item['showDetails'] && !item._source.comment.length && item.showComments" class="d-inline-block">
-            <v-btn icon small @click="item.showComments = false">
+            <v-btn icon size="small" @click="item.showComments = false">
               <v-icon title="Close comments"> mdi-comment-remove-outline </v-icon>
             </v-btn>
           </div>
@@ -583,7 +583,7 @@ export default {
       return this.$store.state.currentSearchNode
     },
     headers() {
-      let baseHeaders = [
+      const baseHeaders = [
         {
           text: '',
           value: 'data-table-select',
@@ -607,9 +607,9 @@ export default {
           sortable: false,
         },
       ]
-      let extraHeaders = []
+      const extraHeaders = []
       this.selectedFields.forEach((field) => {
-        let header = {
+        const header = {
           text: field.field,
           align: 'start',
           value: '_source.' + field.field,
@@ -653,14 +653,14 @@ export default {
       return 'item._source.' + field
     },
     toggleDetailedEvent: function (row) {
-      let index = this.expandedRows.findIndex((x) => x._id === row._id)
+      const index = this.expandedRows.findIndex((x) => x._id === row._id)
       if (this.expandedRows.some((event) => event._id === row._id)) {
         if (row.showDetails) {
-          row['showDetails'] = false
+          row.showDetails = false
           this.expandedRows.splice(index, 1)
           this.$set(row, 'showComments', false)
         } else {
-          row['showDetails'] = true
+          row.showDetails = true
           this.expandedRows.splice(index, 1)
           this.expandedRows.push(row)
           return
@@ -671,7 +671,7 @@ export default {
           this.expandedRows.push(row)
         }
       } else {
-        row['showDetails'] = true
+        row.showDetails = true
         this.expandedRows.push(row)
       }
     },
@@ -689,24 +689,24 @@ export default {
         if (index < 1) {
           return
         }
-        let prevEvent = this.eventList.objects[index - 1]
-        let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
-        let prevTimestampMillis = this.$options.filters.formatTimestamp(prevEvent._source.timestamp)
-        let timestamp = Math.floor(timestampMillis / 1000)
-        let prevTimestamp = Math.floor(prevTimestampMillis / 1000)
+        const prevEvent = this.eventList.objects[index - 1]
+        const timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+        const prevTimestampMillis = this.$options.filters.formatTimestamp(prevEvent._source.timestamp)
+        const timestamp = Math.floor(timestampMillis / 1000)
+        const prevTimestamp = Math.floor(prevTimestampMillis / 1000)
         let delta = Math.floor(timestamp - prevTimestamp)
         if (this.order === 'desc') {
           delta = Math.floor(prevTimestamp - timestamp)
         }
-        let deltaDays = Math.floor(delta / 60 / 60 / 24)
+        const deltaDays = Math.floor(delta / 60 / 60 / 24)
         if (deltaDays > 0) {
-          prevEvent['deltaDays'] = deltaDays
+          prevEvent.deltaDays = deltaDays
           this.expandedRows.push(prevEvent)
         }
       })
     },
     getTimeline: function (event) {
-      let isLegacy = this.meta.indices_metadata[event._index].is_legacy
+      const isLegacy = this.meta.indices_metadata[event._index].is_legacy
       let timeline
       if (isLegacy) {
         timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === event._index)
@@ -716,7 +716,7 @@ export default {
       return timeline
     },
     getTimelineColor(event) {
-      let timeline = this.getTimeline(event)
+      const timeline = this.getTimeline(event)
       let backgroundColor = timeline.color
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
@@ -742,9 +742,9 @@ export default {
       }
     },
     getAllIndices: function () {
-      let allIndices = []
+      const allIndices = []
       this.sketch.active_timelines.forEach((timeline) => {
-        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        const isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
         if (isLegacy) {
           allIndices.push(timeline.searchindex.index_name)
         } else {
@@ -786,7 +786,7 @@ export default {
       // Update with selected fields
       this.currentQueryFilter.fields = this.selectedFields
 
-      let formData = {}
+      const formData = {}
       if (this.currentQueryDsl) {
         formData.dsl = this.currentQueryDsl
         formData.filter = this.currentQueryFilter
@@ -799,11 +799,11 @@ export default {
 
       // Search history
       if (incognito) {
-        formData['incognito'] = true
+        formData.incognito = true
       }
 
       if (parent) {
-        formData['parent'] = parent
+        formData.parent = parent
       }
 
       if (parent && incognito) {
@@ -811,13 +811,13 @@ export default {
       }
 
       if (this.branchParent) {
-        formData['parent'] = this.branchParent
+        formData.parent = this.branchParent
       }
 
       // Get DFIQ context
-      formData['scenario'] = this.activeContext.scenario.id
-      formData['facet'] = this.activeContext.facet.id
-      formData['question'] = this.activeContext.question.id
+      formData.scenario = this.activeContext.scenario.id
+      formData.facet = this.activeContext.facet.id
+      formData.question = this.activeContext.question.id
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {
@@ -845,15 +845,15 @@ export default {
       this.exportDialog = true
       const now = new Date()
       const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'
-      let formData = {
+      const formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
         file_name: exportFileName,
       }
       ApiClient.exportSearchResult(this.sketch.id, formData)
         .then((response) => {
-          let fileURL = window.URL.createObjectURL(new Blob([response.data]))
-          let fileLink = document.createElement('a')
+          const fileURL = window.URL.createObjectURL(new Blob([response.data]))
+          const fileLink = document.createElement('a')
           fileLink.href = fileURL
           fileLink.setAttribute('download', exportFileName)
           document.body.appendChild(fileLink)
@@ -873,7 +873,7 @@ export default {
       this.search()
     },
     removeChip: function (chip, search = true) {
-      let chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
+      const chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (search) {
         this.search()
@@ -964,7 +964,7 @@ export default {
         .then((response) => {
           this.saveSearchFormName = ''
           this.saveSearchMenu = false
-          let newView = response.data.objects[0]
+          const newView = response.data.objects[0]
           this.$store.state.meta.views.push(newView)
         })
         .catch((e) => {})
@@ -991,9 +991,9 @@ export default {
         this.currentQueryString = newQueryRequest.queryString || ''
         this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
         this.currentQueryDsl = newQueryRequest.queryDsl || null
-        let resetPagination = newQueryRequest['resetPagination'] || false
-        let incognito = newQueryRequest['incognito'] || false
-        let parent = newQueryRequest['parent'] || false
+        const resetPagination = newQueryRequest.resetPagination || false
+        const incognito = newQueryRequest.incognito || false
+        const parent = newQueryRequest.parent || false
         // Set additional fields. This is used when loading filter from a saved search.
         if (this.currentQueryFilter.fields) {
           this.selectedFields = this.currentQueryFilter.fields

@@ -40,7 +40,7 @@ limitations under the License.
       </v-col>
 
       <v-col cols="1">
-        <v-chip style="padding-left: 8px" x-small :color="isResolved ? 'success' : ''" :outlined="!isResolved">
+        <v-chip style="padding-left: 8px" size="x-small" :color="isResolved ? 'success' : ''" :variant="!isResolved && 'outlined'">
           {{ questionsWithConclusion.length }}/{{ facet.questions.length }}
         </v-chip>
       </v-col>

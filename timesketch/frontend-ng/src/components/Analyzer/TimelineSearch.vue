@@ -15,20 +15,20 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-btn small text color="primary" @click="selectAll()" class="mb-1">
-      <v-icon left small>mdi-plus</v-icon>
+    <v-btn size="small" variant="text" color="primary" @click="selectAll()" class="mb-1">
+      <v-icon start size="small">mdi-plus</v-icon>
       <span>Select all</span>
     </v-btn>
-    <v-btn small text color="primary" @click="unselectAll()" class="mb-1">
-      <v-icon left small>mdi-minus</v-icon>
+    <v-btn size="small" variant="text" color="primary" @click="unselectAll()" class="mb-1">
+      <v-icon start size="small">mdi-minus</v-icon>
       <span>Unselect all</span>
     </v-btn>
     <v-autocomplete
       v-model="selectedTimelines"
       :items="allReadyTimelines"
-      outlined
+      variant="outlined"
       label="Select timelines for analysis"
-      item-text="name"
+      item-title="name"
       item-value="id"
       multiple
       class="center-label-height"
@@ -42,7 +42,7 @@ limitations under the License.
         ></ts-analyzer-timeline-chip>
       </template>
       <template v-slot:item="data">
-        <v-list-item-content>
+        
           <div>
               <ts-analyzer-timeline-chip
                 :timeline="data.item"
@@ -50,7 +50,7 @@ limitations under the License.
                 @click:close="remove(data.item)"
               ></ts-analyzer-timeline-chip>
           </div>
-        </v-list-item-content>
+        
       </template>
     </v-autocomplete>
   </div>

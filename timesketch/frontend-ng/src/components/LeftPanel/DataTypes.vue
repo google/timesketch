@@ -20,7 +20,7 @@ limitations under the License.
     style="cursor: pointer"
     @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-database-outline</v-icon>
+    <v-icon start>mdi-database-outline</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -30,7 +30,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-database-outline</v-icon> Data Types </span>
+      <span> <v-icon start>mdi-database-outline</v-icon> Data Types </span>
       <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ dataTypes.length }}</strong></small
@@ -52,8 +52,8 @@ limitations under the License.
                 v-model="search"
                 clearable
                 hide-details
-                outlined
-                dense
+                variant="outlined"
+                density="compact"
                 prepend-inner-icon="mdi-magnify"
                 label="Search for a data type.."
               ></v-text-field>
@@ -107,7 +107,7 @@ export default {
   },
   methods: {
     setQueryAndFilter(dataType) {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'data_type:' + '"' + dataType + '"'
       EventBus.$emit('setQueryAndFilter', eventData)

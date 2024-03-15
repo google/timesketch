@@ -19,8 +19,8 @@ limitations under the License.
     <br />
     <v-form @submit.prevent="renameSketch()">
       <v-text-field
-        outlined
-        dense
+        variant="outlined"
+        density="compact"
         autofocus
         v-model="newSketchName"
         @focus="$event.target.select()"
@@ -30,8 +30,8 @@ limitations under the License.
       </v-text-field>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text @click="closeDialog()"> Cancel </v-btn>
-        <v-btn :disabled="!newSketchName || newSketchName.length > 255" text color="primary" @click="renameSketch()">
+        <v-btn variant="text" @click="closeDialog()"> Cancel </v-btn>
+        <v-btn :disabled="!newSketchName || newSketchName.length > 255" variant="text" color="primary" @click="renameSketch()">
           Save
         </v-btn>
       </v-card-actions>

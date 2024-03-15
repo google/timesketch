@@ -20,9 +20,9 @@ export default {
     if (!input) {
       input = 0
     }
-    let units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-    let exponent = Math.min(Math.floor(Math.log(input) / Math.log(1000)), units.length - 1)
-    let num = (input / Math.pow(1000, exponent)).toFixed(2) * 1
+    const units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    const exponent = Math.min(Math.floor(Math.log(input) / Math.log(1000)), units.length - 1)
+    const num = (input / Math.pow(1000, exponent)).toFixed(2) * 1
     return num + units[exponent]
   },
 }

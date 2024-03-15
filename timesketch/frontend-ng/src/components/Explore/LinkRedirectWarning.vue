@@ -13,7 +13,7 @@ limitations under the License.
 <template>
     <v-card>
       <v-card-title>
-        <v-icon large color="red">mdi-shield-alert-outline</v-icon>
+        <v-icon size="large" color="red">mdi-shield-alert-outline</v-icon>
         <span class="text-h6 ml-2">External redirect warning!</span>
       </v-card-title>
       <v-card-text>
@@ -43,14 +43,14 @@ limitations under the License.
         <v-spacer></v-spacer>
         <v-btn
           color="primary"
-          text
+          variant="text"
           @click="clearAndCancel"
         >
           cancel
         </v-btn>
         <v-btn
           color="primary"
-          text
+          variant="text"
           :href="contextUrl"
           target="_blank"
           @click="clearAndCancel"

@@ -15,9 +15,9 @@ limitations under the License.
 -->
 <template>
   <v-menu v-model="showMenu" offset-x :close-on-content-click="false">
-    <template v-slot:activator="{ on, attrs }">
+    <template v-slot:activator="{ props }">
       <v-icon title="Modify tags" v-if="assignedTags.length > 0" v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus</v-icon>
-      <v-icon title="Modify tags" v-else v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
+      <v-icon title="Modify tags" v-else v-bind="props" class="ml-1">mdi-tag-plus-outline</v-icon>
     </template>
 
     <v-card min-width="500px" class="mx-auto" max-width="500px" min-height="260px">
@@ -34,12 +34,12 @@ limitations under the License.
             :text-color="tag.textColor"
             :disabled="assignedTags.includes(tag.tag) ? true : false"
             class="text-center"
-            small
+            size="small"
             @click="addTags(tag.tag)"
             @click.stop="showMenu = false"
             title="Add quick tag"
           >
-            <v-icon small left> {{ tag.label }} </v-icon>
+            <v-icon size="small" start> {{ tag.label }} </v-icon>
             {{ tag.tag }}
           </v-chip>
         </v-chip-group>
@@ -51,12 +51,12 @@ limitations under the License.
             :color="getQuickTag(tag) ? getQuickTag(tag).color : ''"
             :text-color="getQuickTag(tag) ? getQuickTag(tag).textColor : ''"
             class="text-center"
-            small
-            close
+            size="small"
+            closable
             @click:close="removeTags(tag)"
             title="Remove "
           >
-            <v-icon v-if="getQuickTag(tag)" small left>{{ getQuickTag(tag).label }}</v-icon>
+            <v-icon v-if="getQuickTag(tag)" size="small" start>{{ getQuickTag(tag).label }}</v-icon>
             {{ tag }}
           </v-chip>
         </v-chip-group>
@@ -65,11 +65,11 @@ limitations under the License.
           v-model="selectedTags"
           :hide-no-data="!search"
           :items="customTags"
-          :search-input.sync="search"
+          :search.sync="search"
           hide-selected
           label="Add tags ..."
           small-chips
-          outlined
+          variant="outlined"
           @change="addTags(selectedTags)"
         >
           <template v-slot:no-data>
@@ -77,7 +77,7 @@ limitations under the License.
               <span class="subheading">Create new tag: </span>
               <v-chip
                 class="ml-1"
-                small
+                size="small"
               >
                 {{ search }}
               </v-chip>
@@ -85,7 +85,7 @@ limitations under the License.
           </template>
           <template v-slot:item="{ item }">
             <v-chip
-              small
+              size="small"
             >
               {{ item }}
             </v-chip>

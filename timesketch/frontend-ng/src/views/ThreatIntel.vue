@@ -27,12 +27,12 @@ limitations under the License.
     </ts-indicator-dialog>
 
     <v-container fluid>
-      <v-btn class="mt-n1 ml-3" text color="primary" @click="addIndicator">
-        <v-icon left>mdi-plus</v-icon>
+      <v-btn class="mt-n1 ml-3" variant="text" color="primary" @click="addIndicator">
+        <v-icon start>mdi-plus</v-icon>
         Add Indicator
       </v-btn>
 
-      <v-card outlined class="mt-3 mx-3">
+      <v-card variant="outlined" class="mt-3 mx-3">
         <v-data-table
           :headers="headers"
           :items="intelligenceData"
@@ -40,13 +40,13 @@ limitations under the License.
           :items-per-page="40"
         >
           <template v-slot:item.search="{ item }">
-            <v-btn icon small @click="generateSearchQuery(item.ioc)">
-              <v-icon title="Search this indicator" small>mdi-magnify</v-icon>
+            <v-btn icon size="small" @click="generateSearchQuery(item.ioc)">
+              <v-icon title="Search this indicator" size="small">mdi-magnify</v-icon>
             </v-btn>
           </template>
 
           <template v-slot:item.externalURI="{ item }">
-            <v-icon title="Open link" v-if="item.externalURI" x-small>mdi-open-in-new</v-icon>
+            <v-icon title="Open link" v-if="item.externalURI" size="x-small">mdi-open-in-new</v-icon>
             <a
               style="text-decoration: none"
               v-if="getValidUrl(item.externalURI)"
@@ -58,18 +58,18 @@ limitations under the License.
           </template>
           <template v-slot:item.tags="{ item }">
             <v-chip-group>
-              <v-chip small v-for="tag in item.tags" :key="tag" @click="searchForIOC(tag)">
+              <v-chip size="small" v-for="tag in item.tags" :key="tag" @click="searchForIOC(tag)">
                 {{ tag }}
               </v-chip>
             </v-chip-group>
           </template>
 
           <template v-slot:item.actions="{ item }">
-            <v-btn small icon @click="editIndicator(item.index)">
-              <v-icon small title="Edit indicator">mdi-pencil</v-icon>
+            <v-btn size="small" icon @click="editIndicator(item.index)">
+              <v-icon size="small" title="Edit indicator">mdi-pencil</v-icon>
             </v-btn>
-            <v-btn small icon @click="deleteIndicator(item.index)">
-              <v-icon small title="Delete indicator">mdi-trash-can-outline</v-icon>
+            <v-btn size="small" icon @click="deleteIndicator(item.index)">
+              <v-icon size="small" title="Delete indicator">mdi-trash-can-outline</v-icon>
             </v-btn>
           </template>
         </v-data-table>
@@ -168,10 +168,10 @@ export default {
     },
     buildTagInfo() {
       this.tagInfo = {}
-      for (var ioc of this.intelligenceData) {
-        for (var tag of ioc.tags) {
+      for (const ioc of this.intelligenceData) {
+        for (const tag of ioc.tags) {
           // deal with the case when tag is an object that is already enriched.
-          var tagKey = null
+          let tagKey = null
           if (typeof tag === 'object') {
             tagKey = tag.name
           } else {
@@ -193,16 +193,16 @@ export default {
       if (field !== undefined) {
         query = `${field}:${query}`
       }
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = query
       eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     searchForIOC(tag) {
-      let tagDetails = this.tagInfo[tag] || {}
-      let opensearchQuery = tagDetails.iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
-      let eventData = {}
+      const tagDetails = this.tagInfo[tag] || {}
+      const opensearchQuery = tagDetails.iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = opensearchQuery
       eventData.queryFilter = defaultQueryFilter()

@@ -21,7 +21,7 @@ limitations under the License.
     <v-divider></v-divider>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn text color="primary" @click="close()"> Close </v-btn>
+      <v-btn variant="text" color="primary" @click="close()"> Close </v-btn>
     </v-card-actions>
   </v-card>
 </template>
