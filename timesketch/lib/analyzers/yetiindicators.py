@@ -468,4 +468,4 @@ class YetiLOLBASIndicators(YetiBaseAnalyzer):
 
 manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
 manager.AnalysisManager.register_analyzer(YetiMalwareIndicators)
-manager.AnalysisManager.register_analyzer(YetiSigmaIndicators)
+manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
