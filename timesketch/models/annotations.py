@@ -226,6 +226,17 @@ class CommentMixin(object):
 
     @classmethod
     def get_with_comments(cls, **kwargs):
+        """Eagerly loads comments for a given object query using subquery.
+
+        subqueryload is more efficient than joinedload for many-to-one
+        references on large datasets.
+
+        Args:
+            kwargs: Keyword arguments passed to filter_by.
+
+        Returns:
+            List of objects with comments eagerly loaded.
+        """
         return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
 
     def remove_comment(self, comment_id):
