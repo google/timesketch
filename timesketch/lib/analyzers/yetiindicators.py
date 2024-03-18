@@ -351,22 +351,26 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
         entities = self.get_entities(_type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR)
         for entity in entities.values():
-            print(f'Processing entity "{entity["name"]}" ({entity["type"]})')
             indicators = self.get_neighbors(
                 entity,
                 max_hops=self._MAX_HOPS,
                 neighbor_types=self._TARGET_NEIGHBOR_TYPE,
             )
             for indicator in indicators.values():
+                query_dsl = None
                 if indicator["type"] == "regex":
                     query_dsl = self.build_query_from_regexp(indicator)
                 if indicator["type"] == "sigma":
                     query_dsl = self.build_query_from_sigma(indicator)
+                if (
+                    indicator["type"] == "query"
+                    and indicator["query_type"] == "opensearch"
+                ):
+                    query_dsl = {
+                        "query": {"query_string": {"query": indicator["pattern"]}}
+                    }
                 if not query_dsl:
                     continue
-                print(
-                    f'Processing indicator "{indicator["name"]}" ({indicator["type"]})'
-                )
                 events = self.event_stream(
                     query_dsl=query_dsl, return_fields=["message"], scroll=False
                 )
