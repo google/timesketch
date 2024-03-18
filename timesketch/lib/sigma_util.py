@@ -276,7 +276,7 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
     assert parsed_sigma_rules is not None
 
-    sigma_search_query = parsed_sigma_rules[0].replace("*.keyword:", "message:")
+    sigma_search_query = list(parsed_sigma_rules)[0].replace("*.keyword:", "message:")
 
     if not isinstance(rule_return.get("title"), str):
         error_msg = "Missing value: 'title' from the YAML data."
