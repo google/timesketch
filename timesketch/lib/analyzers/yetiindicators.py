@@ -323,7 +323,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             A dictionary representing a query DSL.
         """
         try:
-            parsed_sigma = sigma_util.parse_sigma_rule_by_text(indicator["pattern"])
+            parsed_sigma = sigma_util.parse_sigma_rule_by_text(
+                indicator["pattern"], sanitize=False
+            )
         except yaml.scanner.ScannerError as exception:
             logging.error(f"Error parsing Sigma rule {indicator['id']}: {exception}")
             return None
@@ -349,6 +351,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
         entities = self.get_entities(_type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR)
         for entity in entities.values():
+            print(f'Processing entity "{entity["name"]}" ({entity["type"]})')
             indicators = self.get_neighbors(
                 entity,
                 max_hops=self._MAX_HOPS,
@@ -361,6 +364,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                     query_dsl = self.build_query_from_sigma(indicator)
                 if not query_dsl:
                     continue
+                print(
+                    f'Processing indicator "{indicator["name"]}" ({indicator["type"]})'
+                )
                 events = self.event_stream(
                     query_dsl=query_dsl, return_fields=["message"], scroll=False
                 )
@@ -422,7 +428,7 @@ class YetiTriageIndicators(YetiBaseAnalyzer):
 
     _TAG_SELECTOR = ["triage"]
     _TYPE_SELECTOR = "attack-pattern"
-    _TARGET_NEIGHBOR_TYPE = ["regex"]
+    _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
     _SAVE_INTELLIGENCE = False
 
 
@@ -447,20 +453,20 @@ class YetiMalwareIndicators(YetiBaseAnalyzer):
 
 
 class YetiLOLBASIndicators(YetiBaseAnalyzer):
-    """Analyzer for Yeti LOLBAS rules."""
+    """Analyzer for Yeti LOLBAS indicators."""
 
     NAME = "yetilolbasindicators"
     DISPLAY_NAME = "Yeti LOLBAS Sigma indicators"
     DESCRIPTION = (
-        "Mark events that match Yeti Sigma indicators from tools"
+        "Mark events that match Yeti Sigma indicators linked to tools"
         " that are tagged `lolbas`."
     )
 
-    DEPENDENCIES = frozenset(["domain"])
+    DEPENDENCIES = frozenset(["yetitriageindicators"])
 
     _TAG_SELECTOR = ["lolbas"]
     _TYPE_SELECTOR = "tool"
-    _TARGET_NEIGHBOR_TYPE = ["sigma"]
+    _TARGET_NEIGHBOR_TYPE = ["sigma", "query"]
     _SAVE_INTELLIGENCE = True
     _DIRECTION = "inbound"
     _MAX_HOPS = 1
