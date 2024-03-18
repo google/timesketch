@@ -1,19 +1,16 @@
 """Index analyzer plugin for Yeti indicators."""
 
 import json
-import re
-
-from typing import Dict, List, Union, Optional
-
-from flask import current_app
 import logging
+import re
+from typing import Dict, List, Optional, Union
+
 import requests
 import yaml
+from flask import current_app
 
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
-from timesketch.lib import emojis
-from timesketch.lib import sigma_util
+from timesketch.lib import emojis, sigma_util
+from timesketch.lib.analyzers import interface, manager
 
 TYPE_TO_EMOJI = {
     "malware": "SPIDER",
@@ -327,7 +324,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 indicator["pattern"], sanitize=False
             )
         except yaml.scanner.ScannerError as exception:
-            logging.error(f"Error parsing Sigma rule {indicator['id']}: {exception}")
+            logging.error(
+                "Error parsing Sigma rule %s: %s", indicator["id"], str(exception)
+            )
             return None
         return {"query": {"query_string": {"query": parsed_sigma["search_query"]}}}
 
