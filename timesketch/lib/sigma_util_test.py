@@ -189,10 +189,9 @@ falsepositives:
 level: high
 """
         )
-
         self.assertIsNotNone(rule)
         self.assertEqual(
-            'message:("Whitespace at" OR " beginning " OR " and extra text ")',
+            '("Whitespace at" OR " beginning " OR " and extra text ")',
             rule.get("search_query"),
         )
 
@@ -284,7 +283,7 @@ detection:
         self.assertIsNotNone(rule)
         self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
-            'message:("aaa:bbb" OR "ccc\\:\\:ddd")',
+            '("aaa:bbb" OR "ccc\\:\\:ddd")',
             rule.get("search_query"),
         )
 
@@ -462,7 +461,7 @@ detection:
         )
         self.assertIsNotNone(rule)
         self.assertEqual(
-            'message("onlyoneterm" OR "two words" OR "completely new term")',
+            '("onlyoneterm" OR "two words" OR "completely new term")',
             rule.get("search_query"),
         )
 
