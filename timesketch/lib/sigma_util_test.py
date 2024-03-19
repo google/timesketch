@@ -43,8 +43,6 @@ detection:
     selection:
         EventID: 4624
         ProcessName|endswith: '\WmiPrvSE.exe'
-        CommandLine|contains:
-            - '-AddInRoot:.'
     condition: selection
 falsepositives:
     - Monitoring tools
