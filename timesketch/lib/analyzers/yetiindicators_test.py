@@ -86,6 +86,7 @@ class TestYetiIndicators(BaseTest):
         super().setUp()
         current_app.config["YETI_API_ROOT"] = "blah"
         current_app.config["YETI_API_KEY"] = "blah"
+        yetiindicators.NEIGHBOR_CACHE = {}
 
     # Mock the OpenSearch datastore.
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -159,4 +160,107 @@ class TestYetiIndicators(BaseTest):
         self.assertIn(
             sorted(["xmrig", "malware"]),
             [sorted(x) for x in mock_event.add_tags.call_args[0]],
+        )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_build_query_from_regexp(self):
+        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        query = analyzer.build_query_from_regexp(
+            {
+                "name": "random regex",
+                "type": "regex",
+                "description": "Random description",
+                "created": "2024-02-16T12:12:14.564723Z",
+                "modified": "2024-02-16T12:12:14.564729Z",
+                "valid_from": "2024-02-16T12:12:14.564730Z",
+                "valid_until": "2024-03-17T12:12:14.564758Z",
+                "pattern": r"this_is_my_{2,3}regex[0-9]",
+                "location": "filesystem",
+                "diamond": "victim",
+                "kill_chain_phases": [],
+                "relevant_tags": ["regex"],
+                "id": "2152802",
+                "root_type": "indicator",
+            }
+        )
+        self.assertEqual(
+            query,
+            {
+                "query": {
+                    "bool": {
+                        "should": [
+                            {
+                                "regexp": {
+                                    "filename.keyword": {
+                                        "value": r".*this_is_my_{2,3}regex[0-9].*",
+                                        "case_insensitive": True,
+                                    }
+                                }
+                            },
+                            {
+                                "regexp": {
+                                    "display_name.keyword": {
+                                        "value": r".*this_is_my_{2,3}regex[0-9].*",
+                                        "case_insensitive": True,
+                                    }
+                                }
+                            },
+                        ]
+                    }
+                }
+            },
+        )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_build_query_from_sigma(self):
+        sigma_pattern = """id: asd
+title: test
+description: test
+status: experimental
+date: 2024/01/01
+author: 'tomchop'
+references:
+  - blah
+logsource:
+    category: winprefetch
+    service: winprefetch
+detection:
+    selection1:
+      Image|endswith:
+        - '\\rundll32.exe'
+    condition: selection1
+falsepositives:
+    - Uknown
+level: medium
+tags:
+    - blah
+"""
+        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        query = analyzer.build_query_from_sigma(
+            {
+                "name": "random sigma",
+                "type": "sigma",
+                "description": "Random description",
+                "created": "2024-02-16T12:12:14.564723Z",
+                "modified": "2024-02-16T12:12:14.564729Z",
+                "valid_from": "2024-02-16T12:12:14.564730Z",
+                "valid_until": "2024-03-17T12:12:14.564758Z",
+                "pattern": sigma_pattern,
+                "location": "not_used",
+                "diamond": "victim",
+                "kill_chain_phases": [],
+                "relevant_tags": ["sigma"],
+                "id": "2152802",
+                "root_type": "indicator",
+            }
+        )
+        self.assertEqual(
+            query,
+            {
+                "query": {
+                    "query_string": {
+                        "query": '(data_type:"windows\\:prefetch\\:execution" AND message:("\\\\rundll32.exe"))'
+                    }
+                }
+            },
         )
