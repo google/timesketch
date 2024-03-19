@@ -18,12 +18,9 @@ limitations under the License.
     v-if="iconOnly"
     class="pa-4"
     style="cursor: pointer"
-    @click="
-      $emit('toggleDrawer')
-      expanded = true
-    "
+    @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-text-box-search-outline</v-icon>
+    <v-icon start>mdi-text-box-search-outline</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -31,9 +28,9 @@ limitations under the License.
       :style="searchtemplates && searchtemplates.length ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-text-box-search-outline</v-icon> Search Templates </span>
+      <span> <v-icon start>mdi-text-box-search-outline</v-icon> Search Templates </span>
       <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ searchtemplates.length }}</strong></small
@@ -49,8 +46,8 @@ limitations under the License.
                 v-model="search"
                 clearable
                 hide-details
-                outlined
-                dense
+                variant="outlined"
+                density="compact"
                 prepend-inner-icon="mdi-magnify"
                 label="Search for a template.."
               ></v-text-field>

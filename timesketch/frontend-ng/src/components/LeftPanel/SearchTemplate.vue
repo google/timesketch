@@ -21,7 +21,7 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
       no-gutters
       class="pa-2 pl-5"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       {{ searchtemplate.name }}
     </v-row>
@@ -32,7 +32,7 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
       no-gutters
       class="pa-2 pl-5"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       {{ searchtemplate.name }}
     </v-row>
@@ -44,15 +44,15 @@ limitations under the License.
             v-model="params[parameter.name]"
             :hint="parameter.description"
             :label="parameter.description"
-            outlined
-            dense
+            variant="outlined"
+            density="compact"
             hide-details
           >
           </v-text-field>
         </div>
 
         <v-card-actions class="pl-0">
-          <v-btn @click="parseQueryAndSearch()" small depressed color="primary" :disabled="!filledOut"> Search </v-btn>
+          <v-btn @click="parseQueryAndSearch()" size="small" variant="flat" color="primary" :disabled="!filledOut"> Search </v-btn>
         </v-card-actions>
       </div>
     </v-expand-transition>
@@ -87,7 +87,7 @@ export default {
   },
   methods: {
     search(queryString) {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
       EventBus.$emit('setQueryAndFilter', eventData)

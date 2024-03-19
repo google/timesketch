@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-simple-table>
+  <v-table>
     <template v-slot:default>
       <thead>
         <tr>
@@ -30,9 +30,9 @@ limitations under the License.
           :key="analyzer.analyzerName"
         >
           <td>
-            <v-tooltip right open-delay="500">
-              <template v-slot:activator="{ on }">
-                <div v-on="on" class="d-inline-block d-flex justify-center pr-4">
+            <v-tooltip location="right" open-delay="500">
+              <template v-slot:activator="{ props }">
+                <div v-bind="props" class="d-inline-block d-flex justify-center pr-4">
                   <v-progress-circular
                     v-if="isLoading(analyzer.analyzerName)"
                     :size="20"
@@ -67,7 +67,7 @@ limitations under the License.
       <v-dialog v-model="reRunDialog" max-width="515" :retain-focus="false">
         <v-card>
           <v-card-title>
-            <v-icon large>mdi-replay</v-icon>
+            <v-icon size="large">mdi-replay</v-icon>
             <span class="text-h6 ml-2">Run "{{ reRunDialogAnalyzerDisplayName }}" again?</span>
           </v-card-title>
           <v-card-text>
@@ -79,14 +79,14 @@ limitations under the License.
             <v-spacer></v-spacer>
             <v-btn
               color="primary"
-              text
+              variant="text"
               @click="reRunDialog = false"
             >
               cancel
             </v-btn>
             <v-btn
               color="primary"
-              text
+              variant="text"
               @click="runAnalyzer(reRunDialogAnalyzerName, true); reRunDialog = false"
             >
               continue
@@ -95,7 +95,7 @@ limitations under the License.
         </v-card>
       </v-dialog>
     </template>
-  </v-simple-table>
+  </v-table>
 </template>
 
 <script>
@@ -165,8 +165,8 @@ export default {
         return byAnalyzerMap
     },
     sortedAnalyzerList() {
-      let unsortedAnalyzerList = Object.entries(this.analyzerList).map(([analyzerName, info]) => ({analyzerName, info}))
-      let sortedAnalyzerList = [...unsortedAnalyzerList]
+      const unsortedAnalyzerList = Object.entries(this.analyzerList).map(([analyzerName, info]) => ({analyzerName, info}))
+      const sortedAnalyzerList = [...unsortedAnalyzerList]
       sortedAnalyzerList.sort((a, b) => a.info.display_name.localeCompare(b.info.display_name))
       return sortedAnalyzerList
     },
@@ -208,8 +208,8 @@ export default {
       ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName], force)
         .then((response) => {
           let analyses = []
-          let sessionIds = []
-          for (let session of response.data.objects[0]) {
+          const sessionIds = []
+          for (const session of response.data.objects[0]) {
             sessionIds.push(session.id)
             analyses = analyses.concat(session.analyses)
           }

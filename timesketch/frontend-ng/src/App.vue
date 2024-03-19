@@ -16,10 +16,10 @@ limitations under the License.
 <template>
   <v-app id="app">
     <!-- Global snackbar -->
-    <v-snackbar v-model="snackbar.active" :timeout="snackbar.timeout" :color="snackbar.color" top>
+    <v-snackbar v-model="snackbar.active" :timeout="snackbar.timeout" :color="snackbar.color" location="top">
       {{ snackbar.message }}
       <template v-slot:action="{ attrs }">
-        <v-btn text v-bind="attrs" @click="snackbar.active = false"> Close </v-btn>
+        <v-btn variant="text" v-bind="attrs" @click="snackbar.active = false"> Close </v-btn>
       </template>
     </v-snackbar>
 
@@ -63,7 +63,7 @@ export default {
         this.$vuetify.theme.dark = false
       }
     }
-    let element = document.body
+    const element = document.body
     element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
   },
   beforeDestroy() {

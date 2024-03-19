@@ -18,7 +18,7 @@ limitations under the License.
     <v-row
       no-gutters
       class="pa-3 pl-1"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
       @click="getSigmaRuleResource(sigmaRule.rule_uuid)"
       style="cursor: pointer; font-size: 0.9em"
     >
@@ -33,37 +33,37 @@ limitations under the License.
 
       <v-col cols="1">
         <v-menu offset-y>
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon title="Manage Sigma rule" small>mdi-dots-vertical</v-icon>
+          <template v-slot:activator="{ props }">
+            <v-btn size="small" icon v-bind="props">
+              <v-icon title="Manage Sigma rule" size="small">mdi-dots-vertical</v-icon>
             </v-btn>
           </template>
           <v-card>
-            <v-list dense>
+            <v-list density="compact">
               <v-list-item-group>
                 <v-list-item :to="{ name: 'SigmaEditRule', params: { ruleId: sigmaRule.rule_uuid } }">
                   <v-list-item-icon>
-                    <v-icon small>mdi-pencil</v-icon>
+                    <v-icon size="small">mdi-pencil</v-icon>
                   </v-list-item-icon>
                   <v-list-item-title>Edit Rule</v-list-item-title>
                 </v-list-item>
                 <v-list-item v-on:click="downloadSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon small>mdi-download</v-icon>
+                    <v-icon size="small">mdi-download</v-icon>
                   </v-list-item-icon>
                   <v-list-item-title>Download Rule</v-list-item-title>
                 </v-list-item>
 
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon small>mdi-flash-off-outline</v-icon>
+                    <v-icon size="small">mdi-flash-off-outline</v-icon>
                   </v-list-item-icon>
 
                   <v-list-item-title>Disable from analyzer</v-list-item-title>
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon small>mdi-delete</v-icon>
+                    <v-icon size="small">mdi-delete</v-icon>
                   </v-list-item-icon>
                   <v-list-item-title>Delete Rule</v-list-item-title>
                 </v-list-item>
@@ -77,7 +77,7 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded" class="pa-4 pt-0">
         <div class="mt-2">
-          <v-simple-table dense>
+          <v-table dense>
             <template v-slot:default>
               <tbody>
                 <tr v-for="(value, key) in sigmaRuleSummary" :key="key">
@@ -103,7 +103,7 @@ limitations under the License.
                         v-for="tag in value"
                         :key="tag"
                         rounded
-                        x-small
+                        size="x-small"
                         class="mr-2"
                         @click="applyFilterChip(tag)"
                       >
@@ -117,14 +117,14 @@ limitations under the License.
                 </tr>
               </tbody>
             </template>
-          </v-simple-table>
+          </v-table>
         </div>
 
         <div class="mt-3">
           <v-btn
             @click="search(detailedSigmaRule.search_query)"
-            small
-            depressed
+            size="small"
+            variant="flat"
             color="primary"
             v-if="sketch.id !== undefined"
             >Search</v-btn
@@ -172,7 +172,7 @@ export default {
   },
   methods: {
     search(queryString) {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
       EventBus.$emit('setQueryAndFilter', eventData)
@@ -212,9 +212,9 @@ export default {
         //  get the current Sigma rule yaml again
         ApiClient.getSigmaRuleResource(ruleUuid)
           .then((response) => {
-            var editingRule = response.data.objects[0]
+            const editingRule = response.data.objects[0]
             const regex = /status:\s*(experimental|testing|stable)/g
-            var ruleYaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
+            const ruleYaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
             ApiClient.updateSigmaRule(ruleUuid, ruleYaml)
               .then(() => {
                 this.$store.dispatch('updateSigmaList')
@@ -232,9 +232,9 @@ export default {
     downloadSigmaRule(ruleUuid) {
       ApiClient.getSigmaRuleResource(ruleUuid)
         .then((response) => {
-          var editingRule = response.data.objects[0]
-          var blob = new Blob([editingRule.rule_yaml], { type: 'text/plain' })
-          var link = document.createElement('a')
+          const editingRule = response.data.objects[0]
+          const blob = new Blob([editingRule.rule_yaml], { type: 'text/plain' })
+          const link = document.createElement('a')
           link.href = window.URL.createObjectURL(blob)
           link.download = editingRule.title + '.yml'
           link.click()
@@ -244,10 +244,10 @@ export default {
         })
     },
     applyFilterChip(value) {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = '*'
-      let chip = {
+      const chip = {
         field: 'tag',
         value: value,
         type: 'term',

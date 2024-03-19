@@ -14,27 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-dialog :value="dialog" @input="$emit('input', $event)" max-width="600px" @click:outside="closeDialog()">
+  <v-dialog :model-value="dialog" @update:model-value="$emit('input', $event)" max-width="600px" @click:outside="closeDialog()">
     <v-card class="pa-4">
       <h3>{{ title }}</h3>
       <br />
-      <v-text-field outlined label="Indicator data" v-model="newIndicator.ioc" @input="autoSelectIndicatorType($event)">
+      <v-text-field variant="outlined" label="Indicator data" v-model="newIndicator.ioc" @update:model-value="autoSelectIndicatorType($event)">
       </v-text-field>
-      <v-select outlined label="Indicator type" v-model="newIndicator.type" :items="indicatorTypes"> </v-select>
+      <v-select variant="outlined" label="Indicator type" v-model="newIndicator.type" :items="indicatorTypes"> </v-select>
       <v-combobox
         v-model="newIndicator.tags"
         :items="Object.keys(this.tagInfo)"
         label="Add tags.. (optional)"
-        outlined
+        variant="outlined"
         chips
         small-chips
         multiple
       ></v-combobox>
-      <v-text-field outlined label="External reference (optional)" v-model="newIndicator.externalURI"> </v-text-field>
+      <v-text-field variant="outlined" label="External reference (optional)" v-model="newIndicator.externalURI"> </v-text-field>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text @click="closeDialog()"> Cancel </v-btn>
-        <v-btn text color="primary" :disabled="!newIndicator.ioc" @click="saveIndicator"> Save </v-btn>
+        <v-btn variant="text" @click="closeDialog()"> Cancel </v-btn>
+        <v-btn variant="text" color="primary" :disabled="!newIndicator.ioc" @click="saveIndicator"> Save </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

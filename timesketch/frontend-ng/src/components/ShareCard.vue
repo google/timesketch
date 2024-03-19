@@ -21,14 +21,14 @@ limitations under the License.
       <v-autocomplete
         v-model="usersAndGroupsToAdd"
         :items="usersAndGroups"
-        outlined
+        variant="outlined"
         single-line
         chips
         small-chips
         hide-details
         multiple
         return-object
-        deletable-chips
+        closable-chips
         label="Add people and groups"
       ></v-autocomplete>
       <br />
@@ -36,25 +36,25 @@ limitations under the License.
       <v-list>
         <v-list-item>
           <v-list-item-avatar>
-            <v-avatar color="grey lighten-1" size="32">
-              <span class="white--text">{{ sketch.user.username | initialLetter }}</span>
+            <v-avatar color="grey-lighten-1" size="32">
+              <span class="text-white">{{ sketch.user.username | initialLetter }}</span>
             </v-avatar>
           </v-list-item-avatar>
-          <v-list-item-content>
+          
             <v-list-item-title v-text="sketch.user.username"></v-list-item-title>
-          </v-list-item-content>
+          
           <v-spacer></v-spacer>
           <small>Owner</small>
         </v-list-item>
         <v-list-item v-for="user in meta.collaborators.users" :key="user">
           <v-list-item-avatar>
-            <v-avatar color="grey lighten-1" size="32">
-              <span class="white--text">{{ user | initialLetter }}</span>
+            <v-avatar color="grey-lighten-1" size="32">
+              <span class="text-white">{{ user | initialLetter }}</span>
             </v-avatar>
           </v-list-item-avatar>
-          <v-list-item-content>
+          
             <v-list-item-title v-text="user"></v-list-item-title>
-          </v-list-item-content>
+          
           <v-spacer></v-spacer>
           <v-icon @click="revokeAccess(user, '')">mdi-trash-can-outline</v-icon>
         </v-list-item>
@@ -62,9 +62,9 @@ limitations under the License.
           <v-list-item-avatar>
             <v-icon>mdi-account-group-outline</v-icon>
           </v-list-item-avatar>
-          <v-list-item-content>
+          
             <v-list-item-title v-text="group"></v-list-item-title>
-          </v-list-item-content>
+          
           <v-spacer></v-spacer>
           <v-icon @click="revokeAccess('', group)">mdi-trash-can-outline</v-icon>
         </v-list-item>
@@ -79,12 +79,12 @@ limitations under the License.
         :label="generalAccess"
         :prepend-icon="accessIcon"
         style="width: 150px"
-        @change="setPublicAccess()"
+        @update:model-value="setPublicAccess()"
       ></v-select>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text @click="$emit('close-dialog')">Cancel</v-btn>
-        <v-btn color="primary" depressed @click="grantAccess()">Done</v-btn>
+        <v-btn variant="text" @click="$emit('close-dialog')">Cancel</v-btn>
+        <v-btn color="primary" variant="flat" @click="grantAccess()">Done</v-btn>
       </v-card-actions>
     </div>
   </v-card>
@@ -145,10 +145,10 @@ export default {
         return
       }
       this.isLoading = true
-      let usersToAdd = this.usersAndGroupsToAdd
+      const usersToAdd = this.usersAndGroupsToAdd
         .filter((user) => user.type === 'user')
         .map((userObject) => userObject.value)
-      let groupsToAdd = this.usersAndGroupsToAdd
+      const groupsToAdd = this.usersAndGroupsToAdd
         .filter((group) => group.type === 'group')
         .map((groupObject) => groupObject.value)
       ApiClient.grantSketchAccess(this.sketch.id, usersToAdd, groupsToAdd)
@@ -166,8 +166,8 @@ export default {
     },
     revokeAccess: function (userName, groupName) {
       this.isLoading = true
-      let userToRemove = [userName]
-      let groupToRemove = [groupName]
+      const userToRemove = [userName]
+      const groupToRemove = [groupName]
       ApiClient.revokeSketchAccess(this.sketch.id, userToRemove, groupToRemove)
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
@@ -198,7 +198,7 @@ export default {
     ApiClient.getUsers()
       .then((response) => {
         response.data.objects[0].forEach((user) => {
-          let userObject = {
+          const userObject = {
             text: user.username,
             value: user.username,
             type: 'user',
@@ -211,7 +211,7 @@ export default {
     ApiClient.getGroups()
       .then((response) => {
         response.data.objects[0].forEach((group) => {
-          let groupObject = {
+          const groupObject = {
             text: group.name,
             value: group.name,
             type: 'group',

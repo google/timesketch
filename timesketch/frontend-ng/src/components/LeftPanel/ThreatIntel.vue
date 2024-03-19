@@ -18,12 +18,9 @@ limitations under the License.
     v-if="iconOnly"
     class="pa-4"
     style="cursor: pointer"
-    @click="
-      $emit('toggleDrawer')
-      expanded = true
-    "
+    @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-shield-search</v-icon>
+    <v-icon start>mdi-shield-search</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -31,9 +28,9 @@ limitations under the License.
       :style="!(intelligenceData && intelligenceData.length) ? '' : 'cursor: pointer'"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-shield-search</v-icon> Threat Intelligence </span>
+      <span> <v-icon start>mdi-shield-search</v-icon> Threat Intelligence </span>
       <v-btn
         icon
         class="float-right mt-n1 mr-n1"
@@ -58,7 +55,7 @@ limitations under the License.
         :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon small title="Manage indicators">mdi-pencil</v-icon>
+        <v-icon size="small" title="Manage indicators">mdi-pencil</v-icon>
       </v-btn>
 
       <span v-if="!expanded" class="float-right" style="margin-right: 10px">
@@ -103,8 +100,8 @@ limitations under the License.
                 </template>
 
                 <template v-slot:item.actions="{ item }">
-                  <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
+                  <v-btn icon size="small" @click="generateSearchQuery(item.ioc)">
+                    <v-icon size="small" title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -122,8 +119,8 @@ limitations under the License.
                 </template>
 
                 <template v-slot:item.actions="{ item }">
-                  <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
+                  <v-btn icon size="small" @click="generateSearchQuery(item.ioc)">
+                    <v-icon size="small" title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -131,7 +128,7 @@ limitations under the License.
             <v-tab-item :transition="false">
               <v-data-table dense :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
                 <template v-slot:item.tag="{ item }">
-                  <v-chip x-small @click="searchForIOC(item)">{{ item.tag.name }}</v-chip>
+                  <v-chip size="x-small" @click="searchForIOC(item)">{{ item.tag.name }}</v-chip>
                 </template>
                 <template v-slot:item.iocs="{ item }">
                   <small :title="item.iocs">{{ item.iocs.length }}</small>
@@ -140,8 +137,8 @@ limitations under the License.
                   <small>{{ item.tag.weight }}</small>
                 </template>
                 <template v-slot:item.actions="{ item }">
-                  <v-btn icon small @click="searchForIOC(item)">
-                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
+                  <v-btn icon size="small" @click="searchForIOC(item)">
+                    <v-icon size="small" title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -222,10 +219,10 @@ export default {
       // We need tagMetadata to be embedded in the list below as it is used
       // for sorting in the table.
       this.tagInfo = {}
-      for (var ioc of this.intelligenceData) {
-        for (var tag of ioc.tags) {
+      for (const ioc of this.intelligenceData) {
+        for (const tag of ioc.tags) {
           // deal with the case when tag is an object that is alread enriched.
-          var tagKey = null
+          let tagKey = null
           if (typeof tag === 'object') {
             tagKey = tag.name
           } else {
@@ -247,13 +244,13 @@ export default {
       if (typeof tag === 'object') {
         return tag
       } else {
-        let tagInfo = { name: tag }
+        const tagInfo = { name: tag }
         if (this.tagMetadata[tag]) {
           return _.extend(tagInfo, this.tagMetadata[tag])
         } else {
-          for (var regex in this.tagMetadata['regexes']) {
+          for (const regex in this.tagMetadata.regexes) {
             if (tag.match(regex)) {
-              return _.extend(tagInfo, this.tagMetadata['regexes'][regex])
+              return _.extend(tagInfo, this.tagMetadata.regexes[regex])
             }
           }
           return _.extend(tagInfo, this.tagMetadata.default)
@@ -267,15 +264,15 @@ export default {
       if (field !== undefined) {
         query = `${field}:${query}`
       }
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = query
       eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     searchForIOC(tag) {
-      let opensearchQuery = tag.iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
-      let eventData = {}
+      const opensearchQuery = tag.iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = opensearchQuery
       eventData.queryFilter = defaultQueryFilter()

@@ -20,9 +20,9 @@ limitations under the License.
       <v-row>
         <v-col cols="12">
           <v-text-field
-            :value="datetime"
+            :model-value="datetime"
             label="Datetime"
-            outlined
+            variant="outlined"
             hide-details
             v-on:click="showPicker = true"
             v-model="datetime"
@@ -38,7 +38,7 @@ limitations under the License.
             mode="dateTime"
             ref="picker"
             timezone="UTC"
-            :is-dark="$vuetify.theme.dark"
+            :is-dark="this.$vuetify.theme.dark"
             is24hr
             is-date
             is-expanded
@@ -48,17 +48,17 @@ limitations under the License.
 
       <v-row>
         <v-col cols="12">
-          <v-text-field :value="message" v-model="message" label="Message" outlined hide-details> </v-text-field>
+          <v-text-field :model-value="message" v-model="message" label="Message" variant="outlined" hide-details> </v-text-field>
         </v-col>
       </v-row>
 
       <v-row>
         <v-col cols="12">
           <v-text-field
-            :value="timestampDesc"
+            :model-value="timestampDesc"
             label="Timestamp Description"
             v-model="timestampDesc"
-            outlined
+            variant="outlined"
             hide-details
           >
           </v-text-field>
@@ -67,21 +67,21 @@ limitations under the License.
 
       <v-row v-for="(attribute, index) in attributes" :key="index">
         <v-col cols="6">
-          <v-text-field label="Attribute Name" outlined hide-details v-model="attributes[index].name"> </v-text-field>
+          <v-text-field label="Attribute Name" variant="outlined" hide-details v-model="attributes[index].name"> </v-text-field>
         </v-col>
         <v-col cols="6">
-          <v-text-field label="Attribute Value" outlined hide-details v-model="attributes[index].value"> </v-text-field>
+          <v-text-field label="Attribute Value" variant="outlined" hide-details v-model="attributes[index].value"> </v-text-field>
         </v-col>
       </v-row>
 
       <v-card-actions>
-        <v-btn text color="primary" @click="attributes.push({ name: '', value: '' })" :disabled="isDisabled">
+        <v-btn variant="text" color="primary" @click="attributes.push({ name: '', value: '' })" :disabled="isDisabled">
           <v-icon>mdi-plus</v-icon>
           Add Attribute
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn text @click="clearAndCancel()"> Cancel </v-btn>
-        <v-btn text color="primary" @click="submit"> Save </v-btn>
+        <v-btn variant="text" @click="clearAndCancel()"> Cancel </v-btn>
+        <v-btn variant="text" color="primary" @click="submit"> Save </v-btn>
       </v-card-actions>
     </v-container>
   </v-card>
@@ -139,13 +139,13 @@ export default {
       if (this.datetime === null || this.message === null || this.timestampDesc === null) {
         return
       }
-      let sketchId = this.$store.state.sketch.id
-      let config = {
+      const sketchId = this.$store.state.sketch.id
+      const config = {
         headers: {
           'Content-Type': 'application/json',
         },
       }
-      let attributes = {}
+      const attributes = {}
       this.attributes
         .filter((attribute) => !(attribute.name === '' || attribute.value === ''))
         .reduce((_, attribute) => {

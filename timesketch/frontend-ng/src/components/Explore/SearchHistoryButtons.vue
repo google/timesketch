@@ -60,7 +60,7 @@ export default {
       if (!this.currentSearchNode.children.length) {
         return
       }
-      let lastSearchNode = this.currentSearchNode.children.slice(-1).pop()
+      const lastSearchNode = this.currentSearchNode.children.slice(-1).pop()
       EventBus.$emit('selected-node-from-dropdown', lastSearchNode)
     },
   },

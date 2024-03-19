@@ -18,9 +18,9 @@ limitations under the License.
     <v-toolbar dense flat>
       <h3 class="ml-6" style="white-space: nowrap;">Event Data Analytics</h3>
       <div>
-        <v-chip outlined class="ml-2">Field:&nbsp;<span style="font-family: monospace">{{ this.eventKey }}</span></v-chip>
-        <v-chip outlined class="ml-2">Value:&nbsp;<span style="font-family: monospace">{{ this.truncateValue(this.eventValue)  }}</span></v-chip>
-        <v-chip outlined class="ml-2">Event datetime:&nbsp;<span style="font-family: monospace">{{ this.eventDateTime }}</span></v-chip>
+        <v-chip variant="outlined" class="ml-2">Field:&nbsp;<span style="font-family: monospace">{{ this.eventKey }}</span></v-chip>
+        <v-chip variant="outlined" class="ml-2">Value:&nbsp;<span style="font-family: monospace">{{ this.truncateValue(this.eventValue)  }}</span></v-chip>
+        <v-chip variant="outlined" class="ml-2">Event datetime:&nbsp;<span style="font-family: monospace">{{ this.eventDateTime }}</span></v-chip>
       </div>
       <v-spacer></v-spacer>
       <v-btn icon @click="clearAndCancel">
@@ -31,11 +31,11 @@ limitations under the License.
       <v-container fluid >
         <v-row justify="center">
           <v-col>
-            <v-card outlined height="146px" :loading="!statsReady">
+            <v-card variant="outlined" height="146px" :loading="!statsReady">
               <v-card-title>
                 Sketch statistics
               </v-card-title>
-              <v-simple-table dense v-if="statsReady" class="px-2 mt-n4">
+              <v-table dense v-if="statsReady" class="px-2 mt-n4">
                 <tbody>
                   <tr>
                     <td width="200px">Total number of events</td>
@@ -50,13 +50,13 @@ limitations under the License.
                     <td><strong>{{ this.fieldDateTimeMaximum }}</strong></td>
                   </tr>
                 </tbody>
-              </v-simple-table>
+              </v-table>
             </v-card>
-            <v-card outlined height="146px" :loading="!statsReady" class="mt-1">
+            <v-card variant="outlined" height="146px" :loading="!statsReady" class="mt-1">
               <v-card-title>
                 Field statistics
               </v-card-title>
-              <v-simple-table dense v-if="statsReady" class="px-2 mt-n4">
+              <v-table dense v-if="statsReady" class="px-2 mt-n4">
                 <tbody>
                   <tr>
                     <td width="200px">Field name</td>
@@ -71,13 +71,13 @@ limitations under the License.
                     <td><strong>{{ this.fieldCardinality }}</strong></td>
                   </tr>
                 </tbody>
-              </v-simple-table>
+              </v-table>
             </v-card>
-            <v-card outlined height="180px" :loading="!statsReady" class="mt-1">
+            <v-card variant="outlined" height="180px" :loading="!statsReady" class="mt-1">
               <v-card-title>
                 Value statistics
               </v-card-title>
-              <v-simple-table dense v-if="statsReady" class="px-2 mt-n4">
+              <v-table dense v-if="statsReady" class="px-2 mt-n4">
                 <tbody>
                   <tr>
                     <td width="200px">Field value</td>
@@ -96,17 +96,17 @@ limitations under the License.
                     <td><strong>{{ this.valueDateTimeMaximum }}</strong></td>
                   </tr>
                 </tbody>
-              </v-simple-table>
+              </v-table>
             </v-card>
           </v-col>
           <v-col align="center">
-              <v-card outlined height="480px" :loading="!statsReady">
+              <v-card variant="outlined" height="480px" :loading="!statsReady">
                 <v-card-title>
                   Top {{ Math.min(10, this.commonValues.length) }} &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
                   <v-spacer></v-spacer>
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                      <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                      <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
                     </template>
                     <span>The top {{ Math.min(10, this.commonValues.length) }} most common
                       &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
@@ -127,13 +127,13 @@ limitations under the License.
               </v-card>
             </v-col>
             <v-col align="center">
-              <v-card outlined height="480px" :loading="!statsReady">
+              <v-card variant="outlined" height="480px" :loading="!statsReady">
                 <v-card-title>
                   Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
                   <v-spacer></v-spacer>
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                      <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                      <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
                     </template>
                     <span>Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp;
                       events that have a maximum event count of 5
@@ -158,13 +158,13 @@ limitations under the License.
         </v-row>
         <v-row>
           <v-col align="center">
-            <v-card outlined height="480px" :loading="!statsReady">
+            <v-card variant="outlined" height="480px" :loading="!statsReady">
               <v-card-title>
                 Percentage of &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events
                 <v-spacer></v-spacer>
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
                   </template>
                   <span>Shows the ratio of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
                     events to other <span style="font-family: monospace">{{ eventKey }}</span> events.
@@ -182,13 +182,13 @@ limitations under the License.
           </v-col>
 
           <v-col align="center">
-            <v-card outlined height="480px" :loading="!eventDistributionReady">
+            <v-card variant="outlined" height="480px" :loading="!eventDistributionReady">
               <v-card-title>
                 Event distribution by {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
                 <v-spacer></v-spacer>
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
                   </template>
                   <span>Shows the distribution of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
                     events in the sketch based on the {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
@@ -198,7 +198,7 @@ limitations under the License.
               </v-card-title>
               <v-card-text v-if="statsReady">
                 <v-btn-toggle mandatory v-model="selectedDistributionIntervalIndex">
-                  <v-btn v-for="interval in this.distributionIntervals" :key="interval" small>
+                  <v-btn v-for="interval in this.distributionIntervals" :key="interval" size="small">
                     {{ interval }}
                   </v-btn>
                 </v-btn-toggle>
@@ -212,13 +212,13 @@ limitations under the License.
           </v-col>
 
             <v-col align="center">
-            <v-card outlined height="480" :loading="!dataReady">
+            <v-card variant="outlined" height="480" :loading="!dataReady">
               <v-card-title>
                 Surrounding events
                 <v-spacer></v-spacer>
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
                   </template>
                   <span>Shows the distribution of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
                     events that are {{ this.recentIntervals[this.selectedRecentEventsIndex] }} of
@@ -228,7 +228,7 @@ limitations under the License.
               </v-card-title>
               <v-card-text v-if="dataReady">
                 <v-btn-toggle mandatory v-model="selectedRecentEventsIndex">
-                  <v-btn v-for="interval in this.recentIntervals" :key="interval" small>
+                  <v-btn v-for="interval in this.recentIntervals" :key="interval" size="small">
                     {{ interval }}
                   </v-btn>
                 </v-btn-toggle>
@@ -484,13 +484,13 @@ export default {
       }
     },
     intervalHeatmapSeries() {
-      let series = []
+      const series = []
 
       if (this.eventDistributionData === undefined) return series
 
-      for (let day of Array.from({ length: 7}).keys()) {
-        let daySeries = []
-        for (let hour of Array.from({ length: 24}).keys()) {
+      for (const day of Array.from({ length: 7}).keys()) {
+        const daySeries = []
+        for (const hour of Array.from({ length: 24}).keys()) {
           const count = this.eventDistributionData.hour_of_week_histogram.buckets[day*24 + hour].doc_count
           daySeries.push({x: this.hoursOfDay[hour], y: count})
         }

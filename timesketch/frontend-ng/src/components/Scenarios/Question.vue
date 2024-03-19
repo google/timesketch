@@ -21,7 +21,7 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
       @click="toggleQuestion()"
       :class="
-        $vuetify.theme.dark
+        this.$vuetify.theme.dark
           ? expanded
             ? 'dark-highlight-selected'
             : 'dark-hover'
@@ -40,7 +40,7 @@ limitations under the License.
       <div
         v-show="expanded"
         :class="
-          $vuetify.theme.dark
+          this.$vuetify.theme.dark
             ? expanded
               ? 'dark-highlight'
               : 'dark-hover'
@@ -55,7 +55,7 @@ limitations under the License.
         <div class="pt-2 pl-5">
           <div v-if="searchTemplates.length || opensearchQueries.length">
             <small>Suggested queries</small>
-            <v-chip-group column active-class="primary">
+            <v-chip-group column selected-class="primary">
               <ts-search-chip
                 v-for="searchtemplate in searchTemplates"
                 :key="searchtemplate.id"
@@ -82,15 +82,15 @@ limitations under the License.
 
         <!-- Add new conclusion -->
         <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-4 mr-3 pl-5">
-          <v-btn x-small text color="primary" @click="addConclusion = !addConclusion">
-            <v-icon x-small>mdi-plus</v-icon>
+          <v-btn size="x-small" variant="text" color="primary" @click="addConclusion = !addConclusion">
+            <v-icon size="x-small">mdi-plus</v-icon>
             Add conclusion
           </v-btn>
           <v-textarea
             v-if="addConclusion"
             v-model="conclusionText"
             class="mt-3"
-            outlined
+            variant="outlined"
             flat
             hide-details
             auto-grow
@@ -100,7 +100,7 @@ limitations under the License.
           >
             <template v-slot:prepend-inner>
               <v-avatar color="grey" class="mt-n2 mr-2" size="28">
-                <span class="white--text">{{ currentUser | initialLetter }}</span>
+                <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
               </v-avatar>
             </template>
           </v-textarea>
@@ -108,16 +108,13 @@ limitations under the License.
           <v-card-actions v-if="addConclusion" class="pr-0">
             <v-spacer></v-spacer>
             <v-btn
-              small
-              text
-              @click="
-                conclusionText = ''
-                addConclusion = false
-              "
+              size="small"
+              variant="text"
+              @click="conclusionText = ''; addConclusion = false"
             >
               Cancel
             </v-btn>
-            <v-btn small text color="primary" @click="createConclusion()" :disabled="!conclusionText"> Save </v-btn>
+            <v-btn size="small" variant="text" color="primary" @click="createConclusion()" :disabled="!conclusionText"> Save </v-btn>
           </v-card-actions>
         </div>
       </div>
@@ -175,7 +172,7 @@ export default {
         .catch((e) => {})
     },
     getSuggestedQueries() {
-      let approaches = this.question.approaches.map((approach) => JSON.parse(approach.spec_json))
+      const approaches = this.question.approaches.map((approach) => JSON.parse(approach.spec_json))
       approaches.forEach((approach) => {
         approach._view.processors.forEach((processor) => {
           processor.analysis.forEach((analysis) => {
@@ -198,7 +195,7 @@ export default {
       this.expanded = !this.expanded
     },
     setActiveContext: function (question) {
-      let payload = {
+      const payload = {
         scenario: this.scenario,
         facet: this.facet,
         question: this.question,

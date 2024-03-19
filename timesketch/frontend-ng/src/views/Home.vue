@@ -25,13 +25,13 @@ limitations under the License.
       <span style="font-size: 1.2em">timesketch</span>
 
       <v-spacer></v-spacer>
-      <v-avatar color="grey lighten-1" size="25" class="ml-3">
-        <span class="white--text">{{ currentUser | initialLetter }}</span>
+      <v-avatar color="grey-lighten-1" size="25" class="ml-3">
+        <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
       </v-avatar>
       <v-menu offset-y>
-        <template v-slot:activator="{ on, attrs }">
+        <template v-slot:activator="{ props }">
           <v-avatar>
-            <v-btn small icon v-bind="attrs" v-on="on">
+            <v-btn size="small" icon v-bind="props">
               <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
             </v-btn>
           </v-avatar>
@@ -43,17 +43,17 @@ limitations under the License.
                 <v-list-item-icon>
                   <v-icon>mdi-brightness-6</v-icon>
                 </v-list-item-icon>
-                <v-list-item-content>
+
                   <v-list-item-title>Toggle theme</v-list-item-title>
-                </v-list-item-content>
+
               </v-list-item>
               <v-list-item v-on:click="switchUI">
                 <v-list-item-icon>
                   <v-icon>mdi-view-dashboard-outline</v-icon>
                 </v-list-item-icon>
-                <v-list-item-content>
+
                   <v-list-item-title>Use the old UI</v-list-item-title>
-                </v-list-item-content>
+
               </v-list-item>
 
               <a href="/logout/" style="text-decoration: none; color: inherit">
@@ -62,9 +62,9 @@ limitations under the License.
                     <v-icon>mdi-logout</v-icon>
                   </v-list-item-icon>
 
-                  <v-list-item-content>
+
                     <v-list-item-title>Logout</v-list-item-title>
-                  </v-list-item-content>
+
                 </v-list-item>
               </a>
             </v-list-item-group>
@@ -76,12 +76,12 @@ limitations under the License.
     <!-- Main view -->
     <v-main class="notransition">
       <v-container fluid pa-0>
-        <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
+        <v-sheet class="pa-5" :color="this.$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
           <h2>Start new investigation</h2>
           <v-row no-gutters class="mt-5">
             <v-dialog v-model="createSketchDialog" width="500">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
+              <template v-slot:activator="{ props }">
+                <v-btn variant="flat" size="small" class="mr-5" color="primary" v-bind="props"> Blank sketch </v-btn>
               </template>
               <v-card class="pa-4">
                 <h3>New sketch</h3>
@@ -89,8 +89,8 @@ limitations under the License.
                 <v-form @submit.prevent="createSketch()">
                   <v-text-field
                     v-model="sketchForm.name"
-                    outlined
-                    dense
+                    variant="outlined"
+                    density="compact"
                     placeholder="Name your sketch"
                     autofocus
                     clearable
@@ -99,12 +99,12 @@ limitations under the License.
                   </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn text @click="createSketchDialog = false"> Cancel </v-btn>
+                    <v-btn variant="text" @click="createSketchDialog = false"> Cancel </v-btn>
                     <v-btn
                       :disabled="!sketchForm.name || sketchForm.name.length > 255"
                       @click="createSketch()"
                       color="primary"
-                      text
+                      variant="text"
                     >
                       Create
                     </v-btn>
@@ -161,7 +161,7 @@ export default {
     createSketch: function () {
       ApiClient.createSketch(this.sketchForm)
         .then((response) => {
-          let newSketchId = response.data.objects[0].id
+          const newSketchId = response.data.objects[0].id
           this.clearFormData()
           this.$router.push({ name: 'Overview', params: { sketchId: newSketchId } })
         })
@@ -173,7 +173,7 @@ export default {
     document.title = 'Timesketch'
     ApiClient.getScenarioTemplates()
       .then((response) => {
-        this.scenarioTemplates = response.data['objects']
+        this.scenarioTemplates = response.data.objects
       })
       .catch((e) => {})
   },

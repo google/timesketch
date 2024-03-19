@@ -21,7 +21,7 @@ limitations under the License.
       class="pa-3 pl-1"
       style="cursor: pointer"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <v-col cols="1" class="pl-1">
         <v-icon title="Open results" v-if="!expanded">mdi-chevron-right</v-icon>

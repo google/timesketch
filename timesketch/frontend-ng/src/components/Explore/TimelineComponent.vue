@@ -21,13 +21,11 @@ limitations under the License.
 <template>
   <span>
     <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
-      <template v-slot:activator="{ on, attrs }">
+      <template v-slot:activator="{ props, attrs }">
         <slot
           name="processing"
           :timelineStatus="timelineStatus"
-          :events="{
-            on,
-          }"
+          :events="{on: props}"
         > </slot>
       </template>
       <v-card>
@@ -37,12 +35,12 @@ limitations under the License.
             <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
             <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
               <strong>Number of events: </strong>
-              {{ allIndexedEvents | compactNumber }}
+              {{ this.$filters.compactNumber(allIndexedEvents) }}
             </li>
             <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
             <li>
-              <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-              <small>({{ timeline.created_at | timeSince }})</small>
+              <strong>Created at: </strong>{{ $filters.shortDateTime(timeline.created_at) }}
+              <small>({{ this.$filters.timeSince(timeline.created_at) }})</small>
             </li>
           </ul>
           <br />
@@ -52,21 +50,21 @@ limitations under the License.
             v-for="datasource in datasourcesProcessing"
             :key="datasource.id"
             colored-border
-            border="left"
+            border="start"
             elevation="1"
             :color="datasourceStatusColors(datasource)"
           >
             <ul>
               <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
               <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-              <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+              <li><strong>File size:</strong> {{ this.$filters.compactBytes(datasource.file_size) }}</li>
               <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
               <li><strong>Provider:</strong> {{ datasource.provider }}</li>
               <li><strong>Context:</strong> {{ datasource.context }}</li>
               <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
               <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
               <li>
-                <strong>Total File Events:</strong>{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+                <strong>Total File Events:</strong>{{ this.$filters.compactNumber(totalEventsDatasource(datasource.file_on_disk)) }}
               </li>
               <li v-if="dataSourceStatus(datasource) === 'fail'">
                 <strong>Error message:</strong>
@@ -76,7 +74,7 @@ limitations under the License.
             <br />
           </v-alert>
 
-          <v-card outlined v-if="percentComplete > 0.1">
+          <v-card variant="outlined" v-if="percentComplete > 0.1">
             <v-card-title>{{ eventsPerSecond.slice(-1)[0] }} events/s</v-card-title>
             <v-sparkline
               :value="eventsPerSecond"
@@ -93,17 +91,17 @@ limitations under the License.
             >
             </v-sparkline>
             <v-sheet class="py-4 px-3">
-              <v-progress-linear color="light-blue" height="25" :value="percentComplete" rounded>
+              <v-progress-linear color="light-blue" height="25" :model-value="percentComplete" rounded>
                 {{ percentComplete }}% (complete {{ processingETA() }})
               </v-progress-linear>
             </v-sheet>
           </v-card>
-          <v-card v-else outlined class="pa-3"> Waiting for processing to begin.. </v-card>
+          <v-card v-else variant="outlined" class="pa-3"> Waiting for processing to begin.. </v-card>
         </div>
         <v-divider></v-divider>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
+          <v-btn color="primary" variant="text" @click="dialogStatus = false"> Close </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -116,7 +114,7 @@ limitations under the License.
       content-class="menu-with-gap"
       ref="timelineChipMenuRef"
     >
-      <template v-slot:activator="{ on }">
+      <template v-slot:activator="{ props }">
         <slot
           name="processed"
           :timelineFailed="timelineFailed"
@@ -125,15 +123,15 @@ limitations under the License.
           :events="{
             toggleTimeline,
             openDialog,
-            menuOn: on,
+            menuOn: props,
           }"
         ></slot>
       </template>
       <v-sheet flat>
-        <v-list dense>
+        <v-list density="compact">
           <v-dialog v-model="dialogRename" width="600">
-            <template v-slot:activator="{ on, attrs }">
-              <v-list-item v-bind="attrs" v-on="on">
+            <template v-slot:activator="{ props }">
+              <v-list-item v-bind="props">
                 <v-list-item-action>
                   <v-icon>mdi-square-edit-outline</v-icon>
                 </v-list-item-action>
@@ -144,12 +142,12 @@ limitations under the License.
               <v-form @submit.prevent="rename()">
                 <h3>Rename timeline</h3>
                 <br />
-                <v-text-field clearable outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()" :rules="timelineNameRules">
+                <v-text-field clearable variant="outlined" density="compact" autofocus v-model="newTimelineName" @focus="$event.target.select()" :rules="timelineNameRules">
                 </v-text-field>
                 <v-card-actions>
                   <v-spacer></v-spacer>
-                  <v-btn text @click="dialogRename = false"> Cancel </v-btn>
-                  <v-btn :disabled="!newTimelineName || newTimelineName.length > 255" color="primary" text @click="rename()"> Save </v-btn>
+                  <v-btn variant="text" @click="dialogRename = false"> Cancel </v-btn>
+                  <v-btn :disabled="!newTimelineName || newTimelineName.length > 255" color="primary" variant="text" @click="rename()"> Save </v-btn>
                 </v-card-actions>
               </v-form>
             </v-card>
@@ -172,8 +170,8 @@ limitations under the License.
           </v-list-item>
 
           <v-dialog v-model="dialogStatus" width="800">
-            <template v-slot:activator="{ on, attrs }">
-              <v-list-item v-bind="attrs" v-on="on">
+            <template v-slot:activator="{ props }">
+              <v-list-item v-bind="props">
                 <v-list-item-action>
                   <v-icon :color="iconStatus === 'mdi-alert-circle-outline' ? 'red' : ''">{{ iconStatus }}</v-icon>
                 </v-list-item-action>
@@ -187,12 +185,12 @@ limitations under the License.
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                   <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                     <strong>Number of events: </strong>
-                    {{ allIndexedEvents | compactNumber }}
+                    {{ this.$filters.compactNumber(allIndexedEvents) }}
                   </li>
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
-                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-                    <small>({{ timeline.created_at | timeSince }})</small>
+                    <strong>Created at: </strong>{{ $filters.shortDateTime(timeline.created_at) }}
+                    <small>({{ this.$filters.timeSince(timeline.created_at) }})</small>
                   </li>
                   <li><strong>Number of datasources: </strong>{{ datasources.length }}</li>
                 </ul>
@@ -200,7 +198,7 @@ limitations under the License.
                 <v-alert
                   v-for="datasource in datasources"
                   :key="datasource.id"
-                  outlined
+                  variant="outlined"
                   text
                   :color="datasourceStatusColors(datasource)"
                   class="ma-5"
@@ -208,7 +206,7 @@ limitations under the License.
                   <ul style="list-style-type: none">
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
                     <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-                    <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                    <li><strong>File size:</strong> {{ this.$filters.compactBytes(datasource.file_size) }}</li>
                     <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
                     <li><strong>Provider:</strong> {{ datasource.provider }}</li>
                     <li><strong>Context:</strong> {{ datasource.context }}</li>
@@ -216,7 +214,7 @@ limitations under the License.
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
                       <strong>Total File Events: </strong
-                      >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+                      >{{ this.$filters.compactNumber(totalEventsDatasource(datasource.file_on_disk)) }}
                     </li>
                     <li v-if="dataSourceStatus(datasource) === 'fail'">
                       <strong>Error message:</strong>
@@ -228,7 +226,7 @@ limitations under the License.
               <v-divider></v-divider>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
+                <v-btn color="primary" variant="text" @click="dialogStatus = false"> Close </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -263,31 +261,31 @@ limitations under the License.
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                   <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                     <strong>Number of events: </strong>
-                    {{ allIndexedEvents | compactNumber }}
+                    {{ this.$filters.compactNumber(allIndexedEvents) }}
                   </li>
                   <strong>Number of events: </strong>
                   {{
-                    allIndexedEvents | compactNumber
+                    this.$filters.compactNumber(allIndexedEvents)
                   }}
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
-                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-                    <small>({{ timeline.created_at | timeSince }})</small>
+                    <strong>Created at: </strong>{{ this.$filters.shortDateTime(timeline.created_at) }}
+                    <small>({{ this.$filters.timeSince(timeline.created_at) }})</small>
                   </li>
                 </ul>
               </v-card-text>
               <v-card-actions>
-                <v-btn color="primary" text @click="deleteConfirmation = false"> cancel </v-btn>
+                <v-btn color="primary" variant="text" @click="deleteConfirmation = false"> cancel </v-btn>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="remove()"> delete </v-btn>
+                <v-btn color="primary" variant="text" @click="remove()"> delete </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
         </v-list>
         <div v-if="!timelineFailed" class="px-4">
           <v-color-picker
-            @update:color="updateColor"
-            :value="timeline.color"
+            @update:model-value="updateColor"
+            :model-value="timeline.color"
             :show-swatches="!showCustomColorPicker"
             :swatches="colorPickerSwatches"
             :hide-canvas="!showCustomColorPicker"
@@ -296,7 +294,7 @@ limitations under the License.
             mode="hexa"
             dot-size="15"
           ></v-color-picker>
-          <v-btn text x-small class="mt-2" @click="showCustomColorPicker = !showCustomColorPicker">
+          <v-btn variant="text" size="x-small" class="mt-2" @click="showCustomColorPicker = !showCustomColorPicker">
             <span v-if="showCustomColorPicker">Palette</span>
             <span v-else>Custom color</span>
           </v-btn>
@@ -423,9 +421,9 @@ export default {
       if (!this.datasourcesProcessing.length) {
         return 0
       }
-      let start = dayjs.utc(this.datasourcesProcessing[0].updated_at)
-      let end = dayjs.utc()
-      let diffSeconds = end.diff(start, 'second')
+      const start = dayjs.utc(this.datasourcesProcessing[0].updated_at)
+      const end = dayjs.utc()
+      const diffSeconds = end.diff(start, 'second')
       return diffSeconds
     },
     avarageEventsPerSecond() {
@@ -434,8 +432,8 @@ export default {
       return Math.floor(avg)
     },
     processingETA() {
-      let secondsLeft = this.secondsToComplete - this.secondsSinceStart()
-      let eta = dayjs().add(secondsLeft, 'second').fromNow()
+      const secondsLeft = this.secondsToComplete - this.secondsSinceStart()
+      const eta = dayjs().add(secondsLeft, 'second').fromNow()
       return eta
     },
     toggleTimeline() {
@@ -463,9 +461,9 @@ export default {
           // indices.
           //
           // Tracking in: https://github.com/google/timesketch/issues/2361
-          let tmpAllIndexedEvents = this.allIndexedEvents
+          const tmpAllIndexedEvents = this.allIndexedEvents
           this.allIndexedEvents = response.data.meta.lines_indexed
-          let deltaEvents = this.allIndexedEvents - tmpAllIndexedEvents
+          const deltaEvents = this.allIndexedEvents - tmpAllIndexedEvents
 
           if (deltaEvents < 10000 && deltaEvents > 0) {
             this.eventsPerSecond.push(Math.floor(deltaEvents / 5))
@@ -518,14 +516,14 @@ export default {
     this.timelineStatus = this.timeline.status[0].status
 
     this.datasources = this.timeline.datasources
-    let timelineStat = this.meta.stats_per_timeline[this.timeline.id]
+    const timelineStat = this.meta.stats_per_timeline[this.timeline.id]
 
     if (this.timelineStatus === 'processing') {
       this.autoRefresh = true
     } else {
       this.autoRefresh = false
       if (timelineStat) {
-        this.allIndexedEvents = timelineStat['count']
+        this.allIndexedEvents = timelineStat.count
       }
     }
     this.newTimelineName = this.timeline.name

@@ -44,7 +44,7 @@ limitations under the License.
         </div>
       </v-toolbar>
 
-      <v-card v-show="unfurlReady" outlined>
+      <v-card v-show="unfurlReady" variant="outlined">
         <!-- Cytoscape container -->
         <div ref="graphContainer" :style="{ height: canvasHeight, width: '100%' }">
           <div ref="cy" width="100%" class="pa-2" :style="{ 'min-height': canvasHeight }"></div>
@@ -54,7 +54,7 @@ limitations under the License.
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn color="primary" text @click="clearAndCancel"> close </v-btn>
+      <v-btn color="primary" variant="text" @click="clearAndCancel"> close </v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -175,9 +175,9 @@ export default {
       if (!this.$refs.graphContainer) {
         return
       }
-      let canvasHeight = this.$refs.graphContainer.style.height
-      let canvasWidth = this.$refs.graphContainer.style.width
-      let canvas = this.$refs.cy
+      const canvasHeight = this.$refs.graphContainer.style.height
+      const canvasWidth = this.$refs.graphContainer.style.width
+      const canvas = this.$refs.cy
       canvas.style.minHeight = canvasHeight + 'px'
       canvas.style.height = canvasHeight + 'px'
       canvas.style.minWidth = canvasWidth + 'px'
@@ -201,7 +201,7 @@ export default {
     buildUnfurlGraph: function (data = {}) {
       this.cy.elements().remove()
 
-      let elements = []
+      const elements = []
       data.nodes.forEach((node) => {
         elements.push({
           group: 'nodes',

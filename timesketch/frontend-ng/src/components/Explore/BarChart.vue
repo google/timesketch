@@ -73,8 +73,8 @@ export default {
           theme: 'dark',
           x: {
             formatter: (timestamp) => {
-              let timerange = this.getBucketDateTimeRange(timestamp)
-              let duration = this.$moment.duration(timerange.start.diff(timerange.end))
+              const timerange = this.getBucketDateTimeRange(timestamp)
+              const duration = this.$moment.duration(timerange.start.diff(timerange.end))
               return `${timerange.start.format('YYYY-MM-DD HH:mm:ss')} + ${duration.humanize()}`
             },
           },
@@ -109,7 +109,7 @@ export default {
   },
   computed: {
     series() {
-      let series = {
+      const series = {
         name: 'Events',
         data: [],
       }
@@ -122,30 +122,30 @@ export default {
   },
   methods: {
     getBucketDateTimeRange(timestamp) {
-      let startDatetime = this.$moment.utc(timestamp)
+      const startDatetime = this.$moment.utc(timestamp)
 
       // Get bucket interval from Elasticsearch. Format: 3M, 1s etc
-      let intervalSplit = this.chartData.interval.split(/(\d+)/)
-      let intervalCount = intervalSplit[1]
-      let intervalPeriod = intervalSplit[2]
+      const intervalSplit = this.chartData.interval.split(/(\d+)/)
+      const intervalCount = intervalSplit[1]
+      const intervalPeriod = intervalSplit[2]
 
       // Calculate the end of bucket time range using the interval
-      let endDatetime = this.$moment.utc(timestamp).add(parseInt(intervalCount), intervalPeriod)
+      const endDatetime = this.$moment.utc(timestamp).add(parseInt(intervalCount), intervalPeriod)
       return { start: startDatetime, end: endDatetime }
     },
     emitFilterRequest(config) {
-      let dataPointIndex = config.selectedDataPoints[0][0]
-      let series = config.w.config.series[0]['data']
+      const dataPointIndex = config.selectedDataPoints[0][0]
+      const series = config.w.config.series[0].data
 
       // Exit early if this is the last bucket.
       if (series.length === 1) {
         return
       }
 
-      let timestamp = series[dataPointIndex][0]
-      let timerange = this.getBucketDateTimeRange(timestamp)
+      const timestamp = series[dataPointIndex][0]
+      const timerange = this.getBucketDateTimeRange(timestamp)
 
-      let chip = {
+      const chip = {
         field: '',
         type: 'datetime_range',
         value: timerange.start.toISOString() + ',' + timerange.end.toISOString(),

@@ -18,12 +18,9 @@ limitations under the License.
     v-if="iconOnly"
     class="pa-4"
     style="cursor: pointer"
-    @click="
-      $emit('toggleDrawer')
-      expanded = true
-    "
+    @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-auto-fix</v-icon>
+    <v-icon start>mdi-auto-fix</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -31,13 +28,13 @@ limitations under the License.
       class="pa-4"
       :style="!sortedAnalyzerResults.length ? '' : 'cursor: pointer'"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-auto-fix</v-icon> Analyzer Results </span>
+      <span> <v-icon start>mdi-auto-fix</v-icon> Analyzer Results </span>
       <v-btn
         v-if="expanded || (sortedAnalyzerResults && !sortedAnalyzerResults.length && analyzerResultsReady)"
         icon
-        text
+        variant="text"
         class="float-right mt-n1 mr-n1"
         :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: undefined } }"
         @click.stop=""
@@ -50,13 +47,13 @@ limitations under the License.
           :size="24"
           :width="1"
           indeterminate
-          :value="activeAnalyzerDisplayCount"
+          :model-value="activeAnalyzerDisplayCount"
           >{{ activeAnalyzerDisplayCount }}</v-progress-circular
         >
-        <v-tooltip v-if="activeAnalyzerTimeoutTriggered" top>
-          <template v-slot:activator="{ on }">
-            <v-btn v-on="on" small icon @click.stop="" @click="startPolling()">
-              <v-icon small>mdi-reload-alert</v-icon>
+        <v-tooltip v-if="activeAnalyzerTimeoutTriggered" location="top">
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" size="small" icon @click.stop="" @click="startPolling()">
+              <v-icon size="small">mdi-reload-alert</v-icon>
             </v-btn>
           </template>
           <span>Analyzer status check timeout, click to reload</span>
@@ -105,8 +102,8 @@ limitations under the License.
                   v-model="search"
                   clearable
                   hide-details
-                  outlined
-                  dense
+                  variant="outlined"
+                  density="compact"
                   label="Filter analyzers"
                 ></v-text-field>
               </v-toolbar>
@@ -169,7 +166,7 @@ export default {
     sortedAnalyzerResults() {
       const perAnalyzer = this.groupByAnalyzer([...this.analyzerResults, ...this.activeAnalyses])
       // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
-      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
+      const sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
       sortedAnalyzerList.sort((a, b) =>
         a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name)
       )
@@ -204,7 +201,7 @@ export default {
       let allAnalyses = []
       for (const timeline of this.sketch.timelines) {
         const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
-        let analyses = response.data.objects[0]
+        const analyses = response.data.objects[0]
         if (!analyses) continue
         allAnalyses = allAnalyses.concat(analyses)
       }
@@ -213,7 +210,7 @@ export default {
       this.analyzerResultsReady = true
     },
     groupByAnalyzer(analyses) {
-      let perAnalyzer = {}
+      const perAnalyzer = {}
       let multiResults = {}
       for (const analysis of analyses) {
         if (!perAnalyzer[analysis.analyzer_name]) {
@@ -312,8 +309,8 @@ export default {
       return perAnalyzer
     },
     getAnalyzerMultiResults(analyses, analyzerName, sessionId, timelineId) {
-      let results = []
-      let status = new Set()
+      const results = []
+      const status = new Set()
       for (const analysis of analyses) {
         if (
           analysis.analyzer_name === analyzerName &&
@@ -403,7 +400,7 @@ export default {
           const activeSessionsDetailed = response.data.objects[0].detailed_sessions
           if (activeSessionsDetailed.length > 0) {
             for (const session of activeSessionsDetailed) {
-              activeAnalyses.push(...session.objects[0]['analyses'])
+              activeAnalyses.push(...session.objects[0].analyses)
             }
           }
         }

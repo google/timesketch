@@ -36,25 +36,25 @@ limitations under the License.
       <v-icon title="Toggle results for this timeline" class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
       <span class="timeline-name-ellipsis" style="width:82% !important;">{{ timeline.name }}</span>
       <div v-if="timeline.analysis_status === 'ERROR'">
-        <v-btn text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
-          <v-icon title="The analyzer ran into an error" small class="ml-1">mdi-alert</v-icon>
+        <v-btn variant="text" size="x-small" icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
+          <v-icon title="The analyzer ran into an error" size="small" class="ml-1">mdi-alert</v-icon>
         </v-btn>
       </div>
       <div v-else-if="checkAnalyzerOutput && !isMultiAnalyzer">
-        <v-tooltip top>
-          <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
-              <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
+        <v-tooltip location="top">
+          <template v-slot:activator="{ props }">
+            <v-btn v-show="!isMultiAnalyzer" variant="text" size="x-small" icon v-bind="props" class="ml-1" :ripple="false" style="cursor: default">
+              <v-icon size="small" :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
           <span>Result Priority: {{ resultPriority }}</span>
         </v-tooltip>
       </div>
       <div v-else>
-        <v-tooltip v-if="!isMultiAnalyzer" top>
-          <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
-              <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
+        <v-tooltip v-if="!isMultiAnalyzer" location="top">
+          <template v-slot:activator="{ props }">
+            <v-btn v-show="!isMultiAnalyzer" variant="text" size="x-small" icon v-bind="props" class="ml-1" :ripple="false" style="cursor: default">
+              <v-icon size="small" :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
           <span>Result Priority: Note</span>
@@ -64,7 +64,7 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-if="!isMultiAnalyzer" v-show="expanded" :class="getHoverTheme">
-        <v-simple-table v-if="checkAnalyzerOutput" dense class="ml-2 borderless">
+        <v-table v-if="checkAnalyzerOutput" dense class="ml-2 borderless">
           <tbody :class="getHoverTheme">
             <tr class="pr-3">
               <td width="105">
@@ -131,7 +131,7 @@ limitations under the License.
                 <strong>{{ key }}:</strong>
               </td>
               <td style="border: none" v-if="key === 'Searches'">
-                <v-chip v-for="(view, index) in item" :key="index" @click="setView(view)" outlined class="mr-1" small>
+                <v-chip v-for="(view, index) in item" :key="index" @click="setView(view)" variant="outlined" class="mr-1" size="small">
                   {{ view.name }}
                 </v-chip>
               </td>
@@ -141,7 +141,7 @@ limitations under the License.
                   :key="story.id"
                   :to="{ name: 'Story', params: { storyId: story.id } }"
                 >
-                  <v-chip outlined class="mr-1" small link>{{ story.title }}</v-chip>
+                  <v-chip variant="outlined" class="mr-1" size="small" link>{{ story.title }}</v-chip>
                 </router-link>
               </td>
               <td style="border: none" v-if="key === 'Graphs'">
@@ -151,9 +151,9 @@ limitations under the License.
                   :to="{ name: 'Graph', params: { graph: graph.id === undefined ? graph.name : graph.id } }"
                 >
                   <v-chip
-                    outlined
+                    variant="outlined"
                     class="mr-1"
-                    small
+                    size="small"
                     link
                     @click="graph.id === undefined ? setGraphPlugin(graph.name) : setSavedGraph(graph.id)"
                   >
@@ -171,7 +171,7 @@ limitations under the License.
                   :key="index"
                   color="lightgrey"
                   class="mr-1 mb-1"
-                  small
+                  size="small"
                   @click="applyFilterChip(tag, 'tag', 'term', timeline.id)"
                 >
                   {{ tag }}
@@ -183,7 +183,7 @@ limitations under the License.
                   :key="index"
                   color="lightgrey"
                   class="mr-1 mb-1"
-                  small
+                  size="small"
                   @click="applySearch(`_exists_:${attribute}`, timeline.id)"
                 >
                   {{ attribute }}
@@ -191,8 +191,8 @@ limitations under the License.
               </td>
             </tr>
           </tbody>
-        </v-simple-table>
-        <v-simple-table v-else dense class="ml-2 borderless">
+        </v-table>
+        <v-table v-else dense class="ml-2 borderless">
           <tbody :class="getHoverTheme">
             <tr class="pr-3">
               <td width="80" style="border: none">
@@ -224,11 +224,11 @@ limitations under the License.
               </td>
             </tr>
           </tbody>
-        </v-simple-table>
+        </v-table>
       </div>
       <div v-else v-show="expanded" :class="getHoverTheme">
         <!-- TODO: iterate on multianalyzer timeline results -->
-        <v-simple-table dense class="ml-2 borderless">
+        <v-table dense class="ml-2 borderless">
           <tbody :class="getHoverTheme">
             <tr>
               <td>
@@ -262,7 +262,7 @@ limitations under the License.
               </td>
             </tr>
           </tbody>
-        </v-simple-table>
+        </v-table>
         <v-data-iterator
           :items="timeline.results"
           :items-per-page="10"
@@ -333,38 +333,38 @@ export default {
       return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_status
     },
     getAnalyzerOutputMetaData: function () {
-      let metaData = {}
+      const metaData = {}
       if (this.verboseAnalyzerOutput !== undefined && this.verboseAnalyzerOutput.platform_meta_data !== undefined) {
         if (this.verboseAnalyzerOutput.platform_meta_data.saved_views !== undefined) {
-          metaData['Searches'] = []
+          metaData.Searches = []
           for (const id of this.verboseAnalyzerOutput.platform_meta_data.saved_views) {
-            let view = this.meta.views.find((view) => view.id === id)
+            const view = this.meta.views.find((view) => view.id === id)
             if (view !== undefined) {
-              metaData['Searches'].push(view)
+              metaData.Searches.push(view)
             }
           }
         }
         if (this.verboseAnalyzerOutput.platform_meta_data.saved_stories !== undefined) {
-          metaData['Story'] = []
+          metaData.Story = []
           for (const id of this.verboseAnalyzerOutput.platform_meta_data.saved_stories) {
-            let storie = this.meta.stories.find((storie) => storie.id === id)
+            const storie = this.meta.stories.find((storie) => storie.id === id)
             if (storie !== undefined) {
-              metaData['Story'].push(storie)
+              metaData.Story.push(storie)
             }
           }
         }
         if (this.verboseAnalyzerOutput.platform_meta_data.saved_graphs !== undefined) {
-          metaData['Graphs'] = []
+          metaData.Graphs = []
           for (const id of this.verboseAnalyzerOutput.platform_meta_data.saved_graphs) {
             if (typeof id === 'number') {
-              let savedGraph = this.savedGraphs.find((graph) => graph.id === id)
+              const savedGraph = this.savedGraphs.find((graph) => graph.id === id)
               if (savedGraph !== undefined) {
-                metaData['Graphs'].push(savedGraph)
+                metaData.Graphs.push(savedGraph)
               }
             } else if (typeof id === 'string') {
-              let pluginGraph = this.graphs.find((graph) => graph.name === id)
+              const pluginGraph = this.graphs.find((graph) => graph.name === id)
               if (pluginGraph !== undefined) {
-                metaData['Graphs'].push(pluginGraph)
+                metaData.Graphs.push(pluginGraph)
               }
             } else {
               console.error('Saved Graph reference is neither Integer nor String.', typeof id, id)
@@ -372,13 +372,13 @@ export default {
           }
         }
         if (this.verboseAnalyzerOutput.platform_meta_data.saved_aggregations !== undefined) {
-          metaData['Aggregations'] = this.verboseAnalyzerOutput.platform_meta_data.saved_aggregations
+          metaData.Aggregations = this.verboseAnalyzerOutput.platform_meta_data.saved_aggregations
         }
         if (this.verboseAnalyzerOutput.platform_meta_data.created_tags !== undefined) {
-          metaData['Tags'] = this.verboseAnalyzerOutput.platform_meta_data.created_tags
+          metaData.Tags = this.verboseAnalyzerOutput.platform_meta_data.created_tags
         }
         if (this.verboseAnalyzerOutput.platform_meta_data.created_attributes !== undefined) {
-          metaData['Attributes'] = this.verboseAnalyzerOutput.platform_meta_data.created_attributes
+          metaData.Attributes = this.verboseAnalyzerOutput.platform_meta_data.created_attributes
         }
         return metaData
       }
@@ -444,7 +444,7 @@ export default {
       EventBus.$emit('setSavedGraph', graphId)
     },
     applySearch(searchQuery = '', timelineId = '_all') {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = searchQuery
       eventData.queryFilter = {
@@ -458,7 +458,7 @@ export default {
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     applyFilterChip(term, termField = '', termType = 'label', timelineId = '_all') {
-      let eventData = {}
+      const eventData = {}
       eventData.doSearch = true
       eventData.queryString = '*'
       eventData.queryFilter = {
@@ -469,7 +469,7 @@ export default {
         order: 'asc',
         chips: [],
       }
-      let chip = {
+      const chip = {
         field: termField,
         value: term,
         type: termType,

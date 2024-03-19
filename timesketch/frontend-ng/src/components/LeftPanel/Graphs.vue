@@ -18,12 +18,9 @@ limitations under the License.
     v-if="iconOnly"
     class="pa-4"
     style="cursor: pointer"
-    @click="
-      $emit('toggleDrawer')
-      expanded = true
-    "
+    @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-source-branch</v-icon>
+    <v-icon start>mdi-source-branch</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -31,9 +28,9 @@ limitations under the License.
       style="cursor: pointer"
       class="pa-4"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-source-branch</v-icon> Graphs </span>
+      <span> <v-icon start>mdi-source-branch</v-icon> Graphs </span>
 
       <span class="float-right" style="margin-right: 10px">
         <small
@@ -57,9 +54,9 @@ limitations under the License.
               no-gutters
               @click="setSavedGraph(graph.id)"
               class="pa-2 pl-5"
-              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+              :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
             >
-              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
+              <span :class="this.$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
             </v-row>
           </router-link>
         </div>
@@ -77,9 +74,9 @@ limitations under the License.
               no-gutters
               @click="setGraphPlugin(graph.name)"
               class="pa-2 pl-5"
-              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+              :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
             >
-              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
+              <span :class="this.$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
             </v-row>
           </router-link>
         </div>

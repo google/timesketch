@@ -40,7 +40,7 @@ limitations under the License.
             <center>
               <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
               <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
-              <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+              <v-btn rounded variant="flat" color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
             </center>
           </v-sheet>
         </v-row>
@@ -59,9 +59,9 @@ limitations under the License.
         app
         clipped-left
         flat
-        :color="$vuetify.theme.dark ? '#121212' : 'white'"
+        :color="this.$vuetify.theme.dark ? '#121212' : 'white'"
         :style="[
-          $vuetify.theme.dark
+          this.$vuetify.theme.dark
             ? { 'border-bottom': '1px solid hsla(0,0%,100%,.12) !important' }
             : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
         ]"
@@ -94,7 +94,7 @@ limitations under the License.
               {{ sketch.name }}
             </div>
             <div>
-              <v-icon title="Rename sketch" small class="ml-1" v-if="hover" @click="renameSketchDialog = true"
+              <v-icon title="Rename sketch" size="small" class="ml-1" v-if="hover" @click="renameSketchDialog = true"
                 >mdi-pencil</v-icon
               >
             </div>
@@ -104,41 +104,41 @@ limitations under the License.
 
         <!-- Sharing dialog -->
         <v-dialog v-model="shareDialog" width="500">
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn small rounded depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
-              <v-icon small left>mdi-account-multiple-plus</v-icon>
+          <template v-slot:activator="{ props }">
+            <v-btn size="small" rounded variant="flat" color="primary" class="ml-2" v-bind="props">
+              <v-icon size="small" start>mdi-account-multiple-plus</v-icon>
               Share
             </v-btn>
           </template>
           <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
         </v-dialog>
 
-        <v-avatar color="grey lighten-1" size="25" class="ml-3">
-          <span class="white--text">{{ currentUser | initialLetter }}</span>
+        <v-avatar color="grey-lighten-1" size="25" class="ml-3">
+          <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
         </v-avatar>
         <v-menu offset-y>
-          <template v-slot:activator="{ on, attrs }">
+          <template v-slot:activator="{ props }">
             <v-avatar>
-              <v-btn small icon v-bind="attrs" v-on="on">
+              <v-btn size="small" icon v-bind="props">
                 <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
               </v-btn>
             </v-avatar>
           </template>
           <v-card>
-            <v-list two-line>
+            <v-list lines="two">
               <v-list-item v-if="sketch.user">
-                <v-list-item-content>
+
                   <v-list-item-title>
-                    <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                    <strong>Created:</strong> {{ this.$filters.shortDateTime(sketch.created_at) }}
                   </v-list-item-title>
                   <v-list-item-subtitle>
-                    <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                    <small>{{ this.$filters.timeSince(sketch.created_at)}} by {{ sketch.user.username }}</small>
                   </v-list-item-subtitle>
-                </v-list-item-content>
+
               </v-list-item>
 
               <v-list-item>
-                <v-list-item-content>
+
                   <v-list-item-title>
                     <strong>Access: </strong>
                     <span v-if="meta.permissions && meta.permissions.public">Public</span>
@@ -150,7 +150,7 @@ limitations under the License.
                     >
                     <small v-else>Only people with access can open</small>
                   </v-list-item-subtitle>
-                </v-list-item-content>
+
               </v-list-item>
             </v-list>
 
@@ -160,45 +160,45 @@ limitations under the License.
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
+
                     <v-list-item-title>Toggle theme</v-list-item-title>
-                  </v-list-item-content>
+
                 </v-list-item>
 
                 <v-list-item @click="renameSketchDialog = true">
                   <v-list-item-icon>
                     <v-icon>mdi-pencil</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
+
                     <v-list-item-title>Rename sketch</v-list-item-title>
-                  </v-list-item-content>
+
                 </v-list-item>
 
                 <v-list-item @click="archiveSketch()" :disabled="isArchived">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
+
                     <v-list-item-title>Archive sketch</v-list-item-title>
-                  </v-list-item-content>
+
                 </v-list-item>
 
                 <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
                   <v-list-item-icon>
                     <v-icon>mdi-trash-can-outline</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
+
                     <v-list-item-title>Delete sketch</v-list-item-title>
-                  </v-list-item-content>
+
                 </v-list-item>
 
                 <v-list-item v-on:click="switchUI">
                   <v-list-item-icon>
                     <v-icon>mdi-view-dashboard-outline</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
+
                     <v-list-item-title>Use the old UI</v-list-item-title>
-                  </v-list-item-content>
+
                 </v-list-item>
 
                 <a href="/logout/" style="text-decoration: none; color: inherit">
@@ -207,9 +207,9 @@ limitations under the License.
                       <v-icon>mdi-logout</v-icon>
                     </v-list-item-icon>
 
-                    <v-list-item-content>
+
                       <v-list-item-title>Logout</v-list-item-title>
-                    </v-list-item-content>
+
                   </v-list-item>
                 </a>
               </v-list-item-group>
@@ -225,7 +225,7 @@ limitations under the License.
         clipped
         disable-resize-watcher
         stateless
-        hide-overlay
+        :scrim="false"
         :width="navigationDrawer.width"
       >
         <!-- Dialog for adding a scenario -->
@@ -236,10 +236,10 @@ limitations under the License.
               <v-select
                 v-model="selectedScenario"
                 :items="scenarioTemplates"
-                item-text="name"
+                item-title="name"
                 return-object
                 label="Select a scenario"
-                outlined
+                variant="outlined"
                 class="mt-3"
               ></v-select>
               <div v-if="selectedScenario">
@@ -249,8 +249,8 @@ limitations under the License.
             <v-divider></v-divider>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
-              <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
+              <v-btn @click="scenarioDialog = false" variant="text"> Cancel </v-btn>
+              <v-btn variant="text" color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
                 Add
               </v-btn>
             </v-card-actions>
@@ -292,15 +292,15 @@ limitations under the License.
                 <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
                   >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
                 >
-                <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
-                  ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
+                <v-btn v-else variant="text" color="primary" @click="scenarioDialog = true" style="cursor: pointer"
+                  ><v-icon start>mdi-plus</v-icon> Add Scenario</v-btn
                 >
               </v-col>
 
               <v-col cols="6">
                 <v-btn
-                  small
-                  text
+                  size="small"
+                  variant="text"
                   color="primary"
                   v-if="hiddenScenarios.length"
                   @click="showHidden = !showHidden"
@@ -353,14 +353,14 @@ limitations under the License.
                 v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
                 :key="duration"
                 :value="duration"
-                small
-                outlined
+                size="small"
+                variant="outlined"
                 @click="updateContextQuery(duration)"
               >
-                {{ duration | formatSeconds }}
+                {{ this.$filters.formatSeconds(duration) }}
               </v-btn>
             </v-btn-toggle>
-            <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+            <v-btn size="small" variant="text" class="ml-5" @click="contextToSearch()">Replace search</v-btn>
 
             <v-spacer></v-spacer>
 
@@ -556,17 +556,17 @@ export default {
       }
     },
     generateContextQuery(event) {
-      let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+      const timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
       this.contextStartTime = dayjs.utc(timestampMillis).subtract(this.contextTimeWindowSeconds, 'second')
       this.contextEndTime = dayjs.utc(timestampMillis).add(this.contextTimeWindowSeconds, 'second')
-      let startChip = {
+      const startChip = {
         field: '',
         value: this.contextStartTime.toISOString() + ',' + this.contextEndTime.toISOString(),
         type: 'datetime_range',
         operator: 'must',
         active: true,
       }
-      let queryFilter = {
+      const queryFilter = {
         from: 0,
         terminate_after: 40,
         size: 40,
@@ -574,7 +574,7 @@ export default {
         order: 'asc',
         chips: [startChip],
       }
-      let queryRequest = { queryString: '*', queryFilter: queryFilter }
+      const queryRequest = { queryString: '*', queryFilter: queryFilter }
       return queryRequest
     },
     updateContextQuery(duration) {
@@ -582,7 +582,7 @@ export default {
       this.queryRequest = this.generateContextQuery(this.currentContextEvent)
     },
     contextToSearch() {
-      let queryRequest = this.generateContextQuery(this.currentContextEvent)
+      const queryRequest = this.generateContextQuery(this.currentContextEvent)
       queryRequest.doSearch = true
       EventBus.$emit('setQueryAndFilter', queryRequest)
       this.showTimelineView = false
@@ -616,7 +616,7 @@ export default {
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
-      let element = document.body
+      const element = document.body
       element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {

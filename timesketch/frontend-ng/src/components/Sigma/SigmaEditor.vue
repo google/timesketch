@@ -23,11 +23,11 @@ limitations under the License.
       v-if="!ruleId"
       align="left"
       dense
-      outlined
+      variant="outlined"
       hide-details
       :items="SigmaTemplates"
-      @change="selectTemplate"
-      item-text="title"
+      @update:model-value="selectTemplate"
+      item-title="title"
       label="Choose template"
       style="width: 300px"
       class="mb-4 mt-2"
@@ -35,33 +35,33 @@ limitations under the License.
     </v-autocomplete>
 
     <div v-if="editingRule.search_query">
-      <v-alert type="error" outlined dense v-if="!isParsingSuccesful && status_text">
+      <v-alert type="error" variant="outlined" density="compact" v-if="!isParsingSuccesful && status_text">
         {{ status_text }}
       </v-alert>
-      <v-alert type="success" v-else outlined dense>
+      <v-alert type="success" v-else variant="outlined" density="compact">
         Preview:
         <span style="font-family: monospace">{{ editingRule.search_query }}</span>
       </v-alert>
     </div>
 
-    <v-card outlined>
+    <v-card variant="outlined">
       <v-textarea
         v-model="ruleYamlTextArea"
-        solo
+        variant="solo"
         flat
         hide-details
         rows="25"
         autofocus
         placeholder="Get started by choosing a template above.."
-        @input="parseSigma(ruleYamlTextArea)"
+        @update:model-value="parseSigma(ruleYamlTextArea)"
         :color="this.isParsingSuccesful ? 'success' : 'error'"
         class="editSigmaRule"
       >
       </v-textarea>
       <v-divider></v-divider>
       <v-card-actions>
-        <v-btn :disabled="!isParsingSuccesful" @click="saveRule()" text color="primary"> Save </v-btn>
-        <v-btn text :to="{ name: 'Explore' }" style="margin-left: 10px"> Cancel </v-btn>
+        <v-btn :disabled="!isParsingSuccesful" @click="saveRule()" variant="text" color="primary"> Save </v-btn>
+        <v-btn variant="text" :to="{ name: 'Explore' }" style="margin-left: 10px"> Cancel </v-btn>
       </v-card-actions>
     </v-card>
   </div>
@@ -91,7 +91,7 @@ export default {
   },
   methods: {
     selectTemplate(text) {
-      var matchingTemplate = this.SigmaTemplates.find((obj) => {
+      const matchingTemplate = this.SigmaTemplates.find((obj) => {
         return obj.title === text
       })
       this.ruleYamlTextArea = matchingTemplate.text
@@ -104,7 +104,7 @@ export default {
       }
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
-          var parsedRule = response.data.objects[0]
+          const parsedRule = response.data.objects[0]
           if (parsedRule.tags.length > 0 && parsedRule.tags[0] == null) {
             this.status_text = 'Please specify at least one tag if you use the tags field'
             this.isParsingSuccesful = false

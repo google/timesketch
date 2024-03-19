@@ -18,12 +18,9 @@ limitations under the License.
     v-if="iconOnly"
     class="pa-4"
     style="cursor: pointer"
-    @click="
-      $emit('toggleDrawer')
-      expanded = true
-    "
+    @click="$emit('toggleDrawer'); expanded = true"
   >
-    <v-icon left>mdi-book-open-outline</v-icon>
+    <v-icon start>mdi-book-open-outline</v-icon>
     <div style="height: 1px"></div>
   </div>
   <div v-else>
@@ -33,13 +30,13 @@ limitations under the License.
       class="pa-4"
       flat
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
+      <span> <v-icon start>mdi-book-open-outline</v-icon> Stories </span>
       <v-btn
         icon
         v-if="expanded || !(meta.stories && meta.stories.length)"
-        text
+        variant="text"
         class="float-right mt-n1 mr-n1"
         @click="createStory()"
         @click.stop=""
@@ -62,8 +59,8 @@ limitations under the License.
           :to="{ name: 'Story', params: { storyId: story.id } }"
           style="cursor: pointer; font-size: 0.9em; text-decoration: none"
         >
-          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ story.title }}</span>
+          <v-row no-gutters class="pa-2 pl-5" :class="this.$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+            <span :class="this.$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ story.title }}</span>
           </v-row>
         </router-link>
       </div>
@@ -94,11 +91,11 @@ export default {
   },
   methods: {
     createStory() {
-      let title = 'Untitled story'
-      let content = ''
+      const title = 'Untitled story'
+      const content = ''
       ApiClient.createStory(title, content, this.sketch.id)
         .then((response) => {
-          let newStoryId = response.data.objects[0].id
+          const newStoryId = response.data.objects[0].id
           this.$router.push({ name: 'Story', params: { storyId: newStoryId } })
           this.$store.dispatch('updateSketch', this.sketch.id)
         })

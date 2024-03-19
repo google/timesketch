@@ -16,14 +16,14 @@ limitations under the License.
 <template>
   <div>
     <v-progress-linear v-if="loading" color="primary" indeterminate height="2"></v-progress-linear>
-    <v-list three-line>
+    <v-list lines="three">
       <v-list-item @mouseover="showControls = true" @mouseleave="showControls = false">
-        <v-list-item-content>
+
           <v-list-item-title style="font-size: 0.9em">
             <strong>{{ conclusion.user.username }}</strong>
           </v-list-item-title>
           <v-list-item-subtitle>
-            <small>{{ conclusion.created_at | shortDateTime }} ({{ conclusion.created_at | timeSince }})</small>
+            <small>{{ $filters.shortDateTime(conclusion.created_at) }} ({{ this.$filters.timeSince(conclusion.created_at) }})</small>
           </v-list-item-subtitle>
 
           <div v-if="editable">
@@ -31,30 +31,30 @@ limitations under the License.
               style="font-size: 0.9em"
               hide-details
               auto-grow
-              outlined
+              variant="outlined"
               v-model="conclusionText"
-              :value="conclusion.conclusion"
+              :model-value="conclusion.conclusion"
             >
             </v-textarea>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn small text @click="editable = false"> Cancel </v-btn>
-              <v-btn small text color="primary" @click="saveConclusion()" :disabled="!conclusionText"> Save </v-btn>
+              <v-btn size="small" variant="text" @click="editable = false"> Cancel </v-btn>
+              <v-btn size="small" variant="text" color="primary" @click="saveConclusion()" :disabled="!conclusionText"> Save </v-btn>
             </v-card-actions>
           </div>
           <div v-else style="max-width: 90%; font-size: 0.9em">{{ conclusion.conclusion }}</div>
-        </v-list-item-content>
+
 
         <v-list-item-action
           v-if="showControls && currentUser == conclusion.user.username"
           style="position: absolute; right: 0"
         >
-          <v-chip outlined style="margin-right: 10px">
-            <v-btn icon small>
-              <v-icon small @click="editConclusion()">mdi-square-edit-outline</v-icon>
+          <v-chip variant="outlined" style="margin-right: 10px">
+            <v-btn icon size="small">
+              <v-icon size="small" @click="editConclusion()">mdi-square-edit-outline</v-icon>
             </v-btn>
-            <v-btn icon small>
-              <v-icon small @click="deleteConclusion()">mdi-trash-can-outline</v-icon>
+            <v-btn icon size="small">
+              <v-icon size="small" @click="deleteConclusion()">mdi-trash-can-outline</v-icon>
             </v-btn>
           </v-chip>
         </v-list-item-action>

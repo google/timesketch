@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import Vue from 'vue'
 
 const requireFilter = require.context(
   // The relative path of the components folder
@@ -24,10 +23,10 @@ const requireFilter = require.context(
   /[A-Z]\w+\.(js)$/
 )
 
+const filters = {};
 requireFilter.keys().forEach((fileName) => {
-  // Get component config
   const filterModule = requireFilter(fileName)
-
-  // Register filter globally
-  Vue.filter(filterModule.default.name, filterModule.default.filter)
+  filters[filterModule.default.name] =  filterModule.default.filter;
 })
+
+export default filters;

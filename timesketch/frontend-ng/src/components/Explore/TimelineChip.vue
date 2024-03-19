@@ -37,37 +37,37 @@ limitations under the License.
         @click="slotProps.events.toggleTimeline"
         :style="timelineStyle(slotProps.timelineStatus)"
         class="pr-1 timeline-chip"
-        :class="[{ failed: slotProps.timelineFailed }, $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
+        :class="[{ failed: slotProps.timelineFailed }, this.$vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
         :ripple="!slotProps.timelineFailed"
       >
         <div class="chip-content">
-          <v-icon v-if="slotProps.timelineFailed" title="Import failed; click for details" @click="slotProps.events.openDialog" left color="red" size="x-large">
+          <v-icon v-if="slotProps.timelineFailed" title="Import failed; click for details" @click="slotProps.events.openDialog" start color="red" size="x-large">
             mdi-alert-circle-outline
           </v-icon>
-          <v-icon v-if="!slotProps.timelineFailed" title="Toggle visibility" left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
+          <v-icon v-if="!slotProps.timelineFailed" title="Toggle visibility" start :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
 
-          <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="200">
-            <template v-slot:activator="{ on: onTooltip, attrs }">
+          <v-tooltip location="bottom" :disabled="timeline.name.length < 30" open-delay="200">
+            <template v-slot:activator="{ props }">
               <span
                 class="timeline-name-ellipsis"
                 :class="{ disabled: !isSelected && slotProps.timelineStatus === 'ready' }"
-                v-bind="attrs"
-                v-on="onTooltip"
+
+                v-bind="props"
                 >{{ timeline.name }}</span
               >
             </template>
             <span>{{ timeline.name }}</span>
           </v-tooltip>
 
-          <span class="right">
+          <span class="float-right">
             <span v-if="slotProps.timelineStatus === 'processing'" class="ml-3">
               <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
             </span>
 
             <span v-if="!slotProps.timelineFailed" class="events-count" x-small>
-              {{ eventsCount | compactNumber }}
+              {{ this.$filters.compactNumber(eventsCount) }}
             </span>
-            <v-btn class="ma-1" x-small icon v-on="slotProps.events.menuOn">
+            <v-btn class="ma-1" size="x-small" icon v-on="slotProps.events.menuOn">
               <v-icon title="Manage Timeline"> mdi-dots-vertical </v-icon>
             </v-btn>
           </span>
