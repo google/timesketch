@@ -18,8 +18,6 @@ import time
 import json
 import click
 
-from timesketch_api_client import error
-
 
 @click.group("analyze")
 def analysis_group():
@@ -50,6 +48,8 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
         analyzer_name: Name of the analyzer to run.
         timeline_id: Timeline ID of the timeline to analyze.
     """
+    from timesketch_api_client import error
+
     sketch = ctx.obj.sketch
     timelines = []
     if timeline_id == "all":
