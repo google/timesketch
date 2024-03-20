@@ -149,6 +149,7 @@ class TestYetiIndicators(BaseTest):
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_slug(self):
+        """Tests that slugs are formed correctly."""
         analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
         mock_event = mock.Mock()
         mock_event.get_comments.return_value = []
@@ -165,6 +166,7 @@ class TestYetiIndicators(BaseTest):
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_build_query_from_regexp(self):
+        """Tests that that queries are correctly built from regex indicators."""
         analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_regexp(
             {
@@ -214,6 +216,8 @@ class TestYetiIndicators(BaseTest):
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_build_query_from_sigma(self):
+        """Tests that that queries are correctly built from sigma indicators."""
+        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
         sigma_pattern = """id: asd
 title: test
 description: test
@@ -236,7 +240,6 @@ level: medium
 tags:
     - blah
 """
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_sigma(
             {
                 "name": "random sigma",
@@ -260,7 +263,10 @@ tags:
             {
                 "query": {
                     "query_string": {
-                        "query": '(data_type:"windows\\:prefetch\\:execution" AND message:("\\\\rundll32.exe"))'
+                        "query": (
+                            '(data_type:"windows\\:prefetch\\:execution" '
+                            'AND message:("\\\\rundll32.exe"))'
+                        )
                     }
                 }
             },
