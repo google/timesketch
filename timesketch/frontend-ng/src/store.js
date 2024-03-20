@@ -47,6 +47,7 @@ const defaultState = (currentUser) => {
     },
     contextLinkConf: {},
     sketchAnalyzerList: {},
+    savedVisualizations: [],
     activeAnalyses: [],
     analyzerResults: [],
     enabledTimelines: [],
@@ -89,6 +90,9 @@ export default new Vuex.Store({
       Vue.set(state, 'sigmaRuleList', payload['objects'])
       Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
     },
+    SET_VISUALIZATION_LIST(state, payload) {
+      Vue.set(state, 'savedVisualizations', payload)
+    },
     SET_ACTIVE_USER(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
         let currentUser = response.data.objects[0].username
@@ -126,6 +130,9 @@ export default new Vuex.Store({
     },
     SET_ANALYZER_LIST(state, payload) {
       Vue.set(state, 'sketchAnalyzerList', payload)
+    },
+    SET_SAVED_VISUALIZATIONS(state, payload) {
+      Vue.set(state, 'savedVisualizations', payload)
     },
     SET_ACTIVE_ANALYSES(state, payload) {
       Vue.set(state, 'activeAnalyses', payload)
@@ -268,6 +275,17 @@ export default new Vuex.Store({
         })
         .catch((e) => { })
     },
+    updateSavedVisualizationList(context, sketchId) {
+      ApiClient.getAggregations(sketchId)
+        .then(
+          (response) => {
+            context.commit('SET_VISUALIZATION_LIST', response.data.objects[0] || [])
+          }
+        )
+        .catch(
+          (e) => { }
+        )
+    },  
     setActiveContext(context, activeScenarioContext) {
       context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
     },

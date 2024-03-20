@@ -69,6 +69,12 @@ class AggregationResource(resources.ResourceMixin, Resource):
             )
         aggregation = Aggregation.get_by_id(aggregation_id)
 
+        # Check that the aggregation exists
+        if not aggregation:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "The aggregation ID ({0:d}) does not exist.".format(aggregation_id),
+            )
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
             abort(
@@ -468,17 +474,20 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
         aggregator_name = form.aggregator_name.data
 
         if aggregator_name:
-            if isinstance(form.aggregator_parameters.data, dict):
-                aggregator_parameters = form.aggregator_parameters.data
-            else:
-                aggregator_parameters = json.loads(form.aggregator_parameters.data)
-
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
                 aggregator_name
             )
             if not agg_class:
-                return {}
-            if not aggregator_parameters:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    f"Aggregator {aggregator_name} not found",
+                )
+
+            if form.aggregator_parameters.data:
+                aggregator_parameters = form.aggregator_parameters.data
+                if not isinstance(aggregator_parameters, dict):
+                    aggregator_parameters = json.loads(aggregator_parameters)
+            else:
                 aggregator_parameters = {}
 
             indices = aggregator_parameters.pop("index", sketch_indices)
@@ -490,12 +499,10 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             aggregator = agg_class(
                 sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids
             )
+            aggregator_description = aggregator.describe
 
+            # legacy chart settings
             chart_type = aggregator_parameters.pop("supported_charts", None)
-            chart_color = aggregator_parameters.pop("chart_color", "")
-            chart_title = aggregator_parameters.pop(
-                "chart_title", aggregator.chart_title
-            )
 
             time_before = time.time()
             try:
@@ -515,10 +522,13 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 )
             time_after = time.time()
 
-            aggregator_description = aggregator.describe
-
             buckets = result_obj.to_dict()
             buckets["buckets"] = buckets.pop("values")
+            if "labels" in buckets:
+                buckets["labels"] = buckets.pop("labels")
+            if "chart_options" in buckets:
+                buckets["chart_options"] = buckets.pop("chart_options")
+
             result = {"aggregation_result": {aggregator_name: buckets}}
             meta = {
                 "method": "aggregator_run",
@@ -529,10 +539,16 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             }
 
             if chart_type:
-                meta["vega_spec"] = result_obj.to_chart(
+                chart_color = aggregator_parameters.pop("chart_color", "")
+                chart_title = aggregator_parameters.pop("chart_title", None)
+                chart_spec = result_obj.to_chart(
                     chart_name=chart_type, chart_title=chart_title, color=chart_color
                 )
-                meta["vega_chart_title"] = chart_title
+                if chart_spec:
+                    meta["vega_spec"] = chart_spec
+                    if not chart_title:
+                        chart_title = aggregator.chart_title
+                    meta["vega_chart_title"] = chart_title
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg

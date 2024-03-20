@@ -278,6 +278,7 @@ limitations under the License.
             <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
             <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
             <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
+            <ts-visualizations :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-visualizations>
           </v-tab-item>
           <v-tab-item :transition="false">
             <ts-scenario
@@ -406,6 +407,7 @@ import TsShareCard from '../components/ShareCard.vue'
 import TsRenameSketch from '../components/RenameSketch.vue'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
+import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 
 export default {
@@ -427,6 +429,7 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
+    TsVisualizations
   },
   data() {
     return {
