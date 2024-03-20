@@ -318,6 +318,9 @@ export default {
   getAnalyzerSession(sketchId, sessionId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   },
+  getSketchAnalyzerSessions(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/latest')
+  },
   getActiveAnalyzerSessions(sketchId) {
     let params = {
       params: {
