@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-card class="pa-4" min-height="800px">
     <v-card-title>Settings</v-card-title>
-    <v-list v-if="settings" two-line subheader flat>
+    <v-list class="px-3" v-if="settings" two-line subheader flat>
       <v-subheader>Layout</v-subheader>
       <v-list-item>
         <v-list-item-action>
