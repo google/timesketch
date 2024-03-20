@@ -53,6 +53,11 @@ limitations under the License.
         </v-card>
       </v-dialog>
 
+      <!-- Settings dialog -->
+      <v-dialog v-model="showSettingsDialog" width="700px">
+        <ts-settings-dialog></ts-settings-dialog>
+      </v-dialog>
+
       <!-- Top horizontal toolbar -->
       <v-app-bar
         v-if="!loadingSketch"
@@ -105,7 +110,7 @@ limitations under the License.
         <!-- Sharing dialog -->
         <v-dialog v-model="shareDialog" width="500">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn small rounded depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+            <v-btn small rounded depressed color="primary" class="mr -2" v-bind="attrs" v-on="on">
               <v-icon small left>mdi-account-multiple-plus</v-icon>
               Share
             </v-btn>
@@ -113,7 +118,7 @@ limitations under the License.
           <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
         </v-dialog>
 
-        <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <v-avatar color="grey lighten-1" size="25" class="ml-2">
           <span class="white--text">{{ currentUser | initialLetter }}</span>
         </v-avatar>
         <v-menu offset-y>
@@ -198,6 +203,15 @@ limitations under the License.
                   </v-list-item-icon>
                   <v-list-item-content>
                     <v-list-item-title>Use the old UI</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item @click="showSettingsDialog = true">
+                  <v-list-item-icon>
+                    <v-icon>mdi-cog-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Settings</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
 
@@ -407,6 +421,7 @@ import TsRenameSketch from '../components/RenameSketch.vue'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
+import TsSettingsDialog from '../components/SettingsDialog.vue'
 
 export default {
   props: ['sketchId'],
@@ -427,14 +442,15 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
+    TsSettingsDialog,
   },
   data() {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 410,
+        width: 56,
       },
-      isMiniDrawer: false,
+      isMiniDrawer: true,
       selectedScenario: null,
       scenarioDialog: false,
       showLeftPanel: false,
@@ -453,6 +469,7 @@ export default {
       contextStartTime: null,
       contextEndTime: null,
       contextTimeWindowSeconds: 300,
+      showSettingsDialog: false,
     }
   },
   mounted() {
@@ -466,10 +483,15 @@ export default {
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
-      this.loadingSketch = false
+      this.$store.dispatch('updateUserSettings').then(() => {
+        if (this.userSettings.showLeftPanel) {
+          this.toggleDrawer()
+        }
+      })
       if (this.hasTimelines && !this.isArchived) {
         this.showLeftPanel = true
       }
+      this.loadingSketch = false
     })
     EventBus.$on('showContextWindow', this.showContextWindow)
   },
@@ -482,6 +504,9 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    userSettings() {
+      return this.$store.state.settings
     },
     isArchived() {
       if (!this.sketch.status || !this.sketch.status.length) {
@@ -631,14 +656,14 @@ export default {
         .catch((e) => {})
     },
     toggleDrawer: function () {
-      this.navigationDrawer.width = 410
-      if (this.isMiniDrawer) {
+      if (this.navigationDrawer.width > 56) {
+        this.navigationDrawer.width = 56
+        this.isMiniDrawer = true
+      } else {
+        this.navigationDrawer.width = 350
         setTimeout(() => {
           this.isMiniDrawer = false
         }, 100)
-      } else {
-        this.navigationDrawer.width = 56
-        this.isMiniDrawer = true
       }
     },
   },
