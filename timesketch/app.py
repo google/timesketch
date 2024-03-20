@@ -21,7 +21,7 @@ import sys
 
 import six
 
-from flask import Flask
+from flask import Flask, jsonify
 from celery import Celery
 
 from flask_login import LoginManager
@@ -146,6 +146,11 @@ def create_app(config=None, legacy_ui=False):
     for route in V1_API_ROUTES:
         api_v1.add_resource(*route)
 
+    # If a request hits this route, it means the requested endpoint doesn't exist
+    @app.route('/api/v1/<path:path>')
+    def handle_invalid_route(path):
+        return jsonify({'error': 'Not found'}), 404
+
     # Register error handlers
     # pylint: disable=unused-variable
     @app.errorhandler(ApiHTTPError)
@@ -156,6 +161,11 @@ def create_app(config=None, legacy_ui=False):
             HTTP response object (instance of flask.wrappers.Response)
         """
         return error.build_response()
+
+
+
+
+
 
     # Setup the login manager.
     login_manager = LoginManager()
@@ -229,3 +239,4 @@ def create_celery_app():
 
     celery.Task = ContextTask
     return celery
+
