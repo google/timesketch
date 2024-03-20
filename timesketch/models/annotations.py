@@ -27,6 +27,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
@@ -222,6 +223,21 @@ class CommentMixin(object):
             ),
         )
         return relationship(self.Comment)
+
+    @classmethod
+    def get_with_comments(cls, **kwargs):
+        """Eagerly loads comments for a given object query using subquery.
+
+        subqueryload is more efficient than joinedload for many-to-one
+        references on large datasets.
+
+        Args:
+            kwargs: Keyword arguments passed to filter_by.
+
+        Returns:
+            List of objects with comments eagerly loaded.
+        """
+        return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
 
     def remove_comment(self, comment_id):
         """Remove a comment from an event.
