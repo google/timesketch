@@ -111,7 +111,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             )
 
         access_token = response.json()["access_token"]
-        self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
+        self._yeti_session.headers.update(
+            {"authorization": f"Bearer {access_token}"}
+        )
 
     def _get_neighbors_request(self, params):
         """Simple wrapper around requests call to make testing easier."""
@@ -214,7 +216,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         event.add_tags(list(tags))
         event.commit()
 
-        msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
+        msg = (
+            f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
+        )
         if neighbors:
             msg += f'Related entities: {[neighbor["name"] for neighbor in neighbors]}'
 
@@ -258,7 +262,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 for ioc in self._intelligence_attribute["data"]
             }
         except ValueError:
-            print("Intelligence not set on sketch, will be created from scratch.")
+            print(
+                "Intelligence not set on sketch, will be created from scratch."
+            )
 
     def save_intelligence(self):
         self.sketch.add_sketch_attribute(
@@ -325,10 +331,14 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             )
         except yaml.scanner.ScannerError as exception:
             logging.error(
-                "Error parsing Sigma rule %s: %s", indicator["id"], str(exception)
+                "Error parsing Sigma rule %s: %s",
+                indicator["id"],
+                str(exception),
             )
             return None
-        return {"query": {"query_string": {"query": parsed_sigma["search_query"]}}}
+        return {
+            "query": {"query_string": {"query": parsed_sigma["search_query"]}}
+        }
 
     def run(self):
         """Entry point for the analyzer.
@@ -348,7 +358,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         if self._SAVE_INTELLIGENCE:
             self.get_intelligence_attribute()
 
-        entities = self.get_entities(_type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR)
+        entities = self.get_entities(
+            _type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR
+        )
         for entity in entities.values():
             indicators = self.get_neighbors(
                 entity,
@@ -366,7 +378,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                     and indicator["query_type"] == "opensearch"
                 ):
                     query_dsl = {
-                        "query": {"query_string": {"query": indicator["pattern"]}}
+                        "query": {
+                            "query_string": {"query": indicator["pattern"]}
+                        }
                     }
                 if not query_dsl:
                     continue
@@ -381,7 +395,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                     if entity["type"] in HIGH_SEVERITY_TYPES:
                         priority = "HIGH"
                         if self._SAVE_INTELLIGENCE:
-                            self.add_intelligence_entry(indicator, event, entity)
+                            self.add_intelligence_entry(
+                                indicator, event, entity
+                            )
 
                     entities_found.add(f"{entity['name']}:{entity['type']}")
 
