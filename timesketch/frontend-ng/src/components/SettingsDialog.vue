@@ -56,7 +56,6 @@ export default {
   },
   methods: {
     saveSettings() {
-      console.log('save')
       ApiClient.saveUserSettings(this.settings)
         .then(() => this.$store.dispatch('updateUserSettings'))
         .catch((error) => {
