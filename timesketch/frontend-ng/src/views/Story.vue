@@ -65,8 +65,8 @@ limitations under the License.
                   </v-btn>
                 </v-toolbar>
                 <v-divider></v-divider>
-                <v-tabs-items v-model="block.currentTab">
-                  <v-tab-item :transition="false">
+                <v-window v-model="block.currentTab">
+                  <v-window-item :transition="false">
                     <v-textarea
                       variant="solo"
                       flat
@@ -77,11 +77,11 @@ limitations under the License.
                       auto-grow
                       autofocus
                     ></v-textarea>
-                  </v-tab-item>
-                  <v-tab-item :transition="false">
+                  </v-window-item>
+                  <v-window-item :transition="false">
                     <div class="markdown-body pa-4" v-html="toHtml(block.draft)"></div>
-                  </v-tab-item>
-                </v-tabs-items>
+                  </v-window-item>
+                </v-window>
 
                 <v-divider v-if="block.edit"></v-divider>
                 <v-card-actions v-if="block.edit">
@@ -224,13 +224,13 @@ limitations under the License.
                 <v-card width="475">
                   <v-list>
                     <v-list-item-group color="primary">
-                      <v-subheader>Saved Graphs</v-subheader>
+                      <v-list-subheader>Saved Graphs</v-list-subheader>
                       <v-list-item v-for="savedGraph in savedGraphs" :key="savedGraph.id">
                         <v-list-item-content @click="addSavedGraphBlock(savedGraph, index)">
                           {{ savedGraph.name }}
                         </v-list-item-content>
                       </v-list-item>
-                      <v-subheader>Plugins</v-subheader>
+                      <v-list-subheader>Plugins</v-list-subheader>
                       <v-list-item v-for="graphPlugin in graphPlugins" :key="graphPlugin.name">
                         <v-list-item-content @click="addGraphPluginBlock(graphPlugin, index)">
                           {{ graphPlugin.name }}

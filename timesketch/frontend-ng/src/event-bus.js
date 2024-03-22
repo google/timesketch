@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import * as Vue from 'vue'
 
 // Create global EventBus to use in certain situations where performance is
 // important and props/events are not optimal. Use with caution to not add

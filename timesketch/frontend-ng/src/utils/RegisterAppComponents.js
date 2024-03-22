@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import Vue from 'vue'
 
 const requireComponent = require.context(
   // The relative path of the components folder
@@ -24,17 +23,16 @@ const requireComponent = require.context(
   /App[A-Z]\w+\.(vue|js)$/
 )
 
-requireComponent.keys().forEach((fileName) => {
+export default requireComponent.keys().map((fileName) => {
   // Get component config
   const componentConfig = requireComponent(fileName)
+  console.log('compCOnf', componentConfig);
   const componentName = componentConfig.default.name
 
-  // Register component globally
-  Vue.component(
-    componentName,
+    return [componentName,
     // Look for the component options on `.default`, which will
     // exist if the component was exported with `export default`,
     // otherwise fall back to module's root.
     componentConfig.default || componentConfig
-  )
+    ]
 })
