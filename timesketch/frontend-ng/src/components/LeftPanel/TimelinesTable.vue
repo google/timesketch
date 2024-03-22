@@ -36,11 +36,11 @@ limitations under the License.
       <ts-upload-timeline-form v-if="expanded">
         <template v-slot="slotProps">
           <v-btn
+            v-bind="slotProps.attrs"
             v-if="expanded || allTimelines.length === 0"
             icon
             variant="text"
             class="float-right mt-n1 mr-n1"
-            v-bind="slotProps.attrs"
             v-on="slotProps.on"
             @click.stop=""
           >

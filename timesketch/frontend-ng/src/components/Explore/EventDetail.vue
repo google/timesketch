@@ -85,7 +85,7 @@ limitations under the License.
                     <!-- Context link submenu -->
                     <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
                       <template v-slot:activator="{ props }">
-                        <v-btn icon color="primary" size="x-small" style="cursor: pointer" v-bind="props">
+                        <v-btn v-bind="props" icon color="primary" size="x-small" style="cursor: pointer">
                           <v-icon title="Context Lookup" size="small"> mdi-open-in-new </v-icon>
                         </v-btn>
                       </template>

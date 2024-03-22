@@ -105,7 +105,7 @@ limitations under the License.
         <!-- Sharing dialog -->
         <v-dialog v-model="shareDialog" width="500">
           <template v-slot:activator="{ props }">
-            <v-btn size="small" rounded variant="flat" color="primary" class="ml-2" v-bind="props">
+            <v-btn v-bind="props" size="small" rounded variant="flat" color="primary" class="ml-2" >
               <v-icon size="small" start>mdi-account-multiple-plus</v-icon>
               Share
             </v-btn>
@@ -119,7 +119,7 @@ limitations under the License.
         <v-menu offset-y>
           <template v-slot:activator="{ props }">
             <v-avatar>
-              <v-btn size="small" icon v-bind="props">
+              <v-btn v-bind="props" size="small" icon >
                 <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
               </v-btn>
             </v-avatar>

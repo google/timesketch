@@ -37,24 +37,24 @@ limitations under the License.
         <v-list-item>
           <v-list-item-avatar>
             <v-avatar color="grey-lighten-1" size="32">
-              <span class="text-white">{{ sketch.user.username | initialLetter }}</span>
+              <span class="text-white">{{ $filters.initialLetter(sketch.user.username) }}</span>
             </v-avatar>
           </v-list-item-avatar>
-          
+
             <v-list-item-title v-text="sketch.user.username"></v-list-item-title>
-          
+
           <v-spacer></v-spacer>
           <small>Owner</small>
         </v-list-item>
         <v-list-item v-for="user in meta.collaborators.users" :key="user">
           <v-list-item-avatar>
             <v-avatar color="grey-lighten-1" size="32">
-              <span class="text-white">{{ user | initialLetter }}</span>
+              <span class="text-white">{{ $filters.initialLetter(user) }}</span>
             </v-avatar>
           </v-list-item-avatar>
-          
+
             <v-list-item-title v-text="user"></v-list-item-title>
-          
+
           <v-spacer></v-spacer>
           <v-icon @click="revokeAccess(user, '')">mdi-trash-can-outline</v-icon>
         </v-list-item>
@@ -62,9 +62,9 @@ limitations under the License.
           <v-list-item-avatar>
             <v-icon>mdi-account-group-outline</v-icon>
           </v-list-item-avatar>
-          
+
             <v-list-item-title v-text="group"></v-list-item-title>
-          
+
           <v-spacer></v-spacer>
           <v-icon @click="revokeAccess('', group)">mdi-trash-can-outline</v-icon>
         </v-list-item>

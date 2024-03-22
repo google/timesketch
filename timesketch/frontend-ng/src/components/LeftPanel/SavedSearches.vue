@@ -57,7 +57,7 @@ limitations under the License.
               </v-btn>
               <v-menu offset-y>
                 <template v-slot:activator="{ props }">
-                  <v-btn size="small" icon v-bind="props" class="mr-1">
+                  <v-btn v-bind="props"  size="small" icon class="mr-1">
                     <v-icon title="More actions" size="small">mdi-dots-vertical</v-icon>
                   </v-btn>
                 </template>

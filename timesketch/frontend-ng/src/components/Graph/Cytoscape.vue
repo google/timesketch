@@ -69,7 +69,7 @@ limitations under the License.
           <!-- Graph settings menu -->
           <v-menu offset-y :close-on-content-click="false" :persistent="!(true)" content-class="menu-with-gap">
             <template v-slot:activator="{ props }">
-              <v-btn icon :disabled="!currentGraph || !graphPluginName" v-bind="props">
+              <v-btn v-bind="props" icon :disabled="!currentGraph || !graphPluginName" >
                 <v-icon title="Graph settings">mdi-cog-outline</v-icon>
               </v-btn>
             </template>
@@ -106,7 +106,7 @@ limitations under the License.
         <v-spacer></v-spacer>
         <div v-if="Object.keys(currentGraphCache).length">
           <i
-            ><small>Generated {{ currentGraphCache.updated_at | timeSince }}</small></i
+            ><small>Generated {{ $filters.timeSince(currentGraphCache.updated_at) }}</small></i
           >
           <v-btn
             icon

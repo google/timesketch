@@ -31,7 +31,7 @@ limitations under the License.
       <v-menu offset-y>
         <template v-slot:activator="{ props }">
           <v-avatar>
-            <v-btn size="small" icon v-bind="props">
+            <v-btn v-bind="props" size="small" icon>
               <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
             </v-btn>
           </v-avatar>
@@ -81,7 +81,7 @@ limitations under the License.
           <v-row no-gutters class="mt-5">
             <v-dialog v-model="createSketchDialog" width="500">
               <template v-slot:activator="{ props }">
-                <v-btn variant="flat" size="small" class="mr-5" color="primary" v-bind="props"> Blank sketch </v-btn>
+                <v-btn v-bind="props" variant="flat" size="small" class="mr-5" color="primary"> Blank sketch </v-btn>
               </template>
               <v-card class="pa-4">
                 <h3>New sketch</h3>

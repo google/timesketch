@@ -113,7 +113,7 @@ limitations under the License.
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>
-                <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
+                <component v-bind="formatComponentProps(block)" :is="block.componentName" ></component>
               </v-card-text>
             </v-card>
             <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" variant="outlined" class="mb-2">
@@ -156,7 +156,7 @@ limitations under the License.
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>
-                <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
+                <component v-bind="formatComponentProps(block)" :is="'TsCytoscape'" ></component>
               </v-card-text>
             </v-card>
             <v-card v-if="block.componentName === 'TsCytoscapeSavedGraph'" variant="outlined" class="mb-2">
@@ -175,7 +175,7 @@ limitations under the License.
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>
-                <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
+                <component v-bind="formatComponentProps(block)" :is="'TsCytoscape'" ></component>
               </v-card-text>
             </v-card>
           </div>
@@ -197,7 +197,7 @@ limitations under the License.
               <!-- Saved Search selector -->
               <v-menu offset-y v-model="block.showSavedSearchMenu">
                 <template v-slot:activator="{ props }">
-                  <v-btn class="mr-2" rounded variant="outlined" size="small" :disabled="!meta.views.length" v-bind="props">
+                  <v-btn v-bind="props" class="mr-2" rounded variant="outlined" size="small" :disabled="!meta.views.length" >
                     <v-icon start size="small">mdi-plus</v-icon>
                     Saved Search
                   </v-btn>
@@ -216,7 +216,7 @@ limitations under the License.
               </v-menu>
               <v-menu offset-y v-model="block.showGraphMenu">
                 <template v-slot:activator="{ props }">
-                  <v-btn rounded variant="outlined" size="small" :disabled="!graphPlugins.length" v-bind="props">
+                  <v-btn v-bind="props" rounded variant="outlined" size="small" :disabled="!graphPlugins.length" >
                     <v-icon start size="small">mdi-plus</v-icon>
                     Graphs
                   </v-btn>
