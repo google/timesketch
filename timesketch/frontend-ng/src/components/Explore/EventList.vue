@@ -36,7 +36,7 @@ limitations under the License.
       <strong>Showing context for event:</strong>
       <v-sheet class="d-flex flex-wrap mt-1 mb-5">
         <v-sheet class="flex-1-0">
-          <span style="width: 200px" v-bind:style="getTimelineColor(highlightEvent)" class="datetime-table-cell pa-2">
+          <span v-bind:style="getTimelineColor(highlightEvent)" style="width: 200px" class="datetime-table-cell pa-2">
             {{ this.$filters.formatTimestamp(this.$filters.toISO8601(highlightEvent._source.timestamp)) }}
           </span>
         </v-sheet>
@@ -49,14 +49,14 @@ limitations under the License.
       </v-sheet>
     </div>
     <div v-if="eventList.objects.length || searchInProgress">
-      <v-data-table
+      <v-data-table-server
         v-model="selectedEvents"
         :headers="headers"
         :items="eventList.objects"
         :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
         :loading="searchInProgress"
         :options.sync="tableOptions"
-        :server-items-length="totalHitsForPagination"
+        :items-length="totalHitsForPagination"
         item-key="_id"
         loading-text="Searching... Please wait"
         show-select
@@ -79,7 +79,7 @@ limitations under the License.
 
               <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
                 <template v-slot:activator="{ props }">
-                  <v-btn icon v-bind="props">
+                  <v-btn v-bind="props" icon>
                     <v-icon title="Save current search">mdi-content-save-outline</v-icon>
                   </v-btn>
                 </template>
@@ -122,7 +122,7 @@ limitations under the License.
 
               <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
                 <template v-slot:activator="{ props }">
-                  <v-btn icon v-bind="props">
+                  <v-btn v-bind="props" icon >
                     <v-icon title="Modify columns">mdi-view-column-outline</v-icon>
                   </v-btn>
                 </template>
@@ -170,14 +170,14 @@ limitations under the License.
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ props }">
-                  <v-btn icon v-bind="props">
+                  <v-btn v-bind="props" icon>
                     <v-icon title="View settings">mdi-dots-horizontal</v-icon>
                   </v-btn>
                 </template>
 
                 <v-card variant="outlined" max-width="475" class="mx-auto">
-                  <v-list subheader lines="two" flat density="compact">
-                    <v-subheader>Density</v-subheader>
+                  <v-list lines="two" flat density="compact">
+                    <v-list-subheader>Density</v-list-subheader>
 
                     <v-list-item-group>
                       <v-list-item :ripple="false">
@@ -213,7 +213,7 @@ limitations under the License.
                     <v-divider></v-divider>
 
                     <v-list subheader lines="two" flat>
-                      <v-subheader>Misc</v-subheader>
+                      <v-list-subheader>Misc</v-list-subheader>
                       <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
@@ -304,8 +304,8 @@ limitations under the License.
             <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
             <div v-if="item.deltaDays > 0" class="ml-7">
               <div
-                class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
                 v-bind:style="getTimeBubbleColor(item)"
+                class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
               ></div>
               <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
                 <div class="ts-time-bubble-text">
@@ -313,8 +313,8 @@ limitations under the License.
                 </div>
               </div>
               <div
-                class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
                 v-bind:style="getTimeBubbleColor(item)"
+                class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
               ></div>
             </div>
           </td>
@@ -416,7 +416,7 @@ limitations under the License.
             </v-btn>
           </div>
         </template>
-      </v-data-table>
+      </v-data-table-server>
     </div>
   </div>
 </template>

@@ -78,8 +78,8 @@ limitations under the License.
               Tags (<small>{{ Object.keys(tagInfo).length }} </small>)
             </v-tab>
           </v-tabs>
-          <v-tabs-items v-model="tabs">
-            <v-tab-item :transition="false">
+          <v-window v-model="tabs">
+            <v-window-item :transition="false">
               <v-data-table
                 v-if="intelligenceData.length >= 10"
                 dense
@@ -124,8 +124,8 @@ limitations under the License.
                   </v-btn>
                 </template>
               </v-data-table>
-            </v-tab-item>
-            <v-tab-item :transition="false">
+            </v-window-item>
+            <v-window-item :transition="false">
               <v-data-table dense :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
                 <template v-slot:item.tag="{ item }">
                   <v-chip size="x-small" @click="searchForIOC(item)">{{ item.tag.name }}</v-chip>
@@ -142,8 +142,8 @@ limitations under the License.
                   </v-btn>
                 </template>
               </v-data-table>
-            </v-tab-item>
-          </v-tabs-items>
+            </v-window-item>
+          </v-window>
         </div>
       </div>
     </v-expand-transition>

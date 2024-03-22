@@ -65,8 +65,8 @@ limitations under the License.
                   </v-btn>
                 </v-toolbar>
                 <v-divider></v-divider>
-                <v-tabs-items v-model="block.currentTab">
-                  <v-tab-item :transition="false">
+                <v-window v-model="block.currentTab">
+                  <v-window-item :transition="false">
                     <v-textarea
                       variant="solo"
                       flat
@@ -77,11 +77,11 @@ limitations under the License.
                       auto-grow
                       autofocus
                     ></v-textarea>
-                  </v-tab-item>
-                  <v-tab-item :transition="false">
+                  </v-window-item>
+                  <v-window-item :transition="false">
                     <div class="markdown-body pa-4" v-html="toHtml(block.draft)"></div>
-                  </v-tab-item>
-                </v-tabs-items>
+                  </v-window-item>
+                </v-window>
 
                 <v-divider v-if="block.edit"></v-divider>
                 <v-card-actions v-if="block.edit">
@@ -113,7 +113,7 @@ limitations under the License.
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>
-                <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
+                <component v-bind="formatComponentProps(block)" :is="block.componentName" ></component>
               </v-card-text>
             </v-card>
             <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" variant="outlined" class="mb-2">
@@ -156,7 +156,7 @@ limitations under the License.
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>
-                <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
+                <component v-bind="formatComponentProps(block)" :is="'TsCytoscape'" ></component>
               </v-card-text>
             </v-card>
             <v-card v-if="block.componentName === 'TsCytoscapeSavedGraph'" variant="outlined" class="mb-2">
@@ -175,7 +175,7 @@ limitations under the License.
               </v-toolbar>
               <v-divider></v-divider>
               <v-card-text>
-                <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
+                <component v-bind="formatComponentProps(block)" :is="'TsCytoscape'" ></component>
               </v-card-text>
             </v-card>
           </div>
@@ -197,7 +197,7 @@ limitations under the License.
               <!-- Saved Search selector -->
               <v-menu offset-y v-model="block.showSavedSearchMenu">
                 <template v-slot:activator="{ props }">
-                  <v-btn class="mr-2" rounded variant="outlined" size="small" :disabled="!meta.views.length" v-bind="props">
+                  <v-btn v-bind="props" class="mr-2" rounded variant="outlined" size="small" :disabled="!meta.views.length" >
                     <v-icon start size="small">mdi-plus</v-icon>
                     Saved Search
                   </v-btn>
@@ -216,7 +216,7 @@ limitations under the License.
               </v-menu>
               <v-menu offset-y v-model="block.showGraphMenu">
                 <template v-slot:activator="{ props }">
-                  <v-btn rounded variant="outlined" size="small" :disabled="!graphPlugins.length" v-bind="props">
+                  <v-btn v-bind="props" rounded variant="outlined" size="small" :disabled="!graphPlugins.length" >
                     <v-icon start size="small">mdi-plus</v-icon>
                     Graphs
                   </v-btn>
@@ -224,13 +224,13 @@ limitations under the License.
                 <v-card width="475">
                   <v-list>
                     <v-list-item-group color="primary">
-                      <v-subheader>Saved Graphs</v-subheader>
+                      <v-list-subheader>Saved Graphs</v-list-subheader>
                       <v-list-item v-for="savedGraph in savedGraphs" :key="savedGraph.id">
                         <v-list-item-content @click="addSavedGraphBlock(savedGraph, index)">
                           {{ savedGraph.name }}
                         </v-list-item-content>
                       </v-list-item>
-                      <v-subheader>Plugins</v-subheader>
+                      <v-list-subheader>Plugins</v-list-subheader>
                       <v-list-item v-for="graphPlugin in graphPlugins" :key="graphPlugin.name">
                         <v-list-item-content @click="addGraphPluginBlock(graphPlugin, index)">
                           {{ graphPlugin.name }}

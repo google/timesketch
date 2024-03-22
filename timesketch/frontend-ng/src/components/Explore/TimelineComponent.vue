@@ -306,7 +306,7 @@ limitations under the License.
 </template>
 
 <script>
-import Vue from 'vue'
+import * as Vue from 'vue'
 import _ from 'lodash'
 import dayjs from '@/plugins/dayjs'
 import ApiClient from '../../utils/RestApiClient'

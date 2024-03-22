@@ -106,7 +106,7 @@ limitations under the License.
                   <v-spacer></v-spacer>
                   <v-tooltip location="bottom">
                     <template v-slot:activator="{ props }">
-                      <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
+                      <v-icon v-bind="props" color="primary">mdi-information-outline</v-icon>
                     </template>
                     <span>The top {{ Math.min(10, this.commonValues.length) }} most common
                       &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
@@ -133,7 +133,7 @@ limitations under the License.
                   <v-spacer></v-spacer>
                   <v-tooltip location="bottom">
                     <template v-slot:activator="{ props }">
-                      <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
+                      <v-icon v-bind="props" color="primary">mdi-information-outline</v-icon>
                     </template>
                     <span>Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp;
                       events that have a maximum event count of 5
@@ -164,7 +164,7 @@ limitations under the License.
                 <v-spacer></v-spacer>
                 <v-tooltip location="bottom">
                   <template v-slot:activator="{ props }">
-                    <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
+                    <v-icon v-bind="props" color="primary">mdi-information-outline</v-icon>
                   </template>
                   <span>Shows the ratio of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
                     events to other <span style="font-family: monospace">{{ eventKey }}</span> events.
@@ -188,7 +188,7 @@ limitations under the License.
                 <v-spacer></v-spacer>
                 <v-tooltip location="bottom">
                   <template v-slot:activator="{ props }">
-                    <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
+                    <v-icon v-bind="props" color="primary">mdi-information-outline</v-icon>
                   </template>
                   <span>Shows the distribution of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
                     events in the sketch based on the {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
@@ -218,7 +218,7 @@ limitations under the License.
                 <v-spacer></v-spacer>
                 <v-tooltip location="bottom">
                   <template v-slot:activator="{ props }">
-                    <v-icon color="primary" v-bind="props">mdi-information-outline</v-icon>
+                    <v-icon v-bind="props" color="primary">mdi-information-outline</v-icon>
                   </template>
                   <span>Shows the distribution of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
                     events that are {{ this.recentIntervals[this.selectedRecentEventsIndex] }} of

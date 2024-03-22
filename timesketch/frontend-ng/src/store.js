@@ -13,11 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import Vue from 'vue'
-import Vuex from 'vuex'
 import ApiClient from './utils/RestApiClient'
-
-Vue.use(Vuex)
+import { createStore } from 'vuex'
 
 const defaultState = (currentUser) => {
   return {
@@ -56,47 +53,47 @@ const defaultState = (currentUser) => {
 // Initial state
 const state = defaultState()
 
-export default new Vuex.Store({
+export default createStore({
   state,
   mutations: {
     SET_SKETCH(state, payload) {
-      Vue.set(state, 'sketch', payload.objects[0])
-      Vue.set(state, 'meta', payload.meta)
+      state.sketch = payload.objects[0]
+      state.meta = payload.meta
     },
     SET_SEARCH_HISTORY(state, payload) {
-      Vue.set(state, 'searchHistory', payload.objects)
+      state.searchHistory = payload.objects
     },
     SET_SCENARIOS(state, payload) {
-      Vue.set(state, 'scenarios', payload.objects[0])
+      state.scenarios = payload.objects[0]
     },
     SET_SCENARIO_TEMPLATES(state, payload) {
-      Vue.set(state, 'scenarioTemplates', payload.objects)
+      state.scenarioTemplates = payload.objects
     },
     SET_TIMELINE_TAGS(state, buckets) {
-      Vue.set(state, 'tags', buckets)
+      state.tags = buckets
     },
     SET_DATA_TYPES(state, payload) {
       const buckets = payload.objects[0].field_bucket.buckets
-      Vue.set(state, 'dataTypes', buckets)
+      state.dataTypes = buckets
     },
     SET_COUNT(state, payload) {
-      Vue.set(state, 'count', payload)
+      state.count = payload
     },
     SET_SEARCH_NODE(state, payload) {
-      Vue.set(state, 'currentSearchNode', payload)
+      state.currentSearchNode = payload
     },
     SET_SIGMA_LIST(state, payload) {
-      Vue.set(state, 'sigmaRuleList', payload.objects)
-      Vue.set(state, 'sigmaRuleList_count', payload.meta.rules_count)
+      state.sigmaRuleList = payload.objects
+      state.sigmaRuleList_count = payload.meta.rules_count
     },
     SET_ACTIVE_USER(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
         const currentUser = response.data.objects[0].username
-        Vue.set(state, 'currentUser', currentUser)
+        state.currentUser = currentUser;
       })
     },
     SET_ACTIVE_CONTEXT(state, payload) {
-      Vue.set(state, 'activeContext', payload)
+      state.activeContext = payload
     },
     CLEAR_ACTIVE_CONTEXT(state) {
       const payload = {
@@ -104,16 +101,16 @@ export default new Vuex.Store({
         facet: {},
         question: {}
       }
-      Vue.set(state, 'activeContext', payload)
+      state.activeContext = payload
     },
     SET_GRAPH_PLUGINS(state, payload) {
-      Vue.set(state, 'graphPlugins', payload)
+      state.graphPlugins = payload
     },
     SET_SAVED_GRAPHS(state, payload) {
-      Vue.set(state, 'savedGraphs', payload.objects[0] || [])
+      state.savedGraphs = payload.objects[0] || []
     },
     SET_SNACKBAR(state, snackbar) {
-      Vue.set(state, 'snackbar', snackbar)
+      state.snackbar = snackbar
     },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
@@ -122,46 +119,46 @@ export default new Vuex.Store({
       })
     },
     SET_CONTEXT_LINKS(state, payload) {
-      Vue.set(state, 'contextLinkConf', payload)
+      state.contextLinkConf = payload
     },
     SET_ANALYZER_LIST(state, payload) {
-      Vue.set(state, 'sketchAnalyzerList', payload)
+      state.sketchAnalyzerList = payload
     },
     SET_ACTIVE_ANALYSES(state, payload) {
-      Vue.set(state, 'activeAnalyses', payload)
+      state.activeAnalyses = payload
     },
     ADD_ACTIVE_ANALYSES(state, payload) {
       const freshActiveAnalyses = [
         ...state.activeAnalyses,
         ...payload,
       ]
-      Vue.set(state, 'activeAnalyses', freshActiveAnalyses)
+      state.activeAnalyses = freshActiveAnalyses
     },
     SET_ANALYZER_RESULTS(state, payload) {
-      Vue.set(state, 'analyzerResults', payload)
+      state.analyzerResults = payload
     },
     SET_ENABLED_TIMELINES(state, payload) {
-      Vue.set(state, 'enabledTimelines', payload)
+      state.enabledTimelines = payload
     },
     ADD_ENABLED_TIMELINES(state, payload) {
       const freshEnabledTimelines = [
         ...state.enabledTimelines,
         ...payload,
       ]
-      Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
+      state.enabledTimelines = freshEnabledTimelines
     },
     REMOVE_ENABLED_TIMELINES(state, payload) {
-      Vue.set(state, 'enabledTimelines', state.enabledTimelines.filter(tl => !payload.includes(tl)))
+      state.enabledTimelines = state.enabledTimelines.filter(tl => !payload.includes(tl))
     },
     TOGGLE_ENABLED_TIMELINE(state, payload) {
       if (state.enabledTimelines.includes(payload)) {
-        Vue.set(state, 'enabledTimelines', state.enabledTimelines.filter(tl => payload !== tl))
+        state.enabledTimelines = state.enabledTimelines.filter(tl => payload !== tl)
       } else {
         const freshEnabledTimelines = [
           ...state.enabledTimelines,
           payload,
         ]
-        Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
+        state.enabledTimelines =  freshEnabledTimelines
       }
     },
   },

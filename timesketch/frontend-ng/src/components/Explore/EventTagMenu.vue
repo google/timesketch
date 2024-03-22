@@ -16,8 +16,8 @@ limitations under the License.
 <template>
   <v-menu v-model="showMenu" offset-x :close-on-content-click="false">
     <template v-slot:activator="{ props }">
-      <v-icon title="Modify tags" v-if="assignedTags.length > 0" v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus</v-icon>
-      <v-icon title="Modify tags" v-else v-bind="props" class="ml-1">mdi-tag-plus-outline</v-icon>
+      <v-icon v-bind="attrs" title="Modify tags" v-if="assignedTags.length > 0" v-on="on" class="ml-1">mdi-tag-plus</v-icon>
+      <v-icon v-bind="props" title="Modify tags" v-else class="ml-1">mdi-tag-plus-outline</v-icon>
     </template>
 
     <v-card min-width="500px" class="mx-auto" max-width="500px" min-height="260px">

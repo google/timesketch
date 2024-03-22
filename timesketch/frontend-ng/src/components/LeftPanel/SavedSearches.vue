@@ -57,21 +57,21 @@ limitations under the License.
               </v-btn>
               <v-menu offset-y>
                 <template v-slot:activator="{ props }">
-                  <v-btn size="small" icon v-bind="props" class="mr-1">
+                  <v-btn v-bind="props"  size="small" icon class="mr-1">
                     <v-icon title="More actions" size="small">mdi-dots-vertical</v-icon>
                   </v-btn>
                 </template>
                 <v-list density="compact" class="mx-auto">
                   <v-list-item style="cursor: pointer" @click="copySavedSearchIdToClipboard(savedSearch.id)">
-                    <v-list-item-icon>
+                    <v-list-item>
                       <v-icon size="small">mdi-identifier</v-icon>
-                    </v-list-item-icon>
+                    </v-list-item>
                     <v-list-item-title>Copy saved search ID</v-list-item-title>
                   </v-list-item>
                   <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
-                    <v-list-item-icon>
+                    <v-list-item>
                       <v-icon size="small">mdi-link-variant</v-icon>
-                    </v-list-item-icon>
+                    </v-list-item>
                     <v-list-item-title>Copy link to this search</v-list-item-title>
                   </v-list-item>
                 </v-list>

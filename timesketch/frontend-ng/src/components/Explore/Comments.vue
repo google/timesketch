@@ -26,11 +26,11 @@ limitations under the License.
         @mouseover="selectComment(comment)"
         @mouseleave="unSelectComment()"
       >
-        <v-list-item-avatar>
+        <v-list-item>
           <v-avatar color="grey-lighten-1">
             <span class="text-white">{{ this.$filters.initialLetter(comment.user.username) }}</span>
           </v-avatar>
-        </v-list-item-avatar>
+        </v-list-item>
 
 
           <v-list-item-title>

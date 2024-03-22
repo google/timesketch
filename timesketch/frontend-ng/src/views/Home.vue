@@ -31,7 +31,7 @@ limitations under the License.
       <v-menu offset-y>
         <template v-slot:activator="{ props }">
           <v-avatar>
-            <v-btn size="small" icon v-bind="props">
+            <v-btn v-bind="props" size="small" icon>
               <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
             </v-btn>
           </v-avatar>
@@ -40,17 +40,17 @@ limitations under the License.
           <v-list>
             <v-list-item-group color="primary">
               <v-list-item v-on:click="toggleTheme">
-                <v-list-item-icon>
+                <v-list-item>
                   <v-icon>mdi-brightness-6</v-icon>
-                </v-list-item-icon>
+                </v-list-item>
 
                   <v-list-item-title>Toggle theme</v-list-item-title>
 
               </v-list-item>
               <v-list-item v-on:click="switchUI">
-                <v-list-item-icon>
+                <v-list-item>
                   <v-icon>mdi-view-dashboard-outline</v-icon>
-                </v-list-item-icon>
+                </v-list-item>
 
                   <v-list-item-title>Use the old UI</v-list-item-title>
 
@@ -58,9 +58,9 @@ limitations under the License.
 
               <a href="/logout/" style="text-decoration: none; color: inherit">
                 <v-list-item>
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon>mdi-logout</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
 
 
                     <v-list-item-title>Logout</v-list-item-title>
@@ -81,7 +81,7 @@ limitations under the License.
           <v-row no-gutters class="mt-5">
             <v-dialog v-model="createSketchDialog" width="500">
               <template v-slot:activator="{ props }">
-                <v-btn variant="flat" size="small" class="mr-5" color="primary" v-bind="props"> Blank sketch </v-btn>
+                <v-btn v-bind="props" variant="flat" size="small" class="mr-5" color="primary"> Blank sketch </v-btn>
               </template>
               <v-card class="pa-4">
                 <h3>New sketch</h3>

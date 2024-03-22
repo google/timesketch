@@ -14,7 +14,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import Vue from 'vue'
 
 const defaultTimeout = 5000
 const defaultSnackBar = {
@@ -24,7 +23,7 @@ const defaultSnackBar = {
 }
 
 // These methids will be available to all components without any further imports.
-Vue.mixin({
+export default {
     methods: {
         successSnackBar(message) {
             const snackbar = defaultSnackBar
@@ -46,4 +45,4 @@ Vue.mixin({
           this.$store.dispatch('setSnackBar', snackbar)
       },
     }
-})
+}

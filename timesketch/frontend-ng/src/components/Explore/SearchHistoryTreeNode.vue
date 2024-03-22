@@ -12,7 +12,7 @@
       <v-tooltip location="bottom">
         <template v-slot:activator="{ props }">
           <div
-           
+
             v-bind="props"
             class="query-string"
             :class="[{ 'query-string-active': isSelected }]"
@@ -25,7 +25,7 @@
       </v-tooltip>
 
       <div class="tag is-light" style="margin-left: 5px; float: right">
-        <small>{{ count | compactNumber }}</small>
+        <small>{{ $filters.compactNumber(count) }}</small>
       </div>
     </span>
 

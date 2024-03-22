@@ -43,7 +43,7 @@ limitations under the License.
       <div v-else-if="checkAnalyzerOutput && !isMultiAnalyzer">
         <v-tooltip location="top">
           <template v-slot:activator="{ props }">
-            <v-btn v-show="!isMultiAnalyzer" variant="text" size="x-small" icon v-bind="props" class="ml-1" :ripple="false" style="cursor: default">
+            <v-btn v-bind="props"  v-show="!isMultiAnalyzer" variant="text" size="x-small" icon class="ml-1" :ripple="false" style="cursor: default">
               <v-icon size="small" :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
@@ -53,7 +53,7 @@ limitations under the License.
       <div v-else>
         <v-tooltip v-if="!isMultiAnalyzer" location="top">
           <template v-slot:activator="{ props }">
-            <v-btn v-show="!isMultiAnalyzer" variant="text" size="x-small" icon v-bind="props" class="ml-1" :ripple="false" style="cursor: default">
+            <v-btn v-bind="props"  v-show="!isMultiAnalyzer" variant="text" size="x-small" icon class="ml-1" :ripple="false" style="cursor: default">
               <v-icon size="small" :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>

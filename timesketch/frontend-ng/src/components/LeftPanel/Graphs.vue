@@ -43,7 +43,7 @@ limitations under the License.
       <div v-show="expanded">
         <!-- Saved graphs -->
         <div v-show="savedGraphs.length">
-          <v-subheader>Saved Graphs</v-subheader>
+          <span class="text-subheader-2">Saved Graphs</span>
           <router-link
             v-for="graph in savedGraphs"
             :key="graph.id"
@@ -63,7 +63,7 @@ limitations under the License.
 
         <!-- Graph plugins -->
         <div v-show="graphs.length">
-          <v-subheader>Plugins</v-subheader>
+          <span class="text-subheader-2">Plugins</span>
           <router-link
             v-for="graph in graphs"
             :key="graph.name"

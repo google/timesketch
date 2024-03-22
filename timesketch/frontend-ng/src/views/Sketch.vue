@@ -105,7 +105,7 @@ limitations under the License.
         <!-- Sharing dialog -->
         <v-dialog v-model="shareDialog" width="500">
           <template v-slot:activator="{ props }">
-            <v-btn size="small" rounded variant="flat" color="primary" class="ml-2" v-bind="props">
+            <v-btn v-bind="props" size="small" rounded variant="flat" color="primary" class="ml-2" >
               <v-icon size="small" start>mdi-account-multiple-plus</v-icon>
               Share
             </v-btn>
@@ -119,7 +119,7 @@ limitations under the License.
         <v-menu offset-y>
           <template v-slot:activator="{ props }">
             <v-avatar>
-              <v-btn size="small" icon v-bind="props">
+              <v-btn v-bind="props" size="small" icon >
                 <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
               </v-btn>
             </v-avatar>
@@ -157,45 +157,45 @@ limitations under the License.
             <v-list>
               <v-list-item-group color="primary">
                 <v-list-item v-on:click="toggleTheme">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon>mdi-brightness-6</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
 
                     <v-list-item-title>Toggle theme</v-list-item-title>
 
                 </v-list-item>
 
                 <v-list-item @click="renameSketchDialog = true">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon>mdi-pencil</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
 
                     <v-list-item-title>Rename sketch</v-list-item-title>
 
                 </v-list-item>
 
                 <v-list-item @click="archiveSketch()" :disabled="isArchived">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon>mdi-archive</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
 
                     <v-list-item-title>Archive sketch</v-list-item-title>
 
                 </v-list-item>
 
                 <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon>mdi-trash-can-outline</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
 
                     <v-list-item-title>Delete sketch</v-list-item-title>
 
                 </v-list-item>
 
                 <v-list-item v-on:click="switchUI">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon>mdi-view-dashboard-outline</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
 
                     <v-list-item-title>Use the old UI</v-list-item-title>
 
@@ -203,9 +203,9 @@ limitations under the License.
 
                 <a href="/logout/" style="text-decoration: none; color: inherit">
                   <v-list-item>
-                    <v-list-item-icon>
+                    <v-list-item>
                       <v-icon>mdi-logout</v-icon>
-                    </v-list-item-icon>
+                    </v-list-item>
 
 
                       <v-list-item-title>Logout</v-list-item-title>
@@ -261,8 +261,8 @@ limitations under the License.
           <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
         </v-tabs>
         <v-divider></v-divider>
-        <v-tabs-items v-model="leftPanelTab">
-          <v-tab-item :transition="false">
+        <v-window v-model="leftPanelTab">
+          <v-window-item :transition="false">
             <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
             <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
             <ts-saved-searches
@@ -278,8 +278,8 @@ limitations under the License.
             <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
             <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
             <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
-          </v-tab-item>
-          <v-tab-item :transition="false">
+          </v-window-item>
+          <v-window-item :transition="false">
             <ts-scenario
               v-for="scenario in activeScenarios"
               :key="scenario.id"
@@ -324,8 +324,8 @@ limitations under the License.
                 @toggleDrawer="toggleDrawer()"
               ></ts-scenario>
             </div>
-          </v-tab-item>
-        </v-tabs-items>
+          </v-window-item>
+        </v-window>
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->

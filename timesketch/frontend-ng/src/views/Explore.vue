@@ -46,6 +46,7 @@ limitations under the License.
         <v-menu v-model="showSearchDropdown" offset-y attach :close-on-content-click="false" :persistent="!(true)">
           <template v-slot:activator="{ props }">
             <v-text-field
+              v-bind="props"
               v-model="currentQueryString"
               hide-details
               label="Search"
@@ -61,8 +62,6 @@ limitations under the License.
               @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
-
-              v-bind="props"
             >
               <template v-slot:append>
                 <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
@@ -118,9 +117,9 @@ limitations under the License.
             style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 100px"
           >
             <ts-search-history-tree
+              v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
               @node-click="jumpInHistory"
               :show-history="showSearchHistory"
-              v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
               style="transform-origin: top left"
             ></ts-search-history-tree>
           </div>
@@ -138,7 +137,7 @@ limitations under the License.
             <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
             <v-dialog v-model="addManualEvent" width="600">
               <template v-slot:activator="{ props }">
-                <v-btn size="small" variant="text" rounded color="primary" v-bind="props">
+                <v-btn v-bind="props" size="small" variant="text" rounded color="primary">
                   <v-icon start size="small"> mdi-plus </v-icon>
                   Add manual event
                 </v-btn>
@@ -175,7 +174,7 @@ limitations under the License.
         <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
           <v-menu offset-y content-class="menu-with-gap">
             <template v-slot:activator="{ props }">
-              <v-chip variant="outlined" v-bind="props">
+              <v-chip v-bind="props" variant="outlined">
                 <v-icon start size="small"> mdi-clock-outline </v-icon>
                 <span v-bind:style="[!chip.active ? { 'text-decoration': 'line-through', opacity: '50%' } : '']">
                   <span>{{ chip.value.split(',')[0] }}</span>
@@ -245,7 +244,7 @@ limitations under the License.
             style="overflow: visible"
           >
             <template v-slot:activator="{ props }">
-              <v-btn size="small" variant="text" rounded color="primary" v-bind="props">
+              <v-btn v-bind="props" size="small" variant="text" rounded color="primary">
                 <v-icon start size="small"> mdi-clock-plus-outline </v-icon>
                 Add timefilter
               </v-btn>
@@ -263,13 +262,12 @@ limitations under the License.
             <v-tooltip location="top" :disabled="chip.value.length < 33" open-delay="300">
               <template v-slot:activator="{ props }">
                 <v-chip
+                  v-bind="props"
                   variant="outlined"
                   closable
                   close-icon="mdi-close"
                   @click:close="removeChip(chip)"
                   @click="copyFilterChip(chip)"
-
-                  v-bind="props"
                 >
                   <v-icon v-if="chip.value === '__ts_star'" start size="small" color="amber">mdi-star</v-icon>
                   <v-icon v-if="chip.value === '__ts_comment'" start size="small">mdi-comment-multiple-outline</v-icon>

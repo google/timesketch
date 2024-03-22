@@ -13,14 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import Vue from 'vue'
-import VueRouter from 'vue-router'
+import {createRouter, createWebHistory} from 'vue-router'
 
 import Home from './views/Home.vue'
 import Canvas from './views/Canvas.vue'
 import Sketch from './views/Sketch.vue'
-
-Vue.use(VueRouter)
 
 const routes = [
   {
@@ -93,7 +90,7 @@ const routes = [
   },
 ]
 
-export default new VueRouter({
-  mode: 'history',
+export default createRouter({
+  history: createWebHistory(),
   routes,
 })

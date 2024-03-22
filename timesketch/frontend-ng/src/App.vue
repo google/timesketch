@@ -19,7 +19,7 @@ limitations under the License.
     <v-snackbar v-model="snackbar.active" :timeout="snackbar.timeout" :color="snackbar.color" location="top">
       {{ snackbar.message }}
       <template v-slot:action="{ attrs }">
-        <v-btn variant="text" v-bind="attrs" @click="snackbar.active = false"> Close </v-btn>
+        <v-btn v-bind="attrs" variant="text" @click="snackbar.active = false"> Close </v-btn>
       </template>
     </v-snackbar>
 

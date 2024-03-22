@@ -34,7 +34,7 @@ limitations under the License.
       <v-col cols="1">
         <v-menu offset-y>
           <template v-slot:activator="{ props }">
-            <v-btn size="small" icon v-bind="props">
+            <v-btn v-bind="props" size="small" icon >
               <v-icon title="Manage Sigma rule" size="small">mdi-dots-vertical</v-icon>
             </v-btn>
           </template>
@@ -42,29 +42,29 @@ limitations under the License.
             <v-list density="compact">
               <v-list-item-group>
                 <v-list-item :to="{ name: 'SigmaEditRule', params: { ruleId: sigmaRule.rule_uuid } }">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon size="small">mdi-pencil</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
                   <v-list-item-title>Edit Rule</v-list-item-title>
                 </v-list-item>
                 <v-list-item v-on:click="downloadSigmaRule(sigmaRule.rule_uuid)">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon size="small">mdi-download</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
                   <v-list-item-title>Download Rule</v-list-item-title>
                 </v-list-item>
 
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon size="small">mdi-flash-off-outline</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
 
                   <v-list-item-title>Disable from analyzer</v-list-item-title>
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
-                  <v-list-item-icon>
+                  <v-list-item>
                     <v-icon size="small">mdi-delete</v-icon>
-                  </v-list-item-icon>
+                  </v-list-item>
                   <v-list-item-title>Delete Rule</v-list-item-title>
                 </v-list-item>
               </v-list-item-group>
