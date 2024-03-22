@@ -35,11 +35,11 @@ limitations under the License.
       People with access
       <v-list>
         <v-list-item>
-          <v-list-item-avatar>
+          <v-list-item>
             <v-avatar color="grey-lighten-1" size="32">
               <span class="text-white">{{ $filters.initialLetter(sketch.user.username) }}</span>
             </v-avatar>
-          </v-list-item-avatar>
+          </v-list-item>
 
             <v-list-item-title v-text="sketch.user.username"></v-list-item-title>
 
@@ -47,11 +47,11 @@ limitations under the License.
           <small>Owner</small>
         </v-list-item>
         <v-list-item v-for="user in meta.collaborators.users" :key="user">
-          <v-list-item-avatar>
+          <v-list-item>
             <v-avatar color="grey-lighten-1" size="32">
               <span class="text-white">{{ $filters.initialLetter(user) }}</span>
             </v-avatar>
-          </v-list-item-avatar>
+          </v-list-item>
 
             <v-list-item-title v-text="user"></v-list-item-title>
 
@@ -59,9 +59,11 @@ limitations under the License.
           <v-icon @click="revokeAccess(user, '')">mdi-trash-can-outline</v-icon>
         </v-list-item>
         <v-list-item v-for="group in meta.collaborators.groups" :key="group">
-          <v-list-item-avatar>
-            <v-icon>mdi-account-group-outline</v-icon>
-          </v-list-item-avatar>
+          <v-list-item>
+            <v-avatar :rounded="0">
+                <v-icon>mdi-account-group-outline</v-icon>
+            </v-avatar>
+          </v-list-item>
 
             <v-list-item-title v-text="group"></v-list-item-title>
 

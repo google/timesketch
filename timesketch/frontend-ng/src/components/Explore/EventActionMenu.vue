@@ -21,21 +21,21 @@ limitations under the License.
       </template>
       <v-list density="compact" class="mx-auto">
         <v-list-item style="cursor: pointer" @click="copyEventUrlToClipboard()">
-          <v-list-item-icon>
+          <v-list-item>
             <v-icon size="small">mdi-link-variant</v-icon>
-          </v-list-item-icon>
+          </v-list-item>
           <v-list-item-title>Copy link to event</v-list-item-title>
         </v-list-item>
         <v-list-item style="cursor: pointer" @click="copyEventAsJSON()">
-          <v-list-item-icon>
+          <v-list-item>
             <v-icon size="small">mdi-code-json</v-icon>
-          </v-list-item-icon>
+          </v-list-item>
           <v-list-item-title>Copy event data as JSON</v-list-item-title>
         </v-list-item>
         <v-list-item style="cursor: pointer" @click="showContextWindow()">
-          <v-list-item-icon>
+          <v-list-item>
             <v-icon size="small">mdi-magnify-plus-outline</v-icon>
-          </v-list-item-icon>
+          </v-list-item>
           <v-list-item-title>Context search</v-list-item-title>
         </v-list-item>
       </v-list>

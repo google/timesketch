@@ -49,14 +49,14 @@ limitations under the License.
       </v-sheet>
     </div>
     <div v-if="eventList.objects.length || searchInProgress">
-      <v-data-table
+      <v-data-table-server
         v-model="selectedEvents"
         :headers="headers"
         :items="eventList.objects"
         :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
         :loading="searchInProgress"
         :options.sync="tableOptions"
-        :server-items-length="totalHitsForPagination"
+        :items-length="totalHitsForPagination"
         item-key="_id"
         loading-text="Searching... Please wait"
         show-select
@@ -176,8 +176,8 @@ limitations under the License.
                 </template>
 
                 <v-card variant="outlined" max-width="475" class="mx-auto">
-                  <v-list subheader lines="two" flat density="compact">
-                    <v-subheader>Density</v-subheader>
+                  <v-list lines="two" flat density="compact">
+                    <v-list-subheader>Density</v-list-subheader>
 
                     <v-list-item-group>
                       <v-list-item :ripple="false">
@@ -213,7 +213,7 @@ limitations under the License.
                     <v-divider></v-divider>
 
                     <v-list subheader lines="two" flat>
-                      <v-subheader>Misc</v-subheader>
+                      <v-list-subheader>Misc</v-list-subheader>
                       <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
@@ -416,7 +416,7 @@ limitations under the License.
             </v-btn>
           </div>
         </template>
-      </v-data-table>
+      </v-data-table-server>
     </div>
   </div>
 </template>

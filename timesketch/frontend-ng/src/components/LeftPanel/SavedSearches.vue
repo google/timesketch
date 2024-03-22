@@ -63,15 +63,15 @@ limitations under the License.
                 </template>
                 <v-list density="compact" class="mx-auto">
                   <v-list-item style="cursor: pointer" @click="copySavedSearchIdToClipboard(savedSearch.id)">
-                    <v-list-item-icon>
+                    <v-list-item>
                       <v-icon size="small">mdi-identifier</v-icon>
-                    </v-list-item-icon>
+                    </v-list-item>
                     <v-list-item-title>Copy saved search ID</v-list-item-title>
                   </v-list-item>
                   <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
-                    <v-list-item-icon>
+                    <v-list-item>
                       <v-icon size="small">mdi-link-variant</v-icon>
-                    </v-list-item-icon>
+                    </v-list-item>
                     <v-list-item-title>Copy link to this search</v-list-item-title>
                   </v-list-item>
                 </v-list>
