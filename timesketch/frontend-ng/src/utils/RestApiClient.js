@@ -501,6 +501,7 @@ export default {
       url: url,
     }
     return RestApiClient.post('/unfurl/', formData)
+  },
   getUserSettings() {
     return RestApiClient.get('/users/me/settings/')
   },
