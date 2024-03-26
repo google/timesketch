@@ -146,10 +146,17 @@ def create_app(config=None, legacy_ui=False):
     for route in V1_API_ROUTES:
         api_v1.add_resource(*route)
 
-    # If a request hits this route, it means the requested endpoint doesn't exist
+    # Returns 404 for invalid api routes
     @app.route('/api/v1/<path:path>')
     def handle_invalid_route(path):
-        return jsonify({'error': 'Not found'}), 404
+        """If a request hits this route, that requested endpoint does not exist.
+
+        Returns:
+            HTTP response object (instance of jsonify)        
+        """
+        return jsonify({'Error 404': 
+            'The requested URL was not found on the server. '
+            'If you entered the URL manually please check your spelling and try again.'}), 404
 
     # Register error handlers
     # pylint: disable=unused-variable
@@ -161,11 +168,6 @@ def create_app(config=None, legacy_ui=False):
             HTTP response object (instance of flask.wrappers.Response)
         """
         return error.build_response()
-
-
-
-
-
 
     # Setup the login manager.
     login_manager = LoginManager()
