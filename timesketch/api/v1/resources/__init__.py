@@ -41,6 +41,11 @@ class ResourceMixin(object):
     # Schemas for database model resources
     group_fields = {"name": fields.String}
 
+    user_profile_fields = {
+        "picture_url": fields.String,
+        "picture_filename": fields.String,
+    }
+
     user_fields = {
         "id": fields.Integer,
         "username": fields.String,
@@ -49,6 +54,7 @@ class ResourceMixin(object):
         "admin": fields.Boolean,
         "active": fields.Boolean,
         "groups": fields.Nested(group_fields),
+        "profile": fields.Nested(user_profile_fields),
     }
 
     aggregation_fields = {
@@ -341,6 +347,7 @@ class ResourceMixin(object):
         "searchtemplate": searchtemplate_fields,
         "view": view_fields,
         "user": user_fields,
+        "userprofile": user_profile_fields,
         "graph": graph_fields,
         "graphcache": graphcache_fields,
         "group": group_fields,

@@ -501,5 +501,11 @@ export default {
       url: url,
     }
     return RestApiClient.post('/unfurl/', formData)
+  getUserSettings() {
+    return RestApiClient.get('/users/me/settings/')
+  },
+  saveUserSettings(settings) {
+    let formData = { settings: settings }
+    return RestApiClient.post('/users/me/settings/', formData)
   },
 }

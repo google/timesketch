@@ -12,8 +12,6 @@
 #       re_flags: []
 #       emojis: []
 #       tags: []
-#       create_view: False
-#       aggregate: False
 #       overwrite_store_as: True
 #       overwrite_and_merge_store_as: False
 #       store_type_list: False
@@ -36,13 +34,6 @@
 # The field store_as defines the name of the attribute the feature is
 # stored as.
 #
-# The create_view is an optional boolean that determines whether a view
-# should be created if there are hits.
-#
-# The aggregate is an optional boolean that determines if we want to
-# create an aggregation of the results and store it (ATM this does
-# nothing, but once aggregations are supported it will).
-#
 # The overwrite_store_as is an optional boolean that determines if
 # we want to overwrite the field store_as if it already exists.
 #
@@ -59,8 +50,6 @@
 # the regular expression is run against the attribute to extract a value.
 # The first value extracted is then stored inside the "store_as" attribute.
 # If there are emojis or tags defined they are also applied to that event.
-# In the end, if a view is supposed to be created a view searching for
-# the added tag is added (only if there are results).
 # ------------------------------------------------------------------------
 
 email_addresses:
@@ -69,7 +58,7 @@ email_addresses:
         store_as: 'email_address'
         re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
         re_flags: []
-        aggregate: True
+        tags: ['email-address']
 
 gmail_accounts:
         query_string: 'source_short:"WEBHIST" AND url:"mail.google.com"'
@@ -77,7 +66,6 @@ gmail_accounts:
         store_as: 'found_account'
         re: '[a-zA-Z0-9_\.+\-]+@(gmail|googlemail)\.com'
         re_flags: []
-        aggregate: True
         tags: ['gmail-account']
         emojis: ['ID_BUTTON']
 
@@ -88,7 +76,6 @@ github_accounts:
         store_as: 'found_account'
         re: 'https://github.com/users/([A-z-\d]{1,39})'
         re_flags: []
-        aggregate: True
         tags: ['github-account']
         emojis: ['ID_BUTTON']
 
@@ -99,7 +86,6 @@ linkedin_accounts:
         attribute: 'url'
         store_as: 'found_account'
         re: 'https://www.linkedin.com/in/([A-z-\d]{5,32})/edit/'
-        aggregate: True
         tags: ['linkedin-account']
         emojis: ['ID_BUTTON']
 
