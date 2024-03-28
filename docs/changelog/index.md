@@ -7,6 +7,31 @@ hide:
 
 # Changelog
 
+
+## Version 20240328
+Released: 2024-03-28
+
+### ⚠️ Note
+Upgrading to this Timesketch version requires a database upgrade!
+
+See https://timesketch.org/guides/admin/upgrade/ for more details.
+
+### What's Changed
+#### ✨ Features
+
+* DFIQ new UI and navigation by @berggren in [#3041](https://github.com/google/timesketch/pull/3041)
+* User profile and settings support by @berggren in [3048](https://github.com/google/timesketch/pull/3048)
+* Enhancements to Yeti indicators by @tomchop in [3038](https://github.com/google/timesketch/pull/3038)
+
+#### 🐞 Fixes
+
+* Improvements to the sigma handling by @tomchop in [3050](https://github.com/google/timesketch/pull/3050)
+* Update run_analyzers in the api client by @jkppr in [3037](https://github.com/google/timesketch/pull/3037)
+* Fix a bug in the feature_extraction analyzer by @jkppr in [3047](https://github.com/google/timesketch/pull/3047)
+
+
+**Full Changelog**: [20240207...20240328](https://github.com/google/timesketch/compare/20240207...20240328)
+
 ## Version 20240207
 Released: 2024-02-07
 
