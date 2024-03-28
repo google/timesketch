@@ -815,9 +815,9 @@ export default {
       }
 
       // Get DFIQ context
-      formData['scenario'] = this.activeContext.scenario.id
-      formData['facet'] = this.activeContext.facet.id
-      formData['question'] = this.activeContext.question.id
+      formData['scenario'] = this.activeContext.scenarioId
+      formData['facet'] = this.activeContext.facetId
+      formData['question'] = this.activeContext.questionId
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {

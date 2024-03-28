@@ -17,24 +17,6 @@ limitations under the License.
   <v-container fluid>
     <!-- Right side menu -->
     <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
-    <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
-      <template v-slot:prepend>
-        <v-toolbar flat>
-          <v-toolbar-title>Right Side Panel</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn icon @click="showRightSidePanel = false">
-            <v-icon title="Close sidepanel">mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-      </template>
-      <v-container> TODO: Add content here </v-container>
-    </v-navigation-drawer>
-
-    <!-- DFIQ context -->
-    <ts-scenario-context-card
-      class="pt-0 mt-n2 mb-7"
-      v-if="activeContext.question.display_name"
-    ></ts-scenario-context-card>
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
@@ -318,7 +300,6 @@ import TsFilterMenu from '../components/Explore/FilterMenu.vue'
 import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
 import TsEventList from '../components/Explore/EventList.vue'
-import TsScenarioContextCard from '../components/Scenarios/ContextCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -344,7 +325,6 @@ export default {
     TsUploadTimelineFormButton,
     TsAddManualEvent,
     TsEventList,
-    TsScenarioContextCard,
   },
   props: ['sketchId'],
   data() {
@@ -460,10 +440,17 @@ export default {
       // Preserve user defined item count instead of resetting.
       this.currentQueryFilter.size = this.currentItemsPerPage
       this.currentQueryFilter.terminate_after = this.currentItemsPerPage
+
+      // Run the search
       if (searchEvent.doSearch) {
-        this.search()
+        if (searchEvent.incognito) {
+          this.search(true, true)
+        } else {
+          this.search()
+        }
       }
     },
+
     search: function (resetPagination = true, incognito = false, parent = false) {
       let queryRequest = {}
       queryRequest['queryString'] = this.currentQueryString

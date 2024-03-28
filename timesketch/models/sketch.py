@@ -73,6 +73,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
     analysissessions = relationship("AnalysisSession", backref="sketch", lazy="select")
     searchhistories = relationship("SearchHistory", backref="sketch", lazy="dynamic")
     scenarios = relationship("Scenario", backref="sketch", lazy="dynamic")
+    facets = relationship("Facet", backref="sketch", lazy="dynamic")
+    questions = relationship("InvestigativeQuestion", backref="sketch", lazy="dynamic")
 
     @property
     def get_named_aggregations(self):
@@ -487,7 +489,9 @@ class SearchHistory(LabelMixin, BaseModel):
         node_dict["query_string"] = node.query_string
         node_dict["query_filter"] = node.query_filter
         node_dict["query_dsl"] = node.query_dsl
-        node_dict["scenario_id"] = node.scenario_id
+        node_dict["scenario"] = node.scenario_id
+        node_dict["facet"] = node.facet_id
+        node_dict["question"] = node.question_id
         node_dict["children"] = []
         return node_dict
 
@@ -537,6 +541,7 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, Bas
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
     facets = relationship("Facet", backref="scenario", lazy="select")
+    questions = relationship("InvestigativeQuestion", backref="scenario", lazy="select")
     search_histories = relationship("SearchHistory", backref="scenario", lazy="select")
 
 
@@ -635,6 +640,7 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
     description = Column(UnicodeText())
     dfiq_identifier = Column(UnicodeText())
     spec_json = Column(UnicodeText())
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
     scenario_id = Column(Integer, ForeignKey("scenario.id"))
     timeframes = relationship("FacetTimeFrame", backref="facet", lazy="select")
@@ -730,8 +736,10 @@ class InvestigativeQuestion(
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     dfiq_identifier = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey("user.id"))
     spec_json = Column(UnicodeText())
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    scenario_id = Column(Integer, ForeignKey("scenario.id"))
     facet_id = Column(Integer, ForeignKey("facet.id"))
     approaches = relationship(
         "InvestigativeQuestionApproach",

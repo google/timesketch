@@ -357,7 +357,7 @@ class ResourceMixin(object):
         "event_label": label_fields,
         "Investigativequestionapproach": approach_fields,
         "investigativequestionconclusion": question_conclusion_fields,
-        "investigative_question": question_fields,
+        "investigativequestion": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
         "sigmarule": sigmarule_fields,
