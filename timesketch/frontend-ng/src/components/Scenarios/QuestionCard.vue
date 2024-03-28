@@ -509,6 +509,9 @@ export default {
       this.$store.dispatch('setActiveContext', payload)
     },
     toHtml(markdown) {
+      if (!markdown) {
+        return
+      }
       return DOMPurify.sanitize(marked(markdown))
     },
     getDfiqQuestionUrl(id) {
