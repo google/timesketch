@@ -54,7 +54,6 @@ class InvalidResourceTest(BaseTest):
         response = self.client.get(self.invalid_resource_url)
         self.assert404(response)
 
-
 class SketchListResourceTest(BaseTest):
     """Test SketchListResource."""
 
