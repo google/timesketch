@@ -43,6 +43,17 @@ class ResourceMixinTest(BaseTest):
             },
         )
 
+class InvalidResourceTest(BaseTest):
+    """Test an Invalid Resource."""
+
+    invalid_resource_url = "api/v1/invalidresource"
+    
+    def test_invalid_endpoint(self):
+        """Authenticated request to get a non existant API endpoint"""
+        self.login()
+        response = self.client.get(self.invalid_resource_url)
+        self.assert404(response)
+
 
 class SketchListResourceTest(BaseTest):
     """Test SketchListResource."""
