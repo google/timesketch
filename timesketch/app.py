@@ -21,10 +21,12 @@ import sys
 
 import six
 
-from flask import Flask, jsonify
+from flask import Flask
+from flask import jsonify
 from celery import Celery
 
-from flask_login import LoginManager, login_required
+from flask_login import LoginManager
+from flask_login import login_required
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
@@ -156,7 +158,7 @@ def create_app(config=None, legacy_ui=False):
             HTTP response object (instance of jsonify)        
         """
         return jsonify({'Error 404': 
-            'The requested URL was not found on the server. '
+            'The requested URL was not found on the server.'
             'If you entered the URL manually please check your spelling and try again.'}), 404
     
     # Register error handlers
