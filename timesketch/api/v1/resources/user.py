@@ -16,6 +16,7 @@ import json
 import logging
 
 from flask import abort
+from flask import jsonify
 from flask import request
 from flask_restful import Resource
 from flask_login import login_required
@@ -28,6 +29,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
+from timesketch.models.user import UserProfile
 from timesketch.models.user import Group
 
 
@@ -154,6 +156,40 @@ class LoggedInUserResource(resources.ResourceMixin, Resource):
         db_session.add(current_user)
         db_session.commit()
         return HTTP_STATUS_CODE_OK
+
+
+class UserSettingsResource(resources.ResourceMixin, Resource):
+    """Settings for the logged in user."""
+
+    @login_required
+    def get(self):
+        """Get profile for the logged in user.
+
+        Returns:
+            User profile as json
+        """
+        profile = UserProfile.get_or_create(user=current_user)
+        settings = json.loads(profile.settings)
+        schema = {"objects": [settings], "meta": {}}
+        return jsonify(schema)
+
+    @login_required
+    def post(self):
+        """Create or update the logged in user's settings.
+
+        Returns:
+            User settings as json
+        """
+        profile = UserProfile.get_or_create(user=current_user)
+        settings = json.loads(profile.settings)
+        form = request.json
+
+        form_settings = form.get("settings", {})
+        settings.update(form_settings)
+        profile.settings = json.dumps(settings)
+
+        db_session.add(profile)
+        db_session.commit()
 
 
 class CollaboratorResource(resources.ResourceMixin, Resource):

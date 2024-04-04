@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for sigma_util score."""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -188,7 +189,6 @@ falsepositives:
 level: high
 """
         )
-
         self.assertIsNotNone(rule)
         self.assertEqual(
             '("Whitespace at" OR " beginning " OR " and extra text ")',
@@ -283,7 +283,7 @@ detection:
         self.assertIsNotNone(rule)
         self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
-            r'("aaa:bbb" OR "ccc\:\:ddd")',
+            '("aaa:bbb" OR "ccc\\:\\:ddd")',
             rule.get("search_query"),
         )
 
@@ -461,7 +461,7 @@ detection:
         )
         self.assertIsNotNone(rule)
         self.assertEqual(
-            r'("onlyoneterm" OR "two words" OR "completely new term")',
+            '("onlyoneterm" OR "two words" OR "completely new term")',
             rule.get("search_query"),
         )
 
