@@ -13,7 +13,7 @@
 # limitations under the License.
 """This module implements the user model."""
 
-from __future__ import unicode_literals
+# from __future__ import unicode_literals
 
 import codecs
 
@@ -57,6 +57,7 @@ class User(UserMixin, BaseModel):
     active = Column(Boolean(), default=True)
     admin = Column(Boolean(), default=False)
     # Relationships
+    profile = relationship("UserProfile", backref="user", lazy="dynamic")
     sketches = relationship("Sketch", backref="user", lazy="dynamic")
     analyses = relationship("Analysis", backref="user", lazy="dynamic")
     analysissessions = relationship("AnalysisSession", backref="user", lazy="dynamic")
@@ -116,6 +117,15 @@ class User(UserMixin, BaseModel):
             stored password hash.
         """
         return check_password_hash(self.password, plaintext)
+
+
+class UserProfile(BaseModel):
+    """Implements the User profile model."""
+
+    picture_url = Column(Unicode(255))
+    picture_filename = Column(Unicode(255))
+    settings = Column(UnicodeText(), default="{}")
+    user_id = Column(Integer, ForeignKey("user.id"))
 
 
 class Group(LabelMixin, StatusMixin, BaseModel):

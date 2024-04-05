@@ -126,7 +126,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if question_id:
             question = InvestigativeQuestion.get_by_id(question_id)
             if question:
-                if question.facet.scenario.sketch_id != sketch.id:
+                if question.sketch_id != sketch.id:
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         "Question is not part of this sketch.",
@@ -323,7 +323,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         comments = {}
         if "comment" in return_fields:
-            events = Event.query.filter_by(sketch=sketch).all()
+            events = Event.get_with_comments(sketch=sketch)
             for event in events:
                 for comment in event.comments:
                     comments.setdefault(event.document_id, [])
@@ -384,7 +384,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             # Add DFIQ context
             new_search.scenario = scenario
             new_search.facet = facet
-            new_search.question = question
+            new_search.investigativequestion = question
 
             if previous_search:
                 new_search.parent = previous_search
@@ -489,6 +489,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("limit", type=int, required=False, location="args")
+        self.parser.add_argument("question", type=int, required=False, location="args")
 
     @login_required
     def get(self, sketch_id):
@@ -503,6 +504,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         # How many results to return (12 if nothing is specified)
         args = self.parser.parse_args()
         limit = args.get("limit")
+        question_id = args.get("question")
 
         if not limit:
             limit = DEFAULT_LIMIT
@@ -512,12 +514,29 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         result = []
-        nodes = (
-            SearchHistory.query.filter_by(user=current_user, sketch=sketch)
-            .order_by(SearchHistory.id.desc())
-            .limit(SQL_LIMIT)
-            .all()
-        )
+
+        if question_id:
+            question = InvestigativeQuestion.get_by_id(question_id)
+            if question.sketch.id != sketch.id:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    "No question found with this ID for this sketch.",
+                )
+            nodes = (
+                SearchHistory.query.filter_by(
+                    user=current_user, sketch=sketch, investigativequestion=question
+                )
+                .order_by(SearchHistory.id.desc())
+                .limit(SQL_LIMIT)
+                .all()
+            )
+        else:
+            nodes = (
+                SearchHistory.query.filter_by(user=current_user, sketch=sketch)
+                .order_by(SearchHistory.id.desc())
+                .limit(SQL_LIMIT)
+                .all()
+            )
 
         uniq_queries = set()
         count = 0

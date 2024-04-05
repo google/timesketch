@@ -15,12 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-chip v-if="type === 'chip'" x-small @click="search(queryString)">
+    <v-chip v-if="type === 'chip'" small @click="search(queryString)">
+      <v-icon class="mr-1" small>mdi-magnify</v-icon>
       {{ displayName }}
     </v-chip>
-    <div v-if="type === 'link'" @click="search(queryString)" style="cursor: pointer; font-size: 0.9em">
+    <div v-if="type === 'link'" @click="search(queryString)" style="cursor: pointer">
       <v-row no-gutters class="pa-1" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <span>
+        <span style="font-size: 0.9em">
           <v-icon small>mdi-magnify</v-icon>
           {{ displayName }}</span
         >
