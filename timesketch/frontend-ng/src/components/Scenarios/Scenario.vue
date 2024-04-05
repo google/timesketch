@@ -56,7 +56,7 @@ limitations under the License.
             </v-form>
           </v-card>
         </v-dialog>
-        <v-menu offset-y :close-on-content-click="true">
+        <v-menu :close-on-content-click="true">
           <template v-slot:activator="{ props }">
             <v-btn v-bind="props" class="ml-1" size="small" icon >
               <v-icon>mdi-dots-vertical</v-icon>

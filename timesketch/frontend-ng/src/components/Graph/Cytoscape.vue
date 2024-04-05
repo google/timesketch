@@ -67,7 +67,7 @@ limitations under the License.
           </v-btn>
 
           <!-- Graph settings menu -->
-          <v-menu offset-y :close-on-content-click="false" :persistent="!(true)" content-class="menu-with-gap">
+          <v-menu :close-on-content-click="false" :persistent="!(true)" content-class="menu-with-gap">
             <template v-slot:activator="{ props }">
               <v-btn v-bind="props" icon :disabled="!currentGraph || !graphPluginName" >
                 <v-icon title="Graph settings">mdi-cog-outline</v-icon>

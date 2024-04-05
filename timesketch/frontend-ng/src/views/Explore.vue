@@ -43,7 +43,7 @@ limitations under the License.
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
         </v-sheet>
 
-        <v-menu v-model="showSearchDropdown" offset-y attach :close-on-content-click="false" :persistent="!(true)">
+        <v-menu v-model="showSearchDropdown" attach :close-on-content-click="false" :persistent="!(true)">
           <template v-slot:activator="{ props }">
             <v-text-field
               v-bind="props"
@@ -172,7 +172,7 @@ limitations under the License.
       <!-- Time filter chips -->
       <div>
         <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-          <v-menu offset-y content-class="menu-with-gap">
+          <v-menu content-class="menu-with-gap">
             <template v-slot:activator="{ props }">
               <v-chip v-bind="props" variant="outlined">
                 <v-icon start size="small"> mdi-clock-outline </v-icon>
@@ -188,7 +188,6 @@ limitations under the License.
               <v-list>
                 <!-- Edit timefilter menu -->
                 <v-menu
-                  offset-y
                   :close-on-content-click="false"
                   :persistent="!(true)"
                   nudge-top="70"
@@ -236,7 +235,6 @@ limitations under the License.
         <span>
           <v-menu
             v-model="timeFilterMenu"
-            offset-y
             :close-on-content-click="false"
             :persistent="!(true)"
             content-class="menu-with-gap"

@@ -195,7 +195,7 @@ limitations under the License.
                 Text
               </v-btn>
               <!-- Saved Search selector -->
-              <v-menu offset-y v-model="block.showSavedSearchMenu">
+              <v-menu v-model="block.showSavedSearchMenu">
                 <template v-slot:activator="{ props }">
                   <v-btn v-bind="props" class="mr-2" rounded variant="outlined" size="small" :disabled="!meta.views.length" >
                     <v-icon start size="small">mdi-plus</v-icon>
@@ -210,7 +210,7 @@ limitations under the License.
                   </v-list>
                 </v-card>
               </v-menu>
-              <v-menu offset-y v-model="block.showGraphMenu">
+              <v-menu v-model="block.showGraphMenu">
                 <template v-slot:activator="{ props }">
                   <v-btn v-bind="props" rounded variant="outlined" size="small" :disabled="!graphPlugins.length" >
                     <v-icon start size="small">mdi-plus</v-icon>

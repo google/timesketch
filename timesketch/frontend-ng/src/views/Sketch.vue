@@ -112,7 +112,7 @@ limitations under the License.
         <v-avatar color="grey-lighten-1" size="25" class="ml-3">
           <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
         </v-avatar>
-        <v-menu offset-y>
+        <v-menu>
           <template v-slot:activator="{ props }">
             <v-avatar>
               <v-btn v-bind="props" size="small" icon >

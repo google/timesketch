@@ -55,7 +55,7 @@ limitations under the License.
               <v-btn icon size="x-small" style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
                 <v-icon title="Copy link to this search" size="small" v-show="key == c_key">mdi-link-variant</v-icon>
               </v-btn>
-              <v-menu offset-y>
+              <v-menu>
                 <template v-slot:activator="{ props }">
                   <v-btn v-bind="props"  size="small" icon class="mr-1">
                     <v-icon title="More actions" size="small">mdi-dots-vertical</v-icon>

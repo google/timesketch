@@ -168,7 +168,7 @@ limitations under the License.
                 <v-icon title="Download current view as CSV">mdi-download</v-icon>
               </v-btn>
 
-              <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
+              <v-menu v-if="!disableSettings" :close-on-content-click="false">
                 <template v-slot:activator="{ props }">
                   <v-btn v-bind="props" icon>
                     <v-icon title="View settings">mdi-dots-horizontal</v-icon>

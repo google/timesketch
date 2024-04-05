@@ -32,7 +32,7 @@ limitations under the License.
       </v-col>
 
       <v-col cols="1">
-        <v-menu offset-y>
+        <v-menu>
           <template v-slot:activator="{ props }">
             <v-btn v-bind="props" size="small" icon >
               <v-icon title="Manage Sigma rule" size="small">mdi-dots-vertical</v-icon>
