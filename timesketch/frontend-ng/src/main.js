@@ -59,7 +59,7 @@ app.use(vuetify)
 // appComponents.forEach(([name, config]) => app.component(name, config))
 
 // Third party
-app.use(require('vue-moment'))
+// app.use(require('vue-moment'))
 
 // Disable warning during development
 // Vue.config.productionTip = false

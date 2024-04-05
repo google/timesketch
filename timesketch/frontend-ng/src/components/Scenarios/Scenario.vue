@@ -56,7 +56,7 @@ limitations under the License.
             </v-form>
           </v-card>
         </v-dialog>
-        <v-menu offset-y :close-on-content-click="true">
+        <v-menu :close-on-content-click="true">
           <template v-slot:activator="{ props }">
             <v-btn v-bind="props" class="ml-1" size="small" icon >
               <v-icon>mdi-dots-vertical</v-icon>
@@ -64,41 +64,39 @@ limitations under the License.
           </template>
           <v-card>
             <v-list density="compact">
-              <v-list-item-group color="primary">
-                <v-list-item @click="copyScenario(scenario.dfiq_identifier)">
-                  <v-list-item>
-                    <v-icon size="small">mdi-content-copy</v-icon>
-                  </v-list-item>
-
-                    <v-list-item-title>Make a copy</v-list-item-title>
-
+              <v-list-item @click="copyScenario(scenario.dfiq_identifier)">
+                <v-list-item>
+                  <v-icon size="small">mdi-content-copy</v-icon>
                 </v-list-item>
 
-                <v-list-item @click.stop="renameDialog = true">
-                  <v-list-item>
-                    <v-icon size="small">mdi-pencil</v-icon>
-                  </v-list-item>
+                  <v-list-item-title>Make a copy</v-list-item-title>
 
-                    <v-list-item-title>Rename</v-list-item-title>
+              </v-list-item>
 
+              <v-list-item @click.stop="renameDialog = true">
+                <v-list-item>
+                  <v-icon size="small">mdi-pencil</v-icon>
                 </v-list-item>
-                <v-list-item v-if="is_hidden" @click="setStatus('active')">
-                  <v-list-item>
-                    <v-icon size="small">mdi-eye</v-icon>
-                  </v-list-item>
 
-                    <v-list-item-title>Reactivate</v-list-item-title>
+                  <v-list-item-title>Rename</v-list-item-title>
 
+              </v-list-item>
+              <v-list-item v-if="is_hidden" @click="setStatus('active')">
+                <v-list-item>
+                  <v-icon size="small">mdi-eye</v-icon>
                 </v-list-item>
-                <v-list-item v-else @click="setStatus('hidden')">
-                  <v-list-item>
-                    <v-icon size="small">mdi-eye-off</v-icon>
-                  </v-list-item>
 
-                    <v-list-item-title>Hide from list</v-list-item-title>
+                  <v-list-item-title>Reactivate</v-list-item-title>
 
+              </v-list-item>
+              <v-list-item v-else @click="setStatus('hidden')">
+                <v-list-item>
+                  <v-icon size="small">mdi-eye-off</v-icon>
                 </v-list-item>
-              </v-list-item-group>
+
+                  <v-list-item-title>Hide from list</v-list-item-title>
+
+              </v-list-item>
             </v-list>
           </v-card>
         </v-menu>

@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <span>
-    <v-menu v-model="showMenu" offset-y transition="slide-y-transition">
+    <v-menu v-model="showMenu" transition="slide-y-transition">
       <template v-slot:activator="{ props }">
         <v-icon v-bind="props" title="Event Action Menu" class="ml-1">mdi-dots-vertical</v-icon>
       </template>

@@ -149,7 +149,7 @@ export default {
       }
 
       this.triggered.forEach(analyzer => analyzerSet.has(analyzer) ? null : analyzerSet.add(analyzer))
-      this.resetTriggeredAnalyzers()
+      // this.resetTriggeredAnalyzers()
 
       return analyzerSet
 

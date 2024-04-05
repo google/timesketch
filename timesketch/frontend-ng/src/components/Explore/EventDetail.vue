@@ -83,7 +83,7 @@ limitations under the License.
                       <v-icon size="small" title="Copy attribute value">mdi-content-copy</v-icon>
                     </v-btn>
                     <!-- Context link submenu -->
-                    <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
+                    <v-menu v-if="checkContextLinkDisplay(key, value)" transition="slide-y-transition">
                       <template v-slot:activator="{ props }">
                         <v-btn v-bind="props" icon color="primary" size="x-small" style="cursor: pointer">
                           <v-icon title="Context Lookup" size="small"> mdi-open-in-new </v-icon>

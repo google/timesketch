@@ -76,7 +76,7 @@ limitations under the License.
 
           <v-card variant="outlined" v-if="percentComplete > 0.1">
             <v-card-title>{{ eventsPerSecond.slice(-1)[0] }} events/s</v-card-title>
-            <v-sparkline
+            <!-- <v-sparkline
               :value="eventsPerSecond"
               :gradient="sparkline.gradient"
               :smooth="sparkline.radius || false"
@@ -89,7 +89,7 @@ limitations under the License.
               :auto-line-width="sparkline.autoLineWidth"
               auto-draw
             >
-            </v-sparkline>
+            </v-sparkline> -->
             <v-sheet class="py-4 px-3">
               <v-progress-linear color="light-blue" height="25" :model-value="percentComplete" rounded>
                 {{ percentComplete }}% (complete {{ processingETA() }})
@@ -108,7 +108,6 @@ limitations under the License.
 
     <v-menu
       v-else
-      offset-y
       max-width="385"
       :close-on-content-click="false"
       content-class="menu-with-gap"

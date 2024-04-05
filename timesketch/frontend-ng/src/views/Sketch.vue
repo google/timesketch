@@ -24,11 +24,9 @@ limitations under the License.
       <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4" style="background: transparent">
-            <center>
-              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
-              <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
-              <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
-            </center>
+            <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+            <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
+            <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
           </v-sheet>
         </v-row>
       </v-container>
@@ -37,11 +35,9 @@ limitations under the License.
       <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4">
-            <center>
-              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
-              <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
-              <v-btn rounded variant="flat" color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
-            </center>
+            <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+            <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
+            <v-btn rounded variant="flat" color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
           </v-sheet>
         </v-row>
       </v-container>
@@ -116,7 +112,7 @@ limitations under the License.
         <v-avatar color="grey-lighten-1" size="25" class="ml-3">
           <span class="text-white">{{ this.$filters.initialLetter(currentUser) }}</span>
         </v-avatar>
-        <v-menu offset-y>
+        <v-menu>
           <template v-slot:activator="{ props }">
             <v-avatar>
               <v-btn v-bind="props" size="small" icon >
@@ -155,64 +151,62 @@ limitations under the License.
             </v-list>
 
             <v-list>
-              <v-list-item-group color="primary">
-                <v-list-item v-on:click="toggleTheme">
-                  <v-list-item>
-                    <v-icon>mdi-brightness-6</v-icon>
-                  </v-list-item>
-
-                    <v-list-item-title>Toggle theme</v-list-item-title>
-
+              <v-list-item v-on:click="toggleTheme">
+                <v-list-item>
+                  <v-icon>mdi-brightness-6</v-icon>
                 </v-list-item>
 
-                <v-list-item @click="renameSketchDialog = true">
-                  <v-list-item>
-                    <v-icon>mdi-pencil</v-icon>
-                  </v-list-item>
+                  <v-list-item-title>Toggle theme</v-list-item-title>
 
-                    <v-list-item-title>Rename sketch</v-list-item-title>
+              </v-list-item>
 
+              <v-list-item @click="renameSketchDialog = true">
+                <v-list-item>
+                  <v-icon>mdi-pencil</v-icon>
                 </v-list-item>
 
-                <v-list-item @click="archiveSketch()" :disabled="isArchived">
-                  <v-list-item>
-                    <v-icon>mdi-archive</v-icon>
-                  </v-list-item>
+                  <v-list-item-title>Rename sketch</v-list-item-title>
 
-                    <v-list-item-title>Archive sketch</v-list-item-title>
+              </v-list-item>
 
+              <v-list-item @click="archiveSketch()" :disabled="isArchived">
+                <v-list-item>
+                  <v-icon>mdi-archive</v-icon>
                 </v-list-item>
 
-                <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
-                  <v-list-item>
-                    <v-icon>mdi-trash-can-outline</v-icon>
-                  </v-list-item>
+                  <v-list-item-title>Archive sketch</v-list-item-title>
 
-                    <v-list-item-title>Delete sketch</v-list-item-title>
+              </v-list-item>
 
+              <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
+                <v-list-item>
+                  <v-icon>mdi-trash-can-outline</v-icon>
                 </v-list-item>
 
-                <v-list-item v-on:click="switchUI">
-                  <v-list-item>
-                    <v-icon>mdi-view-dashboard-outline</v-icon>
-                  </v-list-item>
+                  <v-list-item-title>Delete sketch</v-list-item-title>
 
-                    <v-list-item-title>Use the old UI</v-list-item-title>
+              </v-list-item>
 
+              <v-list-item v-on:click="switchUI">
+                <v-list-item>
+                  <v-icon>mdi-view-dashboard-outline</v-icon>
                 </v-list-item>
 
-                <a href="/logout/" style="text-decoration: none; color: inherit">
+                  <v-list-item-title>Use the old UI</v-list-item-title>
+
+              </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
                   <v-list-item>
-                    <v-list-item>
-                      <v-icon>mdi-logout</v-icon>
-                    </v-list-item>
-
-
-                      <v-list-item-title>Logout</v-list-item-title>
-
+                    <v-icon>mdi-logout</v-icon>
                   </v-list-item>
-                </a>
-              </v-list-item-group>
+
+
+                    <v-list-item-title>Logout</v-list-item-title>
+
+                </v-list-item>
+              </a>
             </v-list>
           </v-card>
         </v-menu>
