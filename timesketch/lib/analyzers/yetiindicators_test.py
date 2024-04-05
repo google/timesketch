@@ -142,7 +142,7 @@ class TestYetiIndicators(BaseTest):
         message = json.loads(analyzer.run())
         self.assertEqual(
             message["result_summary"],
-            "No indicators were found in the timeline.",
+            "0/1 indicators were found in the timeline.",
         )
         mock_get_entities.assert_called_once()
         mock_get_neighbors.asset_called_once()
