@@ -24,11 +24,9 @@ limitations under the License.
       <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4" style="background: transparent">
-            <center>
-              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
-              <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
-              <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
-            </center>
+            <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+            <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
+            <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
           </v-sheet>
         </v-row>
       </v-container>
@@ -37,11 +35,9 @@ limitations under the License.
       <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4">
-            <center>
-              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
-              <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
-              <v-btn rounded variant="flat" color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
-            </center>
+            <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+            <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
+            <v-btn rounded variant="flat" color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
           </v-sheet>
         </v-row>
       </v-container>
