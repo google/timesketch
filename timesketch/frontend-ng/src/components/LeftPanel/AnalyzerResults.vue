@@ -81,6 +81,7 @@ limitations under the License.
             <template v-slot:default="props">
               <ts-analyzer-result
                 v-for="analyzer in props.items"
+                v-if="analyzer"
                 :key="analyzer.analyzerName"
                 :analyzer="analyzer"
                 :isActive="activeAnalyzers.has(analyzer.analyzerName)"
