@@ -38,36 +38,34 @@ limitations under the License.
         </template>
         <v-card>
           <v-list>
-            <v-list-item-group color="primary">
-              <v-list-item v-on:click="toggleTheme">
-                <v-list-item>
-                  <v-icon>mdi-brightness-6</v-icon>
-                </v-list-item>
-
-                  <v-list-item-title>Toggle theme</v-list-item-title>
-
-              </v-list-item>
-              <v-list-item v-on:click="switchUI">
-                <v-list-item>
-                  <v-icon>mdi-view-dashboard-outline</v-icon>
-                </v-list-item>
-
-                  <v-list-item-title>Use the old UI</v-list-item-title>
-
+            <v-list-item v-on:click="toggleTheme">
+              <v-list-item>
+                <v-icon>mdi-brightness-6</v-icon>
               </v-list-item>
 
-              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item-title>Toggle theme</v-list-item-title>
+
+            </v-list-item>
+            <v-list-item v-on:click="switchUI">
+              <v-list-item>
+                <v-icon>mdi-view-dashboard-outline</v-icon>
+              </v-list-item>
+
+                <v-list-item-title>Use the old UI</v-list-item-title>
+
+            </v-list-item>
+
+            <a href="/logout/" style="text-decoration: none; color: inherit">
+              <v-list-item>
                 <v-list-item>
-                  <v-list-item>
-                    <v-icon>mdi-logout</v-icon>
-                  </v-list-item>
-
-
-                    <v-list-item-title>Logout</v-list-item-title>
-
+                  <v-icon>mdi-logout</v-icon>
                 </v-list-item>
-              </a>
-            </v-list-item-group>
+
+
+                  <v-list-item-title>Logout</v-list-item-title>
+
+              </v-list-item>
+            </a>
           </v-list>
         </v-card>
       </v-menu>

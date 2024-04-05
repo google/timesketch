@@ -33,7 +33,7 @@ limitations under the License.
 
       <v-row v-if="showPicker">
         <v-col cols="12">
-          <date-picker
+          <VDatePicker
             v-model="dateFromPicker"
             mode="dateTime"
             ref="picker"
@@ -42,7 +42,7 @@ limitations under the License.
             is24hr
             is-date
             is-expanded
-          ></date-picker>
+          ></VDatePicker>
         </v-col>
       </v-row>
 
@@ -89,13 +89,14 @@ limitations under the License.
 
 <script>
 import dayjs from '@/plugins/dayjs'
-import DatePicker from 'v-calendar/lib/components/date-picker.umd'
+// import DatePicker from 'v-calendar/lib/components/date-picker.umd'
+import VDatePicker from 'v-calendar'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
   props: ['datetimeProp'],
   components: {
-    DatePicker,
+    VDatePicker,
   },
   data() {
     return {

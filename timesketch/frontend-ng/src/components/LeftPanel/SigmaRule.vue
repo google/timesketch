@@ -40,34 +40,32 @@ limitations under the License.
           </template>
           <v-card>
             <v-list density="compact">
-              <v-list-item-group>
-                <v-list-item :to="{ name: 'SigmaEditRule', params: { ruleId: sigmaRule.rule_uuid } }">
-                  <v-list-item>
-                    <v-icon size="small">mdi-pencil</v-icon>
-                  </v-list-item>
-                  <v-list-item-title>Edit Rule</v-list-item-title>
+              <v-list-item :to="{ name: 'SigmaEditRule', params: { ruleId: sigmaRule.rule_uuid } }">
+                <v-list-item>
+                  <v-icon size="small">mdi-pencil</v-icon>
                 </v-list-item>
-                <v-list-item v-on:click="downloadSigmaRule(sigmaRule.rule_uuid)">
-                  <v-list-item>
-                    <v-icon size="small">mdi-download</v-icon>
-                  </v-list-item>
-                  <v-list-item-title>Download Rule</v-list-item-title>
+                <v-list-item-title>Edit Rule</v-list-item-title>
+              </v-list-item>
+              <v-list-item v-on:click="downloadSigmaRule(sigmaRule.rule_uuid)">
+                <v-list-item>
+                  <v-icon size="small">mdi-download</v-icon>
+                </v-list-item>
+                <v-list-item-title>Download Rule</v-list-item-title>
+              </v-list-item>
+
+              <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
+                <v-list-item>
+                  <v-icon size="small">mdi-flash-off-outline</v-icon>
                 </v-list-item>
 
-                <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
-                  <v-list-item>
-                    <v-icon size="small">mdi-flash-off-outline</v-icon>
-                  </v-list-item>
-
-                  <v-list-item-title>Disable from analyzer</v-list-item-title>
+                <v-list-item-title>Disable from analyzer</v-list-item-title>
+              </v-list-item>
+              <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
+                <v-list-item>
+                  <v-icon size="small">mdi-delete</v-icon>
                 </v-list-item>
-                <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
-                  <v-list-item>
-                    <v-icon size="small">mdi-delete</v-icon>
-                  </v-list-item>
-                  <v-list-item-title>Delete Rule</v-list-item-title>
-                </v-list-item>
-              </v-list-item-group>
+                <v-list-item-title>Delete Rule</v-list-item-title>
+              </v-list-item>
             </v-list>
           </v-card>
         </v-menu>

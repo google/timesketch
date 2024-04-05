@@ -179,7 +179,6 @@ limitations under the License.
                   <v-list lines="two" flat density="compact">
                     <v-list-subheader>Density</v-list-subheader>
 
-                    <v-list-item-group>
                       <v-list-item :ripple="false">
                         <template>
                           <v-list-item-action>
@@ -209,12 +208,10 @@ limitations under the License.
 
                         </template>
                       </v-list-item>
-                    </v-list-item-group>
                     <v-divider></v-divider>
 
                     <v-list subheader lines="two" flat>
                       <v-list-subheader>Misc</v-list-subheader>
-                      <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
                             <v-switch density="compact" color="" v-model="displayOptions.showTags"></v-switch>
@@ -224,8 +221,6 @@ limitations under the License.
                             <v-list-item-subtitle>Show tags</v-list-item-subtitle>
 
                         </v-list-item>
-                      </v-list-item-group>
-                      <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
                             <v-switch density="compact" v-model="displayOptions.showEmojis"></v-switch>
@@ -235,8 +230,6 @@ limitations under the License.
                             <v-list-item-subtitle>Show emojis</v-list-item-subtitle>
 
                         </v-list-item>
-                      </v-list-item-group>
-                      <v-list-item-group>
                         <v-list-item :ripple="false">
                           <v-list-item-action>
                             <v-switch density="compact" v-model="displayOptions.showTimelineName"></v-switch>
@@ -246,7 +239,6 @@ limitations under the License.
                             <v-list-item-subtitle>Show timeline name</v-list-item-subtitle>
 
                         </v-list-item>
-                      </v-list-item-group>
                     </v-list>
                   </v-list>
                 </v-card>

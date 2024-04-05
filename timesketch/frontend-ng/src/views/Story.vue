@@ -204,13 +204,9 @@ limitations under the License.
                 </template>
                 <v-card width="475">
                   <v-list>
-                    <v-list-item-group color="primary">
-                      <v-list-item v-for="savedSearch in meta.views" :key="savedSearch.id">
-                        <v-list-item-content @click="addEventListBlock(savedSearch, index)">
-                          {{ savedSearch.name }}
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list-item-group>
+                    <v-list-item v-for="savedSearch in meta.views" :key="savedSearch.id" @click="addEventListBlock(savedSearch, index)">
+                        {{ savedSearch.name }}
+                    </v-list-item>
                   </v-list>
                 </v-card>
               </v-menu>
@@ -223,20 +219,14 @@ limitations under the License.
                 </template>
                 <v-card width="475">
                   <v-list>
-                    <v-list-item-group color="primary">
                       <v-list-subheader>Saved Graphs</v-list-subheader>
-                      <v-list-item v-for="savedGraph in savedGraphs" :key="savedGraph.id">
-                        <v-list-item-content @click="addSavedGraphBlock(savedGraph, index)">
-                          {{ savedGraph.name }}
-                        </v-list-item-content>
+                      <v-list-item v-for="savedGraph in savedGraphs" :key="savedGraph.id" @click="addSavedGraphBlock(savedGraph, index)">
+                        {{ savedGraph.name }}
                       </v-list-item>
                       <v-list-subheader>Plugins</v-list-subheader>
-                      <v-list-item v-for="graphPlugin in graphPlugins" :key="graphPlugin.name">
-                        <v-list-item-content @click="addGraphPluginBlock(graphPlugin, index)">
-                          {{ graphPlugin.name }}
-                        </v-list-item-content>
+                      <v-list-item v-for="graphPlugin in graphPlugins" :key="graphPlugin.name" @click="addGraphPluginBlock(graphPlugin, index)">
+                        {{ graphPlugin.name }}
                       </v-list-item>
-                    </v-list-item-group>
                   </v-list>
                 </v-card>
               </v-menu>
