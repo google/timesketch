@@ -347,6 +347,10 @@ class TimesketchApi:
 
         session = requests.Session()
 
+        # GCP IAP
+        if token := os.getenv("AUTHORIZATION_TOKEN"):
+            session.headers = {"Authorization": f"Bearer {token}"}
+
         # If using HTTP Basic auth, add the user/pass to the session
         if auth_mode == "http-basic":
             session.auth = (username, password)
