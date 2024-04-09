@@ -194,8 +194,6 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             db_session.commit()
 
             if sketch and sketch.has_permission(current_user, "write"):
-                self.datastore.import_event(index_name, event, flush_interval=1)
-
                 timeline = Timeline.get_or_create(
                     name=searchindex.name,
                     description=searchindex.description,
@@ -206,6 +204,11 @@ class EventCreateResource(resources.ResourceMixin, Resource):
 
                 if timeline not in sketch.timelines:
                     sketch.timelines.append(timeline)
+
+                # Include the timeline ID in the event, otherwise Timesketch is not
+                # aware that the event is part of a timeline.
+                event["__ts_timeline_id"] = timeline.id
+                self.datastore.import_event(index_name, event, flush_interval=1)
 
                 timeline.set_status("ready")
                 db_session.add(timeline)

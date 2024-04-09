@@ -35,6 +35,8 @@ services:
     container_name: opensearch
     image: opensearchproject/opensearch:2.15.0
     restart: always
+    ports:
+      - 127.0.0.1:9200:9200
     environment:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
