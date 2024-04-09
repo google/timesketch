@@ -380,7 +380,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             for timeline in sketch.active_timelines:
                 index_name = timeline.searchindex.index_name
                 if indices_metadata[index_name].get("is_legacy", False):
-                    doc_count, _ = self.datastore.count(indices=index_name)
+                    doc_count, _ = self.datastore.count(indices=[index_name])
                     stats_per_timeline[timeline.id] = {"count": doc_count}
             count_agg_spec = {
                 "aggs": {
