@@ -247,7 +247,6 @@ multiple factors._
 
 - message
 - datetime
-- timestamp
 - timestamp_desc
 
 The datetime field also needs to be mapped as a date, not a text string.

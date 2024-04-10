@@ -317,7 +317,7 @@ export default {
       return this.$store.state.sketch
     },
     eventDateTime() {
-      return new Date(this.eventTimestamp/1000).toISOString()
+      return new Date(this.eventTimestamp).toISOString()
     },
     selectedDistributionInterval() {
       return this.distributionIntervals[this.selectedDistributionIntervalIndex]

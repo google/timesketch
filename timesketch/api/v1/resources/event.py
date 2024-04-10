@@ -14,14 +14,12 @@
 """Event resources for version 1 of the Timesketch API."""
 
 import codecs
-import datetime
 import hashlib
 import json
 import logging
 import math
 import time
 
-import dateutil
 import numpy as np
 import pandas as pd
 import six
@@ -118,27 +116,9 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         index_name_seed = "timesketch_{0:d}".format(sketch_id)
 
         date_string = form.get("date_string")
-        if not date_string:
-            date = datetime.datetime.utcnow().isoformat()
-        else:
-            # derive datetime from timestamp:
-            try:
-                date = dateutil.parser.parse(date_string)
-            except (dateutil.parser.ParserError, OverflowError) as e:
-                logger.error("Unable to convert date string", exc_info=True)
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Unable to add event, not able to convert the date "
-                    "string. Was it properly formatted? Error: "
-                    "{0!s}".format(e),
-                )
-
-        timestamp = int(time.mktime(date.utctimetuple())) * 1000000
-        timestamp += date.microsecond
 
         event = {
             "datetime": date_string,
-            "timestamp": timestamp,
             "timestamp_desc": form.get("timestamp_desc", "Event Happened"),
             "message": form.get("message", "No message string"),
         }
@@ -337,7 +317,6 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
     ATTRIBUTE_FIELDS = ["attr_name", "attr_value"]
     RESERVED_ATTRIBUTE_NAMES = [
         "datetime",
-        "timestamp",
         "message",
         "timestamp_desc",
     ]

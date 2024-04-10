@@ -255,7 +255,7 @@ export default {
         .then((response) => {
           this.fullEvent = response.data.objects
           this.comments = response.data.meta.comments
-          this.eventTimestamp = response.data.objects.timestamp
+          this.eventTimestamp = new Date(response.data.objects.datetime).getTime()
           this.eventTimestampDesc = response.data.objects.timestamp_desc
           if (this.comments.length > 0) {
             this.event.showComments = true

@@ -133,7 +133,6 @@ class ClientTest(interface.BaseEndToEndTest):
             "mappings": {
                 "properties": {
                     "datetime": {"type": "date"},
-                    "timestamp": {"type": "long"},
                     "timestamp_desc": {
                         "type": "text",
                         "fields": {"keyword": {"type": "keyword"}},

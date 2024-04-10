@@ -17,7 +17,6 @@ Data fields will vary depending on the source being uploaded, but here are some 
 | Field            | Description                                    | Example query                                |
 | ---------------- | ---------------------------------------------- | -------------------------------------------- |
 | `message`        | String with information about event            | `message:”This is a message”`                |
-| `timestamp`      | Timestamp as microseconds since Unix epoch     | `timestamp:”363420000”`                      |
 | `datetime`       | Date and time in ISO8601 format                | `datetime:”2016-03-31T22:56:32+00:00”`       |
 | `timestamp_desc` | String explaining what type of timestamp it is | `timestamp_desc:”Content Modification Time”` |
 

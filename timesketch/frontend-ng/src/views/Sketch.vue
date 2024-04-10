@@ -509,7 +509,7 @@ export default {
       }
     },
     generateContextQuery(event) {
-      let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+      let timestampMillis = this.$options.filters.formatTimestamp(event._source.datetime)
       this.contextStartTime = dayjs.utc(timestampMillis).subtract(this.contextTimeWindowSeconds, 'second')
       this.contextEndTime = dayjs.utc(timestampMillis).add(this.contextTimeWindowSeconds, 'second')
       let startChip = {

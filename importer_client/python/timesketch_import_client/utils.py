@@ -28,7 +28,6 @@ FIELDS_TO_SKIP_IN_FORMAT_STRING = frozenset(
     [
         "timestamp_desc",
         "time",
-        "timestamp",
         "data_type",
         "datetime",
         "source_short",

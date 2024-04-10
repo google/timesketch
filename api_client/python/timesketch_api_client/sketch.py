@@ -40,9 +40,7 @@ class Sketch(resource.BaseResource):
     """
 
     # Add in necessary fields in data ingested via a different mechanism.
-    _NECESSARY_DATA_FIELDS = frozenset(
-        ["timestamp", "timestamp_desc", "datetime", "message"]
-    )
+    _NECESSARY_DATA_FIELDS = frozenset(["timestamp_desc", "datetime", "message"])
 
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
