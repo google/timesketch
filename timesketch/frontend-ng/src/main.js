@@ -28,6 +28,8 @@ import $filters from './utils/GlobalFilters.js';
 import {createVuetify} from 'vuetify'
 // import 'vuetify/dist/vuetify.min.css'
 import 'vuetify/styles'
+import { aliases, mdi } from 'vuetify/iconsets/mdi'
+import '@mdi/font/css/materialdesignicons.css'
 
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
@@ -49,7 +51,15 @@ const app = createApp({
 app.use(store)
 app.use(router)
 
+
 const vuetify = createVuetify({
+  icons: {
+    defaultSet: 'mdi',
+    aliases,
+    sets: {
+      mdi,
+    },
+  },
   components,
   directives
 })

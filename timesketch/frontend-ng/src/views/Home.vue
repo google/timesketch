@@ -16,12 +16,10 @@ limitations under the License.
 <template>
   <div>
     <!-- Top horizontal toolbar -->
-    <v-toolbar flat color="transparent">
-      <v-avatar class="mt-2 ml-n3">
-        <router-link to="/">
-          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-        </router-link>
-      </v-avatar>
+    <v-toolbar flat color="transparent" class="pl-3 pr-3">
+      <router-link to="/">
+        <v-img src="/dist/timesketch-color.png" class="mx-2" height="25" width="25" contain></v-img>
+      </router-link>
       <span style="font-size: 1.2em">timesketch</span>
 
       <v-spacer></v-spacer>
@@ -30,11 +28,7 @@ limitations under the License.
       </v-avatar>
       <v-menu>
         <template v-slot:activator="{ props }">
-          <v-avatar>
-            <v-btn v-bind="props" size="small" icon>
-              <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
-            </v-btn>
-          </v-avatar>
+          <v-btn v-bind="props" class="ml-1" icon="mdi-dots-vertical" density="compact" size="large" title="Timesketch Options"></v-btn>
         </template>
         <v-card>
           <v-list>
@@ -73,8 +67,8 @@ limitations under the License.
 
     <!-- Main view -->
     <v-main class="notransition">
-      <v-container fluid pa-0>
-        <v-sheet class="pa-5" :color="this.$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
+      <v-container fluid class="pa-0">
+        <v-sheet class="pa-5" :color="this.$vuetify.theme.dark ? 'grey-darken-4' : 'grey-lighten-3'" min-height="200">
           <h2>Start new investigation</h2>
           <v-row no-gutters class="mt-5">
             <v-dialog v-model="createSketchDialog" width="500">
