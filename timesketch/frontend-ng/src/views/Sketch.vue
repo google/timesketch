@@ -21,10 +21,10 @@ limitations under the License.
 
     <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
       <!-- Empty state -->
-      <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
+      <v-container v-if="!hasTimelines && !loadingSketch" class="fill-height" fluid>
         <v-row align="center" justify="center">
-          <v-sheet class="pa-4" style="background: transparent">
-            <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+          <v-sheet style="background: transparent" justify-center class="pa-4 d-flex flex-column align-center justify-center">
+            <v-img src="/dist/empty-state.png" height="100" width="300"></v-img>
             <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
             <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
           </v-sheet>
@@ -55,6 +55,7 @@ limitations under the License.
         app
         clipped-left
         flat
+        class="pl-3"
         :color="this.$vuetify.theme.dark ? '#121212' : 'white'"
         :style="[
           this.$vuetify.theme.dark
@@ -66,11 +67,9 @@ limitations under the License.
           <v-icon title="Toggle left panel">mdi-menu</v-icon>
         </v-btn>
 
-        <v-avatar class="ml-n2 mt-1">
-          <router-link to="/">
-            <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-          </router-link>
-        </v-avatar>
+        <router-link to="/">
+          <v-img src="/dist/timesketch-color.png" class="mx-2" height="25" width="25" contain></v-img>
+        </router-link>
 
         <v-hover v-slot="{ hover }">
           <div class="d-flex flex-wrap">
@@ -114,11 +113,7 @@ limitations under the License.
         </v-avatar>
         <v-menu>
           <template v-slot:activator="{ props }">
-            <v-avatar>
-              <v-btn v-bind="props" size="small" icon >
-                <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-avatar>
+            <v-btn v-bind="props" class="ml-1" icon="mdi-dots-vertical" density="compact" size="large" title="Timesketch Options"></v-btn>
           </template>
           <v-card>
             <v-list lines="two">

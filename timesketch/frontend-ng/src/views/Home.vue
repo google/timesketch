@@ -16,9 +16,9 @@ limitations under the License.
 <template>
   <div>
     <!-- Top horizontal toolbar -->
-    <v-toolbar flat color="transparent" class="pl-2 pr-2">
-        <router-link to="/">
-          <v-img src="/dist/timesketch-color.png" class="mx-2" height="25" width="25" contain></v-img>
+    <v-toolbar flat color="transparent" class="pl-3 pr-3">
+      <router-link to="/">
+        <v-img src="/dist/timesketch-color.png" class="mx-2" height="25" width="25" contain></v-img>
       </router-link>
       <span style="font-size: 1.2em">timesketch</span>
 
@@ -28,9 +28,7 @@ limitations under the License.
       </v-avatar>
       <v-menu>
         <template v-slot:activator="{ props }">
-          <v-avatar>
-            <v-btn v-bind="props" icon="mdi-dots-vertical" density="compact" size="large" title="Timesketch Options"></v-btn>
-          </v-avatar>
+          <v-btn v-bind="props" class="ml-1" icon="mdi-dots-vertical" density="compact" size="large" title="Timesketch Options"></v-btn>
         </template>
         <v-card>
           <v-list>
