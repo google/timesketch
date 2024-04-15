@@ -148,9 +148,10 @@ def create_app(config=None, legacy_ui=False):
         api_v1.add_resource(*route)
     
     # Returns 404 for invalid api routes
+    # pylint: disable=unused-variable
     @app.route('/api/v1/<path:path>')
     @login_required
-    def handle_invalid_route(path):
+    def handle_invalid_api_route(path):
         """If a request hits this route, that requested endpoint does not exist.
 
         Returns:
