@@ -196,8 +196,6 @@ def create_app(config=None, legacy_ui=False):
     # Setup CSRF protection for the whole application
     CSRFProtect(app)
 
-    
-
     return app
 
 
