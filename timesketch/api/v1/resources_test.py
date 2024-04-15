@@ -47,7 +47,7 @@ class InvalidResourceTest(BaseTest):
     """Test an Invalid Resource."""
 
     invalid_resource_url = "api/v1/invalidresource"
-    
+
     def test_invalid_endpoint(self):
         """Authenticated request to get a non existant API endpoint"""
         self.login()
