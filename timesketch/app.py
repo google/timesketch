@@ -152,10 +152,10 @@ def create_app(config=None, legacy_ui=False):
     @app.route('/api/v1/<path:path>')
     @login_required
     def handle_invalid_api_route(path):
-        """If a request hits this route, that requested endpoint does not exist.
+        """Error handler for non-existent API routes.
 
-        Returns:
-            HTTP response object (instance of jsonify)        
+        Raises:
+            ApiHTTPError: Error 404 - not found        
         """
         raise ApiHTTPError(
           'The requested URL was not found on the server. If you entered the '
