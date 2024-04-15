@@ -157,9 +157,9 @@ def create_app(config=None, legacy_ui=False):
         Returns:
             HTTP response object (instance of jsonify)        
         """
-        return jsonify({'Error 404': 
-            'The requested URL was not found on the server.'
-            'If you entered the URL manually please check your spelling and try again.'}), 404
+        raise ApiHTTPError(
+          'The requested URL was not found on the server. If you entered the '
+          'URL manually please check your spelling and try again.', 404)
     
     # Register error handlers
     # pylint: disable=unused-variable
