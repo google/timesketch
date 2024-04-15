@@ -22,7 +22,6 @@ import sys
 import six
 
 from flask import Flask
-from flask import jsonify
 from celery import Celery
 
 from flask_login import LoginManager
