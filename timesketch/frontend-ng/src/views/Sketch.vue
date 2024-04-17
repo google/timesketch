@@ -251,13 +251,9 @@ limitations under the License.
         ></ts-saved-searches>
         <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
         <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
-        <ts-graphs :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-graphs>
         <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
         <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
-        <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
         <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
-        <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
-        <ts-visualizations :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-visualizations>
       </v-navigation-drawer>
 
       <!-- Right panel -->
@@ -346,15 +342,12 @@ import TsSavedSearches from '../components/LeftPanel/SavedSearches.vue'
 import TsDataTypes from '../components/LeftPanel/DataTypes.vue'
 import TsTags from '../components/LeftPanel/Tags.vue'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates.vue'
-import TsSigmaRules from '../components/LeftPanel/SigmaRules.vue'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel.vue'
-import TsGraphs from '../components/LeftPanel/Graphs.vue'
 import TsStories from '../components/LeftPanel/Stories.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsShareCard from '../components/ShareCard.vue'
 import TsRenameSketch from '../components/RenameSketch.vue'
-import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
@@ -368,15 +361,12 @@ export default {
     TsDataTypes,
     TsTags,
     TsSearchTemplates,
-    TsSigmaRules,
     TsUploadTimelineFormButton,
     TsShareCard,
     TsRenameSketch,
     TsIntelligence,
-    TsGraphs,
     TsStories,
     TsSearch,
-    TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
     TsVisualizations,

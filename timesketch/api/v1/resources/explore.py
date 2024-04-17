@@ -19,34 +19,29 @@ import json
 import zipfile
 
 import prometheus_client
+from flask import abort, jsonify, request, send_file
+from flask_login import current_user, login_required
+from flask_restful import Resource, reqparse
 
-from flask import abort
-from flask import jsonify
-from flask import request
-from flask import send_file
-from flask_restful import Resource
-from flask_restful import reqparse
-from flask_login import login_required
-from flask_login import current_user
-
-from timesketch.api.v1 import export
-from timesketch.api.v1 import resources
-from timesketch.lib import forms
-from timesketch.lib import utils
+from timesketch.api.v1 import export, resources
+from timesketch.lib import forms, utils
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    METRICS_NAMESPACE,
+)
 from timesketch.lib.utils import get_validated_indices
-from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.models import db_session
-from timesketch.models.sketch import Event
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import View
-from timesketch.models.sketch import SearchHistory
-from timesketch.models.sketch import Scenario
-from timesketch.models.sketch import Facet
-from timesketch.models.sketch import InvestigativeQuestion
+from timesketch.models.sketch import (
+    Event,
+    Facet,
+    InvestigativeQuestion,
+    Scenario,
+    SearchHistory,
+    Sketch,
+    View,
+)
 
 # Metrics definitions
 METRICS = {
@@ -143,14 +138,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
         parent = request.json.get("parent", None)
         incognito = request.json.get("incognito", False)
 
-        return_field_string = form.fields.data
-        if return_field_string:
-            return_fields = [x.strip() for x in return_field_string.split(",")]
-        else:
-            return_fields = query_filter.get("fields", [])
-            return_fields = [field["field"] for field in return_fields]
-            return_fields.extend(DEFAULT_SOURCE_FIELDS)
-
         if not query_filter:
             query_filter = {}
 
@@ -243,7 +230,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 "query": form.query.data,
                 "query_dsl": query_dsl,
                 "query_filter": query_filter,
-                "return_fields": return_fields,
             }
             with zipfile.ZipFile(file_object, mode="w") as zip_file:
                 zip_file.writestr("METADATA", data=json.dumps(form_data))
@@ -254,7 +240,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     indices=indices,
                     sketch=sketch,
                     datastore=self.datastore,
-                    return_fields=return_fields,
                     timeline_ids=timeline_ids,
                 )
                 fh.seek(0)
@@ -274,7 +259,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     query_dsl=query_dsl,
                     indices=indices,
                     aggregations=index_stats_agg,
-                    return_fields=return_fields,
                     enable_scroll=enable_scroll,
                     timeline_ids=timeline_ids,
                 )
@@ -322,12 +306,11 @@ class ExploreResource(resources.ResourceMixin, Resource):
         count_total_complete = sum(count_per_timeline.values())
 
         comments = {}
-        if "comment" in return_fields:
-            events = Event.get_with_comments(sketch=sketch)
-            for event in events:
-                for comment in event.comments:
-                    comments.setdefault(event.document_id, [])
-                    comments[event.document_id].append(comment.comment)
+        events = Event.get_with_comments(sketch=sketch)
+        for event in events:
+            for comment in event.comments:
+                comments.setdefault(event.document_id, [])
+                comments[event.document_id].append(comment.comment)
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
@@ -343,8 +326,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             except KeyError:
                 pass
 
-            if "comment" in return_fields:
-                event["_source"]["comment"] = comments.get(event["_id"], [])
+            event["_source"]["comment"] = comments.get(event["_id"], [])
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.

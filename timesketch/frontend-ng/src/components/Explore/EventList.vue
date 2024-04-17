@@ -32,28 +32,12 @@ limitations under the License.
       <li>Try fewer keywords.</li>
     </div>
 
-    <div v-if="highlightEvent" class="mt-4">
-      <strong>Showing context for event:</strong>
-      <v-sheet class="d-flex flex-wrap mt-1 mb-5">
-        <v-sheet class="flex-1-0">
-          <span style="width: 200px" v-bind:style="getTimelineColor(highlightEvent)" class="datetime-table-cell pa-2">
-            {{ highlightEvent._source.datetime | formatTimestamp | toISO8601 }}
-          </span>
-        </v-sheet>
-
-        <v-sheet class="">
-          <span class="datetime-table-cell pa-2">
-            {{ highlightEvent._source.message }}
-          </span>
-        </v-sheet>
-      </v-sheet>
-    </div>
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
         :headers="headers"
         :items="eventList.objects"
-        :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
+        :footer-props="{ 'items-per-page-options': [50, 100, 250, 500, 1000], 'show-current-page': true }"
         :loading="searchInProgress"
         :options.sync="tableOptions"
         :server-items-length="totalHitsForPagination"
@@ -120,49 +104,6 @@ limitations under the License.
                 </v-btn>
               </template>
 
-              <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon title="Modify columns">mdi-view-column-outline</v-icon>
-                  </v-btn>
-                </template>
-
-                <v-card height="50vh">
-                  <v-card-title>Select columns</v-card-title>
-
-                  <v-card-text>
-                    <v-text-field
-                      v-model="searchColumns"
-                      append-icon="mdi-magnify"
-                      label="Search"
-                      single-line
-                      hide-details
-                    ></v-text-field>
-                    <br />
-                    <v-data-table
-                      v-model="selectedFields"
-                      :headers="columnHeaders"
-                      :items="meta.mappings"
-                      :search="searchColumns"
-                      :hide-default-footer="true"
-                      item-key="field"
-                      disable-pagination
-                      show-select
-                      dense
-                      @input="updateSelectedFields"
-                    >
-                    </v-data-table>
-                  </v-card-text>
-
-                  <v-divider></v-divider>
-
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn text @click="selectedFields = [{ field: 'message', type: 'text' }]"> Reset </v-btn>
-                    <v-btn text color="primary" @click="columnDialog = false"> Set columns </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
 
               <v-btn icon @click="exportSearchResult()">
                 <v-icon title="Download current view as CSV">mdi-download</v-icon>
@@ -268,7 +209,7 @@ limitations under the License.
               :options="options"
               @update:options="updateOptions"
               :show-current-page="true"
-              :items-per-page-options="[10, 40, 80, 100, 200, 500]"
+              :items-per-page-options="[50, 100, 250, 500, 1000]"
               items-per-page-text="Rows per page:"
               style="border: 0"
               class="mr-n3"
@@ -344,16 +285,15 @@ limitations under the License.
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
-        <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
+        <template v-slot:item._source="{ item }">
           <div
-            :key="field.text"
             class="ts-event-field-container"
             style="cursor: pointer"
             @click="toggleDetailedEvent(item)"
           >
             <span
               :class="{
-                'ts-event-field-ellipsis': field.text === 'message',
+                'ts-event-field-line-clamp': true,
                 'ts-event-field-highlight': item._id === highlightEventId,
               }"
             >
@@ -361,14 +301,13 @@ limitations under the License.
               <span
                 v-if="
                   displayOptions.showTags &&
-                  index === 3 &&
                   ('tag' in item._source ? item._source.tag.length > 0 : false)
                 "
               >
-                <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
+                <ts-event-tags class="ts-event-tags" :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
-              <span v-if="displayOptions.showEmojis && index === 3">
+              <span v-if="displayOptions.showEmojis">
                 <span
                   class="mr-2"
                   v-for="emoji in item._source.__ts_emojis"
@@ -378,7 +317,17 @@ limitations under the License.
                 >
                 </span>
               </span>
-              <span>{{ item._source[field.text] }}</span>
+              <span>
+                <b>timestamp_desc</b>:<code>{{ item._source.timestamp_desc }}</code>
+              </span>
+              <span>
+                <b>data_type</b>:<code>{{ item._source.data_type }}</code>
+              </span>
+              <span v-for="(value, key) in item._source" v-bind:key="key">
+                <span v-if="isIncluded(key)">
+                  <b>{{ key }}</b>:<code>{{ value }}</code>
+                </span>
+              </span>
             </span>
           </div>
         </template>
@@ -467,7 +416,7 @@ export default {
     },
     itemsPerPage: {
       type: Number,
-      default: 40,
+      default: 50,
     },
     disableSaveSearch: {
       type: Boolean,
@@ -507,7 +456,6 @@ export default {
       },
       currentItemsPerPage: this.itemsPerPage,
       expandedRows: [],
-      selectedFields: [{ field: 'message', type: 'text' }],
       searchColumns: '',
       columnDialog: false,
       saveSearchMenu: false,
@@ -608,21 +556,14 @@ export default {
         },
       ]
       let extraHeaders = []
-      this.selectedFields.forEach((field) => {
-        let header = {
-          text: field.field,
-          align: 'start',
-          value: '_source.' + field.field,
-          sortable: false,
-        }
-        if (field.field === 'message') {
-          header.width = '100%'
-          extraHeaders.unshift(header)
-        } else {
-          extraHeaders.push(header)
-        }
-      })
-
+      let header = {
+        text: 'Event',
+        align: 'start',
+        value: '_source',
+        sortable: false,
+        width: '100%',
+      }
+      extraHeaders.unshift(header)
       // Extend the column headers from position 3 (after the actions column)
       baseHeaders.splice(3, 0, ...extraHeaders)
 
@@ -648,9 +589,6 @@ export default {
         this.currentQueryFilter.order = 'desc'
       }
       this.search(true, true, false)
-    },
-    getFieldName: function (field) {
-      return 'item._source.' + field
     },
     toggleDetailedEvent: function (row) {
       let index = this.expandedRows.findIndex((x) => x._id === row._id)
@@ -732,6 +670,14 @@ export default {
         'background-color': backgroundColor,
       }
     },
+    isIncluded(key) {
+      const hideKeys = ["datetime", "timestamp_desc", "tag", "label", "comment", "tag", "label", "data_type"]
+      if (key.startsWith("__") || hideKeys.includes(key)) {
+        return false
+      } else {
+        return true
+      }
+    },
     getTimeBubbleColor() {
       let backgroundColor = '#f5f5f5'
       if (this.$vuetify.theme.dark) {
@@ -782,9 +728,6 @@ export default {
         this.currentQueryFilter.size = this.tableOptions.itemsPerPage
         this.currentQueryFilter.from = 0
       }
-
-      // Update with selected fields
-      this.currentQueryFilter.fields = this.selectedFields
 
       let formData = {}
       if (this.currentQueryDsl) {
@@ -922,17 +865,6 @@ export default {
       this.currentPage = this.tableOptions.page
       this.search(false, true)
     },
-    updateSelectedFields: function (value) {
-      // If we haven't fetched the field before, do an new search.
-      value.forEach((field) => {
-        if (!this.headers.filter((e) => e.field === field.field).length > 0) {
-          this.search(true, true)
-        }
-      })
-    },
-    removeField: function (index) {
-      this.selectedFields.splice(index, 1)
-    },
     toggleStar(event) {
       if (event._source.label.includes('__ts_star')) {
         event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
@@ -994,10 +926,6 @@ export default {
         let resetPagination = newQueryRequest['resetPagination'] || false
         let incognito = newQueryRequest['incognito'] || false
         let parent = newQueryRequest['parent'] || false
-        // Set additional fields. This is used when loading filter from a saved search.
-        if (this.currentQueryFilter.fields) {
-          this.selectedFields = this.currentQueryFilter.fields
-        }
         // Preserve user defined sort order.
         if (this.sortOrderAsc) {
           this.currentQueryFilter.order = 'asc'
@@ -1014,10 +942,6 @@ export default {
       this.currentQueryString = this.queryRequest.queryString
       this.currentQueryFilter = { ...this.queryRequest.queryFilter } || defaultQueryFilter()
       this.currentQueryDsl = { ...this.queryRequest.queryDsl }
-      // Set additional fields when loading filter from a saved search.
-      if (this.currentQueryFilter.fields) {
-        this.selectedFields = this.currentQueryFilter.fields
-      }
       this.search()
     }
   },
@@ -1025,31 +949,31 @@ export default {
 </script>
 
 <style lang="scss">
+.ts-event-tags span {
+  height: 20px !important;
+}
+
 .ts-event-field-container {
   position: relative;
   max-width: 100%;
-  height: 100%;
-  padding: 0 !important;
+  height: 64;
+  padding: 5px;
+  padding-left: 0px !important;
+  line-height: 16px; 
+  font-family: monospace;
   display: -webkit-flex;
   display: -moz-flex;
   display: flex;
   vertical-align: text-bottom !important;
 }
 
-.ts-event-field-ellipsis {
-  position: absolute;
-  white-space: nowrap;
-  overflow-y: visible;
-  overflow-x: hidden;
-  text-overflow: ellipsis;
-  -ms-text-overflow: ellipsis;
-  -o-text-overflow: ellipsis;
-  max-width: 100%;
-  min-width: 0;
-  width: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  left: 0;
+.ts-event-field-line-clamp {
+  overflow: hidden;
+  display: -webkit-box;
+  /* number of lines to show */
+  -webkit-line-clamp: 3;
+  line-clamp: 3; 
+  -webkit-box-orient: vertical;
 }
 
 .ts-event-field-highlight {
@@ -1085,6 +1009,7 @@ export default {
 
 .datetime-table-cell {
   height: 100%;
+  font-weight: 401;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -44,7 +44,7 @@ FIELDS_TO_REMOVE = ["_id", "_type", "_index", "_source", "__ts_timeline_id"]
 DEFAULT_CHUNK_SIZE = 10000
 
 # Columns that must be present in ingested timesketch files.
-TIMESKETCH_FIELDS = frozenset({"message", "datetime", "timestamp_desc"})
+TIMESKETCH_FIELDS = frozenset({"datetime", "timestamp_desc"})
 
 # Columns that must be present in ingested redline files.
 REDLINE_FIELDS = frozenset({"Alert", "Tag", "Timestamp", "Field", "Summary"})
@@ -473,7 +473,7 @@ def read_and_validate_jsonl(
         A dict that's ready to add to the datastore.
     """
     # Fields that must be present in each entry of the JSONL file.
-    mandatory_fields = ["message", "datetime", "timestamp_desc"]
+    mandatory_fields = ["datetime", "timestamp_desc"]
     lineno = 0
     for line in file_handle:
         lineno += 1

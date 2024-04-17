@@ -220,7 +220,6 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     "indices": [timeline.id],
                     "order": "asc",
                     "chips": [],
-                    "fields": [{"field": "message", "type": "text"}],
                 },
                 query_dsl=None,
                 indices=[timeline.searchindex.index_name],

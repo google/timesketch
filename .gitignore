@@ -27,6 +27,8 @@ importer_client/python/build/
 # Ignore frontend build related files
 node_modules
 timesketch/static/dist
+timesketch/frontend-ng/package-lock.json
+timesketch/frontend-ng/yarn.lock
 
 # Frontend Log files
 npm-debug.log*

@@ -333,7 +333,6 @@ export default {
       countPerTimeline: {},
       currentItemsPerPage: 40,
       timeFilterMenu: false,
-      selectedFields: [{ field: 'message', type: 'text' }],
       showRightSidePanel: false,
       addManualEvent: false,
       datetimeManualEvent: '',
@@ -477,10 +476,6 @@ export default {
           let view = response.data.objects[0]
           this.currentQueryString = view.query_string
           this.currentQueryFilter = JSON.parse(view.query_filter)
-          if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
-            this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
-          }
-          this.selectedFields = this.currentQueryFilter.fields
           let chips = this.currentQueryFilter.chips
           if (chips) {
             for (let i = 0; i < chips.length; i++) {
@@ -660,10 +655,6 @@ export default {
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string
       this.currentQueryFilter = JSON.parse(node.query_filter)
-      if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
-        this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
-      }
-      this.selectedFields = this.currentQueryFilter.fields
       if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
         let allIndices = []
         this.sketch.active_timelines.forEach((timeline) => {

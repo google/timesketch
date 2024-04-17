@@ -127,5 +127,5 @@ Generate UI builds:
 CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
 docker exec -it $CONTAINER_ID timesketch bash
 cd /usr/local/src/timesketch/timesketch/frontend-ng
-npm run build
+yarn build
 ```
