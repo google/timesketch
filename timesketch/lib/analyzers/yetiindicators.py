@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Set, Tuple
 
 import requests
 import yaml
@@ -295,28 +295,31 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self._intelligence_attribute["data"].append(intel)
         self._intelligence_refs.add((match_in_sketch, uri))
 
-    def get_intelligence_attribute(self) -> None:
+    def get_intelligence_attribute(self) -> Tuple[Dict, Set[Tuple[str, str]]]:
         """Fetches the intelligence attribute from the database."""
         try:
-            self._intelligence_attribute = self.sketch.get_sketch_attributes(
+            intelligence_attribute = self.sketch.get_sketch_attributes(
                 "intelligence"
             )
-            self._intelligence_refs = {
+            refs = {
                 (ioc["ioc"], ioc["externalURI"])
-                for ioc in self._intelligence_attribute["data"]
+                for ioc in intelligence_attribute["data"]
             }
+            return intelligence_attribute, refs
+
         except ValueError:
             logging.info(
                 "Intelligence not set on sketch, will be created from scratch."
             )
+        return {"data": []}, set()
 
     def save_intelligence(self) -> None:
         """Saves the intelligence attribute to the database."""
         # This is necessary to take into account changes that may
         # have been made by other runs of this analyzer or other analyzers
         # that add intelligence to the sketch.
-        db_intel = self.sketch.get_sketch_attributes("intelligence")
-        for ioc in db_intel["data"]:
+        db_attribute, _ = self.get_intelligence_attribute()
+        for ioc in db_attribute["data"]:
             if (ioc["ioc"], ioc["externalURI"]) not in self._intelligence_refs:
                 self._intelligence_attribute["data"].append(ioc)
 
@@ -437,7 +440,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self.save_intelligence()
 
         if self._SAVE_INTELLIGENCE:
-            self.get_intelligence_attribute()
+            self._intelligence_attribute, self._intelligence_refs = (
+                self.get_intelligence_attribute()
+            )
 
         entities = self.get_entities(
             _type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR
