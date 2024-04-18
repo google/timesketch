@@ -86,7 +86,6 @@ Write-Host "* Fetching configuration files.."
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/ontology.yaml).Content | out-file timesketch\etc\timesketch\ontology.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml).Content | out-file timesketch\etc\timesketch\intelligence_tag_metadata.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_config.yaml).Content | out-file timesketch\etc\timesketch\sigma_config.yaml -encoding UTF8NoBOM
-(Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_rule_status.csv).Content | out-file timesketch\etc\timesketch\sigma_rule_status.csv -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml).Content | out-file timesketch\etc\timesketch\sigma\rules\lnx_susp_zmap.yml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/contrib/nginx.conf).Content | out-file timesketch\etc\nginx.conf -encoding UTF8NoBOM
 Write-Host "OK"
