@@ -510,7 +510,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self.output.result_priority = priority
 
         if not total_matches:
-            note = f"0/{total_processed} indicators were found in the timeline ({total_failed} failed)."
+            note = f"0/{total_processed} indicators were found in the timeline ({total_failed} failed)"
             self.output.result_summary = note
             return str(self.output)
 
@@ -528,7 +528,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         success_note = (
             f"{total_matches} events matched {len(matching_indicators)}/{total_processed} "
             f"indicators ({total_failed} failed).\n\n"
-            f"Entities found: {', '.join(entities_found)}."
+            f"Entities found: {', '.join(entities_found)}"
         )
         self.output.result_summary = success_note
 
