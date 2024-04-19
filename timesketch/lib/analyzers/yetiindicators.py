@@ -548,7 +548,8 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             self.save_intelligence()
 
         success_note = (
-            f"{total_matches} events matched {len(matching_indicators)}/{total_processed} "
+            f"{total_matches} events matched "
+            f"{len(matching_indicators)}/{total_processed} "
             f"indicators ({total_failed} failed).\n\n"
             f"Entities found: {', '.join(entities_found)}"
         )
