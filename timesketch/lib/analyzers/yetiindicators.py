@@ -252,6 +252,18 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
     def add_intelligence_entry(
         self, indicator: Dict, event: interface.Event, entity: Dict
     ) -> None:
+        """Adds an intelligence entry to the local intelligence attribute.
+
+        For regex indicators, the intelligence will be the match that is
+        extracted from the event. For observables, the full message event
+        message attribute is used.
+
+        Args:
+            indicator: The Yeti indicator that matched the event.
+            event: The Timesketch event that intelligence needs to be extracted
+                from.
+            entity: The Yeti Entity that is linked to the indicator.
+        """
         intel_type = "other"
         match_in_sketch = None
 
@@ -288,7 +300,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         intel = {
             "externalURI": uri,
             "ioc": match_in_sketch,
-            "tags": [slugify(tag) for tag in (tags + [entity["name"]])],
+            "tags": [slugify(tag) for tag in tags + [entity["name"]]],
             "type": intel_type,
         }
 
@@ -470,14 +482,15 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                         }
                 if not query_dsl:
                     logging.warning(
-                        'Unsupported indicator type, skipping: '
-                        f'{indicator["type"]} ({indicator["root_type"]})'
+                        'Unsupported indicator type, skipping: %s (%s)',
+                        indicator["type"],
+                        indicator["root_type"],
                     )
                     continue
                 events = self.event_stream(
                     query_dsl=query_dsl, return_fields=["message"], scroll=False
                 )
-                logging.info(f"Searching for {query_dsl}")
+                logging.info("Searching for %s", str(query_dsl))
                 try:
                     indicator_match = 0
                     start = datetime.datetime.now()
@@ -495,11 +508,13 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                         entities_found.add(f"{entity['name']}:{entity['type']}")
                         indicator_match += 1
                     logging.info(
-                        f"Found {indicator_match} matches for indicator "
-                        f"{indicator['id']} in "
-                        f"{datetime.datetime.now() - start}"
-                    )
-                except Exception as exception:
+                        "Found %s matches for indicator %s in %s",
+                        indicator_match,
+                        indicator["id"],
+                        str(datetime.datetime.now() - start))
+                except Exception as exception:  # pylint: disable=broad-except
+                    # No matter the exception, we don't want to stop the
+                    # analyzer. Errors are logged and reported in the UI.
                     logging.error(
                         "Error processing events for indicator %s: %s",
                         indicator["id"],
@@ -513,7 +528,10 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self.output.result_priority = priority
 
         if not total_matches:
-            note = f"0/{total_processed} indicators were found in the timeline ({total_failed} failed)"
+            note = (
+                f"0/{total_processed} indicators were found in the "
+                "timeline ({total_failed} failed)"
+            )
             self.output.result_summary = note
             return str(self.output)
 
@@ -546,7 +564,8 @@ class YetiTriageIndicators(YetiBaseAnalyzer):
     DESCRIPTION = (
         "Mark triage events using forensics indicators from Yeti. Will fetch"
         ' all attack-patterns tagged with the "triage" tag, and traverse the'
-        " graph searching for regex indicators. {attack-pattern:triage} → {regex, query}"
+        " graph searching for regex indicators."
+        " {attack-pattern:triage} → {regex, query}"
     )
 
     DEPENDENCIES = frozenset(["domain"])
@@ -604,7 +623,10 @@ class YetiInvestigations(YetiBaseAnalyzer):
 
     NAME = "yetiinvestigations"
     DISPLAY_NAME = "Yeti Investigations intelligence"
-    DESCRIPTION = "Mark events that match Yeti investigation indicators and observables. {investigation} ← {indicators, observables}"
+    DESCRIPTION = (
+        "Mark events that match Yeti investigation indicators and observables."
+        " {investigation} ← {indicators, observables}"
+    )
 
     _TYPE_SELECTOR = "investigation"
     _TARGET_NEIGHBOR_TYPE = ["sigma", "query", "regex", "observable"]
