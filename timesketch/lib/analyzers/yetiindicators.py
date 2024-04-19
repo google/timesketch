@@ -515,7 +515,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         if not total_matches:
             note = (
                 f"0/{total_processed} indicators were found in the "
-                "timeline ({total_failed} failed)"
+                f"timeline ({total_failed} failed)"
             )
             self.output.result_summary = note
             return str(self.output)
