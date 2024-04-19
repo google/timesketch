@@ -27,8 +27,8 @@ limitations under the License.
     </v-dialog>
 
     <v-dialog v-model="dialog" max-width="1000">
-      <template v-slot:activator="{ props }">
-        <slot v-bind="props"></slot>
+      <template v-slot:activator="{props: activatorProps}">
+        <slot :props="activatorProps"></slot>
       </template>
       <v-card>
         <v-container class="pa-4">
