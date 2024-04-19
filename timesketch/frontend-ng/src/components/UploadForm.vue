@@ -499,9 +499,11 @@ export default {
       }
       return this.error.length === 0
     },
-    setFile: function (fileList) {
+    setFile: function () {
       /* 1. Initilize the variables */
 
+      // console.log('setFile', fileList, this.uploadedFiles);
+      const fileList = this.uploadedFiles;
       if (!fileList[0]) {
         return
       }
