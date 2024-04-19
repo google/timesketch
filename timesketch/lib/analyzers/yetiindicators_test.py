@@ -272,9 +272,7 @@ tags:
             },
         )
 
-    @mock.patch(
-        "timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_build_query_from_observable(self):
         """Tests that that queries are correctly built from regex indicators."""
         analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)

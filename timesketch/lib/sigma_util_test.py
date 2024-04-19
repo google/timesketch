@@ -227,7 +227,9 @@ detection:
 falsepositives:
     - Unknown
 level: high
-""", sanitize=True)
+""",
+            sanitize=True,
+        )
 
         self.assertIsNotNone(rule)
         self.assertEqual(
