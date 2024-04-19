@@ -482,7 +482,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                         }
                 if not query_dsl:
                     logging.warning(
-                        'Unsupported indicator type, skipping: %s (%s)',
+                        "Unsupported indicator type, skipping: %s (%s)",
                         indicator["type"],
                         indicator["root_type"],
                     )
@@ -511,7 +511,8 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                         "Found %s matches for indicator %s in %s",
                         indicator_match,
                         indicator["id"],
-                        str(datetime.datetime.now() - start))
+                        str(datetime.datetime.now() - start),
+                    )
                 except Exception as exception:  # pylint: disable=broad-except
                     # No matter the exception, we don't want to stop the
                     # analyzer. Errors are logged and reported in the UI.
