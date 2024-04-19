@@ -26,7 +26,10 @@ limitations under the License.
       :to="{ name: 'Explore', params: { sketchId: sketch.id } }"
       custom
       v-slot="{ navigate }"
+    >
+      <div @click="navigate" @keypress.enter="navigate" role="link"
       class="pa-4"
+      style="cursor: pointer"
       :class="
         this.$vuetify.theme.dark
           ? isExploreRoute
@@ -36,9 +39,7 @@ limitations under the License.
           ? 'light-highlight'
           : 'light-hover'
       "
-      style="cursor: pointer"
-    >
-      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon start>mdi-magnify</v-icon>Search</div>
+      ><v-icon start>mdi-magnify</v-icon>Search</div>
     </router-link>
     <v-divider></v-divider>
   </div>
