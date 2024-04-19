@@ -128,9 +128,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             )
 
         access_token = response.json()["access_token"]
-        self._yeti_session.headers.update(
-            {"authorization": f"Bearer {access_token}"}
-        )
+        self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
 
     def _get_neighbors_request(self, params: Dict) -> Dict:
         """Simple wrapper around requests call to make testing easier."""
@@ -278,16 +276,12 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 return
 
             uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
-            intel_type = INDICATOR_LOCATION_MAPPING.get(
-                indicator["location"], "other"
-            )
+            intel_type = INDICATOR_LOCATION_MAPPING.get(indicator["location"], "other")
             tags = indicator["relevant_tags"]
 
         if indicator["root_type"] == "observable":
             match_in_sketch = indicator["value"]
-            intel_type = OBSERVABLE_INTEL_MAPPING.get(
-                indicator["type"], "other"
-            )
+            intel_type = OBSERVABLE_INTEL_MAPPING.get(indicator["type"], "other")
             uri = f"{self.yeti_web_root}/observables/{indicator['id']}"
             tags = list(indicator["tags"].keys())
 
@@ -310,9 +304,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
     def get_intelligence_attribute(self) -> Tuple[Dict, Set[Tuple[str, str]]]:
         """Fetches the intelligence attribute from the database."""
         try:
-            intelligence_attribute = self.sketch.get_sketch_attributes(
-                "intelligence"
-            )
+            intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
             refs = {
                 (ioc["ioc"], ioc["externalURI"])
                 for ioc in intelligence_attribute["data"]
@@ -429,9 +421,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 str(exception),
             )
             return None
-        return {
-            "query": {"query_string": {"query": parsed_sigma["search_query"]}}
-        }
+        return {"query": {"query_string": {"query": parsed_sigma["search_query"]}}}
 
     def run(self):
         """Entry point for the analyzer.
@@ -456,9 +446,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 self.get_intelligence_attribute()
             )
 
-        entities = self.get_entities(
-            _type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR
-        )
+        entities = self.get_entities(_type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR)
         for entity in entities.values():
             indicators = self.get_neighbors(
                 entity,
@@ -476,9 +464,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 elif indicator["type"] == "query":
                     if indicator["query_type"] == "opensearch":
                         query_dsl = {
-                            "query": {
-                                "query_string": {"query": indicator["pattern"]}
-                            }
+                            "query": {"query_string": {"query": indicator["pattern"]}}
                         }
                 if not query_dsl:
                     logging.warning(
@@ -501,9 +487,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                         if entity["type"] in HIGH_SEVERITY_TYPES:
                             priority = "HIGH"
                             if self._SAVE_INTELLIGENCE:
-                                self.add_intelligence_entry(
-                                    indicator, event, entity
-                                )
+                                self.add_intelligence_entry(indicator, event, entity)
 
                         entities_found.add(f"{entity['name']}:{entity['type']}")
                         indicator_match += 1
