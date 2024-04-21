@@ -38,6 +38,14 @@ limitations under the License.
         ></v-text-field>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col>
+        <v-switch
+          v-model="showOptions"
+          label="Show detailed chart options"
+        ></v-switch>
+      </v-col>
+    </v-row>
     <v-row v-if="showOptions">
       <v-col>
         <v-text-field 
