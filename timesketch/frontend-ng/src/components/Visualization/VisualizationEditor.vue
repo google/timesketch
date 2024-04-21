@@ -14,17 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card outlined>
+  <v-card flat>
     <v-card-title>
       Create new visualization using aggregated events
     </v-card-title>
     <v-card-text>
-      <v-stepper v-model="currentStep" vertical flat>
-        <v-stepper-step step="1" editable>
-          Aggregation Type
-          <small>Select and configure event aggregation</small>
-        </v-stepper-step>
-        <v-stepper-content step="1">
+      <v-row>
+        <v-col cols="4">
           <v-card outlined>
             <v-card-text>
               <TsAggregationConfig
@@ -43,93 +39,6 @@ limitations under the License.
                 :splitByTimeline="selectedSplitByTimeline"
                 @updateSplitByTimeline="selectedSplitByTimeline = $event"
               ></TsAggregationConfig>
-            </v-card-text>
-          </v-card>
-        </v-stepper-content>
-        <v-stepper-step step="2" editable>
-          Apply existing/recent/saved search parameters
-          <small>
-            Loading search parameters will overwrite any existing event filters
-          </small>
-        </v-stepper-step>
-        <v-stepper-content step="2">
-          <v-card>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col md="6">
-                    <v-btn @click="loadSavedSearch">
-                      Load saved search
-                    </v-btn>
-                  </v-col>
-                  <v-col md="6">
-                    <TsSavedSearchSelect
-                      @updateSavedSearch="selectedSavedSearch = $event"
-                    ></TsSavedSearchSelect>
-                  </v-col>
-                </v-row>
-                <v-row>
-                  <v-col md="6">
-                    <v-btn @click="loadRecentSearch">
-                      Load from recent search history
-                    </v-btn>
-                  </v-col>
-                  <v-col md="6">
-                    <TsRecentSearchSelect
-                      @updateRecentSearch="selectedRecentSearch = $event"
-                    ></TsRecentSearchSelect>
-                  </v-col>
-                </v-row>
-                <v-row>
-                  <v-col md="6">
-                    <v-btn 
-                      @click="loadCurrentSearch"
-                      :disabled="selectedQueryString === undefined"
-                    >
-                      Load current search  
-                    </v-btn>
-                  </v-col>
-                  <v-col md="6">
-                    <v-text-field
-                      outlined
-                      label="Current query string"
-                      readonly
-                      v-model="selectedQueryString"
-                      ></v-text-field>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-          </v-card>
-        </v-stepper-content>
-        <v-stepper-step step="3" editable>
-          Event filters
-          <small>
-            Select and configure filters to apply before aggregation
-          </small>
-        </v-stepper-step>
-        <v-stepper-content step="3">
-          <TsAggregationFiltersPanel
-            :queryString="selectedQueryString"
-            @updateFilterQueryString="selectedQueryString = $event"
-            :timelineIDs="selectedTimelineIDs"
-            @updateFilterTimelineIDs="selectedTimelineIDs = $event"
-            :startDate="selectedRange.start"
-            :endDate="selectedRange.end"
-            @updateFilterDateRange="selectedRange = $event"
-            :filterChips="selectedQueryChips"
-            @updateFilterChips="selectedQueryChips = $event"
-          ></TsAggregationFiltersPanel>
-        </v-stepper-content>
-        <v-stepper-step step="4" editable>
-          Chart type
-          <small>
-            Select and configure chart visualization
-          </small>
-        </v-stepper-step>
-        <v-stepper-content step="4">
-          <v-card outlined>
-            <v-card-text>
               <TsChartConfig
                 :aggregatorType="selectedAggregator"
                 :chartType="selectedChartType"
@@ -153,25 +62,31 @@ limitations under the License.
               ></TsChartConfig>
             </v-card-text>
           </v-card>
-        </v-stepper-content>
-      </v-stepper>
-      <TsChartCard
-        v-if="chartSeries && selectedChartType"
-        :fieldName="selectedField.field"
-        :metricName="selectedMetric"
-        :is-time-series="selectedAggregator ? selectedAggregator.endsWith('date_histogram') : false"
-        :chartSeries="chartSeries" 
-        :chartLabels="chartLabels"
-        :chartTitle="selectedChartTitle"
-        :chartType="selectedChartType"
-        :height="selectedHeight"
-        :width="selectedWidth"
-        :xTitle="selectedXTitle"
-        :showXLabels="selectedShowXLabels"
-        :yTitle="selectedYTitle"
-        :showYLabels="selectedShowYLabels"
-        :showDataLabels="selectedShowDataLabels"
-      ></TsChartCard>
+        </v-col>
+        <v-col cols="8">
+          <v-card outlined>
+            <v-card-text>
+              <TsChartCard
+                v-if="chartSeries && selectedChartType"
+                :fieldName="selectedField.field"
+                :metricName="selectedMetric"
+                :is-time-series="selectedAggregator ? selectedAggregator.endsWith('date_histogram') : false"
+                :chartSeries="chartSeries" 
+                :chartLabels="chartLabels"
+                :chartTitle="selectedChartTitle"
+                :chartType="selectedChartType"
+                :height="selectedHeight"
+                :width="selectedWidth"
+                :xTitle="selectedXTitle"
+                :showXLabels="selectedShowXLabels"
+                :yTitle="selectedYTitle"
+                :showYLabels="selectedShowYLabels"
+                :showDataLabels="selectedShowDataLabels"
+              ></TsChartCard>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
     </v-card-text>
     <v-card-actions>
       <v-btn color="primary" 
@@ -211,20 +126,14 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsAggregationConfig from './AggregationConfig.vue'
-import TsSavedSearchSelect from './SavedSearchSelect.vue'
-import TsRecentSearchSelect from './RecentSearchSelect.vue'
 import TsChartConfig from './ChartConfig.vue'
-import TsAggregationFiltersPanel from './AggregationFiltersPanel.vue'
 import TsChartCard from './ChartCard.vue'
 
 export default {
   components: {
     TsAggregationConfig,
-    TsAggregationFiltersPanel,
     TsChartConfig,
     TsChartCard,
-    TsRecentSearchSelect,
-    TsSavedSearchSelect,
   },
   props: {
     aggregator: {

@@ -37,31 +37,30 @@ limitations under the License.
         ></v-autocomplete>
       </v-col>
     </v-row>
-    <v-row>
-      <v-col cols="12" md="6">
+    <v-row v-if="!disableMetric">
+      <v-col>
         <v-autocomplete
           outlined
           v-model="selectedMetric"
-          :disabled="disableMetric"
           :items="metrics"
           label="Aggregation Metric"
         ></v-autocomplete>
       </v-col>
-      <v-col cols="12" md="6">
+    </v-row>
+    <v-row v-if="!disableMaxItems">
+      <v-col>
         <v-select
           outlined
           v-model="selectedMaxItems"
-          :disabled="disableMaxItems"
           :items="[...Array(50).keys()].map((_, i) => i + 1)"
           :label="labelMaxItems"
         ></v-select>
       </v-col>
     </v-row>
-    <v-row>
-      <v-col cols="12" md="6">
+    <v-row v-if="!disableInterval">
+      <v-col>
         <v-autocomplete
           outlined
-          :disabled="disableInterval"
           v-model="selectedInterval"
           :items="allCalendarIntervals"
           label="Calendar interval"

@@ -38,7 +38,7 @@ limitations under the License.
         ></v-text-field>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-if="showOptions">
       <v-col>
         <v-text-field 
           v-model.number="selectedHeight" 
@@ -56,7 +56,7 @@ limitations under the License.
         ></v-text-field>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-if="showOptions">
       <v-col>
         <v-text-field 
           v-model="selectedXTitle" 
@@ -72,7 +72,7 @@ limitations under the License.
         </v-checkbox>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-if="showOptions"> 
       <v-col>
         <v-text-field 
           v-model="selectedYTitle" 
@@ -89,7 +89,7 @@ limitations under the License.
         </v-checkbox>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-if="showOptions">
       <v-col>
         <v-checkbox 
           v-model="selectedDataLabels" 
@@ -122,6 +122,10 @@ export default {
     showDataLabels: {
       type: Boolean,
       default: true,
+    },
+    showOptions: {
+      type: Boolean,
+      default: false,
     },
     showXLabels: {
       type: Boolean,
