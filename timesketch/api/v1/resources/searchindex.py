@@ -15,23 +15,21 @@
 import logging
 
 import opensearchpy
-from flask import request
-from flask import abort
+from flask import abort, request
+from flask_login import current_user, login_required
 from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.models import db_session
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Timeline
-
+from timesketch.models.sketch import SearchIndex, Timeline
 
 logger = logging.getLogger("timesketch.index_api")
 
@@ -117,12 +115,21 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             searchindex.set_status("fail")
             db_session.commit()
 
-        fields = list(
-            mapping.get(searchindex.index_name, {})
-            .get("mappings", {})
-            .get("properties", {})
-            .keys()
-        )
+        # In case the index is an alias, the mapping of the first index is returned
+        if self.datastore.client.indices.exists_alias(searchindex.index_name):
+            fields = list(
+                mapping.get(next(iter(mapping)), {})
+                .get("mappings", {})
+                .get("properties", {})
+                .keys()
+            )
+        else:
+            fields = list(
+                mapping.get(searchindex.index_name, {})
+                .get("mappings", {})
+                .get("properties", {})
+                .keys()
+            )
 
         meta = {
             "contains_timeline_id": bool("__ts_timeline_id" in fields),

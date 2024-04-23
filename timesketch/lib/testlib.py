@@ -17,25 +17,25 @@ from __future__ import unicode_literals
 
 import codecs
 import json
-import six
+from re import search
 
+import six
 from flask_testing import TestCase
 
 from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
-from timesketch.models import init_db
-from timesketch.models import drop_all
-from timesketch.models import db_session
-from timesketch.models.user import Group
-from timesketch.models.user import User
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import SearchTemplate
-from timesketch.models.sketch import View
-from timesketch.models.sketch import Event
-from timesketch.models.sketch import Story
+from timesketch.models import db_session, drop_all, init_db
 from timesketch.models.sigma import SigmaRule
+from timesketch.models.sketch import (
+    Event,
+    SearchIndex,
+    SearchTemplate,
+    Sketch,
+    Story,
+    Timeline,
+    View,
+)
+from timesketch.models.user import Group, User
 
 SIGMA_RULE = """
 title: Suspicious Installation of Zenmap
@@ -350,6 +350,9 @@ class MockDataStore(object):
 
     def flush_queued_events(self):
         """No-op mock to flush_queued_events for the datastore."""
+
+    def resolve_index_alias(self, searchindex_id: str) -> tuple:
+        return searchindex_id, searchindex_id
 
 
 class MockGraphDatabase(object):

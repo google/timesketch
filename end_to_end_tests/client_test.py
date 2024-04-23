@@ -15,8 +15,8 @@
 
 import json
 import time
-import opensearchpy
 
+import opensearchpy
 from timesketch_api_client import search
 
 from . import interface, manager
@@ -86,45 +86,10 @@ class ClientTest(interface.BaseEndToEndTest):
         data_source = data_sources[0]
         self.assertions.assertEqual(data_source.get("context", ""), context)
 
-    def test_direct_opensearch_timeline_filter_id(self):
-        """Generate multiple timelines from a single index"""
-        index_name = "index-multiple"
-
-        self.import_directly_to_opensearch(
-            filename="sigma_events_multiple.csv", index_name=index_name
-        )
-
-        sketch = self.api.create_sketch(
-            name="Testing Direct", description="Adding data directly from ES"
-        )
-
-        context = "e2e - > test_direct_opensearch"
-        timelines = []
-        for i in range(0, 3):
-            timelines.append(
-                sketch.generate_timeline_from_es_index(
-                    es_index_name=index_name,
-                    name=f"Ingested Via Mechanism - {i}",
-                    provider="end_to_end_testing_platform",
-                    context=context,
-                    timeline_filter_id=i,
-                )
-            )
-
-        _ = sketch.lazyload_data(refresh_cache=True)
-        self.assertions.assertEqual(len(sketch.list_timelines()), 3)
-
-        for i in range(0, 3):
-            self.assertions.assertEqual(
-                timelines[i].name, f"Ingested Via Mechanism - {i}"
-            )
-            search_obj = search.Search(sketch)
-            search_obj.query_string = f"__ts_timeline_filter_id:{i}"
-            self.assertions.assertEqual(len(search_obj.table), 1)
-
-    def test_direct_opensearch_disable_update_query(self):
+    def test_direct_opensearch_with_alias(self):
         """Test injecting data into OpenSearch directly."""
-        index_name = "index"
+        alias_name = "index"
+        index_name = "index-00001"
 
         es = opensearchpy.OpenSearch(
             [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}], http_compress=True
@@ -147,6 +112,7 @@ class ClientTest(interface.BaseEndToEndTest):
             }
         }
         es.indices.create(index_name, body=body)
+        es.indices.put_alias(index=index_name, name=alias_name)
 
         self.import_directly_to_opensearch(
             filename="sigma_events_timeline_id.csv", index_name=index_name
@@ -163,7 +129,6 @@ class ClientTest(interface.BaseEndToEndTest):
                 sketch.generate_timeline_from_es_index(
                     es_index_name=index_name,
                     name=f"Timeline - {i}",
-                    timeline_update_query=False,
                     provider="end_to_end_testing_platform",
                     context=context,
                 )

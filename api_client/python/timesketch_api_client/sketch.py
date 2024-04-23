@@ -1929,8 +1929,6 @@ class Sketch(resource.BaseResource):
         self,
         es_index_name,
         name,
-        timeline_filter_id=None,
-        timeline_update_query=True,
         provider="Manually added to OpenSearch",
         context="Added via API client",
         data_label="OpenSearch",
@@ -1947,11 +1945,6 @@ class Sketch(resource.BaseResource):
         Args:
             es_index_name: name of the index in OpenSearch.
             name: string with the name of the timeline.
-            timeline_filter_id: optional string to filter on documents in an
-            index with multiple timelines.
-            timeline_update_query: optional boolean to determine if the update
-                by query is executed to add the timeline ID to the documents
-                , defaults to True.
             description: optional string with a description of the timeline.
             provider: optional string with the provider name for the data
                 source of the imported data. Defaults to "Manually added
@@ -1977,18 +1970,7 @@ class Sketch(resource.BaseResource):
         if not name:
             raise ValueError("Timeline name needs to be provided.")
 
-        # Step 1: Make sure the index doesn't exist already.
-        # This step is executed when an index is used for a single timeline
-        if (None, True) == (timeline_filter_id, timeline_update_query):
-            for index_obj in self.api.list_searchindices():
-                if index_obj is None:
-                    continue
-                if index_obj.index_name == es_index_name:
-                    raise ValueError(
-                        "Unable to add the ES index, since it already exists."
-                    )
-
-        # Step 2: Create a SearchIndex.
+        # Step 1: Create a SearchIndex.
         resource_url = f"{self.api.api_root}/searchindices/"
         form_data = {
             "searchindex_name": es_index_name,
@@ -2013,7 +1995,7 @@ class Sketch(resource.BaseResource):
 
         searchindex_id = objects[0].get("id")
 
-        # Step 3: Verify mappings to make sure data conforms.
+        # Step 2: Verify mappings to make sure data conforms.
         index_obj = api_index.SearchIndex(searchindex_id, api=self.api)
         index_fields = set(index_obj.fields)
         if not self._NECESSARY_DATA_FIELDS.issubset(index_fields):
@@ -2030,7 +2012,7 @@ class Sketch(resource.BaseResource):
         if status:
             index_obj.status = status
 
-        # Step 4: Create the Timeline.
+        # Step 3: Create the Timeline.
         resource_url = f"{self.api.api_root}/sketches/{self.id}/timelines/"
         form_data = {"timeline": searchindex_id, "timeline_name": name}
         response = self.api.session.post(resource_url, json=form_data)
@@ -2059,28 +2041,7 @@ class Sketch(resource.BaseResource):
             searchindex=timeline_dict["searchindex"]["index_name"],
         )
 
-        # Step 5: Add the timeline ID into the dataset.
-        # This step is skipped if the update_by_query is `False`, because the
-        # documents will be ingested with timeline ID as field
-        if timeline_update_query:
-            resource_url = (
-                f"{self.api.api_root}/sketches/{self.id}/event/add_timeline_id/"
-            )
-            form_data = {
-                "searchindex_id": searchindex_id,
-                "timeline_id": timeline_dict["id"],
-                "timeline_filter_id": timeline_filter_id,
-            }
-            response = self.api.session.post(resource_url, json=form_data)
-
-            if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-                error.error_message(
-                    response,
-                    message="Unable to add timeline identifier to data",
-                    error=ValueError,
-                )
-
-        # Step 6: Add a DataSource object.
+        # Step 4: Add a DataSource object.
         resource_url = f"{self.api.api_root}/sketches/{self.id}/datasource/"
         form_data = {
             "timeline_id": timeline_dict["id"],

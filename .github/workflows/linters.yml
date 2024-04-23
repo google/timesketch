@@ -8,31 +8,6 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  PyLint:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
-        python-version: ['3.10']
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install -r test_requirements.txt
-          pip install -r requirements.txt
-          pip install -e .
-          pip install api_client/python
-          pip install importer_client/python
-      - name: Run pylint
-        run: |
-          git config pull.rebase false && git fetch -p origin master
-          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
-
   Black-formatter:
     runs-on: ubuntu-latest
     steps:

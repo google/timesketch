@@ -420,12 +420,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
             "search_node": search_node,
         }
 
-        # Elasticsearch version 7.x returns total hits as a dictionary.
-        # TODO: Refactor when version 6.x has been deprecated.
+        # Support OpenSearch
         if isinstance(meta["es_total_count"], dict):
             meta["es_total_count"] = meta["es_total_count"].get("value", 0)
 
         schema = {"meta": meta, "objects": result["hits"]["hits"]}
+
         return jsonify(schema)
 
 

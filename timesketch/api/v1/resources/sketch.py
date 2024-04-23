@@ -351,17 +351,8 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         mappings = []
 
-        for index_name, value in mappings_settings.items():
-            # The structure is different in ES version 6.x and lower. This check
-            # makes sure we support both old and new versions.
+        for value in mappings_settings.values():
             properties = value["mappings"].get("properties")
-            if not properties:
-                properties = next(iter(value["mappings"].values())).get("properties")
-
-            # Determine if index is from the time before multiple timelines per
-            # index. This is used in the UI to support both modes.
-            is_legacy = bool("__ts_timeline_id" not in properties)
-            indices_metadata[index_name]["is_legacy"] = is_legacy
 
             for field, value_dict in properties.items():
                 mapping_dict = {}
@@ -376,12 +367,6 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         # Get number of events per timeline
         if sketch_indices:
-            # Support legacy indices.
-            for timeline in sketch.active_timelines:
-                index_name = timeline.searchindex.index_name
-                if indices_metadata[index_name].get("is_legacy", False):
-                    doc_count, _ = self.datastore.count(indices=[index_name])
-                    stats_per_timeline[timeline.id] = {"count": doc_count}
             count_agg_spec = {
                 "aggs": {
                     "per_timeline": {

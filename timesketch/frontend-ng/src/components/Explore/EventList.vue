@@ -644,13 +644,7 @@ export default {
       })
     },
     getTimeline: function (event) {
-      let isLegacy = this.meta.indices_metadata[event._index].is_legacy
-      let timeline
-      if (isLegacy) {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === event._index)
-      } else {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === event._source.__ts_timeline_id)
-      }
+      let timeline = this.sketch.active_timelines.find((timeline) => timeline.id === event._source.__ts_timeline_id)
       return timeline
     },
     getTimelineColor(event) {
@@ -690,12 +684,7 @@ export default {
     getAllIndices: function () {
       let allIndices = []
       this.sketch.active_timelines.forEach((timeline) => {
-        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
-        if (isLegacy) {
-          allIndices.push(timeline.searchindex.index_name)
-        } else {
-          allIndices.push(timeline.id)
-        }
+        allIndices.push(timeline.id)
       })
       return allIndices
     },
