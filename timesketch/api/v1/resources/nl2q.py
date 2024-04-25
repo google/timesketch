@@ -14,16 +14,25 @@
 """NL2Q API for version 1 of the Timesketch API."""
 
 import logging
-from timesketch.lib.llms import manager
 
 from flask import jsonify
 from flask import request
 from flask import abort
+from flask import current_app
 from flask_restful import Resource
 from flask_login import login_required
+from flask_login import current_user
 
+import pandas as pd
+
+from timesketch.api.v1 import utils
+from timesketch.lib.llms import manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.models.sketch import Sketch
+
 
 logger = logging.getLogger("timesketch.api_nl2q")
 
@@ -31,28 +40,105 @@ logger = logging.getLogger("timesketch.api_nl2q")
 class Nl2qResource(Resource):
     """Resource to get NL2Q prediction."""
 
-    def build_prompt(self, question):
-      """Builds the prompt.
+    def build_prompt(self, question, sketch_id):
+        """Builds the prompt.
 
-      Return:
-        String containing the whole prompt.
-      """
+        Return:
+          String containing the whole prompt.
+        """
+        prompt = ""
+        prompt_file = current_app.config.get("DATA_TYPES_PATH")
+        with open(prompt_file, "r") as file:
+            prompt = file.read()
+        prompt = prompt.format(
+            question=question,
+            data_types=self.data_types_descriptions(self.sketch_data_types(1)),
+        )
+        return prompt
 
-      prompt = """
-      Convert this question to a Lucene query for Timesketch:
+    def sketch_data_types(self, sketch_id):
+        """Get's the data types from current sketch..
 
-      {question}
-      """
-      prompt = prompt.format(question=question)
-      return prompt
+        Returns:
+          List of data types in a sketch.
+        """
+        output = []
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
+            )
+
+        data_type_aggregation = utils.run_aggregator(
+            sketch_id, "field_bucket", {"field": "data_type", "limit": "1000"}
+        )
+        data_type_aggregation[0].values
+        data_types = data_type_aggregation[0].values
+        for data_type in data_types:
+            output.append(data_type.get("data_type"))
+        return ",".join(output)
+
+    def data_types_descriptions(self, data_types):
+        """Creates a dict of data types and attribute descriptions.
+
+        Returns:
+          Dict of data types and attribute descriptions.
+        """
+        df_data_types = utils.load_csv_file("DATA_TYPES_PATH")
+        df_short_data_types = pd.DataFrame(
+            df_data_types.groupby("data_type").apply(self.concatenate_values),
+            columns=["fields"],
+        )
+        df_short_data_types["data_type"] = df_short_data_types.index
+        df_short_data_types["data_type"] = df_short_data_types["data_type"].apply(
+            lambda x: x.strip()
+        )
+        df_short_data_types.reset_index(drop=True, inplace=True)
+        output = []
+        for dtype in data_types.split(","):
+            extract = df_short_data_types[
+                df_short_data_types["data_type"] == dtype.strip()
+            ]
+            if extract.empty:
+                print(f"'{dtype.strip()}' not found in [{data_types}]")
+                continue
+            output.append(extract.iloc[0]["fields"])
+        return "\n".join(output)
+
+    def generate_fields(self, group):
+        """Generated the fields for a data type.
+
+        Returns:
+          String of the generated fields.
+        """
+        generated_fields = ", ".join(
+            f'"{n}" ({t}, {d})'
+            for n, t, d in zip(group["field"], group["type"], group["description"])
+        )
+        return generated_fields
+
+    def concatenate_values(self, group):
+        """Concatenates the fields for a data type
+
+        Returns:
+          String of the concatenated fields.
+        """
+        concatenated_valued = '- "{}" fields: [{}]'.format(
+            group["data_type"].iloc[0], self.generate_fields(group)
+        )
+        return concatenated_valued
 
     @login_required
-    def post(self):
+    def post(self, sketch_id):
         """Handles POST request to the resource.
 
         Returns:
             String representing the LLM prediction.
         """
+        llm_provider = current_app.config.get("LLM_PROVIDER")
         form = request.json
         if not form:
             abort(
@@ -67,7 +153,30 @@ class Nl2qResource(Resource):
             )
 
         question = form.get("question")
-        prompt = build_prompt(question)
+        prompt = self.build_prompt(question, sketch_id)
+        llm = manager.LLMManager().get_provider(llm_provider)()
+
+        try:
+            prediction = llm.generate(prompt)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error NL2Q prompt: {}".format(e))
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                e,
+            )
+        return jsonify(prediction)
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource for debugging
+
+        Returns:
+            String representing the LLM prediction.
+        """
+
+        question = "what is all traffic with ip x?"
+        prompt = self.build_prompt(question, sketch_id)
+
         llm = manager.LLMManager().get_provider("vertexai")()
 
         try:
@@ -79,4 +188,4 @@ class Nl2qResource(Resource):
                 e,
             )
 
-        return jsonify(prediction)
+        return jsonify(prompt)
