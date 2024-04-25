@@ -52,7 +52,7 @@ class Nl2qResource(Resource):
             prompt = file.read()
         prompt = prompt.format(
             question=question,
-            data_types=self.data_types_descriptions(self.sketch_data_types(1)),
+            data_types=self.data_types_descriptions(self.sketch_data_types(sketch_id)),
         )
         return prompt
 
@@ -165,27 +165,3 @@ class Nl2qResource(Resource):
                 e,
             )
         return jsonify(prediction)
-
-    @login_required
-    def get(self, sketch_id):
-        """Handles GET request to the resource for debugging
-
-        Returns:
-            String representing the LLM prediction.
-        """
-
-        question = "what is all traffic with ip x?"
-        prompt = self.build_prompt(question, sketch_id)
-
-        llm = manager.LLMManager().get_provider("vertexai")()
-
-        try:
-            prediction = llm.generate(prompt)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error("Error NL2Q prompt: {}".format(e))
-            abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                e,
-            )
-
-        return jsonify(prompt)
