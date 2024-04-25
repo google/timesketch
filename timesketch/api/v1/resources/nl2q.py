@@ -75,7 +75,6 @@ class Nl2qResource(Resource):
         data_type_aggregation = utils.run_aggregator(
             sketch_id, "field_bucket", {"field": "data_type", "limit": "1000"}
         )
-        data_type_aggregation[0].values
         data_types = data_type_aggregation[0].values
         for data_type in data_types:
             output.append(data_type.get("data_type"))
