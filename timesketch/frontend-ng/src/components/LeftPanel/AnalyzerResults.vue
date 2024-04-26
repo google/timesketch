@@ -35,6 +35,7 @@ limitations under the License.
         v-if="expanded || (sortedAnalyzerResults && !sortedAnalyzerResults.length && analyzerResultsReady)"
         icon
         variant="text"
+        density="comfortable"
         class="float-right mt-n1 mr-n1"
         :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: undefined } }"
         @click.stop=""

@@ -40,6 +40,7 @@ limitations under the License.
             v-if="expanded || allTimelines.length === 0"
             icon
             variant="text"
+            density="comfortable"
             class="float-right mt-n1 mr-n1"
             v-on="slotProps.on"
             @click.stop=""
@@ -145,7 +146,13 @@ limitations under the License.
                       <v-icon v-if="isEnabled(item)"> mdi-eye </v-icon>
                       <v-icon v-else> mdi-eye-off </v-icon>
                     </v-btn>
-                    <v-btn class="ma-1" size="x-small" icon v-on="slotProps.events.menuOn">
+                    <v-btn
+                      class="ma-1"
+                      size="x-small"
+                      icon
+                      v-on="slotProps.events.menuOn"
+                      variant="text"
+                    >
                       <v-icon> mdi-dots-vertical </v-icon>
                     </v-btn>
                   </span>

@@ -37,6 +37,7 @@ limitations under the License.
         icon
         v-if="expanded || !(meta.stories && meta.stories.length)"
         variant="text"
+        density="comfortable"
         class="float-right mt-n1 mr-n1"
         @click="createStory()"
         @click.stop=""
