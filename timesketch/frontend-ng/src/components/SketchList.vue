@@ -33,11 +33,11 @@ limitations under the License.
           single-line
           label="Search"
           prepend-inner-icon="mdi-magnify"
+          v-model="searchQuery"
           @change="search"
         ></v-text-field>
       </v-col>
     </v-row>
-
     <br />
     <v-data-table
       :headers="headers"
@@ -103,7 +103,6 @@ export default {
   methods: {
     search: function (query) {
       this.scope = 'search'
-      this.searchQuery = query
       this.getSketches()
     },
     switchScope: function (newScope) {
@@ -124,6 +123,9 @@ export default {
         })
     },
   },
+  mounted() {
+    this.getSketches()
+  }
 }
 </script>
 
