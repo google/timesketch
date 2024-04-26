@@ -249,7 +249,7 @@ The data that is ingested needs to have few fields already set before it can be
 ingested into Timesketch:
 
 - message
-- timestamp
+- timestamp_desc
 - datetime
 
 The datetime field also needs to be mapped as a date, not a text string.
