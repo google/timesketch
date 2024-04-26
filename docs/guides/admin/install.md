@@ -29,12 +29,6 @@ It is possible to install Timesketch without docker but we strongly encourage us
 
 Follow the official installation instructions to [install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
-Make sure you install docker-compose-plugin as well
-
-```shell
-sudo apt install docker-compose-plugin
-```
-
 ### 2. Start the installation
 
 #### Download helper script
