@@ -176,13 +176,12 @@ limitations under the License.
 
       <!-- Left panel -->
       <v-navigation-drawer
-        v-model="showLeftPanel"
-        app
-        clipped
+        :model-value="showLeftPanel"
         disable-resize-watcher
-        stateless
         :scrim="false"
         :width="navigationDrawer.width"
+        permanent
+
       >
         <!-- Dialog for adding a scenario -->
         <v-dialog v-model="scenarioDialog" max-width="500px">
