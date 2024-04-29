@@ -33,46 +33,55 @@ if [ $# -eq 0 ] || [ "$1" == "-h" ]  || [ "$1" == "--help" ]; then
 	help
 fi
 
+# Use "sudo" for docker commands if sudoless docker is not enabled
+# "docker version" will return "true" if sudoless docker is configured
+if docker version >/dev/null 2>&1; then
+	s=""
+else
+	s="sudo"
+	sudo -v
+fi
+
 # Set variables required to execute commands
-CONTAINER_ID="$(sudo docker container list --filter name='timesketch-dev' --quiet)"
+CONTAINER_ID="$("$s" docker container list --filter name='timesketch-dev' --quiet)"
 frontend=${2:-"frontend"}
 
 # Run the provided command
 case "$1" in
  	build-api-cli)
 		# CLI client
-		sudo docker exec --workdir '/usr/local/src/timesketch/cli_client/python' --interactive --tty $CONTAINER_ID python3 setup.py build
-		sudo docker exec --workdir '/usr/local/src/timesketch/cli_client/python' --interactive --tty $CONTAINER_ID python3 setup.py install
+		$s docker exec --workdir '/usr/local/src/timesketch/cli_client/python' --interactive --tty $CONTAINER_ID python3 setup.py build
+		$s docker exec --workdir '/usr/local/src/timesketch/cli_client/python' --interactive --tty $CONTAINER_ID python3 setup.py install
 		# API client
-		sudo docker exec --workdir '/usr/local/src/timesketch/api_client/python' --interactive --tty $CONTAINER_ID python3 setup.py build
-		sudo docker exec --workdir '/usr/local/src/timesketch/api_client/python' --interactive --tty $CONTAINER_ID python3 setup.py install
+		$s docker exec --workdir '/usr/local/src/timesketch/api_client/python' --interactive --tty $CONTAINER_ID python3 setup.py build
+		$s docker exec --workdir '/usr/local/src/timesketch/api_client/python' --interactive --tty $CONTAINER_ID python3 setup.py install
 		;;
  	celery)
-		sudo docker exec --interactive --tty $CONTAINER_ID celery --app timesketch.lib.tasks worker --loglevel=info
+		$s docker exec --interactive --tty $CONTAINER_ID celery --app timesketch.lib.tasks worker --loglevel=info
 		;;
 	logs)
-		sudo docker logs --follow $CONTAINER_ID
+		$s docker logs --follow $CONTAINER_ID
 		;;
 	shell)
-		sudo docker exec --interactive --tty $CONTAINER_ID /bin/bash
+		$s docker exec --interactive --tty $CONTAINER_ID /bin/bash
 		;;
 	test)
-		sudo docker exec --workdir /usr/local/src/timesketch --interactive --tty $CONTAINER_ID python3 run_tests.py --coverage
+		$s docker exec --workdir /usr/local/src/timesketch --interactive --tty $CONTAINER_ID python3 run_tests.py --coverage
 		;;
 	vue-build)
-		sudo docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend build
+		$s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend build
 		;;
 	vue-dev)
-		sudo docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend serve
+		$s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend serve
 		;;
 	vue-install-deps)
-		sudo docker exec --interactive --tty $CONTAINER_ID yarn install --cwd=/usr/local/src/timesketch/timesketch/$frontend
+		$s docker exec --interactive --tty $CONTAINER_ID yarn install --cwd=/usr/local/src/timesketch/timesketch/$frontend
 		;;
 	vue-test)
-		sudo docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng test
+		$s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng test
 		;;
 	web)
-		sudo docker exec --interactive --tty $CONTAINER_ID gunicorn --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 timesketch.wsgi:application
+		$s docker exec --interactive --tty $CONTAINER_ID gunicorn --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 timesketch.wsgi:application
 		;;
 	*)
 		echo \""$1"\" is not a valid command.; help
