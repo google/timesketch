@@ -43,7 +43,7 @@ else
 fi
 
 # Set variables required to execute commands
-CONTAINER_ID="$("$s" docker container list --filter name='timesketch-dev' --quiet)"
+CONTAINER_ID="$($s docker container list --filter name='timesketch-dev' --quiet)"
 frontend="frontend-ng"
 
 # Run the provided command
