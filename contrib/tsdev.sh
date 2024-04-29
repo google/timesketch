@@ -44,7 +44,7 @@ fi
 
 # Set variables required to execute commands
 CONTAINER_ID="$("$s" docker container list --filter name='timesketch-dev' --quiet)"
-frontend=${2:-"frontend"}
+frontend="frontend-ng"
 
 # Run the provided command
 case "$1" in
