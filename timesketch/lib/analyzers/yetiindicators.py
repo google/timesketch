@@ -454,7 +454,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 neighbor_types=self._TARGET_NEIGHBOR_TYPE,
             )
             logging.debug(
-                f"Found {len(indicators)} neighbor indicators for {entity['name']}"
+                "Found %d neighbor indicators for %s", len(indicators), entity['name']
             )
             for indicator in indicators.values():
                 query_dsl = None
