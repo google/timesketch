@@ -77,7 +77,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
     # Number of hops to traverse from the entity
     _MAX_HOPS = 5
     # Direction to traverse the graph. One of {inbound, outbound, any}
-    _DIRECTION = "outbound"
+    _DIRECTION = "inbound"
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the Analyzer.
@@ -312,7 +312,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             return intelligence_attribute, refs
 
         except ValueError:
-            logging.info(
+            logging.debug(
                 "Intelligence not set on sketch, will be created from scratch."
             )
         return {"data": []}, set()
@@ -453,6 +453,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 max_hops=self._MAX_HOPS,
                 neighbor_types=self._TARGET_NEIGHBOR_TYPE,
             )
+            logging.debug(
+                f"Found {len(indicators)} neighbor indicators for {entity['name']}"
+            )
             for indicator in indicators.values():
                 query_dsl = None
                 if indicator["root_type"] == "observable":
@@ -476,7 +479,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 events = self.event_stream(
                     query_dsl=query_dsl, return_fields=["message"], scroll=False
                 )
-                logging.info("Searching for %s", str(query_dsl))
+                logging.debug("Searching for %s", str(query_dsl))
                 try:
                     indicator_match = 0
                     start = datetime.datetime.now()
@@ -491,7 +494,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
                         entities_found.add(f"{entity['name']}:{entity['type']}")
                         indicator_match += 1
-                    logging.info(
+                    logging.debug(
                         "Found %s matches for indicator %s in %s",
                         indicator_match,
                         indicator["id"],
@@ -559,6 +562,7 @@ class YetiTriageIndicators(YetiBaseAnalyzer):
     _TAG_SELECTOR = ["triage"]
     _TYPE_SELECTOR = "attack-pattern"
     _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
+    _DIRECTION = "inbound"
     _SAVE_INTELLIGENCE = False
 
 
