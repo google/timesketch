@@ -108,32 +108,27 @@ limitations under the License.
 
     <v-menu
       v-else
-      max-width="385"
       :close-on-content-click="false"
       content-class="menu-with-gap"
+      location-strategy="connected"
+      target="parent"
       ref="timelineChipMenuRef"
     >
+
       <template v-slot:activator="{ props }">
         <slot
           name="processed"
           :timelineFailed="timelineFailed"
           :timelineChipColor="timelineChipColor"
           :timelineStatus="timelineStatus"
-          :events="{
-            toggleTimeline,
-            openDialog,
-            menuOn: props,
-          }"
+          :events="{ toggleTimeline, openDialog, menuOn: props }"
         ></slot>
       </template>
-      <v-sheet flat>
+      <v-sheet flat class="pb-6">
         <v-list density="compact">
           <v-dialog v-model="dialogRename" width="600">
             <template v-slot:activator="{ props }">
-              <v-list-item v-bind="props">
-                <v-list-item-action>
-                  <v-icon>mdi-square-edit-outline</v-icon>
-                </v-list-item-action>
+              <v-list-item v-bind="props" prepend-icon="mdi-square-edit-outline">
                 <v-list-item-subtitle>Rename</v-list-item-subtitle>
               </v-list-item>
             </template>
@@ -151,30 +146,27 @@ limitations under the License.
               </v-form>
             </v-card>
           </v-dialog>
+            <v-list-item
+              v-if="timelineStatus === 'ready'"
+              @click="$emit('toggle', timeline)"
+              :prepend-icon="isSelected ? 'mdi-eye-off' : 'mdi-eye'"
+            >
+              <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
+              <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
+            </v-list-item>
 
-          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('toggle', timeline)">
-            <v-list-item-action>
-              <v-icon v-if="isSelected">mdi-eye-off</v-icon>
-              <v-icon v-else>mdi-eye</v-icon>
-            </v-list-item-action>
-            <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
-            <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
-          </v-list-item>
-
-          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('disableAllOtherTimelines', timeline)">
-            <v-list-item-action>
-              <v-icon>mdi-checkbox-marked-circle-minus-outline</v-icon>
-            </v-list-item-action>
+          <v-list-item
+            v-if="timelineStatus === 'ready'"
+            @click="$emit('disableAllOtherTimelines', timeline)"
+            prepend-icon="mdi-checkbox-marked-circle-minus-outline"
+          >
             <v-list-item-subtitle>Unselect other timelines</v-list-item-subtitle>
           </v-list-item>
 
           <v-dialog v-model="dialogStatus" width="800">
             <template v-slot:activator="{ props }">
-              <v-list-item v-bind="props">
-                <v-list-item-action>
-                  <v-icon :color="iconStatus === 'mdi-alert-circle-outline' ? 'red' : ''">{{ iconStatus }}</v-icon>
-                </v-list-item-action>
-                <v-list-item-subtitle>Data sources ({{ datasources.length }})</v-list-item-subtitle>
+              <v-list-item v-bind="props" :prepend-icon="iconStatus" :base-color="iconStatus === 'mdi-alert-circle-outline' ? 'red' : ''">
+                <v-list-item-subtitle><span style="color: black">Data sources ({{ datasources.length }})</span></v-list-item-subtitle>
               </v-list-item>
             </template>
             <v-card>
@@ -235,17 +227,16 @@ limitations under the License.
             :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: timeline.id } }"
             style="cursor: pointer"
             @click="$refs.timelineChipMenuRef.isActive = false"
+            prepend-icon="mdi-auto-fix"
           >
-            <v-list-item-action>
-              <v-icon>mdi-auto-fix</v-icon>
-            </v-list-item-action>
             <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
           </v-list-item>
 
-          <v-list-item style="cursor: pointer" @click="deleteConfirmation = true">
-            <v-list-item-action>
-              <v-icon>mdi-trash-can-outline</v-icon>
-            </v-list-item-action>
+          <v-list-item
+            style="cursor: pointer"
+            @click="deleteConfirmation = true"
+            prepend-icon="mdi-trash-can-outline"
+          >
             <v-list-item-subtitle>Delete</v-list-item-subtitle>
           </v-list-item>
           <v-dialog v-model="deleteConfirmation" max-width="500">
@@ -283,6 +274,7 @@ limitations under the License.
         </v-list>
         <div v-if="!timelineFailed" class="px-4">
           <v-color-picker
+            elevation="0"
             @update:model-value="updateColor"
             :model-value="timeline.color"
             :show-swatches="!showCustomColorPicker"
@@ -298,7 +290,6 @@ limitations under the License.
             <span v-else>Custom color</span>
           </v-btn>
         </div>
-        <br />
       </v-sheet>
     </v-menu>
   </span>
@@ -442,7 +433,7 @@ export default {
     },
     // Set debounce to 300ms to limit requests to the server.
     updateColor: _.debounce(function (color) {
-      Vue.set(this.timeline, 'color', color.hex.substring(1))
+      this.timeline['color'] = color.substring(1)
       this.$emit('save', this.timeline)
     }, 300),
     fetchData() {
