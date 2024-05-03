@@ -34,14 +34,14 @@ limitations under the License.
     >
       <span> <v-icon start>mdi-clock-outline</v-icon> Timelines </span>
       <ts-upload-timeline-form v-if="expanded">
-        <template v-slot="slotProps">
+        <template v-slot="{props}">
           <v-btn
-            v-bind="slotProps.attrs"
+            v-bind="props"
             v-if="expanded || allTimelines.length === 0"
             icon
             variant="text"
+            density="comfortable"
             class="float-right mt-n1 mr-n1"
-            v-on="slotProps.on"
             @click.stop=""
           >
             <v-icon title="Add timeline">mdi-plus</v-icon>
@@ -70,16 +70,16 @@ limitations under the License.
         ></v-text-field>
         <v-data-table
           class="data-table"
-          :hide-default-footer="allTimelines.length <= paginationThreshold"
-          :hide-default-header="true"
+          :no-filter="true"
           v-model="selected"
           :items="allTimelines"
           :headers="headers"
           item-key="id"
-          dense
+          density="compact"
           disable-sort
           :search="search"
         >
+        <template #bottom v-if="allTimelines.length <= paginationThreshold"></template>
           <template v-slot:item.name="{ item }">
             <ts-timeline-component
               class="mb-1 mt-1"
@@ -131,7 +131,7 @@ limitations under the License.
                     <span>{{ item.name }}</span>
                   </v-tooltip>
 
-                  <span class="float-right">
+                  <span class="right-align">
                     <span v-if="!slotProps.timelineFailed" class="events-count mr-1" x-small>
                       {{ this.$filters.compactNumber(getCount(item)) }}
                     </span>
@@ -139,13 +139,22 @@ limitations under the License.
                       v-if="!slotProps.timelineFailed"
                       class="ma-1"
                       size="x-small"
+                      density="comfortable"
+                      variant="text"
                       icon
                       @click="slotProps.events.toggleTimeline"
                     >
                       <v-icon v-if="isEnabled(item)"> mdi-eye </v-icon>
                       <v-icon v-else> mdi-eye-off </v-icon>
                     </v-btn>
-                    <v-btn class="ma-1" size="x-small" icon v-on="slotProps.events.menuOn">
+                    <v-btn
+                      v-bind="slotProps.events.menuOn"
+                      class="ma-1"
+                      size="x-small"
+                      icon
+                      density="comfortable"
+                      variant="text"
+                    >
                       <v-icon> mdi-dots-vertical </v-icon>
                     </v-btn>
                   </span>
@@ -248,8 +257,17 @@ export default {
 }
 </script>
 
+<style lang="scss">
+  .data-table thead {
+    display: none ;
+  }
+</style>
+
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
+.right-align {
+  margin-left: auto;
+}
 .chip-content {
   flex: 1;
   margin: 0;

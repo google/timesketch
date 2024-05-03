@@ -36,6 +36,7 @@ limitations under the License.
         v-if="expanded || (sigmaRules && !sigmaRules.length)"
         icon
         variant="text"
+        density="comfortable"
         class="float-right mt-n1 mr-n1"
         :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""

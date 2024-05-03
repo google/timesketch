@@ -33,6 +33,8 @@ limitations under the License.
       <span> <v-icon start>mdi-shield-search</v-icon> Threat Intelligence </span>
       <v-btn
         icon
+        variant="text"
+        density="comfortable"
         class="float-right mt-n1 mr-n1"
         v-if="intelligenceData && !intelligenceData.length"
         @click="addIndicator()"

@@ -63,7 +63,7 @@ limitations under the License.
 
         <!-- Graph plugins -->
         <div v-show="graphs.length">
-          <span class="text-subheader-2">Plugins</span>
+          <div class="text-subtitle-2 ml-3 mb-3 mt-3">Plugins</div>
           <router-link
             v-for="graph in graphs"
             :key="graph.name"
