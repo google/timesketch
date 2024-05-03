@@ -111,7 +111,7 @@ class TestYetiIndicators(BaseTest):
         self.assertEqual(
             message["result_summary"],
             (
-                "1 events matched 1 indicators (out of 1 processed).\n\n"
+                "1 events matched 1/1 indicators (0 failed).\n\n"
                 "Entities found: xmrig:malware"
             ),
         )
@@ -142,7 +142,7 @@ class TestYetiIndicators(BaseTest):
         message = json.loads(analyzer.run())
         self.assertEqual(
             message["result_summary"],
-            "No indicators were found in the timeline.",
+            "0/1 indicators were found in the timeline (0 failed)",
         )
         mock_get_entities.assert_called_once()
         mock_get_neighbors.asset_called_once()
@@ -267,6 +267,45 @@ tags:
                             '(data_type:"windows\\:prefetch\\:execution" '
                             'AND message:("\\\\rundll32.exe"))'
                         )
+                    }
+                }
+            },
+        )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_build_query_from_observable(self):
+        """Tests that that queries are correctly built from regex indicators."""
+        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        query = analyzer.build_query_from_observable(
+            {
+                "value": "C:\\ProgramFiles\\mimi.exe",
+                "type": "url",
+                "created": "2024-04-18T08:42:11.330182Z",
+                "context": [],
+                "last_analysis": {},
+                "id": "46833442",
+                "tags": {
+                    "mimikatz": {
+                        "source": "observables/46833442",
+                        "target": "tags/46833460",
+                        "last_seen": "2024-04-18T08:42:11.370806Z",
+                        "expires": "2024-05-18T08:42:11.370811Z",
+                        "fresh": True,
+                        "id": "tagged/46833473",
+                    }
+                },
+                "root_type": "observable",
+            }
+        )
+        self.assertEqual(
+            query,
+            {
+                "query": {
+                    "wildcard": {
+                        "message.keyword": {
+                            "value": "*C:\\\\ProgramFiles\\\\mimi.exe*",
+                            "case_insensitive": True,
+                        }
                     }
                 }
             },
