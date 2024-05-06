@@ -555,7 +555,7 @@ export default {
         aggregator_name: 'field_summary',
         aggregator_parameters: {
           field: this.eventKey,
-          field_query_string: this.eventValue
+          field_query_string: String(this.eventValue)
         }
       }).then((response) => {
         this.stats = response.data.objects[0].field_summary.buckets[0]
@@ -620,7 +620,7 @@ export default {
         aggregator_name: 'date_histogram',
         aggregator_parameters: {
           field: this.eventKey,
-          field_query_string: this.eventValue,
+          field_query_string: String(this.eventValue),
           supported_intervals: supportedIntervals,
           start_time: startTime.toISOString().slice(0, -1),
           end_time: endTime.toISOString().slice(0, -1),

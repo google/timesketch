@@ -17,14 +17,13 @@ from __future__ import unicode_literals
 import copy
 from datetime import datetime
 
-from timesketch.lib.aggregators import interface
-from timesketch.lib.aggregators import manager
+from timesketch.lib.aggregators import interface, manager
 
 
 class DateHistogramAggregation(interface.BaseAggregator):
     """Date Histogram Aggregation.
 
-    This aggregator uses "date_histogram" which is a type of OpenSearch
+    This aggregator uses "calendar_interval" which is a type of OpenSearch
     aggregation that buckets documents (i.e. events in Timesketch) into
     time-based intervals.
     """
@@ -35,7 +34,9 @@ class DateHistogramAggregation(interface.BaseAggregator):
 
     SUPPORTED_CHARTS = frozenset(["heatmap", "date_histogram", "table"])
 
-    SUPPORTED_INTERVALS = frozenset(["year", "month", "day", "day_of_week", "hour"])
+    SUPPORTED_INTERVALS = frozenset(
+        ["year", "quarter", "month", "week", "day", "hour", "minute"]
+    )
 
     FORM_FIELDS = [
         {
@@ -108,7 +109,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
             "aggregation": {
                 "date_histogram": {
                     "field": "datetime",
-                    # "interval": "TODO"
+                    "calendar_interval": None,
                 }
             }
         },
@@ -184,7 +185,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
             {"query_string": {"query": query}}
         )
         aggregation_spec["aggs"]["aggregation"]["date_histogram"][
-            "interval"
+            "calendar_interval"
         ] = self.interval
         aggregation_spec["aggs"]["aggregation"]["date_histogram"]["missing"] = 0
         aggregation_spec["aggs"]["aggregation"]["date_histogram"]["min_doc_count"] = 0
@@ -266,10 +267,10 @@ class DateHistogramAggregation(interface.BaseAggregator):
                 "year": dt.year,
             }
 
-            if self.interval in ("month", "day", "day_of_week", "hour"):
+            if self.interval in ("month", "day", "hour"):
                 value["month"] = dt.month
 
-                if self.interval in ("day", "day_of_week", "hour"):
+                if self.interval in ("day", "hour"):
                     value["day"] = dt.day
                     value["dow"] = dt.weekday()
 
