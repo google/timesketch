@@ -23,13 +23,54 @@ limitations under the License.
     </v-dialog>
 
     <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
+      <p class="ml-n2 mt-n4">
+        <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn small text rounded color="secondary" v-bind="attrs" v-on="on">
+              <v-icon left small title="Save current search">mdi-content-save-outline</v-icon>
+              save this search
+            </v-btn>
+          </template>
+
+          <v-card class="pa-4">
+            <h3>Save Search</h3>
+            <br />
+            <v-text-field
+              clearable
+              v-model="saveSearchFormName"
+              required
+              placeholder="Name your saved search"
+              outlined
+              dense
+              autofocus
+              @focus="$event.target.select()"
+              :rules="saveSearchNameRules"
+            >
+            </v-text-field>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+              <v-btn
+                text
+                color="primary"
+                @click="saveSearch"
+                :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
+              >
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </p>
       <p>
-        Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
+        Your search <span v-if="currentQueryString">'{{ currentQueryString }}'</span><span v-if="filterChips.length"> in combination with the selected filter terms</span> did not match any events.
       </p>
       <p>Suggestions:</p>
-      <li>Try different keywords.</li>
-      <li>Try more general keywords.</li>
-      <li>Try fewer keywords.</li>
+      <ul>
+        <li>Try different keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
+        <li>Try more general keywords.</li>
+        <li>Try fewer keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
+      </ul>
     </div>
 
     <div v-if="highlightEvent" class="mt-4">
@@ -638,6 +679,9 @@ export default {
     },
     activeContext() {
       return this.$store.state.activeContext
+    },
+    filterChips: function () {
+      return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
     },
   },
   methods: {
