@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""NL2Q API for version 1 of the Timesketch API."""
+"""Natural language to query (NL2Q) API for version 1 of the Timesketch API."""
 
 import logging
 
