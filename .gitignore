@@ -37,3 +37,4 @@ vagrant/*.log
 # Exclude .venv folder
 .venv/
 .vscode/*
+vertexai/

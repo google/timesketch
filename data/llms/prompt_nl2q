@@ -1,6 +1,0 @@
-Convert the following question to a Lucene query for Timesketch.
-
-Sketch data types:
-{data_types}
-Question: {question}
-Answer:

@@ -284,7 +284,19 @@ def load_csv_file(config_parametre_name):
     Returns:
         A data frame with the CSV content
     """
-    csv_file = current_app.config.get(config_parametre_name)
+    csv_file = current_app.config.get(config_parametre_name, "")
+    if not csv_file:
+        logger.error(
+            "The path to the CSV file isn't defined in the " "main configuration file"
+        )
+        return {}
+    if not os.path.isfile(csv_file):
+        logger.error(
+            "Unable to read the config, file: "
+            "[{0:s}] does not exist".format(csv_file)
+        )
+        return {}
+
     return pd.read_csv(csv_file)
 
 

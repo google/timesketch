@@ -60,12 +60,12 @@ class Nl2qResource(Resource):
                     self.sketch_data_types(sketch_id)
                 ),
             )
-        except (OSError, IOError) as e:
+        except (OSError, IOError):
             abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No prompt defined")
         return prompt
 
     def sketch_data_types(self, sketch_id):
-        """Get's the data types from current sketch.
+        """Get the data types for the current sketch.
 
         Args:
           sketch_id: Sketch ID.
@@ -87,6 +87,10 @@ class Nl2qResource(Resource):
             sketch_id, "field_bucket", {"field": "data_type", "limit": "1000"}
         )
         data_types = data_type_aggregation[0].values
+        if not data_types:
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No data types in the sketch."
+            )
         for data_type in data_types:
             output.append(data_type.get("data_type"))
         return ",".join(output)
@@ -154,10 +158,18 @@ class Nl2qResource(Resource):
     def post(self, sketch_id):
         """Handles POST request to the resource.
 
+        Args:
+          sketch_id: Sketch ID.
+
         Returns:
-            String representing the LLM prediction.
+            JSON representing the LLM prediction.
         """
-        llm_provider = current_app.config.get("LLM_PROVIDER")
+        llm_provider = current_app.config.get("LLM_PROVIDER", "")
+        if not llm_provider:
+            logger.error(
+                "No LLM provider was defined in the " "main configuration file"
+            )
+            return {}
         form = request.json
         if not form:
             abort(
@@ -180,7 +192,8 @@ class Nl2qResource(Resource):
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error NL2Q prompt: {}".format(e))
             abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "An error occurred generating the NL2Q prediction via the\
+                    defined LLM. Please contact your Timesketch administrator.",
                 e,
             )
         return jsonify(prediction)
