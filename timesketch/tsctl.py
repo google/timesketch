@@ -495,24 +495,39 @@ def info():
         print("psort.py not installed")
 
     # Get installed node version
-    output = subprocess.check_output(["node", "--version"]).decode("utf-8")
-    print(f"Node version: {output} ")
+    try:
+        output = subprocess.check_output(["node", "--version"]).decode("utf-8")
+        print(f"Node version: {output} ")
+    except FileNotFoundError:
+        print("Node not installed. Node is only used in the dev environment.")
 
-    # Get installed npm version
-    output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
-    print(f"npm version: {output}")
+    try:
+        # Get installed npm version
+        output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
+        print(f"npm version: {output}")
+    except FileNotFoundError:
+        print("npm not installed. npm is only used in the dev environment.")
 
-    # Get installed yarn version
-    output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
-    print(f"yarn version: {output} ")
+    try:
+        # Get installed yarn version
+        output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
+        print(f"yarn version: {output} ")
+    except FileNotFoundError:
+        print("yarn not installed. Yarn is only used in the dev environment.")
 
-    # Get installed python version
-    output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
-    print(f"Python version: {output} ")
+    try:
+        # Get installed python version
+        output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
+        print(f"Python version: {output} ")
+    except FileNotFoundError:
+        print("Python3 not installed")
 
-    # Get installed pip version
-    output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
-    print(f"pip version: {output} ")
+    try:
+        # Get installed pip version
+        output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
+        print(f"pip version: {output} ")
+    except FileNotFoundError:
+        print("pip not installed")
 
 
 def print_table(table_data):
