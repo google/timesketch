@@ -43,21 +43,32 @@ class Nl2qResource(Resource):
     def build_prompt(self, question, sketch_id):
         """Builds the prompt.
 
+        Args:
+          sketch_id: Sketch ID.
+
         Return:
           String containing the whole prompt.
         """
         prompt = ""
-        prompt_file = current_app.config.get("DATA_TYPES_PATH")
-        with open(prompt_file, "r") as file:
-            prompt = file.read()
-        prompt = prompt.format(
-            question=question,
-            data_types=self.data_types_descriptions(self.sketch_data_types(sketch_id)),
-        )
+        prompt_file = current_app.config.get("PROMPT_NL2Q")
+        try:
+            with open(prompt_file, "r") as file:
+                prompt = file.read()
+            prompt = prompt.format(
+                question=question,
+                data_types=self.data_types_descriptions(
+                    self.sketch_data_types(sketch_id)
+                ),
+            )
+        except (OSError, IOError) as e:
+            abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No prompt defined")
         return prompt
 
     def sketch_data_types(self, sketch_id):
-        """Get's the data types from current sketch..
+        """Get's the data types from current sketch.
+
+        Args:
+          sketch_id: Sketch ID.
 
         Returns:
           List of data types in a sketch.
@@ -82,6 +93,9 @@ class Nl2qResource(Resource):
 
     def data_types_descriptions(self, data_types):
         """Creates a dict of data types and attribute descriptions.
+
+        Args:
+          data_types: List of data types in the sketch.
 
         Returns:
           Dict of data types and attribute descriptions.
@@ -110,6 +124,9 @@ class Nl2qResource(Resource):
     def generate_fields(self, group):
         """Generated the fields for a data type.
 
+        Args:
+          group: Data type fields.
+
         Returns:
           String of the generated fields.
         """
@@ -120,7 +137,10 @@ class Nl2qResource(Resource):
         return generated_fields
 
     def concatenate_values(self, group):
-        """Concatenates the fields for a data type
+        """Concatenates the fields for a data type.
+
+        Args:
+          group: Data type fields.
 
         Returns:
           String of the concatenated fields.
