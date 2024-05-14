@@ -18,12 +18,15 @@ from __future__ import unicode_literals
 import json
 import mock
 
+from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.testlib import BaseTest
+from timesketch.lib.testlib import TestConfig
 from timesketch.lib.testlib import MockDataStore
 
 from timesketch.api.v1.resources import ResourceMixin
@@ -1177,3 +1180,140 @@ class UserTest(BaseTest):
         response = self.client.get("/api/v1/users/1/")
         data = json.loads(response.get_data(as_text=True))
         self.assertEqual(data["objects"][0]["username"], "test1")
+
+
+class TestNl2qPrompt(BaseTest):
+    """Test Nl2qResource."""
+
+    resource_url = "/api/v1/sketches/1/nl2q/"
+
+    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_prompt(self, mock_aggregator, mock_llm_manager):
+        """Test the prompt is created correctly."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_aggregator.return_value = [
+            {
+                "values": [
+                    {"data_type": "test:data_type:1"},
+                    {"data_type": "test:data_type:2"},
+                ]
+            }
+        ]
+        mock_llm = mock.Mock()
+        mock_llm.generate.return_value = {"prediction": "query"}
+        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        expected_input = (
+            "Convert the following question to a Lucene query for Timesketch.\n\n"
+            "Sketch data types:\n"
+            '- "test:data_type:1" fields: ["field_test_1" (str, field test 1 '
+            'description.), "field_test_2" (str, field test 2 description.)]\n'
+            '- "test:data_type:2" fields: ["field_test_1" (str, field test 1 '
+            'description.), "field_test_2" (str, field test 2 description.)]\n'
+            "Question: Question for LLM?\n"
+            "Answer:\n"
+        )
+        mock_llm.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
+    def test_nl2q_no_prompt(self):
+        """Test the prompt file does not exist."""
+
+
+class TestNl2qPromptFile(BaseTest):
+    """Test Nl2qResource."""
+
+    resource_url = "/api/v1/sketches/1/nl2q/"
+
+    def create_app(self):
+        """Setup the Flask application.
+        Returns:
+            Flask application (instance of flask.app.Flask)
+        """
+
+        TestConfig.PROMPT_NL2Q = "../../../test_data/nl2q/test_prompt_nl2q_not_exist"
+        app = create_app(TestConfig)
+        return app
+
+    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_files(self, mock_aggregator, mock_llm_manager):
+        """Test the prompt is created correctly."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_aggregator.return_value = [
+            {
+                "values": [
+                    {"data_type": "test:data_type:1"},
+                    {"data_type": "test:data_type:2"},
+                ]
+            }
+        ]
+        mock_llm = mock.Mock()
+        mock_llm.generate.return_value = {"prediction": "query"}
+        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        self.assertEqual(json.loads(response.text)["message"], "No prompt defined")
+
+
+class TestNl2qDataTypesFile(BaseTest):
+    """Test Nl2qResource."""
+
+    resource_url = "/api/v1/sketches/1/nl2q/"
+
+    def create_app(self):
+        """Setup the Flask application.
+        Returns:
+            Flask application (instance of flask.app.Flask)
+        """
+
+        TestConfig.DATA_TYPES_PATH = (
+            "../../../test_data/nl2q/test_data_types_not_exist.csv"
+        )
+        app = create_app(TestConfig)
+        return app
+
+    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_files(self, mock_aggregator, mock_llm_manager):
+        """Test the prompt is created correctly."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_aggregator.return_value = [
+            {
+                "values": [
+                    {"data_type": "test:data_type:1"},
+                    {"data_type": "test:data_type:2"},
+                ]
+            }
+        ]
+        mock_llm = mock.Mock()
+        mock_llm.generate.return_value = {"prediction": "query"}
+        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        self.assertEqual(
+            json.loads(response.text)["message"],
+            "No data types description file or the file is empty.",
+        )

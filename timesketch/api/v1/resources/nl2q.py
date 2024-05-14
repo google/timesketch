@@ -86,7 +86,8 @@ class Nl2qResource(Resource):
         data_type_aggregation = utils.run_aggregator(
             sketch_id, "field_bucket", {"field": "data_type", "limit": "1000"}
         )
-        data_types = data_type_aggregation[0].values
+
+        data_types = data_type_aggregation[0]["values"]
         if not data_types:
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No data types in the sketch."
@@ -105,6 +106,11 @@ class Nl2qResource(Resource):
           Dict of data types and attribute descriptions.
         """
         df_data_types = utils.load_csv_file("DATA_TYPES_PATH")
+        if df_data_types.empty:
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "No data types description file or the file is empty.",
+            )
         df_short_data_types = pd.DataFrame(
             df_data_types.groupby("data_type").apply(self.concatenate_values),
             columns=["fields"],

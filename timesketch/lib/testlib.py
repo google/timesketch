@@ -80,6 +80,9 @@ class TestConfig(object):
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
     CONTEXT_LINKS_CONFIG_PATH = "./test_tools/test_events/mock_context_links.yaml"
+    LLM_PROVIDER = "test"
+    DATA_TYPES_PATH = "../../../test_data/nl2q/test_data_types.csv"
+    PROMPT_NL2Q = "../../../test_data/nl2q/test_prompt_nl2q"
 
 
 class MockOpenSearchClient(object):
