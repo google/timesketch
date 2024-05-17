@@ -377,7 +377,7 @@ export default {
               return
             }
             const lastActiveCount = this.activeAnalyses.length
-            const activeAnalyses = await this.fetchActiveAnalyses(this.$store, this.sketch.id)
+            const activeAnalyses = await this.fetchActiveAnalyses(this.sketch.id)
 
             // Refetch analyzer results if some analyzer finished.
             if (lastActiveCount !== activeAnalyses.length) {
