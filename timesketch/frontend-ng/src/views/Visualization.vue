@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <v-card flat class="mx-3">
+    <v-card flat>
       <ts-visualization-editor v-if="!aggregationId"></ts-visualization-editor>
     </v-card>
     <ts-saved-visualization
