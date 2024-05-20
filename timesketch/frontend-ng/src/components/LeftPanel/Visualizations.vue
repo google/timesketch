@@ -92,12 +92,23 @@ limitations under the License.
               :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'"
               @click="navigateToSavedVisualization(savedVisualization.id)"
             >
+            
               <span class="d-inline-block text-truncate" style="max-width: 250px"> 
                 <v-icon left small>
                   {{ getIcon(savedVisualization.chart_type) }}
                 </v-icon> 
-                {{ savedVisualization.name }}
+                <!-- {{ savedVisualization.name }} -->
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <span
+                      v-bind="attrs"
+                      v-on="on"
+                    >{{ savedVisualization.name }}</span>
+                  </template>
+                  <span>{{ savedVisualization.name }}</span>
+                </v-tooltip>
               </span>
+            
             </v-col>
             <v-col cols="auto">
               <v-menu offset-y>
