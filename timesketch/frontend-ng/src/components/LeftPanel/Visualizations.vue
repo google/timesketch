@@ -231,7 +231,9 @@ export default {
   },
   computed: {
     savedVisualizations() {
-      return this.$store.state.savedVisualizations
+      return this.$store.state.savedVisualizations.filter(
+          (e) => JSON.parse(e.parameters)['aggregator_class'] === 'apex'
+      )
     },
     visualizationCount() {
       if (!this.$store.state.savedVisualizations) {

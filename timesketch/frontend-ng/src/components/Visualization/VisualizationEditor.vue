@@ -365,6 +365,7 @@ export default {
     getAggregatorParameters() {
       return {
         aggregator_name: this.selectedAggregator,
+        aggregator_class: 'apex',
         aggregator_parameters: {
           fields: [this.selectedField],
           aggregator_options: {

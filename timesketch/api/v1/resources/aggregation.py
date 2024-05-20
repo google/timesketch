@@ -30,6 +30,7 @@ from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib import utils as lib_utils
+from timesketch.lib.aggregators import apex
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -532,6 +533,9 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             result = {"aggregation_result": {aggregator_name: buckets}}
             meta = {
                 "method": "aggregator_run",
+                "aggregator_class": (
+                    "apex" if isinstance(aggregator, apex.ApexAggregation) else 'legacy'
+                ),
                 "chart_type": chart_type,
                 "name": aggregator_description.get("name"),
                 "description": aggregator_description.get("description"),
