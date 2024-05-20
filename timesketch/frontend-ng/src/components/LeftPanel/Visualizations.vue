@@ -92,10 +92,10 @@ limitations under the License.
               :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'"
               @click="navigateToSavedVisualization(savedVisualization.id)"
             >
-              <v-icon left small>
-                {{ getIcon(savedVisualization.chart_type) }}
-              </v-icon> 
-              <span class="saved-visualization-title-ellipsis">
+              <span class="d-inline-block text-truncate" style="max-width: 250px"> 
+                <v-icon left small>
+                  {{ getIcon(savedVisualization.chart_type) }}
+                </v-icon> 
                 {{ savedVisualization.name }}
               </span>
             </v-col>
@@ -259,12 +259,3 @@ export default {
 
 }
 </script>
-
-<style scoped lang="scss">
-.saved-visualization-title-ellipsis {
-  width: 100;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-</style>
