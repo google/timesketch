@@ -48,6 +48,7 @@ limitations under the License.
       </span>
   
       <v-btn
+        v-if="expanded || !(savedVisualizations && savedVisualizations.length)"
         icon
         text
         class="float-right mt-n1 mr-n1"
