@@ -231,6 +231,9 @@ export default {
   },
   computed: {
     savedVisualizations() {
+      if (!this.$store.state.savedVisualizations) {
+        return []
+      }
       return this.$store.state.savedVisualizations.filter(
           (e) => JSON.parse(e.parameters)['aggregator_class'] === 'apex'
       )
@@ -239,7 +242,9 @@ export default {
       if (!this.$store.state.savedVisualizations) {
         return 0
       }
-      return this.$store.state.savedVisualizations.length
+      return this.$store.state.savedVisualizations.filter(
+          (e) => JSON.parse(e.parameters)['aggregator_class'] === 'apex'
+      ).length
     }, 
     sketch() {
       return this.$store.state.sketch
