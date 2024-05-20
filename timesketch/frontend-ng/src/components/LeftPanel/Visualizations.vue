@@ -98,7 +98,7 @@ limitations under the License.
                   {{ getIcon(savedVisualization.chart_type) }}
                 </v-icon> 
                 <!-- {{ savedVisualization.name }} -->
-                <v-tooltip bottom>
+                <v-tooltip bottom :disabled="savedVisualization.name.length < 34">
                   <template v-slot:activator="{ on, attrs }">
                     <span
                       v-bind="attrs"
