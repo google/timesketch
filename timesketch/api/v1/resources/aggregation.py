@@ -534,7 +534,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             meta = {
                 "method": "aggregator_run",
                 "aggregator_class": (
-                    "apex" if isinstance(aggregator, apex.ApexAggregation) else 'legacy'
+                    "apex" if isinstance(aggregator, apex.ApexAggregation) else "legacy"
                 ),
                 "chart_type": chart_type,
                 "name": aggregator_description.get("name"),
