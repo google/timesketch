@@ -92,11 +92,6 @@ class AggregationQuerySpec:
         if clause not in self._VALID_QUERY_CLAUSES:
             raise ValueError(f"Unknown boolean clause - {clause}.")
 
-        # try:
-        #     _ = datetime.fromisoformat(datetime_value)
-        # except ValueError as error:
-        # raise ValueError(f"{datetime_value} is not ISO formatted.") from error
-
         for query_clause in self.bool_queries[clause]:
             if "range" in query_clause and "datetime" in query_clause["range"]:
                 query_clause["range"]["datetime"][operator] = datetime_value

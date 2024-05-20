@@ -94,7 +94,10 @@ limitations under the License.
             >
               <v-icon left small>
                 {{ getIcon(savedVisualization.chart_type) }}
-              </v-icon> {{ savedVisualization.name }}                       
+              </v-icon> 
+              <span class="saved-visualization-title-ellipsis">
+                {{ savedVisualization.name }}
+              </span>
             </v-col>
             <v-col cols="auto">
               <v-menu offset-y>
@@ -198,6 +201,7 @@ export default {
             }
           })
           .catch((e) => {
+            this.errorSnackBar('Failed to delete Saved Visualization!')
             console.error(e)
           })
       }
@@ -248,3 +252,12 @@ export default {
 
 }
 </script>
+
+<style scoped lang="scss">
+.saved-visualization-title-ellipsis {
+  width: 100;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
