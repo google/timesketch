@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <ts-chart-card 
+  <div class="ml-3">
+    <ts-chart-card 
     v-if="aggregationId"
       :chartSeries="chartSeries" 
       :chartLabels="chartLabels"
