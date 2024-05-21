@@ -41,12 +41,12 @@ limitations under the License.
     <v-row>
       <v-col>
         <v-switch
-          v-model="showOptions"
+          v-model="selectedShowOptions"
           label="Show detailed chart options"
         ></v-switch>
       </v-col>
     </v-row>
-    <v-row v-if="showOptions">
+    <v-row v-if="selectedShowOptions">
       <v-col>
         <v-text-field 
           v-model.number="selectedHeight" 
@@ -64,7 +64,7 @@ limitations under the License.
         ></v-text-field>
       </v-col>
     </v-row>
-    <v-row v-if="showOptions">
+    <v-row v-if="selectedShowOptions">
       <v-col>
         <v-text-field 
           v-model="selectedXTitle" 
@@ -80,7 +80,7 @@ limitations under the License.
         </v-checkbox>
       </v-col>
     </v-row>
-    <v-row v-if="showOptions"> 
+    <v-row v-if="selectedShowOptions"> 
       <v-col>
         <v-text-field 
           v-model="selectedYTitle" 
@@ -97,7 +97,7 @@ limitations under the License.
         </v-checkbox>
       </v-col>
     </v-row>
-    <v-row v-if="showOptions">
+    <v-row v-if="selectedShowOptions">
       <v-col>
         <v-checkbox 
           v-model="selectedDataLabels" 
@@ -166,6 +166,7 @@ export default {
       selectedChartTitle: this.title,
       selectedDataLabels: this.showDataLabels,
       selectedHeight: this.height,
+      selectedShowOptions: this.showOptions,
       selectedShowXLabels: this.showXLabels,
       selectedShowYLabels: this.showYLabels,
       selectedWidth: this.width,
