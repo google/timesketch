@@ -75,7 +75,6 @@ limitations under the License.
     </div>
     <v-expand-transition>
       <div v-show="expanded && savedVisualizations.length">
-        <v-subheader>Saved Visualizations</v-subheader>
         <div
           v-for="(savedVisualization, key) in savedVisualizations"
           :key="key"
