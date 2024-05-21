@@ -15,7 +15,7 @@
  -->
  <template>
   <v-card
-    flat
+    outlined
     :min-height="height"
     :width="width + (chartType === 'table' ? 25 : 0)"
   >
