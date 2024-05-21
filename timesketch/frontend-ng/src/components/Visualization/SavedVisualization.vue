@@ -16,23 +16,24 @@ limitations under the License.
 <template>
   <div class="ml-3">
     <ts-chart-card 
-    v-if="aggregationId"
-      :chartSeries="chartSeries" 
-      :chartLabels="chartLabels"
-      :chartTitle="chartTitle"
-      :chartType="chartType"
-      :fieldName="fieldName"
-      :height="height"
-      :isTimeSeries="isTimeSeries"
-      :metricName="metricName"
-      :showDataLabels="showDataLabels"
-      :showXLabels="showXLabels"
-      :showYLabels="showYLabels"
-      :width="width"
-      :xTitle="xTitle"
-      :yTitle="yTitle"
-    >
-  </ts-chart-card>
+      v-if="aggregationId"
+        :chartSeries="chartSeries" 
+        :chartLabels="chartLabels"
+        :chartTitle="chartTitle"
+        :chartType="chartType"
+        :fieldName="fieldName"
+        :height="height"
+        :isTimeSeries="isTimeSeries"
+        :metricName="metricName"
+        :showDataLabels="showDataLabels"
+        :showXLabels="showXLabels"
+        :showYLabels="showYLabels"
+        :width="width"
+        :xTitle="xTitle"
+        :yTitle="yTitle"
+      >
+    </ts-chart-card>
+  </div>
 </template>
 
 <script>
