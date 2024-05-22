@@ -49,12 +49,14 @@ limitations under the License.
     </v-row>
     <v-row v-if="!disableMaxItems">
       <v-col>
-        <v-select
+        <v-text-field
+          :label="labelMaxItems"
           outlined
           v-model="selectedMaxItems"
-          :items="[...Array(50).keys()].map((_, i) => i + 1)"
-          :label="labelMaxItems"
-        ></v-select>
+          single-line
+          type="number"
+          min=1
+        />
       </v-col>
     </v-row>
     <v-row v-if="!disableInterval">
