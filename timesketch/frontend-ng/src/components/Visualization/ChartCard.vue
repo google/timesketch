@@ -17,7 +17,7 @@
   <v-card
     flat
     :min-height="height"
-    :width="width"
+    :min-width="width"
   >
     <v-card-text>
       <TsBarChart 
