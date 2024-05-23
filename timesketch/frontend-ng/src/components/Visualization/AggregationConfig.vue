@@ -52,8 +52,7 @@ limitations under the License.
         <v-text-field
           :label="labelMaxItems"
           outlined
-          v-model="selectedMaxItems"
-          single-line
+          :v-model="selectedMaxItems"
           type="number"
           min=1
         />
