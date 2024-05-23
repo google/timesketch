@@ -169,7 +169,7 @@ export default {
       type: Number,
     },
     metric: {
-      type: Number,
+      type: String,
     },
     queryChips: {
       type: Array,

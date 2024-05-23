@@ -52,9 +52,9 @@ limitations under the License.
         <v-text-field
           :label="labelMaxItems"
           outlined
-          :v-model="selectedMaxItems.number"
+          v-model.number="selectedMaxItems"
           type="number"
-          min=1
+          oninput="if(this.value < 1) this.value = 1;"
         />
       </v-col>
     </v-row>
