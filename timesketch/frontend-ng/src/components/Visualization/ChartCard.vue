@@ -15,9 +15,9 @@
  -->
  <template>
   <v-card
-    outlined
+    flat
     :min-height="height"
-    :width="width + (chartType === 'table' ? 25 : 0)"
+    :width="width"
   >
     <v-card-text>
       <TsBarChart 

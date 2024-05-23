@@ -64,7 +64,7 @@ limitations under the License.
           </v-card>
         </v-col>
         <v-col cols="8">
-          <v-card outlined>
+          <v-card outlined v-show="chartSeries && selectedChartType">
             <v-card-text>
               <TsChartCard
                 v-if="chartSeries && selectedChartType"

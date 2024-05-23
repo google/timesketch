@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="ml-3">
+  <v-card class="mx-3" outlined>
     <ts-chart-card 
       v-if="aggregationId"
         :chartSeries="chartSeries" 
@@ -33,7 +33,7 @@ limitations under the License.
         :yTitle="yTitle"
       >
     </ts-chart-card>
-  </div>
+  </v-card>
 </template>
 
 <script>
