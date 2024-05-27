@@ -1195,9 +1195,9 @@ class TestNl2qResource(BaseTest):
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
         mock_AggregationResult.values = [
-                    {"data_type": "test:data_type:1"},
-                    {"data_type": "test:data_type:2"},
-                ]
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
         mock_aggregator.return_value = (mock_AggregationResult, {})
         mock_llm = mock.Mock()
         mock_llm.generate.return_value = "LLM generated query"
@@ -1221,9 +1221,8 @@ class TestNl2qResource(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictEqual(
             response.json,
-            {'llm_query': 'LLM generated query', 'question': 'Question for LLM?'},
+            {"llm_query": "LLM generated query", "question": "Question for LLM?"},
         )
-
 
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
@@ -1235,9 +1234,9 @@ class TestNl2qResource(BaseTest):
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
         mock_AggregationResult.values = [
-                    {"data_type": "test:data_type:1"},
-                    {"data_type": "test:data_type:2"},
-                ]
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
         mock_aggregator.return_value = (mock_AggregationResult, {})
         response = self.client.post(
             self.resource_url,
@@ -1277,9 +1276,9 @@ class TestNl2qResource(BaseTest):
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
         mock_AggregationResult.values = [
-                    {"data_type": "test:data_type:1"},
-                    {"data_type": "test:data_type:2"},
-                ]
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
         mock_aggregator.return_value = (mock_AggregationResult, {})
         response = self.client.post(
             self.resource_url,
@@ -1338,9 +1337,9 @@ class TestNl2qResource(BaseTest):
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
         mock_AggregationResult.values = [
-                    {"data_type": "test:data_type:1"},
-                    {"data_type": "test:data_type:2"},
-                ]
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
         mock_aggregator.return_value = (mock_AggregationResult, {})
         mock_llm = mock.Mock()
         mock_llm.generate.side_effect = Exception("Test exception")
