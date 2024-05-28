@@ -757,7 +757,14 @@ def searchindex_info(searchindex_id):
     required=False,
     help="Limit the number of results.",
 )
-def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
+@click.option(
+    "--export_csv",
+    required=False,
+    help="Export the results to a CSV file.",
+)
+def analyzer_stats(
+    analyzer_name, timeline_id, scope, result_text_search, limit, export_csv
+):
     """Prints analyzer stats."""
 
     if timeline_id:
@@ -789,6 +796,7 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
         new_row = pd.DataFrame(
             [
                 {
+                    "analyzer_name": analysis.analyzer_name,
                     "runtime": analysis.updated_at - analysis.created_at,
                     "hits": matches,
                     "timeline_id": analysis.timeline_id,
@@ -832,5 +840,9 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
     if analyzer_name != "sigma":
         df = df.drop(columns=["hits"])
 
-    pd.options.display.max_colwidth = 500
-    print(df)
+    if export_csv:
+        df.to_csv(export_csv, index=False)
+        print(f"Analyzer stats exported to {export_csv}")
+    else:
+        pd.options.display.max_colwidth = 500
+        print(df)
