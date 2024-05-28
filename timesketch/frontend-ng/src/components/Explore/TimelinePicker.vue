@@ -92,18 +92,13 @@ export default {
       return this.$store.state.enabledTimelines.includes(timeline.id)
     },
     getCount(timeline) {
-      let count = 0
       if (this.countPerTimeline) {
-        count = this.countPerTimeline[timeline.id]
+        const count = this.countPerTimeline[timeline.id]
         if (typeof count === 'number') {
           return count
         }
       }
-      // Support for old style indices
-      if (!count && this.countPerIndex) {
-        count = this.countPerIndex[timeline.searchindex.index_name]
-      }
-      return count
+      return 0
     },
     remove(timeline) {
       this.isLoading = true
