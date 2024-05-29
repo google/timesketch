@@ -50,7 +50,7 @@ class Nl2qResource(Resource):
           String containing the whole prompt.
         """
         prompt = ""
-        prompt_file = current_app.config.get("PROMPT_NL2Q")
+        prompt_file = current_app.config.get("PROMPT_NL2Q", "")
         try:
             with open(prompt_file, "r") as file:
                 prompt = file.read()
@@ -87,7 +87,12 @@ class Nl2qResource(Resource):
             sketch_id, "field_bucket", {"field": "data_type", "limit": "1000"}
         )
 
-        data_types = data_type_aggregation[0]["values"]
+        if not data_type_aggregation or not data_type_aggregation[0]:
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "Internal problem with the aggregations.",
+            )
+        data_types = data_type_aggregation[0].values
         if not data_types:
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No data types in the sketch."
@@ -172,10 +177,11 @@ class Nl2qResource(Resource):
         """
         llm_provider = current_app.config.get("LLM_PROVIDER", "")
         if not llm_provider:
-            logger.error(
-                "No LLM provider was defined in the " "main configuration file"
+            logger.error("No LLM provider was defined in the main configuration file")
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "No LLM provider was defined in the main configuration file",
             )
-            return {}
         form = request.json
         if not form:
             abort(
@@ -191,15 +197,23 @@ class Nl2qResource(Resource):
 
         question = form.get("question")
         prompt = self.build_prompt(question, sketch_id)
-        llm = manager.LLMManager().get_provider(llm_provider)()
+        try:
+            llm = manager.LLMManager().get_provider(llm_provider)()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error LLM Provider: {}".format(e))
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "Error LLM Provider",
+            )
 
         try:
             prediction = llm.generate(prompt)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error NL2Q prompt: {}".format(e))
             abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 "An error occurred generating the NL2Q prediction via the\
                     defined LLM. Please contact your Timesketch administrator.",
-                e,
             )
-        return jsonify(prediction)
+        result = {"question": question, "llm_query": prediction}
+        return jsonify(result)

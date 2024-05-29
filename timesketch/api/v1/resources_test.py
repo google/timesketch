@@ -1221,7 +1221,7 @@ class TestNl2qResource(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictEqual(
             response.json,
-            {"llm_query": "LLM generated query", "question": "Question for LLM?"},
+            {"question": "Question for LLM?", "llm_query": "LLM generated query"},
         )
 
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
