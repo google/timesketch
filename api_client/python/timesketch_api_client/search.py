@@ -697,7 +697,7 @@ class Search(resource.SketchResource):
         self._return_fields = return_fields
 
         if max_entries:
-            self._max_entries = max_entries
+            self.max_entries = max_entries
 
         # TODO: Make use of search templates and aggregations.
         # self._searchtemplate = data.get('searchtemplate', 0)
