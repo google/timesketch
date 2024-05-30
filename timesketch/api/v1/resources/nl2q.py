@@ -61,7 +61,7 @@ class Nl2qResource(Resource):
                 ),
             )
         except (OSError, IOError):
-            abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No prompt defined")
+            abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No prompt file found")
         return prompt
 
     def sketch_data_types(self, sketch_id):
@@ -192,7 +192,7 @@ class Nl2qResource(Resource):
         if "question" not in form:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "question parameter is required",
+                "The 'question' parameter is required!",
             )
 
         question = form.get("question")
@@ -203,7 +203,8 @@ class Nl2qResource(Resource):
             logger.error("Error LLM Provider: {}".format(e))
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "Error LLM Provider",
+                "Error in loading the LLM Provider. Please contact your "
+                "Timesketch administrator.",
             )
 
         try:
@@ -212,8 +213,8 @@ class Nl2qResource(Resource):
             logger.error("Error NL2Q prompt: {}".format(e))
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "An error occurred generating the NL2Q prediction via the\
-                    defined LLM. Please contact your Timesketch administrator.",
+                "An error occurred generating the NL2Q prediction via the "
+                "defined LLM. Please contact your Timesketch administrator.",
             )
         result = {"question": question, "llm_query": prediction}
         return jsonify(result)
