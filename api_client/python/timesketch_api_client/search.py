@@ -692,9 +692,9 @@ class Search(resource.SketchResource):
         if query_filter:
             self.query_filter = query_filter
 
-        self._query_string = query_string
+        self.query_string = query_string
         self.query_dsl = query_dsl
-        self._return_fields = return_fields
+        self.return_fields = return_fields
 
         if max_entries:
             self.max_entries = max_entries
