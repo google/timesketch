@@ -504,16 +504,16 @@ class Search(resource.SketchResource):
         if not isinstance(query_filter, dict):
             raise ValueError("Unable to query with a query filter that isn't a dict.")
 
-        stop_size = self._max_entries
+        stop_size = self.max_entries
         scrolling = not bool(stop_size and (stop_size < self.DEFAULT_SIZE_LIMIT))
 
         if self.scrolling is not None:
             scrolling = self.scrolling
 
         form_data = {
-            "query": self._query_string,
+            "query": self.query_string,
             "filter": query_filter,
-            "dsl": self._query_dsl,
+            "dsl": self.query_dsl,
             "count": count,
             "fields": self.return_fields,
             "enable_scroll": scrolling,
@@ -546,7 +546,7 @@ class Search(resource.SketchResource):
         count = len(response_json.get("objects", []))
         total_count = count
         while count > 0:
-            if self._max_entries and total_count >= self._max_entries:
+            if self.max_entries and total_count >= self.max_entries:
                 break
 
             if not scroll_id:
@@ -740,14 +740,14 @@ class Search(resource.SketchResource):
             if "fields" in filter_dict:
                 fields = filter_dict.pop("fields")
                 return_fields = [x.get("field") for x in fields]
-                self._return_fields = ",".join(return_fields)
+                self.return_fields = ",".join(return_fields)
 
             indices = filter_dict.get("indices", [])
             if indices:
                 self.indices = indices
 
             self.query_filter = filter_dict
-        self._query_string = data.get("query_string", "")
+        self.query_string = data.get("query_string", "")
         self._resource_id = search_id
         self._searchtemplate = data.get("searchtemplate", 0)
         self._updated_at = data.get("updated_at", "")
