@@ -36,21 +36,19 @@ limitations under the License.
       <template v-slot:selection="data">
         <ts-analyzer-timeline-chip
           class="mr-1"
-          :timeline="data.item"
+          :timeline="data.item.raw"
           :close="true"
           @click:close="remove(data.item)"
         ></ts-analyzer-timeline-chip>
       </template>
       <template v-slot:item="data">
-        
           <div>
               <ts-analyzer-timeline-chip
-                :timeline="data.item"
-                :close="selectedTimelines.includes(data.item.id)"
-                @click:close="remove(data.item)"
+                :timeline="data.item.raw"
+                :close="selectedTimelines.includes(data.item.raw.id)"
+                @click:close="remove(data.item.raw)"
               ></ts-analyzer-timeline-chip>
           </div>
-        
       </template>
     </v-autocomplete>
   </div>

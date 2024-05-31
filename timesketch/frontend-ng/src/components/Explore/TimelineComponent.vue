@@ -311,7 +311,7 @@ const gradients = [
 ]
 
 export default {
-  props: ['timeline', 'eventsCount', 'isSelected', 'isEmptyState'],
+  props: ['timeline', 'isSelected'],
   data() {
     return {
       autoRefresh: false,
@@ -393,6 +393,14 @@ export default {
       }
       return this.timeline.color
     },
+    timelineStatus() {
+
+      const statusArr = this.timeline.status
+      if (statusArr && statusArr[0]) {
+        return statusArr[0].status
+      }
+      return undefined
+    }
   },
   methods: {
     openDialog() {
@@ -502,8 +510,6 @@ export default {
     },
   },
   created() {
-    // TODO: Move to computed
-    this.timelineStatus = this.timeline.status[0].status
 
     this.datasources = this.timeline.datasources
     const timelineStat = this.meta.stats_per_timeline[this.timeline.id]
