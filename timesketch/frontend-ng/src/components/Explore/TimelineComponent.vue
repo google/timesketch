@@ -320,7 +320,6 @@ export default {
       dialogStatus: false,
       dialogRename: false,
       datasources: [],
-      timelineStatus: null,
       eventsPerSecond: [],
       newTimelineName: [...this.timeline.name],
       sparkline: {

@@ -254,7 +254,7 @@ limitations under the License.
 
             <v-spacer></v-spacer>
 
-            <v-data-footer
+            <v-data-table-footer
               v-if="totalHits > 11 && !disablePagination"
               :pagination="pagination"
               :options="options"
@@ -264,7 +264,7 @@ limitations under the License.
               items-per-page-text="Rows per page:"
               style="border: 0"
               class="mr-n3"
-            ></v-data-footer>
+            ></v-data-table-footer>
           </v-toolbar>
 
           <v-card v-if="showHistogram" variant="outlined" class="my-3">

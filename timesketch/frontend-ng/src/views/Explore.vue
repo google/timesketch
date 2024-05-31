@@ -93,7 +93,7 @@ limitations under the License.
             <v-slider
               v-model="zoomLevel"
               thumb-label
-              ticks
+              show-ticks
               append-icon="mdi-magnify-plus-outline"
               prepend-icon="mdi-magnify-minus-outline"
               min="0.1"

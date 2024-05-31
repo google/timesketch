@@ -182,10 +182,12 @@ export default {
     EventBus.$on('isDarkTheme', this.toggleTheme)
   },
   watch: {
-    'currentQueryFilter.indices'(val) {
-      this.syncSelectedTimelines()
-    },
-    deep: true,
+    'currentQueryFilter.indices': {
+      handler(val) {
+        this.syncSelectedTimelines()
+      },
+      deep: true,
+    }
   },
 }
 </script>
