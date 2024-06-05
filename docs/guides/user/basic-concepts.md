@@ -36,6 +36,15 @@ You can comment events in your sketch. The comments are saved in your sketch, th
 
 Click the little star symbol in the Event List to star an event. Stared events can be used to filter on them and or to add all starred events in your story.
 
+## Tag / Label in context of an Event.
+
+An event can have a list of tags. Those can be added via API, API client, CLI client or the Web UI.
+The tags are stored in the opensearch object in the field `tag`. This also means a data source, e.g. plaso could add tag(s) when parsing / processing data to be handed to Timesketch.
+
+In contrast to a tag, in older versions of Timesketch there was a label that could be added to an event. An event could have one or more labels at a time. Those labels where stored in the database, not in the opensearch object. The concept of labels in events is slowly being deprecated and removed from UI.
+
+> There might be many more places where tags can be added to instances, e.g. a Sigma rule might have one or more tags.
+
 ## Views
 
 Views are saved search queries. Those can either be created by the User, by API or via Analyzers.

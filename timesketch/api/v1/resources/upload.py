@@ -346,7 +346,17 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         """
         _filename, _extension = os.path.splitext(file_storage.filename)
         file_extension = _extension.lstrip(".")
-        timeline_name = form.get("name", _filename.rstrip("."))
+        timeline_name = str(form.get("name", _filename.rstrip(".")))
+        if len(timeline_name) == 0 or timeline_name == "null":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Timeline name cannot be empty.",
+            )
+        if len(timeline_name) > 255:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Timeline name must not exceed 255 characters.",
+            )
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
@@ -355,7 +365,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             filename = codecs.decode(filename, "utf-8")
 
         upload_folder = current_app.config["UPLOAD_FOLDER"]
-        file_path = os.path.join(upload_folder, filename)
+        file_path = utils.format_upload_path(upload_folder, filename)
 
         chunk_index = form.get("chunk_index")
         if isinstance(chunk_index, str) and chunk_index.isdigit():
@@ -394,11 +404,21 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         # For file chunks we need the correct filepath, otherwise each chunk
         # will get their own UUID as a filename.
         if index_name:
-            file_path = os.path.join(upload_folder, index_name)
+            if not utils.is_valid_index_name(index_name):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to upload file. Index name is not valid",
+                )
+            file_path = utils.format_upload_path(upload_folder, index_name)
         elif chunk_index_name:
-            file_path = os.path.join(upload_folder, chunk_index_name)
+            if not utils.is_valid_index_name(chunk_index_name):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to upload file. Index name is not valid",
+                )
+            file_path = utils.format_upload_path(upload_folder, chunk_index_name)
         else:
-            file_path = os.path.join(upload_folder, uuid.uuid4().hex)
+            file_path = utils.format_upload_path(upload_folder, uuid.uuid4().hex)
 
         try:
             with open(file_path, "ab") as fh:
@@ -487,7 +507,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not isinstance(sketch_id, int):
             sketch_id = int(sketch_id)
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

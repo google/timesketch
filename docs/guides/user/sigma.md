@@ -22,18 +22,20 @@ Sigma rules are exposed to the Web Interface as part of a sketch.
 To list all Sigma rules, visit :
 
 ```
-https://$TIMESKETCH/sketch/1/sigma/
+https://$TIMESKETCH/v2/studio/sigma/new
 ```
 
-This will show a table with all Sigma rules installed on a system. You can search for:
+This will show a list on the left with all Sigma rules installed on a system. You can search for:
 
 - Rule ID
 - Title
-- OpenSearch Search query
+- Search query
 - File Name
 - Tag
 
-So if you want to search for ZMap related rules, you can search for `zma` in `Title, File Name` and it will show you the pre installed rule.
+So if you want to search for ZMap related rules, you can search for `zma` and it will show you the pre installed rule.
+
+![Sigma studio](../../assets/images/sigma_studio.png)
 
 #### Analyzer
 
@@ -59,16 +61,6 @@ ts_ttp:[ "attack.discovery", "attack.t1046"]
 
 From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the Search Query from the found rule `(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")` it will open an explore view for this sketch with this query pre filled for you to explore the data.
 
-#### Rule ID
-
-If you click the rule ID `5266a592-b793-11ea-b3de-0242ac130004` a detail view for that rule will open up.
-
-```bash
-https://$TIMESKETCH/sketch/1/sigma/details?ruleId=5266a592-b793-11ea-b3de-0242ac130004
-```
-
-In this detail view all key and values of that rule that has been parsed by Timesketch are exposed.
-
 ### Install rules
 
 Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
@@ -77,9 +69,17 @@ To use the official community rules you can visit [github.com/Neo23x0/sigma](htt
 #### Web
 
 In the past, Sigma rules where stored on disk, in 2022 this has been changed and Sigma rules are stored in the database.
-New rules can be added / modified via the Sigma Tab.
+New rules can be added / modified via the Sigma portion of the Studio.
 
-![Sigma create rule](/assets/images/Sigma_create_rule.gif)
+Visit
+
+```
+https://$TIMESKETCH/v2/studio/sigma/new
+```
+
+![Sigma create rule](/assets/images/Sigma_create_rule_new.gif)
+
+There are some [best practices](#Compose-new-rules) to compose new Sigma rules.
 
 #### tscl
 
@@ -147,14 +147,6 @@ Field mappings like:
 ```
 
 Are interpreted depending on the selected product in the rule. If the product in the rule is `linux` the Selector `TargetFilename` in a rule would be tranlated to `filename:"foobar"`. If the product is anything else, e.g. `Windows` it would be `xml_string:"foobar"`
-
-### Analyzer_run.py
-
-You can run the Sigma analyzer providing sample data:
-
-```shell
-python3 test_tools/analyzer_run.py --test_file test_tools/test_events/sigma_events.jsonl timesketch/lib/analyzers/sigma_tagger.py RulesSigmaPlugin
-```
 
 ## Test data
 

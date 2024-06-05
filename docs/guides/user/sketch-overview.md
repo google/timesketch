@@ -13,6 +13,8 @@ Now you need to add timelines to your new sketch. To do so, you can click “Imp
 
 Alternatively, you can go to “Timelines” tab and select from all available timelines.
 
+![Empty state](../../assets/images/empty_state_sketch.png)
+
 ## Navigating a sketch
 A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”, "Attributes", "Intelligence".
 
@@ -42,6 +44,8 @@ You can share the sketch with users, groups of users, make it available to all u
 **Views** allows quick access to saved views and creation of new views
 
 **Timerange** allows to control the timerange of shown events.
+
+![Timefilter](../../assets/images/timefilter.png)
 
 **Filter** Add a filter, e.g. to show only starred events
 

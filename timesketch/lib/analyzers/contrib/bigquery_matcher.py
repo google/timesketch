@@ -1,4 +1,5 @@
 """Index analyzer plugin for matching against data in BigQuery tables."""
+
 import itertools
 import logging
 
@@ -108,7 +109,7 @@ class BigQueryMatcherPlugin(interface.BaseAnalyzer):
 
         try:
             bq_client = bigquery.Client(project=bq_project)
-        except (google_auth_exceptions.DefaultCredentialsError) as exception:
+        except google_auth_exceptions.DefaultCredentialsError as exception:
             return "Could not authenticate to BigQuery: {0!s}".format(exception)
 
         num_matches = 0

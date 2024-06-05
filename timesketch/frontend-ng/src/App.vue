@@ -23,15 +23,13 @@ limitations under the License.
       </template>
     </v-snackbar>
 
-    <v-main>
-      <!-- Main view -->
-      <router-view></router-view>
-    </v-main>
+    <!-- Main router view -->
+    <router-view></router-view>
   </v-app>
 </template>
 
 <script>
-import EventBus from './main'
+import EventBus from './event-bus.js'
 
 export default {
   name: 'app',
@@ -65,6 +63,8 @@ export default {
         this.$vuetify.theme.dark = false
       }
     }
+    let element = document.body
+    element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
   },
   beforeDestroy() {
     EventBus.$off('errorSnackBar')

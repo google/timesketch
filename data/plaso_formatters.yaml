@@ -1,0 +1,23 @@
+# Plaso uses formatter definitions to format events into a human readable format.
+# The formatter definitions are defined in YAML and loaded by Plaso at runtime.
+# This file overrides or extend the default formatter definitions.
+# For more information about the formatter definitions see: https://plaso.readthedocs.io/en/latest/sources/user/Output-and-formatting.html#formatter-configuration-file-format
+
+# Windows Event Log (EVTX) formatter definitions.
+type: 'conditional'
+data_type: 'windows:evtx:record'
+custom_helpers:
+  - identifier: 'windows_eventlog_message'
+    output_attribute: 'message_string'
+message:
+  - '[{event_identifier}]'
+  - '{message_string}'
+  - 'Source Name: {source_name}'
+  - 'Strings: {strings}'
+short_message:
+  - '[{event_identifier} / 0x{event_identifier:04x}]'
+  - 'Source Name: {source_name}'
+  - 'Strings: {strings}'
+  - 'Provider identifier: {provider_identifier}'
+short_source: 'EVTX'
+source: 'WinEVTX'

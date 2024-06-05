@@ -17,7 +17,7 @@ import axios from 'axios'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 const RestApiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/legacy/api/v1',
   headers: {
     common: {
       'X-CSRFToken': document.getElementsByTagName('meta')[0]['content'],
@@ -26,7 +26,7 @@ const RestApiClient = axios.create({
 })
 
 const RestApiBlobClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/legacy/api/v1',
   responseType: 'blob',
   headers: {
     common: {
@@ -346,50 +346,34 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma (to be deprecated)
-  getSigmaList() {
-    // deprecated
-    return RestApiClient.get('/sigma/')
-  },
-  getSigmaResource(ruleUuid) {
-    // deprecated
-    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
-  },
-  getSigmaByText(ruleText) {
-    // deprecated
-    let formData = {
-      content: ruleText,
-    }
-    return RestApiClient.post('/sigma/text/', formData)
-  },
   // SigmaRule (new rules file based)
   getSigmaRuleList() {
-    return RestApiClient.get('/sigmarule/')
+    return RestApiClient.get('/sigmarules/')
   },
   getSigmaRuleResource(ruleUuid) {
-    return RestApiClient.get('/sigmarule/' + ruleUuid + '/')
+    return RestApiClient.get('/sigmarules/' + ruleUuid + '/')
   },
   getSigmaRuleByText(ruleText) {
     let formData = {
       content: ruleText,
     }
-    return RestApiClient.post('/sigmarule/text/', formData)
+    return RestApiClient.post('/sigmarules/text/', formData)
   },
   deleteSigmaRule(ruleUuid) {
-    return RestApiClient.delete('/sigmarule/' + ruleUuid + '/')
+    return RestApiClient.delete('/sigmarules/' + ruleUuid + '/')
   },
   createSigmaRule(ruleText) {
     let formData = {
       rule_yaml: ruleText,
     }
-    return RestApiClient.post('/sigmarule/', formData)
+    return RestApiClient.post('/sigmarules/', formData)
   },
   updateSigmaRule(id, ruleText) {
     let formData = {
       id: id,
       rule_yaml: ruleText,
     }
-    return RestApiClient.put('/sigmarule/' + id + '/', formData)
+    return RestApiClient.put('/sigmarules/' + id + '/', formData)
   },
   getTagMetadata() {
     return RestApiClient.get('/intelligence/tagmetadata/')

@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "NODE_ENV=development vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "test:unit": "vue-cli-service test:unit"
+    "serve": "NODE_ENV=development NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
+    "lint": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service lint",
+    "test:unit": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service test:unit"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.2",
@@ -21,7 +21,7 @@
     "cytoscape-spread": "^3.0.0",
     "eslint-config-prettier": "^8.3.0",
     "lodash": "^4.17.11",
-    "marked": ">=2.0.0",
+    "marked": ">=2.0.0 <5.0.0",
     "moment": "^2.24.0",
     "vega": "^5.4.0",
     "vega-embed": "^4.2.2",
@@ -50,8 +50,8 @@
     "chai": "^4.1.2",
     "eslint": "^5.8.0",
     "eslint-plugin-vue": "^5.0.0",
-    "node-sass": "^4.9.0",
-    "sass-loader": "^7.1.0",
+    "node-sass": "^8.0.0",
+    "sass-loader": "^10.1.1",
     "vue-template-compiler": "^2.6.12"
   }
 }

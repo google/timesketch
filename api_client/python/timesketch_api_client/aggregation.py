@@ -43,10 +43,11 @@ class Aggregation(resource.SketchResource):
 
     def __init__(self, sketch):
         self._created_at = ""
+        self._name = ""
         self._parameters = {}
         self._updated_at = ""
         self._group_id = None
-        self.aggregator_name = ""
+        self._aggregator_name = ""
         self.chart_color = ""
         self.chart_type = ""
         self.chart_title = ""
@@ -113,7 +114,7 @@ class Aggregation(resource.SketchResource):
         if search_id:
             self.search_id = search_id
 
-        self.aggregator_name = aggregator_name
+        self._aggregator_name = aggregator_name
         self.chart_color = parameters.get("chart_color", "")
         self._parameters = parameters
 
@@ -149,9 +150,10 @@ class Aggregation(resource.SketchResource):
         if not data:
             return
 
-        self.aggregator_name = data.get("agg_type")
+        self._aggregator_name = data.get("agg_type")
         self.type = "stored"
 
+        self._name = data.get("name", "")
         self._created_at = data.get("created_at", "")
         self._updated_at = data.get("updated_at", "")
         self._group_id = data.get("aggregationgroup_id")
@@ -173,7 +175,7 @@ class Aggregation(resource.SketchResource):
 
         self._username = data.get("user", {}).get("username", "System")
         self.resource_data = self._run_aggregator(
-            aggregator_name=self.aggregator_name,
+            aggregator_name=self._aggregator_name,
             parameters=parameters,
             chart_type=chart_type,
         )
@@ -190,7 +192,7 @@ class Aggregation(resource.SketchResource):
             self.api.api_root, self._sketch.id
         )
 
-        self.aggregator_name = "DSL"
+        self._aggregator_name = "DSL"
         self._username = getpass.getuser()
         self.type = "DSL"
 
@@ -211,7 +213,11 @@ class Aggregation(resource.SketchResource):
         self.resource_data = error.get_response_json(response, logger)
 
     def from_aggregator_run(
-        self, aggregator_name, aggregator_parameters, search_id=None, chart_type=None
+        self,
+        aggregator_name,
+        aggregator_parameters,
+        search_id=None,
+        chart_type=None,
     ):
         """Initialize the aggregation object by running an aggregator class.
 
@@ -270,6 +276,8 @@ class Aggregation(resource.SketchResource):
             return self.chart_title
 
         data = self.lazyload_data()
+        if not data:
+            return ""
         meta = data.get("meta", {})
         self.chart_title = meta.get("vega_chart_title", "")
 
@@ -288,7 +296,9 @@ class Aggregation(resource.SketchResource):
     @property
     def description(self):
         """Property that returns the description string."""
-        data = self.resource_data
+        data = self.lazyload_data()
+        if not data:
+            return ""
         meta = data.get("meta", {})
         return meta.get("description", "")
 
@@ -303,12 +313,7 @@ class Aggregation(resource.SketchResource):
     @property
     def name(self):
         """Property that returns the name of the aggregation."""
-        data = self.resource_data
-        meta = data.get("meta", {})
-        name = meta.get("name")
-        if name:
-            return name
-        return self.aggregator_name
+        return self._name
 
     @name.setter
     def name(self, name):
@@ -317,6 +322,18 @@ class Aggregation(resource.SketchResource):
             return
         meta = self.resource_data.get("meta")
         meta["name"] = name
+
+    @property
+    def aggregator_name(self):
+        """Property that returns the aggregator name."""
+        if self._aggregator_name:
+            return self._aggregator_name
+
+        data = self.resource_data
+        meta = data.get("meta", {})
+        self._aggregator_name = meta.get("name")
+
+        return self._aggregator_name
 
     def add_label(self, label):
         """Add a label to the aggregation.
@@ -377,7 +394,7 @@ class Aggregation(resource.SketchResource):
         data = {
             "name": self.name,
             "description": self.description,
-            "agg_type": self.aggregator_name,
+            "agg_type": self._aggregator_name,
             "parameters": self._parameters,
             "chart_type": self.chart_type,
         }
@@ -608,6 +625,8 @@ class AggregationGroup(resource.SketchResource):
             return altair.Chart()
 
         data = self.lazyload_data()
+        if not data:
+            return None
 
         meta = data.get("meta", {})
         vega_spec = meta.get("vega_spec")

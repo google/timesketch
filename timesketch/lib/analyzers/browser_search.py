@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for browser search."""
+
 from __future__ import unicode_literals
 
 import logging
@@ -85,6 +86,12 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 re.compile(r"sites\.google\."),
                 "_extract_search_query_from_url",
                 "q",
+            ),
+            (
+                "LinkedIn",
+                re.compile(r"linkedin\.com/search"),
+                "_extract_search_query_from_url",
+                "keywords",
             ),
             (
                 "Yahoo",
@@ -326,7 +333,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
 
             story.add_text(
                 "## Browser Search Analyzer.\n\nThe browser search "
-                "analyzer takes URLs usually resevered for browser "
+                "analyzer takes URLs usually reserved for browser "
                 "search queries and extracts the search string."
                 "In this timeline the analyzer discovered {0:d} "
                 "browser searches.\n\nThis is a summary of "

@@ -20,6 +20,7 @@ import json
 import time
 import traceback
 import unittest
+import uuid
 
 import opensearchpy
 import opensearchpy.helpers
@@ -60,25 +61,35 @@ class BaseEndToEndTest(object):
         self._counter = collections.Counter()
         self._imported_files = []
 
-    def import_timeline(self, filename):
+    def import_timeline(self, filename, index_name=None, sketch=None):
         """Import a Plaso, CSV or JSONL file.
 
         Args:
             filename (str): Filename of the file to be imported.
+            index_name (str): The OpenSearch index to store the documents in.
+            sketch (Sketch): Optional sketch object to add the timeline to.
+                        if no sketch is provided, the default sketch is used.
 
         Raises:
             TimeoutError if import takes too long.
         """
+        if not sketch:
+            sketch = self.sketch
         if filename in self._imported_files:
             return
         file_path = os.path.join(TEST_DATA_DIR, filename)
-        print("Importing: {0:s}".format(file_path))
+        if not index_name:
+            index_name = uuid.uuid4().hex
 
         with importer.ImportStreamer() as streamer:
-            streamer.set_sketch(self.sketch)
+            streamer.set_sketch(sketch)
             streamer.set_timeline_name(file_path)
+            streamer.set_index_name(index_name)
+            streamer.set_provider("e2e test interface")
             streamer.add_file(file_path)
             timeline = streamer.timeline
+            if not timeline:
+                print("Error creating timeline, please try again.")
 
         # Poll the timeline status and wait for the timeline to be ready
         max_time_seconds = 600  # Timeout after 10min
@@ -88,10 +99,30 @@ class BaseEndToEndTest(object):
         while True:
             if retry_count >= max_retries:
                 raise TimeoutError
-            _ = timeline.lazyload_data(refresh_cache=True)
-            status = timeline.status
 
-            # TODO: Do something with other statuses? (e.g. failed)
+            try:
+                if not timeline:
+                    print("Error no timeline yet, trying to get the new one")
+                    timeline = streamer.timeline
+                _ = timeline.lazyload_data(refresh_cache=True)
+                status = timeline.status
+            except AttributeError:
+                # The timeline is not ready yet, so we need to wait
+                retry_count += 1
+                time.sleep(sleep_time_seconds)
+                continue
+
+            if not timeline.index:
+                retry_count += 1
+                time.sleep(sleep_time_seconds)
+                continue
+
+            if status == "fail" or timeline.index.status == "fail":
+                if retry_count > 3:
+                    raise RuntimeError(
+                        f"Unable to import timeline {timeline.index.id}."
+                    )
+
             if status == "ready" and timeline.index.status == "ready":
                 break
             retry_count += 1
@@ -122,17 +153,22 @@ class BaseEndToEndTest(object):
             raise ValueError("File [{0:s}] does not exist.".format(file_path))
 
         es = opensearchpy.OpenSearch(
-            [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}], http_compress=True
+            [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
+            http_compress=True,
         )
 
-        df = pd.read_csv(file_path, error_bad_lines=False)
+        df = pd.read_csv(file_path, on_bad_lines="warn")
         if "datetime" in df:
             df["datetime"] = pd.to_datetime(df["datetime"])
 
         def _pandas_to_opensearch(data_frame):
             for _, row in data_frame.iterrows():
                 row.dropna(inplace=True)
-                yield {"_index": index_name, "_type": "_doc", "_source": row.to_dict()}
+                yield {
+                    "_index": index_name,
+                    "_type": "_doc",
+                    "_source": row.to_dict(),
+                }
 
         if os.path.isfile(OPENSEARCH_MAPPINGS_FILE):
             mappings = {}

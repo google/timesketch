@@ -27,6 +27,7 @@ nav:
           - Tagger analyzer: guides/analyzers/tagger.md
           - Feature extraction analyzer: guides/analyzers/feature_extraction.md
           - Sigma analyzer: guides/analyzers/sigma_analyzer.md
+          - HashR analyzer: guides/analyzers/hashR_lookup.md
   - Admin Guide:
       - Install: guides/admin/install.md
       - Upgrade: guides/admin/upgrade.md
@@ -42,9 +43,15 @@ nav:
       - API client:
           - Introduction: developers/api-client.md
           - Upload data via API: developers/api-upload-data.md
+      - CLI client: developers/cli-client.md
       - Analyzers:
           - Create an analyzer: developers/analyzer-development.md
   - Changelog:
+    - changelog/index.md
+    - changelog/2023-05.md
+    - changelog/2023-03.md
+    - changelog/2023-02.md
+    - changelog/2023-01.md
     - changelog/2022-12.md
     - changelog/2022-10.md
     - changelog/2022-09.md

@@ -99,7 +99,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             "type": "ts-dynamic-form-datetime-input",
             "name": "start_time",
             "label": (
-                "ISO formatted timestamp for the start time " "of the aggregated data"
+                "ISO formatted timestamp for the start time of the aggregated data"
             ),
             "placeholder": "Enter a start date for the aggregation",
             "default_value": "",

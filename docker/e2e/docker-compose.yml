@@ -15,8 +15,10 @@ services:
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
+      args:
+        - PLASO_PPA_TRACK=${PLASO_PPA_TRACK}
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
     links:
       - opensearch
       - postgres
@@ -33,9 +35,6 @@ services:
       - discovery.type=single-node
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
       - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
-    ports:
-      - "9200:9200"
-      - "9300:9300"
     ulimits:
       memlock:
         soft: -1
@@ -46,8 +45,6 @@ services:
 
   postgres:
     image: postgres
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password

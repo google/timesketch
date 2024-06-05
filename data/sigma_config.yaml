@@ -258,6 +258,7 @@ logsources:
     conditions:
       data_type:
         - "syslog:ssh:login"
+        - "syslog:line"
 fieldmappings:
     EventID: event_identifier
     ComputerName: computer_name

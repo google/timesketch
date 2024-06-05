@@ -28,7 +28,7 @@ class SearchTemplate(resource.BaseResource):
 
     def __init__(self, api):
         """Initialize the search template object."""
-        super().__init__(api, "searchtemplate/")
+        super().__init__(api, "searchtemplates/")
         self._description = ""
         self._name = ""
         self._resource_id = None
@@ -61,7 +61,7 @@ class SearchTemplate(resource.BaseResource):
                 "does not seem to be saved, which is required."
             )
 
-        resource_url = f"{self.api.api_root}/searchtemplate/{self._resource_id}/"
+        resource_url = f"{self.api.api_root}/searchtemplates/{self._resource_id}/"
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
@@ -77,7 +77,7 @@ class SearchTemplate(resource.BaseResource):
             ValueError: If issues came up during processing.
         """
         self._resource_id = template_id
-        self.resource_uri = f"searchtemplate/{self._resource_id}/"
+        self.resource_uri = f"searchtemplates/{self._resource_id}/"
 
         if sketch_id:
             self._sketch_id = sketch_id
@@ -102,7 +102,7 @@ class SearchTemplate(resource.BaseResource):
         self._search_id = search_obj.id
         self._sketch_id = search_obj.sketch.id
 
-        response = self.api.fetch_resource_data("searchtemplate/")
+        response = self.api.fetch_resource_data("searchtemplates/")
         meta = response.get("meta", {})
         template_id = 0
         for data in meta.get("collection", []):
@@ -113,7 +113,7 @@ class SearchTemplate(resource.BaseResource):
             return
 
         self._resource_id = template_id
-        self.resource_uri = f"searchtemplate/{self._resource_id}/"
+        self.resource_uri = f"searchtemplates/{self._resource_id}/"
 
     @property
     def id(self):
@@ -159,7 +159,7 @@ class SearchTemplate(resource.BaseResource):
             self._sketch_id = sketch_id
         else:
             raise ValueError(
-                "Sketch needs to be set, or an integer value for " "a sketch ID."
+                "Sketch needs to be set, or an integer value for a sketch ID."
             )
 
     def save(self):
@@ -180,7 +180,7 @@ class SearchTemplate(resource.BaseResource):
         data = {
             "search_id": self._search_id,
         }
-        resource_url = f"{self.api.api_root}/searchtemplate/"
+        resource_url = f"{self.api.api_root}/searchtemplates/"
         response = self.api.session.post(resource_url, json=data)
 
         status = error.check_return_status(response, logger)
@@ -193,26 +193,26 @@ class SearchTemplate(resource.BaseResource):
         template_dict = response_json.get("objects", [{}])[0]
 
         self._resource_id = template_dict.get("id", 0)
-        self.resource_uri = f"searchtemplate/{self._resource_id}/"
+        self.resource_uri = f"searchtemplates/{self._resource_id}/"
         return f"Saved search as a template to ID: {self.id}"
 
     def to_search(self):
         """Returns a search object from a template."""
         if not self._resource_id:
             raise ValueError(
-                "Unable to get a search object unless it is tied to a " "template."
+                "Unable to get a search object unless it is tied to a template."
             )
 
         if not self._sketch_id:
             raise ValueError(
-                "Unable to get a search object unless it is tied to " "a sketch."
+                "Unable to get a search object unless it is tied to a sketch."
             )
 
         data = self.lazyload_data(refresh_cache=True)
         objects = data.get("objects")
         if not objects:
             raise ValueError(
-                "Unable to get search object, issue with retrieving " "template data."
+                "Unable to get search object, issue with retrieving template data."
             )
 
         template_dict = objects[0]

@@ -21,6 +21,7 @@ from typing import Text
 import configparser
 import logging
 import os
+import sys
 import requests
 
 from google.auth.transport import requests as auth_requests
@@ -241,7 +242,7 @@ class ConfigAssistant:
         if config_file_path:
             if not os.path.isfile(config_file_path):
                 error_msg = (
-                    "Unable to load config file, file {0:s} does not " "exist."
+                    "Unable to load config file, file {0:s} does not exist."
                 ).format(config_file_path)
                 logger.error(error_msg)
                 raise IOError(error_msg)
@@ -273,6 +274,13 @@ class ConfigAssistant:
         timesketch_config = config[section]
         for name, value in timesketch_config.items():
             self.set_config(name, value)
+
+        # verify is expected to be a boolean but will be read from file as string
+        # therefore, we need to overwrite it here
+        if self.get_config("verify") == "False":
+            self.set_config("verify", False)
+        else:
+            self.set_config("verify", True)
 
         if load_cli_config:
             if "cli" not in config.sections():
@@ -418,7 +426,9 @@ def get_client(
     assistant = ConfigAssistant()
     try:
         assistant.load_config_file(
-            config_path, section=config_section, load_cli_config=load_cli_config
+            config_path,
+            section=config_section,
+            load_cli_config=load_cli_config,
         )
         if config_dict:
             assistant.load_config_dict(config_dict)
@@ -483,6 +493,15 @@ def configure_missing_parameters(
             file.
     """
     just_configured = []
+
+    if config_assistant.missing:
+        if not sys.stdout.isatty() or not sys.stdin.isatty():
+            msg = (
+                "You will be asked to provide config values, but the session"
+                " doesn't have a tty. Please set up your config file, or "
+                "rerun in a tty."
+            )
+            raise RuntimeError(msg)
 
     for field in config_assistant.missing:
         hint = config_assistant.CONFIG_HINTS.get(field, "")

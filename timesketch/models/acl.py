@@ -111,7 +111,7 @@ class AccessControlMixin(object):
             dict(
                 __tablename__="%s_accesscontrolentry" % self.__tablename__,
                 parent_id=Column(Integer, ForeignKey("%s.id" % self.__tablename__)),
-                parent=relationship(self),
+                parent=relationship(self, viewonly=True),
             ),
         )
         return relationship(self.AccessControlEntry)
@@ -127,7 +127,7 @@ class AccessControlMixin(object):
             user: A user (Instance of timesketch.models.user.User)
 
         Returns:
-            An ACL base query (instance of timesketch.models.AclBaseQuery)
+            A SQLAlchemy query (instance of sqlalchemy.orm.query.Query)
         """
         # If no user, assume the user that made the request.
         if not user:
@@ -343,12 +343,14 @@ class AccessControlMixin(object):
         # Grant permission to a group.
         if group and not self._get_ace(permission, group=group):
             self.acl.append(self.AccessControlEntry(permission=permission, group=group))
+            db_session.add(self)
             db_session.commit()
             return
 
         # Grant permission to a user.
         if not self._get_ace(permission, user=user, check_group=False):
             self.acl.append(self.AccessControlEntry(permission=permission, user=user))
+            db_session.add(self)
             db_session.commit()
 
     def revoke_permission(self, permission, user=None, group=None):
@@ -365,6 +367,7 @@ class AccessControlMixin(object):
             if group_ace:
                 for ace in group_ace:
                     self.acl.remove(ace)
+                db_session.add(self)
                 db_session.commit()
             return
 
@@ -373,4 +376,5 @@ class AccessControlMixin(object):
         if user_ace:
             for ace in user_ace:
                 self.acl.remove(ace)
+            db_session.add(self)
             db_session.commit()

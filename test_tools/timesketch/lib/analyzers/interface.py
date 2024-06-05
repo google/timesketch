@@ -557,7 +557,7 @@ class Sketch(object):
         self._context = context
 
 
-class BaseIndexAnalyzer(object):
+class BaseAnalyzer(object):
     """Base class for analyzers.
 
     Attributes:
@@ -654,7 +654,6 @@ class BaseIndexAnalyzer(object):
             )
 
         with codecs.open(self._file_name, encoding="utf-8", errors="replace") as fh:
-
             if file_extension == "csv":
                 reader = csv.DictReader(fh)
                 for row in reader:
@@ -716,7 +715,7 @@ class BaseIndexAnalyzer(object):
         self.datastore = context
 
 
-class BaseSketchAnalyzer(BaseIndexAnalyzer):
+class BaseSketchAnalyzer(BaseAnalyzer):
     """Base class for sketch analyzers.
 
     Attributes:

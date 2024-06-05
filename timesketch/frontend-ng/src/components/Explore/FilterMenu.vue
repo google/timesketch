@@ -72,7 +72,7 @@ limitations under the License.
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
+        <v-btn text @click="clearAndCancel"> Cancel </v-btn>
         <v-btn text color="primary" @click="submit()"> Add filter </v-btn>
       </v-card-actions>
     </v-container>
@@ -84,6 +84,7 @@ import dayjs from '@/plugins/dayjs'
 import DatePicker from 'v-calendar/lib/components/date-picker.umd'
 
 export default {
+  props: ['selectedChip'],
   components: {
     DatePicker,
   },
@@ -121,20 +122,26 @@ export default {
       return this.range.end
     },
   },
+  created() {
+    if (this.selectedChip) {
+      this.range.start = this.selectedChip.value.split(',')[0]
+      this.range.end = this.selectedChip.value.split(',')[1]
+    }
+  },
   methods: {
     getDateRange: function (num, resolution) {
       let now = dayjs.utc()
       let then = now.subtract(num, resolution)
       let chipType = 'datetime_range'
       let chipValue = then.format('YYYY-MM-DD') + ',' + now.format('YYYY-MM-DD')
-      this.chip = {
+      let chip = {
         field: '',
         type: chipType,
         value: chipValue,
         operator: 'must',
         active: true,
       }
-      this.$emit('addChip', this.chip)
+      this.addChip(chip)
       this.$emit('cancel')
 
       return { start: now, end: then }
@@ -169,7 +176,7 @@ export default {
         operator: 'must',
         active: true,
       }
-      this.$emit('addChip', chip)
+      this.addChip(chip)
       this.range = {
         start: null,
         end: null,
@@ -181,6 +188,13 @@ export default {
         end: '',
       }
       this.$emit('cancel')
+    },
+    addChip: function (newChip) {
+      if (this.selectedChip) {
+        this.$emit('updateChip', newChip)
+      } else {
+        this.$emit('addChip', newChip)
+      }
     },
     submit: function () {
       if (!this.range.start) {
@@ -200,14 +214,14 @@ export default {
       if (this.range.start !== this.range.end) {
         let chipType = 'datetime_range'
         let chipValue = this.range.start + ',' + this.range.end
-        this.chip = {
+        let chip = {
           field: '',
           type: chipType,
           value: chipValue,
           operator: 'must',
           active: true,
         }
-        this.$emit('addChip', this.chip)
+        this.addChip(chip)
         this.range = {
           start: '',
           end: '',

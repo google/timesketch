@@ -46,179 +46,6 @@ from timesketch.models import db_session
 logger = logging.getLogger("timesketch.api.sigma")
 
 
-def _enrich_sigma_rule_object(rule: SigmaRule):
-    """Helper function: Returns an enriched Sigma object given a SigmaRule.
-
-    It will extract the `status`, `created_at` and `updated_at` and make them
-    a field.
-
-    Args:
-        rule: type SigmaRule.
-
-    Returns:
-        Enriched Sigma dict.
-    """
-    parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule.rule_yaml)
-    parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
-    parsed_rule["created_at"] = str(rule.created_at)
-    parsed_rule["updated_at"] = str(rule.updated_at)
-    parsed_rule["title"] = parsed_rule.get("title", rule.title)
-    parsed_rule["description"] = parsed_rule.get("description", rule.description)
-    parsed_rule["rule_yaml"] = rule.rule_yaml
-
-    # via StatusMixin, values according to:
-    # https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
-    parsed_rule["status"] = rule.get_status.status
-
-    return parsed_rule
-
-
-# TODO(jaegeral): deprecate this class
-class SigmaListResource(resources.ResourceMixin, Resource):
-    """DEPRECATED: Resource to get list of Sigma rules.
-
-    Will be removed as part of
-    https://github.com/google/timesketch/issues/2301.
-
-    """
-
-    @login_required
-    def get(self):
-        """Handles GET request to the resource.
-        Returns:
-            Dict of sigma rules
-        """
-        sigma_rules = []
-
-        try:
-            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-
-        except ValueError as e:
-            logger.error(
-                "OS Error, unable to get the path to the Sigma rules",
-                exc_info=True,
-            )
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
-        # TODO: idea for meta: add a list of folders that have been parsed
-        meta = {"rules_count": len(sigma_rules)}
-        return jsonify({"objects": sigma_rules, "meta": meta})
-
-
-# TODO(jaegeral): deprecate this class
-class SigmaResource(resources.ResourceMixin, Resource):
-    """DEPRECATED: Resource to get a Sigma rule.
-
-    Will be removed as part of
-    https://github.com/google/timesketch/issues/2301.
-    """
-
-    @login_required
-    def get(self, rule_uuid):
-        """DEPRECATED: Handles GET request to the resource.
-        Args:
-            rule_uuid: UUID of the sigma rule
-        Returns:
-            JSON sigma rule
-        """
-        return_rule = None
-        try:
-            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-
-        except ValueError as e:
-            logger.error(
-                "OS Error, unable to get the path to the Sigma rules",
-                exc_info=True,
-            )
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
-        for rule in sigma_rules:
-            if rule is not None:
-                if rule_uuid == rule.get("id"):
-                    return_rule = rule
-
-        if return_rule is None:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID.")
-
-        meta = {
-            "current_user": current_user.username,
-            "rules_count": len(sigma_rules),
-        }
-        return jsonify({"objects": [return_rule], "meta": meta})
-
-
-# TODO(jaegeral): deprecate this class
-class SigmaByTextResource(resources.ResourceMixin, Resource):
-    """DEPRECATED: Resource to get a Sigma rule by text.
-
-    Will be removed as part of
-    https://github.com/google/timesketch/issues/2301.
-
-    """
-
-    @login_required
-    def post(self):
-        """Handles POST request to the resource.
-        Returns:
-            JSON sigma rule
-        """
-
-        form = request.json
-        if not form:
-            form = request.data
-
-        content = form.get("content")
-        if not content:
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Missing values from the request.",
-            )
-
-        try:
-            sigma_rule = ts_sigma_lib.parse_sigma_rule_by_text(content)
-
-        except ValueError:
-            logger.error(
-                "Sigma Parsing error with the user provided rule",
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Error unable to parse the provided Sigma rule",
-            )
-
-        except NotImplementedError as exception:
-            logger.error(
-                "Sigma Parsing error: Feature in the rule provided "
-                " is not implemented in this backend",
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma Parsing error: Feature in the rule provided "
-                " is not implemented in this backend: {0!s}".format(exception),
-            )
-
-        except sigma_exceptions.SigmaParseError as exception:
-            logger.error("Sigma Parsing error: unknown error", exc_info=True)
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error generating rule  with error: {0!s}".format(
-                    exception
-                ),
-            )
-
-        except yaml.parser.ParserError as exception:
-            logger.error(
-                "Sigma Parsing error: an invalid yml file has been provided",
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: invalid YAML provided: {0!s}".format(exception),
-            )
-
-        return jsonify({"objects": [sigma_rule], "meta": {}})
-
-
 class SigmaRuleListResource(resources.ResourceMixin, Resource):
     """Resource to get list of all SigmaRules."""
 
@@ -237,7 +64,9 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
         all_sigma_rules = SigmaRule.query.all()
         for rule in all_sigma_rules:
-            sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
+            sigma_rules.append(
+                ts_sigma_lib.enrich_sigma_rule_object(rule=rule, parse_yaml=False)
+            )
 
         meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
@@ -252,14 +81,14 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         All attributes of the rule are taken by the `rule_yaml` value in the
         POST request.
 
-        If no `rule_yaml` is found in the reuqest, the method will fail as this
+        If no `rule_yaml` is found in the request, the method will fail as this
         is required to parse the rule.
 
         Remark: To update a rule, use `PUT`instead.
 
         Returns:
             Sigma rule object and HTTP status 200 code indicating
-            whether operation was sucessful.
+            whether operation was successful.
             HTTP Error code 400 if no `rule_yaml` is provided or a parsing
                 error occurs.
             HTTP Error code 400 if rule_uuid does not match id in the YAML.
@@ -323,7 +152,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self, rule_uuid):
-        """Fetches a single Sigma rule from the databse.
+        """Fetches a single Sigma rule from the database.
 
         Fetches a single Sigma rule selected by the `UUID` in
         `/sigmarule/<string:rule_uuid>/` and returns a JSON represantion of the
@@ -354,7 +183,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
         return_rule = []
 
-        return_rule.append(_enrich_sigma_rule_object(rule=rule))
+        return_rule.append(
+            ts_sigma_lib.enrich_sigma_rule_object(rule=rule, parse_yaml=True)
+        )
 
         return jsonify({"objects": return_rule, "meta": {}})
 

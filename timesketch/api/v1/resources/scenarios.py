@@ -14,33 +14,48 @@
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
 import logging
-import json
 
 from flask import jsonify
 from flask import request
 from flask import abort
+from flask import current_app
 from flask_restful import Resource
 from flask_restful import reqparse
 from flask_login import current_user
 from flask_login import login_required
 
 from timesketch.api.v1 import resources
-from timesketch.api.v1.utils import load_yaml_config
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.dfiq import DFIQ
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
+from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
 
 
 logger = logging.getLogger("timesketch.scenario_api")
 
 
+def load_dfiq_from_config():
+    """Create DFIQ object from config.
+
+    Returns:
+        DFIQ object or None if no DFIQ_PATH is configured.
+    """
+    dfiq_path = current_app.config.get("DFIQ_PATH")
+    if not dfiq_path:
+        logger.error("No DFIQ_PATH configured")
+        return None
+    return DFIQ(dfiq_path)
+
+
 class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
-    """Resource for investigative scenarios."""
+    """List all scenarios available."""
 
     @login_required
     def get(self):
@@ -49,17 +64,23 @@ class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the scenarios.
         """
-        scenarios = load_yaml_config("SCENARIOS_PATH")
+        dfiq = load_dfiq_from_config()
+        if not dfiq:
+            return jsonify({"objects": []})
+
+        scenarios = [scenario.__dict__ for scenario in dfiq.scenarios]
         return jsonify({"objects": scenarios})
 
 
 class ScenarioListResource(resources.ResourceMixin, Resource):
-    """Resource for investigative scenarios."""
+    """List scenarios for a sketch."""
 
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("status", type=str, required=False, default="")
+        self.parser.add_argument(
+            "status", type=str, required=False, default="", location="args"
+        )
 
     @login_required
     def get(self, sketch_id):
@@ -70,8 +91,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """
         args = self.parser.parse_args()
         filter_on_status = args.get("status")
-
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
         if not sketch.has_permission(current_user, "write"):
@@ -91,13 +111,12 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
     def post(self, sketch_id):
         """Handles POST request to the resource.
 
-        This resource creates a new scenario for a sketch based on a template.
-        Templates are defined in SCENARIOS_PATH.
+        This resource creates a new scenario for a sketch based on a DFIQ template.
 
         Returns:
             A JSON representation of the scenario.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
         if not sketch.has_permission(current_user, "write"):
@@ -106,69 +125,107 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch",
             )
 
+        dfiq = load_dfiq_from_config()
+        if not dfiq:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server")
+
         form = request.json
         if not form:
             form = request.data
 
-        scenarios = load_yaml_config("SCENARIOS_PATH")
-        facets = load_yaml_config("FACETS_PATH")
-        questions = load_yaml_config("QUESTIONS_PATH")
+        scenario_id = form.get("scenario_id")
+        display_name = form.get("display_name")
 
-        scenario_name = form.get("scenario_name")
-        scenario_dict = next(
-            scenario
-            for scenario in scenarios
-            if scenario["short_name"] == scenario_name
+        scenario = next(
+            (scenario for scenario in dfiq.scenarios if scenario.id == scenario_id),
+            None,
         )
-        scenario_display_name = form.get(
-            "display_name", scenario_dict.get("display_name", "")
-        )
+        if not scenario:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario template: {scenario_id}"
+            )
 
-        if not scenario_dict:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_name}")
+        if not display_name:
+            display_name = scenario.name
 
-        scenario = Scenario(
-            name=scenario_name,
-            display_name=scenario_display_name,
-            description=scenario_dict.get("description", ""),
-            spec_json=json.dumps(scenario_dict),
+        scenario_sql = Scenario(
+            dfiq_identifier=scenario.id,
+            name=scenario.name,
+            display_name=display_name,
+            description=scenario.description,
+            spec_json=scenario.to_json(),
             sketch=sketch,
             user=current_user,
         )
 
-        for facet_name in scenario_dict.get("facets", []):
-            facet_dict = facets.get(facet_name)
-            facet = Facet(
-                name=facet_name,
-                display_name=facet_dict.get("display_name", ""),
-                description=facet_dict.get("description", ""),
-                spec_json=json.dumps(facet_dict),
+        for facet_id in scenario.facets:
+            facet = next(
+                (facet for facet in dfiq.facets if facet.id == facet_id),
+                None,
+            )
+            facet_sql = Facet(
+                dfiq_identifier=facet.id,
+                name=facet.name,
+                display_name=facet.name,
+                description=facet.description,
+                spec_json=facet.to_json(),
+                sketch=sketch,
                 user=current_user,
             )
-            scenario.facets.append(facet)
+            scenario_sql.facets.append(facet_sql)
 
-            for question_name in facet_dict.get("questions", []):
-                question_dict = questions.get(question_name)
-                question = InvestigativeQuestion(
-                    name=question_name,
-                    display_name=question_dict.get("display_name", ""),
-                    description=question_dict.get("description", ""),
-                    spec_json=json.dumps(question_dict),
+            for question_id in facet.questions:
+                question = next(
+                    (
+                        question
+                        for question in dfiq.questions
+                        if question.id == question_id
+                    ),
+                    None,
+                )
+                question_sql = InvestigativeQuestion(
+                    dfiq_identifier=question.id,
+                    name=question.name,
+                    display_name=question.name,
+                    description=question.description,
+                    spec_json=question.to_json(),
+                    sketch=sketch,
+                    scenario=scenario_sql,
                     user=current_user,
                 )
-                search_templates = question_dict.get("search_templates", [])
-                for template_uuid in search_templates:
-                    search_template = SearchTemplate.query.filter_by(
-                        template_uuid=template_uuid
-                    ).first()
-                    if search_template:
-                        question.search_templates.append(search_template)
-                facet.questions.append(question)
+                facet_sql.questions.append(question_sql)
 
-        db_session.add(scenario)
+                for approach_id in question.approaches:
+                    approach = next(
+                        (
+                            approach
+                            for approach in dfiq.approaches
+                            if approach.id == approach_id
+                        ),
+                        None,
+                    )
+                    approach_sql = InvestigativeQuestionApproach(
+                        dfiq_identifier=approach.id,
+                        name=approach.name,
+                        display_name=approach.name,
+                        description=approach.description.get("details", ""),
+                        spec_json=approach.to_json(),
+                        user=current_user,
+                    )
+
+                    for search_template in approach.search_templates:
+                        search_template_sql = SearchTemplate.query.filter_by(
+                            template_uuid=search_template["value"]
+                        ).first()
+                        if search_template_sql:
+                            approach_sql.search_templates.append(search_template_sql)
+
+                    question_sql.approaches.append(approach_sql)
+
+        db_session.add(scenario_sql)
         db_session.commit()
 
-        return self.to_json(scenario)
+        return self.to_json(scenario_sql)
 
 
 class ScenarioResource(resources.ResourceMixin, Resource):
@@ -181,8 +238,8 @@ class ScenarioResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the scenarios.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        scenario = Scenario.query.get(scenario_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -202,13 +259,13 @@ class ScenarioResource(resources.ResourceMixin, Resource):
         """Handles POST request to the resource.
 
         This resource creates a new scenario for a sketch based on a template.
-        Templates are defined in SCENARIOS_PATH.
+        Templates are defined in DFIQ.
 
         Returns:
             A JSON representation of the scenario.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        scenario = Scenario.query.get(scenario_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -244,8 +301,8 @@ class ScenarioStatusResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the updated scenario.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        scenario = Scenario.query.get(scenario_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -272,6 +329,281 @@ class ScenarioStatusResource(resources.ResourceMixin, Resource):
         return self.to_json(scenario)
 
 
+class FacetListResource(resources.ResourceMixin, Resource):
+    """List facets for a scenario."""
+
+    @login_required
+    def get(self, sketch_id, scenario_id):
+        """Get all facets for a scenario.
+
+        Returns:
+            A list of JSON representations of the facets.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+        if not scenario.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
+
+        facets = Facet.query.filter_by(scenario=scenario).all()
+        return self.to_json(facets)
+
+
+class QuestionOrphanListResource(resources.ResourceMixin, Resource):
+    """List all questions that doesn't have an associated scenario or facet."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Get all questions that doesn't have an associated scenario or facet.
+
+        Returns:
+            A list of JSON representations of the questions.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        questions = InvestigativeQuestion.query.filter_by(
+            sketch=sketch, scenario=None, facet=None
+        ).all()
+        return self.to_json(questions)
+
+
+class QuestionWithScenarioListResource(resources.ResourceMixin, Resource):
+    """List all questions for a scenario that doesn't have an associated facet."""
+
+    @login_required
+    def get(self, sketch_id, scenario_id):
+        """Get all questions for a scenario that doesn't have an associated facet.
+
+        Returns:
+            A list of JSON representations of the questions.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        if not scenario:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No scenario found with this ID")
+        if not scenario.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
+
+        questions = InvestigativeQuestion.query.filter_by(
+            sketch=sketch, scenario=scenario, facet=None
+        ).all()
+
+        if not questions:
+            return jsonify({"objects": [[]]})
+
+        return self.to_json(questions)
+
+
+class QuestionWithFacetListResource(resources.ResourceMixin, Resource):
+    """List all investigative questions for a facet."""
+
+    @login_required
+    def get(self, sketch_id, scenario_id, facet_id):
+        """Get all questions for a facet.
+
+        Returns:
+            A list of JSON representations of the questions.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
+        facet = Facet.get_by_id(facet_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        if not scenario:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No scenario found with this ID")
+        if not scenario.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
+
+        if not facet:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No facet found with this ID")
+        if not facet.scenario.id == scenario.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Facet is not part of this scenario.")
+
+        questions = InvestigativeQuestion.query.filter_by(facet=facet).all()
+        return self.to_json(questions)
+
+
+class QuestionTemplateListResource(resources.ResourceMixin, Resource):
+    """List all scenarios available."""
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of JSON representations of the scenarios.
+        """
+        dfiq = load_dfiq_from_config()
+        if not dfiq:
+            return jsonify({"objects": []})
+
+        scenarios = [scenario.__dict__ for scenario in dfiq.questions]
+        return jsonify({"objects": scenarios})
+
+
+class QuestionListResource(resources.ResourceMixin, Resource):
+    """Create an investigative question."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Create an investigative question.
+
+        Returns:
+            A JSON representation of the question.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        dfiq_question = None
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        form = request.json
+        if not form:
+            form = request.data
+        question_text = form.get("question_text")
+        scenario_id = form.get("scenario_id")
+        facet_id = form.get("facet_id")
+        template_id = form.get("template_id")
+
+        scenario = Scenario.get_by_id(scenario_id) if scenario_id else None
+        facet = Facet.get_by_id(facet_id) if facet_id else None
+
+        if not question_text:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Question is missing")
+
+        if scenario:
+            if scenario.sketch.id != sketch.id:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch."
+                )
+
+        if facet:
+            if facet.sketch.id != sketch.id:
+                abort(HTTP_STATUS_CODE_FORBIDDEN, "Facet is not part of this sketch.")
+
+        if template_id:
+            dfiq = load_dfiq_from_config()
+            if not dfiq:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server"
+                )
+            dfiq_question = [
+                question for question in dfiq.questions if question.id == template_id
+            ][0]
+
+        if dfiq_question:
+            new_question = InvestigativeQuestion(
+                dfiq_identifier=dfiq_question.id,
+                name=dfiq_question.name,
+                display_name=dfiq_question.name,
+                description=dfiq_question.description,
+                spec_json=dfiq_question.to_json(),
+                sketch=sketch,
+                user=current_user,
+            )
+            for approach_id in dfiq_question.approaches:
+                approach = next(
+                    (
+                        approach
+                        for approach in dfiq.approaches
+                        if approach.id == approach_id
+                    ),
+                    None,
+                )
+                approach_sql = InvestigativeQuestionApproach(
+                    dfiq_identifier=approach.id,
+                    name=approach.name,
+                    display_name=approach.name,
+                    description=approach.description.get("details", ""),
+                    spec_json=approach.to_json(),
+                    user=current_user,
+                )
+
+                for search_template in approach.search_templates:
+                    search_template_sql = SearchTemplate.query.filter_by(
+                        template_uuid=search_template["value"]
+                    ).first()
+                    if search_template_sql:
+                        approach_sql.search_templates.append(search_template_sql)
+
+                new_question.approaches.append(approach_sql)
+
+        else:
+            new_question = InvestigativeQuestion.get_or_create(
+                name=question_text,
+                display_name=question_text,
+                sketch=sketch,
+                scenario=scenario,
+                facet=facet,
+                user=current_user,
+            )
+
+        db_session.add(new_question)
+        db_session.commit()
+
+        return self.to_json(new_question)
+
+
+class QuestionResource(resources.ResourceMixin, Resource):
+    """Resource for an investigative question."""
+
+    @login_required
+    def get(self, sketch_id, question_id):
+        """Get a investigative question.
+
+        Returns:
+            A list of JSON representations of the question.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+        if not question.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Question is not part of this sketch.")
+
+        return self.to_json(question)
+
+
 class QuestionConclusionListResource(resources.ResourceMixin, Resource):
     """Resource for investigative question conclusion."""
 
@@ -282,11 +614,11 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the conclusions.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
@@ -305,11 +637,11 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the conclusion.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
@@ -328,7 +660,7 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             db_session.add(conclusion)
             db_session.commit()
 
-        return self.to_json(conclusion)
+        return self.to_json(question)
 
 
 class QuestionConclusionResource(resources.ResourceMixin, Resource):
@@ -342,15 +674,15 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the conclusion.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
+        conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
 
@@ -367,7 +699,7 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
             db_session.add(conclusion)
             db_session.commit()
 
-        return self.to_json(conclusion)
+        return self.to_json(question)
 
     @login_required
     def delete(self, sketch_id, question_id, conclusion_id):
@@ -375,15 +707,15 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
 
         Deletes a conclusion.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
+        conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
 
@@ -399,3 +731,5 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
 
         db_session.delete(conclusion)
         db_session.commit()
+
+        return self.to_json(question)

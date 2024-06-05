@@ -1,0 +1,182 @@
+# Config file for the feature extraction analyzer.
+# A feature extraction definition looks like this:
+# name:
+#       # Define either a query_string or query_dsl.
+#       query_string: *
+#       query_dsl:
+#       # Mandatory fields.
+#       attribute:
+#       store_as:
+#       re:
+#       # Optional fields.
+#       re_flags: []
+#       emojis: []
+#       tags: []
+#       overwrite_store_as: True
+#       overwrite_and_merge_store_as: False
+#       store_type_list: False
+#       keep_multimatch: False
+#
+# Each definition needs to define either a query_string or a query_dsl.
+#
+# re_flags is a list of flags as strings from the re module. These include:
+# - DEBUG
+# - DOTALL
+# - IGNORECASE
+# - LOCALE
+# - MULTILINE
+# - TEMPLATE
+# - UNICODE
+# - VERBOSE
+#
+# The fields tags and emojis are optional.
+#
+# The field store_as defines the name of the attribute the feature is
+# stored as.
+#
+# The overwrite_store_as is an optional boolean that determines if
+# we want to overwrite the field store_as if it already exists.
+#
+# The overwrite_and_merge_store_as is an optional boolean that determines
+# if we want to overwrite the field store_as and merge the existing values.
+#
+# The store_type_list is an optional boolean that determines if we want to
+# store the extracted data in List type (default is text).
+#
+# The keep_multimatch is an optional boolean that determines if we want to
+# store all matching results (default store first result).
+#
+# The feature extraction works in the way that the query is run, and
+# the regular expression is run against the attribute to extract a value.
+# The first value extracted is then stored inside the "store_as" attribute.
+# If there are emojis or tags defined they are also applied to that event.
+# ------------------------------------------------------------------------
+
+email_addresses:
+        query_string: 'source_short:"WEBHIST"'
+        attribute: 'message'
+        store_as: 'email_address'
+        re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
+        re_flags: []
+        tags: ['email-address']
+
+gmail_accounts:
+        query_string: 'source_short:"WEBHIST" AND url:"mail.google.com"'
+        attribute: 'message'
+        store_as: 'found_account'
+        re: '[a-zA-Z0-9_\.+\-]+@(gmail|googlemail)\.com'
+        re_flags: []
+        tags: ['gmail-account']
+        emojis: ['ID_BUTTON']
+
+github_accounts:
+        query_string: 'source_short:"WEBHIST" AND
+          url:"https://github.com/users" AND title:"Your Profile"'
+        attribute: 'url'
+        store_as: 'found_account'
+        re: 'https://github.com/users/([A-z-\d]{1,39})'
+        re_flags: []
+        tags: ['github-account']
+        emojis: ['ID_BUTTON']
+
+# Linkedin account extraction from profile edit url
+linkedin_accounts:
+        query_string: 'source_short:"WEBHIST" AND
+          url:"https://www.linkedin.com/in/" AND url:"/edit/"'
+        attribute: 'url'
+        store_as: 'found_account'
+        re: 'https://www.linkedin.com/in/([A-z-\d]{5,32})/edit/'
+        tags: ['linkedin-account']
+        emojis: ['ID_BUTTON']
+
+rdp_ts_ipv4_addresses:
+        query_string: 'data_type:"windows:evtx:record" AND
+          source_name:"Microsoft-Windows-TerminalServices-LocalSessionManager"'
+        attribute: 'strings'
+        store_as: 'ip_address'
+        re: '(?:[0-9]{1,3}\.){3}[0-9]{1,3}'
+
+rdp_rds_ipv4_addresses:
+        query_string: 'data_type:"windows:evtx:record" AND
+          source_name:"Microsoft-Windows-RemoteDesktopServices-RdpCoreTS"'
+        attribute: 'strings'
+        store_as: 'client_ip'
+        re: '(?:[0-9]{1,3}\.){3}[0-9]{1,3}'
+
+ssh_client_ipv4_addresses:
+        query_string: 'reporter:"sshd"'
+        attribute: 'message'
+        store_as: 'client_ip'
+        re: 'Connection from ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+ on (?:[0-9]{1,3}\.){3}[0-9]{1,3} port \d+(?: rdomain ? .*)?$'
+
+ssh_client_ipv4_addresses_2:
+        query_string: 'reporter:"sshd"'
+        attribute: 'message'
+        store_as: 'client_ip'
+        re: 'Connection [a-z]+ by ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+'
+
+ssh_host_ipv4_addresses:
+        query_string: 'reporter:"sshd"'
+        attribute: 'message'
+        store_as: 'host_ip'
+        re: '^\[sshd\] \[\d+\]: Connection from (?:[0-9]{1,3}\.){3}[0-9]{1,3} port \d+ on ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+(?: rdomain ? .*)?$'
+
+ssh_client_password_ipv4_addresses:
+        query_string: 'reporter:"sshd"'
+        attribute: 'message'
+        store_as: 'client_ip'
+        re: '(?:Accepted|Failed) (?:password|publickey) for \w+ from ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+'
+
+ssh_disconnected_username:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'username'
+        re: 'Disconnected\s+from user (?P<username>[^\s]+) [^\s]+ port \d+$'
+
+ssh_disconnected_ip_address:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'ip_address'
+        re: 'Disconnected from user [^\s]+ (?P<ip_address>[^\s]+) port \d+$'
+
+ssh_disconnected_port:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'port'
+        re: 'Disconnected from user [^\s]+ [^\s]+ port (?P<port>\d+)$'
+
+ssh_failed_username:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'username'
+        re: 'Failed password for (?:invalid user)?\s*(?P<username>[^\s]+) from [^\s]+ port \d+ ssh\d'
+
+ssh_failed_ip_address:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'ip_address'
+        re: 'Failed password for (?:invalid user)?\s*[^\s]+ from (?P<ip_address>[^\s]+) port \d+ ssh\d'
+
+ssh_failed_port:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'port'
+        re: 'Failed password for (?:invalid user)?\s*[^\s]+ from [^\s]+ port (?P<port>\d+) ssh\d'
+
+ssh_failed_method:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'authentication_method'
+        re: 'Failed (?P<authentication_method>[^\s]+) for .*ssh\d'
+
+win_bits_client_ipv4_addresses:
+        query_string: 'data_type:"windows:evtx:record" AND source_name:Microsoft-Windows-Bits-Client'
+        attribute: 'strings'
+        store_as: 'ip_address'
+        re: '(?:[0-9]{1,3}\.){3}[0-9]{1,3}'
+
+win_bits_client_url:
+        query_string: 'data_type:"windows:evtx:record" AND source_name:Microsoft-Windows-Bits-Client'
+        attribute: 'strings'
+        store_as: 'url'
+        re: '(?<=")(?:(?:https?:\/\/)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+)(?:[\/\?#][^\s,"]*)?(?=")'

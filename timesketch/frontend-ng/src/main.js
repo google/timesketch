@@ -16,35 +16,20 @@ limitations under the License.
 import Vue from 'vue'
 import App from './App.vue'
 
-import router from './router'
-import store from './store'
+import router from './router.js'
+import store from './store.js'
 
 import '@/mixins/snackBar'
-
-// Third party
-import VueScrollTo from 'vue-scrollto'
-import Multiselect from 'vue-multiselect'
-import VueCytoscape from 'vue-cytoscape'
-import VueClipboard from 'vue-clipboard2'
 
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 require('./assets/main.scss')
+require('./assets/markdown.scss')
 require('./utils/RegisterAppComponents')
 require('./utils/RegisterAppFilters')
 
-// Create global EventBus to use in certain situations where performance is
-// important and props/events are not optimal. Use with caution to not add
-// unnecessary complexity.
-const EventBus = new Vue()
-export default EventBus
-
 // Third party
 Vue.use(require('vue-moment'))
-Vue.use(VueCytoscape)
-Vue.use(VueClipboard)
-Vue.use(VueScrollTo)
-Vue.component('multiselect', Multiselect)
 
 // Disable warning during development
 Vue.config.productionTip = false

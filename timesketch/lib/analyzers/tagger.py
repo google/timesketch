@@ -1,5 +1,6 @@
 """Analyzer plugin for tagging."""
-from collections.abc import Iterable
+
+from collections.abc import Iterable  # pylint: disable no-name-in-module
 import logging
 
 from timesketch.lib import emojis
@@ -126,7 +127,8 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
             for attribute in dynamic_tags:
                 tag_value = event.source.get(attribute)
                 for mod in config.get("modifiers", []):
-                    tag_value = self.MODIFIERS[mod](tag_value)
+                    if isinstance(tag_value, str):
+                        tag_value = self.MODIFIERS[mod](tag_value)
                 if isinstance(tag_value, Iterable):
                     dynamic_tag_values.extend(tag_value)
                 else:

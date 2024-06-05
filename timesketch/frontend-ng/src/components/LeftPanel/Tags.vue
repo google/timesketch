@@ -14,27 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="tags.length">
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-tag-multiple-outline</v-icon> Tags ({{ tags.length }})</span
-      >
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-tag-multiple-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
+    <div
+      :style="(tags && tags.length) || (labels && labels.length) ? 'cursor: pointer' : ''"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span>
+
+      <span class="float-right" style="margin-right: 10px">
+        <small
+          ><strong v-if="tags && labels">{{ tags.length + labels.length }}</strong></small
+        >
+      </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
-        <v-divider></v-divider>
-        <v-row
-          no-gutters
-          v-for="tag in tags"
-          :key="tag.tag"
-          class="pa-3 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-        >
-          <div @click="search(tag.tag)" style="cursor: pointer; font-size: 0.9em">
-            <span>{{ tag.tag }} ({{ tag.count | compactNumber }})</span>
-          </div>
-        </v-row>
+      <div v-show="expanded && (tags.length || labels.length)">
+        <ts-tags-list></ts-tags-list>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -42,21 +52,15 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
-
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
+import TsTagsList from './TagsList.vue'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
+  components: {
+    TsTagsList,
+  },
   data: function () {
     return {
       expanded: false,
@@ -72,14 +76,8 @@ export default {
     tags() {
       return this.$store.state.tags
     },
-  },
-  methods: {
-    search(tag) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
-      eventData.queryFilter = defaultQueryFilter()
-      EventBus.$emit('setQueryAndFilter', eventData)
+    labels() {
+      return this.meta.filter_labels
     },
   },
 }
