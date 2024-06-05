@@ -61,7 +61,7 @@ class TestMisp(BaseTest):
         )
         mock_requests_post.assert_called_with(
             "https://test.com//attributes/restSearch/",
-            data={"returnFormat": "json", "value": "test.txt", "type": "filename"},
+            json={"returnFormat": "json", "value": ["test.txt"], "type": "filename"},
             headers={"Authorization": "test"},
             verify=False,
         )
@@ -90,7 +90,7 @@ class TestMisp(BaseTest):
         )
         mock_requests_post.assert_called_with(
             "https://test.com//attributes/restSearch/",
-            data={"returnFormat": "json", "value": "test.txt", "type": "filename"},
+            json={"returnFormat": "json", "value": ["test.txt"], "type": "filename"},
             headers={"Authorization": "test"},
             verify=False,
         )

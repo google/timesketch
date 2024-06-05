@@ -31,7 +31,6 @@ class MispAnalyzer(interface.BaseAnalyzer):
         self.misp_url = kwargs.get("misp_url")
         self.misp_api_key = kwargs.get("misp_api_key")
         self.total_event_counter = 0
-        self.request_set = set()
         self.result_dict = dict()
 
     @staticmethod
@@ -64,7 +63,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         """
         results = requests.post(
             f"{self.misp_url}/attributes/restSearch/",
-            data={"returnFormat": "json", "value": value, "type": attr},
+            json={"returnFormat": "json", "value": value, "type": attr},
             headers={"Authorization": self.misp_api_key},
             verify=False,
         )
@@ -72,7 +71,6 @@ class MispAnalyzer(interface.BaseAnalyzer):
         if results.status_code != 200:
             msg_error = "Error with MISP query: Status code"
             logger.error("{} {}".format(msg_error, results.status_code))
-            # logger.error(f"{msg_error} {results.status_code}")
             return []
         result_loc = results.json()
         if "name" in result_loc:
@@ -117,27 +115,43 @@ class MispAnalyzer(interface.BaseAnalyzer):
         """
         events = self.event_stream(query_string=query, return_fields=[timesketch_attr])
         create_a_view = False
+        query_list = list()
+        events_list = list()
+
+        # Create a list to make only one query to misp
         for event in events:
             loc = event.source.get(timesketch_attr)
             if loc:
+                events_list.append(event) # Make a copy of event in a list
                 if attr == "filename":
                     loc = ntpath.basename(loc)
                     if not loc:
                         _, loc = ntpath.split(event.source.get(timesketch_attr))
 
-                if not loc in self.request_set:
-                    result = self.get_misp_attributes(loc, attr)
-                    if result:
+                if not loc in query_list:
+                    query_list.append(loc)
+                self.result_dict[f"{attr}:{loc}"] = []
+
+        result = self.get_misp_attributes(query_list, attr)
+        if result:
+            create_a_view = True
+            for event in events_list: # Use list of event
+                loc = event.source.get(timesketch_attr)
+                if loc:
+                    if attr == "filename":
+                        loc = ntpath.basename(loc)
+                        if not loc:
+                            _, loc = ntpath.split(event.source.get(timesketch_attr))
+
+                    loc_key = f"{attr}:{loc}"
+                    for element in result:
+                        if loc == element["value"]:
+                            self.result_dict[loc_key].append(element)
+
+                    # Mark event if there's a result
+                    if self.result_dict[loc_key]:
                         self.total_event_counter += 1
-                        create_a_view = True
-                        self.mark_event(event, result, attr)
-                        self.result_dict[f"{attr}:{loc}"] = result
-                    else:
-                        self.result_dict[f"{attr}:{loc}"] = False
-                    self.request_set.add(loc)
-                elif self.result_dict[f"{attr}:{loc}"]:
-                    self.total_event_counter += 1
-                    self.mark_event(event, self.result_dict[f"{attr}:{loc}"], attr)
+                        self.mark_event(event, self.result_dict[loc_key], attr)
 
         if create_a_view:
             self.sketch.add_view(
