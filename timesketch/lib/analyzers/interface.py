@@ -257,7 +257,7 @@ class Event(object):
 
         # Add new tags to the analyzer output object
         if self._analyzer:
-            self._analyzer.output.add_created_tags(new_tags)
+            self._analyzer.output.add_created_tags(tags)
 
     def add_emojis(self, emojis):
         """Add emojis to the Event.
@@ -1432,7 +1432,12 @@ class AnalyzerOutput:
         Args:
             tags: The tags to add to the list of created_tags.
         """
-        self.add_meta_item("created_tags", tags)
+        existing_tags = self.platform_meta_data["created_tags"]
+        if existing_tags:
+            analyzer_tags = list(set().union(existing_tags, tags))
+        else:
+            analyzer_tags = tags
+        self.add_meta_item("created_tags", analyzer_tags)
 
     def add_created_attributes(self, attributes):
         """Adds a attributes to the list of created_attributes.
