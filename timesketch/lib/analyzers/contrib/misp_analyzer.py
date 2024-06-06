@@ -122,7 +122,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         for event in events:
             loc = event.source.get(timesketch_attr)
             if loc:
-                events_list.append(event) # Make a copy of event in a list
+                events_list.append(event)  # Make a copy of event in a list
                 if attr == "filename":
                     loc = ntpath.basename(loc)
                     if not loc:
@@ -135,7 +135,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         result = self.get_misp_attributes(query_list, attr)
         if result:
             create_a_view = True
-            for event in events_list: # Use list of event
+            for event in events_list:  # Use list of event
                 loc = event.source.get(timesketch_attr)
                 if loc:
                     if attr == "filename":
