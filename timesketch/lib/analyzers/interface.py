@@ -1434,10 +1434,6 @@ class AnalyzerOutput:
         """
         existing_tags = self.platform_meta_data["created_tags"]
         analyzer_tags = list(set(existing_tags) | set(tags))
-        # if existing_tags:
-        #     analyzer_tags = list(set().union(existing_tags, tags))
-        # else:
-        #     analyzer_tags = tags
         self.add_meta_item("created_tags", analyzer_tags)
 
     def add_created_attributes(self, attributes):
