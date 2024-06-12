@@ -21,7 +21,7 @@ limitations under the License.
 
     <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
       <!-- Empty state -->
-      <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
+      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4" style="background: transparent">
             <center>
