@@ -28,28 +28,29 @@ class MispAnalyzer(interface.BaseAnalyzer):
             timeline_id: The ID of the timeline.
         """
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
-        self.misp_url = kwargs.get("misp_url")
-        self.misp_api_key = kwargs.get("misp_api_key")
+        self.misp_url = current_app.config.get("MISP_URL")
+        self.misp_api_key = current_app.config.get("MISP_API_KEY")
         self.total_event_counter = 0
         self.result_dict = dict()
+        self._query_string = kwargs.get("query")[0]
+        self._attr = kwargs.get("query")[1]
+        self._timesketch_attr = kwargs.get("query")[2]
 
     @staticmethod
     def get_kwargs():
         """Get kwargs for the analyzer.
 
         Returns:
-            Info to connect to MISP.
+            List of attributes to search for in Timesketch and query in MISP
         """
 
-        misp_url = current_app.config.get("MISP_URL")
-        misp_api_key = current_app.config.get("MISP_API_KEY")
-
-        if not misp_api_key or not misp_url:
-            logger.error("MISP conf not found")
-            return []
-
-        matcher_kwargs = [{"misp_url": misp_url, "misp_api_key": misp_api_key}]
-        return matcher_kwargs
+        to_query = [
+            {"query": ["md5_hash:*", "md5", "md5_hash"]},
+            {"query": ["sha1_hash:*", "sha1", "sha1_hash"]},
+            {"query": ["sha256_hash:*", "sha256", "sha256_hash"]},
+            {"query": ["filename:*", "filename", "filename"]},
+        ]
+        return to_query
 
     def get_misp_attributes(self, value, attr):
         """Search event on MISP.
@@ -169,19 +170,9 @@ class MispAnalyzer(interface.BaseAnalyzer):
         if not self.misp_url or not self.misp_api_key:
             return "No MISP configuration settings found, aborting."
 
-        query_sha = "md5_hash:*"
-        self.query_misp(query_sha, "md5", "md5_hash")
+        self.query_misp(self._query_string, self._attr, self._timesketch_attr)
 
-        query_sha = "sha1_hash:*"
-        self.query_misp(query_sha, "sha1", "sha1_hash")
-
-        query_sha = "sha256_hash:*"
-        self.query_misp(query_sha, "sha256", "sha256_hash")
-
-        query = "filename:*"
-        self.query_misp(query, "filename", "filename")
-
-        return f"MISP Match: {self.total_event_counter}"
+        return f"[{self._timesketch_attr}] MISP Match: {self.total_event_counter}"
 
 
 manager.AnalysisManager.register_analyzer(MispAnalyzer)
