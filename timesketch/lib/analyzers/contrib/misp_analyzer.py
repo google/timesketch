@@ -32,9 +32,9 @@ class MispAnalyzer(interface.BaseAnalyzer):
         self.misp_api_key = current_app.config.get("MISP_API_KEY")
         self.total_event_counter = 0
         self.result_dict = dict()
-        self._query_string = kwargs.get("query")[0]
-        self._attr = kwargs.get("query")[1]
-        self._timesketch_attr = kwargs.get("query")[2]
+        self._query_string = kwargs.get("query_string")
+        self._attr = kwargs.get("attr")
+        self._timesketch_attr = kwargs.get("timesketch_attr")
 
     @staticmethod
     def get_kwargs():
@@ -45,10 +45,10 @@ class MispAnalyzer(interface.BaseAnalyzer):
         """
 
         to_query = [
-            {"query": ["md5_hash:*", "md5", "md5_hash"]},
-            {"query": ["sha1_hash:*", "sha1", "sha1_hash"]},
-            {"query": ["sha256_hash:*", "sha256", "sha256_hash"]},
-            {"query": ["filename:*", "filename", "filename"]},
+            {"query_string": "md5_hash:*",  "attr": "md5", "timesketch_attr": "md5_hash"},
+            {"query_string": "sha1_hash:*",  "attr": "sha1", "timesketch_attr": "sha1_hash"},
+            {"query_string": "sha256_hash:*", "attr": "sha256", "timesketch_attr": "sha256_hash"},
+            {"query_string": "filename:*", "attr": "filename", "timesketch_attr": "filename"}
         ]
         return to_query
 
