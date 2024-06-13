@@ -30,6 +30,12 @@ MISP_ATTR = {
 }
 MATCHING_MISP = {"filename": "test.txt"}
 
+QUERY_MISP = {
+    "query_string": "filename:*",
+    "attr": "filename",
+    "timesketch_attr": "filename",
+}
+
 
 class TestMisp(BaseTest):
     """Tests the functionality of the analyzer."""
@@ -43,7 +49,7 @@ class TestMisp(BaseTest):
     @mock.patch("requests.post")
     def test_attr_match(self, mock_requests_post):
         """Test match"""
-        analyzer = misp_analyzer.MispAnalyzer("test_index", 1)
+        analyzer = misp_analyzer.MispAnalyzer("test_index", 1, None, **QUERY_MISP)
         analyzer.misp_url = "https://test.com/"
         analyzer.misp_api_key = "test"
         analyzer.datastore.client = mock.Mock()
@@ -57,7 +63,7 @@ class TestMisp(BaseTest):
         message = analyzer.run()
         self.assertEqual(
             message,
-            ("MISP Match: 1"),
+            ("[filename] MISP Match: 1"),
         )
         mock_requests_post.assert_called_with(
             "https://test.com//attributes/restSearch/",
@@ -70,7 +76,7 @@ class TestMisp(BaseTest):
     @mock.patch("requests.post")
     def test_attr_nomatch(self, mock_requests_post):
         """Test no match"""
-        analyzer = misp_analyzer.MispAnalyzer("test_index", 1)
+        analyzer = misp_analyzer.MispAnalyzer("test_index", 1, None, **QUERY_MISP)
         analyzer.misp_url = "https://test.com/"
         analyzer.misp_api_key = "test"
         analyzer.datastore.client = mock.Mock()
@@ -86,7 +92,7 @@ class TestMisp(BaseTest):
         message = analyzer.run()
         self.assertEqual(
             message,
-            ("MISP Match: 0"),
+            ("[filename] MISP Match: 0"),
         )
         mock_requests_post.assert_called_with(
             "https://test.com//attributes/restSearch/",
@@ -94,3 +100,10 @@ class TestMisp(BaseTest):
             headers={"Authorization": "test"},
             verify=False,
         )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_get_kwargs(self):
+        analyzer_init = misp_analyzer.MispAnalyzer("test_index", 1)
+        queries = analyzer_init.get_kwargs()
+        self.assertIsNotNone(queries)
+        self.assertGreaterEqual(len(queries), 4)

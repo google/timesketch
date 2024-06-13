@@ -45,10 +45,26 @@ class MispAnalyzer(interface.BaseAnalyzer):
         """
 
         to_query = [
-            {"query_string": "md5_hash:*",  "attr": "md5", "timesketch_attr": "md5_hash"},
-            {"query_string": "sha1_hash:*",  "attr": "sha1", "timesketch_attr": "sha1_hash"},
-            {"query_string": "sha256_hash:*", "attr": "sha256", "timesketch_attr": "sha256_hash"},
-            {"query_string": "filename:*", "attr": "filename", "timesketch_attr": "filename"}
+            {
+                "query_string": "md5_hash:*",
+                "attr": "md5",
+                "timesketch_attr": "md5_hash",
+            },
+            {
+                "query_string": "sha1_hash:*",
+                "attr": "sha1",
+                "timesketch_attr": "sha1_hash",
+            },
+            {
+                "query_string": "sha256_hash:*",
+                "attr": "sha256",
+                "timesketch_attr": "sha256_hash",
+            },
+            {
+                "query_string": "filename:*",
+                "attr": "filename",
+                "timesketch_attr": "filename",
+            },
         ]
         return to_query
 
