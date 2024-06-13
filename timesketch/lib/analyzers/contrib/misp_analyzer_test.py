@@ -9,7 +9,6 @@ from timesketch.lib.analyzers.contrib import misp_analyzer
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
-SHA256_VALUE = "ac7233de5daa4ab262e2e751028f56a7e9d5b9e724624c1d55e8b070d8c3cd09"
 MISP_ATTR = {
     "response": {
         "Attribute": [
@@ -50,8 +49,6 @@ class TestMisp(BaseTest):
     def test_attr_match(self, mock_requests_post):
         """Test match"""
         analyzer = misp_analyzer.MispAnalyzer("test_index", 1, None, **QUERY_MISP)
-        analyzer.misp_url = "https://test.com/"
-        analyzer.misp_api_key = "test"
         analyzer.datastore.client = mock.Mock()
         mock_requests_post.return_value.status_code = 200
         mock_requests_post.return_value.json.return_value = MISP_ATTR
@@ -77,8 +74,6 @@ class TestMisp(BaseTest):
     def test_attr_nomatch(self, mock_requests_post):
         """Test no match"""
         analyzer = misp_analyzer.MispAnalyzer("test_index", 1, None, **QUERY_MISP)
-        analyzer.misp_url = "https://test.com/"
-        analyzer.misp_api_key = "test"
         analyzer.datastore.client = mock.Mock()
         mock_requests_post.return_value.status_code = 200
         mock_requests_post.return_value.json.return_value = {
@@ -106,4 +101,10 @@ class TestMisp(BaseTest):
         analyzer_init = misp_analyzer.MispAnalyzer("test_index", 1)
         queries = analyzer_init.get_kwargs()
         self.assertIsNotNone(queries)
-        self.assertGreaterEqual(len(queries), 4)
+        self.assertGreaterEqual(len(queries), 1)
+        for query in queries:
+            query_list_keys = query.keys()
+            self.assertEqual(len(query_list_keys), 3)
+            self.assertEqual(
+                list(query_list_keys), ["query_string", "attr", "timesketch_attr"]
+            )
