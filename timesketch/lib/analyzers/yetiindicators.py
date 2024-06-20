@@ -323,7 +323,8 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             # the case. The API will return only the first value if the list
             # has 1 element, so this check is necessary.
             if isinstance(intelligence_attribute, list):
-                intelligence_attribute = self._merge_intelligence_attributes(intelligence_attribute)
+                intelligence_attribute = self._merge_intelligence_attributes(
+                    intelligence_attribute)
 
             refs = {
                 (ioc["ioc"], ioc["externalURI"])
