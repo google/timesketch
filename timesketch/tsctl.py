@@ -495,24 +495,39 @@ def info():
         print("psort.py not installed")
 
     # Get installed node version
-    output = subprocess.check_output(["node", "--version"]).decode("utf-8")
-    print(f"Node version: {output} ")
+    try:
+        output = subprocess.check_output(["node", "--version"]).decode("utf-8")
+        print(f"Node version: {output} ")
+    except FileNotFoundError:
+        print("Node not installed. Node is only used in the dev environment.")
 
-    # Get installed npm version
-    output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
-    print(f"npm version: {output}")
+    try:
+        # Get installed npm version
+        output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
+        print(f"npm version: {output}")
+    except FileNotFoundError:
+        print("npm not installed. npm is only used in the dev environment.")
 
-    # Get installed yarn version
-    output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
-    print(f"yarn version: {output} ")
+    try:
+        # Get installed yarn version
+        output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
+        print(f"yarn version: {output} ")
+    except FileNotFoundError:
+        print("yarn not installed. Yarn is only used in the dev environment.")
 
-    # Get installed python version
-    output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
-    print(f"Python version: {output} ")
+    try:
+        # Get installed python version
+        output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
+        print(f"Python version: {output} ")
+    except FileNotFoundError:
+        print("Python3 not installed")
 
-    # Get installed pip version
-    output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
-    print(f"pip version: {output} ")
+    try:
+        # Get installed pip version
+        output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
+        print(f"pip version: {output} ")
+    except FileNotFoundError:
+        print("pip not installed")
 
 
 def print_table(table_data):
@@ -742,7 +757,14 @@ def searchindex_info(searchindex_id):
     required=False,
     help="Limit the number of results.",
 )
-def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
+@click.option(
+    "--export_csv",
+    required=False,
+    help="Export the results to a CSV file.",
+)
+def analyzer_stats(
+    analyzer_name, timeline_id, scope, result_text_search, limit, export_csv
+):
     """Prints analyzer stats."""
 
     if timeline_id:
@@ -774,6 +796,7 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
         new_row = pd.DataFrame(
             [
                 {
+                    "analyzer_name": analysis.analyzer_name,
                     "runtime": analysis.updated_at - analysis.created_at,
                     "hits": matches,
                     "timeline_id": analysis.timeline_id,
@@ -817,5 +840,9 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
     if analyzer_name != "sigma":
         df = df.drop(columns=["hits"])
 
-    pd.options.display.max_colwidth = 500
-    print(df)
+    if export_csv:
+        df.to_csv(export_csv, index=False)
+        print(f"Analyzer stats exported to {export_csv}")
+    else:
+        pd.options.display.max_colwidth = 500
+        print(df)

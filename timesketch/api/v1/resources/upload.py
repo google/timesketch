@@ -355,7 +355,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if len(timeline_name) > 255:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Timeline name needs to be less than 255 characters.",
+                "Timeline name must not exceed 255 characters.",
             )
 
         # We do not need a human readable filename or
