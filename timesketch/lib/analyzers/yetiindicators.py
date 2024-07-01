@@ -306,11 +306,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         data = []
         existing_refs = set()
         for value in attribute_values:
-            for ioc in value['data']:
-                if ioc['externalURI'] in existing_refs:
+            for ioc in value["data"]:
+                if ioc["externalURI"] in existing_refs:
                     continue
                 data.append(ioc)
-                existing_refs.add(ioc['externalURI'])
+                existing_refs.add(ioc["externalURI"])
         return {"data": data}
 
     def get_intelligence_attribute(self) -> Tuple[Dict, Set[Tuple[str, str]]]:
@@ -324,7 +324,8 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             # has 1 element, so this check is necessary.
             if isinstance(intelligence_attribute, list):
                 intelligence_attribute = self._merge_intelligence_attributes(
-                    intelligence_attribute)
+                    intelligence_attribute
+                )
 
             refs = {
                 (ioc["ioc"], ioc["externalURI"])
