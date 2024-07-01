@@ -370,11 +370,18 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             A dictionary representing a query DSL.
         """
         escaped = observable["value"].replace("\\", "\\\\")
+        field = "message.keyword"
+        search = f"*{escaped}*"
+
+        if observable["type"] == "sha256":
+            field = "sha256_hash"
+            search = escaped
+
         return {
             "query": {
                 "wildcard": {
-                    "message.keyword": {
-                        "value": f"*{escaped}*",
+                    field: {
+                        "value": search,
                         "case_insensitive": True,
                     }
                 },
