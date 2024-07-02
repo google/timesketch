@@ -274,6 +274,12 @@ export default {
   getAggregations(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/')
   },
+  getAggregationById(sketchId, aggregationId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/aggregation/' + aggregationId)
+  },
+  deleteAggregationById(sketchId, aggregationId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/aggregation/' + aggregationId)
+  },
   getAggregationGroups(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/group/')
   },
@@ -288,7 +294,7 @@ export default {
       name: name,
       description: aggregation.description,
       agg_type: aggregation.name,
-      chart_type: formData['supported_charts'],
+      chart_type: formData['supported_charts'] || formData['aggregator_parameters']['chart_type'],
       parameters: formData,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', newFormData)
