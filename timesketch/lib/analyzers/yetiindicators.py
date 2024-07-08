@@ -301,10 +301,32 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self._intelligence_attribute["data"].append(intel)
         self._intelligence_refs.add((match_in_sketch, uri))
 
+    def _merge_intelligence_attributes(self, attribute_values):
+        """Merges multiple intelligence values that might have been stored."""
+        data = []
+        existing_refs = set()
+        for value in attribute_values:
+            for ioc in value["data"]:
+                if ioc["externalURI"] in existing_refs:
+                    continue
+                data.append(ioc)
+                existing_refs.add(ioc["externalURI"])
+        return {"data": data}
+
     def get_intelligence_attribute(self) -> Tuple[Dict, Set[Tuple[str, str]]]:
         """Fetches the intelligence attribute from the database."""
         try:
             intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
+
+            # In some cases, the intelligence attribute may be split into
+            # multiple "values" due tu race conditions. Merge them if that's
+            # the case. The API will return only the first value if the list
+            # has 1 element, so this check is necessary.
+            if isinstance(intelligence_attribute, list):
+                intelligence_attribute = self._merge_intelligence_attributes(
+                    intelligence_attribute
+                )
+
             refs = {
                 (ioc["ioc"], ioc["externalURI"])
                 for ioc in intelligence_attribute["data"]
@@ -327,9 +349,10 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             if (ioc["ioc"], ioc["externalURI"]) not in self._intelligence_refs:
                 self._intelligence_attribute["data"].append(ioc)
 
+        attribute_string = json.dumps(self._intelligence_attribute)
         self.sketch.add_sketch_attribute(
             "intelligence",
-            [json.dumps(self._intelligence_attribute)],
+            [attribute_string],
             ontology="intelligence",
             overwrite=True,
         )
@@ -348,11 +371,18 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             A dictionary representing a query DSL.
         """
         escaped = observable["value"].replace("\\", "\\\\")
+        field = "message.keyword"
+        search = f"*{escaped}*"
+
+        if observable["type"] == "sha256":
+            field = "sha256_hash"
+            search = escaped
+
         return {
             "query": {
                 "wildcard": {
-                    "message.keyword": {
-                        "value": f"*{escaped}*",
+                    field: {
+                        "value": search,
                         "case_insensitive": True,
                     }
                 },
