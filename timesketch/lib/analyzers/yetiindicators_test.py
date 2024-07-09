@@ -78,6 +78,7 @@ MATCHING_PATH_MESSAGE = {
     "message": "/usr/bin/dhpcd",
 }
 
+
 class YetiTestAnalyzer(yetiindicators.YetiBaseAnalyzer):
     NAME = "yetitest"
     DISPLAY_NAME = "Test for yeti analyzer"
@@ -153,7 +154,7 @@ class TestYetiIndicators(BaseTest):
     )
     def test_indicator_match(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
@@ -191,7 +192,7 @@ class TestYetiIndicators(BaseTest):
     )
     def test_indicator_nomatch(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
@@ -209,7 +210,7 @@ class TestYetiIndicators(BaseTest):
     )
     def test_slug(self):
         """Tests that slugs are formed correctly."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         mock_event = mock.Mock()
         mock_event.get_comments.return_value = []
         analyzer.mark_event(
@@ -228,7 +229,7 @@ class TestYetiIndicators(BaseTest):
     )
     def test_build_query_from_regexp(self):
         """Tests that that queries are correctly built from regex indicators."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_regexp(
             {
                 "name": "random regex",
@@ -280,7 +281,7 @@ class TestYetiIndicators(BaseTest):
     )
     def test_build_query_from_sigma(self):
         """Tests that that queries are correctly built from sigma indicators."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         sigma_pattern = """id: asd
 title: test
 description: test
@@ -340,7 +341,7 @@ tags:
     )
     def test_build_query_from_observable(self):
         """Tests that that queries are correctly built from regex indicators."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_observable(
             {
                 "value": "C:\\ProgramFiles\\mimi.exe",
