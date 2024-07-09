@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Union, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import requests
 import yaml
