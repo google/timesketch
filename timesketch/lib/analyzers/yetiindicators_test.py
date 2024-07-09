@@ -111,6 +111,7 @@ class TestYetiIndicators(BaseTest):
         "YetiBaseAnalyzer._get_entities_request"
     )
     def test_api_query(self, mock_get_entities, mock_get_neighbors):
+        """Tests that queries to the API are well-formed."""
         analyzer = YetiTestAnalyzer("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
