@@ -813,6 +813,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         for _event in events:
             searchindex_id = _event["_index"]
+
             # In case the index is part of an alias index, the alias name is used as searchindex
             searchindex_id, searchindex_name = self.datastore.resolve_index_alias(
                 searchindex_id
@@ -931,6 +932,9 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         # only one event will be in the event list
         for _event in events:
             searchindex_id = _event["_index"]
+
+            # In case the index is part of an alias index, the alias name is used as searchindex
+            searchindex_id, _ = self.datastore.resolve_index_alias(searchindex_id)
             searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
             event_id = _event["_id"]
 
