@@ -39,8 +39,6 @@ OBSERVABLE_INTEL_MAPPING = {
     "md5": "hash_md5",
 }
 
-NEIGHBOR_CACHE = {}
-
 HIGH_SEVERITY_TYPES = {
     "malware",
     "threat-actor",
@@ -156,9 +154,6 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         Returns:
           A list of dictionaries describing a Yeti object.
         """
-        if yeti_object["id"] in NEIGHBOR_CACHE:
-            return NEIGHBOR_CACHE[yeti_object["id"]]
-
         extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
         request = {
             "count": 0,
@@ -173,15 +168,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         results = self._get_neighbors_request(request)
         neighbors = {}
         for neighbor in results.get("vertices", {}).values():
-            # Yeti will return all vertices in the graph's path, not just
-            # the ones that are fo type target_types. We still want these
-            # in the cache.
             if (
                 neighbor["type"] in neighbor_types
                 or neighbor["root_type"] in neighbor_types
             ):
                 neighbors[neighbor["id"]] = neighbor
-            NEIGHBOR_CACHE[yeti_object["id"]] = neighbors
         return neighbors
 
     def _get_entities_request(self, params):
