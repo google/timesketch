@@ -22,7 +22,7 @@ Use the following data types with their fields to convert this question to a Tim
 * "windows:firewall_log:entry" -> "action", "destination_ip", "destination_port", "icmp_code", "icmp_type", "information", "last_written_time", "packet_size", "path", "protocol", "source_ip", "source_port", "tcp_ack", "tcp_flags", "tcp_sequence_number", "tcp_window_size", "message"
 **Answer**: `data_type:"windows:firewall_log:entry" AND destination_ip:1.1.1.2 AND destination_port:90 AND action:ALLOW`
 
-Use the following data types with their fields to convert this question to a TimeSketch query: `Was file x created?`.
+Use the following data types with their fields to convert this question to a Timesketch query: `Was file x created?`.
 **Data types**:
 * "fs:bodyfile:entry" -> "access_time", "change_time", "creation_time", "filename", "group_identifier", "inode", "md5", "mode_as_string", "modification_time", "offset", "owner_identifier", "size", "symbolic_link_target", "message"
 **Answer**: `data_type:"fs:bodyfile:entry" AND filename:x`
