@@ -66,9 +66,7 @@ class Nl2qResource(Resource):
         prompt = prompt.format(
             examples=examples,
             question=question,
-            data_types=self.data_types_descriptions(
-                self.sketch_data_types(sketch_id)
-            ),
+            data_types=self.data_types_descriptions(self.sketch_data_types(sketch_id)),
         )
         return prompt
 
@@ -103,7 +101,8 @@ class Nl2qResource(Resource):
         data_types = data_type_aggregation[0].values
         if not data_types:
             abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No data types in the sketch."
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "No data types in the sketch.",
             )
         for data_type in data_types:
             output.append(data_type.get("data_type"))
@@ -153,7 +152,10 @@ class Nl2qResource(Resource):
         Returns:
           String of the generated fields.
         """
-        return ", ".join(f'"{f}"' for f, t, d in zip(group["field"], group["type"], group["description"]))
+        return ", ".join(
+            f'"{f}"'
+            for f, t, d in zip(group["field"], group["type"], group["description"])
+        )
 
     def concatenate_values(self, group):
         """Concatenates the fields for a data type.
