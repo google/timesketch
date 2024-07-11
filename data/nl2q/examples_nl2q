@@ -45,7 +45,7 @@ Use the following data types with their fields to convert this question to a Tim
 * "safari:history:visit_sqlite" -> "host", "last_visited_time", "offset", "query", "title", "url", "visit_count", "was_http_non_get", "message"
 **Answer**: `data_type:("firefox:places:page_visited" OR "opera:history:entry" OR "safari:history:visit" OR "safari:history:visit_sqlite") AND (url:*dropbox.com* OR url: *box.com* OR url: *.dropbox.com* OR url: *.dropbox-dns.com* OR url: *.protonmail.com* OR url: *.protonmail.ch* OR url: *.onedrive.com* OR url: *.live.com* OR url: *.mega.nz* OR url: *.mega.co.nz.sync.com* OR url: *.tresorit.com*)`
 
-Use the following data types with their fields to convert this question to a TimeSketch query: `Was chrome used in incognito mode?`.
+Use the following data types with their fields to convert this question to a Timesketch query: `Was chrome used in incognito mode?`.
 **Data types**:
 * "windows:prefetch:execution" -> "executable", "last_run_time", "number_of_volumes", "prefetch_hash", "run_count", "message"
 **Answer**: `"chrome.exe" AND message:*--disable-databases*`
