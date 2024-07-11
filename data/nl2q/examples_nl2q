@@ -32,7 +32,7 @@ Use the following data types with their fields to convert this question to a Tim
 * "santa:file_system_event" -> "action", "file_new_path", "file_path", "gid", "group", "last_written_time", "pid", "pid_version", "ppid", "process", "process_path", "uid", "user", "message"
 **Answer**: `data_type:"santa:file_system_event" AND action:CREATE AND process:x`
 
-Use the following data types with their fields to convert this question to a TimeSketch query: `What are the files accessed after time 2024-01-01?`.
+Use the following data types with their fields to convert this question to a Timesketch query: `What are the files accessed after time 2024-01-01?`.
 **Data types**:
 * "fs:bodyfile:entry" -> "access_time", "change_time", "creation_time", "filename", "group_identifier", "inode", "md5", "mode_as_string", "modification_time", "offset", "owner_identifier", "size", "symbolic_link_target", "message"
 **Answer**: `data_type:"fs:bodyfile:entry" AND acess_time>2024-01-01`
