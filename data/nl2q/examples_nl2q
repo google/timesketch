@@ -7,7 +7,7 @@ Use the following data types with their fields to convert this question to a Tim
 * "syslog:line" -> "authentication_method", "body", "fingerprint", "hostname", "ip_address", "last_written_time", "pid", "port", "protocol", "reporter", "severity", "username", "message"
 **Answer**: `data_type:("shell:zsh:history" OR "bash:history:entry" OR "linux:apt_history_log:entry" OR "selinux:line" OR "syslog:line") AND message:*tmp* AND message:*chmod* AND message:*777*`
 
-Use the following data types with their fields to convert this question to a TimeSketch query: `Are there SSH root logings?`.
+Use the following data types with their fields to convert this question to a Timesketch query: `Are there SSH root logins?`.
 **Data types**:
 * "syslog:ssh:login" -> "authentication_method", "fingerprint", "ip_address", "last_written_time", "port", "protocol", "username", "message"
 **Answer**: `data_type:("syslog:ssh:login") AND message:*root*`
