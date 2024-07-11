@@ -6,7 +6,7 @@ You are at the interface between users and a search engine. Users send you quest
 
 {examples}
 
-Use the following data types with their fields to convert this question to a TimeSketch query: `{question}`.
+Use the following data types with their fields to convert this question to a Timesketch query: `{question}`.
 **Data types**:
 {data_types}
 **Answer**:
