@@ -62,7 +62,7 @@ Use the following data types with their fields to convert this question to a Tim
 * "av:trendmicro:scan" -> "action", "filename", "offset", "path", "scan_type", "threat", "written_time", "message"
 **Answer**: `data_type:"av:defender:detection_history" AND process:y`
 
-Use the following data types with their fields to convert this question to a TimeSketch query: `Was any attempt to change a password?`.
+Use the following data types with their fields to convert this question to a Timesketch query: `Was any attempt to change a password?`.
 **Data types**:
 * "windows:evtx:record" -> "computer_name", "creation_time", "event_identifier", "event_level", "event_version", "message_identifier", "offset", "provider_identifier", "record_number", "recovered", "source_name", "user_sid", "written_time", "xml_string", "message"
 **Answer**: `data_type:"windows:evtx:record" AND event_identifier:4723`
