@@ -50,7 +50,7 @@ Use the following data types with their fields to convert this question to a Tim
 * "windows:prefetch:execution" -> "executable", "last_run_time", "number_of_volumes", "prefetch_hash", "run_count", "message"
 **Answer**: `"chrome.exe" AND message:*--disable-databases*`
 
-Use the following data types with their fields to convert this question to a TimeSketch query: `Are there SSH logins?`.
+Use the following data types with their fields to convert this question to a Timesketch query: `Are there SSH logins?`.
 **Data types**:
 * "syslog:ssh:login" -> "authentication_method", "fingerprint", "ip_address", "last_written_time", "port", "protocol", "username", "message"
 **Answer**: `data_type:"syslog:ssh:login" body:*Accept*`
