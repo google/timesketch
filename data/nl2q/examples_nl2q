@@ -1,4 +1,4 @@
-Use the following data types with their fields to convert this question to a TimeSketch query: `Have files been made executable in temp folders?`.
+Use the following data types with their fields to convert this question to a Timesketch query: `Have files been made executable in temp folders?`.
 **Data types**:
 * "shell:zsh:history" -> "command", "elapsed_seconds", "last_written_time", "message"
 * "bash:history:entry" -> "command", "written_time", "message"
