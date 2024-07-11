@@ -1208,15 +1208,15 @@ class TestNl2qResource(BaseTest):
             content_type="application/json",
         )
         expected_input = (
-            "Examples:\n",
-            "example 1\n",
-            "\n",
-            "example 2\n",
-            "Types:\n",
-            '* "test:data_type:1" -> "field_test_1", "field_test_2"\n',
-            '* "test:data_type:2" -> "field_test_3", "field_test_4"\n',
-            "Question:\n",
-            "Question for LLM?",
+            "Examples:\n"
+            "example 1\n"
+            "\n"
+            "example 2\n"
+            "Types:\n"
+            '* "test:data_type:1" -> "field_test_1", "field_test_2"\n'
+            '* "test:data_type:2" -> "field_test_3", "field_test_4"\n'
+            "Question:\n"
+            "Question for LLM?"
         )
         mock_llm.generate.assert_called_once_with(expected_input)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
