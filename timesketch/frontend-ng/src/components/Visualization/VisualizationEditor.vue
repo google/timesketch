@@ -14,113 +14,132 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card flat>
-    <v-card-title>
-      Create new visualization using aggregated events
-    </v-card-title>
-    <v-card-text>
-      <v-row>
-        <v-col cols="4">
-          <v-card outlined>
-            <v-card-text>
-              <TsAggregationConfig
-                :field="selectedField"
-                @updateField="selectedField = $event"
-                :aggregator="selectedAggregator"
-                @updateAggregator="selectedAggregator = $event"
-                :metric="selectedMetric"
-                @updateMetric="selectedMetric = $event"
-                :maxItems="selectedMaxItems"
-                @updateMaxItems="selectedMaxItems = $event"
-                :interval="selectedInterval"
-                @updateInterval="selectedInterval = $event"
-                :intervalQuantity="selectedIntervalQuantity"
-                @updateIntervalQuantity="selectedIntervalQuantity = $event"
-                :splitByTimeline="selectedSplitByTimeline"
-                @updateSplitByTimeline="selectedSplitByTimeline = $event"
-              ></TsAggregationConfig>
-              <TsChartConfig
-                :aggregatorType="selectedAggregator"
-                :chartType="selectedChartType"
-                @updateChartType="selectedChartType = $event"
-                :title="selectedChartTitle"
-                @updateTitle="selectedChartTitle = $event"
-                :height="selectedHeight"
-                @updateHeight="selectedHeight = $event"
-                :width="selectedWidth"
-                @updateWidth="selectedWidth = $event"
-                :xTitle="selectedXTitle"
-                @updateXTitle="selectedXTitle = $event"
-                :showXLabels="selectedShowXLabels"
-                @updateShowXLabels="selectedShowXLabels = $event"
-                :yTitle="selectedYTitle"
-                @updateYTitle="selectedYTitle = $event"
-                :showYLabels="selectedShowYLabels"
-                @updateShowYLabels="selectedShowYLabels = $event"
-                :showDataLabels="selectedShowDataLabels"
-                @updateShowDataLabels="selectedShowDataLabels = $event"
-              ></TsChartConfig>
-            </v-card-text>
-          </v-card>
+  <div>
+    <v-dialog v-model="renameVisualDialog" width="600">
+      <v-card class="pa-4">
+        <h3>Rename Visualization</h3>
+        <br />
+        <v-form @submit.prevent="rename()">
+          <v-text-field outlined dense autofocus v-model="selectedChartTitleDraft" @focus="$event.target.select()"> </v-text-field>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text @click="renameVisualDialog = false"> Cancel </v-btn>
+            <v-btn color="primary" text @click="rename()"> Save </v-btn>
+          </v-card-actions>
+        </v-form>
+      </v-card>
+    </v-dialog>
+    <v-toolbar dense flat class="mt-n3" color="transparent">
+      <v-toolbar-title @dblclick="renameVisualDialog = true"> {{ selectedChartTitle }}</v-toolbar-title>
+      <v-btn icon small @click="renameVisualDialog = true">
+        <v-icon small>mdi-pencil</v-icon>
+      </v-btn>
+    </v-toolbar>
+    <v-divider class="mx-3"></v-divider>
+    <v-row class="mt-3">
+      <v-col>
+        <TsAggregationConfig
+          :field="selectedField"
+          @updateField="selectedField = $event"
+          :aggregator="selectedAggregator"
+          @updateAggregator="selectedAggregator = $event"
+          :metric="selectedMetric"
+          @updateMetric="selectedMetric = $event"
+          :maxItems="selectedMaxItems"
+          @updateMaxItems="selectedMaxItems = $event"
+          :interval="selectedInterval"
+          @updateInterval="selectedInterval = $event"
+          :intervalQuantity="selectedIntervalQuantity"
+          @updateIntervalQuantity="selectedIntervalQuantity = $event"
+          :splitByTimeline="selectedSplitByTimeline"
+          @updateSplitByTimeline="selectedSplitByTimeline = $event"
+        ></TsAggregationConfig>
+        <TsChartConfig
+          :aggregatorType="selectedAggregator"
+          :chartType="selectedChartType"
+          @updateChartType="selectedChartType = $event"
+          :title="selectedChartTitle"
+          @updateTitle="selectedChartTitle = $event"
+          :height="selectedHeight"
+          @updateHeight="selectedHeight = $event"
+          :width="selectedWidth"
+          @updateWidth="selectedWidth = $event"
+          :xTitle="selectedXTitle"
+          @updateXTitle="selectedXTitle = $event"
+          :showXLabels="selectedShowXLabels"
+          @updateShowXLabels="selectedShowXLabels = $event"
+          :yTitle="selectedYTitle"
+          @updateYTitle="selectedYTitle = $event"
+          :showYLabels="selectedShowYLabels"
+          @updateShowYLabels="selectedShowYLabels = $event"
+          :showDataLabels="selectedShowDataLabels"
+          @updateShowDataLabels="selectedShowDataLabels = $event"
+        ></TsChartConfig>
         </v-col>
         <v-col cols="8">
-          <v-card outlined v-show="chartSeries && selectedChartType">
-            <v-card-text>
-              <TsChartCard
-                v-if="chartSeries && selectedChartType"
-                :fieldName="selectedField.field"
-                :metricName="selectedMetric"
-                :is-time-series="selectedAggregator ? selectedAggregator.endsWith('date_histogram') : false"
-                :chartSeries="chartSeries" 
-                :chartLabels="chartLabels"
-                :chartTitle="selectedChartTitle"
-                :chartType="selectedChartType"
-                :height="selectedHeight"
-                :width="selectedWidth"
-                :xTitle="selectedXTitle"
-                :showXLabels="selectedShowXLabels"
-                :yTitle="selectedYTitle"
-                :showYLabels="selectedShowYLabels"
-                :showDataLabels="selectedShowDataLabels"
-              ></TsChartCard>
-            </v-card-text>
-          </v-card>
+          <TsChartCard
+            v-if="chartSeries && selectedChartType"
+            :fieldName="selectedField.field"
+            :metricName="selectedMetric"
+            :is-time-series="selectedAggregator ? selectedAggregator.endsWith('date_histogram') : false"
+            :chartSeries="chartSeries"
+            :chartLabels="chartLabels"
+            :chartType="selectedChartType"
+            :height="selectedHeight"
+            :width="selectedWidth"
+            :xTitle="selectedXTitle"
+            :showXLabels="selectedShowXLabels"
+            :yTitle="selectedYTitle"
+            :showYLabels="selectedShowYLabels"
+            :showDataLabels="selectedShowDataLabels"
+          ></TsChartCard>
         </v-col>
       </v-row>
-    </v-card-text>
-    <v-card-actions>
-      <v-btn color="primary" 
-        @click="loadAggregationData"
-        :disabled="!(
-          selectedField && 
-          selectedAggregator && 
-          selectedChartType
-        )"
-      >
-        Load/refresh data
-      </v-btn>
-      <v-btn 
-        color="primary"
-        :disabled="response == null || !selectedChartTitle"
-        @click="saveVisualization"
-      >
-        Save
-      </v-btn>
-      <v-btn 
-        color="primary" 
-        @click="clear"
-      >
-        Clear
-      </v-btn>
-      <v-btn 
-        color="primary" 
-        @click="clear" 
-        :to="{ name: 'Explore' }"
-      >
-        Cancel
-      </v-btn>
-    </v-card-actions>
-  </v-card>
+      <v-divider class="mx-3"></v-divider>
+      <div class="mt-4">
+        <v-btn
+          class="ml-3"
+          color="primary"
+          :disabled="response == null || !selectedChartTitle"
+          @click="saveVisualization"
+        >
+          Save
+        </v-btn>
+
+        <v-btn
+          text
+          color="primary"
+          @click="loadAggregationData"
+          :disabled="!(
+            selectedField &&
+            selectedAggregator &&
+            selectedChartType
+          )"
+        >
+          <span v-if="chartSeries && selectedChartType">refresh data</span>
+          <span v-else>Load data</span>
+        </v-btn>
+
+        <v-btn
+          text
+          @click="clear"
+          :disabled="!(
+            selectedField &&
+            selectedAggregator &&
+            selectedChartType
+          )"
+        >
+          Clear
+        </v-btn>
+        <v-btn
+          text
+          @click="clear"
+          :to="{ name: 'Explore' }"
+        >
+          Cancel
+        </v-btn>
+      </div>
+  </div>
 </template>
 
 <script>
@@ -144,6 +163,7 @@ export default {
     },
     chartTitle: {
       type: String,
+      default: 'New Visualization',
     },
     chartType: {
       type: String,
@@ -159,9 +179,9 @@ export default {
     interval: {
       type: Object,
       default: function() {
-        return { 
-          interval: 'year', 
-          max: 10 
+        return {
+          interval: 'year',
+          max: 10
         }
       },
     },
@@ -180,8 +200,8 @@ export default {
     range: {
       type: Object,
       default: function() {
-        return { 
-          start: '', end: '' 
+        return {
+          start: '', end: ''
         }
       }
     },
@@ -249,6 +269,8 @@ export default {
       selectedWidth: this.width,
       selectedXTitle: this.xTitle,
       selectedYTitle: this.yTitle,
+      renameVisualDialog: false,
+      selectedChartTitleDraft: this.selectedChartTitleDraft,
     }
   },
   computed: {
@@ -279,6 +301,10 @@ export default {
     },
   },
   methods: {
+    rename() {
+      this.renameVisualDialog = false
+      this.selectedChartTitle = this.selectedChartTitleDraft
+    },
     loadCurrentSearch() {
       const currentSearchNode = this.$store.state.currentSearchNode
       if (!currentSearchNode) {
@@ -347,8 +373,10 @@ export default {
       this.selectedYTitle = this.yTitle
     },
     saveVisualization() {
+      if (this.selectedChartTitle === "New Visualization") {
+        this.selectedChartTitle = prompt("Please enter a name for the visualization:")
+      }
       if (this.response != null) {
-        
         ApiClient.saveAggregation(
           this.sketch.id,
           this.responseMeta,

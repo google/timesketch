@@ -20,12 +20,12 @@
     :min-width="width"
   >
     <v-card-text>
-      <TsBarChart 
+      <TsBarChart
         v-if="chartSeries != null && chartType === 'bar'"
         :fieldName="fieldName"
         :metricName="metricName"
         :is-time-series="isTimeSeries"
-        :chartSeries="chartSeries" 
+        :chartSeries="chartSeries"
         :chartLabels="chartLabels"
         :chartTitle="chartTitle"
         :height="height"
@@ -42,7 +42,7 @@
         :fieldName="fieldName"
         :metricName="metricName"
         :is-time-series="isTimeSeries"
-        :chartSeries="chartSeries" 
+        :chartSeries="chartSeries"
         :chartLabels="chartLabels"
         :chartTitle="chartTitle"
         :height="height"
@@ -59,7 +59,7 @@
         :fieldName="fieldName"
         :metricName="metricName"
         :is-time-series="isTimeSeries"
-        :chartSeries="chartSeries" 
+        :chartSeries="chartSeries"
         :chartLabels="chartLabels"
         :chartTitle="chartTitle"
         :height="height"
@@ -76,7 +76,7 @@
         :fieldName="fieldName"
         :metricName="metricName"
         :is-time-series="isTimeSeries"
-        :chartSeries="chartSeries" 
+        :chartSeries="chartSeries"
         :chartLabels="chartLabels"
         :chartTitle="chartTitle"
         :height="height"
@@ -88,12 +88,12 @@
         :showDataLabels="showDataLabels"
       >
       </TsHeatmapChart>
-      <TsLineChart 
+      <TsLineChart
         v-if="chartSeries != null && chartType === 'line'"
         :fieldName="fieldName"
         :metricName="metricName"
         :is-time-series="isTimeSeries"
-        :chartSeries="chartSeries" 
+        :chartSeries="chartSeries"
         :chartLabels="chartLabels"
         :chartTitle="chartTitle"
         :height="height"
@@ -110,14 +110,14 @@
         :fieldName="fieldName"
         :metricName="metricName"
         :is-time-series="isTimeSeries"
-        :chartSeries="chartSeries" 
+        :chartSeries="chartSeries"
         :chartLabels="chartLabels"
         :chartTitle="chartTitle"
         :height="height"
         :width="width"
       >
       </TsTableChart>
-    </v-card-text>      
+    </v-card-text>
   </v-card>
  </template>
 
@@ -147,6 +147,7 @@ import TsTableChart from './ChartTable.vue'
     },
     chartTitle: {
       type: String,
+      default: undefined,
     },
     chartType: {
       type: String,
