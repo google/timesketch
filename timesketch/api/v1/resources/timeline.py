@@ -436,13 +436,13 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 )
             except opensearchpy.RequestError as e:
                 error_msg = (
-                  "RequestError when closing index {0:s} - please try again in "
-                  "5 min or contact your admin. Error: {1:s}".format(
-                    searchindex.index_name, str(e)
-                  )
+                    "RequestError when closing index {0:s} - please try again in "
+                    "5 min or contact your admin. Error: {1:s}".format(
+                        searchindex.index_name, str(e)
+                    )
                 )
                 logger.error(error_msg)
-              abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)
+                abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)
 
             searchindex.set_status(status="archived")
             timeline.set_status(status="archived")
