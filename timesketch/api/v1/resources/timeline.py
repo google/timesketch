@@ -35,6 +35,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
@@ -433,6 +434,15 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     "Unable to close index: {0:s} - index not "
                     "found".format(searchindex.index_name)
                 )
+            except opensearchpy.RequestError as e:
+                error_msg = (
+                  "RequestError when closing index {0:s} - please try again in "
+                  "5 min or contact your admin. Error: {1:s}".format(
+                    searchindex.index_name, str(e)
+                  )
+                )
+                logger.error(error_msg)
+              abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)
 
             searchindex.set_status(status="archived")
             timeline.set_status(status="archived")
