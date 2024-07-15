@@ -79,6 +79,18 @@ MATCHING_PATH_MESSAGE = {
 }
 
 
+class YetiTestAnalyzer(yetiindicators.YetiBaseAnalyzer):
+    NAME = "yetitest"
+    DISPLAY_NAME = "Test for yeti analyzer"
+    DESCRIPTION = "Just an analyzer for teting"
+
+    _TYPE_SELECTOR = ["investigation:tag1,tag2", "malware"]
+    _TARGET_NEIGHBOR_TYPE = ["sigma", "query", "regex", "observable"]
+    _SAVE_INTELLIGENCE = True
+    _DIRECTION = "any"
+    _MAX_HOPS = 1
+
+
 class TestYetiIndicators(BaseTest):
     """Tests the functionality of the YetiIndicators analyzer."""
 
@@ -98,9 +110,48 @@ class TestYetiIndicators(BaseTest):
         "timesketch.lib.analyzers.yetiindicators."
         "YetiBaseAnalyzer._get_entities_request"
     )
+    def test_api_query(self, mock_get_entities, mock_get_neighbors):
+        """Tests that queries to the API are well-formed."""
+        analyzer = YetiTestAnalyzer("test_index", 1, 123)
+        analyzer.datastore.client = mock.Mock()
+        mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
+        mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
+
+        analyzer.run()
+        mock_get_entities.assert_any_call(
+            {
+                "query": {
+                    "name": "",
+                    "tags": ["tag1", "tag2"],
+                    "type": "investigation",
+                },
+                "count": 0,
+            }
+        )
+        mock_get_entities.assert_any_call(
+            {
+                "query": {
+                    "name": "",
+                    "tags": [],
+                    "type": "malware",
+                },
+                "count": 0,
+            }
+        )
+
+    # Mock the OpenSearch datastore.
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.lib.analyzers.yetiindicators."
+        "YetiBaseAnalyzer._get_neighbors_request"
+    )
+    @mock.patch(
+        "timesketch.lib.analyzers.yetiindicators."
+        "YetiBaseAnalyzer._get_entities_request"
+    )
     def test_indicator_match(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
@@ -115,8 +166,8 @@ class TestYetiIndicators(BaseTest):
                 "Entities found: xmrig:malware"
             ),
         )
-        mock_get_entities.assert_called_once()
-        mock_get_neighbors.assert_called_once()
+        mock_get_entities.assert_called()
+        mock_get_neighbors.assert_called()
         self.assertEqual(
             sorted(analyzer.tagged_events["0"]["tags"]),
             sorted(["malware", "xmrig"]),
@@ -134,7 +185,7 @@ class TestYetiIndicators(BaseTest):
     )
     def test_indicator_nomatch(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
@@ -144,13 +195,13 @@ class TestYetiIndicators(BaseTest):
             message["result_summary"],
             "0/1 indicators were found in the timeline (0 failed)",
         )
-        mock_get_entities.assert_called_once()
-        mock_get_neighbors.asset_called_once()
+        mock_get_entities.assert_called()
+        mock_get_neighbors.asset_called()
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_slug(self):
         """Tests that slugs are formed correctly."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         mock_event = mock.Mock()
         mock_event.get_comments.return_value = []
         analyzer.mark_event(
@@ -167,7 +218,7 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_build_query_from_regexp(self):
         """Tests that that queries are correctly built from regex indicators."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_regexp(
             {
                 "name": "random regex",
@@ -217,7 +268,7 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_build_query_from_sigma(self):
         """Tests that that queries are correctly built from sigma indicators."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         sigma_pattern = """id: asd
 title: test
 description: test
@@ -275,7 +326,7 @@ tags:
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_build_query_from_observable(self):
         """Tests that that queries are correctly built from regex indicators."""
-        analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_observable(
             {
                 "value": "C:\\ProgramFiles\\mimi.exe",
