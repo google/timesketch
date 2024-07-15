@@ -27,85 +27,76 @@ limitations under the License.
         </TsChartTypeSelect>
       </v-col>
     </v-row>
-    <v-row>
-      <v-col>
-        <v-text-field
-          outlined
-          label="Visualization name / title"
-          v-model="selectedChartTitle"
-          required
-          :rules="[rules.required]"
-        ></v-text-field>
-      </v-col>
+    <v-row class="my-4">
+      <v-btn small icon @click="selectedShowOptions = !selectedShowOptions" class="ml-2">
+        <v-icon v-if="selectedShowOptions" title="Hide Chart Options">mdi-chevron-up</v-icon>
+        <v-icon v-else title="Show Chart Options">mdi-chevron-down</v-icon>
+      </v-btn>
+      <span v-if="selectedShowOptions" @click="selectedShowOptions = !selectedShowOptions" class="chart-options-trigger">Hide Chart Options</span>
+      <span v-else @click="selectedShowOptions = !selectedShowOptions" class="chart-options-trigger">Show Chart Options</span>
     </v-row>
-    <v-row>
-      <v-col>
-        <v-switch
-          v-model="selectedShowOptions"
-          label="Show detailed chart options"
-        ></v-switch>
-      </v-col>
-    </v-row>
-    <v-row v-if="selectedShowOptions">
-      <v-col>
-        <v-text-field 
-          v-model.number="selectedHeight" 
-          outlined 
-          label="Height" 
-          type="number"
-        ></v-text-field>
-      </v-col>
-      <v-col>
-        <v-text-field 
-          v-model.number="selectedWidth" 
-          outlined 
-          label="Width" 
-          type="number"
-        ></v-text-field>
-      </v-col>
-    </v-row>
-    <v-row v-if="selectedShowOptions">
-      <v-col>
-        <v-text-field 
-          v-model="selectedXTitle" 
-          outlined 
-          label="X-axis title"
-        ></v-text-field>
-      </v-col>
-      <v-col>
-        <v-checkbox 
-          v-model="selectedShowXLabels" 
-          label="Show x-axis labels"
-        >
-        </v-checkbox>
-      </v-col>
-    </v-row>
-    <v-row v-if="selectedShowOptions"> 
-      <v-col>
-        <v-text-field 
-          v-model="selectedYTitle" 
-          outlined 
-          label="Y-axis title"
-        >
-        </v-text-field>
-      </v-col>
-      <v-col>
-        <v-checkbox 
-          v-model="selectedShowYLabels" 
-          label="Show y-axis labels"
-        >
-        </v-checkbox>
-      </v-col>
-    </v-row>
-    <v-row v-if="selectedShowOptions">
-      <v-col>
-        <v-checkbox 
-          v-model="selectedDataLabels" 
-          label="Show data labels"
-        >
-        </v-checkbox>
-      </v-col>
-    </v-row>
+    <v-expand-transition>
+      <div v-if="selectedShowOptions">
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model.number="selectedHeight"
+              outlined
+              label="Height"
+              type="number"
+            ></v-text-field>
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-model.number="selectedWidth"
+              outlined
+              label="Width"
+              type="number"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row class="mt-n10">
+          <v-col>
+            <v-text-field
+              v-model="selectedYTitle"
+              outlined
+              label="Y-axis title"
+            >
+            </v-text-field>
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-model="selectedXTitle"
+              outlined
+              label="X-axis title"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row class="mt-n14">
+          <v-col>
+            <v-checkbox
+              v-model="selectedDataLabels"
+              label="Show data labels"
+            >
+            </v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              v-model="selectedShowYLabels"
+              label="Show y-axis labels"
+            >
+            </v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              v-model="selectedShowXLabels"
+              label="Show x-axis labels"
+            >
+            </v-checkbox>
+          </v-col>
+        </v-row>
+      </div>
+    </v-expand-transition>
   </v-container>
 </template>
 
@@ -121,7 +112,7 @@ export default {
       type: String,
     },
     chartType: {
-      type: String,  
+      type: String,
     },
     height: {
       type: Number,
@@ -235,3 +226,11 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.chart-options-trigger {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+}
+</style>

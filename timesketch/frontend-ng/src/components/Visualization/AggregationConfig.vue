@@ -21,8 +21,8 @@ limitations under the License.
           :field="selectedField"
           @selectedField="selectedField = $event"
           :rules="[rules.required]"
-        >
-        </TsEventFieldSelect>
+          >
+          </TsEventFieldSelect>
       </v-col>
     </v-row>
     <v-row>
@@ -37,7 +37,7 @@ limitations under the License.
         ></v-autocomplete>
       </v-col>
     </v-row>
-    <v-row v-if="!disableMetric">
+    <v-row v-if="!disableMetric" class="mt-n10">
       <v-col>
         <v-autocomplete
           outlined
@@ -47,7 +47,7 @@ limitations under the License.
         ></v-autocomplete>
       </v-col>
     </v-row>
-    <v-row v-if="!disableMaxItems">
+    <v-row v-if="!disableMaxItems" class="mt-n10">
       <v-col>
         <v-text-field
           :label="labelMaxItems"
@@ -58,7 +58,7 @@ limitations under the License.
         />
       </v-col>
     </v-row>
-    <v-row v-if="!disableInterval">
+    <v-row v-if="!disableInterval" class="mt-n10">
       <v-col>
         <v-autocomplete
           outlined
@@ -115,131 +115,131 @@ export default {
           required: value => !!value || 'Required.',
       },
       intMetrics: [
-        { 
-          text: 'Average', 
-          value: 'avg' 
+        {
+          text: 'Average',
+          value: 'avg'
         },
-        { 
-          text: 'Count', 
-          value: 'value_count' 
+        {
+          text: 'Count',
+          value: 'value_count'
         },
-        { 
-          text: 'Minimum', 
-          value: 'min' 
+        {
+          text: 'Minimum',
+          value: 'min'
         },
-        { 
-          text: 'Maximum', 
-          value: 'max' 
+        {
+          text: 'Maximum',
+          value: 'max'
         },
-        { 
-          text: 'Sum', 
-          value: 'sum' 
+        {
+          text: 'Sum',
+          value: 'sum'
         },
-        { 
-          text: 'Unique', 
-          value: 'cardinality' 
+        {
+          text: 'Unique',
+          value: 'cardinality'
         },
       ],
       stringAggregators: [
-        { 
-          text: 'Auto Time Interval', 
-          value: 'auto_date_histogram' 
+        {
+          text: 'Auto Time Interval',
+          value: 'auto_date_histogram'
         },
-        { 
-          text: 'Rare terms', 
-          value: 'rare_terms' 
+        {
+          text: 'Rare terms',
+          value: 'rare_terms'
         },
         // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
-        { 
-          text: 'Time interval', 
-          value: 'calendar_date_histogram' 
+        {
+          text: 'Time interval',
+          value: 'calendar_date_histogram'
         },
-        { 
-          text: 'Top K terms', 
-          value: 'top_terms' 
+        {
+          text: 'Top K terms',
+          value: 'top_terms'
         },
       ],
       allAggregators: [
-        { 
-          text: 'Auto Time Interval', 
-          value: 'auto_date_histogram' 
+        {
+          text: 'Auto Time Interval',
+          value: 'auto_date_histogram'
         },
-        { 
-          text: 'Rare terms', 
-          value: 'rare_terms' 
+        {
+          text: 'Rare terms',
+          value: 'rare_terms'
         },
         // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
-        // { 
-        //   text: 'Single Metric', 
-        //   value: 'single_metric' 
+        // {
+        //   text: 'Single Metric',
+        //   value: 'single_metric'
         // },
-        { 
-          text: 'Time interval', 
-          value: 'calendar_date_histogram' 
+        {
+          text: 'Time interval',
+          value: 'calendar_date_histogram'
         },
-        { 
-          text: 'Top K terms', 
-          value: 'top_terms' 
+        {
+          text: 'Top K terms',
+          value: 'top_terms'
         },
       ],
       stringMetrics: [
-        { 
-          text: 'Count', 
-          value: 'value_count' 
+        {
+          text: 'Count',
+          value: 'value_count'
         },
-        { 
-          text: 'Unique', value: 'cardinality' 
+        {
+          text: 'Unique', value: 'cardinality'
         },
       ],
       allCalendarIntervals: [
-        { 
-          text: 'Year', 
-          value: { 
-            interval: 'year', 
+        {
+          text: 'Year',
+          value: {
+            interval: 'year',
             max: 10,
-          } 
+          }
         },
-        { 
-          text: 'Quarter', 
-          value: { 
-            interval: 'quarter', 
-            max: 4 
-          } 
+        {
+          text: 'Quarter',
+          value: {
+            interval: 'quarter',
+            max: 4
+          }
         },
-        { 
-          text: 'Month', 
-          value: { 
-            interval: 'month', 
-            max: 12 
-          } 
+        {
+          text: 'Month',
+          value: {
+            interval: 'month',
+            max: 12
+          }
         },
-        { 
+        {
           text: 'Week',
-          value: { 
-            interval: 'week', 
-            max: 52 
-          } 
+          value: {
+            interval: 'week',
+            max: 52
+          }
         },
-        { 
-          text: 'Day', 
-          value: { 
-            interval: 'day', 
-            max: 31 
-          } 
+        {
+          text: 'Day',
+          value: {
+            interval: 'day',
+            max: 31
+          }
         },
-        { 
-          text: 'Hour', 
-          value: { 
-            interval: 'hour', 
-            max: 24 
-          } 
+        {
+          text: 'Hour',
+          value: {
+            interval: 'hour',
+            max: 24
+          }
         },
-        { 
-          text: 'Minute', 
-          value: { 
-            interval: 'minute', 
-            max: 60 
-          } 
+        {
+          text: 'Minute',
+          value: {
+            interval: 'minute',
+            max: 60
+          }
         },
       ],
     }
@@ -269,13 +269,13 @@ export default {
     },
     disableInterval() {
       return !(
-        this.selectedAggregator && 
+        this.selectedAggregator &&
         this.selectedAggregator === 'calendar_date_histogram'
       )
     },
     disableTimelineSplit() {
       return !(
-        this.selectedAggregator && 
+        this.selectedAggregator &&
         this.selectedAggregator.endsWith('date_histogram'))
     },
     disableMaxItems() {

@@ -14,35 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-autocomplete
-    outlined
-    v-model="selectedChartType"
-    :items="chartByAggregator"
-    label="Chart type"
-    @input="$emit('selectedChartType', $event)"
-  >
-    <template #item="{ item, on, attrs }">
-      <v-list-item 
-        v-on="on" 
-        v-bind="attrs"
-      >
-        <v-list-item-avatar>
-          <v-icon> 
-            {{ item.icon }}
-          </v-icon>
-        </v-list-item-avatar>
-        <v-list-item-content>
-          {{ item.text }}
-        </v-list-item-content>
-      </v-list-item>
-    </template>
-    <template #selection="{ item }">
-      <v-icon>
-        {{ item.icon }}
-      </v-icon>
-      &nbsp; &nbsp; {{ item.text }}
-    </template>
-  </v-autocomplete>
+  <v-btn-toggle v-model="chartSelector" mandatory>
+    <v-btn
+    v-for="(item, index) in chartByAggregator"
+    :key="index"
+    @click="$emit('selectedChartType', item.text)"
+    :title="item.text"
+    :disabled="chartSelectorDisabled"
+    >
+      <v-icon>{{ item.icon }}</v-icon>
+    </v-btn>
+  </v-btn-toggle>
 </template>
 
 <script>
@@ -57,93 +39,111 @@ export default {
   },
   data() {
     return {
+      chartSelector: 0,
+      chartSelectorDisabled: false,
       selectedChartType: this.chart,
       chartTypes: [
-        { 
-          text: 'bar', 
+        {
+          text: 'bar',
           icon: 'mdi-poll mdi-rotate-90',
         },
-        { 
-          text: 'column', 
-          icon: 'mdi-chart-bar', 
+        {
+          text: 'column',
+          icon: 'mdi-chart-bar',
         },
-        { 
-          text: 'line', 
-          icon: 'mdi-chart-line', 
+        {
+          text: 'line',
+          icon: 'mdi-chart-line',
         },
-        { 
-          text: 'table', 
+        {
+          text: 'table',
           icon: 'mdi-table',
         },
-        // { 
-        //   text: 'gantt', 
+        // {
+        //   text: 'gantt',
         //   icon: 'mdi-chart-gantt',
         // },
-        { 
-          text: 'heatmap', 
+        {
+          text: 'heatmap',
           icon: 'mdi-blur-linear',
         },
         {
           text: 'donut',
-          icon: 'mdi-chart-donut', 
+          icon: 'mdi-chart-donut',
         }
       ],
       seriesChartTypes: [
-        { 
-          text: 'bar', 
+        {
+          text: 'bar',
           icon: 'mdi-poll mdi-rotate-90',
         },
-        { 
-          text: 'column', 
-          icon: 'mdi-chart-bar', 
+        {
+          text: 'column',
+          icon: 'mdi-chart-bar',
         },
-        { 
-          text: 'line', 
-          icon: 'mdi-chart-line', 
+        {
+          text: 'line',
+          icon: 'mdi-chart-line',
         },
-        { 
-          text: 'table', 
+        {
+          text: 'table',
           icon: 'mdi-table',
         },
-        { 
-          text: 'heatmap', 
+        {
+          text: 'heatmap',
           icon: 'mdi-blur-linear',
         },
       ],
       singleMetricChartTypes: [
-        // { 
-        //   text: 'number', 
+        // {
+        //   text: 'number',
         //   icon: 'mdi-numeric'
         // },
-        // { 
-        //   text: 'table', 
+        // {
+        //   text: 'table',
         //   icon: 'mdi-table',
         // },
       ]
     }
   },
   computed: {
+    allChartTypes() {
+      const uniqueChartText = new Set();
+      const uniqueChartTypes = [];
+
+      for (const chartType of [...this.chartTypes, ...this.seriesChartTypes, ...this.singleMetricChartTypes]) {
+        if (!uniqueChartText.has(chartType.text)) {
+          uniqueChartText.add(chartType.text);
+          uniqueChartTypes.push(chartType);
+        }
+      }
+      return uniqueChartTypes;
+    },
     chartByAggregator() {
       if (this.aggregator === 'top_terms') {
+        this.chartSelectorDisabled = false
         return this.chartTypes
       } else if (
         this.aggregator === 'rare_terms' ||
         this.aggregator === 'auto_date_histogram' ||
         this.aggregator === 'calendar_date_histogram'
       ) {
+        this.chartSelectorDisabled = false
         return this.seriesChartTypes
-      } 
+      }
       else if (this.aggregator === 'single_metric') {
+        this.chartSelectorDisabled = false
         return this.singleMetricChartTypes
       }
+      this.chartSelectorDisabled = true
       return this.allChartTypes
     }
   },
   watch: {
     aggregator() {
       if (this.chartByAggregator) {
-        this.selectedChartType = this.chartByAggregator[0].text    
-        this.$emit('selectedChartType', this.selectedChartType) 
+        this.selectedChartType = this.chartByAggregator[0].text
+        this.$emit('selectedChartType', this.selectedChartType)
       }
     },
     chart() {
