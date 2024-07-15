@@ -1,35 +1,23 @@
-FROM us-docker.pkg.dev/osdfir-registry/picatrix/picatrix:latest
+FROM quay.io/jupyter/minimal-notebook:python-3.11
 
-USER picatrix
+USER jovyan
 
-ENV VIRTUAL_ENV=/home/picatrix/picenv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV JUPYTER_PORT=8844
+COPY --chown=1000:100 ./jupyter_server_config.py $HOME/.jupyter/jupyter_server_config.py
+COPY --chown=1000:100 ./overrides.json /opt/conda/share/jupyter/lab/settings/overrides.json
+COPY --chown=1000:100 --from=timesketch_api_client python $HOME/timesketch_api_client
 
-RUN mkdir -p /home/picatrix/.local/share/jupyter/nbextensions/snippets/ && \
-    mkdir -p /home/picatrix/.jupyter/custom
+RUN pip install jupyter_scheduler jupyterlab-vim jupyter-collaboration jupyterlab-fonts && \
+    pip install jupyterlab-lsp "python-lsp-server[all]" && \
+    pip install picatrix ipywidgets && \
+    pip install -e $HOME/timesketch_api_client
 
-COPY --chown=1000:1000 docker/dev/build/timesketchrc /home/picatrix/.timesketchrc
-COPY --chown=1000:1000 docker/dev/build/timesketch_token /home/picatrix/.timesketch.token
-COPY --chown=1000:1000 . /home/picatrix/code
-COPY --chown=1000:1000 docker/dev/build/snippets.json /home/picatrix/.local/share/jupyter/nbextensions/snippets/snippets.json
-COPY --chown=1000:1000 docker/dev/build/10-widgets.py /home/picatrix/.ipython/profile_default/startup/10-widgets.py
-COPY --chown=1000:1000 docker/dev/build/logo.png /home/picatrix/.jupyter/custom/logo.png
-COPY --chown=1000:1000 docker/dev/build/custom.css /home/picatrix/.jupyter/custom/custom.css
-COPY --chown=1000:1000 docker/dev/build/timesketch /home/picatrix/picenv/share/jupyter/nbextensions/timesketch
+RUN mkdir -p /opt/conda/share/jupyter/nbextensions/snippets/
 
-RUN sed -i -e "s/c.NotebookApp.token = 'picatrix'/c.NotebookApp.token = 'timesketch'/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
-    sed -i -e "s/c.NotebookApp.port = 8899/c.NotebookApp.port = 8844/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
-    pip install -e /home/picatrix/code/api_client/python && \
-    pip install -e /home/picatrix/code/importer_client/python/ && \
-    jupyter nbextension enable snippets/main && \
-    jupyter nbextension enable timesketch/main && \
-    pip install ipydatetime && \
-    jupyter nbextension install --user --py ipydatetime && \
-    jupyter nbextension enable --user --py ipydatetime
+COPY --chown=1000:100 timesketchrc $HOME/.timesketchrc
+COPY --chown=1000:100 timesketch_token $HOME/.timesketch.token
 
-WORKDIR /usr/local/src/picadata/
-EXPOSE 8844
+RUN ipython3 profile create
 
-# Run jupyter.
-ENTRYPOINT ["jupyter", "notebook"]
+COPY --chown=1000:100 10-widgets.py $HOME/.ipython/profile_default/startup/10-widgets.py
+
+ENTRYPOINT ["jupyter-lab"]

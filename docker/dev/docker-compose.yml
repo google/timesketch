@@ -68,21 +68,15 @@ services:
 
   notebook:
     container_name: notebook
-    image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
+    build:
+      context: build/
+      dockerfile: Dockerfile-notebook
+      additional_contexts:
+        - timesketch_api_client=../../api_client/
     ports:
-      - 127.0.0.1:8844:8844
+      - 127.0.0.1:8844:8080
     restart: on-failure
     links:
       - opensearch
     volumes:
-      - ../../:/usr/local/src/timesketch/:ro
-      - /tmp/:/usr/local/src/picadata/
-  prometheus:
-    container_name: prometheus
-    image: prom/prometheus:v2.24.1
-    volumes:
-      - ./prometheus:/etc/prometheus
-    ports:
-      - 127.0.0.1:9090:9090
-    command: --config.file=/etc/prometheus/prometheus.yml
-
+      - ../../api_client/python:$HOME/timesketch_api_client

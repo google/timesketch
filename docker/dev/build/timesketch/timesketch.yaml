@@ -1,6 +1,0 @@
-Type: IPython Notebook Extension
-Compatibility: 4.x, 5.x, 6.x
-Name: Timesketch
-Main: main.js
-Link: README.md
-Description: Add few default cells to a new notebook.

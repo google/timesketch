@@ -34,7 +34,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build and publish Docker image
+      - name: Build and publish Timesketch Docker image
         uses: docker/build-push-action@v4
         with:
           context: docker/release/build
@@ -44,3 +44,14 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Build and publish Jupyter Labs Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: docker/dev/build
+          file: docker/dev/build/Dockerfile-notebook
+          build-args: |
+            BRANCH=${{ github.head_ref }}
+          build-contexts: timesketch_api_client=api_client/
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

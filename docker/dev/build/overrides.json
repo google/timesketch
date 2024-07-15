@@ -1,0 +1,35 @@
+{
+  "@jupyterlab/apputils-extension:notification": {
+    "fetchNews": false
+  },
+  "@jupyterlab/extensionmanager-extension:plugin": {
+    "disclaimed": true
+  },
+  "@jupyterlab/fileeditor-extension:plugin": {
+    "editorConfig": {
+      "customStyles": {
+        "fontFamily": "Fira Code Regular",
+        "fontSize": null,
+        "lineHeight": null
+      }
+    },
+    "scrollPastEnd": true,
+    "toolbar": []
+  },
+  "@jupyterlab/apputils-extension:themes": {
+    "adaptive-theme": true,
+    "theme": "JupyterLab Dark"
+  },
+  "@jupyterlab/shortcuts-extension:shortcuts": {
+    "shortcuts": [
+      {
+        "command": "vim:leave-current-mode",
+        "selector": ".jp-NotebookPanel[data-jp-vim-mode='true'][data-jp-vim-esc-to-cmd-mode='true'] .jp-Notebook.jp-mod-editMode",
+        "keys": [
+          "J",
+          "J"
+        ]
+      }
+    ]
+  }
+}
