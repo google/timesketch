@@ -44,6 +44,12 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta-notebook
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-notebook
+
       - name: Build and publish Jupyter Labs Docker image
         uses: docker/build-push-action@v4
         with:
@@ -53,5 +59,5 @@ jobs:
             BRANCH=${{ github.head_ref }}
           build-contexts: timesketch_api_client=api_client/
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-notebook.outputs.tags }}
+          labels: ${{ steps.meta-notebook.outputs.labels }}
