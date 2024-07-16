@@ -50,18 +50,24 @@ class Nl2qResource(Resource):
           String containing the whole prompt.
         """
         prompt = ""
+        examples = ""
         prompt_file = current_app.config.get("PROMPT_NL2Q", "")
+        examples_file = current_app.config.get("EXAMPLES_NL2Q", "")
         try:
             with open(prompt_file, "r") as file:
                 prompt = file.read()
-            prompt = prompt.format(
-                question=question,
-                data_types=self.data_types_descriptions(
-                    self.sketch_data_types(sketch_id)
-                ),
-            )
         except (OSError, IOError):
             abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No prompt file found")
+        try:
+            with open(examples_file, "r") as file:
+                examples = file.read()
+        except (OSError, IOError):
+            abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No examples file found")
+        prompt = prompt.format(
+            examples=examples,
+            question=question,
+            data_types=self.data_types_descriptions(self.sketch_data_types(sketch_id)),
+        )
         return prompt
 
     def sketch_data_types(self, sketch_id):
@@ -95,20 +101,21 @@ class Nl2qResource(Resource):
         data_types = data_type_aggregation[0].values
         if not data_types:
             abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, "No data types in the sketch."
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "No data types in the sketch.",
             )
         for data_type in data_types:
             output.append(data_type.get("data_type"))
         return ",".join(output)
 
     def data_types_descriptions(self, data_types):
-        """Creates a dict of data types and attribute descriptions.
+        """Creates a formatted string of data types and attribute descriptions.
 
         Args:
           data_types: List of data types in the sketch.
 
         Returns:
-          Dict of data types and attribute descriptions.
+          Formatted string of data types and attribute descriptions.
         """
         df_data_types = utils.load_csv_file("DATA_TYPES_PATH")
         if df_data_types.empty:
@@ -145,11 +152,10 @@ class Nl2qResource(Resource):
         Returns:
           String of the generated fields.
         """
-        generated_fields = ", ".join(
-            f'"{n}" ({t}, {d})'
-            for n, t, d in zip(group["field"], group["type"], group["description"])
+        return ", ".join(
+            f'"{f}"'
+            for f, t, d in zip(group["field"], group["type"], group["description"])
         )
-        return generated_fields
 
     def concatenate_values(self, group):
         """Concatenates the fields for a data type.
@@ -160,10 +166,7 @@ class Nl2qResource(Resource):
         Returns:
           String of the concatenated fields.
         """
-        concatenated_valued = '- "{}" fields: [{}]'.format(
-            group["data_type"].iloc[0], self.generate_fields(group)
-        )
-        return concatenated_valued
+        return f'* "{group["data_type"].iloc[0]}" -> {self.generate_fields(group)}'
 
     @login_required
     def post(self, sketch_id):
