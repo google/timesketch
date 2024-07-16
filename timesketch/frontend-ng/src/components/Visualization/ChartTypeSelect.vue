@@ -40,7 +40,6 @@ export default {
   data() {
     return {
       chartSelector: 0,
-      chartSelectorDisabled: false,
       selectedChartType: this.chart,
       chartTypes: [
         {
@@ -121,22 +120,21 @@ export default {
     },
     chartByAggregator() {
       if (this.aggregator === 'top_terms') {
-        this.chartSelectorDisabled = false
         return this.chartTypes
       } else if (
         this.aggregator === 'rare_terms' ||
         this.aggregator === 'auto_date_histogram' ||
         this.aggregator === 'calendar_date_histogram'
       ) {
-        this.chartSelectorDisabled = false
         return this.seriesChartTypes
       }
       else if (this.aggregator === 'single_metric') {
-        this.chartSelectorDisabled = false
         return this.singleMetricChartTypes
       }
-      this.chartSelectorDisabled = true
       return this.allChartTypes
+    },
+    chartSelectorDisabled() {
+      return !this.aggregator
     }
   },
   watch: {

@@ -373,8 +373,13 @@ export default {
       this.selectedYTitle = this.yTitle
     },
     saveVisualization() {
-      if (this.selectedChartTitle === "New Visualization") {
-        this.selectedChartTitle = prompt("Please enter a name for the visualization:")
+      if (!this.selectedChartTitle || this.selectedChartTitle === "New Visualization") {
+        var newChartTitle = prompt("Please enter a name for the visualization:")
+        if (!newChartTitle) {
+          this.errorSnackBar('New visualization name is empty.')
+          return
+        }
+        this.selectedChartTitle = newChartTitle
       }
       if (this.response != null) {
         ApiClient.saveAggregation(

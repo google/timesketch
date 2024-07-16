@@ -30,7 +30,7 @@ limitations under the License.
     <div style="height: 1px">
     </div>
   </div>
-  <div 
+  <div
     v-else
     key="iconOnly"
   >
@@ -40,13 +40,13 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> 
+      <span>
         <v-icon left>
           mdi-chart-bar
-        </v-icon> 
-        Visualizations 
+        </v-icon>
+        Visualizations
       </span>
-  
+
       <v-btn
         v-if="expanded || !(savedVisualizations && savedVisualizations.length)"
         icon
@@ -59,12 +59,12 @@ limitations under the License.
           mdi-plus
         </v-icon>
       </v-btn>
-      <span 
-        v-if="!expanded" 
-        class="float-right" 
+      <span
+        v-if="!expanded"
+        class="float-right"
         style="margin-right: 10px"
       >
-        <small 
+        <small
           v-if="savedVisualizations && savedVisualizations.length"
         >
           <strong>
@@ -78,26 +78,26 @@ limitations under the License.
         <div
           v-for="(savedVisualization, key) in savedVisualizations"
           :key="key"
-          
+
           style="cursor: pointer; font-size: 0.9em; text-decoration: none"
-          
+
         >
-          <v-row 
-            no-gutters 
-            class="pa-2 pl-5" 
+          <v-row
+            no-gutters
+            class="pa-2 pl-5"
             :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
           >
             <v-col
               :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'"
               @click="navigateToSavedVisualization(savedVisualization.id)"
             >
-            
-              <span class="d-inline-block text-truncate" style="max-width: 250px"> 
+
+              <span class="d-inline-block text-truncate" style="max-width: 250px">
                 <v-icon left small>
                   {{ getIcon(savedVisualization.chart_type) }}
-                </v-icon> 
+                </v-icon>
                 <!-- {{ savedVisualization.name }} -->
-                <v-tooltip bottom :disabled="savedVisualization.name.length < 34">
+                <v-tooltip bottom :disabled="savedVisualization.name && savedVisualization.name.length < 34">
                   <template v-slot:activator="{ on, attrs }">
                     <span
                       v-bind="attrs"
@@ -107,20 +107,20 @@ limitations under the License.
                   <span>{{ savedVisualization.name }}</span>
                 </v-tooltip>
               </span>
-            
+
             </v-col>
             <v-col cols="auto">
               <v-menu offset-y>
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn 
-                    small 
-                    icon 
-                    v-bind="attrs" 
-                    v-on="on" 
+                  <v-btn
+                    small
+                    icon
+                    v-bind="attrs"
+                    v-on="on"
                     class="mr-1"
                   >
-                    <v-icon 
-                      title="Actions" 
+                    <v-icon
+                      title="Actions"
                       small
                     >
                       mdi-dots-vertical
@@ -156,7 +156,7 @@ limitations under the License.
     <v-divider></v-divider>
   </div>
 </template>
-  
+
 <script>
 import ApiClient from '../../utils/RestApiClient'
 
@@ -183,7 +183,7 @@ export default {
     },
     copyVisualizationUrlToClipboard(savedVisualizationId) {
       try {
-        let url = window.location.origin + '/sketch/' + this.sketch.id + '/visualization/view/' + savedVisualizationId 
+        let url = window.location.origin + '/sketch/' + this.sketch.id + '/visualization/view/' + savedVisualizationId
         navigator.clipboard.writeText(url)
         this.infoSnackBar('Saved Visualization URL copied to clipboard')
       } catch (error) {
@@ -197,9 +197,9 @@ export default {
           .then((response) => {
             this.$store.dispatch('updateSavedVisualizationList', this.sketch.id)
             this.infoSnackBar('Saved Visualization has been deleted')
-            let params = { 
-              name: 'VisualizationView', 
-              params: { 
+            let params = {
+              name: 'VisualizationView',
+              params: {
                 aggregationId: savedVisualizationId
               }
             }
@@ -229,7 +229,7 @@ export default {
     },
     navigateToSavedVisualization(savedVisualizationId) {
       let params = {
-        name: 'VisualizationView', 
+        name: 'VisualizationView',
         params: { aggregationId: savedVisualizationId }
       }
       let nextPath = this.$router.resolve(params).route.fullPath
@@ -255,7 +255,7 @@ export default {
       return this.$store.state.savedVisualizations.filter(
           (e) => JSON.parse(e.parameters)['aggregator_class'] === 'apex'
       ).length
-    }, 
+    },
     sketch() {
       return this.$store.state.sketch
     },
