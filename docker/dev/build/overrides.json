@@ -31,5 +31,15 @@
         ]
       }
     ]
+  },
+  "@jupyterlab/completer-extension:manager": {
+    "availableProviders": {
+      "lsp": 1000,
+      "CompletionProvider:context": 500,
+      "CompletionProvider:kernel": 550
+    },
+    "providerTimeout": 1000,
+    "showDocumentationPanel": true,
+    "autoCompletion": true
   }
 }

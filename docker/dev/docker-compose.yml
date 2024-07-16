@@ -79,4 +79,4 @@ services:
     links:
       - opensearch
     volumes:
-      - ../../api_client/python:$HOME/timesketch_api_client
+      - ../../api_client/python:/home/jovyan/timesketch_api_client

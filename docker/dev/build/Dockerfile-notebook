@@ -19,5 +19,6 @@ COPY --chown=1000:100 timesketch_token $HOME/.timesketch.token
 RUN ipython3 profile create
 
 COPY --chown=1000:100 10-widgets.py $HOME/.ipython/profile_default/startup/10-widgets.py
+COPY --chown=1000:100 Template.ipynb $HOME/work
 
 ENTRYPOINT ["jupyter-lab"]

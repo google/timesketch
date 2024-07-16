@@ -24,7 +24,7 @@ def generate_connect_button(click_function=None):
 
     def _click_function(_):
         with output:
-            id = str(sketch_field.value)
+            id = int(sketch_field.value)
             ts_client = config.get_client()
             sketch = ts_client.get_sketch(id)
             try:
