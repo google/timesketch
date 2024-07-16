@@ -34,7 +34,21 @@ limitations under the License.
           :items="aggregators"
           label="Aggregate events by"
           :rules="[rules.required]"
-        ></v-autocomplete>
+          append-icon="mdi-question"
+        >
+        <template #item="data">
+          <v-tooltip bottom>
+            <template #activator="{ on, attrs }">
+              <v-layout wrap v-on="on" v-bind="attrs">
+                <v-list-item-content>
+                  <v-list-item-title>{{data.item.text}}</v-list-item-title>
+                </v-list-item-content>
+              </v-layout>
+            </template>
+            <span>{{ data.item.tooltip }}</span>
+          </v-tooltip>
+        </template>
+        </v-autocomplete>
       </v-col>
     </v-row>
     <v-row v-if="!disableMetric" class="mt-n10">
@@ -142,31 +156,37 @@ export default {
       ],
       stringAggregators: [
         {
-          text: 'Auto Time Interval',
-          value: 'auto_date_histogram'
+          text: 'Auto Date Histogram',
+          value: 'auto_date_histogram',
+          tooltip: 'Aggregates events into a set number of intervals by datetime.'
         },
         {
-          text: 'Rare terms',
-          value: 'rare_terms'
+          text: 'Rare Terms',
+          value: 'rare_terms',
+          tooltip: 'Aggregates by unique and infrequent terms.'
         },
         // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
         {
-          text: 'Time interval',
-          value: 'calendar_date_histogram'
+          text: 'Date Histogram',
+          value: 'calendar_date_histogram',
+          tooltip: 'Aggregates events by calendar intervals.'
         },
         {
-          text: 'Top K terms',
-          value: 'top_terms'
+          text: 'Top Terms',
+          value: 'top_terms',
+          tooltip: 'Aggregates by the most common and unique terms.'
         },
       ],
       allAggregators: [
         {
-          text: 'Auto Time Interval',
-          value: 'auto_date_histogram'
+          text: 'Auto Date Histogram',
+          value: 'auto_date_histogram',
+          tooltip: 'Aggregates events into a set number of intervals by datetime.'
         },
         {
           text: 'Rare terms',
-          value: 'rare_terms'
+          value: 'rare_terms',
+          tooltip: 'Aggregates by unique and infrequent terms.'
         },
         // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
         // {
@@ -174,12 +194,14 @@ export default {
         //   value: 'single_metric'
         // },
         {
-          text: 'Time interval',
-          value: 'calendar_date_histogram'
+          text: 'Date Histogram',
+          value: 'calendar_date_histogram',
+          tooltip: 'Aggregates events by calendar intervals.'
         },
         {
-          text: 'Top K terms',
-          value: 'top_terms'
+          text: 'Top Terms',
+          value: 'top_terms',
+          tooltip: 'Aggregates by the most common and unique terms.'
         },
       ],
       stringMetrics: [
