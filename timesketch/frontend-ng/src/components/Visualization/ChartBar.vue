@@ -225,8 +225,8 @@ export default {
       if (this.isTimeSeries) {
         let start = this.chartLabels[dataPointIndex]
         let end = (dataPointIndex + 1 < this.chartLabels.length) ? this.chartLabels[dataPointIndex + 1] : ''
-        
-        
+
+
         if (end === "") {
           // exit early on last bucket
           return
