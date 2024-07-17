@@ -27,6 +27,7 @@ from flask_login import current_user
 
 
 import altair as alt
+import pandas as pd
 
 from timesketch.lib import ontology
 from timesketch.lib.aggregators import manager as aggregator_manager
@@ -272,6 +273,31 @@ def load_yaml_config(config_parameter_name):
 
     with open(yaml_path, "r") as fh:
         return yaml.safe_load(fh)
+
+
+def load_csv_file(config_parametre_name):
+    """Load a CSV file.
+    Args:
+        config_paramater_name (str): Name of the config paramter to get the
+        path to the CSV file from.
+
+    Returns:
+        A data frame with the CSV content
+    """
+    csv_file = current_app.config.get(config_parametre_name, "")
+    if not csv_file:
+        logger.error(
+            "The path to the CSV file isn't defined in the " "main configuration file"
+        )
+        return {}
+    if not os.path.isfile(csv_file):
+        logger.error(
+            "Unable to read the config, file: "
+            "[{0:s}] does not exist".format(csv_file)
+        )
+        return {}
+
+    return pd.read_csv(csv_file)
 
 
 def escape_query_string(query_string):

@@ -75,6 +75,7 @@ from .resources.graph import GraphCacheResource
 from .resources.intelligence import TagMetadataResource
 from .resources.contextlinks import ContextLinkConfigResource
 from .resources.unfurl import UnfurlResource
+from .resources.nl2q import Nl2qResource
 
 from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
@@ -194,6 +195,7 @@ API_ROUTES = [
     (TagMetadataResource, "/intelligence/tagmetadata/"),
     (ContextLinkConfigResource, "/contextlinks/"),
     (UnfurlResource, "/unfurl/"),
+    (Nl2qResource, "/sketches/<int:sketch_id>/nl2q/"),
     # Scenario templates
     (ScenarioTemplateListResource, "/scenarios/"),
     # Scenarios

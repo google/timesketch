@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Union, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import requests
 import yaml
@@ -39,8 +39,6 @@ OBSERVABLE_INTEL_MAPPING = {
     "md5": "hash_md5",
 }
 
-NEIGHBOR_CACHE = {}
-
 HIGH_SEVERITY_TYPES = {
     "malware",
     "threat-actor",
@@ -64,10 +62,10 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
     DEPENDENCIES = frozenset(["domain"])
 
-    # Entities with these tags will be fetched from Yeti
-    _TAG_SELECTOR: List[str] = []
     # Entities of this type will be fetched from Yeti
-    _TYPE_SELECTOR: Union[str, None] = None
+    # Can optionally contain tags after a `:`
+    # e.g. `malware:ransomware,tag2`
+    _TYPE_SELECTOR: List[str]
     # Graph will be traversed from the entities looking for these types
     # of neighbors
     _TARGET_NEIGHBOR_TYPE: List[str] = []
@@ -156,9 +154,6 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         Returns:
           A list of dictionaries describing a Yeti object.
         """
-        if yeti_object["id"] in NEIGHBOR_CACHE:
-            return NEIGHBOR_CACHE[yeti_object["id"]]
-
         extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
         request = {
             "count": 0,
@@ -173,15 +168,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         results = self._get_neighbors_request(request)
         neighbors = {}
         for neighbor in results.get("vertices", {}).values():
-            # Yeti will return all vertices in the graph's path, not just
-            # the ones that are fo type target_types. We still want these
-            # in the cache.
             if (
                 neighbor["type"] in neighbor_types
                 or neighbor["root_type"] in neighbor_types
             ):
                 neighbors[neighbor["id"]] = neighbor
-            NEIGHBOR_CACHE[yeti_object["id"]] = neighbors
         return neighbors
 
     def _get_entities_request(self, params):
@@ -197,22 +188,31 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             )
         return results.json()
 
-    def get_entities(self, _type: str, tags: List[str]) -> Dict[str, dict]:
+    def get_entities(self, type_selector: List[str]) -> Dict[str, dict]:
         """Fetches Entities with a certain tag on Yeti.
 
         Args:
-            _type: Search entities of this type
-            tags: A list of tags to filter entities with.
+            type_selector: Use these type selectors to search entities. Type
+              Selectors have a TYPE:TAG1,TAG2 format.
 
         Returns:
             A dictionary of entities obtained from Yeti, keyed by entity ID.
         """
-        query = {"name": "", "tags": tags}
-        if _type:
-            query["type"] = _type
-        data = self._get_entities_request({"query": query, "count": 0})
-        entities = {item["id"]: item for item in data["entities"]}
-        return entities
+        all_entities = {}
+        for _type in type_selector:
+            tags = []
+            if ":" in _type:
+                tag_suffix = _type.split(":")[1]
+                _type = _type.replace(":" + tag_suffix, "")
+                tags = tag_suffix.split(",")
+
+            query = {"name": "", "tags": tags}
+            if _type:
+                query["type"] = _type
+            data = self._get_entities_request({"query": query, "count": 0})
+            entities = {item["id"]: item for item in data["entities"]}
+            all_entities.update(entities)
+        return all_entities
 
     def mark_event(
         self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
@@ -301,10 +301,32 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self._intelligence_attribute["data"].append(intel)
         self._intelligence_refs.add((match_in_sketch, uri))
 
+    def _merge_intelligence_attributes(self, attribute_values):
+        """Merges multiple intelligence values that might have been stored."""
+        data = []
+        existing_refs = set()
+        for value in attribute_values:
+            for ioc in value["data"]:
+                if ioc["externalURI"] in existing_refs:
+                    continue
+                data.append(ioc)
+                existing_refs.add(ioc["externalURI"])
+        return {"data": data}
+
     def get_intelligence_attribute(self) -> Tuple[Dict, Set[Tuple[str, str]]]:
         """Fetches the intelligence attribute from the database."""
         try:
             intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
+
+            # In some cases, the intelligence attribute may be split into
+            # multiple "values" due tu race conditions. Merge them if that's
+            # the case. The API will return only the first value if the list
+            # has 1 element, so this check is necessary.
+            if isinstance(intelligence_attribute, list):
+                intelligence_attribute = self._merge_intelligence_attributes(
+                    intelligence_attribute
+                )
+
             refs = {
                 (ioc["ioc"], ioc["externalURI"])
                 for ioc in intelligence_attribute["data"]
@@ -327,9 +349,10 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             if (ioc["ioc"], ioc["externalURI"]) not in self._intelligence_refs:
                 self._intelligence_attribute["data"].append(ioc)
 
+        attribute_string = json.dumps(self._intelligence_attribute)
         self.sketch.add_sketch_attribute(
             "intelligence",
-            [json.dumps(self._intelligence_attribute)],
+            [attribute_string],
             ontology="intelligence",
             overwrite=True,
         )
@@ -348,11 +371,18 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             A dictionary representing a query DSL.
         """
         escaped = observable["value"].replace("\\", "\\\\")
+        field = "message.keyword"
+        search = f"*{escaped}*"
+
+        if observable["type"] == "sha256":
+            field = "sha256_hash"
+            search = escaped
+
         return {
             "query": {
                 "wildcard": {
-                    "message.keyword": {
-                        "value": f"*{escaped}*",
+                    field: {
+                        "value": search,
                         "case_insensitive": True,
                     }
                 },
@@ -446,7 +476,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 self.get_intelligence_attribute()
             )
 
-        entities = self.get_entities(_type=self._TYPE_SELECTOR, tags=self._TAG_SELECTOR)
+        entities = self.get_entities(type_selector=self._TYPE_SELECTOR)
         for entity in entities.values():
             indicators = self.get_neighbors(
                 entity,
@@ -454,8 +484,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 neighbor_types=self._TARGET_NEIGHBOR_TYPE,
             )
             logging.debug(
-                "Found %d neighbor indicators for %s", len(indicators), entity["name"]
+                "Found %d neighbor indicators for %s",
+                len(indicators),
+                entity["name"],
             )
+
             for indicator in indicators.values():
                 query_dsl = None
                 if indicator["root_type"] == "observable":
@@ -559,29 +592,28 @@ class YetiTriageIndicators(YetiBaseAnalyzer):
 
     DEPENDENCIES = frozenset(["domain"])
 
-    _TAG_SELECTOR = ["triage"]
-    _TYPE_SELECTOR = "attack-pattern"
+    _TYPE_SELECTOR = ["attack-pattern:triage"]
     _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
     _DIRECTION = "inbound"
     _SAVE_INTELLIGENCE = False
 
 
-class YetiMalwareIndicators(YetiBaseAnalyzer):
-    """Analyzer for Yeti malware indicators."""
+class YetiBadnessIndicators(YetiBaseAnalyzer):
+    """Analyzer for Yeti indicators related to attacks."""
 
-    NAME = "yetimalwareindicators"
-    DISPLAY_NAME = "Yeti malware indicators"
+    NAME = "yetibadnessindicators"
+    DISPLAY_NAME = "Yeti badness indicators"
     DESCRIPTION = (
-        "Mark malware-related events using forensic indicators from "
-        "Yeti. Will fetch all malware entities and traverse the"
-        " graph searching for regex indicators, and save matches to the "
-        " sketch's intelligence attribute. {malware} ← {regex, query}"
+        "Mark badness-related events using indicators from "
+        "Yeti. Will fetch all malware and exploit-tagged attack-pattern "
+        "entities and traverse the graph searching for regex indicators,"
+        " and save matches to the sketch's intelligence attribute. "
+        "{malware, attack-pattern:exploit} ← {regex, query}"
     )
 
     DEPENDENCIES = frozenset(["domain"])
 
-    _TAG_SELECTOR = []
-    _TYPE_SELECTOR = "malware"
+    _TYPE_SELECTOR = ["malware", "attack-pattern:exploit"]
     _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
     _DIRECTION = "inbound"
     _SAVE_INTELLIGENCE = True
@@ -600,8 +632,7 @@ class YetiLOLBASIndicators(YetiBaseAnalyzer):
         " that are tagged `lolbas`. {tool:lobas} ← {sigma, query, regex}"
     )
 
-    _TAG_SELECTOR = ["lolbas"]
-    _TYPE_SELECTOR = "tool"
+    _TYPE_SELECTOR = ["tool:lolbas"]
     _TARGET_NEIGHBOR_TYPE = ["sigma", "query", "regex"]
     _SAVE_INTELLIGENCE = True
     _DIRECTION = "inbound"
@@ -618,7 +649,7 @@ class YetiInvestigations(YetiBaseAnalyzer):
         " {investigation} ← {indicators, observables}"
     )
 
-    _TYPE_SELECTOR = "investigation"
+    _TYPE_SELECTOR = ["investigation"]
     _TARGET_NEIGHBOR_TYPE = ["sigma", "query", "regex", "observable"]
     _SAVE_INTELLIGENCE = True
     _DIRECTION = "any"
@@ -626,6 +657,6 @@ class YetiInvestigations(YetiBaseAnalyzer):
 
 
 manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
-manager.AnalysisManager.register_analyzer(YetiMalwareIndicators)
+manager.AnalysisManager.register_analyzer(YetiBadnessIndicators)
 manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
 manager.AnalysisManager.register_analyzer(YetiInvestigations)

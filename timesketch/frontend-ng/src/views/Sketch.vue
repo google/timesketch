@@ -21,7 +21,7 @@ limitations under the License.
 
     <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
       <!-- Empty state -->
-      <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
+      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4" style="background: transparent">
             <center>
@@ -257,6 +257,7 @@ limitations under the License.
         <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
         <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
         <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
+        <ts-visualizations :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-visualizations>
       </v-navigation-drawer>
 
       <!-- Right panel -->
@@ -355,6 +356,7 @@ import TsShareCard from '../components/ShareCard.vue'
 import TsRenameSketch from '../components/RenameSketch.vue'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
+import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 import TsQuestionCard from '../components/Scenarios/QuestionCard.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
@@ -377,6 +379,7 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
+    TsVisualizations,
     TsQuestionCard,
     TsSettingsDialog,
   },

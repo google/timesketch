@@ -140,9 +140,6 @@ def upload_file(
 
         streamer.add_file(file_path)
 
-        # Force a flush.
-        streamer.flush()
-
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
