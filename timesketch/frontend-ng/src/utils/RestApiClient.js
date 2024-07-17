@@ -275,10 +275,10 @@ export default {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/')
   },
   getAggregationById(sketchId, aggregationId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/aggregation/' + aggregationId)
+    return RestApiClient.get('/sketches/' + sketchId + '/aggregation/' + aggregationId + '/')
   },
   deleteAggregationById(sketchId, aggregationId) {
-    return RestApiClient.delete('/sketches/' + sketchId + '/aggregation/' + aggregationId)
+    return RestApiClient.delete('/sketches/' + sketchId + '/aggregation/' + aggregationId + '/')
   },
   getAggregationGroups(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/group/')
