@@ -178,6 +178,26 @@ limitations under the License.
                 <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
               </v-card-text>
             </v-card>
+            <v-card v-if="block.componentName === 'TsSavedVisualization'" outlined class="mb-2">
+              <v-toolbar dense flat>
+                <router-link
+                  style="cursor: pointer; text-decoration: none"
+                  :to="{ name: 'VisualizationView', params: { aggregationId: block.componentProps.savedVisualizationId } }"
+                >
+                  {{ block.componentProps.name }}
+                </router-link>
+
+                <v-spacer></v-spacer>
+                <v-btn icon @click="deleteBlock(index)">
+                  <v-icon small>mdi-trash-can-outline</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>
+                <TsSavedVisualization :aggregationId="block.componentProps.savedVisualizationId">
+                </TsSavedVisualization>
+              </v-card-text>
+            </v-card>
           </div>
         </div>
 
@@ -186,7 +206,7 @@ limitations under the License.
           <div class="mb-2 mt-2">
             <div
               :class="{
-                hidden: !hover && !block.isActive && !block.showGraphMenu && !block.showSavedSearchMenu && hasContent,
+                hidden: !hover && !block.isActive && !block.showGraphMenu && !block.showSavedSearchMenu && !block.showSavedVisualizationMenu && hasContent,
               }"
             >
               <!-- Text block -->
@@ -216,7 +236,7 @@ limitations under the License.
               </v-menu>
               <v-menu offset-y v-model="block.showGraphMenu">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn rounded outlined small :disabled="!graphPlugins.length" v-bind="attrs" v-on="on">
+                  <v-btn class="mr-2" rounded outlined small :disabled="!graphPlugins.length" v-bind="attrs" v-on="on">
                     <v-icon left small>mdi-plus</v-icon>
                     Graphs
                   </v-btn>
@@ -240,6 +260,26 @@ limitations under the License.
                   </v-list>
                 </v-card>
               </v-menu>
+              <v-menu offset-y v-model="block.showSavedVisualizationMenu">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn rounded outlined small :disabled="!savedVisualizations.length" v-bind="attrs" v-on="on">
+                    <v-icon left small>mdi-plus</v-icon>
+                    Visualizations
+                  </v-btn>
+                </template>
+                <v-card>
+                  <v-list>
+                    <v-list-item-group color="primary">
+                      <v-subheader>Saved Visualizations</v-subheader>
+                      <v-list-item v-for="savedVisualization in savedVisualizations" :key="savedVisualization.id">
+                        <v-list-item-content @click="addSavedVisualization(savedVisualization, index)">
+                          {{ savedVisualization.name }}
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list-item-group>
+                  </v-list>
+                </v-card>
+              </v-menu>
             </div>
           </div>
         </v-hover>
@@ -257,6 +297,7 @@ import _ from 'lodash'
 
 import TsEventList from '../components/Explore/EventList.vue'
 import TsCytoscape from '../components/Graph/Cytoscape.vue'
+import TsSavedVisualization from '../components/Visualization/SavedVisualization.vue'
 
 const defaultBlock = () => {
   return {
@@ -268,6 +309,7 @@ const defaultBlock = () => {
     isActive: false,
     showGraphMenu: false,
     showSavedSearchMenu: false,
+    showSavedVisualizationMenu: false,
   }
 }
 
@@ -279,7 +321,7 @@ const componentCompatibility = () => {
 
 export default {
   props: ['sketchId', 'storyId'],
-  components: { TsEventList, TsCytoscape },
+  components: { TsEventList, TsCytoscape, TsSavedVisualization },
   data: function () {
     return {
       title: '',
@@ -309,6 +351,14 @@ export default {
     },
     savedGraphs() {
       return this.$store.state.savedGraphs
+    },
+    savedVisualizations() {
+      if (!this.$store.state.savedVisualizations) {
+        return []
+      }
+      return this.$store.state.savedVisualizations.filter(
+          (e) => JSON.parse(e.parameters)['aggregator_class'] === 'apex'
+      )
     },
   },
   methods: {
@@ -407,6 +457,17 @@ export default {
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
+    addSavedVisualization(savedVisualization, index) {
+      let newIndex = index + 1
+      let newBlock = defaultBlock()
+      newBlock.componentName = 'TsSavedVisualization'
+      newBlock.componentProps = {
+        name: savedVisualization.name,
+        savedVisualizationId: savedVisualization.id,
+      }
+      this.blocks.splice(newIndex, 0, newBlock)
+      this.save()
+    },
     editTextBlock(block) {
       if (block.edit) {
         return
@@ -440,6 +501,7 @@ export default {
         block.isActive = false
         block.showGraphMenu = false
         block.showSavedSearchMenu = false
+        block.showSavedVisualizationMenu = false
         block.edit = false
         if (block.draft) {
           block.content = block.draft
