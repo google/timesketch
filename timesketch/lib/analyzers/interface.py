@@ -402,7 +402,8 @@ class Sketch(object):
             params: a dictionary of the parameters for the aggregation.
             chart_type: the chart type.
             description: the description, visible in the UI.
-            label: string with a label to attach to the aggregation.view_id: optional ID of the view to attach the aggregation to.
+            label: string with a label to attach to the aggregation.
+            view_id: optional ID of the view to attach the aggregation to.
         """
         if not name:
             raise ValueError("Aggregator name needs to be defined.")
@@ -837,14 +838,11 @@ class Story(object):
         block["content"] = text
         self._commit(block)
 
-    def add_aggregation(self, aggregation, agg_type=""):
+    def add_aggregation(self, aggregation):
         """Add a saved aggregation to the Story.
 
         Args:
             aggregation (Aggregation): Saved aggregation to add to the story.
-            agg_type (str): string indicating the type of aggregation, can be:
-                "table" or the name of the chart to be used, eg "barcharct",
-                "hbarchart". Defaults to the value of supported_charts.
         """
         today = datetime.datetime.utcnow()
         block = self._create_new_block()
