@@ -389,13 +389,7 @@ class Sketch(object):
             raise RuntimeError("No such sketch")
 
     def add_apex_aggregation(
-        self,
-        name,
-        params,
-        chart_type,
-        description="",
-        label=None,
-        view_id=None
+        self, name, params, chart_type, description="", label=None, view_id=None
     ):
         """Add aggregation to the sketch using apex charts and tables.
 
@@ -432,7 +426,7 @@ class Sketch(object):
             parameters=json.dumps(params, ensure_ascii=False),
             sketch=self.sql_sketch,
             user=None,
-            view=view
+            view=view,
         )
 
         if label:

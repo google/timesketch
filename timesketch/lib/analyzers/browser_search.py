@@ -293,15 +293,15 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                     "aggregator_options": {
                         "metric": "value_count",
                         "max_items": 20,
-                        "timeline_ids": [self.timeline_id]
+                        "timeline_ids": [self.timeline_id],
                     },
                     "chart_type": "table",
                     "chart_options": {
                         "chartTitle": top_search_name,
                         "height": 600,
-                        "width": 800
-                    }
-                }
+                        "width": 800,
+                    },
+                },
             }
             agg_obj = self.sketch.add_apex_aggregation(
                 name=top_search_name,
@@ -309,7 +309,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 chart_type="table",
                 description="Created by the browser search analyzer",
                 label="informational",
-                view_id=view.id
+                view_id=view.id,
             )
 
             top_days_name = f"Top 20 days of search queries ({self.timeline_name})"
@@ -321,15 +321,15 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                     "aggregator_options": {
                         "metric": "value_count",
                         "max_items": 20,
-                        "timeline_ids": [self.timeline_id]
+                        "timeline_ids": [self.timeline_id],
                     },
                     "chart_type": "table",
                     "chart_options": {
                         "chartTitle": top_days_name,
                         "height": 600,
-                        "width": 800
-                    }
-                }
+                        "width": 800,
+                    },
+                },
             }
             agg_days = self.sketch.add_apex_aggregation(
                 name=top_days_name,
@@ -337,7 +337,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 chart_type="bar",
                 description="Created by the browser search analyzer",
                 label="informational",
-                view_id=view.id
+                view_id=view.id,
             )
 
             top_engines_name = f"Top 20 Search Engines ({self.timeline_name})"
@@ -350,15 +350,15 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                         "metric": "value_count",
                         "max_items": 20,
                         "query_string": 'tag:"browser-search"',
-                        "timeline_ids": [self.timeline_id]
+                        "timeline_ids": [self.timeline_id],
                     },
                     "chart_type": "bar",
                     "chart_options": {
                         "chartTitle": top_days_name,
                         "height": 600,
-                        "width": 800
-                    }
-                }
+                        "width": 800,
+                    },
+                },
             }
             agg_engines = self.sketch.add_apex_aggregation(
                 name=top_engines_name,
@@ -366,7 +366,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 chart_type="table",
                 description="Created by the browser search analyzer",
                 label="informational",
-                view_id=view.id
+                view_id=view.id,
             )
 
             story = self.sketch.add_story(
