@@ -125,7 +125,7 @@ limitations under the License.
                 </v-btn>
               </v-toolbar>
               <v-divider></v-divider>
-              <v-card-text>Aggregations are not yet supported</v-card-text>
+              <v-card-text>Legacy group Aggregations are not supported</v-card-text>
             </v-card>
             <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
               <v-toolbar dense flat
@@ -136,7 +136,7 @@ limitations under the License.
                 </v-btn>
               </v-toolbar>
               <v-divider></v-divider>
-              <v-card-text>Aggregations are not yet supported</v-card-text>
+              <v-card-text>Legacy aggregations are not supported</v-card-text>
             </v-card>
             <v-card v-if="block.componentName === 'TsCytoscapePlugin'" outlined class="mb-2">
               <v-toolbar dense flat>
