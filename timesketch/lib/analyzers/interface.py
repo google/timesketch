@@ -388,6 +388,60 @@ class Sketch(object):
         if not self.sql_sketch:
             raise RuntimeError("No such sketch")
 
+    def add_apex_aggregation(
+        self,
+        name,
+        params,
+        chart_type,
+        description="",
+        label=None,
+        view_id=None
+    ):
+        """Add aggregation to the sketch using apex charts and tables.
+
+        Note: since this is updating the database directly, the caller needs
+        to ensure the chart type and parameters are valid since no checks are
+        performed in this function.
+
+        Args:
+            name: the name.
+            params: a dictionary of the parameters for the aggregation.
+            chart_type: the chart type.
+            description: the description, visible in the UI.
+            label: string with a label to attach to the aggregation.view_id: optional ID of the view to attach the aggregation to.
+        """
+        if not name:
+            raise ValueError("Aggregator name needs to be defined.")
+        if not params:
+            raise ValueError("Aggregator parameters have to be defined.")
+
+        if view_id:
+            view = View.get_by_id(view_id)
+        else:
+            view = None
+
+        if "aggregator_name" not in params:
+            raise ValueError("Aggregator name not specified")
+        aggregator = params["aggregator_name"]
+
+        aggregation = Aggregation.get_or_create(
+            agg_type=aggregator,
+            chart_type=chart_type,
+            description=description,
+            name=name,
+            parameters=json.dumps(params, ensure_ascii=False),
+            sketch=self.sql_sketch,
+            user=None,
+            view=view
+        )
+
+        if label:
+            aggregation.add_label(label)
+        db_session.add(aggregation)
+        db_session.commit()
+
+        return aggregation
+
     def add_aggregation(
         self,
         name,
@@ -800,26 +854,14 @@ class Story(object):
         """
         today = datetime.datetime.utcnow()
         block = self._create_new_block()
-        parameter_dict = json.loads(aggregation.parameters)
-        if agg_type:
-            parameter_dict["supported_charts"] = agg_type
-        else:
-            agg_type = parameter_dict.get("supported_charts")
-            # Neither agg_type nor supported_charts is set.
-            if not agg_type:
-                agg_type = "table"
-                parameter_dict["supported_charts"] = "table"
 
-        block["componentName"] = "TsAggregationCompact"
-        block["componentProps"]["aggregation"] = {
-            "agg_type": aggregation.agg_type,
-            "id": aggregation.id,
+        block["componentName"] = "TsSavedVisualization"
+        block["componentProps"] = {
             "name": aggregation.name,
-            "chart_type": agg_type,
+            "savedVisualizationId": aggregation.id,
             "description": aggregation.description,
             "created_at": today.isoformat(),
             "updated_at": today.isoformat(),
-            "parameters": json.dumps(parameter_dict),
             "user": {"username": None},
         }
         self._commit(block)
