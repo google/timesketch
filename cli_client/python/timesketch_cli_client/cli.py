@@ -18,27 +18,29 @@ import click
 
 from requests.exceptions import ConnectionError as RequestConnectionError
 
+
 # pylint: disable=import-error
 from timesketch_api_client import config as timesketch_config
 
 # pylint: enable=import-error
 
+
 from timesketch_cli_client.commands import analyze
 from timesketch_cli_client.commands import config
-from timesketch_cli_client.commands import importer
+from timesketch_cli_client.commands import upload
 from timesketch_cli_client.commands import intelligence
 from timesketch_cli_client.commands import search
 from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
+from timesketch_cli_client.commands import version
 from timesketch_cli_client.commands import events
 from timesketch_cli_client.commands import sigma
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
-from .version import get_version
 
 
 class TimesketchCli(object):
-    """Timesketch CLI state object.
+    """CLI state object.
 
     Attributes:
         sketch_from_flag: Sketch ID if provided by flag
@@ -60,22 +62,50 @@ class TimesketchCli(object):
             conf_file: Path to the config file.
             output_format_from_flag: Output format to use.
         """
-        self.api = api_client
+        self.cached_api_client = api_client
+        self.cached_config_assistant = None
+        self.conf_file = conf_file
         self.sketch_from_flag = sketch_from_flag
         self.output_format_from_flag = output_format_from_flag
 
-        if not api_client:
-            try:
-                # TODO: Consider other config sections here as well.
-                self.api = timesketch_config.get_client(load_cli_config=True)
-                if not self.api:
-                    raise RequestConnectionError
-            except RequestConnectionError:
-                click.echo("ERROR: Cannot connect to the Timesketch server.")
-                sys.exit(1)
+    @property
+    def config_assistant(self):
+        """Config assistant from the API client.
 
-        self.config_assistant = timesketch_config.ConfigAssistant()
-        self.config_assistant.load_config_file(conf_file, load_cli_config=True)
+        Returns:
+            Config Assistant object.
+        """
+        if self.cached_config_assistant:
+            return self.cached_config_assistant
+
+        from timesketch_api_client import config as timesketch_config
+
+        _config_assistant = timesketch_config.ConfigAssistant()
+        _config_assistant.load_config_file(self.conf_file, load_cli_config=True)
+        self.cached_config_assistant = _config_assistant
+        return self.cached_config_assistant
+
+    @property
+    def api_client(self):
+        """Timesketch API client.
+
+        Returns:
+            API client object.
+        """
+        if self.cached_api_client:
+            return self.cached_api_client
+
+        from timesketch_api_client import config as timesketch_config
+
+        try:
+            _api_client = timesketch_config.get_client(load_cli_config=True)
+            if not _api_client:
+                raise RequestConnectionError
+            self.cached_api_client = _api_client
+        except RequestConnectionError:
+            click.echo("ERROR: Cannot connect to the Timesketch server.")
+            sys.exit(1)
+        return self.cached_api_client
 
     @property
     def sketch(self):
@@ -88,9 +118,13 @@ class TimesketchCli(object):
         sketch_from_config = self.config_assistant.get_config("sketch")
 
         if self.sketch_from_flag:
-            active_sketch = self.api.get_sketch(sketch_id=int(self.sketch_from_flag))
+            active_sketch = self.api_client.get_sketch(
+                sketch_id=int(self.sketch_from_flag)
+            )
         elif sketch_from_config:
-            active_sketch = self.api.get_sketch(sketch_id=int(sketch_from_config))
+            active_sketch = self.api_client.get_sketch(
+                sketch_id=int(sketch_from_config)
+            )
 
         if not active_sketch:
             click.echo(
@@ -99,7 +133,6 @@ class TimesketchCli(object):
             )
             sys.exit(1)
 
-        # Make sure we have access to the sketch.
         try:
             active_sketch.name
         except KeyError:
@@ -134,7 +167,6 @@ class TimesketchCli(object):
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version=get_version(), prog_name="Timesketch CLI")
 @click.option("--sketch", type=int, default=None, help="Sketch to work in.")
 @click.option(
     "--output-format",
@@ -167,7 +199,8 @@ cli.add_command(search.search_group)
 cli.add_command(search.saved_searches_group)
 cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
-cli.add_command(importer.importer)
+cli.add_command(upload.upload)
+cli.add_command(version.version)
 cli.add_command(events.events_group)
 cli.add_command(sigma.sigma_group)
 cli.add_command(intelligence.intelligence_group)
