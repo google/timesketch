@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 import unittest
+
 import mock
 
 from . import client
@@ -35,7 +36,12 @@ class TimesketchApiTest(unittest.TestCase):
         response = self.api_client.fetch_resource_data("sketches/")
         self.assertIsInstance(response, dict)
 
-    # TODO: Add test for create_sketch()
+    def test_create_sketch(self):
+        """Test to create a sketch."""
+        sketch = self.api_client.create_sketch("test", "test")
+        self.assertEqual(sketch.id, 1)
+        self.assertEqual(sketch.name, "test")
+        self.assertEqual(sketch.description, "test")
 
     def test_get_sketch(self):
         """Test to get a sketch."""

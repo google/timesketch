@@ -771,7 +771,7 @@ def mock_response(*args, **kwargs):
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
         "http://127.0.0.1/api/v1/sketches/": MockResponse(json_data=sketch_list_data),
-        "http://127.0.0.1/api/v1/sketches/1": MockResponse(json_data=sketch_data),
+        "http://127.0.0.1/api/v1/sketches/1/": MockResponse(json_data=sketch_data),
         "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long
             json_data=event_data_1
         ),

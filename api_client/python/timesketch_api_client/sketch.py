@@ -54,7 +54,7 @@ class Sketch(resource.BaseResource):
         self.api = api
         self._archived = None
         self._sketch_name = sketch_name
-        super().__init__(api=api, resource_uri=f"sketches/{self.id}")
+        super().__init__(api=api, resource_uri=f"sketches/{self.id}/")
 
     @property
     def acl(self):
