@@ -41,5 +41,16 @@
     "providerTimeout": 1000,
     "showDocumentationPanel": true,
     "autoCompletion": true
+  },
+  "@jupyterlab/notebook-extension:tracker": {
+    "codeCellConfig": {
+      "lineNumbers": true
+      },
+    "markdownCellConfig": {
+      "lineNumbers": true
+      },
+    "rawCellConfig": {
+      "lineNumbers": true
+    }
   }
 }
