@@ -665,14 +665,9 @@ export default {
       }
     },
     isIncluded(key, value) {
-      const hiddenKeys = ["datetime", "timestamp_desc", "tag", "label", "comment", "tag", "label", "data_type", "domain", "hostname"]
+      const hiddenKeys = ["datetime", "timestamp_desc", "tag", "label", "comment", "data_type", "domain", "hostname"]
       const regEx = /^[0-9]+-[0-9]+-[0-9]+[T][0-9]+[:][0-9]+[:][0-9]+/gm
-      if (key.startsWith("__") || hiddenKeys.includes(key)) {
-        console.log(regEx.exec(value))
-        return false
-      }
-      // Filter keys that contain ISO-8610 format 
-      else if (regEx.exec(value)) {
+      if (value == null || key.startsWith("__") || hiddenKeys.includes(key) || regEx.exec(value)) {
         return false
       }
       else {
