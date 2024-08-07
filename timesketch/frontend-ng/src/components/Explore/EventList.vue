@@ -1072,7 +1072,6 @@ export default {
 .ts-event-field-container {
   position: relative;
   max-width: 100%;
-  height: 100%;
   padding: 0 !important;
   display: -webkit-flex;
   display: -moz-flex;
