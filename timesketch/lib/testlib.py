@@ -83,6 +83,7 @@ class TestConfig(object):
     LLM_PROVIDER = "test"
     DATA_TYPES_PATH = "./test_data/nl2q/test_data_types.csv"
     PROMPT_NL2Q = "./test_data/nl2q/test_prompt_nl2q"
+    EXAMPLES_NL2Q = "./test_data/nl2q/test_examples_nl2q"
 
 
 class MockOpenSearchClient(object):

@@ -284,46 +284,89 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 additional_fields=self._FIELDS_TO_INCLUDE,
             )
 
-            params = {
-                "field": "search_string",
-                "limit": 20,
-                "index": [self.timeline_id],
+            top_search_name = f"Top 20 browser search queries ({self.timeline_name})"
+            top_search_params = {
+                "aggregator_name": "top_terms",
+                "aggregator_class": "apex",
+                "aggregator_parameters": {
+                    "fields": [{"field": "search_string", "type": "text"}],
+                    "aggregator_options": {
+                        "metric": "value_count",
+                        "max_items": 20,
+                        "timeline_ids": [self.timeline_id],
+                    },
+                    "chart_type": "table",
+                    "chart_options": {
+                        "chartTitle": top_search_name,
+                        "height": 600,
+                        "width": 800,
+                    },
+                },
             }
-            agg_obj = self.sketch.add_aggregation(
-                name="Top 20 browser search queries ({0:s})".format(self.timeline_name),
-                agg_name="field_bucket",
-                agg_params=params,
-                view_id=view.id,
-                chart_type="table",
-                description="Created by the browser search analyzer",
-            )
-
-            params = {
-                "field": "search_day",
-                "index": [self.timeline_id],
-                "limit": 20,
-            }
-            agg_days = self.sketch.add_aggregation(
-                name="Top 20 days of search queries ({0:s})".format(self.timeline_name),
-                agg_name="field_bucket",
-                agg_params=params,
+            agg_obj = self.sketch.add_apex_aggregation(
+                name=top_search_name,
+                params=top_search_params,
                 chart_type="table",
                 description="Created by the browser search analyzer",
                 label="informational",
+                view_id=view.id,
             )
 
-            params = {
-                "query_string": 'tag:"browser-search"',
-                "index": [self.timeline_id],
-                "field": "domain",
+            top_days_name = f"Top 20 days of search queries ({self.timeline_name})"
+            top_days_params = {
+                "aggregator_name": "top_terms",
+                "aggregator_class": "apex",
+                "aggregator_parameters": {
+                    "fields": [{"field": "search_day", "type": "text"}],
+                    "aggregator_options": {
+                        "metric": "value_count",
+                        "max_items": 20,
+                        "timeline_ids": [self.timeline_id],
+                    },
+                    "chart_type": "table",
+                    "chart_options": {
+                        "chartTitle": top_days_name,
+                        "height": 600,
+                        "width": 800,
+                    },
+                },
             }
-            agg_engines = self.sketch.add_aggregation(
-                name="Top Search Engines ({0:s})".format(self.timeline_name),
-                agg_name="query_bucket",
-                agg_params=params,
-                view_id=view.id,
-                chart_type="hbarchart",
+            agg_days = self.sketch.add_apex_aggregation(
+                name=top_days_name,
+                params=top_days_params,
+                chart_type="bar",
                 description="Created by the browser search analyzer",
+                label="informational",
+                view_id=view.id,
+            )
+
+            top_engines_name = f"Top 20 Search Engines ({self.timeline_name})"
+            top_engines_params = {
+                "aggregator_name": "top_terms",
+                "aggregator_class": "apex",
+                "aggregator_parameters": {
+                    "fields": [{"field": "domain", "type": "text"}],
+                    "aggregator_options": {
+                        "metric": "value_count",
+                        "max_items": 20,
+                        "query_string": 'tag:"browser-search"',
+                        "timeline_ids": [self.timeline_id],
+                    },
+                    "chart_type": "bar",
+                    "chart_options": {
+                        "chartTitle": top_days_name,
+                        "height": 600,
+                        "width": 800,
+                    },
+                },
+            }
+            agg_engines = self.sketch.add_apex_aggregation(
+                name=top_engines_name,
+                params=top_engines_params,
+                chart_type="table",
+                description="Created by the browser search analyzer",
+                label="informational",
+                view_id=view.id,
             )
 
             story = self.sketch.add_story(
@@ -345,7 +388,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
             story.add_text("The top 20 most commonly discovered searches were:")
             story.add_aggregation(agg_obj)
             story.add_text("The domains used to search:")
-            story.add_aggregation(agg_engines, "hbarchart")
+            story.add_aggregation(agg_engines)
             story.add_text("And the most common days of search:")
             story.add_aggregation(agg_days)
             story.add_text("And an overview of all the discovered search terms:")
