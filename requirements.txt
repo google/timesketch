@@ -12,7 +12,7 @@ flask_migrate==4.0.4
 flask_restful==0.3.10
 flask_sqlalchemy==3.0.3
 flask_wtf==1.2.1
-google-auth==1.7.0
+google-auth==2.32.0
 google_auth_oauthlib==0.4.1
 gunicorn==22.0.0
 numpy==1.23.4
