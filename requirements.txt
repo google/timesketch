@@ -1,20 +1,20 @@
 alembic==1.11.1
 altair==4.1.0
 celery==5.2.7
-cryptography==42.0.4
+cryptography==43.0.0
 datasketch==1.5.0
-dfir-unfurl==20230901
-opensearch-py==2.3.1
-Flask==2.3.2
+dfir-unfurl==20240627
+opensearch-py==2.6.0
+Flask==3.0.3
 flask_bcrypt==1.0.1
-flask_login==0.6.2
+flask_login==0.6.3
 flask_migrate==4.0.4
 flask_restful==0.3.10
 flask_sqlalchemy==3.0.3
-flask_wtf==1.1.1
+flask_wtf==1.2.1
 google-auth==1.7.0
 google_auth_oauthlib==0.4.1
-gunicorn==22.0.0  # Note: Last version to support py2
+gunicorn==22.0.0
 numpy==1.23.4
 oauthlib==3.1.0
 pandas==1.5.0
@@ -22,7 +22,7 @@ PyJWT==2.4.0
 python_dateutil==2.8.1
 PyYAML==6.0.1
 redis==4.4.4
-requests==2.32.0
+requests==2.32.3
 sigmatools==0.19.1 ; python_version > '3.4'
 six==1.12.0
 SQLAlchemy==1.4.48
@@ -35,5 +35,5 @@ networkx==2.5
 prometheus-client==0.16.0
 prometheus-flask-exporter==0.22.4
 decorator==5.0.5
-geoip2==4.2.0
+geoip2==4.8.0
 jsonschema==4.17.3
