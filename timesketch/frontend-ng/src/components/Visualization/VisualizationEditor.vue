@@ -37,6 +37,13 @@ limitations under the License.
     </v-toolbar>
     <v-divider class="mx-3"></v-divider>
     <v-row class="mt-3">
+      <v-col >
+        <v-container class="ma-0">
+          <ts-timeline-search @selectedTimelines="selectedTimelineIDs = $event"></ts-timeline-search>
+        </v-container>
+      </v-col>
+    </v-row>
+    <v-row class="mt-3">
       <v-col>
         <TsAggregationConfig
           :field="selectedField"
@@ -147,12 +154,14 @@ import ApiClient from '../../utils/RestApiClient'
 import TsAggregationConfig from './AggregationConfig.vue'
 import TsChartConfig from './ChartConfig.vue'
 import TsChartCard from './ChartCard.vue'
+import TsTimelineSearch from '../Analyzer/TimelineSearch.vue'
 
 export default {
   components: {
     TsAggregationConfig,
     TsChartConfig,
     TsChartCard,
+    TsTimelineSearch,
   },
   props: {
     aggregator: {
