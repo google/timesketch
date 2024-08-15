@@ -46,6 +46,7 @@ limitations under the License.
     <v-row class="mt-3">
       <v-col>
         <TsAggregationConfig
+          v-if="selectedTimelineIDs.length > 0"
           :field="selectedField"
           @updateField="selectedField = $event"
           :aggregator="selectedAggregator"
@@ -62,6 +63,7 @@ limitations under the License.
           @updateSplitByTimeline="selectedSplitByTimeline = $event"
         ></TsAggregationConfig>
         <TsChartConfig
+          v-if="selectedTimelineIDs.length > 0"
           :aggregatorType="selectedAggregator"
           :chartType="selectedChartType"
           @updateChartType="selectedChartType = $event"
@@ -85,7 +87,7 @@ limitations under the License.
         </v-col>
         <v-col cols="8">
           <TsChartCard
-            v-if="chartSeries && selectedChartType"
+            v-if="selectedTimelineIDs.length > 0 && chartSeries && selectedChartType"
             :fieldName="selectedField.field"
             :metricName="selectedMetric"
             :is-time-series="selectedAggregator ? selectedAggregator.endsWith('date_histogram') : false"
@@ -105,6 +107,7 @@ limitations under the License.
       <v-divider class="mx-3"></v-divider>
       <div class="mt-4">
         <v-btn
+          v-if="selectedTimelineIDs.length > 0"
           class="ml-3"
           color="primary"
           :disabled="response == null || !selectedChartTitle"
@@ -114,6 +117,7 @@ limitations under the License.
         </v-btn>
 
         <v-btn
+          v-if="selectedTimelineIDs.length > 0"
           text
           color="primary"
           @click="loadAggregationData"
@@ -128,6 +132,7 @@ limitations under the License.
         </v-btn>
 
         <v-btn
+          v-if="selectedTimelineIDs.length > 0"
           text
           @click="clear"
           :disabled="!(
@@ -139,6 +144,7 @@ limitations under the License.
           Clear
         </v-btn>
         <v-btn
+          v-if="selectedTimelineIDs.length > 0"
           text
           @click="clear"
           :to="{ name: 'Explore' }"
