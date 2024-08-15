@@ -19,7 +19,7 @@ import time
 import mock
 import jwt
 
-from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.google_auth import decode_jwt
@@ -399,7 +399,7 @@ class TestGoogleCloudOpenIdConnect(BaseTest):
             issuer=OIDC_VALID_ISSUER,
         )
         public_key = get_public_key_for_jwt(test_jwt, OIDC_PUBLIC_KEY_URL)
-        self.assertIsInstance(public_key, _RSAPublicKey)
+        self.assertIsInstance(public_key, rsa.RSAPublicKey)
 
     def test_valid_oidc_jwt(self):
         """Test to validate a valid OpenID Connect JWT."""
