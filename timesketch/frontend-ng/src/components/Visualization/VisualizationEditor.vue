@@ -39,7 +39,7 @@ limitations under the License.
     <v-row class="mt-3">
       <v-col >
         <v-container class="ma-0">
-          <ts-timeline-search @selectedTimelines="selectedTimelineIDs = $event"></ts-timeline-search>
+          <ts-timeline-search componentName="visualization" @selectedTimelines="selectedTimelineIDs = $event"></ts-timeline-search>
         </v-container>
       </v-col>
     </v-row>
