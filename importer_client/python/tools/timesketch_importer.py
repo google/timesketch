@@ -143,6 +143,10 @@ def upload_file(
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
+        analyzers_name = config_dict.get("analyzers_name")
+        if analyzers_name:
+            streamer.close(analyzers_name)
+
     logger.info("File upload completed.")
     return timeline, task_id
 
@@ -460,6 +464,20 @@ def main(args=None):
         nargs="?",
         type=str,
         help=("Path to the file that is to be imported."),
+    )
+
+    config_group.add_argument(
+        "--analyzer_names",
+        "--analyzer-names",
+        type=str,
+        action="store",
+        nargs='+',
+        dest="analyzer_names",
+        default=[],
+        help=(
+            "Set of analyzers that we will automatically run right after the timelines are uploaded"
+            "the strings needs to be the analyzers name" 
+        ),
     )
 
     options = argument_parser.parse_args(args)
