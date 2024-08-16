@@ -41,7 +41,6 @@ limitations under the License.
         <v-container class="ma-0">
           <ts-timeline-search 
             componentName="visualization" 
-            :analyzerTimelineId="selectedTImelineIDs"
             @selectedTimelines="selectedTimelineIDs = $event"></ts-timeline-search>
         </v-container>
       </v-col>
