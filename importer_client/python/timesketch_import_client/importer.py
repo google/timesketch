@@ -708,8 +708,8 @@ class ImportStreamer(object):
         """Return the celery task identification for the upload."""
         return self._celery_task_id
 
-    def close(self):
-        """Close the streamer."""
+    def close(self, analyzer_names):
+        """Close the streamer, and run the analyzers based on the analyzer_names """
         try:
             self._ready()
         except ValueError:
@@ -722,7 +722,7 @@ class ImportStreamer(object):
         pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
             self._sketch.api.api_root, self._sketch.id
         )
-        data = {"index_name": self._index}
+        data = {"index_name": self._index, "analyzer_names": analyzer_names}
         _ = self._sketch.api.session.post(pipe_resource, json=data)
 
     def flush(self, end_stream=True):
