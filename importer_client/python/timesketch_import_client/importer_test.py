@@ -17,7 +17,6 @@ from __future__ import unicode_literals
 import json
 import unittest
 import mock
-
 import pandas
 
 from . import importer
@@ -51,9 +50,6 @@ class MockStreamer(importer.ImportStreamer):
 
     def _upload_data_frame(self, data_frame, end_stream, retry_count=0):
         self.lines.extend(json.loads(data_frame.to_json(orient="records")))
-
-    def close(self):
-        pass
 
 
 class TimesketchImporterTest(unittest.TestCase):
@@ -157,7 +153,7 @@ class TimesketchImporterTest(unittest.TestCase):
 
             streamer.flush()
             self._run_all_tests(streamer.columns, streamer.lines)
-
+        
     def test_adding_json(self):
         """Test adding a JSON to the importer."""
         with MockStreamer() as streamer:
