@@ -146,6 +146,8 @@ def upload_file(
         analyzers_name = config_dict.get("analyzers_name")
         if analyzers_name:
             streamer.close(analyzers_name)
+        else:
+            streamer.close()
 
     logger.info("File upload completed.")
     return timeline, task_id
@@ -471,7 +473,6 @@ def main(args=None):
         "--analyzer-names",
         type=str,
         action="store",
-        nargs='+',
         dest="analyzer_names",
         default=[],
         help=(
