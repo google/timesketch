@@ -27,7 +27,7 @@ limitations under the License.
       v-model="selectedTimelines"
       :items="allReadyTimelines"
       outlined
-      label="Select timelines for analysis"
+      :label="`Select timelines for ${componentName}`"
       item-text="name"
       item-value="id"
       multiple
@@ -63,7 +63,7 @@ export default {
   components:{
     TsAnalyzerTimelineChip,
   },
-  props: ['analyzerTimelineId'],
+  props: ['analyzerTimelineId', 'componentName'],
   data() {
     return {
       selectedTimelines: [],

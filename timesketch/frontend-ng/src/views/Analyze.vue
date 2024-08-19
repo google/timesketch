@@ -17,7 +17,7 @@ limitations under the License.
   <v-container fluid>
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
       <div class="mt-2">
-        <ts-timeline-search :analyzer-timeline-id="analyzerTimelineId" @selectedTimelines="timelineSelection = $event"></ts-timeline-search>
+        <ts-timeline-search componentName="analysis" :analyzer-timeline-id="analyzerTimelineId" @selectedTimelines="timelineSelection = $event"></ts-timeline-search>
       </div>
       <v-divider></v-divider>
       <div>
