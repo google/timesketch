@@ -59,7 +59,7 @@ limitations under the License.
         style="position: absolute; z-index: 1000"
         elevation="10"
         outlined
-        width="100%"
+        width="50%"
         v-click-outside="onClickOutside"
       >
         <v-row>
@@ -69,7 +69,6 @@ limitations under the License.
                 v-model="queryString"
                 placeholder="Find a question, or create a new one.."
                 class="mx-2 mb-1"
-                clearable
                 autofocus
                 hide-details
                 dense
@@ -78,10 +77,17 @@ limitations under the License.
                 solo
                 @keyup.enter="createQuestion()"
               >
-                <template v-slot:prepend>
-                  <v-btn depressed small class="text-none" :disabled="!queryString" @click="createQuestion()">
+                <template v-slot:append>
+                  <v-btn
+                    depressed
+                    small
+                    class="text-none mt-1 mr-n3"
+                    :disabled="!queryString"
+                    color="primary"
+                    @click="createQuestion()"
+                  >
                     <v-icon>mdi-plus</v-icon>
-                    Create
+                    Create new question
                   </v-btn>
                 </template>
               </v-text-field>
@@ -89,13 +95,14 @@ limitations under the License.
           </v-col>
         </v-row>
         <v-row no-gutters>
-          <v-col cols="6" v-if="matches.questions && matches.questions.length">
+          <v-col cols="12" v-if="matches.questions && matches.questions.length">
             <v-toolbar dense flat>
               <strong
-                >Questions <span style="font-size: 0.7em">({{ matches.questions.length }})</span></strong
+                >Assigned questions for this sketch
+                <span style="font-size: 0.7em">({{ matches.questions.length }})</span></strong
               >
             </v-toolbar>
-            <v-divider></v-divider>
+
             <v-list style="max-height: 500px" class="overflow-y-auto">
               <v-list-item-group>
                 <v-list-item
@@ -108,39 +115,33 @@ limitations under the License.
                     class="mr-2"
                     :disabled="!question.conclusions.length"
                     :color="question.conclusions.length ? 'success' : ''"
-                    >mdi-check-circle-outline</v-icon
+                    >mdi-check-circle</v-icon
                   >
                   <v-list-item-title>{{ question.name }}</v-list-item-title>
                 </v-list-item>
               </v-list-item-group>
             </v-list>
           </v-col>
+        </v-row>
 
-          <v-col :cols="matches.questions ? 6 : 12" v-if="matches.templates.length">
+        <v-row no-gutters>
+          <v-col cols="12" v-if="matches.templates.length">
             <v-toolbar dense flat>
               <strong
-                >DFIQ <span style="font-size: 0.7em">({{ matches.templates.length }})</span></strong
+                >Add DFIQ question <span style="font-size: 0.7em">({{ matches.templates.length }})</span></strong
               >
             </v-toolbar>
-            <v-divider></v-divider>
-            <v-list two-line style="height: 500px" class="overflow-y-auto">
+            <v-list style="height: 400px" class="overflow-y-auto">
               <v-list-item-group>
                 <v-list-item
                   v-for="(question, index) in matches.templates"
                   :key="index"
                   @click="createQuestion(question)"
                 >
+                  <v-icon small class="mr-2">mdi-plus</v-icon>
                   <v-list-item-content>
                     <v-list-item-title> {{ question.name }}</v-list-item-title>
-                    <v-list-item-subtitle :title="question.description">{{
-                      question.description
-                    }}</v-list-item-subtitle>
                   </v-list-item-content>
-                  <v-list-item-action>
-                    <v-btn icon>
-                      <v-icon color="grey lighten-1">mdi-plus</v-icon>
-                    </v-btn>
-                  </v-list-item-action>
                 </v-list-item>
               </v-list-item-group>
             </v-list>
@@ -185,7 +186,7 @@ limitations under the License.
                 <!-- Suggested queries -->
                 <v-tab-item :transition="false">
                   <div v-if="allSuggestedQueries.length">
-                    <div class="pa-4 markdown-body" style="background-color: transparent">
+                    <div class="mt-4" style="background-color: transparent">
                       <ts-search-chip
                         v-for="query in allSuggestedQueries"
                         :key="query.value"
@@ -278,29 +279,6 @@ limitations under the License.
                   </div>
                 </v-tab-item>
               </v-tabs-items>
-            </v-col>
-            <v-divider vertical></v-divider>
-            <v-col cols="5">
-              <v-subheader>
-                <strong style="font-size: 1.1em">Search history</strong>
-              </v-subheader>
-              <div v-if="!searchHistory.length" class="px-4">
-                <i style="font-size: 0.9em">Here you will find your recent search history for this question.</i>
-              </div>
-              <div
-                v-for="(searchHistoryItem, index) in searchHistory"
-                :key="index"
-                @click="search(searchHistoryItem)"
-                style="cursor: pointer"
-                class="px-4 mt-n2"
-              >
-                <v-row no-gutters class="pa-1 ml-n1 mb-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-                  <span style="font-size: 0.9em">
-                    <v-icon small>mdi-magnify</v-icon>
-                    {{ searchHistoryItem.query_string }}</span
-                  >
-                </v-row>
-              </div>
             </v-col>
           </v-row>
         </div>
@@ -432,7 +410,7 @@ export default {
       ApiClient.createQuestion(this.sketch.id, null, null, questionText, templateId)
         .then((response) => {
           const newQuestion = response.data.objects[0]
-          this.setActiveQuestion(newQuestion)
+          //this.setActiveQuestion(newQuestion)
           this.$emit('new-question', newQuestion)
           this.getSketchQuestions()
         })
@@ -557,6 +535,7 @@ export default {
         })
     } else {
       this.showEmptySelect = true
+      this.showDropdown = true
     }
   },
 }
