@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "direct"
+  - package-ecosystem: "pip"
+    directory: "/test_requirements.txt"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "direct"
+  - package-ecosystem: "npm"
+    directory: "/timesketch/frontend-ng"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "direct"
+# ignore dependencies of the legacy front-end since it is deprecated
+  - package-ecosystem: "npm"
+    directory: "/timesketch/frontend"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-type: "*"
