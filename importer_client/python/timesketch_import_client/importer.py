@@ -26,8 +26,6 @@ import uuid
 import numpy
 import pandas
 
-from unittest import mock
-
 from timesketch_api_client import timeline
 from timesketch_api_client import definitions
 from timesketch_import_client import utils
@@ -710,12 +708,15 @@ class ImportStreamer(object):
         """Return the celery task identification for the upload."""
         return self._celery_task_id
 
-    def close(self, analyzer_names=[]):
+    def close(self, analyzer_names=None):
         """Close the streamer, and run the analyzers based on the analyzer_names"""
         try:
             self._ready()
         except ValueError:
             return
+
+        if analyzer_names is None:
+            analyzer_names = []
 
         if self._data_lines:
             self.flush(end_stream=True)
