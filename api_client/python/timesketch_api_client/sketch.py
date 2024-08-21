@@ -32,6 +32,7 @@ from . import search
 from . import searchtemplate
 from . import story
 from . import timeline
+from . import scenario as scenario_lib
 
 
 logger = logging.getLogger("timesketch_api.sketch")
@@ -1610,28 +1611,159 @@ class Sketch(resource.BaseResource):
             as_pandas=as_pandas,
         )
 
-    def add_scenario(self, scenario_name):
-        """Adds a investigative scenario to the sketch.
+    def add_scenario(self, dfiq_id, display_name=None):
+        """Adds an investigative scenario to the sketch.
 
         Args:
-            scenario_name (str): Name of the scenario to add.
+            dfiq_id (str): ID of the DFIQ scenario template to add.
+            display_name (str): [Optional] Name of the scenario to add.
 
         Raises:
             RuntimeError: If sketch is archived.
 
         Returns:
-            Dictionary with scenario.
+            Scenario object.
         """
         if self.is_archived():
             raise RuntimeError("Unable to add a scenario to an archived sketch")
 
-        form_data = {"scenario_name": scenario_name}
+        if not display_name:
+            form_data = {"dfiq_id": dfiq_id}
+        else:
+            form_data = {"dfiq_id": dfiq_id, "display_name": display_name}
 
         resource_url = "{0:s}/sketches/{1:d}/scenarios/".format(
             self.api.api_root, self.id
         )
         response = self.api.session.post(resource_url, json=form_data)
-        return error.get_response_json(response, logger)
+        response_json = error.get_response_json(response, logger)
+        scenario_objects = response_json.get("objects")
+        if not scenario_objects:
+            raise RuntimeError(
+                f"Failed to add the scenario {dfiq_id} to the sketch {self.id}."
+            )
+
+        if not len(scenario_objects) == 1:
+            raise RuntimeError(
+                f"Failed to add the scenario {dfiq_id} to the sketch {self.id}."
+            )
+        scenario_data = scenario_objects[0]
+        scenario = scenario_lib.Scenario(
+            scenario_id=scenario_data.get("id", -1),
+            sketch_id=self.id,
+            api=self.api,
+        )
+
+        return scenario
+
+    def list_scenarios(self):
+        """Get a list of all scenarios that are attached to the sketch.
+
+        Returns:
+            List of scenarios (instances of Scenario objects)
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to list scenarios on an archived sketch.")
+
+        scenario_list = []
+        resource_url = "{0:s}/sketches/{1:d}/scenarios/".format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.get(resource_url)
+        response_json = error.get_response_json(response, logger)
+        scenario_objects = response_json.get("objects")
+        if not scenario_objects:
+            return scenario_list
+
+        if not len(scenario_objects) == 1:
+            return scenario_list
+        for scenario_dict in scenario_objects[0]:
+            scenario_list.append(
+                scenario_lib.Scenario(
+                    scenario_id=scenario_dict.get("id", -1),
+                    sketch_id=self.id,
+                    api=self.api,
+                )
+            )
+        return scenario_list
+
+    def add_question(self, dfiq_id=None, question_text=None):
+        """Adds an investigative question to the sketch.
+
+        Args:
+            dfiq_id (str): [Optional] ID of the DFIQ question template to add.
+            question_text (str): [Optional] Question text to add.
+
+        Raises:
+            RuntimeError: If sketch is archived or input is missing.
+
+        Returns:
+            Question object.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to add a question to an archived sketch!")
+
+        if dfiq_id:
+            form_data = {"template_id": dfiq_id}
+        elif question_text:
+            form_data = {"question_text": question_text}
+        else:
+            raise RuntimeError("Either dfiq_id or question_text are required!")
+
+        resource_url = "{0:s}/sketches/{1:d}/questions/".format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.post(resource_url, json=form_data)
+        response_json = error.get_response_json(response, logger)
+        question_objects = response_json.get("objects")
+        if not question_objects:
+            raise RuntimeError(
+                f"Failed to add the scenario {dfiq_id} to the sketch {self.id}."
+            )
+
+        if not len(question_objects) == 1:
+            raise RuntimeError(
+                f"Failed to add the scenario {dfiq_id} to the sketch {self.id}."
+            )
+        question_data = question_objects[0]
+        question = scenario_lib.Question(
+            question_id=question_data.get("id", -1),
+            sketch_id=self.id,
+            api=self.api,
+        )
+
+        return question
+
+    def list_questions(self):
+        """Get a list of all questions that are attached to the sketch.
+
+        Returns:
+            List of questions (instances of Question objects)
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to list questions on an archived sketch.")
+
+        question_list = []
+        resource_url = "{0:s}/sketches/{1:d}/questions/".format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.get(resource_url)
+        response_json = error.get_response_json(response, logger)
+        question_objects = response_json.get("objects")
+        if not question_objects:
+            return question_list
+
+        if not len(question_objects) == 1:
+            return question_list
+        for question_dict in question_objects[0]:
+            question_list.append(
+                scenario_lib.Question(
+                    question_id=question_dict.get("id", -1),
+                    sketch_id=self.id,
+                    api=self.api,
+                )
+            )
+        return question_list
 
     def add_event(self, message, date, timestamp_desc, attributes=None, tags=None):
         """Adds an event to the sketch specific timeline.

@@ -37,8 +37,18 @@ limitations under the License.
     </v-toolbar>
     <v-divider class="mx-3"></v-divider>
     <v-row class="mt-3">
+      <v-col >
+        <v-container class="ma-0">
+          <ts-timeline-search 
+            componentName="visualization" 
+            @selectedTimelines="selectedTimelineIDs = $event"></ts-timeline-search>
+        </v-container>
+      </v-col>
+    </v-row>
+    <v-row class="mt-3">
       <v-col>
         <TsAggregationConfig
+          @enabled="selectedTimelineIDs.length > 0"
           :field="selectedField"
           @updateField="selectedField = $event"
           :aggregator="selectedAggregator"
@@ -100,7 +110,7 @@ limitations under the License.
         <v-btn
           class="ml-3"
           color="primary"
-          :disabled="response == null || !selectedChartTitle"
+          :disabled="selectedTimelineIDs.length == 0 || response == null || !selectedChartTitle"
           @click="saveVisualization"
         >
           Save
@@ -110,7 +120,7 @@ limitations under the License.
           text
           color="primary"
           @click="loadAggregationData"
-          :disabled="!(
+          :disabled="selectedTimelineIDs.length == 0 || !(
             selectedField &&
             selectedAggregator &&
             selectedChartType
@@ -147,12 +157,14 @@ import ApiClient from '../../utils/RestApiClient'
 import TsAggregationConfig from './AggregationConfig.vue'
 import TsChartConfig from './ChartConfig.vue'
 import TsChartCard from './ChartCard.vue'
+import TsTimelineSearch from '../Analyzer/TimelineSearch.vue'
 
 export default {
   components: {
     TsAggregationConfig,
     TsChartConfig,
     TsChartCard,
+    TsTimelineSearch,
   },
   props: {
     aggregator: {
