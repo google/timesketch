@@ -153,7 +153,7 @@ class TimesketchImporterTest(unittest.TestCase):
 
             streamer.flush()
             self._run_all_tests(streamer.columns, streamer.lines)
-        
+
     def test_adding_json(self):
         """Test adding a JSON to the importer."""
         with MockStreamer() as streamer:

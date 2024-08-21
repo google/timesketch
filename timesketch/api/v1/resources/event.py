@@ -504,9 +504,9 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                                 f"exists for event_id '{request_event_id}'."
                             )
                         else:
-                            new_attributes[request_attribute_name] = (
-                                request_attribute_value
-                            )
+                            new_attributes[
+                                request_attribute_name
+                            ] = request_attribute_value
 
                     if new_attributes:
                         datastore.import_event(
