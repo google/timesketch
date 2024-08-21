@@ -711,7 +711,7 @@ class ImportStreamer(object):
         return self._celery_task_id
 
     def close(self, analyzer_names=[]):
-        """Close the streamer, and run the analyzers based on the analyzer_names """
+        """Close the streamer, and run the analyzers based on the analyzer_names"""
         try:
             self._ready()
         except ValueError:
@@ -726,8 +726,6 @@ class ImportStreamer(object):
         )
         data = {"index_name": self._index, "analyzer_names": analyzer_names}
         _ = self._sketch.api.session.post(pipe_resource, json=data)
-
-
 
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
