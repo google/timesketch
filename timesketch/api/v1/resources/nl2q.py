@@ -200,24 +200,34 @@ class Nl2qResource(Resource):
 
         question = form.get("question")
         prompt = self.build_prompt(question, sketch_id)
+        result_schema = {
+            "name": "AI generated search query",
+            "query_string": None,
+            "error": None,
+        }
         try:
             llm = manager.LLMManager().get_provider(llm_provider)()
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: {}".format(e))
-            abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "Error in loading the LLM Provider. Please contact your "
-                "Timesketch administrator.",
-            )
+            result_schema["error"] = "Error loading the LLM Provider"
+            return jsonify(result_schema)
+            # abort(
+            #    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+            #    "Error in loading the LLM Provider. Please contact your "
+            #    "Timesketch administrator.",
+            # )
 
         try:
             prediction = llm.generate(prompt)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error NL2Q prompt: {}".format(e))
-            abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "An error occurred generating the NL2Q prediction via the "
-                "defined LLM. Please contact your Timesketch administrator.",
-            )
-        result = {"question": question, "llm_query": prediction}
-        return jsonify(result)
+            result_schema["error"] = "Unable to generate query"
+            return jsonify(result_schema)
+            # abort(
+            #    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+            #    "An error occurred generating the NL2Q prediction via the "
+            #    "defined LLM. Please contact your Timesketch administrator.",
+            # )
+        result_schema["query_string"] = prediction.strip("```")
+
+        return jsonify(result_schema)

@@ -30,16 +30,16 @@ limitations under the License.
               </span>
             </strong>
           </span>
-          <v-btn small depressed class="text-none" @click="showDropdown = !showDropdown">
+          <v-btn small depressed class="text-none" color="primary" @click="showDropdown = !showDropdown">
             Change question
             <v-icon small right>mdi-chevron-down</v-icon>
           </v-btn>
         </span>
 
         <span v-if="showEmptySelect && !isLoading">
-          <v-btn text class="text-none" @click="showDropdown = !showDropdown">
-            Select an investigative question
-            <v-icon small right>mdi-chevron-down</v-icon>
+          <v-btn depressed class="text-none ml-n2" color="primary" @click="showDropdown = !showDropdown">
+            Select or create an investigative question
+            <v-icon right>mdi-plus</v-icon>
           </v-btn>
         </span>
         <v-spacer></v-spacer>
@@ -55,7 +55,7 @@ limitations under the License.
       </v-toolbar>
 
       <v-card
-        v-if="showDropdown"
+        v-if="showDropdown && !isLoading"
         style="position: absolute; z-index: 1000"
         elevation="10"
         outlined
@@ -103,7 +103,7 @@ limitations under the License.
               >
             </v-toolbar>
 
-            <v-list style="max-height: 500px" class="overflow-y-auto">
+            <v-list style="max-height: 300px" class="overflow-y-auto">
               <v-list-item-group>
                 <v-list-item
                   v-for="(question, index) in matches.questions"
@@ -131,7 +131,7 @@ limitations under the License.
                 >Add DFIQ question <span style="font-size: 0.7em">({{ matches.templates.length }})</span></strong
               >
             </v-toolbar>
-            <v-list style="height: 400px" class="overflow-y-auto">
+            <v-list style="height: 300px" class="overflow-y-auto">
               <v-list-item-group>
                 <v-list-item
                   v-for="(question, index) in matches.templates"
@@ -155,7 +155,7 @@ limitations under the License.
           <v-row no-gutters>
             <v-col>
               <v-tabs v-model="activeTab" background-color="transparent">
-                <v-tab :disabled="!allSuggestedQueries.length" class="text-none">
+                <v-tab class="text-none">
                   Suggested queries
                   <span class="ml-1"
                     ><small
@@ -184,16 +184,36 @@ limitations under the License.
               </v-tabs>
               <v-tabs-items v-model="activeTab" style="background-color: transparent">
                 <!-- Suggested queries -->
-                <v-tab-item :transition="false">
+                <v-tab-item :transition="false" class="mb-2">
                   <div v-if="allSuggestedQueries.length">
                     <div class="mt-4" style="background-color: transparent">
                       <ts-search-chip
                         v-for="query in allSuggestedQueries"
                         :key="query.value"
                         :searchchip="query"
+                        icon="mdi-magnify"
                         type="link"
+                      ></ts-search-chip>
+                    </div>
+                  </div>
+
+                  <div class="mt-1" v-if="userSettings.generateQuery">
+                    <div v-if="suggestedQueryLoading" class="pa-2 pl-4">
+                      <v-skeleton-loader type="sentences" width="200"></v-skeleton-loader>
+                    </div>
+                    <div v-if="Object.keys(suggestedQuery).length && !suggestedQueryLoading">
+                      <ts-search-chip
+                        :searchchip="suggestedQuery"
+                        type="link"
+                        icon="mdi-shimmer"
                         class="mb-1"
                       ></ts-search-chip>
+                    </div>
+                    <div v-if="!Object.keys(suggestedQuery).length && !suggestedQueryLoading" class="pl-4">
+                      <v-btn small depressed light class="text-none mt-2 mb-4 btn-gradient" @click="getSuggestedQuery">
+                        <v-icon small left>mdi-shimmer</v-icon>
+                        Generate query</v-btn
+                      >
                     </div>
                   </div>
                 </v-tab-item>
@@ -319,6 +339,8 @@ export default {
       queryString: '',
       showDropdown: false,
       showEmptySelect: false,
+      suggestedQuery: {},
+      suggestedQueryLoading: false,
     }
   },
   computed: {
@@ -327,6 +349,9 @@ export default {
     },
     currentUser() {
       return this.$store.state.currentUser
+    },
+    userSettings() {
+      return this.$store.state.settings
     },
     matches() {
       if (!this.queryString) {
@@ -376,6 +401,17 @@ export default {
     },
   },
   methods: {
+    getSuggestedQuery() {
+      this.suggestedQueryLoading = true
+      ApiClient.nl2q(this.sketch.id, this.activeQuestion.display_name)
+        .then((response) => {
+          this.suggestedQuery = response.data
+          this.suggestedQueryLoading = false
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
     getQuestionTemplates() {
       this.isLoading = true
       ApiClient.getQuestionTemplates()
@@ -410,7 +446,7 @@ export default {
       ApiClient.createQuestion(this.sketch.id, null, null, questionText, templateId)
         .then((response) => {
           const newQuestion = response.data.objects[0]
-          //this.setActiveQuestion(newQuestion)
+          this.setActiveQuestion(newQuestion)
           this.$emit('new-question', newQuestion)
           this.getSketchQuestions()
         })
@@ -466,7 +502,7 @@ export default {
       this.queryString = ''
       this.currentTitle = question.name
       this.expanded = true
-      this.getSearchHistory()
+      this.suggestedQuery = {}
 
       // Set active tab
       if (this.activeQuestion.conclusions.length) {
@@ -591,5 +627,21 @@ export default {
 }
 .textfield-light-background {
   background-color: #fff !important;
+}
+.btn-gradient {
+  background: radial-gradient(
+    circle at 100% 0%,
+    #a0d9f2,
+    #a7d9f5,
+    #add9f7,
+    #b3dafa,
+    #b9dafb,
+    #bfdafd,
+    #c5dbfe,
+    #cadbff
+  );
+}
+.skeleton-gradient {
+  color: radial-gradient(circle at 100% 0%, #a0d9f2, #a7d9f5, #add9f7, #b3dafa, #b9dafb, #bfdafd, #c5dbfe, #cadbff);
 }
 </style>
