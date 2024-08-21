@@ -39,7 +39,6 @@ limitations under the License.
         <span v-if="showEmptySelect && !isLoading">
           <v-btn depressed class="text-none ml-n2" color="primary" @click="showDropdown = !showDropdown">
             Select or create an investigative question
-            <v-icon right>mdi-plus</v-icon>
           </v-btn>
         </span>
         <v-spacer></v-spacer>
@@ -86,7 +85,7 @@ limitations under the License.
                     color="primary"
                     @click="createQuestion()"
                   >
-                    <v-icon>mdi-plus</v-icon>
+                    <v-icon left small>mdi-plus</v-icon>
                     Create new question
                   </v-btn>
                 </template>
