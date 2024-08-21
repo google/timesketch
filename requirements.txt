@@ -8,7 +8,7 @@ opensearch-py==2.6.0
 Flask==3.0.3
 flask_bcrypt==1.0.1
 flask_login==0.6.3
-flask_migrate==4.0.4
+flask_migrate==4.0.7
 flask_restful==0.3.10
 flask_sqlalchemy==3.0.3
 flask_wtf==1.2.1
