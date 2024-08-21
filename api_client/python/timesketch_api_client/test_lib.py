@@ -653,7 +653,7 @@ def mock_response(*args, **kwargs):
                     "name": "Test Scenario",
                 }
             ]
-        ]
+        ],
     }
 
     mock_scenario_response = {
@@ -664,120 +664,100 @@ def mock_response(*args, **kwargs):
                 "dfiq_identifier": "S0001",
                 "display_name": "Test Scenario",
                 "id": 1,
-                "name": "Test Scenario"
+                "name": "Test Scenario",
             }
-        ]
+        ],
     }
 
     mock_scenario_templates_response = {
         "objects": [
             {
-              "child_ids": [
-                "F0001",
-                "F0002"
-              ],
-              "description": "Scenario description!",
-              "id": "S0001",
-              "name": "Test Scenario",
-              "parent_ids": [],
-              "tags": [
-                "test"
-              ]
+                "child_ids": ["F0001", "F0002"],
+                "description": "Scenario description!",
+                "id": "S0001",
+                "name": "Test Scenario",
+                "parent_ids": [],
+                "tags": ["test"],
             },
             {
-              "child_ids": [
-                "F1007"
-              ],
-              "description": "Scenario description 2!",
-              "id": "S0002",
-              "name": "Test Scenario 2",
-              "parent_ids": [],
-              "tags": []
-            }
+                "child_ids": ["F1007"],
+                "description": "Scenario description 2!",
+                "id": "S0002",
+                "name": "Test Scenario 2",
+                "parent_ids": [],
+                "tags": [],
+            },
         ]
     }
 
     mock_sketch_questions_response = {
-      "meta": {},
-      "objects": [
-        [
-          {
-            "approaches": [
-              {
-                "description": "Test Approach Description",
-                "display_name": "Test Approach",
-                "id": 26,
-                "name": "Test Approach",
-                "search_templates": []
-              }
-            ],
-            "conclusions": [],
-            "description": "Test Question Description",
-            "dfiq_identifier": "Q0001",
-            "display_name": "Test Question?",
-            "id": 1,
-            "name": "Test Question?"
-          }
-        ]
-      ]
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "approaches": [
+                        {
+                            "description": "Test Approach Description",
+                            "display_name": "Test Approach",
+                            "id": 26,
+                            "name": "Test Approach",
+                            "search_templates": [],
+                        }
+                    ],
+                    "conclusions": [],
+                    "description": "Test Question Description",
+                    "dfiq_identifier": "Q0001",
+                    "display_name": "Test Question?",
+                    "id": 1,
+                    "name": "Test Question?",
+                }
+            ]
+        ],
     }
 
     mock_question_response = {
-      "meta": {},
-      "objects": [
-          {
-            "approaches": [
-              {
-                "description": "Test Approach Description",
-                "display_name": "Test Approach",
-                "id": 26,
-                "name": "Test Approach",
-                "search_templates": []
-              }
-            ],
-            "conclusions": [],
-            "description": "Test Question Description",
-            "dfiq_identifier": "Q0001",
-            "display_name": "Test Question?",
-            "id": 1,
-            "name": "Test Question?"
-          }
-      ]
+        "meta": {},
+        "objects": [
+            {
+                "approaches": [
+                    {
+                        "description": "Test Approach Description",
+                        "display_name": "Test Approach",
+                        "id": 26,
+                        "name": "Test Approach",
+                        "search_templates": [],
+                    }
+                ],
+                "conclusions": [],
+                "description": "Test Question Description",
+                "dfiq_identifier": "Q0001",
+                "display_name": "Test Question?",
+                "id": 1,
+                "name": "Test Question?",
+            }
+        ],
     }
 
     mock_question_templates_response = {
         "objects": [
-          {
-            "child_ids": [
-              "Q0001.01"
-            ],
-            "description": "Test Question Description",
-            "id": "Q0001",
-            "name": "Test question?",
-            "parent_ids": [
-              "F0001"
-            ],
-            "tags": [
-              "test"
-            ]
-          },
-          {
-            "child_ids": [
-              "Q0002.01"
-            ],
-            "description": "Second Test Question Description",
-            "id": "Q0002",
-            "name": "Second question?",
-            "parent_ids": [
-              "F0001"
-            ],
-            "tags": [
-              "test"
-            ]
-          }
+            {
+                "child_ids": ["Q0001.01"],
+                "description": "Test Question Description",
+                "id": "Q0001",
+                "name": "Test question?",
+                "parent_ids": ["F0001"],
+                "tags": ["test"],
+            },
+            {
+                "child_ids": ["Q0002.01"],
+                "description": "Second Test Question Description",
+                "id": "Q0002",
+                "name": "Second question?",
+                "parent_ids": ["F0001"],
+                "tags": ["test"],
+            },
         ]
     }
-
 
     # Register API endpoints to the correct mock response data for GET requests.
     url_router = {
@@ -859,13 +839,13 @@ def mock_response(*args, **kwargs):
             json_data=mock_scenario_templates_response
         ),
         "http://127.0.0.1/api/v1/sketches/1/questions/": MockResponse(
-          json_data=mock_sketch_questions_response
+            json_data=mock_sketch_questions_response
         ),
         "http://127.0.0.1/api/v1/questions/": MockResponse(
-          json_data=mock_question_templates_response
+            json_data=mock_question_templates_response
         ),
         "http://127.0.0.1/api/v1/sketches/1/questions/1/": MockResponse(
-          json_data=mock_question_response
+            json_data=mock_question_response
         ),
     }
 
