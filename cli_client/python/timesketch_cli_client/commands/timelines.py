@@ -77,3 +77,36 @@ def describe_timeline(ctx, timeline_id):
             click.echo(f"\tOriginal filename: {original_filename}")
             click.echo(f"\tFile on disk: {file_on_disk}")
             click.echo(f"\tError: {error_message}")
+
+
+@timelines_group.command("rename")
+@click.argument("timeline-id", type=int, required=True)
+@click.argument("new-name", type=str, required=True)
+@click.pass_context
+def rename_timeline(ctx, timeline_id, new_name):
+    """Rename a timeline.
+
+    Args:
+        ctx: Click CLI context object.
+        timeline-id: Timeline ID from argument.
+        new-name: New Timeline name
+    """
+    sketch = ctx.obj.sketch
+    output = ctx.obj.output_format
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline")
+        return
+    timeline.lazyload_data()
+
+    # Set new name
+    timeline.name = new_name
+
+    # Print output depending on output settings
+    if output == "json":
+        click.echo(f"{timeline.resource_data}")
+        return
+    if output != "text":
+        click.echo(f'Unsupported output format: "{output}" - using "text" instead')
+    else:
+        click.echo(f"New name: {timeline.name}")
