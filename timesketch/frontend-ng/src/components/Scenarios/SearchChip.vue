@@ -19,7 +19,7 @@ limitations under the License.
       <v-icon class="mr-1" small>mdi-magnify</v-icon>
       {{ displayName }}
     </v-chip>
-    <div v-if="type === 'link'" @click="search(queryString)" style="cursor: pointer">
+    <div v-if="type === 'link'" @click="search(queryString)" :class="!searchchip.error ? 'enabled' : ''">
       <div style="font-size: 0.9em" class="pb-1 pl-1" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
         <span>
           <v-icon small class="mr-2 ml-2">{{ icon }}</v-icon>
@@ -79,5 +79,9 @@ export default {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.enabled {
+  cursor: pointer;
 }
 </style>
