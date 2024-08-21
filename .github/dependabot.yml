@@ -31,5 +31,3 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 0
-    ignore:
-      - dependency-type: "*"
