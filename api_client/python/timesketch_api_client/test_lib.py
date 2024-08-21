@@ -863,6 +863,9 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1/questions/": MockResponse(
             json_data=mock_question_response
         ),
+        "http://127.0.0.1/api/v1/sketches/1/explore/": MockResponse(
+            json_data=timeline_data
+        ),
     }
 
     if kwargs.get("empty", False):
