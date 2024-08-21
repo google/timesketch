@@ -110,3 +110,29 @@ def rename_timeline(ctx, timeline_id, new_name):
         click.echo(f'Unsupported output format: "{output}" - using "text" instead')
     else:
         click.echo(f"New name: {timeline.name}")
+
+
+@timelines_group.command("delete")
+@click.argument("timeline-id", type=int, required=True)
+@click.pass_context
+def delete_timeline(ctx, timeline_id):
+    """Delete a timeline.
+    (Will mark a timeline as deleted, but the Opensearch Index will remain)
+
+    Args:
+        ctx: Click CLI context object.
+        timeline-id: Timeline ID from argument to be deleted.
+    """
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline")
+        return
+    timeline.lazyload_data()
+    if click.confirm(
+        f"Do you really want to mark the timeline as deleted: {timeline_id} {timeline.name}?"
+    ):
+        timeline.delete()
+
+    click.echo("Deleted")
+    return

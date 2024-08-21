@@ -528,3 +528,14 @@ To rename a single timeline in a sketch, the command `timelines rename` can be u
 timesketch --sketch 1 timelines rename 1 foobar23
 ```
 
+### Delete a timeline
+
+The cli client is using the API to delete a timeline.
+
+As of August 2024, the API method to delete a timeline does only mark the reference in the database as deleted, the data will remain in Opensearch.
+
+```bash
+timesketch --sketch 1 timelines delete 1
+Do you really want to mark the timeline as deleted: 1 foobar23? [y/N]: y
+Deleted
+```
