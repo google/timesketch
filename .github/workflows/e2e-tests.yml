@@ -10,7 +10,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
@@ -27,7 +27,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
@@ -46,7 +46,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
@@ -63,7 +63,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
