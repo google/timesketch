@@ -520,6 +520,25 @@ timesketch --sketch 1 timelines list
 
 It is also possible to get all the output as JSON.
 
+### Describe a timeline
+
+The command `timelines describe` will provide several variables, names and settings for a given timeline.
+
+```
+timesketch --sketch 1 --output-format text timelines describe 2
+Name: foobar3
+Index: 41dde394812d44c1ac1784997d05efed
+Status: ready
+Event count: 260454
+Color: AAAAAA
+Name: foobar3
+Created: 2024-08-20T14:57:59.047015
+Datasources:
+	Original filename: win7-x86.plaso
+	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
+	Error:
+```
+
 ### Rename timeline
 
 To rename a single timeline in a sketch, the command `timelines rename` can be used.
@@ -539,3 +558,47 @@ timesketch --sketch 1 timelines delete 1
 Confirm to mark the timeline deleted:: 1 foobar23? [y/N]: y
 Deleted
 ```
+
+### Change timeline color
+
+The color is an important setting for a timeline when using the WebUI. To change the color using the CLI `timelines color` can be used.
+
+Before:
+```bash
+timesketch --sketch 1 --output-format text timelines describe 2
+Name: foobar3
+Index: 41dde394812d44c1ac1784997d05efed
+Status: ready
+Event count: 260454
+Color: AAAAAA
+Name: foobar3
+Created: 2024-08-20T14:57:59.047015
+Datasources:
+	Original filename: win7-x86.plaso
+	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
+	Error:
+```
+
+Using it:
+
+```bash
+timesketch --sketch 1 timelines color 2 BBBBBB
+```
+
+After:
+
+```bash
+timesketch --sketch 1 --output-format text timelines describe 2
+Name: foobar3
+Index: 41dde394812d44c1ac1784997d05efed
+Status: ready
+Event count: 260454
+Color: BBBBBB
+Name: foobar3
+Created: 2024-08-20T14:57:59.047015
+Datasources:
+	Original filename: win7-x86.plaso
+	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
+	Error:
+```
+
