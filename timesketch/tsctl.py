@@ -285,7 +285,7 @@ def import_search_templates(path):
             search_templates = yaml.safe_load(fh.read())
 
         if isinstance(search_templates, dict):
-            search_template_list = [search_templates]
+            search_templates = [search_templates]
 
         if search_templates:
             for search_template_dict in search_templates:
