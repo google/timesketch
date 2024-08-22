@@ -476,8 +476,8 @@ def main(args=None):
         dest="analyzer_names",
         default=[],
         help=(
-            "Set of analyzers that we will automatically run right after the timelines are uploaded"
-            "the strings needs to be the analyzers name"
+            "Set of analyzers that we will automatically run right after the"
+            "timelines are uploaded. The input needs to be the analyzers names."
         ),
     )
 

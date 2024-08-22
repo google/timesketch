@@ -472,10 +472,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self.save_intelligence()
 
         if self._SAVE_INTELLIGENCE:
-            (
-                self._intelligence_attribute,
-                self._intelligence_refs,
-            ) = self.get_intelligence_attribute()
+            self._intelligence_attribute, self._intelligence_refs = (
+                self.get_intelligence_attribute()
+            )
 
         entities = self.get_entities(type_selector=self._TYPE_SELECTOR)
         for entity in entities.values():
