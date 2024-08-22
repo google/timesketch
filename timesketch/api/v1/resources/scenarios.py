@@ -14,6 +14,7 @@
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
 import logging
+import json
 
 from flask import jsonify
 from flask import request
@@ -193,15 +194,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                 )
                 facet_sql.questions.append(question_sql)
 
-                for approach_id in question.approaches:
-                    approach = next(
-                        (
-                            approach
-                            for approach in dfiq.approaches
-                            if approach.id == approach_id
-                        ),
-                        None,
-                    )
+                for approach in question.approaches:
                     approach_sql = InvestigativeQuestionApproach(
                         dfiq_identifier=approach.id,
                         name=approach.name,
@@ -466,8 +459,8 @@ class QuestionTemplateListResource(resources.ResourceMixin, Resource):
         if not dfiq:
             return jsonify({"objects": []})
 
-        scenarios = [scenario.__dict__ for scenario in dfiq.questions]
-        return jsonify({"objects": scenarios})
+        questions = [json.loads(question.to_json()) for question in dfiq.questions]
+        return jsonify({"objects": questions})
 
 
 class QuestionListResource(resources.ResourceMixin, Resource):
@@ -517,15 +510,7 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                 sketch=sketch,
                 user=current_user,
             )
-            for approach_id in dfiq_question.approaches:
-                approach = next(
-                    (
-                        approach
-                        for approach in dfiq.approaches
-                        if approach.id == approach_id
-                    ),
-                    None,
-                )
+            for approach in dfiq_question.approaches:
                 approach_sql = InvestigativeQuestionApproach(
                     dfiq_identifier=approach.id,
                     name=approach.name,
