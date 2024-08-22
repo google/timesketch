@@ -133,17 +133,15 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        scenario_id = form.get("scenario_id")
+        dfiq_id = form.get("dfiq_id")
         display_name = form.get("display_name")
 
         scenario = next(
-            (scenario for scenario in dfiq.scenarios if scenario.id == scenario_id),
+            (scenario for scenario in dfiq.scenarios if scenario.id == dfiq_id),
             None,
         )
         if not scenario:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario template: {scenario_id}"
-            )
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario template: {dfiq_id}")
 
         if not display_name:
             display_name = scenario.name
@@ -499,19 +497,6 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         scenario = Scenario.get_by_id(scenario_id) if scenario_id else None
         facet = Facet.get_by_id(facet_id) if facet_id else None
 
-        if not question_text:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Question is missing")
-
-        if scenario:
-            if scenario.sketch.id != sketch.id:
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch."
-                )
-
-        if facet:
-            if facet.sketch.id != sketch.id:
-                abort(HTTP_STATUS_CODE_FORBIDDEN, "Facet is not part of this sketch.")
-
         if template_id:
             dfiq = load_dfiq_from_config()
             if not dfiq:
@@ -560,6 +545,22 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                 new_question.approaches.append(approach_sql)
 
         else:
+            if not question_text:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, "Question is missing")
+
+            if scenario:
+                if scenario.sketch.id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        "Scenario is not part of this sketch.",
+                    )
+
+            if facet:
+                if facet.sketch.id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN, "Facet is not part of this sketch."
+                    )
+
             new_question = InvestigativeQuestion.get_or_create(
                 name=question_text,
                 display_name=question_text,
