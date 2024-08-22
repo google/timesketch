@@ -35,7 +35,7 @@ def list_timelines(ctx):
 
 
 @timelines_group.command("describe")
-@click.argument("timeline-id", type=int, required=False)
+@click.argument("timeline-id", type=int, required=True)
 @click.pass_context
 def describe_timeline(ctx, timeline_id):
     """Show details for a timeline.
@@ -62,6 +62,7 @@ def describe_timeline(ctx, timeline_id):
     click.echo(f"Status: {timeline.status}")
     lines_indexed = timeline.resource_data.get("meta").get("lines_indexed", 0)
     click.echo(f"Event count: {lines_indexed or 0}")
+    click.echo(f"Color: {timeline.color}")
 
     for timeline_object in timeline.resource_data.get("objects", None):
         name = timeline_object.get("name", "no name")
@@ -135,4 +136,30 @@ def delete_timeline(ctx, timeline_id):
         timeline.delete()
 
     click.echo("Deleted")
+    return
+
+
+@timelines_group.command("color")
+@click.argument("timeline-id", type=int, required=True)
+@click.argument("color", type=str, required=True)
+@click.pass_context
+def timeline_change_color(ctx, timeline_id, color):
+    """Change the color of a timeline (in HEX color code)
+
+    Args:
+        ctx: Click CLI context object.
+        timeline-id: Timeline ID from argument to be modified.
+        color: Hex value of color to be used for the timeline
+    """
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline")
+        return
+    if not (len(color) == 4 or len(color) == 6):
+        click.echo("Color must be hex without leading # e.g. AAAA or AABB11")
+        return
+    timeline.lazyload_data()
+    timeline.color = color
+
     return
