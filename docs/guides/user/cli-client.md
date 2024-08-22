@@ -536,6 +536,6 @@ As of August 2024, the API method to delete a timeline does only mark the refere
 
 ```bash
 timesketch --sketch 1 timelines delete 1
-Do you really want to mark the timeline as deleted: 1 foobar23? [y/N]: y
+Confirm to mark the timeline deleted:: 1 foobar23? [y/N]: y
 Deleted
 ```

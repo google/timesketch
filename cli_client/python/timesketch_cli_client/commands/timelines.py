@@ -130,7 +130,7 @@ def delete_timeline(ctx, timeline_id):
         return
     timeline.lazyload_data()
     if click.confirm(
-        f"Do you really want to mark the timeline as deleted: {timeline_id} {timeline.name}?"
+        f"Confirm to mark the timeline deleted:{timeline_id} {timeline.name}?"
     ):
         timeline.delete()
 
