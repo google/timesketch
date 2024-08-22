@@ -243,13 +243,6 @@ class DFIQ:
                 yaml_object.get("parent_ids"),
                 yaml_object.get("approaches"),
             )
-        if yaml_object["type"] == "approach":
-            return Approach(
-                yaml_object["id"],
-                yaml_object["name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
-            )
         return None
 
     def _load_yaml_files_by_type(self, dfiq_type, yaml_data_path=None):
