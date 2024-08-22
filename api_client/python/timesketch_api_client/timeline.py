@@ -79,6 +79,12 @@ class Timeline(resource.BaseResource):
             self._color = timeline["objects"][0]["color"]
         return self._color
 
+    @color.setter
+    def color(self, color):
+        """Change the color of the timeline."""
+        self._color = color
+        self._commit()
+
     @property
     def data_sources(self):
         """Property that returns the timeline data sources."""
