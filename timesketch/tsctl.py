@@ -175,8 +175,8 @@ def drop_db():
         if click.confirm(
             "Are you REALLLY sure you want to DROP ALL the database tables?"
         ):
-            print("All tables dropped. Database is now empty.")
             drop_all()
+            print("All tables dropped. Database is now empty.")
 
 
 @cli.command(name="list-sketches")
