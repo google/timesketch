@@ -31,15 +31,17 @@ class Scenario(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    def __init__(self, sketch_id, scenario_id, api):
+    def __init__(self, sketch_id, scenario_id, uuid, api):
         """Initializes the Scenario object.
 
         Args:
             scenario_id: Primary key ID of the scenario.
             api: An instance of TiscmesketchApi object.
+            uuid: UUID of the scenario.
             sketch_id: ID of a sketch.
         """
         self.id = scenario_id
+        self.uuid = uuid
         self.api = api
         self.sketch_id = sketch_id
         super().__init__(
@@ -57,21 +59,11 @@ class Scenario(resource.BaseResource):
         return scenario["objects"][0]["name"]
 
     @property
-    def scenario_id(self):
-        """Property that returns the scenario id.
+    def dfiq_identifier(self):
+        """Property that returns the dfiq identifier.
 
         Returns:
-            Scenario id as integer.
-        """
-        scenario = self.lazyload_data()
-        return scenario["objects"][0]["id"]
-
-    @property
-    def dfiq_id(self):
-        """Property that returns the dfiq id.
-
-        Returns:
-            dfiq id as string.
+            dfiq identifier as string.
         """
         scenario = self.lazyload_data()
         return scenario["objects"][0]["dfiq_identifier"]
@@ -91,36 +83,6 @@ class Scenario(resource.BaseResource):
         return self.lazyload_data()
 
 
-class ScenarioTemplateList(resource.BaseResource):
-    """Timesketch scenario template list.
-
-    Attributes:
-        api: An instance of TimesketchApi object.
-    """
-
-    def __init__(self, api):
-        """Initializes the ScenarioList object.
-
-        Args:
-            api: An instance of TimesketchApi object.
-        """
-        self.api = api
-        super().__init__(api=api, resource_uri="scenarios/")
-
-    def get(self):
-        """
-        Retrieves a list of scenario templates.
-
-        Returns:
-            list: A list of Scenario tempaltes.
-        """
-        resource_url = f"{self.api.api_root}/scenarios/"
-        response = self.api.session.get(resource_url)
-        response_json = error.get_response_json(response, logger)
-        scenario_objects = response_json.get("objects", [])
-        return scenario_objects
-
-
 class Question(resource.BaseResource):
     """Timesketch question object.
 
@@ -129,7 +91,7 @@ class Question(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    def __init__(self, sketch_id, question_id, api):
+    def __init__(self, sketch_id, question_id, uuid, api):
         """Initializes the question object.
 
         Args:
@@ -138,6 +100,7 @@ class Question(resource.BaseResource):
             sketch_id: ID of a sketch.
         """
         self.id = question_id
+        self.uuid = uuid
         self.api = api
         self.sketch_id = sketch_id
         super().__init__(
@@ -155,21 +118,11 @@ class Question(resource.BaseResource):
         return question["objects"][0]["name"]
 
     @property
-    def question_id(self):
-        """Property that returns the question id.
-
-        Returns:
-            Question id as integer.
-        """
-        question = self.lazyload_data()
-        return question["objects"][0]["id"]
-
-    @property
-    def dfiq_id(self):
+    def dfiq_identifier(self):
         """Property that returns the question template id.
 
         Returns:
-            Question ID as string.
+            Question DFIQ identifier as string.
         """
         question = self.lazyload_data()
         return question["objects"][0]["dfiq_identifier"]
@@ -199,31 +152,33 @@ class Question(resource.BaseResource):
         return self.lazyload_data()
 
 
-class QuestionTemplateList(resource.BaseResource):
-    """Timesketch question template list.
+def getScenarioTemplateList(api):
+    """Retrieves a list of scenario templates.
 
-    Attributes:
+    Args:
         api: An instance of TimesketchApi object.
+
+    Returns:
+        list: A list of Scenario tempaltes.
     """
+    resource_url = f"{api.api_root}/scenarios/"
+    response = api.session.get(resource_url)
+    response_json = error.get_response_json(response, logger)
+    scenario_objects = response_json.get("objects", [])
+    return scenario_objects
 
-    def __init__(self, api):
-        """Initializes the QuestionList object.
 
-        Args:
-            api: An instance of TimesketchApi object.
-        """
-        self.api = api
-        super().__init__(api=api, resource_uri="questions/")
+def getQuestionTemplateList(api):
+    """Retrieves a list of question templates.
 
-    def get(self):
-        """
-        Retrieves a list of question templates.
+    Args:
+        api: An instance of TimesketchApi object.
 
-        Returns:
-            list: A list of question tempaltes.
-        """
-        resource_url = f"{self.api.api_root}/questions/"
-        response = self.api.session.get(resource_url)
-        response_json = error.get_response_json(response, logger)
-        scenario_objects = response_json.get("objects", [])
-        return scenario_objects
+    Returns:
+        list: A list of Question tempaltes.
+    """
+    resource_url = f"{api.api_root}/questions/"
+    response = api.session.get(resource_url)
+    response_json = error.get_response_json(response, logger)
+    question_objects = response_json.get("objects", [])
+    return question_objects

@@ -106,8 +106,8 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(scenario, scenario_lib.Scenario)
         self.assertEqual(scenario.id, 1)
         self.assertEqual(scenario.name, "Test Scenario")
-        self.assertEqual(scenario.scenario_id, 1)
-        self.assertEqual(scenario.dfiq_id, "S0001")
+        self.assertEqual(scenario.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(scenario.dfiq_identifier, "S0001")
         self.assertEqual(scenario.description, "Scenario description!")
 
     def test_add_scenario(self):
@@ -116,8 +116,8 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(scenario, scenario_lib.Scenario)
         self.assertEqual(scenario.id, 1)
         self.assertEqual(scenario.name, "Test Scenario")
-        self.assertEqual(scenario.scenario_id, 1)
-        self.assertEqual(scenario.dfiq_id, "S0001")
+        self.assertEqual(scenario.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(scenario.dfiq_identifier, "S0001")
         self.assertEqual(scenario.description, "Scenario description!")
 
     def test_list_questions(self):
@@ -129,8 +129,8 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(question, scenario_lib.Question)
         self.assertEqual(question.id, 1)
         self.assertEqual(question.name, "Test Question?")
-        self.assertEqual(question.question_id, 1)
-        self.assertEqual(question.dfiq_id, "Q0001")
+        self.assertEqual(question.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(question.dfiq_identifier, "Q0001")
         self.assertEqual(question.description, "Test Question Description")
 
     def test_add_question(self):
@@ -139,6 +139,6 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(question, scenario_lib.Question)
         self.assertEqual(question.id, 1)
         self.assertEqual(question.name, "Test Question?")
-        self.assertEqual(question.question_id, 1)
-        self.assertEqual(question.dfiq_id, "Q0001")
+        self.assertEqual(question.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(question.dfiq_identifier, "Q0001")
         self.assertEqual(question.description, "Test Question Description")

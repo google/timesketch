@@ -46,7 +46,7 @@ class ScenarioListTest(unittest.TestCase):
 
     def test_scenario_list(self):
         """Test ScenarioList object."""
-        scenario_list = scenario_lib.ScenarioTemplateList(self.api_client).get()
+        scenario_list = scenario_lib.getScenarioTemplateList(self.api_client)
         self.assertIsInstance(scenario_list, list)
         self.assertEqual(len(scenario_list), 2)
         self.assertEqual(scenario_list[0]["name"], "Test Scenario")
@@ -78,7 +78,7 @@ class QuestionListTest(unittest.TestCase):
 
     def test_question_list(self):
         """Test QuestionList object."""
-        question_list = scenario_lib.QuestionTemplateList(self.api_client).get()
+        question_list = scenario_lib.getQuestionTemplateList(self.api_client)
         self.assertIsInstance(question_list, list)
         self.assertEqual(len(question_list), 2)
         self.assertEqual(question_list[0]["name"], "Test question?")
