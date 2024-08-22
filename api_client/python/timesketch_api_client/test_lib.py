@@ -646,6 +646,7 @@ def mock_response(*args, **kwargs):
         "objects": [
             [
                 {
+                    "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
                     "description": "Scenario description!",
                     "dfiq_identifier": "S0001",
                     "display_name": "Test Scenario",
@@ -660,6 +661,7 @@ def mock_response(*args, **kwargs):
         "meta": {},
         "objects": [
             {
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
                 "description": "Scenario description!",
                 "dfiq_identifier": "S0001",
                 "display_name": "Test Scenario",
@@ -672,6 +674,7 @@ def mock_response(*args, **kwargs):
     mock_scenario_templates_response = {
         "objects": [
             {
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
                 "child_ids": ["F0001", "F0002"],
                 "description": "Scenario description!",
                 "id": "S0001",
@@ -680,6 +683,7 @@ def mock_response(*args, **kwargs):
                 "tags": ["test"],
             },
             {
+                "uuid": "1234a567-123d-b89c-e45f-g6h7ijk8l910",
                 "child_ids": ["F1007"],
                 "description": "Scenario description 2!",
                 "id": "S0002",
@@ -704,6 +708,7 @@ def mock_response(*args, **kwargs):
                             "search_templates": [],
                         }
                     ],
+                    "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
                     "conclusions": [],
                     "description": "Test Question Description",
                     "dfiq_identifier": "Q0001",
@@ -728,6 +733,7 @@ def mock_response(*args, **kwargs):
                         "search_templates": [],
                     }
                 ],
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
                 "conclusions": [],
                 "description": "Test Question Description",
                 "dfiq_identifier": "Q0001",
@@ -741,6 +747,7 @@ def mock_response(*args, **kwargs):
     mock_question_templates_response = {
         "objects": [
             {
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
                 "child_ids": ["Q0001.01"],
                 "description": "Test Question Description",
                 "id": "Q0001",
@@ -749,6 +756,7 @@ def mock_response(*args, **kwargs):
                 "tags": ["test"],
             },
             {
+                "uuid": "1234a567-123d-b89c-e45f-g6h7ijk8l910",
                 "child_ids": ["Q0002.01"],
                 "description": "Second Test Question Description",
                 "id": "Q0002",
