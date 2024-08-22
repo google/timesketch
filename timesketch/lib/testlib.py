@@ -80,6 +80,10 @@ class TestConfig(object):
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
     CONTEXT_LINKS_CONFIG_PATH = "./test_tools/test_events/mock_context_links.yaml"
+    LLM_PROVIDER = "test"
+    DATA_TYPES_PATH = "./test_data/nl2q/test_data_types.csv"
+    PROMPT_NL2Q = "./test_data/nl2q/test_prompt_nl2q"
+    EXAMPLES_NL2Q = "./test_data/nl2q/test_examples_nl2q"
 
 
 class MockOpenSearchClient(object):
@@ -435,17 +439,20 @@ class BaseTest(TestCase):
         db_session.add(model)
         db_session.commit()
 
-    def _create_user(self, username, set_password=False):
+    def _create_user(self, username, set_password=False, set_admin=False):
         """Create a user in the database.
         Args:
             username: Username (string)
             set_password: Boolean value to decide if a password should be set
+            set_admin: Boolean value to decide if the user should be an admin
         Returns:
             A user (instance of timesketch.models.user.User)
         """
         user = User.get_or_create(username=username, name=username)
         if set_password:
             user.set_password(plaintext="test", rounds=4)
+        if set_admin:
+            user.admin = True
         self._commit_to_database(user)
         return user
 
@@ -616,6 +623,9 @@ class BaseTest(TestCase):
 
         self.user1 = self._create_user(username="test1", set_password=True)
         self.user2 = self._create_user(username="test2", set_password=False)
+        self.useradmin = self._create_user(
+            username="testadmin", set_password=True, set_admin=True
+        )
 
         self.group1 = self._create_group(name="test_group1", user=self.user1)
         self.group2 = self._create_group(name="test_group2", user=self.user1)
@@ -674,6 +684,14 @@ class BaseTest(TestCase):
         self.client.post(
             "/login/",
             data=dict(username="test1", password="test"),
+            follow_redirects=True,
+        )
+
+    def login_admin(self):
+        """Authenticate the test user with admin privileges."""
+        self.client.post(
+            "/login/",
+            data=dict(username="testadmin", password="test"),
             follow_redirects=True,
         )
 

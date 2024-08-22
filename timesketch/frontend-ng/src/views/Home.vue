@@ -25,7 +25,6 @@ limitations under the License.
       <span style="font-size: 1.2em">timesketch</span>
 
       <v-spacer></v-spacer>
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
         <span class="white--text">{{ currentUser | initialLetter }}</span>
       </v-avatar>
@@ -46,6 +45,14 @@ limitations under the License.
                 </v-list-item-icon>
                 <v-list-item-content>
                   <v-list-item-title>Toggle theme</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <v-list-item v-on:click="switchUI">
+                <v-list-item-icon>
+                  <v-icon>mdi-view-dashboard-outline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Use the old UI</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
 

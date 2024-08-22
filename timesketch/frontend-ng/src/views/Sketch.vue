@@ -21,7 +21,7 @@ limitations under the License.
 
     <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
       <!-- Empty state -->
-      <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
+      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4" style="background: transparent">
             <center>
@@ -51,6 +51,11 @@ limitations under the License.
         <v-card class="pa-4">
           <ts-rename-sketch @close="renameSketchDialog = false"></ts-rename-sketch>
         </v-card>
+      </v-dialog>
+
+      <!-- Settings dialog -->
+      <v-dialog v-model="showSettingsDialog" width="700px">
+        <ts-settings-dialog></ts-settings-dialog>
       </v-dialog>
 
       <!-- Top horizontal toolbar -->
@@ -101,12 +106,11 @@ limitations under the License.
           </div>
         </v-hover>
         <v-spacer></v-spacer>
-        <v-btn small rounded depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
         <!-- Sharing dialog -->
         <v-dialog v-model="shareDialog" width="500">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn small rounded depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+            <v-btn small rounded depressed color="primary" class="mr -2" v-bind="attrs" v-on="on">
               <v-icon small left>mdi-account-multiple-plus</v-icon>
               Share
             </v-btn>
@@ -114,7 +118,7 @@ limitations under the License.
           <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
         </v-dialog>
 
-        <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <v-avatar color="grey lighten-1" size="25" class="ml-2">
           <span class="white--text">{{ currentUser | initialLetter }}</span>
         </v-avatar>
         <v-menu offset-y>
@@ -193,6 +197,24 @@ limitations under the License.
                   </v-list-item-content>
                 </v-list-item>
 
+                <v-list-item v-on:click="switchUI">
+                  <v-list-item-icon>
+                    <v-icon>mdi-view-dashboard-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Use the old UI</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item @click="showSettingsDialog = true">
+                  <v-list-item-icon>
+                    <v-icon>mdi-cog-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Settings</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
                 <a href="/logout/" style="text-decoration: none; color: inherit">
                   <v-list-item>
                     <v-list-item-icon>
@@ -220,111 +242,48 @@ limitations under the License.
         hide-overlay
         :width="navigationDrawer.width"
       >
-        <!-- Dialog for adding a scenario -->
-        <v-dialog v-model="scenarioDialog" max-width="500px">
-          <v-card>
-            <div class="pa-3">
-              <h3>Investigative Scenarios</h3>
-              <v-select
-                v-model="selectedScenario"
-                :items="scenarioTemplates"
-                item-text="name"
-                return-object
-                label="Select a scenario"
-                outlined
-                class="mt-3"
-              ></v-select>
-              <div v-if="selectedScenario">
-                {{ selectedScenario.description }}
-              </div>
-            </div>
-            <v-divider></v-divider>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
-              <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
-                Add
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+        <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
+        <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
+        <ts-saved-searches
+          v-if="meta.views"
+          :icon-only="isMiniDrawer"
+          @toggleDrawer="toggleDrawer()"
+        ></ts-saved-searches>
+        <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
+        <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
+        <ts-graphs :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-graphs>
+        <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
+        <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
+        <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
+        <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
+        <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
+        <ts-visualizations :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-visualizations>
+      </v-navigation-drawer>
 
-        <v-tabs v-model="leftPanelTab" grow :next-icon="null" :prev-icon="null">
-          <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
-        </v-tabs>
-        <v-divider></v-divider>
-        <v-tabs-items v-model="leftPanelTab">
-          <v-tab-item :transition="false">
-            <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
-            <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
-            <ts-saved-searches
-              v-if="meta.views"
-              :icon-only="isMiniDrawer"
-              @toggleDrawer="toggleDrawer()"
-            ></ts-saved-searches>
-            <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
-            <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
-            <ts-graphs :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-graphs>
-            <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
-            <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
-            <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
-            <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
-            <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
-          </v-tab-item>
-          <v-tab-item :transition="false">
-            <ts-scenario
-              v-for="scenario in activeScenarios"
-              :key="scenario.id"
-              :scenario="scenario"
-              :icon-only="isMiniDrawer"
-              @toggleDrawer="toggleDrawer()"
-            ></ts-scenario>
-            <v-row class="mt-0 px-2" flat v-show="!isMiniDrawer">
-              <v-col cols="6">
-                <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
-                  >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
-                >
-                <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
-                  ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
-                >
-              </v-col>
-
-              <v-col cols="6">
-                <v-btn
-                  small
-                  text
-                  color="primary"
-                  v-if="hiddenScenarios.length"
-                  @click="showHidden = !showHidden"
-                  class="mt-1"
-                >
-                  <small
-                    ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
-                      hiddenScenarios.length
-                    }})</small
-                  >
-                </v-btn>
-              </v-col>
-            </v-row>
-
-            <div v-if="showHidden">
-              <ts-scenario
-                v-for="scenario in hiddenScenarios"
-                :key="scenario.id"
-                :scenario="scenario"
-                :icon-only="isMiniDrawer"
-                @toggleDrawer="toggleDrawer()"
-              ></ts-scenario>
-            </div>
-          </v-tab-item>
-        </v-tabs-items>
+      <!-- Right panel -->
+      <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
+        <template v-slot:prepend>
+          <v-toolbar flat>
+            <v-toolbar-title>Right Side Panel</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn icon @click="showRightSidePanel = false">
+              <v-icon title="Close sidepanel">mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+        </template>
+        <v-container> TODO: Add content here </v-container>
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->
-      <v-main class="notransition mt-5">
+      <v-main class="notransition">
+        <!-- Scenario context -->
+        <!--<ts-scenario-navigation v-if="sketch.status && hasTimelines && !isArchived"></ts-scenario-navigation>-->
+        <ts-question-card v-if="sketch.status && hasTimelines && !isArchived"></ts-question-card>
+
         <router-view
           v-if="sketch.status && hasTimelines && !isArchived"
           @setTitle="(title) => (this.title = title)"
+          class="mt-n3"
         ></router-view>
       </v-main>
 
@@ -383,7 +342,6 @@ import ApiClient from '../utils/RestApiClient.js'
 import EventBus from '../event-bus.js'
 import dayjs from '@/plugins/dayjs'
 
-import TsScenario from '../components/Scenarios/Scenario.vue'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches.vue'
 import TsDataTypes from '../components/LeftPanel/DataTypes.vue'
 import TsTags from '../components/LeftPanel/Tags.vue'
@@ -398,12 +356,14 @@ import TsShareCard from '../components/ShareCard.vue'
 import TsRenameSketch from '../components/RenameSketch.vue'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
+import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
+import TsQuestionCard from '../components/Scenarios/QuestionCard.vue'
+import TsSettingsDialog from '../components/SettingsDialog.vue'
 
 export default {
   props: ['sketchId'],
   components: {
-    TsScenario,
     TsSavedSearches,
     TsDataTypes,
     TsTags,
@@ -419,14 +379,17 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
+    TsVisualizations,
+    TsQuestionCard,
+    TsSettingsDialog,
   },
   data() {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 410,
+        width: 56,
       },
-      isMiniDrawer: false,
+      isMiniDrawer: true,
       selectedScenario: null,
       scenarioDialog: false,
       showLeftPanel: false,
@@ -445,6 +408,10 @@ export default {
       contextStartTime: null,
       contextEndTime: null,
       contextTimeWindowSeconds: 300,
+      showFacetMenu: false,
+      showQuestionMenu: false,
+      showRightSidePanel: false,
+      showSettingsDialog: false,
     }
   },
   mounted() {
@@ -452,16 +419,20 @@ export default {
     this.showLeftPanel = false
     this.$store.dispatch('updateSketch', this.sketchId).then(() => {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
-      this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
-      this.loadingSketch = false
+      this.$store.dispatch('updateUserSettings').then(() => {
+        if (this.userSettings.showLeftPanel) {
+          this.toggleDrawer()
+        }
+      })
       if (this.hasTimelines && !this.isArchived) {
         this.showLeftPanel = true
       }
+      this.loadingSketch = false
     })
     EventBus.$on('showContextWindow', this.showContextWindow)
   },
@@ -475,32 +446,17 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    userSettings() {
+      return this.$store.state.settings
+    },
     isArchived() {
       if (!this.sketch.status || !this.sketch.status.length) {
         return false
       }
       return this.sketch.status[0].status === 'archived'
     },
-    scenarios() {
-      return this.$store.state.scenarios
-    },
-    scenarioTemplates() {
-      return this.$store.state.scenarioTemplates
-    },
     currentUser() {
       return this.$store.state.currentUser
-    },
-    activeScenarios() {
-      if (!this.scenarios) {
-        return []
-      }
-      return this.scenarios.filter((scenario) => !scenario.status.length || scenario.status[0].status === 'active')
-    },
-    hiddenScenarios() {
-      if (!this.scenarios) {
-        return []
-      }
-      return this.scenarios.filter((scenario) => scenario.status.length && scenario.status[0].status === 'hidden')
     },
     hasTimelines() {
       return this.sketch.timelines && this.sketch.timelines.length
@@ -614,23 +570,15 @@ export default {
     switchUI: function () {
       window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
-    addScenario: function (scenarioId) {
-      this.scenarioDialog = false
-      ApiClient.addScenario(this.sketch.id, scenarioId)
-        .then((response) => {
-          this.$store.dispatch('updateScenarios', this.sketch.id)
-        })
-        .catch((e) => {})
-    },
     toggleDrawer: function () {
-      this.navigationDrawer.width = 410
-      if (this.isMiniDrawer) {
+      if (this.navigationDrawer.width > 56) {
+        this.navigationDrawer.width = 56
+        this.isMiniDrawer = true
+      } else {
+        this.navigationDrawer.width = 350
         setTimeout(() => {
           this.isMiniDrawer = false
         }, 100)
-      } else {
-        this.navigationDrawer.width = 56
-        this.isMiniDrawer = true
       }
     },
   },

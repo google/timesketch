@@ -21,7 +21,7 @@ limitations under the License.
         v-if="currentGraphPlugin || currentSavedGraph"
         :graph-plugin-name="currentGraphPlugin"
         :saved-graph-id="currentSavedGraph"
-        canvas-height="80vh"
+        canvas-height="70vh"
       ></ts-cytoscape>
     </div>
   </v-container>

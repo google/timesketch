@@ -14,6 +14,7 @@
 """Aggregator module."""
 
 # Register all aggregators here by importing them.
+from timesketch.lib.aggregators import apex
 from timesketch.lib.aggregators import bucket
 from timesketch.lib.aggregators import date_histogram
 from timesketch.lib.aggregators import feed

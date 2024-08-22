@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for sigma_util score."""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -47,6 +48,49 @@ falsepositives:
     - Monitoring tools
     - Legitimate system administration
 level: low
+"""
+
+SIGMA_MOCK_RULE_TEST5 = r"""
+
+title: Proxy Execution via Wuauclt
+id: af77cf95-c469-471c-b6a0-946c685c4798
+related:
+    - id: ba1bb0cb-73da-42de-ad3a-de10c643a5d0
+      type: obsoletes
+    - id: d7825193-b70a-48a4-b992-8b5b3015cc11
+      type: obsoletes
+status: test
+description: Detects the use of the Windows Update Client binary (wuauclt.exe) to proxy execute code.
+references:
+    - https://dtm.uk/wuauclt/
+    - https://blog.malwarebytes.com/threat-intelligence/2022/01/north-koreas-lazarus-apt-leverages-windows-update-client-github-in-latest-campaign/
+author: Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), Florian Roth (Nextron Systems), Sreeman, FPT.EagleEye Team
+date: 2020/10/12
+modified: 2023/02/13
+tags:
+    - attack.defense_evasion
+    - attack.t1218
+    - attack.execution
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        - Image|endswith: '\wuauclt.exe'
+        - OriginalFileName: 'wuauclt.exe'
+    selection_cli:
+        CommandLine|contains|all:
+            - 'UpdateDeploymentProvider'
+            - '.dll'
+            - 'RunHandlerComServer'
+    filter:
+        CommandLine|contains:
+            - ' /UpdateDeploymentProvider UpdateDeploymentProvider.dll '
+            - ' wuaueng.dll '
+    condition: all of selection_* and not filter
+falsepositives:
+    - Unknown
+level: high
 """
 
 
@@ -150,6 +194,49 @@ level: high
         self.assertIn("2020/06/26", rule.get("date"))
         self.assertIsInstance(rule.get("date"), str)
 
+    def test_get_rule_by_text_no_sanitize(self):
+        """Test getting sigma rule by text with no sanitization."""
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
+title: TEST
+id: BLAH
+status: test
+description: test
+author: test
+date: 2020/02/01
+modified: 2020/02/01
+tags:
+    - tag1
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        - Image|endswith: '\foo.exe'
+        - OriginalFileName: 'origfile.exe'
+    selection_cli:
+        CommandLine|contains|all:
+            - 'bar'
+            - '.dll'
+            - 'Baz'
+    filter:
+        CommandLine|contains:
+            - ' /foo bar.dll '
+            - ' baz.dll '
+    condition: all of selection_* and not filter
+falsepositives:
+    - Unknown
+level: high
+""",
+            sanitize=True,
+        )
+
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            '(data_type:"windows:evtx:record" AND event_identifier:("1" OR "4688") AND source_name:("Microsoft-Windows-Sysmon" OR "Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND ((message:"\\\\foo.exe" OR xml_string:"origfile.exe") AND (xml_string:*bar* AND xml_string:*.dll* AND xml_string:"Baz")) AND (NOT (xml_string:(" \\/foo bar.dll " OR " baz.dll "))))',  # pylint: disable=line-too-long
+            rule.get("search_query"),
+        )
+
     def test_get_rule_by_text_parsing_error(self):
         """Test getting sigma rule by text with a rule causing parsing error."""
         with self.assertRaises(sigma_exceptions.SigmaParseError):
@@ -188,7 +275,6 @@ falsepositives:
 level: high
 """
         )
-
         self.assertIsNotNone(rule)
         self.assertEqual(
             '("Whitespace at" OR " beginning " OR " and extra text ")',
@@ -283,7 +369,7 @@ detection:
         self.assertIsNotNone(rule)
         self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
-            r'("aaa:bbb" OR "ccc\:\:ddd")',
+            '("aaa:bbb" OR "ccc\\:\\:ddd")',
             rule.get("search_query"),
         )
 
@@ -461,7 +547,7 @@ detection:
         )
         self.assertIsNotNone(rule)
         self.assertEqual(
-            r'("onlyoneterm" OR "two words" OR "completely new term")',
+            '("onlyoneterm" OR "two words" OR "completely new term")',
             rule.get("search_query"),
         )
 

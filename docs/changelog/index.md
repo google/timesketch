@@ -7,6 +7,65 @@ hide:
 
 # Changelog
 
+
+## Version 20240328
+Released: 2024-03-28
+
+### ⚠️ Note
+Upgrading to this Timesketch version requires a database upgrade!
+
+See https://timesketch.org/guides/admin/upgrade/ for more details.
+
+### What's Changed
+#### ✨ Features
+
+* DFIQ new UI and navigation by @berggren in [#3041](https://github.com/google/timesketch/pull/3041)
+* User profile and settings support by @berggren in [3048](https://github.com/google/timesketch/pull/3048)
+* Enhancements to Yeti indicators by @tomchop in [3038](https://github.com/google/timesketch/pull/3038)
+
+#### 🐞 Fixes
+
+* Improvements to the sigma handling by @tomchop in [3050](https://github.com/google/timesketch/pull/3050)
+* Update run_analyzers in the api client by @jkppr in [3037](https://github.com/google/timesketch/pull/3037)
+* Fix a bug in the feature_extraction analyzer by @jkppr in [3047](https://github.com/google/timesketch/pull/3047)
+
+
+**Full Changelog**: [20240207...20240328](https://github.com/google/timesketch/compare/20240207...20240328)
+
+## Version 20240207
+Released: 2024-02-07
+
+### What's Changed
+#### ✨ Features
+
+* Collapsable left panel by @berggren in [#3008](https://github.com/google/timesketch/pull/3008)
+* Support for Large Language Model (LLM) services by @berggren in [#3019](https://github.com/google/timesketch/pull/3019)
+* Implement user management (create, list, get) via API by @lo-chr in [#3024](https://github.com/google/timesketch/pull/3024)
+* Setup frontend unit tests with vitest by @Annoraaq in [#3013](https://github.com/google/timesketch/pull/3013)
+
+#### 🐞 Fixes
+
+* Move "old UI" button by @jkppr in [#3033](https://github.com/google/timesketch/pull/3033)
+* Mark events with indicator's relevant_tags (Yeti) by @tomchop in [#3022](https://github.com/google/timesketch/pull/3022)
+* Fix failing Plaso uploads after 6 months by @jkppr in [#3017](https://github.com/google/timesketch/pull/3017)
+* Fix error handling in the API client by @jkppr in [#3006](https://github.com/google/timesketch/pull/3006)
+* Add optional TLS verification by @tomchop in [#3016](https://github.com/google/timesketch/pull/3016)
+* Yeti analyzer fix: use session object by @tomchop in [#3020](https://github.com/google/timesketch/pull/3020)
+* Adjust query for Yeti indicators by @tomchop in [#3009](https://github.com/google/timesketch/pull/3009)
+* Bump cryptography from 41.0.4 to 41.0.6 by @dependabot in [#2998](https://github.com/google/timesketch/pull/2998)
+* SQLalchemy upgrade - step one by @berggren in [#2979](https://github.com/google/timesketch/pull/2979)
+* Fix: get and use access token for Yeti by @tomchop in [#3010](https://github.com/google/timesketch/pull/3010)
+* Adding form validation to prevent names > 255 char. by @jkppr in [#3026](https://github.com/google/timesketch/pull/3026)
+* Update black formatting by @jkppr in [#3031](https://github.com/google/timesketch/pull/3031)
+* Timesketch API client: Adding type check to prevent error. by @jkppr in [#3030](https://github.com/google/timesketch/pull/3030)
+* Fix double escaping in sigma_util causing yaml.parser.ParserError by @lo-chr in [#3028](https://github.com/google/timesketch/pull/3028)
+* UI build 20240207 by @jkppr in [#3035](https://github.com/google/timesketch/pull/3035)
+
+### New Contributors
+* @lo-chr made their first contribution in [#3028](https://github.com/google/timesketch/pull/3028)
+
+**Full Changelog**: [20231206...20240207](https://github.com/google/timesketch/compare/20231206...20240207)
+
 ## Version 20231206
 Released: 2023-12-06
 
@@ -41,7 +100,7 @@ Released: 2023-12-06
 * Update the analyzer timeline picker by @jkppr in [#3001](https://github.com/google/timesketch/pull/3001)
 * UI build 20231206 by @jkppr in [#3002](https://github.com/google/timesketch/pull/3002)
 
-## New Contributors
+### New Contributors
 * @JohannesLks made their first contribution in [#2990](https://github.com/google/timesketch/pull/2990)
 * @coloradosarge made their first contribution in [#3000](https://github.com/google/timesketch/pull/3000)
 
@@ -86,7 +145,7 @@ See https://timesketch.org/guides/admin/upgrade/ for more details.
 * Sanitise HTML from Unfurl by @berggren in https://github.com/google/timesketch/pull/2959
 * Context link backwards compatibility & sanitation by @jkppr in https://github.com/google/timesketch/pull/2958
 
-## New Contributors
+### New Contributors
 * @NightAcrobat777 made their first contribution in https://github.com/google/timesketch/pull/2951
 * @fazledyn-or made their first contribution in https://github.com/google/timesketch/pull/2940
 * @bwhelan212 made their first contribution in https://github.com/google/timesketch/pull/2954

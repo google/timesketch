@@ -298,33 +298,6 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
             # Commit the event to the datastore.
             event.commit()
 
-        aggregate_results = config.get("aggregate", False)
-        create_view = config.get("create_view", False)
-
-        # If aggregation is turned on, we automatically create an aggregation.
-        if aggregate_results:
-            create_view = True
-
-        if create_view and event_counter:
-            view = self.sketch.add_view(
-                name, self.NAME, query_string=query, query_dsl=query_dsl
-            )
-
-            if aggregate_results:
-                params = {
-                    "field": store_as,
-                    "limit": 20,
-                    "index": [self.timeline_id],
-                }
-                self.sketch.add_aggregation(
-                    name="Top 20 for: {0:s} [{1:s}]".format(store_as, name),
-                    agg_name="field_bucket",
-                    agg_params=params,
-                    description="Created by the feature extraction analyzer",
-                    view_id=view.id,
-                    chart_type="hbarchart",
-                )
-
         return "Feature extraction [{0:s}] extracted {1:d} features.".format(
             name, event_counter
         )

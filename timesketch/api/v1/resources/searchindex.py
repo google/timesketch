@@ -214,6 +214,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN, "\n".join(error_strings))
 
         searchindex.set_status(status="deleted")
+        # TODO: Actually implement to delete the index
         db_session.commit()
 
         other_indexes = SearchIndex.query.filter_by(

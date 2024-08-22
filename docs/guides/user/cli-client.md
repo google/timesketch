@@ -505,3 +505,37 @@ It is also possible to provide a comma separated list of tags to remove. The fol
 timesketch events remove_tag --timeline-id 4 --event-id k8P1MYcBkeTGnypeeKJL --tag foobar333,fooba123
 200
 ```
+
+## Timelines
+
+### List timelines
+
+To list all timelines in a given sketch use: `timelines list`.
+
+```bash
+timesketch --sketch 1 timelines list
+1 foobar
+2 foobar3
+```
+
+It is also possible to get all the output as JSON.
+
+### Rename timeline
+
+To rename a single timeline in a sketch, the command `timelines rename` can be used.
+
+```bash
+timesketch --sketch 1 timelines rename 1 foobar23
+```
+
+### Delete a timeline
+
+The cli client is using the API to delete a timeline.
+
+As of August 2024, the API method to delete a timeline does only mark the reference in the database as deleted, the data will remain in Opensearch.
+
+```bash
+timesketch --sketch 1 timelines delete 1
+Confirm to mark the timeline deleted:: 1 foobar23? [y/N]: y
+Deleted
+```
