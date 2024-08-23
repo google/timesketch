@@ -1,7 +1,8 @@
-display_name: Test Question
+name: Test Question
 description: Test Question
 type: question
 id: Q1001
+uuid: bb094c9a-afb7-4daf-a853-7859d2f99d0c
 tags:
 parent_ids:
   - F1001
