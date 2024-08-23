@@ -715,9 +715,6 @@ class ImportStreamer(object):
         except ValueError:
             return
 
-        if analyzer_names is None:
-            analyzer_names = []
-
         if self._data_lines:
             self.flush(end_stream=True)
 
@@ -725,7 +722,8 @@ class ImportStreamer(object):
         pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
             self._sketch.api.api_root, self._sketch.id
         )
-        data = {"index_name": self._index, "analyzer_names": analyzer_names}
+        
+        data = {"index_name": self._index, "analyzer_names": analyzer_names} if analyzer_names != None else {"index_name": self._index}
         _ = self._sketch.api.session.post(pipe_resource, json=data)
 
     def flush(self, end_stream=True):
