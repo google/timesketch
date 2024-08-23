@@ -93,7 +93,6 @@ export default {
       if (this.approach.steps) {
         this.approach.steps.forEach((step) => {
           if (step.type === 'opensearch-query') {
-            console.log(step)
             opensearchQueries.push(step)
           }
         })
