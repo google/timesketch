@@ -136,13 +136,28 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
         dfiq_id = form.get("dfiq_id")
         display_name = form.get("display_name")
+        uuid = form.get("uuid")
 
-        scenario = next(
-            (scenario for scenario in dfiq.scenarios if scenario.id == dfiq_id),
-            None,
-        )
+        scenario = None
+
+        if uuid:
+            scenario = next(
+                (s for s in dfiq.scenarios if s.uuid == uuid),
+                None,
+            )
+        elif dfiq_id:
+            scenario = next(
+                (s for s in dfiq.scenarios if s.id == dfiq_id),
+                None,
+            )
+        elif display_name:
+            scenario = next(
+                (s for s in dfiq.scenarios if s.name == display_name),
+                None,
+            )
+
         if not scenario:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario template: {dfiq_id}")
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No scenario found matching the provided data: {form}")
 
         if not display_name:
             display_name = scenario.name
@@ -488,19 +503,25 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         scenario_id = form.get("scenario_id")
         facet_id = form.get("facet_id")
         template_id = form.get("template_id")
+        uuid = form.get("uuid")
 
         scenario = Scenario.get_by_id(scenario_id) if scenario_id else None
         facet = Facet.get_by_id(facet_id) if facet_id else None
 
-        if template_id:
+        if template_id or uuid:
             dfiq = load_dfiq_from_config()
             if not dfiq:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server"
                 )
-            dfiq_question = [
-                question for question in dfiq.questions if question.id == template_id
-            ][0]
+            if uuid:
+                dfiq_question = [
+                    question for question in dfiq.questions if question.uuid == uuid
+                ][0]
+            else:
+                dfiq_question = [
+                    question for question in dfiq.questions if question.id == template_id
+                ][0]
 
         if dfiq_question:
             new_question = InvestigativeQuestion(
