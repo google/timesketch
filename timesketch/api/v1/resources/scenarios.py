@@ -157,7 +157,10 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             )
 
         if not scenario:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No scenario found matching the provided data: {form}")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"No scenario found matching the provided data: {form}",
+            )
 
         if not display_name:
             display_name = scenario.name
@@ -207,10 +210,15 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                     description=question.description,
                     spec_json=question.to_json(),
                     sketch=sketch,
-                    scenario=scenario_sql,
+                    # scenario=scenario_sql,
                     user=current_user,
                 )
-                facet_sql.questions.append(question_sql)
+                # facet_sql.questions.append(question_sql)
+
+                # TODO: This is a tmp hack to make all questions oprhaned!
+                # We need to fix this by loading connected questions as well in
+                # the frontend!
+                db_session.add(question_sql)
 
                 for approach in question.approaches:
                     approach_sql = InvestigativeQuestionApproach(
@@ -520,7 +528,9 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                 ][0]
             else:
                 dfiq_question = [
-                    question for question in dfiq.questions if question.id == template_id
+                    question
+                    for question in dfiq.questions
+                    if question.id == template_id
                 ][0]
 
         if dfiq_question:
