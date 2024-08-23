@@ -481,7 +481,8 @@ def main(args=None):
         default=[],
         help=(
             "Set of analyzers that we will automatically run right after the "
-            "timelines are uploaded. The input needs to be the analyzers names, provided as a comma-separated string."
+            "timelines are uploaded. The input needs to be the analyzers names."
+            "Provided as a comma-separated string."
         ),
     )
 

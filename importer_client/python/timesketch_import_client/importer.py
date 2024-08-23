@@ -725,7 +725,7 @@ class ImportStreamer(object):
 
         data = (
             {"index_name": self._index, "analyzer_names": analyzer_names}
-            if analyzer_names != None
+            if analyzer_names is not None
             else {"index_name": self._index}
         )
         _ = self._sketch.api.session.post(pipe_resource, json=data)
