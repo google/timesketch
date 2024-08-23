@@ -424,6 +424,7 @@ export default {
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
+      this.$store.dispatch('updateSystemSettings')
       this.$store.dispatch('updateUserSettings').then(() => {
         if (this.userSettings.showLeftPanel) {
           this.toggleDrawer()

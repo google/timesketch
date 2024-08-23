@@ -30,16 +30,15 @@ limitations under the License.
               </span>
             </strong>
           </span>
-          <v-btn small depressed class="text-none" @click="showDropdown = !showDropdown">
+          <v-btn small depressed class="text-none" color="primary" @click="showDropdown = !showDropdown">
             Change question
             <v-icon small right>mdi-chevron-down</v-icon>
           </v-btn>
         </span>
 
         <span v-if="showEmptySelect && !isLoading">
-          <v-btn text class="text-none" @click="showDropdown = !showDropdown">
-            Select an investigative question
-            <v-icon small right>mdi-chevron-down</v-icon>
+          <v-btn depressed class="text-none ml-n2" color="primary" @click="showDropdown = !showDropdown">
+            Select or create an investigative question
           </v-btn>
         </span>
         <v-spacer></v-spacer>
@@ -55,11 +54,11 @@ limitations under the License.
       </v-toolbar>
 
       <v-card
-        v-if="showDropdown"
+        v-if="showDropdown && !isLoading"
         style="position: absolute; z-index: 1000"
         elevation="10"
         outlined
-        width="100%"
+        width="50%"
         v-click-outside="onClickOutside"
       >
         <v-row>
@@ -69,7 +68,6 @@ limitations under the License.
                 v-model="queryString"
                 placeholder="Find a question, or create a new one.."
                 class="mx-2 mb-1"
-                clearable
                 autofocus
                 hide-details
                 dense
@@ -78,10 +76,17 @@ limitations under the License.
                 solo
                 @keyup.enter="createQuestion()"
               >
-                <template v-slot:prepend>
-                  <v-btn depressed small class="text-none" :disabled="!queryString" @click="createQuestion()">
-                    <v-icon>mdi-plus</v-icon>
-                    Create
+                <template v-slot:append>
+                  <v-btn
+                    depressed
+                    small
+                    class="text-none mt-1 mr-n3"
+                    :disabled="!queryString"
+                    color="primary"
+                    @click="createQuestion()"
+                  >
+                    <v-icon left small>mdi-plus</v-icon>
+                    Create new question
                   </v-btn>
                 </template>
               </v-text-field>
@@ -89,14 +94,15 @@ limitations under the License.
           </v-col>
         </v-row>
         <v-row no-gutters>
-          <v-col cols="6" v-if="matches.questions && matches.questions.length">
+          <v-col cols="12" v-if="matches.questions && matches.questions.length">
             <v-toolbar dense flat>
               <strong
-                >Questions <span style="font-size: 0.7em">({{ matches.questions.length }})</span></strong
+                >Assigned questions for this sketch
+                <span style="font-size: 0.7em">({{ matches.questions.length }})</span></strong
               >
             </v-toolbar>
-            <v-divider></v-divider>
-            <v-list style="max-height: 500px" class="overflow-y-auto">
+
+            <v-list style="max-height: 300px" class="overflow-y-auto">
               <v-list-item-group>
                 <v-list-item
                   v-for="(question, index) in matches.questions"
@@ -108,39 +114,33 @@ limitations under the License.
                     class="mr-2"
                     :disabled="!question.conclusions.length"
                     :color="question.conclusions.length ? 'success' : ''"
-                    >mdi-check-circle-outline</v-icon
+                    >mdi-check-circle</v-icon
                   >
                   <v-list-item-title>{{ question.name }}</v-list-item-title>
                 </v-list-item>
               </v-list-item-group>
             </v-list>
           </v-col>
+        </v-row>
 
-          <v-col :cols="matches.questions ? 6 : 12" v-if="matches.templates.length">
+        <v-row no-gutters>
+          <v-col cols="12" v-if="matches.templates.length">
             <v-toolbar dense flat>
               <strong
-                >DFIQ <span style="font-size: 0.7em">({{ matches.templates.length }})</span></strong
+                >Add DFIQ question <span style="font-size: 0.7em">({{ matches.templates.length }})</span></strong
               >
             </v-toolbar>
-            <v-divider></v-divider>
-            <v-list two-line style="height: 500px" class="overflow-y-auto">
+            <v-list style="height: 300px" class="overflow-y-auto">
               <v-list-item-group>
                 <v-list-item
                   v-for="(question, index) in matches.templates"
                   :key="index"
                   @click="createQuestion(question)"
                 >
+                  <v-icon small class="mr-2">mdi-plus</v-icon>
                   <v-list-item-content>
                     <v-list-item-title> {{ question.name }}</v-list-item-title>
-                    <v-list-item-subtitle :title="question.description">{{
-                      question.description
-                    }}</v-list-item-subtitle>
                   </v-list-item-content>
-                  <v-list-item-action>
-                    <v-btn icon>
-                      <v-icon color="grey lighten-1">mdi-plus</v-icon>
-                    </v-btn>
-                  </v-list-item-action>
                 </v-list-item>
               </v-list-item-group>
             </v-list>
@@ -154,7 +154,7 @@ limitations under the License.
           <v-row no-gutters>
             <v-col>
               <v-tabs v-model="activeTab" background-color="transparent">
-                <v-tab :disabled="!allSuggestedQueries.length" class="text-none">
+                <v-tab :disabled="allSuggestedQueries.length === 0 && !userSettings.generateQuery" class="text-none">
                   Suggested queries
                   <span class="ml-1"
                     ><small
@@ -183,16 +183,36 @@ limitations under the License.
               </v-tabs>
               <v-tabs-items v-model="activeTab" style="background-color: transparent">
                 <!-- Suggested queries -->
-                <v-tab-item :transition="false">
+                <v-tab-item :transition="false" class="mb-2">
                   <div v-if="allSuggestedQueries.length">
-                    <div class="pa-4 markdown-body" style="background-color: transparent">
+                    <div class="mt-4" style="background-color: transparent">
                       <ts-search-chip
                         v-for="query in allSuggestedQueries"
                         :key="query.value"
                         :searchchip="query"
+                        icon="mdi-magnify"
                         type="link"
+                      ></ts-search-chip>
+                    </div>
+                  </div>
+
+                  <div class="mt-1" v-if="userSettings.generateQuery && systemSettings.LLM_PROVIDER">
+                    <div v-if="suggestedQueryLoading" class="pa-2 pl-4">
+                      <v-skeleton-loader type="sentences" width="200"></v-skeleton-loader>
+                    </div>
+                    <div v-if="Object.keys(suggestedQuery).length && !suggestedQueryLoading">
+                      <ts-search-chip
+                        :searchchip="suggestedQuery"
+                        type="link"
+                        icon="mdi-shimmer"
                         class="mb-1"
                       ></ts-search-chip>
+                    </div>
+                    <div v-if="!Object.keys(suggestedQuery).length && !suggestedQueryLoading" class="pl-4">
+                      <v-btn small depressed light class="text-none mt-2 mb-4 btn-gradient" @click="getSuggestedQuery">
+                        <v-icon small left>mdi-shimmer</v-icon>
+                        Generate query</v-btn
+                      >
                     </div>
                   </div>
                 </v-tab-item>
@@ -279,29 +299,6 @@ limitations under the License.
                 </v-tab-item>
               </v-tabs-items>
             </v-col>
-            <v-divider vertical></v-divider>
-            <v-col cols="5">
-              <v-subheader>
-                <strong style="font-size: 1.1em">Search history</strong>
-              </v-subheader>
-              <div v-if="!searchHistory.length" class="px-4">
-                <i style="font-size: 0.9em">Here you will find your recent search history for this question.</i>
-              </div>
-              <div
-                v-for="(searchHistoryItem, index) in searchHistory"
-                :key="index"
-                @click="search(searchHistoryItem)"
-                style="cursor: pointer"
-                class="px-4 mt-n2"
-              >
-                <v-row no-gutters class="pa-1 ml-n1 mb-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-                  <span style="font-size: 0.9em">
-                    <v-icon small>mdi-magnify</v-icon>
-                    {{ searchHistoryItem.query_string }}</span
-                  >
-                </v-row>
-              </div>
-            </v-col>
           </v-row>
         </div>
       </v-expand-transition>
@@ -341,6 +338,8 @@ export default {
       queryString: '',
       showDropdown: false,
       showEmptySelect: false,
+      suggestedQuery: {},
+      suggestedQueryLoading: false,
     }
   },
   computed: {
@@ -349,6 +348,12 @@ export default {
     },
     currentUser() {
       return this.$store.state.currentUser
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
+    },
+    userSettings() {
+      return this.$store.state.settings
     },
     matches() {
       if (!this.queryString) {
@@ -398,6 +403,17 @@ export default {
     },
   },
   methods: {
+    getSuggestedQuery() {
+      this.suggestedQueryLoading = true
+      ApiClient.nl2q(this.sketch.id, this.activeQuestion.display_name)
+        .then((response) => {
+          this.suggestedQuery = response.data
+          this.suggestedQueryLoading = false
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
     getQuestionTemplates() {
       this.isLoading = true
       ApiClient.getQuestionTemplates()
@@ -488,7 +504,7 @@ export default {
       this.queryString = ''
       this.currentTitle = question.name
       this.expanded = true
-      this.getSearchHistory()
+      this.suggestedQuery = {}
 
       // Set active tab
       if (this.activeQuestion.conclusions.length) {
@@ -625,5 +641,21 @@ export default {
 }
 .textfield-light-background {
   background-color: #fff !important;
+}
+.btn-gradient {
+  background: radial-gradient(
+    circle at 100% 0%,
+    #a0d9f2,
+    #a7d9f5,
+    #add9f7,
+    #b3dafa,
+    #b9dafb,
+    #bfdafd,
+    #c5dbfe,
+    #cadbff
+  );
+}
+.skeleton-gradient {
+  color: radial-gradient(circle at 100% 0%, #a0d9f2, #a7d9f5, #add9f7, #b3dafa, #b9dafb, #bfdafd, #c5dbfe, #cadbff);
 }
 </style>

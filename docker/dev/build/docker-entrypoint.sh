@@ -20,7 +20,7 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
   ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
-  ln -s /usr/local/src/timesketch/data/scenarios /etc/timesketch/
+  ln -s /usr/local/src/timesketch/data/dfiq /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/context_links.yaml /etc/timesketch/context_links.yaml
   ln -s /usr/local/src/timesketch/data/plaso_formatters.yaml /etc/timesketch/plaso_formatters.yaml
 

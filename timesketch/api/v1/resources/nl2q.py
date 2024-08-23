@@ -200,24 +200,30 @@ class Nl2qResource(Resource):
 
         question = form.get("question")
         prompt = self.build_prompt(question, sketch_id)
+        result_schema = {
+            "name": "AI generated search query",
+            "query_string": None,
+            "error": None,
+        }
         try:
             llm = manager.LLMManager().get_provider(llm_provider)()
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: {}".format(e))
-            abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "Error in loading the LLM Provider. Please contact your "
-                "Timesketch administrator.",
+            result_schema["error"] = (
+                "Error loading LLM Provider. Please try again later!"
             )
+            return jsonify(result_schema)
 
         try:
             prediction = llm.generate(prompt)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error NL2Q prompt: {}".format(e))
-            abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "An error occurred generating the NL2Q prediction via the "
-                "defined LLM. Please contact your Timesketch administrator.",
+            result_schema["error"] = (
+                "An error occurred generating the query via the defined LLM. "
+                "Please try again later!"
             )
-        result = {"question": question, "llm_query": prediction}
-        return jsonify(result)
+            return jsonify(result_schema)
+        # The model sometimes output tripple backticks that needs to be removed.
+        result_schema["query_string"] = prediction.strip("```")
+
+        return jsonify(result_schema)

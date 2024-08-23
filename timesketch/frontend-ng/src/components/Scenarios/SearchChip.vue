@@ -19,13 +19,18 @@ limitations under the License.
       <v-icon class="mr-1" small>mdi-magnify</v-icon>
       {{ displayName }}
     </v-chip>
-    <div v-if="type === 'link'" @click="search(queryString)" style="cursor: pointer">
-      <v-row no-gutters class="pa-1" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <span style="font-size: 0.9em">
-          <v-icon small>mdi-magnify</v-icon>
-          {{ displayName }}</span
-        >
-      </v-row>
+    <div v-if="type === 'link'" @click="search(queryString)" :class="!searchchip.error ? 'enabled' : ''">
+      <div style="font-size: 0.9em" class="pb-1 pl-1" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+        <span>
+          <v-icon small class="mr-2 ml-2">{{ icon }}</v-icon>
+          <strong>{{ displayName }}</strong>
+          <br />
+          <small v-if="searchchip.error" class="ml-8" style="font-size: 0.8em">{{ searchchip.error }}</small>
+          <div v-else style="width: 90%" class="truncate-with-ellipsis">
+            <small class="ml-8" style="font-size: 0.8em">{{ queryString }}</small>
+          </div>
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -45,7 +50,7 @@ const defaultQueryFilter = () => {
 }
 
 export default {
-  props: ['searchchip', 'type'],
+  props: ['searchchip', 'type', 'icon'],
   computed: {
     displayName() {
       return this.searchchip.name || this.searchchip.description
@@ -56,6 +61,9 @@ export default {
   },
   methods: {
     search(queryString) {
+      if (this.searchchip.error) {
+        return
+      }
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
@@ -65,3 +73,15 @@ export default {
   },
 }
 </script>
+
+<style scoped lang="scss">
+.truncate-with-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.enabled {
+  cursor: pointer;
+}
+</style>

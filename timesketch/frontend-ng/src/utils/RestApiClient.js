@@ -508,11 +508,18 @@ export default {
     }
     return RestApiClient.post('/unfurl/', formData)
   },
+  getSystemSettings() {
+    return RestApiClient.get('/settings/')
+  },
   getUserSettings() {
     return RestApiClient.get('/users/me/settings/')
   },
   saveUserSettings(settings) {
     let formData = { settings: settings }
     return RestApiClient.post('/users/me/settings/', formData)
+  },
+  nl2q(sketchId, question) {
+    let formData = { question: question }
+    return RestApiClient.post('/sketches/' + sketchId + '/nl2q/', formData)
   },
 }

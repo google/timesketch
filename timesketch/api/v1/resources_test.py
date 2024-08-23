@@ -1222,7 +1222,11 @@ class TestNl2qResource(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictEqual(
             response.json,
-            {"question": "Question for LLM?", "llm_query": "LLM generated query"},
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
         )
 
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
@@ -1253,6 +1257,8 @@ class TestNl2qResource(BaseTest):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        # data = json.loads(response.get_data(as_text=True))
+        # self.assertIsNotNone(data.get("error"))
 
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
@@ -1315,7 +1321,9 @@ class TestNl2qResource(BaseTest):
             data=json.dumps(data),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        data = json.loads(response.get_data(as_text=True))
+        self.assertIsNotNone(data.get("error"))
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_no_llm_provider(self):
@@ -1379,4 +1387,19 @@ class TestNl2qResource(BaseTest):
             data=json.dumps(data),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        data = json.loads(response.get_data(as_text=True))
+        self.assertIsNotNone(data.get("error"))
+
+
+class SystemSettingsResourceTest(BaseTest):
+    """Test system settings resource."""
+
+    resource_url = "/api/v1/settings/"
+
+    def test_system_settings_resource(self):
+        """Authenticated request to get system settings."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        expected_response = {"LLM_PROVIDER": "test"}
+        self.assertEqual(response.json, expected_response)

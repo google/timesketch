@@ -23,13 +23,19 @@ limitations under the License.
     </v-dialog>
 
     <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
-      <p class="ml-n2 mt-n4">
+      <p>
+        Your search <span v-if="currentQueryString">'{{ currentQueryString }}'</span
+        ><span v-if="filterChips.length"> in combination with the selected filter terms</span> did not match any events.
+      </p>
+      <p>
         <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn small text rounded color="secondary" v-bind="attrs" v-on="on">
-              <v-icon left small title="Save current search">mdi-content-save-outline</v-icon>
-              save this search
-            </v-btn>
+            <div v-bind="attrs" v-on="on">
+              <v-btn small depressed>
+                <v-icon left small title="Save current search">mdi-content-save-outline</v-icon>
+                Save search
+              </v-btn>
+            </div>
           </template>
 
           <v-card class="pa-4">
@@ -61,9 +67,6 @@ limitations under the License.
             </v-card-actions>
           </v-card>
         </v-dialog>
-      </p>
-      <p>
-        Your search <span v-if="currentQueryString">'{{ currentQueryString }}'</span><span v-if="filterChips.length"> in combination with the selected filter terms</span> did not match any events.
       </p>
       <p>Suggestions:</p>
       <ul>

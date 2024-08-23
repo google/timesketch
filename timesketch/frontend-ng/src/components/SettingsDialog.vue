@@ -29,6 +29,17 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
+      <v-list-item v-if="systemSettings.LLM_PROVIDER">
+        <v-list-item-action>
+          <v-switch v-model="settings.generateQuery" color="primary" @change="saveSettings()"></v-switch>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>AI generated queries</v-list-item-title>
+          <v-list-item-subtitle
+            >Select to enable experimental AI query suggestions for DFIQ questions</v-list-item-subtitle
+          >
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
   </v-card>
 </template>
@@ -43,12 +54,18 @@ const DEFAULT_SETTINGS = {
 export default {
   data() {
     return {
-      settings: null,
+      settings: {
+        showLeftPanel: true,
+        generateQuery: true,
+      },
     }
   },
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
     },
     userSettings() {
       return this.$store.state.settings

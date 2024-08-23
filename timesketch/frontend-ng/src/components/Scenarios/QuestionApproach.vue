@@ -28,7 +28,7 @@ limitations under the License.
         :key="opensearchQuery.value"
         :searchchip="opensearchQuery"
         type="link"
-        class="mb-1"
+        class="mb-1 mt-2"
       ></ts-search-chip>
     </div>
 
