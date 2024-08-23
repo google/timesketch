@@ -411,7 +411,7 @@ export default {
     },
     getSketchQuestions() {
       this.isLoading = true
-      ApiClient.getOrphanQuestions(this.sketch.id)
+      return ApiClient.getOrphanQuestions(this.sketch.id)
         .then((response) => {
           this.sketchQuestions = response.data.objects[0]
           this.isLoading = false
@@ -536,27 +536,40 @@ export default {
   },
   mounted() {
     EventBus.$on('createBranch', this.getSearchHistory)
+    let questionUUID = this.$route.query.question_uuid
     this.getQuestionTemplates()
-    this.getSketchQuestions()
-    // Restore active question from local storage
-    let storageKey = 'sketchContext' + this.sketch.id.toString()
-    let storedContext = localStorage.getItem(storageKey)
-    let context = {}
-    if (storedContext) {
-      context = JSON.parse(storedContext)
-    }
-    if (Object.keys(context).length) {
-      this.isLoading = true
-      ApiClient.getQuestion(this.sketch.id, context.questionId)
-        .then((response) => {
-          this.setActiveQuestion(response.data.objects[0])
-          this.isLoading = false
-        })
-        .catch((e) => {
-          console.error(e)
-        })
-    } else {
-      this.showEmptySelect = true
+    this.getSketchQuestions().then(() => {
+      if (questionUUID) {
+        const question = this.sketchQuestions.find((question) => question.uuid === questionUUID)
+        if (!question) {
+          this.errorSnackBar('No question found with that UUID')
+          this.showEmptySelect = true
+          return
+        }
+        this.setActiveQuestion(question)
+      }
+    })
+    if (!questionUUID) {
+      // Restore active question from local storage
+      let storageKey = 'sketchContext' + this.sketch.id.toString()
+      let storedContext = localStorage.getItem(storageKey)
+      let context = {}
+      if (storedContext) {
+        context = JSON.parse(storedContext)
+      }
+      if (Object.keys(context).length) {
+        this.isLoading = true
+        ApiClient.getQuestion(this.sketch.id, context.questionId)
+          .then((response) => {
+            this.setActiveQuestion(response.data.objects[0])
+            this.isLoading = false
+          })
+          .catch((e) => {
+            console.error(e)
+          })
+      } else {
+        this.showEmptySelect = true
+      }
     }
   },
 }
