@@ -32,8 +32,11 @@ class Component(object):
         child_ids: The child IDs of the component.
     """
 
-    def __init__(self, dfiq_id, name, description=None, tags=None, parent_ids=None):
+    def __init__(
+        self, dfiq_id, uuid, name, description=None, tags=None, parent_ids=None
+    ):
         self.id = dfiq_id
+        self.uuid = uuid
         self.name = name
         self.description = description
         self.tags = tags
@@ -58,18 +61,21 @@ class Component(object):
         )
 
 
-class Approach(Component):
+class Approach:
     """Class that represents an approach.
 
     Attributes:
-        templates: The templates of the approach.
+        search_templates: The search templates of the approach.
     """
 
-    def __init__(self, dfiq_id, name, description, tags, view):
+    def __init__(self, approach):
         """Initializes the approach."""
-        self._parent_ids = [dfiq_id.split(".")[0]]
-        self._view = view
-        super().__init__(dfiq_id, name, description, tags, self._parent_ids)
+        self.name = approach["name"]
+        self.description = approach.get("description")
+        self.notes = approach.get("notes")
+        self.references = approach.get("references")
+        self.steps = approach.get("steps")
+        self.tags = approach.get("tags")
 
     def _get_timesketch_analyses(self):
         """Returns the Timesketch analysis provider of the approach.
@@ -81,13 +87,17 @@ class Approach(Component):
         Returns:
             A list of Timesketch analysis approaches.
         """
-        timesketch_analyses = []
-        for processor in self._view.get("processors", []):
-            if "timesketch" in processor.get("analysis", {}):
-                provider = processor["analysis"]["timesketch"]
-                for analysis in provider:
-                    timesketch_analyses.append(analysis)
-        return timesketch_analyses
+        analysis_types = ["timesketch-searchtemplate", "opensearch-query"]
+        return [
+            step
+            for step in self.steps
+            if step["stage"] == "analysis" and step["type"] in analysis_types
+        ]
+
+    def to_json(self):
+        return json.dumps(
+            self, default=lambda o: o.__dict__, sort_keys=False, allow_nan=False
+        )
 
     @property
     def search_templates(self):
@@ -99,33 +109,27 @@ class Approach(Component):
         return [
             analysis
             for analysis in self._get_timesketch_analyses()
-            if analysis["type"] == "searchtemplate"
+            if analysis["type"] == "timesketch-searchtemplate"
         ]
 
 
 class Question(Component):
     """Class that represents a question."""
 
-    def __init__(self, dfiq_id, name, description, tags, parent_ids):
+    def __init__(self, dfiq_id, uuid, name, description, tags, parent_ids, approaches):
         """Initializes the question."""
-        super().__init__(dfiq_id, name, description, tags, parent_ids)
-
-    @property
-    def approaches(self):
-        """Returns the approaches of the question.
-
-        Returns:
-            A list of IDs of approaches linked to this question.
-        """
-        return self.child_ids
+        self.approaches = []
+        if approaches:
+            self.approaches = [Approach(approach) for approach in approaches]
+        super().__init__(dfiq_id, uuid, name, description, tags, parent_ids)
 
 
 class Facet(Component):
     """Class that represents a facet."""
 
-    def __init__(self, dfiq_id, name, description, tags, parent_ids):
+    def __init__(self, dfiq_id, uuid, name, description, tags, parent_ids):
         """Initializes the facet."""
-        super().__init__(dfiq_id, name, description, tags, parent_ids)
+        super().__init__(dfiq_id, uuid, name, description, tags, parent_ids)
 
     @property
     def questions(self):
@@ -140,9 +144,9 @@ class Facet(Component):
 class Scenario(Component):
     """Class that represents a scenario."""
 
-    def __init__(self, dfiq_id, name, description, tags):
+    def __init__(self, dfiq_id, uuid, name, description, tags):
         """Initializes the scenario."""
-        super().__init__(dfiq_id, name, description, tags)
+        super().__init__(dfiq_id, uuid, name, description, tags)
 
     @property
     def facets(self):
@@ -216,18 +220,6 @@ class DFIQ:
             key=lambda x: x.id,
         )
 
-    @property
-    def approaches(self):
-        """Returns the approaches of DFIQ.
-
-        Returns:
-            A list of Approach objects.
-        """
-        return sorted(
-            [c for c in self.components.values() if isinstance(c, Approach)],
-            key=lambda x: x.id,
-        )
-
     @staticmethod
     def _convert_yaml_object_to_dfiq_component(yaml_object):
         """Converts a YAML object to a DFIQ component.
@@ -238,14 +230,16 @@ class DFIQ:
         if yaml_object["type"] == "scenario":
             return Scenario(
                 yaml_object["id"],
-                yaml_object["display_name"],
+                yaml_object["uuid"],
+                yaml_object["name"],
                 yaml_object.get("description"),
                 yaml_object.get("tags"),
             )
         if yaml_object["type"] == "facet":
             return Facet(
                 yaml_object["id"],
-                yaml_object["display_name"],
+                yaml_object["uuid"],
+                yaml_object["name"],
                 yaml_object.get("description"),
                 yaml_object.get("tags"),
                 yaml_object.get("parent_ids"),
@@ -253,18 +247,12 @@ class DFIQ:
         if yaml_object["type"] == "question":
             return Question(
                 yaml_object["id"],
-                yaml_object["display_name"],
+                yaml_object["uuid"],
+                yaml_object["name"],
                 yaml_object.get("description"),
                 yaml_object.get("tags"),
                 yaml_object.get("parent_ids"),
-            )
-        if yaml_object["type"] == "approach":
-            return Approach(
-                yaml_object["id"],
-                yaml_object["display_name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
-                yaml_object.get("view"),
+                yaml_object.get("approaches"),
             )
         return None
 

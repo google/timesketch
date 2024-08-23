@@ -14,6 +14,7 @@
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
 import logging
+import json
 
 from flask import jsonify
 from flask import request
@@ -135,19 +136,38 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
         dfiq_id = form.get("dfiq_id")
         display_name = form.get("display_name")
+        uuid = form.get("uuid")
 
-        scenario = next(
-            (scenario for scenario in dfiq.scenarios if scenario.id == dfiq_id),
-            None,
-        )
+        scenario = None
+
+        if uuid:
+            scenario = next(
+                (s for s in dfiq.scenarios if s.uuid == uuid),
+                None,
+            )
+        elif dfiq_id:
+            scenario = next(
+                (s for s in dfiq.scenarios if s.id == dfiq_id),
+                None,
+            )
+        elif display_name:
+            scenario = next(
+                (s for s in dfiq.scenarios if s.name == display_name),
+                None,
+            )
+
         if not scenario:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario template: {dfiq_id}")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"No scenario found matching the provided data: {form}",
+            )
 
         if not display_name:
             display_name = scenario.name
 
         scenario_sql = Scenario(
             dfiq_identifier=scenario.id,
+            uuid=scenario.uuid,
             name=scenario.name,
             display_name=display_name,
             description=scenario.description,
@@ -163,6 +183,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             )
             facet_sql = Facet(
                 dfiq_identifier=facet.id,
+                uuid=facet.uuid,
                 name=facet.name,
                 display_name=facet.name,
                 description=facet.description,
@@ -183,30 +204,27 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                 )
                 question_sql = InvestigativeQuestion(
                     dfiq_identifier=question.id,
+                    uuid=question.uuid,
                     name=question.name,
                     display_name=question.name,
                     description=question.description,
                     spec_json=question.to_json(),
                     sketch=sketch,
-                    scenario=scenario_sql,
+                    # scenario=scenario_sql,
                     user=current_user,
                 )
-                facet_sql.questions.append(question_sql)
+                # facet_sql.questions.append(question_sql)
 
-                for approach_id in question.approaches:
-                    approach = next(
-                        (
-                            approach
-                            for approach in dfiq.approaches
-                            if approach.id == approach_id
-                        ),
-                        None,
-                    )
+                # TODO: This is a tmp hack to make all questions oprhaned!
+                # We need to fix this by loading connected questions as well in
+                # the frontend!
+                db_session.add(question_sql)
+
+                for approach in question.approaches:
                     approach_sql = InvestigativeQuestionApproach(
-                        dfiq_identifier=approach.id,
                         name=approach.name,
                         display_name=approach.name,
-                        description=approach.description.get("details", ""),
+                        description=approach.description,
                         spec_json=approach.to_json(),
                         user=current_user,
                     )
@@ -466,8 +484,8 @@ class QuestionTemplateListResource(resources.ResourceMixin, Resource):
         if not dfiq:
             return jsonify({"objects": []})
 
-        scenarios = [scenario.__dict__ for scenario in dfiq.questions]
-        return jsonify({"objects": scenarios})
+        questions = [json.loads(question.to_json()) for question in dfiq.questions]
+        return jsonify({"objects": questions})
 
 
 class QuestionListResource(resources.ResourceMixin, Resource):
@@ -493,23 +511,32 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         scenario_id = form.get("scenario_id")
         facet_id = form.get("facet_id")
         template_id = form.get("template_id")
+        uuid = form.get("uuid")
 
         scenario = Scenario.get_by_id(scenario_id) if scenario_id else None
         facet = Facet.get_by_id(facet_id) if facet_id else None
 
-        if template_id:
+        if template_id or uuid:
             dfiq = load_dfiq_from_config()
             if not dfiq:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server"
                 )
-            dfiq_question = [
-                question for question in dfiq.questions if question.id == template_id
-            ][0]
+            if uuid:
+                dfiq_question = [
+                    question for question in dfiq.questions if question.uuid == uuid
+                ][0]
+            else:
+                dfiq_question = [
+                    question
+                    for question in dfiq.questions
+                    if question.id == template_id
+                ][0]
 
         if dfiq_question:
             new_question = InvestigativeQuestion(
                 dfiq_identifier=dfiq_question.id,
+                uuid=dfiq_question.uuid,
                 name=dfiq_question.name,
                 display_name=dfiq_question.name,
                 description=dfiq_question.description,
@@ -517,20 +544,11 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                 sketch=sketch,
                 user=current_user,
             )
-            for approach_id in dfiq_question.approaches:
-                approach = next(
-                    (
-                        approach
-                        for approach in dfiq.approaches
-                        if approach.id == approach_id
-                    ),
-                    None,
-                )
+            for approach in dfiq_question.approaches:
                 approach_sql = InvestigativeQuestionApproach(
-                    dfiq_identifier=approach.id,
                     name=approach.name,
                     display_name=approach.name,
-                    description=approach.description.get("details", ""),
+                    description=approach.description,
                     spec_json=approach.to_json(),
                     user=current_user,
                 )
