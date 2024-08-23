@@ -154,7 +154,7 @@ limitations under the License.
           <v-row no-gutters>
             <v-col>
               <v-tabs v-model="activeTab" background-color="transparent">
-                <v-tab class="text-none">
+                <v-tab :disabled="allSuggestedQueries.length === 0 && !userSettings.generateQuery" class="text-none">
                   Suggested queries
                   <span class="ml-1"
                     ><small
