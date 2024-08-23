@@ -722,8 +722,12 @@ class ImportStreamer(object):
         pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
             self._sketch.api.api_root, self._sketch.id
         )
-        
-        data = {"index_name": self._index, "analyzer_names": analyzer_names} if analyzer_names != None else {"index_name": self._index}
+
+        data = (
+            {"index_name": self._index, "analyzer_names": analyzer_names}
+            if analyzer_names != None
+            else {"index_name": self._index}
+        )
         _ = self._sketch.api.session.post(pipe_resource, json=data)
 
     def flush(self, end_stream=True):

@@ -152,8 +152,10 @@ def upload_file(
     logger.info("File upload completed.")
     return timeline, task_id
 
+
 def comma_separated_list(value):
-    return value.split(',')
+    return value.split(",")
+
 
 def main(args=None):
     """The main function of the tool."""
