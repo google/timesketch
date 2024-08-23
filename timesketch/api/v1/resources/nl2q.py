@@ -209,7 +209,9 @@ class Nl2qResource(Resource):
             llm = manager.LLMManager().get_provider(llm_provider)()
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: {}".format(e))
-            result_schema["error"] = "Error loading LLM Provider. Please try again later!"
+            result_schema["error"] = (
+                "Error loading LLM Provider. Please try again later!"
+            )
             return jsonify(result_schema)
 
         try:
@@ -217,7 +219,8 @@ class Nl2qResource(Resource):
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error NL2Q prompt: {}".format(e))
             result_schema["error"] = (
-                "An error occurred generating the query via the defined LLM. Please try again later!"
+                "An error occurred generating the query via the defined LLM. "
+                "Please try again later!"
             )
             return jsonify(result_schema)
         # The model sometimes output tripple backticks that needs to be removed.
