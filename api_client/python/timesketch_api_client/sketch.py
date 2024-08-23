@@ -1639,14 +1639,14 @@ class Sketch(resource.BaseResource):
 
         form_data = {}
         if uuid:
-            form_data["template_uuid"] = uuid
+            form_data["uuid"] = uuid
         elif dfiq_id:
             form_data["template_id"] = dfiq_id
         else:  # name is provided
             scenario_templates = scenario_lib.getScenarioTemplateList(self.api)
             for template in scenario_templates:
                 if template.get("name") == name:
-                    form_data["template_uuid"] = template.get("uuid")
+                    form_data["uuid"] = template.get("uuid")
                     break
             else:
                 raise ValueError(f"No DFIQ scenario template found with name '{name}'")
@@ -1684,6 +1684,10 @@ class Sketch(resource.BaseResource):
         response_json = error.get_response_json(response, logger)
 
         scenario_objects = response_json.get("objects", [])
+        # Check if it's a nested list or a single list
+        if scenario_objects and isinstance(scenario_objects[0], list):
+            scenario_objects = scenario_objects[0]
+
         return [
             scenario_lib.Scenario(
                 uuid=scenario_data.get("uuid"),
@@ -1691,7 +1695,7 @@ class Sketch(resource.BaseResource):
                 sketch_id=self.id,
                 api=self.api,
             )
-            for scenario_data in scenario_objects[0]
+            for scenario_data in scenario_objects
         ]
 
     def add_question(self, dfiq_id=None, uuid=None, question_text=None):
@@ -1725,12 +1729,12 @@ class Sketch(resource.BaseResource):
         if dfiq_id:
             form_data["template_id"] = dfiq_id
         elif uuid:
-            form_data["template_uuid"] = uuid
+            form_data["uuid"] = uuid
         else:  # question_text is provided
             question_templates = scenario_lib.getQuestionTemplateList(self.api)
             for template in question_templates:
                 if template.get("name") == question_text:
-                    form_data["template_uuid"] = template.get("uuid")
+                    form_data["uuid"] = template.get("uuid")
                     break
             else:
                 form_data["question_text"] = question_text
@@ -1769,6 +1773,10 @@ class Sketch(resource.BaseResource):
         response_json = error.get_response_json(response, logger)
 
         question_objects = response_json.get("objects", [])
+        # Check if it's a nested list or a single list
+        if question_objects and isinstance(question_objects[0], list):
+            question_objects = question_objects[0]
+
         return [
             scenario_lib.Question(
                 question_id=question_data.get("id"),
@@ -1776,7 +1784,7 @@ class Sketch(resource.BaseResource):
                 sketch_id=self.id,
                 api=self.api,
             )
-            for question_data in question_objects[0]
+            for question_data in question_objects
         ]
 
     def add_event(self, message, date, timestamp_desc, attributes=None, tags=None):
