@@ -143,9 +143,9 @@ def upload_file(
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
-        analyzers_name = config_dict.get("analyzer_names")
-        if analyzers_name:
-            streamer.close(analyzers_name)
+        analyzer_names = config_dict.get("analyzer_names")
+        if analyzer_names:
+            streamer.close(analyzer_names)
         else:
             streamer.close()
 
