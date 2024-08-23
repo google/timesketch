@@ -196,7 +196,7 @@ limitations under the License.
                     </div>
                   </div>
 
-                  <div class="mt-1" v-if="userSettings.generateQuery">
+                  <div class="mt-1" v-if="userSettings.generateQuery && systemSettings.LLM_PROVIDER">
                     <div v-if="suggestedQueryLoading" class="pa-2 pl-4">
                       <v-skeleton-loader type="sentences" width="200"></v-skeleton-loader>
                     </div>
@@ -348,6 +348,9 @@ export default {
     },
     currentUser() {
       return this.$store.state.currentUser
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
     },
     userSettings() {
       return this.$store.state.settings

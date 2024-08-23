@@ -29,8 +29,7 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
-      <v-subheader>Experiments</v-subheader>
-      <v-list-item>
+      <v-list-item v-if="systemSettings.LLM_PROVIDER">
         <v-list-item-action>
           <v-switch v-model="settings.generateQuery" color="primary" @change="saveSettings()"></v-switch>
         </v-list-item-action>
@@ -64,6 +63,9 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
     },
     userSettings() {
       return this.$store.state.settings
