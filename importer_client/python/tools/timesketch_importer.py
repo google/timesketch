@@ -152,6 +152,8 @@ def upload_file(
     logger.info("File upload completed.")
     return timeline, task_id
 
+def comma_separated_list(value):
+    return value.split(',')
 
 def main(args=None):
     """The main function of the tool."""
@@ -471,13 +473,13 @@ def main(args=None):
     config_group.add_argument(
         "--analyzer_names",
         "--analyzer-names",
-        type=str,
+        type=comma_separated_list,
         action="store",
         dest="analyzer_names",
         default=[],
         help=(
-            "Set of analyzers that we will automatically run right after the"
-            "timelines are uploaded. The input needs to be the analyzers names."
+            "Set of analyzers that we will automatically run right after the "
+            "timelines are uploaded. The input needs to be the analyzers names, provided as a comma-separated string."
         ),
     )
 
