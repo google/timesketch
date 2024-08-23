@@ -1390,3 +1390,16 @@ class TestNl2qResource(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(data.get("error"))
+
+
+class SystemSettingsResourceTest(BaseTest):
+    """Test system settings resource."""
+
+    resource_url = "/api/v1/settings/"
+
+    def test_system_settings_resource(self):
+        """Authenticated request to get system settings."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        expected_response = {"LLM_PROVIDER": "test"}
+        self.assertEqual(response.json, expected_response)
