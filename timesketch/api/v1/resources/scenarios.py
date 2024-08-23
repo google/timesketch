@@ -149,6 +149,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
         scenario_sql = Scenario(
             dfiq_identifier=scenario.id,
+            uuid=scenario.uuid,
             name=scenario.name,
             display_name=display_name,
             description=scenario.description,
@@ -164,6 +165,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             )
             facet_sql = Facet(
                 dfiq_identifier=facet.id,
+                uuid=facet.uuid,
                 name=facet.name,
                 display_name=facet.name,
                 description=facet.description,
@@ -184,6 +186,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                 )
                 question_sql = InvestigativeQuestion(
                     dfiq_identifier=question.id,
+                    uuid=question.uuid,
                     name=question.name,
                     display_name=question.name,
                     description=question.description,
@@ -196,10 +199,9 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
                 for approach in question.approaches:
                     approach_sql = InvestigativeQuestionApproach(
-                        dfiq_identifier=approach.id,
                         name=approach.name,
                         display_name=approach.name,
-                        description=approach.description.get("details", ""),
+                        description=approach.description,
                         spec_json=approach.to_json(),
                         user=current_user,
                     )
@@ -503,6 +505,7 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         if dfiq_question:
             new_question = InvestigativeQuestion(
                 dfiq_identifier=dfiq_question.id,
+                uuid=dfiq_question.uuid,
                 name=dfiq_question.name,
                 display_name=dfiq_question.name,
                 description=dfiq_question.description,
@@ -512,10 +515,9 @@ class QuestionListResource(resources.ResourceMixin, Resource):
             )
             for approach in dfiq_question.approaches:
                 approach_sql = InvestigativeQuestionApproach(
-                    dfiq_identifier=approach.id,
                     name=approach.name,
                     display_name=approach.name,
-                    description=approach.description.get("details", ""),
+                    description=approach.description,
                     spec_json=approach.to_json(),
                     user=current_user,
                 )

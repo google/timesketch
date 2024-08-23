@@ -18,7 +18,7 @@ limitations under the License.
     <div
       class="pb-4 markdown-body"
       style="font-size: 1em; background-color: transparent"
-      v-html="toHtml(approach.description.details)"
+      v-html="toHtml(approach.description)"
     ></div>
 
     <div v-if="opensearchQueries.length" class="pb-4">
@@ -41,11 +41,11 @@ limitations under the License.
     <v-expand-transition>
       <div v-if="showDetails" class="mt-3">
         <!-- References -->
-        <div v-if="approach.description.references && approach.description.references.length">
+        <div v-if="approach.references && approach.references.length">
           <v-icon class="mr-2">mdi-link-variant</v-icon>
           <strong>References</strong>
           <ul class="mb-4 mt-2 markdown-body" style="line-height: 70%; background-color: transparent">
-            <li v-for="reference in approach.description.references" :key="reference">
+            <li v-for="reference in approach.references" :key="reference">
               <div v-html="toHtml(reference)" style="font-size: 0.9em"></div>
             </li>
           </ul>
@@ -55,7 +55,7 @@ limitations under the License.
           <v-icon color="success" class="mr-2">mdi-check</v-icon>
           <strong>Covered</strong>
           <ul class="mt-2">
-            <li v-for="note in approach._view.notes.covered" :key="note">{{ note }}</li>
+            <li v-for="note in approach.notes.covered" :key="note">{{ note }}</li>
           </ul>
         </v-sheet>
 
@@ -63,7 +63,7 @@ limitations under the License.
           <v-icon color="error" class="mr-2">mdi-close</v-icon>
           <strong>Not covered</strong>
           <ul class="mt-2">
-            <li v-for="note in approach._view.notes.not_covered" :key="note">{{ note }}</li>
+            <li v-for="note in approach.notes.not_covered" :key="note">{{ note }}</li>
           </ul>
         </v-sheet>
       </div>
@@ -90,17 +90,14 @@ export default {
     },
     opensearchQueries() {
       let opensearchQueries = []
-      this.approach._view.processors.forEach((processor) => {
-        processor.analysis.forEach((analysis) => {
-          if (analysis.name === 'OpenSearch') {
-            analysis.steps.forEach((step) => {
-              if (step.type === 'opensearch-query') {
-                opensearchQueries.push(step)
-              }
-            })
+      if (this.approach.steps) {
+        this.approach.steps.forEach((step) => {
+          if (step.type === 'opensearch-query') {
+            console.log(step)
+            opensearchQueries.push(step)
           }
         })
-      })
+      }
       return opensearchQueries
     },
   },

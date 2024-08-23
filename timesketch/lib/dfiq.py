@@ -32,8 +32,11 @@ class Component(object):
         child_ids: The child IDs of the component.
     """
 
-    def __init__(self, dfiq_id, name, description=None, tags=None, parent_ids=None):
+    def __init__(
+        self, dfiq_id, uuid, name, description=None, tags=None, parent_ids=None
+    ):
         self.id = dfiq_id
+        self.uuid = uuid
         self.name = name
         self.description = description
         self.tags = tags
@@ -67,7 +70,12 @@ class Approach:
 
     def __init__(self, approach):
         """Initializes the approach."""
-        self.approach_dict = approach
+        self.name = approach["name"]
+        self.description = approach.get("description")
+        self.notes = approach.get("notes")
+        self.references = approach.get("references")
+        self.steps = approach.get("steps")
+        self.tags = approach.get("tags")
 
     def _get_timesketch_analyses(self):
         """Returns the Timesketch analysis provider of the approach.
@@ -82,7 +90,7 @@ class Approach:
         analysis_types = ["timesketch-searchtemplate", "opensearch-query"]
         return [
             step
-            for step in self.approach_dict.get("steps", [])
+            for step in self.steps
             if step["stage"] == "analysis" and step["type"] in analysis_types
         ]
 
@@ -108,20 +116,20 @@ class Approach:
 class Question(Component):
     """Class that represents a question."""
 
-    def __init__(self, dfiq_id, name, description, tags, parent_ids, approaches):
+    def __init__(self, dfiq_id, uuid, name, description, tags, parent_ids, approaches):
         """Initializes the question."""
         self.approaches = []
         if approaches:
             self.approaches = [Approach(approach) for approach in approaches]
-        super().__init__(dfiq_id, name, description, tags, parent_ids)
+        super().__init__(dfiq_id, uuid, name, description, tags, parent_ids)
 
 
 class Facet(Component):
     """Class that represents a facet."""
 
-    def __init__(self, dfiq_id, name, description, tags, parent_ids):
+    def __init__(self, dfiq_id, uuid, name, description, tags, parent_ids):
         """Initializes the facet."""
-        super().__init__(dfiq_id, name, description, tags, parent_ids)
+        super().__init__(dfiq_id, uuid, name, description, tags, parent_ids)
 
     @property
     def questions(self):
@@ -136,9 +144,9 @@ class Facet(Component):
 class Scenario(Component):
     """Class that represents a scenario."""
 
-    def __init__(self, dfiq_id, name, description, tags):
+    def __init__(self, dfiq_id, uuid, name, description, tags):
         """Initializes the scenario."""
-        super().__init__(dfiq_id, name, description, tags)
+        super().__init__(dfiq_id, uuid, name, description, tags)
 
     @property
     def facets(self):
@@ -222,6 +230,7 @@ class DFIQ:
         if yaml_object["type"] == "scenario":
             return Scenario(
                 yaml_object["id"],
+                yaml_object["uuid"],
                 yaml_object["name"],
                 yaml_object.get("description"),
                 yaml_object.get("tags"),
@@ -229,6 +238,7 @@ class DFIQ:
         if yaml_object["type"] == "facet":
             return Facet(
                 yaml_object["id"],
+                yaml_object["uuid"],
                 yaml_object["name"],
                 yaml_object.get("description"),
                 yaml_object.get("tags"),
@@ -237,6 +247,7 @@ class DFIQ:
         if yaml_object["type"] == "question":
             return Question(
                 yaml_object["id"],
+                yaml_object["uuid"],
                 yaml_object["name"],
                 yaml_object.get("description"),
                 yaml_object.get("tags"),

@@ -376,17 +376,17 @@ export default {
       }
       let queries = []
       let approaches = this.activeQuestion.approaches.map((approach) => JSON.parse(approach.spec_json))
-      approaches.forEach((approach) => {
-        approach._view.processors.forEach((processor) => {
-          processor.analysis.forEach((analysis) => {
-            if (analysis.name === 'OpenSearch') {
-              analysis.steps.forEach((step) => {
+      if (approaches) {
+        approaches.forEach((approach) => {
+          if (approach.steps) {
+            approach.steps.forEach((step) => {
+              if (step.type === 'opensearch-query') {
                 queries.push(step)
-              })
-            }
-          })
+              }
+            })
+          }
         })
-      })
+      }
       return queries
     },
     currentUserConclusion() {
