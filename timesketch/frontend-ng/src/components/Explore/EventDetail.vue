@@ -41,12 +41,18 @@ limitations under the License.
                     </v-btn>
 
                     <!-- Include field:value as filter chip -->
-                    <v-btn @click.stop="applyFilterChip(key, value, 'must')" icon x-small class="mr-1">
+                    <v-btn
+                      v-if="!ignoreFilterChips.has(key)"
+                      @click.stop="applyFilterChip(key, value, 'must')"
+                      icon
+                      x-small
+                      class="mr-1">
                       <v-icon title="Filter for value">mdi-filter-plus-outline</v-icon>
                     </v-btn>
 
                     <!-- Exclude field:value as filter chip -->
                     <v-btn
+                      v-if="!ignoreFilterChips.has(key)"
                       @click.stop="applyFilterChip(key, value, 'must_not')"
                       icon
                       x-small
@@ -197,8 +203,11 @@ export default {
         'path_spec',
         'strings',
         'timestamp',
-        'timestamp_desc',
         'xml_string',
+      ]),
+      ignoreFilterChips: new Set([
+        'datetime',
+        'tag',
       ]),
       eventKey: '',
       eventValue: '',
