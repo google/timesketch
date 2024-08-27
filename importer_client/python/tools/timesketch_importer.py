@@ -144,8 +144,9 @@ def upload_file(
         task_id = streamer.celery_task_id
 
         analyzer_names = config_dict.get("analyzer_names")
-        if analyzer_names:
-            streamer.close(analyzer_names)
+        timeline_ids = config_dict.get("timeline_ids")
+        if analyzer_names and timeline_ids:
+            streamer.close(analyzer_names=analyzer_names, timeline_ids=timeline_ids)
         else:
             streamer.close()
 
@@ -482,6 +483,20 @@ def main(args=None):
         help=(
             "Set of analyzers that we will automatically run right after the "
             "timelines are uploaded. The input needs to be the analyzers names."
+            "Provided as a comma-separated string."
+        ),
+    )
+
+    config_group.add_argument(
+        "--timeline_ids",
+        "--timeline-ids",
+        type=comma_separated_list,
+        action="store",
+        dest="timeline_ids",
+        default=[],
+        help=(
+            "Set of timelines that we will automatically analyze right after the "
+            "timelines are uploaded. The input needs to be the analyzers IDs."
             "Provided as a comma-separated string."
         ),
     )
