@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <v-card class="mx-3 mt-3 mb-7" outlined :class="$vuetify.theme.dark ? '' : 'context-card-light-grey-background'">
+    <v-card class="mx-3 mt-3 mb-3" outlined :class="$vuetify.theme.dark ? '' : 'context-card-light-grey-background'">
       <v-toolbar flat dense style="background-color: transparent">
         <span v-if="isLoading">
           <v-progress-circular :size="20" :width="1" indeterminate color="primary" class="mr-3"></v-progress-circular>
