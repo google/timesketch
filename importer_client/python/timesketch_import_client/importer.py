@@ -709,7 +709,7 @@ class ImportStreamer(object):
         return self._celery_task_id
 
     def close(self, analyzer_names=None, timeline_ids=None):
-        """Close the streamer, run the specified analyzers on the specified timeline ids"""
+        """Close the streamer, run analyzers on timelines"""
         try:
             self._ready()
         except ValueError:
