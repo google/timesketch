@@ -708,8 +708,8 @@ class ImportStreamer(object):
         """Return the celery task identification for the upload."""
         return self._celery_task_id
 
-    def close(self, analyzer_names=None):
-        """Close the streamer, and run the analyzers based on the analyzer_names"""
+    def close(self, analyzer_names=None, timeline_ids=None):
+        """Close the streamer, run the specified analyzers on the specified timeline ids"""
         try:
             self._ready()
         except ValueError:
@@ -724,10 +724,15 @@ class ImportStreamer(object):
         )
 
         data = (
-            {"index_name": self._index, "analyzer_names": analyzer_names}
-            if analyzer_names is not None
+            {
+                "index_name": self._index,
+                "analyzer_names": analyzer_names,
+                "timeline_ids": timeline_ids,
+            }
+            if (analyzer_names is not None) and (timeline_ids is not None)
             else {"index_name": self._index}
         )
+
         _ = self._sketch.api.session.post(pipe_resource, json=data)
 
     def flush(self, end_stream=True):
