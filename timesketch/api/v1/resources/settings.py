@@ -30,7 +30,7 @@ class SystemSettingsResource(Resource):
             JSON object with system settings.
         """
         # Settings from timesketch.conf to expose to the frontend clients.
-        settings_to_return = ["LLM_PROVIDER"]
+        settings_to_return = ["LLM_PROVIDER", "DFIQ_ENABLED"]
         result = {}
 
         for setting in settings_to_return:

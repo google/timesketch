@@ -1401,5 +1401,5 @@ class SystemSettingsResourceTest(BaseTest):
         """Authenticated request to get system settings."""
         self.login()
         response = self.client.get(self.resource_url)
-        expected_response = {"LLM_PROVIDER": "test"}
+        expected_response = {"DFIQ_ENABLED": False, "LLM_PROVIDER": "test"}
         self.assertEqual(response.json, expected_response)

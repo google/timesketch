@@ -278,12 +278,12 @@ limitations under the License.
       <v-main class="notransition">
         <!-- Scenario context -->
         <!--<ts-scenario-navigation v-if="sketch.status && hasTimelines && !isArchived"></ts-scenario-navigation>-->
-        <ts-question-card v-if="sketch.status && hasTimelines && !isArchived"></ts-question-card>
+        <ts-question-card v-if="sketch.status && hasTimelines && !isArchived && systemSettings.DFIQ_ENABLED"></ts-question-card>
 
         <router-view
           v-if="sketch.status && hasTimelines && !isArchived"
           @setTitle="(title) => (this.title = title)"
-          class="mt-n3"
+          class="mt-4"
         ></router-view>
       </v-main>
 
@@ -464,6 +464,9 @@ export default {
     },
     currentRouteName() {
       return this.$route.name
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
     },
   },
   methods: {
