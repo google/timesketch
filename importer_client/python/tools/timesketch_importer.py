@@ -157,6 +157,12 @@ def upload_file(
 def comma_separated_list(value):
     return value.split(",")
 
+def comma_separated_int_list(value):
+    try:
+        return [int(x) for x in value.split(',')]
+    except ValueError:
+        raise argparse.ArgumentTypeError("Values must be integers separated by commas")
+
 
 def main(args=None):
     """The main function of the tool."""
@@ -490,14 +496,14 @@ def main(args=None):
     config_group.add_argument(
         "--timeline_ids",
         "--timeline-ids",
-        type=comma_separated_list,
+        type=comma_separated_int_list,
         action="store",
         dest="timeline_ids",
         default=[],
         help=(
             "Set of timelines that we will automatically analyze right after the "
             "timelines are uploaded. The input needs to be the analyzers IDs."
-            "Provided as a comma-separated string."
+            "Provided as a comma-separated integer list."
         ),
     )
 
