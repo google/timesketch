@@ -157,11 +157,14 @@ def upload_file(
 def comma_separated_list(value):
     return value.split(",")
 
+
 def comma_separated_int_list(value):
     try:
-        return [int(x) for x in value.split(',')]
-    except ValueError:
-        raise argparse.ArgumentTypeError("Values must be integers separated by commas")
+        return [int(x) for x in value.split(",")]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "Values must be integers separated by commas"
+        ) from exc
 
 
 def main(args=None):
