@@ -15,9 +15,13 @@
 
 import os
 import json
+import logging
 import yaml
 
 import networkx as nx
+from packaging.version import Version
+
+logger = logging.getLogger("timesketch.lib.dfiq")
 
 
 class Component(object):
@@ -174,6 +178,7 @@ class DFIQ:
         Parameters:
             yaml_data_path: The path to the DFIQ YAML files.
         """
+        self.min_supported_DFIQ_version = "1.1.0"
         self.yaml_data_path = yaml_data_path
         self.plural_map = {
             "Scenario": "scenarios",
@@ -227,33 +232,41 @@ class DFIQ:
         Returns:
             A DFIQ component if the YAML object is valid, otherwise None.
         """
-        if yaml_object["type"] == "scenario":
-            return Scenario(
-                yaml_object["id"],
-                yaml_object["uuid"],
-                yaml_object["name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
+        try:
+            if yaml_object["type"] == "scenario":
+                return Scenario(
+                    yaml_object["id"],
+                    yaml_object["uuid"],
+                    yaml_object["name"],
+                    yaml_object.get("description"),
+                    yaml_object.get("tags"),
+                )
+            if yaml_object["type"] == "facet":
+                return Facet(
+                    yaml_object["id"],
+                    yaml_object["uuid"],
+                    yaml_object["name"],
+                    yaml_object.get("description"),
+                    yaml_object.get("tags"),
+                    yaml_object.get("parent_ids"),
+                )
+            if yaml_object["type"] == "question":
+                return Question(
+                    yaml_object["id"],
+                    yaml_object["uuid"],
+                    yaml_object["name"],
+                    yaml_object.get("description"),
+                    yaml_object.get("tags"),
+                    yaml_object.get("parent_ids"),
+                    yaml_object.get("approaches"),
+                )
+        except KeyError as e:
+            logger.error(
+                "DFIQ: Loaded YAML object does not match the supported schema! "
+                "KeyError: %s",
+                str(e),
             )
-        if yaml_object["type"] == "facet":
-            return Facet(
-                yaml_object["id"],
-                yaml_object["uuid"],
-                yaml_object["name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
-                yaml_object.get("parent_ids"),
-            )
-        if yaml_object["type"] == "question":
-            return Question(
-                yaml_object["id"],
-                yaml_object["uuid"],
-                yaml_object["name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
-                yaml_object.get("parent_ids"),
-                yaml_object.get("approaches"),
-            )
+            return None
         return None
 
     def _load_yaml_files_by_type(self, dfiq_type, yaml_data_path=None):
@@ -283,9 +296,35 @@ class DFIQ:
                 mode="r",
             ) as file:
                 component_from_yaml = yaml.safe_load(file)
-                component_dict[component_from_yaml["id"]] = (
-                    self._convert_yaml_object_to_dfiq_component(component_from_yaml)
+                # Check if the file matches the min supported DFIQ version:
+                try:
+                    if Version(str(component_from_yaml["dfiq_version"])) < Version(
+                        self.min_supported_DFIQ_version
+                    ):
+                        logger.warning(
+                            "DFIQ: The provided DFIQ file '%s' does not match "
+                            "the minimal suppored DFIQ version: '%s'. Skipping "
+                            "import!",
+                            dfiq_file,
+                            self.min_supported_DFIQ_version,
+                        )
+                        continue
+                except KeyError:
+                    logger.warning(
+                        "DFIQ: The provided DFIQ file '%s' does not have a "
+                        "dfiq_version set. Min. supported version: '%s'. "
+                        "Skipping import!",
+                        dfiq_file,
+                        self.min_supported_DFIQ_version,
+                    )
+                    continue
+                dfiq_object = self._convert_yaml_object_to_dfiq_component(
+                    component_from_yaml
                 )
+                if dfiq_object:
+                    component_dict[component_from_yaml["id"]] = (
+                        self._convert_yaml_object_to_dfiq_component(component_from_yaml)
+                    )
         return component_dict
 
     def _load_dfiq_items_from_yaml(self):
