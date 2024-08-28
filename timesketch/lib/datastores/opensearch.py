@@ -351,10 +351,27 @@ class OpenSearchDataStore(object):
 
         query_dsl = {"query": {"bool": {"must": [], "must_not": [], "filter": []}}}
 
+        special_char_query = None
+        if query_string:
+            query_parts = query_string.split(":", 1)
+            if len(query_parts) == 2:
+                field_name, query_value = query_parts
+
+                # Special Character Check
+                if set(query_value) <= set('.+-=_&|><!(){}[]^"~?:\\/'):
+                    # Construct the term query directly using the .keyword
+                    special_char_query = {
+                        "term": {f"{field_name}.keyword": query_value}
+                    }
+                    query_string = ""
+
         if query_string:
             query_dsl["query"]["bool"]["must"].append(
                 {"query_string": {"query": query_string, "default_operator": "AND"}}
             )
+
+        if special_char_query:
+            query_dsl["query"]["bool"]["must"].append(special_char_query)
 
         # New UI filters
         if query_filter.get("chips", None):
@@ -374,13 +391,22 @@ class OpenSearchDataStore(object):
                     labels.append(chip["value"])
 
                 elif chip["type"] == "term":
-                    term_filter = {
-                        "match_phrase": {
-                            "{}".format(chip["field"]): {
-                                "query": "{}".format(chip["value"])
+                    if isinstance(chip["value"], str):
+                        term_filter = {
+                            "match_phrase": {
+                                "{}.keyword".format(chip["field"]): {
+                                    "query": "{}".format(chip["value"])
+                                }
                             }
                         }
-                    }
+                    else:
+                        term_filter = {
+                            "match_phrase": {
+                                "{}".format(chip["field"]): {
+                                    "query": "{}".format(chip["value"])
+                                }
+                            }
+                        }
 
                     if chip["operator"] == "must":
                         must_filters.append(term_filter)
