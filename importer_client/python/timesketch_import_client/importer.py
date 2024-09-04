@@ -708,8 +708,31 @@ class ImportStreamer(object):
         """Return the celery task identification for the upload."""
         return self._celery_task_id
 
-    def close(self, analyzer_names=None, timeline_ids=None):
-        """Close the streamer, run analyzers on timelines"""
+    def run_analyzers(self, analyzer_names=None):
+        """Run the analyzers on the uploaded timelines"""
+        try:
+            self._ready()
+        except ValueError:
+            return
+    
+        pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
+            self._sketch.api.api_root, self._sketch.id
+        )
+        timeline_ids = [timeline.id for timeline in self._sketch.list_timelines()] 
+        data = (
+            {
+                "index_name": self._index,
+                "analyzer_names": analyzer_names,
+                "timeline_ids": timeline_ids,
+            }
+            if (analyzer_names is not None) and len(timeline_ids) != 0
+            else {"index_name": self._index}
+        )   
+
+        _ = self._sketch.api.session.post(pipe_resource, json=data)
+
+    def close(self):
+        """Close the streamer"""
         try:
             self._ready()
         except ValueError:
@@ -718,23 +741,8 @@ class ImportStreamer(object):
         if self._data_lines:
             self.flush(end_stream=True)
 
-        # Trigger auto analyzer pipeline to kick in.
-        pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
-            self._sketch.api.api_root, self._sketch.id
-        )
-
-        data = (
-            {
-                "index_name": self._index,
-                "analyzer_names": analyzer_names,
-                "timeline_ids": timeline_ids,
-            }
-            if (analyzer_names is not None) and (timeline_ids is not None)
-            else {"index_name": self._index}
-        )
-
-        _ = self._sketch.api.session.post(pipe_resource, json=data)
-
+        # TODO: Mark something different so that we don't need that anymore?
+        
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
 
