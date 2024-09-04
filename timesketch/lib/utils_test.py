@@ -232,6 +232,38 @@ class TestUtils(BaseTest):
         for output in expected_outputs:
             self.assertDictEqual(next(results), output)
 
+    def test_missing_datetime_in_CSV(self):
+        """Test for parsing a file with missing datetime field does attempt
+        to get it from timestamp or fail"""
+        results = iter(
+            read_and_validate_csv(
+                "test_tools/test_events/validate_no_datetime_timestamps.csv"
+            )
+        )
+
+        n = 1
+        for item in results:
+            n = n + 1
+            if item["data_type"] == "No timestamp1":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1437789661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2015-07-25T02:01:01+00:00")
+
+            elif item["data_type"] == "No timestamp2":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1406253661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2014-07-25T02:01:01+00:00")
+            elif item["data_type"] == "Whitespace datetime":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["datetime"], "2016-07-25T02:01:01+00:00")
+                self.assertIsNotNone(
+                    item["datetime"]
+                )  # TODO: This should not be a space
+
+        self.assertGreaterEqual(n, 3)
+
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
