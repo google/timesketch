@@ -229,7 +229,8 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                         display_name=approach.name,
                         description=approach.description,
                         spec_json=approach.to_json(),
-                        user=current_user,
+                        user_id=current_user.id,
+                        sketch=sketch,
                     )
 
                     for search_template in approach.search_templates:
@@ -553,7 +554,8 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                     display_name=approach.name,
                     description=approach.description,
                     spec_json=approach.to_json(),
-                    user=current_user,
+                    user_id=current_user.id,
+                    sketch=sketch,
                 )
 
                 for search_template in approach.search_templates:

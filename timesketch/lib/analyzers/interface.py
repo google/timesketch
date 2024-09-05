@@ -904,6 +904,7 @@ class BaseAnalyzer:
     NAME = "name"
     DISPLAY_NAME = None
     DESCRIPTION = None
+    IS_DFIQ_ANALYZER = False
 
     # If this analyzer depends on another analyzer
     # it needs to be included in this frozenset by using

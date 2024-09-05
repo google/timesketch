@@ -332,6 +332,7 @@ def build_sketch_analysis_pipeline(
     analyzer_kwargs=None,
     analyzer_force_run=False,
     timeline_id=None,
+    include_dfiq=False,
 ):
     """Build a pipeline for sketch analysis.
 
@@ -349,13 +350,13 @@ def build_sketch_analysis_pipeline(
         analyzer_kwargs (dict): Arguments to the analyzers.
         analyzer_force_run (bool): If true then force the analyzer to run.
         timeline_id (int): Optional int of the timeline to run the analyzer on.
+        include_dfiq (bool): If trie then include dfiq analyzers in the task.
 
     Returns:
         A tuple with a Celery group with analysis tasks or None if no analyzers
         are enabled and an analyzer session ID.
     """
     tasks = []
-
     if not analyzer_names:
         analyzer_names = current_app.config.get("AUTO_SKETCH_ANALYZERS", [])
         if not analyzer_kwargs:
@@ -377,7 +378,7 @@ def build_sketch_analysis_pipeline(
     analysis_session = AnalysisSession(user=user, sketch=sketch)
     db_session.add(analysis_session)
 
-    analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
+    analyzers = manager.AnalysisManager.get_analyzers(analyzer_names, include_dfiq)
     for analyzer_name, analyzer_class in analyzers:
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.get_by_id(searchindex_id)
@@ -452,7 +453,6 @@ def build_sketch_analysis_pipeline(
                     **kwargs,
                 )
             )
-
     # Commit the analysis session to the database.
     if len(analysis_session.analyses) > 0:
         db_session.add(analysis_session)

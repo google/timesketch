@@ -84,11 +84,13 @@ class AnalysisManager(object):
         cls._class_registry = {}
 
     @classmethod
-    def get_analyzers(cls, analyzer_names=None):
+    def get_analyzers(cls, analyzer_names=None, include_dfiq=False):
         """Retrieves the registered analyzers.
 
         Args:
             analyzer_names (list): List of analyzer names.
+            include_dfiq (bool): Optional. Whether to include DFIQ analyzers
+                                 in the results. Defaults to False.
 
         Yields:
             tuple: containing:
@@ -105,6 +107,14 @@ class AnalysisManager(object):
                 if analyzer_name in completed_analyzers:
                     continue
                 analyzer_class = cls.get_analyzer(analyzer_name)
+                # Apply DFIQ filtering
+                if (
+                    not include_dfiq
+                    and hasattr(analyzer_class, "IS_DFIQ_ANALYZER")
+                    and analyzer_class.IS_DFIQ_ANALYZER
+                ):
+                    continue
+
                 yield analyzer_name, analyzer_class
                 completed_analyzers.add(analyzer_name)
 

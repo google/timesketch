@@ -180,6 +180,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
               * display_name: Display name of the analyzer for the UI
               * description: Description of the analyzer provided in the class
               * is_multi: Boolean indicating if the analyzer is a multi analyzer
+              * is_dfiq: Boolean indicating if the analyzer is a dfiq analyzer
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -188,22 +189,29 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
-        analyzers = [x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
 
-        analyzers = analyzer_manager.AnalysisManager.get_analyzers()
+        include_dfiq = (
+            request.args.get("include_dfiq", default="false").lower() == "true"
+        )
+
+        # This line feels double the work, do we need this?
+        # analyzers = [x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
+
+        analyzers = analyzer_manager.AnalysisManager.get_analyzers(
+            include_dfiq=include_dfiq
+        )
         analyzers_detail = []
         for analyzer_name, analyzer_class in analyzers:
             # TODO: update the multi_analyzer detection logic for edgecases
             # where analyzers are using custom parameters (e.g. misp)
-            multi = False
-            if len(analyzer_class.get_kwargs()) > 0:
-                multi = True
             analyzers_detail.append(
                 {
                     "name": analyzer_name,
                     "display_name": analyzer_class.DISPLAY_NAME,
                     "description": analyzer_class.DESCRIPTION,
-                    "is_multi": multi,
+                    "is_multi": len(analyzer_class.get_kwargs()) > 0,
+                    "is_dfiq": hasattr(analyzer_class, "IS_DFIQ_ANALYZER")
+                    and analyzer_class.IS_DFIQ_ANALYZER,
                 }
             )
 
@@ -266,8 +274,12 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         if form.get("analyzer_force_run"):
             analyzer_force_run = True
 
+        include_dfiq = False
+        if form.get("include_dfiq"):
+            include_dfiq = True
+
         analyzers = []
-        all_analyzers = [x for x, _ in analyzer_manager.AnalysisManager.get_analyzers()]
+        all_analyzers = [x for x, _ in analyzer_manager.AnalysisManager.get_analyzers(include_dfiq=include_dfiq)]
         for analyzer in analyzer_names:
             for correct_name in all_analyzers:
                 if fnmatch.fnmatch(correct_name, analyzer):
@@ -301,6 +313,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                     analyzer_kwargs=analyzer_kwargs,
                     timeline_id=timeline_id,
                     analyzer_force_run=analyzer_force_run,
+                    include_dfiq=include_dfiq,
                 )
             except KeyError as e:
                 logger.warning(

@@ -44,6 +44,11 @@ from timesketch.models.annotations import GenericAttributeMixin
 from timesketch.lib.utils import random_color
 from timesketch.models import db_session
 
+from blinker import signal
+
+# Create the signal
+approach_created = signal('approach-created')
+
 
 logger = logging.getLogger("timesketch.sketch")
 
@@ -807,3 +812,14 @@ class InvestigativeQuestionApproach(
     search_histories = relationship(
         "SearchHistory", backref="investigativequestionapproach", lazy="select"
     )
+
+    def __init__(self, *args, **kwargs):
+        self.sketch = kwargs.pop('sketch', None)
+        super().__init__(*args, **kwargs)
+        # Import here to avoid circular imports.
+        # pylint: disable=import-outside-toplevel
+        # from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
+        # analyzer_manager = DFIQAnalyzerManager(approach=self)
+        # analyzer_manager.check_for_dfiq_analyzer()
+        approach_created.send(self)
+        print("### Blinker signal sent!")
