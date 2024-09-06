@@ -11,48 +11,45 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""This file contains a class for managing DFIQ analyzers."""
 
 import logging
 import json
 
 from timesketch.models.sketch import Timeline
 from timesketch.lib.aggregators import manager as aggregator_manager
-from timesketch.models.sketch import approach_created  # Import the signal
 
 logger = logging.getLogger("timesketch.analyzers.dfiq")
 
-@approach_created.connect
-def trigger_dfiq_analyzsis(approach, **extra):
-    analyzer_manager = DFIQAnalyzerManager(approach=approach)
-    analyzer_manager.check_for_dfiq_analyzer()
-# This approach triggrs the following SQLA messages:
-# /usr/local/src/timesketch/timesketch/models/annotations.py:403: SAWarning: Object of type <InvestigativeQuestion> not in session, add operation along 'User.investigative_questions' will not proceed db_session.commit()
-# /usr/local/src/timesketch/timesketch/models/annotations.py:403: SAWarning: Object of type <InvestigativeQuestion> not in session, add operation along 'Sketch.questions' will not proceed db_session.commit()
-# To fix this, the InvestigativeQuestion needs to be added to the Database before we trigger the analyzers!
 
 class DFIQAnalyzerManager:
     """Manager for executing DFIQ analyzers."""
 
-    def __init__(self, approach):
+    def __init__(self, approach, sketch):
         """Initializes the manager."""
-        self.sketch = approach.sketch
-        self.user_id = approach.user_id
+        self.sketch = sketch
+        self.user_id = approach.user.id
         self.approach_spec = json.loads(approach.spec_json)
+        self.approach_id = approach.id
 
         self.aggregator_manager = aggregator_manager
 
-    def check_for_dfiq_analyzer(self):
-      """Checks if the created approach has analyzer steps to execute."""
-      dfiq_analyzers = set()
-      if self.approach_spec.get("steps"):
-          for step in self.approach_spec.get("steps"):
-              if step.get("stage") == "analysis" and step.get("type") == "timesketch-analyzer":
-                  dfiq_analyzers.add(step.get("value"))
+    def check_for_dfiq_analyzer_steps(self):
+        """Checks if the created approach has analyzer steps to execute."""
+        dfiq_analyzers = set()
+        analyzer_sessions = []
+        if self.approach_spec.get("steps"):
+            for step in self.approach_spec.get("steps"):
+                if (
+                    step.get("stage") == "analysis"
+                    and step.get("type") == "timesketch-analyzer"
+                ):
+                    dfiq_analyzers.add(step.get("value"))
 
-      if dfiq_analyzers:
-          print(f"### Next gonna run {dfiq_analyzers}")
-          analyzer_sessions = self._run_dfiq_analyzers(dfiq_analyzers)
-          return analyzer_sessions
+        if dfiq_analyzers:
+            analyzer_sessions = self._run_dfiq_analyzers(dfiq_analyzers)
+
+        return analyzer_sessions
 
     def _get_analyzers_by_data_type(self, dfiq_analyzers):
         """Groups DFIQ analyzers by their required data types.
@@ -67,11 +64,15 @@ class DFIQAnalyzerManager:
                   attribute (i.e., an empty list). It will trigger the analyzer
                   to run on all timelines in the sketch.
         """
+        # Import here to avoid circular imports.
+        # pylint: disable=import-outside-toplevel
         from timesketch.lib.analyzers import manager as analyzer_manager
+
         analyzer_by_datatypes = {}
-        for analyzer_name, analyzer_class in analyzer_manager.AnalysisManager.get_analyzers(
-            include_dfiq=True
-        ):
+        for (
+            analyzer_name,
+            analyzer_class,
+        ) in analyzer_manager.AnalysisManager.get_analyzers(include_dfiq=True):
             if analyzer_name not in dfiq_analyzers:
                 continue
 
@@ -118,8 +119,9 @@ class DFIQAnalyzerManager:
         analyzer_by_datatypes = self._get_analyzers_by_data_type(dfiq_analyzers)
         if not analyzer_by_datatypes:
             logger.error(
-                "None of the requested DFIQ analyzers have required data "
-                "types defined. Aborting."
+                "None of the requested DFIQ analyzers exist on this Timesketch "
+                "instance Requested: %s",
+                str(dfiq_analyzers),
             )
             return []
 
@@ -135,6 +137,8 @@ class DFIQAnalyzerManager:
                 elif data_type in timeline_datatypes:
                     analyzer_by_timeline[timeline_id].extend(analyzer_names)
 
+        # Import here to avoid circular imports.
+        # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
 
         sessions = []
@@ -152,12 +156,14 @@ class DFIQAnalyzerManager:
                     analyzer_names=analyzer_names,
                     analyzer_kwargs=None,
                     timeline_id=timeline_id,
-                    analyzer_force_run=True,
+                    analyzer_force_run=False,
                     include_dfiq=True,
+                    approach_id=self.approach_id,
                 )
             except KeyError as e:
                 logger.warning(
-                    f"Unable to build analyzer pipeline, analyzer does not exist: {e}"
+                    "Unable to build analyzer pipeline, analyzer does not exist: %s",
+                    str(e),
                 )
                 continue
             if analyzer_group:

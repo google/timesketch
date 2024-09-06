@@ -37,6 +37,7 @@ from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
+from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 
 
 logger = logging.getLogger("timesketch.scenario_api")
@@ -56,6 +57,50 @@ def load_dfiq_from_config():
         logger.error("No DFIQ_PATH configured")
         return None
     return DFIQ(dfiq_path)
+
+
+def check_and_run_dfiq_analysis_steps(dfiq_obj, sketch):
+    """Checks if any DFIQ analyzers need to be executed for the given DFIQ object.
+
+    Args:
+        dfiq_obj: The DFIQ object (Scenario, Question, or Approach).
+        sketch: The sketch object associated with the DFIQ object.
+
+    Returns:
+        List of analyzer_session objects (can be empty) or False.
+    """
+    analyzer_sessions = []
+    if isinstance(dfiq_obj, InvestigativeQuestionApproach):
+        analyzer_manager = DFIQAnalyzerManager(approach=dfiq_obj, sketch=sketch)
+        session = analyzer_manager.check_for_dfiq_analyzer_steps()
+        if session:
+            analyzer_sessions.extend(session)
+    elif isinstance(dfiq_obj, InvestigativeQuestion):
+        for approach in dfiq_obj.approaches:
+            analyzer_manager = DFIQAnalyzerManager(approach=approach, sketch=sketch)
+            session = analyzer_manager.check_for_dfiq_analyzer_steps()
+            if session:
+                analyzer_sessions.extend(session)
+    elif isinstance(dfiq_obj, Facet):
+        for question in dfiq_obj.questions:
+            result = check_and_run_dfiq_analysis_steps(question, sketch)
+            if result:
+                analyzer_sessions.extend(result)
+    elif isinstance(dfiq_obj, Scenario):
+        if dfiq_obj.facets:
+            for facet in dfiq_obj.facets:
+                result = check_and_run_dfiq_analysis_steps(facet, sketch)
+                if result:
+                    analyzer_sessions.extend(result)
+        if dfiq_obj.questions:
+            for question in dfiq_obj.questions:
+                result = check_and_run_dfiq_analysis_steps(question, sketch)
+                if result:
+                    analyzer_sessions.extend(result)
+    else:
+        return False  # Invalid DFIQ object type
+
+    return analyzer_sessions if analyzer_sessions else False
 
 
 class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
@@ -229,8 +274,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                         display_name=approach.name,
                         description=approach.description,
                         spec_json=approach.to_json(),
-                        user_id=current_user.id,
-                        sketch=sketch,
+                        user=current_user,
                     )
 
                     for search_template in approach.search_templates:
@@ -242,8 +286,22 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
                     question_sql.approaches.append(approach_sql)
 
+                    db_session.add(question_sql)
+
+                # TODO: Remove commit and check function here when questions are
+                # linked to Scenarios again!
+                # Needs a tmp commit here so we can run the analyzer on the question.
+                db_session.commit()
+                # Check if any of the questions contains analyzer approaches
+                check_and_run_dfiq_analysis_steps(question_sql, sketch)
+
         db_session.add(scenario_sql)
         db_session.commit()
+
+        # This does not work, since we don't have Scnearios linked down to
+        # Approaches anymore! We intentionally broke the link to facets to show
+        # Questions in the frontend.
+        # check_and_run_dfiq_analysis_steps(scenario_sql, sketch)
 
         return self.to_json(scenario_sql)
 
@@ -554,8 +612,7 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                     display_name=approach.name,
                     description=approach.description,
                     spec_json=approach.to_json(),
-                    user_id=current_user.id,
-                    sketch=sketch,
+                    user=current_user,
                 )
 
                 for search_template in approach.search_templates:
@@ -595,6 +652,8 @@ class QuestionListResource(resources.ResourceMixin, Resource):
 
         db_session.add(new_question)
         db_session.commit()
+
+        check_and_run_dfiq_analysis_steps(new_question, sketch)
 
         return self.to_json(new_question)
 

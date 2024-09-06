@@ -333,6 +333,7 @@ def build_sketch_analysis_pipeline(
     analyzer_force_run=False,
     timeline_id=None,
     include_dfiq=False,
+    approach_id=None,
 ):
     """Build a pipeline for sketch analysis.
 
@@ -351,6 +352,7 @@ def build_sketch_analysis_pipeline(
         analyzer_force_run (bool): If true then force the analyzer to run.
         timeline_id (int): Optional int of the timeline to run the analyzer on.
         include_dfiq (bool): If trie then include dfiq analyzers in the task.
+        approach_id (int): Optional ID of the approach triggering the analyzer.
 
     Returns:
         A tuple with a Celery group with analysis tasks or None if no analyzers
@@ -437,6 +439,7 @@ def build_sketch_analysis_pipeline(
                 user=user,
                 sketch=sketch,
                 timeline=timeline,
+                approach_id=approach_id,
             )
             analysis.add_attribute(name="kwargs_hash", value=kwargs_list_hash)
             analysis.set_status("PENDING")

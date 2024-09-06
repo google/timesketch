@@ -51,6 +51,7 @@ METRICS = {
 logger = logging.getLogger("timesketch.analysis_api")
 
 
+# TODO: Filter DFIQ analyzer results from this!
 class AnalysisResource(resources.ResourceMixin, Resource):
     """Resource to get analyzer session."""
 
@@ -194,9 +195,6 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
             request.args.get("include_dfiq", default="false").lower() == "true"
         )
 
-        # This line feels double the work, do we need this?
-        # analyzers = [x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
-
         analyzers = analyzer_manager.AnalysisManager.get_analyzers(
             include_dfiq=include_dfiq
         )
@@ -279,7 +277,12 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
             include_dfiq = True
 
         analyzers = []
-        all_analyzers = [x for x, _ in analyzer_manager.AnalysisManager.get_analyzers(include_dfiq=include_dfiq)]
+        all_analyzers = [
+            x
+            for x, _ in analyzer_manager.AnalysisManager.get_analyzers(
+                include_dfiq=include_dfiq
+            )
+        ]
         for analyzer in analyzer_names:
             for correct_name in all_analyzers:
                 if fnmatch.fnmatch(correct_name, analyzer):
