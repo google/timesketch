@@ -13,43 +13,167 @@
 # limitations under the License.
 """This file contains a class for managing DFIQ analyzers."""
 
-import logging
+import importlib
+import inspect
 import json
+import logging
+import os
 
-from timesketch.models.sketch import Timeline
 from timesketch.lib.aggregators import manager as aggregator_manager
+from timesketch.lib.analyzers import interface
+from timesketch.lib.analyzers import manager as analyzer_manager
+from timesketch.models.sketch import Timeline
 
-logger = logging.getLogger("timesketch.analyzers.dfiq")
+
+logger = logging.getLogger("timesketch.analyzers.dfiq_plugins.manager")
+
+
+def load_dfiq_analyzers():
+    """Loads DFIQ analyzer classes."""
+
+    DFIQ_ANALYZER_PATH = os.path.dirname(os.path.abspath(__file__))
+
+    # Clear existing registrations before reloading
+    for name, analyzer_class in analyzer_manager.AnalysisManager.get_analyzers(
+        include_dfiq=True
+    ):
+        if (
+            hasattr(analyzer_class, "IS_DFIQ_ANALYZER")
+            and analyzer_class.IS_DFIQ_ANALYZER
+        ):
+            try:
+                analyzer_manager.AnalysisManager.deregister_analyzer(name)
+                logger.info("Deregistered DFIQ analyzer: %s", name)
+            except KeyError as e:
+                logger.error(str(e))
+
+    # Dynamically load DFIQ Analyzers
+    for filename in os.listdir(DFIQ_ANALYZER_PATH):
+        if filename.endswith(".py") and not filename.startswith("__"):
+            module_name = filename[:-3]  # Remove .py extension
+            if module_name == "manager":
+                continue
+            module_path = f"timesketch.lib.analyzers.dfiq_plugins.{module_name}"
+            try:
+                module = importlib.import_module(module_path)
+                for name, obj in inspect.getmembers(module):
+                    if name not in [
+                        "interface",
+                        "logger",
+                        "logging",
+                        "manager",
+                    ] and not name.startswith("__"):
+                        if (
+                            inspect.isclass(obj)
+                            and issubclass(obj, interface.BaseAnalyzer)
+                            and hasattr(obj, "IS_DFIQ_ANALYZER")
+                            and obj.IS_DFIQ_ANALYZER
+                        ):
+                            analyzer_manager.AnalysisManager.register_analyzer(obj)
+                            logger.info("Registered DFIQ analyzer: %s", obj.NAME)
+                        else:
+                            logger.error(
+                                'Skipped loading "%s" as analyzer, since it did'
+                                " not meet the requirements.",
+                                str(module_path),
+                            )
+            except ImportError as error:
+                logger.error(
+                    "Failed to import dfiq analyzer module: %s, %s",
+                    str(module_path),
+                    str(error),
+                )
 
 
 class DFIQAnalyzerManager:
     """Manager for executing DFIQ analyzers."""
 
-    def __init__(self, approach, sketch):
-        """Initializes the manager."""
+    def __init__(self, sketch):
+        """Initializes the manager.
+
+        Args:
+            sketch: The sketch object.
+        """
         self.sketch = sketch
-        self.user_id = approach.user.id
-        self.approach_spec = json.loads(approach.spec_json)
-        self.approach_id = approach.id
-
         self.aggregator_manager = aggregator_manager
+        self.aggregation_max_tries = 3
 
-    def check_for_dfiq_analyzer_steps(self):
-        """Checks if the created approach has analyzer steps to execute."""
-        dfiq_analyzers = set()
+    def trigger_analyzers_for_approach(self, approach):
+        """Triggers DFIQ analyzers for a newly added approach.
+
+        Args:
+           approach (InvestigativeQuestionApproach): An approach object to link
+                    with the analyssis
+
+        Returns:
+            analyzer_sessions or None
+        """
+        dfiq_analyzers = self._get_dfiq_analyzer(approach)
+
         analyzer_sessions = []
-        if self.approach_spec.get("steps"):
-            for step in self.approach_spec.get("steps"):
+        if dfiq_analyzers:
+            analyzer_sessions = self._run_dfiq_analyzers(dfiq_analyzers, approach)
+
+        return analyzer_sessions if analyzer_sessions else False
+
+    def trigger_analyzers_for_timelines(self, timelines):
+        """Triggers DFIQ analyzers for a newly added timeline.
+
+        Args:
+            timelines [<timesketch.models.sketch.Timeline>]: List of timeline
+                     objects.
+
+        Returns:
+            analyzer_sessions or None
+        """
+        if isinstance(timelines, Timeline):
+            timelines = [timelines]
+        analyzer_sessions = []
+        for approach in self._find_analyzer_approaches():
+            dfiq_analyzers = self._get_dfiq_analyzer(approach)
+            if dfiq_analyzers:
+                session = self._run_dfiq_analyzers(
+                    dfiq_analyzers=dfiq_analyzers,
+                    approach=approach,
+                    timelines=timelines,
+                )
+                if session:
+                    analyzer_sessions.extend(session)
+
+        return analyzer_sessions if analyzer_sessions else False
+
+    def _find_analyzer_approaches(self):
+        """Finds approaches with a defined analyzer step.
+
+        Returns:
+            A list of InvestigativeQuestionApproach objects that have a defined
+            analyzer step in their specification.
+        """
+        approaches = []
+        for question in self.sketch.questions:
+            for approach in question.approaches:
+                approach_spec = json.loads(approach.spec_json)
+                if any(
+                    step.get("stage") == "analysis"
+                    and step.get("type") == "timesketch-analyzer"
+                    for step in approach_spec.get("steps", [])
+                ):
+                    approaches.append(approach)
+        return approaches
+
+    def _get_dfiq_analyzer(self, approach):
+        """Checks if the approach has analyzer steps to execute."""
+        dfiq_analyzers = set()
+        approach_spec = json.loads(approach.spec_json)
+        if approach_spec.get("steps"):
+            for step in approach_spec.get("steps"):
                 if (
                     step.get("stage") == "analysis"
                     and step.get("type") == "timesketch-analyzer"
                 ):
                     dfiq_analyzers.add(step.get("value"))
 
-        if dfiq_analyzers:
-            analyzer_sessions = self._run_dfiq_analyzers(dfiq_analyzers)
-
-        return analyzer_sessions
+        return dfiq_analyzers
 
     def _get_analyzers_by_data_type(self, dfiq_analyzers):
         """Groups DFIQ analyzers by their required data types.
@@ -87,14 +211,20 @@ class DFIQAnalyzerManager:
                     )
         return analyzer_by_datatypes
 
-    def _get_data_types_per_timeline(self):
+    def _get_data_types_per_timeline(self, timelines=[]):
         """Retrieves data types present in each eligible timeline.
+
+        Args:
+            timelines: (optional) A list of timeline objects.
 
         Returns:
             dict: A dictionary mapping timeline IDs to lists of data types.
         """
+        if not timelines:
+            timelines = self.sketch.timelines
+
         datatype_per_timeline = {}
-        for timeline in self.sketch.timelines:
+        for timeline in timelines:
             if timeline.get_status.status.lower() != "ready":
                 continue
 
@@ -107,11 +237,13 @@ class DFIQAnalyzerManager:
             ]
         return datatype_per_timeline
 
-    def _run_dfiq_analyzers(self, dfiq_analyzers):
+    def _run_dfiq_analyzers(self, dfiq_analyzers, approach, timelines=[]):
         """Executes DFIQ analyzers on matching timelines.
 
         Args:
             dfiq_analyzers (set): A set of DFIQ analyzer names.
+            approach (InvestigativeQuestionApproach): An approach object to link with the analyssis
+            timelines ([<Timeline>]): Optional list of timelines to limit the analysis on.
 
         Returns:
             list: A list of analyzer sessions (potentially empty).
@@ -125,8 +257,7 @@ class DFIQAnalyzerManager:
             )
             return []
 
-        datatype_per_timeline = self._get_data_types_per_timeline()
-
+        datatype_per_timeline = self._get_data_types_per_timeline(timelines)
         analyzer_by_timeline = {}
         for timeline_id, timeline_datatypes in datatype_per_timeline.items():
             analyzer_by_timeline[timeline_id] = []
@@ -152,13 +283,13 @@ class DFIQAnalyzerManager:
                 analyzer_group, session = tasks.build_sketch_analysis_pipeline(
                     sketch_id=self.sketch.id,
                     searchindex_id=timeline.searchindex.id,
-                    user_id=self.user_id,
+                    user_id=approach.user.id,
                     analyzer_names=analyzer_names,
                     analyzer_kwargs=None,
                     timeline_id=timeline_id,
                     analyzer_force_run=False,
                     include_dfiq=True,
-                    approach_id=self.approach_id,
+                    approach_id=approach.id,
                 )
             except KeyError as e:
                 logger.warning(

@@ -59,42 +59,51 @@ def load_dfiq_from_config():
     return DFIQ(dfiq_path)
 
 
-def check_and_run_dfiq_analysis_steps(dfiq_obj, sketch):
+def check_and_run_dfiq_analysis_steps(dfiq_obj, sketch, analyzer_manager=None):
     """Checks if any DFIQ analyzers need to be executed for the given DFIQ object.
 
     Args:
         dfiq_obj: The DFIQ object (Scenario, Question, or Approach).
         sketch: The sketch object associated with the DFIQ object.
+        analyzer_manager: Optional. An existing instance of DFIQAnalyzerManager.
 
     Returns:
         List of analyzer_session objects (can be empty) or False.
     """
+    # Initialize the analyzer manager only once.
+    if not analyzer_manager:
+        analyzer_manager = DFIQAnalyzerManager(sketch=sketch)
+
     analyzer_sessions = []
     if isinstance(dfiq_obj, InvestigativeQuestionApproach):
-        analyzer_manager = DFIQAnalyzerManager(approach=dfiq_obj, sketch=sketch)
-        session = analyzer_manager.check_for_dfiq_analyzer_steps()
+        session = analyzer_manager.trigger_analyzers_for_approach(approach=dfiq_obj)
         if session:
             analyzer_sessions.extend(session)
     elif isinstance(dfiq_obj, InvestigativeQuestion):
         for approach in dfiq_obj.approaches:
-            analyzer_manager = DFIQAnalyzerManager(approach=approach, sketch=sketch)
-            session = analyzer_manager.check_for_dfiq_analyzer_steps()
+            session = analyzer_manager.trigger_analyzers_for_approach(approach=approach)
             if session:
                 analyzer_sessions.extend(session)
     elif isinstance(dfiq_obj, Facet):
         for question in dfiq_obj.questions:
-            result = check_and_run_dfiq_analysis_steps(question, sketch)
+            result = check_and_run_dfiq_analysis_steps(
+                question, sketch, analyzer_manager
+            )
             if result:
                 analyzer_sessions.extend(result)
     elif isinstance(dfiq_obj, Scenario):
         if dfiq_obj.facets:
             for facet in dfiq_obj.facets:
-                result = check_and_run_dfiq_analysis_steps(facet, sketch)
+                result = check_and_run_dfiq_analysis_steps(
+                    facet, sketch, analyzer_manager
+                )
                 if result:
                     analyzer_sessions.extend(result)
         if dfiq_obj.questions:
             for question in dfiq_obj.questions:
-                result = check_and_run_dfiq_analysis_steps(question, sketch)
+                result = check_and_run_dfiq_analysis_steps(
+                    question, sketch, analyzer_manager
+                )
                 if result:
                     analyzer_sessions.extend(result)
     else:

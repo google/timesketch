@@ -15,39 +15,29 @@
 
 from __future__ import unicode_literals
 
-import os
-import logging
-import subprocess
-import traceback
-
 import codecs
+from hashlib import sha1
 import io
 import json
-from hashlib import sha1
-import six
-import yaml
-
-from opensearchpy.exceptions import NotFoundError
-from opensearchpy.exceptions import RequestError
-from flask import current_app
+import logging
+import os
+import subprocess
+import traceback
 
 from celery import chain
 from celery import group
 from celery import signals
+from flask import current_app
+from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import RequestError
+import six
 from sqlalchemy import create_engine
-
-# To be able to determine plaso's version.
-try:
-    import plaso
-    from plaso.cli import pinfo_tool
-except ImportError:
-    plaso = None
-
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
 from timesketch.lib import datafinder
 from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
@@ -59,6 +49,15 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.user import User
+import yaml
+
+
+# To be able to determine plaso's version.
+try:
+    import plaso
+    from plaso.cli import pinfo_tool
+except ImportError:
+    plaso = None
 
 
 logger = logging.getLogger("timesketch.tasks")
@@ -167,9 +166,11 @@ def _close_index(index_name, data_store, timeline_id):
 
 def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
-    Args:
-        timeline_id: Timeline ID.
+
+        Args:
+            timeline_id: Timeline ID.
     """
+    # TODO: Clean-up function, since neither status nor error_msg are used!
     timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
@@ -193,6 +194,32 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     # Commit changes to database
     db_session.add(timeline)
     db_session.commit()
+
+    # Refresh the index so it is searchable for the analyzers right away.
+    datastore = OpenSearchDataStore(
+        host=current_app.config["OPENSEARCH_HOST"],
+        port=current_app.config["OPENSEARCH_PORT"],
+    )
+    try:
+        datastore.client.indices.refresh(index=timeline.searchindex.index_name)
+    except NotFoundError:
+        logger.error(
+            "Unable to refresh index: {0:s}, not found, "
+            "removing from list.".format(timeline.searchindex.index_name)
+        )
+
+    # If status is set to ready, check for analyzers to execute.
+    if timeline.get_status.status == "ready":
+        analyzer_manager = DFIQAnalyzerManager(sketch=timeline.sketch)
+        sessions = analyzer_manager.trigger_analyzers_for_timelines(
+            timelines=[timeline]
+        )
+        if sessions:
+            logger.info(
+                "Executed %d analyzers on the new timeline: '%s'",
+                len(sessions),
+                timeline.name,
+            )
 
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):

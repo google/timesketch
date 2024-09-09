@@ -148,3 +148,20 @@ class AnalysisManager(object):
                 "Class already set for name: {0:s}.".format(analyzer_class.NAME)
             )
         cls._class_registry[analyzer_name] = analyzer_class
+
+    @classmethod
+    def deregister_analyzer(cls, analyzer_name):
+        """Deregister an analyzer class.
+
+        The analyzer classes are identified by their lower case name.
+
+        Args:
+            analyzer_name (string): the analyzer name to deregister.
+
+        Raises:
+            KeyError: If class is not registered for the corresponding name.
+        """
+        if analyzer_name not in cls._class_registry:
+            # Do we really need a KeyError here? Isn't logging enough?
+            raise KeyError("Class not set for name: {0:s}.".format(analyzer_name))
+        analyzer_class = cls._class_registry.pop(analyzer_name, None)
