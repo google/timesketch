@@ -167,8 +167,8 @@ def _close_index(index_name, data_store, timeline_id):
 def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
-        Args:
-            timeline_id: Timeline ID.
+    Args:
+        timeline_id: Timeline ID.
     """
     # TODO: Clean-up function, since neither status nor error_msg are used!
     timeline = Timeline.get_by_id(timeline_id)
