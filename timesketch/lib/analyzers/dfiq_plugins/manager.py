@@ -188,10 +188,6 @@ class DFIQAnalyzerManager:
                   attribute (i.e., an empty list). It will trigger the analyzer
                   to run on all timelines in the sketch.
         """
-        # Import here to avoid circular imports.
-        # pylint: disable=import-outside-toplevel
-        from timesketch.lib.analyzers import manager as analyzer_manager
-
         analyzer_by_datatypes = {}
         for (
             analyzer_name,
@@ -211,7 +207,7 @@ class DFIQAnalyzerManager:
                     )
         return analyzer_by_datatypes
 
-    def _get_data_types_per_timeline(self, timelines=[]):
+    def _get_data_types_per_timeline(self, timelines=None):
         """Retrieves data types present in each eligible timeline.
 
         Args:
@@ -237,13 +233,15 @@ class DFIQAnalyzerManager:
             ]
         return datatype_per_timeline
 
-    def _run_dfiq_analyzers(self, dfiq_analyzers, approach, timelines=[]):
+    def _run_dfiq_analyzers(self, dfiq_analyzers, approach, timelines=None):
         """Executes DFIQ analyzers on matching timelines.
 
         Args:
             dfiq_analyzers (set): A set of DFIQ analyzer names.
-            approach (InvestigativeQuestionApproach): An approach object to link with the analyssis
-            timelines ([<Timeline>]): Optional list of timelines to limit the analysis on.
+            approach (InvestigativeQuestionApproach): An approach object to link
+                     with the analyssis
+            timelines ([<Timeline>]): Optional list of timelines to limit the
+                      analysis on.
 
         Returns:
             list: A list of analyzer sessions (potentially empty).
