@@ -164,4 +164,4 @@ class AnalysisManager(object):
         if analyzer_name not in cls._class_registry:
             # Do we really need a KeyError here? Isn't logging enough?
             raise KeyError("Class not set for name: {0:s}.".format(analyzer_name))
-        analyzer_class = cls._class_registry.pop(analyzer_name, None)
+        _ = cls._class_registry.pop(analyzer_name, None)
