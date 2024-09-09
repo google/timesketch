@@ -117,14 +117,13 @@ def export_sketch(ctx, filename):
         click.echo(f"Number of events in that sketch: {search_obj.expected_size}")
 
         search_obj.to_file(filename)
-        # Using the sketch.export function might also work
+        # Using the sketch.export function could be an alternative here
         # TODO: https://github.com/google/timesketch/issues/2344
-        # sketch.export("./test.zip")
         end_time = time.time()
         click.echo(f"Export took {end_time - start_time} seconds")
         click.echo("Finish")
     except ValueError as e:
-        click.echo(f"Error: {e} {e.message}")
+        click.echo(f"Error: {e}")
         ctx.exit(1)
 
 
