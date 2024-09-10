@@ -23,6 +23,8 @@ import logging
 import os
 import subprocess
 import traceback
+import six
+import yaml
 
 from celery import chain
 from celery import group
@@ -30,7 +32,6 @@ from celery import signals
 from flask import current_app
 from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
-import six
 from sqlalchemy import create_engine
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
@@ -49,7 +50,6 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.user import User
-import yaml
 
 
 # To be able to determine plaso's version.
