@@ -193,7 +193,9 @@ class TimesketchImporterTest(unittest.TestCase):
                 "datetime": ["2019-01-03T02:39:42"],
             }
         )
-        fixed_frame = self._importer._fix_data_frame(data_frame)
+        fixed_frame = self._importer._fix_data_frame(
+            data_frame
+        )  # pylint: disable=protected-access
         self.assertIsNotNone(fixed_frame)
 
         self.assertIs("ille" in fixed_frame["vital_stats"].values, True)
@@ -211,7 +213,9 @@ class TimesketchImporterTest(unittest.TestCase):
                 "datetime": ["2024-07-24T10:57:02.877297Z"],
             }
         )
-        fixed_frame = self._importer._fix_data_frame(data_frame)
+        fixed_frame = self._importer._fix_data_frame(
+            data_frame
+        )  # pylint: disable=protected-access
         self.assertIsNotNone(fixed_frame)
 
         print(fixed_frame["datetime"].values)
@@ -228,7 +232,9 @@ class TimesketchImporterTest(unittest.TestCase):
                 "datetime": ["1985-01-21T10:57:02.25Z"],
             }
         )
-        fixed_frame = self._importer._fix_data_frame(data_frame)
+        fixed_frame = self._importer._fix_data_frame(
+            data_frame
+        )  # pylint: disable=protected-access
         self.assertIsNotNone(fixed_frame)
 
         print(fixed_frame["datetime"].values)
