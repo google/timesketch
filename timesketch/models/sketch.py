@@ -352,6 +352,9 @@ class Analysis(GenericAttributeMixin, LabelMixin, StatusMixin, CommentMixin, Bas
     timeline_id = Column(Integer, ForeignKey("timeline.id"))
     searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
     approach_id = Column(Integer, ForeignKey("investigativequestionapproach.id"))
+    question_conclusion_id = Column(
+        Integer, ForeignKey("investigativequestionconclusion.id")
+    )
 
 
 class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -724,6 +727,9 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
     )
     saved_aggregations = relationship(
         "Aggregation", secondary=questionconclusion_aggregation_association_table
+    )
+    analysis = relationship(
+        "Analysis", backref="investigativequestionconclusion", lazy="select"
     )
 
 

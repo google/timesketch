@@ -49,6 +49,8 @@ from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import InvestigativeQuestionApproach
+from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.models.user import User
 
 
@@ -351,6 +353,43 @@ def build_index_pipeline(
     return chain(index_task)
 
 
+def _create_question_conclusion(user_id, approach_id, analysis_results, analysis):
+    """Creates a QuestionConclusion for a user and approach.
+
+    Args:
+        user_id (int): The user ID.
+        approach_id (int):  The approach ID.
+        conclusion (str): The actual conclusion of the analysis.
+
+    Returns:
+        InvestigativeQuestionConclusion: A QuestionConclusion object or None.
+    """
+    approach = InvestigativeQuestionApproach.get_by_id(approach_id)
+    if not approach:
+        logging.error("No approach with ID '%d' found.", approach_id)
+        return None
+
+    if not analysis_results:
+        logging.error(
+            "Can't create an InvestigativeQuestionConclusion without any "
+            "conclusion or analysis_results provided."
+        )
+        return None
+
+    # TODO: (jkppr) Parse the analysis_results and extract added stories,
+    # searches, graphs, aggregations and add to the object!
+    question_conclusion = InvestigativeQuestionConclusion(
+        conclusion=analysis_results,
+        investigativequestion_id=approach.investigativequestion_id,
+        automated=True,
+    )
+    question_conclusion.analysis.append(analysis)
+    db_session.add(question_conclusion)
+    db_session.commit()
+
+    return question_conclusion if question_conclusion else None
+
+
 def build_sketch_analysis_pipeline(
     sketch_id,
     searchindex_id,
@@ -598,6 +637,19 @@ def run_sketch_analyzer(
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info("[{0:s}] result: {1:s}".format(analyzer_name, result))
+    if hasattr(analyzer_class, "IS_DFIQ_ANALYZER") and analyzer_class.IS_DFIQ_ANALYZER:
+        analysis = Analysis.get_by_id(analysis_id)
+        user_id = analysis.user.id
+        approach_id = analysis.approach_id
+        question_conclusion = _create_question_conclusion(
+            user_id, approach_id, result, analysis
+        )
+        if question_conclusion:
+            logger.info(
+                '[{0:s}] added a conclusion to dfiq: "{1:s}"'.format(
+                    analyzer_name, question_conclusion.investigativequestion.name
+                )
+            )
     return index_name
 
 
