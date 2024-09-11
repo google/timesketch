@@ -232,8 +232,6 @@ class TimesketchImporterTest(unittest.TestCase):
         fixed_frame = self._importer._fix_data_frame(data_frame)
         self.assertIsNotNone(fixed_frame)
 
-        print(fixed_frame["datetime"].values)
-        print(fixed_frame["timestamp"].values)
         self.assertIs(
             "1985-01-21T10:57:02+0000" in fixed_frame["datetime"].values, True
         )
