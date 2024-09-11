@@ -1,0 +1,5 @@
+"message","timestamp","datetime","timestamp_desc","data_type"
+"Missing timezone info","123456","2017-09-24 19:01:01","Write time","Missing_timezone_info"
+"Wrong epoch","123456","2017-07-24T19:01:01","Write time","wrong_timestamp"
+"Wrong epoch","9999999999999","2017-10-24 19:01:01","Write time","long_timestamp"
+"Wrong epoch","88888888","1234 19:01:01","Write time","wrong_datetime_1"

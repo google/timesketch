@@ -110,6 +110,8 @@ class TimesketchImporterTest(unittest.TestCase):
 
         self.frame = pandas.DataFrame(self.lines)
 
+        self._importer = importer.ImportStreamer()
+
     def test_adding_data_frames(self):
         """Test adding a data frame to the importer."""
         with MockStreamer() as streamer:
@@ -175,6 +177,67 @@ class TimesketchImporterTest(unittest.TestCase):
             streamer.flush()
             self._run_all_tests(streamer.columns, streamer.lines)
 
+    # pylint: disable=protected-access
+    def test_fix_data_frame(self):
+        """Test fixing a data frame.
+        create a pandas dataframe with timestamp, datetime, message and data_type
+        columns and check some basics that the method is actually working.
+        """
+
+        data_frame = pandas.DataFrame(
+            {
+                "timestamp": ["1435789661000000"],
+                "stuff": ["foobar"],
+                "correct": [True],
+                "random_number": [11332],
+                "vital_stats": ["ille"],
+                "datetime": ["2019-01-03T02:39:42"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+
+        self.assertIs("ille" in fixed_frame["vital_stats"].values, True)
+        print(fixed_frame["datetime"].values)
+        self.assertIs(
+            "2019-01-03T02:39:42+0000" in fixed_frame["datetime"].values, True
+        )
+
+    def test_fix_data_frame_precision_datetime(self):
+        """Test fixing a data frame with a datetime hat has microsecond precision."""
+
+        data_frame = pandas.DataFrame(
+            {
+                "timestamp": ["1456"],
+                "datetime": ["2024-07-24T10:57:02.877297Z"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+
+        print(fixed_frame["datetime"].values)
+        self.assertIs(
+            "2024-07-24T10:57:02+0000" in fixed_frame["datetime"].values, True
+        )
+
+    def test_fix_data_frame_precision_timestamp(self):
+        """Test fixing a data frame with a timestamp hat has microsecond precision."""
+
+        data_frame = pandas.DataFrame(
+            {
+                "timestamp": ["1331698658276340"],
+                "datetime": ["1985-01-21T10:57:02.25Z"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+
+        self.assertIs(
+            "1985-01-21T10:57:02+0000" in fixed_frame["datetime"].values, True
+        )
+        self.assertIs("1331698658276340" in fixed_frame["timestamp"].values, True)
+
+    # pylint: enable=protected-access
     def _run_all_tests(self, columns, lines):
         """Run all tests on the result set of a streamer."""
         # The first line is the column line.
