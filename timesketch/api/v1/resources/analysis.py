@@ -181,7 +181,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
               * display_name: Display name of the analyzer for the UI
               * description: Description of the analyzer provided in the class
               * is_multi: Boolean indicating if the analyzer is a multi analyzer
-              * is_dfiq: Boolean indicating if the analyzer is a dfiq analyzer
+              * is_dfiq: Boolean indicating if the analyzer is a DFIQ analyzer
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:

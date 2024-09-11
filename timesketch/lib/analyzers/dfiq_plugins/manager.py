@@ -50,7 +50,7 @@ def load_dfiq_analyzers():
     # Dynamically load DFIQ Analyzers
     for filename in os.listdir(DFIQ_ANALYZER_PATH):
         if filename.endswith(".py") and not filename.startswith("__"):
-            module_name = filename[:-3]  # Remove .py extension
+            module_name = os.path.splitext(filename)[0]  # Remove .py extension
             if module_name == "manager":
                 continue
             module_path = f"timesketch.lib.analyzers.dfiq_plugins.{module_name}"
