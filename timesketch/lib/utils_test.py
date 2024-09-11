@@ -258,9 +258,7 @@ class TestUtils(BaseTest):
             elif item["data_type"] == "Whitespace datetime":
                 self.assertIsNotNone(item["timestamp"])
                 self.assertEqual(item["datetime"], "2016-07-25T02:01:01+00:00")
-                self.assertIsNotNone(
-                    item["datetime"]
-                )  # TODO: This should not be a space
+                self.assertIsNotNone(item["datetime"])
 
         self.assertGreaterEqual(n, 3)
 
