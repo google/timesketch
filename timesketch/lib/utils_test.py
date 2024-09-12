@@ -314,7 +314,7 @@ class TestUtils(BaseTest):
 
         self.assertIn("csv_very_future_event", str(results_list))
         self.assertIn("2227-12-31T23:01:01+00:00", str(results_list))
-        self.assertIn("1601-01-01T00:00:00Z", str(results_list))
+        self.assertNotIn("1601-01-01", str(results_list))
 
     def test_time_precision_in_csv(self):
         """Test for parsing a file with time precision"""
