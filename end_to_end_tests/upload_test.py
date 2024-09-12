@@ -258,12 +258,12 @@ class UploadTest(interface.BaseEndToEndTest):
         )
 
         # Search for future event check if datetime value is in the result
-        search_obj = search.Search(sketch)
-        search_obj.query_string = "data_type:csv_very_future_event"
-        search_obj.commit()
-        self.assertions.assertEqual(len(search_obj.table), 1)
+        search_obj2 = search.Search(sketch)
+        search_obj2.query_string = "data_type:csv_very_future_event"
+        search_obj2.commit()
+        self.assertions.assertEqual(len(search_obj2.table), 1)
         self.assertions.assertEqual(
-            "2227-12-31" in str(search_obj.table["datetime"]), True
+            "2227-12-31" in str(search_obj2.table["datetime"]), True
         )
 
     def test_csv_different_timestamps(self):
