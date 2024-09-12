@@ -232,6 +232,84 @@ class TestUtils(BaseTest):
         for output in expected_outputs:
             self.assertDictEqual(next(results), output)
 
+    def test_missing_datetime_in_CSV(self):
+        """Test for parsing a file with missing datetime field does attempt
+        to get it from timestamp or fail"""
+        results = iter(
+            read_and_validate_csv(
+                "test_tools/test_events/validate_no_datetime_timestamps.csv"
+            )
+        )
+
+        n = 1
+        for item in results:
+            n = n + 1
+            if item["data_type"] == "No timestamp1":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1437789661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2015-07-25T02:01:01+00:00")
+
+            elif item["data_type"] == "No timestamp2":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1406253661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2014-07-25T02:01:01+00:00")
+            elif item["data_type"] == "Whitespace datetime":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["datetime"], "2016-07-25T02:01:01+00:00")
+                self.assertIsNotNone(item["datetime"])
+
+        self.assertGreaterEqual(n, 3)
+
+    def test_time_datetime_valueerror(self):
+        """Test for parsing a file with time precision
+
+        The file is currently parsed as:
+        {'message': 'Missing timezone info', 'timestamp': 123456,
+            'datetime': '2017-09-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'Missing_timezone_info'}
+        {'message': 'Wrong epoch', 'timestamp': 123456,
+            'datetime': '2017-07-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'wrong_timestamp'}
+        {'message': 'Wrong epoch', 'timestamp': 9999999999999,
+            'datetime': '2017-10-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'long_timestamp'}
+
+        """
+
+        results = iter(
+            read_and_validate_csv("test_tools/test_events/invalid_datetime.csv")
+        )
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item)
+        # check that certain values are not present in results_list
+        self.assertNotIn(
+            "wrong_datetime_1",
+            str(results_list),
+            "Parsed line is in results but should be skipped",
+        )
+        self.assertIn("long_timestamp", str(results_list))
+
+    def test_time_precision_in_csv(self):
+        """Test for parsing a file with time precision"""
+        results = iter(
+            read_and_validate_csv("test_tools/test_events/validate_time_precision.csv")
+        )
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item["timestamp"])
+
+        self.assertIn("timestamptest1", str(results_list))
+        self.assertIn("2024-07-24T10:57:02.877297+00:00", str(results_list))
+        self.assertIn("timestamptest2", str(results_list))
+
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
