@@ -326,11 +326,11 @@ class UploadTest(interface.BaseEndToEndTest):
         events = sketch.explore("data_type:timestamptest", as_pandas=True)
         self.assertions.assertEqual(len(events), 3)
 
-        # check that events with no timestamps have not been imported
+        # check that events with no timestamp
         events = sketch.explore("data_type:no_timestamp", as_pandas=True)
         self.assertions.assertEqual(len(events), 1)
 
-        # check that events with no datetime have not been imported
+        # check number of events with no datetime
         events = sketch.explore("data_type:no_datetime", as_pandas=True)
         self.assertions.assertEqual(len(events), 1)
 
