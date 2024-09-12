@@ -320,7 +320,7 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj = search.Search(sketch)
         search_obj.query_string = "data_type:timestamptest"
         search_obj.commit()
-        self.assertions.assertEqual(len(search_obj.table), 5)
+        self.assertions.assertEqual(len(search_obj.table), 3)
 
         # check that the number of events is correct with a different method
         events = sketch.explore("data_type:timestamptest", as_pandas=True)
