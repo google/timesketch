@@ -144,27 +144,13 @@ def upload_file(
         task_id = streamer.celery_task_id
 
         analyzer_names = config_dict.get("analyzer_names")
-        timeline_ids = config_dict.get("timeline_ids")
-        if analyzer_names and timeline_ids:
-            streamer.close(analyzer_names=analyzer_names, timeline_ids=timeline_ids)
-        else:
-            streamer.close()
+        if analyzer_names:
+            streamer.run_analyzers(analyzer_names=analyzer_names)
+
+        streamer.close()
 
     logger.info("File upload completed.")
     return timeline, task_id
-
-
-def comma_separated_list(value):
-    return value.split(",")
-
-
-def comma_separated_int_list(value):
-    try:
-        return [int(x) for x in value.split(",")]
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError(
-            "Values must be integers separated by commas"
-        ) from exc
 
 
 def main(args=None):
@@ -485,28 +471,14 @@ def main(args=None):
     config_group.add_argument(
         "--analyzer_names",
         "--analyzer-names",
-        type=comma_separated_list,
+        nargs='*',
         action="store",
         dest="analyzer_names",
         default=[],
         help=(
             "Set of analyzers that we will automatically run right after the "
             "timelines are uploaded. The input needs to be the analyzers names."
-            "Provided as a comma-separated string."
-        ),
-    )
-
-    config_group.add_argument(
-        "--timeline_ids",
-        "--timeline-ids",
-        type=comma_separated_int_list,
-        action="store",
-        dest="timeline_ids",
-        default=[],
-        help=(
-            "Set of timelines that we will automatically analyze right after the "
-            "timelines are uploaded. The input needs to be the analyzers IDs."
-            "Provided as a comma-separated integer list."
+            "Provided as strings separated by space"
         ),
     )
 
@@ -664,6 +636,7 @@ def main(args=None):
         "log_config_file": options.log_config_file,
         "data_label": options.data_label,
         "context": options.context,
+        "analyzer_names": options.analyzer_names,
     }
 
     logger.info("Uploading file.")
