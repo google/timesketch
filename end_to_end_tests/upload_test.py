@@ -295,7 +295,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 '"2015-07-24 19:01:01","Write time","timestamptest fail"\n'
             )
             file_object.write(string)
-            string = '"no_datetime","123456",' '"","Write time","no_datetime"\n'
+            string = '"no_datetime","123456","","Write time","no_datetime"\n'
             file_object.write(string)
             string = (
                 '"Notimestamp","",'
