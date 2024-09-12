@@ -296,6 +296,26 @@ class TestUtils(BaseTest):
         )
         self.assertIn("long_timestamp", str(results_list))
 
+    def test_datetime_out_of_normal_range_in_csv(self):
+        """Test for parsing a file with datetimes that are way out of range for
+        normal usage
+        One of the reasons to create this is:
+        https://github.com/google/timesketch/issues/1617
+        """
+        results = iter(
+            read_and_validate_csv(
+                "test_tools/test_events/validate_time_out_of_range.csv"
+            )
+        )
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item["timestamp"])
+
+        self.assertIn("csv_very_future_event", str(results_list))
+        self.assertIn("2227-12-31T23:01:01+00:00", str(results_list))
+        self.assertIn("1601-01-01T00:00:00Z", str(results_list))
+
     def test_time_precision_in_csv(self):
         """Test for parsing a file with time precision"""
         results = iter(

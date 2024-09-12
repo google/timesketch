@@ -1,0 +1,3 @@
+"message","timestamp","datetime","timestamp_desc","data_type"
+"csv very old event","","1601-01-01T00:00:00Z","Write time","csv_very_old_event"
+"csv event in the distant future","","2227-12-31T23:01:01+00:00","Write time","csv_very_future_event"
