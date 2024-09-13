@@ -1,0 +1,6 @@
+"message","timestamp","datetime","timestamp_desc","data_type"
+"No datetime given","1435789661000000","","Logging","No_datetime"
+"Whitespace datetime","1437789661000000"," ","Logging","Whitespace_datetime"
+"No Timestamp1","","2015-07-25 02:01:01+00:00","Logging","No timestamp1"
+"No Timestamp2",,"2014-07-25 02:01:01+00:00","Logging","No timestamp2"
+"Whitespace Timestamp"," ","2016-07-25 02:01:01+00:00","Logging","Whitespace timestamp"
