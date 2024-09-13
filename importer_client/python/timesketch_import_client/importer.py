@@ -28,9 +28,39 @@ import pandas
 
 from timesketch_api_client import timeline
 from timesketch_api_client import definitions
+from timesketch_api_client.error import UnableToRunAnalyzer
 from timesketch_import_client import utils
 
 logger = logging.getLogger("timesketch_importer.importer")
+
+
+def run_analyzers(analyzer_names=None, timeline_obj=None):
+    """Run the analyzers on the uploaded timeline."""
+
+    if not timeline_obj:
+        logger.error("Unable to run analyzers: Timeline object not found.")
+        raise ValueError("Timeline object not found.")
+
+    if timeline_obj.status not in ("ready", "success"):
+        logger.error("The provided timeline '%s' is not ready yet!", timeline_obj.name)
+        return None
+
+    if not analyzer_names:
+        logger.info("No analyzer names provided, skipping analysis.")
+        return None
+
+    try:
+        analyzer_results = timeline_obj.run_analyzers(analyzer_names)
+    except UnableToRunAnalyzer as e:
+        logger.error(
+            "Failed to run requested analyzers '%s'! Error: %s",
+            str(analyzer_names),
+            str(e),
+        )
+        return None
+
+    logger.debug("Analyzer results: %s", analyzer_results)
+    return analyzer_results
 
 
 class ImportStreamer(object):
@@ -708,28 +738,15 @@ class ImportStreamer(object):
         """Return the celery task identification for the upload."""
         return self._celery_task_id
 
-    def run_analyzers(self, analyzer_names=None):
-        """Run the analyzers on the uploaded timelines"""
-        try:
-            self._ready()
-        except ValueError:
-            return
-    
-        pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
-            self._sketch.api.api_root, self._sketch.id
-        )
-        timeline_ids = [timeline.id for timeline in self._sketch.list_timelines()] 
-        data = (
-            {
-                "index_name": self._index,
-                "analyzer_names": analyzer_names,
-                "timeline_ids": timeline_ids,
-            }
-            if (analyzer_names is not None) and len(timeline_ids) != 0
-            else {"index_name": self._index}
-        )   
+    def _trigger_analyzers(self, analyzer_names=None):
+        """Run the analyzers on the uploaded timeline."""
 
-        _ = self._sketch.api.session.post(pipe_resource, json=data)
+        self._ready()
+
+        if self._data_lines:
+            self.flush(end_stream=True)
+
+        return run_analyzers(analyzer_names=analyzer_names, timeline_obj=self.timeline)
 
     def close(self):
         """Close the streamer"""
@@ -741,8 +758,6 @@ class ImportStreamer(object):
         if self._data_lines:
             self.flush(end_stream=True)
 
-        # TODO: Mark something different so that we don't need that anymore?
-        
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
 
