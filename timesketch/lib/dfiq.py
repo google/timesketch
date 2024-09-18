@@ -322,9 +322,9 @@ class DFIQ:
                     component_from_yaml
                 )
                 if dfiq_object:
-                    component_dict[
-                        component_from_yaml["id"]
-                    ] = self._convert_yaml_object_to_dfiq_component(component_from_yaml)
+                    component_dict[component_from_yaml["id"]] = (
+                        self._convert_yaml_object_to_dfiq_component(component_from_yaml)
+                    )
         return component_dict
 
     def _load_dfiq_items_from_yaml(self):
