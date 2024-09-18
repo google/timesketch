@@ -37,18 +37,17 @@ limitations under the License.
     </v-toolbar>
     <v-divider class="mx-3"></v-divider>
     <v-row class="mt-3">
-      <v-col >
-        <v-container class="ma-0">
-          <ts-timeline-search 
-            componentName="visualization" 
-            @selectedTimelines="selectedTimelineIDs = $event"></ts-timeline-search>
-        </v-container>
-      </v-col>
-    </v-row>
-    <v-row class="mt-3">
       <v-col>
+        <TsAggregationEventSelect
+          @updateTimelineIDs="selectedTimelineIDs = $event"
+          :timelineIDs="selectedTimelineIDs"
+          @updateQueryString="selectedQueryString = $event"
+          :queryString="selectedQueryString"
+          @updateQueryChips="selectedQueryChips = $event"
+          :queryChips="selectedQueryChips"
+        >
+        </TsAggregationEventSelect>
         <TsAggregationConfig
-          @enabled="selectedTimelineIDs.length > 0"
           :field="selectedField"
           @updateField="selectedField = $event"
           :aggregator="selectedAggregator"
@@ -120,7 +119,7 @@ limitations under the License.
           text
           color="primary"
           @click="loadAggregationData"
-          :disabled="selectedTimelineIDs.length == 0 || !(
+          :disabled="!validAggregation || !(
             selectedField &&
             selectedAggregator &&
             selectedChartType
@@ -133,7 +132,7 @@ limitations under the License.
         <v-btn
           text
           @click="clear"
-          :disabled="!(
+          :disabled="!validAggregation || !(
             selectedField &&
             selectedAggregator &&
             selectedChartType
@@ -157,14 +156,14 @@ import ApiClient from '../../utils/RestApiClient'
 import TsAggregationConfig from './AggregationConfig.vue'
 import TsChartConfig from './ChartConfig.vue'
 import TsChartCard from './ChartCard.vue'
-import TsTimelineSearch from '../Analyzer/TimelineSearch.vue'
+import TsAggregationEventSelect from './AggregationEventSelect.vue'
 
 export default {
   components: {
     TsAggregationConfig,
     TsChartConfig,
     TsChartCard,
-    TsTimelineSearch,
+    TsAggregationEventSelect,
   },
   props: {
     aggregator: {
@@ -286,6 +285,9 @@ export default {
     }
   },
   computed: {
+    validAggregation() {
+      return this.selectedTimelineIDs.length > 0 && this.selectedQueryString
+    },
     sketch() {
       return this.$store.state.sketch
     },
@@ -303,13 +305,6 @@ export default {
         return this.response.labels
       }
       return undefined
-    },
-    currentQueryString() {
-      const currentSearchNode = this.$store.state.currentSearchNode
-      if (!currentSearchNode) {
-        return ""
-      }
-      return currentSearchNode.query_string
     },
   },
   methods: {
