@@ -165,7 +165,7 @@ class Scenario(Component):
 class DFIQ:
     """Class that represents DFIQ.
 
-    Atributes:
+    Attributes:
         yaml_data_path: The path to the DFIQ YAML files.
         plural_map: A map of DFIQ types to their plural form.
         components: A dict of DFIQ components.
@@ -303,7 +303,7 @@ class DFIQ:
                     ):
                         logger.warning(
                             "DFIQ: The provided DFIQ file '%s' does not match "
-                            "the minimal suppored DFIQ version: '%s'. Skipping "
+                            "the minimal supported DFIQ version: '%s'. Skipping "
                             "import!",
                             dfiq_file,
                             self.min_supported_DFIQ_version,
@@ -322,9 +322,9 @@ class DFIQ:
                     component_from_yaml
                 )
                 if dfiq_object:
-                    component_dict[component_from_yaml["id"]] = (
-                        self._convert_yaml_object_to_dfiq_component(component_from_yaml)
-                    )
+                    component_dict[
+                        component_from_yaml["id"]
+                    ] = self._convert_yaml_object_to_dfiq_component(component_from_yaml)
         return component_dict
 
     def _load_dfiq_items_from_yaml(self):

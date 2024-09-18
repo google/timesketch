@@ -1096,7 +1096,7 @@ class OpenSearchDataStore(object):
                 doc_id = index.get("_id", "(unable to get doc id)")
                 caused_by = error.get("caused_by", {})
 
-                caused_reason = caused_by.get("reason", "Unkown Detailed Reason")
+                caused_reason = caused_by.get("reason", "Unknown Detailed Reason")
 
                 error_counter[error.get("type")] += 1
                 detail_msg = "{0:s}/{1:s}".format(

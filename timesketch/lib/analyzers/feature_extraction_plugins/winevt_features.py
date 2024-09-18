@@ -116,7 +116,7 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
 
         Args:
             name (str): Features extraction name.
-            config (dict): A dict that contains the configuration fo the
+            config (dict): A dict that contains the configuration for the
                 feature extraction.
 
         Returns:
