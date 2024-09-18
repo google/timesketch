@@ -57,7 +57,7 @@ limitations under the License.
             class="button is-success"
             @click="showAddColumn"
           >
-            {{ showAddColumnFlag ? "Hide colums" : "Add Columns" }}</button
+            {{ showAddColumnFlag ? "Hide columns" : "Add Columns" }}</button
           ><br /><br />
 
           <!-- Dynamically generation of the preview of the CSV file -->
@@ -547,7 +547,7 @@ export default {
        * Method to map the missing headers.
        * First, it checks some conditions, in particular, the user needs to:
        * 1. map the missing header with any existing one in the CSV,
-       * 2. avoid to map 2 or more missing headers with the same exsiting one,
+       * 2. avoid to map 2 or more missing headers with the same existing one,
        * 3. specify a default value in case he chooses to create a new column
        */
       if (!source) return;
@@ -683,7 +683,7 @@ export default {
       return this.error.length === 0;
     },
     setFile: function (fileList) {
-      /* 1. Initilize the variables */
+      /* 1. Initialize the variables */
 
       if (!fileList[0]) {
         return;
