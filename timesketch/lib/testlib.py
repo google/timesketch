@@ -79,7 +79,7 @@ class TestConfig(object):
     SIMILARITY_DATA_TYPES = []
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
-    CONTEXT_LINKS_CONFIG_PATH = "./test_tools/test_events/mock_context_links.yaml"
+    CONTEXT_LINKS_CONFIG_PATH = "./tests/test_events/mock_context_links.yaml"
     LLM_PROVIDER = "test"
     DFIQ_ENABLED = False
     DATA_TYPES_PATH = "./test_data/nl2q/test_data_types.csv"

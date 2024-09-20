@@ -1,0 +1,2 @@
+{"message": "total precision in datetime jsonl","timestamp": 123456789,"datetime": "2024-07-24T10:57:02.877297Z","timestamp_desc": "Write time","data_type": "timestamptest1"}
+{"message": "precision in timestamp jsonl","timestamp": 1331698658276340,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","data_type": "timestamptest2"}
