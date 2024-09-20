@@ -240,7 +240,7 @@ class UploadTest(interface.BaseEndToEndTest):
             name=f"datetime_out_of_normal_range_in_csv_{rand}"
         )
         self.sketch = sketch
-        file_path = "/usr/local/src/timesketch/test_tools/test_events/validate_time_out_of_range.csv"  # pylint: disable=line-too-long
+        file_path = "/usr/local/src/timesketch/tests/test_events/validate_time_out_of_range.csv"  # pylint: disable=line-too-long
         self.import_timeline(file_path, index_name=rand, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly

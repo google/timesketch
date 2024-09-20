@@ -191,7 +191,7 @@ class TestUtils(BaseTest):
         self.assertDictEqual(
             next(
                 read_and_validate_csv(
-                    "test_tools/test_events/validate_date_events_missing_timestamp.csv"
+                    "tests/test_events/validate_date_events_missing_timestamp.csv"
                 )
             ),
             expected_output,
@@ -225,9 +225,7 @@ class TestUtils(BaseTest):
             },
         ]
         results = iter(
-            read_and_validate_csv(
-                "test_tools/test_events/validate_timestamp_conversion.csv"
-            )
+            read_and_validate_csv("tests/test_events/validate_timestamp_conversion.csv")
         )
         for output in expected_outputs:
             self.assertDictEqual(next(results), output)
@@ -237,7 +235,7 @@ class TestUtils(BaseTest):
         to get it from timestamp or fail"""
         results = iter(
             read_and_validate_csv(
-                "test_tools/test_events/validate_no_datetime_timestamps.csv"
+                "tests/test_events/validate_no_datetime_timestamps.csv"
             )
         )
 
@@ -281,9 +279,7 @@ class TestUtils(BaseTest):
 
         """
 
-        results = iter(
-            read_and_validate_csv("test_tools/test_events/invalid_datetime.csv")
-        )
+        results = iter(read_and_validate_csv("tests/test_events/invalid_datetime.csv"))
         results_list = []
         for item in results:
             results_list.append(item)
@@ -303,9 +299,7 @@ class TestUtils(BaseTest):
         https://github.com/google/timesketch/issues/1617
         """
         results = iter(
-            read_and_validate_csv(
-                "test_tools/test_events/validate_time_out_of_range.csv"
-            )
+            read_and_validate_csv("tests/test_events/validate_time_out_of_range.csv")
         )
         results_list = []
         for item in results:
@@ -319,7 +313,7 @@ class TestUtils(BaseTest):
     def test_time_precision_in_csv(self):
         """Test for parsing a file with time precision"""
         results = iter(
-            read_and_validate_csv("test_tools/test_events/validate_time_precision.csv")
+            read_and_validate_csv("tests/test_events/validate_time_precision.csv")
         )
         results_list = []
         for item in results:
