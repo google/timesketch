@@ -155,3 +155,9 @@ Congratulations, your Timesketch system is operational and ready to use.
 ### Set up users
 
 After system is set up, look at [here](/guides/admin/admin-cli/) to add users.
+
+# Timesketch K8s Installation
+
+Please refer to
+[OSDFIR Infrastructure](https://github.com/google/osdfir-infrastructure)
+repository for official installation instructions.
