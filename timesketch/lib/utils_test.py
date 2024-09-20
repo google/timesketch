@@ -27,7 +27,7 @@ from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
 
 
-TEST_CSV = "test_tools/test_events/sigma_events.csv"
+TEST_CSV = "tests/test_events/sigma_events.csv"
 ISO8601_REGEX = (
     r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0["
     r"1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5]["
