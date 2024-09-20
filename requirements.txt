@@ -1,7 +1,7 @@
 alembic==1.11.1
 altair==4.1.0
 celery==5.2.7
-cryptography==43.0.0
+cryptography==43.0.1
 datasketch==1.5.0
 dfir-unfurl==20230901
 opensearch-py==2.6.0
