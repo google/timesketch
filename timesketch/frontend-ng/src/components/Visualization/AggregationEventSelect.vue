@@ -81,7 +81,7 @@ export default {
       type: String
     },
     queryChips: {
-      type: Object
+      type: Array
     },
     recentSearch: {
       type: Object,
