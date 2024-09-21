@@ -34,36 +34,36 @@ limitations under the License.
           autofocus
           label="Event query"
           v-model="selectedQueryString"
-
         >
         </v-text-field>
       </v-col>
     </v-row>
     <v-row class="mt-n10">
       <v-col>
-        <v-autocomplete
+        <v-select
           v-bind="$attrs"
           v-model="selectedRecentSearch"
           :items="allRecentSearches"
           clearable
-          outlined
-          label="Select a recent search"
+          solo
+          dense
+          label="Recent search"
           :disabled="!!selectedSavedSearch"
-
         >
-        </v-autocomplete>
+        </v-select>
       </v-col>
-      <v-col >
-        <v-autocomplete
-          :disabled="!!selectedRecentSearch"
+      <v-col>
+        <v-select
           v-bind="$attrs"
           v-model="selectedSavedSearch"
           :items="allSavedSearches"
           clearable
-          outlined
-          label="Select a saved search"
+          solo
+          dense
+          label="Saved search"
+          :disabled="!!selectedRecentSearch"
         >
-        </v-autocomplete>
+        </v-select>
       </v-col>
     </v-row>
   </v-container>

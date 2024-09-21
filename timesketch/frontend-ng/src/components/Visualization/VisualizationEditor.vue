@@ -86,6 +86,12 @@ limitations under the License.
         ></TsChartConfig>
         </v-col>
         <v-col cols="8">
+          <v-img
+            v-if="chartSeries == null"
+            src="/dist/vis_placeholder.png"
+            width="750"
+            height="520"
+          ></v-img>
           <TsChartCard
             v-if="chartSeries && selectedChartType"
             :fieldName="selectedField.field"
