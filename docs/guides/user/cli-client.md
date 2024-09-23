@@ -283,6 +283,18 @@ To remove an attribute from a sketch
 timesketch sketch remove_attribute
 ```
 
+### Archive Sketch
+
+Running `sketch archive` will set the archive flag to the sketch.
+
+### Unarchive a sketch
+
+Running `sketch unarchive` will set the archive flag to the sketch.
+
+### Export a sketch
+
+Running `sketch export` will export the complete Sketch to a file.
+
 ## Intelligence
 
 Intelligence is always sketch specific. The same can be achieved using 

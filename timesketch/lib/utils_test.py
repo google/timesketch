@@ -27,7 +27,7 @@ from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
 
 
-TEST_CSV = "test_tools/test_events/sigma_events.csv"
+TEST_CSV = "tests/test_events/sigma_events.csv"
 ISO8601_REGEX = (
     r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0["
     r"1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5]["
@@ -191,7 +191,7 @@ class TestUtils(BaseTest):
         self.assertDictEqual(
             next(
                 read_and_validate_csv(
-                    "test_tools/test_events/validate_date_events_missing_timestamp.csv"
+                    "tests/test_events/validate_date_events_missing_timestamp.csv"
                 )
             ),
             expected_output,
@@ -225,12 +225,104 @@ class TestUtils(BaseTest):
             },
         ]
         results = iter(
-            read_and_validate_csv(
-                "test_tools/test_events/validate_timestamp_conversion.csv"
-            )
+            read_and_validate_csv("tests/test_events/validate_timestamp_conversion.csv")
         )
         for output in expected_outputs:
             self.assertDictEqual(next(results), output)
+
+    def test_missing_datetime_in_CSV(self):
+        """Test for parsing a file with missing datetime field does attempt
+        to get it from timestamp or fail"""
+        results = iter(
+            read_and_validate_csv(
+                "tests/test_events/validate_no_datetime_timestamps.csv"
+            )
+        )
+
+        n = 1
+        for item in results:
+            n = n + 1
+            if item["data_type"] == "No timestamp1":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1437789661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2015-07-25T02:01:01+00:00")
+
+            elif item["data_type"] == "No timestamp2":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1406253661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2014-07-25T02:01:01+00:00")
+            elif item["data_type"] == "Whitespace datetime":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["datetime"], "2016-07-25T02:01:01+00:00")
+                self.assertIsNotNone(item["datetime"])
+
+        self.assertGreaterEqual(n, 3)
+
+    def test_time_datetime_valueerror(self):
+        """Test for parsing a file with time precision
+
+        The file is currently parsed as:
+        {'message': 'Missing timezone info', 'timestamp': 123456,
+            'datetime': '2017-09-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'Missing_timezone_info'}
+        {'message': 'Wrong epoch', 'timestamp': 123456,
+            'datetime': '2017-07-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'wrong_timestamp'}
+        {'message': 'Wrong epoch', 'timestamp': 9999999999999,
+            'datetime': '2017-10-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'long_timestamp'}
+
+        """
+
+        results = iter(read_and_validate_csv("tests/test_events/invalid_datetime.csv"))
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item)
+        # check that certain values are not present in results_list
+        self.assertNotIn(
+            "wrong_datetime_1",
+            str(results_list),
+            "Parsed line is in results but should be skipped",
+        )
+        self.assertIn("long_timestamp", str(results_list))
+
+    def test_datetime_out_of_normal_range_in_csv(self):
+        """Test for parsing a file with datetimes that are way out of range for
+        normal usage
+        One of the reasons to create this is:
+        https://github.com/google/timesketch/issues/1617
+        """
+        results = iter(
+            read_and_validate_csv("tests/test_events/validate_time_out_of_range.csv")
+        )
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item["timestamp"])
+
+        self.assertIn("csv_very_future_event", str(results_list))
+        self.assertIn("2227-12-31T23:01:01+00:00", str(results_list))
+        self.assertNotIn("1601-01-01", str(results_list))
+
+    def test_time_precision_in_csv(self):
+        """Test for parsing a file with time precision"""
+        results = iter(
+            read_and_validate_csv("tests/test_events/validate_time_precision.csv")
+        )
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item["timestamp"])
+
+        self.assertIn("timestamptest1", str(results_list))
+        self.assertIn("2024-07-24T10:57:02.877297+00:00", str(results_list))
+        self.assertIn("timestamptest2", str(results_list))
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
