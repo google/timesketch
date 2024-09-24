@@ -286,7 +286,7 @@ detection:
         - '\\rundll32.exe'
     condition: selection1
 falsepositives:
-    - Uknown
+    - Unknown
 level: medium
 tags:
     - blah

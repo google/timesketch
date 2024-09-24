@@ -252,7 +252,7 @@ def run_aggregator_group(group, sketch_id):
 def load_yaml_config(config_parameter_name):
     """Load a YAML file.
     Args:
-        config_paramater_name (str): Name of the config paramter to get the
+        config_paramater_name (str): Name of the config parameter to get the
         path to the YAML file from.
 
     Returns:
@@ -278,7 +278,7 @@ def load_yaml_config(config_parameter_name):
 def load_csv_file(config_parametre_name):
     """Load a CSV file.
     Args:
-        config_paramater_name (str): Name of the config paramter to get the
+        config_paramater_name (str): Name of the config parameter to get the
         path to the CSV file from.
 
     Returns:

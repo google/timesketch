@@ -233,7 +233,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
                 for the aggregation.
 
         Returns:
-            interface.AggregationResult: the aggreation result.
+            interface.AggregationResult: the aggregation result.
         """
         if not field or not field_query_string:
             raise ValueError("Missing field and/or field_query_string.")

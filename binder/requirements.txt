@@ -1,5 +1,0 @@
-# This requirements file is only used for binder.
-timesketch_api_client>=20190123
-altair>=2.3.0
-vega_datasets
-jupyterlab>=0.34.0
