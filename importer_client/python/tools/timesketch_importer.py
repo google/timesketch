@@ -693,7 +693,7 @@ def main(args=None):
             str(timeline.name),
         )
         _ = importer.run_analyzers(
-            analyzer_names=options.analyzer_names, timeline=timeline
+            analyzer_names=options.analyzer_names, timeline_obj=timeline
         )
 
 
