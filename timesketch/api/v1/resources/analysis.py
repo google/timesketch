@@ -238,7 +238,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
 
         timeline_ids = form.get("timeline_ids")
         if not timeline_ids:
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST, "No timelines are uploaded yet")
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Need to provide a timeline ID")
 
         sketch_timelines = {t.id for t in sketch.timelines}
         if not set(timeline_ids).issubset(sketch_timelines):
