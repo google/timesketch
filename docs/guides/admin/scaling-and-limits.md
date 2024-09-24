@@ -19,7 +19,7 @@ These are the limitations:
 ## OpenSearch indices limitation
 
 In the past, every timeline in a sketch was a dedicated OpenSearch Index. In larger installations, Timesketch hit the number of maximum open shards OpenSearch could handle.
-Therefor a design [https://github.com/google/timesketch/issues/1567](change) was made to tackle those limitations
+Therefore a design [https://github.com/google/timesketch/issues/1567](change) was made to tackle those limitations
 
 - There are maximum number (1500) of shards that can be opened.
 - There are limitations with Lucene (which OpenSearch uses) and then OpenSearch itself, see https://www.elastic.co/guide/en/app-search/current/limits.html and maximum sizes of HTTP requests, hence when Timesketch uploads files they are split up, to avoid HTTP limitations.

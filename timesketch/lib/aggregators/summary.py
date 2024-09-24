@@ -112,7 +112,7 @@ class SummaryAggregation(interface.BaseAggregator):
                 values.
 
         Returns:
-            interface.AggregationResult: the aggreation result.
+            interface.AggregationResult: the aggregation result.
         """
         self.field = field
         # pylint: disable=attribute-defined-outside-init
@@ -253,7 +253,7 @@ class DateSummaryAggregator(interface.BaseAggregator):
                 aggregation.
 
         Returns:
-            interface.AggregationResult: the aggreation result.
+            interface.AggregationResult: the aggregation result.
         """
         self.field = field
         # pylint: disable=attribute-defined-outside-init

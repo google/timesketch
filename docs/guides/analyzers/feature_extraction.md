@@ -135,7 +135,7 @@ name:
     mapping:                Type: list[dict] | REQUIRED
                             A list of dicts that define the new attribute name
                             and the string index of the event to extract the
-                            value from. Additonally it can also contain an
+                            value from. Additionally it can also contain an
                             alias list to add multiple attributes with
                             the same value but different names.
 
@@ -149,7 +149,7 @@ name:
 
         aliases:            Type: list[str] | OPTIONAL
                             A list of aliases to add additionally to the
-                            offical name of the attribute. This can be used
+                            official name of the attribute. This can be used
                             to add different field names matching individual
                             field name ontologies. E.g. srcIP, domain, etc.
 ```
