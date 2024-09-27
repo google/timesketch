@@ -9,6 +9,7 @@ COPY --chown=1000:100 --from=timesketch_api_client python $HOME/timesketch_api_c
 RUN pip install jupyter_scheduler jupyterlab-vim jupyter-collaboration jupyterlab-fonts && \
     pip install jupyterlab-lsp "python-lsp-server[all]" && \
     pip install picatrix ipywidgets && \
+    pip install pandas[performance,plot-output-formatting] mitreattack-python && \
     pip install -e $HOME/timesketch_api_client
 
 RUN mkdir -p /opt/conda/share/jupyter/nbextensions/snippets/
