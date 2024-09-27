@@ -15,11 +15,8 @@
 """This is the setup file for the project."""
 from __future__ import unicode_literals
 
-from setuptools import find_packages
-from setuptools import setup
-
+from setuptools import find_packages, setup
 from timesketch_api_client import version
-
 
 long_description = (
     "The Timesketch API client provides you with a set of Python libraries "
@@ -54,7 +51,8 @@ setup(
     zip_safe=False,
     install_requires=frozenset(
         [
-            "pandas",
+            "pandas[performance,plot-output-formatting]",
+            "mitreattack-python",
             "cryptography",
             "requests",
             "altair",
