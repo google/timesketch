@@ -280,7 +280,7 @@ limitations under the License.
         <!-- Datetime field with action buttons -->
         <template v-slot:item._source.datetime="{ item }">
           <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-            {{ item._source.datetime | formatTimestamp | toISO8601 }}
+            {{ item._source.datetime | formatDatetimeToString }}
           </div>
         </template>
 
@@ -546,7 +546,7 @@ export default {
           text: 'Datetime (UTC) ',
           align: 'start',
           value: '_source.datetime',
-          width: '200',
+          width: '170',
           sortable: true,
         },
         {
@@ -628,8 +628,8 @@ export default {
           return
         }
         let prevEvent = this.eventList.objects[index - 1]
-        let timestampMillis = this.$options.filters.formatTimestamp(event._source.datetime)
-        let prevTimestampMillis = this.$options.filters.formatTimestamp(prevEvent._source.datetime)
+        let timestampMillis = this.$options.filters.formatDatetimeToUnix(event._source.datetime)
+        let prevTimestampMillis = this.$options.filters.formatDatetimeToUnix(prevEvent._source.datetime)
         let timestamp = Math.floor(timestampMillis / 1000)
         let prevTimestamp = Math.floor(prevTimestampMillis / 1000)
         let delta = Math.floor(timestamp - prevTimestamp)

@@ -435,7 +435,7 @@ export default {
     },
     processingETA() {
       let secondsLeft = this.secondsToComplete - this.secondsSinceStart()
-      let eta = dayjs().add(secondsLeft, 'second').fromNow()
+      let eta = dayjs.utc().add(secondsLeft, 'second').fromNow()
       return eta
     },
     toggleTimeline() {

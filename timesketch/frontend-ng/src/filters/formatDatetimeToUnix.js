@@ -13,10 +13,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import dayjs from '@/plugins/dayjs'
+
 export default {
-  name: 'formatTimestamp',
+  name: 'formatDatetimeToUnix',
   filter: function (datetime) {
-    let miliSeconds = new Date(datetime).getTime()
-    return parseInt(miliSeconds)
+
+    let timestamp = dayjs.utc(datetime)
+
+    if (timestamp.isValid()) {
+      return timestamp.valueOf()
+    }
+    else {
+      return NaN
+    }
   },
 }

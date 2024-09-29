@@ -16,11 +16,19 @@ limitations under the License.
 import dayjs from '@/plugins/dayjs'
 
 export default {
-  name: 'toISO8601',
-  filter: function (timestampMillis) {
-    if (timestampMillis < 0) {
+  name: 'formatDatetimeToString',
+  filter: function (datetime) {
+
+    let timestamp = dayjs.utc(datetime)
+
+    if (timestamp.unix() < 0) {
       return 'No timestamp'
     }
-    return dayjs(timestampMillis).toISOString()
+    else if (timestamp.isValid()) {
+      return timestamp.format('YYYY-MM-DDTHH:mm:ss')
+    }
+    else {
+      return 'No timestamp'
+    }
   },
 }
