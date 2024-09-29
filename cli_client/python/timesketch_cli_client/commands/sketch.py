@@ -91,6 +91,7 @@ def create_sketch(ctx, name, description):
         description: Description of the sketch (optional).
     """
     api_client = ctx.obj.api
+
     if not description:
         description = name
     sketch = api_client.create_sketch(name=name, description=description)

@@ -17,9 +17,6 @@ import json
 import sys
 
 import click
-from tabulate import tabulate
-
-from timesketch_api_client import search
 
 
 def format_output(search_obj, output_format, show_headers, show_internal_columns):
@@ -35,6 +32,8 @@ def format_output(search_obj, output_format, show_headers, show_internal_columns
     Returns:
         Search results in the requested output format.
     """
+    from tabulate import tabulate
+
     dataframe = search_obj.to_pandas()
 
     # Label is being set regardless of return_fields. Remove if it is not in
@@ -81,8 +80,9 @@ def describe_query(search_obj):
 @click.option(
     "--query",
     "-q",
-    default="*",
     help="Search query in OpenSearch query string format",
+    required=True,
+    default="*",
 )
 @click.option(
     "--time",
@@ -150,6 +150,8 @@ def search_group(
     show_internal_columns,
 ):
     """Search and explore."""
+    from timesketch_api_client import search
+
     sketch = ctx.obj.sketch
     output_format = ctx.obj.output_format
     search_obj = search.Search(sketch=sketch)
@@ -235,7 +237,7 @@ def search_group(
 
 @click.group("saved-searches")
 def saved_searches_group():
-    """Managed saved searches."""
+    """Manage saved searches."""
 
 
 @saved_searches_group.command("list")
