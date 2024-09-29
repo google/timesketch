@@ -251,7 +251,7 @@ limitations under the License.
         ></ts-saved-searches>
         <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
         <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
-        <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
+        <!--<ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>-->
         <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
         <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
       </v-navigation-drawer>
@@ -343,7 +343,7 @@ import TsDataTypes from '../components/LeftPanel/DataTypes.vue'
 import TsTags from '../components/LeftPanel/Tags.vue'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates.vue'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel.vue'
-import TsStories from '../components/LeftPanel/Stories.vue'
+// import TsStories from '../components/LeftPanel/Stories.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsShareCard from '../components/ShareCard.vue'
@@ -365,7 +365,7 @@ export default {
     TsShareCard,
     TsRenameSketch,
     TsIntelligence,
-    TsStories,
+    // TsStories,
     TsSearch,
     TsTimelinesTable,
     TsEventList,
