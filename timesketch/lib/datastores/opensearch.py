@@ -714,6 +714,14 @@ class OpenSearchDataStore(object):
         Returns:
             List with label names.
         """
+        # If no indices are provided, return an empty list. This indicates
+        # there are no labels to aggregate within the specified sketch.
+        # Returning early prevents querying OpenSearch with an empty
+        # index list, which would default to querying all indices ("_all")
+        # and could potentially cause performance issues or errors.
+        if not indices:
+            return []
+
         # This is a workaround to return all labels by setting the max buckets
         # to something big. If a sketch has more than this amount of labels
         # the list will be incomplete but it should be uncommon to have >10k
@@ -1096,7 +1104,7 @@ class OpenSearchDataStore(object):
                 doc_id = index.get("_id", "(unable to get doc id)")
                 caused_by = error.get("caused_by", {})
 
-                caused_reason = caused_by.get("reason", "Unkown Detailed Reason")
+                caused_reason = caused_by.get("reason", "Unknown Detailed Reason")
 
                 error_counter[error.get("type")] += 1
                 detail_msg = "{0:s}/{1:s}".format(

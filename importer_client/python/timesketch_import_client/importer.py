@@ -28,9 +28,39 @@ import pandas
 
 from timesketch_api_client import timeline
 from timesketch_api_client import definitions
+from timesketch_api_client.error import UnableToRunAnalyzer
 from timesketch_import_client import utils
 
 logger = logging.getLogger("timesketch_importer.importer")
+
+
+def run_analyzers(analyzer_names=None, timeline_obj=None):
+    """Run the analyzers on the uploaded timeline."""
+
+    if not timeline_obj:
+        logger.error("Unable to run analyzers: Timeline object not found.")
+        raise ValueError("Timeline object not found.")
+
+    if timeline_obj.status not in ("ready", "success"):
+        logger.error("The provided timeline '%s' is not ready yet!", timeline_obj.name)
+        return None
+
+    if not analyzer_names:
+        logger.info("No analyzer names provided, skipping analysis.")
+        return None
+
+    try:
+        analyzer_results = timeline_obj.run_analyzers(analyzer_names)
+    except UnableToRunAnalyzer as e:
+        logger.error(
+            "Failed to run requested analyzers '%s'! Error: %s",
+            str(analyzer_names),
+            str(e),
+        )
+        return None
+
+    logger.debug("Analyzer results: %s", analyzer_results)
+    return analyzer_results
 
 
 class ImportStreamer(object):
@@ -708,8 +738,18 @@ class ImportStreamer(object):
         """Return the celery task identification for the upload."""
         return self._celery_task_id
 
+    def _trigger_analyzers(self, analyzer_names=None):
+        """Run the analyzers on the uploaded timeline."""
+
+        self._ready()
+
+        if self._data_lines:
+            self.flush(end_stream=True)
+
+        return run_analyzers(analyzer_names=analyzer_names, timeline_obj=self.timeline)
+
     def close(self):
-        """Close the streamer."""
+        """Close the streamer"""
         try:
             self._ready()
         except ValueError:
@@ -717,13 +757,6 @@ class ImportStreamer(object):
 
         if self._data_lines:
             self.flush(end_stream=True)
-
-        # Trigger auto analyzer pipeline to kick in.
-        pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
-            self._sketch.api.api_root, self._sketch.id
-        )
-        data = {"index_name": self._index}
-        _ = self._sketch.api.session.post(pipe_resource, json=data)
 
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
@@ -736,6 +769,7 @@ class ImportStreamer(object):
             ValueError: if the stream object is not fully configured.
             RuntimeError: if the stream was not uploaded.
         """
+
         if not self._data_lines:
             return
 

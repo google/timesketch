@@ -107,7 +107,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        # Retrive request argument
+        # Retrieve request argument
         args = self.parser.parse_args()
         include_details = False
         if args.get("include_details"):
