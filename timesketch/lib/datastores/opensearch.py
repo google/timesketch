@@ -714,6 +714,14 @@ class OpenSearchDataStore(object):
         Returns:
             List with label names.
         """
+        # If no indices are provided, return an empty list. This indicates
+        # there are no labels to aggregate within the specified sketch.
+        # Returning early prevents querying OpenSearch with an empty
+        # index list, which would default to querying all indices ("_all")
+        # and could potentially cause performance issues or errors.
+        if not indices:
+            return []
+
         # This is a workaround to return all labels by setting the max buckets
         # to something big. If a sketch has more than this amount of labels
         # the list will be incomplete but it should be uncommon to have >10k
