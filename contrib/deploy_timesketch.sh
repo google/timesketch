@@ -157,7 +157,7 @@ else
 fi
 
 if [ -z "$SKIP_CREATE_USER" ]; then
-  read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
+  read -p "Would you like to create a new timesketch user? [y/N]" CREATE_USER
 fi
 
 if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
