@@ -102,7 +102,7 @@ class AggregationQuerySpec:
             )
 
     def add_query_string_filter(self, query_string, clause="filter"):
-        """Adds a query string filter to the agregation query specification.
+        """Adds a query string filter to the aggregation query specification.
 
         Args:
             query_string (str): the query string.

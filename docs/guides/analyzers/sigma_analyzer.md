@@ -17,7 +17,7 @@ Reasons might be because:
 ## Which rules should be deployed
 
 It is not recommended to deploy all rules from https://github.com/SigmaHQ/sigma as it is impossible for the Timesketch project to ensure that all rules produce valid OpenSearch Queries.
-Instead pick the rules you verified the format of your logs allign and you expect hits.
+Instead pick the rules you verified the format of your logs align and you expect hits.
 
 ## Troubleshooting
 

@@ -62,7 +62,7 @@ This will spawn a listener on port `5001`. Point your browser to `http://localho
 dev credentials, and you should be redirected to the main Timesketch page. All code changes in `.vue` files will
 be instantly picked up.
 
-## Frontend-ng developement
+## Frontend-ng development
 
 When developing the `frontend-ng` you use the VueJS frontend server. Changes will be picked up automatically
 as soon as a `.vue` file is saved without having to rebuild the frontend or even refresh your browser.
