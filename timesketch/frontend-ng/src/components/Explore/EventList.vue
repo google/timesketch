@@ -30,12 +30,10 @@ limitations under the License.
       <p>
         <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
           <template v-slot:activator="{ on, attrs }">
-            <div v-bind="attrs" v-on="on">
-              <v-btn small depressed>
-                <v-icon left small title="Save current search">mdi-content-save-outline</v-icon>
-                Save search
-              </v-btn>
-            </div>
+            <v-btn small depressed v-bind="attrs" v-on="on" title="Save Search">
+              <v-icon left small >mdi-content-save-outline</v-icon>
+              Save search
+            </v-btn>
           </template>
 
           <v-card class="pa-4">

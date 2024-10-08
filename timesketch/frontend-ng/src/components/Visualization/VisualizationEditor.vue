@@ -39,7 +39,7 @@ limitations under the License.
     <v-row class="mt-3">
       <v-col>
         <TsAggregationEventSelect
-          @updateTimelineIDs="selectedTimelineIDs = $event"
+          @updateTimelineIDs="getTimelineFields"
           :timelineIDs="selectedTimelineIDs"
           @updateQueryString="selectedQueryString = $event"
           :queryString="selectedQueryString"
@@ -48,6 +48,8 @@ limitations under the License.
         >
         </TsAggregationEventSelect>
         <TsAggregationConfig
+          :timelineFields="availableTimelineFields"
+          :loadingFields="loadingFields"
           :field="selectedField"
           @updateField="selectedField = $event"
           :aggregator="selectedAggregator"
@@ -85,12 +87,13 @@ limitations under the License.
           @updateShowDataLabels="selectedShowDataLabels = $event"
         ></TsChartConfig>
         </v-col>
-        <v-col cols="8">
+        <v-col cols="8" :class="chartSeries == null? 'd-flex justify-center align-center' : ''">
           <v-img
             v-if="chartSeries == null"
             src="/dist/vis_placeholder.png"
-            width="750"
-            height="520"
+            max-width="600"
+            max-height="500"
+            contain
           ></v-img>
           <TsChartCard
             v-if="chartSeries && selectedChartType"
@@ -213,6 +216,7 @@ export default {
     },
     queryString: {
       type: String,
+      default: "*"
     },
     range: {
       type: Object,
@@ -288,6 +292,8 @@ export default {
       selectedYTitle: this.yTitle,
       renameVisualDialog: false,
       selectedChartTitleDraft: this.selectedChartTitleDraft,
+      availableTimelineFields: [],
+      loadingFields: false,
     }
   },
   computed: {
@@ -314,6 +320,51 @@ export default {
     },
   },
   methods: {
+    getTimelineFields(timelineIDs) {
+      this.selectedTimelineIDs = timelineIDs
+      if (!timelineIDs || timelineIDs.length === 0 ) {
+        this.availableTimelineFields = []
+        return;
+      }
+
+      this.loadingFields = true;
+
+      if (timelineIDs.length === 1) {
+        ApiClient.getTimelineFields(this.sketch.id, timelineIDs[0])
+          .then(response => {
+            this.availableTimelineFields = response.data.objects
+            this.loadingFields = false
+          })
+          .catch(error => {
+            console.error("Error fetching fields:", error);
+            this.availableTimelineFields = [];
+            this.loadingFields = false
+          });
+      }
+      else {
+        const promises = timelineIDs.map(timelineID => {
+          return ApiClient.getTimelineFields(this.sketch.id, timelineID)
+            .then(response => response.data.objects)
+            .catch(error => {
+                console.error("Error fetching timeline fields:", error);
+                return []
+            })
+          })
+
+          Promise.all(promises)
+            .then(results => {
+              // Flatten the arrays and create a set to guarantee uniqueness
+              const intersection = results.reduce((a, b) => a.filter(c => b.includes(c)));
+              this.availableTimelineFields = intersection
+              this.loadingFields = false;
+            })
+            .catch(error => {
+              console.error("Error in Promise.all", error)
+              this.availableTimelineFields = []
+              this.loadingFields = false;
+            })
+      }
+    },
     rename() {
       this.renameVisualDialog = false
       this.selectedChartTitle = this.selectedChartTitleDraft
