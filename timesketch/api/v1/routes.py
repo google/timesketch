@@ -56,7 +56,7 @@ from .resources.story import StoryResource
 from .resources.explore import QueryResource
 from .resources.timeline import TimelineResource
 from .resources.timeline import TimelineListResource
-from timesketch.api.v1.resources.timeline import TimelineFieldsResource
+from .resources.timeline import TimelineFieldsResource
 from .resources.searchindex import SearchIndexListResource
 from .resources.searchindex import SearchIndexResource
 from .resources.session import SessionResource
