@@ -535,6 +535,7 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         return self.to_json(searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+# TODO(Issue 3200): Research more efficient ways to gather unique fields.
 class TimelineFieldsResource(resources.ResourceMixin, Resource):
     """Resource to retrieve unique fields present in a timeline.
 
