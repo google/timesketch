@@ -6,6 +6,6 @@
   </v-app>
 </template>
 
-<script setup>
-  //
-</script>
+<style lang="scss">
+@import "src/styles/global.scss";
+</style>

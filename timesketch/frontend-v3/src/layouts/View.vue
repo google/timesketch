@@ -14,17 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-app>
-    <default-app-bar />
-    <default-view></default-view>
-  </v-app>
+  <v-main>
+    <v-container fluid class="px-5">
+      <router-view />
+    </v-container>
+  </v-main>
 </template>
-
-<script setup>
-import DefaultAppBar from "./AppBar.vue";
-import DefaultView from "./View.vue";
-import { useAppStore } from "@/stores/app";
-
-const appStore = useAppStore();
-appStore.setTestAppStore();
-</script>

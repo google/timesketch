@@ -14,17 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-app>
-    <default-app-bar />
-    <default-view></default-view>
-  </v-app>
+  <v-container fluid>
+    <ts-sketch-list />
+    {{ testAppStore }}
+  </v-container>
 </template>
 
-<script setup>
-import DefaultAppBar from "./AppBar.vue";
-import DefaultView from "./View.vue";
+<script>
+import TsSketchList from "@/components/SketchList.vue";
 import { useAppStore } from "@/stores/app";
 
-const appStore = useAppStore();
-appStore.setTestAppStore();
+export default {
+  components: {
+    TsSketchList,
+  },
+  data() {
+    return {
+      appStore: useAppStore(),
+    };
+  },
+  computed: {
+    testAppStore() {
+      return this.appStore.testAppStore;
+    },
+  },
+  methods: {},
+};
 </script>

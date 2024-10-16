@@ -14,17 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-app>
-    <default-app-bar />
-    <default-view></default-view>
-  </v-app>
+  <v-toolbar flat class="pr-4" color="transparent">
+    <v-app-bar-title class="ml-n1">
+      <span>timesketch</span>
+    </v-app-bar-title>
+    <template v-slot:prepend>
+      <v-img
+        src="/timesketch-color.png"
+        width="30"
+        height="30"
+        class="ml-4 mr-3"
+        style="cursor: pointer"
+        @click="navigate('/')"
+      >
+      </v-img>
+    </template>
+    <template v-slot:append> Right hand side </template>
+  </v-toolbar>
+  <v-divider></v-divider>
 </template>
 
-<script setup>
-import DefaultAppBar from "./AppBar.vue";
-import DefaultView from "./View.vue";
-import { useAppStore } from "@/stores/app";
-
-const appStore = useAppStore();
-appStore.setTestAppStore();
+<script>
+export default {
+  data() {
+    return {};
+  },
+  computed: {},
+  methods: {},
+};
 </script>
