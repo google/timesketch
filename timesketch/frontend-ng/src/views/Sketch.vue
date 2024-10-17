@@ -433,6 +433,7 @@ export default {
       if (this.hasTimelines && !this.isArchived) {
         this.showLeftPanel = true
       }
+      this.updateDocumentTitle();
       this.loadingSketch = false
     })
     EventBus.$on('showContextWindow', this.showContextWindow)
@@ -585,8 +586,20 @@ export default {
         }, 100)
       }
     },
+    updateDocumentTitle: function() {
+      if (this.sketch && this.sketch.name && this.sketch.id) {
+        document.title = `[${this.sketch.id}] ${this.sketch.name}`;
+      } else {
+        document.title = 'Timesketch';
+      }
+    },
   },
   watch: {
+    sketch(newSketch) {
+      if (newSketch) {
+        this.updateDocumentTitle();
+      }
+    },
     hasTimelines(newVal, oldVal) {
       if (oldVal === 0 && newVal > 0) {
         this.showLeftPanel = true
