@@ -55,7 +55,7 @@ User <USER> created/updated
 
 Now, start the `gunicon` server that will serve the Timsketch WSGI app.
 
-To make this task easier, we recommend using the `timesketch/contrib/tsdev.sh`
+To make this task easier, we recommend using the `timesketch/utils/tsdev.sh`
 script.
 
 In one shell:
@@ -92,7 +92,7 @@ If you're planning to work on those (or even just import timelines into your
 Timesketch instance), you'll need to launch a Celery worker, and re-launch it
 every time you bring changes to its code.
 
-You can use `timesketch/contrib/tsdev.sh` for this task as well.
+You can use `timesketch/utils/tsdev.sh` for this task as well.
 
 In a new shell, run the following:
 
@@ -130,7 +130,7 @@ For development on the new `frontend-ng` UI, you need to install some
 dependencies once and start the new frontend. More on frontend development is
 documented [here](https://timesketch.org/developers/frontend-development/).
 
-We recommend using the `timesketch/contrib/tsdev.sh` script for this task as well.
+We recommend using the `timesketch/utils/tsdev.sh` script for this task as well.
 
 Install frontend-ng dependencies:
 ```bash
