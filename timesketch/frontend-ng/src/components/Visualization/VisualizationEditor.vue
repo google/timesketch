@@ -354,8 +354,8 @@ export default {
           Promise.all(promises)
             .then(results => {
               // Flatten the arrays and create a set to guarantee uniqueness
-              const intersection = results.reduce((a, b) => a.filter(c => b.includes(c)));
-              this.availableTimelineFields = intersection
+              const union = [...new Set(results.flat())];
+              this.availableTimelineFields = union
               this.loadingFields = false;
             })
             .catch(error => {
