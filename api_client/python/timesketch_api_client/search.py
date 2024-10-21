@@ -16,6 +16,7 @@ import datetime
 import json
 import logging
 import re
+from typing import Optional
 
 import pandas
 
@@ -493,12 +494,19 @@ class Search(resource.SketchResource):
         """Execute a search request and store the results.
 
         Args:
-            file_name (str): optional file path to a filename that
+            file_name (str): Optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
-            count (bool): optional boolean that determines whether
+            count (bool): Optional boolean that determines whether
                 we want to execute the query or only count the
-                number of events that the query would produce.
+                number of events that the query would produce. If
+                set to True, the results will be stored in the
+                search object, and the number of events will be
+                returned.
+
+        Returns:
+            A dict with the search results or the total number of events
+            (if count=True) or None if saved to file.
         """
         query_filter = self.query_filter
         if not isinstance(query_filter, dict):
@@ -531,14 +539,14 @@ class Search(resource.SketchResource):
         if file_name:
             with open(file_name, "wb") as fw:
                 fw.write(response.content)
-            return
+            return None
 
         response_json = error.get_response_json(response, logger)
 
         if count:
             meta = response_json.get("meta", {})
             self._total_elastic_size = meta.get("total_count", 0)
-            return
+            return meta.get("total_count", 0)
 
         scroll_id = response_json.get("meta", {}).get("scroll_id", "")
         form_data["scroll_id"] = scroll_id
@@ -579,6 +587,7 @@ class Search(resource.SketchResource):
             )
 
         self._raw_response = response_json
+        return response_json
 
     def add_chip(self, chip):
         """Add a chip to the ..."""
@@ -647,7 +656,7 @@ class Search(resource.SketchResource):
         if self._total_elastic_size:
             return self._total_elastic_size
 
-        self._execute_query(count=True)
+        _ = self._execute_query(count=True)
         return self._total_elastic_size
 
     def from_manual(  # pylint: disable=arguments-differ
@@ -1074,8 +1083,10 @@ class Search(resource.SketchResource):
 
     def to_dict(self):
         """Returns a dict with the respone of the query."""
-        if not self._raw_response:
+        if self._raw_response is None:
             self._execute_query()
+            if not self._raw_response:
+                raise ValueError("No results to return.")
 
         return self._raw_response
 
@@ -1098,8 +1109,10 @@ class Search(resource.SketchResource):
 
     def to_pandas(self):
         """Returns a pandas DataFrame with the response of the query."""
-        if not self._raw_response:
-            self._execute_query()
+        if self._raw_response is None:
+            self._raw_response = self._execute_query()
+            if not self._raw_response:
+                raise ValueError("No results to return.")
 
         return_list = []
         timelines = {t.id: t.name for t in self._sketch.list_timelines()}
