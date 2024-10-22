@@ -162,6 +162,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
         # story.add_text('This is another paragraph')
         for event in events:
             self._cloudtrail_add_tag(event)
+            event.commit()
 
         return "AWS CloudTrail Analyzer completed"
 
