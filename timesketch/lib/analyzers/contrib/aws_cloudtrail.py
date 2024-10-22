@@ -33,9 +33,15 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
             if '"readOnly":true' in cloud_trail_event:
                 event.add_tags(["readOnly"])
                 event.add_emojis([emojis.get_emoji("MAGNIFYING_GLASS")])
-            if any(s in cloud_trail_event for s in ["UnauthorizedOperation", "AccessDenied"]):
+
+            if any( s in cloud_trail_event for s in ["UnauthorizedOperation", "AccessDenied"]):
                 event.add_tags(["UnauthorizedAPICall"])
 
+            if (
+                '"userName":"HIDDEN_DUE_TO_SECURITY_REASONS"' in cloud_trail_event
+                and '"errorMessage":"No username found in supplied account"' in cloud_trail_event
+            ):
+                event.add_tags(["FailedLoginNonExistentIAMUser"])
 
         if event_name:
             if event_name in (
@@ -46,7 +52,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 "CreateSecurityGroup",
                 "DeleteSecurityGroup",
             ):
-                event.add_tags(["SGChanged"])
+                event.add_tags(["SG"])
                 event.add_tags(["NetworkChanged"])
             if event_name in (
                 "CreateNetworkAcl",
@@ -56,7 +62,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 "ReplaceNetworkAclEntry",
                 "ReplaceNetworkAclAssociation",
             ):
-                event.add_tags(["NACLChanged"])
+                event.add_tags(["NACL"])
                 event.add_tags(["NetworkChanged"])
             if event_name in (
                 "CreateCustomerGateway",
@@ -66,7 +72,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 "DeleteInternetGateway",
                 "DetachInternetGateway",
             ):
-                event.add_tags(["GWChanged"])
+                event.add_tags(["GW"])
                 event.add_tags(["NetworkChanged"])
             if event_name in (
                 "CreateRoute",
@@ -77,7 +83,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 "DeleteRoute",
                 "DisassociateRouteTable",
             ):
-                event.add_tags(["RouteTableChanged"])
+                event.add_tags(["RouteTable"])
                 event.add_tags(["NetworkChanged"])
             if event_name in (
                 "CreateVpc",
@@ -92,8 +98,29 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 "DisableVpcClassicLink",
                 "EnableVpcClassicLink",
             ):
-                event.add_tags(["VPCChanged"])
+                event.add_tags(["VPC"])
                 event.add_tags(["NetworkChanged"])
+
+            if event_name in (
+                "PutGroupPolicy",
+                "PutRolePolicy",
+                "PutUserPolicy",
+                "AttachGroupPolicy",
+                "AttachRolePolicy",
+                "AttachUserPolicy",
+                "CreatePolicyVersion",
+                "SetDefaultPolicyVersion",
+                "AddUserToGroup",
+                "CreateLoginProfile",
+                "UpdateLoginProfile",
+                "CreateAccessKey",
+                "CreateRole",
+                "AssumeRole",
+            ):
+                event.add_tags(["SuspicousIAMActivity"])
+
+            if event_name in ("ConsoleLogin"):
+                event.add_tags(["ConsoleLogin"])
 
     def run(self):
         """Entry point for the analyzer.
