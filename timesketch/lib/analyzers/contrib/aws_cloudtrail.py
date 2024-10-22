@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+import json
 import logging
 
 from timesketch.lib import emojis
@@ -25,21 +26,38 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
     CLOUD_TRAIL_EVENT = "cloud_trail_event"
     EVENT_NAME = "event_name"
 
+    def _parse_cloudtrail_event(self, event):
+        """Parses the CloudTrail event string into a dictionary."""
+        cloud_trail_event_str = event.source.get(self.CLOUD_TRAIL_EVENT)
+        if not cloud_trail_event_str:
+            return
+
+        try:
+            return json.loads(cloud_trail_event_str)
+        except json.JSONDecodeError:
+            return None
+
     def _cloudtrail_add_tag(self, event):
-        cloud_trail_event = event.source.get(self.CLOUD_TRAIL_EVENT)
+        """Tags CloudTrail events based on event details and type."""
+        cloud_trail_event = self._parse_cloudtrail_event(event)
         event_name = event.source.get(self.EVENT_NAME)
 
         if cloud_trail_event:
-            if '"readOnly":true' in cloud_trail_event:
+            if cloud_trail_event.get("readOnly"):
                 event.add_tags(["readOnly"])
                 event.add_emojis([emojis.get_emoji("MAGNIFYING_GLASS")])
 
-            if any( s in cloud_trail_event for s in ["UnauthorizedOperation", "AccessDenied"]):
+            if cloud_trail_event.get("errorCode") in [
+                "UnauthorizedOperation",
+                "AccessDenied",
+            ]:
                 event.add_tags(["UnauthorizedAPICall"])
 
+            user_name = cloud_trail_event.get("userIdentity", {}).get("userName")
+            error_message = cloud_trail_event.get("errorMessage")
             if (
-                '"userName":"HIDDEN_DUE_TO_SECURITY_REASONS"' in cloud_trail_event
-                and '"errorMessage":"No username found in supplied account"' in cloud_trail_event
+                user_name == "HIDDEN_DUE_TO_SECURITY_REASONS"
+                and error_message == "No username found in supplied account"
             ):
                 event.add_tags(["FailedLoginNonExistentIAMUser"])
 
@@ -119,7 +137,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
             ):
                 event.add_tags(["SuspicousIAMActivity"])
 
-            if event_name in ("ConsoleLogin"):
+            if event_name == "ConsoleLogin":
                 event.add_tags(["ConsoleLogin"])
 
     def run(self):
@@ -132,34 +150,8 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
 
         return_fields = [self.CLOUD_TRAIL_EVENT, self.EVENT_NAME]
 
-        # Generator of events based on your query.
-        # Swap for self.event_pandas to get pandas back instead of events.
         events = self.event_stream(query_string=query, return_fields=return_fields)
 
-        # TODO: If an emoji is needed fetch it here.
-
-        # TODO: Add analyzer logic here.
-        # Methods available to use for sketch analyzers:
-        # sketch.get_all_indices()
-        # (If you add a view, please make sure the analyzer has results before
-        # adding the view.)
-        # view = sketch.add_view(
-        #     view_name=name, analyzer_name=self.NAME,
-        #     query_string=query_string, query_filter={})
-        # event.add_attributes({'foo': 'bar'})
-        # event.add_tags(['tag_name'])
-        # event_add_label('label')
-        # event.add_star()
-        # event.add_comment('comment')
-        # event.add_emojis([my_emoji])
-        # event.add_human_readable('human readable text', self.NAME)
-        # Remember you'll need to add event.commit() once all changes to the
-        # event have been completed.
-        # You can also add a story.
-        # story = self.sketch.add_story(title='Story from analyzer')
-        # story.add_text('## This is a markdown title')
-        # story.add_view(view)
-        # story.add_text('This is another paragraph')
         for event in events:
             self._cloudtrail_add_tag(event)
             event.commit()

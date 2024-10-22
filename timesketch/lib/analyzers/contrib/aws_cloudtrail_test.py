@@ -15,25 +15,14 @@ class TestAwsCloudtrailPlugin(BaseTest):
     def __init__(self, *args, **kwargs):
         super(TestAwsCloudtrailPlugin, self).__init__(*args, **kwargs)
 
-    # Mock the Elasticsearch datastore.
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_event_tagging(self):
-        """Tests that AWS CloudTrail events are tagged as expected."""
+    def test_readOnly_tagging(self):
+        """Tests that AWS CloudTrail readOnly events are tagged as expected."""
         analyzer = aws_cloudtrail.AwsCloudtrailSketchPlugin("test_index", 1)
         analyzer.datastore.client = mock.Mock()
         datastore = analyzer.datastore
 
         source_attributes = {
-            "__ts_timeline_id": 1,
-            "es_index": "",
-            "es_id": "",
-            "label": "",
-            "timestamp": 1410895419859714,
-            "timestamp_desc": "",
-            "datetime": "2014-09-16T19:23:40+00:00",
-            "source_short": "",
-            "source_long": "",
-            "message": "Dummy message",
             "data_type": "aws:cloudtrail:entry",
             "cloud_trail_event": '{"readOnly":true}',
         }
@@ -43,23 +32,47 @@ class TestAwsCloudtrailPlugin(BaseTest):
         self.assertEqual(analyzer.tagged_events["0"]["tags"], ["readOnly"])
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_network_tagging(self):
-        """Tests that AWS CloudTrail events are tagged as expected."""
+    def test_unauthorizedAPICall_tagging(self):
+        """Tests that AWS CloudTrail AccessDenied events are tagged as expected."""
         analyzer = aws_cloudtrail.AwsCloudtrailSketchPlugin("test_index", 1)
         analyzer.datastore.client = mock.Mock()
         datastore = analyzer.datastore
 
         source_attributes = {
-            "__ts_timeline_id": 1,
-            "es_index": "",
-            "es_id": "",
-            "label": "",
-            "timestamp": 1410895419859714,
-            "timestamp_desc": "",
-            "datetime": "2014-09-16T19:23:40+00:00",
-            "source_short": "",
-            "source_long": "",
-            "message": "Dummy message",
+            "data_type": "aws:cloudtrail:entry",
+            "cloud_trail_event": '{"errorCode":"AccessDenied"}',
+        }
+
+        datastore.import_event("test_index", source_attributes, "0")
+        analyzer.run()
+        self.assertEqual(analyzer.tagged_events["0"]["tags"], ["UnauthorizedAPICall"])
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_failedLoginNonExistentIAMUser_tagging(self):
+        """Tests that AWS CloudTrail FailedLoginNonExistentIAMUser events are tagged as expected."""
+        analyzer = aws_cloudtrail.AwsCloudtrailSketchPlugin("test_index", 1)
+        analyzer.datastore.client = mock.Mock()
+        datastore = analyzer.datastore
+
+        source_attributes = {
+            "data_type": "aws:cloudtrail:entry",
+            "cloud_trail_event": "{\"userIdentity\": {\"userName\": \"HIDDEN_DUE_TO_SECURITY_REASONS\"},\"errorMessage\": \"No username found in supplied account\"}"
+        }
+
+        datastore.import_event("test_index", source_attributes, "0")
+        analyzer.run()
+        self.assertEqual(
+            analyzer.tagged_events["0"]["tags"], ["FailedLoginNonExistentIAMUser"]
+        )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_network_tagging(self):
+        """Tests that AWS CloudTrail NetworkChanged events are tagged as expected."""
+        analyzer = aws_cloudtrail.AwsCloudtrailSketchPlugin("test_index", 1)
+        analyzer.datastore.client = mock.Mock()
+        datastore = analyzer.datastore
+
+        source_attributes = {
             "data_type": "aws:cloudtrail:entry",
             "event_name": "AuthorizeSecurityGroupIngress",
         }
@@ -68,5 +81,21 @@ class TestAwsCloudtrailPlugin(BaseTest):
         analyzer.run()
         self.assertEqual(
             sorted(analyzer.tagged_events["0"]["tags"]),
-            sorted(["NetworkChanged", "SGChanged"]),
+            sorted(["NetworkChanged", "SG"]),
         )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_consoleLogin_tagging(self):
+        """Tests that AWS CloudTrail ConsoleLogin events are tagged as expected."""
+        analyzer = aws_cloudtrail.AwsCloudtrailSketchPlugin("test_index", 1)
+        analyzer.datastore.client = mock.Mock()
+        datastore = analyzer.datastore
+
+        source_attributes = {
+            "data_type": "aws:cloudtrail:entry",
+            "event_name": "ConsoleLogin",
+        }
+
+        datastore.import_event("test_index", source_attributes, "0")
+        analyzer.run()
+        self.assertEqual(analyzer.tagged_events["0"]["tags"],["ConsoleLogin"])
