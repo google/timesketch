@@ -140,6 +140,9 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
             if event_name == "ConsoleLogin":
                 event.add_tags(["ConsoleLogin"])
 
+            if event_name == "GetCallerIdentity":
+                event.add_tags(["GetCallerIdentity"])
+
     def run(self):
         """Entry point for the analyzer.
 

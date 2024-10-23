@@ -56,7 +56,7 @@ class TestAwsCloudtrailPlugin(BaseTest):
 
         source_attributes = {
             "data_type": "aws:cloudtrail:entry",
-            "cloud_trail_event": "{\"userIdentity\": {\"userName\": \"HIDDEN_DUE_TO_SECURITY_REASONS\"},\"errorMessage\": \"No username found in supplied account\"}"
+            "cloud_trail_event": '{"userIdentity": {"userName": "HIDDEN_DUE_TO_SECURITY_REASONS"},"errorMessage": "No username found in supplied account"}',
         }
 
         datastore.import_event("test_index", source_attributes, "0")
@@ -98,4 +98,4 @@ class TestAwsCloudtrailPlugin(BaseTest):
 
         datastore.import_event("test_index", source_attributes, "0")
         analyzer.run()
-        self.assertEqual(analyzer.tagged_events["0"]["tags"],["ConsoleLogin"])
+        self.assertEqual(analyzer.tagged_events["0"]["tags"], ["ConsoleLogin"])
