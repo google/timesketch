@@ -69,6 +69,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 "RevokeSecurityGroupEgress",
                 "CreateSecurityGroup",
                 "DeleteSecurityGroup",
+                "ModifySecurityGroupRules",
             ):
                 event.add_tags(["SG"])
                 event.add_tags(["NetworkChanged"])
@@ -82,13 +83,20 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
             ):
                 event.add_tags(["NACL"])
                 event.add_tags(["NetworkChanged"])
-            if event_name in (
-                "CreateCustomerGateway",
-                "DeleteCustomerGateway",
-                "AttachInternetGateway",
-                "CreateInternetGateway",
-                "DeleteInternetGateway",
-                "DetachInternetGateway",
+            if (
+                event_name
+                and any(
+                    act in event_name
+                    for act in [
+                        "Create",
+                        "Delete",
+                        "Attach",
+                        "Accept",
+                        "Associate",
+                        "Replace",
+                    ]
+                )
+                and "Gateway" in event_name
             ):
                 event.add_tags(["GW"])
                 event.add_tags(["NetworkChanged"])
