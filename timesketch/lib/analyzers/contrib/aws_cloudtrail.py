@@ -48,8 +48,8 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 event.add_emojis([emojis.get_emoji("MAGNIFYING_GLASS")])
 
             if cloud_trail_event.get("errorCode") in [
-                "UnauthorizedOperation",
                 "AccessDenied",
+                "UnauthorizedOperation",
             ]:
                 event.add_tags(["UnauthorizedAPICall"])
 
@@ -63,13 +63,13 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
 
         if event_name:
             if event_name in (
-                "AuthorizeSecurityGroupIngress",
                 "AuthorizeSecurityGroupEgress",
-                "RevokeSecurityGroupIngress",
-                "RevokeSecurityGroupEgress",
+                "AuthorizeSecurityGroupIngress",
                 "CreateSecurityGroup",
                 "DeleteSecurityGroup",
                 "ModifySecurityGroupRules",
+                "RevokeSecurityGroupEgress",
+                "RevokeSecurityGroupIngress",
             ):
                 event.add_tags(["SG"])
                 event.add_tags(["NetworkChanged"])
@@ -78,8 +78,8 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 "CreateNetworkAclEntry",
                 "DeleteNetworkAcl",
                 "DeleteNetworkAclEntry",
-                "ReplaceNetworkAclEntry",
                 "ReplaceNetworkAclAssociation",
+                "ReplaceNetworkAclEntry",
             ):
                 event.add_tags(["NACL"])
                 event.add_tags(["NetworkChanged"])
@@ -88,11 +88,11 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
                 and any(
                     act in event_name
                     for act in [
-                        "Create",
-                        "Delete",
-                        "Attach",
                         "Accept",
                         "Associate",
+                        "Attach",
+                        "Create",
+                        "Delete",
                         "Replace",
                     ]
                 )
@@ -103,45 +103,48 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
             if event_name in (
                 "CreateRoute",
                 "CreateRouteTable",
+                "DeleteRoute",
+                "DeleteRouteTable",
+                "DisassociateRouteTable",
                 "ReplaceRoute",
                 "ReplaceRouteTableAssociation",
-                "DeleteRouteTable",
-                "DeleteRoute",
-                "DisassociateRouteTable",
             ):
                 event.add_tags(["RouteTable"])
                 event.add_tags(["NetworkChanged"])
             if event_name in (
-                "CreateVpc",
-                "DeleteVpc",
-                "ModifyVpcAttribute",
                 "AcceptVpcPeeringConnection",
-                "CreateVpcPeeringConnection",
-                "DeleteVpcPeeringConnection",
-                "RejectVpcPeeringConnection",
                 "AttachClassicLinkVpc",
+                "CreateVpc",
+                "CreateVpcPeeringConnection",
+                "DeleteVpc",
+                "DeleteVpcPeeringConnection",
                 "DetachClassicLinkVpc",
                 "DisableVpcClassicLink",
                 "EnableVpcClassicLink",
+                "ModifyVpcAttribute",
+                "RejectVpcPeeringConnection",
             ):
                 event.add_tags(["VPC"])
                 event.add_tags(["NetworkChanged"])
 
             if event_name in (
-                "PutGroupPolicy",
-                "PutRolePolicy",
-                "PutUserPolicy",
+                "AddRoleToInstanceProfile",
+                "AddUserToGroup",
+                "AssumeRole",
                 "AttachGroupPolicy",
                 "AttachRolePolicy",
                 "AttachUserPolicy",
-                "CreatePolicyVersion",
-                "SetDefaultPolicyVersion",
-                "AddUserToGroup",
-                "CreateLoginProfile",
-                "UpdateLoginProfile",
                 "CreateAccessKey",
+                "CreateLoginProfile",
+                "CreatePolicyVersion",
                 "CreateRole",
-                "AssumeRole",
+                "PassRole",
+                "PutGroupPolicy",
+                "PutRolePolicy",
+                "PutUserPolicy",
+                "SetDefaultPolicyVersion",
+                "UpdateAccessKey",
+                "UpdateLoginProfile",
             ):
                 event.add_tags(["SuspicousIAMActivity"])
 
