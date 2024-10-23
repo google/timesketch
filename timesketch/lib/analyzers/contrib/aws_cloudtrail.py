@@ -43,9 +43,12 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
         event_name = event.source.get(self.EVENT_NAME)
 
         if cloud_trail_event:
-            if cloud_trail_event.get("readOnly"):
-                event.add_tags(["readOnly"])
+            if cloud_trail_event.get("readOnly") == True:
+                event.add_tags(["readOnly:true"])
                 event.add_emojis([emojis.get_emoji("MAGNIFYING_GLASS")])
+            elif cloud_trail_event.get("readOnly") == False:
+                event.add_tags(["readOnly:false"])
+                event.add_emojis([emojis.get_emoji("SPARKLES")])
 
             if cloud_trail_event.get("errorCode") in [
                 "AccessDenied",
@@ -168,6 +171,7 @@ class AwsCloudtrailSketchPlugin(interface.BaseAnalyzer):
 
         for event in events:
             self._cloudtrail_add_tag(event)
+            # Add other analyzers here.
             event.commit()
 
         return "AWS CloudTrail Analyzer completed"
