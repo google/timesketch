@@ -729,6 +729,9 @@ class Story(resource.BaseResource):
                 string_list.append(block.text)
             elif block.TYPE == "view":
                 search_obj = block.view
+                if search_obj is None:
+                    logging.warning("Block has no view. Skipping")
+                    continue
                 data_frame = search_obj.to_pandas()
                 string_list.append(data_frame.to_string(index=False))
             elif block.TYPE == "aggregation":
