@@ -84,11 +84,13 @@ class AnalysisManager(object):
         cls._class_registry = {}
 
     @classmethod
-    def get_analyzers(cls, analyzer_names=None):
+    def get_analyzers(cls, analyzer_names=None, include_dfiq=False):
         """Retrieves the registered analyzers.
 
         Args:
             analyzer_names (list): List of analyzer names.
+            include_dfiq (bool): Optional. Whether to include DFIQ analyzers
+                                 in the results. Defaults to False.
 
         Yields:
             tuple: containing:
@@ -105,6 +107,14 @@ class AnalysisManager(object):
                 if analyzer_name in completed_analyzers:
                     continue
                 analyzer_class = cls.get_analyzer(analyzer_name)
+                # Apply DFIQ filtering
+                if (
+                    not include_dfiq
+                    and hasattr(analyzer_class, "IS_DFIQ_ANALYZER")
+                    and analyzer_class.IS_DFIQ_ANALYZER
+                ):
+                    continue
+
                 yield analyzer_name, analyzer_class
                 completed_analyzers.add(analyzer_name)
 
@@ -138,3 +148,20 @@ class AnalysisManager(object):
                 "Class already set for name: {0:s}.".format(analyzer_class.NAME)
             )
         cls._class_registry[analyzer_name] = analyzer_class
+
+    @classmethod
+    def deregister_analyzer(cls, analyzer_name):
+        """Deregister an analyzer class.
+
+        The analyzer classes are identified by their lower case name.
+
+        Args:
+            analyzer_name (string): the analyzer name to deregister.
+
+        Raises:
+            KeyError: If class is not registered for the corresponding name.
+        """
+        if analyzer_name not in cls._class_registry:
+            # Do we really need a KeyError here? Isn't logging enough?
+            raise KeyError("Class not set for name: {0:s}.".format(analyzer_name))
+        _ = cls._class_registry.pop(analyzer_name, None)

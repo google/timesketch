@@ -111,6 +111,9 @@ export default {
   getSketchTimelineAnalysis(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },
+  getTimelineFields(sketchId, timelineId){
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/fields/')
+  },
   saveSketchTimeline(sketchId, timelineId, name, description, color) {
     let formData = {
       name: name,

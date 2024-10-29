@@ -17,19 +17,20 @@ limitations under the License.
   <v-autocomplete
     outlined
     v-model="selectedField"
-    :items="allNonTimestampFields"
+    :items="mappedTimelineFields"
     label="Field name to aggregate"
+    :loading="loadingFields"
     @input="$emit('selectedField', $event)"
   >
-    <template 
+    <template
       #item="{ item, on, attrs }"
     >
-      <v-list-item 
-        v-on="on" 
+      <v-list-item
+        v-on="on"
         v-bind="attrs"
       >
         <v-list-item-avatar>
-          <v-icon> 
+          <v-icon>
             {{ item.value.type === 'text' ? 'mdi-code-string' : 'mdi-pound-box' }}
           </v-icon>
         </v-list-item-avatar>
@@ -38,11 +39,11 @@ limitations under the License.
         </v-list-item-content>
       </v-list-item>
     </template>
-    <template 
+    <template
       #selection="{ item }"
     >
-      <v-icon> 
-        {{ item.value.type === 'text' ? 'mdi-code-string' : 'mdi-pound-box' }} 
+      <v-icon>
+        {{ item.value.type === 'text' ? 'mdi-code-string' : 'mdi-pound-box' }}
       </v-icon>
       &nbsp; &nbsp; {{ item.text }}
     </template>
@@ -56,34 +57,40 @@ export default {
     field: {
       type: Object,
     },
+    timelineFields: {
+      type: Array,
+      default: () => [],
+    },
+    loadingFields: {
+        type: Boolean,
+        default: false
+    },
   },
   data() {
     return {
       selectedField: this.field,
-      
     }
   },
   computed: {
-    allNonTimestampFields() {
-      let mappings = this.$store.state.meta.mappings
-        .filter(
-          (mapping) => {
-            return (
-              mapping['field'] !== 'datetime'
-              && mapping['field'] !== 'timestamp'
-            )
-        })
-        .map(
-          (mapping) => {
-            return {text: mapping['field'], value: mapping}}
-        )
-      return mappings
+    mappedTimelineFields() {
+      const mappings = this.$store.state.meta.mappings;
+
+      return this.timelineFields.map(field => {
+        const mapping = mappings.find(m => m.field === field);
+        const type = mapping ? mapping.type : 'unknown';
+        return { text: field, value: { field, type } };
+      });
     },
   },
   watch: {
     field() {
         this.selectedField = this.field
-    }
+    },
+    timelineFields(newFields) {
+      if (!newFields || newFields.length === 0) {
+          this.selectedField = null;
+      }
+    },
   }
 }
 </script>
