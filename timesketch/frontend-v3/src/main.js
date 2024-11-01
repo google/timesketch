@@ -10,6 +10,8 @@ import { registerPlugins } from "@/plugins";
 // Components
 import App from "./App.vue";
 
+import {initialLetter} from "./filters.js";
+
 // Composables
 import { createApp } from "vue";
 
@@ -18,3 +20,7 @@ const app = createApp(App);
 registerPlugins(app);
 
 app.mount("#app");
+
+app.config.globalProperties.$filters = {
+  initialLetter
+}

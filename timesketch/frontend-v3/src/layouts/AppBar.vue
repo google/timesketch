@@ -29,17 +29,30 @@ limitations under the License.
       >
       </v-img>
     </template>
-    <template v-slot:append> Right hand side </template>
+    <template v-slot:append>
+      <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <span class="white--text">{{ $filters.initialLetter(currentUser) }}</span>
+      </v-avatar>
+    </template>
   </v-toolbar>
   <v-divider></v-divider>
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient.js'
 export default {
   data() {
-    return {};
+    return {
+      currentUser: '',
+    };
   },
   computed: {},
   methods: {},
+  created: function () {
+    ApiClient.getLoggedInUser().then((response) => {
+      let currentUser = response.data.objects[0].username;
+      this.currentUser = currentUser;
+    });
+  },
 };
 </script>
