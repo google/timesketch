@@ -95,10 +95,16 @@ aws_cloudtrail_vpc:
   search_name: 'NetworkChanged VPC'
 
 aws_cloudtrail_suspicous_iam_activity:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"AddRoleToInstanceProfile" OR event_name:"AddUserToGroup" OR event_name:"AssumeRole" OR event_name:"AttachGroupPolicy" OR event_name:"AttachRolePolicy" OR event_name:"AttachUserPolicy" OR event_name:"CreateAccessKey" OR event_name:"CreateLoginProfile" OR event_name:"CreatePolicyVersion" OR event_name:"CreateRole" OR event_name:"PassRole" OR event_name:"PutGroupPolicy" OR event_name:"PutRolePolicy" OR event_name:"PutUserPolicy" OR event_name:"SetDefaultPolicyVersion" OR event_name:"UpdateAccessKey" OR event_name:"UpdateLoginProfile")'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"AddRoleToInstanceProfile" OR event_name:"AddUserToGroup" OR event_name:"AssumeRole" OR event_name:"AttachGroupPolicy" OR event_name:"AttachRolePolicy" OR event_name:"AttachUserPolicy" OR event_name:"CreateAccessKey" OR event_name:"CreateLoginProfile" OR event_name:"CreatePolicyVersion" OR event_name:"CreateRole" OR event_name:"PassRole" OR event_name:"PutGroupPolicy" OR event_name:"PutRolePolicy" OR event_name:"PutUserPolicy" OR event_name:"SetDefaultPolicyVersion" OR event_name:"UpdateAccessKey" OR event_name:"UpdateLoginProfile" OR event_name:"GetFederationToken" )'
   tags: ['SuspicousIAMActivity']
   save_search: true
   search_name: 'SuspicousIAMActivity'
+
+aws_cloudtrail_suspicous_iam_identity_center_activity:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"StartSSO" OR event_name:"CreateUser" OR event_name:"CreateGroup" OR event_name:"AddMemberToGroup" OR event_name:"CreatePermissionSet" OR event_name:"CreateAccountAssignment" OR event_name:"Authenticate" OR event_name:"Federate" OR event_name:"AssumeRoleWithSAML")'
+  tags: ['SuspicousIICActivity']
+  save_search: true
+  search_name: 'SuspicousIICActivity'
 
 aws_cloudtrail_console_login:
   query_string: 'data_type:"aws:cloudtrail:entry" AND event_name:"ConsoleLogin"'
