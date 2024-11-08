@@ -53,7 +53,7 @@ aws_cloudtrail_readonly_false:
   search_name: 'readOnly_false'
 
 aws_cloudtrail_unauthorized_api_call:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (cloud_trail_event:"*errorCode\":\"AccessDenied*" OR cloud_trail_event:"*errorCode\":\"UnauthorizedOperation*")'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND cloud_trail_event: ("*errorCode\":\"AccessDenied*" OR "*errorCode\":\"UnauthorizedOperation*")'
   tags: ['UnauthorizedAPICall']
   save_search: true
   search_name: 'UnauthorizedAPICall'
@@ -65,43 +65,43 @@ aws_cloudtrail_failed_login_non_existent_iam_user:
   search_name: 'FailedLoginNonExistentIAMUser'
 
 aws_cloudtrail_security_group:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"AuthorizeSecurityGroupEgress" OR event_name:"AuthorizeSecurityGroupIngress" OR event_name:"CreateSecurityGroup" OR event_name:"DeleteSecurityGroup" OR event_name:"ModifySecurityGroupRules" OR event_name:"RevokeSecurityGroupEgress" OR event_name:"RevokeSecurityGroupIngress")'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("AuthorizeSecurityGroupEgress" OR "AuthorizeSecurityGroupIngress" OR "CreateSecurityGroup" OR "DeleteSecurityGroup" OR "ModifySecurityGroupRules" OR "RevokeSecurityGroupEgress" OR "RevokeSecurityGroupIngress")'
   tags: ['NetworkChanged', 'SG']
   save_search: true
   search_name: 'NetworkChanged SecurityGroup'
 
 aws_cloudtrail_network_acl:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"CreateNetworkAcl" OR event_name:"CreateNetworkAclEntry" OR event_name:"DeleteNetworkAcl" OR event_name:"DeleteNetworkAclEntry" OR event_name:"ReplaceNetworkAclAssociation" OR event_name:"ReplaceNetworkAclEntry")'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("CreateNetworkAcl" OR "CreateNetworkAclEntry" OR "DeleteNetworkAcl" OR "DeleteNetworkAclEntry" OR "ReplaceNetworkAclAssociation" OR "ReplaceNetworkAclEntry")'
   tags: ['NetworkChanged', 'NACL']
   save_search: true
   search_name: 'NetworkChanged NetworkACl'
 
 aws_cloudtrail_gateway:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:Accept* OR event_name:Associate* OR event_name:Attach* OR event_name:Create* OR event_name:Delete* OR event_name:Replace*) AND event_name:*Gateway'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: (Accept* OR Associate* OR Attach* OR Create* OR Delete* OR Replace*) AND event_name:*Gateway'
   tags: ['NetworkChanged', 'GW']
   save_search: true
   search_name: 'NetworkChanged GateWay'
 
 aws_cloudtrail_routetable:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"CreateRoute" OR event_name:"CreateRouteTable" OR event_name:"DeleteRoute" OR event_name:"DeleteRouteTable" OR event_name:"DisassociateRouteTable" OR event_name:"ReplaceRoute" OR event_name:"ReplaceRouteTableAssociation")'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("CreateRoute" OR "CreateRouteTable" OR "DeleteRoute" OR "DeleteRouteTable" OR "DisassociateRouteTable" OR "ReplaceRoute" OR "ReplaceRouteTableAssociation")'
   tags: ['NetworkChanged', 'RouteTable']
   save_search: true
   search_name: 'NetworkChanged RouteTable'
 
 aws_cloudtrail_vpc:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"AcceptVpcPeeringConnection" OR event_name:"AttachClassicLinkVpc" OR event_name:"CreateVpc" OR event_name:"CreateVpcPeeringConnection" OR event_name:"DeleteVpc" OR event_name:"DeleteVpcPeeringConnection" OR event_name:"DetachClassicLinkVpc" OR event_name:"DisableVpcClassicLink" OR event_name:"EnableVpcClassicLink" OR event_name:"ModifyVpcAttribute" OR event_name:"RejectVpcPeeringConnection")'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("AcceptVpcPeeringConnection" OR "AttachClassicLinkVpc" OR "CreateVpc" OR "CreateVpcPeeringConnection" OR "DeleteVpc" OR "DeleteVpcPeeringConnection" OR "DetachClassicLinkVpc" OR "DisableVpcClassicLink" OR "EnableVpcClassicLink" OR "ModifyVpcAttribute" OR "RejectVpcPeeringConnection")'
   tags: ['NetworkChanged', 'VPC']
   save_search: true
   search_name: 'NetworkChanged VPC'
 
 aws_cloudtrail_suspicous_iam_activity:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"AddRoleToInstanceProfile" OR event_name:"AddUserToGroup" OR event_name:"AssumeRole" OR event_name:"AttachGroupPolicy" OR event_name:"AttachRolePolicy" OR event_name:"AttachUserPolicy" OR event_name:"CreateAccessKey" OR event_name:"CreateLoginProfile" OR event_name:"CreatePolicyVersion" OR event_name:"CreateRole" OR event_name:"PassRole" OR event_name:"PutGroupPolicy" OR event_name:"PutRolePolicy" OR event_name:"PutUserPolicy" OR event_name:"SetDefaultPolicyVersion" OR event_name:"UpdateAccessKey" OR event_name:"UpdateLoginProfile" OR event_name:"GetFederationToken" )'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("AddRoleToInstanceProfile" OR "AddUserToGroup" OR "AssumeRole" OR "AttachGroupPolicy" OR "AttachRolePolicy" OR "AttachUserPolicy" OR "CreateAccessKey" OR "CreateLoginProfile" OR "CreatePolicyVersion" OR "CreateRole" OR "PassRole" OR "PutGroupPolicy" OR "PutRolePolicy" OR "PutUserPolicy" OR "SetDefaultPolicyVersion" OR "UpdateAccessKey" OR "UpdateLoginProfile" OR "GetFederationToken" )'
   tags: ['SuspicousIAMActivity']
   save_search: true
   search_name: 'SuspicousIAMActivity'
 
 aws_cloudtrail_suspicous_iam_identity_center_activity:
-  query_string: 'data_type:"aws:cloudtrail:entry" AND (event_name:"StartSSO" OR event_name:"CreateUser" OR event_name:"CreateGroup" OR event_name:"AddMemberToGroup" OR event_name:"CreatePermissionSet" OR event_name:"CreateAccountAssignment" OR event_name:"Authenticate" OR event_name:"Federate" OR event_name:"AssumeRoleWithSAML")'
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("StartSSO" OR "CreateUser" OR "CreateGroup" OR "AddMemberToGroup" OR "CreatePermissionSet" OR "CreateAccountAssignment" OR "Authenticate" OR "Federate" OR "AssumeRoleWithSAML")'
   tags: ['SuspicousIICActivity']
   save_search: true
   search_name: 'SuspicousIICActivity'
