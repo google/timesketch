@@ -75,13 +75,13 @@ export default {
     return {
       headers: [
         {
-          text: 'Name',
+          title: 'Name',
           align: 'start',
           value: 'name',
         },
-        { text: 'Creator', value: 'user' },
-        { text: 'Created at', value: 'created_at' },
-        { text: 'Last active', value: 'last_activity' },
+        { title: 'Creator', value: 'user' },
+        { title: 'Created at', value: 'created_at' },
+        { title: 'Last active', value: 'last_activity' },
       ],
       sketches: [],
       numSketches: 0,
