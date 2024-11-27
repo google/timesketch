@@ -38,4 +38,3 @@ prometheus-flask-exporter==0.22.4
 decorator==5.0.5
 geoip2==4.8.0
 jsonschema==4.17.3
-pytest==7.1.3
