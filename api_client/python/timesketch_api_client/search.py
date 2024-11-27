@@ -1084,7 +1084,7 @@ class Search(resource.SketchResource):
         """Returns a dict with the respone of the query."""
         if self._raw_response is None:
             self._execute_query()
-            if not self._raw_response:
+            if self._raw_response is None:
                 raise ValueError("No results to return.")
 
         return self._raw_response
@@ -1110,7 +1110,7 @@ class Search(resource.SketchResource):
         """Returns a pandas DataFrame with the response of the query."""
         if self._raw_response is None:
             self._raw_response = self._execute_query()
-            if not self._raw_response:
+            if self._raw_response is None:
                 raise ValueError("No results to return.")
 
         return_list = []
