@@ -22,8 +22,7 @@ jobs:
         run: |
           pip install pipenv
           pipenv install -d
-          rm requirements.txt
-          pipenv install -r test_requirements.txt --dev
+          pipenv run pip install -r test_requirements.txt
       - name: Check pytest installation
         run: pipenv run pip show pytest
       - name: Run unit tests
