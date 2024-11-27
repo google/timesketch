@@ -13,8 +13,6 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04]
         python-version: ['3.9', '3.10']
     steps:
-      - name: Clean virtualenv
-        run: rm -rf /home/runner/.local/share/virtualenvs/timesketch-*
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
