@@ -92,8 +92,17 @@ export default {
     },
     analyzerTimelineId: {
       handler: function (id) {
-        if (id) this.selectedTimelines.push(id)
-        if (!id) this.selectedTimelines = []
+        if (Array.isArray(id)) {
+          this.selectedTimelines = id
+        } else {
+          if (id) {
+            this.selectedTimelines.push(id)
+          }
+          else {
+            this.selectedTimelines = []
+          }
+        }
+
       },
     },
   },

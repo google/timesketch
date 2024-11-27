@@ -20,6 +20,8 @@ limitations under the License.
         <TsEventFieldSelect
           :field="selectedField"
           @selectedField="selectedField = $event"
+          :timelineFields="timelineFields"
+          :loadingFields="loadingFields"
           :rules="[rules.required]"
           >
           </TsEventFieldSelect>
@@ -113,6 +115,14 @@ export default {
     },
     splitByTimeline: {
       type: Boolean,
+    },
+    timelineFields: {
+        type: Array,
+        default: () => [],
+    },
+    loadingFields: {
+        type: Boolean,
+        default: false
     },
   },
   data() {

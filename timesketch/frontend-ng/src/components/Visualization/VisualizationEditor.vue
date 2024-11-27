@@ -37,18 +37,19 @@ limitations under the License.
     </v-toolbar>
     <v-divider class="mx-3"></v-divider>
     <v-row class="mt-3">
-      <v-col >
-        <v-container class="ma-0">
-          <ts-timeline-search 
-            componentName="visualization" 
-            @selectedTimelines="selectedTimelineIDs = $event"></ts-timeline-search>
-        </v-container>
-      </v-col>
-    </v-row>
-    <v-row class="mt-3">
       <v-col>
+        <TsAggregationEventSelect
+          @updateTimelineIDs="getTimelineFields"
+          :timelineIDs="selectedTimelineIDs"
+          @updateQueryString="selectedQueryString = $event"
+          :queryString="selectedQueryString"
+          @updateQueryChips="selectedQueryChips = $event"
+          :queryChips="selectedQueryChips"
+        >
+        </TsAggregationEventSelect>
         <TsAggregationConfig
-          @enabled="selectedTimelineIDs.length > 0"
+          :timelineFields="availableTimelineFields"
+          :loadingFields="loadingFields"
           :field="selectedField"
           @updateField="selectedField = $event"
           :aggregator="selectedAggregator"
@@ -86,7 +87,14 @@ limitations under the License.
           @updateShowDataLabels="selectedShowDataLabels = $event"
         ></TsChartConfig>
         </v-col>
-        <v-col cols="8">
+        <v-col cols="8" :class="chartSeries == null? 'd-flex justify-center align-center' : ''">
+          <v-img
+            v-if="chartSeries == null"
+            src="/dist/vis_placeholder.png"
+            max-width="600"
+            max-height="500"
+            contain
+          ></v-img>
           <TsChartCard
             v-if="chartSeries && selectedChartType"
             :fieldName="selectedField.field"
@@ -120,7 +128,7 @@ limitations under the License.
           text
           color="primary"
           @click="loadAggregationData"
-          :disabled="selectedTimelineIDs.length == 0 || !(
+          :disabled="!validAggregation || !(
             selectedField &&
             selectedAggregator &&
             selectedChartType
@@ -133,7 +141,7 @@ limitations under the License.
         <v-btn
           text
           @click="clear"
-          :disabled="!(
+          :disabled="!validAggregation || !(
             selectedField &&
             selectedAggregator &&
             selectedChartType
@@ -157,14 +165,14 @@ import ApiClient from '../../utils/RestApiClient'
 import TsAggregationConfig from './AggregationConfig.vue'
 import TsChartConfig from './ChartConfig.vue'
 import TsChartCard from './ChartCard.vue'
-import TsTimelineSearch from '../Analyzer/TimelineSearch.vue'
+import TsAggregationEventSelect from './AggregationEventSelect.vue'
 
 export default {
   components: {
     TsAggregationConfig,
     TsChartConfig,
     TsChartCard,
-    TsTimelineSearch,
+    TsAggregationEventSelect,
   },
   props: {
     aggregator: {
@@ -208,6 +216,7 @@ export default {
     },
     queryString: {
       type: String,
+      default: "*"
     },
     range: {
       type: Object,
@@ -283,9 +292,14 @@ export default {
       selectedYTitle: this.yTitle,
       renameVisualDialog: false,
       selectedChartTitleDraft: this.selectedChartTitleDraft,
+      availableTimelineFields: [],
+      loadingFields: false,
     }
   },
   computed: {
+    validAggregation() {
+      return this.selectedTimelineIDs.length > 0 && this.selectedQueryString
+    },
     sketch() {
       return this.$store.state.sketch
     },
@@ -304,15 +318,53 @@ export default {
       }
       return undefined
     },
-    currentQueryString() {
-      const currentSearchNode = this.$store.state.currentSearchNode
-      if (!currentSearchNode) {
-        return ""
-      }
-      return currentSearchNode.query_string
-    },
   },
   methods: {
+    getTimelineFields(timelineIDs) {
+      this.selectedTimelineIDs = timelineIDs
+      if (!timelineIDs || timelineIDs.length === 0 ) {
+        this.availableTimelineFields = []
+        return;
+      }
+
+      this.loadingFields = true;
+
+      if (timelineIDs.length === 1) {
+        ApiClient.getTimelineFields(this.sketch.id, timelineIDs[0])
+          .then(response => {
+            this.availableTimelineFields = response.data.objects
+            this.loadingFields = false
+          })
+          .catch(error => {
+            console.error("Error fetching fields:", error);
+            this.availableTimelineFields = [];
+            this.loadingFields = false
+          });
+      }
+      else {
+        const promises = timelineIDs.map(timelineID => {
+          return ApiClient.getTimelineFields(this.sketch.id, timelineID)
+            .then(response => response.data.objects)
+            .catch(error => {
+                console.error("Error fetching timeline fields:", error);
+                return []
+            })
+          })
+
+          Promise.all(promises)
+            .then(results => {
+              // Flatten the arrays and create a set to guarantee uniqueness
+              const union = [...new Set(results.flat())];
+              this.availableTimelineFields = union
+              this.loadingFields = false;
+            })
+            .catch(error => {
+              console.error("Error in Promise.all", error)
+              this.availableTimelineFields = []
+              this.loadingFields = false;
+            })
+      }
+    },
     rename() {
       this.renameVisualDialog = false
       this.selectedChartTitle = this.selectedChartTitleDraft

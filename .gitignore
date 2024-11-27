@@ -1,5 +1,7 @@
 # Files to ignore by git
 
+.DS_Store
+
 # Back-up files
 *~
 *.swp
@@ -25,6 +27,16 @@ importer_client/python/build/
 # Ignore frontend build related files
 node_modules
 timesketch/static/dist
+
+# Frontend Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# local frontend env files
+.env.local
+.env.*.local
 
 # Test files
 .coverage

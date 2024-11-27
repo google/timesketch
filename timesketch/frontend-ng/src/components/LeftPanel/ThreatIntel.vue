@@ -58,7 +58,7 @@ limitations under the License.
         :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon small title="Manage indicators">mdi-pencil</v-icon>
+        <v-icon small title="Manage indicators">mdi-open-in-new</v-icon>
       </v-btn>
 
       <span v-if="!expanded" class="float-right" style="margin-right: 10px">

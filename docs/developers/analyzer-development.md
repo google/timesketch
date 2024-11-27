@@ -13,7 +13,7 @@ analyzer.
 
 Timesketch analyzers are programs that run when new data is indexed, e.g. when
 you upload a new plaso storage file or when adding an existing index to a
-sketch. They can also be triggered manaully for a specific timeline from the
+sketch. They can also be triggered manually for a specific timeline from the
 Analyzer tab in the UI after the index is finished.
 You have access to a simple API that makes searching, commenting, tagging etc
 easy. Everything you can do in the UI you can do programmatically.

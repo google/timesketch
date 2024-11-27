@@ -26,6 +26,12 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
+from timesketch.lib.dfiq import DFIQ
+from timesketch.api.v1.resources import scenarios
+from timesketch.models.sketch import Scenario
+from timesketch.models.sketch import InvestigativeQuestion
+from timesketch.models.sketch import InvestigativeQuestionApproach
+from timesketch.models.sketch import Facet
 
 from timesketch.api.v1.resources import ResourceMixin
 
@@ -51,7 +57,7 @@ class InvalidResourceTest(BaseTest):
     invalid_resource_url = "api/v1/invalidresource"
 
     def test_invalid_endpoint(self):
-        """Authenticated request to get a non existant API endpoint"""
+        """Authenticated request to get a non existent API endpoint"""
         self.login()
         response = self.client.get(self.invalid_resource_url)
         self.assert404(response)
@@ -1403,3 +1409,126 @@ class SystemSettingsResourceTest(BaseTest):
         response = self.client.get(self.resource_url)
         expected_response = {"DFIQ_ENABLED": False, "LLM_PROVIDER": "test"}
         self.assertEqual(response.json, expected_response)
+
+
+class ScenariosResourceTest(BaseTest):
+    """Tests the scenarios resource."""
+
+    @mock.patch("timesketch.lib.analyzers.dfiq_plugins.manager.DFIQAnalyzerManager")
+    def test_check_and_run_dfiq_analysis_steps(self, mock_analyzer_manager):
+        """Test triggering analyzers for different DFIQ objects."""
+        test_sketch = self.sketch1
+        test_user = self.user1
+        self.sketch1.set_status("ready")
+        self._commit_to_database(test_sketch)
+
+        # Load DFIQ objects
+        dfiq_obj = DFIQ("./test_data/dfiq/")
+
+        scenario = dfiq_obj.scenarios[0]
+        scenario_sql = Scenario(
+            dfiq_identifier=scenario.id,
+            uuid=scenario.uuid,
+            name=scenario.name,
+            display_name=scenario.name,
+            description=scenario.description,
+            spec_json=scenario.to_json(),
+            sketch=test_sketch,
+            user=test_user,
+        )
+
+        facet = dfiq_obj.facets[0]
+        facet_sql = Facet(
+            dfiq_identifier=facet.id,
+            uuid=facet.uuid,
+            name=facet.name,
+            display_name=facet.name,
+            description=facet.description,
+            spec_json=facet.to_json(),
+            sketch=test_sketch,
+            user=test_user,
+        )
+        scenario_sql.facets = [facet_sql]
+
+        question = dfiq_obj.questions[0]
+        question_sql = InvestigativeQuestion(
+            dfiq_identifier=question.id,
+            uuid=question.uuid,
+            name=question.name,
+            display_name=question.name,
+            description=question.description,
+            spec_json=question.to_json(),
+            sketch=test_sketch,
+            scenario=scenario_sql,
+            user=test_user,
+        )
+        facet_sql.questions = [question_sql]
+
+        approach = question.approaches[0]
+        approach_sql = InvestigativeQuestionApproach(
+            name=approach.name,
+            display_name=approach.name,
+            description=approach.description,
+            spec_json=approach.to_json(),
+            user=test_user,
+        )
+        question_sql.approaches = [approach_sql]
+
+        self._commit_to_database(approach_sql)
+        self._commit_to_database(question_sql)
+        self._commit_to_database(facet_sql)
+        self._commit_to_database(scenario_sql)
+
+        # Test without analysis step
+        result = scenarios.check_and_run_dfiq_analysis_steps(scenario_sql, test_sketch)
+        self.assertFalse(result)
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(facet_sql, test_sketch)
+        self.assertFalse(result)
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(approach_sql, test_sketch)
+        self.assertFalse(result)
+
+        # Add analysis step to approach
+        approach.steps.append(
+            {
+                "stage": "analysis",
+                "type": "timesketch-analyzer",
+                "value": "test_analyzer",
+            }
+        )
+        approach_sql.spec_json = approach.to_json()
+
+        # Mocking analyzer manager response.
+        mock_analyzer_manager.trigger_analyzers_for_approach.return_value = [
+            mock.MagicMock()
+        ]
+
+        # Test with analysis step
+        result = scenarios.check_and_run_dfiq_analysis_steps(
+            scenario_sql, test_sketch, mock_analyzer_manager
+        )
+        self.assertEqual(result, [mock.ANY, mock.ANY])
+        mock_analyzer_manager.trigger_analyzers_for_approach.assert_called_with(
+            approach=approach_sql
+        )
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(
+            facet_sql, test_sketch, mock_analyzer_manager
+        )
+        self.assertEqual(result, [mock.ANY])
+        mock_analyzer_manager.trigger_analyzers_for_approach.assert_called_with(
+            approach=approach_sql
+        )
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(
+            question_sql, test_sketch, mock_analyzer_manager
+        )
+        self.assertEqual(result, [mock.ANY])
+        mock_analyzer_manager.trigger_analyzers_for_approach.assert_called_with(
+            approach=approach_sql
+        )
+
+        # Test with invalid object
+        result = scenarios.check_and_run_dfiq_analysis_steps("invalid", test_sketch)
+        self.assertFalse(result)

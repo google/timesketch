@@ -37,3 +37,83 @@ yara_match_tagger:
   modifiers: ['split']
   save_search: true
   search_name: 'Yara rule matches'
+
+aws_cloudtrail_readonly_true:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND cloud_trail_event:"*readOnly\":true*"'
+  tags: ['readOnly_true']
+  emojis: ['MAGNIFYING_GLASS']
+  save_search: true
+  search_name: 'readOnly_true'
+
+aws_cloudtrail_readonly_false:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND cloud_trail_event:"*readOnly\":false*"'
+  tags: ['readOnly_false']
+  emojis: ['SPARKLES']
+  save_search: true
+  search_name: 'readOnly_false'
+
+aws_cloudtrail_unauthorized_api_call:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND cloud_trail_event: ("*errorCode\":\"AccessDenied*" OR "*errorCode\":\"UnauthorizedOperation*")'
+  tags: ['UnauthorizedAPICall']
+  save_search: true
+  search_name: 'UnauthorizedAPICall'
+
+aws_cloudtrail_failed_login_non_existent_iam_user:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND cloud_trail_event:"*userIdentity\":\"HIDDEN_DUE_TO_SECURITY_REASONS*" AND cloud_trail_event:"*errorMessage\":\"No username found in supplied account*"'
+  tags: ['FailedLoginNonExistentIAMUser']
+  save_search: true
+  search_name: 'FailedLoginNonExistentIAMUser'
+
+aws_cloudtrail_security_group:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("AuthorizeSecurityGroupEgress" OR "AuthorizeSecurityGroupIngress" OR "CreateSecurityGroup" OR "DeleteSecurityGroup" OR "ModifySecurityGroupRules" OR "RevokeSecurityGroupEgress" OR "RevokeSecurityGroupIngress")'
+  tags: ['NetworkChanged', 'SG']
+  save_search: true
+  search_name: 'NetworkChanged SecurityGroup'
+
+aws_cloudtrail_network_acl:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("CreateNetworkAcl" OR "CreateNetworkAclEntry" OR "DeleteNetworkAcl" OR "DeleteNetworkAclEntry" OR "ReplaceNetworkAclAssociation" OR "ReplaceNetworkAclEntry")'
+  tags: ['NetworkChanged', 'NACL']
+  save_search: true
+  search_name: 'NetworkChanged NetworkACl'
+
+aws_cloudtrail_gateway:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: (Accept* OR Associate* OR Attach* OR Create* OR Delete* OR Replace*) AND event_name:*Gateway'
+  tags: ['NetworkChanged', 'GW']
+  save_search: true
+  search_name: 'NetworkChanged GateWay'
+
+aws_cloudtrail_routetable:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("CreateRoute" OR "CreateRouteTable" OR "DeleteRoute" OR "DeleteRouteTable" OR "DisassociateRouteTable" OR "ReplaceRoute" OR "ReplaceRouteTableAssociation")'
+  tags: ['NetworkChanged', 'RouteTable']
+  save_search: true
+  search_name: 'NetworkChanged RouteTable'
+
+aws_cloudtrail_vpc:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("AcceptVpcPeeringConnection" OR "AttachClassicLinkVpc" OR "CreateVpc" OR "CreateVpcPeeringConnection" OR "DeleteVpc" OR "DeleteVpcPeeringConnection" OR "DetachClassicLinkVpc" OR "DisableVpcClassicLink" OR "EnableVpcClassicLink" OR "ModifyVpcAttribute" OR "RejectVpcPeeringConnection")'
+  tags: ['NetworkChanged', 'VPC']
+  save_search: true
+  search_name: 'NetworkChanged VPC'
+
+aws_cloudtrail_suspicous_iam_activity:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("AddRoleToInstanceProfile" OR "AddUserToGroup" OR "AssumeRole" OR "AttachGroupPolicy" OR "AttachRolePolicy" OR "AttachUserPolicy" OR "CreateAccessKey" OR "CreateLoginProfile" OR "CreatePolicyVersion" OR "CreateRole" OR "PassRole" OR "PutGroupPolicy" OR "PutRolePolicy" OR "PutUserPolicy" OR "SetDefaultPolicyVersion" OR "UpdateAccessKey" OR "UpdateLoginProfile" OR "GetFederationToken" )'
+  tags: ['SuspicousIAMActivity']
+  save_search: true
+  search_name: 'SuspicousIAMActivity'
+
+aws_cloudtrail_suspicous_iam_identity_center_activity:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name: ("StartSSO" OR "CreateUser" OR "CreateGroup" OR "AddMemberToGroup" OR "CreatePermissionSet" OR "CreateAccountAssignment" OR "Authenticate" OR "Federate" OR "AssumeRoleWithSAML")'
+  tags: ['SuspicousIICActivity']
+  save_search: true
+  search_name: 'SuspicousIICActivity'
+
+aws_cloudtrail_console_login:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name:"ConsoleLogin"'
+  tags: ['ConsoleLogin']
+  save_search: true
+  search_name: 'ConsoleLogin'
+
+aws_cloudtrail_get_caller_identity:
+  query_string: 'data_type:"aws:cloudtrail:entry" AND event_name:"GetCallerIdentity"'
+  tags: ['GetCallerIdentity']
+  save_search: true
+  search_name: 'GetCallerIdentity'

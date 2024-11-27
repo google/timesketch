@@ -102,7 +102,7 @@ class AggregationQuerySpec:
             )
 
     def add_query_string_filter(self, query_string, clause="filter"):
-        """Adds a query string filter to the agregation query specification.
+        """Adds a query string filter to the aggregation query specification.
 
         Args:
             query_string (str): the query string.
@@ -137,7 +137,8 @@ class AggregationQuerySpec:
 
         if clause not in self._VALID_QUERY_CLAUSES:
             raise ValueError(f"Unknown boolean clause {clause}")
-
+        if isinstance(value, str):
+            field = f"{field}.keyword"
         self.bool_queries[clause].append({"match_phrase": {field: {"query": value}}})
 
     def add_term_filter(self, field, value, clause="filter", term_type="term"):
@@ -409,7 +410,7 @@ class ApexAggregation(interface.BaseAggregator):
                 elif chip_type == "datetime_range":
                     aggregation_query.add_datetime_range(chip_value, chip_operator)
                 elif chip_type == "term":
-                    aggregation_query.add_term_filter(
+                    aggregation_query.add_match_phrase_filter(
                         chip_field, chip_value, chip_operator
                     )
                 else:
@@ -418,7 +419,6 @@ class ApexAggregation(interface.BaseAggregator):
         aggregation_query.aggregation_query = self._get_aggregation_dsl(
             aggregator_options
         )
-
         return aggregation_query.spec
 
     def run(

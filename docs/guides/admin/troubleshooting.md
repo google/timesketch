@@ -10,7 +10,7 @@ Please provide as much detailed information as possible, keep in mind that:
 * we cannot look into your thoughts or on your systems;
 * we cannot easily isolate errors if you keep changing your test environment.
 
-If you report a bug or ask for help in Slack, please provide as much information as possible, error messsages, log lines, stacktraces, screenshots, videos etc.
+If you report a bug or ask for help in Slack, please provide as much information as possible, error messages, log lines, stacktraces, screenshots, videos etc.
 
 ## Troubleshooting playbook
 
@@ -61,7 +61,7 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 - Is it a specific file that causes problems?
 - What is the WebUI status of the import?
 - Try switching from WebUI to the `import_client.py` to upload the same file
-- Try to upload one of the [sample files](https://github.com/google/timesketch/blob/master/test_tools/test_events/sigma_events.csv)
+- Try to upload one of the [sample files](https://github.com/google/timesketch/blob/master/tests/test_events/sigma_events.csv)
 - If you open a Github issue for an import issue, please indicate, what type of file you try to upload and what error message / stacktrace you have
 
 ### Issues importing a CSV file
@@ -71,7 +71,7 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 - Is there an encoding issue in the CSV file
 - If you tried to upload via web, try the import client and the other way around
 - Check the celery logs
-- Try to upload [This sample](https://github.com/google/timesketch/blob/master/test_tools/test_events/sigma_events.csv)
+- Try to upload [This sample](https://github.com/google/timesketch/blob/master/tests/test_events/sigma_events.csv)
 - If you open a Github issue, provide at least the header of your CSV and a few lines of content (please scramble PII) so it can be reproduced.
 
 ### Issues importing Plaso file

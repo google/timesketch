@@ -593,7 +593,10 @@ class BaseAuthenticationUtils:
 
         try:
             login_timestamp = int(login_df.iloc[0]["timestamp"])
-            source_port = int(login_df.iloc[0]["source_port"])
+            if login_df.iloc[0]["source_port"] == "-":
+                source_port = 0
+            else:
+                source_port = int(login_df.iloc[0]["source_port"])
         except (IndexError, KeyError) as e:
             log.debug("Unable to get login_timestamp or source_port. %s", str(e))
             return None
