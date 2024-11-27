@@ -27,7 +27,6 @@ jobs:
           pipenv install -r test_requirements.txt
       - name: Run unit tests
         run: |
-          pipenv --venv
           pipenv run pip freeze | grep pytest
           pipenv run python run_tests.py
 
