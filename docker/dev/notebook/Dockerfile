@@ -18,8 +18,14 @@ COPY --chown=1000:1000 docker/dev/notebook/logo.png /home/picatrix/.jupyter/cust
 COPY --chown=1000:1000 docker/dev/notebook/custom.css /home/picatrix/.jupyter/custom/custom.css
 COPY --chown=1000:1000 docker/dev/notebook/timesketch /home/picatrix/picenv/share/jupyter/nbextensions/timesketch
 
+ARG PYTHON_PIP_CONF=""
+RUN if [ -n "${PYTHON_PIP_CONF}" ]; then \
+    mkdir -p ~/.config/pip; \
+    env echo -e "${PYTHON_PIP_CONF}" > ~/.config/pip/pip.conf; \
+  fi
+
 RUN sed -i -e "s/c.NotebookApp.token = 'picatrix'/c.NotebookApp.token = 'timesketch'/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
-    sed -i -e "s/c.NotebookApp.port = 8899/c.NotebookApp.port = 8844/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
+    sed -i -e "s/c.NotebookApp.port = 8899/c.NotebookApp.port = ${JUPYTER_PORT}/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
     pip install -e /home/picatrix/code/api_client/python && \
     pip install -e /home/picatrix/code/importer_client/python/ && \
     jupyter nbextension enable snippets/main && \
