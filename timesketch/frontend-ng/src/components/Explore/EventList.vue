@@ -885,7 +885,7 @@ export default {
           let msg = 'Sorry, there was a problem fetching your search results. Error: "'+ e.response.data.message +'"'
           if (e.response.data.message.includes('too_many_nested_clauses')) {
             msg = 'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
-            this.errorSnackBar(msg)
+            this.warningSnackBar(msg)
           } else {
             this.errorSnackBar(msg)
           }
