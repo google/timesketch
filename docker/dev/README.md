@@ -87,7 +87,7 @@ notebooks. To change that, modify the line:
       - /tmp/:/usr/local/src/picadata/
 ```
 
-in the docker-compose.yml file to point to a directory of your choosing.
+in the _compose.yaml_ file to point to a directory of your choosing.
 In order for the jupyter notebook to be able to make use of that folder it has
 to have read and write permission for the user with the UID 1000.
 
