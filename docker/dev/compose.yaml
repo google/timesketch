@@ -1,48 +1,51 @@
-version: "3"
+name: timesketch-dev
+
+networks:
+  timesketch-dev:
+
 services:
   timesketch:
-    container_name: timesketch-dev
     image: us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest
     command: timesketch
     ports:
-      - 127.0.0.1:5000:5000
-      - 127.0.0.1:5001:5001
-      - 127.0.0.1:8080:8080
-    links:
+      - "5000:5000"
+      - "5001:5001"
+      - "8080:8080"
+    environment:
+      POSTGRES_USER: "timesketch"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_ADDRESS: "postgres"
+      POSTGRES_PORT: "5432"
+      OPENSEARCH_HOST: "opensearch"
+      OPENSEARCH_PORT: "9200"
+      REDIS_ADDRESS: "redis"
+      REDIS_PORT: "6379"
+      TIMESKETCH_USER: "dev"
+      TIMESKETCH_PASSWORD: "dev"
+      CHOKIDAR_USEPOLLING: "true"
+      prometheus_multiproc_dir: "/tmp/"
+    volumes:
+      - "../../:/usr/local/src/timesketch/"
+    depends_on:
       - opensearch
       - postgres
       - redis
-      - notebook
-    environment:
-      - POSTGRES_USER=timesketch
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_ADDRESS=postgres
-      - POSTGRES_PORT=5432
-      - OPENSEARCH_HOST=opensearch
-      - OPENSEARCH_PORT=9200
-      - REDIS_ADDRESS=redis
-      - REDIS_PORT=6379
-      - TIMESKETCH_USER=dev
-      - TIMESKETCH_PASSWORD=dev
-      - CHOKIDAR_USEPOLLING=true
-      - prometheus_multiproc_dir=/tmp/
-
-    restart: always
-    volumes:
-      - ../../:/usr/local/src/timesketch/
+    networks:
+      - timesketch-dev
 
   opensearch:
-    container_name: opensearch
     image: opensearchproject/opensearch:2.15.0
-    restart: always
     environment:
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - network.host=0.0.0.0
-      - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
-      - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
-
+      discovery.type: "single-node"
+      bootstrap.memory_lock: "true"
+      network.host: "0.0.0.0"
+      OPENSEARCH_JAVA_OPTS: "-Xms2g -Xmx2g"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      DISABLE_SECURITY_PLUGIN: "true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+    ports:
+      - "9200:9200"
+    networks:
+      - timesketch-dev
     ulimits:
       memlock:
         soft: -1
@@ -52,35 +55,42 @@ services:
         hard: 65536
 
   postgres:
-    container_name: postgres
     image: postgres:13.1-alpine
     environment:
-      - POSTGRES_USER=timesketch
-      - POSTGRES_PASSWORD=password
-    restart: always
+      POSTGRES_USER: "timesketch"
+      POSTGRES_PASSWORD: "password"
+    ports:
+      - "5432:5432"
+    networks:
+      - timesketch-dev
 
   redis:
-    container_name: redis
     image: redis:6.0.10-alpine
-    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - timesketch-dev
 
   notebook:
-    container_name: notebook
     image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
     ports:
-      - 127.0.0.1:8844:8844
-    restart: on-failure
-    links:
-      - opensearch
+      - "8844:8844"
     volumes:
-      - ../../:/usr/local/src/timesketch/:ro
-      - /tmp/:/usr/local/src/picadata/
+      - "../../:/usr/local/src/timesketch/:ro"
+      - "/tmp/:/usr/local/src/picadata/"
+    depends_on:
+      - opensearch
+    networks:
+      - timesketch-dev
+
   prometheus:
-    container_name: prometheus
     image: prom/prometheus:v2.24.1
     volumes:
-      - ./prometheus:/etc/prometheus
+      - "./prometheus:/etc/prometheus:ro"
     ports:
-      - 127.0.0.1:9090:9090
+      - "9090:9090"
     command: --config.file=/etc/prometheus/prometheus.yml
-
+    depends_on:
+      - timesketch
+    networks:
+      - timesketch-dev
