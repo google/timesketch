@@ -5,6 +5,21 @@ Make sure to follow the docker [post-install](https://docs.docker.com/engine/ins
 
 NOTE: It is not recommended to try to run on a system with less than 8 GB of RAM.
 
+### Prepare a .env file
+
+Compose requires a `.env` file with top level environment variables to be set.
+To create it, just copy the `.env.template` file as a base.
+
+```bash
+cp .env.template .env
+```
+
+Note the `.env` is ignored by Git: you can safely write sensitive data in it.
+
+You can optionally edit the `.env` file.
+This is useful if you need to build images with some company restrictions (accessing
+remote Ubuntu, PyPI or Node repositories).
+
 ### Start a developer version of docker containers in this directory
 
 ```bash
@@ -18,36 +33,32 @@ If you see the following message you can continue
 ```text
 Timesketch development server is ready!
 ```
-### Find out container ID for the timesketch container
-
-```bash
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
-```
-
-In the output look for CONTAINER ID for the timesketch container
-
-To write the ID to a variable, use:
-
-```bash
-export CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
-```
-
-and test with
-
-```bash
-echo $CONTAINER_ID
-```
 
 ### Start a celery container shell
 
+Start the container in foreground (add `-d` to run in background):
+
 ```bash
-docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
+docker compose exec timesketch \
+  celery \
+  -A timesketch.lib.tasks \
+  worker \
+  --loglevel info
 ```
 
 ### Start development webserver (and metrics server)
 
+Start the container in foreground (add `-d` to run in background):
+
 ```bash
-docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
+docker compose exec timesketch \
+  gunicorn \
+  --reload \
+  -b 0.0.0.0:5000 \
+  --log-file - \
+  --timeout 600 \
+  -c /usr/local/src/timesketch/data/gunicorn_config.py \
+  timesketch.wsgi:application
 ```
 
 You now can access your development version at http://127.0.0.1:5000/
@@ -58,18 +69,30 @@ You can also access a metrics dashboard at http://127.0.0.1:3000/
 
 ### Non-interactive
 
-Running the following as a script after `docker compose up -d` will bring up the development environment in the background for you.
+A script applies the previous commands in background for you.
 
 ```bash
-export CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
-docker exec $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
-docker exec $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+docker compose up -d
+./start-frontend-ng-no-dev.sh
+```
+
+A second script starts an additional development server for the frontend
+(http://127.0.0.1:5001/).
+You need to wait a few seconds before accessing it.
+
+```bash
+docker compose up -d
+./start-frontend-ng-dev.sh
 ```
 
 ### Run tests
 
 ```bash
-docker exec -w /usr/local/src/timesketch -it $CONTAINER_ID python3 run_tests.py --coverage
+docker compose exec \
+    -w /usr/local/src/timesketch \
+    -it \
+    timesketch \
+    python3 run_tests.py --coverage
 ```
 
 That will run all tests in your docker container. It is recommended to run all tests at least before creating a pull request.
