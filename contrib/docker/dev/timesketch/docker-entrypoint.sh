@@ -17,12 +17,14 @@ function kill_other_processes() {
   exit 0
 }
 
+. "${HOME}/.virtualenvs/app/bin/activate"
+
 # Run the container the default way
 if [[ "$1" = 'timesketch' ]]; then
   CONF_DIR="/etc/timesketch"
 
   # Install Timesketch in editable mode from volume
-  pip3 install -e /usr/local/src/timesketch/
+  pip install -e /usr/local/src/timesketch/
 
   # Add web user
   tsctl create-user --password "${TIMESKETCH_PASSWORD}" "${TIMESKETCH_USER}"
