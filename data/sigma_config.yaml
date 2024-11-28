@@ -78,6 +78,11 @@ logsources:
     product: windows
     conditions:
       data_type: "windows:evtx:record"
+  service_windows_certificate_services:
+    service: certificateservicesclient-lifecycle-system
+    conditions:
+      source_name:
+        - "Microsoft-Windows-CertificateServicesClient-Lifecycle-System"
   service_windows_security:
     service: security
     conditions:
