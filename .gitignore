@@ -11,9 +11,6 @@
 *.pyo
 **/.ipynb_checkpoints/
 
-# Ignore back-up files.
-*~
-
 # Specific auto-generated build files
 /.eggs
 /.tox
