@@ -48,3 +48,6 @@ vagrant/*.log
 
 # Exclude Visual Studio Code files
 .vscode/*
+
+# Exclude JetBrains IDE files
+.idea/
