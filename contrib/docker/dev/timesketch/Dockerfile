@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-wheel \
     python3-setuptools \
     python3-psycopg2 \
+    python3-venv \
     tzdata \
   && rm -rf /var/lib/apt/lists/*
 
@@ -69,13 +70,18 @@ RUN if [ -n "${PYTHON_PIP_CONF}" ]; then \
 # Install Yarn for frontend development
 RUN npm install --global yarn
 
-# Install dependencies for Timesketch
-COPY ./requirements.txt /timesketch-requirements.txt
-RUN pip3 install -r /timesketch-requirements.txt
+# Install dependencies for Timesketch in a virtual environment
+COPY ["./requirements.txt", "/timesketch-requirements.txt"]
+COPY ["./test_requirements.txt", "/timesketch-test-requirements.txt"]
+RUN python3 -m venv --upgrade-deps --system-site-packages ~/.virtualenvs/timesketch \
+    && . ~/.virtualenvs/timesketch/bin/activate \
+    && pip install --no-cache-dir \
+        -r /timesketch-requirements.txt \
+        -r /timesketch-test-requirements.txt \
+        psycopg2-binary
 
-# Install test dependencies for Timesketch
-COPY ./test_requirements.txt /timesketch-test-requirements.txt
-RUN pip3 install -r /timesketch-requirements.txt -r /timesketch-test-requirements.txt
+# Update the PATH to include the virtual environment
+ENV PATH="/root/.virtualenvs/timesketch/bin:${PATH}"
 
 # Copy the entrypoint script into the container
 COPY ["./docker/dev/timesketch/docker-entrypoint.sh", "/"]
