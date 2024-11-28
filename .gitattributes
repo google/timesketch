@@ -1,0 +1,5 @@
+*                               text=auto
+**/docker/**                    text=auto  eol=lf
+requirements.txt                text=auto  eol=lf
+requirements-dev.txt            text=auto  eol=lf
+
