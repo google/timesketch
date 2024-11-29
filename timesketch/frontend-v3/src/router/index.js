@@ -12,6 +12,7 @@ import Default from "@/layouts/Default";
 
 // Import App views
 import Home from "@/views/Home.vue";
+import Overview from "@/views/Overview.vue";
 
 // Routes
 const routes = [
@@ -23,6 +24,12 @@ const routes = [
         path: "",
         name: "home",
         component: Home,
+        props: true,
+      },
+      {
+        path: "",
+        name: "overview",
+        component: Overview,
         props: true,
       },
     ],
