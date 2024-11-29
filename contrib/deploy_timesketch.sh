@@ -16,10 +16,16 @@
 set -e
 
 START_CONTAINER=
+SKIP_CREATE_USER=
 
-if [ "$1" == "--start-container" ]; then
-    START_CONTAINER=yes
-fi
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --start-container) START_CONTAINER=yes ;;
+        --skip-create-user) SKIP_CREATE_USER=yes ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 
 # Exit early if run as non-root user.
 if [ "$EUID" -ne 0 ]; then
@@ -150,7 +156,9 @@ else
   exit
 fi
 
-read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
+if [ -z "$SKIP_CREATE_USER" ]; then
+  read -p "Would you like to create a new timesketch user? [y/N]" CREATE_USER
+fi
 
 if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   read -p "Please provide a new username: " NEWUSERNAME
