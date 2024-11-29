@@ -67,7 +67,13 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient.js'
+import { useTheme } from 'vuetify'
+
 export default {
+  setup() {
+    const theme = useTheme();
+    return { theme };
+  },
   data() {
     return {
       currentUser: '',
@@ -76,8 +82,7 @@ export default {
   computed: {},
   methods: {
     toggleTheme: function () {
-      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+      this.theme.global.name.value = this.theme.global.current.value.dark ? 'light' : 'dark';
     },
   },
   created: function () {
