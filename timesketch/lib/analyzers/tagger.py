@@ -129,10 +129,13 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
                 for mod in config.get("modifiers", []):
                     if isinstance(tag_value, str):
                         tag_value = self.MODIFIERS[mod](tag_value)
-                if isinstance(tag_value, Iterable):
-                    dynamic_tag_values.extend(tag_value)
-                else:
+
+                if isinstance(tag_value, str):
                     dynamic_tag_values.append(tag_value)
+                elif isinstance(tag_value, Iterable):
+                    dynamic_tag_values.extend(tag_value)
+                elif tag_value is not None:
+                    dynamic_tag_values.append(str(tag_value))
             event.add_tags(dynamic_tag_values)
 
             event.add_emojis(emojis_to_add)

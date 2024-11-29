@@ -94,4 +94,4 @@ class TestBigQueryMatcherPlugin(BaseTest):
 def _add_event_to_datastore(datastore, event_id, attributes_dict):
     event = copy.deepcopy(MockDataStore.event_dict)
     event["_source"].update(attributes_dict)
-    datastore.import_event("test_index", "test_event", event["_source"], str(event_id))
+    datastore.import_event("test_index", event["_source"], str(event_id))
