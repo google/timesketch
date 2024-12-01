@@ -25,7 +25,7 @@
     "vega": "^5.4.0",
     "vega-embed": "^4.2.2",
     "vega-lite": "3.4.0",
-    "vue": "^2.6.12",
+    "vue": "^3.0.0",
     "vue-apexcharts": "^1.6.1",
     "vue-dragscroll": "^3.0.0",
     "vue-moment": "^4.0.0",
