@@ -531,21 +531,29 @@ def read_and_validate_jsonl(
             )
 
 
-def get_validated_indices(indices: List, sketch: object):
+def get_validated_indices(
+    indices: List, sketch: object, include_processing_timelines: bool = False
+):
     """Exclude any deleted search index references.
 
     Args:
         indices: List of indices from the user
         sketch: A sketch object (instance of models.sketch.Sketch).
+        include_processing_timelines: True to include Timelines
+          in status "processing". False by default.
 
     Returns:
         Tuple of two items:
           List of indices with those removed that is not in the sketch
           List of timeline IDs that should be part of the output.
     """
+    allowed_statuses = ["ready"]
+    if include_processing_timelines:
+        allowed_statuses.append("processing")
+
     sketch_structure = {}
     for timeline in sketch.timelines:
-        if timeline.get_status.status.lower() != "ready":
+        if timeline.get_status.status.lower() not in allowed_statuses:
             continue
         index_ = timeline.searchindex.index_name
         sketch_structure.setdefault(index_, [])
