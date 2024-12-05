@@ -135,7 +135,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
 
     @property
     def active_timelines(self):
-        """List timelines that are ready for analysis.
+        """List timelines that are being processed or ready for analysis.
 
         Returns:
             List of instances of timesketch.models.sketch.Timeline
@@ -144,7 +144,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
         for timeline in self.timelines:
             timeline_status = timeline.get_status.status
             index_status = timeline.searchindex.get_status.status
-            if (timeline_status or index_status) in ("processing", "fail", "archived"):
+            if (timeline_status or index_status) in ("fail", "archived"):
                 continue
             _timelines.append(timeline)
         return _timelines

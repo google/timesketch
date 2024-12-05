@@ -466,7 +466,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
         sketch_indices = {
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in ["ready", "processing"]
         }
 
         aggregation_dsl = form.aggregation_dsl.data
