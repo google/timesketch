@@ -52,7 +52,8 @@ limitations under the License.
       :loading="loading"
     >
       <template v-slot:item.name="{ item }">
-        <router-link style="text-decoration: none" :to="{ name: 'home' }">{{
+        <!-- <router-link style="text-decoration: none" :to="{ name: 'sketch', params: { sketchId: item.id } }">{{ -->
+        <router-link style="text-decoration: none" :to="'sketch/' + item.id">{{
           item.name
         }}</router-link>
       </template>
@@ -113,7 +114,6 @@ export default {
       this.loading = true
       ApiClient.getSketchList(this.scope, this.options.page, this.options.itemsPerPage, this.searchQuery)
         .then((response) => {
-          console.log('setsketches', this.sketches)
           this.sketches = response.data.objects
           this.numSketches = response.data.meta.total_items
           this.loading = false

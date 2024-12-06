@@ -12,6 +12,7 @@ import Default from "@/layouts/Default";
 
 // Import App views
 import Home from "@/views/Home.vue";
+import Sketch from "@/views/Sketch.vue";
 
 // Routes
 const routes = [
@@ -25,7 +26,12 @@ const routes = [
         component: Home,
         props: true,
       },
-    ],
+      {
+        path: 'sketch/:sketchId',
+        component: Sketch,
+        props: true,
+      },
+    ]
   },
 ];
 
