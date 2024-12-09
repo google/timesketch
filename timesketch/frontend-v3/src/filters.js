@@ -21,7 +21,6 @@ export const initialLetter = (input) => {
   return input.charAt(0).toUpperCase();
 };
 
-
 export const shortDateTime = (date) => {
     return dayjs.utc(date).format('YYYY-MM-DD HH:mm')
 };
@@ -32,4 +31,3 @@ export const timeSince = (date) => {
   }
   return dayjs.utc(date).fromNow()
 }
-

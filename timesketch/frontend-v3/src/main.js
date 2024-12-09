@@ -11,6 +11,8 @@ import { registerPlugins } from "@/plugins";
 import App from "./App.vue";
 import {initialLetter, shortDateTime, timeSince} from "./filters.js";
 
+import {initialLetter, shortDateTime, timeSince} from "./filters.js";
+
 // Composables
 import { createApp } from "vue";
 
