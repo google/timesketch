@@ -33,6 +33,33 @@ limitations under the License.
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
         <span class="white--text">{{ $filters.initialLetter(currentUser) }}</span>
       </v-avatar>
+      <v-menu offset-y>
+        <template v-slot:activator="{ props }">
+          <v-btn small icon v-bind="props">
+            <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+          <v-list>
+            <v-list-item
+              prepend-icon="mdi-brightness-6"
+              v-on:click="toggleTheme"
+            >
+              <v-list-item-title>Toggle theme</v-list-item-title>
+            </v-list-item>
+            <v-list-item
+              href="/legacy/"
+              prepend-icon="mdi-view-dashboard-outline"
+            >
+              <v-list-item-title>Use the old UI</v-list-item-title>
+            </v-list-item>
+            <v-list-item
+              href="/logout/"
+              prepend-icon="mdi-logout"
+            >
+              <v-list-item-title>Logout</v-list-item-title>
+            </v-list-item>
+          </v-list>
+      </v-menu>
     </template>
   </v-toolbar>
   <v-divider></v-divider>
@@ -47,7 +74,12 @@ export default {
     };
   },
   computed: {},
-  methods: {},
+  methods: {
+    toggleTheme: function () {
+      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
+      localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+    },
+  },
   created: function () {
     ApiClient.getLoggedInUser().then((response) => {
       let currentUser = response.data.objects[0].username;
