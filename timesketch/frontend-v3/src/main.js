@@ -9,6 +9,7 @@ import { registerPlugins } from "@/plugins";
 
 // Components
 import App from "./App.vue";
+import {initialLetter, shortDateTime, timeSince} from "./filters.js";
 
 import {initialLetter, shortDateTime, timeSince} from "./filters.js";
 
