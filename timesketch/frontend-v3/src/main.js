@@ -9,8 +9,7 @@ import { registerPlugins } from "@/plugins";
 
 // Components
 import App from "./App.vue";
-
-import {initialLetter} from "./filters.js";
+import {initialLetter, shortDateTime, timeSince} from "./filters.js";
 
 // Composables
 import { createApp } from "vue";
@@ -22,5 +21,7 @@ registerPlugins(app);
 app.mount("#app");
 
 app.config.globalProperties.$filters = {
-  initialLetter
+  initialLetter,
+  shortDateTime,
+  timeSince,
 }

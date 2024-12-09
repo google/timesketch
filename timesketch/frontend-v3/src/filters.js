@@ -13,10 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import dayjs from '@/plugins/dayjs'
 
 export const initialLetter = (input) => {
   if (!input) return '';
   input = input.toString();
   return input.charAt(0).toUpperCase();
 };
+
+
+export const shortDateTime = (date) => {
+    return dayjs.utc(date).format('YYYY-MM-DD HH:mm')
+};
+
+export const timeSince = (date) => {
+  if (!date) {
+    return ''
+  }
+  return dayjs.utc(date).fromNow()
+}
 

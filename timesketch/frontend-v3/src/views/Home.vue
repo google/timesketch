@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-container fluid class="pa-0">
-    <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey-darken-4' : 'grey-lighten-3'" min-height="200">
+    <v-sheet class="pa-5" :color="theme.global.current.value.dark ? 'grey-darken-4' : 'grey-lighten-3'" min-height="200">
       <h2>Start new investigation</h2>
       <v-row no-gutters class="mt-5">
         <v-dialog v-model="createSketchDialog" width="500">
@@ -65,10 +65,15 @@ limitations under the License.
 import TsSketchList from "@/components/SketchList.vue";
 import ApiClient from '../utils/RestApiClient.js'
 import { useAppStore } from "@/stores/app";
+import { useTheme } from 'vuetify'
 
 export default {
   components: {
     TsSketchList,
+  },
+  setup() {
+    const theme = useTheme();
+    return { theme };
   },
   data() {
     return {
