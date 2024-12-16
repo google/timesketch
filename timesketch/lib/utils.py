@@ -304,7 +304,7 @@ def read_and_validate_csv(
                 # (not available) as its value and the event row will be
                 # dropped in the next line
                 chunk["datetime"] = pandas.to_datetime(
-                    chunk["datetime"], errors="coerce"
+                    chunk["datetime"], errors="coerce", utc=True
                 )
                 num_chunk_rows = chunk.shape[0]
 
