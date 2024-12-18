@@ -17,9 +17,8 @@ limitations under the License.
   <v-autocomplete
     outlined
     v-model="selectedField"
-    :items="mappedTimelineFields"
+    :items="allNonTimestampFields"
     label="Field name to aggregate"
-    :loading="loadingFields"
     @input="$emit('selectedField', $event)"
   >
     <template
@@ -57,14 +56,6 @@ export default {
     field: {
       type: Object,
     },
-    timelineFields: {
-      type: Array,
-      default: () => [],
-    },
-    loadingFields: {
-        type: Boolean,
-        default: false
-    },
   },
   data() {
     return {
@@ -72,25 +63,26 @@ export default {
     }
   },
   computed: {
-    mappedTimelineFields() {
-      const mappings = this.$store.state.meta.mappings;
-
-      return this.timelineFields.map(field => {
-        const mapping = mappings.find(m => m.field === field);
-        const type = mapping ? mapping.type : 'unknown';
-        return { text: field, value: { field, type } };
-      });
+    allNonTimestampFields() {
+      let mappings = this.$store.state.meta.mappings
+        .filter(
+          (mapping) => {
+            return (
+              mapping['field'] !== 'datetime'
+              && mapping['field'] !== 'timestamp'
+            )
+        })
+        .map(
+          (mapping) => {
+            return {text: mapping['field'], value: mapping}}
+        )
+      return mappings
     },
   },
   watch: {
     field() {
         this.selectedField = this.field
-    },
-    timelineFields(newFields) {
-      if (!newFields || newFields.length === 0) {
-          this.selectedField = null;
-      }
-    },
+    }
   }
 }
 </script>
