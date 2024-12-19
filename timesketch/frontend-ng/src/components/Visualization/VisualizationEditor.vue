@@ -39,7 +39,7 @@ limitations under the License.
     <v-row class="mt-3">
       <v-col>
         <TsAggregationEventSelect
-          @updateTimelineIDs="getTimelineFields"
+          @updateTimelineIDs="selectedTimelineIDs = $event"
           :timelineIDs="selectedTimelineIDs"
           @updateQueryString="selectedQueryString = $event"
           :queryString="selectedQueryString"
@@ -48,8 +48,6 @@ limitations under the License.
         >
         </TsAggregationEventSelect>
         <TsAggregationConfig
-          :timelineFields="availableTimelineFields"
-          :loadingFields="loadingFields"
           :field="selectedField"
           @updateField="selectedField = $event"
           :aggregator="selectedAggregator"
@@ -292,8 +290,6 @@ export default {
       selectedYTitle: this.yTitle,
       renameVisualDialog: false,
       selectedChartTitleDraft: this.selectedChartTitleDraft,
-      availableTimelineFields: [],
-      loadingFields: false,
     }
   },
   computed: {
@@ -320,51 +316,6 @@ export default {
     },
   },
   methods: {
-    getTimelineFields(timelineIDs) {
-      this.selectedTimelineIDs = timelineIDs
-      if (!timelineIDs || timelineIDs.length === 0 ) {
-        this.availableTimelineFields = []
-        return;
-      }
-
-      this.loadingFields = true;
-
-      if (timelineIDs.length === 1) {
-        ApiClient.getTimelineFields(this.sketch.id, timelineIDs[0])
-          .then(response => {
-            this.availableTimelineFields = response.data.objects
-            this.loadingFields = false
-          })
-          .catch(error => {
-            console.error("Error fetching fields:", error);
-            this.availableTimelineFields = [];
-            this.loadingFields = false
-          });
-      }
-      else {
-        const promises = timelineIDs.map(timelineID => {
-          return ApiClient.getTimelineFields(this.sketch.id, timelineID)
-            .then(response => response.data.objects)
-            .catch(error => {
-                console.error("Error fetching timeline fields:", error);
-                return []
-            })
-          })
-
-          Promise.all(promises)
-            .then(results => {
-              // Flatten the arrays and create a set to guarantee uniqueness
-              const union = [...new Set(results.flat())];
-              this.availableTimelineFields = union
-              this.loadingFields = false;
-            })
-            .catch(error => {
-              console.error("Error in Promise.all", error)
-              this.availableTimelineFields = []
-              this.loadingFields = false;
-            })
-      }
-    },
     rename() {
       this.renameVisualDialog = false
       this.selectedChartTitle = this.selectedChartTitleDraft
