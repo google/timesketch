@@ -106,11 +106,11 @@ class TimesketchApi:
         self._flow = None
 
         if not create_session:
-            self.session = None
+            self._session = None
             return
 
         try:
-            self.session = self._create_session(
+            self._session = self._create_session(
                 username,
                 password,
                 verify=verify,
@@ -145,13 +145,20 @@ class TimesketchApi:
 
         return "API Client: {0:s}".format(version.get_version())
 
+    @property
+    def session(self):
+        """Property that returns the session object."""
+        if self._session is None:
+            raise ValueError("Session is not set.")
+        return self._session
+
     def set_credentials(self, credential_object):
         """Sets the credential object."""
         self.credentials = credential_object
 
     def set_session(self, session_object):
         """Sets the session object."""
-        self.session = session_object
+        self._session = session_object
 
     def _authenticate_session(self, session, username, password):
         """Post username/password to authenticate the HTTP session.
