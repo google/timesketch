@@ -83,6 +83,12 @@ case "$1" in
 	web)
 		$s docker exec --interactive --tty $CONTAINER_ID gunicorn --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 timesketch.wsgi:application
 		;;
+	v3-dev)
+		$s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev
+		;;
+	v3-install-deps)
+		$s docker exec --interactive --tty $CONTAINER_ID yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-v3
+		;;
 	*)
 		echo \""$1"\" is not a valid command.; help
 esac
