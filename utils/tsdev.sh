@@ -21,6 +21,8 @@ help(){
 	echo "  vue-install-deps  Install vue frontend dependencies"
 	echo "  vue-test          Test the vue frontend"
 	echo "  web               Start the web frontend bound to port 5000"
+	echo "  v3-dev            Serve the vue3 frontend"
+	echo "  v3-install-deps   Install vue3 frontend dependencies"
 	echo
 	echo "Examples:"
 	echo "  tsdev.sh logs"
