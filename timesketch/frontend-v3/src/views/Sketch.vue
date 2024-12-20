@@ -20,7 +20,6 @@ limitations under the License.
 <script>
 import ApiClient from '../utils/RestApiClient.js'
 import dayjs from '@/plugins/dayjs'
-import EventBus from '../event-bus.js'
 import { useAppStore } from "@/stores/app";
 
 export default {
@@ -81,10 +80,10 @@ export default {
       this.updateDocumentTitle();
       this.loadingSketch = false
     })
-    EventBus.$on('showContextWindow', this.showContextWindow)
+    // EventBus.$on('showContextWindow', this.showContextWindow)
   },
   beforeDestroy() {
-    EventBus.$off('showContextWindow')
+    // EventBus.$off('showContextWindow')
   },
   computed: {
     sketch() {
