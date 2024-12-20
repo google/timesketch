@@ -231,12 +231,12 @@ class Graph(resource.SketchResource):
         self._created_at = time
         self._updated_at = time
 
-    def from_manual(self, data, **kwargs):  # pylint: disable=arguments-differ
+    def from_manual(self, data, **kwargs):  # pytype: disable=signature-mismatch
         """Generate a new graph using a dictionary.
 
         Args:
             data (dict): A dictionary of dictionaries adjacency representation.
-            kwargs (dict[str, object]): Depending on the resource they may
+            **kwargs (dict[str, object]): Depending on the resource they may
                 require different sets of arguments to be able to run a raw
                 API request.
 
