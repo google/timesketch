@@ -41,6 +41,7 @@ class Aggregation(resource.SketchResource):
         search_id: a search ID if the aggregation is tied to a specific
             saved search.
     """
+
     resource_data: dict[str, Any]
 
     def __init__(self, sketch):
