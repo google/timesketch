@@ -230,8 +230,10 @@ class Graph(resource.SketchResource):
         time = datetime.datetime.now(datetime.timezone.utc)
         self._created_at = time
         self._updated_at = time
-    
-    def from_manual(self, data, **kwargs):  # pylint: disable=arguments-differ; pytype: disable=signature-mismatch
+
+    def from_manual(
+        self, data, **kwargs
+    ):  # pylint: disable=arguments-differ; pytype: disable=signature-mismatch
         """Generate a new graph using a dictionary.
 
         Args:
