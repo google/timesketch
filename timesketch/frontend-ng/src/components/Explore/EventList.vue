@@ -726,6 +726,9 @@ export default {
     activeContext() {
       return this.$store.state.activeContext
     },
+    settings() {
+      return this.$store.state.settings
+    },
     filterChips: function () {
       return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
     },
@@ -915,6 +918,8 @@ export default {
       formData['scenario'] = this.activeContext.scenarioId
       formData['facet'] = this.activeContext.facetId
       formData['question'] = this.activeContext.questionId
+
+      formData['include_processing_timelines'] = this.settings.showProcessingTimelineEvents
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {

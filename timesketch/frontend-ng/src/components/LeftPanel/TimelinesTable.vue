@@ -195,6 +195,14 @@ export default {
         return a.name.localeCompare(b.name)
       })
     },
+    settings() {
+      return this.$store.state.settings
+    },
+  },
+  watch: {
+    'settings.showProcessingTimelineEvents': function (newValue, oldValue) {
+      this.updateEnabledTimelines(oldValue === undefined)
+    },
   },
   methods: {
     isEnabled(timeline) {
@@ -205,6 +213,29 @@ export default {
     },
     disableAllOtherTimelines(timeline) {
       this.$store.dispatch('updateEnabledTimelines', [timeline.id])
+    },
+    updateEnabledTimelines(isNewSelection) {
+      let timelines = this.activeTimelines
+
+      if (isNewSelection) {
+        if (!this.settings.showProcessingTimelineEvents) {
+          timelines = timelines.filter((tl) => tl.status[0].status !== 'processing')
+        }
+      } else {
+        timelines = timelines.filter((tl) => this.$store.state.enabledTimelines.includes(tl.id))
+        if (this.settings.showProcessingTimelineEvents) {
+          this.activeTimelines.forEach((tl) => {
+            if (!timelines.includes(tl) && tl.status[0].status === 'processing') {
+              timelines.push(tl)
+            }
+          })
+          timelines.sort((a, b) => a.id - b.id)
+        }
+      }
+
+      let timelineIds = timelines.map((tl) => tl.id)
+
+      this.$store.dispatch('updateEnabledTimelines', timelineIds)
     },
     timelineStyle(timelineStatus, isSelected) {
       const greyOut = timelineStatus === 'ready' && !isSelected
@@ -237,10 +268,7 @@ export default {
     }
   },
   created() {
-    this.$store.dispatch(
-      'updateEnabledTimelines',
-      this.activeTimelines.map((tl) => tl.id)
-    )
+    this.updateEnabledTimelines(true)
   },
   mounted() {
     EventBus.$on('updateCountPerTimeline', this.updateCountPerTimeline)
