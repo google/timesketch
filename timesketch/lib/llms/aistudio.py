@@ -14,9 +14,9 @@
 """Google AI Studio LLM provider."""
 
 import json
+from typing import Optional
 from timesketch.lib.llms import interface
 from timesketch.lib.llms import manager
-from typing import Optional
 
 
 # Check if the required dependencies are installed.
@@ -56,10 +56,12 @@ class AIStudio(interface.LLMProvider):
 
         Args:
             prompt: The prompt to use for the generation.
-            response_schema: An optional JSON schema to define the expected response format.
+            response_schema: An optional JSON schema to define the expected 
+                response format.
 
         Returns:
-            The generated text as a string (or parsed data if response_schema is provided).
+            The generated text as a string (or parsed data if
+                response_schema is provided).
         """
 
         generation_config = genai.GenerationConfig(
@@ -83,7 +85,7 @@ class AIStudio(interface.LLMProvider):
                 return json.loads(response.text)
             except Exception as error:
                 raise ValueError(
-                    f"Error JSON parsing text: {response.text}: {e}"
+                    f"Error JSON parsing text: {response.text}: {error}"
                 ) from error
         return response.text
 
