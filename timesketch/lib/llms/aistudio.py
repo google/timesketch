@@ -26,6 +26,7 @@ try:
 except ImportError:
     has_required_deps = False
 
+
 class AIStudio(interface.LLMProvider):
     """AI Studio LLM provider."""
 
@@ -49,7 +50,6 @@ class AIStudio(interface.LLMProvider):
         genai.configure(api_key=self._api_key)
         self.model = genai.GenerativeModel(model_name=self._model_name)
 
-
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """
         Generate text using the Google AI Studio service.
@@ -61,18 +61,18 @@ class AIStudio(interface.LLMProvider):
         Returns:
             The generated text as a string (or parsed data if response_schema is provided).
         """
-        
+
         generation_config = genai.GenerationConfig(
             temperature=self._temperature,
             top_p=self._top_p,
-            top_k = self._top_k,
-            max_output_tokens = self._max_output_tokens,
+            top_k=self._top_k,
+            max_output_tokens=self._max_output_tokens,
         )
-        
+
         if response_schema:
-             generation_config.response_mime_type = "application/json"
-             generation_config.response_schema = response_schema
-            
+            generation_config.response_mime_type = "application/json"
+            generation_config.response_schema = response_schema
+
         response = self.model.generate_content(
             contents=prompt,
             generation_config=generation_config,
@@ -81,9 +81,10 @@ class AIStudio(interface.LLMProvider):
         if response_schema:
             try:
                 return json.loads(response.text)
-            except Exception as e:
-                print(f"Error processing JSON response: {e}")
-                return f"Error processing JSON: {e}. Raw response: {response.text}"
+            except Exception as error:
+                raise ValueError(
+                    f"Error JSON parsing text: {response.text}: {e}"
+                ) from error
         return response.text
 
 
