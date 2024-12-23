@@ -43,7 +43,7 @@ limitations under the License.
 
       <!-- Child Setting: Event Summarization -->
       <v-list-item v-if="systemSettings.LLM_PROVIDER">
-        <v-list-item-action class="ml-8"> 
+        <v-list-item-action class="ml-8">
           <v-switch
             v-model="settings.eventSummarization"
             color="primary"
@@ -51,7 +51,7 @@ limitations under the License.
             :disabled="!settings.aiPoweredFeaturesMain"
           ></v-switch>
         </v-list-item-action>
-        <v-list-item-content class="ml-8"> 
+        <v-list-item-content class="ml-8">
           <v-list-item-title>Event summarization</v-list-item-title>
           <v-list-item-subtitle
             >Enable AI powered summarization of events</v-list-item-subtitle
@@ -76,6 +76,17 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
+      <v-list-item>
+        <v-list-item-action>
+          <v-switch v-model="settings.showProcessingTimelineEvents" color="primary" @change="saveSettings()"></v-switch>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>Include Processing Events</v-list-item-title>
+          <v-list-item-subtitle
+          >Allows queries to include events from timelines still being <strong>processed</strong>.</v-list-item-subtitle
+          >
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
   </v-card>
 </template>
@@ -88,6 +99,7 @@ const DEFAULT_SETTINGS = {
   aiPoweredFeaturesMain: false,
   eventSummarization: false,
   generateQuery: false,
+  showProcessingTimelineEvents: false,
 }
 
 export default {
@@ -98,6 +110,7 @@ export default {
         aiPoweredFeaturesMain: false,
         eventSummarization: false,
         generateQuery: false,
+        showProcessingTimelineEvents: false,
       },
     }
   },
@@ -140,6 +153,7 @@ export default {
       this.settings.aiPoweredFeaturesMain = this.settings.aiPoweredFeaturesMain !== undefined ? this.settings.aiPoweredFeaturesMain : DEFAULT_SETTINGS.aiPoweredFeaturesMain;
       this.settings.eventSummarization = this.settings.eventSummarization !== undefined ? this.settings.eventSummarization : DEFAULT_SETTINGS.eventSummarization;
       this.settings.generateQuery = this.settings.generateQuery !== undefined ? this.settings.generateQuery : DEFAULT_SETTINGS.generateQuery;
+      this.settings.showProcessingTimelineEvents = this.settings.showProcessingTimelineEvents !== undefined ? this.settings.showProcessingTimelineEvents : DEFAULT_SETTINGS.showProcessingTimelineEvents;
     }
   },
 }
