@@ -125,7 +125,7 @@ ssh_client_password_ipv4_addresses:
         query_string: 'reporter:"sshd"'
         attribute: 'message'
         store_as: 'client_ip'
-        re: '(?:Accepted|Failed) (?:password|publickey) for \w+ from ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+'
+        re: '(?:Accepted|Failed) (?:password|publickey) for [A-Za-z0-9._-]+? from ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+'
 
 ssh_disconnected_username:
         query_string: 'reporter:"sshd"'

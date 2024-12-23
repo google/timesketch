@@ -16,6 +16,7 @@ import datetime
 import getpass
 import json
 import logging
+from typing import Any
 
 import altair
 import pandas
@@ -40,6 +41,8 @@ class Aggregation(resource.SketchResource):
         search_id: a search ID if the aggregation is tied to a specific
             saved search.
     """
+
+    resource_data: dict[str, Any]
 
     def __init__(self, sketch):
         self._created_at = ""
@@ -307,7 +310,7 @@ class Aggregation(resource.SketchResource):
         """Set the description of an aggregation."""
         if "meta" not in self.resource_data:
             return
-        meta = self.resource_data.get("meta")
+        meta = self.resource_data.get("meta", {})
         meta["description"] = description
 
     @property

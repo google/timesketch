@@ -28,6 +28,7 @@ from opensearchpy import OpenSearch
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
+from opensearchpy.exceptions import TransportError
 
 # pylint: disable=redefined-builtin
 from opensearchpy.exceptions import ConnectionError
@@ -607,7 +608,7 @@ class OpenSearchDataStore(object):
                     _source_includes=return_fields,
                     scroll=scroll_timeout,
                 )
-        except RequestError as e:
+        except (RequestError, TransportError) as e:
             root_cause = e.info.get("error", {}).get("root_cause")
             if root_cause:
                 error_items = []
