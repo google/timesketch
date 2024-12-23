@@ -20,7 +20,7 @@ limitations under the License.
 -->
 <template>
   <span>
-    <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
+    <v-dialog v-if="!timelineAvailable" v-model="dialogStatus" width="600">
       <template v-slot:activator="{ on, attrs }">
         <slot
           name="processing"
@@ -155,7 +155,7 @@ limitations under the License.
             </v-card>
           </v-dialog>
 
-          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('toggle', timeline)">
+          <v-list-item v-if="timelineAvailable" @click="$emit('toggle', timeline)">
             <v-list-item-action>
               <v-icon v-if="isSelected">mdi-eye-off</v-icon>
               <v-icon v-else>mdi-eye</v-icon>
@@ -164,7 +164,7 @@ limitations under the License.
             <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
           </v-list-item>
 
-          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('disableAllOtherTimelines', timeline)">
+          <v-list-item v-if="timelineAvailable" @click="$emit('disableAllOtherTimelines', timeline)">
             <v-list-item-action>
               <v-icon>mdi-checkbox-marked-circle-minus-outline</v-icon>
             </v-list-item-action>
@@ -245,7 +245,7 @@ limitations under the License.
             <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
           </v-list-item>
 
-          <v-list-item style="cursor: pointer" @click="deleteConfirmation = true">
+          <v-list-item v-if="timelineAvailable" style="cursor: pointer" @click="deleteConfirmation = true">
             <v-list-item-action>
               <v-icon>mdi-trash-can-outline</v-icon>
             </v-list-item-action>
@@ -399,11 +399,17 @@ export default {
     timelineFailed() {
       return this.timelineStatus === 'fail'
     },
+    timelineAvailable() {
+      return this.timelineStatus === 'ready' || (this.settings.showProcessingTimelineEvents && this.timelineStatus === 'processing')
+    },
     timelineChipColor() {
       if (!this.timeline.color.startsWith('#')) {
         return '#' + this.timeline.color
       }
       return this.timeline.color
+    },
+    settings() {
+      return this.$store.state.settings
     },
   },
   methods: {
@@ -476,7 +482,12 @@ export default {
           } else {
             this.autoRefresh = false
             this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
-              if (this.timelineStatus === 'ready') this.$emit('toggle', response.data.objects[0])
+              if (this.timelineStatus === 'ready'
+                && !this.$store.state.enabledTimelines.includes(this.timeline.id)
+                && !this.settings.showProcessingTimelineEvents
+              ) {
+                this.$emit('toggle', response.data.objects[0])
+              }
             })
           }
         })

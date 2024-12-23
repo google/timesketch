@@ -38,6 +38,9 @@ limitations under the License.
             </template>
             <span>{{ timeline.name }}</span>
           </v-tooltip>
+          <span v-if="timeline.status[0].status === 'processing'" class="ml-3 mr-3">
+            <v-progress-circular small indeterminate color="grey" :size="17" :width="2"></v-progress-circular>
+          </span>
         </div>
       </v-chip>
     </template>
