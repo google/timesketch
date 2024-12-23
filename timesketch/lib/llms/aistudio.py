@@ -56,7 +56,7 @@ class AIStudio(interface.LLMProvider):
 
         Args:
             prompt: The prompt to use for the generation.
-            response_schema: An optional JSON schema to define the expected 
+            response_schema: An optional JSON schema to define the expected
                 response format.
 
         Returns:
