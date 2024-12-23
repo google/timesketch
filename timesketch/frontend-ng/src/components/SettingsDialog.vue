@@ -40,6 +40,17 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
+      <v-list-item>
+        <v-list-item-action>
+          <v-switch v-model="settings.showProcessingTimelineEvents" color="primary" @change="saveSettings()"></v-switch>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>Show processing timeline events</v-list-item-title>
+          <v-list-item-subtitle
+          >Select to include events from timelines in <strong>processing</strong> state</v-list-item-subtitle
+          >
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
   </v-card>
 </template>
@@ -49,6 +60,7 @@ import ApiClient from '../utils/RestApiClient'
 
 const DEFAULT_SETTINGS = {
   showLeftPanel: true,
+  showProcessingTimelineEvents: false,
 }
 
 export default {
@@ -57,6 +69,7 @@ export default {
       settings: {
         showLeftPanel: true,
         generateQuery: true,
+        showProcessingTimelineEvents: false,
       },
     }
   },
