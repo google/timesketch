@@ -1,0 +1,2918 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../troubleshooting/">
+      
+      
+        <link rel="next" href="../context-links/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>Admin CLI - timesketch</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tsctl" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="timesketch" class="md-header__button md-logo" aria-label="timesketch" data-md-component="logo">
+      
+  <img src="../../../assets/images/timesketch-color.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            timesketch
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Admin CLI
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/google/timesketch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user/upload-data/" class="md-tabs__link">
+          
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../install/" class="md-tabs__link">
+          
+  
+  Admin Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../developers/getting-started/" class="md-tabs__link">
+          
+  
+  Developers
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../changelog/" class="md-tabs__link">
+          
+  
+  Changelog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../community/resources/" class="md-tabs__link">
+          
+  
+  Community
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://osdfir.blogspot.com/search/label/timesketch" class="md-tabs__link">
+        
+  
+    
+  
+  Blog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="timesketch" class="md-nav__button md-logo" aria-label="timesketch" data-md-component="logo">
+      
+  <img src="../../../assets/images/timesketch-color.svg" alt="logo">
+
+    </a>
+    timesketch
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/google/timesketch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/upload-data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Uploading timelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/basic-concepts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basic concepts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/sketch-overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sketch overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/search-query-guide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Search query guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/cli-client/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Command line client
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/notebook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interactive notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/import-from-json-csv/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Import from JSON or CSV
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/sigma/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Sigma
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/intelligence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intelligence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_10" id="__nav_3_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Analyzers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_10">
+            <span class="md-nav__icon md-icon"></span>
+            Analyzers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/tagger/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tagger analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/feature_extraction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature extraction analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/sigma_analyzer/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sigma analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/hashR_lookup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HashR analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Admin Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Admin Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scaling-and-limits/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scaling and limits
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Admin CLI
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Admin CLI
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tsctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      tsctl
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="tsctl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version" class="md-nav__link">
+    <span class="md-ellipsis">
+      version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#info" class="md-nav__link">
+    <span class="md-ellipsis">
+      info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      User management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-user-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change user password
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removing users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      List users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      Make admin
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revoke-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      Revoke admin
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Group management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removing groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-group-membership" class="md-nav__link">
+    <span class="md-ellipsis">
+      Managing group membership
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Managing group membership">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add-a-suer-to-a-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add a suer to a group
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-group-member" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removing a group member
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      add_index
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#routes" class="md-nav__link">
+    <span class="md-ellipsis">
+      routes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#db" class="md-nav__link">
+    <span class="md-ellipsis">
+      db
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="db">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrade-db-after-schema-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      Upgrade DB After Schema Change
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade DB After Schema Change">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-database-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Database Schema Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drop-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drop database
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search_template" class="md-nav__link">
+    <span class="md-ellipsis">
+      search_template
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import" class="md-nav__link">
+    <span class="md-ellipsis">
+      import
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#similarity_score" class="md-nav__link">
+    <span class="md-ellipsis">
+      similarity_score
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sketch
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sketch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sketch-info-get-information-about-a-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      sketch-info Get information about a sketch
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeline-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeline info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigma" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sigma
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sigma">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-sigma-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Sigma rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-sigma-rules-in-a-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add Sigma rules in a folder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-sigma-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export Sigma rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-a-sigma-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove a Sigma rule
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drop-all-sigma-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drop all Sigma rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      Shell
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-links-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context Links Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyzer-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer-stats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context-links/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context Links
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Developers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Developers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/frontend-development/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Frontend development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing and running tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/notebook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interactive notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API client
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            API client
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/api-client/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/api-upload-data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upload data via API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/cli-client/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CLI client
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Analyzers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Analyzers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/analyzer-development/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create an analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Changelog
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2022-12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2022-12
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2022-10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2022-10
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2022-09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2022-09
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Community
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Community
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../community/resources/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Resources
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../community/roadmap/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Roadmap
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Events
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            Events
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../community/2021-timesketch-summit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2021 Summit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://osdfir.blogspot.com/search/label/timesketch" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tsctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      tsctl
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="tsctl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version" class="md-nav__link">
+    <span class="md-ellipsis">
+      version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#info" class="md-nav__link">
+    <span class="md-ellipsis">
+      info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      User management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-user-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change user password
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removing users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      List users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      Make admin
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revoke-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      Revoke admin
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Group management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removing groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-group-membership" class="md-nav__link">
+    <span class="md-ellipsis">
+      Managing group membership
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Managing group membership">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add-a-suer-to-a-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add a suer to a group
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-group-member" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removing a group member
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      add_index
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#routes" class="md-nav__link">
+    <span class="md-ellipsis">
+      routes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#db" class="md-nav__link">
+    <span class="md-ellipsis">
+      db
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="db">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrade-db-after-schema-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      Upgrade DB After Schema Change
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade DB After Schema Change">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-database-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Database Schema Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drop-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drop database
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search_template" class="md-nav__link">
+    <span class="md-ellipsis">
+      search_template
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import" class="md-nav__link">
+    <span class="md-ellipsis">
+      import
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#similarity_score" class="md-nav__link">
+    <span class="md-ellipsis">
+      similarity_score
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sketch
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sketch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sketch-info-get-information-about-a-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      sketch-info Get information about a sketch
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeline-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeline info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigma" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sigma
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sigma">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-sigma-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Sigma rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-sigma-rules-in-a-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add Sigma rules in a folder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-sigma-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export Sigma rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-a-sigma-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove a Sigma rule
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drop-all-sigma-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drop all Sigma rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      Shell
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-links-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context Links Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyzer-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer-stats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Admin CLI</h1>
+
+<h2 id="tsctl">tsctl</h2>
+<p>tsctl is a command-line tool for managing and interacting with a Timesketch instance. It allows users to create and delete sketches, add and remove data sources, manage users and groups, and perform various other tasks.</p>
+<p>Its commands can be accessed by running tsctl followed by the desired subcommand. For example, to list all the available sketches in a Timesketch instance, tsctl list-sketches can be run.</p>
+<h3 id="config">Config</h3>
+<p>The <code>--config</code> parameter in tsctl is used to specify the location of a configuration file that contains settings for tsctl. This configuration file can specify default values for various tsctl options, such as the <code>hostname</code> and <code>port</code> of the Timesketch server, the <code>username</code> and <code>password</code> to use when authenticating with the server, and other settings.</p>
+<p>Parameters:</p>
+<pre><code class="language-shell">--config / -c (optional)
+</code></pre>
+<p>Example</p>
+<pre><code class="language-shell">tsctl run -c /etc/timesketch/timesketch.conf
+</code></pre>
+<h3 id="version">version</h3>
+<p>Displays the version of Timesketch installed on the system</p>
+<p>Example</p>
+<pre><code class="language-shell">tsctl version
+Timesketch version: 20210602
+</code></pre>
+<h3 id="info">info</h3>
+<p>Displays various useful version information used on the system Timesketch is installed on.</p>
+<p>Example</p>
+<pre><code class="language-shell">tsctl info
+Timesketch version: 20210602
+plaso - psort version 20220930
+Node version: v14.20.1
+npm version: 6.14.17
+yarn version: 1.22.19
+Python version: Python 3.10.6
+pip version: pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
+</code></pre>
+<h3 id="user-management">User management</h3>
+<h4 id="adding-users">Adding users</h4>
+<p>tsctl provides a subcommand for creating users in a Timesketch instance. This subcommand is called <code>create-user</code>, and it allows you to specify the <code>username</code>, <code>password</code>, and other details for the user you want to create.</p>
+<p>To use the <code>create-user</code> subcommand, you would run <code>tsctl create-user</code> followed by the desired options and arguments. For example, to create a user with the username "john" and the password "123456", you could run the following command: <code>tsctl create-user --username john --password 123456</code>.</p>
+<p>Once the user is created, they will be able to log in to the Timesketch instance using their username and password. You can then use the list-users subcommand to verify that the user was created successfully.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl create-user
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--name / -n
+--password / -p (optional)
+</code></pre>
+<p>Example</p>
+<pre><code class="language-shell">tsctl create-user foo
+</code></pre>
+<h4 id="change-user-password">Change user password</h4>
+<p>To change a user password, the create-user command can be used, as it is checking if the user exists if yes it will update the update.</p>
+<p>This command would change the password of the user with the specified username to the new password provided. The user will then be able to log in to the Timesketch instance using their new password.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl create-user
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--username / -u
+--password / -p (optional)
+</code></pre>
+<p>Example</p>
+<pre><code class="language-shell">tsctl create-user foo
+</code></pre>
+<h4 id="removing-users">Removing users</h4>
+<p>tsctl provides a subcommand for disabling users in a Timesketch instance. This subcommand is called <code>disable-user</code>, and it allows you to specify the username or user ID of the user you want to disable.</p>
+<p>To use the <code>disable-user</code> subcommand, you would run <code>tsctl disable-user</code> followed by the desired options and arguments. For example, to disable a user with the username "john", you could run the following command:
+<code>tsctl disable-user john</code>.</p>
+<p>This command would disable the user with the specified username, preventing them from logging in to the Timesketch instance. However, their user account will still exist in the system, and you can use the enable-user subcommand to re-enable their account at any time.</p>
+<p>Disabled users are not removed from the system, but marked as disabled.
+The current implementation is not complete. Disabled users will still show up for other commands.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl disable_user
+tsctl enable_user
+</code></pre>
+<p>Example</p>
+<pre><code class="language-shell">tsctl disable_user foo
+tsctl enable_user foo
+</code></pre>
+<h4 id="list-users">List users</h4>
+<p>tsctl provides a subcommand for listing the users in a Timesketch instance. This subcommand is called <code>list-users</code>, and it allows you to view a list of the users in the system, along with their username, user ID, and other details.</p>
+<p>To use the <code>list-users</code> subcommand, you would run <code>tsctl list-users</code> followed by the desired options and arguments. For example, to list all the users in the Timesketch instance, you could run the following command: <code>tsctl list-users</code>.</p>
+<p>This command would display a list of the users in the Timesketch instance, along with their username and other details.</p>
+<p>Example</p>
+<pre><code class="language-shell">tsctl list-users
+foo
+bar
+dev (admin)
+</code></pre>
+<h4 id="make-admin">Make admin</h4>
+<p>tsctl provides a subcommand for granting administrator privileges to a user in a Timesketch instance. This subcommand is called <code>make-admin</code>, and it allows you to specify the username of the user you want to grant administrator privileges to.</p>
+<p>To use the <code>make-admin</code> subcommand, you would run <code>tsctl make-admin</code> followed by the desired options and arguments. For example, to grant administrator privileges to a user with the username "john", you could run the following command: <code>tsctl make-admin  john</code></p>
+<p>This command would grant the user with the specified username administrator privileges.</p>
+<p>Once a user has administrator privileges, they will be able to perform a wider range of tasks in the Timesketch instance. You can use the <code>list-users</code> subcommand to verify that the user has been granted administrator privileges successfully.</p>
+<p>You can use <code>tsctl revoke-admin</code> to revoke admin privileges.</p>
+<h4 id="revoke-admin">Revoke admin</h4>
+<p>tsctl provides a subcommand for revoking administrator privileges from a user in a Timesketch instance. This subcommand is called <code>revoke-admin</code>, and it allows you to specify the username of the user you want to revoke administrator privileges from.</p>
+<p>To use the <code>revoke-admin</code> subcommand, you would run <code>tsctl revoke-admin</code> followed by the desired options and arguments. For example, to revoke administrator privileges from a user with the username "john", you could run the following command: <code>tsctl revoke-admin john</code></p>
+<p>This command would revoke the administrator privileges of the user with the specified username.</p>
+<p>Once a user's administrator privileges are revoked, they will no longer be able to perform tasks that require administrator privileges in the Timesketch instance. You can use the <code>list-users</code> subcommand to verify that the user's administrator privileges have been revoked successfully.</p>
+<h3 id="group-management">Group management</h3>
+<h4 id="adding-groups">Adding groups</h4>
+<p>tsctl provides a subcommand for adding groups in a Timesketch instance. This subcommand is called <code>add-group</code>, and it allows you to specify the name and description of the group you want to add.</p>
+<p>To use the <code>add-group</code> subcommand, you would run tsctl add-group followed by the desired options and arguments. For example, to add a group called "analysts" with the description "Group for analysts", you could run the following command: <code>tsctl add-group --name analysts --description "Group for analysts"</code>
+This command would create a new group with the specified name and description. Once the group is created, you can use the <code>list-groups</code> subcommand to verify that the group was added successfully.</p>
+<p>You can also use the <code>add-user-to-group</code> subcommand to add users to the group you have created. This allows you to manage the members of the group, and control which users have access to the sketches and data sources associated with the group.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl add_group
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--name / -n
+</code></pre>
+<h4 id="removing-groups">Removing groups</h4>
+<p>Not yet implemented.</p>
+<h4 id="managing-group-membership">Managing group membership</h4>
+<h5 id="add-a-suer-to-a-group">Add a suer to a group</h5>
+<p>tsctl provides a subcommand for adding users to a group in a Timesketch instance. This subcommand is called <code>add-group-member</code>, and it allows you to specify the username of the user you want to add to the group, as well as the name of the group you want to add the user to.</p>
+<p>To use the <code>add-group-member</code> subcommand, you would run <code>tsctl add-group-member</code> followed by the desired options and arguments. For example, to add a user with the username "john" to a group called "analysts", you could run the following command: <code>tsctl add-group-member --username john --group-name analysts</code>.
+This command would add the user with the specified username to the group with the specified name.</p>
+<p>Once the user is added to the group, they will be able to access the sketches and data sources associated with the group, based on the permissions granted to the group. You can use the <code>list-groups</code> subcommand to verify that the user was added to the group successfully.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl add-group-member
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-shell">tsctl add-group-member --username john --group-name analysts
+</code></pre>
+<h5 id="removing-a-group-member">Removing a group member</h5>
+<p>tsctl provides a subcommand for removing users from a group in a Timesketch instance. This subcommand is called <code>remove-group-member</code>, and it allows you to specify the username of the user you want to remove from the group, as well as the name of the group you want to remove the user from.</p>
+<p>To use the <code>remove-group-member</code> subcommand, you would run <code>tsctl remove-group-member</code> followed by the desired options and arguments. For example, to remove a user with the username "john" from a group called "analysts", you could run the following command: <code>tsctl remove-group-member --username john --group-name analysts</code></p>
+<p>This command would remove the user with the specified username from the group with the specified name.</p>
+<p>Once the user is removed from the group, they will no longer be able to access the sketches and data sources associated with the group. You can use the list-groups subcommand to verify that the user was removed from the group successfully.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl remove-group-member
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-shell">tsctl remove-group-member --username john --group-name analysts
+</code></pre>
+<h3 id="add_index">add_index</h3>
+<p>Create a new Timesketch searchindex.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl add_index
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--name / -n
+--index / -i
+--user / -u
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-shell">tsctl add_index -u user_foo -i test_index_name -n sample
+</code></pre>
+<h3 id="routes">routes</h3>
+<p>tsctl provides a subcommand for displaying the available API routes in a Timesketch instance. This subcommand is called <code>routes</code>, and it allows you to view a list of the API routes that are available in the Timesketch instance, along with their URL and description.</p>
+<p>To use the routes subcommand, you would run <code>tsctl routes</code> followed by the desired options and arguments. For example, to list all the available API routes in the Timesketch instance, you could run the following command: <code>tsctl routes</code>.
+This command would display a list of the available API routes in the Timesketch instance, along with their URL and description.</p>
+<p>Example:</p>
+<pre><code class="language-bash">tsctl routes
+Endpoint                           Methods            Rule
+---------------------------------  -----------------  -------------------------------------------------------------------------
+aggregationexploreresource         POST               /api/v1/sketches/&lt;int:sketch_id&gt;/aggregation/explore/
+</code></pre>
+<h3 id="db">db</h3>
+<p>tsctl provides a subcommand for managing the database in a Timesketch instance. This subcommand is called <code>db</code>, and it allows you to perform various operations on the Timesketch database, such as creating the database tables, initializing the database schema, and migrating the database to the latest version.</p>
+<p>To use the <code>db</code> subcommand, you would run <code>tsctl db</code> followed by the desired options and arguments. For example, to initialize the database schema in the Timesketch instance, you could run the following command:
+<code>tsctl db init</code></p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl db
+</code></pre>
+<p>Example</p>
+<pre><code class="language-bash">tsctl db --help
+Usage: tsctl db [OPTIONS] COMMAND [ARGS]...
+
+  Perform database migrations.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  branches   Show current branch points
+  current    Display the current revision for each database.
+  downgrade  Revert to a previous version
+  edit       Edit a revision file
+  heads      Show current available heads in the script directory
+  history    List changeset scripts in chronological order.
+  init       Creates a new migration repository.
+  merge      Merge two revisions together, creating a new revision file
+  migrate    Autogenerate a new revision file (Alias for 'revision...
+  revision   Create a new revision file.
+  show       Show the revision denoted by the given symbol.
+  stamp      'stamp' the revision table with the given revision; don't...
+  upgrade    Upgrade to a later version
+</code></pre>
+<h4 id="upgrade-db-after-schema-change">Upgrade DB After Schema Change</h4>
+<p>After changing the schema for the database a revision file needs to be generated.</p>
+<p>(temporary solution)
+Before doing the database migration you'll need to modify the file <code>timesketch/models/__init__.py</code>:</p>
+<pre><code class="language-python">
+def init_db():
+...
+        BaseModel.metadata.create_all(bind=engine)
+</code></pre>
+<p>This line needs to be commented out, eg:</p>
+<pre><code class="language-python">
+def init_db():
+...
+        #BaseModel.metadata.create_all(bind=engine)
+</code></pre>
+<p>Then inside the timesketch container, to generate the file use the command:</p>
+<pre><code class="language-shell">cd /usr/local/src/timesketch/timesketch
+tsctl db stamp head
+tsctl db upgrade
+</code></pre>
+<p>This makes sure that the database is current. Then create a revision file:</p>
+<pre><code class="language-shell">tsctl db migrate -m &quot;&lt;message&gt;&quot;
+</code></pre>
+<p>Once the migration is done, remove the comment to re-enable the line in <code>timesketch/models/__init.py</code>.</p>
+<h5 id="troubleshooting-database-schema-changes">Troubleshooting Database Schema Changes</h5>
+<p>If the migration file is not created, which could be an indication that the schema change
+is not detected by the automation one can create an empty revision file:</p>
+<pre><code class="language-shell">tsctl db revision
+</code></pre>
+<p>And then fill in the blanks, see examples of changes in <code>timesketch/migrations/versions/*_.py</code>.</p>
+<h3 id="drop-database">Drop database</h3>
+<p>Will drop all databases.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl drop_db
+</code></pre>
+<h3 id="search_template">search_template</h3>
+<p>Export/Import search templates to/from file.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl search_template
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--import / -i
+--export / -e
+</code></pre>
+<p>import_location: Path to the yaml file to import templates.
+export_location: Path to the yaml file to export templates.</p>
+<h3 id="import">import</h3>
+<p>Creates a new Timesketch timeline from a file. Supported file formats are: plaso, csv and jsonl.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl import
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--file / -f
+--sketch_id / -s      (optional)
+--username / -f       (optional)
+--timeline_name / -n  (optional)
+</code></pre>
+<p>The sketch id is inferred from the filename if it starts with a number. The timeline name can also be generated from the filename if not specified.</p>
+<h3 id="similarity_score">similarity_score</h3>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl similarity_score
+</code></pre>
+<h3 id="sketch">Sketch</h3>
+<h4 id="sketch-info-get-information-about-a-sketch">sketch-info Get information about a sketch</h4>
+<p>Displays various information about a given sketch.</p>
+<pre><code class="language-shell">tsctl sketch-info
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-shell">Sketch 1 Name: (aaa)
+searchindex_id index_name                       created_at                 user_id description
+1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:06:52.849124 1       20200918_0417_DESKTOP-SDN1RPT
+3              88002da782f64061bf3703bc782b6006 2022-10-21 15:19:26.072964 1       all_packets
+1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:28:55.474166 1       E01-DC01_20200918_0347_CDrive
+4              11d761cd266640d798e30bb897c8dd4e 2022-10-21 15:32:15.060184 1       autoruns-desktop-sdn1rpt_fresh_import
+3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:12.316273 1       sigma_events
+3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:48.592320 1       sigma_events2
+Shared with:
+    Users: (user_id, username)
+        3: bar
+    Groups:
+        user-group
+Sketch Status: new
+Sketch is public: True
+Sketch Labels: ([],)
+Status:
+id status created_at                 user_id
+1  new    2022-10-21 15:04:59.935504 None
+</code></pre>
+<h3 id="timeline-info">Timeline info</h3>
+<p>In some cases, logs present a OpenSearch Index id and it is not easy to find out
+which Sketch that index is related to.</p>
+<p>Therefore the following command can be used:</p>
+<pre><code class="language-bash"># tsctl searchindex-info --searchindex_id asd
+Searchindex: asd not found in database.
+# tsctl searchindex-info --searchindex_id 4c5afdf60c6e49499801368b7f238353
+Searchindex: 4c5afdf60c6e49499801368b7f238353 Name: sigma_events found in database.
+Corresponding Timeline id: 3 in Sketch Id: 2
+Corresponding Sketch id: 2 Sketch name: asdasd
+</code></pre>
+<h3 id="sigma">Sigma</h3>
+<h4 id="list-sigma-rules">List Sigma rules</h4>
+<p>Lists all Sigma rules installed on a system</p>
+<pre><code class="language-shell">tsctl list-sigma-rules
+</code></pre>
+<pre><code class="language-bash">tsctl list-sigma-rules --columns=rule_uuid,title,status
+rule_uuid,title,status
+['8c10509b-9ba5-4387-bf6c-e347931b646f', 'SigmaRuleTemplateTitledddd', 'experimental']
+['5266a592-b793-11ea-b3de-0242ac130004', 'Suspicious Installation of Zenmap', 'experimental']
+['e5684ad6-5824-4680-9cc5-e8f0babd77bb', 'Foobar', 'experimental']
+tsctl list-sigma-rules --columns=rule_uuid,title,status | grep experimental | wc -l
+3
+</code></pre>
+<h4 id="add-sigma-rules-in-a-folder">Add Sigma rules in a folder</h4>
+<p>Will add all Sigma rules in a folder and its subfolders to the database.</p>
+<pre><code class="language-shell">tsctl import-sigma-rules sigma/rules/cloud/gcp/
+Importing: Google Cloud Kubernetes RoleBinding
+Importing: Google Cloud Storage Buckets Modified or Deleted
+Importing: Google Cloud VPN Tunnel Modified or Deleted
+Importing: Google Cloud Re-identifies Sensitive Information
+...
+</code></pre>
+<h4 id="export-sigma-rules">Export Sigma rules</h4>
+<p>Will export all Sigma rules to a folder.</p>
+<pre><code class="language-shell">tsctl export-sigma-rules ./test
+13 Sigma rules exported
+</code></pre>
+<h4 id="remove-a-sigma-rule">Remove a Sigma rule</h4>
+<p>This will remove a single Sigma rule from the database</p>
+<pre><code class="language-shell">tsctl remove-sigma-rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f
+Rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f deleted
+</code></pre>
+<h4 id="drop-all-sigma-rules">Drop all Sigma rules</h4>
+<p>Will drop all Sigma rules from database.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl remove-all-sigma-rules
+Do you really want to drop all the Sigma rules? [y/N]: y
+Are you REALLLY sure you want to DROP ALL the Sigma rules? [y/N]: y
+All rules deleted
+</code></pre>
+<h3 id="shell">Shell</h3>
+<p>tsctl provides a subcommand for starting an interactive Python shell with the Timesketch API client pre-initialized. This subcommand is called <code>shell</code>, and it allows you to access the Timesketch API and perform various operations using the Python interpreter.</p>
+<p>To use the <code>shell</code> subcommand, you would run <code>tsctl shell</code> followed by the desired options and arguments. For example, to start an interactive Python shell with the Timesketch API client pre-initialized, you could run the following command: <code>tsctl shell</code>.</p>
+<h3 id="context-links-configuration">Context Links Configuration</h3>
+<p>We can use <code>tsctl</code> to test the yaml config file for the context link feature.
+This is especially useful if an entry that is added to the configuration file
+does not show up as a context link in the frontend.</p>
+<pre><code>tsctl validate-context-links-conf &lt;PATH TO CONFIG FILE&gt;
+</code></pre>
+<p>The default config can be found at <code>data/context_links.yaml</code> .</p>
+<p>The output will tell if there is a value not matching the schema requirements:</p>
+<p><strong>No error:</strong> All entries in the configuration file match the schema requirements.</p>
+<pre><code>$ tsctl validate-context-links-conf ./context_links.yaml
+=&gt; OK: &quot;virustotal&quot;
+=&gt; OK: &quot;unfurl&quot;
+=&gt; OK: &quot;mseventid&quot;
+=&gt; OK: &quot;urlhaus&quot;
+</code></pre>
+<p><strong>With an error:</strong> Here the validator tells us that there is an error with the
+replacement pattern in the <code>context_link</code> entry.</p>
+<pre><code>$ tsctl validate-context-links-conf ./context_links.yaml
+=&gt; ERROR: &quot;virustotal&quot; &gt;&gt; 'https://www.virustotal.com/gui/search/&lt;ATTR_VALUE' does not match '&lt;ATTR_VALUE&gt;'
+
+Failed validating 'pattern' in schema['properties']['context_link']:
+    {'pattern': '&lt;ATTR_VALUE&gt;', 'type': 'string'}
+
+On instance['context_link']:
+    'https://www.virustotal.com/gui/search/&lt;ATTR_VALUE'
+
+=&gt; OK: &quot;unfurl&quot;
+=&gt; OK: &quot;mseventid&quot;
+=&gt; OK: &quot;urlhaus&quot;
+</code></pre>
+<h3 id="analyzer-stats">Analyzer-stats</h3>
+<p><code>tsctl</code>offers a method called <code>analyzer-stats</code> to display various information about analyzer runs of the past.</p>
+<p>To use the <code>analyzer-stats</code> subcommand, you would run <code>tsctl analyzer-stats</code> followed by the desired options and arguments.</p>
+<pre><code class="language-shell">tsctl analyzer-stats
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-shell">tsctl analyzer-stats --help
+Usage: tsctl analyzer-stats [OPTIONS] ANALYZER_NAME
+
+  Prints analyzer stats.
+
+Options:
+  --timeline_id TEXT         Timeline ID if the analyzer results should be
+                             filtered by timeline.
+  --scope TEXT               Scope on: [many_hits, long_runtime, recent]
+  --result_text_search TEXT  Search in result text. E.g. for a specific
+                             rule_id.
+  --help                     Show this message and exit.
+tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
+     runtime  hits                                                                          result  analysis_id                 created_at
+36  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           51 2023-01-03 21:33:14.475700
+37  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           52 2023-01-03 21:33:40.477309
+39  0.083333  2344  2344 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           54 2023-01-03 21:33:40.594573
+38  0.000000   145   145 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           55 2023-01-03 21:33:40.626931
+47  0.100000   145   145 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           61 2023-01-04 17:09:04.078641
+40  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           53 2023-01-03 21:33:40.521002
+41  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           56 2023-01-03 21:33:40.658743
+42  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           57 2023-01-03 21:33:40.696942
+43  2.800000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           58 2023-01-04 17:09:03.751176
+44  2.816667     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           62 2023-01-04 17:09:04.112822
+45  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           60 2023-01-04 17:09:04.046003
+46  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           59 2023-01-04 17:09:04.014973
+48  2.750000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           63 2023-01-04 17:09:04.148185
+</code></pre>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+  </body>
+</html>

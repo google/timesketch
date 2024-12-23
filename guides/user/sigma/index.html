@@ -1,0 +1,2516 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../import-from-json-csv/">
+      
+      
+        <link rel="next" href="../intelligence/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>Use Sigma - timesketch</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sigma" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="timesketch" class="md-header__button md-logo" aria-label="timesketch" data-md-component="logo">
+      
+  <img src="../../../assets/images/timesketch-color.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            timesketch
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Use Sigma
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/google/timesketch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../upload-data/" class="md-tabs__link">
+          
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../admin/install/" class="md-tabs__link">
+          
+  
+  Admin Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../developers/getting-started/" class="md-tabs__link">
+          
+  
+  Developers
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../changelog/" class="md-tabs__link">
+          
+  
+  Changelog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../community/resources/" class="md-tabs__link">
+          
+  
+  Community
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://osdfir.blogspot.com/search/label/timesketch" class="md-tabs__link">
+        
+  
+    
+  
+  Blog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="timesketch" class="md-nav__button md-logo" aria-label="timesketch" data-md-component="logo">
+      
+  <img src="../../../assets/images/timesketch-color.svg" alt="logo">
+
+    </a>
+    timesketch
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/google/timesketch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upload-data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Uploading timelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../basic-concepts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basic concepts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sketch-overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sketch overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../search-query-guide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Search query guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-client/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Command line client
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interactive notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../import-from-json-csv/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Import from JSON or CSV
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Use Sigma
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Use Sigma
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-sigma" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is Sigma
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sigma-in-timesketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sigma in Timesketch
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sigma in Timesketch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Interface
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#analyzer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyzer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hits
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search Query
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tscl" class="md-nav__link">
+    <span class="md-ellipsis">
+      tscl
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timesketch-config-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timesketch config file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigma-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sigma config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Field Mapping
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compose-new-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compose new rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compose new rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best practices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#date-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Date format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Date format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#number-of-or" class="md-nav__link">
+    <span class="md-ellipsis">
+      Number of or
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce-the-haystack" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reduce the haystack
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-find-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to find issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to find issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-verify-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to verify issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to verify issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timesketch-api-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timesketch API / logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigmac" class="md-nav__link">
+    <span class="md-ellipsis">
+      sigmac
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-do-with-problematic-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      What to do with problematic rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intelligence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intelligence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_10" id="__nav_3_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Analyzers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_10">
+            <span class="md-nav__icon md-icon"></span>
+            Analyzers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/tagger/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tagger analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/feature_extraction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feature extraction analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/sigma_analyzer/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sigma analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analyzers/hashR_lookup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HashR analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Admin Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Admin Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/upgrade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/scaling-and-limits/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scaling and limits
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/troubleshooting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/admin-cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Admin CLI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/context-links/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context Links
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Developers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Developers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/frontend-development/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Frontend development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing and running tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/notebook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interactive notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API client
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            API client
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/api-client/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/api-upload-data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upload data via API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/cli-client/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CLI client
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Analyzers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Analyzers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/analyzer-development/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create an analyzer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Changelog
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2023-01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2023-01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2022-12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2022-12
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2022-10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2022-10
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/2022-09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2022-09
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Community
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Community
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../community/resources/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Resources
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../community/roadmap/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Roadmap
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Events
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            Events
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../community/2021-timesketch-summit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2021 Summit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://osdfir.blogspot.com/search/label/timesketch" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-sigma" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is Sigma
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sigma-in-timesketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sigma in Timesketch
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sigma in Timesketch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Interface
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#analyzer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyzer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyzer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hits
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search Query
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tscl" class="md-nav__link">
+    <span class="md-ellipsis">
+      tscl
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timesketch-config-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timesketch config file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigma-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sigma config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Field Mapping
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compose-new-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compose new rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compose new rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best practices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#date-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Date format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Date format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#number-of-or" class="md-nav__link">
+    <span class="md-ellipsis">
+      Number of or
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce-the-haystack" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reduce the haystack
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-find-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to find issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to find issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-verify-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to verify issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to verify issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timesketch-api-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timesketch API / logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigmac" class="md-nav__link">
+    <span class="md-ellipsis">
+      sigmac
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-do-with-problematic-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      What to do with problematic rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="sigma">Sigma</h1>
+<h2 id="what-is-sigma">What is Sigma</h2>
+<p>See description at the <a href="https://github.com/Neo23x0/sigma#what-is-sigma">Sigma Github repository</a></p>
+<h2 id="sigma-in-timesketch">Sigma in Timesketch</h2>
+<p>Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyzer.
+The other option is to use Sigma via the API and the API client or the Web interface.</p>
+<blockquote>
+<p>Sigma in Timesketch should still be considered an Alpha version functionality with known performance and functionality issues.</p>
+</blockquote>
+<h3 id="web-interface">Web Interface</h3>
+<p>Sigma rules are exposed to the Web Interface as part of a sketch.</p>
+<p>To list all Sigma rules, visit :</p>
+<pre><code>https://$TIMESKETCH/v2/studio/sigma/new
+</code></pre>
+<p>This will show a list on the left with all Sigma rules installed on a system. You can search for:</p>
+<ul>
+<li>Rule ID</li>
+<li>Title</li>
+<li>Search query</li>
+<li>File Name</li>
+<li>Tag</li>
+</ul>
+<p>So if you want to search for ZMap related rules, you can search for <code>zma</code> and it will show you the pre installed rule.</p>
+<p><img alt="Sigma studio" src="../../../assets/images/sigma_studio.png" /></p>
+<h4 id="analyzer">Analyzer</h4>
+<p>The Sigma Analyzer will only take rules that have the status: <code>stable</code>. <code>Experimental</code>, <code>Deprecated</code> or similar marked rules are <strong>not picked up</strong> by the Analyzer.</p>
+<h5 id="hits">Hits</h5>
+<p>If you have run the Sigma Analyzer on a sketch and a rule has produced hits, the following fields will be added to the event:</p>
+<ul>
+<li><code>ts_sigma_rule</code> will store the rule title that produced hits on an event.</li>
+<li><code>ts_ttp</code> if a rule had ATT&amp;CK(r) tags added, they will be added to this array</li>
+</ul>
+<p>To query all rules that had Sigma rules matched in an analyzer run, query for:
+<code>ts_sigma_rule:*</code>.</p>
+<p>E.g. an event might have the following attributes:</p>
+<pre><code>ts_sigma_rule:[ &quot;Suspicious Installation of ZMap&quot; ]
+ts_ttp:[ &quot;attack.discovery&quot;, &quot;attack.t1046&quot;]
+</code></pre>
+<h4 id="search-query">Search Query</h4>
+<p>From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the Search Query from the found rule <code>(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")</code> it will open an explore view for this sketch with this query pre filled for you to explore the data.</p>
+<h3 id="install-rules">Install rules</h3>
+<p>Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
+To use the official community rules you can visit <a href="https://github.com/Neo23x0/sigma">github.com/Neo23x0/sigma</a> and copy the rules you are interested in.</p>
+<h4 id="web">Web</h4>
+<p>In the past, Sigma rules where stored on disk, in 2022 this has been changed and Sigma rules are stored in the database.
+New rules can be added / modified via the Sigma portion of the Studio.</p>
+<p>Visit</p>
+<pre><code>https://$TIMESKETCH/v2/studio/sigma/new
+</code></pre>
+<p><img alt="Sigma create rule" src="/assets/images/Sigma_create_rule_new.gif" /></p>
+<p>There are some <a href="#Compose-new-rules">best practices</a> to compose new Sigma rules.</p>
+<h4 id="tscl">tscl</h4>
+<p>Sigma rules can also be added by the <a href="../admin/admin-cli">admin-cli</a>.</p>
+<pre><code class="language-shell">tsctl import-sigma-rules sigma/rules/cloud/gcp/
+Importing: Google Cloud Kubernetes RoleBinding
+Importing: Google Cloud Storage Buckets Modified or Deleted
+Importing: Google Cloud VPN Tunnel Modified or Deleted
+Importing: Google Cloud Re-identifies Sensitive Information
+...
+</code></pre>
+<h4 id="limitations">Limitations</h4>
+<p>It is <strong>not</strong> recommended to simply add all Sigma rules from e.g. <a href="https://github.com/Neo23x0/sigma">github.com/Neo23x0/sigma</a>.</p>
+<ul>
+<li>Rules might have missing field mappings (see below) which will cause to broad queries</li>
+<li>Rules might have to many <code>OR</code> &amp; <code>AND</code> combinations that result in very compley OpenSearch queries. On a large index, such queries can cause Timeouts that can lead to stability problems of your Timesketch instance</li>
+<li>To many rules marked as Stable could result in Sigma Analyzers running for hours or days, blocking other Analyzers</li>
+</ul>
+<h3 id="timesketch-config-file">Timesketch config file</h3>
+<p>There are multiple sigma related config variables in <code>timesketch.conf</code>.</p>
+<pre><code># Sigma Settings
+
+SIGMA_CONFIG = '/etc/timesketch/sigma_config.yaml'
+SIGMA_TAG_DELAY = 5
+</code></pre>
+<p><code>SIGMA_TAG_DELAY</code>can be used to throttle the Sigma analyzer. If Timesketch is running on a less powerful machine (or docker-dev) a sleep timer of 15 seconds will help avoid OpenSearch Search exceptions for to many requests to the ES backend in a to short timerange. For more powerful Timesketch installations, this value can be set to 0.</p>
+<h3 id="sigma-config">Sigma config</h3>
+<p>In the config file</p>
+<pre><code class="language-shell">sigma_config.yaml
+</code></pre>
+<p>There is a section with mappings, most mappings where copied from HELK configuration.
+If you find a mapping missing, feel free to add and create a PR.</p>
+<h3 id="field-mapping">Field Mapping</h3>
+<p>The field mappings are used to translate the generalised term from Sigma into the expected field names in Timesketch. Most of the field names in Timesketch are mapped to the expected output names of Plaso.</p>
+<p>Some adjustments verified:</p>
+<ul>
+<li>s/EventID/event_identifier</li>
+<li>s/Source/source_name</li>
+</ul>
+<p>There are many entries in https://github.com/google/timesketch/blob/master/data/sigma_config.yaml mapped to <code>xml_string</code>. This is because a lot of data in Windows EVTX XML is not valid XML and will be represented in the section <code>xml_string</code> (see https://github.com/log2timeline/plaso/issues/442).</p>
+<p>Field mappings like:</p>
+<pre><code>  TargetFilename:
+      product=linux: filename
+      default: xml_string
+</code></pre>
+<p>Are interpreted depending on the selected product in the rule. If the product in the rule is <code>linux</code> the Selector <code>TargetFilename</code> in a rule would be translated to <code>filename:"foobar"</code>. If the product is anything else, e.g. <code>Windows</code> it would be <code>xml_string:"foobar"</code></p>
+<h2 id="test-data">Test data</h2>
+<p>If you want to test that feature, get some evtx files from the following
+links and parse it via plaso</p>
+<ul>
+<li><a href="https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES">github.com/sbousseaden/EVTX-ATTACK-SAMPLES</a></li>
+<li><a href="https://github.com/sans-blue-team/DeepBlueCLI/evtx">github.com/sans-blue-team/DeepBlueCLI/evtx</a></li>
+<li><a href="https://github.com/jaegeral/timesketch-test-data">github.com/jaegeral/timesketch-test-data</a></li>
+</ul>
+<h2 id="compose-new-rules">Compose new rules</h2>
+<p>In the Sigma Tab in a sketch there is a toggle called <code>Compose Sigma rule</code>.
+If turned on it will show a text area that takes the yaml text of a Sigma rule.
+Once you are happy with your rule, click <code>Parse</code> and the rule will be parsed as if it is installed on Timesketch.
+Press <code>Save</code> to store it in the database.</p>
+<p>This feature can be helpful if you want to test out field mapping.</p>
+<p>From the parse result you can copy the <code>search_query</code> value and paste it in a new window where you have the explore of a Sketch open.</p>
+<h3 id="best-practices">Best practices</h3>
+<p>When writing Rules specific for Timesketch first and foremost you should the guide from one of the creators of Sigma:
+<a href="https://www.nextron-systems.com/2018/02/10/write-sigma-rules/">How to Write Sigma Rules</a>.</p>
+<h3 id="date-format">Date format</h3>
+<p>When setting the <code>date</code> field in your rule, stick to <code>YYYY/MM/DD</code>.</p>
+<h4 id="number-of-or">Number of or</h4>
+<p>On top of that, it is recommended to avoid a large chain or <code>or</code> checks.</p>
+<pre><code class="language-yaml">detection:
+    keywords:
+        - 'value1'
+        - 'value2'
+        - 'value3'
+        ...
+        - 'value20'
+    condition: keywords
+</code></pre>
+<p>such a query would look like:
+<code>*value1* or *value2* or *value3* ... or *value20*</code> because that results in a very expensive / long query to execute on the dataset.</p>
+<p>Instead it is recommended to splice it into multiple rules:</p>
+<p>Rule 1:</p>
+<pre><code class="language-yaml">detection:
+    keywords:
+        - 'value1'
+        - 'value2'
+        - 'value3'
+        ...
+        - 'value10'
+    condition: keywords
+</code></pre>
+<p>and</p>
+<p>Rule 2:</p>
+<pre><code class="language-yaml">detection:
+    keywords:
+        - 'value11'
+        - 'value12'
+        - 'value13'
+        ...
+        - 'value20'
+    condition: keywords
+</code></pre>
+<p>That will create two queries:
+<code>*value1* or *value2* or *value3* ... or *value10*</code> and <code>*value11* or *value12* or *value13* ... or *value20*</code>.</p>
+<p>The Sigma analyzer is designed to batch and throttle execution of queries which is beneficial for such rule structure.</p>
+<h3 id="reduce-the-haystack">Reduce the haystack</h3>
+<p>If you can, define the haystack OpenSearch has to query. This can be achieved by adding a check for <code>data_type:"foosource"</code>.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="how-to-find-issues">How to find issues</h3>
+<h4 id="logs">Logs</h4>
+<p>In the celery logs, while running the sigma analyzer, you will see something like that:</p>
+<pre><code class="language-shell">result: Applied 0 tags
+* win_apt_carbonpaper_turla.yml: 0
+...
+* win_syskey_registry_access.yml: 0
+Problematic rules:
+XXXX
+</code></pre>
+<p>The XXX here is the "problem" and you should note those rules. Once you note and identified those rules, it is recommended to take the id and attempt a API call like the following:</p>
+<pre><code class="language-python">from timesketch_api_client import config
+ts = config.get_client()
+rule = ts.get_sigma_rule(&quot;c0478ead-5336-46c2-bd5e-b4c84bc3a36e&quot;)
+print(rule.search_query)
+</code></pre>
+<p>Where the ID is the id of your problematic rule. This will hopefully give you more insight from the web server logs of what caused the problem. E.g.
+"Aggregations not implemented for this backend"
+It is then recommended to move those rules to a separate folder, maybe even creating a small shell script that does that for you once you pull upstream rules from the Sigma repository.</p>
+<h3 id="how-to-verify-issues">How to verify issues</h3>
+<h4 id="timesketch-api-logs">Timesketch API / logs</h4>
+<p>If you have doubt if a rule does work, take the uuid and run python code mentioned above.</p>
+<h4 id="sigmac">sigmac</h4>
+<p>Another option is to run the rule against the official sigma client with the Timesketch sigma mapping file.</p>
+<p>For our example from above:</p>
+<pre><code class="language-shell">sigma/tools/sigma$ python3 sigmac.py -t es-qs --config ../../../sigma_config.yaml ../../rules/windows/image_load/sysmon_mimikatz_inmemory_detection.yml
+An unsupported feature is required for this Sigma rule (../../rules/windows/image_load/sysmon_mimikatz_inmemory_detection.yml): Aggregations not implemented for this backend
+Feel free to contribute for fun and fame, this is open source :) -&gt; https://github.com/Neo23x0/sigma
+</code></pre>
+<h3 id="what-to-do-with-problematic-rules">What to do with problematic rules</h3>
+<p>Update the status of the rule to <code>deprecated</code>.</p>
+<p>If the rules do not contain any sensitive content, you could also open an issue in the timesketch project and or in the upstream sigma project and explain your issue (best case: provide your timesketch sigma config and the rule file so it can be verified).</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+  </body>
+</html>
