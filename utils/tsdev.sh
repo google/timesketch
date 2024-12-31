@@ -83,8 +83,8 @@ case "$1" in
 		$s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend build
 		;;
 	vue-dev)
-    $s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend $(if [ "$frontend" == "frontend-v3" ]; then echo "dev"; else echo "serve"; fi)
-    ;;
+		$s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend $(if [ "$frontend" == "frontend-v3" ]; then echo "dev"; else echo "serve"; fi)
+		;;
 	vue-install-deps)
 		$s docker exec --interactive --tty $CONTAINER_ID yarn install --cwd=/usr/local/src/timesketch/timesketch/$frontend
 		;;
