@@ -24,11 +24,11 @@ help(){
 	echo
 	echo "Frontend:"
 	echo "  frontend          The old v1 frontend (deprecated)."
-  echo "  frontend-ng       The current v2 frontend (vue2)."
-  echo "  frontend-v3       The future v3 frontend (vue3)."
-  echo
+	echo "  frontend-ng       The current v2 frontend (vue2)."
+	echo "  frontend-v3       The future v3 frontend (vue3)."
+	echo
 	echo "Examples:"
-  echo "  tsdev.sh vue-dev frontend-v3"
+	echo "  tsdev.sh vue-dev frontend-v3"
 	echo "  tsdev.sh logs"
 	echo "  tsdev.sh test"
 	exit 0
