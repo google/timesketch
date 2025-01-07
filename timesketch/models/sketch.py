@@ -58,23 +58,96 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
-    timelines = relationship("Timeline", backref="sketch", lazy="select")
-    views = relationship("View", backref="sketch", lazy="select")
-    events = relationship("Event", backref="sketch", lazy="select")
-    stories = relationship("Story", backref="sketch", lazy="select")
-    aggregations = relationship("Aggregation", backref="sketch", lazy="select")
-    attributes = relationship("Attribute", backref="sketch", lazy="select")
-    graphs = relationship("Graph", backref="sketch", lazy="select")
-    graphcaches = relationship("GraphCache", backref="sketch", lazy="select")
-    aggregationgroups = relationship(
-        "AggregationGroup", backref="sketch", lazy="select"
+    timelines = relationship(
+        "Timeline",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
     )
-    analysis = relationship("Analysis", backref="sketch", lazy="select")
-    analysissessions = relationship("AnalysisSession", backref="sketch", lazy="select")
-    searchhistories = relationship("SearchHistory", backref="sketch", lazy="dynamic")
-    scenarios = relationship("Scenario", backref="sketch", lazy="dynamic")
-    facets = relationship("Facet", backref="sketch", lazy="dynamic")
-    questions = relationship("InvestigativeQuestion", backref="sketch", lazy="dynamic")
+    views = relationship(
+        "View",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    events = relationship(
+        "Event",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    stories = relationship(
+        "Story",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    aggregations = relationship(
+        "Aggregation",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    attributes = relationship(
+        "Attribute",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    graphs = relationship(
+        "Graph",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    graphcaches = relationship(
+        "GraphCache",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    aggregationgroups = relationship(
+        "AggregationGroup",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    analysis = relationship(
+        "Analysis",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    analysissessions = relationship(
+        "AnalysisSession",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    searchhistories = relationship(
+        "SearchHistory",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
+    scenarios = relationship(
+        "Scenario",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
+    facets = relationship(
+        "Facet",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
+    questions = relationship(
+        "InvestigativeQuestion",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
 
     @property
     def get_named_aggregations(self):
