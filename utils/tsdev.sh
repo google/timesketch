@@ -21,6 +21,7 @@ help(){
 	echo "  vue-install-deps  Install vue frontend dependencies. Default: 'frontend-ng'"
 	echo "  vue-test          Test the vue frontend. Default: 'frontend-ng'"
 	echo "  web               Start the web frontend bound to port 5000"
+ 	echo "  postgres          Connect to the Timesketch postgres database."
 	echo
 	echo "Frontend:"
 	echo "  frontend          The old v1 frontend (deprecated)."
@@ -93,6 +94,9 @@ case "$1" in
 		;;
 	web)
 		$s docker exec --interactive --tty $CONTAINER_ID gunicorn --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 timesketch.wsgi:application
+		;;
+  	postgres)
+		$s docker exec --interactive --tty postgres bash -c "psql -U timesketch -d timesketch"
 		;;
 	*)
 		echo \""$1"\" is not a valid command.; help
