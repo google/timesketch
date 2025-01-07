@@ -496,6 +496,9 @@ class SketchResource(resources.ResourceMixin, Resource):
                     "Sketch with the label [{0:s}] cannot be deleted.".format(label),
                 )
         sketch.set_status(status="deleted")
+        db_session.delete(sketch)
+        db_session.commit()
+        # TODO: there needs to be a lot of related data to be deleted
         return HTTP_STATUS_CODE_OK
 
     @login_required
