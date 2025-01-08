@@ -919,13 +919,66 @@ def run_csv_jsonl(
     final_counter = 0
     error_msg = ""
     error_count = 0
+    unique_keys = set()
+    limit_buffer_percentage = float(
+        current_app.config.get("OPENSEARCH_MAPPING_BUFFER", 0.2)
+    )
+    upper_mapping_limit = int(
+        current_app.config.get("OPENSEARCH_MAPPING_UPPER_LIMIT", 2000)
+    )
+
     try:
         opensearch.create_index(index_name=index_name, mappings=mappings)
+
+        current_index_mapping_properties = (
+            opensearch.client.indices.get_mapping(index=index_name)
+            .get(index_name, {})
+            .get("mappings", {})
+            .get("properties", {})
+        )
+        unique_keys = set(current_index_mapping_properties)
+
+        try:
+            current_limit = int(opensearch.client.indices.get_settings(index=index_name)[
+                index_name
+            ]["settings"]["index"]["mapping"]["total_fields"]["limit"])
+        except KeyError:
+            current_limit = 1000
+
         for event in read_and_validate(
             file_handle=file_handle,
             headers_mapping=headers_mapping,
             delimiter=delimiter,
         ):
+            unique_keys.update(event.keys())
+            # Calculating the new limit. Each unique key is counted twice due to
+            # the "keayword" type plus a percentage buffer (default 20%).
+            new_limit = int((len(unique_keys)*2) * (1 + limit_buffer_percentage))
+            # To prevent mapping explosions we still check against an upper
+            # mapping limit set in timesketch.conf (default: 2000).
+            if new_limit > upper_mapping_limit:
+                error_msg = (
+                    f"Error: Indexing timeline [{timeline_name}] into [{index_name}] "
+                    f"exceeds the upper field mapping limit of {upper_mapping_limit}. "
+                    f"Currently mapped fields: ~{len(unique_keys)*2} / New "
+                    f"calculated mapping limit: {new_limit}. Review your import "
+                    "data or adjust OPENSEARCH_MAPPING_UPPER_LIMIT."
+                )
+                logger.error(error_msg)
+                _set_datasource_status(timeline_id, file_path, "fail", error_message=str(error_msg))
+                return None
+
+            if new_limit > current_limit:
+                opensearch.client.indices.put_settings(
+                    index=index_name, body={"index.mapping.total_fields.limit": new_limit}
+                )
+                logger.info(
+                    "OpenSearch index [%s] mapping limit increased to: %d",
+                    index_name,
+                    new_limit,
+                )
+                current_limit = new_limit
+
             opensearch.import_event(index_name, event, timeline_id=timeline_id)
             final_counter += 1
 
@@ -933,6 +986,7 @@ def run_csv_jsonl(
         results = opensearch.flush_queued_events()
 
         error_container = results.get("error_container", {})
+        error_count = len(error_container.get(index_name, {}).get('errors', []))
         error_msg = get_import_errors(
             error_container=error_container,
             index_name=index_name,
@@ -950,7 +1004,7 @@ def run_csv_jsonl(
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(error_msg))
         logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
         return None
 
@@ -972,7 +1026,7 @@ def run_csv_jsonl(
         )
 
     # Set status to ready when done
-    _set_datasource_status(timeline_id, file_path, "ready", error_message=error_msg)
+    _set_datasource_status(timeline_id, file_path, "ready", error_message=str(error_msg))
 
     return index_name
 
