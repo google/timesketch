@@ -15,6 +15,15 @@ limitations under the License.
 -->
 <template>
   <div>
+    <v-alert
+      v-model="showBanner"
+      dense
+      dismissible
+      type="info"
+    >
+      Processing timelines can be enabled but their events may be incomplete.
+    </v-alert>
+
     <v-dialog v-model="exportDialog" width="700">
       <v-card flat class="pa-5">
         <v-progress-circular indeterminate size="20" width="1"></v-progress-circular>
@@ -581,6 +590,7 @@ export default {
       showHistogram: false,
       branchParent: null,
       sortOrderAsc: true,
+      showBanner: false,
     }
   },
   computed: {
@@ -873,6 +883,7 @@ export default {
         .then((response) => {
           this.eventList.objects = response.data.objects
           this.eventList.meta = response.data.meta
+          this.updateShowBanner()
           this.searchInProgress = false
           EventBus.$emit('updateCountPerTimeline', response.data.meta.count_per_timeline)
           this.$emit('countPerTimeline', response.data.meta.count_per_timeline)
@@ -1039,6 +1050,15 @@ export default {
         })
         .catch((e) => {})
     },
+    updateShowBanner: function() {
+      // Show banner only when processing timelines are enabled and at
+      // least one enabled timeline is the "processing" state.
+      this.showBanner =
+        !!this.settings.showProcessingTimelineEvents &&
+        this.$store.state.sketch.active_timelines
+          .filter(tl => this.$store.state.enabledTimelines.includes(tl.id))
+          .some(tl => tl.status && tl.status[0].status === 'processing')
+    },
   },
   watch: {
     tableOptions: {
@@ -1077,6 +1097,11 @@ export default {
         this.search(resetPagination, incognito, parent)
       },
       deep: true,
+    },
+    'settings.showProcessingTimelineEvents': {
+      handler() {
+        this.updateShowBanner()
+      },
     },
   },
   created() {
