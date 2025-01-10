@@ -232,7 +232,7 @@ class Graph(resource.SketchResource):
         self._updated_at = time
 
     def from_manual(
-        self, data, **kwargs
+        self, data=None, **kwargs
     ):  # pylint: disable=arguments-differ; pytype: disable=signature-mismatch
         """Generate a new graph using a dictionary.
 
