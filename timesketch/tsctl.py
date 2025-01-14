@@ -545,6 +545,21 @@ def print_table(table_data):
         print()
 
 
+@cli.command(name="sketch-delete")
+@click.argument("sketch_id")
+def sketch_delete(sketch_id):
+    """Delete a sketch."""
+    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    if not sketch:
+        print("Sketch does not exist.")
+    else:
+        print(f"Sketch {sketch_id} Name: ({sketch.name})")
+        sketch.delete()
+        db_session.delete(sketch)
+        db_session.commit()
+        print(f"Sketch {sketch_id} deleted.")
+
+
 @cli.command(name="sketch-info")
 @click.argument("sketch_id")
 def sketch_info(sketch_id):

@@ -495,10 +495,20 @@ class SketchResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_FORBIDDEN,
                     "Sketch with the label [{0:s}] cannot be deleted.".format(label),
                 )
+
         sketch.set_status(status="deleted")
+        # TODO: actually delete the sketch
+
+        for timeline in sketch.active_timelines:
+            timeline.set_status(status="deleted")
+            searchindex = timeline.searchindex
+            db_session.delete(searchindex)
+            db_session.delete(timeline)
+            # remove the opensearch index
+            self.datastore.client.indices.delete(index=searchindex.index_name)
+
         db_session.delete(sketch)
         db_session.commit()
-        # TODO: there needs to be a lot of related data to be deleted
         return HTTP_STATUS_CODE_OK
 
     @login_required
