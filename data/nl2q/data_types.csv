@@ -1,0 +1,1802 @@
+data_type,field,type,description
+android:app_usage,component,str,name of the individual component of the application.
+android:app_usage,last_resume_time,dfdatetime.DateTimeValues,date and time the application was last resumed.
+android:app_usage,package,str,name of the Android application.
+android:event:call,call_type,int,type of call- such as: Incoming- Outgoing- or Missed.
+android:event:call,duration,int,number of seconds the call lasted.
+android:event:call,end_time,dfdatetime.DateTimeValues,date and time the call was stopped.
+android:event:call,name,str,name associated to the remote party.
+android:event:call,number,str,phone number associated to the remote party.
+android:event:call,offset,str,identifier of the row- from which the event data was extracted.
+android:event:call,query,str,SQL query that was used to obtain the event data.
+android:event:call,start_time,dfdatetime.DateTimeValues,date and time the call was started.
+android:logcat,component_tag,str,the tag that indicates the system component from which the logcat line originates.
+android:logcat,file_offset,int,the file offset of where the log message was parsed.
+android:logcat,message,str,the log message.
+android:logcat,pid,int,process identifier (PID) that created the logcat line.
+android:logcat,priority,str,a character in the set {V- D- I- W- E- F- S}- which is ordered from lowest to highest priority.
+android:logcat,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+android:logcat,thread_identifier,int,thread identifier (TID) that created the logcat line.
+android:logcat,user_identifier,int,the user identifier (UID) or Android ID of the logged process.
+android:messaging:hangouts,body,str,content of the SMS text message.
+android:messaging:hangouts,creation_time,dfdatetime.DateTimeValues,date and time the Google Hangouts message was created.
+android:messaging:hangouts,message_status,int,message status.
+android:messaging:hangouts,message_type,int,message type.
+android:messaging:hangouts,offset,str,identifier of the row- from which the event data was extracted.
+android:messaging:hangouts,query,str,SQL query that was used to obtain the event data.
+android:messaging:hangouts,sender,str,Name with the sender.
+android:messaging:sms,address,str,phone number associated to the sender or receiver.
+android:messaging:sms,body,str,content of the SMS text message.
+android:messaging:sms,creation_time,dfdatetime.DateTimeValues,creation date and time of the message.
+android:messaging:sms,offset,str,identifier of the row- from which the event data was extracted.
+android:messaging:sms,query,str,SQL query that was used to obtain the event data.
+android:messaging:sms,sms_read,int,message read status- either Read or Unread.
+android:messaging:sms,sms_type,int,message type- either Sent or Received.
+android:tango:contact,access_time,dfdatetime.DateTimeValues,date and time the contact was last accessed.
+android:tango:contact,birthday,str,contact profile birthday.
+android:tango:contact,distance,int,contact profile distance.
+android:tango:contact,first_name,str,contact profile first name.
+android:tango:contact,friend_request_message,str,message sent on friend request.
+android:tango:contact,friend_request_time,dfdatetime.DateTimeValues,date and time a friend request was sent.
+android:tango:contact,friend_request_type,str,flag indicating the type of friend request sent for example outRequest for request sent or noRequest for no request.
+android:tango:contact,gender,str,contact profile gender.
+android:tango:contact,is_friend,bool,True if the contact is considered a friend.
+android:tango:contact,last_active_time,dfdatetime.DateTimeValues,date and time the contact was last active.
+android:tango:contact,last_name,str,contact profile last name.
+android:tango:contact,status,str,contact status message.
+android:tango:conversation,conversation_identifier,int,conversation identifier.
+android:tango:message,creation_time,dfdatetime.DateTimeValues,date and time the message was created.
+android:tango:message,direction,int,flag indicating direction of the message.
+android:tango:message,message_identifier,int,message identifier.
+android:tango:message,sent_time,dfdatetime.DateTimeValues,date and time the message was sent.
+android:twitter:contact,creation_time,dfdatetime.DateTimeValues,date and time the contact was created.
+android:twitter:contact,description,str,twitter account profile description.
+android:twitter:contact,followers,int,number of followers.
+android:twitter:contact,friends,int,number of following.
+android:twitter:contact,friendship_time,dfdatetime.DateTimeValues,date and time the contact was befriended.
+android:twitter:contact,identifier,int,contact row id.
+android:twitter:contact,image_url,str,profile picture url.
+android:twitter:contact,location,str,twitter account profile location content.
+android:twitter:contact,modification_time,dfdatetime.DateTimeValues,date and time the contact was last modified.
+android:twitter:contact,name,str,twitter account name.
+android:twitter:contact,query,str,SQL query that was used to obtain the event data.
+android:twitter:contact,statuses,int,twitter account number of tweets.
+android:twitter:contact,user_identifier,int,twitter account id.
+android:twitter:contact,username,str,twitter account handler.
+android:twitter:contact,web_url,str,twitter account profile url content.
+android:twitter:search,creation_time,dfdatetime.DateTimeValues,date and time the search was created.
+android:twitter:search,name,str,twitter name handler.
+android:twitter:search,query,str,SQL query that was used to obtain the event data.
+android:twitter:search,search_query,str,search query.
+android:twitter:status,author_identifier,int,twitter account identifier.
+android:twitter:status,content,str,status content.
+android:twitter:status,creation_time,dfdatetime.DateTimeValues,date and time the status was created.
+android:twitter:status,favorited,int,favorited flag as 0/1 value.
+android:twitter:status,identifier,int,status row identifier.
+android:twitter:status,query,str,SQL query that was used to obtain the event data.
+android:twitter:status,retweeted,int,retweeted flag as 0/1 value.
+android:twitter:status,username,str,twitter account handler.
+android:webview:cookie,cookie_name,str,name of the cookie.
+android:webview:cookie,data,str,data stored in the cookie.
+android:webview:cookie,expiration_time,dfdatetime.DateTimeValues,date and time the cache entry expires.
+android:webview:cookie,host,str,host that set the cookie.
+android:webview:cookie,offset,str,identifier of the row- from which the event data was extracted.
+android:webview:cookie,path,str,path for which the cookie was set.
+android:webview:cookie,query,str,SQL query that was used to obtain the event data.
+android:webview:cookie,secure,bool,True if the cookie should only be transmitted over a secure channel.
+android:webview:cookie,url,str,URL of the cookie.
+android:webviewcache,content_length,int,size of the cached content.
+android:webviewcache,expiration_time,dfdatetime.DateTimeValues,date and time the cache entry expires.
+android:webviewcache,last_modified_time,dfdatetime.DateTimeValues,date and time the cache entry was last modified.
+android:webviewcache,query,str,SQL query that was used to obtain the event data.
+android:webviewcache,url,str,URL the content was retrieved from.
+apache:access_log:entry,http_request,str,first line of http request.
+apache:access_log:entry,http_request_referer,str,http request referer header information.
+apache:access_log:entry,http_request_user_agent,str,http request user agent header information.
+apache:access_log:entry,http_response_bytes,int,http response bytes size without headers.
+apache:access_log:entry,http_response_code,int,http response code from server.
+apache:access_log:entry,ip_address,str,IPv4 or IPv6 addresses.
+apache:access_log:entry,port_number,int,canonical port of the server serving the request.
+apache:access_log:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+apache:access_log:entry,remote_name,str,remote logname (from identd- if supplied).
+apache:access_log:entry,server_name,str,canonical hostname of the server serving the request.
+apache:access_log:entry,user_name,str,logged user name.
+av:defender:detection_history,filename,str,name of the file that the threat was detected in.
+av:defender:detection_history,host_and_user,str,"name of the host and user in ""DOMAIN\USER"" format."
+av:defender:detection_history,process,str,name of the process that caused the detection.
+av:defender:detection_history,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+av:defender:detection_history,sha256,str,SHA-256 hash of the file.
+av:defender:detection_history,threat_name,str,name of the threat that was detected. web_filenames (list[str]): URI of files detected as downloaded from the web.
+av:mcafee:accessprotectionlog,action,str,action.
+av:mcafee:accessprotectionlog,filename,str,filename.
+av:mcafee:accessprotectionlog,offset,int,offset of the line relative to the start of the file- from which the event data was extracted.
+av:mcafee:accessprotectionlog,rule,str,rule.
+av:mcafee:accessprotectionlog,status,str,status.
+av:mcafee:accessprotectionlog,trigger_location,str,trigger location.
+av:mcafee:accessprotectionlog,username,str,username.
+av:mcafee:accessprotectionlog,written_time,dfdatetime.DateTimeValues,entry written date and time.
+av:symantec:scanlog,access,str,access.
+av:symantec:scanlog,action0,str,action0.
+av:symantec:scanlog,action1,str,action1.
+av:symantec:scanlog,action1_status,str,action1 status.
+av:symantec:scanlog,action2,str,action2.
+av:symantec:scanlog,action2_status,str,action2 status.
+av:symantec:scanlog,address,str,address.
+av:symantec:scanlog,backup_id,str,backup identifier.
+av:symantec:scanlog,cat,str,category.
+av:symantec:scanlog,cleaninfo,str,clean information.
+av:symantec:scanlog,clientgroup,str,client group.
+av:symantec:scanlog,compressed,str,compressed.
+av:symantec:scanlog,computer,str,computer.
+av:symantec:scanlog,definfo,str,definfo.
+av:symantec:scanlog,defseqnumber,str,def sequence number.
+av:symantec:scanlog,deleteinfo,str,delete information.
+av:symantec:scanlog,depth,str,depth.
+av:symantec:scanlog,description,str,description.
+av:symantec:scanlog,domain_guid,str,domain identifier (GUID).
+av:symantec:scanlog,domainname,str,domain name.
+av:symantec:scanlog,err_code,str,error code.
+av:symantec:scanlog,event,str,event.
+av:symantec:scanlog,event_data,str,event data.
+av:symantec:scanlog,extra,str,extra.
+av:symantec:scanlog,file,str,file.
+av:symantec:scanlog,flags,str,flags.
+av:symantec:scanlog,groupid,str,group identifier.
+av:symantec:scanlog,guid,str,guid.
+av:symantec:scanlog,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+av:symantec:scanlog,license_expiration_dt,str,license expiration date.
+av:symantec:scanlog,license_feature_name,str,license feature name.
+av:symantec:scanlog,license_feature_ver,str,license feature ver.
+av:symantec:scanlog,license_fulfillment_id,str,license fulfillment identifier.
+av:symantec:scanlog,license_lifecycle,str,license lifecycle.
+av:symantec:scanlog,license_seats,str,license seats.
+av:symantec:scanlog,license_seats_delta,str,license seats delta.
+av:symantec:scanlog,license_seats_total,str,license seats total.
+av:symantec:scanlog,license_serial_num,str,license serial number.
+av:symantec:scanlog,license_start_dt,str,license start date.
+av:symantec:scanlog,log_session_guid,str,log session identifier (GUID).
+av:symantec:scanlog,logger,str,logger.
+av:symantec:scanlog,login_domain,str,login domain.
+av:symantec:scanlog,macaddr,str,MAC address.
+av:symantec:scanlog,new_ext,str,new ext.
+av:symantec:scanlog,ntdomain,str,ntdomain.
+av:symantec:scanlog,offset,str,offset.
+av:symantec:scanlog,parent,str,parent.
+av:symantec:scanlog,quarfwd_status,str,quarfwd status.
+av:symantec:scanlog,remote_machine,str,remote machine.
+av:symantec:scanlog,remote_machine_ip,str,remote machine IP address.
+av:symantec:scanlog,scanid,str,scan identifier.
+av:symantec:scanlog,snd_status,str,snd status.
+av:symantec:scanlog,status,str,status.
+av:symantec:scanlog,still_infected,str,still infected.
+av:symantec:scanlog,time,str,time.
+av:symantec:scanlog,user,str,user.
+av:symantec:scanlog,vbin_id,str,vbin identifier.
+av:symantec:scanlog,vbin_session_id,str,vbin session identifier.
+av:symantec:scanlog,version,str,version.
+av:symantec:scanlog,virus,str,virus.
+av:symantec:scanlog,virus_id,str,virus identifier.
+av:symantec:scanlog,virustype,str,virustype.
+av:trendmicro:scan,action,str,action.
+av:trendmicro:scan,filename,str,filename.
+av:trendmicro:scan,offset,int,offset of the line relative to the start of the file- from which the event data was extracted.
+av:trendmicro:scan,path,str,path.
+av:trendmicro:scan,scan_type,str,scan_type.
+av:trendmicro:scan,threat,str,threat.
+av:trendmicro:scan,written_time,dfdatetime.DateTimeValues,date and time the log entry was written.
+av:trendmicro:webrep,application_name,str,application name.
+av:trendmicro:webrep,block_mode,str,operation mode.
+av:trendmicro:webrep,credibility_rating,int,credibility rating.
+av:trendmicro:webrep,credibility_score,int,credibility score.
+av:trendmicro:webrep,group_code,str,group code.
+av:trendmicro:webrep,group_name,str,group name.
+av:trendmicro:webrep,ip,str,IP address.
+av:trendmicro:webrep,offset,int,offset of the line relative to the start of the file- from which the event data was extracted.
+av:trendmicro:webrep,policy_identifier,int,policy identifier.
+av:trendmicro:webrep,threshold,int,threshold value.
+av:trendmicro:webrep,url,str,accessed URL.
+av:trendmicro:webrep,written_time,dfdatetime.DateTimeValues,entry written date and time.
+aws:cloudtrail:entry,access_key,str,access key identifier.
+aws:cloudtrail:entry,account_identifier,str,AWS account identifier.
+aws:cloudtrail:entry,cloud_trail_event,str,CloudTrail event.
+aws:cloudtrail:entry,event_name,str,event name.
+aws:cloudtrail:entry,event_source,str,AWS service.
+aws:cloudtrail:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+aws:cloudtrail:entry,resources,str,resources.
+aws:cloudtrail:entry,source_ip,str,source IP address.
+aws:cloudtrail:entry,user_identity_arn,str,AWS ARN of the user.
+aws:cloudtrail:entry,user_name,str,name of the AWS user.
+aws:elb:access,actions_executed,str,The actions taken when processing the request.
+aws:elb:access,alpn_back_end_protocol,str,The application protocol negotiated with the target- in string format. If no ALPN policy is configured in the TLS listener- no matching protocol is found- or no valid protocol list is sent- this value is set to -. (only for network load balancer logs)
+aws:elb:access,alpn_client_preference_list,str,The value of the application_layer_protocol_negotiation extension in the client hello message. This value is URL-encoded. Each protocol is enclosed in double quotes and protocols are separated by a comma. If no ALPN policy is configured in the TLS listener- no valid client hello message is sent- or the extension is not present- this value is set to -. The string is truncated if it is longer than 256 bytes. (only for network load balancer logs)
+aws:elb:access,alpn_front_end_protocol,str,The application protocol negotiated with the client- in string format. If no ALPN policy is configured in the TLS listener- no matching protocol is found- or no valid protocol list is sent- this value is set to -. (only for network load balancer logs)
+aws:elb:access,chosen_cert_arn,str,The ARN of the certificate presented to the source.
+aws:elb:access,chosen_cert_serial,str,Reserved for future use. This value is always set to -. (only for network load balancer logs)
+aws:elb:access,classification,str,The classification for desync mitigation.
+aws:elb:access,classification_reason,str,The classification reason code.
+aws:elb:access,connection_duration,str,duration of the connection to complete- from start to closure- in milliseconds. (only for network load balancer logs)
+aws:elb:access,destination_group_arn,str,The Amazon Resource Name (ARN) of the destination group.
+aws:elb:access,destination_ip_address,str,The IP address of the destination that processed this request.
+aws:elb:access,destination_list,str,A space-delimited list of IP addresses and ports for the destinations that processed this request.
+aws:elb:access,destination_port,int,The port of the destination that processed this request.
+aws:elb:access,destination_processing_duration,str,duration from the time the load balancer sent the request to a destination until the destination started to send the response headers.
+aws:elb:access,destination_status_code,int,The status code of the response from the destination.
+aws:elb:access,destination_status_code_list,str,A space-delimited list of status codes.
+aws:elb:access,domain_name,str,The SNI domain provided by the source during the TLS handshake.
+aws:elb:access,error_reason,str,The error reason code- enclosed in double quotes.
+aws:elb:access,handshake_duration,str,duration of the handshake to complete after the TCP connection is established- including client-side delays- in milliseconds. This time is included in the connection_duration field. (only for network load balancer logs)
+aws:elb:access,incoming_tls_alert,str,The integer value of TLS alerts received by the load balancer from the client- if present. (only for network load balancer logs)
+aws:elb:access,listener,str,The resource ID of the TLS listener for the connection. (only for network load balancer logs)
+aws:elb:access,matched_rule_priority,int,The priority value of the rule that matched the request.
+aws:elb:access,received_bytes,int,The size of the request- in bytes- received from the source.
+aws:elb:access,redirect_url,str,The URL of the redirect destination.
+aws:elb:access,request_processing_duration,str,total duration from the time the load balancer received the request until the time it sent the request to a destination.
+aws:elb:access,request_time,dfdatetime.DateTimeValues,date and time a request was sent.
+aws:elb:access,request_type,str,The type of request or connection.
+aws:elb:access,resource_identifier,str,The resource ID of the load balancer.
+aws:elb:access,response_processing_duration,str,duration of processing a response.
+aws:elb:access,response_time,dfdatetime.DateTimeValues,date and time a response was sent.
+aws:elb:access,sent_bytes,int,The size of the response- in bytes- sent to the source.
+aws:elb:access,source_ip_address,str,The IP address of the requesting source.
+aws:elb:access,source_port,int,The port of the requesting source.
+aws:elb:access,ssl_cipher,str,The SSL cipher of the HTTPS listener.
+aws:elb:access,ssl_protocol,str,The SSL protocol of the HTTPS listener.
+aws:elb:access,tls_cipher,str,The cipher suite negotiated with the client- in OpenSSL format. If TLS negotiation does not complete- this value is set to -. (only for network load balancer logs)
+aws:elb:access,tls_named_group,str,Reserved for future use. This value is always set to -. (only for network load balancer logs)
+aws:elb:access,tls_protocol_version,str,The TLS protocol negotiated with the client- in string format. If TLS negotiation does not complete- this value is set to -. (only for network load balancer logs)
+aws:elb:access,trace_identifier,str,The contents of the X-Amzn-Trace-Id header.
+aws:elb:access,user_agent,str,A User-Agent string.
+aws:elb:access,version,str,The version of the log entry. (only for network load balancer logs)
+azure:activitylog:entry,caller,str,Azure identity.
+azure:activitylog:entry,client_ip,str,client IP address.
+azure:activitylog:entry,correlation_identifier,str,Correlation identifier.
+azure:activitylog:entry,event_data_identifier,str,Event data identifier.
+azure:activitylog:entry,event_name,str,name of the event.
+azure:activitylog:entry,level,str,log level.
+azure:activitylog:entry,operation_identifier,str,Operation identifier.
+azure:activitylog:entry,operation_name,str,operation name.
+azure:activitylog:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+azure:activitylog:entry,resource_group,str,resource group.
+azure:activitylog:entry,resource_identifier,str,resource.
+azure:activitylog:entry,resource_provider,str,API service.
+azure:activitylog:entry,resource_type,str,resource type.
+azure:activitylog:entry,subscription_identifier,str,subscription identifier.
+azure:activitylog:entry,tenant_identifier,str,tenant identifier.
+azure:application_gateway_access:entry,client_ip,str,Client IP address of the request.
+azure:application_gateway_access:entry,client_port,int,Client TCP/UDP port for the request.
+azure:application_gateway_access:entry,client_response_time,int,Duration- in seconds- from the first byte of a client request to be processed up to the first byte sent as response to the client.
+azure:application_gateway_access:entry,host,str,Address listed in the host header of the request. If rewritten using header rewrite- contains the updated host name.
+azure:application_gateway_access:entry,http_method,str,HTTP method used by the request.
+azure:application_gateway_access:entry,http_status,int,HTTP status code returned to the client from application gateway.
+azure:application_gateway_access:entry,http_version,str,HTTP version of the request.
+azure:application_gateway_access:entry,instance_identifier,str,Application gateway instance that served the request.
+azure:application_gateway_access:entry,original_host,str,Original request host name.
+azure:application_gateway_access:entry,original_request_uri,str,Original request URL- including arguments.
+azure:application_gateway_access:entry,received_bytes,int,Size of packet received- in bytes.
+azure:application_gateway_access:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+azure:application_gateway_access:entry,request_query,str,Server-Routed: Back-end pool instance that was sent the request. X-AzureApplicationGateway-LOG-ID: Correlation ID used for the request. It can be used to troubleshoot traffic issues on the back-end servers. SERVER-STATUS: HTTP response code that application gateway received from the back-end.
+azure:application_gateway_access:entry,request_uri,str,URI of the received request.
+azure:application_gateway_access:entry,sent_bytes,int,Size of packet sent- in bytes.
+azure:application_gateway_access:entry,server_response_latency,str,Latency of the response (in seconds) from the back-end server.
+azure:application_gateway_access:entry,server_routed,str,The back-end server that application gateway routes the request to.
+azure:application_gateway_access:entry,server_status,str,HTTP status code of the back-end server.
+azure:application_gateway_access:entry,ssl_cipher,str,Cipher suite being used for TLS communication.
+azure:application_gateway_access:entry,ssl_client_certificate_fingerprint,str,Fingerprint of the SSL client certificate.
+azure:application_gateway_access:entry,ssl_client_certificate_issuer_name,str,Name of the issuer of the SSL client certificate.
+azure:application_gateway_access:entry,ssl_client_verify,str,TODO.
+azure:application_gateway_access:entry,ssl_enabled,str,Whether communication to the back-end pools used TLS. Valid values are on and off.
+azure:application_gateway_access:entry,ssl_protocol,str,The SSL/TLS protocol used.
+azure:application_gateway_access:entry,time_taken,double,Duration- in seconds- that it takes for the first byte of a client request to be processed and its last-byte sent in the response to the client. It's important to note that the Time-Taken field usually includes the time that the request and response packets are traveling over the network.
+azure:application_gateway_access:entry,user_agent,str,User agent from the HTTP request header.
+azure:application_gateway_access:entry,waf_evaluation_time,str,Duration- in seconds- that it takes for the request to be processed by the WAF.
+azure:application_gateway_access:entry,waf_mode,str,Value can be either Detection or Prevention.
+bash:history:entry,command,str,command that was executed.
+bash:history:entry,written_time,dfdatetime.DateTimeValues,date and time the entry was written.
+bsm:entry,event_type,int,identifier that represents the type of the event. extra_tokens (list[dict[str- dict[str- str]]]): event extra tokens- which is a list of dictionaries that contain: {token type: {token values}}
+bsm:entry,offset,int,offset of the BSM record relative to the start of the file- from which the event data was extracted.
+bsm:entry,record_length,int,record length in bytes (trailer number).
+bsm:entry,return_value,str,processed return value and exit status.
+bsm:entry,written_time,dfdatetime.DateTimeValues,entry written date and time.
+ccleaner:configuration,configuration,str,CCleaner configuration.
+ccleaner:configuration,key_path,str,Windows Registry key path.
+ccleaner:configuration,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+ccleaner:update,key_path,str,Windows Registry key path.
+ccleaner:update,update_time,dfdatetime.DateTimeValues,date and time CCleaner last checked for an update.
+chrome:autofill:entry,creation_time,dfdatetime.DateTimeValues,creation date and time of the autofill entry.
+chrome:autofill:entry,field_name,str,name of form field.
+chrome:autofill:entry,last_used_time,dfdatetime.DateTimeValues,last date and time the autofill entry was last used.
+chrome:autofill:entry,query,str,SQL query that was used to obtain the event data.
+chrome:autofill:entry,usage_count,int,count of times value has been used in field_name.
+chrome:autofill:entry,value,str,value populated in form field.
+chrome:cache:entry,creation_time,dfdatetime.DateTimeValues,creation date and time of the cache entry.
+chrome:cache:entry,original_url,str,original URL.
+chrome:cookie:entry,access_time,dfdatetime.DateTimeValues,date and time the cookie was last accessed.
+chrome:cookie:entry,cookie_name,str,name of the cookie.
+chrome:cookie:entry,creation_time,dfdatetime.DateTimeValues,date and time the cookie was created.
+chrome:cookie:entry,data,str,value of the cookie.
+chrome:cookie:entry,expiration_time,dfdatetime.DateTimeValues,date and time the cookie expires.
+chrome:cookie:entry,host,str,hostname of host that set the cookie value.
+chrome:cookie:entry,httponly,bool,True if the cookie cannot be accessed through client side script.
+chrome:cookie:entry,path,str,path where the cookie got set.
+chrome:cookie:entry,persistent,bool,True if the cookie is persistent.
+chrome:cookie:entry,query,str,SQL query that was used to obtain the event data.
+chrome:cookie:entry,secure,bool,True if the cookie should only be transmitted over a secure channel.
+chrome:cookie:entry,url,str,URL or path where the cookie got set.
+chrome:extension_activity:activity_log,action_type,str,action type.
+chrome:extension_activity:activity_log,activity_id,str,activity identifier.
+chrome:extension_activity:activity_log,api_name,str,name of API.
+chrome:extension_activity:activity_log,arg_url,str,URL argument.
+chrome:extension_activity:activity_log,args,str,arguments.
+chrome:extension_activity:activity_log,extension_id,str,extension identifier.
+chrome:extension_activity:activity_log,other,str,other.
+chrome:extension_activity:activity_log,page_title,str,title of webpage.
+chrome:extension_activity:activity_log,page_url,str,URL of webpage.
+chrome:extension_activity:activity_log,query,str,SQL query that was used to obtain the event data.
+chrome:extension_activity:activity_log,recorded_time,dfdatetime.DateTimeValues,date and time the entry was recorded.
+chrome:history:file_downloaded,danger_type,int,assessment by Safe Browsing of the danger of the downloaded content.
+chrome:history:file_downloaded,end_time,dfdatetime.DateTimeValues,date and time the download was finished.
+chrome:history:file_downloaded,full_path,str,full path where the file was downloaded to.
+chrome:history:file_downloaded,interrupt_reason,int,indication why the download was interrupted.
+chrome:history:file_downloaded,offset,str,identifier of the row- from which the event data was extracted.
+chrome:history:file_downloaded,opened,int,value to indicate if the downloaded file was opened from the browser.
+chrome:history:file_downloaded,query,str,SQL query that was used to obtain the event data.
+chrome:history:file_downloaded,received_bytes,int,number of bytes received while downloading.
+chrome:history:file_downloaded,start_time,dfdatetime.DateTimeValues,date and time the download was started.
+chrome:history:file_downloaded,state,int,state of the download- such as finished or cancelled.
+chrome:history:file_downloaded,total_bytes,int,total number of bytes to download.
+chrome:history:file_downloaded,url,str,URL of the downloaded file.
+chrome:history:page_visited,from_visit,str,URL where the visit originated from.
+chrome:history:page_visited,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+chrome:history:page_visited,offset,str,identifier of the row- from which the event data was extracted.
+chrome:history:page_visited,page_transition_type,int,type of transitions between pages.
+chrome:history:page_visited,query,str,SQL query that was used to obtain the event data.
+chrome:history:page_visited,title,str,title of the visited page.
+chrome:history:page_visited,typed_count,int,number of times the user has navigated to the page by typing in the address.
+chrome:history:page_visited,url,str,URL of the visited page.
+chrome:history:page_visited,url_hidden,bool,True if the URL is hidden.
+chrome:history:page_visited,visit_count,int,number of times the user has navigated to this page.
+chrome:history:page_visited,visit_source,int,source of the page visit.
+chrome:preferences:content_settings:exceptions,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+chrome:preferences:content_settings:exceptions,permission,str,permission.
+chrome:preferences:content_settings:exceptions,primary_url,str,primary URL.
+chrome:preferences:content_settings:exceptions,secondary_url,str,secondary URL.
+chrome:preferences:extension_installation,extension_identifier,str,extension identifier.
+chrome:preferences:extension_installation,extension_name,str,extension name.
+chrome:preferences:extension_installation,installation_time,dfdatetime.DateTimeValues,date and time the Chrome extension was installed.
+chrome:preferences:extension_installation,path,str,path.
+chrome:preferences:extensions_autoupdater,message,str,message.
+chrome:preferences:extensions_autoupdater,recorded_time,dfdatetime.DateTimeValues,date and time the entry was recorded.
+confluence:access,forwarded_for,str,request X-FORWARDED-FOR header value.
+confluence:access,http_request_method,str,HTTP request method.
+confluence:access,http_request_referer,str,HTTP request referer header information.
+confluence:access,http_request_uri,str,HTTP request URI.
+confluence:access,http_request_user_agent,str,HTTP request user agent header information.
+confluence:access,http_response_bytes,int,HTTP response bytes size without headers.
+confluence:access,http_response_code,int,HTTP response code from server.
+confluence:access,http_version,str,HTTP request version.
+confluence:access,process_duration,int,time taken to process the request in milliseconds.
+confluence:access,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+confluence:access,remote_name,str,remote  hostname or IP address
+confluence:access,thread_name,str,name of the thread that handled the request.
+confluence:access,user_name,str,response X-AUSERNAME header value.
+cookie:google:analytics:utma,cookie_name,str,name of cookie.
+cookie:google:analytics:utma,domain_hash,str,domain hash.
+cookie:google:analytics:utma,sessions,int,number of sessions.
+cookie:google:analytics:utma,url,str,URL or path where the cookie got set. visited_times (list[dfdatetime.DateTimeValues]): dates and times the URL was visited.
+cookie:google:analytics:utma,visitor_identifier,str,visitor identifier.
+cookie:google:analytics:utmb,cookie_name,str,name of cookie.
+cookie:google:analytics:utmb,domain_hash,str,domain hash.
+cookie:google:analytics:utmb,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+cookie:google:analytics:utmb,pages_viewed,int,number of pages viewed.
+cookie:google:analytics:utmb,url,str,URL or path where the cookie got set.
+cookie:google:analytics:utmt,cookie_name,str,name of cookie.
+cookie:google:analytics:utmt,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+cookie:google:analytics:utmt,url,str,URL or path where the cookie got set.
+cookie:google:analytics:utmz,cookie_name,str,name of cookie.
+cookie:google:analytics:utmz,domain_hash,str,domain hash.
+cookie:google:analytics:utmz,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+cookie:google:analytics:utmz,sessions,int,number of sessions.
+cookie:google:analytics:utmz,sources,int,number of sources.
+cookie:google:analytics:utmz,url,str,URL or path where the cookie got set.
+cups:ipp:event,application,str,application that prints the document.
+cups:ipp:event,computer_name,str,name of the computer.
+cups:ipp:event,copies,int,number of copies.
+cups:ipp:event,creation_time,dfdatetime.DateTimeValues,date and time the print job was created (added).
+cups:ipp:event,doc_type,str,type of document.
+cups:ipp:event,end_time,dfdatetime.DateTimeValues,date and time the print job was stopped.
+cups:ipp:event,job_id,str,job identifier.
+cups:ipp:event,job_name,str,job name.
+cups:ipp:event,owner,str,real name of the user.
+cups:ipp:event,printer_id,str,identification name of the print.
+cups:ipp:event,start_time,dfdatetime.DateTimeValues,date and time the print job was started.
+cups:ipp:event,uri,str,URL of the CUPS service.
+cups:ipp:event,user,str,system user name.
+docker:container:configuration,action,str,whether the container was created- started- or finished.
+docker:container:configuration,container_identifier,str,identifier of the container (SHA256).
+docker:container:configuration,container_name,str,name of the container.
+docker:container:configuration,creation_time,dfdatetime.DateTimeValues,date and time the container was created (added).
+docker:container:configuration,end_time,dfdatetime.DateTimeValues,date and time the container was stopped.
+docker:container:configuration,start_time,dfdatetime.DateTimeValues,date and time the container was started.
+docker:container:log:entry,container_identifier,str,identifier of the container (SHA256).
+docker:container:log:entry,log_line,str,log line.
+docker:container:log:entry,log_source,str,log source.
+docker:container:log:entry,written_time,dfdatetime.DateTimeValues,date and time the entry was written.
+docker:layer:configuration,creation_time,dfdatetime.DateTimeValues,date and time the layer was created (added). layer_identifier: the identifier of the current Docker layer (SHA-1).
+dropbox:sync_history:entry,direction,str,the source of the synchronisation event
+dropbox:sync_history:entry,event_type,str,the event type
+dropbox:sync_history:entry,file_event_type,str,the file event type
+dropbox:sync_history:entry,file_identifier,str,the Dropbox identifier of the file.
+dropbox:sync_history:entry,local_path,str,the local path of the file.
+dropbox:sync_history:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+edge:resources:load_statistics,query,str,query that created the event data. resource_hostname: External domain of the resource that was loaded resource_type: Integer descriptor of resource type top_level_hostname: Source domain that initiated resource load
+firefox:cache:record,data_size,int,size of the cached data.
+firefox:cache:record,expiration_time,dfdatetime.DateTimeValues,date and time the cache entry expires.
+firefox:cache:record,fetch_count,int,number of times the cache entry was fetched.
+firefox:cache:record,frequency,int,???
+firefox:cache:record,info_size,int,size of the metadata.
+firefox:cache:record,last_fetched_time,dfdatetime.DateTimeValues,date and time the cache entry was last fetched.
+firefox:cache:record,last_modified_time,dfdatetime.DateTimeValues,date and time the cache entry was last modified.
+firefox:cache:record,location,str,???
+firefox:cache:record,request_method,str,HTTP request method.
+firefox:cache:record,request_size,int,HTTP request byte size.
+firefox:cache:record,response_code,int,HTTP response code.
+firefox:cache:record,url,str,URL of original content.
+firefox:cache:record,version,str,cache format version.
+firefox:cookie:entry,access_time,dfdatetime.DateTimeValues,date and time the cookie was last accessed.
+firefox:cookie:entry,cookie_name,str,name field of the cookie.
+firefox:cookie:entry,creation_time,dfdatetime.DateTimeValues,date and time the cookie was created.
+firefox:cookie:entry,data,str,cookie data.
+firefox:cookie:entry,expiration_time,dfdatetime.DateTimeValues,date and time the cookie expires.
+firefox:cookie:entry,host,str,hostname of host that set the cookie value.
+firefox:cookie:entry,httponly,bool,True if the cookie cannot be accessed through client side script.
+firefox:cookie:entry,offset,str,identifier of the row- from which the event data was extracted.
+firefox:cookie:entry,path,str,URI of the page that set the cookie.
+firefox:cookie:entry,query,str,SQL query that was used to obtain the event data.
+firefox:cookie:entry,secure,bool,True if the cookie should only be transmitted over a secure channel.
+firefox:downloads:download,deleted,int,deleted state.
+firefox:downloads:download,download_state,int,state of the download.
+firefox:downloads:download,end_time,dfdatetime.DateTimeValues,date and time the download was finished.
+firefox:downloads:download,expiration,int,expiration.
+firefox:downloads:download,flags,int,flags associated with this download
+firefox:downloads:download,full_path,str,full path of the target of the download.
+firefox:downloads:download,name,str,name of the download.
+firefox:downloads:download,query,str,SQL query that was used to obtain the event data.
+firefox:downloads:download,received_bytes,int,number of bytes received.
+firefox:downloads:download,start_time,dfdatetime.DateTimeValues,date and time the download was started.
+firefox:downloads:download,total_bytes,int,total number of bytes of the download.
+firefox:downloads:download,type,int,type field.
+firefox:downloads:download,url,str,source URL of the download.
+firefox:downloads:download,mime_type,str,mime type of the download.
+firefox:downloads:download,offset,str,identifier of the row- from which the event data was extracted.
+firefox:downloads:download,referrer,str,referrer URL of the download.
+firefox:downloads:download,temporary_location,str,temporary location of the download.
+firefox:places:bookmark,added_time,dfdatetime.DateTimeValues,date and time the bookmark was added.
+firefox:places:bookmark,host,str,visited hostname.
+firefox:places:bookmark,modification_time,dfdatetime.DateTimeValues,date and time the bookmark was last modified.
+firefox:places:bookmark,offset,str,identifier of the row- from which the event data was extracted.
+firefox:places:bookmark,places_title,str,places title.
+firefox:places:bookmark,query,str,SQL query that was used to obtain the event data.
+firefox:places:bookmark,title,str,title of the bookmark folder.
+firefox:places:bookmark,type,int,bookmark type.
+firefox:places:bookmark,url,str,bookmarked URL.
+firefox:places:bookmark,visit_count,int,visit count.
+firefox:places:bookmark_annotation,added_time,dfdatetime.DateTimeValues,date and time the bookmark annotation was added.
+firefox:places:bookmark_annotation,content,str,annotation content.
+firefox:places:bookmark_annotation,modification_time,dfdatetime.DateTimeValues,date and time the bookmark annotation was last modified.
+firefox:places:bookmark_annotation,offset,str,identifier of the row- from which the event data was extracted.
+firefox:places:bookmark_annotation,query,str,SQL query that was used to obtain the event data.
+firefox:places:bookmark_annotation,title,str,title of the bookmark folder.
+firefox:places:bookmark_annotation,url,str,bookmarked URL.
+firefox:places:bookmark_folder,added_time,dfdatetime.DateTimeValues,date and time the bookmark folder was added.
+firefox:places:bookmark_folder,modification_time,dfdatetime.DateTimeValues,date and time the bookmark folder was last modified.
+firefox:places:bookmark_folder,offset,str,identifier of the row- from which the event data was extracted.
+firefox:places:bookmark_folder,query,str,SQL query that was used to obtain the event data.
+firefox:places:bookmark_folder,title,str,title of the bookmark folder.
+firefox:places:page_visited,from_visit,str,URL that referred to the visited page.
+firefox:places:page_visited,hidden,str,value to indicated if the URL was hidden.
+firefox:places:page_visited,host,str,visited hostname.
+firefox:places:page_visited,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+firefox:places:page_visited,offset,str,identifier of the row- from which the event data was extracted.
+firefox:places:page_visited,query,str,SQL query that was used to obtain the event data.
+firefox:places:page_visited,title,str,title of the visited page.
+firefox:places:page_visited,typed,str,value to indicated if the URL was typed.
+firefox:places:page_visited,url,str,URL of the visited page.
+firefox:places:page_visited,visit_count,int,visit count.
+firefox:places:page_visited,visit_type,str,transition type for the event.
+fish:history:entry,command,str,command that was executed.
+fish:history:entry,written_time,dfdatetime.DateTimeValues,date and time the entry was written.
+fs:bodyfile:entry,access_time,dfdatetime.DateTimeValues,file entry last access date and time.
+fs:bodyfile:entry,change_time,dfdatetime.DateTimeValues,file entry inode change (or metadata last modification) date and time.
+fs:bodyfile:entry,creation_time,dfdatetime.DateTimeValues,file entry creation date and time.
+fs:bodyfile:entry,filename,str,name of the file.
+fs:bodyfile:entry,group_identifier,int,group identifier (GID)- equivalent to st_gid.
+fs:bodyfile:entry,inode,int,inode of the file. Note that inode is an overloaded term in the context of a bodyfile and used for MFT entry index values as well.
+fs:bodyfile:entry,md5,str,MD5 hash of the file content- formatted as a hexadecimal string.
+fs:bodyfile:entry,mode_as_string,str,protection mode.
+fs:bodyfile:entry,modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+fs:bodyfile:entry,offset,int,number of the corresponding line- from which the event data was extracted.
+fs:bodyfile:entry,owner_identifier,str,user identifier (UID or SID) of the owner.
+fs:bodyfile:entry,size,int,size of the file content.
+fs:bodyfile:entry,symbolic_link_target,str,path of the symbolic link target.
+fs:ntfs:usn_change,file_attribute_flags,int,NTFS file attribute flags.
+fs:ntfs:usn_change,file_reference,int,NTFS file reference.
+fs:ntfs:usn_change,filename,str,name of the file associated with the event.
+fs:ntfs:usn_change,offset,int,offset of the USN record relative to the start of the $J data stream- from which the event data was extracted.
+fs:ntfs:usn_change,parent_file_reference,int,NTFS file reference of the parent.
+fs:ntfs:usn_change,update_reason_flags,int,update reason flags.
+fs:ntfs:usn_change,update_sequence_number,int,update sequence number.
+fs:ntfs:usn_change,update_source_flags,int,update source flags.
+fs:ntfs:usn_change,update_time,dfdatetime.DateTimeValues,update date and time.
+fs:stat,access_time,dfdatetime.DateTimeValues,file entry last access date and time.
+fs:stat,added_time,dfdatetime.DateTimeValues,file entry added date and time. attribute_names ([str]): extended attribute names.
+fs:stat,backup_time,dfdatetime.DateTimeValues,file entry backup date and time.
+fs:stat,change_time,dfdatetime.DateTimeValues,file entry inode change (or metadata last modification) date and time.
+fs:stat,creation_time,dfdatetime.DateTimeValues,file entry creation date and time.
+fs:stat,deletion_time,dfdatetime.DateTimeValues,file entry deletion date and time.
+fs:stat,display_name,str,display name.
+fs:stat,file_entry_type,int,dfVFS file entry type.
+fs:stat,file_size,int,file size in bytes.
+fs:stat,file_system_type,str,file system type.
+fs:stat,filename,str,name of the file.
+fs:stat,group_identifier,int,group identifier (GID)- equivalent to st_gid.
+fs:stat,inode,int,inode of the file.
+fs:stat,is_allocated,bool,True if the file is allocated.
+fs:stat,mode,int,access mode- equivalent to st_mode & 0x0fff.
+fs:stat,modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+fs:stat,number_of_links,int,number of hard links- equivalent to st_nlink.
+fs:stat,owner_identifier,int,user identifier (UID) of the owner- equivalent to st_uid.
+fs:stat:ntfs,access_time,dfdatetime.DateTimeValues,file entry last access date and time.
+fs:stat:ntfs,attribute_type,int,"attribute type for example ""0x00000030""- which represents ""$FILE_NAME""."
+fs:stat:ntfs,creation_time,dfdatetime.DateTimeValues,file entry creation date and time.
+fs:stat:ntfs,display_name,str,display name.
+fs:stat:ntfs,entry_modification_time,dfdatetime.DateTimeValues,file entry modification date and time.
+fs:stat:ntfs,file_attribute_flags,int,NTFS file attribute flags.
+fs:stat:ntfs,file_reference,int,NTFS file reference.
+fs:stat:ntfs,file_system_type,str,file system type.
+fs:stat:ntfs,filename,str,name of the file.
+fs:stat:ntfs,is_allocated,bool,True if the MFT entry is allocated (marked as in use).
+fs:stat:ntfs,modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+fs:stat:ntfs,name,str,name associated with the stat event- for example that of a $FILE_NAME attribute or None if not available.
+fs:stat:ntfs,parent_file_reference,int,NTFS file reference of the parent. path_hints (list[str]): hints about the full path of the file.
+fs:stat:ntfs,symbolic_link_target,str,path of the symbolic link target.
+gcp:log:entry,container,str,TODO
+gcp:log:entry,event_subtype,str,JSON event sub type or protocol buffer method.
+gcp:log:entry,event_type,str,TODO
+gcp:log:entry,filename,str,TODO firewall_rules (list[str]): firewall rules. firewall_source_ranges (list[str]): firewall source ranges.
+gcp:log:entry,log_name,str,name of the log entry.
+gcp:log:entry,message,str,TODO policy_deltas (list[str]): TODO
+gcp:log:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+gcp:log:entry,request_account_identifier,str,GCP account identifier of the request.
+gcp:log:entry,request_description,str,description of the request.
+gcp:log:entry,request_direction,str,direction of the request.
+gcp:log:entry,request_email,str,email address of the request.
+gcp:log:entry,request_member,str,member of the request. request_metadata (list[str]): request metadata values.
+gcp:log:entry,request_name,str,name of the request.
+gcp:log:entry,request_target_tags,str,TODO resource_labels (list[str]): resource labels.
+gcp:log:entry,resource_name,str,name of the resource.
+gcp:log:entry,service_account_display_name,str,display name of the service account.
+gcp:log:entry,service_name,str,name of the servie.
+gcp:log:entry,severity,str,log entry severity.
+gcp:log:entry,text_payload,str,text payload for logs not using a JSON or proto payload.
+gcp:log:entry,user,str,user principal performing the logged action.
+gdrive:snapshot:cloud_entry,creation_time,dfdatetime.DateTimeValues,date and time the snapshot cloud entry was created.
+gdrive:snapshot:cloud_entry,modification_time,dfdatetime.DateTimeValues,date and time the snapshot cloud entry was last modified.
+gdrive:snapshot:cloud_entry,path,str,path of the file.
+gdrive:snapshot:cloud_entry,query,str,SQL query that was used to obtain the event data.
+gdrive:snapshot:cloud_entry,shared,bool,True if the file is shared- False if the file is private.
+gdrive:snapshot:cloud_entry,size,int,size of the file.
+gdrive:snapshot:cloud_entry,url,str,URL of the file.
+gdrive:snapshot:local_entry,modification_time,dfdatetime.DateTimeValues,date and time the snapshot local entry was last modified.
+gdrive:snapshot:local_entry,path,str,path of the file.
+gdrive:snapshot:local_entry,query,str,SQL query that was used to obtain the event data.
+gdrive:snapshot:local_entry,size,int,size of the file.
+google_drive_sync_log:entry,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+google_drive_sync_log:entry,level,str,"logging level of event such as ""DEBUG""- ""WARN""- ""INFO"" and ""ERROR""."
+google_drive_sync_log:entry,message,str,log message.
+google_drive_sync_log:entry,process_identifier,int,process identifier of process which logged event.
+google_drive_sync_log:entry,source_code,str,filename:line_number of source file which logged event.
+google_drive_sync_log:entry,thread,str,"colon-separated thread identifier in the form ""ID:name"" which logged event."
+googlelog:log,file_name,str,the name of the source file that logged the message.
+googlelog:log,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+googlelog:log,line_number,int,the line number in the source file where the logging statement is.
+googlelog:log,message,str,the log message.
+googlelog:log,priority,str,the priority of the message - I- W- E or F. These values represent messages logged at INFO- WARNING- ERROR or FATAL severities- respectively.
+googlelog:log,thread_identifier,int,the identifier of the thread that recorded the message.
+iis:log:line,cs_cookie,str,Content of a sent or received cookie.
+iis:log:line,cs_host,str,HTTP host header name.
+iis:log:line,cs_referrer,str,Site that referred to the requested site.
+iis:log:line,cs_uri_query,str,URI query that was requested.
+iis:log:line,cs_username,str,Username of the authenticated user that accessed the server- where anonymous users are indicated by a hyphen.
+iis:log:line,dest_ip,str,IP address of the server that generated the logged activity.
+iis:log:line,dest_port,str,Server port number.
+iis:log:line,http_method,str,HTTP request method- such as GET or POST.
+iis:log:line,http_status,str,HTTP status code that was returned by the server.
+iis:log:line,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+iis:log:line,protocol_version,str,HTTP protocol version that was used.
+iis:log:line,received_bytes,str,Number of bytes received and processed by the server.
+iis:log:line,requested_uri_stem,str,File requested- such as index.php or Default.htm
+iis:log:line,s_computername,str,Name of the server that generated the logged activity.
+iis:log:line,s_sitename,str,Service name and instance number that was running on the client.
+iis:log:line,sc_substatus,str,HTTP substatus error code that was returned by the server.
+iis:log:line,sc_win32_status,str,Windows status code of the server.
+iis:log:line,sent_bytes,str,Number of bytes sent by the server.
+iis:log:line,source_ip,str,IP address of the client that made the request.
+iis:log:line,time_taken,str,Time taken- in milliseconds- to process the request.
+iis:log:line,user_agent,str,User agent that was used.
+imessage:event:chat,attachment_location,str,location of the attachment.
+imessage:event:chat,client_version,int,client version.
+imessage:event:chat,creation_time,dfdatetime.DateTimeValues,date and time the message was created.
+imessage:event:chat,imessage_id,str,mobile number or email address the message was sent to or received from.
+imessage:event:chat,message_type,int,value to indicate the message was sent (1) or received (0).
+imessage:event:chat,offset,str,identifier of the row- from which the event data was extracted.
+imessage:event:chat,query,str,SQL query that was used to obtain the event data.
+imessage:event:chat,read_receipt,bool,True if the message read receipt was received.
+imessage:event:chat,service,str,service- which is either SMS or iMessage.
+imessage:event:chat,text,str,content of the message.
+ios:app_privacy:access,accessor_identifier,str,identifier of process accessing the resource
+ios:app_privacy:access,accessor_identifier_type,str,type of identifier
+ios:app_privacy:access,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+ios:app_privacy:access,resource_category,str,category of the accessed resource
+ios:app_privacy:access,resource_identifier,str,GUID of the resource being accessed
+ios:app_privacy:network,bundle_identifier,str,bundle identifier that accesssed the resource
+ios:app_privacy:network,domain,str,domain name accessed
+ios:app_privacy:network,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+ios:carplay:history:entry,application_identifier,str,application identifier.
+ios:carplay:history:entry,last_run_time,dfdatetime.DateTimeValues,application last run date and time.
+ios:datausage:event,bundle_identifier,str,bundle identifier.
+ios:datausage:event,process_name,str,name of the process.
+ios:datausage:event,start_time,dfdatetime.DateTimeValues,date and time the start of the network connection was established.
+ios:datausage:event,wifi_in,int,number of bytes received over Wi-Fi.
+ios:datausage:event,wifi_out,int,number of bytes sent over Wi-Fi.
+ios:datausage:event,wireless_wan_in,int,number of bytes received over cellular.
+ios:datausage:event,wireless_wan_out,int,number of bytes sent over cellular.
+ios:idstatuscache:lookup,apple_identifier,str,type and value of the identifier.
+ios:idstatuscache:lookup,lookup_time,dfdatetime.DateTimeValues,"date and time of the lookup. process_name (str)"" name of the process that looked up an identifier."
+ios:kik:messaging,body,str,content of the message.
+ios:kik:messaging,message_status,str,message status- such as: read- unread- not sent- delivered- etc.
+ios:kik:messaging,message_type,str,message type- either Sent or Received.
+ios:kik:messaging,offset,str,identifier of the row- from which the event data was extracted.
+ios:kik:messaging,query,str,SQL query that was used to obtain the event data.
+ios:kik:messaging,received_time,dfdatetime.DateTimeValues,date and time the message was received.
+ios:kik:messaging,username,str,unique username of the sender or receiver.
+ios:lockdownd_log:entry,body,str,body of the log entry.
+ios:lockdownd_log:entry,process_identifier,int,identifier of the process making the request to lockdownd.
+ios:lockdownd_log:entry,written_time,dfdatetime.DateTimeValues,date and time the log entry was written.
+ios:netusage:process,process_name,str,name of the process.
+ios:netusage:process,start_time,dfdatetime.DateTimeValues,date and time the start of the network connection was established.
+ios:netusage:process,wifi_in,int,bytes received via wifi.
+ios:netusage:process,wifi_out,int,bytes sent via wifi.
+ios:netusage:process,wired_in,int,bytes received via wired connection.
+ios:netusage:process,wired_out,int,bytes sent via wired connection.
+ios:netusage:process,wireless_wan_in,int,bytes received via cellular connection.
+ios:netusage:process,wireless_wan_out,int,bytes sent via cellular connection.
+ios:netusage:route,bytes_in,int,number of bytes received.
+ios:netusage:route,bytes_out,int,number of bytes sent.
+ios:netusage:route,network_identifier,str,name of network.
+ios:netusage:route,network_signature,str,signature of network.
+ios:netusage:route,network_type,int,integer indicating network type.
+ios:netusage:route,start_time,dfdatetime.DateTimeValues,date and time the start of the network connection was established.
+ios:powerlog:application_usage,background_time,str,Number of seconds that the application ran in the background.
+ios:powerlog:application_usage,bundle_identifier,str,Name of the application.
+ios:powerlog:application_usage,screen_on_time,str,Number of seconds that the application ran in the foreground.
+ios:powerlog:application_usage,start_time,dfdatetime.DateTimeValues,date and time the start of the application.
+ios:screentime:event,bundle_identifier,str,Bundle Identifier of the application.
+ios:screentime:event,device_identifier,str,GUID for the device.
+ios:screentime:event,device_name,str,Name of the device in use (when available).
+ios:screentime:event,domain,str,Domain of the website visited.
+ios:screentime:event,start_time,dfdatetime.DateTimeValues,date and time the start of the application.
+ios:screentime:event,total_time,int,Number of seconds where the application was in the foreground.
+ios:screentime:event,user_family_name,str,Family name of the user.
+ios:screentime:event,user_given_name,str,Given name of the user.
+ios:sysdiag_log:entry,body,str,body of the event line.
+ios:sysdiag_log:entry,originating_call,str,call that created the entry.
+ios:sysdiag_log:entry,process_identifier,str,process_identifier.
+ios:sysdiag_log:entry,severity,str,severity of the message.
+ios:sysdiag_log:entry,written_time,dfdatetime.DateTimeValues,date and time the log entry was written.
+ios:sysdiagnose:logd:line,body,str,body of the event line.
+ios:sysdiagnose:logd:line,logger,str,name of the process that generated the event.
+ios:sysdiagnose:logd:line,written_time,dfdatetime.DateTimeValues,date and time the log entry was written.
+ios:twitter:contact,creation_time,dfdatetime.DateTimeValues,date and time the contact was created.
+ios:twitter:contact,description,str,description of the profile.
+ios:twitter:contact,followers_count,int,number of accounts following the contact.
+ios:twitter:contact,following,int,1 if the contact is following the user's account- 0 if not.
+ios:twitter:contact,following_count,int,number of accounts the contact is following.
+ios:twitter:contact,location,str,location of the profile.
+ios:twitter:contact,modification_time,dfdatetime.DateTimeValues,date and time the contact was last modified.
+ios:twitter:contact,name,str,name of the profile.
+ios:twitter:contact,profile_url,str,URL of the profile picture.
+ios:twitter:contact,query,str,SQL query that was used to obtain the event data.
+ios:twitter:contact,screen_name,str,screen name.
+ios:twitter:contact,url,str,URL of the profile.
+ios:twitter:status,creation_time,dfdatetime.DateTimeValues,date and time the status was created.
+ios:twitter:status,favorite_count,int,number of times the status message has been favorited.
+ios:twitter:status,favorited,int,value to mark status as favorite by the account.
+ios:twitter:status,modification_time,dfdatetime.DateTimeValues,date and time the status was last modified.
+ios:twitter:status,name,str,user's profile name.
+ios:twitter:status,query,str,SQL query that was used to obtain the event data.
+ios:twitter:status,retweet_count,str,number of times the status message has been retweeted.
+ios:twitter:status,text,str,content of the status message.
+ios:twitter:status,user_identifier,int,user identifier.
+ipod:device:entry,device_class,str,device class.
+ipod:device:entry,device_identifier,str,identifier of the device.
+ipod:device:entry,family_identifier,str,identifier of the device family.
+ipod:device:entry,firmware_version,str,firmware version.
+ipod:device:entry,imei,str,IMEI (International Mobile Equipment Identity).
+ipod:device:entry,last_connected_time,dfdatetime.DateTimeValues,last date and time the iPod- iPad or iPhone storage (device) was connected.
+ipod:device:entry,serial_number,str,serial number.
+ipod:device:entry,use_count,str,number of times the device was used.
+java:download:idx,downloaded_time,dfdatetime.DateTimeValues,date and time the content was downloaded.
+java:download:idx,expiration_time,dfdatetime.DateTimeValues,date and time the cached download expires.
+java:download:idx,idx_version,str,format version of IDX file.
+java:download:idx,ip_address,str,IP address of the host in the URL.
+java:download:idx,modification_time,dfdatetime.DateTimeValues,date and time the cached download expires.
+java:download:idx,url,str,URL of the downloaded file.
+kodi:videos:viewing,filename,str,video filename.
+kodi:videos:viewing,last_played_time,dfdatetime.DateTimeValues,date and time of the last occurrence the video was played.
+kodi:videos:viewing,play_count,int,number of times the video has been played.
+kodi:videos:viewing,query,str,SQL query that was used to obtain the event data.
+linux:apt_history_log:entry,command,str,command.
+linux:apt_history_log:entry,command_line,str,command line.
+linux:apt_history_log:entry,end_time,dfdatetime.DateTimeValues,date and time the end of the log entry was added.
+linux:apt_history_log:entry,error,str,reported error.
+linux:apt_history_log:entry,packages,str,packages that were affected.
+linux:apt_history_log:entry,requester,str,user requesting the activity.
+linux:apt_history_log:entry,start_time,dfdatetime.DateTimeValues,date and time the start of the log entry was added.
+linux:dpkg_log:entry,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+linux:dpkg_log:entry,body,str,body of the log line.
+linux:locate_database:entry,path,str,path of the locate database (updatedb) entry.
+linux:locate_database:entry,written_time,dfdatetime.DateTimeValues,entry written date and time.
+linux:popularity_contest_log:entry,access_time,dfdatetime.DateTimeValues,file entry last access date and time.
+linux:popularity_contest_log:entry,change_time,dfdatetime.DateTimeValues,file entry inode change (or metadata last modification) date and time.
+linux:popularity_contest_log:entry,mru,str,recently used app/library from package.
+linux:popularity_contest_log:entry,package,str,installed packaged name- which the mru belongs to.
+linux:popularity_contest_log:entry,record_tag,str,popularity context tag.
+linux:popularity_contest_log:session,details,str,version and host architecture.
+linux:popularity_contest_log:session,end_time,dfdatetime.DateTimeValues,date and time the end of the session log entry was added.
+linux:popularity_contest_log:session,host_identifier,str,host identifier (UUID).
+linux:popularity_contest_log:session,session,int,session number.
+linux:popularity_contest_log:session,start_time,dfdatetime.DateTimeValues,date and time the start of the session log entry was added.
+linux:utmp:event,exit_status,int,exit status.
+linux:utmp:event,hostname,str,hostname or IP address.
+linux:utmp:event,ip_address,str,IP address from the connection.
+linux:utmp:event,offset,int,offset of the utmp record relative to the start of the file- from which the event data was extracted.
+linux:utmp:event,pid,int,process identifier (PID).
+linux:utmp:event,terminal,str,type of terminal.
+linux:utmp:event,terminal_identifier,int,inittab identifier.
+linux:utmp:event,type,int,type of login.
+linux:utmp:event,username,str,user name.
+linux:utmp:event,written_time,dfdatetime.DateTimeValues,entry written date and time.
+mackeeper:cache,added_time,dfdatetime.DateTimeValues,date and time the cache entry was added.
+mackeeper:cache,description,str,description.
+mackeeper:cache,event_type,str,event type.
+mackeeper:cache,offset,str,identifier of the row- from which the event data was extracted.
+mackeeper:cache,query,str,SQL query that was used to obtain the event data.
+mackeeper:cache,record_id,int,record identifier.
+mackeeper:cache,room,str,room.
+mackeeper:cache,text,str,text.
+mackeeper:cache,url,str,URL.
+mackeeper:cache,user_name,str,user name.
+mackeeper:cache,user_sid,str,user security identifier (SID).
+macos:airport:entry,last_connected_time,dfdatetime.DateTimeValues,last date and time MacOS Airport connected to the Wi-Fi network.
+macos:airport:entry,security_type,str,Wi-Fi security type.
+macos:airport:entry,ssid,str,Wi-Fi SSID.
+macos:appfirewall_log:entry,action,str,action.
+macos:appfirewall_log:entry,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+macos:appfirewall_log:entry,agent,str,agent that save the log.
+macos:appfirewall_log:entry,computer_name,str,name of the computer.
+macos:appfirewall_log:entry,process_name,str,name of the entity that tried to do the action.
+macos:appfirewall_log:entry,status,str,saved status action.
+macos:apple_account:entry,account_name,str,name of the account.
+macos:apple_account:entry,creation_time,dfdatetime.DateTimeValues,date and time the Apple account was created (configured) on the system.
+macos:apple_account:entry,first_name,str,first name.
+macos:apple_account:entry,last_connected_time,dfdatetime.DateTimeValues,last date and time the system successfully connected to the Apple account.
+macos:apple_account:entry,last_name,str,last (or family) name.
+macos:apple_account:entry,validation_time,dfdatetime.DateTimeValues,date and time the Apple account was validated.
+macos:application_usage:entry,application,str,name of the application.
+macos:application_usage:entry,application_version,str,version of the application.
+macos:application_usage:entry,bundle_identifier,str,bundle identifier of the application.
+macos:application_usage:entry,count,int,number of occurances of the event.
+macos:application_usage:entry,event,str,event.
+macos:application_usage:entry,last_used_time,dfdatetime.DateTimeValues,last date and time the application was last used.
+macos:application_usage:entry,query,str,SQL query that was used to obtain the event data.
+macos:asl:entry,computer_name,str,name of the host.
+macos:asl:entry,extra_information,str,extra fields associated to the event.
+macos:asl:entry,facility,str,facility.
+macos:asl:entry,group_identifier,int,group identifier (GID).
+macos:asl:entry,level,str,level of criticality of the event.
+macos:asl:entry,message,str,message of the event.
+macos:asl:entry,message_identifier,int,message identifier.
+macos:asl:entry,process_identifier,int,process identifier (PID).
+macos:asl:entry,read_group_identifier,int,the group identifier that can read this file- where -1 represents all.
+macos:asl:entry,read_user_identifier,int,user identifier that can read this file- where -1 represents all.
+macos:asl:entry,record_position,int,position of the event record.
+macos:asl:entry,sender,str,sender or process that created the event.
+macos:asl:entry,user_identifier,int,user identifier (UID).
+macos:asl:entry,written_time,dfdatetime.DateTimeValues,entry written date and time.
+macos:asl:file,creation_time,dfdatetime.DateTimeValues,creation date and time.
+macos:asl:file,format_version,int,ASL file format version.
+macos:asl:file,is_dirty,bool,True if the last log entry offset does not match value in file header and the file is considered dirty.
+macos:bluetooth:entry,device_identifier,str,identifier of the device.
+macos:bluetooth:entry,device_name,str,name of the device.
+macos:bluetooth:entry,inquiry_time,dfdatetime.DateTimeValues,date and time of the most recent inquiry (connection during discovery mode) of a Bluetooth device.
+macos:bluetooth:entry,is_paired,bool,True if the device has been paired.
+macos:bluetooth:entry,name_update_time,dfdatetime.DateTimeValues,date and time of the most recent update of the human name.
+macos:bluetooth:entry,services_update_time,dfdatetime.DateTimeValues,date and time of the most recent poll of a Bluetooth device.
+macos:document_versions:file,creation_time,dfdatetime.DateTimeValues,date and time the version information was created.
+macos:document_versions:file,last_seen_time,dfdatetime.DateTimeValues,date and time and the original file was last seen (replicated).
+macos:document_versions:file,name,str,name of the original file.
+macos:document_versions:file,path,str,path from the original file.
+macos:document_versions:file,query,str,SQL query that was used to obtain the event data.
+macos:document_versions:file,user_sid,str,user identifier that open the file.
+macos:document_versions:file,version_path,str,path to the version copy of the original file.
+macos:fseventsd:record,event_identifier,int,the record event identifier.
+macos:fseventsd:record,file_entry_modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+macos:fseventsd:record,flags,int,flags stored in the record.
+macos:fseventsd:record,node_identifier,int,file system node identifier related to the file system event.
+macos:fseventsd:record,path,str,path recorded in the fseventsd record.
+macos:install_history:entry,name,str,display name of the installed package.
+macos:install_history:entry,process_name,str,name of the process that installed the package.
+macos:install_history:entry,version,str,display version of the installed package.
+macos:install_history:entry,written_time,dfdatetime.DateTimeValues,entry written date and time.
+macos:keychain:application,account_name,str,name of the account.
+macos:keychain:application,comments,str,comments added by the user.
+macos:keychain:application,creation_time,dfdatetime.DateTimeValues,creation date and time of the keychain record.
+macos:keychain:application,entry_name,str,name of the entry.
+macos:keychain:application,modification_time,dfdatetime.DateTimeValues,modification date and time of the keychain record.
+macos:keychain:application,ssgp_hash,str,password/certificate hash formatted as a hexadecimal string.
+macos:keychain:application,text_description,str,description.
+macos:keychain:internet,account_name,str,name of the account.
+macos:keychain:internet,comments,str,comments added by the user.
+macos:keychain:internet,creation_time,dfdatetime.DateTimeValues,creation date and time of the keychain record.
+macos:keychain:internet,entry_name,str,name of the entry.
+macos:keychain:internet,modification_time,dfdatetime.DateTimeValues,modification date and time of the keychain record.
+macos:keychain:internet,protocol,str,"internet protocol used- for example ""https""."
+macos:keychain:internet,ssgp_hash,str,password/certificate hash formatted as a hexadecimal string.
+macos:keychain:internet,text_description,str,description.
+macos:keychain:internet,type_protocol,str,"sub-protocol used- for example ""form""."
+macos:keychain:internet,where,str,domain name or IP where the password is used.
+macos:knowledgec:application,bundle_identifier,str,bundle identifier of the application.
+macos:knowledgec:application,creation_time,dfdatetime.DateTimeValues,creation date and time of the KnowledgeC record.
+macos:knowledgec:application,duration,int,duration of the activity.
+macos:knowledgec:application,end_time,dfdatetime.DateTimeValues,date and time the activity ended.
+macos:knowledgec:application,start_time,dfdatetime.DateTimeValues,date and time the activity started.
+macos:knowledgec:safari,bundle_identifier,str,bundle identifier of the application.
+macos:knowledgec:safari,creation_time,dfdatetime.DateTimeValues,creation date and time of the KnowledgeC record.
+macos:knowledgec:safari,duration,int,duration of the activity.
+macos:knowledgec:safari,end_time,dfdatetime.DateTimeValues,date and time the activity ended.
+macos:knowledgec:safari,start_time,dfdatetime.DateTimeValues,date and time the activity started.
+macos:knowledgec:safari,title,str,title of the webpage visited.
+macos:knowledgec:safari,url,str,URL visited.
+macos:launchd:entry,group_name,str,name of the group.
+macos:launchd:entry,name,str,name.
+macos:launchd:entry,program,str,program and arguments.
+macos:launchd:entry,user_name,str,name of the user.
+macos:launchd_log:entry,body,str,content of the log event.
+macos:launchd_log:entry,process_name,str,name of the process that created the record.
+macos:launchd_log:entry,severity,str,severity of the message.
+macos:launchd_log:entry,written_time,dfdatetime.DateTimeValues,date and time the log entry was written.
+macos:login_window:entry,login_hook,str,path of the script to run during login.
+macos:login_window:entry,logout_hook,str,path of the script to run during logout.
+macos:login_window:managed_login_item,is_hidden,bool,"True if the item should is not shown in the ""Users & Groups"" items list."
+macos:login_window:managed_login_item,path,str,URL or path of the location of the item.
+macos:lsquarantine:entry,agent,str,user agent that was used to download the file.
+macos:lsquarantine:entry,data,bytes,data.
+macos:lsquarantine:entry,downloaded_time,dfdatetime.DateTimeValues,date and time the file was downloaded.
+macos:lsquarantine:entry,query,str,SQL query that was used to obtain the event data.
+macos:lsquarantine:entry,url,str,original URL of the file.
+macos:notes:entry,creation_time,dfdatetime.DateTimeValues,date and time the notes database entry was created.
+macos:notes:entry,modification_time,dfdatetime.DateTimeValues,date and time the notes database entry was last modified.
+macos:notes:entry,text,str,note text.
+macos:notes:entry,title,str,note title.
+macos:notification_center:entry,body,str,body of the notification message.
+macos:notification_center:entry,bundle_name,str,name of the application's bundle that generated the notification.
+macos:notification_center:entry,creation_time,dfdatetime.DateTimeValues,date and time the entry was created.
+macos:notification_center:entry,presented,int,either 1 or 0 if the notification has been shown to the user.
+macos:notification_center:entry,subtitle,str,optional. Subtitle of the notification message.
+macos:notification_center:entry,title,str,title of the message. Usually the name of the application that generated the notification. Occasionally the name of the sender of the notification for example- in case of chat messages.
+macos:securityd_log:entry,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+macos:securityd_log:entry,caller,str,caller- consists of two hex numbers.
+macos:securityd_log:entry,facility,str,facility.
+macos:securityd_log:entry,level,str,priority level.
+macos:securityd_log:entry,message,str,message.
+macos:securityd_log:entry,security_api,str,name of securityd function.
+macos:securityd_log:entry,sender,str,name of the sender.
+macos:securityd_log:entry,sender_pid,int,process identifier of the sender.
+macos:software_updata:entry,full_update_time,dfdatetime.DateTimeValues,date and time of last full MacOS software update. recommended_updates (list[str]): recommended updates.
+macos:software_updata:entry,system_version,str,operating system version.
+macos:software_updata:entry,update_time,dfdatetime.DateTimeValues,date and time of last MacOS software update.
+macos:startup_item:entry,description,str,description of the startup item.
+macos:startup_item:entry,order_preference,str,startup order preference. provides (list[str]): names of services provided by the startup item. requires (list[str]): services required prior to this startup item. uses (list[str]): services that should be started before this startup item.
+macos:tcc_entry,allowed,bool,whether access to the service was allowed.
+macos:tcc_entry,client,str,name of the client requesting access to the service.
+macos:tcc_entry,modification_time,dfdatetime.DateTimeValues,date and time of the entry last modification.
+macos:tcc_entry,prompt_count,int,number of times an application prompted the user for access to a service.
+macos:tcc_entry,query,str,SQL query that was used to obtain the event data.
+macos:tcc_entry,service,str,name of the service.
+macos:time_machine:backup,backup_alias,str,alias of the backup.
+macos:time_machine:backup,destination_identifier,str,identifier of the destination volume. snapshot_times (list[dfdatetime.DateTimeValues]): dates and times of the creation of backup snaphots.
+macos:unified_logging:event,activity_identifier,int,activity identifier.
+macos:unified_logging:event,boot_identifier,str,boot identifier.
+macos:unified_logging:event,category,str,event category.
+macos:unified_logging:event,event_message,str,event message.
+macos:unified_logging:event,event_type,str,event type.
+macos:unified_logging:event,message_type,str,message type.
+macos:unified_logging:event,process_identifier,int,process identifier (PID).
+macos:unified_logging:event,process_image_identifier,str,process image identifier- contains an UUID.
+macos:unified_logging:event,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+macos:unified_logging:event,sender_image_identifier,str,(sender) image identifier- contains an UUID.
+macos:unified_logging:event,sender_image_path,str,path of the (sender) image.
+macos:unified_logging:event,signpost_identifier,int,signpost identifier.
+macos:unified_logging:event,signpost_name,str,signpost name.
+macos:unified_logging:event,subsystem,str,subsystem that produced the logging event.
+macos:unified_logging:event,thread_identifier,int,thread identifier.
+macos:unified_logging:event,ttl,int,log time to live (TTL).
+macos:user:entry,fullname,str,full name.
+macos:user:entry,home_directory,str,path of the home directory.
+macos:user:entry,last_login_attempt_time,dfdatetime.DateTimeValues,date and time of the last (failed) login attempt.
+macos:user:entry,last_login_time,dfdatetime.DateTimeValues,date and time of the last login.
+macos:user:entry,last_password_set_time,dfdatetime.DateTimeValues,date and time of the last password set.
+macos:user:entry,number_of_failed_login_attempts,str,number of failed login attempts.
+macos:user:entry,password_hash,str,password hash.
+macos:user:entry,user_identifier,str,user identifier.
+macos:user:entry,username,str,username.
+macos:utmpx:entry,hostname,str,hostname or IP address.
+macos:utmpx:entry,offset,int,offset of the utmpx record relative to the start of the file- from which the event data was extracted.
+macos:utmpx:entry,pid,int,process identifier (PID).
+macos:utmpx:entry,terminal,str,name of the terminal.
+macos:utmpx:entry,terminal_identifier,int,inittab identifier.
+macos:utmpx:entry,type,int,type of login.
+macos:utmpx:entry,username,str,user name.
+macos:utmpx:entry,written_time,dfdatetime.DateTimeValues,entry written date and time.
+macos:wifi_log:entry,action,str,known Wi-Fi action- for example connected to an access point- configured- etc. If the action is not known- the value is the message of the log (text variable).
+macos:wifi_log:entry,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+macos:wifi_log:entry,agent,str,name and identifier of process that generated the log message.
+macos:wifi_log:entry,function,str,name of function that generated the log message.
+macos:wifi_log:entry,text,str,log message.
+microsoft365:audit_log:entry,application_access_context,str,application access context
+microsoft365:audit_log:entry,audit_record_identifier,str,audit record identifier.
+microsoft365:audit_log:entry,client_ip,str,client IP address.
+microsoft365:audit_log:entry,object_identifier,str,object identifier
+microsoft365:audit_log:entry,operation_name,str,operation name.
+microsoft365:audit_log:entry,organization_identifier,str,organization identifier.
+microsoft365:audit_log:entry,record_type,int,record type.
+microsoft365:audit_log:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+microsoft365:audit_log:entry,result_status,str,result status
+microsoft365:audit_log:entry,scope,str,scope.
+microsoft365:audit_log:entry,user_identifier,str,user identifier
+microsoft365:audit_log:entry,user_key,str,user key.
+microsoft365:audit_log:entry,user_type,int,user type.
+microsoft365:audit_log:entry,workload,str,Microsoft (Office) 365 service
+msie:webcache:container,access_count,int,access count.
+msie:webcache:container,access_time,dfdatetime.DateTimeValues,last access date and time.
+msie:webcache:container,cache_identifier,int,cache identifier.
+msie:webcache:container,cached_file_size,int,size of the cached file.
+msie:webcache:container,cached_filename,str,name of the cached file.
+msie:webcache:container,container_identifier,int,container identifier.
+msie:webcache:container,creation_time,dfdatetime.DateTimeValues,creation date and time.
+msie:webcache:container,entry_identifier,int,entry identifier.
+msie:webcache:container,expiration_time,dfdatetime.DateTimeValues,expiration date and time.
+msie:webcache:container,file_extension,str,file extension.
+msie:webcache:container,modification_time,dfdatetime.DateTimeValues,modification date and time.
+msie:webcache:container,post_check_time,dfdatetime.DateTimeValues,post check date and time.
+msie:webcache:container,redirect_url,str,URL from which the request was redirected.
+msie:webcache:container,request_headers,str,request headers.
+msie:webcache:container,response_headers,str,response headers.
+msie:webcache:container,synchronization_count,int,synchronization count.
+msie:webcache:container,synchronization_time,dfdatetime.DateTimeValues,synchronization date and time.
+msie:webcache:container,url,str,URL.
+msie:webcache:containers,access_time,dfdatetime.DateTimeValues,last access date and time.
+msie:webcache:containers,container_identifier,int,container identifier.
+msie:webcache:containers,directory,str,name of the cache directory.
+msie:webcache:containers,name,str,name of the cache container.
+msie:webcache:containers,scavenge_time,dfdatetime.DateTimeValues,last scavenge date and time.
+msie:webcache:containers,set_identifier,int,set identifier.
+msie:webcache:cookie,container_identifier,int,container identifier.
+msie:webcache:cookie,cookie_hash,str,a similarity hash of the cookie contents
+msie:webcache:cookie,cookie_name,str,name of the cookie
+msie:webcache:cookie,cookie_value,str,value of the cookie encoded in ascii
+msie:webcache:cookie,cookie_value_raw,str,raw value of cookie in hex
+msie:webcache:cookie,entry_identifier,int,entry identifier.
+msie:webcache:cookie,expiration_time,dfdatetime.DateTimeValues,expiration date and time.
+msie:webcache:cookie,flags,int,an representation of cookie flags
+msie:webcache:cookie,modification_time,dfdatetime.DateTimeValues,modification date and time.
+msie:webcache:cookie,request_domain,str,Request domain for which the cookie was set.
+msie:webcache:leak_file,cached_filename,str,name of the cached file.
+msie:webcache:leak_file,creation_time,dfdatetime.DateTimeValues,creation date and time.
+msie:webcache:leak_file,leak_identifier,int,leak identifier.
+msie:webcache:partitions,directory,str,directory.
+msie:webcache:partitions,partition_identifier,int,partition identifier.
+msie:webcache:partitions,partition_type,int,partition type.
+msie:webcache:partitions,scavenge_time,dfdatetime.DateTimeValues,last scavenge date and time.
+msie:webcache:partitions,table_identifier,int,table identifier.
+msiecf:leak,cache_directory_index,int,index of the cache directory.
+msiecf:leak,cache_directory_name,str,name of the cache directory.
+msiecf:leak,cached_file_size,int,size of the cached file.
+msiecf:leak,cached_filename,str,name of the cached file.
+msiecf:leak,offset,int,offset of the MSIECF item relative to the start of the file- from which the event data was extracted.
+msiecf:leak,recovered,bool,True if the item was recovered.
+msiecf:redirected,offset,int,offset of the MSIECF item relative to the start of the file- from which the event data was extracted.
+msiecf:redirected,recovered,bool,True if the item was recovered.
+msiecf:redirected,url,str,location URL.
+msiecf:url,access_time,dfdatetime.DateTimeValues,date and time the MSIECF item was last accessed.
+msiecf:url,cache_directory_index,int,index of the cache directory.
+msiecf:url,cache_directory_name,str,name of the cache directory.
+msiecf:url,cached_file_size,int,size of the cached file.
+msiecf:url,cached_filename,str,name of the cached file.
+msiecf:url,creation_time,dfdatetime.DateTimeValues,date and time the MSIECF item was created.
+msiecf:url,expiration_time,dfdatetime.DateTimeValues,date and time the MSIECF item expires.
+msiecf:url,http_headers,str,HTTP headers.
+msiecf:url,last_visited_time,dfdatetime.DateTimeValues,date and time the MSIECF item was last visited.
+msiecf:url,modification_time,dfdatetime.DateTimeValues,date and time the MSIECF item was last modified.
+msiecf:url,number_of_hits,int,number of hits.
+msiecf:url,offset,int,offset of the MSIECF item relative to the start of the file- from which the event data was extracted.
+msiecf:url,primary_time,dfdatetime.DateTimeValues,unspecified primary date and time of the MSIECF item.
+msiecf:url,recovered,bool,True if the item was recovered.
+msiecf:url,secondary_time,dfdatetime.DateTimeValues,unspecified secondary date and time of the MSIECF item.
+msiecf:url,synchronization_time,dfdatetime.DateTimeValues,synchronization date and time.
+msiecf:url,url,str,location URL.
+networkminer:fileinfos:file,destination_ip,str,Destination IP address.
+networkminer:fileinfos:file,destination_port,str,Destination port number.
+networkminer:fileinfos:file,file_details,string,Details about the file.
+networkminer:fileinfos:file,file_md5,string,MD5 hash of the file.
+networkminer:fileinfos:file,file_path,string,File path to where it was downloaded.
+networkminer:fileinfos:file,file_size,string,Size of the file.
+networkminer:fileinfos:file,filename,string,Name of the file.
+networkminer:fileinfos:file,source_ip,str,Originating IP address.
+networkminer:fileinfos:file,source_port,str,Originating port number.
+networkminer:fileinfos:file,written_time,dfdatetime.DateTimeValues,entry written date and time.
+olecf:dest_list:entry,birth_droid_file_identifier,str,birth droid file identifier.
+olecf:dest_list:entry,birth_droid_volume_identifier,str,birth droid volume identifier.
+olecf:dest_list:entry,droid_file_identifier,str,droid file identifier.
+olecf:dest_list:entry,droid_volume_identifier,str,droid volume identifier.
+olecf:dest_list:entry,entry_number,int,DestList entry number.
+olecf:dest_list:entry,hostname,str,hostname.
+olecf:dest_list:entry,modification_time,dfdatetime.DateTimeValues,last modification date and time.
+olecf:dest_list:entry,offset,int,offset of the DestList entry relative to the start of the DestList stream- from which the event data was extracted.
+olecf:dest_list:entry,path,str,path.
+olecf:dest_list:entry,pin_status,int,pin status.
+olecf:document_summary_info,application_version,str,application version.
+olecf:document_summary_info,category,str,category of the document- such as memo or proposal.
+olecf:document_summary_info,codepage,str,codepage of the document summary information.
+olecf:document_summary_info,company,str,name of the company of the document.
+olecf:document_summary_info,content_status,str,content status.
+olecf:document_summary_info,content_type,str,content type. document_parts (list[str]): names of document parts.
+olecf:document_summary_info,document_version,int,Version of the document.
+olecf:document_summary_info,item_creation_time,dfdatetime.DateTimeValues,creation date and time of the item.
+olecf:document_summary_info,item_modification_time,dfdatetime.DateTimeValues,modification date and time of the item.
+olecf:document_summary_info,language,str,Language of the document.
+olecf:document_summary_info,links_up_to_date,bool,True if the links are up to date.
+olecf:document_summary_info,manager,str,name of the manager of the document.
+olecf:document_summary_info,number_of_bytes,int,size of the document in bytes.
+olecf:document_summary_info,number_of_characters_with_white_space,int,number of characters including spaces in the document.
+olecf:document_summary_info,number_of_clips,int,number of multi-media clips in the document.
+olecf:document_summary_info,number_of_hidden_slides,int,number of hidden slides in the document.
+olecf:document_summary_info,number_of_lines,int,number of lines in the document.
+olecf:document_summary_info,number_of_notes,int,number of notes in the document.
+olecf:document_summary_info,number_of_paragraphs,int,number of paragraphs in the document.
+olecf:document_summary_info,number_of_slides,int,number of slides in the document.
+olecf:document_summary_info,presentation_format,str,target format for presentation- such as 35mm- printer or video.
+olecf:document_summary_info,scale,bool,True if scaling of the thumbnail is desired or false if cropping is desired.
+olecf:document_summary_info,shared_document,bool,True if the document is shared.
+olecf:item,creation_time,dfdatetime.DateTimeValues,creation date and time of the item.
+olecf:item,modification_time,dfdatetime.DateTimeValues,modification date and time of the item.
+olecf:item,name,str,name of the OLE Compound File item.
+olecf:item,size,int,data size of the OLE Compound File item.
+olecf:summary_info,application,str,name of application that created document.
+olecf:summary_info,author,str,author of the document.
+olecf:summary_info,codepage,str,codepage of the summary information.
+olecf:summary_info,comments,str,comments.
+olecf:summary_info,creation_time,dfdatetime.DateTimeValues,creation date and time of the document.
+olecf:summary_info,edit_duration,int,total editing time.
+olecf:summary_info,item_creation_time,dfdatetime.DateTimeValues,creation date and time of the item.
+olecf:summary_info,item_modification_time,dfdatetime.DateTimeValues,modification date and time of the item.
+olecf:summary_info,keywords,str,keywords.
+olecf:summary_info,last_printed_time,dfdatetime.DateTimeValues,date and time the document was last printed.
+olecf:summary_info,last_save_time,dfdatetime.DateTimeValues,date and time the document was last saved.
+olecf:summary_info,last_saved_by,str,name of user that last saved the document.
+olecf:summary_info,number_of_characters,int,number of characters without spaces in the document.
+olecf:summary_info,number_of_pages,int,number of pages in the document.
+olecf:summary_info,number_of_words,int,number of words in the document.
+olecf:summary_info,revision_number,int,revision number.
+olecf:summary_info,security_flags,int,security flags.
+olecf:summary_info,subject,str,subject.
+olecf:summary_info,template,str,name of the template used to created the document.
+olecf:summary_info,title,str,title of the document.
+openxml:metadata,application,str,name of application that created document.
+openxml:metadata,application_version,str,version of application that created document.
+openxml:metadata,author,str,name of author.
+openxml:metadata,creation_time,dfdatetime.DateTimeValues,creation date and time of the document.
+openxml:metadata,digital_signature,str,digital signature.
+openxml:metadata,edit_duration,int,total editing time.
+openxml:metadata,hyperlinks_changed,bool,True if hyperlinks have changed.
+openxml:metadata,last_printed_time,dfdatetime.DateTimeValues,date and time the document was last printed.
+openxml:metadata,last_saved_by,str,name of user that last saved the document.
+openxml:metadata,links_up_to_date,bool,True if the links are up to date.
+openxml:metadata,modification_time,dfdatetime.DateTimeValues,modification date and time of the document.
+openxml:metadata,number_of_characters,int,number of characters without spaces in the document.
+openxml:metadata,number_of_characters_with_spaces,int,number of characters including spaces in the document.
+openxml:metadata,number_of_clips,int,number of multi-media clips in the document.
+openxml:metadata,number_of_hidden_slides,int,number of hidden slides in the document.
+openxml:metadata,number_of_lines,int,number of lines in the document.
+openxml:metadata,number_of_pages,int,number of pages in the document.
+openxml:metadata,number_of_paragraphs,int,number of paragraphs in the document.
+openxml:metadata,number_of_slides,int,number of slides in the document.
+openxml:metadata,number_of_words,int,number of words in the document.
+openxml:metadata,revision_number,int,revision number.
+openxml:metadata,scale,bool,True if scaling of the thumbnail is desired or false if cropping is desired.
+openxml:metadata,security_flags,int,security flags.
+openxml:metadata,shared_doc,bool,True if document is shared.
+openxml:metadata,template,str,name of the template used to created the document.
+opera:history:entry,description,str,description.
+opera:history:entry,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+opera:history:entry,popularity_index,int,popularity index.
+opera:history:entry,title,str,title.
+opera:history:entry,url,str,URL.
+opera:history:typed_entry,entry_selection,str,information about whether the URL was directly typed in or the result of the user choosing from the auto complete.
+opera:history:typed_entry,entry_type,str,information about whether the URL was directly typed in or the result of the user choosing from the auto complete.
+opera:history:typed_entry,last_typed_time,dfdatetime.DateTimeValues,date and time the URL was last typed.
+opera:history:typed_entry,url,str,typed URL or hostname.
+p2p:bittorrent:transmission,added_time,dfdatetime.DateTimeValues,date and time the torrent was added to Transmission.
+p2p:bittorrent:transmission,destination,str,path of the downloaded file.
+p2p:bittorrent:transmission,downloaded_time,dfdatetime.DateTimeValues,date and time the content was downloaded.
+p2p:bittorrent:transmission,last_activity_time,dfdatetime.DateTimeValues,date and time of the last download activity.
+p2p:bittorrent:transmission,seedtime,int,client seed time in number of minutes.
+p2p:bittorrent:utorrent,added_time,dfdatetime.DateTimeValues,date and time the torrent was added to Transmission.
+p2p:bittorrent:utorrent,caption,str,official name of package.
+p2p:bittorrent:utorrent,destination,str,path of the downloaded file.
+p2p:bittorrent:utorrent,downloaded_time,dfdatetime.DateTimeValues,date and time the content was downloaded. modification_times (list[dfdatetime.DateTimeValues]): modification dates and times.
+p2p:bittorrent:utorrent,seedtime,int,client seed time in number of minutes.
+pe_coff:dll_import,delayed_import,bool,True if the DLL is imported at run-time.
+pe_coff:dll_import,modification_time,dfdatetime.DateTimeValues,last modification date and time.
+pe_coff:dll_import,name,str,name of the imported DLL.
+pe_coff:file,creation_time,dfdatetime.DateTimeValues,creation date and time.
+pe_coff:file,export_dll_name,str,name of the exported DLL.
+pe_coff:file,export_table_modification_time,dfdatetime.DateTimeValues,export table last modification date and time.
+pe_coff:file,imphash,str,Import Hash of the Portable Executable (PE) file.
+pe_coff:file,load_configuration_table_modification_time,dfdatetime.DateTimeValues,load configuration table last modification date and time.
+pe_coff:file,pe_type,str,type of Portable Executable (PE) file. section_names (list[str]): names of the sections in the Portable Executable (PE) file.
+pe_coff:resource,identifier,int,identifier of the resource.
+pe_coff:resource,modification_time,dfdatetime.DateTimeValues,last modification date and time.
+pe_coff:resource,name,str,name of the resource.
+plist:key,key,str,name of plist key.
+plist:key,root,str,path from the root to this plist key.
+plist:key,written_time,dfdatetime.DateTimeValues,entry written date and time.
+pls_recall:entry,database_name,str,name of the database.
+pls_recall:entry,offset,int,offset of the PL/SQL Recall record relative to the start of the file- from which the event data was extracted.
+pls_recall:entry,query,str,PL/SQL query.
+pls_recall:entry,sequence_number,int,sequence number.
+pls_recall:entry,username,str,username used to query.
+pls_recall:entry,written_time,dfdatetime.DateTimeValues,entry written date and time.
+postgresql:application_log:entry,log_line,str,log message.
+postgresql:application_log:entry,pid,int,process identifier (PID).
+postgresql:application_log:entry,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+postgresql:application_log:entry,severity,str,severity.
+postgresql:application_log:entry,user,str,user@database string if present. Records the user account and database name that was authenticated or attempting to authenticate.
+powershell:transcript_log:entry,build_version,str,Build number of current version.
+powershell:transcript_log:entry,clr_version,str,Common Language Runtime version.
+powershell:transcript_log:entry,commands,str,Commands that were executed.
+powershell:transcript_log:entry,compatible_versions,str,Compatible PowerShell versions.
+powershell:transcript_log:entry,configuration_name,str,Configuration name.
+powershell:transcript_log:entry,edition,str,PowerShell edition
+powershell:transcript_log:entry,host_application,str,Application that executed the commands.
+powershell:transcript_log:entry,machine,str,Hostname of machine.
+powershell:transcript_log:entry,process_identifier,str,Process identifier.
+powershell:transcript_log:entry,remoting_protocol_version,str,PowerShell remote management protocol version.
+powershell:transcript_log:entry,runas_user,str,User context of execution.
+powershell:transcript_log:entry,serialization_version,str,Serialization method version.
+powershell:transcript_log:entry,start_time,dfdatetime.DateTimeValues,date and time the start of the PowerShell transcript.
+powershell:transcript_log:entry,username,str,User that executed the commands.
+powershell:transcript_log:entry,version,str,PowerShell version.
+powershell:transcript_log:entry,ws_man_stack_version,str,WS-Management stack version
+safari:cookie:entry,cookie_name,str,cookie name.
+safari:cookie:entry,cookie_value,str,cookie value.
+safari:cookie:entry,creation_time,dfdatetime.DateTimeValues,date and time the cookie was created.
+safari:cookie:entry,expiration_time,dfdatetime.DateTimeValues,date and time the cookie expires.
+safari:cookie:entry,flags,int,cookie flags.
+safari:cookie:entry,path,str,path of the cookie.
+safari:cookie:entry,url,str,URL where this cookie is valid.
+safari:downloads:entry,end_time,dfdatetime.DateTimeValues,date and time the download was finished.
+safari:downloads:entry,full_path,str,full path where the file was downloaded to.
+safari:downloads:entry,received_bytes,int,number of bytes received while downloading.
+safari:downloads:entry,remove_on_completion,bool,remove the download when completed (done).
+safari:downloads:entry,start_time,dfdatetime.DateTimeValues,date and time the download was started.
+safari:downloads:entry,total_bytes,int,total number of bytes to download.
+safari:downloads:entry,url,str,URL of the downloaded file.
+safari:history:visit,display_title,str,display title of the webpage visited.
+safari:history:visit,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+safari:history:visit,title,str,title of the webpage visited.
+safari:history:visit,url,str,URL visited.
+safari:history:visit,visit_count,int,number of times the website was visited.
+safari:history:visit,was_http_non_get,bool,True if the webpage was visited using a non-GET HTTP request.
+safari:history:visit_sqlite,host,str,hostname of the server.
+safari:history:visit_sqlite,last_visited_time,dfdatetime.DateTimeValues,date and time the URL was last visited.
+safari:history:visit_sqlite,offset,str,identifier of the row- from which the event data was extracted.
+safari:history:visit_sqlite,query,str,SQL query that was used to obtain the event data.
+safari:history:visit_sqlite,title,str,title of the webpage visited.
+safari:history:visit_sqlite,url,str,URL visited.
+safari:history:visit_sqlite,visit_count,int,number of times the website was visited.
+safari:history:visit_sqlite,was_http_non_get,bool,True if the webpage was visited using a non-GET HTTP request.
+santa:diskmount,action,str,event type recorded by Santa.
+santa:diskmount,appearance_time,dfdatetime.DateTimeValues,date and time the disk appeared.
+santa:diskmount,bsd_name,str,disk BSD name.
+santa:diskmount,bus,str,device protocol.
+santa:diskmount,dmg_path,str,DMG file path.
+santa:diskmount,fs,str,disk volume kind.
+santa:diskmount,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+santa:diskmount,model,str,disk model.
+santa:diskmount,mount,str,disk mount point.
+santa:diskmount,serial,str,disk serial.
+santa:diskmount,volume,str,disk volume name.
+santa:execution,action,str,action recorded by Santa.
+santa:execution,certificate_common_name,str,certificate common name.
+santa:execution,certificate_hash,str,SHA256 hash for the certificate associated with the executed process.
+santa:execution,decision,str,if the process was allowed or blocked.
+santa:execution,gid,str,group identifier associated with the executed process.
+santa:execution,group,str,group name associated with the executed process.
+santa:execution,last_run_time,dfdatetime.DateTimeValues,executable (binary) last run date and time.
+santa:execution,long_reason,str,further explanation behind Santa decision to execute or block a process.
+santa:execution,mode,str,Santa execution mode- for example Monitor or Lockdown.
+santa:execution,pid,str,process identifier for the process.
+santa:execution,pid_version,str,the process identifier version extracted from the Mach audit token. The version can sed to identify process identifier rollovers.
+santa:execution,ppid,str,parent process identifier for the executed process.
+santa:execution,process_arguments,str,executed process with its arguments.
+santa:execution,process_hash,str,SHA256 hash for the executed process.
+santa:execution,process_path,str,process file path.
+santa:execution,reason,str,reason behind Santa decision to execute or block a process.
+santa:execution,uid,str,user identifier associated with the executed process.
+santa:execution,user,str,user name associated with the executed process.
+santa:file_system_event,action,str,event type recorded by Santa.
+santa:file_system_event,file_new_path,str,new file path and name for RENAME events.
+santa:file_system_event,file_path,str,file path and name for WRITE/DELETE events.
+santa:file_system_event,gid,str,group identifier associated with the executed process.
+santa:file_system_event,group,str,group name associated with the executed process.
+santa:file_system_event,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+santa:file_system_event,pid,str,process identifier for the process.
+santa:file_system_event,pid_version,str,the process identifier version extracted from the Mach audit token. The version can be used to identify process identifier rollovers.
+santa:file_system_event,ppid,str,parent process identifier for the executed process.
+santa:file_system_event,process,str,process name.
+santa:file_system_event,process_path,str,process file path.
+santa:file_system_event,uid,str,user identifier associated with the executed process.
+santa:file_system_event,user,str,user name associated with the executed process.
+santa:process_exit,action,str,action recorded by Santa.
+santa:process_exit,exit_time,dfdatetime.DateTimeValues,process exit date and time.
+santa:process_exit,gid,str,group identifier associated with the executed process.
+santa:process_exit,pid,str,process identifier for the process.
+santa:process_exit,pid_version,str,the process identifier version extracted from the Mach audit token. The version can be used to identify process identifier rollovers.
+santa:process_exit,ppid,str,parent process identifier for the executed process.
+santa:process_exit,uid,str,user identifier associated with the executed process.
+sccm_log:entry,component,str,component.
+sccm_log:entry,text,str,text.
+sccm_log:entry,written_time,dfdatetime.DateTimeValues,date and time the entry was written.
+selinux:line,audit_type,str,audit type.
+selinux:line,body,str,body of the log line.
+selinux:line,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+selinux:line,pid,int,process identifier (PID) that created the SELinux log line.
+setupapi:log:line,end_time,dfdatetime.DateTimeValues,date and time the end of the log entry was added.
+setupapi:log:line,entry_type,str,"log entry type- for examaple ""Device Install - PCI\VEN_104C&DEV_8019&SUBSYS_8010104C&REV_00\3&61aaa01&0&38"" or ""Sysprep Respecialize - {804b345a-ffd7-854c-a1b5-ca9598907846}""."
+setupapi:log:line,exit_status,str,the exit status of the logged operation.
+setupapi:log:line,start_time,dfdatetime.DateTimeValues,date and time the start of the log entry was added.
+shell:zsh:history,command,str,command that was run.
+shell:zsh:history,elapsed_seconds,int,number of seconds that the command took to execute.
+shell:zsh:history,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+skydrive:log:entry,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+skydrive:log:entry,detail,str,detail.
+skydrive:log:entry,log_level,str,log level.
+skydrive:log:entry,module,str,name of the module that generated the log message.
+skydrive:log:entry,source_code,str,source file and line number that generated the log message.
+skype:event:account,authentication_request_sent_time,dfdatetime.DateTimeValues,date and time the last authentication request was sent.
+skype:event:account,authentication_request_time,dfdatetime.DateTimeValues,date and time the account was last requested to authenticate.
+skype:event:account,country,str,home country of the account holder.
+skype:event:account,display_name,str,display name of the account holder.
+skype:event:account,email,str,registered email address of the account holder.
+skype:event:account,last_online_time,dfdatetime.DateTimeValues,date and time the account was last online.
+skype:event:account,last_used_time,dfdatetime.DateTimeValues,date and time the account was last used.
+skype:event:account,mood_change_time,dfdatetime.DateTimeValues,date and time the mood was last changed.
+skype:event:account,offset,str,identifier of the row- from which the event data was extracted.
+skype:event:account,profile_change_time,dfdatetime.DateTimeValues,date and time the profile was last changed.
+skype:event:account,query,str,SQL query that was used to obtain the event data.
+skype:event:account,username,str,full name of the Skype account holder and display name.
+skype:event:call,attempt_time,dfdatetime.DateTimeValues,date and time the call was attempted.
+skype:event:call,call_type,str,call type- such as: WAITING- STARTED- FINISHED.
+skype:event:call,dst_call,str,account which received the call.
+skype:event:call,duration,int,number of seconds the call lasted.
+skype:event:call,end_time,dfdatetime.DateTimeValues,date and time the call was stopped.
+skype:event:call,offset,str,identifier of the row- from which the event data was extracted.
+skype:event:call,query,str,SQL query that was used to obtain the event data.
+skype:event:call,src_call,str,account which started the call.
+skype:event:call,start_time,dfdatetime.DateTimeValues,date and time the call was started.
+skype:event:call,user_start_call,bool,True if the owner account started the call.
+skype:event:call,video_conference,bool,True if the call was a video conference.
+skype:event:chat,from_account,str,from display name and the author.
+skype:event:chat,query,str,SQL query that was used to obtain the event data.
+skype:event:chat,recorded_time,dfdatetime.DateTimeValues,date and time the chat was recorded.
+skype:event:chat,text,str,body XML.
+skype:event:chat,title,str,title.
+skype:event:chat,to_account,str,accounts- excluding the author- of the conversation.
+skype:event:sms,number,str,phone number where the SMS was sent.
+skype:event:sms,query,str,SQL query that was used to obtain the event data.
+skype:event:sms,recorded_time,dfdatetime.DateTimeValues,date and time the SMS was recorded.
+skype:event:sms,text,str,text (SMS body) that was sent.
+skype:event:transferfile,accept_time,dfdatetime.DateTimeValues,date and time the file transfer was accepted.
+skype:event:transferfile,destination,str,account that received the file.
+skype:event:transferfile,end_time,dfdatetime.DateTimeValues,date and time the file transfer was stopped.
+skype:event:transferfile,offset,str,identifier of the row- from which the event data was extracted.
+skype:event:transferfile,query,str,SQL query that was used to obtain the event data.
+skype:event:transferfile,source,str,account that sent the file.
+skype:event:transferfile,start_time,dfdatetime.DateTimeValues,date and time the file transfer was started.
+skype:event:transferfile,transfer_status,int,file transfer status.
+skype:event:transferfile,transferred_filename,str,name of the file transferred.
+skype:event:transferfile,transferred_filepath,str,path of the file transferred.
+skype:event:transferfile,transferred_filesize,int,size of the file transferred.
+snort:fastlog:alert,classification,str,classification of the alert.
+snort:fastlog:alert,destination_ip,str,destination IP-address.
+snort:fastlog:alert,destination_port,int,destination TCP/UDP port number.
+snort:fastlog:alert,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+snort:fastlog:alert,message,str,message associated with the alert.
+snort:fastlog:alert,priority,int,priorty- ranging from 1 (high) to 4 (very low).
+snort:fastlog:alert,rule_identifier,str,identifier of the Snort3/Suricata rule that generated the alert.
+snort:fastlog:alert,source_ip,str,source IP-address.
+snort:fastlog:alert,source_port,int,source TCP/UDP port number.
+sophos:av:log,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+sophos:av:log,text,str,Sophos anti-virus log message.
+spotlight:metadata_item,added_time,dfdatetime.DateTimeValues,date and time the item was added (kMDItemDateAdded).
+spotlight:metadata_item,attribute_change_time,dfdatetime.DateTimeValues,date and time an attribute was last changed (kMDItemAttributeChangeDate).
+spotlight:metadata_item,content_creation_time,dfdatetime.DateTimeValues,date and time the content was created (kMDItemContentCreationDate).
+spotlight:metadata_item,content_modification_time,dfdatetime.DateTimeValues,date and time the content was last modified (kMDItemContentModificationDate).
+spotlight:metadata_item,content_type,str,content type of the corresponding file (system) entry (kMDItemContentType).
+spotlight:metadata_item,creation_time,dfdatetime.DateTimeValues,date and time the item was created (_kMDItemCreationDate).
+spotlight:metadata_item,downloaded_time,dfdatetime.DateTimeValues,date and time the item was downloaded (kMDItemDownloadedDate).
+spotlight:metadata_item,file_name,str,name of the corresponding file (system) entry (_kMDItemFileName).
+spotlight:metadata_item,file_system_identifier,int,file system identifier- for example the catalog node identifier (CNID) on HFS.
+spotlight:metadata_item,kind,str,item kind (kMDItemKind).
+spotlight:metadata_item,modification_time,dfdatetime.DateTimeValues,date and time the item was last modified (_kMDItemContentChangeDate).
+spotlight:metadata_item,parent_file_system_identifier,int,file system identifier of the parent.
+spotlight:metadata_item,purchase_time,dfdatetime.DateTimeValues,date and time the item was purchased in the AppStore (kMDItemAppStorePurchaseDate). snapshot_times (list[dfdatetime.DateTimeValues]): dates and times of the creation of backup snaphots (_kTimeMachineOldestSnapshot and _kTimeMachineNewestSnapshot).
+spotlight:metadata_item,update_time,dfdatetime.DateTimeValues,date and time the item was last updated. used_times (list[dfdatetime.DateTimeValues]): dates and times when the item was used (kMDItemUsedDates and kMDItemLastUsedDate).
+spotlight_searched_terms:entry,display_name,str,display name.
+spotlight_searched_terms:entry,last_used_time,dfdatetime.DateTimeValues,last date and time the search term was last used.
+spotlight_searched_terms:entry,path,str,path.
+spotlight_searched_terms:entry,search_term,str,search term.
+spotlight_volume_configuration:store,creation_time,dfdatetime.DateTimeValues,volume creation date and time.
+spotlight_volume_configuration:store,partial_path,str,part of the path.
+spotlight_volume_configuration:store,volume_identifier,str,identifier of the volume.
+syslog:comment,body,str,message body.
+syslog:comment,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+syslog:cron:task_run,command,str,command executed.
+syslog:cron:task_run,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+syslog:cron:task_run,username,str,name of user the command was executed.
+syslog:line,body,str,message body.
+syslog:line,hostname,str,hostname of the reporter.
+syslog:line,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+syslog:line,pid,str,process identifier of the reporter.
+syslog:line,reporter,str,reporter.
+syslog:line,severity,str,severity.
+syslog:line,authentication_method,str,authentication method.
+syslog:line,fingerprint,str,fingerprint.
+syslog:line,ip_address,str,IP address.
+syslog:line,port,str,port.
+syslog:line,protocol,str,protocol.
+syslog:line,username,str,name of user the command was executed.
+systemd:journal,body,str,message body.
+systemd:journal,hostname,str,hostname.
+systemd:journal,pid,int,process identifier (PID).
+systemd:journal,reporter,str,reporter.
+systemd:journal,written_time,dfdatetime.DateTimeValues,date and time the log entry was written.
+task_scheduler:task_cache:entry,key_path,str,Windows Registry key path.
+task_scheduler:task_cache:entry,last_registered_time,dfdatetime.DateTimeValues,date and time the task was last registered.
+task_scheduler:task_cache:entry,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+task_scheduler:task_cache:entry,launch_time,dfdatetime.DateTimeValues,date and time the task was last launched.
+task_scheduler:task_cache:entry,task_identifier,str,identifier of the task.
+task_scheduler:task_cache:entry,task_name,str,name of the task.
+task_scheduler:task_cache:entry,unknown_time,dfdatetime.DateTimeValues,unknown date and time.
+viminfo:history,filename,str,the name of the file that was opened/edited.
+viminfo:history,history_type,str,the Vim history type.
+viminfo:history,history_value,str,the Vim history value.
+viminfo:history,item_number,int,the item number of the history type.
+viminfo:history,recorded_time,dfdatetime.DateTimeValues,date and time the log entry was recorded.
+vsftpd:log,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+vsftpd:log,text,str,vsftpd log message.
+wincc:simatic_s7:entry,body,str,the message content of the event.
+wincc:simatic_s7:entry,creation_time,dfdatetime.DateTimeValues,date and time the log entry was created.
+wincc:sys_log:entry,body,str,the content of the log's message.
+wincc:sys_log:entry,creation_time,dfdatetime.DateTimeValues,date and time the log entry was created.
+wincc:sys_log:entry,event_number,int,a number specifying the type of event.
+wincc:sys_log:entry,log_hostname,str,the hostname of the machine logging the event.
+wincc:sys_log:entry,log_identifier,int,identifier for this log file.
+wincc:sys_log:entry,source_device,str,which device generated the event.
+windows:diagnosis:eventtranscript,application_name,str,Application name.
+windows:diagnosis:eventtranscript,application_root_directory,str,Application root directory.
+windows:diagnosis:eventtranscript,application_version,str,Application version.
+windows:diagnosis:eventtranscript,compressed_payload_size,int,Size of the compressed payload.
+windows:diagnosis:eventtranscript,event_keywords,int,Event keywords
+windows:diagnosis:eventtranscript,event_name,str,Diagnosis full event name.
+windows:diagnosis:eventtranscript,event_name_hash,int,Hash of full event name.
+windows:diagnosis:eventtranscript,friendly_logging_binary_name,str,Friendly name for logging binary.
+windows:diagnosis:eventtranscript,ikey,str,iKey
+windows:diagnosis:eventtranscript,is_core,int,Boolean value represented as an integer.
+windows:diagnosis:eventtranscript,logging_binary_name,str,Binary that generated the event.
+windows:diagnosis:eventtranscript,name,str,Name of the payload- similar to event name.
+windows:diagnosis:eventtranscript,producer_identifier,int,Identifier of the EventTranscript event producer. provider group.
+windows:diagnosis:eventtranscript,provider_group_identifier,int,Identifier of the EventTranscript event
+windows:diagnosis:eventtranscript,recorded_time,dfdatetime.DateTimeValues,date and time the entry was recorded.
+windows:diagnosis:eventtranscript,user_identifier,str,Windows Security identifier (SID) of a user account.
+windows:diagnosis:eventtranscript,version,str,Payload version
+windows:evt:record,computer_name,str,computer name stored in the event record.
+windows:evt:record,creation_time,dfdatetime.DateTimeValues,event record creation date and time.
+windows:evt:record,event_category,int,event category.
+windows:evt:record,event_identifier,int,event identifier.
+windows:evt:record,event_type,int,event type.
+windows:evt:record,facility,int,event facility.
+windows:evt:record,message_identifier,int,event message identifier.
+windows:evt:record,offset,int,offset of the event record relative to the start of the file- from which the event data was extracted.
+windows:evt:record,record_number,int,event record number.
+windows:evt:record,recovered,bool,True if the record was recovered.
+windows:evt:record,severity,int,event severity.
+windows:evt:record,source_name,str,name of the event source. strings (list[str]): event strings.
+windows:evt:record,user_sid,str,user security identifier (SID) stored in the event record.
+windows:evt:record,written_time,dfdatetime.DateTimeValues,event record written date and time.
+windows:evtx:record,computer_name,str,computer name stored in the event record.
+windows:evtx:record,creation_time,dfdatetime.DateTimeValues,event record creation date and time.
+windows:evtx:record,event_identifier,int,event identifier.
+windows:evtx:record,event_level,int,event level.
+windows:evtx:record,event_version,int,event version.
+windows:evtx:record,message_identifier,int,event message identifier.
+windows:evtx:record,offset,int,offset of the EVTX record relative to the start of the file- from which the event data was extracted.
+windows:evtx:record,provider_identifier,str,identifier of the EventLog provider.
+windows:evtx:record,record_number,int,event record number.
+windows:evtx:record,recovered,bool,True if the record was recovered.
+windows:evtx:record,source_name,str,name of the event source. strings (list[str]): event strings.
+windows:evtx:record,user_sid,str,user security identifier (SID) stored in the event record.
+windows:evtx:record,written_time,dfdatetime.DateTimeValues,event record written date and time.
+windows:evtx:record,xml_string,str,XML representation of the event.
+windows:file_history:namespace,creation_time,dfdatetime.DateTimeValues,file entry creation date and time.
+windows:file_history:namespace,file_attribute,int,file attribute.
+windows:file_history:namespace,identifier,str,identifier.
+windows:file_history:namespace,modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+windows:file_history:namespace,original_filename,str,original file name.
+windows:file_history:namespace,parent_identifier,str,parent identifier.
+windows:file_history:namespace,usn_number,int,USN number.
+windows:firewall_log:entry,action,str,action taken.
+windows:firewall_log:entry,destination_ip,str,destination IP address.
+windows:firewall_log:entry,destination_port,int,TCP or UDP destination port.
+windows:firewall_log:entry,icmp_code,int,ICMP code.
+windows:firewall_log:entry,icmp_type,int,ICMP type.
+windows:firewall_log:entry,information,str,additional information.
+windows:firewall_log:entry,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:firewall_log:entry,packet_size,int,packet size.
+windows:firewall_log:entry,path,str,direction of the communication- which can be: SEND- RECEIVE- FORWARD- and UNKNOWN.
+windows:firewall_log:entry,protocol,str,IP protocol.
+windows:firewall_log:entry,source_ip,str,source IP address.
+windows:firewall_log:entry,source_port,int,TCP or UDP source port.
+windows:firewall_log:entry,tcp_ack,int,TCP acknowledgement number.
+windows:firewall_log:entry,tcp_flags,str,TCP flags.
+windows:firewall_log:entry,tcp_sequence_number,int,TCP sequence number.
+windows:firewall_log:entry,tcp_window_size,int,TCP window size.
+windows:lnk:link,access_time,dfdatetime.DateTimeValues,file entry last access date and time.
+windows:lnk:link,birth_droid_file_identifier,str,distributed link tracking birth droid file identifier.
+windows:lnk:link,birth_droid_volume_identifier,str,distributed link tracking birth droid volume identifier.
+windows:lnk:link,command_line_arguments,str,command line arguments.
+windows:lnk:link,creation_time,dfdatetime.DateTimeValues,file entry creation date and time.
+windows:lnk:link,description,str,description of the linked item.
+windows:lnk:link,drive_serial_number,int,drive serial number where the linked item resides.
+windows:lnk:link,drive_type,str,drive type where the linked item resided.
+windows:lnk:link,droid_file_identifier,str,distributed link tracking droid file identifier.
+windows:lnk:link,droid_volume_identifier,str,distributed link tracking droid volume identifier.
+windows:lnk:link,env_var_location,str,environment variables location.
+windows:lnk:link,file_attribute_flags,int,file attribute flags of the linked item.
+windows:lnk:link,file_size,int,size of the linked item.
+windows:lnk:link,icon_location,str,icon location.
+windows:lnk:link,link_target,str,shell item list of the link target.
+windows:lnk:link,local_path,str,local path of the linked item.
+windows:lnk:link,modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+windows:lnk:link,network_path,str,local path of the linked item.
+windows:lnk:link,relative_path,str,relative path.
+windows:lnk:link,volume_label,str,volume label where the linked item resided.
+windows:lnk:link,working_directory,str,working directory.
+windows:metadata:deleted_item,deletion_time,dfdatetime.DateTimeValues,file entry deletion date and time.
+windows:metadata:deleted_item,drive_number,int,drive number.
+windows:metadata:deleted_item,file_size,int,file size.
+windows:metadata:deleted_item,offset,int,offset of the Recycle Bin record relative to the start of the file- from which the event data was extracted.
+windows:metadata:deleted_item,original_filename,str,filename.
+windows:metadata:deleted_item,record_index,int,index of the record- from which the event data was extracted.
+windows:metadata:deleted_item,short_filename,str,short filename.
+windows:onedrive:log,code_filename,str,code filename.
+windows:onedrive:log,code_function_name,str,code function name.
+windows:onedrive:log,decoded_parameters,str,decoded (and decrypted) parameters.
+windows:onedrive:log,raw_parameters,str,the raw parameters encoded as a hexadecimal formatted string.
+windows:onedrive:log,recorded_time,dfdatetime.DateTimeValues,date and time the entry was recorded.
+windows:pca_log:entry,description,str,description of the executable.
+windows:pca_log:entry,executable,str,executable filename.
+windows:pca_log:entry,exit_code,str,final result of the execution.
+windows:pca_log:entry,last_execution_time,dfdatetime.DateTimeValues,entry last execution date and time.
+windows:pca_log:entry,program_identifier,str,program identifier.
+windows:pca_log:entry,run_status,str,execution status.
+windows:pca_log:entry,vendor,str,vendor of executed software.
+windows:pca_log:entry,version,str,version of executed software.
+windows:prefetch:execution,executable,str,executable filename.
+windows:prefetch:execution,last_run_time,dfdatetime.DateTimeValues,executable (binary) last run date and time. mapped_files (list[str]): mapped filenames.
+windows:prefetch:execution,number_of_volumes,int,number of volumes. path_hints (list[str]): possible full paths to the executable.
+windows:prefetch:execution,prefetch_hash,int,prefetch hash. previous_run_times (list[dfdatetime.DateTimeValues]): previous executable (binary) run date and time.
+windows:prefetch:execution,run_count,int,run count. volume_device_paths (list[str]): volume device paths. volume_serial_numbers (list[int]): volume serial numbers.
+windows:registry:amcache,company_name,str,company name that created product file belongs to.
+windows:registry:amcache,file_creation_time,dfdatetime.DateTimeValues,file entry creation date and time.
+windows:registry:amcache,file_description,str,description of file.
+windows:registry:amcache,file_modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+windows:registry:amcache,file_reference,str,file system file reference- for example 9-1 (MFT entry - sequence number).
+windows:registry:amcache,file_size,int,size of file in bytes.
+windows:registry:amcache,file_version,str,version of file.
+windows:registry:amcache,full_path,str,full path of file.
+windows:registry:amcache,installation_time,dfdatetime.DateTimeValues,installation date and time.
+windows:registry:amcache,language_code,int,language code of file.
+windows:registry:amcache,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:amcache,link_time,dfdatetime.DateTimeValues,link date and time.
+windows:registry:amcache,msi_installation_time,dfdatetime.DateTimeValues,MSI installation date and time.
+windows:registry:amcache,product_name,str,product name file belongs to.
+windows:registry:amcache,program_identifier,str,GUID of entry under Root/Program key file belongs to.
+windows:registry:amcache,sha1,str,SHA-1.
+windows:registry:amcache:programs,entry_type,str,type of entry (usually AddRemoveProgram).
+windows:registry:amcache:programs,file_paths,str,file paths of installed program.
+windows:registry:amcache:programs,files,str,list of files belonging to program.
+windows:registry:amcache:programs,installation_time,dfdatetime.DateTimeValues,installation date and time.
+windows:registry:amcache:programs,language_code,int,language_code of program.
+windows:registry:amcache:programs,msi_package_code,str,MSI package code of program.
+windows:registry:amcache:programs,msi_product_code,str,MSI product code of program.
+windows:registry:amcache:programs,name,str,name of installed program.
+windows:registry:amcache:programs,package_code,str,package code of program.
+windows:registry:amcache:programs,product_code,str,product code of program.
+windows:registry:amcache:programs,publisher,str,publisher of program.
+windows:registry:amcache:programs,uninstall_key,str,unicode string of uninstall registry key for program.
+windows:registry:amcache:programs,version,str,version of program.
+windows:registry:appcompatcache,entry_index,int,cache entry index number for the record.
+windows:registry:appcompatcache,file_entry_modification_time,dfdatetime.DateTimeValues,last modification date and time of the corresponding file entry.
+windows:registry:appcompatcache,key_path,str,Windows Registry key path.
+windows:registry:appcompatcache,last_update_time,dfdatetime.DateTimeValues,last update date and time of the Application Compatibility Cache entry.
+windows:registry:appcompatcache,offset,int,offset of the Application Compatibility Cache entry relative to the start of the Windows Registry value data- from which the event data was extracted.
+windows:registry:appcompatcache,path,str,full path to the executable.
+windows:registry:bagmru,entries,str,most recently used (MRU) entries.
+windows:registry:bagmru,key_path,str,Windows Registry key path.
+windows:registry:bagmru,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:bam,last_run_time,dfdatetime.DateTimeValues,executable (binary) last run date and time.
+windows:registry:bam,path,str,path of the executable (binary).
+windows:registry:bam,user_identifier,str,user identifier (Windows NT SID).
+windows:registry:boot_execute,key_path,str,Windows Registry key path.
+windows:registry:boot_execute,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:boot_execute,value,str,boot execute value- contains the value obtained from the BootExecute Registry value.
+windows:registry:boot_verification,image_path,str,location of the boot verification executable- contains the value obtained from the ImagePath Registry value.
+windows:registry:boot_verification,key_path,str,Windows Registry key path.
+windows:registry:boot_verification,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:explorer:programcache,entries,str,entries in the program cache.
+windows:registry:explorer:programcache,key_path,str,Windows Registry key path.
+windows:registry:explorer:programcache,known_folder_identifier,str,known folder identifier.
+windows:registry:explorer:programcache,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:explorer:programcache,value_name,str,Windows Registry value name.
+windows:registry:installation,build_number,str,Windows build number.
+windows:registry:installation,installation_time,dfdatetime.DateTimeValues,Windows installation date and time.
+windows:registry:installation,key_path,str,Windows Registry key path.
+windows:registry:installation,owner,str,registered owner.
+windows:registry:installation,product_name,str,product name.
+windows:registry:installation,service_pack,str,service pack.
+windows:registry:installation,version,str,Windows version.
+windows:registry:key_value,key_path,str,Windows Registry key path.
+windows:registry:key_value,last_written_time,dfdatetime.DateTimeValues,key last written date and time. values (list[tuple[str- str- str]]): name- data type and data of the values in the key.
+windows:registry:mount_points2,key_path,str,Windows Registry key path.
+windows:registry:mount_points2,label,str,mount point label.
+windows:registry:mount_points2,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:mount_points2,name,str,name of the mount point source.
+windows:registry:mount_points2,server_name,str,name of the remote drive server or None if not set.
+windows:registry:mount_points2,share_name,str,name of the remote drive share or None if not set.
+windows:registry:mount_points2,type,str,"type of the mount point source- which can be ""Drive""- ""Remove Drive"" or ""Volume""."
+windows:registry:mrulist,key_path,str,Windows Registry key path.
+windows:registry:mrulist,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:mrulistex,key_path,str,Windows Registry key path.
+windows:registry:mrulistex,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:msie_zone_settings,key_path,str,Windows Registry key path.
+windows:registry:msie_zone_settings,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:msie_zone_settings,settings,str,MSIE zone settings.
+windows:registry:mstsc:connection,entries,str,most recently used (MRU) entries.
+windows:registry:mstsc:connection,key_path,str,Windows Registry key path.
+windows:registry:mstsc:connection,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:mstsc:connection,username,str,username- provided by the UsernameHint value.
+windows:registry:mstsc:mru,entries,str,most recently used (MRU) entries.
+windows:registry:mstsc:mru,key_path,str,Windows Registry key path.
+windows:registry:mstsc:mru,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:network,connection_type,int,type of connection.
+windows:registry:network,creation_time,dfdatetime.DateTimeValues,entry creation date and time.
+windows:registry:network,default_gateway_mac,str,MAC address for the default gateway.
+windows:registry:network,description,str,description of the wireless connection.
+windows:registry:network,dns_suffix,str,DNS suffix.
+windows:registry:network,last_connected_time,dfdatetime.DateTimeValues,last connected date and time.
+windows:registry:network,ssid,str,SSID of the connection.
+windows:registry:network_drive,drive_letter,str,drive letter assigned to network drive.
+windows:registry:network_drive,key_path,str,Windows Registry key path.
+windows:registry:network_drive,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:network_drive,server_name,str,name of the server of the network drive.
+windows:registry:network_drive,share_name,str,name of the share of the network drive.
+windows:registry:office_mru,key_path,str,Windows Registry key path.
+windows:registry:office_mru,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:office_mru,value_string,str,MRU value.
+windows:registry:office_mru_list,entries,str,most recently used (MRU) entries.
+windows:registry:office_mru_list,key_path,str,Windows Registry key path.
+windows:registry:office_mru_list,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:outlook_search_mru,entries,str,most recently used (MRU) entries.
+windows:registry:outlook_search_mru,key_path,str,Windows Registry key path.
+windows:registry:outlook_search_mru,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:run,key_path,str,Windows Registry key path.
+windows:registry:run,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:sam_users,account_rid,int,account relative identifier (RID).
+windows:registry:sam_users,comments,str,comments.
+windows:registry:sam_users,fullname,str,full name.
+windows:registry:sam_users,key_path,str,Windows Registry key path.
+windows:registry:sam_users,last_login_time,dfdatetime.DateTimeValues,date and time of the last login.
+windows:registry:sam_users,last_password_set_time,dfdatetime.DateTimeValues,date and time of the last password set.
+windows:registry:sam_users,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:sam_users,login_count,int,login count.
+windows:registry:sam_users,username,str,a string containing the username.
+windows:registry:service,error_control,int,error control value of the Windows driver or service executable.
+windows:registry:service,image_path,str,path of the Windows driver or service executable.
+windows:registry:service,key_path,str,Windows Registry key path.
+windows:registry:service,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:service,name,str,name of the Windows driver or service.
+windows:registry:service,object_name,str,Windows service object name.
+windows:registry:service,service_dll,str,Windows service DLL.
+windows:registry:service,service_type,int,Windows driver or service type.
+windows:registry:service,start_type,int,Device or service start type.
+windows:registry:service,values,str,names and data of additional values in the key. values (list[tuple[str- str- str]]): name- data type and data of the additional values in the key.
+windows:registry:shutdown,key_path,str,Windows Registry key path.
+windows:registry:shutdown,last_shutdown_time,dfdatetime.DateTimeValues,date and time the system was last shutdown.
+windows:registry:shutdown,value_name,str,name of the Windows Registry value.
+windows:registry:timezone,configuration,str,timezone configuration.
+windows:registry:timezone,key_path,str,Windows Registry key path.
+windows:registry:timezone,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:typedurls,entries,str,typed URLs or paths entries.
+windows:registry:typedurls,key_path,str,Windows Registry key path.
+windows:registry:typedurls,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:usb,key_path,str,Windows Registry key path.
+windows:registry:usb,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:usb,product,str,product of the USB device.
+windows:registry:usb,serial,str,serial number of the USB device.
+windows:registry:usb,subkey_name,str,name of the Windows Registry subkey.
+windows:registry:usb,vendor,str,vendor of the USB device.
+windows:registry:usbstor:instance,device_last_arrival_time,dfdatetime.DateTimeValues,date and time of the device insertion.
+windows:registry:usbstor:instance,device_last_removal_time,dfdatetime.DateTimeValues,date and time of the removal insertion.
+windows:registry:usbstor:instance,device_type,str,type of USB device.
+windows:registry:usbstor:instance,display_name,str,display name of the USB device.
+windows:registry:usbstor:instance,driver_first_installation_time,dfdatetime.DateTimeValues,date and time of when the device instance was first installed in the system
+windows:registry:usbstor:instance,driver_last_installation_time,dfdatetime.DateTimeValues,date and time of when the current device instance was installed in the system.
+windows:registry:usbstor:instance,firmware_time,dfdatetime.DateTimeValues,date and time of the firmware.
+windows:registry:usbstor:instance,key_path,str,Windows Registry key path.
+windows:registry:usbstor:instance,product,str,product of the USB device.
+windows:registry:usbstor:instance,revision,str,revision number of the USB device.
+windows:registry:usbstor:instance,vendor,str,vendor of the USB device.
+windows:registry:userassist,application_focus_count,int,application focus count.
+windows:registry:userassist,application_focus_duration,int,application focus duration.
+windows:registry:userassist,entry_index,int,entry index.
+windows:registry:userassist,key_path,str,Windows Registry key path.
+windows:registry:userassist,last_execution_time,dfdatetime.DateTimeValues,date and time the application was last executed (or run).
+windows:registry:userassist,number_of_executions,int,number of executions.
+windows:registry:userassist,value_name,str,name of the Windows Registry value.
+windows:registry:winlogon,application,str,Winlogon application.
+windows:registry:winlogon,command,str,Winlogon command.
+windows:registry:winlogon,handler,str,Winlogon handler.
+windows:registry:winlogon,key_path,str,Windows Registry key path.
+windows:registry:winlogon,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+windows:registry:winlogon,trigger,str,Winlogon trigger.
+windows:restore_point:info,creation_time,dfdatetime.DateTimeValues,creation date and time.
+windows:restore_point:info,description,str,description.
+windows:restore_point:info,restore_point_event_type,str,restore point event type.
+windows:restore_point:info,restore_point_type,str,restore point type.
+windows:restore_point:info,sequence_number,str,sequence number.
+windows:shell_item:file_entry,access_time,dfdatetime.DateTimeValues,file entry last access date and time.
+windows:shell_item:file_entry,creation_time,dfdatetime.DateTimeValues,file entry creation date and time.
+windows:shell_item:file_entry,file_reference,str,"NTFS file reference- in the format: ""MTF entry - sequence number""."
+windows:shell_item:file_entry,localized_name,str,localized name of the file entry shell item.
+windows:shell_item:file_entry,long_name,str,long name of the file entry shell item.
+windows:shell_item:file_entry,modification_time,dfdatetime.DateTimeValues,file entry last modification date and time.
+windows:shell_item:file_entry,name,str,name of the file entry shell item.
+windows:shell_item:file_entry,origin,str,origin of the event.
+windows:shell_item:file_entry,shell_item_path,str,shell item path.
+windows:srum:application_usage,application,str,application.
+windows:srum:application_usage,background_bytes_read,int,background number of bytes read.
+windows:srum:application_usage,background_bytes_written,int,background number of bytes written.
+windows:srum:application_usage,background_context_switches,int,number of background context switches.
+windows:srum:application_usage,background_cycle_time,int,background cycle time.
+windows:srum:application_usage,background_number_for_flushes,int,background number of flushes.
+windows:srum:application_usage,background_number_for_read_operations,int,background number of read operations.
+windows:srum:application_usage,background_number_for_write_operations,int,background number of write operations.
+windows:srum:application_usage,face_time,int,face time.
+windows:srum:application_usage,foreground_bytes_read,int,foreground number of bytes read.
+windows:srum:application_usage,foreground_bytes_written,int,foreground number of bytes written.
+windows:srum:application_usage,foreground_context_switches,int,number of foreground context switches.
+windows:srum:application_usage,foreground_cycle_time,int,foreground cycle time.
+windows:srum:application_usage,foreground_number_for_flushes,int,foreground number of flushes.
+windows:srum:application_usage,foreground_number_for_read_operations,int,foreground number of read operations.
+windows:srum:application_usage,foreground_number_for_write_operations,int,foreground number of write operations.
+windows:srum:application_usage,identifier,int,record identifier.
+windows:srum:application_usage,recorded_time,dfdatetime.DateTimeValues,date and time the sample was recorded.
+windows:srum:application_usage,user_identifier,str,user identifier- which is a Windows NT security identifier.
+windows:srum:network_connectivity,application,str,application.
+windows:srum:network_connectivity,identifier,int,record identifier.
+windows:srum:network_connectivity,interface_luid,int,interface locally unique identifier (LUID).
+windows:srum:network_connectivity,l2_profile_flags,int,L2 profile flags.
+windows:srum:network_connectivity,l2_profile_identifier,int,L2 profile identifier.
+windows:srum:network_connectivity,last_connected_time,dfdatetime.DateTimeValues,last date and time the connection was established.
+windows:srum:network_connectivity,user_identifier,str,user identifier- which is a Windows NT security identifier.
+windows:srum:network_usage,application,str,application.
+windows:srum:network_usage,bytes_received,int,number of bytes received.
+windows:srum:network_usage,bytes_sent,int,number of bytes sent.
+windows:srum:network_usage,identifier,int,record identifier.
+windows:srum:network_usage,interface_luid,int,interface locally unique identifier (LUID).
+windows:srum:network_usage,l2_profile_flags,int,L2 profile flags.
+windows:srum:network_usage,l2_profile_identifier,int,L2 profile identifier.
+windows:srum:network_usage,user_identifier,str,user identifier- which is a Windows NT security identifier.
+windows:tasks:job,application,str,path to job executable.
+windows:tasks:job,comment,str,description of the scheduled task.
+windows:tasks:job,last_run_time,dfdatetime.DateTimeValues,executable (binary) last run date and time.
+windows:tasks:job,parameters,str,application command line parameters.
+windows:tasks:job,username,str,username that scheduled the task.
+windows:tasks:job,working_directory,str,working directory of the scheduled task.
+windows:tasks:trigger,application,str,path to job executable.
+windows:tasks:trigger,comment,str,description of the scheduled task.
+windows:tasks:trigger,end_time,dfdatetime.DateTimeValues,date and time the end of the trigger.
+windows:tasks:trigger,parameters,str,application command line parameters.
+windows:tasks:trigger,start_time,dfdatetime.DateTimeValues,date and time the start of the trigger.
+windows:tasks:trigger,trigger_type,int,trigger type.
+windows:tasks:trigger,username,str,username that scheduled the task.
+windows:tasks:trigger,working_directory,str,working directory of the scheduled task.
+windows:timeline:generic,application_display_name,str,a more human-friendly version of the package_identifier- such as 'Docker for Windows' or 'Microsoft Store'.
+windows:timeline:generic,description,str,this is an optional field- used to describe the action in the timeline view- and is usually populated with the path of the file currently open in the program described by package_identifier. Otherwise None.
+windows:timeline:generic,package_identifier,str,the package ID or path to the executable run. Depending on the program- this either looks like a path (for example- c:\python34\python.exe) or like a package name (for example Docker.DockerForWindows.Settings).
+windows:timeline:generic,start_time,dfdatetime.DateTimeValues,date and time the start of the activity.
+windows:timeline:user_engaged,active_duration_seconds,int,the number of seconds the user spent interacting with the program.
+windows:timeline:user_engaged,package_identifier,str,the package ID or location of the executable the user interacted with.
+windows:timeline:user_engaged,reporting_app,str,"the name of the application that reported the user's interaction. This is the name of a monitoring tool- for example ""ShellActivityMonitor""."
+windows:timeline:user_engaged,start_time,dfdatetime.DateTimeValues,date and time the start of the activity.
+windows:user_access_logging:clients,access_time,dfdatetime.DateTimeValues,last access date and time.
+windows:user_access_logging:clients,authenticated_username,str,domain/user account name performing the access.
+windows:user_access_logging:clients,client_name,str,client name- use unknown.
+windows:user_access_logging:clients,insert_time,dfdatetime.DateTimeValues,date and time the entry was first inserted into the table.
+windows:user_access_logging:clients,role_identifier,str,identifier of the service accessed.
+windows:user_access_logging:clients,role_name,str,Name of the service accessed.
+windows:user_access_logging:clients,source_ip_address,str,source IP address.
+windows:user_access_logging:clients,tenant_identifier,str,unique identifier of a tenant client.
+windows:user_access_logging:clients,total_accesses,int,Count of accesses for the year.
+windows:user_access_logging:dns,hostname,str,hostname.
+windows:user_access_logging:dns,ip_address,str,IP address.
+windows:user_access_logging:dns,last_seen_time,dfdatetime.DateTimeValues,date and time the hostname to IP address mapping was last observed.
+windows:user_access_logging:role_access,first_seen_time,dfdatetime.DateTimeValues,date and time the role was first observed to be used.
+windows:user_access_logging:role_access,last_seen_time,dfdatetime.DateTimeValues,date and time the role was last observed to be used.
+windows:user_access_logging:role_access,role_identifier,str,identifier of the role.
+windows:user_access_logging:role_access,role_name,str,name of the role.
+windows:user_access_logging:system_identity,creation_time,dfdatetime.DateTimeValues,date and time the system identity was created.
+windows:user_access_logging:system_identity,operating_system_build,int,operating system build.
+windows:user_access_logging:system_identity,system_dns_hostname,str,System hostname.
+windows:user_access_logging:system_identity,system_domain_name,str,System domain name.
+windows:user_access_logging:virtual_machines,bios_identifier,str,BIOS identifier.
+windows:user_access_logging:virtual_machines,creation_time,dfdatetime.DateTimeValues,date and time the virtual machine was created.
+windows:user_access_logging:virtual_machines,last_active_time,dfdatetime.DateTimeValues,date and time the virtual machine was last observed to be active.
+windows:user_access_logging:virtual_machines,serial_number,str,Serial number.
+windows:user_access_logging:virtual_machines,vm_identifier,str,identifier of the virtual machine.
+windows:volume:creation,creation_time,dfdatetime.DateTimeValues,volume creation date and time.
+windows:volume:creation,device_path,str,volume device path.
+windows:volume:creation,origin,str,origin of the event (event source)- for example the corresponding Prefetch file name.
+windows:volume:creation,serial_number,str,volume serial number.
+winrar:history,entries,str,archive history entries.
+winrar:history,key_path,str,Windows Registry key path.
+winrar:history,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+xchat:log:line,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+xchat:log:line,nickname,str,nickname.
+xchat:log:line,text,str,text sent by nickname or other text (server- messages- etc.).
+xchat:scrollback:line,added_time,dfdatetime.DateTimeValues,date and time the log entry was added.
+xchat:scrollback:line,nickname,str,nickname.
+xchat:scrollback:line,text,str,text sent by nickname service messages.
+zeitgeist:activity,offset,str,identifier of the row- from which the event data was extracted.
+zeitgeist:activity,query,str,SQL query that was used to obtain the event data.
+zeitgeist:activity,recorded_time,dfdatetime.DateTimeValues,date and time the entry was recorded.
+zeitgeist:activity,subject_uri,str,subject URI.
+syslog:ssh:login,authentication_method,str,authentication method.
+syslog:ssh:login,fingerprint,str,fingerprint.
+syslog:ssh:login,ip_address,str,IP address.
+syslog:ssh:login,last_written_time,dfdatetime.DateTimeValues,entry last written date and time.
+syslog:ssh:login,port,str,port.
+syslog:ssh:login,protocol,str,protocol.
+syslog:ssh:login,username,str,name of user the command was executed.

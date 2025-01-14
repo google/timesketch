@@ -20,6 +20,7 @@ import uuid
 import six
 
 import opensearchpy
+from flask import jsonify
 from flask import request
 from flask import abort
 from flask import current_app
@@ -35,10 +36,12 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+from timesketch.lib.aggregators import manager as aggregator_manager
 
 
 logger = logging.getLogger("timesketch.timeline_api")
@@ -54,7 +57,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         Returns:
             View in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -71,7 +74,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -97,7 +100,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                 "The timeline (searchindex id) needs to be an integer.",
             )
 
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
         if searchindex.get_status.status == "deleted":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -139,7 +142,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         else:
             metadata["created"] = False
             return_code = HTTP_STATUS_CODE_OK
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
@@ -197,11 +200,11 @@ class TimelineResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             timeline_id: Integer primary key for a timeline database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Timeline found with this ID.")
 
@@ -255,10 +258,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             timeline_id: Integer primary key for a timeline database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -353,11 +356,11 @@ class TimelineResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             timeline_id: Integer primary key for a timeline database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -433,6 +436,15 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     "Unable to close index: {0:s} - index not "
                     "found".format(searchindex.index_name)
                 )
+            except opensearchpy.RequestError as e:
+                error_msg = (
+                    "RequestError when closing index {0:s} - please try again in "
+                    "5 min or contact your admin. Error: {1:s}".format(
+                        searchindex.index_name, str(e)
+                    )
+                )
+                logger.error(error_msg)
+                abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)
 
             searchindex.set_status(status="archived")
             timeline.set_status(status="archived")
@@ -475,7 +487,7 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
 
         sketch = None
         if sketch_id:
-            sketch = Sketch.query.get_with_acl(sketch_id)
+            sketch = Sketch.get_with_acl(sketch_id)
             if not sketch:
                 abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -521,3 +533,100 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         utils.update_sketch_last_activity(sketch)
 
         return self.to_json(searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+# TODO(Issue 3200): Research more efficient ways to gather unique fields.
+class TimelineFieldsResource(resources.ResourceMixin, Resource):
+    """Resource to retrieve unique fields present in a timeline.
+
+    This resource aggregates data types within a timeline and then queries
+    OpenSearch to retrieve all unique fields present across those data types,
+    excluding default Timesketch fields.
+    """
+
+    @login_required
+    def get(self, sketch_id, timeline_id):
+        """Handles GET request to retrieve unique fields in a timeline.
+
+        Args:
+            sketch_id (int): The ID of the sketch.
+            timeline_id (int): The ID of the timeline.
+
+        Returns:
+            flask.wrappers.Response: A JSON response containing a list of
+                unique fields in the timeline, sorted alphabetically. Returns
+                an empty list if no fields are found or if there's an error.
+                Possible error codes: 400, 403, 404.
+        """
+
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        timeline = Timeline.get_by_id(timeline_id)
+        if not timeline:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch.id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "The timeline does not belong to the sketch.",
+            )
+
+        index_name = timeline.searchindex.index_name
+        timeline_fields = set()
+
+        # 1. Get distinct data types for the timeline using aggregation
+        aggregator_name = "field_bucket"
+        aggregator_parameters = {
+            "field": "data_type",
+            "limit": "10000",  # Get all data types
+        }
+
+        agg_class = aggregator_manager.AggregatorManager.get_aggregator(aggregator_name)
+        if not agg_class:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"Aggregator {aggregator_name} not found")
+
+        aggregator = agg_class(
+            sketch_id=sketch_id, indices=[index_name], timeline_ids=[timeline_id]
+        )
+        result_obj = aggregator.run(**aggregator_parameters)
+
+        if not result_obj:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Error running data type aggregation.")
+
+        data_types = sorted([bucket["data_type"] for bucket in result_obj.values])
+
+        # 2. For each data type, query for a single event to get fields
+        for data_type in data_types:
+            query_filter = {"indices": [timeline_id], "size": 1}
+
+            try:
+                result = self.datastore.search(
+                    sketch_id=sketch_id,
+                    query_string=f'data_type:"{data_type}"',
+                    query_filter=query_filter,
+                    query_dsl=None,
+                    indices=[index_name],
+                    timeline_ids=[timeline_id],
+                )
+            except ValueError as e:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+            if isinstance(result, dict) and result.get("hits", {}).get("hits", []):
+                event = result["hits"]["hits"][0]["_source"]
+                for field in event:
+                    if field not in [
+                        "datetime",
+                        "timestamp",
+                        "__ts_timeline_id",
+                    ]:
+                        timeline_fields.add(field)
+
+        return jsonify({"objects": sorted(list(timeline_fields))})

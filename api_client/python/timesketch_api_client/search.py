@@ -493,27 +493,34 @@ class Search(resource.SketchResource):
         """Execute a search request and store the results.
 
         Args:
-            file_name (str): optional file path to a filename that
+            file_name (str): Optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
-            count (bool): optional boolean that determines whether
+            count (bool): Optional boolean that determines whether
                 we want to execute the query or only count the
-                number of events that the query would produce.
+                number of events that the query would produce. If
+                set to True, the results will be stored in the
+                search object, and the number of events will be
+                returned.
+
+        Returns:
+            A dict with the search results or the total number of events
+            (if count=True) or None if saved to file.
         """
         query_filter = self.query_filter
         if not isinstance(query_filter, dict):
             raise ValueError("Unable to query with a query filter that isn't a dict.")
 
-        stop_size = self._max_entries
+        stop_size = self.max_entries
         scrolling = not bool(stop_size and (stop_size < self.DEFAULT_SIZE_LIMIT))
 
         if self.scrolling is not None:
             scrolling = self.scrolling
 
         form_data = {
-            "query": self._query_string,
+            "query": self.query_string,
             "filter": query_filter,
-            "dsl": self._query_dsl,
+            "dsl": self.query_dsl,
             "count": count,
             "fields": self.return_fields,
             "enable_scroll": scrolling,
@@ -531,14 +538,14 @@ class Search(resource.SketchResource):
         if file_name:
             with open(file_name, "wb") as fw:
                 fw.write(response.content)
-            return
+            return None
 
         response_json = error.get_response_json(response, logger)
 
         if count:
             meta = response_json.get("meta", {})
             self._total_elastic_size = meta.get("total_count", 0)
-            return
+            return meta.get("total_count", 0)
 
         scroll_id = response_json.get("meta", {}).get("scroll_id", "")
         form_data["scroll_id"] = scroll_id
@@ -546,7 +553,7 @@ class Search(resource.SketchResource):
         count = len(response_json.get("objects", []))
         total_count = count
         while count > 0:
-            if self._max_entries and total_count >= self._max_entries:
+            if self.max_entries and total_count >= self.max_entries:
                 break
 
             if not scroll_id:
@@ -579,6 +586,7 @@ class Search(resource.SketchResource):
             )
 
         self._raw_response = response_json
+        return response_json
 
     def add_chip(self, chip):
         """Add a chip to the ..."""
@@ -647,7 +655,7 @@ class Search(resource.SketchResource):
         if self._total_elastic_size:
             return self._total_elastic_size
 
-        self._execute_query(count=True)
+        _ = self._execute_query(count=True)
         return self._total_elastic_size
 
     def from_manual(  # pylint: disable=arguments-differ
@@ -692,12 +700,12 @@ class Search(resource.SketchResource):
         if query_filter:
             self.query_filter = query_filter
 
-        self._query_string = query_string
+        self.query_string = query_string
         self.query_dsl = query_dsl
-        self._return_fields = return_fields
+        self.return_fields = return_fields
 
         if max_entries:
-            self._max_entries = max_entries
+            self.max_entries = max_entries
 
         # TODO: Make use of search templates and aggregations.
         # self._searchtemplate = data.get('searchtemplate', 0)
@@ -740,14 +748,14 @@ class Search(resource.SketchResource):
             if "fields" in filter_dict:
                 fields = filter_dict.pop("fields")
                 return_fields = [x.get("field") for x in fields]
-                self._return_fields = ",".join(return_fields)
+                self.return_fields = ",".join(return_fields)
 
             indices = filter_dict.get("indices", [])
             if indices:
                 self.indices = indices
 
             self.query_filter = filter_dict
-        self._query_string = data.get("query_string", "")
+        self.query_string = data.get("query_string", "")
         self._resource_id = search_id
         self._searchtemplate = data.get("searchtemplate", 0)
         self._updated_at = data.get("updated_at", "")
@@ -816,10 +824,11 @@ class Search(resource.SketchResource):
                     new_indices.append(str(index))
                     continue
 
-            if index.isdigit():
-                if int(index) in valid_ids:
-                    new_indices.append(index)
-                    continue
+            if isinstance(index, str):
+                if index.isdigit():
+                    if int(index) in valid_ids:
+                        new_indices.append(index)
+                        continue
 
             # Is this a timeline name?
             if index in timeline_names:
@@ -1073,8 +1082,10 @@ class Search(resource.SketchResource):
 
     def to_dict(self):
         """Returns a dict with the respone of the query."""
-        if not self._raw_response:
+        if self._raw_response is None:
             self._execute_query()
+            if self._raw_response is None:
+                raise ValueError("No results to return.")
 
         return self._raw_response
 
@@ -1097,8 +1108,10 @@ class Search(resource.SketchResource):
 
     def to_pandas(self):
         """Returns a pandas DataFrame with the response of the query."""
-        if not self._raw_response:
-            self._execute_query()
+        if self._raw_response is None:
+            self._raw_response = self._execute_query()
+            if self._raw_response is None:
+                raise ValueError("No results to return.")
 
         return_list = []
         timelines = {t.id: t.name for t in self._sketch.list_timelines()}

@@ -13,7 +13,7 @@ analyzer.
 
 Timesketch analyzers are programs that run when new data is indexed, e.g. when
 you upload a new plaso storage file or when adding an existing index to a
-sketch. They can also be triggered manaully for a specific timeline from the
+sketch. They can also be triggered manually for a specific timeline from the
 Analyzer tab in the UI after the index is finished.
 You have access to a simple API that makes searching, commenting, tagging etc
 easy. Everything you can do in the UI you can do programmatically.
@@ -50,8 +50,8 @@ of the following.
 If you just want to extract a simple feature, e.g. want to extract a hostname or
 IP that is somewhere in the message field, or inside another attribute you don't
 have to write a new analyzer, you can take advantage of the feature_extraction
-analyzer. All you need to do is to edit the `features.yaml` file found here:
-https://github.com/google/timesketch/blob/master/data/features.yaml
+analyzer. All you need to do is to edit the `regex_features.yaml` file found here:
+https://github.com/google/timesketch/blob/master/data/regex_features.yaml
 
 An example extraction entry looks like this:
 

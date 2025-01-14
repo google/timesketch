@@ -1,0 +1,1011 @@
+# Config file for the windows event (winevt) plugin of the feature extraction
+# analyzer.
+# A winevt feature extraction definition looks like this:
+#
+# name:
+#
+#     source_name:            Type: list[str] | REQUIRED | case-insensitive
+#                             A list of source names to match against. Multiple
+#                             entries will be checked with OR.
+#
+#     provider_identifier:    Type: list[str] | OPTIONAL | case-insensitive
+#                             A list of provider identifiers to match against.
+#                             Multiple entries will be checked with OR.
+#
+#     event_version:          Type: int | REQUIRED
+#                             The event version to match against.
+#
+#     event_identifier:       Type: int | REQUIRED
+#                             The event identifier to match against.
+#
+#     references:             Type: list[str] | OPTIONAL
+#                             A list of references to provide as context and
+#                             source for the event mapping. E.g. a URL to the
+#                             official Microsoft documentation on the event.
+#
+#     mapping:                Type: list[dict] | REQUIRED
+#                             A list of dicts that define the new attribute name
+#                             and the string index of the event to extract the
+#                             value from. Additonally it can also contain an
+#                             alias list to add multiple attributes with
+#                             the same value but different names.
+#
+#         name:               Type: str | REQUIRED
+#                             The name of the new attribute to create.
+#
+#         string_index:       Type: int | REQUIRED | Starting at index 0
+#                             The string index of the event to extract the
+#                             value from. Based on the plaso extracted "strings"
+#                             attribute with Windows eventlog entries.
+#
+#         aliases:            Type: list[str] | OPTIONAL
+#                             A list of aliases to add additionally to the
+#                             offical name of the attribute. This can be used
+#                             to add different field names matching individual
+#                             field name ontologies. E.g. srcIP, domain, etc.
+#
+# For more details and examples of such an extraction check the Timesketch
+# documentation:
+#
+# https://timesketch.org/guides/analyzers/feature_extraction/
+#
+# ------------------------------------------------------------------------
+# 4624: An account was successfully logged on.
+## Windows Server 2008, Windows Vista
+security_4624_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
+  event_identifier: 4624
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 2
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 7
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 8
+    - name: logon_process_name
+      string_index: 9
+    - name: authentication_package_name
+      string_index: 10
+    - name: workstation_name
+      string_index: 11
+    - name: logon_guid
+      string_index: 12
+    - name: transmitted_services
+      string_index: 13
+    - name: lm_package_name
+      string_index: 14
+    - name: key_length
+      string_index: 15
+    - name: process_id
+      string_index: 16
+    - name: process_name
+      string_index: 17
+    - name: ip_address
+      string_index: 18
+    - name: ip_port
+      string_index: 19
+      aliases:
+        - port
+
+## Windows Server 2012, Windows 8
+security_4624_v1:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
+  event_identifier: 4624
+  event_version: 1
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 2
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 7
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 8
+    - name: logon_process_name
+      string_index: 9
+    - name: authentication_package_name
+      string_index: 10
+    - name: workstation_name
+      string_index: 11
+    - name: logon_guid
+      string_index: 12
+    - name: transmitted_services
+      string_index: 13
+    - name: lm_package_name
+      string_index: 14
+    - name: key_length
+      string_index: 15
+    - name: process_id
+      string_index: 16
+    - name: process_name
+      string_index: 17
+    - name: ip_address
+      string_index: 18
+    - name: ip_port
+      string_index: 19
+      aliases:
+        - port
+    - name: impersonation_level
+      string_index: 20
+
+## Windows 10
+security_4624_v2:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
+  event_identifier: 4624
+  event_version: 2
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 2
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 7
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 8
+    - name: logon_process_name
+      string_index: 9
+    - name: authentication_package_name
+      string_index: 10
+    - name: workstation_name
+      string_index: 11
+    - name: logon_guid
+      string_index: 12
+    - name: transmitted_services
+      string_index: 13
+    - name: lm_package_name
+      string_index: 14
+    - name: key_length
+      string_index: 15
+    - name: process_id
+      string_index: 16
+    - name: process_name
+      string_index: 17
+    - name: ip_address
+      string_index: 18
+    - name: ip_port
+      string_index: 19
+      aliases:
+        - port
+    - name: impersonation_level
+      string_index: 20
+    - name: restricted_admin_mode
+      string_index: 21
+    - name: target_outbound_user_name
+      string_index: 22
+    - name: target_outbound_domain_name
+      string_index: 23
+    - name: virtual_account
+      string_index: 24
+    - name: target_linked_logon_id
+      string_index: 25
+    - name: elevated_token
+      string_index: 26
+
+# 4625: An account failed to log on.
+security_4625_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
+  event_identifier: 4625
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 2
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: status
+      string_index: 7
+    - name: failure_reason
+      string_index: 8
+    - name: sub_status
+      string_index: 9
+    - name: logon_type
+      string_index: 10
+    - name: logon_process_name
+      string_index: 11
+    - name: authentication_package_name
+      string_index: 12
+    - name: workstation_name
+      string_index: 13
+    - name: transmitted_services
+      string_index: 14
+    - name: lm_package_name
+      string_index: 15
+    - name: key_length
+      string_index: 16
+    - name: process_id
+      string_index: 17
+    - name: process_name
+      string_index: 18
+    - name: ip_address
+      string_index: 19
+    - name: ip_port
+      string_index: 20
+      aliases:
+        - port
+
+# 4634: An account was logged off.
+security_4634_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4634
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4634
+  mapping:
+    - name: target_user_sid
+      string_index: 0
+    - name: target_user_name
+      string_index: 1
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 2
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 3
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 4
+
+# 4648: A logon was attempted using explicit credentials.
+security_4648_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4648
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4648
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 2
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 3
+    - name: logon_guid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_guid
+      string_index: 7
+    - name: target_server_name
+      string_index: 8
+    - name: target_info
+      string_index: 9
+    - name: process_id
+      string_index: 10
+    - name: process_name
+      string_index: 11
+    - name: ip_address
+      string_index: 12
+    - name: ip_port
+      string_index: 13
+      aliases:
+        - port
+
+# 4688: A new process has been created.
+## Windows Server 2008, Windows Vista.
+security_4688_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4688
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_logon_id
+      string_index: 2
+    - name: new_process_id
+      string_index: 3
+    - name: new_process_name
+      string_index: 4
+    - name: token_elevation_type
+      string_index: 5
+    - name: process_id
+      string_index: 6
+
+## Windows Server 2012 R2, Windows 8.1.
+security_4688_v1:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4688
+  event_version: 1
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_logon_id
+      string_index: 2
+    - name: new_process_id
+      string_index: 3
+    - name: new_process_name
+      string_index: 4
+    - name: token_elevation_type
+      string_index: 5
+    - name: process_id
+      string_index: 6
+    - name: command_line
+      string_index: 7
+
+## Windows 10
+security_4688_v2:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4688
+  event_version: 2
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 2
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 3
+    - name: new_process_id
+      string_index: 4
+      aliases:
+        - process_id
+    - name: new_process_name
+      string_index: 5
+      aliases:
+        - process_name
+    - name: token_elevation_type
+      string_index: 6
+    - name: process_id
+      string_index: 7
+    - name: command_line
+      string_index: 8
+    - name: target_user_sid
+      string_index: 9
+    - name: target_user_name
+      string_index: 10
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 11
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 12
+      aliases:
+        - logon_id
+    - name: parent_process_name
+      string_index: 13
+    - name: mandatory_level
+      string_index: 14
+
+# 4720: A user account was created.
+security_4720_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4720
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4720
+  mapping:
+    - name: target_user_name
+      string_index: 0
+    - name: target_domain_name
+      string_index: 1
+    - name: subject_user_sid
+      string_index: 2
+    - name: subject_user_name
+      string_index: 3
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 4
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 5
+    - name: privilege_list
+      string_index: 6
+    - name: sam_account_name
+      string_index: 7
+      aliases:
+        - username
+    - name: display_name
+      string_index: 8
+    - name: user_principal_name
+      string_index: 9
+    - name: home_directory
+      string_index: 10
+    - name: home_path
+      string_index: 11
+    - name: script_path
+      string_index: 12
+    - name: profile_path
+      string_index: 13
+    - name: user_workstations
+      string_index: 14
+    - name: password_last_set
+      string_index: 15
+    - name: account_expires
+      string_index: 16
+    - name: primary_group_id
+      string_index: 17
+    - name: allowed_to_delegate_to
+      string_index: 18
+    - name: old_uac_value
+      string_index: 19
+    - name: new_uac_value
+      string_index: 20
+    - name: user_account_control
+      string_index: 21
+    - name: user_parameters
+      string_index: 22
+    - name: sid_history
+      string_index: 23
+    - name: logon_hours
+      string_index: 24
+
+# 4728: A member was added to a security-enabled global group
+security_4728_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4728
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-security-group-management
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4732
+  mapping:
+    - name: member_name
+      string_index: 0
+    - name: member_sid
+      string_index: 1
+    - name: target_user_name
+      string_index: 2
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 3
+      aliases:
+        - domain
+    - name: target_sid
+      string_index: 4
+    - name: subject_user_sid
+      string_index: 5
+    - name: subject_user_name
+      string_index: 6
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 7
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 8
+    - name: privilege_list
+      string_index: 9
+
+# 4732: A member was added to a security-enabled local group
+security_4732_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
+  event_identifier: 4732
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4732
+  mapping:
+    - name: member_name
+      string_index: 0
+    - name: member_sid
+      string_index: 1
+    - name: target_user_name
+      string_index: 2
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 3
+      aliases:
+        - domain
+    - name: target_sid
+      string_index: 4
+    - name: subject_user_sid
+      string_index: 5
+    - name: subject_user_name
+      string_index: 6
+      aliases:
+        - subject_username
+    - name: subject_domain_name
+      string_index: 7
+      aliases:
+        - subject_domain
+    - name: subject_logon_id
+      string_index: 8
+    - name: privilege_list
+      string_index: 9
+
+# 7045: A new service was installed in the system.
+system_7045_v0:
+  source_name:
+    - 'Service Control Manager'
+  provider_identifier:
+    - '{555908d1-a6d7-4695-8e1e-26931d2012f4}'
+  event_identifier: 7045
+  event_version: 0
+  references:
+    - https://windows-event-explorer.app.elstc.co/publisher/Service%20Control%20Manager/event/7045/v0
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697
+  mapping:
+    - name: service_name
+      string_index: 0
+    - name: image_path
+      string_index: 1
+    - name: service_type
+      string_index: 2
+    - name: start_type
+      string_index: 3
+    - name: account_name
+      string_index: 4
+
+# Microsoft-Windows-TerminalServices-LocalSessionManager/Operational Events
+## Event ID 21: Remote Desktop Services: Session logon succeeded
+terminal_services_21_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 21
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee891131(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: source_network_address
+      string_index: 2
+      aliases:
+        - ip_address
+
+## Event ID 23: Remote Desktop Services: Session logoff succeeded
+terminal_services_23_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 23
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee907364(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+
+## Event ID 24: Remote Desktop Services: Session has been disconnected
+terminal_services_24_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 24
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee907330(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: source_network_address
+      string_index: 2
+      aliases:
+        - ip_address
+
+## Event ID 25: Remote Desktop Services: Session reconnection succeeded
+terminal_services_25_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 25
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee891126(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: source_network_address
+      string_index: 2
+      aliases:
+        - ip_address
+
+## Event ID 39: Session <X> has been disconnected by session <Y>
+terminal_services_39_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 39
+  event_version: 0
+  references:
+    - "https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/#:~:text=NOT%20%E2%80%9CLOCAL%E2%80%9D.-,Event%20ID%3A%2039,-Provider%20Name%3A"
+  mapping:
+    - name: target_session_id
+      string_index: 0
+    - name: source_session_id
+      string_index: 1
+
+## Event ID 40: Session <X> has been disconnected, reason code <Z>
+terminal_services_40_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 40
+  event_version: 0
+  references:
+    - "https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/#:~:text=the%20RDP%20session.-,Event%20ID%3A%2040,-Provider%20Name%3A"
+  mapping:
+    - name: session_id
+      string_index: 0
+    - name: reason
+      string_index: 1
+
+# Microsoft-Windows-Bits-Client Events
+## Event ID 3: The BITS service created a new job.
+### Version 0 is used in win2k08
+bits_client_3_v0:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/cc734602(v=ws.10)"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_owner
+      string_index: 1
+
+### Version 1
+bits_client_3_v0:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 1
+  references:
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+
+### Version 2 is used in win2k16
+bits_client_3_v2:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 2
+  references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+    - name: process_path
+      string_index: 3
+    - name: process_id
+      string_index: 4
+
+### Version 3 is used in win2k19 and win2k22.
+bits_client_3_v3:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 3
+  event_version: 3
+  references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+    - name: process_path
+      string_index: 3
+    - name: process_id
+      string_index: 4
+    - name: client_process_start_key
+      string_index: 5
+
+## EventID 4: BITS transfer job is complete.
+### Version 1 is used by win2k8 to win2k22
+bits_client_4_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 4
+  event_version: 1
+  references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: job_title
+      string_index: 1
+    - name: job_id
+      string_index: 2
+    - name: job_owner
+      string_index: 3
+    - name: file_count
+      string_index: 4
+    - name: bytes_transferred
+      string_index: 5
+      aliases:
+        - bytes_out
+    - name: bytes_transferred_from_peer
+      string_index: 6
+      aliases:
+        - bytes_in
+
+## Event ID 59: BITS started the transfer job.
+### Version 1 is used in win2k16, win2k19, and win2k22
+bits_client_59_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 59
+  event_version: 1
+  references:
+    - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: transfer_id
+      string_index: 0
+    - name: name
+      string_index: 1
+    - name: id
+      string_index: 2
+    - name: url
+      string_index: 3
+    - name: peer
+      string_index: 4
+    - name: file_time
+      string_index: 5
+    - name: file_length
+      string_index: 6
+    - name: bytes_total
+      string_index: 7
+    - name: bytes_transferred
+      string_index: 8
+      aliases:
+        - bytes_out
+    - name: bytes_transferred_from_peer
+      string_index: 9
+      aliases:
+        - bytes_in
+
+## Event ID 60: BITS stopped transferring the transfer job.
+bits_client_60_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 60
+  event_version: 1
+  references:
+    - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: transfer_id
+      string_index: 0
+    - name: name
+      string_index: 1
+    - name: id
+      string_index: 2
+    - name: url
+      string_index: 3
+    - name: peer
+      string_index: 4
+    - name: hr
+      string_index: 5
+    - name: file_time
+      string_index: 6
+      aliases:
+        - file_create_time
+    - name: file_length
+      string_index: 7
+      aliases:
+        - file_size
+    - name: bytes_total
+      string_index: 8
+    - name: bytes_transferred
+      string_index: 9
+      aliases:
+        - bytes_out
+    - name: proxy
+      string_index: 10
+    - name: peer_protocol_flag
+      string_index: 11
+    - name: bytes_transferred_from_peer
+      string_index: 12
+      aliases:
+        - bytes_in
+    - name: additional_info_hr
+      string_index: 13
+    - name: peer_context_info
+      string_index: 14
+    - name: bandwidth_limit
+      string_index: 15
+    - name: ignore_bandwidth_limits_on_lan
+      string_index: 16
+

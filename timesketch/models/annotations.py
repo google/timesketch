@@ -27,6 +27,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
@@ -59,50 +60,17 @@ class Label(BaseAnnotation):
 
     label = Column(Unicode(255))
 
-    def __init__(self, user, label):
-        """Initialize the model.
-
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            name: Name of the label
-        """
-        super().__init__()
-        self.user = user
-        self.label = label
-
 
 class Comment(BaseAnnotation):
     """A comment annotation."""
 
     comment = Column(UnicodeText())
 
-    def __init__(self, user, comment):
-        """Initialize the model.
-
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            body: The body if the comment
-        """
-        super().__init__()
-        self.user = user
-        self.comment = comment
-
 
 class Status(BaseAnnotation):
     """A status annotation."""
 
     status = Column(Unicode(255))
-
-    def __init__(self, user, status):
-        """Initialize the model.
-
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            status: The type of status (string, e.g. open)
-        """
-        super().__init__()
-        self.user = user
-        self.status = status
 
 
 class GenericAttribute(BaseAnnotation):
@@ -112,23 +80,6 @@ class GenericAttribute(BaseAnnotation):
     value = Column(UnicodeText())
     ontology = Column(UnicodeText())
     description = Column(UnicodeText())
-
-    def __init__(self, user, name, value, ontology, description):
-        """Initialize the Attribute object.
-
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            name (str): The name of the attribute.
-            value (str):  The value of the attribute
-            ontology (str): The ontology (type) of the value, The values that
-                can be used are defined in timesketch/lib/ontology.py.
-        """
-        super().__init__()
-        self.user = user
-        self.name = name
-        self.value = value
-        self.ontology = ontology
-        self.description = description
 
 
 class LabelMixin(object):
@@ -180,6 +131,7 @@ class LabelMixin(object):
         if self.has_label(label):
             return
         self.labels.append(self.Label(user=user, label=label))
+        db_session.add(self)
         db_session.commit()
 
     def remove_label(self, label):
@@ -192,6 +144,7 @@ class LabelMixin(object):
             if label_obj.label.lower() != label.lower():
                 continue
             self.labels.remove(label_obj)
+        db_session.add(self)
         db_session.commit()
 
     def has_label(self, label):
@@ -271,6 +224,21 @@ class CommentMixin(object):
         )
         return relationship(self.Comment)
 
+    @classmethod
+    def get_with_comments(cls, **kwargs):
+        """Eagerly loads comments for a given object query using subquery.
+
+        subqueryload is more efficient than joinedload for many-to-one
+        references on large datasets.
+
+        Args:
+            kwargs: Keyword arguments passed to filter_by.
+
+        Returns:
+            List of objects with comments eagerly loaded.
+        """
+        return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
+
     def remove_comment(self, comment_id):
         """Remove a comment from an event.
 
@@ -280,6 +248,7 @@ class CommentMixin(object):
         for comment_obj in self.comments:
             if comment_obj.id == int(comment_id):
                 self.comments.remove(comment_obj)
+                db_session.add(self)
                 db_session.commit()
                 return True
 
@@ -308,6 +277,7 @@ class CommentMixin(object):
         for comment_obj in self.comments:
             if comment_obj.id == int(comment_id):
                 comment_obj.comment = comment
+                db_session.add(self)
                 db_session.commit()
                 return comment_obj
 
@@ -362,6 +332,7 @@ class StatusMixin(object):
         for _status in self.status:
             self.status.remove(_status)
         self.status.append(self.Status(user=None, status=status))
+        db_session.add(self)
         db_session.commit()
 
     @property
@@ -428,6 +399,7 @@ class GenericAttributeMixin(object):
                 description=description,
             )
         )
+        db_session.add(self)
         db_session.commit()
 
     @property

@@ -1,4 +1,5 @@
 """Tests for BrowserSearchPlugin."""
+
 from __future__ import unicode_literals
 
 import mock
@@ -28,14 +29,12 @@ class TestBrowserSearchPlugin(BaseTest):
         self.assertEqual(github_result, "foobar")
 
         drive_search = (
-            "https://drive.google.com/drive/search" "?q=my%20secret%20stuff&ln=en"
+            "https://drive.google.com/drive/search?q=my%20secret%20stuff&ln=en"
         )
         drive_result = analyzer._extract_search_query_from_url(drive_search, "q")
         self.assertEqual(drive_result, "my secret stuff")
 
-        google_search = (
-            "https://subsite.google.is/search?q=my%20sec" "ret%20stuff&ln=en"
-        )
+        google_search = "https://subsite.google.is/search?q=my%20secret%20stuff&ln=en"
         google_result = analyzer._extract_search_query_from_url(google_search, "q")
         self.assertEqual(google_result, "my secret stuff")
         google_search = "https://google.com/search?q=my%20secret%20stuff&ln=en"
@@ -58,7 +57,7 @@ class TestBrowserSearchPlugin(BaseTest):
         self.assertEqual(duck_result, "from:me@stuff.com")
 
         group_search = (
-            "https://groups.google.com/a/mydomain/forum/#!search" "/secret/somestuff"
+            "https://groups.google.com/a/mydomain/forum/#!search/secret/somestuff"
         )
         group_result = analyzer._extract_urlpart_search_query(group_search)
         self.assertEqual(group_result, "secret")

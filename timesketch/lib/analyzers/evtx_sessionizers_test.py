@@ -60,8 +60,8 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_get_event_data(self):
         """Test getEventData returns the correct values."""
-        user = User("test_user")
-        sketch = Sketch("test_sketch", "description", user)
+        user = User(username="test_user", name="test user")
+        sketch = Sketch(name="test_sketch", description="description", user=user)
         label = sketch.Label(label="Test label", user=user)
         sketch.labels.append(label)
 

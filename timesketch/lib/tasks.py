@@ -15,39 +15,30 @@
 
 from __future__ import unicode_literals
 
-import os
-import logging
-import subprocess
-import traceback
-import re
-
 import codecs
+from hashlib import sha1
 import io
 import json
-from hashlib import sha1
+import logging
+import os
+import subprocess
+import traceback
 import six
 import yaml
-
-from opensearchpy.exceptions import NotFoundError
-from opensearchpy.exceptions import RequestError
-from flask import current_app
 
 from celery import chain
 from celery import group
 from celery import signals
+from flask import current_app
+from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import RequestError
 from sqlalchemy import create_engine
-
-# To be able to determine plaso's version.
-try:
-    import plaso
-except ImportError:
-    plaso = None
-
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
 from timesketch.lib import datafinder
 from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
@@ -58,7 +49,17 @@ from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import InvestigativeQuestionApproach
+from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.models.user import User
+
+
+# To be able to determine plaso's version.
+try:
+    import plaso
+    from plaso.cli import pinfo_tool
+except ImportError:
+    plaso = None
 
 
 logger = logging.getLogger("timesketch.tasks")
@@ -167,10 +168,12 @@ def _close_index(index_name, data_store, timeline_id):
 
 def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
+
     Args:
         timeline_id: Timeline ID.
     """
-    timeline = Timeline.query.get(timeline_id)
+    # TODO: Clean-up function, since neither status nor error_msg are used!
+    timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
         return
@@ -194,9 +197,35 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     db_session.add(timeline)
     db_session.commit()
 
+    # Refresh the index so it is searchable for the analyzers right away.
+    datastore = OpenSearchDataStore(
+        host=current_app.config["OPENSEARCH_HOST"],
+        port=current_app.config["OPENSEARCH_PORT"],
+    )
+    try:
+        datastore.client.indices.refresh(index=timeline.searchindex.index_name)
+    except NotFoundError:
+        logger.error(
+            "Unable to refresh index: {0:s}, not found, "
+            "removing from list.".format(timeline.searchindex.index_name)
+        )
+
+    # If status is set to ready, check for analyzers to execute.
+    if timeline.get_status.status == "ready":
+        analyzer_manager = DFIQAnalyzerManager(sketch=timeline.sketch)
+        sessions = analyzer_manager.trigger_analyzers_for_timelines(
+            timelines=[timeline]
+        )
+        if sessions:
+            logger.info(
+                "Executed %d analyzers on the new timeline: '%s'",
+                len(sessions),
+                timeline.name,
+            )
+
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
@@ -211,7 +240,7 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_file_events)
@@ -324,6 +353,43 @@ def build_index_pipeline(
     return chain(index_task)
 
 
+def _create_question_conclusion(user_id, approach_id, analysis_results, analysis):
+    """Creates a QuestionConclusion for a user and approach.
+
+    Args:
+        user_id (int): The user ID.
+        approach_id (int):  The approach ID.
+        conclusion (str): The actual conclusion of the analysis.
+
+    Returns:
+        InvestigativeQuestionConclusion: A QuestionConclusion object or None.
+    """
+    approach = InvestigativeQuestionApproach.get_by_id(approach_id)
+    if not approach:
+        logging.error("No approach with ID '%d' found.", approach_id)
+        return None
+
+    if not analysis_results:
+        logging.error(
+            "Can't create an InvestigativeQuestionConclusion without any "
+            "conclusion or analysis_results provided."
+        )
+        return None
+
+    # TODO: (jkppr) Parse the analysis_results and extract added stories,
+    # searches, graphs, aggregations and add to the object!
+    question_conclusion = InvestigativeQuestionConclusion(
+        conclusion=analysis_results,
+        investigativequestion_id=approach.investigativequestion_id,
+        automated=True,
+    )
+    question_conclusion.analysis.append(analysis)
+    db_session.add(question_conclusion)
+    db_session.commit()
+
+    return question_conclusion if question_conclusion else None
+
+
 def build_sketch_analysis_pipeline(
     sketch_id,
     searchindex_id,
@@ -332,6 +398,8 @@ def build_sketch_analysis_pipeline(
     analyzer_kwargs=None,
     analyzer_force_run=False,
     timeline_id=None,
+    include_dfiq=False,
+    approach_id=None,
 ):
     """Build a pipeline for sketch analysis.
 
@@ -349,13 +417,14 @@ def build_sketch_analysis_pipeline(
         analyzer_kwargs (dict): Arguments to the analyzers.
         analyzer_force_run (bool): If true then force the analyzer to run.
         timeline_id (int): Optional int of the timeline to run the analyzer on.
+        include_dfiq (bool): If trie then include dfiq analyzers in the task.
+        approach_id (int): Optional ID of the approach triggering the analyzer.
 
     Returns:
         A tuple with a Celery group with analysis tasks or None if no analyzers
         are enabled and an analyzer session ID.
     """
     tasks = []
-
     if not analyzer_names:
         analyzer_names = current_app.config.get("AUTO_SKETCH_ANALYZERS", [])
         if not analyzer_kwargs:
@@ -369,21 +438,22 @@ def build_sketch_analysis_pipeline(
         analyzer_kwargs = current_app.config.get("ANALYZERS_DEFAULT_KWARGS", {})
 
     if user_id:
-        user = User.query.get(user_id)
+        user = User.get_by_id(user_id)
     else:
         user = None
 
-    sketch = Sketch.query.get(sketch_id)
-    analysis_session = AnalysisSession(user, sketch)
+    sketch = Sketch.get_by_id(sketch_id)
+    analysis_session = AnalysisSession(user=user, sketch=sketch)
+    db_session.add(analysis_session)
 
-    analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
+    analyzers = manager.AnalysisManager.get_analyzers(analyzer_names, include_dfiq)
     for analyzer_name, analyzer_class in analyzers:
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
-        searchindex = SearchIndex.query.get(searchindex_id)
+        searchindex = SearchIndex.get_by_id(searchindex_id)
 
         timeline = None
         if timeline_id:
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         if not timeline:
             timeline = Timeline.query.filter_by(
@@ -435,11 +505,12 @@ def build_sketch_analysis_pipeline(
                 user=user,
                 sketch=sketch,
                 timeline=timeline,
+                approach_id=approach_id,
             )
             analysis.add_attribute(name="kwargs_hash", value=kwargs_list_hash)
             analysis.set_status("PENDING")
-            analysis_session.analyses.append(analysis)
             db_session.add(analysis)
+            analysis_session.analyses.append(analysis)
             db_session.commit()
 
             tasks.append(
@@ -451,7 +522,6 @@ def build_sketch_analysis_pipeline(
                     **kwargs,
                 )
             )
-
     # Commit the analysis session to the database.
     if len(analysis_session.analyses) > 0:
         db_session.add(analysis_session)
@@ -511,7 +581,7 @@ def run_email_result_task(index_name, sketch_id=None):
             return ""
 
         if sketch_id:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
 
         subject = "Timesketch: [{0:s}] is ready".format(searchindex.name)
 
@@ -567,6 +637,19 @@ def run_sketch_analyzer(
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info("[{0:s}] result: {1:s}".format(analyzer_name, result))
+    if hasattr(analyzer_class, "IS_DFIQ_ANALYZER") and analyzer_class.IS_DFIQ_ANALYZER:
+        analysis = Analysis.get_by_id(analysis_id)
+        user_id = analysis.user.id
+        approach_id = analysis.approach_id
+        question_conclusion = _create_question_conclusion(
+            user_id, approach_id, result, analysis
+        )
+        if question_conclusion:
+            logger.info(
+                '[{0:s}] added a conclusion to dfiq: "{1:s}"'.format(
+                    analyzer_name, question_conclusion.investigativequestion.name
+                )
+            )
     return index_name
 
 
@@ -657,35 +740,20 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     message = "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})"
     logger.info(message.format(timeline_name, index_name, source_type))
 
+    # Run pinfo on storage file
     try:
-        pinfo_path = current_app.config["PINFO_PATH"]
-    except KeyError:
-        pinfo_path = "pinfo.py"
-
-    cmd = [
-        pinfo_path,
-        "--output-format",
-        "json",
-        "--sections",
-        "events",
-        file_path,
-    ]
-
-    # Run pinfo.py
-    try:
-        command = subprocess.run(cmd, capture_output=True, check=True)
-        storage_counters_json = command.stdout.decode("utf-8")
-        storage_counters = json.loads(re.sub(r"^{, ", r"{", storage_counters_json))
-        total_file_events = (
-            storage_counters.get("storage_counters", {}).get("parsers", {}).get("total")
+        pinfo = pinfo_tool.PinfoTool()
+        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
+            file_path
         )
+        storage_counters = (
+            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
+                storage_reader
+            )
+        )
+        total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
-    except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.decode("utf-8")
-        _set_datasource_total_events(timeline_id, file_path, total_file_events=0)
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        raise
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
@@ -969,7 +1037,7 @@ def find_data_task(
     data_finder.set_rule(data_finder_dict.get(rule_name))
     data_finder.set_timeline_ids(timeline_ids)
 
-    sketch = Sketch.query.get(sketch_id)
+    sketch = Sketch.get_by_id(sketch_id)
     indices = set()
     for timeline in sketch.active_timelines:
         if timeline.id not in timeline_ids:

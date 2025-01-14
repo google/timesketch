@@ -41,11 +41,20 @@ class ResourceMixin(object):
     # Schemas for database model resources
     group_fields = {"name": fields.String}
 
+    user_profile_fields = {
+        "picture_url": fields.String,
+        "picture_filename": fields.String,
+    }
+
     user_fields = {
+        "id": fields.Integer,
         "username": fields.String,
+        "name": fields.String,
+        "email": fields.String,
         "admin": fields.Boolean,
         "active": fields.Boolean,
         "groups": fields.Nested(group_fields),
+        "profile": fields.Nested(user_profile_fields),
     }
 
     aggregation_fields = {
@@ -275,6 +284,8 @@ class ResourceMixin(object):
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
+        "dfiq_identifier": fields.String,
+        "uuid": fields.String,
         "spec_json": fields.String,
         "user": fields.Nested(user_fields),
         "approaches": fields.List(fields.Nested(approach_fields)),
@@ -288,6 +299,8 @@ class ResourceMixin(object):
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
+        "dfiq_identifier": fields.String,
+        "uuid": fields.String,
         "spec_json": fields.String,
         "user": fields.Nested(user_fields),
         "questions": fields.List(fields.Nested(question_fields)),
@@ -306,6 +319,7 @@ class ResourceMixin(object):
         "display_name": fields.String,
         "description": fields.String,
         "dfiq_identifier": fields.String,
+        "uuid": fields.String,
         "spec_json": fields.String,
         "user": fields.Nested(user_fields),
         "facets": fields.List(fields.Nested(facet_fields)),
@@ -336,6 +350,7 @@ class ResourceMixin(object):
         "searchtemplate": searchtemplate_fields,
         "view": view_fields,
         "user": user_fields,
+        "userprofile": user_profile_fields,
         "graph": graph_fields,
         "graphcache": graphcache_fields,
         "group": group_fields,
@@ -345,7 +360,7 @@ class ResourceMixin(object):
         "event_label": label_fields,
         "Investigativequestionapproach": approach_fields,
         "investigativequestionconclusion": question_conclusion_fields,
-        "investigative_question": question_fields,
+        "investigativequestion": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
         "sigmarule": sigmarule_fields,

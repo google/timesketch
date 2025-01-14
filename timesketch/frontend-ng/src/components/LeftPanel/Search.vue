@@ -14,9 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
+    <router-link :to="{ name: 'Explore', params: { sketchId: sketch.id } }">
+      <v-icon left>mdi-magnify</v-icon>
+      <div style="height: 1px"></div>
+    </router-link>
+  </div>
+
+  <div v-else>
     <router-link
-      :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+      :to="{ name: 'Explore', params: { sketchId: sketch.id } }"
       custom
       v-slot="{ navigate }"
       class="pa-4"
@@ -31,7 +38,7 @@ limitations under the License.
       "
       style="cursor: pointer"
     >
-      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon left>mdi-magnify</v-icon> Search</div>
+      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon left>mdi-magnify</v-icon>Search</div>
     </router-link>
     <v-divider></v-divider>
   </div>
@@ -39,9 +46,18 @@ limitations under the License.
 
 <script>
 export default {
+  props: {
+    iconOnly: Boolean,
+  },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     isExploreRoute() {
       return this.$route.name === 'Explore'
+    },
+    sketchId() {
+      return this.$store.state.sketch.id
     },
   },
 }

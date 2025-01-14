@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
-        python-version: ['3.8', '3.10']
+        python-version: ['3.9', '3.10']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -22,17 +22,19 @@ jobs:
         run: |
           pip install pipenv
           pipenv install -d
-          pipenv install -r test_requirements.txt
+          pipenv run pip install -r test_requirements.txt
+      - name: Check pytest installation
+        run: pipenv run pip show pytest
       - name: Run unit tests
         run: |
-          pipenv run python run_tests.py
+          pipenv run python3 run_tests.py
 
   # Frontend tests (VueJS)
   VueJS:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: timesketch/frontend
+        working-directory: timesketch/frontend-ng
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
@@ -45,8 +47,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
         run: |
-          sudo apt install yarn npm --no-install-recommends
           yarn install
 
       - name: Run unit tests with yarn
-        run: yarn run test:unit
+        run: yarn run test

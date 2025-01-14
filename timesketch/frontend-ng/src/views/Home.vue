@@ -25,7 +25,6 @@ limitations under the License.
       <span style="font-size: 1.2em">timesketch</span>
 
       <v-spacer></v-spacer>
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
         <span class="white--text">{{ currentUser | initialLetter }}</span>
       </v-avatar>
@@ -33,7 +32,7 @@ limitations under the License.
         <template v-slot:activator="{ on, attrs }">
           <v-avatar>
             <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-dots-vertical</v-icon>
+              <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
             </v-btn>
           </v-avatar>
         </template>
@@ -46,6 +45,14 @@ limitations under the License.
                 </v-list-item-icon>
                 <v-list-item-content>
                   <v-list-item-title>Toggle theme</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <v-list-item v-on:click="switchUI">
+                <v-list-item-icon>
+                  <v-icon>mdi-view-dashboard-outline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Use the old UI</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
 
@@ -80,12 +87,27 @@ limitations under the License.
                 <h3>New sketch</h3>
                 <br />
                 <v-form @submit.prevent="createSketch()">
-                  <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
+                  <v-text-field
+                    v-model="sketchForm.name"
+                    outlined
+                    dense
+                    placeholder="Name your sketch"
+                    autofocus
+                    clearable
+                    :rules="sketchNameRules"
+                  >
                   </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="createSketchDialog = false"> Cancel </v-btn>
-                    <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>
+                    <v-btn
+                      :disabled="!sketchForm.name || sketchForm.name.length > 255"
+                      @click="createSketch()"
+                      color="primary"
+                      text
+                    >
+                      Create
+                    </v-btn>
                   </v-card-actions>
                 </v-form>
               </v-card>
@@ -102,8 +124,8 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import TsSketchList from '../components/SketchList'
+import ApiClient from '../utils/RestApiClient.js'
+import TsSketchList from '../components/SketchList.vue'
 
 export default {
   components: { TsSketchList },
@@ -114,6 +136,10 @@ export default {
       },
       createSketchDialog: false,
       scenarioTemplates: [],
+      sketchNameRules: [
+        (v) => !!v || 'Sketch name is required.',
+        (v) => (v && v.length <= 255) || 'Sketch name is too long.',
+      ],
     }
   },
   computed: {

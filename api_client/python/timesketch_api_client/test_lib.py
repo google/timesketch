@@ -47,6 +47,7 @@ def mock_session():
         # pylint: disable=unused-argument
         def post(self, *args, **kwargs):
             """Mock POST request handler."""
+            kwargs["method"] = "POST"
             if self._post_done:
                 return mock_response(*args, empty=True)
             return mock_response(*args, **kwargs)
@@ -640,7 +641,133 @@ def mock_response(*args, **kwargs):
 
     aggregation_group = {"meta": {"command": "list_groups"}, "objects": []}
 
-    # Register API endpoints to the correct mock response data.
+    mock_sketch_scenario_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                    "description": "Scenario description!",
+                    "dfiq_identifier": "S0001",
+                    "display_name": "Test Scenario",
+                    "id": 1,
+                    "name": "Test Scenario",
+                }
+            ]
+        ],
+    }
+
+    mock_scenario_response = {
+        "meta": {},
+        "objects": [
+            {
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                "description": "Scenario description!",
+                "dfiq_identifier": "S0001",
+                "display_name": "Test Scenario",
+                "id": 1,
+                "name": "Test Scenario",
+            }
+        ],
+    }
+
+    mock_scenario_templates_response = {
+        "objects": [
+            {
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                "child_ids": ["F0001", "F0002"],
+                "description": "Scenario description!",
+                "id": "S0001",
+                "name": "Test Scenario",
+                "parent_ids": [],
+                "tags": ["test"],
+            },
+            {
+                "uuid": "1234a567-123d-b89c-e45f-g6h7ijk8l910",
+                "child_ids": ["F1007"],
+                "description": "Scenario description 2!",
+                "id": "S0002",
+                "name": "Test Scenario 2",
+                "parent_ids": [],
+                "tags": [],
+            },
+        ]
+    }
+
+    mock_sketch_questions_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "approaches": [
+                        {
+                            "description": "Test Approach Description",
+                            "display_name": "Test Approach",
+                            "id": 26,
+                            "name": "Test Approach",
+                            "search_templates": [],
+                        }
+                    ],
+                    "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                    "conclusions": [],
+                    "description": "Test Question Description",
+                    "dfiq_identifier": "Q0001",
+                    "display_name": "Test Question?",
+                    "id": 1,
+                    "name": "Test Question?",
+                }
+            ]
+        ],
+    }
+
+    mock_question_response = {
+        "meta": {},
+        "objects": [
+            {
+                "approaches": [
+                    {
+                        "description": "Test Approach Description",
+                        "display_name": "Test Approach",
+                        "id": 26,
+                        "name": "Test Approach",
+                        "search_templates": [],
+                    }
+                ],
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                "conclusions": [],
+                "description": "Test Question Description",
+                "dfiq_identifier": "Q0001",
+                "display_name": "Test Question?",
+                "id": 1,
+                "name": "Test Question?",
+            }
+        ],
+    }
+
+    mock_question_templates_response = {
+        "objects": [
+            {
+                "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                "child_ids": ["Q0001.01"],
+                "description": "Test Question Description",
+                "id": "Q0001",
+                "name": "Test question?",
+                "parent_ids": ["F0001"],
+                "tags": ["test"],
+            },
+            {
+                "uuid": "1234a567-123d-b89c-e45f-g6h7ijk8l910",
+                "child_ids": ["Q0002.01"],
+                "description": "Second Test Question Description",
+                "id": "Q0002",
+                "name": "Second question?",
+                "parent_ids": ["F0001"],
+                "tags": ["test"],
+            },
+        ]
+    }
+
+    # Register API endpoints to the correct mock response data for GET requests.
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
         "http://127.0.0.1/api/v1/sketches/": MockResponse(json_data=sketch_list_data),
@@ -710,9 +837,49 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1/aggregation/explore/": MockResponse(
             json_data=aggregation_chart_data
         ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/": MockResponse(
+            json_data=mock_sketch_scenario_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/": MockResponse(
+            json_data=mock_scenario_response
+        ),
+        "http://127.0.0.1/api/v1/scenarios/": MockResponse(
+            json_data=mock_scenario_templates_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/": MockResponse(
+            json_data=mock_sketch_questions_response
+        ),
+        "http://127.0.0.1/api/v1/questions/": MockResponse(
+            json_data=mock_question_templates_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/1/": MockResponse(
+            json_data=mock_question_response
+        ),
+    }
+
+    # Register API endpoints to the correct mock response data for POST requests.
+    post_url_router = {
+        "http://127.0.0.1/api/v1/sketches/1/event/attributes/": MockResponse(
+            json_data=add_event_attribute_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/explore/": MockResponse(
+            json_data=aggregation_chart_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/": MockResponse(
+            json_data=mock_scenario_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/": MockResponse(
+            json_data=mock_question_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/explore/": MockResponse(
+            json_data=timeline_data
+        ),
     }
 
     if kwargs.get("empty", False):
         return MockResponse(text_data=empty_data)
+
+    if kwargs.get("method", "").upper() == "POST":
+        return post_url_router.get(args[0], MockResponse(None, 404))
 
     return url_router.get(args[0], MockResponse(None, 404))

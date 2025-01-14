@@ -140,11 +140,10 @@ def upload_file(
 
         streamer.add_file(file_path)
 
-        # Force a flush.
-        streamer.flush()
-
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
+
+        streamer.close()
 
     logger.info("File upload completed.")
     return timeline, task_id
@@ -465,6 +464,20 @@ def main(args=None):
         help=("Path to the file that is to be imported."),
     )
 
+    config_group.add_argument(
+        "--analyzer_names",
+        "--analyzer-names",
+        nargs="*",
+        action="store",
+        dest="analyzer_names",
+        default=[],
+        help=(
+            "Set of analyzers that we will automatically run right after the "
+            "timelines are uploaded. The input needs to be the analyzers names."
+            "Provided as strings separated by space"
+        ),
+    )
+
     options = argument_parser.parse_args(args)
 
     if options.show_version:
@@ -619,6 +632,7 @@ def main(args=None):
         "log_config_file": options.log_config_file,
         "data_label": options.data_label,
         "context": options.context,
+        "analyzer_names": options.analyzer_names,
     }
 
     logger.info("Uploading file.")
@@ -630,6 +644,11 @@ def main(args=None):
         logger.info(
             "File got successfully uploaded to sketch: {0:d}".format(my_sketch.id)
         )
+        if options.analyzer_names:
+            logger.warning(
+                "Argument 'analyzer_names' only works with 'wait_timeline = "
+                "True'! Skipping execution of analyzers: {analyzer_names}"
+            )
         return
 
     if not timeline:
@@ -666,6 +685,16 @@ def main(args=None):
                 task_state = task.get("state", "Unknown")
         print(f"Status of the index is: {task_state}")
         break
+
+    if options.analyzer_names:
+        logger.info(
+            "Trigger analyzers: %s on Timeline '%s'",
+            str(options.analyzer_names),
+            str(timeline.name),
+        )
+        _ = importer.run_analyzers(
+            analyzer_names=options.analyzer_names, timeline_obj=timeline
+        )
 
 
 if __name__ == "__main__":

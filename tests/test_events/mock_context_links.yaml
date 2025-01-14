@@ -1,0 +1,37 @@
+# Mock configuration file for testing the context links API endpoint!
+## Hardcoded Modules
+hardcoded_modules:
+  module_one:
+    short_name: "ModuleOne"
+    validation_regex: "/^[0-9a-f]{64}$/i"
+    match_fields:
+      - xml
+      - xml_string
+  module_two:
+    short_name: "ModuleTwo"
+    match_fields:
+      - url
+      - uri
+      - original_url
+
+## External Services
+linked_services:
+  lookupone:
+    short_name: "LookupOne"
+    match_fields: ["hash"]
+    validation_regex: "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i"
+    context_link: "https://lookupone.local/q=<ATTR_VALUE>"
+    redirect_warning: TRUE
+
+  lookuptwo:
+    short_name: "LookupTwo"
+    match_fields: ["sha256_hash", "hash"]
+    validation_regex: "/^[0-9a-f]{64}$/i"
+    context_link: "https://lookuptwo.local/q=<ATTR_VALUE>"
+    redirect_warning: FALSE
+
+  lookupthree:
+    short_name: "LookupThree"
+    match_fields: ["url"]
+    context_link: "https://lookupthree.local/q=<ATTR_VALUE>"
+    redirect_warning: TRUE

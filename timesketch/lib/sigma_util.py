@@ -135,7 +135,13 @@ def get_all_sigma_rules(parse_yaml: bool = False):
 
 
 def _sanitize_query(sigma_rule_query: str) -> str:
-    """Returns a sanitized query
+    """Returns a sanitized query.
+
+    This function requires more thorough testing as it
+    generated OpenSearch queries with an invalid syntax. The Sigma library
+    does a good enough job at generating compatible (albeit maybe inefficient)
+    queries.
+
     Args:
         sigma_rule_query: path to the sigma rule to be parsed
     Returns:
@@ -205,12 +211,14 @@ def sanitize_incoming_sigma_rule_text(rule_text: string):
 
 
 @lru_cache(maxsize=8)
-def parse_sigma_rule_by_text(rule_text, sigma_config=None):
+def parse_sigma_rule_by_text(rule_text, sigma_config=None, sanitize=True):
     """Returns a JSON representation for a rule
 
     Args:
         rule_text: Text of the sigma rule to be parsed
         sigma_config: config file object
+        sanitize: If set to True, sanitization rules will be ran over the
+            resulting Lucene query.
 
     Returns:
         JSON representation of the parsed rule
@@ -251,7 +259,7 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
         for doc in rule_yaml_data:
             parser = sigma_collection.SigmaCollectionParser(
-                str(doc), sigma_conf_obj, None
+                str(rule_text), sigma_conf_obj, None
             )
             parsed_sigma_rules = parser.generate(sigma_backend)
             rule_return.update(doc)
@@ -270,10 +278,10 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
     assert parsed_sigma_rules is not None
 
-    sigma_search_query = ""
-
-    for sigma_rule in parsed_sigma_rules:
-        sigma_search_query = _sanitize_query(sigma_rule)
+    sigma_search_query = list(parsed_sigma_rules)[0]
+    if sanitize:
+        sigma_search_query = _sanitize_query(sigma_search_query)
+    sigma_search_query = sigma_search_query.replace("*.keyword:", "message.keyword:")
 
     if not isinstance(rule_return.get("title"), str):
         error_msg = "Missing value: 'title' from the YAML data."

@@ -14,9 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-tag-multiple-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
-      :style="tags && tags.length || labels && labels.length ? 'cursor: pointer' : ''"
+      :style="(tags && tags.length) || (labels && labels.length) ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
@@ -25,7 +37,7 @@ limitations under the License.
 
       <span class="float-right" style="margin-right: 10px">
         <small
-          ><strong>{{ tags.length + labels.length }}</strong></small
+          ><strong v-if="tags && labels">{{ tags.length + labels.length }}</strong></small
         >
       </span>
     </div>
@@ -43,10 +55,12 @@ limitations under the License.
 import TsTagsList from './TagsList.vue'
 
 export default {
+  props: {
+    iconOnly: Boolean,
+  },
   components: {
     TsTagsList,
   },
-  props: [],
   data: function () {
     return {
       expanded: false,

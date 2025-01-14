@@ -47,7 +47,7 @@
 #
 #       columns - a list of columns that should be present in the data file
 #                 for this to be a match on. It should be noted that all the
-#                 columns need to be present and no extra columnns should be
+#                 columns need to be present and no extra columns should be
 #                 in the log file. If there may be extra columns then use
 #                 columns_subset instead.
 #

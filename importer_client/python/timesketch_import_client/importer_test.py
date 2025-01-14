@@ -17,8 +17,9 @@ from __future__ import unicode_literals
 import json
 import unittest
 import mock
-
 import pandas
+
+from timesketch_api_client.error import UnableToRunAnalyzer
 
 from . import importer
 
@@ -110,6 +111,8 @@ class TimesketchImporterTest(unittest.TestCase):
 
         self.frame = pandas.DataFrame(self.lines)
 
+        self._importer = importer.ImportStreamer()
+
     def test_adding_data_frames(self):
         """Test adding a data frame to the importer."""
         with MockStreamer() as streamer:
@@ -175,6 +178,67 @@ class TimesketchImporterTest(unittest.TestCase):
             streamer.flush()
             self._run_all_tests(streamer.columns, streamer.lines)
 
+    # pylint: disable=protected-access
+    def test_fix_data_frame(self):
+        """Test fixing a data frame.
+        create a pandas dataframe with timestamp, datetime, message and data_type
+        columns and check some basics that the method is actually working.
+        """
+
+        data_frame = pandas.DataFrame(
+            {
+                "timestamp": ["1435789661000000"],
+                "stuff": ["foobar"],
+                "correct": [True],
+                "random_number": [11332],
+                "vital_stats": ["ille"],
+                "datetime": ["2019-01-03T02:39:42"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+
+        self.assertIs("ille" in fixed_frame["vital_stats"].values, True)
+        print(fixed_frame["datetime"].values)
+        self.assertIs(
+            "2019-01-03T02:39:42+0000" in fixed_frame["datetime"].values, True
+        )
+
+    def test_fix_data_frame_precision_datetime(self):
+        """Test fixing a data frame with a datetime hat has microsecond precision."""
+
+        data_frame = pandas.DataFrame(
+            {
+                "timestamp": ["1456"],
+                "datetime": ["2024-07-24T10:57:02.877297Z"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+
+        print(fixed_frame["datetime"].values)
+        self.assertIs(
+            "2024-07-24T10:57:02+0000" in fixed_frame["datetime"].values, True
+        )
+
+    def test_fix_data_frame_precision_timestamp(self):
+        """Test fixing a data frame with a timestamp hat has microsecond precision."""
+
+        data_frame = pandas.DataFrame(
+            {
+                "timestamp": ["1331698658276340"],
+                "datetime": ["1985-01-21T10:57:02.25Z"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+
+        self.assertIs(
+            "1985-01-21T10:57:02+0000" in fixed_frame["datetime"].values, True
+        )
+        self.assertIs("1331698658276340" in fixed_frame["timestamp"].values, True)
+
+    # pylint: enable=protected-access
     def _run_all_tests(self, columns, lines):
         """Run all tests on the result set of a streamer."""
         # The first line is the column line.
@@ -207,3 +271,67 @@ class TimesketchImporterTest(unittest.TestCase):
             ]
         )
         self.assertSetEqual(set(messages), message_correct)
+
+
+class RunAnalyzersTest(unittest.TestCase):
+    """Tests for the run_analyzers function."""
+
+    @mock.patch("timesketch_import_client.importer.logger")
+    def test_run_analyzers_without_timeline(self, mock_logger):
+        """Test calling run_analyzers without a timeline object."""
+        with self.assertRaises(ValueError):
+            importer.run_analyzers(analyzer_names=["test_analyzer"])
+        mock_logger.error.assert_called_with(
+            "Unable to run analyzers: Timeline object not found."
+        )
+
+    @mock.patch("timesketch_import_client.importer.logger")
+    def test_run_analyzers_timeline_not_ready(self, mock_logger):
+        """Test calling run_analyzers with a timeline that is not ready."""
+        timeline_obj = mock.Mock(status="pending", name="test")
+        importer.run_analyzers(
+            analyzer_names=["test_analyzer"], timeline_obj=timeline_obj
+        )
+        mock_logger.error.assert_called_with(
+            "The provided timeline '%s' is not ready yet!", timeline_obj.name
+        )
+
+    @mock.patch("timesketch_import_client.importer.logger")
+    def test_run_analyzers_without_analyzers(self, mock_logger):
+        """Test calling run_analyzers without analyzers."""
+        timeline_obj = mock.Mock(status="ready")
+        importer.run_analyzers(timeline_obj=timeline_obj)
+        mock_logger.info.assert_called_with(
+            "No analyzer names provided, skipping analysis."
+        )
+
+    @mock.patch("timesketch_import_client.importer.logger")
+    def test_run_analyzers_success(self, mock_logger):
+        """Test calling run_analyzers successfully."""
+        timeline_obj = mock.Mock(
+            status="ready", run_analyzers=mock.Mock(return_value="Success")
+        )
+        return_value = importer.run_analyzers(
+            analyzer_names=["test_analyzer"], timeline_obj=timeline_obj
+        )
+        self.assertEqual(return_value, "Success")
+        mock_logger.debug.assert_called_with("Analyzer results: %s", "Success")
+
+    @mock.patch("timesketch_import_client.importer.logger")
+    def test_run_analyzers_failed(self, mock_logger):
+        """Test calling run_analyzers with an exception."""
+        timeline_obj = mock.Mock(
+            status="ready",
+            run_analyzers=mock.Mock(
+                side_effect=UnableToRunAnalyzer("Analyzer failed.")
+            ),
+        )
+        return_value = importer.run_analyzers(
+            analyzer_names=["test_analyzer"], timeline_obj=timeline_obj
+        )
+        self.assertIsNone(return_value)
+        mock_logger.error.assert_called_with(
+            "Failed to run requested analyzers '%s'! Error: %s",
+            "['test_analyzer']",
+            "Analyzer failed.",
+        )

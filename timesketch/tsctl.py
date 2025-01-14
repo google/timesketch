@@ -78,11 +78,11 @@ def create_user(username, password=None):
 
     if not password:
         password = get_password_from_prompt()
-    user = User.get_or_create(username=username)
+    user = User.get_or_create(username=username, name=username)
     user.set_password(plaintext=password)
     db_session.add(user)
     db_session.commit()
-    print(f"User {username, password} created/updated")
+    print(f"User account for {username} created/updated")
 
 
 @cli.command(name="enable-user")
@@ -175,8 +175,8 @@ def drop_db():
         if click.confirm(
             "Are you REALLLY sure you want to DROP ALL the database tables?"
         ):
-            print("All tables dropped. Database is now empty.")
             drop_all()
+            print("All tables dropped. Database is now empty.")
 
 
 @cli.command(name="list-sketches")
@@ -202,7 +202,7 @@ def list_groups():
 @click.argument("group_name")
 def create_group(group_name):
     """Create a group."""
-    group = Group.get_or_create(name=group_name)
+    group = Group.get_or_create(name=group_name, display_name=group_name)
     db_session.add(group)
     db_session.commit()
     print(f"Group created: {group_name}")
@@ -285,7 +285,7 @@ def import_search_templates(path):
             search_templates = yaml.safe_load(fh.read())
 
         if isinstance(search_templates, dict):
-            search_template_list = [search_template_list]
+            search_templates = [search_templates]
 
         if search_templates:
             for search_template_dict in search_templates:
@@ -495,24 +495,39 @@ def info():
         print("psort.py not installed")
 
     # Get installed node version
-    output = subprocess.check_output(["node", "--version"]).decode("utf-8")
-    print(f"Node version: {output} ")
+    try:
+        output = subprocess.check_output(["node", "--version"]).decode("utf-8")
+        print(f"Node version: {output} ")
+    except FileNotFoundError:
+        print("Node not installed. Node is only used in the dev environment.")
 
-    # Get installed npm version
-    output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
-    print(f"npm version: {output}")
+    try:
+        # Get installed npm version
+        output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
+        print(f"npm version: {output}")
+    except FileNotFoundError:
+        print("npm not installed. npm is only used in the dev environment.")
 
-    # Get installed yarn version
-    output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
-    print(f"yarn version: {output} ")
+    try:
+        # Get installed yarn version
+        output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
+        print(f"yarn version: {output} ")
+    except FileNotFoundError:
+        print("yarn not installed. Yarn is only used in the dev environment.")
 
-    # Get installed python version
-    output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
-    print(f"Python version: {output} ")
+    try:
+        # Get installed python version
+        output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
+        print(f"Python version: {output} ")
+    except FileNotFoundError:
+        print("Python3 not installed")
 
-    # Get installed pip version
-    output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
-    print(f"pip version: {output} ")
+    try:
+        # Get installed pip version
+        output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
+        print(f"pip version: {output} ")
+    except FileNotFoundError:
+        print("pip not installed")
 
 
 def print_table(table_data):
@@ -598,7 +613,23 @@ def sketch_info(sketch_id):
 def validate_context_links_conf(path):
     """Validates the provided context link yaml configuration file."""
 
-    schema = {
+    hardcoded_modules_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "short_name": {"type": "string"},
+            "match_fields": {
+                "type": "array",
+                "items": [
+                    {"type": "string"},
+                ],
+            },
+            "validation_regex": {"type": "string"},
+        },
+        "required": ["short_name", "match_fields"],
+    }
+
+    linked_services_schema = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
@@ -645,12 +676,27 @@ def validate_context_links_conf(path):
         print("The provided config file is empty.")
         return
 
-    for entry in context_link_config:
-        try:
-            validate(instance=context_link_config[entry], schema=schema)
-            print(f'=> OK: "{entry}"')
-        except (ValidationError, SchemaError) as err:
-            print(f'=> ERROR: "{entry}" >> {err}\n')
+    if context_link_config["hardcoded_modules"]:
+        for entry in context_link_config["hardcoded_modules"]:
+            try:
+                validate(
+                    instance=context_link_config["hardcoded_modules"][entry],
+                    schema=hardcoded_modules_schema,
+                )
+                print(f'=> OK: "{entry}"')
+            except (ValidationError, SchemaError) as err:
+                print(f'=> ERROR: "{entry}" >> {err}\n')
+
+    if context_link_config["linked_services"]:
+        for entry in context_link_config["linked_services"]:
+            try:
+                validate(
+                    instance=context_link_config["linked_services"][entry],
+                    schema=linked_services_schema,
+                )
+                print(f'=> OK: "{entry}"')
+            except (ValidationError, SchemaError) as err:
+                print(f'=> ERROR: "{entry}" >> {err}\n')
 
 
 @cli.command(name="searchindex-info")
@@ -711,11 +757,18 @@ def searchindex_info(searchindex_id):
     required=False,
     help="Limit the number of results.",
 )
-def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
+@click.option(
+    "--export_csv",
+    required=False,
+    help="Export the results to a CSV file.",
+)
+def analyzer_stats(
+    analyzer_name, timeline_id, scope, result_text_search, limit, export_csv
+):
     """Prints analyzer stats."""
 
     if timeline_id:
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             print("No timeline found with this ID.")
             return
@@ -743,6 +796,7 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
         new_row = pd.DataFrame(
             [
                 {
+                    "analyzer_name": analysis.analyzer_name,
                     "runtime": analysis.updated_at - analysis.created_at,
                     "hits": matches,
                     "timeline_id": analysis.timeline_id,
@@ -786,5 +840,9 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
     if analyzer_name != "sigma":
         df = df.drop(columns=["hits"])
 
-    pd.options.display.max_colwidth = 500
-    print(df)
+    if export_csv:
+        df.to_csv(export_csv, index=False)
+        print(f"Analyzer stats exported to {export_csv}")
+    else:
+        pd.options.display.max_colwidth = 500
+        print(df)

@@ -40,3 +40,4 @@ from timesketch.lib.analyzers import tagger
 
 import timesketch.lib.analyzers.authentication
 import timesketch.lib.analyzers.contrib
+import timesketch.lib.analyzers.dfiq_plugins

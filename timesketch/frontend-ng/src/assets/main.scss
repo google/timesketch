@@ -161,23 +161,33 @@ html {
 }
 
 .light-info-card {
-  background-color: rgba(33, 150, 243, .1);
+  background-color: #e7f4fe;
   color: #333;
   border-radius: 6px;
 }
 
 .dark-info-card {
-  background-color: rgba(33, 150, 243, .1);
+  background-color: #131F29;
   color:#fff;
   border-radius: 6px;
-  border:1px solid rgba(33, 150, 243, 0.3);
+  border:1px solid #174366;
+}
+
+.light-info-accordion {
+  background-color: #e7f4fe;
+  color: #333;
+}
+
+.dark-info-accordion {
+  background-color: #131F29;
+  color:#fff;
 }
 
 .timeline-name-ellipsis {
   width: 200px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis
+  text-overflow: ellipsis;
 }
 
 .theme--dark.v-navigation-drawer {

@@ -15,9 +15,13 @@
 
 import os
 import json
+import logging
 import yaml
 
 import networkx as nx
+from packaging.version import Version
+
+logger = logging.getLogger("timesketch.lib.dfiq")
 
 
 class Component(object):
@@ -32,8 +36,11 @@ class Component(object):
         child_ids: The child IDs of the component.
     """
 
-    def __init__(self, dfiq_id, name, description=None, tags=None, parent_ids=None):
+    def __init__(
+        self, dfiq_id, uuid, name, description=None, tags=None, parent_ids=None
+    ):
         self.id = dfiq_id
+        self.uuid = uuid
         self.name = name
         self.description = description
         self.tags = tags
@@ -58,18 +65,21 @@ class Component(object):
         )
 
 
-class Approach(Component):
+class Approach:
     """Class that represents an approach.
 
     Attributes:
-        templates: The templates of the approach.
+        search_templates: The search templates of the approach.
     """
 
-    def __init__(self, dfiq_id, name, description, tags, view):
+    def __init__(self, approach):
         """Initializes the approach."""
-        self._parent_ids = [dfiq_id.split(".")[0]]
-        self._view = view
-        super().__init__(dfiq_id, name, description, tags, self._parent_ids)
+        self.name = approach["name"]
+        self.description = approach.get("description")
+        self.notes = approach.get("notes")
+        self.references = approach.get("references")
+        self.steps = approach.get("steps")
+        self.tags = approach.get("tags")
 
     def _get_timesketch_analyses(self):
         """Returns the Timesketch analysis provider of the approach.
@@ -81,13 +91,17 @@ class Approach(Component):
         Returns:
             A list of Timesketch analysis approaches.
         """
-        timesketch_analyses = []
-        for processor in self._view.get("processors", []):
-            if "timesketch" in processor.get("analysis", {}):
-                provider = processor["analysis"]["timesketch"]
-                for analysis in provider:
-                    timesketch_analyses.append(analysis)
-        return timesketch_analyses
+        analysis_types = ["timesketch-searchtemplate", "opensearch-query"]
+        return [
+            step
+            for step in self.steps
+            if step["stage"] == "analysis" and step["type"] in analysis_types
+        ]
+
+    def to_json(self):
+        return json.dumps(
+            self, default=lambda o: o.__dict__, sort_keys=False, allow_nan=False
+        )
 
     @property
     def search_templates(self):
@@ -99,33 +113,27 @@ class Approach(Component):
         return [
             analysis
             for analysis in self._get_timesketch_analyses()
-            if analysis["type"] == "searchtemplate"
+            if analysis["type"] == "timesketch-searchtemplate"
         ]
 
 
 class Question(Component):
     """Class that represents a question."""
 
-    def __init__(self, dfiq_id, name, description, tags, parent_ids):
+    def __init__(self, dfiq_id, uuid, name, description, tags, parent_ids, approaches):
         """Initializes the question."""
-        super().__init__(dfiq_id, name, description, tags, parent_ids)
-
-    @property
-    def approaches(self):
-        """Returns the approaches of the question.
-
-        Returns:
-            A list of IDs of approaches linked to this question.
-        """
-        return self.child_ids
+        self.approaches = []
+        if approaches:
+            self.approaches = [Approach(approach) for approach in approaches]
+        super().__init__(dfiq_id, uuid, name, description, tags, parent_ids)
 
 
 class Facet(Component):
     """Class that represents a facet."""
 
-    def __init__(self, dfiq_id, name, description, tags, parent_ids):
+    def __init__(self, dfiq_id, uuid, name, description, tags, parent_ids):
         """Initializes the facet."""
-        super().__init__(dfiq_id, name, description, tags, parent_ids)
+        super().__init__(dfiq_id, uuid, name, description, tags, parent_ids)
 
     @property
     def questions(self):
@@ -140,9 +148,9 @@ class Facet(Component):
 class Scenario(Component):
     """Class that represents a scenario."""
 
-    def __init__(self, dfiq_id, name, description, tags):
+    def __init__(self, dfiq_id, uuid, name, description, tags):
         """Initializes the scenario."""
-        super().__init__(dfiq_id, name, description, tags)
+        super().__init__(dfiq_id, uuid, name, description, tags)
 
     @property
     def facets(self):
@@ -157,7 +165,7 @@ class Scenario(Component):
 class DFIQ:
     """Class that represents DFIQ.
 
-    Atributes:
+    Attributes:
         yaml_data_path: The path to the DFIQ YAML files.
         plural_map: A map of DFIQ types to their plural form.
         components: A dict of DFIQ components.
@@ -170,6 +178,7 @@ class DFIQ:
         Parameters:
             yaml_data_path: The path to the DFIQ YAML files.
         """
+        self.min_supported_DFIQ_version = "1.1.0"
         self.yaml_data_path = yaml_data_path
         self.plural_map = {
             "Scenario": "scenarios",
@@ -216,18 +225,6 @@ class DFIQ:
             key=lambda x: x.id,
         )
 
-    @property
-    def approaches(self):
-        """Returns the approaches of DFIQ.
-
-        Returns:
-            A list of Approach objects.
-        """
-        return sorted(
-            [c for c in self.components.values() if isinstance(c, Approach)],
-            key=lambda x: x.id,
-        )
-
     @staticmethod
     def _convert_yaml_object_to_dfiq_component(yaml_object):
         """Converts a YAML object to a DFIQ component.
@@ -235,37 +232,41 @@ class DFIQ:
         Returns:
             A DFIQ component if the YAML object is valid, otherwise None.
         """
-        if yaml_object["type"] == "scenario":
-            return Scenario(
-                yaml_object["id"],
-                yaml_object["display_name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
+        try:
+            if yaml_object["type"] == "scenario":
+                return Scenario(
+                    yaml_object["id"],
+                    yaml_object["uuid"],
+                    yaml_object["name"],
+                    yaml_object.get("description"),
+                    yaml_object.get("tags"),
+                )
+            if yaml_object["type"] == "facet":
+                return Facet(
+                    yaml_object["id"],
+                    yaml_object["uuid"],
+                    yaml_object["name"],
+                    yaml_object.get("description"),
+                    yaml_object.get("tags"),
+                    yaml_object.get("parent_ids"),
+                )
+            if yaml_object["type"] == "question":
+                return Question(
+                    yaml_object["id"],
+                    yaml_object["uuid"],
+                    yaml_object["name"],
+                    yaml_object.get("description"),
+                    yaml_object.get("tags"),
+                    yaml_object.get("parent_ids"),
+                    yaml_object.get("approaches"),
+                )
+        except KeyError as e:
+            logger.error(
+                "DFIQ: Loaded YAML object does not match the supported schema! "
+                "KeyError: %s",
+                str(e),
             )
-        if yaml_object["type"] == "facet":
-            return Facet(
-                yaml_object["id"],
-                yaml_object["display_name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
-                yaml_object.get("parent_ids"),
-            )
-        if yaml_object["type"] == "question":
-            return Question(
-                yaml_object["id"],
-                yaml_object["display_name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
-                yaml_object.get("parent_ids"),
-            )
-        if yaml_object["type"] == "approach":
-            return Approach(
-                yaml_object["id"],
-                yaml_object["display_name"],
-                yaml_object.get("description"),
-                yaml_object.get("tags"),
-                yaml_object.get("view"),
-            )
+            return None
         return None
 
     def _load_yaml_files_by_type(self, dfiq_type, yaml_data_path=None):
@@ -295,9 +296,35 @@ class DFIQ:
                 mode="r",
             ) as file:
                 component_from_yaml = yaml.safe_load(file)
-                component_dict[
-                    component_from_yaml["id"]
-                ] = self._convert_yaml_object_to_dfiq_component(component_from_yaml)
+                # Check if the file matches the min supported DFIQ version:
+                try:
+                    if Version(str(component_from_yaml["dfiq_version"])) < Version(
+                        self.min_supported_DFIQ_version
+                    ):
+                        logger.warning(
+                            "DFIQ: The provided DFIQ file '%s' does not match "
+                            "the minimal supported DFIQ version: '%s'. Skipping "
+                            "import!",
+                            dfiq_file,
+                            self.min_supported_DFIQ_version,
+                        )
+                        continue
+                except KeyError:
+                    logger.warning(
+                        "DFIQ: The provided DFIQ file '%s' does not have a "
+                        "dfiq_version set. Min. supported version: '%s'. "
+                        "Skipping import!",
+                        dfiq_file,
+                        self.min_supported_DFIQ_version,
+                    )
+                    continue
+                dfiq_object = self._convert_yaml_object_to_dfiq_component(
+                    component_from_yaml
+                )
+                if dfiq_object:
+                    component_dict[component_from_yaml["id"]] = (
+                        self._convert_yaml_object_to_dfiq_component(component_from_yaml)
+                    )
         return component_dict
 
     def _load_dfiq_items_from_yaml(self):

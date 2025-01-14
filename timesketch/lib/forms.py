@@ -109,7 +109,16 @@ class UsernamePasswordForm(BaseForm):
 class NameDescriptionForm(BaseForm):
     """Generic form for name and description forms. Used in multiple places."""
 
-    name = StringField("Name", validators=[DataRequired()])
+    name = StringField(
+        "Name",
+        validators=[
+            DataRequired(),
+            Length(
+                max=255,
+                message="Name must be less than 255 characters.",
+            ),
+        ],
+    )
     description = StringField("Description", widget=widgets.TextArea())
 
 
@@ -161,7 +170,16 @@ class TogglePublic(BaseForm):
 class SaveViewForm(BaseForm):
     """Form used to save a view."""
 
-    name = StringField("Name")
+    name = StringField(
+        "Name",
+        validators=[
+            DataRequired(),
+            Length(
+                max=255,
+                message="Name must be less than 255 characters.",
+            ),
+        ],
+    )
     description = StringField("Description", validators=[Optional()])
     query = StringField("Query")
     filter = StringField("Filter")

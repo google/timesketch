@@ -24,12 +24,54 @@ limitations under the License.
 
     <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
       <p>
-        Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
+        Your search <span v-if="currentQueryString">'{{ currentQueryString }}'</span
+        ><span v-if="filterChips.length"> in combination with the selected filter terms</span> did not match any events.
+      </p>
+      <p>
+        <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn small depressed v-bind="attrs" v-on="on" title="Save Search">
+              <v-icon left small >mdi-content-save-outline</v-icon>
+              Save search
+            </v-btn>
+          </template>
+
+          <v-card class="pa-4">
+            <h3>Save Search</h3>
+            <br />
+            <v-text-field
+              clearable
+              v-model="saveSearchFormName"
+              required
+              placeholder="Name your saved search"
+              outlined
+              dense
+              autofocus
+              @focus="$event.target.select()"
+              :rules="saveSearchNameRules"
+            >
+            </v-text-field>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+              <v-btn
+                text
+                color="primary"
+                @click="saveSearch"
+                :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
+              >
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </p>
       <p>Suggestions:</p>
-      <li>Try different keywords.</li>
-      <li>Try more general keywords.</li>
-      <li>Try fewer keywords.</li>
+      <ul>
+        <li>Try different keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
+        <li>Try more general keywords.</li>
+        <li>Try fewer keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
+      </ul>
     </div>
 
     <div v-if="highlightEvent" class="mt-4">
@@ -80,13 +122,15 @@ limitations under the License.
               <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-content-save-outline</v-icon>
+                    <v-icon title="Save current search">mdi-content-save-outline</v-icon>
                   </v-btn>
                 </template>
+
                 <v-card class="pa-4">
                   <h3>Save Search</h3>
                   <br />
                   <v-text-field
+                    clearable
                     v-model="saveSearchFormName"
                     required
                     placeholder="Name your saved search"
@@ -94,24 +138,34 @@ limitations under the License.
                     dense
                     autofocus
                     @focus="$event.target.select()"
+                    :rules="saveSearchNameRules"
                   >
                   </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn text color="primary" @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="saveSearch"
+                      :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
+                    >
+                      Save
+                    </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
 
-              <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram">
-                <v-icon>mdi-chart-bar</v-icon>
-              </v-btn>
+              <template>
+                <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram">
+                  <v-icon title="Toggle event histogram">mdi-chart-bar</v-icon>
+                </v-btn>
+              </template>
 
               <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-view-column-outline</v-icon>
+                    <v-icon title="Modify columns">mdi-view-column-outline</v-icon>
                   </v-btn>
                 </template>
 
@@ -152,19 +206,14 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-tooltip top open-delay="500">
-                <template v-slot:activator="{ on }">
-                  <v-btn v-on="on" icon @click="exportSearchResult()">
-                <v-icon>mdi-download</v-icon>
-                  </v-btn>
-                </template>
-                <span>Download current view as csv</span>
-              </v-tooltip>
+              <v-btn icon @click="exportSearchResult()">
+                <v-icon title="Download current view as CSV">mdi-download</v-icon>
+              </v-btn>
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-dots-horizontal</v-icon>
+                    <v-icon title="View settings">mdi-dots-horizontal</v-icon>
                   </v-btn>
                 </template>
 
@@ -275,7 +324,7 @@ limitations under the License.
                 reset
               </v-btn>
               <v-btn icon @click="showHistogram = false">
-                <v-icon>mdi-close</v-icon>
+                <v-icon title="Close histogram">mdi-close</v-icon>
               </v-btn>
             </v-toolbar>
             <ts-bar-chart
@@ -316,8 +365,10 @@ limitations under the License.
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
           <v-btn small icon @click="toggleStar(item)">
-            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
-            <v-icon v-else>mdi-star-outline</v-icon>
+            <v-icon title="Toggle star status" v-if="item._source.label.includes('__ts_star')" color="amber"
+              >mdi-star</v-icon
+            >
+            <v-icon title="Toggle star status" v-else>mdi-star-outline</v-icon>
           </v-btn>
 
           <!-- Tag menu -->
@@ -359,14 +410,14 @@ limitations under the License.
                 <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
-              <span v-if="displayOptions.showEmojis && index === 0">
+              <span v-if="displayOptions.showEmojis && index === 3">
                 <span
                   class="mr-2"
                   v-for="emoji in item._source.__ts_emojis"
                   :key="emoji"
-                  v-html="emoji"
+                  v-html="emoji + ';'"
                   :title="meta.emojis[emoji]"
-                  >{{ emoji }}
+                >
                 </span>
               </span>
               <span>{{ item._source[field.text] }}</span>
@@ -385,47 +436,27 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-tooltip top open-delay="500">
-            <template v-slot:activator="{ on }">
-              <div v-on="on" class="d-inline-block">
-                <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
-                  <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
-                    <v-icon small> mdi-comment-text-multiple-outline </v-icon>
-                  </v-badge>
-                </v-btn>
-              </div>
-            </template>
-            <span v-if="!item['showDetails']">Open event &amp; comments</span>
-            <span v-if="item['showDetails']">Close event &amp; comments</span>
-          </v-tooltip>
-          <v-tooltip
-            v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
-            top
-            open-delay="500"
-          >
-            <template v-slot:activator="{ on }">
-              <div v-on="on" class="d-inline-block">
-                <v-btn icon small @click="newComment(item)">
-                  <v-icon> mdi-comment-plus-outline </v-icon>
-                </v-btn>
-              </div>
-            </template>
-            <span>Add a comment</span>
-          </v-tooltip>
-          <v-tooltip
-            v-if="item['showDetails'] && !item._source.comment.length && item.showComments"
-            top
-            open-delay="500"
-          >
-            <template v-slot:activator="{ on }">
-              <div v-on="on" class="d-inline-block">
-                <v-btn icon small @click="item.showComments = false">
-                  <v-icon> mdi-comment-remove-outline </v-icon>
-                </v-btn>
-              </div>
-            </template>
-            <span>Close comments</span>
-          </v-tooltip>
+          <div class="d-inline-block">
+            <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
+              <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
+                <v-icon :title="item['showDetails'] ? 'Close event &amp; comments' : 'Open event &amp; comments'" small>
+                  mdi-comment-text-multiple-outline
+                </v-icon>
+              </v-badge>
+            </v-btn>
+          </div>
+
+          <div v-if="item['showDetails'] && !item._source.comment.length && !item.showComments" class="d-inline-block">
+            <v-btn icon small @click="newComment(item)">
+              <v-icon title="Add a comment"> mdi-comment-plus-outline </v-icon>
+            </v-btn>
+          </div>
+
+          <div v-if="item['showDetails'] && !item._source.comment.length && item.showComments" class="d-inline-block">
+            <v-btn icon small @click="item.showComments = false">
+              <v-icon title="Close comments"> mdi-comment-remove-outline </v-icon>
+            </v-btn>
+          </div>
         </template>
       </v-data-table>
     </div>
@@ -433,11 +464,11 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
+import ApiClient from '../../utils/RestApiClient.js'
+import EventBus from '../../event-bus.js'
 
-import TsBarChart from './BarChart'
-import TsEventDetail from './EventDetail'
+import TsBarChart from './BarChart.vue'
+import TsEventDetail from './EventDetail.vue'
 import TsEventTagMenu from './EventTagMenu.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
@@ -523,6 +554,7 @@ export default {
       columnDialog: false,
       saveSearchMenu: false,
       saveSearchFormName: '',
+      saveSearchNameRules: [(v) => !!v || 'Name is required.', (v) => (v && v.length <= 255) || 'Name is too long.'],
       selectedEventTags: [],
       tagConfig: {
         good: { color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
@@ -645,6 +677,12 @@ export default {
         })
       }
       return baseHeaders
+    },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
+    filterChips: function () {
+      return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
     },
   },
   methods: {
@@ -821,11 +859,17 @@ export default {
         formData['parent'] = this.branchParent
       }
 
+      // Get DFIQ context
+      formData['scenario'] = this.activeContext.scenarioId
+      formData['facet'] = this.activeContext.facetId
+      formData['question'] = this.activeContext.questionId
+
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {
           this.eventList.objects = response.data.objects
           this.eventList.meta = response.data.meta
           this.searchInProgress = false
+          EventBus.$emit('updateCountPerTimeline', response.data.meta.count_per_timeline)
           this.$emit('countPerTimeline', response.data.meta.count_per_timeline)
           this.$emit('countPerIndex', response.data.meta.count_per_index)
 
@@ -838,7 +882,14 @@ export default {
           }
         })
         .catch((e) => {
-          this.errorSnackBar('Sorry, there was a problem fetching your search results. Please try again.')
+          let msg = 'Sorry, there was a problem fetching your search results. Error: "'+ e.response.data.message +'"'
+          if (e.response.data.message.includes('too_many_nested_clauses')) {
+            msg = 'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
+            this.warningSnackBar(msg)
+          } else {
+            this.errorSnackBar(msg)
+          }
+          console.error('Error message: ' + msg)
           console.error(e)
         })
     },
@@ -1029,7 +1080,6 @@ export default {
 .ts-event-field-container {
   position: relative;
   max-width: 100%;
-  height: 100%;
   padding: 0 !important;
   display: -webkit-flex;
   display: -moz-flex;

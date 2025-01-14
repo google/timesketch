@@ -79,6 +79,12 @@ class Timeline(resource.BaseResource):
             self._color = timeline["objects"][0]["color"]
         return self._color
 
+    @color.setter
+    def color(self, color):
+        """Change the color of the timeline."""
+        self._color = color
+        self._commit()
+
     @property
     def data_sources(self):
         """Property that returns the timeline data sources."""
@@ -199,7 +205,7 @@ class Timeline(resource.BaseResource):
         if analyzer_kwargs:
             if not isinstance(analyzer_kwargs, dict):
                 raise error.UnableToRunAnalyzer(
-                    "Unable to run analyzer, analyzer kwargs needs to be a " "dict"
+                    "Unable to run analyzer, analyzer kwargs needs to be a dict"
                 )
 
             if analyzer_name not in analyzer_kwargs:
@@ -249,34 +255,11 @@ class Timeline(resource.BaseResource):
             self.api.api_root, self._sketch_id
         )
 
-        if not ignore_previous:
-            all_names = {x.lower() for x in analyzer_names}
-            done_names = set()
-
-            response = self.api.fetch_resource_data(
-                f"sketches/{self._sketch_id}/timelines/{self.id}/analysis/"
-            )
-            analyzer_data = response.get("objects", [[]])
-
-            if analyzer_data:
-                for result in analyzer_data[0]:
-                    result_analyzer = result.get("analyzer_name", "N/A")
-                    done_names.add(result_analyzer.lower())
-
-            analyzer_names = list(all_names.difference(done_names))
-            for name in all_names.intersection(done_names):
-                logger.error(
-                    "Analyzer {0:s} has already been run on the timeline, "
-                    'use "ignore_previous=True" to overwrite'.format(name)
-                )
-
-            if not analyzer_names:
-                return None
-
         data = {
             "timeline_ids": [self.id],
             "analyzer_names": analyzer_names,
             "analyzer_kwargs": analyzer_kwargs,
+            "analyzer_force_run": ignore_previous,
         }
         response = self.api.session.post(resource_url, json=data)
 
@@ -290,10 +273,12 @@ class Timeline(resource.BaseResource):
         data = error.get_response_json(response, logger)
         objects = data.get("objects", [])
         if not objects:
-            raise error.UnableToRunAnalyzer(
-                "No session data returned back, analyzer may have run but "
-                "unable to verify, please verify manually."
+            logger.info(
+                "Analyzers %s were already run on the timeline, use "
+                "'ignore_previous=True' to overwrite.",
+                analyzer_names,
             )
+            return None
 
         analyzer_results = []
         for session_dict in objects[0]:

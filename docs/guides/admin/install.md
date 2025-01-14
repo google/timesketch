@@ -10,7 +10,7 @@ It is possible to install Timesketch without docker but we strongly encourage us
 
 **You will need**
 
-- Machine with Ubuntu 20.04 installed.
+- Machine with Ubuntu 22.04 installed.
 - At least 8GB RAM, but the more the better.
 - Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
 
@@ -28,12 +28,6 @@ It is possible to install Timesketch without docker but we strongly encourage us
 ### 1. Install Docker
 
 Follow the official installation instructions to [install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
-
-Make sure you install docker-compose-plugin as well
-
-```shell
-sudo apt install docker-compose-plugin
-```
 
 ### 2. Start the installation
 
@@ -78,16 +72,44 @@ sudo docker compose exec timesketch-web tsctl create-user <USERNAME>
 
 ### 4. Enable TLS (optional)
 
-It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
+It is out of scope for the deployment script to setup certificates but here are
+pointers on how to use Let's Encrypt in a docker deployment.
 
-1. You need to configure a DNS name for the server. Use your DNS provider instructions.
-2. Make sure your webserver is reachable on port 80.
-3. Follow the official guide to install and run Let's Encrypt on Ubuntu:
-   https://certbot.eff.org/lets-encrypt/ubuntufocal-other
+1. You need to configure a DNS name for the server. Use your DNS providers
+instructions.
+2. Update your `timesketch/docker-compose.yaml` file. Update the nginx service
+and add the certbot service with the following config:
+  ```
+    nginx:
+      container_name: nginx
+      image: nginx:${NGINX_VERSION}
+      restart: always
+      ports:
+        - ${NGINX_HTTP_PORT}:80
+        - ${NGINX_HTTPS_PORT}:443
+      volumes:
+        - ${NGINX_CONFIG_PATH}:/etc/nginx/nginx.conf
+        - ./etc/certbot/www/:/var/www/certbot/:ro
+        - ./etc/certbot/conf/:/etc/letsencrypt/:ro
 
-When Let's Encrypt has been installed and you have generated certificates (located in /etc/letsencrypt) it is time to reconfigure Nginx.
-
-Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
+    certbot:
+      image: certbot/certbot:latest
+      volumes:
+        - ./etc/certbot/www/:/var/www/certbot/:rw
+        - ./etc/certbot/conf/:/etc/letsencrypt/:rw
+  ```
+3. Add the following location to your `timesketch/etc/nginx.conf`:
+```
+location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+```
+4. Run certbot with `--dry-run` first. If all goes well, run it again without
+the `--dry-run` flag.
+```
+docker-compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d <HOSTNAME>
+```
+5. Edit `timesketch/etc/nginx.conf` (HOSTNAME is the DNS name of your server):
 
 ```
 events {
@@ -99,8 +121,8 @@ http {
       listen 80;
       listen [::]:80;
       listen 443 ssl;
-      ssl_certificate /etc/letsencrypt/live/<HOSTNAME>>/fullchain.pem;
-      ssl_certificate_key /etc/letsencrypt/live/<HOSTNAME>>/privkey.pem;
+      ssl_certificate /etc/letsencrypt/live/<HOSTNAME>/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/<HOSTNAME>/privkey.pem;
       client_max_body_size 0m;
 
       location / {
@@ -118,24 +140,8 @@ http {
     }
 }
 ```
-**If you need to use a non-standard port** you can change the `proxy_set_header Host $host;` to `proxy_set_header Host $http_host;` instead.
-
-
-Make the certificate and key available to the Nginx Docker container. Edit timesketch/docker-compose.yml and mount /etc/letsencrypt:
-
-```
-...
-
-nginx:
-  image: nginx:${NGINX_VERSION}
-  restart: always
-  ports:
-    - "80:80"
-    - "443:443"
-  volumes:
-    - ./etc/nginx.conf:/etc/nginx/nginx.conf
-    - /etc/letsencrypt:/etc/letsencrypt/
-```
+**If you need to use a non-standard port** you can change the
+`proxy_set_header Host $host;` to `proxy_set_header Host $http_host;` instead.
 
 Restart the system:
 
@@ -149,3 +155,9 @@ Congratulations, your Timesketch system is operational and ready to use.
 ### Set up users
 
 After system is set up, look at [here](/guides/admin/admin-cli/) to add users.
+
+# Timesketch K8s Installation
+
+Please refer to
+[OSDFIR Infrastructure](https://github.com/google/osdfir-infrastructure)
+repository for official installation instructions.

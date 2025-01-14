@@ -24,11 +24,16 @@ logger = logging.getLogger("timesketch_api.user")
 class User(resource.BaseResource):
     """User object."""
 
-    def __init__(self, api):
+    def __init__(self, api, user_id=None):
         """Initializes the user object."""
         self._object_data = None
-        resource_uri = "users/me/"
-        super().__init__(api, resource_uri)
+        if not user_id:
+            resource_uri = "users/me/"
+            super().__init__(api, resource_uri)
+        else:
+            self.id = user_id
+            self.api = api
+            super().__init__(api=api, resource_uri=f"users/{self.id}")
 
     def _get_data(self):
         """Returns dict from the first object of the resource data."""

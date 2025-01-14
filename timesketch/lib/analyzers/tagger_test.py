@@ -1,4 +1,5 @@
 """Tests for TaggerSketchPlugin."""
+
 import yaml
 import mock
 

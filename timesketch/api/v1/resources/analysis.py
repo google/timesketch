@@ -51,6 +51,7 @@ METRICS = {
 logger = logging.getLogger("timesketch.analysis_api")
 
 
+# TODO: Filter DFIQ analyzer results from this!
 class AnalysisResource(resources.ResourceMixin, Resource):
     """Resource to get analyzer session."""
 
@@ -61,7 +62,7 @@ class AnalysisResource(resources.ResourceMixin, Resource):
         Returns:
             An analysis in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -70,7 +71,7 @@ class AnalysisResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -96,7 +97,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
         Returns:
             A analyzer session in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -106,7 +107,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        # Retrive request argument
+        # Retrieve request argument
         args = self.parser.parse_args()
         include_details = False
         if args.get("include_details"):
@@ -152,7 +153,7 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
         Returns:
             A analyzer session in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -162,7 +163,7 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        analysis_session = AnalysisSession.query.get(session_id)
+        analysis_session = AnalysisSession.get_by_id(session_id)
 
         return self.to_json(analysis_session)
 
@@ -180,30 +181,35 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
               * display_name: Display name of the analyzer for the UI
               * description: Description of the analyzer provided in the class
               * is_multi: Boolean indicating if the analyzer is a multi analyzer
+              * is_dfiq: Boolean indicating if the analyzer is a DFIQ analyzer
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
-        analyzers = [x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
 
-        analyzers = analyzer_manager.AnalysisManager.get_analyzers()
+        include_dfiq = (
+            request.args.get("include_dfiq", default="false").lower() == "true"
+        )
+
+        analyzers = analyzer_manager.AnalysisManager.get_analyzers(
+            include_dfiq=include_dfiq
+        )
         analyzers_detail = []
         for analyzer_name, analyzer_class in analyzers:
             # TODO: update the multi_analyzer detection logic for edgecases
             # where analyzers are using custom parameters (e.g. misp)
-            multi = False
-            if len(analyzer_class.get_kwargs()) > 0:
-                multi = True
             analyzers_detail.append(
                 {
                     "name": analyzer_name,
                     "display_name": analyzer_class.DISPLAY_NAME,
                     "description": analyzer_class.DESCRIPTION,
-                    "is_multi": multi,
+                    "is_multi": len(analyzer_class.get_kwargs()) > 0,
+                    "is_dfiq": hasattr(analyzer_class, "IS_DFIQ_ANALYZER")
+                    and analyzer_class.IS_DFIQ_ANALYZER,
                 }
             )
 
@@ -216,7 +222,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         Returns:
             A string with the response from running the analyzer.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -266,8 +272,17 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         if form.get("analyzer_force_run"):
             analyzer_force_run = True
 
+        include_dfiq = False
+        if form.get("include_dfiq"):
+            include_dfiq = True
+
         analyzers = []
-        all_analyzers = [x for x, _ in analyzer_manager.AnalysisManager.get_analyzers()]
+        all_analyzers = [
+            x
+            for x, _ in analyzer_manager.AnalysisManager.get_analyzers(
+                include_dfiq=include_dfiq
+            )
+        ]
         for analyzer in analyzer_names:
             for correct_name in all_analyzers:
                 if fnmatch.fnmatch(correct_name, analyzer):
@@ -284,7 +299,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         # TODO: Change to run on Timeline instead of Index
         sessions = []
         for timeline_id in timeline_ids:
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
             if not timeline:
                 continue
             if not timeline.status[0].status == "ready":
@@ -301,6 +316,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                     analyzer_kwargs=analyzer_kwargs,
                     timeline_id=timeline_id,
                     analyzer_force_run=analyzer_force_run,
+                    include_dfiq=include_dfiq,
                 )
             except KeyError as e:
                 logger.warning(

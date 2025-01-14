@@ -16,9 +16,9 @@ limitations under the License.
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import Home from './views/Home'
-import Canvas from './views/Canvas'
-import Sketch from './views/Sketch'
+import Home from './views/Home.vue'
+import Canvas from './views/Canvas.vue'
+import Sketch from './views/Sketch.vue'
 
 Vue.use(VueRouter)
 
@@ -68,7 +68,25 @@ const routes = [
             component: Canvas,
             props: true,
           },
-
+        ]
+      },
+      {
+        path: 'visualization',
+        component: Canvas,
+        props: true,
+        children: [
+          {
+            path: 'new',
+            name: 'VisualizationNew',
+            component: Canvas,
+            props: true,
+          },
+          {
+            path: 'view/:aggregationId',
+            name: 'VisualizationView',
+            component: Canvas,
+            props: true,
+          },
         ]
       },
       {

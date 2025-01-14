@@ -56,10 +56,13 @@ from .resources.story import StoryResource
 from .resources.explore import QueryResource
 from .resources.timeline import TimelineResource
 from .resources.timeline import TimelineListResource
+from .resources.timeline import TimelineFieldsResource
 from .resources.searchindex import SearchIndexListResource
 from .resources.searchindex import SearchIndexResource
 from .resources.session import SessionResource
 from .resources.user import UserListResource
+from .resources.user import UserResource
+from .resources.user import UserSettingsResource
 from .resources.user import GroupListResource
 from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
@@ -72,11 +75,21 @@ from .resources.graph import GraphPluginListResource
 from .resources.graph import GraphCacheResource
 from .resources.intelligence import TagMetadataResource
 from .resources.contextlinks import ContextLinkConfigResource
+from .resources.unfurl import UnfurlResource
+from .resources.nl2q import Nl2qResource
+from .resources.settings import SystemSettingsResource
 
 from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
 from .resources.scenarios import ScenarioResource
 from .resources.scenarios import ScenarioStatusResource
+from .resources.scenarios import FacetListResource
+from .resources.scenarios import QuestionOrphanListResource
+from .resources.scenarios import QuestionWithScenarioListResource
+from .resources.scenarios import QuestionWithFacetListResource
+from .resources.scenarios import QuestionTemplateListResource
+from .resources.scenarios import QuestionListResource
+from .resources.scenarios import QuestionResource
 from .resources.scenarios import QuestionConclusionListResource
 from .resources.scenarios import QuestionConclusionResource
 
@@ -155,6 +168,10 @@ API_ROUTES = [
         TimelineResource,
         "/sketches/<int:sketch_id>/timelines/<int:timeline_id>/",
     ),
+    (
+        TimelineFieldsResource,
+        "/sketches/<int:sketch_id>/timelines/<int:timeline_id>/fields/",
+    ),
     (SearchIndexListResource, "/searchindices/"),
     (SearchIndexResource, "/searchindices/<int:searchindex_id>/"),
     (
@@ -169,6 +186,8 @@ API_ROUTES = [
     (SigmaRuleResource, "/sigmarules/<string:rule_uuid>/"),
     (SigmaRuleByTextResource, "/sigmarules/text/"),
     (LoggedInUserResource, "/users/me/"),
+    (UserSettingsResource, "/users/me/settings/"),
+    (UserResource, "/users/<int:user_id>/"),
     (GraphListResource, "/sketches/<int:sketch_id>/graphs/"),
     (GraphResource, "/sketches/<int:sketch_id>/graphs/<int:graph_id>/"),
     (GraphPluginListResource, "/graphs/"),
@@ -181,20 +200,40 @@ API_ROUTES = [
     (DataFinderResource, "/sketches/<int:sketch_id>/data/find/"),
     (TagMetadataResource, "/intelligence/tagmetadata/"),
     (ContextLinkConfigResource, "/contextlinks/"),
-    # Scenarios
+    (UnfurlResource, "/unfurl/"),
+    (Nl2qResource, "/sketches/<int:sketch_id>/nl2q/"),
+    (SystemSettingsResource, "/settings/"),
+    # Scenario templates
     (ScenarioTemplateListResource, "/scenarios/"),
+    # Scenarios
     (ScenarioListResource, "/sketches/<int:sketch_id>/scenarios/"),
-    (
-        ScenarioResource,
-        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/",
-    ),
+    (ScenarioResource, "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/"),
     (
         ScenarioStatusResource,
         "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/status/",
     ),
+    # Facets
+    (
+        FacetListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/facets/",
+    ),
+    # (FacetResource, "/sketches/<int:sketch_id>/facets/<int:facet_id>/"),
+    # Questions
+    (QuestionOrphanListResource, "/sketches/<int:sketch_id>/questions/"),
+    (
+        QuestionWithScenarioListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/questions/",
+    ),
+    (
+        QuestionWithFacetListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/facets/<int:facet_id>/questions/",
+    ),
+    (QuestionTemplateListResource, "/questions/"),
+    (QuestionListResource, "/sketches/<int:sketch_id>/questions/"),
+    (QuestionResource, "/sketches/<int:sketch_id>/questions/<int:question_id>/"),
     (
         QuestionConclusionListResource,
-        "/sketches/<int:sketch_id>/questions/<int:question_id>/",
+        "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/",
     ),
     (
         QuestionConclusionResource,

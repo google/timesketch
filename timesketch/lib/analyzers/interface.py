@@ -248,7 +248,7 @@ class Event(object):
                     "tags": existing_tags,
                 }
 
-        new_tags = list(set().union(existing_tags, tags))
+        new_tags = list(set(existing_tags) | set(tags))
         if self._analyzer:
             self._analyzer.tagged_events[self.event_id]["tags"] = new_tags
         else:
@@ -257,7 +257,7 @@ class Event(object):
 
         # Add new tags to the analyzer output object
         if self._analyzer:
-            self._analyzer.output.add_created_tags(new_tags)
+            self._analyzer.output.add_created_tags(tags)
 
     def add_emojis(self, emojis):
         """Add emojis to the Event.
@@ -382,11 +382,60 @@ class Sketch(object):
             sketch_id: The Sketch ID.
         """
         self.id = sketch_id
-        self.sql_sketch = SQLSketch.query.get(sketch_id)
+        self.sql_sketch = SQLSketch.get_by_id(sketch_id)
         self._analyzer = analyzer
 
         if not self.sql_sketch:
             raise RuntimeError("No such sketch")
+
+    def add_apex_aggregation(
+        self, name, params, chart_type, description="", label=None, view_id=None
+    ):
+        """Add aggregation to the sketch using apex charts and tables.
+
+        Note: since this is updating the database directly, the caller needs
+        to ensure the chart type and parameters are valid since no checks are
+        performed in this function.
+
+        Args:
+            name: the name.
+            params: a dictionary of the parameters for the aggregation.
+            chart_type: the chart type.
+            description: the description, visible in the UI.
+            label: string with a label to attach to the aggregation.
+            view_id: optional ID of the view to attach the aggregation to.
+        """
+        if not name:
+            raise ValueError("Aggregator name needs to be defined.")
+        if not params:
+            raise ValueError("Aggregator parameters have to be defined.")
+
+        if view_id:
+            view = View.get_by_id(view_id)
+        else:
+            view = None
+
+        if "aggregator_name" not in params:
+            raise ValueError("Aggregator name not specified")
+        aggregator = params["aggregator_name"]
+
+        aggregation = Aggregation.get_or_create(
+            agg_type=aggregator,
+            chart_type=chart_type,
+            description=description,
+            name=name,
+            parameters=json.dumps(params, ensure_ascii=False),
+            sketch=self.sql_sketch,
+            user=None,
+            view=view,
+        )
+
+        if label:
+            aggregation.add_label(label)
+        db_session.add(aggregation)
+        db_session.commit()
+
+        return aggregation
 
     def add_aggregation(
         self,
@@ -416,7 +465,7 @@ class Sketch(object):
             raise ValueError("Aggregator parameters have to be defined.")
 
         if view_id:
-            view = View.query.get(view_id)
+            view = View.get_by_id(view_id)
         else:
             view = None
 
@@ -454,7 +503,7 @@ class Sketch(object):
             raise ValueError("Aggregator group name needs to be defined.")
 
         if view_id:
-            view = View.query.get(view_id)
+            view = View.get_by_id(view_id)
         else:
             view = None
 
@@ -789,37 +838,22 @@ class Story(object):
         block["content"] = text
         self._commit(block)
 
-    def add_aggregation(self, aggregation, agg_type=""):
+    def add_aggregation(self, aggregation):
         """Add a saved aggregation to the Story.
 
         Args:
             aggregation (Aggregation): Saved aggregation to add to the story.
-            agg_type (str): string indicating the type of aggregation, can be:
-                "table" or the name of the chart to be used, eg "barcharct",
-                "hbarchart". Defaults to the value of supported_charts.
         """
         today = datetime.datetime.utcnow()
         block = self._create_new_block()
-        parameter_dict = json.loads(aggregation.parameters)
-        if agg_type:
-            parameter_dict["supported_charts"] = agg_type
-        else:
-            agg_type = parameter_dict.get("supported_charts")
-            # Neither agg_type nor supported_charts is set.
-            if not agg_type:
-                agg_type = "table"
-                parameter_dict["supported_charts"] = "table"
 
-        block["componentName"] = "TsAggregationCompact"
-        block["componentProps"]["aggregation"] = {
-            "agg_type": aggregation.agg_type,
-            "id": aggregation.id,
+        block["componentName"] = "TsSavedVisualization"
+        block["componentProps"] = {
             "name": aggregation.name,
-            "chart_type": agg_type,
+            "savedVisualizationId": aggregation.id,
             "description": aggregation.description,
             "created_at": today.isoformat(),
             "updated_at": today.isoformat(),
-            "parameters": json.dumps(parameter_dict),
             "user": {"username": None},
         }
         self._commit(block)
@@ -870,6 +904,7 @@ class BaseAnalyzer:
     NAME = "name"
     DISPLAY_NAME = None
     DESCRIPTION = None
+    IS_DFIQ_ANALYZER = False
 
     # If this analyzer depends on another analyzer
     # it needs to be included in this frozenset by using
@@ -1115,7 +1150,7 @@ class BaseAnalyzer:
         Returns:
             Return value of the run method.
         """
-        analysis = Analysis.query.get(analysis_id)
+        analysis = Analysis.get_by_id(analysis_id)
         analysis.set_status("STARTED")
 
         timeline = analysis.timeline
@@ -1389,7 +1424,7 @@ class AnalyzerOutput:
             item = [item]
         if key in self.platform_meta_data:
             self.platform_meta_data[key] = list(
-                set().union(self.platform_meta_data[key], item)
+                set(self.platform_meta_data[key]) | set(item)
             )
         else:
             self.platform_meta_data[key] = item
@@ -1432,7 +1467,9 @@ class AnalyzerOutput:
         Args:
             tags: The tags to add to the list of created_tags.
         """
-        self.add_meta_item("created_tags", tags)
+        existing_tags = self.platform_meta_data["created_tags"]
+        analyzer_tags = list(set(existing_tags) | set(tags))
+        self.add_meta_item("created_tags", analyzer_tags)
 
     def add_created_attributes(self, attributes):
         """Adds a attributes to the list of created_attributes.
@@ -1485,9 +1522,9 @@ class AnalyzerOutput:
             ]
 
         if self.platform_meta_data["saved_aggregations"]:
-            output["platform_meta_data"][
-                "saved_aggregations"
-            ] = self.platform_meta_data["saved_aggregations"]
+            output["platform_meta_data"]["saved_aggregations"] = (
+                self.platform_meta_data["saved_aggregations"]
+            )
 
         if self.platform_meta_data["created_tags"]:
             output["platform_meta_data"]["created_tags"] = self.platform_meta_data[
@@ -1495,9 +1532,9 @@ class AnalyzerOutput:
             ]
 
         if self.platform_meta_data["created_attributes"]:
-            output["platform_meta_data"][
-                "created_attributes"
-            ] = self.platform_meta_data["created_attributes"]
+            output["platform_meta_data"]["created_attributes"] = (
+                self.platform_meta_data["created_attributes"]
+            )
 
         return output
 

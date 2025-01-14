@@ -283,6 +283,18 @@ To remove an attribute from a sketch
 timesketch sketch remove_attribute
 ```
 
+### Archive Sketch
+
+Running `sketch archive` will set the archive flag to the sketch.
+
+### Unarchive a sketch
+
+Running `sketch unarchive` will set the archive flag to the sketch.
+
+### Export a sketch
+
+Running `sketch export` will export the complete Sketch to a file.
+
 ## Intelligence
 
 Intelligence is always sketch specific. The same can be achieved using 
@@ -505,3 +517,100 @@ It is also possible to provide a comma separated list of tags to remove. The fol
 timesketch events remove_tag --timeline-id 4 --event-id k8P1MYcBkeTGnypeeKJL --tag foobar333,fooba123
 200
 ```
+
+## Timelines
+
+### List timelines
+
+To list all timelines in a given sketch use: `timelines list`.
+
+```bash
+timesketch --sketch 1 timelines list
+1 foobar
+2 foobar3
+```
+
+It is also possible to get all the output as JSON.
+
+### Describe a timeline
+
+The command `timelines describe` will provide several variables, names and settings for a given timeline.
+
+```
+timesketch --sketch 1 --output-format text timelines describe 2
+Name: foobar3
+Index: 41dde394812d44c1ac1784997d05efed
+Status: ready
+Event count: 260454
+Color: AAAAAA
+Name: foobar3
+Created: 2024-08-20T14:57:59.047015
+Datasources:
+	Original filename: win7-x86.plaso
+	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
+	Error:
+```
+
+### Rename timeline
+
+To rename a single timeline in a sketch, the command `timelines rename` can be used.
+
+```bash
+timesketch --sketch 1 timelines rename 1 foobar23
+```
+
+### Delete a timeline
+
+The cli client is using the API to delete a timeline.
+
+As of August 2024, the API method to delete a timeline does only mark the reference in the database as deleted, the data will remain in Opensearch.
+
+```bash
+timesketch --sketch 1 timelines delete 1
+Confirm to mark the timeline deleted:: 1 foobar23? [y/N]: y
+Deleted
+```
+
+### Change timeline color
+
+The color is an important setting for a timeline when using the WebUI. To change the color using the CLI `timelines color` can be used.
+
+Before:
+```bash
+timesketch --sketch 1 --output-format text timelines describe 2
+Name: foobar3
+Index: 41dde394812d44c1ac1784997d05efed
+Status: ready
+Event count: 260454
+Color: AAAAAA
+Name: foobar3
+Created: 2024-08-20T14:57:59.047015
+Datasources:
+	Original filename: win7-x86.plaso
+	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
+	Error:
+```
+
+Using it:
+
+```bash
+timesketch --sketch 1 timelines color 2 BBBBBB
+```
+
+After:
+
+```bash
+timesketch --sketch 1 --output-format text timelines describe 2
+Name: foobar3
+Index: 41dde394812d44c1ac1784997d05efed
+Status: ready
+Event count: 260454
+Color: BBBBBB
+Name: foobar3
+Created: 2024-08-20T14:57:59.047015
+Datasources:
+	Original filename: win7-x86.plaso
+	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
+	Error:
+```
+

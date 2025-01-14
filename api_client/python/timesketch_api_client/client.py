@@ -106,11 +106,11 @@ class TimesketchApi:
         self._flow = None
 
         if not create_session:
-            self.session = None
+            self._session = None
             return
 
         try:
-            self.session = self._create_session(
+            self._session = self._create_session(
                 username,
                 password,
                 verify=verify,
@@ -145,13 +145,20 @@ class TimesketchApi:
 
         return "API Client: {0:s}".format(version.get_version())
 
+    @property
+    def session(self):
+        """Property that returns the session object."""
+        if self._session is None:
+            raise ValueError("Session is not set.")
+        return self._session
+
     def set_credentials(self, credential_object):
         """Sets the credential object."""
         self.credentials = credential_object
 
     def set_session(self, session_object):
         """Sets the session object."""
-        self.session = session_object
+        self._session = session_object
 
     def _authenticate_session(self, session, username, password):
         """Post username/password to authenticate the HTTP session.
@@ -368,22 +375,52 @@ class TimesketchApi:
             Dictionary with the response data.
 
         Raises:
-            RuntimeError: If response could not be JSON-decoded after
+            ValueError: If response could not be JSON-decoded after
                 DEFAULT_RETRY_COUNT attempts.
+            RuntimeError: If the API server returns an error or empty.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
-        response = self.session.get(resource_url, params=params)
 
         retry_count = 0
+        result = None
         while True:
-            result = error.get_response_json(response, logger)
-            # Any dict with content is good enough for us to return.
-            if result:
-                return result
             retry_count += 1
+            response = self.session.get(resource_url, params=params)
+            try:
+                result = error.get_response_json(response, logger)
+                if result:
+                    return result
+            except RuntimeError as e:
+                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                    raise RuntimeError(
+                        "Error for request '{0:s}' - '{1!s}'".format(resource_url, e)
+                    ) from e
+
+                logger.warning(
+                    "[{0:d}/{1:d}] Parsing the repsonse for request '{2:s}'"
+                    "failed. Trying again...".format(
+                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
+                    )
+                )
+            except ValueError as e:
+                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                    raise ValueError(
+                        "Error parsing response for request '{0:s}' - {1!s}".format(
+                            resource_url, e
+                        )
+                    ) from e
+
+                logger.warning(
+                    "[{0:d}/{1:d}] Parsing the JSON repsonse for request "
+                    "'{2:s}' failed. Trying again...".format(
+                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
+                    )
+                )
+
             if retry_count >= self.DEFAULT_RETRY_COUNT:
                 raise RuntimeError(
-                    f"Unable to fetch JSON resource data. Response: {str(result)}"
+                    "Unable to fetch JSON resource data for request: '{0:s}'"
+                    " - Response: '{1!s}'".format(resource_url, result)
                 )
 
     def create_sketch(self, name, description=None):
@@ -420,6 +457,62 @@ class TimesketchApi:
 
         sketch_id = objects[0]["id"]
         return self.get_sketch(sketch_id)
+
+    def create_user(self, username, password):
+        """Create a new user.
+
+        Args:
+            username: Name of the user
+            password: Password of the user
+
+        Returns:
+            True if user created successfully.
+
+        Raises:
+            RuntimeError: If response does not contain an 'objects' key after
+                DEFAULT_RETRY_COUNT attempts.
+        """
+
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = "{0:s}/users/".format(self.api_root)
+            form_data = {"username": username, "password": password}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get("objects")
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError("Unable to create a new user.")
+
+        return user.User(user_id=objects[0]["id"], api=self)
+
+    def list_users(self):
+        """Get a list of all users.
+
+        Yields:
+            User object instances.
+        """
+        response = self.fetch_resource_data("users/")
+
+        for user_dict in response.get("objects", [])[0]:
+            user_id = user_dict["id"]
+            user_obj = user.User(user_id=user_id, api=self)
+            yield user_obj
+
+    def get_user(self, user_id):
+        """Get a user.
+
+        Args:
+            user_id: Primary key ID of the user.
+
+        Returns:
+            Instance of a User object.
+        """
+        return user.User(user_id=user_id, api=self)
 
     def get_oauth_token_status(self):
         """Return a dict with OAuth token status, if one exists."""
@@ -481,9 +574,9 @@ class TimesketchApi:
                 line_dict["field_{0:d}_name".format(field_index + 1)] = field.get(
                     "name"
                 )
-                line_dict[
-                    "field_{0:d}_description".format(field_index + 1)
-                ] = field.get("description")
+                line_dict["field_{0:d}_description".format(field_index + 1)] = (
+                    field.get("description")
+                )
             lines.append(line_dict)
 
         return pandas.DataFrame(lines)

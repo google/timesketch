@@ -28,6 +28,7 @@ from opensearchpy import OpenSearch
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
+from opensearchpy.exceptions import TransportError
 
 # pylint: disable=redefined-builtin
 from opensearchpy.exceptions import ConnectionError
@@ -351,10 +352,27 @@ class OpenSearchDataStore(object):
 
         query_dsl = {"query": {"bool": {"must": [], "must_not": [], "filter": []}}}
 
+        special_char_query = None
+        if query_string:
+            query_parts = query_string.split(":", 1)
+            if len(query_parts) == 2:
+                field_name, query_value = query_parts
+
+                # Special Character Check
+                if set(query_value) <= set('.+-=_&|><!(){}[]^"~?:\\/'):
+                    # Construct the term query directly using the .keyword
+                    special_char_query = {
+                        "term": {f"{field_name}.keyword": query_value}
+                    }
+                    query_string = ""
+
         if query_string:
             query_dsl["query"]["bool"]["must"].append(
                 {"query_string": {"query": query_string, "default_operator": "AND"}}
             )
+
+        if special_char_query:
+            query_dsl["query"]["bool"]["must"].append(special_char_query)
 
         # New UI filters
         if query_filter.get("chips", None):
@@ -374,13 +392,22 @@ class OpenSearchDataStore(object):
                     labels.append(chip["value"])
 
                 elif chip["type"] == "term":
-                    term_filter = {
-                        "match_phrase": {
-                            "{}".format(chip["field"]): {
-                                "query": "{}".format(chip["value"])
+                    if isinstance(chip["value"], str):
+                        term_filter = {
+                            "match_phrase": {
+                                "{}.keyword".format(chip["field"]): {
+                                    "query": "{}".format(chip["value"])
+                                }
                             }
                         }
-                    }
+                    else:
+                        term_filter = {
+                            "match_phrase": {
+                                "{}".format(chip["field"]): {
+                                    "query": "{}".format(chip["value"])
+                                }
+                            }
+                        }
 
                     if chip["operator"] == "must":
                         must_filters.append(term_filter)
@@ -581,7 +608,7 @@ class OpenSearchDataStore(object):
                     _source_includes=return_fields,
                     scroll=scroll_timeout,
                 )
-        except RequestError as e:
+        except (RequestError, TransportError) as e:
             root_cause = e.info.get("error", {}).get("root_cause")
             if root_cause:
                 error_items = []
@@ -688,6 +715,14 @@ class OpenSearchDataStore(object):
         Returns:
             List with label names.
         """
+        # If no indices are provided, return an empty list. This indicates
+        # there are no labels to aggregate within the specified sketch.
+        # Returning early prevents querying OpenSearch with an empty
+        # index list, which would default to querying all indices ("_all")
+        # and could potentially cause performance issues or errors.
+        if not indices:
+            return []
+
         # This is a workaround to return all labels by setting the max buckets
         # to something big. If a sketch has more than this amount of labels
         # the list will be incomplete but it should be uncommon to have >10k
@@ -1070,7 +1105,7 @@ class OpenSearchDataStore(object):
                 doc_id = index.get("_id", "(unable to get doc id)")
                 caused_by = error.get("caused_by", {})
 
-                caused_reason = caused_by.get("reason", "Unkown Detailed Reason")
+                caused_reason = caused_by.get("reason", "Unknown Detailed Reason")
 
                 error_counter[error.get("type")] += 1
                 detail_msg = "{0:s}/{1:s}".format(

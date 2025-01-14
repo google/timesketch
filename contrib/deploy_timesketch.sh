@@ -16,10 +16,16 @@
 set -e
 
 START_CONTAINER=
+SKIP_CREATE_USER=
 
-if [ "$1" == "--start-container" ]; then
-    START_CONTAINER=yes
-fi
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --start-container) START_CONTAINER=yes ;;
+        --skip-create-user) SKIP_CREATE_USER=yes ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 
 # Exit early if run as non-root user.
 if [ "$EUID" -ne 0 ]; then
@@ -89,13 +95,11 @@ curl -s $GITHUB_BASE_URL/data/timesketch.conf > timesketch/etc/timesketch/timesk
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/plaso.mappings > timesketch/etc/timesketch/plaso.mappings
 curl -s $GITHUB_BASE_URL/data/generic.mappings > timesketch/etc/timesketch/generic.mappings
-curl -s $GITHUB_BASE_URL/data/features.yaml > timesketch/etc/timesketch/features.yaml
+curl -s $GITHUB_BASE_URL/data/regex_features.yaml > timesketch/etc/timesketch/regex_features.yaml
+curl -s $GITHUB_BASE_URL/data/winevt_features.yaml > timesketch/etc/timesketch/winevt_features.yaml
 curl -s $GITHUB_BASE_URL/data/ontology.yaml > timesketch/etc/timesketch/ontology.yaml
-curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
-curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml > timesketch/etc/timesketch/intelligence_tag_metadata.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
-curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
 curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
 curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
@@ -152,7 +156,9 @@ else
   exit
 fi
 
-read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
+if [ -z "$SKIP_CREATE_USER" ]; then
+  read -p "Would you like to create a new timesketch user? [y/N]" CREATE_USER
+fi
 
 if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   read -p "Please provide a new username: " NEWUSERNAME

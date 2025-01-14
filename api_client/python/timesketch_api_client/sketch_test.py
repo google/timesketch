@@ -21,6 +21,7 @@ from . import client
 from . import search
 from . import test_lib
 from . import timeline as timeline_lib
+from . import scenario as scenario_lib
 
 
 class SketchTest(unittest.TestCase):
@@ -95,3 +96,49 @@ class SketchTest(unittest.TestCase):
         self.assertEqual(
             aggregations[1].description, "Aggregating values of a particular field"
         )
+
+    def test_list_scenarios(self):
+        """Test the Sketch list_scenarios method."""
+        scenarios = self.sketch.list_scenarios()
+        self.assertIsInstance(scenarios, list)
+        self.assertEqual(len(scenarios), 1)
+        scenario = scenarios[0]
+        self.assertIsInstance(scenario, scenario_lib.Scenario)
+        self.assertEqual(scenario.id, 1)
+        self.assertEqual(scenario.name, "Test Scenario")
+        self.assertEqual(scenario.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(scenario.dfiq_identifier, "S0001")
+        self.assertEqual(scenario.description, "Scenario description!")
+
+    def test_add_scenario(self):
+        """Test the Sketch add_scenario method."""
+        scenario = self.sketch.add_scenario(dfiq_id="S0001")
+        self.assertIsInstance(scenario, scenario_lib.Scenario)
+        self.assertEqual(scenario.id, 1)
+        self.assertEqual(scenario.name, "Test Scenario")
+        self.assertEqual(scenario.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(scenario.dfiq_identifier, "S0001")
+        self.assertEqual(scenario.description, "Scenario description!")
+
+    def test_list_questions(self):
+        """Test the Sketch list_questions method."""
+        questions = self.sketch.list_questions()
+        self.assertIsInstance(questions, list)
+        self.assertEqual(len(questions), 1)
+        question = questions[0]
+        self.assertIsInstance(question, scenario_lib.Question)
+        self.assertEqual(question.id, 1)
+        self.assertEqual(question.name, "Test Question?")
+        self.assertEqual(question.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(question.dfiq_identifier, "Q0001")
+        self.assertEqual(question.description, "Test Question Description")
+
+    def test_add_question(self):
+        """Test the Sketch add_question method."""
+        question = self.sketch.add_question(dfiq_id="Q0001")
+        self.assertIsInstance(question, scenario_lib.Question)
+        self.assertEqual(question.id, 1)
+        self.assertEqual(question.name, "Test Question?")
+        self.assertEqual(question.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
+        self.assertEqual(question.dfiq_identifier, "Q0001")
+        self.assertEqual(question.description, "Test Question Description")

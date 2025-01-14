@@ -34,21 +34,25 @@ const defaultState = (currentUser) => {
     count: 0,
     currentSearchNode: null,
     currentUser: currentUser,
+    settings: {},
+    systemSettings: {},
     activeContext: {
-      scenario: null,
-      facet: null,
-      question: null
+      scenario: {},
+      facet: {},
+      question: {},
     },
     snackbar: {
       active: false,
-      color: "",
-      message: "",
-      timeout: -1
+      color: '',
+      message: '',
+      timeout: -1,
     },
     contextLinkConf: {},
     sketchAnalyzerList: {},
+    savedVisualizations: [],
     activeAnalyses: [],
     analyzerResults: [],
+    enabledTimelines: [],
   }
 }
 
@@ -88,6 +92,9 @@ export default new Vuex.Store({
       Vue.set(state, 'sigmaRuleList', payload['objects'])
       Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
     },
+    SET_VISUALIZATION_LIST(state, payload) {
+      Vue.set(state, 'savedVisualizations', payload)
+    },
     SET_ACTIVE_USER(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
         let currentUser = response.data.objects[0].username
@@ -95,13 +102,21 @@ export default new Vuex.Store({
       })
     },
     SET_ACTIVE_CONTEXT(state, payload) {
+      localStorage.setItem(
+        'sketchContext' + state.sketch.id.toString(),
+        JSON.stringify({
+          scenarioId: payload.scenarioId,
+          facetId: payload.facetId,
+          questionId: payload.questionId,
+        })
+      )
       Vue.set(state, 'activeContext', payload)
     },
     CLEAR_ACTIVE_CONTEXT(state) {
       let payload = {
-        scenario: null,
-        facet: null,
-        question: null
+        scenario: state.activeContext.scenario,
+        facet: state.activeContext.facet,
+        question: {},
       }
       Vue.set(state, 'activeContext', payload)
     },
@@ -126,18 +141,50 @@ export default new Vuex.Store({
     SET_ANALYZER_LIST(state, payload) {
       Vue.set(state, 'sketchAnalyzerList', payload)
     },
+    SET_SAVED_VISUALIZATIONS(state, payload) {
+      Vue.set(state, 'savedVisualizations', payload)
+    },
     SET_ACTIVE_ANALYSES(state, payload) {
       Vue.set(state, 'activeAnalyses', payload)
     },
     ADD_ACTIVE_ANALYSES(state, payload) {
-      const freshActiveAnalyses = [
-        ...state.activeAnalyses,
-        ...payload,
-      ]
+      const freshActiveAnalyses = [...state.activeAnalyses, ...payload]
       Vue.set(state, 'activeAnalyses', freshActiveAnalyses)
     },
     SET_ANALYZER_RESULTS(state, payload) {
       Vue.set(state, 'analyzerResults', payload)
+    },
+    SET_ENABLED_TIMELINES(state, payload) {
+      Vue.set(state, 'enabledTimelines', payload)
+    },
+    ADD_ENABLED_TIMELINES(state, payload) {
+      const freshEnabledTimelines = [...state.enabledTimelines, ...payload]
+      Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
+    },
+    REMOVE_ENABLED_TIMELINES(state, payload) {
+      Vue.set(
+        state,
+        'enabledTimelines',
+        state.enabledTimelines.filter((tl) => !payload.includes(tl))
+      )
+    },
+    TOGGLE_ENABLED_TIMELINE(state, payload) {
+      if (state.enabledTimelines.includes(payload)) {
+        Vue.set(
+          state,
+          'enabledTimelines',
+          state.enabledTimelines.filter((tl) => payload !== tl)
+        )
+      } else {
+        const freshEnabledTimelines = [...state.enabledTimelines, payload]
+        Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
+      }
+    },
+    SET_SYSTEM_SETTINGS(state, payload) {
+      Vue.set(state, 'systemSettings', payload || {})
+    },
+    SET_USER_SETTINGS(state, payload) {
+      Vue.set(state, 'settings', payload.objects[0] || {})
     },
   },
   actions: {
@@ -149,7 +196,7 @@ export default new Vuex.Store({
           context.dispatch('updateTimelineTags', { sketchId: sketchId })
           context.dispatch('updateDataTypes', sketchId)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
@@ -157,7 +204,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     resetState(context) {
       context.commit('RESET_STATE')
@@ -173,7 +220,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     updateScenarios(context, sketchId) {
       if (!sketchId) {
@@ -183,14 +230,14 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SCENARIOS', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     updateScenarioTemplates(context, sketchId) {
       return ApiClient.getScenarioTemplates(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     updateTimelineTags(context, payload) {
       if (!context.state.sketch.active_timelines.length) {
@@ -207,17 +254,17 @@ export default new Vuex.Store({
         .then((response) => {
           let buckets = response.data.objects[0]['field_bucket']['buckets']
           if (payload.tag && payload.num) {
-            let missing = buckets.find(tag => tag.tag === payload.tag) === undefined
+            let missing = buckets.find((tag) => tag.tag === payload.tag) === undefined
             if (missing) {
               buckets.push({ tag: payload.tag, count: payload.num })
             } else {
-              let tagIndex = buckets.findIndex(tag => tag.tag === payload.tag)
+              let tagIndex = buckets.findIndex((tag) => tag.tag === payload.tag)
               buckets[tagIndex].count += payload.num
             }
           }
           context.commit('SET_TIMELINE_TAGS', buckets)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     updateDataTypes(context, sketchId) {
       if (!context.state.sketch.active_timelines.length) {
@@ -234,14 +281,21 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_DATA_TYPES', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     updateSigmaList(context) {
       ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => {})
+    },
+    updateSavedVisualizationList(context, sketchId) {
+      ApiClient.getAggregations(sketchId)
+        .then((response) => {
+          context.commit('SET_VISUALIZATION_LIST', response.data.objects[0] || [])
+        })
+        .catch((e) => {})
     },
     setActiveContext(context, activeScenarioContext) {
       context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
@@ -250,26 +304,26 @@ export default new Vuex.Store({
       context.commit('CLEAR_ACTIVE_CONTEXT')
     },
     setSnackBar(context, snackbar) {
-      context.commit("SET_SNACKBAR", {
+      context.commit('SET_SNACKBAR', {
         active: true,
         color: snackbar.color,
         message: snackbar.message,
-        timeout: snackbar.timeout
-      });
+        timeout: snackbar.timeout,
+      })
     },
     updateContextLinks(context) {
       ApiClient.getContextLinkConfig()
         .then((response) => {
           context.commit('SET_CONTEXT_LINKS', response.data)
-      })
-      .catch((e) => { })
+        })
+        .catch((e) => {})
     },
     updateGraphPlugins(context) {
       ApiClient.getGraphPluginList()
         .then((response) => {
           context.commit('SET_GRAPH_PLUGINS', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => {})
     },
     updateSavedGraphs(context, sketchId) {
       if (!sketchId) {
@@ -277,36 +331,68 @@ export default new Vuex.Store({
       }
       ApiClient.getSavedGraphList(sketchId)
         .then((response) => {
-        context.commit('SET_SAVED_GRAPHS', response.data)
-      })
-      .catch((e) => {
-        console.error(e)
-      })
+          context.commit('SET_SAVED_GRAPHS', response.data)
+        })
+        .catch((e) => {
+          console.error(e)
+        })
     },
     updateAnalyzerList(context, sketchId) {
       if (!sketchId) {
         sketchId = context.state.sketch.id
       }
-      ApiClient.getAnalyzers(sketchId).then((response) => {
-        let analyzerList = {}
-        if (response.data !== undefined) {
-          response.data.forEach((analyzer) => {
-            analyzerList[analyzer.name] = analyzer
-          })
-        }
-        context.commit('SET_ANALYZER_LIST', analyzerList)
-      }).catch((e) => {
-        console.log(e)
-      })
+      ApiClient.getAnalyzers(sketchId)
+        .then((response) => {
+          let analyzerList = {}
+          if (response.data !== undefined) {
+            response.data.forEach((analyzer) => {
+              analyzerList[analyzer.name] = analyzer
+            })
+          }
+          context.commit('SET_ANALYZER_LIST', analyzerList)
+        })
+        .catch((e) => {
+          console.error(e)
+        })
     },
     updateActiveAnalyses(context, activeAnalyses) {
-      context.commit('SET_ACTIVE_ANALYSES', activeAnalyses);
+      context.commit('SET_ACTIVE_ANALYSES', activeAnalyses)
     },
     addActiveAnalyses(context, activeAnalyses) {
-      context.commit('ADD_ACTIVE_ANALYSES', activeAnalyses);
+      context.commit('ADD_ACTIVE_ANALYSES', activeAnalyses)
     },
     updateAnalyzerResults(context, analyzerResults) {
-      context.commit('SET_ANALYZER_RESULTS', analyzerResults);
+      context.commit('SET_ANALYZER_RESULTS', analyzerResults)
     },
-  }
+    enableTimeline(context, timeline) {
+      context.commit('ADD_ENABLED_TIMELINES', [timeline])
+    },
+    disableTimeline(context, timeline) {
+      context.commit('REMOVE_ENABLED_TIMELINES', [timeline])
+    },
+    updateEnabledTimelines(context, enabledTimelines) {
+      context.commit('SET_ENABLED_TIMELINES', enabledTimelines)
+    },
+    toggleEnabledTimeline(context, timelineId) {
+      context.commit('TOGGLE_ENABLED_TIMELINE', timelineId)
+    },
+    updateSystemSettings(context) {
+      return ApiClient.getSystemSettings()
+        .then((response) => {
+          context.commit('SET_SYSTEM_SETTINGS', response.data)
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+    updateUserSettings(context) {
+      return ApiClient.getUserSettings()
+        .then((response) => {
+          context.commit('SET_USER_SETTINGS', response.data)
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+  },
 })

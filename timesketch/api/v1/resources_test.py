@@ -22,8 +22,16 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
+from timesketch.lib.dfiq import DFIQ
+from timesketch.api.v1.resources import scenarios
+from timesketch.models.sketch import Scenario
+from timesketch.models.sketch import InvestigativeQuestion
+from timesketch.models.sketch import InvestigativeQuestionApproach
+from timesketch.models.sketch import Facet
 
 from timesketch.api.v1.resources import ResourceMixin
 
@@ -41,6 +49,18 @@ class ResourceMixinTest(BaseTest):
                 "objects": [],
             },
         )
+
+
+class InvalidResourceTest(BaseTest):
+    """Test an Invalid Resource."""
+
+    invalid_resource_url = "api/v1/invalidresource"
+
+    def test_invalid_endpoint(self):
+        """Authenticated request to get a non existent API endpoint"""
+        self.login()
+        response = self.client.get(self.invalid_resource_url)
+        self.assert404(response)
 
 
 class SketchListResourceTest(BaseTest):
@@ -209,6 +229,9 @@ class ExploreResourceTest(BaseTest):
                 "query_filter": "{}",
                 "query_result_count": 0,
                 "query_string": "test",
+                "scenario": None,
+                "facet": None,
+                "question": None,
             },
         },
         "objects": [
@@ -1003,11 +1026,13 @@ class IntelligenceResourceTest(BaseTest):
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertEqual(data, expected_tag_metadata)
+        self.assertDictEqual(data, expected_tag_metadata)
 
 
 class ContextLinksResourceTest(BaseTest):
     """Test Context Links resources."""
+
+    maxDiff = None
 
     def test_get_context_links_config(self):
         """Authenticated request to get the context links configuration."""
@@ -1015,37 +1040,495 @@ class ContextLinksResourceTest(BaseTest):
         expected_configuration = {
             "hash": [
                 {
-                    "short_name": "LookupOne",
-                    "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
                     "context_link": "https://lookupone.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
+                    "short_name": "LookupOne",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
                 },
                 {
-                    "short_name": "LookupTwo",
-                    "validation_regex": "/^[0-9a-f]{64}$/i",
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
                     "redirect_warning": False,
+                    "short_name": "LookupTwo",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
                 },
+            ],
+            "original_url": [
+                {
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                }
             ],
             "sha256_hash": [
                 {
-                    "short_name": "LookupTwo",
-                    "validation_regex": "/^[0-9a-f]{64}$/i",
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
                     "redirect_warning": False,
-                },
+                    "short_name": "LookupTwo",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
+            "uri": [
+                {
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                }
             ],
             "url": [
                 {
-                    "short_name": "LookupThree",
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                },
+                {
                     "context_link": "https://lookupthree.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
+                    "short_name": "LookupThree",
+                    "type": "linked_services",
                 },
             ],
+            "xml": [
+                {
+                    "module": "module_one",
+                    "short_name": "ModuleOne",
+                    "type": "hardcoded_modules",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
+            "xml_string": [
+                {
+                    "module": "module_one",
+                    "short_name": "ModuleOne",
+                    "type": "hardcoded_modules",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
         }
+
         self.login()
         response = self.client.get("/api/v1/contextlinks/")
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictEqual(data, expected_configuration)
+
+
+class UserListTest(BaseTest):
+    """Test UserListResource."""
+
+    def test_user_post_resource_admin(self):
+        """Authenticated request (admin user) to create another user."""
+        self.login_admin()
+
+        data = dict(username="testuser", password="testpassword")
+        response = self.client.post(
+            "/api/v1/users/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+
+    def test_user_post_resource_without_admin(self):
+        """Authenticated request (no admin) to create another user,
+        which should not work."""
+        self.login()
+
+        data = dict(username="testuser", password="testpassword")
+        response = self.client.post(
+            "/api/v1/users/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+    def test_user_post_resource_missing_username(self):
+        """Authenticated request (admin user) to create another user,
+        but with missing username, which should not work."""
+        self.login_admin()
+
+        data = dict(username="", password="testpassword")
+        response = self.client.post(
+            "/api/v1/users/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+    def test_user_post_resource_missing_password(self):
+        """Authenticated request (admin user) to create another user,
+        but with missing password, which should not work."""
+        self.login_admin()
+
+        data = dict(username="testuser", password="")
+        response = self.client.post(
+            "/api/v1/users/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+
+class UserTest(BaseTest):
+    """Test UserResource."""
+
+    def test_user_get_resource_admin(self):
+        """Authenticated request (admin user) to create another user."""
+        self.login_admin()
+
+        response = self.client.get("/api/v1/users/1/")
+        data = json.loads(response.get_data(as_text=True))
+        self.assertEqual(data["objects"][0]["username"], "test1")
+
+
+class TestNl2qResource(BaseTest):
+    """Test Nl2qResource."""
+
+    resource_url = "/api/v1/sketches/1/nl2q/"
+
+    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_prompt(self, mock_aggregator, mock_llm_manager):
+        """Test the prompt is created correctly."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_AggregationResult = mock.MagicMock()
+        mock_AggregationResult.values = [
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
+        mock_aggregator.return_value = (mock_AggregationResult, {})
+        mock_llm = mock.Mock()
+        mock_llm.generate.return_value = "LLM generated query"
+        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        expected_input = (
+            "Examples:\n"
+            "example 1\n"
+            "\n"
+            "example 2\n"
+            "Types:\n"
+            '* "test:data_type:1" -> "field_test_1", "field_test_2"\n'
+            '* "test:data_type:2" -> "field_test_3", "field_test_4"\n'
+            "Question:\n"
+            "Question for LLM?"
+        )
+        mock_llm.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(
+            response.json,
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
+        )
+
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_no_prompt(self, mock_aggregator):
+        """Test error when the prompt file is missing or not configured."""
+
+        self.app.config["PROMPT_NL2Q"] = "/file_does_not_exist.txt"
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_AggregationResult = mock.MagicMock()
+        mock_AggregationResult.values = [
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
+        mock_aggregator.return_value = (mock_AggregationResult, {})
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+
+        del self.app.config["PROMPT_NL2Q"]
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        # data = json.loads(response.get_data(as_text=True))
+        # self.assertIsNotNone(data.get("error"))
+
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_no_examples(self, mock_aggregator):
+        """Test error when the prompt file is missing or not configured."""
+
+        self.app.config["EXAMPLES_NL2Q"] = "/file_does_not_exist.txt"
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_AggregationResult = mock.MagicMock()
+        mock_AggregationResult.values = [
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
+        mock_aggregator.return_value = (mock_AggregationResult, {})
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+
+        del self.app.config["EXAMPLES_NL2Q"]
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_no_question(self):
+        """Test nl2q without submitting a question."""
+
+        self.login()
+        data = dict()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_wrong_llm_provider(self, mock_aggregator):
+        """Test nl2q with llm provider that does not exist."""
+
+        self.app.config["LLM_PROVIDER"] = "DoesNotExists"
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_AggregationResult = mock.MagicMock()
+        mock_AggregationResult.values = [
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
+        mock_aggregator.return_value = (mock_AggregationResult, {})
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        data = json.loads(response.get_data(as_text=True))
+        self.assertIsNotNone(data.get("error"))
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_no_llm_provider(self):
+        """Test nl2q with no llm provider configured."""
+
+        del self.app.config["LLM_PROVIDER"]
+        self.login()
+        data = dict(question="Question for LLM?")
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_no_sketch(self):
+        """Test the nl2q with non existing sketch."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        response = self.client.post(
+            "/api/v1/sketches/9999/nl2q/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_no_permission(self):
+        """Test the nl2q with no permission on the sketch."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        response = self.client.post(
+            "/api/v1/sketches/2/nl2q/",
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_llm_error(self, mock_aggregator, mock_llm_manager):
+        """Test nl2q with llm error."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_AggregationResult = mock.MagicMock()
+        mock_AggregationResult.values = [
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
+        mock_aggregator.return_value = (mock_AggregationResult, {})
+        mock_llm = mock.Mock()
+        mock_llm.generate.side_effect = Exception("Test exception")
+        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        data = json.loads(response.get_data(as_text=True))
+        self.assertIsNotNone(data.get("error"))
+
+
+class SystemSettingsResourceTest(BaseTest):
+    """Test system settings resource."""
+
+    resource_url = "/api/v1/settings/"
+
+    def test_system_settings_resource(self):
+        """Authenticated request to get system settings."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        expected_response = {"DFIQ_ENABLED": False, "LLM_PROVIDER": "test"}
+        self.assertEqual(response.json, expected_response)
+
+
+class ScenariosResourceTest(BaseTest):
+    """Tests the scenarios resource."""
+
+    @mock.patch("timesketch.lib.analyzers.dfiq_plugins.manager.DFIQAnalyzerManager")
+    def test_check_and_run_dfiq_analysis_steps(self, mock_analyzer_manager):
+        """Test triggering analyzers for different DFIQ objects."""
+        test_sketch = self.sketch1
+        test_user = self.user1
+        self.sketch1.set_status("ready")
+        self._commit_to_database(test_sketch)
+
+        # Load DFIQ objects
+        dfiq_obj = DFIQ("./test_data/dfiq/")
+
+        scenario = dfiq_obj.scenarios[0]
+        scenario_sql = Scenario(
+            dfiq_identifier=scenario.id,
+            uuid=scenario.uuid,
+            name=scenario.name,
+            display_name=scenario.name,
+            description=scenario.description,
+            spec_json=scenario.to_json(),
+            sketch=test_sketch,
+            user=test_user,
+        )
+
+        facet = dfiq_obj.facets[0]
+        facet_sql = Facet(
+            dfiq_identifier=facet.id,
+            uuid=facet.uuid,
+            name=facet.name,
+            display_name=facet.name,
+            description=facet.description,
+            spec_json=facet.to_json(),
+            sketch=test_sketch,
+            user=test_user,
+        )
+        scenario_sql.facets = [facet_sql]
+
+        question = dfiq_obj.questions[0]
+        question_sql = InvestigativeQuestion(
+            dfiq_identifier=question.id,
+            uuid=question.uuid,
+            name=question.name,
+            display_name=question.name,
+            description=question.description,
+            spec_json=question.to_json(),
+            sketch=test_sketch,
+            scenario=scenario_sql,
+            user=test_user,
+        )
+        facet_sql.questions = [question_sql]
+
+        approach = question.approaches[0]
+        approach_sql = InvestigativeQuestionApproach(
+            name=approach.name,
+            display_name=approach.name,
+            description=approach.description,
+            spec_json=approach.to_json(),
+            user=test_user,
+        )
+        question_sql.approaches = [approach_sql]
+
+        self._commit_to_database(approach_sql)
+        self._commit_to_database(question_sql)
+        self._commit_to_database(facet_sql)
+        self._commit_to_database(scenario_sql)
+
+        # Test without analysis step
+        result = scenarios.check_and_run_dfiq_analysis_steps(scenario_sql, test_sketch)
+        self.assertFalse(result)
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(facet_sql, test_sketch)
+        self.assertFalse(result)
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(approach_sql, test_sketch)
+        self.assertFalse(result)
+
+        # Add analysis step to approach
+        approach.steps.append(
+            {
+                "stage": "analysis",
+                "type": "timesketch-analyzer",
+                "value": "test_analyzer",
+            }
+        )
+        approach_sql.spec_json = approach.to_json()
+
+        # Mocking analyzer manager response.
+        mock_analyzer_manager.trigger_analyzers_for_approach.return_value = [
+            mock.MagicMock()
+        ]
+
+        # Test with analysis step
+        result = scenarios.check_and_run_dfiq_analysis_steps(
+            scenario_sql, test_sketch, mock_analyzer_manager
+        )
+        self.assertEqual(result, [mock.ANY, mock.ANY])
+        mock_analyzer_manager.trigger_analyzers_for_approach.assert_called_with(
+            approach=approach_sql
+        )
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(
+            facet_sql, test_sketch, mock_analyzer_manager
+        )
+        self.assertEqual(result, [mock.ANY])
+        mock_analyzer_manager.trigger_analyzers_for_approach.assert_called_with(
+            approach=approach_sql
+        )
+
+        result = scenarios.check_and_run_dfiq_analysis_steps(
+            question_sql, test_sketch, mock_analyzer_manager
+        )
+        self.assertEqual(result, [mock.ANY])
+        mock_analyzer_manager.trigger_analyzers_for_approach.assert_called_with(
+            approach=approach_sql
+        )
+
+        # Test with invalid object
+        result = scenarios.check_and_run_dfiq_analysis_steps("invalid", test_sketch)
+        self.assertFalse(result)

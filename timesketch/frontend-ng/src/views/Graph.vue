@@ -21,15 +21,15 @@ limitations under the License.
         v-if="currentGraphPlugin || currentSavedGraph"
         :graph-plugin-name="currentGraphPlugin"
         :saved-graph-id="currentSavedGraph"
-        canvas-height="80vh"
+        canvas-height="70vh"
       ></ts-cytoscape>
     </div>
   </v-container>
 </template>
 
 <script>
-import EventBus from '../main'
-import TsCytoscape from '../components/Graph/Cytoscape'
+import EventBus from '../event-bus.js'
+import TsCytoscape from '../components/Graph/Cytoscape.vue'
 
 export default {
   props: [],

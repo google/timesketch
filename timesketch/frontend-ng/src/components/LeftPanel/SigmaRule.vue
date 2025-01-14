@@ -23,8 +23,8 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
     >
       <v-col cols="1" class="pl-1">
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
+        <v-icon title="Show details" v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon title="Close details" v-else>mdi-chevron-down</v-icon>
       </v-col>
 
       <v-col cols="10">
@@ -35,7 +35,7 @@ limitations under the License.
         <v-menu offset-y>
           <template v-slot:activator="{ on, attrs }">
             <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon small>mdi-dots-vertical</v-icon>
+              <v-icon title="Manage Sigma rule" small>mdi-dots-vertical</v-icon>
             </v-btn>
           </template>
           <v-card>
@@ -137,7 +137,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {

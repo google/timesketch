@@ -44,6 +44,9 @@ from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchHistory
+from timesketch.models.sketch import Scenario
+from timesketch.models.sketch import Facet
+from timesketch.models.sketch import InvestigativeQuestion
 
 # Metrics definitions
 METRICS = {
@@ -70,7 +73,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         Returns:
             JSON with list of matched events
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -92,6 +95,42 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to explore data, unable to validate form data",
             )
+
+        # DFIQ context
+        scenario = None
+        facet = None
+        question = None
+
+        scenario_id = request.json.get("scenario", None)
+        facet_id = request.json.get("facet", None)
+        question_id = request.json.get("question", None)
+
+        if scenario_id:
+            scenario = Scenario.get_by_id(scenario_id)
+            if scenario:
+                if scenario.sketch_id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Scenario is not part of this sketch.",
+                    )
+
+        if facet_id:
+            facet = Facet.get_by_id(facet_id)
+            if facet:
+                if facet.scenario.sketch_id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Facet is not part of this sketch.",
+                    )
+
+        if question_id:
+            question = InvestigativeQuestion.get_by_id(question_id)
+            if question:
+                if question.sketch_id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Question is not part of this sketch.",
+                    )
 
         # TODO: Remove form and use json instead.
         query_dsl = form.dsl.data
@@ -282,7 +321,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         comments = {}
         if "comment" in return_fields:
-            events = Event.query.filter_by(sketch=sketch).all()
+            events = Event.get_with_comments(sketch=sketch)
             for event in events:
                 for comment in event.comments:
                     comments.setdefault(event.document_id, [])
@@ -322,7 +361,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         new_search = SearchHistory(user=current_user, sketch=sketch)
 
         if parent:
-            previous_search = SearchHistory.query.get(parent)
+            previous_search = SearchHistory.get_by_id(parent)
         else:
             previous_search = (
                 SearchHistory.query.filter_by(user=current_user, sketch=sketch)
@@ -339,6 +378,11 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
             new_search.query_result_count = count_total_complete
             new_search.query_time = result["took"]
+
+            # Add DFIQ context
+            new_search.scenario = scenario
+            new_search.facet = facet
+            new_search.investigativequestion = question
 
             if previous_search:
                 new_search.parent = previous_search
@@ -417,7 +461,7 @@ class QueryResource(resources.ResourceMixin, Resource):
         form = forms.ExploreForm.build(request)
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -443,6 +487,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("limit", type=int, required=False, location="args")
+        self.parser.add_argument("question", type=int, required=False, location="args")
 
     @login_required
     def get(self, sketch_id):
@@ -457,21 +502,39 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         # How many results to return (12 if nothing is specified)
         args = self.parser.parse_args()
         limit = args.get("limit")
+        question_id = args.get("question")
 
         if not limit:
             limit = DEFAULT_LIMIT
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         result = []
-        nodes = (
-            SearchHistory.query.filter_by(user=current_user, sketch=sketch)
-            .order_by(SearchHistory.id.desc())
-            .limit(SQL_LIMIT)
-            .all()
-        )
+
+        if question_id:
+            question = InvestigativeQuestion.get_by_id(question_id)
+            if question.sketch.id != sketch.id:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    "No question found with this ID for this sketch.",
+                )
+            nodes = (
+                SearchHistory.query.filter_by(
+                    user=current_user, sketch=sketch, investigativequestion=question
+                )
+                .order_by(SearchHistory.id.desc())
+                .limit(SQL_LIMIT)
+                .all()
+            )
+        else:
+            nodes = (
+                SearchHistory.query.filter_by(user=current_user, sketch=sketch)
+                .order_by(SearchHistory.id.desc())
+                .limit(SQL_LIMIT)
+                .all()
+            )
 
         uniq_queries = set()
         count = 0
@@ -500,7 +563,7 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         Returns:
             Search history in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

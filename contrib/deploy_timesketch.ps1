@@ -38,13 +38,28 @@ wsl -d docker-desktop sysctl -w vm.max_map_count=262144
 [void](New-Item -ItemType Directory -Name timesketch\etc\timesketch\sigma\rules)
 [void](New-Item -ItemType Directory -Name timesketch\upload)
 
+# function to get Cryptographically random alphanumeric characters
+$CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+$rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider
+Function Get-RandomString {
+    Param($length)
+    $KEY = ""
+    for($i = 0; $i -lt [int]$length; $i++)
+    {
+        [byte[]] $byte = 1
+        $rng.GetBytes($byte)
+        $KEY = $KEY + $CHARS[[int]$byte[0]%62]
+    }
+    $KEY
+}
+
 # config parameters
 Write-Host "* Setting default config parameters.."
 $POSTGRES_USER="timesketch"
-$POSTGRES_PASSWORD= (-join(1..42 | ForEach {((65..90)+(97..122)+(".") | % {[char]$_})+(0..9)+(".") | Get-Random}))
+$POSTGRES_PASSWORD=Get-RandomString -length 42 
 $POSTGRES_ADDRESS="postgres"
 $POSTGRES_PORT="5432"
-$SECRET_KEY=(-join(1..42 | ForEach {((65..90)+(97..122)+(".") | % {[char]$_})+(0..9)+(".") | Get-Random}))
+$SECRET_KEY=Get-RandomString -length 42
 $OPENSEARCH_ADDRESS="opensearch"
 $OPENSEARCH_PORT="9200"
 # The command below will take half of the system memory. This can be changed to whatever suits you. More the merrier for the ES though.
@@ -66,11 +81,11 @@ Write-Host "* Fetching configuration files.."
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/tags.yaml).Content | out-file timesketch\etc\timesketch\tags.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/plaso.mappings).Content | out-file timesketch\etc\timesketch\plaso.mappings -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/generic.mappings).Content | out-file timesketch\etc\timesketch\generic.mappings -encoding UTF8NoBOM
-(Invoke-webrequest -URI $GITHUB_BASE_URL/data/features.yaml).Content | out-file timesketch\etc\timesketch\features.yaml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/regex_features.yaml).Content | out-file timesketch\etc\timesketch\regex_features.yaml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/winevt_features.yaml).Content | out-file timesketch\etc\timesketch\winevt_features.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/ontology.yaml).Content | out-file timesketch\etc\timesketch\ontology.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml).Content | out-file timesketch\etc\timesketch\intelligence_tag_metadata.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_config.yaml).Content | out-file timesketch\etc\timesketch\sigma_config.yaml -encoding UTF8NoBOM
-(Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_rule_status.csv).Content | out-file timesketch\etc\timesketch\sigma_rule_status.csv -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml).Content | out-file timesketch\etc\timesketch\sigma\rules\lnx_susp_zmap.yml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/contrib/nginx.conf).Content | out-file timesketch\etc\nginx.conf -encoding UTF8NoBOM
 Write-Host "OK"
@@ -82,8 +97,8 @@ $convfenv = 'timesketch\config.env'
 (Get-Content $timesketchconf).replace("SECRET_KEY = '<KEY_GOES_HERE>'", "SECRET_KEY = '$SECRET_KEY'") | Set-Content $timesketchconf
 
 # Set up the OpenSearch connection
-(Get-Content $timesketchconf).replace("ELASTIC_HOST = '127.0.0.1'", "ELASTIC_HOST = '$OPENSEARCH_ADDRESS'") | Set-Content $timesketchconf
-(Get-Content $timesketchconf).replace("ELASTIC_PORT = 9200", "ELASTIC_PORT = $OPENSEARCH_PORT") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace("OPENSEARCH_HOST = '127.0.0.1'", "ELASTIC_HOST = '$OPENSEARCH_ADDRESS'") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace("OPENSEARCH_PORT = 9200", "ELASTIC_PORT = $OPENSEARCH_PORT") | Set-Content $timesketchconf
 
 # Set up the Redis connection
 (Get-Content $timesketchconf).replace("UPLOAD_ENABLED = False", "UPLOAD_ENABLED = True") | Set-Content $timesketchconf

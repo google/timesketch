@@ -79,7 +79,12 @@ class TestConfig(object):
     SIMILARITY_DATA_TYPES = []
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
-    CONTEXT_LINKS_CONFIG_PATH = "./test_tools/test_events/mock_context_links.yaml"
+    CONTEXT_LINKS_CONFIG_PATH = "./tests/test_events/mock_context_links.yaml"
+    LLM_PROVIDER = "test"
+    DFIQ_ENABLED = False
+    DATA_TYPES_PATH = "./test_data/nl2q/test_data_types.csv"
+    PROMPT_NL2Q = "./test_data/nl2q/test_prompt_nl2q"
+    EXAMPLES_NL2Q = "./test_data/nl2q/test_examples_nl2q"
 
 
 class MockOpenSearchClient(object):
@@ -435,17 +440,20 @@ class BaseTest(TestCase):
         db_session.add(model)
         db_session.commit()
 
-    def _create_user(self, username, set_password=False):
+    def _create_user(self, username, set_password=False, set_admin=False):
         """Create a user in the database.
         Args:
             username: Username (string)
             set_password: Boolean value to decide if a password should be set
+            set_admin: Boolean value to decide if the user should be an admin
         Returns:
             A user (instance of timesketch.models.user.User)
         """
-        user = User.get_or_create(username=username)
+        user = User.get_or_create(username=username, name=username)
         if set_password:
             user.set_password(plaintext="test", rounds=4)
+        if set_admin:
+            user.admin = True
         self._commit_to_database(user)
         return user
 
@@ -457,7 +465,7 @@ class BaseTest(TestCase):
         Returns:
             A group (instance of timesketch.models.user.Group)
         """
-        group = Group.get_or_create(name=name)
+        group = Group.get_or_create(name=name, display_name=name, description=name)
         user.groups.append(group)
         self._commit_to_database(group)
         return group
@@ -616,6 +624,9 @@ class BaseTest(TestCase):
 
         self.user1 = self._create_user(username="test1", set_password=True)
         self.user2 = self._create_user(username="test2", set_password=False)
+        self.useradmin = self._create_user(
+            username="testadmin", set_password=True, set_admin=True
+        )
 
         self.group1 = self._create_group(name="test_group1", user=self.user1)
         self.group2 = self._create_group(name="test_group2", user=self.user1)
@@ -677,6 +688,14 @@ class BaseTest(TestCase):
             follow_redirects=True,
         )
 
+    def login_admin(self):
+        """Authenticate the test user with admin privileges."""
+        self.client.post(
+            "/login/",
+            data=dict(username="testadmin", password="test"),
+            follow_redirects=True,
+        )
+
     def test_unauthenticated(self):
         """
         Generic test for all resources. It tests that no
@@ -701,7 +720,7 @@ class ModelBaseTest(BaseTest):
 
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""
-        db_obj = model_cls.query.get(1)
+        db_obj = model_cls.get_by_id(1)
         for x in expected_result:
             k, v = x[0], x[1]
             self.assertEqual(db_obj.__getattribute__(k), v)
