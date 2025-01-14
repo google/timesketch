@@ -158,3 +158,12 @@ def unarchive_sketch(ctx):
     if sketch.is_archived():
         sketch.unarchive()
         click.echo("Sketch unarchived")
+
+
+@sketch_group.command("delete", help="Delete a sketch")
+@click.pass_context
+def delete_sketch(ctx):
+    """Delete a sketch."""
+    sketch = ctx.obj.sketch
+    sketch.delete()
+    click.echo("Sketch deleted")
