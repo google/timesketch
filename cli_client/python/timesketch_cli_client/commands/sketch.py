@@ -160,15 +160,6 @@ def unarchive_sketch(ctx):
         click.echo("Sketch unarchived")
 
 
-@sketch_group.command("delete", help="Delete a sketch")
-@click.pass_context
-def delete_sketch(ctx):
-    """Delete a sketch."""
-    sketch = ctx.obj.sketch
-    sketch.delete()
-    click.echo("Sketch deleted")
-
-
 @sketch_group.command("add_label", help="Add a label to a sketch")
 @click.option("--label", required=True, help="Name of label to add.")
 @click.pass_context
