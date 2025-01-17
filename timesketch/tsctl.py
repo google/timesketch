@@ -49,14 +49,18 @@ def cli():
 
 
 @cli.command(name="list-users")
-def list_users():
+@click.option("--status", "-s", is_flag=True, help="Show status of the users.")
+def list_users(status):
     """List all users."""
     for user in User.query.all():
         if user.admin:
             extra = " (admin)"
         else:
             extra = ""
-        print(f"{user.username}{extra}")
+        if status:
+            print(f"{user.username}{extra} (active: {user.active})")
+        else:
+            print(f"{user.username}{extra}")
 
 
 @cli.command(name="create-user")
@@ -192,10 +196,17 @@ def list_sketches():
 
 
 @cli.command(name="list-groups")
-def list_groups():
+@click.option("--showmembership", is_flag=True, help="Show members of that group.")
+def list_groups(showmembership):
     """List all groups."""
     for group in Group.query.all():
-        print(group.name)
+        if showmembership:
+            users = []
+            for user in group.users:
+                users.append(user.username)
+            print(f"{group.name}:{','.join(users)}")
+        else:
+            print(group.name)
 
 
 @cli.command(name="create-group")
