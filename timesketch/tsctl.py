@@ -204,7 +204,7 @@ def list_groups(showmembership):
             users = []
             for user in group.users:
                 users.append(user.username)
-            print(f"{group.name}: {', '.join(users)}")
+            print(f"{group.name}:{','.join(users)}")
         else:
             print(group.name)
 
