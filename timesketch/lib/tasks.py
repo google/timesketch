@@ -1010,7 +1010,7 @@ def run_csv_jsonl(
         ):
             unique_keys.update(event.keys())
             # Calculating the new limit. Each unique key is counted twice due to
-            # the "keayword" type plus a percentage buffer (default 20%).
+            # the "keyword" type plus a percentage buffer (default 20%).
             new_limit = int((len(unique_keys) * 2) * (1 + limit_buffer_percentage))
             # To prevent mapping explosions we still check against an upper
             # mapping limit set in timesketch.conf (default: 2000).
