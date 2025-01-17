@@ -158,3 +158,31 @@ def unarchive_sketch(ctx):
     if sketch.is_archived():
         sketch.unarchive()
         click.echo("Sketch unarchived")
+
+
+@sketch_group.command("add_label", help="Add a label to a sketch")
+@click.option("--label", required=True, help="Name of label to add.")
+@click.pass_context
+def add_label(ctx, label):
+    """Add a label to a sketch."""
+    sketch = ctx.obj.sketch
+    sketch.add_sketch_label(label)
+    click.echo("Label added")
+
+
+@sketch_group.command("list_label", help="List labels of sketch")
+@click.pass_context
+def list_label(ctx):
+    """List labels of a sketch."""
+    sketch = ctx.obj.sketch
+    click.echo(sketch.labels)
+
+
+@sketch_group.command("remove_label", help="Remove a label from a sketch")
+@click.option("--label", required=True, help="Name of label to remove.")
+@click.pass_context
+def remove_label(ctx, label):
+    """Remove a label from a sketch."""
+    sketch = ctx.obj.sketch
+    sketch.remove_sketch_label(label)
+    click.echo("Label removed.")

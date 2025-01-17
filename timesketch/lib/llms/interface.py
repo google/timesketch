@@ -14,6 +14,7 @@
 """Interface for LLM providers."""
 
 import string
+from typing import Optional
 
 from flask import current_app
 
@@ -82,13 +83,13 @@ class LLMProvider:
         formatter = string.Formatter()
         return formatter.format(template, **kwargs)
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """Generate a response from the LLM provider.
 
         Args:
             prompt: The prompt to generate a response for.
-            temperature: The temperature to use for the response.
-            stream: Whether to stream the response.
+            response_schema: An optional JSON schema to define the expected
+                response format.
 
         Returns:
             The generated response.
