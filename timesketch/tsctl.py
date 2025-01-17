@@ -196,10 +196,14 @@ def list_sketches():
 
 
 @cli.command(name="list-groups")
-def list_groups():
+@click.option("--showmembership", is_flag=True, help="Show members of that group.")
+def list_groups(showmembership):
     """List all groups."""
     for group in Group.query.all():
         print(group.name)
+        if showmembership:
+            for user in group.users:
+                print(f"\t{user.username}")
 
 
 @cli.command(name="create-group")

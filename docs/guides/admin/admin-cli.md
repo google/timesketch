@@ -212,6 +212,20 @@ Not yet implemented.
 
 #### Managing group membership
 
+##### List groups
+
+To list groups, use `tsctl list-groups`. This can be extended  to show the members of a group using `tsctl list-groups --showmembershipt`
+
+Example:
+
+```bash
+tsctl list-groups --showmembership
+foobar
+foobar-group
+	foobar2
+	foobar
+```
+
 ##### Add a suer to a group
 
 tsctl provides a subcommand for adding users to a group in a Timesketch instance. This subcommand is called `add-group-member`, and it allows you to specify the username of the user you want to add to the group, as well as the name of the group you want to add the user to.
