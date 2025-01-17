@@ -94,9 +94,9 @@ METRICS = {
         ["index_name", "error_type"],
         namespace=METRICS_NAMESPACE,
     ),
-    "worker_total_run_time": prometheus_client.Summary(
-        "worker_total_run_time",
-        "Total runtime of the run_csv_jsonl task",
+    "worker_run_time": prometheus_client.Summary(
+        "worker_run_time_seconds",
+        "Runtime of the worker task in seconds",
         ["index_name", "timeline_id", "source_type"],
         namespace=METRICS_NAMESPACE,
     ),
@@ -723,6 +723,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     Returns:
         Name (str) of the index.
     """
+    time_start = time.time()
     if not plaso:
         raise RuntimeError(
             ("Plaso isn't installed, " "unable to continue processing plaso files.")
@@ -878,6 +879,10 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
     # Mark the searchindex and timelines as ready
     _set_datasource_status(timeline_id, file_path, "ready")
+    time_took_to_run = time.time() - time_start
+    METRICS["worker_run_time"].labels(
+        index_name=index_name, timeline_id=timeline_id, source_type=source_type
+    ).observe(time_took_to_run)
     return index_name
 
 
@@ -1103,7 +1108,7 @@ def run_csv_jsonl(
     )
 
     time_took_to_run = time.time() - time_start
-    METRICS["worker_total_run_time"].labels(
+    METRICS["worker_run_time"].labels(
         index_name=index_name, timeline_id=timeline_id, source_type=source_type
     ).observe(time_took_to_run)
     return index_name
