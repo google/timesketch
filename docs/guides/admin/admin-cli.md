@@ -150,6 +150,17 @@ bar
 dev (admin)
 ```
 
+Adding `--status` will add the status of the user to the output.
+
+Example
+```shell
+tsctl list-users --status
+dev (active: True)
+admin (active: True)
+foobar2 (active: True)
+foobar (active: False)
+```
+
 #### Make admin
 
 tsctl provides a subcommand for granting administrator privileges to a user in a Timesketch instance. This subcommand is called `make-admin`, and it allows you to specify the username of the user you want to grant administrator privileges to.

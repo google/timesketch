@@ -49,14 +49,18 @@ def cli():
 
 
 @cli.command(name="list-users")
-def list_users():
+@click.option("--status", "-s", is_flag=True, help="Show status of the users.")
+def list_users(status):
     """List all users."""
     for user in User.query.all():
         if user.admin:
             extra = " (admin)"
         else:
             extra = ""
-        print(f"{user.username}{extra}")
+        if status:
+            print(f"{user.username}{extra} (active: {user.active})")
+        else:
+            print(f"{user.username}{extra}")
 
 
 @cli.command(name="create-user")
