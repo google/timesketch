@@ -161,9 +161,35 @@ def unarchive_sketch(ctx):
 
 
 @sketch_group.command("delete", help="Delete a sketch")
+@click.option(
+    "--execute",
+    required=False,
+    is_flag=True,
+    help="Only execute the deletion if this is set.",
+)
 @click.pass_context
-def delete_sketch(ctx):
+def delete_sketch(ctx, execute):
     """Delete a sketch."""
     sketch = ctx.obj.sketch
-    sketch.delete()
-    click.echo("Sketch deleted")
+
+    # Dryrun:
+    click.echo("Would delete the following things")
+    click.echo(
+        f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
+    )
+
+    for timeline in sketch.list_timelines():
+        click.echo(
+            f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
+        )
+
+    # for story in sketch.stories:
+    #    click.echo(
+    #        f"  Story: {story.id} {story.title} {story.description} {story.status} {story.created_at} {story.updated_at}" # pylint: disable=line-too-long
+    #    )
+
+    if execute:
+        click.echo("Will delete for real")
+
+        sketch.delete()
+        click.echo("Sketch deleted")
