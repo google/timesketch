@@ -22,10 +22,11 @@ import json
 import logging
 import os
 import subprocess
+import time
 import traceback
 import six
 import yaml
-import time
+import prometheus_client
 
 from celery import chain
 from celery import group
@@ -41,6 +42,7 @@ from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.lib.utils import send_email
@@ -54,8 +56,6 @@ from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.models.user import User
 
-import prometheus_client
-from timesketch.lib.definitions import METRICS_NAMESPACE
 
 # Metrics definitions
 METRICS = {
