@@ -200,10 +200,13 @@ def list_sketches():
 def list_groups(showmembership):
     """List all groups."""
     for group in Group.query.all():
-        print(group.name)
         if showmembership:
+            users = []
             for user in group.users:
-                print(f"\t{user.username}")
+                users.append(user.username)
+            print(f"{group.name}: {', '.join(users)}")
+        else:
+            print(group.name)
 
 
 @cli.command(name="create-group")

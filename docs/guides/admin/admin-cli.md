@@ -220,10 +220,8 @@ Example:
 
 ```bash
 tsctl list-groups --showmembership
-foobar
-foobar-group
-	foobar2
-	foobar
+foobar:
+foobar-group: foobar2, foobar
 ```
 
 ##### Add a suer to a group
