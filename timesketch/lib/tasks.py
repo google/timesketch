@@ -59,50 +59,45 @@ from timesketch.lib.definitions import METRICS_NAMESPACE
 
 # Metrics definitions
 METRICS = {
-    "csv_jsonl_runs": prometheus_client.Counter(
-        "csv_jsonl_runs",
+    "worker_csv_jsonl_runs": prometheus_client.Counter(
+        "worker_csv_jsonl_runs",
         "Number of times the run_csv_jsonl task has been run",
         namespace=METRICS_NAMESPACE,
     ),
-    "manual_event_added": prometheus_client.Counter(
-        "manual_event_added",
-        "Number of times the run_csv_jsonl used to add a manual event",
-        namespace=METRICS_NAMESPACE,
-    ),
-    "mapping_increase": prometheus_client.Gauge(
-        "mapping_increase",
+    "worker_mapping_increase": prometheus_client.Gauge(
+        "worker_mapping_increase",
         "Number of times a mapping increase is requested",
         ["index_name", "timeline_id"],
         namespace=METRICS_NAMESPACE,
     ),
-    "mapping_increase_limit_exceeded": prometheus_client.Counter(
-        "mapping_increase_limit_exceeded",
+    "worker_mapping_increase_limit_exceeded": prometheus_client.Counter(
+        "worker_mapping_increase_limit_exceeded",
         "Number of times the OpenSearch mapping increase ran into the upper limit",
         ["index_name"],
         namespace=METRICS_NAMESPACE,
     ),
-    "files_parsed": prometheus_client.Counter(
-        "files_parsed",
-        "Number of files parsed by the csv_jsonl task",
-        ["file_extension"],
+    "worker_files_parsed": prometheus_client.Counter(
+        "worker_files_parsed",
+        "Number of files parsed by the worker task",
+        ["source_type"],
         namespace=METRICS_NAMESPACE,
     ),
-    "lines_parsed": prometheus_client.Counter(
-        "lines_parsed",
-        "Number of lines parsed by the csv_jsonl task",
-        ["index_name", "timeline_id"],
+    "worker_events_added": prometheus_client.Gauge(
+        "worker_events_added",
+        "Number of events added by the worker parsing task",
+        ["index_name", "timeline_id", "source_type"],
         namespace=METRICS_NAMESPACE,
     ),
-    "import_errors": prometheus_client.Counter(
-        "import_errors",
+    "worker_import_errors": prometheus_client.Counter(
+        "worker_import_errors",
         "Number of errors during the import",
-        ["index_name", "timeline_id"],
+        ["index_name", "error_type"],
         namespace=METRICS_NAMESPACE,
     ),
-    "total_run_time": prometheus_client.Summary(
-        "total_run_time",
+    "worker_total_run_time": prometheus_client.Summary(
+        "worker_total_run_time",
         "Total runtime of the run_csv_jsonl task",
-        ["index_name", "timeline_id", "file_extension"],
+        ["index_name", "timeline_id", "source_type"],
         namespace=METRICS_NAMESPACE,
     ),
 }
@@ -153,6 +148,10 @@ def get_import_errors(error_container, index_name, total_count):
 
     if error_types:
         top_type = error_types.most_common()[0][0]
+        for error_type in error_types:
+            METRICS["worker_import_errors"].labels(
+                index_name=index_name, error_type=error_type
+            ).inc(error_types.get(error_type, 0))
     else:
         top_type = "Unknown Reasons"
 
@@ -910,16 +909,15 @@ def run_csv_jsonl(
     Returns:
         Name (str) of the index.
     """
-    METRICS["csv_jsonl_runs"].inc()
+    METRICS["worker_csv_jsonl_runs"].inc()
     time_start = time.time()
 
     if events:
         file_handle = io.StringIO(events)
         source_type = "jsonl"
-        METRICS["manual_event_added"].inc()
     else:
         file_handle = codecs.open(file_path, "r", encoding="utf-8", errors="replace")
-        METRICS["files_parsed"].labels(file_extension=source_type).inc()
+        METRICS["worker_files_parsed"].labels(source_type=source_type).inc()
 
     validators = {
         "csv": read_and_validate_csv,
@@ -1017,7 +1015,9 @@ def run_csv_jsonl(
             # To prevent mapping explosions we still check against an upper
             # mapping limit set in timesketch.conf (default: 2000).
             if new_limit > upper_mapping_limit:
-                METRICS["mapping_increase_limit_exceeded"].labels(index_name=index_name).inc()
+                METRICS["worker_mapping_increase_limit_exceeded"].labels(
+                    index_name=index_name
+                ).inc()
                 error_msg = (
                     f"Error: Indexing timeline [{timeline_name}] into [{index_name}] "
                     f"exceeds the upper field mapping limit of {upper_mapping_limit}. "
@@ -1036,7 +1036,9 @@ def run_csv_jsonl(
                     index=index_name,
                     body={"index.mapping.total_fields.limit": new_limit},
                 )
-                METRICS["mapping_increase"].labels(index_name=index_name, timeline_id=timeline_id).set(new_limit)
+                METRICS["worker_mapping_increase"].labels(
+                    index_name=index_name, timeline_id=timeline_id
+                ).set(new_limit)
                 logger.info(
                     "OpenSearch index [%s] mapping limit increased to: %d",
                     index_name,
@@ -1046,7 +1048,6 @@ def run_csv_jsonl(
 
             opensearch.import_event(index_name, event, timeline_id=timeline_id)
             final_counter += 1
-            METRICS["lines_parsed"].labels(index_name=index_name, timeline_id=timeline_id).inc()
 
         # Import the remaining events
         results = opensearch.flush_queued_events()
@@ -1076,6 +1077,9 @@ def run_csv_jsonl(
         logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
         return None
 
+    METRICS["worker_events_added"].labels(
+        index_name=index_name, timeline_id=timeline_id, source_type=source_type
+    ).set(final_counter)
     if error_count:
         logger.info(
             "Index timeline: [{0:s}] to index [{1:s}] - {2:d} out of {3:d} "
@@ -1097,12 +1101,11 @@ def run_csv_jsonl(
     _set_datasource_status(
         timeline_id, file_path, "ready", error_message=str(error_msg)
     )
-    METRICS["import_errors"].labels(index_name=index_name, timeline_id=timeline_id).inc(error_count)
 
     time_took_to_run = time.time() - time_start
-    METRICS["total_run_time"].labels(index_name=index_name, timeline_id=timeline_id,file_extension=source_type).observe(
-        time_took_to_run
-    )
+    METRICS["worker_total_run_time"].labels(
+        index_name=index_name, timeline_id=timeline_id, source_type=source_type
+    ).observe(time_took_to_run)
     return index_name
 
 
