@@ -17,23 +17,17 @@ import sys
 import time
 
 import click
-from timesketch_import_client import importer as import_client
 
 
-@click.command("import")
+@click.command("upload")
 @click.option("--name", help="Name of the timeline.")
 @click.option("--timeout", type=int, default=600, help="Seconds to wait for indexing.")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
-def importer(ctx, name, timeout, file_path):
-    """Import timeline.
+def upload(ctx, name, timeout, file_path):
+    """Upload a timeline to the server."""
+    from timesketch_import_client import importer as import_client
 
-    Args:
-        ctx: Click CLI context object.
-        name: Name of the timeline to create.
-        timeout: Seconds to wait for indexing.
-        file_path: File path to the file to import.
-    """
     sketch = ctx.obj.sketch
     if not name:
         name = click.format_filename(file_path, shorten=True)
@@ -78,4 +72,4 @@ def importer(ctx, name, timeout, file_path):
         retry_count += 1
         time.sleep(sleep_time_seconds)
 
-    click.echo(f"Timeline imported: {timeline.name}")
+    click.echo(f"Timeline uploaded: {timeline.name}")
