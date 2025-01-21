@@ -982,10 +982,10 @@ def run_csv_jsonl(
     error_count = 0
     unique_keys = set()
     limit_buffer_percentage = float(
-        current_app.config.get("OPENSEARCH_MAPPING_BUFFER", 0.2)
+        current_app.config.get("OPENSEARCH_MAPPING_BUFFER", 0.1)
     )
     upper_mapping_limit = int(
-        current_app.config.get("OPENSEARCH_MAPPING_UPPER_LIMIT", 2000)
+        current_app.config.get("OPENSEARCH_MAPPING_UPPER_LIMIT", 1000)
     )
 
     try:
@@ -1015,10 +1015,10 @@ def run_csv_jsonl(
         ):
             unique_keys.update(event.keys())
             # Calculating the new limit. Each unique key is counted twice due to
-            # the "keyword" type plus a percentage buffer (default 20%).
+            # the "keyword" type plus a percentage buffer (default 10%).
             new_limit = int((len(unique_keys) * 2) * (1 + limit_buffer_percentage))
             # To prevent mapping explosions we still check against an upper
-            # mapping limit set in timesketch.conf (default: 2000).
+            # mapping limit set in timesketch.conf (default: 1000).
             if new_limit > upper_mapping_limit:
                 METRICS["worker_mapping_increase_limit_exceeded"].labels(
                     index_name=index_name
@@ -1026,9 +1026,8 @@ def run_csv_jsonl(
                 error_msg = (
                     f"Error: Indexing timeline [{timeline_name}] into [{index_name}] "
                     f"exceeds the upper field mapping limit of {upper_mapping_limit}. "
-                    f"Currently mapped fields: ~{len(unique_keys)*2} / New "
-                    f"calculated mapping limit: {new_limit}. Review your import "
-                    "data or adjust OPENSEARCH_MAPPING_UPPER_LIMIT."
+                    f"New calculated mapping limit: {new_limit}. Review your "
+                    "import data or adjust OPENSEARCH_MAPPING_UPPER_LIMIT."
                 )
                 logger.error(error_msg)
                 _set_datasource_status(
@@ -1036,7 +1035,8 @@ def run_csv_jsonl(
                 )
                 return None
 
-            if new_limit > current_limit:
+            if new_limit > current_limit and current_limit < upper_mapping_limit:
+                new_limit = min(new_limit, upper_mapping_limit)
                 opensearch.client.indices.put_settings(
                     index=index_name,
                     body={"index.mapping.total_fields.limit": new_limit},
