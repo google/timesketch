@@ -69,13 +69,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
                 file_object.write(string)
 
-        try:
-            self.import_timeline("/tmp/large.jsonl", index_name=rand, sketch=sketch)
-        except RuntimeError:
-            print(
-                "Timeline import failing is expected. Checking for the correct "
-                "error message..."
-            )
+        self.import_timeline("/tmp/large.jsonl", index_name=rand, sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -130,7 +124,13 @@ class UploadTest(interface.BaseEndToEndTest):
                 json.dump(line_data, file_object)
                 file_object.write("\n")
 
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        try:
+            self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        except RuntimeError:
+            print(
+                "Timeline import failing is expected. Checking for the correct "
+                "error message..."
+            )
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
