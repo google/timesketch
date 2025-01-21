@@ -47,7 +47,7 @@
     "eslint": "^5.8.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-vue": "^5.0.0",
-    "happy-dom": "^15.10.1",
+    "happy-dom": "^15.10.2",
     "node-sass": "^8.0.0",
     "sass": "~1.32",
     "sass-loader": "^10.1.1",
