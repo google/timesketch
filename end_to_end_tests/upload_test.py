@@ -14,6 +14,7 @@
 """End to end tests of Timesketch upload functionality."""
 import os
 import random
+import json
 
 from timesketch_api_client import search
 from . import interface
@@ -85,6 +86,61 @@ class UploadTest(interface.BaseEndToEndTest):
         # check that the number of events is correct with a different method
         events = sketch.explore("data_type:foobarjson", as_pandas=True)
         self.assertions.assertEqual(len(events), 4123)
+
+    def test_upload_jsonl_mapping_exceeds_limit(self):
+        """Test uploading a timeline with a jsonl events that exceeds the
+        default field mapping limit of 1000. The test will create a temporary
+        file with events that have many unique keys and then upload the file to
+        Timesketch. The test will then check that the correct error is triggered.
+        """
+
+        # create a new sketch
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(
+            name=f"test_upload_jsonl_mapping_exceeds_limit {rand}"
+        )
+        self.sketch = sketch
+
+        file_path = "/tmp/mapping_over_1k.jsonl"
+        num_lines = 100
+        num_keys_per_line = 6
+        all_keys = set()
+
+        with open(file_path, "w", encoding="utf-8") as file_object:
+            for i in range(num_lines):
+                line_data = {
+                    "datetime": "2015-07-24T19:01:01+00:00",
+                    "message": f"Event {i} of {num_lines}",
+                    "timestamp_desc": "test",
+                    "data_type": "test:jsonl",
+                }
+                for j in range(num_keys_per_line):
+                    key = f"field_name_{j}_{random.randint(0, 100000)}"
+                    while key in all_keys:  # Avoid duplicate keys
+                        key = f"field_name_{random.randint(0, 100000)}"
+                    all_keys.add(key)
+                    line_data[key] = f"value_{j}_{random.randint(0, 10000)}"
+
+                json.dump(line_data, file_object)
+                file_object.write("\n")
+
+        try:
+            self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        except RuntimeError:
+            print(
+                "Timeline import failing is expected. Checking for the correct "
+                "error message..."
+            )
+        os.remove(file_path)
+
+        timeline = sketch.list_timelines()[0]
+        # check that timeline threw the correct error
+        self.assertions.assertEqual(timeline.name, file_path)
+        self.assertions.assertEqual(timeline.index.name, str(rand))
+        self.assertions.assertEqual(timeline.index.status, "fail")
+        self.assertions.assertIn(
+            "OPENSEARCH_MAPPING_UPPER_LIMIT", timeline.data_sources[0]["error_message"]
+        )
 
     def test_very_large_upload_jsonl(self):
         """Test uploading a timeline with over 50 k events as jsonl. The test
