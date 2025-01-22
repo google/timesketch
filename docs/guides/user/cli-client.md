@@ -295,6 +295,38 @@ Running `sketch unarchive` will set the archive flag to the sketch.
 
 Running `sketch export` will export the complete Sketch to a file.
 
+### Labels
+
+#### list_labels
+
+Running `sketch list_labels` will give you a list of all labels of a sketch.
+
+Example:
+```bash
+timesketch --sketch 14 --output-format json sketch list_label
+['test', 'foobar']
+```
+
+#### add label
+
+Running `sketch add_label --label foobar` will add the label `foobar` to the sketch.
+
+Example:
+```bash
+timesketch --sketch 14 --output-format json sketch add_label --label=foobar
+Label added
+```
+
+#### Remove label
+
+Running `sketch remove_label --label foobar` will remove the label `foobar` from the sketch.
+
+Example:
+```bash
+timesketch --sketch 14 --output-format json sketch remove_label --label=foobar
+Label removed
+```
+
 ## Intelligence
 
 Intelligence is always sketch specific. The same can be achieved using 

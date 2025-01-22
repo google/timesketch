@@ -15,3 +15,4 @@
 
 from timesketch.lib.llms import ollama
 from timesketch.lib.llms import vertexai
+from timesketch.lib.llms import aistudio
