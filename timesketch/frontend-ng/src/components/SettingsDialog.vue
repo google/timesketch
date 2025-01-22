@@ -40,6 +40,17 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
+      <v-list-item v-if="systemSettings.LLM_PROVIDER">
+        <v-list-item-action>
+          <v-switch v-model="settings.aifeatures" color="primary" @change="saveSettings()"></v-switch>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>AI powered features</v-list-item-title>
+          <v-list-item-subtitle
+            >Select to enable experimental AI freatures such as event summarization and query suggestions for DFIQ questions</v-list-item-subtitle
+          >
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
   </v-card>
 </template>
