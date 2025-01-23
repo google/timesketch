@@ -92,7 +92,7 @@ limitations under the License.
     </div>
 
 
-    <v-card v-if="eventList.meta.summary && userSettings.aifeatures" class="mt-4 ts-ai-summary-card" outlined>
+    <v-card v-if="eventList.meta.summary && userSettings.eventSummarization" class="mt-4 ts-ai-summary-card" outlined>
       <v-card-title>
         <v-icon small color="primary" class="ml-1 mr-2">mdi-brain</v-icon> AI Summary 
       </v-card-title>
@@ -893,7 +893,7 @@ export default {
             this.$store.dispatch('updateSearchHistory')
             this.branchParent = this.eventList.meta.search_node.id
           }
-          if (this.eventList.objects.length <= 501) {
+          if (this.eventList.objects.length <= 500 && this.userSettings.eventSummarization) {
             this.fetchEventSummary();
           }
         })
