@@ -78,6 +78,9 @@ export default new Vuex.Store({
     SET_TIMELINE_TAGS(state, buckets) {
       Vue.set(state, 'tags', buckets)
     },
+    SET_EVENT_LABELS(state, payload) {
+      Vue.set(state.meta, 'filter_labels', payload)
+    },
     SET_DATA_TYPES(state, payload) {
       let buckets = payload.objects[0]['field_bucket']['buckets']
       Vue.set(state, 'dataTypes', buckets)
@@ -239,6 +242,19 @@ export default new Vuex.Store({
         })
         .catch((e) => {})
     },
+    updateEventLabels(context, payload) {
+      if (!payload.labels || !payload.label || !payload.num)  {
+        return
+      }
+      let labels = payload.labels
+      let starLabelIndex = labels.findIndex(label => label.label === payload.label);
+      if (starLabelIndex > -1) {
+        labels[starLabelIndex].count = labels[starLabelIndex].count + payload.num
+      } else {
+        labels.push({ label: payload.label, count: 1 })
+      }
+      context.commit('SET_EVENT_LABELS', labels)
+  },
     updateTimelineTags(context, payload) {
       if (!context.state.sketch.active_timelines.length) {
         return
