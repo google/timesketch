@@ -20,9 +20,10 @@ from flask import current_app
 
 DEFAULT_TEMPERATURE = 0.1
 DEFAULT_TOP_P = 0.1
-DEFAULT_TOP_K = 0
+DEFAULT_TOP_K = 1
 DEFAULT_MAX_OUTPUT_TOKENS = 2048
 DEFAULT_STREAM = False
+DEFAULT_LOCATION = None
 
 
 class LLMProvider:
@@ -37,6 +38,7 @@ class LLMProvider:
         top_k: int = DEFAULT_TOP_K,
         max_output_tokens: int = DEFAULT_MAX_OUTPUT_TOKENS,
         stream: bool = DEFAULT_STREAM,
+        location: Optional[str] = DEFAULT_LOCATION,
     ):
         """Initialize the LLM provider.
 
@@ -46,6 +48,7 @@ class LLMProvider:
             top_k: The top_k to use for the response.
             max_output_tokens: The maximum number of output tokens to generate.
             stream: Whether to stream the response.
+            location: The cloud location/region to use for the provider.
 
         Attributes:
             config: The configuration for the LLM provider.
@@ -59,6 +62,8 @@ class LLMProvider:
         config["top_k"] = top_k
         config["max_output_tokens"] = max_output_tokens
         config["stream"] = stream
+        config["location"] = location
+
 
         # Load the LLM provider config from the Flask app config
         config_from_flask = current_app.config.get("LLM_PROVIDER_CONFIGS").get(
