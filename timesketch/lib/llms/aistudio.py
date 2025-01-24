@@ -32,24 +32,6 @@ class AIStudio(interface.LLMProvider):
 
     NAME = "aistudio"
 
-    def __init__(self, config: dict):
-        """Initialize the AI Studio provider.
-        Args:
-            config: The configuration for the provider.
-        """
-        super().__init__(config)
-        self._api_key = self.config.get("api_key")
-        self._model_name = self.config.get("model", "gemini-1.5-flash")
-        self._temperature = self.config.get("temperature", 0.2)
-        self._top_p = self.config.get("top_p", 0.95)
-        self._top_k = self.config.get("top_k", 10)
-        self._max_output_tokens = self.config.get("max_output_tokens", 8192)
-
-        if not self._api_key:
-            raise ValueError("API key is required for AI Studio provider")
-        genai.configure(api_key=self._api_key)
-        self.model = genai.GenerativeModel(model_name=self._model_name)
-
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """
         Generate text using the Google AI Studio service.
@@ -64,18 +46,21 @@ class AIStudio(interface.LLMProvider):
                 response_schema is provided).
         """
 
+        genai.configure(api_key=self.config.get("api_key"))
+        model = genai.GenerativeModel(model_name=self.config.get("model"))
+
         generation_config = genai.GenerationConfig(
-            temperature=self._temperature,
-            top_p=self._top_p,
-            top_k=self._top_k,
-            max_output_tokens=self._max_output_tokens,
+            temperature=self.config.get("temperature"),
+            top_p=self.config.get("top_p"),
+            top_k=self.config.get("top_k"),
+            max_output_tokens=self.config.get("max_output_tokens"),
         )
 
         if response_schema:
             generation_config.response_mime_type = "application/json"
             generation_config.response_schema = response_schema
 
-        response = self.model.generate_content(
+        response = model.generate_content(
             contents=prompt,
             generation_config=generation_config,
         )
@@ -92,3 +77,4 @@ class AIStudio(interface.LLMProvider):
 
 if has_required_deps:
     manager.LLMManager.register_provider(AIStudio)
+    

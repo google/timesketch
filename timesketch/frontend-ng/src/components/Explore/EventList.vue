@@ -90,6 +90,25 @@ limitations under the License.
         </v-sheet>
       </v-sheet>
     </div>
+
+
+    <v-card v-if="eventList.meta.summary && userSettings.eventSummarization" class="mt-4 ts-ai-summary-card" outlined>
+      <v-card-title>
+        <v-icon small color="primary" class="ml-1 mr-2">mdi-brain</v-icon> AI Summary 
+        <!-- Info button for experimental feature - using title attribute -->
+        <v-btn
+          icon
+          small
+          class="ml-1"
+          :title="summaryInfoMessage" 
+        >
+          <v-icon small>mdi-information-outline</v-icon>
+        </v-btn>
+      </v-card-title>
+      <v-card-text class="ts-ai-summary-text" v-html="eventList.meta.summary"></v-card-text>
+    </v-card>
+
+
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
@@ -584,6 +603,11 @@ export default {
     }
   },
   computed: {
+    summaryInfoMessage() {
+      const totalEvents = this.eventList.meta.summary_event_count;
+      const uniqueEvents = this.eventList.meta.summary_unique_event_count;
+      return `[experimental] This summary is based on the message field from ${uniqueEvents} unique events (total events processed: ${totalEvents}).`;
+    },
     sketch() {
       return this.$store.state.sketch
     },
@@ -623,6 +647,9 @@ export default {
     },
     currentSearchNode() {
       return this.$store.state.currentSearchNode
+    },
+    userSettings() {
+      return this.$store.state.settings
     },
     headers() {
       let baseHeaders = [
@@ -880,6 +907,9 @@ export default {
             this.$store.dispatch('updateSearchHistory')
             this.branchParent = this.eventList.meta.search_node.id
           }
+          if (this.eventList.objects.length <= 500 && this.userSettings.eventSummarization) {
+            this.fetchEventSummary();
+          }
         })
         .catch((e) => {
           let msg = 'Sorry, there was a problem fetching your search results. Error: "'+ e.response.data.message +'"'
@@ -892,6 +922,22 @@ export default {
           console.error('Error message: ' + msg)
           console.error(e)
         })
+    },
+    fetchEventSummary: function() {
+      const formData = {
+        query: this.currentQueryString,
+        filter: this.currentQueryFilter,
+      };
+      ApiClient.getEventSummary(this.sketch.id, formData)
+        .then((response) => {
+          this.$set(this.eventList.meta, 'summary', response.data.summary);
+          this.$set(this.eventList.meta, 'summary_event_count', response.data.summary_event_count);
+          this.$set(this.eventList.meta, 'summary_unique_event_count', response.data.summary_unique_event_count);
+        })
+        .catch((error) => {
+          console.error("Error fetching event summary:", error);
+          this.$set(this.eventList.meta, 'summary', 'Error generating summary.'); // Set error message in UI
+        });
     },
     exportSearchResult: function () {
       this.exportDialog = true
@@ -1164,5 +1210,68 @@ th:last-child {
 .v-data-table td:first-child,
 th:first-child {
   padding: 0 0 0 10px !important;
+}
+
+.ts-ai-summary-card {
+  border: 1px solid transparent !important; 
+  border-radius: 8px;
+  background-color: #fafafa; 
+  background-image:
+      linear-gradient(white, white), 
+      linear-gradient(90deg,
+          #8ab4f8 0%,   
+          #81c995 20%, 
+          #f8c665 40%, 
+          #ec7764 60%,  
+          #b39ddb 80%,  
+          #8ab4f8 100%  
+      );
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+  background-size: 300% 100%;
+  animation: borderBeamIridescent-subtle 6s linear infinite; 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); 
+}
+
+@keyframes borderBeamIridescent-subtle { 
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+.theme--dark.ts-ai-summary-card {
+  background-color: #1e1e1e; 
+  border-color: hsla(0,0%,100%,.12) !important; 
+  background-image:
+      linear-gradient(#1e1e1e, #1e1e1e), 
+      linear-gradient(90deg,
+          #8ab4f8 0%,  
+          #81c995 20%,  
+          #f8c665 40%, 
+          #ec7764 60%, 
+          #b39ddb 80%,
+          #8ab4f8 100%  
+      );
+      box-shadow: 0 2px 5px rgba(255, 255, 255, 0.08);
+}
+
+.ts-ai-summary-text {
+  white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  margin-top: -10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.ts-ai-summary-card .v-btn--icon { /* Targeting the icon button within the summary card */
+  cursor: pointer; /* Add hand cursor */
+}
+
+.ts-ai-summary-card .v-btn--icon:hover {
+  opacity: 0.8; /* Slightly reduce opacity on hover */
 }
 </style>
