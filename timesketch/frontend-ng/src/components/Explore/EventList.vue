@@ -996,7 +996,7 @@ export default {
       }
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', event, this.currentSearchNode)
         .then((response) => {
-          this.$store.dispatch('updateEventLabels', { labels: [...this.$store.state.meta.filter_labels], label: "__ts_star", num: count })
+          this.$store.dispatch('updateEventLabels', { label: "__ts_star", num: count })
         })
         .catch((e) => {
           console.error(e)
@@ -1015,7 +1015,7 @@ export default {
       })
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
         .then((response) => {
-          this.$store.dispatch('updateEventLabels',{ labels: [...this.$store.state.meta.filter_labels], label: "__ts_star", num: netStarCountChange })
+          this.$store.dispatch('updateEventLabels',{ label: "__ts_star", num: netStarCountChange })
           this.selectedEvents = []
         })
         .catch((e) => {})

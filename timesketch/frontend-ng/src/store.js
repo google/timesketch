@@ -242,18 +242,18 @@ export default new Vuex.Store({
         })
         .catch((e) => {})
     },
-    updateEventLabels(context, payload) {
-      if (!payload.labels || !payload.label || !payload.num)  {
+    updateEventLabels(context, {label: inputLabel, num}) {
+      if (!inputLabel || !num)  {
         return
       }
-      let labels = payload.labels
-      let starLabelIndex = labels.findIndex(label => label.label === payload.label);
-      if (starLabelIndex > -1) {
-        labels[starLabelIndex].count = labels[starLabelIndex].count + payload.num
+      let allLabels = context.state.meta.filter_labels
+      let label = allLabels.find(label => label.label === inputLabel);
+      if (label !== undefined) {
+        label.count += num
       } else {
-        labels.push({ label: payload.label, count: 1 })
+        allLabels.push({ label: inputLabel, count: num })
       }
-      context.commit('SET_EVENT_LABELS', labels)
+      context.commit('SET_EVENT_LABELS', allLabels)
   },
     updateTimelineTags(context, payload) {
       if (!context.state.sketch.active_timelines.length) {
