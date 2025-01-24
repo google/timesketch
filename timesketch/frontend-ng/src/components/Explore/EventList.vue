@@ -986,27 +986,36 @@ export default {
       this.selectedFields.splice(index, 1)
     },
     toggleStar(event) {
+      let count = 0
       if (event._source.label.includes('__ts_star')) {
         event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
+        count = -1
       } else {
         event._source.label.push('__ts_star')
+        count = 1
       }
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', event, this.currentSearchNode)
-        .then((response) => {})
+        .then((response) => {
+          this.$store.dispatch('updateEventLabels', { label: "__ts_star", num: count })
+        })
         .catch((e) => {
           console.error(e)
         })
     },
     toggleMultipleStars: function () {
+      let netStarCountChange = 0
       this.selectedEvents.forEach((event) => {
         if (event._source.label.includes('__ts_star')) {
           event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
+          netStarCountChange--
         } else {
           event._source.label.push('__ts_star')
+          netStarCountChange++
         }
       })
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
         .then((response) => {
+          this.$store.dispatch('updateEventLabels',{ label: "__ts_star", num: netStarCountChange })
           this.selectedEvents = []
         })
         .catch((e) => {})
