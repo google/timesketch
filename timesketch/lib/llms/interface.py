@@ -64,7 +64,6 @@ class LLMProvider:
         config["stream"] = stream
         config["location"] = location
 
-
         # Load the LLM provider config from the Flask app config
         config_from_flask = current_app.config.get("LLM_PROVIDER_CONFIGS").get(
             self.NAME

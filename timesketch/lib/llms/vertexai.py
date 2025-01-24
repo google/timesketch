@@ -58,8 +58,8 @@ class VertexAI(interface.LLMProvider):
                 temperature=self.config.get("temperature"),
                 top_k=self.config.get("top_k"),
                 top_p=self.config.get("top_p"),
-                response_mime_type='application/json',
-                response_schema=response_schema
+                response_mime_type="application/json",
+                response_schema=response_schema,
             )
         else:
             generation_config = GenerationConfig(
