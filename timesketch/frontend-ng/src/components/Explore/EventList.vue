@@ -95,6 +95,15 @@ limitations under the License.
     <v-card v-if="eventList.meta.summary && userSettings.eventSummarization" class="mt-4 ts-ai-summary-card" outlined>
       <v-card-title>
         <v-icon small color="primary" class="ml-1 mr-2">mdi-brain</v-icon> AI Summary 
+        <!-- Info button for experimental feature - using title attribute -->
+        <v-btn
+          icon
+          small
+          class="ml-1"
+          :title="summaryInfoMessage" 
+        >
+          <v-icon small>mdi-information-outline</v-icon>
+        </v-btn>
       </v-card-title>
       <v-card-text class="ts-ai-summary-text" v-html="eventList.meta.summary"></v-card-text>
     </v-card>
@@ -594,6 +603,11 @@ export default {
     }
   },
   computed: {
+    summaryInfoMessage() {
+      const totalEvents = this.eventList.meta.summary_event_count;
+      const uniqueEvents = this.eventList.meta.summary_unique_event_count;
+      return `[experimental] This summary is based on the message field from ${uniqueEvents} unique events (total events processed: ${totalEvents}).`;
+    },
     sketch() {
       return this.$store.state.sketch
     },
@@ -917,6 +931,8 @@ export default {
       ApiClient.getEventSummary(this.sketch.id, formData)
         .then((response) => {
           this.$set(this.eventList.meta, 'summary', response.data.summary);
+          this.$set(this.eventList.meta, 'summary_event_count', response.data.summary_event_count);
+          this.$set(this.eventList.meta, 'summary_unique_event_count', response.data.summary_unique_event_count);
         })
         .catch((error) => {
           console.error("Error fetching event summary:", error);
@@ -1240,5 +1256,13 @@ th:first-child {
   margin-top: -10px;
   padding-left: 10px;
   padding-right: 10px;
+}
+
+.ts-ai-summary-card .v-btn--icon { /* Targeting the icon button within the summary card */
+  cursor: pointer; /* Add hand cursor */
+}
+
+.ts-ai-summary-card .v-btn--icon:hover {
+  opacity: 0.8; /* Slightly reduce opacity on hover */
 }
 </style>
