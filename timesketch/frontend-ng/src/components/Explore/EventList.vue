@@ -92,10 +92,9 @@ limitations under the License.
     </div>
 
 
-    <v-card v-if="eventList.meta.summary && userSettings.eventSummarization" class="mt-4 ts-ai-summary-card" outlined>
+    <v-card v-if="(eventList.objects.length > 0 || searchInProgress) && userSettings.eventSummarization && !eventList.meta.summaryError" class="mt-4 ts-ai-summary-card" outlined>
       <v-card-title>
         <v-icon small color="primary" class="ml-1 mr-2">mdi-brain</v-icon> AI Summary 
-        <!-- Info button for experimental feature - using title attribute -->
         <v-btn
           icon
           small
@@ -105,7 +104,14 @@ limitations under the License.
           <v-icon small>mdi-information-outline</v-icon>
         </v-btn>
       </v-card-title>
-      <v-card-text class="ts-ai-summary-text" v-html="eventList.meta.summary"></v-card-text>
+      <v-card-text class="ts-ai-summary-text">
+      <div v-if="isSummaryLoading">
+        <div class="ts-summary-placeholder-line shimmer"></div>
+        <div class="ts-summary-placeholder-line shimmer short"></div>
+        <div class="ts-summary-placeholder-line shimmer long"></div>
+      </div>
+      <div v-else v-html="eventList.meta.summary"></div>
+    </v-card-text>
     </v-card>
 
 
@@ -566,6 +572,7 @@ export default {
       tableOptions: {
         itemsPerPage: this.itemsPerPage,
       },
+      isSummaryLoading: false,
       currentItemsPerPage: this.itemsPerPage,
       expandedRows: [],
       selectedFields: [{ field: 'message', type: 'text' }],
@@ -604,9 +611,9 @@ export default {
   },
   computed: {
     summaryInfoMessage() {
-      const totalEvents = this.eventList.meta.summary_event_count;
-      const uniqueEvents = this.eventList.meta.summary_unique_event_count;
-      return `[experimental] This summary is based on the message field from ${uniqueEvents} unique events (total events processed: ${totalEvents}).`;
+      const totalEvents = this.eventList.meta.summary_event_count
+      const uniqueEvents = this.eventList.meta.summary_unique_event_count
+      return `[experimental] This summary is based on the message field from ${uniqueEvents} unique events (total events processed: ${totalEvents}).`
     },
     sketch() {
       return this.$store.state.sketch
@@ -826,9 +833,12 @@ export default {
       return allIndices
     },
     search: function (resetPagination = true, incognito = false, parent = false) {
+      this.isSummaryLoading = true
+      
       // Exit early if there are no indices selected.
       if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
         this.eventList = emptyEventList()
+        this.isSummaryLoading = false
         return
       }
 
@@ -908,7 +918,7 @@ export default {
             this.branchParent = this.eventList.meta.search_node.id
           }
           if (this.eventList.objects.length <= 500 && this.userSettings.eventSummarization) {
-            this.fetchEventSummary();
+            this.fetchEventSummary()
           }
         })
         .catch((e) => {
@@ -927,17 +937,19 @@ export default {
       const formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
-      };
+      }
       ApiClient.getEventSummary(this.sketch.id, formData)
         .then((response) => {
-          this.$set(this.eventList.meta, 'summary', response.data.summary);
-          this.$set(this.eventList.meta, 'summary_event_count', response.data.summary_event_count);
-          this.$set(this.eventList.meta, 'summary_unique_event_count', response.data.summary_unique_event_count);
+          this.$set(this.eventList.meta, 'summary', response.data.summary)
+          this.$set(this.eventList.meta, 'summary_event_count', response.data.summary_event_count)
+          this.$set(this.eventList.meta, 'summary_unique_event_count', response.data.summary_unique_event_count)
+          this.isSummaryLoading = false
         })
         .catch((error) => {
-          console.error("Error fetching event summary:", error);
-          this.$set(this.eventList.meta, 'summary', 'Error generating summary.'); // Set error message in UI
-        });
+          console.error("Error fetching event summary:", error)
+          this.$set(this.eventList.meta, 'summaryError', true)
+          this.isSummaryLoading = false
+        })
     },
     exportSearchResult: function () {
       this.exportDialog = true
@@ -1267,11 +1279,42 @@ th:first-child {
   padding-right: 10px;
 }
 
-.ts-ai-summary-card .v-btn--icon { /* Targeting the icon button within the summary card */
-  cursor: pointer; /* Add hand cursor */
+.ts-ai-summary-card .v-btn--icon {
+  cursor: pointer;
 }
 
 .ts-ai-summary-card .v-btn--icon:hover {
-  opacity: 0.8; /* Slightly reduce opacity on hover */
+  opacity: 0.8;
+}
+
+.ts-summary-placeholder-line {
+  height: 1em;
+  background-color: #e0e0e0;
+  margin-bottom: 0.5em;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.ts-summary-placeholder-line.short {
+  width: 60%;
+}
+
+.ts-summary-placeholder-line.long {
+  width: 80%;
+}
+
+.shimmer {
+  background: linear-gradient(to right, #e0e0e0 8%, #f0f0f0 18%, #e0e0e0 33%);
+  background-size: 800px 100%;
+  animation: shimmer-animation 1.5s infinite linear forwards;
+}
+
+@keyframes shimmer-animation {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
 }
 </style>
