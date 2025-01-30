@@ -1423,7 +1423,7 @@ class ScenariosResourceTest(BaseTest):
         self._commit_to_database(test_sketch)
 
         # Load DFIQ objects
-        dfiq_obj = DFIQ("./test_data/dfiq/")
+        dfiq_obj = DFIQ("./tests/test_data/dfiq/")
 
         scenario = dfiq_obj.scenarios[0]
         scenario_sql = Scenario(
