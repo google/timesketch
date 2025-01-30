@@ -16,7 +16,7 @@
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib import dfiq
 
-TEST_DATA_DIR = "./test_data/dfiq/"
+TEST_DATA_DIR = "./tests/test_data/dfiq/"
 
 
 class TestDFIQ(BaseTest):
