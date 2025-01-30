@@ -14,7 +14,8 @@
     "roboto-fontface": "*",
     "vue": "^3.4.31",
     "vuetify": "^3.6.11",
-    "axios": "^1.7.7"
+    "axios": "^1.7.7",
+    "tiny-emitter": "^2.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",

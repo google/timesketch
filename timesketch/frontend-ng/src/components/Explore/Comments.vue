@@ -116,6 +116,7 @@ export default {
           this.comments.push(response.data.objects[0][0])
           this.event._source.comment.push(this.comment)
           this.comment = ''
+          this.$store.dispatch('updateEventLabels', { label: "__ts_comment", num: 1 })
         })
         .catch((e) => {})
     },
@@ -135,6 +136,7 @@ export default {
           .then((response) => {
             this.comments.splice(commentIndex, 1)
             this.event._source.comment.splice(commentIndex, 1)
+            this.$store.dispatch('updateEventLabels', { label: "__ts_comment", num: -1 })
           })
           .catch((e) => {
             console.error(e)
