@@ -38,9 +38,7 @@ class UploadTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"test_normal_upload_json {rand}")
         self.sketch = sketch
 
-        file_path = (
-            "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
-        )
+        file_path = "/usr/local/src/timesketch/tests/end_to_end_tests/test_data/sigma_events.jsonl"
         self.import_timeline(file_path, index_name=rand, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly

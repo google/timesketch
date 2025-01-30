@@ -22,4 +22,4 @@ if [ -z "$CONTAINER_ID" ]; then
 fi
 
 # Run tests.
-sudo -E docker exec $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+sudo -E docker exec $CONTAINER_ID python3 /usr/local/src/timesketch/tests/end_to_end_tests/tools/run_in_container.py

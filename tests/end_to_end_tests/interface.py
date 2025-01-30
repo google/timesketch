@@ -30,7 +30,7 @@ from timesketch_api_client import client as api_client
 from timesketch_import_client import importer
 
 # Default values based on Docker config.
-TEST_DATA_DIR = "/usr/local/src/timesketch/end_to_end_tests/test_data"
+TEST_DATA_DIR = "/usr/local/src/timesketch/tests/end_to_end_tests/test_data"
 HOST_URI = "http://127.0.0.1"
 OPENSEARCH_HOST = "opensearch"
 OPENSEARCH_PORT = 9200
