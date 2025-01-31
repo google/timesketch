@@ -14,7 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  Sketch {{  this.appStore.sketch}}
+  <div>
+    <!-- Progress indicator when loading sketch data -->
+    <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
+    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
+      <!-- Empty state -->
+      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" class="fill-height" fluid>
+        <v-row align="center" justify="center" class="text-center">
+          <v-sheet class="pa-4" style="background: transparent">
+              <v-img src="/empty-state.png" max-height="100" max-width="300"></v-img>
+              <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
+              <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
+          </v-sheet>
+        </v-row>
+      </v-container>
+
+    </div>
+  </div>
 </template>
 
 <script>
@@ -22,10 +38,12 @@ import ApiClient from '../utils/RestApiClient.js'
 import dayjs from '@/plugins/dayjs'
 import EventBus from '../event-bus.js'
 import { useAppStore } from "@/stores/app";
+import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 
 export default {
   props: ['sketchId'],
   components: {
+    TsUploadTimelineFormButton,
   },
   data() {
     return {
