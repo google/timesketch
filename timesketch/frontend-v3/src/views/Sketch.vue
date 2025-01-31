@@ -208,6 +208,13 @@ limitations under the License.
         hide-overlay
         :width="navigationDrawer.width"
       >
+        <div class="pa-4" style="cursor: pointer">
+          <div><v-icon left>mdi-magnify</v-icon>
+            <template v-if="!isMiniDrawer">
+              Search
+            </template>
+          </div>
+        </div>
       <!-- TODO: content of left panel -->
       </v-navigation-drawer>
 
