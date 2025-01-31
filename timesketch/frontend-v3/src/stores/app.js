@@ -198,5 +198,14 @@ export const useAppStore = defineStore("app", {
         console.error(e)
       }
     },
+
+    setSnackBar(snackbar) {
+      this.snackbar = {
+        active: true,
+        color: snackbar.color,
+        message: snackbar.message,
+        timeout: snackbar.timeout,
+      }
+    },
   },
 });

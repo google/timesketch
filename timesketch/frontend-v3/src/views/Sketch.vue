@@ -105,6 +105,17 @@ limitations under the License.
         </v-hover>
         <v-spacer></v-spacer>
 
+        <!-- Sharing dialog -->
+        <v-dialog v-model="shareDialog" width="500">
+          <template v-slot:activator="{ props }">
+            <v-btn small rounded depressed color="primary" class="mr -2" v-bind="props">
+              <v-icon small left>mdi-account-multiple-plus</v-icon>
+              Share
+            </v-btn>
+          </template>
+          <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
+        </v-dialog>
+
         <v-avatar color="grey lighten-1" size="25" class="ml-3">
           <span class="white--text">{{ $filters.initialLetter(currentUser) }}</span>
         </v-avatar>
@@ -235,6 +246,7 @@ import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import { useTheme } from 'vuetify'
 import TsRenameSketch from '../components/RenameSketch.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
+import TsShareCard from '../components/ShareCard.vue'
 
 export default {
   props: ['sketchId'],
@@ -242,6 +254,7 @@ export default {
     TsRenameSketch,
     TsUploadTimelineFormButton,
     TsSettingsDialog,
+    TsShareCard,
   },
   setup() {
     const theme = useTheme();
