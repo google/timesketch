@@ -48,7 +48,10 @@ limitations under the License.
         </v-card>
       </v-dialog>
 
-      <!-- TODO: Settings dialog -->
+      <!-- Settings dialog -->
+      <v-dialog v-model="showSettingsDialog" width="700px">
+        <ts-settings-dialog></ts-settings-dialog>
+      </v-dialog>
 
       <v-app-bar
         v-if="!loadingSketch"
@@ -231,12 +234,14 @@ import { useAppStore } from "@/stores/app";
 import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import { useTheme } from 'vuetify'
 import TsRenameSketch from '../components/RenameSketch.vue'
+import TsSettingsDialog from '../components/SettingsDialog.vue'
 
 export default {
   props: ['sketchId'],
   components: {
     TsRenameSketch,
     TsUploadTimelineFormButton,
+    TsSettingsDialog,
   },
   setup() {
     const theme = useTheme();
