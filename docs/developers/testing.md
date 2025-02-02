@@ -80,19 +80,19 @@ End2end (e2e) tests are run on Github with every commit. Those tests will setup 
 To run the e2e-tests locally execute to setup the e2e docker images and run them:
 
 ```bash
-$ sh end_to_end_tests/tools/run_end_to_end_tests.sh
+$ sh tests/end_to_end_tests/tools/run_end_to_end_tests.sh
 ```
 
 The tests are stored in:
 
 ```shell
-end_to_end_tests/*.py
+tests/end_to_end_tests/*.py
 ```
 
 And the sample data (currently a plaso file and a csv) is stored in:
 
 ```shell
-end_to_end_tests/test_data/
+tests/end_to_end_tests/test_data/
 ```
 
 ## Writing end2end tests
@@ -104,20 +104,20 @@ The following example is for changing / adding tests to `client_test.py`
 ```shell
 $ export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"
 $ docker exec -it $CONTAINER_ID /bin/bash
-! rm /usr/local/lib/python3.10/dist-packages/end_to_end_tests/client_test.py
-! ln -s /usr/local/src/timesketch/end_to_end_tests/client_test.py /usr/local/lib/python3.10/dist-packages/end_to_end_tests/client_test.py
+! rm /usr/local/lib/python3.10/dist-packages/tests/end_to_end_tests/client_test.py
+! ln -s /usr/local/src/timesketch/tests/end_to_end_tests/client_test.py /usr/local/lib/python3.10/dist-packages/tests/end_to_end_tests/client_test.py
 ```
 
 From now on you can edit the `client_test.py` file outside of the docker instance and run it again with
 
 ```shell
-! python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+! python3 /usr/local/src/timesketch/tests/end_to_end_tests/tools/run_in_container.py
 ```
 
 or run the following outside of the container:
 
 ```bash
-$ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+$ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/tests/end_to_end_tests/tools/run_in_container.py
 ```
 
 ## Linting / Code format
