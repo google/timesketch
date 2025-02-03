@@ -73,7 +73,7 @@ class LLMManager:
             config_mapping = llm_configs.get("default")
 
         if not config_mapping or len(config_mapping) != 1:
-            raise Exception(
+            raise ValueError(
                 "Configuration for the feature must specify exactly one provider."
             )
 
