@@ -36,7 +36,8 @@ class SystemSettingsResource(Resource):
             result[setting] = current_app.config.get(setting)
 
         # Derive the default LLM provider from the new configuration.
-        # Expecting the "default" config to be a dict with exactly one key: the provider name.
+        # Expecting the "default" config to be a dict with exactly one key: 
+        # the provider name.
         llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
         default_provider = None
         default_conf = llm_configs.get("default")
