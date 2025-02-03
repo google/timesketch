@@ -13,8 +13,7 @@
 # limitations under the License.
 """System settings."""
 
-from flask import current_app
-from flask import jsonify
+from flask import current_app, jsonify
 from flask_restful import Resource
 from flask_login import login_required
 
@@ -30,10 +29,19 @@ class SystemSettingsResource(Resource):
             JSON object with system settings.
         """
         # Settings from timesketch.conf to expose to the frontend clients.
-        settings_to_return = ["LLM_PROVIDER", "DFIQ_ENABLED"]
+        settings_to_return = ["DFIQ_ENABLED"]
         result = {}
 
         for setting in settings_to_return:
             result[setting] = current_app.config.get(setting)
+
+        # Derive the default LLM provider from the new configuration.
+        # Expecting the "default" config to be a dict with exactly one key: the provider name.
+        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
+        default_provider = None
+        default_conf = llm_configs.get("default")
+        if default_conf and isinstance(default_conf, dict) and len(default_conf) == 1:
+            default_provider = next(iter(default_conf))
+        result["LLM_PROVIDER"] = default_provider
 
         return jsonify(result)

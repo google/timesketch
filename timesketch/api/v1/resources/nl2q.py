@@ -205,8 +205,9 @@ class Nl2qResource(Resource):
             "query_string": None,
             "error": None,
         }
+        feature_name = "nl2q"
         try:
-            llm = manager.LLMManager().get_provider(llm_provider)()
+            llm = manager.LLMManager.create_provider(feature_name=feature_name)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: {}".format(e))
             result_schema["error"] = (

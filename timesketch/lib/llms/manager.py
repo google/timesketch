@@ -13,11 +13,18 @@
 # limitations under the License.
 """This file contains a class for managing Large Language Model (LLM) providers."""
 
+from flask import current_app
+from timesketch.lib.llms.interface import LLMProvider
+
 
 class LLMManager:
-    """The manager for LLM providers."""
-
     _class_registry = {}
+
+    @classmethod
+    def register_provider(cls, provider_class: type) -> None:
+        """Register a provider class."""
+        provider_name = provider_class.NAME.lower()
+        cls._class_registry[provider_name] = provider_class
 
     @classmethod
     def get_providers(cls):
@@ -48,19 +55,31 @@ class LLMManager:
         return provider_class
 
     @classmethod
-    def register_provider(cls, provider_class: type) -> None:
-        """Register a provider.
-
-        Args:
-            provider_class: The provider class to register.
-
-        Raises:
-            ValueError: If the provider is already registered.
+    def create_provider(cls, feature_name: str = None, **kwargs) -> LLMProvider:
         """
-        provider_name = provider_class.NAME.lower()
-        if provider_name in cls._class_registry:
-            raise ValueError(f"Provider {provider_class.NAME} already registered")
-        cls._class_registry[provider_name] = provider_class
+        Create an instance of the provider for the given feature.
+
+        If a configuration exists for the feature in current_app.config["LLM_PROVIDER_CONFIGS"],
+        use it; otherwise, fall back to the configuration under the "default" key.
+
+        The configuration is expected to be a dict with exactly one key: the provider name.
+        """
+        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
+        if feature_name and feature_name in llm_configs:
+            config_mapping = llm_configs[feature_name]
+        else:
+            config_mapping = llm_configs.get("default")
+
+        if not config_mapping or len(config_mapping) != 1:
+            raise Exception(
+                "Configuration for the feature must specify exactly one provider."
+            )
+
+        provider_name = next(iter(config_mapping))
+        provider_config = config_mapping[provider_name]
+
+        provider_class = cls.get_provider(provider_name)
+        return provider_class(config=provider_config, **kwargs)
 
     @classmethod
     def clear_registration(cls):

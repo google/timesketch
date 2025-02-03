@@ -1313,7 +1313,7 @@ class TestNl2qResource(BaseTest):
     def test_nl2q_wrong_llm_provider(self, mock_aggregator):
         """Test nl2q with llm provider that does not exist."""
 
-        self.app.config["LLM_PROVIDER"] = "DoesNotExists"
+        self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"DoesNotExists": {}}}
         self.login()
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
@@ -1333,9 +1333,11 @@ class TestNl2qResource(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_no_llm_provider(self):
-        """Test nl2q with no llm provider configured."""
+        """Test nl2q with no LLM provider configured."""
+        if "LLM_PROVIDER_CONFIGS" in self.app.config:
+            del self.app.config["LLM_PROVIDER_CONFIGS"]
+        self.app.config["DFIQ_ENABLED"] = False
 
-        del self.app.config["LLM_PROVIDER"]
         self.login()
         data = dict(question="Question for LLM?")
         response = self.client.post(
@@ -1405,6 +1407,9 @@ class SystemSettingsResourceTest(BaseTest):
 
     def test_system_settings_resource(self):
         """Authenticated request to get system settings."""
+        self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"test": {}}}
+        self.app.config["DFIQ_ENABLED"] = False
+
         self.login()
         response = self.client.get(self.resource_url)
         expected_response = {"DFIQ_ENABLED": False, "LLM_PROVIDER": "test"}
