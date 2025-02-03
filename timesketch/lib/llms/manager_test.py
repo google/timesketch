@@ -18,18 +18,19 @@ from timesketch.lib.llms import manager
 
 
 class MockProvider:
-    """A mock LLM provider."""
-
     NAME = "mock"
 
-    def generate_text(self) -> str:
-        """Generate text."""
-        return "This is a mock LLM provider."
+    def __init__(self, config: dict, **kwargs):
+        self.config = config
+
+    def generate(self, prompt: str, response_schema: dict = None) -> str:
+        return "mock response"
 
 
 class TestLLMManager(BaseTest):
     """Tests for the functionality of the manager module."""
 
+    # Clear the registry and register the mock provider.
     manager.LLMManager.clear_registration()
     manager.LLMManager.register_provider(MockProvider)
 
@@ -51,7 +52,7 @@ class TestLLMManager(BaseTest):
         self.assertRaises(KeyError, manager.LLMManager.get_provider, "no_such_provider")
 
     def test_register_provider(self):
-        """Test so we raise KeyError when provider is already registered."""
+        """Test that registering a provider that is already registered raises ValueError."""
         self.assertRaises(
             ValueError, manager.LLMManager.register_provider, MockProvider
         )
