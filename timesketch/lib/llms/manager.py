@@ -24,6 +24,8 @@ class LLMManager:
     def register_provider(cls, provider_class: type) -> None:
         """Register a provider class."""
         provider_name = provider_class.NAME.lower()
+        if provider_name in cls._class_registry:
+            raise ValueError(f"Provider {provider_class.NAME} already registered")
         cls._class_registry[provider_name] = provider_class
 
     @classmethod
