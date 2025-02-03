@@ -18,6 +18,8 @@ from timesketch.lib.llms.interface import LLMProvider
 
 
 class LLMManager:
+    """The manager for LLM providers."""
+
     _class_registry = {}
 
     @classmethod
@@ -61,10 +63,12 @@ class LLMManager:
         """
         Create an instance of the provider for the given feature.
 
-        If a configuration exists for the feature in current_app.config["LLM_PROVIDER_CONFIGS"],
-        use it; otherwise, fall back to the configuration under the "default" key.
+        If a configuration exists for the feature in
+        current_app.config["LLM_PROVIDER_CONFIGS"], use it; otherwise,
+        fall back to the configuration under the "default" key.
 
-        The configuration is expected to be a dict with exactly one key: the provider name.
+        The configuration is expected to be a dict with exactly one key:
+        the provider name.
         """
         llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
         if feature_name and feature_name in llm_configs:
