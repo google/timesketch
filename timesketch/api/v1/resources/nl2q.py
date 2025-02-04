@@ -214,7 +214,7 @@ class Nl2qResource(Resource):
 
         try:
             prediction = llm.generate(prompt)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("Error NL2Q prompt: {}".format(e))
             result_schema["error"] = (
                 "An error occurred generating the query via the defined LLM. "
