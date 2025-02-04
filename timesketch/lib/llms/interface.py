@@ -16,8 +16,6 @@
 import string
 from typing import Optional
 
-from flask import current_app
-
 DEFAULT_TEMPERATURE = 0.1
 DEFAULT_TOP_P = 0.1
 DEFAULT_TOP_K = 1
@@ -27,12 +25,19 @@ DEFAULT_LOCATION = None
 
 
 class LLMProvider:
-    """Base class for LLM providers."""
+    """
+    Base class for LLM providers.
+
+    The provider is instantiated with a configuration dictionary that
+    was extracted (by the manager) from timesketch.conf.
+    Subclasses should override the NAME attribute.
+    """
 
     NAME = "name"
 
     def __init__(
         self,
+        config: dict,
         temperature: float = DEFAULT_TEMPERATURE,
         top_p: float = DEFAULT_TOP_P,
         top_k: int = DEFAULT_TOP_K,
@@ -43,12 +48,13 @@ class LLMProvider:
         """Initialize the LLM provider.
 
         Args:
-            temperature: The temperature to use for the response.
-            top_p: The top_p to use for the response.
-            top_k: The top_k to use for the response.
-            max_output_tokens: The maximum number of output tokens to generate.
-            stream: Whether to stream the response.
-            location: The cloud location/region to use for the provider.
+            config: A dictionary of provider-specific configuration options.
+            temperature: Temperature setting for text generation.
+            top_p: Top probability (p) value used for generation.
+            top_k: Top-k value used for generation.
+            max_output_tokens: Maximum number of tokens to generate in the output.
+            stream: Whether to enable streaming of the generated content.
+            location: An optional location parameter for the provider.
 
         Attributes:
             config: The configuration for the LLM provider.
@@ -56,34 +62,18 @@ class LLMProvider:
         Raises:
             Exception: If the LLM provider is not configured.
         """
-        config = {}
-        config["temperature"] = temperature
-        config["top_p"] = top_p
-        config["top_k"] = top_k
-        config["max_output_tokens"] = max_output_tokens
-        config["stream"] = stream
-        config["location"] = location
-
-        # Load the LLM provider config from the Flask app config
-        config_from_flask = current_app.config.get("LLM_PROVIDER_CONFIGS").get(
-            self.NAME
-        )
-        if not config_from_flask:
-            raise Exception(f"{self.NAME} config not found")
-
-        config.update(config_from_flask)
-        self.config = config
+        self.config = {
+            "temperature": temperature,
+            "top_p": top_p,
+            "top_k": top_k,
+            "max_output_tokens": max_output_tokens,
+            "stream": stream,
+            "location": location,
+        }
+        self.config.update(config)
 
     def prompt_from_template(self, template: str, kwargs: dict) -> str:
-        """Format a prompt from a template.
-
-        Args:
-            template: The template to format.
-            kwargs: The keyword arguments to format the template with.
-
-        Returns:
-            The formatted prompt.
-        """
+        """Format a prompt from a template."""
         formatter = string.Formatter()
         return formatter.format(template, **kwargs)
 
@@ -97,5 +87,7 @@ class LLMProvider:
 
         Returns:
             The generated response.
+
+        Subclasses must override this method.
         """
         raise NotImplementedError()

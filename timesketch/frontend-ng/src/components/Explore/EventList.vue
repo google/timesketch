@@ -31,7 +31,7 @@ limitations under the License.
         <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
           <template v-slot:activator="{ on, attrs }">
             <v-btn small depressed v-bind="attrs" v-on="on" title="Save Search">
-              <v-icon left small >mdi-content-save-outline</v-icon>
+              <v-icon left small>mdi-content-save-outline</v-icon>
               Save search
             </v-btn>
           </template>
@@ -923,9 +923,13 @@ export default {
           }
         })
         .catch((e) => {
-          let msg = 'Sorry, there was a problem fetching your search results. Error: "'+ e.response.data.message +'"'
-          if (e.response.data.message.includes('too_many_nested_clauses')) {
-            msg = 'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
+          let msg = 'Sorry, there was a problem fetching your search results. Error: "' + e.response.data.message + '"'
+          if (
+            e.response.data.message.includes('too_many_nested_clauses') ||
+            e.response.data.message.includes('query_shard_exception')
+          ) {
+            msg =
+              'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
             this.warningSnackBar(msg)
           } else {
             this.errorSnackBar(msg)
@@ -1055,7 +1059,7 @@ export default {
       }
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', event, this.currentSearchNode)
         .then((response) => {
-          this.$store.dispatch('updateEventLabels', { label: "__ts_star", num: count })
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: count })
         })
         .catch((e) => {
           console.error(e)
@@ -1074,7 +1078,7 @@ export default {
       })
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
         .then((response) => {
-          this.$store.dispatch('updateEventLabels',{ label: "__ts_star", num: netStarCountChange })
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: netStarCountChange })
           this.selectedEvents = []
         })
         .catch((e) => {})
