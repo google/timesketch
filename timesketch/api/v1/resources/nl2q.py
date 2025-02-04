@@ -170,6 +170,14 @@ class Nl2qResource(Resource):
 
     @login_required
     def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Args:
+          sketch_id: Sketch ID.
+
+        Returns:
+            JSON representing the LLM prediction.
+        """
         form = request.json
         if not form:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "No JSON data provided")
@@ -197,7 +205,7 @@ class Nl2qResource(Resource):
         feature_name = "nl2q"
         try:
             llm = manager.LLMManager.create_provider(feature_name=feature_name)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: {}".format(e))
             result_schema["error"] = (
                 "Error loading LLM Provider. Please try again later!"
