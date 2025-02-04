@@ -1196,6 +1196,7 @@ class TestNl2qResource(BaseTest):
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_prompt(self, mock_aggregator, mock_create_provider):
         """Test the prompt is created correctly."""
+
         self.login()
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
@@ -1204,13 +1205,9 @@ class TestNl2qResource(BaseTest):
             {"data_type": "test:data_type:2"},
         ]
         mock_aggregator.return_value = (mock_AggregationResult, {})
-        
-        # Create a mock provider that returns the expected query.
         mock_llm = mock.Mock()
         mock_llm.generate.return_value = "LLM generated query"
-        # Patch create_provider to return our mock provider.
         mock_create_provider.return_value = mock_llm
-
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -1318,6 +1315,7 @@ class TestNl2qResource(BaseTest):
 
         self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"DoesNotExists": {}}}
         self.login()
+        self.login()
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
         mock_AggregationResult.values = [
@@ -1337,10 +1335,9 @@ class TestNl2qResource(BaseTest):
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_no_llm_provider(self):
         """Test nl2q with no LLM provider configured."""
+
         if "LLM_PROVIDER_CONFIGS" in self.app.config:
             del self.app.config["LLM_PROVIDER_CONFIGS"]
-        self.app.config["DFIQ_ENABLED"] = False
-
         self.login()
         data = dict(question="Question for LLM?")
         response = self.client.post(
@@ -1376,10 +1373,10 @@ class TestNl2qResource(BaseTest):
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
 
-    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_llm_error(self, mock_aggregator, mock_llm_manager):
+    def test_nl2q_llm_error(self, mock_aggregator, mock_create_provider):
         """Test nl2q with llm error."""
 
         self.login()
@@ -1392,13 +1389,15 @@ class TestNl2qResource(BaseTest):
         mock_aggregator.return_value = (mock_AggregationResult, {})
         mock_llm = mock.Mock()
         mock_llm.generate.side_effect = Exception("Test exception")
-        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        mock_create_provider.return_value = mock_llm
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(
+            response.status_code, HTTP_STATUS_CODE_OK
+        )  # Still expect 200 OK with error in JSON
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(data.get("error"))
 

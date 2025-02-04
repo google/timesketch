@@ -170,45 +170,34 @@ class Nl2qResource(Resource):
 
     @login_required
     def post(self, sketch_id):
-        """Handles POST request to the resource.
+        form = request.json
+        if not form:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "No JSON data provided")
 
-        Args:
-          sketch_id: Sketch ID.
+        if "question" not in form:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "The 'question' parameter is required!")
 
-        Returns:
-            JSON representing the LLM prediction.
-        """
-        llm_provider = current_app.config.get("LLM_PROVIDER", "")
-        if not llm_provider:
-            logger.error("No LLM provider was defined in the main configuration file")
+        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS")
+        if not llm_configs:
+            logger.error("No LLM provider configuration defined.")
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 "No LLM provider was defined in the main configuration file",
             )
-        form = request.json
-        if not form:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "No JSON data provided",
-            )
-
-        if "question" not in form:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "The 'question' parameter is required!",
-            )
 
         question = form.get("question")
         prompt = self.build_prompt(question, sketch_id)
+
         result_schema = {
             "name": "AI generated search query",
             "query_string": None,
             "error": None,
         }
+
         feature_name = "nl2q"
         try:
             llm = manager.LLMManager.create_provider(feature_name=feature_name)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             logger.error("Error LLM Provider: {}".format(e))
             result_schema["error"] = (
                 "Error loading LLM Provider. Please try again later!"
@@ -217,14 +206,13 @@ class Nl2qResource(Resource):
 
         try:
             prediction = llm.generate(prompt)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             logger.error("Error NL2Q prompt: {}".format(e))
             result_schema["error"] = (
                 "An error occurred generating the query via the defined LLM. "
                 "Please try again later!"
             )
             return jsonify(result_schema)
-        # The model sometimes output triple backticks that needs to be removed.
-        result_schema["query_string"] = prediction.strip("```")
 
+        result_schema["query_string"] = prediction.strip("```")
         return jsonify(result_schema)
