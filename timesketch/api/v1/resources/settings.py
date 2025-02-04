@@ -13,9 +13,12 @@
 # limitations under the License.
 """System settings."""
 
+import logging
 from flask import current_app, jsonify
 from flask_restful import Resource
 from flask_login import login_required
+
+logger = logging.getLogger("timesketch.system_settings")
 
 
 class SystemSettingsResource(Resource):
@@ -44,5 +47,19 @@ class SystemSettingsResource(Resource):
         if default_conf and isinstance(default_conf, dict) and len(default_conf) == 1:
             default_provider = next(iter(default_conf))
         result["LLM_PROVIDER"] = default_provider
+
+        # TODO(mvd): Remove by 2025/06/01 once all users have updated their config.
+        old_llm_provider = current_app.config.get("LLM_PROVIDER")
+        if (
+            old_llm_provider and "default" not in llm_configs
+        ):  # Basic check for old config
+            warning_message = (
+                "Your LLM configuration in timesketch.conf is outdated and may cause "
+                "issues with LLM features. "
+                "Please update your LLM_PROVIDER_CONFIGS section to the new format. "
+                "Refer to the documentation for the updated configuration structure."
+            )
+            result["llm_config_warning"] = warning_message
+            logger.warning(warning_message)
 
         return jsonify(result)
