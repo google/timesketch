@@ -26,7 +26,7 @@ class MockAistudioProvider:
         self.config = config
         self.kwargs = kwargs
 
-    def generate(self, prompt=None) -> str:
+    def generate(self) -> str:
         return "Generated response from AI Studio."
 
 
@@ -39,7 +39,7 @@ class MockVertexAIProvider:
         self.config = config
         self.kwargs = kwargs
 
-    def generate(self, prompt=None) -> str:
+    def generate(self) -> str:
         return "Generated response from Vertex AI."
 
 
