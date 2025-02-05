@@ -14,12 +14,15 @@
 
 """Timesketch API for LLM event summarization."""
 
+import multiprocessing
+import multiprocessing.managers
 import logging
 from typing import Dict, Optional
 import json
 import time
-
 import pandas as pd
+import prometheus_client
+
 from flask import request, abort, jsonify, current_app
 from flask_login import login_required, current_user
 from flask_restful import Resource
@@ -28,7 +31,6 @@ from timesketch.api.v1 import resources, export
 from timesketch.lib import definitions, llms, utils
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.models.sketch import Sketch
-import prometheus_client
 
 logger = logging.getLogger("timesketch.api.llm_summarize")
 
@@ -72,6 +74,8 @@ METRICS = {
     ),
 }
 
+_LLM_TIMEOUT_WAIT_SECONDS = 10
+
 
 class LLMSummarizeResource(resources.ResourceMixin, Resource):
     """Resource to get LLM summary of events."""
@@ -86,7 +90,8 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
             The prompt text with the events injected.
 
         Raises:
-             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If prompt template file is not configured, not found, or error when reading it.
+             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If prompt template file
+               is not configured, not found, or error when reading it.
         """
         prompt_file_path = current_app.config.get("PROMPT_LLM_SUMMARIZATION")
         if not prompt_file_path:
@@ -129,9 +134,10 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
 
         Raises:
             HTTP_STATUS_CODE_NOT_FOUND: If no sketch is found with the given ID.
-            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have read access to the sketch.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not
+                have read access to the sketch.
             HTTP_STATUS_CODE_BAD_REQUEST: If the POST request does not contain data,
-            if no events are found, or if there's an issue getting LLM data.
+                if no events are found, or if there's an issue getting LLM data.
             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If LLM provider is not configured.
         """
         start_time = time.time()
@@ -185,15 +191,36 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
 
         try:
             prompt_text = self._get_prompt_text(events_dict)
+            with multiprocessing.Manager() as manager:
+                shared_response = manager.dict()
+                p = multiprocessing.Process(
+                    target=self._get_content_with_timeout,
+                    args=(prompt_text, summary_response_schema, shared_response),
+                )
+                p.start()
+                p.join(timeout=_LLM_TIMEOUT_WAIT_SECONDS)
 
-            response = self._get_content(
-                prompt=prompt_text, response_schema=summary_response_schema
-            )
-        except Exception as e:
+                if p.is_alive():
+                    logger.warning("LLM call timed out after 10 seconds.")
+                    p.terminate()
+                    p.join()
+                    METRICS["llm_summary_errors_total"].labels(
+                        sketch_id=str(sketch_id), error_type="timeout"
+                    ).inc()
+                    abort(
+                        definitions.HTTP_STATUS_CODE_BAD_REQUEST,
+                        "LLM call timed out.",
+                    )
+
+                response = dict(shared_response)
+
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(
                 "Unable to call LLM to process events for summary. Error: %s", e
             )
-            METRICS["llm_summary_errors_total"].labels(sketch_id=str(sketch_id), error_type="llm_api_error").inc()
+            METRICS["llm_summary_errors_total"].labels(
+                sketch_id=str(sketch_id), error_type="llm_api_error"
+            ).inc()
             abort(
                 definitions.HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to get LLM data, check server configuration for LLM.",
@@ -223,6 +250,28 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
             }
         )
 
+    def _get_content_with_timeout(
+        self,
+        prompt: str,
+        response_schema: Optional[dict],
+        shared_response: multiprocessing.managers.DictProxy,
+    ) -> None:
+        """Send a prompt to the LLM and get a response within a process.
+
+        Args:
+            prompt: The prompt to send to the LLM.
+            response_schema: If set, the LLM will attempt to return a structured
+                response that conforms to this schema. If set to None, the LLM
+                will return an unstructured response
+            shared_response: A shared dictionary to store the response.
+        """
+        try:
+            response = self._get_content(prompt, response_schema)
+            shared_response.update(response)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error in LLM call within process: %s", e)
+            shared_response.update({"error": str(e)})
+
     def _get_content(
         self, prompt: str, response_schema: Optional[dict] = None
     ) -> Optional[Dict]:
@@ -242,18 +291,13 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
         Raises:
             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If no LLM provider is defined
             in the configuration file
-            HTTP_STATUS_CODE_BAD_REQUEST: If an error occurs with the configured LLM provider
+            HTTP_STATUS_CODE_BAD_REQUEST: If an error occurs with the
+                configured LLM provider
         """
-        llm_provider = current_app.config.get("LLM_PROVIDER", "")
-        if not llm_provider:
-            logger.error("No LLM provider was defined in the main configuration file")
-            abort(
-                definitions.HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "No LLM provider was defined in the main configuration file",
-            )
         try:
-            llm = llms.manager.LLMManager().get_provider(llm_provider)()
-        except Exception as e:
+            feature_name = "llm_summarization"
+            llm = llms.manager.LLMManager.create_provider(feature_name=feature_name)
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: %s", e)
             abort(
                 definitions.HTTP_STATUS_CODE_BAD_REQUEST,
@@ -275,15 +319,16 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
 
         Args:
             sketch: The Sketch object to query.
-            query_string: The query string to use. Defaults to "*".
-            query_filter: The query filter to use. Defaults to None.
-            id_list: A list of event IDs to use. Defaults to None.
+            query_string: The query string to use.
+            query_filter: The query filter to use.
+            id_list: A list of event IDs to use.
 
         Returns:
             A pandas DataFrame containing the query results.
 
          Raises:
-            HTTP_STATUS_CODE_BAD_REQUEST: If no valid search indices were found to perform the search on.
+            HTTP_STATUS_CODE_BAD_REQUEST: If no valid search indices were found
+                to perform the search on.
         """
         if not query_filter:
             query_filter = {}

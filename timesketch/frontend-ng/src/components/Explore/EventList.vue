@@ -1,5 +1,5 @@
 <!--
-Copyright 2023 Google Inc. All rights reserved.
+Copyright 2025 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -92,51 +92,57 @@ limitations under the License.
     </div>
 
     <div class="ts-event-list-container">
-      <v-card v-if="(eventList.objects.length > 0 || searchInProgress) && userSettings.eventSummarization && !eventList.meta.summaryError" class="ts-ai-summary-card" outlined>
+      <v-card
+        v-if="(eventList.objects.length > 0 || searchInProgress) && userSettings.eventSummarization && !eventList.meta.summaryError"
+        class="ts-ai-summary-card"
+        outlined
+      >
         <v-card-title>
-          <v-icon small color="primary" class="ml-1 mr-2">mdi-brain</v-icon> AI Summary 
-          <v-btn
-            icon
-            small
-            class="ml-1"
-            :title="summaryInfoMessage" 
-          >
+          <v-icon small color="primary" class="ml-1 mr-2">mdi-brain</v-icon>
+          AI Summary
+          <v-btn icon small class="ml-1" :title="summaryInfoMessage">
             <v-icon small>mdi-information-outline</v-icon>
           </v-btn>
+          <v-btn icon small @click="toggleSummary">
+            <v-icon>{{ summaryCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
+          </v-btn>
         </v-card-title>
-        <v-card-text class="ts-ai-summary-text">
-        <div v-if="isSummaryLoading">
-          <div class="ts-summary-placeholder-line shimmer"></div>
-          <div class="ts-summary-placeholder-line shimmer short"></div>
-          <div class="ts-summary-placeholder-line shimmer long"></div>
-        </div>
-        <div v-else v-html="eventList.meta.summary"></div>
-      </v-card-text>
+
+        <v-card-text v-show="!summaryCollapsed" class="ts-ai-summary-text">
+          <div v-if="isSummaryLoading || !eventList.meta.summary">
+            <div class="ts-summary-placeholder-line shimmer"></div>
+            <div class="ts-summary-placeholder-line shimmer short"></div>
+            <div class="ts-summary-placeholder-line shimmer long"></div>
+          </div>
+          <div v-else v-html="eventList.meta.summary"></div>
+        </v-card-text>
+
       </v-card>
+    </div>
 
 
-      <div v-if="eventList.objects.length || searchInProgress">
-        <v-data-table
-          v-model="selectedEvents"
-          :headers="headers"
-          :items="eventList.objects"
-          :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
-          :loading="searchInProgress"
-          :options.sync="tableOptions"
-          :server-items-length="totalHitsForPagination"
-          item-key="_id"
-          loading-text="Searching... Please wait"
-          show-select
-          disable-filtering
-          must-sort
-          :sort-desc.sync="sortOrderAsc"
-          @update:sort-desc="sortEvents"
-          sort-by="_source.timestamp"
-          :hide-default-footer="totalHits < 11 || disablePagination"
-          :expanded="expandedRows"
-          :dense="displayOptions.isCompact"
-          fixed-header
-        >
+    <div v-if="eventList.objects.length || searchInProgress">
+      <v-data-table
+        v-model="selectedEvents"
+        :headers="headers"
+        :items="eventList.objects"
+        :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
+        :loading="searchInProgress"
+        :options.sync="tableOptions"
+        :server-items-length="totalHitsForPagination"
+        item-key="_id"
+        loading-text="Searching... Please wait"
+        show-select
+        disable-filtering
+        must-sort
+        :sort-desc.sync="sortOrderAsc"
+        @update:sort-desc="sortEvents"
+        sort-by="_source.timestamp"
+        :hide-default-footer="totalHits < 11 || disablePagination"
+        :expanded="expandedRows"
+        :dense="displayOptions.isCompact"
+        fixed-header
+      >
           <template v-slot:top="{ pagination, options, updateOptions }">
             <v-toolbar dense flat color="transparent">
               <div v-if="!selectedEvents.length">
@@ -455,8 +461,7 @@ limitations under the License.
             <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em">
               <span class="timeline-name-ellipsis" style="width: 130px; text-align: center">{{
                 getTimeline(item).name
-              }}</span></v-chip
-            >
+              }}</span></v-chip>
           </template>
 
           <!-- Comment field -->
@@ -486,7 +491,6 @@ limitations under the License.
         </v-data-table>
       </div>
     </div>
-  </div>
 </template>
 
 <script>
@@ -608,6 +612,7 @@ export default {
       showHistogram: false,
       branchParent: null,
       sortOrderAsc: true,
+      summaryCollapsed: false,
     }
   },
   computed: {
@@ -721,6 +726,10 @@ export default {
     },
   },
   methods: {
+    toggleSummary() {
+          this.summaryCollapsed = !this.summaryCollapsed;
+          localStorage.setItem('aiSummaryCollapsed', String(this.summaryCollapsed));
+    },
     sortEvents(sortAsc) {
       if (sortAsc) {
         this.currentQueryFilter.order = 'asc'
@@ -918,7 +927,7 @@ export default {
             this.$store.dispatch('updateSearchHistory')
             this.branchParent = this.eventList.meta.search_node.id
           }
-          if (this.eventList.objects.length <= 500 && this.userSettings.eventSummarization) {
+          if (this.userSettings.eventSummarization) {
             this.fetchEventSummary()
           }
         })
@@ -1142,6 +1151,10 @@ export default {
       if (this.currentQueryFilter.fields) {
         this.selectedFields = this.currentQueryFilter.fields
       }
+      const storedState = localStorage.getItem('aiSummaryCollapsed');
+      if (storedState === 'true') {
+        this.summaryCollapsed = true;
+      }
       this.search()
     }
   },
@@ -1337,5 +1350,8 @@ th:first-child {
   width: 100%; 
   gap: 20px;  
 }
-</style>
 
+::v-deep .no-transition {
+  transition: none !important;
+}
+</style>
