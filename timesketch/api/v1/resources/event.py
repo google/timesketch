@@ -30,7 +30,7 @@ import pandas as pd
 from flask import jsonify
 from flask import request
 from flask import abort
-from flask_restful import Resource
+from flask_restful import Resource, inputs
 from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
@@ -252,6 +252,12 @@ class EventResource(resources.ResourceMixin, Resource):
         self.parser.add_argument(
             "event_id", type=six.text_type, required=True, location="args"
         )
+        self.parser.add_argument(
+            "include_processing_timelines",
+            type=inputs.boolean,
+            required=False,
+            location="args",
+        )
 
     @login_required
     def get(self, sketch_id):
@@ -289,10 +295,17 @@ class EventResource(resources.ResourceMixin, Resource):
             )
 
         event_id = args.get("event_id")
+        include_processing_timelines = bool(
+            args.get("include_processing_timelines", False)
+        )
+        allowed_statuses = ["ready"]
+
+        if include_processing_timelines:
+            allowed_statuses.append("processing")
         indices = [
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in allowed_statuses
         ]
 
         # Check if the requested searchindex is part of the sketch

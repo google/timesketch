@@ -246,12 +246,16 @@ export default {
     contextLinkConf() {
       return this.$store.state.contextLinkConf
     },
+    settings() {
+      return this.$store.state.settings
+    },
   },
   methods: {
     getEvent: function () {
       let searchindexId = this.event._index
       let eventId = this.event._id
-      ApiClient.getEvent(this.sketch.id, searchindexId, eventId)
+      let includeProcessingTimelines = !!this.settings.showProcessingTimelineEvents
+      ApiClient.getEvent(this.sketch.id, searchindexId, eventId, includeProcessingTimelines)
         .then((response) => {
           this.fullEvent = response.data.objects
           this.comments = response.data.meta.comments
