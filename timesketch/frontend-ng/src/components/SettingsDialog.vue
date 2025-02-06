@@ -30,14 +30,14 @@ limitations under the License.
         </v-list-item-content>
       </v-list-item>
 
-      <!-- AI Powered Features Master Setting -->
+      <!-- AI Powered Features Main Setting -->
       <v-list-item v-if="systemSettings.LLM_PROVIDER">
         <v-list-item-action>
-          <v-switch v-model="settings.aiPoweredFeaturesMaster" color="primary" @change="updateAiFeatures" ></v-switch>
+          <v-switch v-model="settings.aiPoweredFeaturesMain" color="primary" @change="updateAiFeatures" ></v-switch>
         </v-list-item-action>
         <v-list-item-content>
           <v-list-item-title>AI powered features (experimental)</v-list-item-title>
-          <v-list-item-subtitle>Master switch to enable or disable all experimental AI features</v-list-item-subtitle>
+          <v-list-item-subtitle>Main switch to enable or disable all experimental AI features</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
 
@@ -48,7 +48,7 @@ limitations under the License.
             v-model="settings.eventSummarization"
             color="primary"
             @change="saveSettings()"
-            :disabled="!settings.aiPoweredFeaturesMaster"
+            :disabled="!settings.aiPoweredFeaturesMain"
           ></v-switch>
         </v-list-item-action>
         <v-list-item-content class="ml-8"> 
@@ -66,7 +66,7 @@ limitations under the License.
             v-model="settings.generateQuery"
             color="primary"
             @change="saveSettings()"
-            :disabled="!settings.aiPoweredFeaturesMaster"
+            :disabled="!settings.aiPoweredFeaturesMain"
           ></v-switch>
         </v-list-item-action>
         <v-list-item-content class="ml-8">
@@ -85,7 +85,7 @@ import ApiClient from '../utils/RestApiClient'
 
 const DEFAULT_SETTINGS = {
   showLeftPanel: true,
-  aiPoweredFeaturesMaster: false,
+  aiPoweredFeaturesMain: false,
   eventSummarization: false,
   generateQuery: false,
 }
@@ -95,7 +95,7 @@ export default {
     return {
       settings: {
         showLeftPanel: true,
-        aiPoweredFeaturesMaster: false,
+        aiPoweredFeaturesMain: false,
         eventSummarization: false,
         generateQuery: false,
       },
@@ -121,7 +121,7 @@ export default {
         })
     },
     updateAiFeatures() {
-      if (!this.settings.aiPoweredFeaturesMaster) {
+      if (!this.settings.aiPoweredFeaturesMain) {
         this.settings.eventSummarization = false;
         this.settings.generateQuery = false;
       }
@@ -137,7 +137,7 @@ export default {
       this.saveSettings()
     } else {
       // Ensure default values for new settings are applied if user settings are older
-      this.settings.aiPoweredFeaturesMaster = this.settings.aiPoweredFeaturesMaster !== undefined ? this.settings.aiPoweredFeaturesMaster : DEFAULT_SETTINGS.aiPoweredFeaturesMaster;
+      this.settings.aiPoweredFeaturesMain = this.settings.aiPoweredFeaturesMain !== undefined ? this.settings.aiPoweredFeaturesMain : DEFAULT_SETTINGS.aiPoweredFeaturesMain;
       this.settings.eventSummarization = this.settings.eventSummarization !== undefined ? this.settings.eventSummarization : DEFAULT_SETTINGS.eventSummarization;
       this.settings.generateQuery = this.settings.generateQuery !== undefined ? this.settings.generateQuery : DEFAULT_SETTINGS.generateQuery;
     }

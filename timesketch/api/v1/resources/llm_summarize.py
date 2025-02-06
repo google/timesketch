@@ -191,6 +191,7 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
 
         try:
             prompt_text = self._get_prompt_text(events_dict)
+            # TODO(itsmvd): Change to proper background worker such as celery in future
             with multiprocessing.Manager() as manager:
                 shared_response = manager.dict()
                 p = multiprocessing.Process(

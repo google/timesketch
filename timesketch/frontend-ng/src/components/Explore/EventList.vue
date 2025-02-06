@@ -97,13 +97,18 @@ limitations under the License.
         class="ts-ai-summary-card"
         outlined
       >
-        <v-card-title>
-          <v-icon small color="primary" class="ml-1 mr-2">mdi-brain</v-icon>
-          AI Summary
-          <v-btn icon small class="ml-1" :title="summaryInfoMessage">
+        <v-card-title class="ts-ai-summary-card-title">
+          <v-icon small color="primary" class="ml-1 mr-2 ts-ai-summary-icon">mdi-shimmer</v-icon>
+          <div class="ts-ai-summary-text-group">
+            <span class="ts-ai-summary-title">AI Summary</span>
+            <span v-if="eventList.objects.length > 0" class="ts-ai-summary-subtitle">
+              (for {{ eventList.objects.length }} events in this view)
+            </span>
+          </div>
+          <v-btn icon small class="ml-1 ts-ai-summary-info-btn" :title="summaryInfoMessage">
             <v-icon small>mdi-information-outline</v-icon>
           </v-btn>
-          <v-btn icon small @click="toggleSummary">
+          <v-btn icon small @click="toggleSummary" class="ts-ai-summary-fold-btn">
             <v-icon>{{ summaryCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
           </v-btn>
         </v-card-title>
@@ -1353,5 +1358,22 @@ th:first-child {
 
 ::v-deep .no-transition {
   transition: none !important;
+}
+
+.ts-ai-summary-card-title {
+  display: flex;
+  align-items: baseline;
+}
+
+.ts-ai-summary-title {
+  margin-right: 8px;
+  font-weight: normal;
+}
+
+.ts-ai-summary-subtitle {
+  font-size: 0.7em;
+  color: grey;
+  vertical-align: middle;
+  display: inline-block;
 }
 </style>
