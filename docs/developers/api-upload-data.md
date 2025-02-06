@@ -245,40 +245,27 @@ work with Timesketch. This function does limited checking before making it
 available. The timeline may or may not work in Timesketch, depending on
 multiple factors._
 
-- message
 - datetime
 - timestamp_desc
+- data_type
 
 The datetime field also needs to be mapped as a date, not a text string.
 
 A sample code on how to ingest data into Timesketch that is already in OpenSearch:
-
-- Method 1 - generate a timeline from an index in OpenSearch
-- Method 2 - create a timeline and use the identifier to ingest a timeline into OpensSearch
 
 ```python
 from timesketch_api_client import config
 
 ts_client = config.get_client()
 sketch = ts_client.get_sketch(SKETCH_ID)
- 
-# Method 1 - Single timeline in a single index
-sketch.generate_timeline_from_es_index(
-    es_index_name=OPENSEARCH_INDEX_NAME,
-    name=TIMELINE_NAME,
-    provider='My Custom Ingestion Script',
-    context='python my_custom_script.py --ingest',
-)
 
-# Method 2 - Multiple timelines in a single, where the timeline ID is returned
 timeline = sketch.generate_timeline_from_es_index(
     es_index_name=OPENSEARCH_INDEX_NAME,
     name=TIMELINE_NAME,
-    timeline_update_query=False,
     provider='My Custom Ingestion Script',
     context='python my_custom_script.py --ingest',
 )
 
-# Use `timeline.id` as value the of in the documents that will be ingested in to the index
+# Use `timeline.id` as the value of the integer field `__ts_timeline_id`,
 # e.g. Logstash filter: `{mutate {add_field => { "__ts_timeline_id" => "${TIMELINE_ID}"}}} ``
 ```
