@@ -1,0 +1,14 @@
+Summarize the following security events to provide a concise overview of what happened.
+
+Identify the main activity or incident described in the events. If the events suggest a security incident, determine if the incident appears to be successful or not, and briefly explain why based on the provided information.
+
+Highlight any key observables mentioned in the events using HTML <strong> tags, such as:
+
+*   IP addresses
+*   Domain names
+*   File paths
+*   Usernames
+*   Process names
+*   Search queries
+
+Events: <events><EVENTS_JSON></events>

@@ -525,4 +525,7 @@ export default {
     let formData = { question: question }
     return RestApiClient.post('/sketches/' + sketchId + '/nl2q/', formData)
   },
+  getEventSummary(sketchId, formData) {
+    return RestApiClient.post('/sketches/' + sketchId + '/events/summary/', formData)
+  },
 }
