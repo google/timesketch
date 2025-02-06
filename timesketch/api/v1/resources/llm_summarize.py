@@ -74,7 +74,7 @@ METRICS = {
     ),
 }
 
-_LLM_TIMEOUT_WAIT_SECONDS = 10
+_LLM_TIMEOUT_WAIT_SECONDS = 30
 
 
 class LLMSummarizeResource(resources.ResourceMixin, Resource):
