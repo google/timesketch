@@ -81,7 +81,7 @@ OPENSEARCH_PORT=9200
 OPENSEARCH_MEM_USE_GB=$(cat /proc/meminfo | grep MemTotal | awk '{printf "%.0f", ($2 / (1024 * 1024) / 2)}')
 REDIS_ADDRESS="redis"
 REDIS_PORT=6379
-GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
+GITHUB_BASE_URL="https://raw.githubusercontent.com/hnhdev/timesketch/main"
 echo "OK"
 echo "* Setting OpenSearch memory allocation to ${OPENSEARCH_MEM_USE_GB}GB"
 
@@ -150,7 +150,7 @@ else
   echo
   echo "WARNING: The server is running without encryption."
   echo "Follow the instructions to enable SSL to secure the communications:"
-  echo "https://github.com/google/timesketch/blob/master/docs/Installation.md"
+  echo "https://github.com/google/timesketch/blob/main/docs/Installation.md"
   echo
   echo
   exit

@@ -1,6 +1,6 @@
 # Requires powershell 6.0 or newer - just because the out-file does not support encoding of UTF8NoBom on older versions.
 # This is a copy from the official Bash script of Timesketch. https://timesketch.org/
-# https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+# https://raw.githubusercontent.com/hnhdev/timesketch/main/contrib/deploy_timesketch.sh
 # Some of the functionality might be still missing that is present on the bash script.
 
 # Check for the existing timesketch path
@@ -66,7 +66,7 @@ $OPENSEARCH_PORT="9200"
 $OPENSEARCH_MEM_USE_GB=(Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum /1gb / 2
 $REDIS_ADDRESS="redis"
 $REDIS_PORT="6379"
-$GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
+$GITHUB_BASE_URL="https://raw.githubusercontent.com/hnhdev/timesketch/main"
 Write-Host "OK"
 Write-Host "Setting OpenSearch memory allocation to $OPENSEARCH_MEM_USE_GB GB"
 
@@ -127,4 +127,4 @@ Write-Host "3. docker compose exec timesketch-web tsctl create-user <USERNAME>"
 Write-Host "--"
 Write-Host "WARNING: The server is running without encryption."
 Write-Host "Follow the instructions to enable SSL to secure the communications:"
-Write-Host "https://github.com/google/timesketch/blob/master/docs/Installation.md"
+Write-Host "https://github.com/hnhdev/timesketch/blob/main/docs/Installation.md"
