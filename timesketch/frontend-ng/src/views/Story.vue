@@ -50,7 +50,7 @@ limitations under the License.
         <v-btn v-if="hover" icon small @click="renameStoryDialog = true">
           <v-icon small>mdi-pencil</v-icon>
         </v-btn>
-        <v-btn v-if="hover" icon small @click="deleteStoryDialog = true" color="error">
+        <v-btn v-if="hover" icon small @click="deleteStoryDialog = true">
           <v-icon small>mdi-trash-can-outline</v-icon>
         </v-btn>
       </v-toolbar>
