@@ -220,10 +220,12 @@ limitations under the License.
         :width="navigationDrawer.width"
       >
       <!-- TODO: content of left panel -->
+      <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
+      <ts-example-left-bar :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-example-left-bar>
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->
-      <v-main class="notransition">
+      <div class="pa-6">
         <!-- TODO: Scenario context -->
 
         <router-view
@@ -231,7 +233,7 @@ limitations under the License.
           @setTitle="(title) => (this.title = title)"
           class="mt-4"
         ></router-view>
-      </v-main>
+      </div>
 
     </div>
   </div>
@@ -247,6 +249,8 @@ import { useTheme } from 'vuetify'
 import TsRenameSketch from '../components/RenameSketch.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsShareCard from '../components/ShareCard.vue'
+import TsSearch from '../components/LeftPanel/Search.vue'
+import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
 
 export default {
   props: ['sketchId'],
@@ -254,6 +258,8 @@ export default {
     TsRenameSketch,
     TsUploadTimelineFormButton,
     TsSettingsDialog,
+    TsSearch,
+    TsExampleLeftBar,
     TsShareCard,
   },
   setup() {
@@ -487,4 +493,5 @@ export default {
   },
 }
 </script>
+
 
