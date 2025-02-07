@@ -528,4 +528,7 @@ export default {
   getEventSummary(sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/events/summary/', formData)
   },
+  deleteStory(sketchId, storyId) {
+    return RestApiClient.delete(`/sketches/${sketchId}/stories/${storyId}/`)
+  },
 }
