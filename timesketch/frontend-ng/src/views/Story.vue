@@ -51,7 +51,7 @@ limitations under the License.
           <v-icon small>mdi-pencil</v-icon>
         </v-btn>
         <v-btn v-if="hover" icon small @click="deleteStoryDialog = true">
-          <v-icon small>mdi-trash-can-outline</v-icon>
+          <v-icon small title="Delete Story">mdi-trash-can-outline</v-icon>
         </v-btn>
       </v-toolbar>
     </v-hover>
