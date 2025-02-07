@@ -46,7 +46,7 @@ limitations under the License.
 
     <v-hover v-slot="{ hover }">
       <v-toolbar dense flat class="mt-n3" color="transparent">
-        <v-toolbar-title> {{ title }}</v-toolbar-title>
+        <v-toolbar-title @dblclick="renameStoryDialog = true"> {{ title }}</v-toolbar-title>
         <v-btn v-if="hover" icon small @click="renameStoryDialog = true">
           <v-icon small>mdi-pencil</v-icon>
         </v-btn>
