@@ -202,7 +202,10 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
                 p.join(timeout=_LLM_TIMEOUT_WAIT_SECONDS)
 
                 if p.is_alive():
-                    logger.warning("LLM call timed out after %d seconds.", _LLM_TIMEOUT_WAIT_SECONDS)
+                    logger.warning(
+                        "LLM call timed out after %d seconds.",
+                        _LLM_TIMEOUT_WAIT_SECONDS,
+                    )
                     p.terminate()
                     p.join()
                     METRICS["llm_summary_errors_total"].labels(
@@ -243,6 +246,7 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
             sketch_id=str(sketch_id)
         ).observe(duration)
 
+        # TODO: Add runtime seconds
         return jsonify(
             {
                 "summary": summary_text,
