@@ -133,7 +133,7 @@ limitations under the License.
                 <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
               </v-card-text>
             </v-card>
-            <v-card v-if="block.componentProps.aggregation_group && block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
+            <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
               <v-toolbar dense flat
                 >{{ block.componentProps.aggregation_group.name }}
                 <v-spacer></v-spacer>
@@ -144,7 +144,7 @@ limitations under the License.
               <v-divider></v-divider>
               <v-card-text>Legacy group Aggregations are not supported. Please view this Story in the old UI or update your analyzer.</v-card-text>
             </v-card>
-            <v-card v-if="block.componentProps.aggregation && block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
+            <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
               <v-toolbar dense flat
                 >{{ block.componentProps.aggregation.name }}
                 <v-spacer></v-spacer>
@@ -345,7 +345,7 @@ export default {
       titleDraft: '',
       blocks: [],
       renameStoryDialog: false,
-      deleteStoryDialog: false, // Add state for the delete dialog
+      deleteStoryDialog: false,
     }
   },
   computed: {
