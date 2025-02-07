@@ -144,7 +144,6 @@ export default {
       let groupsToAdd = this.usersAndGroupsToAdd
         .filter((group) => group.type === 'group')
         .map((groupObject) => groupObject.value)
-        console.log('uta', this.sketch.id, usersToAdd, groupsToAdd)
       ApiClient.grantSketchAccess(this.sketch.id, usersToAdd, groupsToAdd)
         .then((response) => {
           this.appStore.updateSketch(this.sketch.id).then(() => {
