@@ -55,7 +55,7 @@ limitations under the License.
           <template v-slot:item.tags="{ item }">
             <v-chip-group>
               <v-chip small v-for="tag in augmentedTags(item.tags).sort((a, b) => b.weight - a.weight)"
-                :color="tag.color" :text-color="tag.textColor" :outlined="tag.style == 'outlined'" :key="tag.name"
+                :color="tag.color" :text-color="tag.textColor" :outlined="tag.style === 'outlined'" :key="tag.name"
                 @click="searchForIOC(tag)">
                 {{ tag.name }}
               </v-chip>
@@ -165,7 +165,7 @@ export default {
       return tags.map(tag => this.metadataForTag(tag))
     },
     getIocTypeMetadata(ioc) {
-      let iocTypeMetatada = IOCTypes.find(def => def.type == ioc.type)
+      let iocTypeMetatada = IOCTypes.find(def => def.type === ioc.type)
       if (iocTypeMetatada !== undefined) {
         return iocTypeMetatada
       } else {
