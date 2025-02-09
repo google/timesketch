@@ -44,6 +44,7 @@ limitations under the License.
           :items="intelligenceData"
           :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
           :items-per-page="40"
+          selectable
         >
           <template v-slot:item.search="{ item }">
             <v-btn icon small @click="generateSearchQuery(item.ioc)">
@@ -158,7 +159,6 @@ export default {
     },
     loadTagMetadata() {
       ApiClient.getTagMetadata().then((response) => {
-        console.log("CALLED")
         this.tagMetadata = response.data
       })
     },
