@@ -64,8 +64,8 @@ limitations under the License.
           </template>
           <template v-slot:item.tags="{ item }">
             <v-chip-group>
-              <v-chip small v-for="tag in item.tags" :key="tag" @click="searchForIOC(tag)">
-                {{ tag }}
+              <v-chip small v-for="tag in augmentedTags(item.tags).sort((a, b) => b.weight - a.weight)" :color="tag.color" :text-color="tag.textColor" :outlined="tag.style == 'outlined'" :key="tag.name" @click="searchForIOC(tag)">
+                {{ tag.name }}
               </v-chip>
             </v-chip-group>
           </template>
@@ -119,6 +119,14 @@ export default {
       indicatorDialog: false,
       currentIndex: -1,
       indicator: '',
+      tagMetadata: {default: {weight: 0, type: 'default'}},
+      tagColorDefinitions: {
+        danger: { color: 'red', textColor: 'white'},
+        warning: { color: 'orange', textColor: 'white'},
+        legit: { color: 'green', textColor: 'white'},
+        default: { color: 'default', textColor: null},
+        info: { color: 'blue', textColor: null, style: 'outlined'}
+      }
     }
   },
   computed: {
@@ -141,6 +149,28 @@ export default {
   methods: {
     addIndicator() {
       this.indicatorDialog = true
+    },
+    loadTagMetadata() {
+      ApiClient.getTagMetadata().then((response) => {
+        console.log("CALLED")
+        this.tagMetadata = response.data
+      })
+    },
+    metadataForTag(tag) {
+      let metadata = this.tagMetadata['default'];
+      if (this.tagMetadata[tag]) {
+        metadata = this.tagMetadata[tag]
+      } else {
+        for (var regex in this.tagMetadata['regexes']) {
+            if (tag.match(regex)) {
+              metadata = this.tagMetadata['regexes'][regex]
+            }
+          }
+        }
+      return {...this.tagColorDefinitions[metadata.type], name: tag, weight: metadata.weight}
+    },
+    augmentedTags(tags) {
+      return tags.map(tag => this.metadataForTag(tag))
     },
     deleteIndicator(index) {
       if (confirm('Delete indicator?')) {
@@ -237,6 +267,7 @@ export default {
   mounted() {
     EventBus.$on('addIndicator', this.showIndicatorDialog)
     this.buildTagInfo()
+    this.loadTagMetadata()
   },
   beforeDestroy() {
     EventBus.$off('addIndicator')

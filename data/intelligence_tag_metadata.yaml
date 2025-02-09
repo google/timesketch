@@ -10,21 +10,36 @@
 
 malware:
   weight: 100
-  class: 'danger'
+  type: 'danger'
+
+bad:
+  weight: 90
+  type: 'danger'
 
 suspicious:
   weight: 50
-  class: 'warning'
+  type: 'warning'
+
+good:
+  weight: 10
+  type: 'legit'
 
 legit:
   weight: 10
-  class: 'success'
+  type: 'legit'
 
 default:
   weight: 0
-  class: 'info'
+  type: 'default'
+
+export:
+  weight: 100
+  type: 'info'
 
 regexes:
   '^GROUPNAME':
-    weight: 100
-    class: 'danger'
+      weight: 100
+      type: 'danger'
+  '^inv_':
+      weight: 80
+      type: 'warning'
