@@ -77,6 +77,7 @@ from .resources.intelligence import TagMetadataResource
 from .resources.contextlinks import ContextLinkConfigResource
 from .resources.unfurl import UnfurlResource
 from .resources.nl2q import Nl2qResource
+from .resources.llm_summarize import LLMSummarizeResource
 from .resources.settings import SystemSettingsResource
 
 from .resources.scenarios import ScenarioTemplateListResource
@@ -202,6 +203,7 @@ API_ROUTES = [
     (ContextLinkConfigResource, "/contextlinks/"),
     (UnfurlResource, "/unfurl/"),
     (Nl2qResource, "/sketches/<int:sketch_id>/nl2q/"),
+    (LLMSummarizeResource, "/sketches/<int:sketch_id>/events/summary/"),
     (SystemSettingsResource, "/settings/"),
     # Scenario templates
     (ScenarioTemplateListResource, "/scenarios/"),

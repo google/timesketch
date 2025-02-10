@@ -63,6 +63,7 @@ def describe_timeline(ctx, timeline_id):
     lines_indexed = timeline.resource_data.get("meta").get("lines_indexed", 0)
     click.echo(f"Event count: {lines_indexed or 0}")
     click.echo(f"Color: {timeline.color}")
+    click.echo(f"Number of fields: {len(timeline.index.fields)}")
 
     for timeline_object in timeline.resource_data.get("objects", None):
         name = timeline_object.get("name", "no name")
