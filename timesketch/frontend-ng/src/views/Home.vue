@@ -173,6 +173,10 @@ export default {
       return this.$store.state.systemSettings
     },
   },
+  mounted() {
+    this.$store.dispatch('updateSystemSettings')
+    this.$store.dispatch('updateUserSettings')
+  },
   methods: {
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
