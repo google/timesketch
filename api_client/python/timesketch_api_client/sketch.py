@@ -1034,10 +1034,6 @@ class Sketch(resource.BaseResource):
             RuntimeError: if the query is missing needed values, or if the
                 sketch is archived.
         """
-        logger.warning(
-            "Using this function is discouraged, please consider using "
-            "the search.Search object instead, which is more flexible."
-        )
 
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError("You need to supply a query or view")

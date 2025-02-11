@@ -216,9 +216,13 @@ def mock_response(*args, **kwargs):
         },
         "objects": [
             {
-                "id": 1,
-                "name": "test",
-                "searchindex": {"id": 1234, "index_name": "test"},
+                "_id": 1234,
+                "_index": "test",
+                "_source": {
+                    "datetime": "2012-03-14T08:12:03.998281",
+                    "id": 1,
+                    "name": "test",
+                },
             }
         ],
     }
@@ -229,9 +233,13 @@ def mock_response(*args, **kwargs):
         },
         "objects": [
             {
-                "id": 2,
-                "name": "more_test",
-                "searchindex": {"id": 42, "index_name": "even_more_test"},
+                "_id": 42,
+                "_index": "even_more_test",
+                "_source": {
+                    "datetime": "2012-03-14T08:12:03.998281",
+                    "id": 2,
+                    "name": "more_test",
+                },
             }
         ],
     }

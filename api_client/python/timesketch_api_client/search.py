@@ -19,10 +19,7 @@ import re
 
 import pandas
 
-from . import error
-from . import resource
-from . import searchtemplate
-
+from . import error, resource, searchtemplate
 
 logger = logging.getLogger("timesketch_api.search")
 
@@ -1141,18 +1138,10 @@ class Search(resource.SketchResource):
             return_list.append(source)
 
         data_frame = pandas.DataFrame(return_list)
-        if "datetime" in data_frame:
-            try:
-                data_frame["datetime"] = pandas.to_datetime(data_frame.datetime)
-            except pandas.errors.OutOfBoundsDatetime:
-                pass
-        elif "timestamp" in data_frame:
-            try:
-                data_frame["datetime"] = pandas.to_datetime(
-                    data_frame.timestamp / 1e6, utc=True, unit="s"
-                )
-            except pandas.errors.OutOfBoundsDatetime:
-                pass
+        try:
+            data_frame["datetime"] = pandas.to_datetime(data_frame.datetime, utc=True)
+        except pandas.errors.OutOfBoundsDatetime:
+            pass
 
         return data_frame
 
