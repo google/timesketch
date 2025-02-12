@@ -167,6 +167,10 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
             query_string = "*"
 
         events_df = self._run_timesketch_query(sketch, query_string, query_filter)
+        if events_df is None or events_df.empty:
+            return jsonify(
+                {"summary": "No events to summarize based on the current filter."}
+            )
         new_df = events_df[["message"]]
         unique_df = new_df.drop_duplicates(subset="message", keep="first")
         events_dict = unique_df.to_dict(orient="records")
