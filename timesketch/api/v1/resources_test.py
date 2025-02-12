@@ -1015,11 +1015,17 @@ class IntelligenceResourceTest(BaseTest):
     def test_get_intelligence_tag_metadata(self):
         """Authenticated request to get intelligence tag metadata."""
         expected_tag_metadata = {
-            "default": {"class": "info", "weight": 0},
-            "legit": {"class": "success", "weight": 10},
-            "malware": {"class": "danger", "weight": 100},
-            "suspicious": {"class": "warning", "weight": 50},
-            "regexes": {"^GROUPNAME": {"class": "danger", "weight": 100}},
+            "malware": {"weight": 100, "type": "danger"},
+            "bad": {"weight": 90, "type": "danger"},
+            "suspicious": {"weight": 50, "type": "warning"},
+            "good": {"weight": 10, "type": "legit"},
+            "legit": {"weight": 10, "type": "legit"},
+            "default": {"weight": 0, "type": "default"},
+            "export": {"weight": 100, "type": "info"},
+            "regexes": {
+                "^GROUPNAME": {"type": "danger", "weight": 100},
+                "^inv_": {"type": "warning", "weight": 80},
+            },
         }
         self.login()
         response = self.client.get("/api/v1/intelligence/tagmetadata/")
@@ -1191,10 +1197,10 @@ class TestNl2qResource(BaseTest):
 
     resource_url = "/api/v1/sketches/1/nl2q/"
 
-    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_prompt(self, mock_aggregator, mock_llm_manager):
+    def test_nl2q_prompt(self, mock_aggregator, mock_create_provider):
         """Test the prompt is created correctly."""
 
         self.login()
@@ -1207,7 +1213,7 @@ class TestNl2qResource(BaseTest):
         mock_aggregator.return_value = (mock_AggregationResult, {})
         mock_llm = mock.Mock()
         mock_llm.generate.return_value = "LLM generated query"
-        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        mock_create_provider.return_value = mock_llm
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -1313,7 +1319,8 @@ class TestNl2qResource(BaseTest):
     def test_nl2q_wrong_llm_provider(self, mock_aggregator):
         """Test nl2q with llm provider that does not exist."""
 
-        self.app.config["LLM_PROVIDER"] = "DoesNotExists"
+        self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"DoesNotExists": {}}}
+        self.login()
         self.login()
         data = dict(question="Question for LLM?")
         mock_AggregationResult = mock.MagicMock()
@@ -1333,9 +1340,10 @@ class TestNl2qResource(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_no_llm_provider(self):
-        """Test nl2q with no llm provider configured."""
+        """Test nl2q with no LLM provider configured."""
 
-        del self.app.config["LLM_PROVIDER"]
+        if "LLM_PROVIDER_CONFIGS" in self.app.config:
+            del self.app.config["LLM_PROVIDER_CONFIGS"]
         self.login()
         data = dict(question="Question for LLM?")
         response = self.client.post(
@@ -1371,10 +1379,10 @@ class TestNl2qResource(BaseTest):
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
 
-    @mock.patch("timesketch.lib.llms.manager.LLMManager")
+    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_llm_error(self, mock_aggregator, mock_llm_manager):
+    def test_nl2q_llm_error(self, mock_aggregator, mock_create_provider):
         """Test nl2q with llm error."""
 
         self.login()
@@ -1387,13 +1395,15 @@ class TestNl2qResource(BaseTest):
         mock_aggregator.return_value = (mock_AggregationResult, {})
         mock_llm = mock.Mock()
         mock_llm.generate.side_effect = Exception("Test exception")
-        mock_llm_manager.return_value.get_provider.return_value = lambda: mock_llm
+        mock_create_provider.return_value = mock_llm
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(
+            response.status_code, HTTP_STATUS_CODE_OK
+        )  # Still expect 200 OK with error in JSON
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(data.get("error"))
 
@@ -1405,6 +1415,9 @@ class SystemSettingsResourceTest(BaseTest):
 
     def test_system_settings_resource(self):
         """Authenticated request to get system settings."""
+        self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"test": {}}}
+        self.app.config["DFIQ_ENABLED"] = False
+
         self.login()
         response = self.client.get(self.resource_url)
         expected_response = {"DFIQ_ENABLED": False, "LLM_PROVIDER": "test"}
