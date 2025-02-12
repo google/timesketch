@@ -1015,11 +1015,17 @@ class IntelligenceResourceTest(BaseTest):
     def test_get_intelligence_tag_metadata(self):
         """Authenticated request to get intelligence tag metadata."""
         expected_tag_metadata = {
-            "default": {"class": "info", "weight": 0},
-            "legit": {"class": "success", "weight": 10},
-            "malware": {"class": "danger", "weight": 100},
-            "suspicious": {"class": "warning", "weight": 50},
-            "regexes": {"^GROUPNAME": {"class": "danger", "weight": 100}},
+            "malware": {"weight": 100, "type": "danger"},
+            "bad": {"weight": 90, "type": "danger"},
+            "suspicious": {"weight": 50, "type": "warning"},
+            "good": {"weight": 10, "type": "legit"},
+            "legit": {"weight": 10, "type": "legit"},
+            "default": {"weight": 0, "type": "default"},
+            "export": {"weight": 100, "type": "info"},
+            "regexes": {
+                "^GROUPNAME": {"type": "danger", "weight": 100},
+                "^inv_": {"type": "warning", "weight": 80},
+            },
         }
         self.login()
         response = self.client.get("/api/v1/intelligence/tagmetadata/")
@@ -1430,7 +1436,7 @@ class ScenariosResourceTest(BaseTest):
         self._commit_to_database(test_sketch)
 
         # Load DFIQ objects
-        dfiq_obj = DFIQ("./test_data/dfiq/")
+        dfiq_obj = DFIQ("./tests/test_data/dfiq/")
 
         scenario = dfiq_obj.scenarios[0]
         scenario_sql = Scenario(
