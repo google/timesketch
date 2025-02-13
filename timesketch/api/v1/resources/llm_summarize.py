@@ -185,8 +185,8 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
             unique_events_count
         )
 
-        logger.info("Summarizing %d events", total_events_count)
-        logger.info("Reduced to %d unique events", unique_events_count)
+        logger.debug("Summarizing %d events", total_events_count)
+        logger.debug("Reduced to %d unique events", unique_events_count)
 
         if not events_dict:
             return jsonify(
