@@ -1,0 +1,60 @@
+---
+hide:
+  - footer
+---
+
+# LLM Features Configuration
+
+Timesketch now includes experimental features leveraging Large Language Models (LLMs) to enhance analysis capabilities. These features include event summarization and AI-generated queries (NL2Q - Natural Language to Query). This document outlines the steps required to configure these features for Timesketch administrators.
+
+## LLM Provider Configuration
+
+To utilize the LLM features, the Timesketch **administrator** must configure an LLM provider in the `timesketch.conf` file. It's possible to configure a specific LLM provider and model per LLM powered feature, or to use a default provider. For most features we recommend using a fast model (such as `gemini-2.0-flash-001` ) for optimal performance, especially for the event summarization feature.
+
+Edit your `timesketch.conf` file to include the `LLM_PROVIDER_CONFIGS` dictionary.  Below is a sample configuration with explanations for each parameter.
+
+```python
+# LLM provider configs
+LLM_PROVIDER_CONFIGS = {
+    # Configure a LLM provider for a specific LLM enabled feature, or the
+    # default provider will be used.
+    # Supported LLM Providers:
+    # - ollama:  Self-hosted, open-source.
+    #   To use the Ollama provider you need to download and run an Ollama server.
+    #   See instructions at: https://ollama.ai/
+    # - vertexai: Google Cloud Vertex AI. Requires Google Cloud Project.
+    #   To use the Vertex AI provider you need to:
+    #   1. Create and export a Service Account Key from the Google Cloud Console.
+    #   2. Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to the full path
+    #      to your service account private key file by adding it to the docker-compose.yml
+    #      under environment:
+    #      GOOGLE_APPLICATION_CREDENTIALS=/usr/local/src/timesketch/<key_file>.json
+    #   3. Install the python libraries: $ pip3 install google-cloud-aiplatform
+    #
+    #   IMPORTANT: Private keys must be kept secret. If you expose your private key it is
+    #   recommended to revoke it immediately from the Google Cloud Console.
+    # - aistudio: Google AI Studio (API key).  Get API key from Google AI Studio website.
+    #   To use Google's AI Studio simply obtain an API key from https://aistudio.google.com/
+    #   $ pip3 install google-generativeai
+    'nl2q': {
+        'vertexai': {
+            'model': 'gemini-2.0-flash-001',
+            'project_id': '', # Required if using vertexai
+        },
+    },
+    'llm_summarization': {
+        'aistudio': {
+            'model': 'gemini-2.0-flash-001', # Recommended model
+            'api_key': '', # Required if using aistudio
+        },
+    },
+    'default': {
+        'aistudio': {
+             'api_key': '', # Required if using aistudio
+             'model': 'gemini-2.0-flash-001',
+        },
+    }
+}
+```
+
+**Note:**  While [users can enable/disable these features](../user/llm-features-user.md), the underlying LLM provider and its configuration are managed by the Timesketch administrator. Enabling these features may incur costs depending on the chosen LLM provider. Please review the pricing details of your selected provider before enabling these features.
