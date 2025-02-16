@@ -58,3 +58,22 @@ LLM_PROVIDER_CONFIGS = {
 ```
 
 **Note:**  While [users can enable/disable these features](../user/llm-features-user.md), the underlying LLM provider and its configuration are managed by the Timesketch administrator. Enabling these features may incur costs depending on the chosen LLM provider. Please review the pricing details of your selected provider before enabling these features.
+
+## Prompt and Data Configuration
+
+Administrators can further customize the behavior of the LLM features by configuring the paths to various prompt and data files within the `timesketch.conf` file.
+
+```python
+# LLM nl2q configuration
+DATA_TYPES_PATH = '/etc/timesketch/nl2q/data_types.csv'
+PROMPT_NL2Q = '/etc/timesketch/nl2q/prompt_nl2q'
+EXAMPLES_NL2Q = '/etc/timesketch/nl2q/examples_nl2q'
+
+# LLM event summarization configuration
+PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_summarize/prompt.txt'
+```
+
+*   `DATA_TYPES_PATH`: Specifies the path to a CSV file defining common Timesketch data types for the NL2Q feature.
+*   `PROMPT_NL2Q`: Specifies the path to the prompt file used by the NL2Q feature to translate a natural language into a Timesketch search query.
+*   `EXAMPLES_NL2Q`: Specifies the path to the examples file used by the NL2Q feature. This file provides the LLM with examples of natural language queries and their corresponding Timesketch search queries, which help improve the accuracy of the NL2Q feature.
+*   `PROMPT_LLM_SUMMARIZATION`: Specifies the path to the prompt file used by the event summarization feature.  Administrators can modify this file to customize the summarization output to their specific needs. This template allows for injecting the event data into the prompt using Python-style string formatting using curly braces `{}`.
