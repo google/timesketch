@@ -5,7 +5,7 @@ hide:
 
 # LLM Features Configuration
 
-Timesketch now includes experimental features leveraging Large Language Models (LLMs) to enhance analysis capabilities. These features include event summarization and AI-generated queries (NL2Q - Natural Language to Query). This document outlines the steps required to configure these features for Timesketch administrators.
+Timesketch includes experimental features leveraging Large Language Models (LLMs) to enhance analysis capabilities. These features include event summarization and AI-generated queries (NL2Q - Natural Language to Query). This document outlines the steps required to configure these features for Timesketch administrators.
 
 ## LLM Provider Configuration
 
@@ -29,13 +29,19 @@ LLM_PROVIDER_CONFIGS = {
     #      to your service account private key file by adding it to the docker-compose.yml
     #      under environment:
     #      GOOGLE_APPLICATION_CREDENTIALS=/usr/local/src/timesketch/<key_file>.json
-    #   3. Install the python libraries: $ pip3 install google-cloud-aiplatform
+    #   3. Verify your instance has the `google-cloud-aiplatform` lib installed.
+    #     * $ sudo docker exec timesketch-web pip list | grep google-cloud-aiplatform
+    #     * You can install it manually using:
+    #       $ sudo docker exec timesketch-web pip install google-cloud-aiplatform==1.70.0
     #
     #   IMPORTANT: Private keys must be kept secret. If you expose your private key it is
     #   recommended to revoke it immediately from the Google Cloud Console.
     # - aistudio: Google AI Studio (API key).  Get API key from Google AI Studio website.
     #   To use Google's AI Studio simply obtain an API key from https://aistudio.google.com/
-    #   $ pip3 install google-generativeai
+    #   Verify your instance runs the required library:
+    #     * $ sudo docker exec timesketch-web pip list | grep google-generativeai
+    #     * You can install it manually using:
+    #       $ sudo docker exec timesketch-web pip install google-generativeai==0.8.4
     'nl2q': {
         'vertexai': {
             'model': 'gemini-2.0-flash-001',
@@ -49,9 +55,8 @@ LLM_PROVIDER_CONFIGS = {
         },
     },
     'default': {
-        'aistudio': {
-             'api_key': '', # Required if using aistudio
-             'model': 'gemini-2.0-flash-001',
+        'ollama': {
+             'model': 'gemma2-2b-it',
         },
     }
 }
@@ -77,3 +82,6 @@ PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_summarize/prompt.txt'
 *   `PROMPT_NL2Q`: Specifies the path to the prompt file used by the NL2Q feature to translate a natural language into a Timesketch search query.
 *   `EXAMPLES_NL2Q`: Specifies the path to the examples file used by the NL2Q feature. This file provides the LLM with examples of natural language queries and their corresponding Timesketch search queries, which help improve the accuracy of the NL2Q feature.
 *   `PROMPT_LLM_SUMMARIZATION`: Specifies the path to the prompt file used by the event summarization feature.  Administrators can modify this file to customize the summarization output to their specific needs. This template allows for injecting the event data into the prompt using Python-style string formatting using curly braces `{}`.
+Timesketch provides some default configuration files for both features:
+* [NL2Q default configuration](https://github.com/google/timesketch/tree/master/data/nl2q).
+* [LLM Summarization default configuration](https://github.com/google/timesketch/tree/master/data/llm_summarize).
