@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 
 import json
 import mock
+import pandas as pd
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -1436,7 +1437,7 @@ class ScenariosResourceTest(BaseTest):
         self._commit_to_database(test_sketch)
 
         # Load DFIQ objects
-        dfiq_obj = DFIQ("./test_data/dfiq/")
+        dfiq_obj = DFIQ("./tests/test_data/dfiq/")
 
         scenario = dfiq_obj.scenarios[0]
         scenario_sql = Scenario(
@@ -1545,3 +1546,68 @@ class ScenariosResourceTest(BaseTest):
         # Test with invalid object
         result = scenarios.check_and_run_dfiq_analysis_steps("invalid", test_sketch)
         self.assertFalse(result)
+
+
+class MockLLM:
+    """Mock LLM class for testing."""
+
+    def generate(self):
+        return {"summary": "Mock summary from LLM"}
+
+
+class TestLLMSummarizeResource(BaseTest):
+    """Test LLMSummarizeResource."""
+
+    resource_url = "/api/v1/sketches/1/events/summary/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_llm_summarize_no_events(self):
+        """Test LLM summarizer when no events are returned from the Timesketch query."""
+        self.login()
+        self.app.config["PROMPT_LLM_SUMMARIZATION"] = "data/llm_summarize/prompt.txt"
+
+        with mock.patch(
+            "timesketch.api.v1.resources.llm_summarize.LLMSummarizeResource._run_timesketch_query",  # pylint: disable=line-too-long
+            return_value=pd.DataFrame(),
+        ), mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore):
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps({"query": "*"}),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertEqual(
+            response_data.get("summary"),
+            "No events to summarize based on the current filter.",
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
+    def test_llm_summarize_with_events(self, mock_create_provider):
+        """Test LLM summarizer with events returned and mock LLM."""
+        self.login()
+        self.app.config["PROMPT_LLM_SUMMARIZATION"] = "data/llm_summarize/prompt.txt"
+        mock_create_provider.return_value = MockLLM()
+
+        sample_events = pd.DataFrame([{"message": "Test event message"}])
+
+        with mock.patch(
+            "timesketch.api.v1.resources.llm_summarize.LLMSummarizeResource._run_timesketch_query",  # pylint: disable=line-too-long
+            return_value=sample_events,
+        ), mock.patch(
+            "timesketch.api.v1.resources.llm_summarize.LLMSummarizeResource._get_content",  # pylint: disable=line-too-long
+            return_value={"summary": "Mock summary from LLM"},
+        ), mock.patch(
+            "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+        ):
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps({"query": "*"}),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertEqual(response_data.get("summary"), "Mock summary from LLM")
