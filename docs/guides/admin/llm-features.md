@@ -56,6 +56,7 @@ LLM_PROVIDER_CONFIGS = {
     },
     'default': {
         'ollama': {
+             'server_url': 'http://localhost:11434',
              'model': 'gemma2-2b-it',
         },
     }
