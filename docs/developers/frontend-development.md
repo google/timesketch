@@ -49,14 +49,14 @@ You need two shells:
 1. Start the main webserver (for serving the API etc) in the first shell:
 
 ```bash
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
 ```
 
 2. Start the development webserver in the second shell:
 
 ```bash
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve
 ```
 
@@ -102,14 +102,14 @@ You need two shells:
 1. Start the main webserver (for serving the API etc) in the first shell:
 
 ```bash
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
 ```
 
 2. Start the development webserver in the second shell:
 
 ```bash
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve
 ```
 
@@ -124,7 +124,7 @@ If you already have a yarn process running with the "old" frontend, it might not
 Generate UI builds:
 
 ```bash
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 docker exec -it $CONTAINER_ID timesketch bash
 cd /usr/local/src/timesketch/timesketch/frontend-ng
 yarn build

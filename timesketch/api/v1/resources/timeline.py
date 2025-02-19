@@ -408,15 +408,6 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     close_index = False
                     break
 
-        if close_index:
-            try:
-                self.datastore.client.indices.close(index=searchindex.index_name)
-            except opensearchpy.NotFoundError:
-                logger.error(
-                    "Unable to close index: {0:s} - index not "
-                    "found".format(searchindex.index_name)
-                )
-
             searchindex.set_status(status="archived")
             timeline.set_status(status="archived")
 

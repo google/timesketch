@@ -1,13 +1,12 @@
 version: "3"
 services:
   timesketch:
-    container_name: timesketch-dev
+    container_name: timesketch
     image: us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest
     command: timesketch
     ports:
       - 127.0.0.1:5000:5000
       - 127.0.0.1:5001:5001
-      - 127.0.0.1:8080:8080
     links:
       - opensearch
       - postgres

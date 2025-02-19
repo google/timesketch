@@ -6,43 +6,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
-  # OpenSearch version 1.x.x
-  PyPi-plaso-stable-opensearch-v1:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up infrastructure with docker compose
-        run: docker compose -f docker/e2e/docker-compose.yml up -d
-        env:
-          OPENSEARCH_VERSION: 1.3.10
-          PLASO_PPA_TRACK: stable
-      - name: Run e2e tests
-        run: docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
-  PyPi-plaso-staging-opensearch-v1:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up infrastructure with docker compose
-        run: docker compose -f docker/e2e/docker-compose.yml up -d
-        env:
-          OPENSEARCH_VERSION: 1.3.10
-          PLASO_PPA_TRACK: staging
-      - name: Run e2e tests
-        run: docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
-
-  # OpenSearch version 2.x.x
   PyPi-plaso-stable-opensearch-v2:
     runs-on: ubuntu-latest
     strategy:
@@ -60,21 +23,3 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
-  PyPi-plaso-staging-opensearch-v2:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up infrastructure with docker compose
-        run: docker compose -f docker/e2e/docker-compose.yml up -d
-        env:
-          OPENSEARCH_VERSION: 2.15.0
-          PLASO_PPA_TRACK: staging
-      - name: Run e2e tests
-        run: docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
-

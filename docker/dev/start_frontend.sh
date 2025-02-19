@@ -4,7 +4,7 @@ echo "[i] Script (NOT TESTED) to run the frontend in dev mode"
 echo "[i] Run this script in timesketch/docker/dev"
 echo "[i] Remember to run 'docker compose up -d' to start the containers"
 
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 docker exec -d $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
 docker compose exec timesketch yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend
 docker compose exec -d timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend build --mode development --watch

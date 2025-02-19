@@ -50,7 +50,7 @@ else
 fi
 
 # Set variables required to execute commands
-CONTAINER_ID="$($s docker container list --filter name='timesketch-dev' --quiet)"
+CONTAINER_ID="$($s docker container list --filter name='timesketch' --quiet)"
 frontend="frontend-ng"
 
 # Check if a second frontend argument is provided

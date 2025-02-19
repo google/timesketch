@@ -18,23 +18,29 @@ If you see the following message you can continue
 ```
 Timesketch development server is ready!
 ```
+
 ### Find out container ID for the timesketch container
 
 ```
-CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 ```
+
 In the output look for CONTAINER ID for the timesketch container
 
 To write the ID to a variable, use:
+
 ```
-export CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+export CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 ```
+
 and test with
+
 ```
 echo $CONTAINER_ID
 ```
 
 ### Start a celery container shell
+
 ```
 docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
 ```
@@ -45,17 +51,18 @@ docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel i
 docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
 ```
 
-You now can access your development version at http://127.0.0.1:5000/
+You now can access your development version at <http://127.0.0.1:5000/>
 
 Log in with user: dev password: dev
 
-You can also access a metrics dashboard at http://127.0.0.1:3000/
+You can also access a metrics dashboard at <http://127.0.0.1:3000/>
 
 ### Non-interactive
 
 Running the following as a script after `docker compose up -d` will bring up the development environment in the background for you.
+
 ```
-export CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+export CONTAINER_ID="$(docker container list -f name=timesketch -q)"
 docker exec $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
 docker exec $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
 ```
@@ -71,7 +78,7 @@ That will run all tests in your docker container. It is recommended to run all t
 ### Jupyter Notebook
 
 To access a Jupyter notebook that has access to the Timesketch development
-environment start a browser and visit http://localhost:8844/ . The password to
+environment start a browser and visit <http://localhost:8844/> . The password to
 gain access is "timesketch".
 
 By default the /tmp directory is mapped as the data directory to store all
@@ -110,5 +117,5 @@ active.
 To update the docker image run:
 
 ```shell
-$ sudo docker image pull us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
+sudo docker image pull us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
 ```
