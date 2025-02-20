@@ -160,17 +160,45 @@ def unarchive_sketch(ctx):
         click.echo("Sketch unarchived")
 
 
-@sketch_group.command("delete", help="Delete a sketch")
+@sketch_group.command(
+    "delete", help="Delete a sketch, default will only mark the sketch as deleted"
+)
 @click.option(
     "--execute",
     required=False,
     is_flag=True,
     help="Only execute the deletion if this is set.",
 )
+@click.option(
+    "--delete_metadata",
+    required=False,
+    is_flag=True,
+    help="Delete metadata associated with the sketch.",
+)
 @click.pass_context
-def delete_sketch(ctx, execute):
-    """Delete a sketch."""
+def delete_sketch(ctx, execute, delete_metadata):
+    """Delete a sketch.
+
+    By default, a sketch will not be deleted. To execute the deletion provide the
+    flag --execute.
+
+    To also delete the metadata to a sketch, provide the flag --delete_metadata.
+
+    Args:
+        execute: Only execute the deletion if this is set.
+        delete_metadata: Delete metadata associated with the sketch.
+    """
     sketch = ctx.obj.sketch
+
+    # check if sketch exists
+    if not sketch:
+        click.echo("Error Sketch does not exist")
+        ctx.exit(1)
+
+    # if sketch is archived, exit
+    if sketch.is_archived():
+        click.echo("Error Sketch is archived")
+        ctx.exit(1)
 
     # Dryrun:
     click.echo("Would delete the following things")
