@@ -16,18 +16,17 @@
 from __future__ import unicode_literals
 
 import time
-import mock
-import jwt
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from timesketch.lib.google_auth import (
+    JwtKeyError,
+    JwtValidationError,
+    decode_jwt,
+    get_public_key_for_jwt,
+    validate_jwt,
+)
 from timesketch.lib.testlib import BaseTest
-from timesketch.lib.google_auth import decode_jwt
-from timesketch.lib.google_auth import validate_jwt
-from timesketch.lib.google_auth import get_public_key_for_jwt
-from timesketch.lib.google_auth import JwtValidationError
-from timesketch.lib.google_auth import JwtKeyError
-
 
 # openssl ecparam -genkey -name prime256v1 -noout -out ec_private.pem
 MOCK_EC_PRIVATE_KEY = """
@@ -53,7 +52,7 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE45WYklVqGutB1h/v0FFOtjeACMA0
 -----END PUBLIC KEY-----
 """
 
-# pylint: disable=line-too-long
+
 # Created with https://mkjwk.org/
 MOCK_RSA_PRIVATE_PUBLIC_KEY_JWK = {
     "kty": "RSA",
@@ -65,7 +64,7 @@ MOCK_RSA_PRIVATE_PUBLIC_KEY_JWK = {
     "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w",
 }
 
-# pylint: disable=line-too-long
+
 MOCK_RSA_PUBLIC_KEY_JWK = {
     "kty": "RSA",
     "e": "AQAB",
@@ -75,7 +74,7 @@ MOCK_RSA_PUBLIC_KEY_JWK = {
     "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w",
 }
 
-# pylint: disable=line-too-long
+
 MOCK_INVALID_RSA_PUBLIC_KEY_JWK = {
     "kty": "RSA",
     "e": "AQAB",
@@ -133,7 +132,6 @@ OIDC_VALID_ISSUER = "https://accounts.google.com"
 OIDC_JWT_ALGORITHM = "RS256"
 
 
-# pylint: disable=unused-argument
 def mock_fetch_iap_public_keys(unused_argument):
     """Mock getting public keys.
 
@@ -143,7 +141,6 @@ def mock_fetch_iap_public_keys(unused_argument):
     return {"iap_1234": MOCK_EC_PUBLIC_KEY}
 
 
-# pylint: disable=unused-argument
 def mock_fetch_oidc_public_keys(unused_argument):
     """Mock getting public keys.
 

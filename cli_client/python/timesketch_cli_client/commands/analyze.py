@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Commands for analyzing timelines."""
+import json
 import sys
 import time
 
-import json
 import click
-
 from timesketch_api_client import error
 
 
@@ -210,7 +209,7 @@ def analyzer_results(ctx, analyzer_name, timeline_id, show_dependent):
                                     f"Dependent: {status} - {result_priority} \
                                           - {result_summary}"
                                 )
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             click.echo(
                 f"Unable to get results for analyzer [{analyzer_name}]  \
                     on [{timeline.name}]: {e}"

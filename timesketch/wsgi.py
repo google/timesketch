@@ -51,7 +51,6 @@ if os.environ.get("prometheus_multiproc_dir"):
     GunicornPrometheusMetrics(application, group_by="endpoint")
 
 
-# pylint: disable=unused-argument
 @application.teardown_appcontext
 def shutdown_session(exception=None):
     """Remove the database session after every request or app shutdown."""

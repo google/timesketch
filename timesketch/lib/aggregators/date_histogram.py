@@ -212,7 +212,6 @@ class DateHistogramAggregation(interface.BaseAggregator):
 
         return aggregation_spec
 
-    # pylint: disable=arguments-differ
     def run(
         self,
         field,
@@ -240,10 +239,9 @@ class DateHistogramAggregation(interface.BaseAggregator):
             raise ValueError("Missing field and/or field_query_string.")
 
         self.field = field
-        # pylint: disable=attribute-defined-outside-init
+
         self.field_query_string = field_query_string
         self.interval = supported_intervals
-        # pylint: enable=attribute-defined-outside-init
 
         encoding = self._get_vega_encoding(supported_charts)
 

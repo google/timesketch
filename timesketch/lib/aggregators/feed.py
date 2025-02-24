@@ -25,8 +25,7 @@ views.
 
 from __future__ import unicode_literals
 
-from timesketch.lib.aggregators import manager
-from timesketch.lib.aggregators import interface
+from timesketch.lib.aggregators import interface, manager
 
 
 class ManualFeedAggregation(interface.BaseAggregator):
@@ -64,7 +63,6 @@ class ManualFeedAggregation(interface.BaseAggregator):
             return self.title
         return "Results From A Manually Fed Table"
 
-    # pylint: disable=arguments-differ
     def run(
         self, data, title="", supported_charts="table", field=None, order_field="count"
     ):

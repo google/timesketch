@@ -16,17 +16,16 @@
 import logging
 import uuid
 
-from flask import jsonify
-from flask import request
-from flask import abort
-from flask_restful import Resource
+from flask import abort, jsonify, request
 from flask_login import login_required
+from flask_restful import Resource
 
 from timesketch.api.v1 import resources
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_NOT_FOUND,
+)
 from timesketch.models.sketch import Sketch
-
 
 logger = logging.getLogger("timesketch.data_api")
 
@@ -101,7 +100,7 @@ class DataFinderResource(resources.ResourceMixin, Resource):
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
-        # pylint: disable=import-outside-toplevel
+
         from timesketch.lib import tasks
 
         pipeline = tasks.run_data_finder(

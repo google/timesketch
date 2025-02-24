@@ -3,18 +3,19 @@ UnlockSessionizerSketchPlugin"""
 
 from __future__ import unicode_literals
 
-import unittest
 import copy
+import unittest
+
 import mock
 
-from timesketch.lib.analyzers.evtx_sessionizers import LogonSessionizerSketchPlugin
-from timesketch.lib.analyzers.evtx_sessionizers import UnlockSessionizerSketchPlugin
-
+from timesketch.lib.analyzers.evtx_sessionizers import (
+    LogonSessionizerSketchPlugin,
+    UnlockSessionizerSketchPlugin,
+)
 from timesketch.lib.analyzers.interface import Event
-from timesketch.lib.testlib import BaseTest
-from timesketch.lib.testlib import MockDataStore
-from timesketch.models.user import User
+from timesketch.lib.testlib import BaseTest, MockDataStore
 from timesketch.models.sketch import Sketch
+from timesketch.models.user import User
 
 xml_string1 = (
     '<Event xmlns="http://schemas.microsoft.com/win/2004/08/events'
@@ -114,7 +115,6 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 message, "Sessionizing completed, number of sessions created: 1"
             )
 
-            # pylint: disable=unexpected-keyword-arg
             event1 = datastore.event_store["0"]
             self.assertEqual(
                 event1["_source"]["session_id"][analyzer.session_type], ["0 (USER_1)"]
@@ -171,8 +171,6 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             self.assertEqual(
                 message, "Sessionizing completed, number of sessions created: 3"
             )
-
-            # pylint: disable=unexpected-keyword-arg
 
             # session 0
             event1 = datastore.event_store["0"]
@@ -242,7 +240,6 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 message, "Sessionizing completed, number of sessions created: 2"
             )
 
-            # pylint: disable=unexpected-keyword-arg
             event1 = datastore.event_store["0"]
             self.assertEqual(
                 event1["_source"]["session_id"][analyzer.session_type], ["0 (USER_1)"]
@@ -296,7 +293,6 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 message, "Sessionizing completed, number of sessions created: 1"
             )
 
-            # pylint: disable=unexpected-keyword-arg
             event1 = datastore.event_store["0"]
             self.assertEqual(
                 event1["_source"]["session_id"][analyzer.session_type], ["0 (USER_1)"]
@@ -345,7 +341,6 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 message, "Sessionizing completed, number of sessions created: 1"
             )
 
-            # pylint: disable=unexpected-keyword-arg
             event1 = datastore.event_store["0"]
             self.assertTrue(
                 event1["_source"].get("session_id") is None
@@ -399,7 +394,6 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 message, "Sessionizing completed, number of sessions created: 2"
             )
 
-            # pylint: disable=unexpected-keyword-arg
             event1 = datastore.event_store["0"]
             self.assertEqual(
                 event1["_source"]["session_id"][analyzer.session_type], ["0 (USER_1)"]
@@ -451,7 +445,6 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 message, "Sessionizing completed, number of sessions created: 1"
             )
 
-            # pylint: disable=unexpected-keyword-arg
             event1 = datastore.event_store["0"]
             self.assertEqual(
                 event1["_source"]["session_id"][analyzer.session_type], ["0 (USER_1)"]

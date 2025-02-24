@@ -18,25 +18,22 @@ https://cloud.google.com/iap/docs/signed-headers-howto
 
 from __future__ import unicode_literals
 
-import time
-import json
 import hashlib
+import json
 import os
-import six
-
-# six.moves is a dynamically-created namespace that doesn't actually
-# exist and therefore pylint can't statically analyze it.
-# pylint: disable-msg=import-error
-from six.moves.urllib import parse as urlparse
+import time
 
 import jwt
 import requests
-
-from flask import url_for
-from flask import current_app
-from flask import session
+import six
+from flask import current_app, session, url_for
+from six.moves.urllib import parse as urlparse
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+
+# six.moves is a dynamically-created namespace that doesn't actually
+# exist and therefore pylint can't statically analyze it.
+
 
 CSRF_KEY = "google_oauth2_csrf_token"
 AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"

@@ -4,14 +4,13 @@ from __future__ import unicode_literals
 
 import re
 
-from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers import sessionizer
+from timesketch.lib.analyzers import manager, sessionizer
 
 # Pattern for SSH events message:
 # '[sshd] [{process_id}]: {message}'
 SSH_PATTERN = re.compile(r"^\[sshd\] \[(?P<process_id>\d+)\]:")
 
-# pylint: disable=line-too-long
+
 # Pattern for message of SSH events for successful connection to port (rdomain is optional):
 # '[sshd] [{process_id}]: Connection from {client_ip} port {client_port} on {host_ip} port {host_port} rdomain {rdomain}'
 #

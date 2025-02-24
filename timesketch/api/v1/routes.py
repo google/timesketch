@@ -15,89 +15,101 @@
 
 from __future__ import unicode_literals
 
-from .resources.aggregation import AggregationGroupResource
-from .resources.aggregation import AggregationGroupListResource
-from .resources.aggregation import AggregationListResource
-from .resources.aggregation import AggregationExploreResource
-from .resources.aggregation import AggregationInfoResource
-from .resources.aggregation import AggregationResource
-from .resources.analysis import AnalysisResource
-from .resources.analysis import AnalyzerRunResource
-from .resources.analysis import AnalyzerSessionActiveListResource
-from .resources.analysis import AnalyzerSessionResource
-from .resources.attribute import AttributeResource
-from .resources.explore import ExploreResource
-from .resources.explore import SearchHistoryResource
-from .resources.explore import SearchHistoryTreeResource
-from .resources.datafinder import DataFinderResource
-from .resources.datasource import DataSourceResource
-from .resources.datasource import DataSourceListResource
-from .resources.event import EventResource
-from .resources.event import EventAnnotationResource
-from .resources.event import EventCreateResource
-from .resources.event import EventTaggingResource
-from .resources.event import EventUnTagResource
-from .resources.event import EventAddAttributeResource
-from .resources.event import CountEventsResource
-from .resources.event import MarkEventsWithTimelineIdentifier
-from .resources.sketch import SketchResource
-from .resources.sketch import SketchListResource
+from .resources.aggregation import (
+    AggregationExploreResource,
+    AggregationGroupListResource,
+    AggregationGroupResource,
+    AggregationInfoResource,
+    AggregationListResource,
+    AggregationResource,
+)
+from .resources.analysis import (
+    AnalysisResource,
+    AnalyzerRunResource,
+    AnalyzerSessionActiveListResource,
+    AnalyzerSessionResource,
+)
 from .resources.archive import SketchArchiveResource
-from .resources.information import VersionResource
-from .resources.view import ViewResource
-from .resources.view import ViewListResource
-from .resources.searchtemplate import SearchTemplateResource
-from .resources.searchtemplate import SearchTemplateParseResource
-from .resources.searchtemplate import SearchTemplateListResource
-from .resources.upload import UploadFileResource
-from .resources.task import TaskResource
-from .resources.story import StoryListResource
-from .resources.story import StoryResource
-from .resources.explore import QueryResource
-from .resources.timeline import TimelineResource
-from .resources.timeline import TimelineListResource
-from .resources.timeline import TimelineFieldsResource
-from .resources.searchindex import SearchIndexListResource
-from .resources.searchindex import SearchIndexResource
-from .resources.session import SessionResource
-from .resources.user import UserListResource
-from .resources.user import UserResource
-from .resources.user import UserSettingsResource
-from .resources.user import GroupListResource
-from .resources.user import CollaboratorResource
-from .resources.user import LoggedInUserResource
-from .resources.sigma import SigmaRuleResource
-from .resources.sigma import SigmaRuleListResource
-from .resources.sigma import SigmaRuleByTextResource
-from .resources.graph import GraphListResource
-from .resources.graph import GraphResource
-from .resources.graph import GraphPluginListResource
-from .resources.graph import GraphCacheResource
-from .resources.intelligence import TagMetadataResource
 from .resources.contextlinks import ContextLinkConfigResource
-from .resources.unfurl import UnfurlResource
-from .resources.nl2q import Nl2qResource
+from .resources.datafinder import DataFinderResource
+from .resources.datasource import DataSourceListResource, DataSourceResource
+from .resources.event import (
+    CountEventsResource,
+    EventAddAttributeResource,
+    EventAnnotationResource,
+    EventCreateResource,
+    EventResource,
+    EventTaggingResource,
+    EventUnTagResource,
+    MarkEventsWithTimelineIdentifier,
+)
+from .resources.explore import (
+    ExploreResource,
+    QueryResource,
+    SearchHistoryResource,
+    SearchHistoryTreeResource,
+)
+from .resources.graph import (
+    GraphCacheResource,
+    GraphListResource,
+    GraphPluginListResource,
+    GraphResource,
+)
+from .resources.information import VersionResource
+from .resources.intelligence import TagMetadataResource
 from .resources.llm_summarize import LLMSummarizeResource
+from .resources.nl2q import Nl2qResource
+from .resources.scenarios import (
+    FacetListResource,
+    QuestionConclusionListResource,
+    QuestionConclusionResource,
+    QuestionListResource,
+    QuestionOrphanListResource,
+    QuestionResource,
+    QuestionTemplateListResource,
+    QuestionWithFacetListResource,
+    QuestionWithScenarioListResource,
+    ScenarioListResource,
+    ScenarioResource,
+    ScenarioStatusResource,
+    ScenarioTemplateListResource,
+)
+from .resources.searchindex import SearchIndexListResource, SearchIndexResource
+from .resources.searchtemplate import (
+    SearchTemplateListResource,
+    SearchTemplateParseResource,
+    SearchTemplateResource,
+)
+from .resources.session import SessionResource
 from .resources.settings import SystemSettingsResource
-
-from .resources.scenarios import ScenarioTemplateListResource
-from .resources.scenarios import ScenarioListResource
-from .resources.scenarios import ScenarioResource
-from .resources.scenarios import ScenarioStatusResource
-from .resources.scenarios import FacetListResource
-from .resources.scenarios import QuestionOrphanListResource
-from .resources.scenarios import QuestionWithScenarioListResource
-from .resources.scenarios import QuestionWithFacetListResource
-from .resources.scenarios import QuestionTemplateListResource
-from .resources.scenarios import QuestionListResource
-from .resources.scenarios import QuestionResource
-from .resources.scenarios import QuestionConclusionListResource
-from .resources.scenarios import QuestionConclusionResource
-
+from .resources.sigma import (
+    SigmaRuleByTextResource,
+    SigmaRuleListResource,
+    SigmaRuleResource,
+)
+from .resources.sketch import SketchListResource, SketchResource
+from .resources.story import StoryListResource, StoryResource
+from .resources.task import TaskResource
+from .resources.timeline import (
+    TimelineFieldsResource,
+    TimelineListResource,
+    TimelineResource,
+)
+from .resources.unfurl import UnfurlResource
+from .resources.upload import UploadFileResource
+from .resources.user import (
+    CollaboratorResource,
+    GroupListResource,
+    LoggedInUserResource,
+    UserListResource,
+    UserResource,
+    UserSettingsResource,
+)
+from .resources.view import ViewListResource, ViewResource
 
 # Disable error for long line. Readability is more important than line
 # length in this case.
-# pylint: disable=line-too-long
+
 API_ROUTES = [
     (SketchListResource, "/sketches/"),
     (SketchResource, "/sketches/<int:sketch_id>/"),

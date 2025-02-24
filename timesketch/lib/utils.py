@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import codecs
 import colorsys
 import csv
 import datetime
@@ -24,11 +25,9 @@ import logging
 import random
 import smtplib
 import time
-import codecs
 
 import pandas
 import six
-
 from dateutil import parser
 from flask import current_app
 from pandas import Timestamp
@@ -452,9 +451,7 @@ def rename_jsonl_headers(linedict, headers_mapping, lineno):
     return linedict
 
 
-def read_and_validate_jsonl(
-    file_handle, delimiter=None, headers_mapping=None
-):  # pylint: disable=unused-argument
+def read_and_validate_jsonl(file_handle, delimiter=None, headers_mapping=None):
     """Generator for reading a JSONL (json lines) file.
 
     Args:

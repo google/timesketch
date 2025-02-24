@@ -14,16 +14,16 @@
 """Unfurl API for version 1 of the Timesketch API."""
 
 import logging
+
 import unfurl
-
-from flask import jsonify
-from flask import request
-from flask import abort
-from flask_restful import Resource
+from flask import abort, jsonify, request
 from flask_login import login_required
+from flask_restful import Resource
 
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+)
 
 logger = logging.getLogger("timesketch.api_unfurl")
 
@@ -55,7 +55,7 @@ class UnfurlResource(Resource):
 
         try:
             unfurl_result = unfurl.run(url)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             logger.error("Error unfurling URL: {}".format(e))
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,

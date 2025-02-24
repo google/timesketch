@@ -14,34 +14,27 @@
 """Sigma resources for version 1 of the Timesketch API."""
 
 import logging
+
 import yaml
-
-from flask import abort
-from flask import jsonify
-from flask import request
+from flask import abort, jsonify, request
+from flask_login import current_user, login_required
 from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
-
 from sigma.parser import exceptions as sigma_exceptions
-
 from sqlalchemy.exc import IntegrityError
 
 import timesketch.lib.sigma_util as ts_sigma_lib
-
 from timesketch.api.v1 import resources
-
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-
-from timesketch.models.sigma import SigmaRule
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CONFLICT,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.models import db_session
-
+from timesketch.models.sigma import SigmaRule
 
 logger = logging.getLogger("timesketch.api.sigma")
 
@@ -168,7 +161,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         try:
             rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             error_msg = "Unable to get the Sigma rule {0!s}".format(e)
             logger.error(
                 error_msg,

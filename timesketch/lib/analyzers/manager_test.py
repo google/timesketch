@@ -15,8 +15,8 @@
 
 from __future__ import unicode_literals
 
-from timesketch.lib.testlib import BaseTest
 from timesketch.lib.analyzers import manager
+from timesketch.lib.testlib import BaseTest
 
 
 class MockAnalyzer(object):
@@ -103,7 +103,6 @@ class TestAnalysisManager(BaseTest):
         self.assertEqual(len(analyzer_names_list), 4)
         self.assertIn("mockanalyzer", analyzer_names_list)
 
-        # pylint: disable=protected-access
         analyzers_to_run = [
             "mockanalyzer",
             "mockanalyzer2",

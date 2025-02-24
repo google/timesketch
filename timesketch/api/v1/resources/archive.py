@@ -22,30 +22,21 @@ import logging
 import zipfile
 
 import opensearchpy
-
-from flask import abort
-from flask import current_app
-from flask import jsonify
-from flask import request
-from flask import send_file
-from flask_login import current_user
-from flask_login import login_required
+import pandas as pd
+from flask import abort, current_app, jsonify, request, send_file
+from flask_login import current_user, login_required
 from flask_restful import Resource
 
-import pandas as pd
-
 from timesketch import version
-from timesketch.api.v1 import export
-from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.api.v1 import export, resources, utils
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.lib.stories import manager as story_export_manager
-from timesketch.models.sketch import Event
-from timesketch.models.sketch import Sketch
-
+from timesketch.models.sketch import Event, Sketch
 
 logger = logging.getLogger("timesketch.api_archive")
 
@@ -386,7 +377,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             event_count = len(result["hits"]["hits"])
 
             while event_count < total_count:
-                # pylint: disable=unexpected-keyword-arg
+
                 result = self.datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
                 event_count += len(result["hits"]["hits"])
                 add_frame = export.query_results_to_dataframe(result, sketch)

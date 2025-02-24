@@ -47,7 +47,7 @@ class EndToEndTestManager(object):
         Raises:
             KeyError: if the test is not registered.
         """
-        # pylint: disable=raise-missing-from
+
         try:
             test_class = cls._class_registry[test_name.lower()]
         except KeyError:

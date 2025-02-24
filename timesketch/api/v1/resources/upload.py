@@ -14,31 +14,24 @@
 """Upload resources for version 1 of the Timesketch API."""
 
 import codecs
+import json
 import logging
 import os
 import uuid
-import json
 
-from flask import jsonify
-from flask import request
-from flask import abort
-from flask import current_app
+from flask import abort, current_app, jsonify, request
+from flask_login import current_user, login_required
 from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
 
-from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.api.v1 import resources, utils
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+)
 from timesketch.models import db_session
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import DataSource
-
+from timesketch.models.sketch import DataSource, SearchIndex, Sketch, Timeline
 
 logger = logging.getLogger("timesketch.api_upload")
 
@@ -114,7 +107,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         return searchindex
 
-    # pylint: disable=too-many-arguments
     def _upload_and_index(
         self,
         file_extension,
@@ -263,7 +255,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         sketch_id = sketch.id
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
-        # pylint: disable=import-outside-toplevel
+
         from timesketch.lib import tasks
 
         pipeline = tasks.build_index_pipeline(

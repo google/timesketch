@@ -6,9 +6,7 @@ import collections
 import uuid
 
 from timesketch.lib import emojis
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers import chain_plugins  # pylint: disable=unused-import
+from timesketch.lib.analyzers import chain_plugins, interface, manager
 from timesketch.lib.analyzers.chain_plugins import manager as chain_manager
 
 

@@ -1,13 +1,10 @@
 """Analyzer plugin for tagging."""
 
-from collections.abc import Iterable  # pylint: disable no-name-in-module
 import logging
+from collections.abc import Iterable
 
 from timesketch.lib import emojis
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers import utils
-
+from timesketch.lib.analyzers import interface, manager, utils
 
 logger = logging.getLogger("timesketch.analyzers.tagger")
 

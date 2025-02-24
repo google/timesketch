@@ -16,7 +16,6 @@
 from __future__ import unicode_literals
 
 import codecs
-from hashlib import sha1
 import io
 import json
 import logging
@@ -24,38 +23,38 @@ import os
 import subprocess
 import time
 import traceback
+from hashlib import sha1
+
+import prometheus_client
 import six
 import yaml
-import prometheus_client
-
-from celery import chain
-from celery import group
-from celery import signals
+from celery import chain, group, signals
 from flask import current_app
-from opensearchpy.exceptions import NotFoundError
-from opensearchpy.exceptions import RequestError
+from opensearchpy.exceptions import NotFoundError, RequestError
 from sqlalchemy import create_engine
-from timesketch.app import configure_logger
-from timesketch.app import create_celery_app
-from timesketch.lib import datafinder
-from timesketch.lib import errors
+
+from timesketch.app import configure_logger, create_celery_app
+from timesketch.lib import datafinder, errors
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.lib.definitions import METRICS_NAMESPACE
-from timesketch.lib.utils import read_and_validate_csv
-from timesketch.lib.utils import read_and_validate_jsonl
-from timesketch.lib.utils import send_email
+from timesketch.lib.utils import (
+    read_and_validate_csv,
+    read_and_validate_jsonl,
+    send_email,
+)
 from timesketch.models import db_session
-from timesketch.models.sketch import Analysis
-from timesketch.models.sketch import AnalysisSession
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import InvestigativeQuestionApproach
-from timesketch.models.sketch import InvestigativeQuestionConclusion
+from timesketch.models.sketch import (
+    Analysis,
+    AnalysisSession,
+    InvestigativeQuestionApproach,
+    InvestigativeQuestionConclusion,
+    SearchIndex,
+    Sketch,
+    Timeline,
+)
 from timesketch.models.user import User
-
 
 # Metrics definitions
 METRICS = {
@@ -117,7 +116,6 @@ celery = create_celery_app()
 PLASO_MINIMUM_VERSION = 20201228
 
 
-# pylint: disable=unused-argument
 @signals.after_setup_logger.connect
 def setup_loggers(*args, **kwargs):
     """Configure the logger."""
@@ -185,7 +183,6 @@ class SqlAlchemyTask(celery.Task):
         super().after_return(*args, **kwargs)
 
 
-# pylint: disable=unused-argument
 @signals.worker_process_init.connect
 def init_worker(**kwargs):
     """Create new database engine per worker process."""
@@ -783,7 +780,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
 
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
@@ -796,18 +793,12 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     # Run pinfo on storage file
     try:
         pinfo = pinfo_tool.PinfoTool()
-        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
-            file_path
-        )
-        storage_counters = (
-            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
-                storage_reader
-            )
-        )
+        storage_reader = pinfo._GetStorageReader(file_path)
+        storage_counters = pinfo._CalculateStorageCounters(storage_reader)
         total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
@@ -1073,7 +1064,7 @@ def run_csv_jsonl(
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
 
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(

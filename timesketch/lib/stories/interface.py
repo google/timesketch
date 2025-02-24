@@ -156,7 +156,6 @@ class StoryExporter(object):
         self.reset()
         return self
 
-    # pylint: disable=unused-argument
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
         self.reset()

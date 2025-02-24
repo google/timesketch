@@ -14,13 +14,14 @@
 """Session resources for version 1 of the Timesketch API."""
 
 from flask import abort
+from flask_login import current_user, login_required
 from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
 
 from timesketch.api.v1 import resources
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+)
 from timesketch.models.sketch import Sketch
 
 
@@ -85,7 +86,7 @@ class SessionResource(resources.ResourceMixin, Resource):
 
         for session_type in session_types:
             id_terms["field"] = "session_id.{}.keyword".format(session_type)
-            # pylint: disable=unexpected-keyword-arg
+
             id_agg = self.datastore.client.search(
                 index=list(sketch_indices), body=id_agg_spec, size=0
             )

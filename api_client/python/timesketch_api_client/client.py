@@ -14,33 +14,20 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
-import os
 import logging
+import os
 import sys
-
-# pylint: disable=wrong-import-order
-import bs4
-import requests
-
-# pylint: disable=redefined-builtin
-from requests.exceptions import ConnectionError
-from urllib3.exceptions import InsecureRequestWarning
 import webbrowser
 
-# pylint: disable-msg=import-error
-from google_auth_oauthlib import flow as googleauth_flow
+import bs4
 import google.auth.transport.requests
 import pandas
+import requests
+from google_auth_oauthlib import flow as googleauth_flow
+from requests.exceptions import ConnectionError
+from urllib3.exceptions import InsecureRequestWarning
 
-from . import credentials
-from . import definitions
-from . import error
-from . import index
-from . import sketch
-from . import user
-from . import version
-from . import sigma
-
+from . import credentials, definitions, error, index, sigma, sketch, user, version
 
 logger = logging.getLogger("timesketch_api.client")
 

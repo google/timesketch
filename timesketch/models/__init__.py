@@ -18,16 +18,14 @@ from __future__ import unicode_literals
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy.query import Query
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker, as_declarative
+from sqlalchemy import Column, DateTime, Integer, create_engine, func
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy import Column
-from sqlalchemy import DateTime
-from sqlalchemy import func
-from sqlalchemy import Integer
+from sqlalchemy.orm import as_declarative, scoped_session, sessionmaker
 
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+)
 
 # The database session
 engine = None
@@ -38,7 +36,7 @@ db_session = scoped_session(session_maker)
 def configure_engine(url):
     """Configure and setup the database session."""
     # These needs to be global because of the way Flask works.
-    # pylint: disable=global-statement,global-variable-not-assigned
+
     # TODO: Can we wrap this in a class?
     global engine, session_maker, db_session
     engine = create_engine(url, future=True)

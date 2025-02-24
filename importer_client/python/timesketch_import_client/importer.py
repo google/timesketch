@@ -25,9 +25,7 @@ import uuid
 
 import numpy
 import pandas
-
-from timesketch_api_client import timeline
-from timesketch_api_client import definitions
+from timesketch_api_client import definitions, timeline
 from timesketch_api_client.error import UnableToRunAnalyzer
 from timesketch_import_client import utils
 
@@ -229,7 +227,7 @@ class ImportStreamer(object):
             try:
                 date = pandas.to_datetime(data_frame["datetime"], utc=True)
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
-            except Exception:  # pylint: disable=broad-except
+            except Exception:
                 logger.error(
                     "Unable to change datetime, is it correctly formatted?",
                     exc_info=True,
@@ -888,7 +886,6 @@ class ImportStreamer(object):
         self._reset()
         return self
 
-    # pylint: disable=unused-argument
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
         self.close()

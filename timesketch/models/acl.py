@@ -24,20 +24,12 @@ import codecs
 import json
 
 import six
-
 from flask_login import current_user
-from sqlalchemy import Column
-from sqlalchemy import ForeignKey
-from sqlalchemy import Integer
-from sqlalchemy import and_
-from sqlalchemy import or_
-from sqlalchemy import not_
-from sqlalchemy import Unicode
+from sqlalchemy import Column, ForeignKey, Integer, Unicode, and_, not_, or_
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 
-from timesketch.models import BaseModel
-from timesketch.models import db_session
+from timesketch.models import BaseModel, db_session
 
 
 class AccessControlEntry(object):
@@ -133,7 +125,6 @@ class AccessControlMixin(object):
         if not user:
             user = current_user
 
-        # pylint: disable=singleton-comparison
         return cls.query.filter(
             or_(
                 cls.AccessControlEntry.user == user,
@@ -212,7 +203,7 @@ class AccessControlMixin(object):
         Returns:
             Set of groups (instance of timesketch.models.user.Group)
         """
-        # pylint: disable=singleton-comparison
+
         group_aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.group == None),
             self.AccessControlEntry.parent == self,
@@ -236,7 +227,7 @@ class AccessControlMixin(object):
         Returns:
             List of users (instances of timesketch.models.user.User)
         """
-        # pylint: disable=singleton-comparison
+
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == self.user),
             not_(self.AccessControlEntry.user == None),
@@ -254,7 +245,6 @@ class AccessControlMixin(object):
         """
         return_dict = {}
 
-        # pylint: disable=singleton-comparison
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == None),
             self.AccessControlEntry.parent == self,
@@ -293,7 +283,6 @@ class AccessControlMixin(object):
         """
         return_dict = {}
 
-        # pylint: disable=singleton-comparison
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == None),
             self.AccessControlEntry.permission == permission,

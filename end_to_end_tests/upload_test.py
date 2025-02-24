@@ -17,8 +17,8 @@ import random
 import json
 
 from timesketch_api_client import search
-from . import interface
-from . import manager
+
+from . import interface, manager
 
 
 class UploadTest(interface.BaseEndToEndTest):
@@ -66,7 +66,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         with open(file_path, "w", encoding="utf-8") as file_object:
             for i in range(4123):
-                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
+                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'
                 file_object.write(string)
 
         self.import_timeline("/tmp/large.jsonl", index_name=rand, sketch=sketch)
@@ -157,7 +157,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         with open(file_path, "w", encoding="utf-8") as file_object:
             for i in range(74251):
-                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
+                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'
                 file_object.write(string)
 
         self.import_timeline(file_path, index_name=rand, sketch=sketch)

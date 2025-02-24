@@ -2,8 +2,7 @@
 
 import re
 
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers import interface, manager
 
 
 class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
@@ -81,7 +80,6 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
                 if method_name.endswith("compute.networks.insert"):
                     event.add_tags(["network-created"])
 
-                # pylint: disable-msg=line-too-long
                 if method_name.endswith("compute.projects.setCommonInstanceMetadata"):
                     event.add_tags(["compute-metadata-changed"])
 

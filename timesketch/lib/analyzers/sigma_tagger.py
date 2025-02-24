@@ -4,9 +4,8 @@ from __future__ import unicode_literals
 
 import logging
 
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
 import timesketch.lib.sigma_util as ts_sigma_lib
+from timesketch.lib.analyzers import interface, manager
 
 logger = logging.getLogger("timesketch.analyzers.sigma_tagger")
 
@@ -106,7 +105,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 tag_list=rule.get("tags"),
                 rule_id=rule.get("id"),
             )
-        except:  # pylint: disable=bare-except
+        except:
             error_msg = "* {0:s} {1:s}".format(rule_name, rule.get("id"))
             logger.error(
                 error_msg,
@@ -114,7 +113,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             )
             return error_msg
 
-        return f"{tagged_events_counter} events tagged for rule [{rule_name}] ({rule.get('id')})"  # pylint: disable=line-too-long
+        return f"{tagged_events_counter} events tagged for rule [{rule_name}] ({rule.get('id')})"
 
     @staticmethod
     def get_kwargs():

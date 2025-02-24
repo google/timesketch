@@ -24,7 +24,6 @@ import pandas as pd
 from timesketch.api.v1 import utils
 from timesketch.lib.stories import api_fetcher as story_api_fetcher
 
-
 logger = logging.getLogger("timesketch.api_exporter")
 
 
@@ -178,7 +177,7 @@ def query_to_filehandle(
     event_count = len(result["hits"]["hits"])
 
     while event_count < total_count:
-        # pylint: disable=unexpected-keyword-arg
+
         result = datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
         event_count += len(result["hits"]["hits"])
         add_frame = query_results_to_dataframe(result, sketch)

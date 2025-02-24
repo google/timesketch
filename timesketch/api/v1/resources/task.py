@@ -15,12 +15,9 @@
 
 import datetime
 
-from flask import current_app
-from flask import jsonify
-from flask import request
+from flask import current_app, jsonify, request
+from flask_login import current_user, login_required
 from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.models.sketch import SearchIndex
@@ -29,16 +26,15 @@ from timesketch.models.sketch import SearchIndex
 class TaskResource(resources.ResourceMixin, Resource):
     """Resource to get information on celery task."""
 
-    # pylint: disable=import-outside-toplevel
     def __init__(self):
         super().__init__()
-        # pylint: disable=import-outside-toplevel
+
         from timesketch.app import create_celery_app
 
         self.celery = create_celery_app()
 
     def _get_celery_information(self, job_id):
-        # pylint: disable=too-many-function-args
+
         celery_task = self.celery.AsyncResult(job_id)
         task = dict(
             task_id=celery_task.task_id,

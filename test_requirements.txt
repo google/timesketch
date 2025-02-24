@@ -5,5 +5,4 @@ pbr >= 4.2.0
 beautifulsoup4 >= 4.8.2
 coverage >= 5.0.2
 httmock >= 1.3.0
-pylint==2.6.0
 astroid==2.4.0

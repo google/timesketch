@@ -8,14 +8,14 @@ Auto generated code by flask-migrate and Alembic.
 """
 
 # This code is auto generated. Ignore linter errors.
-# pylint: skip-file
+
 
 # revision identifiers, used by Alembic.
 revision = "ecf00882f546"
 down_revision = "36e85b266dba"
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 
 def upgrade():

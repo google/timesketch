@@ -16,40 +16,40 @@
 from __future__ import unicode_literals
 
 import requests
-
-from flask import abort
-from flask import Blueprint
-from flask import current_app
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import session
-from flask import url_for
-
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from flask_login import current_user, login_user, logout_user
 from oauthlib import oauth2
 
-from flask_login import current_user
-from flask_login import login_user
-from flask_login import logout_user
-
-from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_OK,
+    HTTP_STATUS_CODE_UNAUTHORIZED,
+)
 from timesketch.lib.forms import UsernamePasswordForm
-from timesketch.lib.google_auth import get_public_key_for_jwt
-from timesketch.lib.google_auth import get_oauth2_discovery_document
-from timesketch.lib.google_auth import get_oauth2_authorize_url
-from timesketch.lib.google_auth import get_encoded_jwt_over_https
-from timesketch.lib.google_auth import decode_jwt
-from timesketch.lib.google_auth import validate_jwt
-from timesketch.lib.google_auth import JwtValidationError
-from timesketch.lib.google_auth import JwtKeyError
-from timesketch.lib.google_auth import JwtFetchError
-from timesketch.lib.google_auth import DiscoveryDocumentError
-from timesketch.lib.google_auth import CSRF_KEY
+from timesketch.lib.google_auth import (
+    CSRF_KEY,
+    DiscoveryDocumentError,
+    JwtFetchError,
+    JwtKeyError,
+    JwtValidationError,
+    decode_jwt,
+    get_encoded_jwt_over_https,
+    get_oauth2_authorize_url,
+    get_oauth2_discovery_document,
+    get_public_key_for_jwt,
+    validate_jwt,
+)
 from timesketch.models import db_session
-from timesketch.models.user import Group
-from timesketch.models.user import User
+from timesketch.models.user import Group, User
 
 # Register flask blueprint
 auth_views = Blueprint("user_views", __name__)
@@ -89,7 +89,7 @@ def login():
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
     if current_app.config.get("GOOGLE_IAP_ENABLED", False):
         encoded_jwt = request.environ.get("HTTP_X_GOOG_IAP_JWT_ASSERTION", None)
-        # pylint: disable=broad-except
+
         if encoded_jwt:
             expected_audience = current_app.config.get("GOOGLE_IAP_AUDIENCE")
             expected_issuer = current_app.config.get("GOOGLE_IAP_ISSUER")
@@ -158,7 +158,7 @@ def login():
             db_session.commit()
 
     # Login form POST
-    # pylint: disable=using-constant-test
+
     form = UsernamePasswordForm()
     if form.validate_on_submit:
         user = User.query.filter_by(username=form.username.data).first()
@@ -270,7 +270,7 @@ def validate_api_token():
         )
 
     expected_issuer = discovery_document["issuer"]
-    # pylint: disable=broad-except
+
     try:
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):

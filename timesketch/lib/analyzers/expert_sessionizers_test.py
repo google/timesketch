@@ -3,17 +3,15 @@
 from __future__ import unicode_literals
 
 import unittest
+
 import mock
 
-from timesketch.lib.analyzers.expert_sessionizers import (
-    WebActivitySessionizerSketchPlugin,
-)
+from timesketch.lib.analyzers.base_sessionizer_test import _create_mock_event
 from timesketch.lib.analyzers.expert_sessionizers import (
     SSHBruteforceSessionizerSketchPlugin,
+    WebActivitySessionizerSketchPlugin,
 )
-from timesketch.lib.analyzers.base_sessionizer_test import _create_mock_event
-from timesketch.lib.testlib import BaseTest
-from timesketch.lib.testlib import MockDataStore
+from timesketch.lib.testlib import BaseTest, MockDataStore
 
 
 class TestWebActivitySessionizerPlugin(BaseTest):
@@ -75,7 +73,7 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest):
         )
 
         test_message = "[sshd] [0]: Invalid user NoSuchUser from 0.0.0.0 " "port 0"
-        # pylint: disable=unexpected-keyword-arg
+
         event1 = datastore.event_store["0"]
         self.assertEqual(event1["_source"]["reporter"], "sshd")
         self.assertEqual(event1["_source"]["message"], test_message)

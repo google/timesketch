@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Gunicorn configuration for metrics endpoint."""
-import os
 import glob
+import os
 import pathlib
 
 from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
@@ -25,7 +25,8 @@ METRICS_ENABLED = METRICS_DB_DIR
 
 
 # Reference: https://github.com/rycus86/prometheus_flask_exporter#wsgi
-# pylint: disable=unused-argument
+
+
 def when_ready(server):
     """Start metrics server when Timesketch app is ready."""
     # Exit early if we don't have the necessary environment set up.

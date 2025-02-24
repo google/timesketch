@@ -3,12 +3,12 @@
 from __future__ import unicode_literals
 
 import copy
-import logging
 import json
+import logging
 
-from flask import current_app
 import mock
 import sqlalchemy
+from flask import current_app
 
 from timesketch.lib.analyzers import hashr_lookup
 from timesketch.lib.testlib import BaseTest, MockDataStore
@@ -431,7 +431,7 @@ class TestHashRLookup(BaseTest):
             mock_check: Mock object for the check_against_hashr function.
             mock_connect: Mock object for the connect_hashr function.
         """
-        # pylint: disable=line-too-long
+
         test_input_hashes = [
             {
                 "hash_sha256": "78a249b6e0f74979d2d2a230abbe5f3c9b558fcc01e61c7c09950304cf95c7c0"
@@ -570,7 +570,7 @@ class TestHashRLookup(BaseTest):
             mock_check: Mock object for the check_against_hashr function.
             mock_connect: Mock object for the connect_hashr function.
         """
-        # pylint: disable=line-too-long
+
         test_input_hashes = [
             {
                 "hash_sha256": "78a249b6e0f74979d2d2a230abbe5f3c9b558fcc01e61c7c09950304cf95c7c0"

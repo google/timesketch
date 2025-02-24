@@ -18,7 +18,6 @@ import sys
 
 import click
 from tabulate import tabulate
-
 from timesketch_api_client import search
 
 
@@ -134,7 +133,6 @@ def describe_query(search_obj):
     help="Show all columns including Timesketch internal ones",
 )
 @click.pass_context
-# pylint: disable=too-many-arguments
 def search_group(
     ctx,
     query,

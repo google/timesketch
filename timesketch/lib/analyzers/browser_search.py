@@ -6,14 +6,10 @@ import logging
 import re
 
 import six
-
 from six.moves import urllib_parse as urlparse
 
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers import utils
 from timesketch.lib import emojis
-
+from timesketch.lib.analyzers import interface, manager, utils
 
 logger = logging.getLogger("timesketch.analyzers.browser_search")
 
@@ -126,7 +122,6 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
         if not url:
             return ""
 
-        # pylint: disable=too-many-function-args
         decoded_url = urlparse.unquote(url)
         if isinstance(decoded_url, six.binary_type):
             try:

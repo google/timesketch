@@ -26,8 +26,7 @@ from __future__ import unicode_literals
 import altair as alt
 import pandas as pd
 
-from timesketch.lib.aggregators import manager
-from timesketch.lib.aggregators import interface
+from timesketch.lib.aggregators import interface, manager
 
 
 class VegaResult:
@@ -47,7 +46,6 @@ class VegaResult:
         self.chart_type = "manual_vega"
         self._spec = spec
 
-    # pylint: disable=unused-argument
     def to_dict(self, encoding=False):
         """Encode aggregation result as dict.
 
@@ -73,7 +71,6 @@ class VegaResult:
         """
         return pd.DataFrame()
 
-    # pylint: disable=unused-argument
     def to_chart(
         self,
         chart_name="",
@@ -153,7 +150,6 @@ class ManualVegaSpecAggregation(interface.BaseAggregator):
             return self.title
         return "Results From A Manual Vega Spec"
 
-    # pylint: disable=arguments-differ
     def run(self, data, title="", **kwargs):
         """Run the aggregation.
 

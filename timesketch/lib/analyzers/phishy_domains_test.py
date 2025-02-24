@@ -3,13 +3,11 @@
 from __future__ import unicode_literals
 
 import mock
-
-from flask import current_app
 from datasketch.minhash import MinHash
+from flask import current_app
 
 from timesketch.lib.analyzers import phishy_domains
-from timesketch.lib.testlib import BaseTest
-from timesketch.lib.testlib import MockDataStore
+from timesketch.lib.testlib import BaseTest, MockDataStore
 
 
 class TestDomainsPlugin(BaseTest):
@@ -36,13 +34,13 @@ class TestDomainsPlugin(BaseTest):
         """Test minhash function."""
         analyzer = phishy_domains.PhishyDomainsSketchPlugin("test_index", 1)
         domain = "www.mbl.is"
-        # pylint: disable=protected-access
+
         minhash = analyzer._get_minhash_from_domain(domain)
 
         self.assertIsInstance(minhash, MinHash)
 
         another_domain = "mbl.is"
-        # pylint: disable=protected-access
+
         minhash2 = analyzer._get_minhash_from_domain(another_domain)
 
         self.assertEqual(minhash.jaccard(minhash2), 0.546875)
@@ -53,14 +51,12 @@ class TestDomainsPlugin(BaseTest):
         """Test get_similar_domains function."""
         analyzer = phishy_domains.PhishyDomainsSketchPlugin("test_index", 1)
         domain = "login.stortmbl.is"
-        # pylint: disable=protected-access
+
         minhash = analyzer._get_minhash_from_domain(domain)
         domain_dict = {domain: {"hash": minhash, "depth": 3}}
 
-        # pylint: disable=protected-access
         similar = analyzer._get_similar_domains("login.stortmbi.is", domain_dict)
         self.assertEqual(len(similar), 1)
 
-        # pylint: disable=protected-access
         similar = analyzer._get_similar_domains("www.google.com", domain_dict)
         self.assertEqual(len(similar), 0)

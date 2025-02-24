@@ -248,7 +248,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             return send_file(file_object, mimetype="zip", download_name=file_name)
 
         if scroll_id:
-            # pylint: disable=unexpected-keyword-arg
+
             result = self.datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
         else:
             try:

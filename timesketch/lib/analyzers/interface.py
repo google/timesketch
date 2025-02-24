@@ -23,31 +23,24 @@ import random
 import time
 import traceback
 
-
-import yaml
-
 import opensearchpy
-from flask import current_app
-from jsonschema import validate, ValidationError, SchemaError
-
 import pandas
+import yaml
+from flask import current_app
+from jsonschema import SchemaError, ValidationError, validate
 
 from timesketch.api.v1 import utils as api_utils
-
 from timesketch.lib import definitions
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
-from timesketch.models.sketch import Attribute
-from timesketch.models.sketch import AttributeValue
 from timesketch.models.sketch import AggregationGroup as SQLAggregationGroup
+from timesketch.models.sketch import Analysis, Attribute, AttributeValue
 from timesketch.models.sketch import Event as SQLEvent
+from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import Story as SQLStory
-from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
-from timesketch.models.sketch import Analysis
-
 
 logger = logging.getLogger("timesketch.analyzers")
 
@@ -117,7 +110,7 @@ def get_yaml_config(file_name):
         try:
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
-            # pylint: disable=logging-format-interpolation
+
             logger.warning(
                 ("Unable to read in YAML config file, " "with error: {0!s}").format(
                     exception
@@ -1187,7 +1180,7 @@ class BaseAnalyzer:
         try:
             result = self.run()
             analysis.set_status("DONE")
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             analysis.set_status("ERROR")
             result = traceback.format_exc()
 

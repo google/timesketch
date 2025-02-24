@@ -13,13 +13,11 @@
 # limitations under the License.
 """Tests for the Timesketch API aggregation object."""
 import unittest
-import mock
 
 import altair as alt
+import mock
 
-from . import aggregation
-from . import client
-from . import test_lib
+from . import aggregation, client, test_lib
 
 
 class AggregationTest(unittest.TestCase):
@@ -31,7 +29,6 @@ class AggregationTest(unittest.TestCase):
         self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
         self.sketch = self.api_client.get_sketch(1)
 
-    # pylint: disable=protected-access
     def test_init(self):
         """Tests the Aggregation init method."""
         aggregation_obj = aggregation.Aggregation(self.sketch)

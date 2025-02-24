@@ -16,34 +16,24 @@
 import logging
 
 import opensearchpy
+from flask import abort, current_app, jsonify, request
+from flask_login import current_user, login_required
+from flask_restful import Resource, inputs, reqparse
+from sqlalchemy import not_, or_
 
-from flask import jsonify
-from flask import request
-from flask import abort
-from flask import current_app
-from flask_restful import Resource
-from flask_restful import reqparse
-from flask_restful import inputs
-from flask_login import login_required
-from flask_login import current_user
-from sqlalchemy import not_
-from sqlalchemy import or_
-
-from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
+from timesketch.api.v1 import resources, utils
 from timesketch.lib import forms
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.aggregators import manager as aggregator_manager
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import SearchTemplate
-from timesketch.models.sketch import View
-
+from timesketch.models.sketch import SearchTemplate, Sketch, View
 
 logger = logging.getLogger("timesketch.sketch_api")
 
@@ -377,7 +367,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                     }
                 }
             }
-            # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
+
             count_agg = self.datastore.client.search(
                 index=sketch_indices, body=count_agg_spec, size=0
             )

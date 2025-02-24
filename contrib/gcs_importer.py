@@ -13,29 +13,26 @@
 # limitations under the License.
 """Google Cloud Storage importer."""
 # Unmaintained contrib. Skip linting this file.
-# pylint: skip-file
+
 
 import argparse
-import time
-import os
-import sys
-import uuid
 import json
 import logging
+import os
+import sys
+import time
+import uuid
 
 from werkzeug.exceptions import Forbidden
 
 from timesketch.app import create_app
 from timesketch.lib import tasks
 from timesketch.models import db_session
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import SearchIndex, Sketch, Timeline
 from timesketch.models.user import User
 
 try:
-    from google.cloud import pubsub_v1
-    from google.cloud import storage
+    from google.cloud import pubsub_v1, storage
 except ImportError:
     sys.exit("ERROR: You are missing Google Cloud libraries")
 

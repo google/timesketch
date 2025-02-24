@@ -945,7 +945,6 @@ class Sketch(resource.BaseResource):
             timelines.append(timeline_obj)
         return timelines
 
-    # pylint: disable=unused-argument
     def upload(self, timeline_name, file_path, es_index=None):
         """Deprecated function to upload data, does nothing.
 
@@ -968,7 +967,6 @@ class Sketch(resource.BaseResource):
         logger.error(message)
         raise RuntimeError(message)
 
-    # pylint: disable=unused-argument
     def add_timeline(self, searchindex):
         """Deprecated function to add timeline to sketch.
 

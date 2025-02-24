@@ -15,9 +15,7 @@
 
 from __future__ import unicode_literals
 
-from flask import Blueprint
-from flask import redirect
-from flask import render_template
+from flask import Blueprint, redirect, render_template
 from flask_login import login_required
 
 # Register flask blueprint
@@ -26,7 +24,6 @@ spa_views = Blueprint("spa_views", __name__)
 
 @spa_views.route("/sketch/<int:sketch_id>/explore/view/<int:view_id>/", methods=["GET"])
 @login_required
-# pylint: disable=unused-argument
 def redirect_view(sketch_id, view_id):
     """Redirect old (deprecated) view URLs to scheme.
 
@@ -39,7 +36,6 @@ def redirect_view(sketch_id, view_id):
 @spa_views.route("/", defaults={"path": ""})
 @spa_views.route("/<path:path>")
 @login_required
-# pylint: disable=unused-argument
 def overview(path):
     """Generates the template.
 

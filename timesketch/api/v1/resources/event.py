@@ -196,14 +196,14 @@ class EventCreateResource(resources.ResourceMixin, Resource):
 
         # TODO: Can this be narrowed down, both in terms of the scope it
         # applies to, as well as not to catch a generic exception.
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Failed to add event ({0!s})".format(e),
             )
 
         # Return Timeline if it was created.
-        # pylint: disable=no-else-return
+
         if timeline:
             return self.to_json(timeline, status_code=HTTP_STATUS_CODE_CREATED)
 
@@ -436,13 +436,12 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                 query_body["size"] = size
                 query_body["terminate_after"] = size
 
-                # pylint: disable=unexpected-keyword-arg
                 eventid_search = datastore.client.search(
                     body=json.dumps(query_body),
                     index=[index],
                     search_type="query_then_fetch",
                 )
-                # pylint: enable=unexpected-keyword-arg
+
                 existing_events = eventid_search["hits"]["hits"]
                 existing_events_dict = {
                     event["_id"]: event for event in existing_events
@@ -634,7 +633,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 query_body["terminate_after"] = size
 
                 try:
-                    # pylint: disable=unexpected-keyword-arg
+
                     search = datastore.client.search(
                         body=json.dumps(query_body),
                         index=[_index],
@@ -1221,7 +1220,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 }
             },
         }
-        # pylint: disable=unexpected-keyword-arg
+
         self.datastore.client.update_by_query(
             body=query_dsl,
             index=searchindex.index_name,

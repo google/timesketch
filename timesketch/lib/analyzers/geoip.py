@@ -17,24 +17,20 @@
 
 """Sketch analyzer plugin for geolocating IP addresses."""
 
-import os
 import ipaddress
 import logging
-
+import os
 from collections import defaultdict
 from typing import Tuple, Union
-
-from flask import current_app
 
 import geoip2.database
 import geoip2.errors
 import geoip2.webservice
 import maxminddb
+from flask import current_app
 
 from timesketch.lib import emojis
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
-
+from timesketch.lib.analyzers import interface, manager
 
 logger = logging.getLogger("timesketch.analyzers.geoip")
 
@@ -93,7 +89,6 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
         """
         return self
 
-    # pylint: disable=W0235
     def __exit__(self, exc_type, exc_value, traceback):
         """Close and clean up client."""
         return super().__exit__(exc_type, exc_value, traceback)
@@ -154,7 +149,6 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         """
         return self
 
-    # pylint: disable=W0235
     def __exit__(self, exc_type, exc_value, traceback):
         """Close and clean up client."""
         return super().__exit__(exc_type, exc_value, traceback)
@@ -290,7 +284,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                     ip_addresses[ip_addr][ip_address_field].append(event)
 
         try:
-            client = self.GEOIP_CLIENT()  # pylint: disable=E1102
+            client = self.GEOIP_CLIENT()
         except GeoIPClientError as error:
             return f"GeoIP Client error - {error}"
 

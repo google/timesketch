@@ -27,8 +27,6 @@ import six
 from dateutil import parser, relativedelta
 from flask import abort, current_app
 from opensearchpy import OpenSearch
-
-# pylint: disable=redefined-builtin
 from opensearchpy.exceptions import (
     ConnectionError,
     ConnectionTimeout,
@@ -493,7 +491,6 @@ class OpenSearchDataStore(object):
 
         return query_dsl
 
-    # pylint: disable=too-many-arguments
     def search(
         self,
         sketch_id,
@@ -577,7 +574,7 @@ class OpenSearchDataStore(object):
         if not return_fields:
             # Suppress the lint error because opensearchpy adds parameters
             # to the function with a decorator and this makes pylint sad.
-            # pylint: disable=unexpected-keyword-arg
+
             return self.client.search(
                 body=query_dsl,
                 index=list(indices),
@@ -586,7 +583,7 @@ class OpenSearchDataStore(object):
             )
 
         try:
-            # pylint: disable=unexpected-keyword-arg
+
             _search_result = self.client.search(
                 body=query_dsl,
                 index=list(indices),
@@ -616,7 +613,6 @@ class OpenSearchDataStore(object):
         METRICS["search_requests"].labels(type="single").inc()
         return _search_result
 
-    # pylint: disable=too-many-arguments
     def search_stream(
         self,
         sketch_id=None,
@@ -683,7 +679,7 @@ class OpenSearchDataStore(object):
             yield event
 
         while scroll_size > 0:
-            # pylint: disable=unexpected-keyword-arg
+
             result = self.client.scroll(scroll_id=scroll_id, scroll="5m")
             scroll_id = result["_scroll_id"]
             scroll_size = len(result["hits"]["hits"])
@@ -714,7 +710,6 @@ class OpenSearchDataStore(object):
         # labels in a sketch.
         max_labels = 10000
 
-        # pylint: disable=line-too-long
         aggregation = {
             "aggs": {
                 "nested": {
@@ -750,7 +745,7 @@ class OpenSearchDataStore(object):
         indices = list(set(indices))
 
         labels = []
-        # pylint: disable=unexpected-keyword-arg
+
         try:
             result = self.client.search(index=indices, body=aggregation, size=0)
         except NotFoundError:
@@ -774,7 +769,6 @@ class OpenSearchDataStore(object):
             labels.append(new_bucket)
         return labels
 
-    # pylint: disable=inconsistent-return-statements
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
 
@@ -787,7 +781,7 @@ class OpenSearchDataStore(object):
         """
         METRICS["search_get_event"].inc()
         try:
-            # pylint: disable=unexpected-keyword-arg
+
             event = self.client.get(
                 id=event_id,
                 index=searchindex_id,
@@ -1036,7 +1030,7 @@ class OpenSearchDataStore(object):
         }
 
         try:
-            # pylint: disable=unexpected-keyword-arg
+
             results = self.client.bulk(
                 body=self.import_events, timeout=self._request_timeout
             )
@@ -1104,7 +1098,7 @@ class OpenSearchDataStore(object):
                     )
                 # We need to catch all exceptions here, since this is a crucial
                 # call that we do not want to break operation.
-                except Exception:  # pylint: disable=broad-except
+                except Exception:
                     es_logger.error(
                         "Unable to upload document, and unable to log the "
                         "error itself.",

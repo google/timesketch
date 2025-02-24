@@ -12,17 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for similar score."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import mock
 from datasketch import MinHash
 
 from timesketch.lib import similarity
-from timesketch.lib.testlib import BaseTest
-from timesketch.lib.testlib import MockDataStore
+from timesketch.lib.testlib import BaseTest, MockDataStore
 
 
 class TestSimilarityLibScorer(BaseTest):
@@ -38,7 +34,7 @@ class TestSimilarityLibScorer(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_shingles_from_text(self):
         """Test splitting up a text string to words."""
-        # pylint: disable=protected-access
+
         shingles = similarity._shingles_from_text(self.test_text, self.delimiters)
         self.assertIsInstance(shingles, list)
         self.assertEqual(len(shingles), 8)

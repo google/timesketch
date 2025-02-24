@@ -15,15 +15,13 @@
 import datetime
 import logging
 
-from flask import current_app
-
 import opensearchpy
 import pandas
+from flask import current_app
 
 from timesketch.lib.charts import manager as chart_manager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
-
 
 logger = logging.getLogger("timesketch.aggregator_interface")
 
@@ -377,7 +375,6 @@ class BaseAggregator(object):
         Returns:
             OpenSearch aggregation result.
         """
-        # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
 
         try:
             aggregation = self.opensearch.client.search(

@@ -13,8 +13,7 @@
 # limitations under the License.
 """Bucket aggregations."""
 
-from timesketch.lib.aggregators import manager
-from timesketch.lib.aggregators import interface
+from timesketch.lib.aggregators import interface, manager
 
 
 class TermsAggregation(interface.BaseAggregator):
@@ -79,7 +78,6 @@ class TermsAggregation(interface.BaseAggregator):
             return f'Top results for "{self.field:s}"'
         return "Top results for an unknown field"
 
-    # pylint: disable=arguments-differ
     def run(
         self,
         field,

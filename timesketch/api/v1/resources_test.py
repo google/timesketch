@@ -12,29 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for v1 of the Timesketch API."""
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 import json
+
 import mock
 import pandas as pd
 
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
-from timesketch.lib.testlib import BaseTest
-from timesketch.lib.testlib import MockDataStore
+from timesketch.api.v1.resources import ResourceMixin, scenarios
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.lib.dfiq import DFIQ
-from timesketch.api.v1.resources import scenarios
-from timesketch.models.sketch import Scenario
-from timesketch.models.sketch import InvestigativeQuestion
-from timesketch.models.sketch import InvestigativeQuestionApproach
-from timesketch.models.sketch import Facet
-
-from timesketch.api.v1.resources import ResourceMixin
+from timesketch.lib.testlib import BaseTest, MockDataStore
+from timesketch.models.sketch import (
+    Facet,
+    InvestigativeQuestion,
+    InvestigativeQuestionApproach,
+    Scenario,
+)
 
 
 class ResourceMixinTest(BaseTest):
@@ -959,7 +960,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
                 },
                 "falsepositives": ["Unknown"],
                 "level": "high",
-                "search_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
+                "search_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',
                 "file_name": "N/A",
             }
         ],

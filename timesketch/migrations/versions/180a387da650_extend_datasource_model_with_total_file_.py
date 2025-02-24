@@ -7,15 +7,14 @@ Create Date: 2022-09-26 13:04:10.336534
 """
 
 # This code is auto generated. Ignore linter errors.
-# pylint: skip-file
 
 
 # revision identifiers, used by Alembic.
 revision = "180a387da650"
 down_revision = "75af34d75b1e"
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 
 def upgrade():
