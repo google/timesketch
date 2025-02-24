@@ -27,24 +27,23 @@ Example configuration for Apache with mod_wsgi (a2enmod mod_wsgi):
 </VirtualHost>
 """
 
+import logging
+
 # If you installed Timesketch in a virtualenv you need to activate it.
 # This needs to be before any imports in order to import from the virtualenv.
 # activate_virtualenv = '/path/to/your/virtualenv/bin/activate_this.py'
 # execfile(activate_virtualenv, dict(__file__=activate_virtualenv))
 import os
-import logging
 
 from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
-from timesketch.app import configure_logger
-from timesketch.app import create_app
+from timesketch.app import configure_logger, create_app
 from timesketch.models import db_session
 
 logger = logging.getLogger("timesketch.wsgi_server")
 
 configure_logger()
 application = create_app()
-application_legacy = create_app(legacy_ui=True)
 
 # Setup metrics endpoint.
 if os.environ.get("prometheus_multiproc_dir"):
@@ -55,12 +54,5 @@ if os.environ.get("prometheus_multiproc_dir"):
 # pylint: disable=unused-argument
 @application.teardown_appcontext
 def shutdown_session(exception=None):
-    """Remove the database session after every request or app shutdown."""
-    db_session.remove()
-
-
-# pylint: disable=unused-argument
-@application_legacy.teardown_appcontext
-def shutdown_session_legacy(exception=None):
     """Remove the database session after every request or app shutdown."""
     db_session.remove()

@@ -2,6 +2,10 @@
 
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
+
+  # Install Timesketch in editable mode from volume
+  pip3 install -e /usr/local/src/timesketch/
+
   # Copy the mappings for plaso ingestion.
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/

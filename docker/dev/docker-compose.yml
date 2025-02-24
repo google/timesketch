@@ -2,7 +2,9 @@ version: "3"
 services:
   timesketch:
     container_name: timesketch
-    image: us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest
+    build:
+      context: ../../
+      dockerfile: ./docker/dev/build/Dockerfile
     command: timesketch
     ports:
       - 127.0.0.1:5000:5000

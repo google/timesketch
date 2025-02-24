@@ -29,7 +29,7 @@ To run TSLint in watch mode, use
 To run a single test (there are multiple ways to do it), open a shell in the docker container:
 
 ```shell
-$ docker exec -it $CONTAINER_ID /bin/bash
+docker exec -it timesketch /bin/bash
 ```
 
 Switch to:
@@ -47,7 +47,7 @@ And execute the single test
 Or all in one:
 
 ```bash
-$ sudo docker exec -it $CONTAINER_ID python3 -m pytest /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
+sudo docker exec -it timesketch python3 -m pytest /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
 ```
 
 ## Writing unittests
@@ -80,7 +80,7 @@ End2end (e2e) tests are run on Github with every commit. Those tests will setup 
 To run the e2e-tests locally execute to setup the e2e docker images and run them:
 
 ```bash
-$ sh end_to_end_tests/tools/run_end_to_end_tests.sh
+sh end_to_end_tests/tools/run_end_to_end_tests.sh
 ```
 
 The tests are stored in:
@@ -103,7 +103,7 @@ The following example is for changing / adding tests to `client_test.py`
 
 ```shell
 $ export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"
-$ docker exec -it $CONTAINER_ID /bin/bash
+$ docker exec -it timesketch /bin/bash
 ! rm /usr/local/lib/python3.10/dist-packages/end_to_end_tests/client_test.py
 ! ln -s /usr/local/src/timesketch/end_to_end_tests/client_test.py /usr/local/lib/python3.10/dist-packages/end_to_end_tests/client_test.py
 ```
@@ -117,7 +117,7 @@ From now on you can edit the `client_test.py` file outside of the docker instanc
 or run the following outside of the container:
 
 ```bash
-$ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+sudo docker exec -it timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
 ```
 
 ## Linting / Code format
@@ -131,4 +131,3 @@ To check linting on a single file, run the following in your docker container:
 ! apt-get install pylint==2.6.0
 ! pylint /usr/local/src/timesketch/timesketch/  --rcfile .pylintrc -v
 ```
-
