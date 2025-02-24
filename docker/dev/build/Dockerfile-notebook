@@ -1,5 +1,10 @@
 FROM quay.io/jupyter/minimal-notebook:python-3.11
 
+USER root
+
+RUN apt update && \
+    apt install -y gcc python3-dev
+
 USER jovyan
 
 COPY --chown=1000:100 ./jupyter_server_config.py $HOME/.jupyter/jupyter_server_config.py
@@ -11,6 +16,12 @@ RUN pip install jupyter_scheduler jupyterlab-vim jupyter-collaboration jupyterla
     pip install picatrix ipywidgets && \
     pip install pandas[performance,plot-output-formatting] mitreattack-python && \
     pip install -e $HOME/timesketch_api_client
+
+USER root
+
+RUN apt remove -y gcc python3-dev
+
+USER jovyan
 
 RUN mkdir -p /opt/conda/share/jupyter/nbextensions/snippets/
 

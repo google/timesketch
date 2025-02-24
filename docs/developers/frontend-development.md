@@ -21,7 +21,8 @@ Note that this directory in the container is mounted as volume from your local r
 Install node dependencies
 
 ```bash
-npm install
+apt update && apt install -y make build-essential g++
+npm install --force
 ```
 
 This will create `node_modules/` folder from `package.json` in the frontend directory.
