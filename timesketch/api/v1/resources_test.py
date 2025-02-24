@@ -1408,6 +1408,50 @@ class TestNl2qResource(BaseTest):
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(data.get("error"))
 
+    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_strip_back_ticks(self, mock_aggregator, mock_create_provider):
+        """Test the result does not have any back tick."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_AggregationResult = mock.MagicMock()
+        mock_AggregationResult.values = [
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
+        mock_aggregator.return_value = (mock_AggregationResult, {})
+        mock_llm = mock.Mock()
+        mock_llm.generate.return_value = " \t`LLM generated query`\n "
+        mock_create_provider.return_value = mock_llm
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        expected_input = (
+            "Examples:\n"
+            "example 1\n"
+            "\n"
+            "example 2\n"
+            "Types:\n"
+            '* "test:data_type:1" -> "field_test_1", "field_test_2"\n'
+            '* "test:data_type:2" -> "field_test_3", "field_test_4"\n'
+            "Question:\n"
+            "Question for LLM?"
+        )
+        mock_llm.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(
+            response.json,
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
+        )
+
 
 class SystemSettingsResourceTest(BaseTest):
     """Test system settings resource."""
