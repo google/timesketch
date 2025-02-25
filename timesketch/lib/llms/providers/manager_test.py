@@ -14,7 +14,7 @@
 """Tests for LLM provider manager."""
 
 from timesketch.lib.testlib import BaseTest
-from timesketch.lib.llms import manager
+from timesketch.lib.llms.providers import manager
 
 
 class MockAistudioProvider:

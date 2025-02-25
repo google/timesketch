@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""A LLM provider for the ollama server."""
+"""A LLM provider for the Ollama server."""
 import json
 import requests
 from typing import Optional
@@ -21,27 +21,29 @@ from timesketch.lib.llms.providers import manager
 
 
 class Ollama(interface.LLMProvider):
-    """A LLM provider for the ollama server."""
+    """A LLM provider for the Ollama server."""
 
     NAME = "ollama"
 
     def _post(self, request_body: str) -> requests.Response:
         """
-        Make a POST request to the ollama server.
+        Make a POST request to the Ollama server.
 
         Args:
             request_body: The body of the request in JSON format.
 
         Returns:
-            The response from the server as a dictionary.
+            The response from the server as a requests.Response object.
         """
         api_resource = "/api/chat"
         url = self.config.get("server_url") + api_resource
-        return requests.post(url, data=request_body)
+        return requests.post(
+            url, data=request_body, headers={"Content-Type": "application/json"}
+        )
 
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """
-        Generate text using the ollama server, optionally with a JSON schema.
+        Generate text using the Ollama server, optionally with a JSON schema.
 
         Args:
             prompt: The prompt to use for the generation.
@@ -49,13 +51,15 @@ class Ollama(interface.LLMProvider):
                 response format.
 
         Returns:
-            The generated text as a string (or parsed data if
-                response_schema is provided).
+            The generated text as a string (or parsed data if response_schema is provided).
+
+        Raises:
+            ValueError: If the request fails or JSON parsing fails.
         """
         request_body = {
             "messages": [{"role": "user", "content": prompt}],
             "model": self.config.get("model"),
-            "stream": False,  # Force to false, streaming not available with /api/chat endpoint
+            "stream": self.config.get("stream"),
             "options": {
                 "temperature": self.config.get("temperature"),
                 "num_predict": self.config.get("max_output_tokens"),
@@ -72,22 +76,18 @@ class Ollama(interface.LLMProvider):
         if response.status_code != 200:
             raise ValueError(f"Error generating text: {response.text}")
 
-        try:
-            text_response = response.json().get("content", "").strip()
-            if response_schema:
+        response_data = response.json()
+        text_response = response_data.get("message", {}).get("content", "").strip()
+
+        if response_schema:
+            try:
                 return json.loads(text_response)
-            
-            return text_response
+            except json.JSONDecodeError as error:
+                raise ValueError(
+                    f"Error JSON parsing text: {text_response}: {error}"
+                ) from error
 
-        except json.JSONDecodeError as error:
-            raise ValueError(
-                f"Error JSON parsing text: {text_response}: {error}"
-            ) from error
-
-        except Exception as error:
-            raise ValueError(
-                f"An unexpected error occurred: {error}"
-            ) from error
+        return text_response
 
 
 manager.LLMManager.register_provider(Ollama)

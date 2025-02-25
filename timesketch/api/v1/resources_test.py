@@ -1198,7 +1198,7 @@ class TestNl2qResource(BaseTest):
 
     resource_url = "/api/v1/sketches/1/nl2q/"
 
-    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
+    @mock.patch("timesketch.lib.llms.provider.manager.LLMManager.create_provider")
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_prompt(self, mock_aggregator, mock_create_provider):
@@ -1380,7 +1380,7 @@ class TestNl2qResource(BaseTest):
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
 
-    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
+    @mock.patch("timesketch.lib.llms.provider.manager.LLMManager.create_provider")
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_llm_error(self, mock_aggregator, mock_create_provider):
@@ -1584,7 +1584,7 @@ class TestLLMSummarizeResource(BaseTest):
         )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
+    @mock.patch("timesketch.lib.llms.provider.manager.LLMManager.create_provider")
     def test_llm_summarize_with_events(self, mock_create_provider):
         """Test LLM summarizer with events returned and mock LLM."""
         self.login()
