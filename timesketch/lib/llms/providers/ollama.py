@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A LLM provider for the Ollama server."""
+from typing import Optional
 import json
 import requests
-from typing import Optional
 
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
@@ -51,7 +51,8 @@ class Ollama(interface.LLMProvider):
                 response format.
 
         Returns:
-            The generated text as a string (or parsed data if response_schema is provided).
+            The generated text as a string (or parsed data if
+            response_schema is provided).
 
         Raises:
             ValueError: If the request fails or JSON parsing fails.
