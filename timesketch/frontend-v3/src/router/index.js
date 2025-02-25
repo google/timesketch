@@ -13,6 +13,7 @@ import Default from "@/layouts/Default";
 // Import App views
 import Home from "@/views/Home.vue";
 import Sketch from "@/views/Sketch.vue";
+import Canvas from "@/components/Canvas.vue";
 
 // Routes
 const routes = [
@@ -26,11 +27,26 @@ const routes = [
         component: Home,
         props: true,
       },
+    ]
+  },
+  {
+    path: '/sketch/:sketchId',
+    component: Sketch,
+    props: true,
+    children: [
       {
-        path: 'sketch/:sketchId',
-        component: Sketch,
+        path: 'explore',
+        name: 'Explore',
+        component: Canvas,
         props: true,
       },
+      {
+        path: 'example',
+        name: 'Example',
+        component: Canvas,
+        props: true,
+      },
+
     ]
   },
 ];
