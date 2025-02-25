@@ -20,16 +20,18 @@ import uuid
 
 import opensearchpy
 import six
-from flask import abort, current_app, request
+from flask import abort, current_app, jsonify, request
 from flask_login import current_user, login_required
 from flask_restful import Resource
 
 from timesketch.api.v1 import resources, utils
 from timesketch.lib import forms
+from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import (
     HTTP_STATUS_CODE_BAD_REQUEST,
     HTTP_STATUS_CODE_CREATED,
     HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
     HTTP_STATUS_CODE_NOT_FOUND,
     HTTP_STATUS_CODE_OK,
 )
@@ -495,3 +497,100 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         utils.update_sketch_last_activity(sketch)
 
         return self.to_json(searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+# TODO(Issue 3200): Research more efficient ways to gather unique fields.
+class TimelineFieldsResource(resources.ResourceMixin, Resource):
+    """Resource to retrieve unique fields present in a timeline.
+
+    This resource aggregates data types within a timeline and then queries
+    OpenSearch to retrieve all unique fields present across those data types,
+    excluding default Timesketch fields.
+    """
+
+    @login_required
+    def get(self, sketch_id, timeline_id):
+        """Handles GET request to retrieve unique fields in a timeline.
+
+        Args:
+            sketch_id (int): The ID of the sketch.
+            timeline_id (int): The ID of the timeline.
+
+        Returns:
+            flask.wrappers.Response: A JSON response containing a list of
+                unique fields in the timeline, sorted alphabetically. Returns
+                an empty list if no fields are found or if there's an error.
+                Possible error codes: 400, 403, 404.
+        """
+
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        timeline = Timeline.get_by_id(timeline_id)
+        if not timeline:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch.id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "The timeline does not belong to the sketch.",
+            )
+
+        index_name = timeline.searchindex.index_name
+        timeline_fields = set()
+
+        # 1. Get distinct data types for the timeline using aggregation
+        aggregator_name = "field_bucket"
+        aggregator_parameters = {
+            "field": "data_type",
+            "limit": "10000",  # Get all data types
+        }
+
+        agg_class = aggregator_manager.AggregatorManager.get_aggregator(aggregator_name)
+        if not agg_class:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"Aggregator {aggregator_name} not found")
+
+        aggregator = agg_class(
+            sketch_id=sketch_id, indices=[index_name], timeline_ids=[timeline_id]
+        )
+        result_obj = aggregator.run(**aggregator_parameters)
+
+        if not result_obj:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Error running data type aggregation.")
+
+        data_types = sorted([bucket["data_type"] for bucket in result_obj.values])
+
+        # 2. For each data type, query for a single event to get fields
+        for data_type in data_types:
+            query_filter = {"indices": [timeline_id], "size": 1}
+
+            try:
+                result = self.datastore.search(
+                    sketch_id=sketch_id,
+                    query_string=f'data_type:"{data_type}"',
+                    query_filter=query_filter,
+                    query_dsl=None,
+                    indices=[index_name],
+                    timeline_ids=[timeline_id],
+                )
+            except ValueError as e:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+            if isinstance(result, dict) and result.get("hits", {}).get("hits", []):
+                event = result["hits"]["hits"][0]["_source"]
+                for field in event:
+                    if field not in [
+                        "datetime",
+                        "timestamp",
+                        "__ts_timeline_id",
+                    ]:
+                        timeline_fields.add(field)
+
+        return jsonify({"objects": sorted(list(timeline_fields))})

@@ -30,6 +30,7 @@ from .resources.analysis import (
     AnalyzerSessionResource,
 )
 from .resources.archive import SketchArchiveResource
+from .resources.attribute import AttributeResource
 from .resources.contextlinks import ContextLinkConfigResource
 from .resources.datafinder import DataFinderResource
 from .resources.datasource import DataSourceListResource, DataSourceResource

@@ -17,6 +17,8 @@ from __future__ import unicode_literals
 
 import time
 
+import jwt
+import mock
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from timesketch.lib.google_auth import (

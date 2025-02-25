@@ -15,24 +15,20 @@
 
 import logging
 
-from flask import jsonify
-from flask import request
-from flask import abort
-from flask import current_app
-from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
-
 import pandas as pd
+from flask import abort, current_app, jsonify, request
+from flask_login import current_user, login_required
+from flask_restful import Resource
 
 from timesketch.api.v1 import utils
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_CODE_NOT_FOUND,
+)
 from timesketch.lib.llms import manager
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.models.sketch import Sketch
-
 
 logger = logging.getLogger("timesketch.api_nl2q")
 
@@ -205,7 +201,7 @@ class Nl2qResource(Resource):
         feature_name = "nl2q"
         try:
             llm = manager.LLMManager.create_provider(feature_name=feature_name)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             logger.error("Error LLM Provider: {}".format(e))
             result_schema["error"] = (
                 "Error loading LLM Provider. Please try again later!"
@@ -214,7 +210,7 @@ class Nl2qResource(Resource):
 
         try:
             prediction = llm.generate(prompt)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             logger.error("Error NL2Q prompt: {}".format(e))
             result_schema["error"] = (
                 "An error occurred generating the query via the defined LLM. "

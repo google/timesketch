@@ -13,12 +13,12 @@
 # limitations under the License.
 """DFIQ support library."""
 
-import os
 import json
 import logging
-import yaml
+import os
 
 import networkx as nx
+import yaml
 from packaging.version import Version
 
 logger = logging.getLogger("timesketch.lib.dfiq")

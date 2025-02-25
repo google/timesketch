@@ -16,9 +16,9 @@ from __future__ import unicode_literals
 
 import json
 import unittest
+
 import mock
 import pandas
-
 from timesketch_api_client.error import UnableToRunAnalyzer
 
 from . import importer
@@ -178,7 +178,6 @@ class TimesketchImporterTest(unittest.TestCase):
             streamer.flush()
             self._run_all_tests(streamer.columns, streamer.lines)
 
-    # pylint: disable=protected-access
     def test_fix_data_frame(self):
         """Test fixing a data frame.
         create a pandas dataframe with timestamp, datetime, message and data_type
@@ -238,7 +237,6 @@ class TimesketchImporterTest(unittest.TestCase):
         )
         self.assertIs("1331698658276340" in fixed_frame["timestamp"].values, True)
 
-    # pylint: enable=protected-access
     def _run_all_tests(self, columns, lines):
         """Run all tests on the result set of a streamer."""
         # The first line is the column line.

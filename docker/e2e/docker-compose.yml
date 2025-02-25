@@ -34,7 +34,7 @@ services:
       - TAKE_FILE_OWNERSHIP=1
       - discovery.type=single-node
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+      - "DISABLE_SECURITY_PLUGIN=true"
     ulimits:
       memlock:
         soft: -1

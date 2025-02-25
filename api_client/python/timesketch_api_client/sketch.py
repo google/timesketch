@@ -23,7 +23,9 @@ import pandas
 
 from . import aggregation, analyzer, definitions, error, graph
 from . import index as api_index
-from . import resource, search, searchtemplate, story, timeline
+from . import resource
+from . import scenario as scenario_lib
+from . import search, searchtemplate, story, timeline
 
 logger = logging.getLogger("timesketch_api.sketch")
 

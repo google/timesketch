@@ -22,8 +22,7 @@ import sys
 import six
 from celery import Celery
 from flask import Flask
-from flask_login import LoginManager
-from flask_login import login_required
+from flask_login import LoginManager, login_required
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
@@ -138,7 +137,6 @@ def create_app(config=None):
         api_v1.add_resource(*route)
 
     # Returns 404 for invalid api routes
-    # pylint: disable=unused-variable
     @app.route("/api/v1/<path:path>")
     @login_required
     def handle_invalid_api_route(path):

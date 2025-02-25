@@ -24,7 +24,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.models.sketch import Timeline
 
-
 logger = logging.getLogger("timesketch.analyzers.dfiq_plugins.manager")
 
 
@@ -267,7 +266,7 @@ class DFIQAnalyzerManager:
                     analyzer_by_timeline[timeline_id].extend(analyzer_names)
 
         # Import here to avoid circular imports.
-        # pylint: disable=import-outside-toplevel
+
         from timesketch.lib import tasks
 
         sessions = []

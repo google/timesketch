@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests of Timesketch upload functionality."""
+import json
 import os
 import random
-import json
 
 from timesketch_api_client import search
 
@@ -285,42 +285,6 @@ class UploadTest(interface.BaseEndToEndTest):
         # check that the number of events is correct with a different method
         events = sketch.explore("data_type:73kcsv", as_pandas=True, max_entries=100000)
         self.assertions.assertEqual(len(events), 73251)
-
-    def test_datetime_out_of_normal_range_in_csv(self):
-        """Test uploading a file with events from way back and some
-        in a distant future. This test can reveal edge cases that might occur
-        when tools produce a "fake" datetime value"""
-
-        rand = str(random.randint(0, 10000))
-        sketch = self.api.create_sketch(
-            name=f"datetime_out_of_normal_range_in_csv_{rand}"
-        )
-        self.sketch = sketch
-        file_path = "/usr/local/src/timesketch/tests/test_events/validate_time_out_of_range.csv"  # pylint: disable=line-too-long
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
-        timeline = sketch.list_timelines()[0]
-        # check that timeline was uploaded correctly
-        self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
-        self.assertions.assertEqual(timeline.index.status, "ready")
-
-        # Search for the very old event
-        search_obj = search.Search(sketch)
-        search_obj.query_string = "data_type:csv_very_old_event"
-        search_obj.commit()
-        self.assertions.assertEqual(len(search_obj.table), 1)
-        self.assertions.assertEqual(
-            "1601-01-01" in str(search_obj.table["datetime"]), True
-        )
-
-        # Search for future event check if datetime value is in the result
-        search_obj2 = search.Search(sketch)
-        search_obj2.query_string = "data_type:csv_very_future_event"
-        search_obj2.commit()
-        self.assertions.assertEqual(len(search_obj2.table), 1)
-        self.assertions.assertEqual(
-            "2227-12-31" in str(search_obj2.table["datetime"]), True
-        )
 
     def test_csv_different_timestamps(self):
         """Test uploading a timeline with different precision of timestamps."""

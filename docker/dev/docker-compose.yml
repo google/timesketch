@@ -34,7 +34,7 @@ services:
 
   opensearch:
     container_name: opensearch
-    image: opensearchproject/opensearch:2.15.0
+    image: opensearchproject/opensearch:2.19.0
     restart: always
     ports:
       - 127.0.0.1:9200:9200
@@ -44,7 +44,8 @@ services:
       - network.host=0.0.0.0
       - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - _JAVA_OPTIONS=-XX:UseSVE=0
 
     ulimits:
       memlock:
