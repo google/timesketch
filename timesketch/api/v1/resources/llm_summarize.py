@@ -29,7 +29,7 @@ from flask_restful import Resource
 
 from timesketch.api.v1 import resources, export
 from timesketch.lib import definitions, utils
-from timesketch.lib.llms.providers import manager
+from timesketch.lib.llms.providers import manager as provider_manager
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.models.sketch import Sketch
 
@@ -306,7 +306,7 @@ class LLMSummarizeResource(resources.ResourceMixin, Resource):
         """
         try:
             feature_name = "llm_summarize"
-            llm = manager.LLMManager.create_provider(feature_name=feature_name)
+            llm = provider_manager.LLMManager.create_provider(feature_name=feature_name)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: %s", e)
             abort(
