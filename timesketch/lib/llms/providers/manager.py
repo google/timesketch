@@ -14,7 +14,7 @@
 """This file contains a class for managing Large Language Model (LLM) providers."""
 
 from flask import current_app
-from timesketch.lib.llms.interface import LLMProvider
+from timesketch.lib.llms.providers.interface import LLMProvider
 
 
 class LLMManager:
@@ -80,7 +80,6 @@ class LLMManager:
             raise ValueError(
                 "Configuration for the feature must specify exactly one provider."
             )
-
         provider_name = next(iter(config_mapping))
         provider_config = config_mapping[provider_name]
 
