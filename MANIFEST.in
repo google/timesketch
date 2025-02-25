@@ -1,0 +1,11 @@
+include LICENSE README.md
+include requirements.txt test_requirements.txt
+include run_tests.py
+exclude .gitignore
+exclude *.pyc
+recursive-include config *
+recursive-include data *
+recursive-include timesketch/frontend-ng/dist *
+recursive-include timesketch/static *
+recursive-include timesketch/templates *
+recursive-exclude timesketch *.pyc

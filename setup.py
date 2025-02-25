@@ -18,20 +18,16 @@ python setup.py build
 sudo python setup.py install
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 import glob
 import os
 import sys
 
 import pkg_resources
-
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 from timesketch import version
-
 
 version_tuple = (sys.version_info[0], sys.version_info[1])
 if version_tuple < (3, 6):
@@ -83,11 +79,6 @@ setup(
         "Environment :: Web Environment",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-    ],
-    data_files=[
-        ("share/timesketch", glob.glob(os.path.join("data", "*.*"))),
-        ("share/timesketch/linux", glob.glob(os.path.join("data", "linux", "*.*"))),
-        ("share/doc/timesketch", ["AUTHORS", "LICENSE", "README.md"]),
     ],
     packages=find_packages(),
     include_package_data=True,
