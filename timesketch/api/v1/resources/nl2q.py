@@ -26,7 +26,7 @@ from flask_login import current_user
 import pandas as pd
 
 from timesketch.api.v1 import utils
-from timesketch.lib.llms import manager
+from timesketch.lib.llms.providers import manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
