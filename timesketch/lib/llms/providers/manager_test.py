@@ -144,3 +144,24 @@ class TestLLMManager(BaseTest):
         self.app.config["LLM_PROVIDER_CONFIGS"] = {}
         with self.assertRaises(ValueError):
             manager.LLMManager.create_provider()
+
+    def test_create_provider_empty_feature_fallback(self):
+        """Test that create_provider falls back to default when feature config is empty."""
+        self.app.config["LLM_PROVIDER_CONFIGS"] = {
+            "llm_summarize": {},  # Empty feature config
+            "default": {
+                "aistudio": {
+                    "api_key": "AIzaSyTestDefaultKey",
+                    "model": "gemini-2.0-flash-exp",
+                }
+            },
+        }
+        provider_instance = manager.LLMManager.create_provider(feature_name="llm_summarize")
+        self.assertIsInstance(provider_instance, MockAistudioProvider)
+        self.assertEqual(
+            provider_instance.config,
+            {
+                "api_key": "AIzaSyTestDefaultKey",
+                "model": "gemini-2.0-flash-exp",
+            },
+        )
