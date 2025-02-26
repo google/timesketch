@@ -1408,7 +1408,7 @@ class TestNl2qResource(BaseTest):
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(data.get("error"))
 
-    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
+    @mock.patch("timesketch.lib.llms.providers.manager.LLMManager.create_provider")
     @mock.patch("timesketch.api.v1.utils.run_aggregator")
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_nl2q_strip_back_ticks(self, mock_aggregator, mock_create_provider):
