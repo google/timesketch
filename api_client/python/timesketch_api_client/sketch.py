@@ -455,7 +455,11 @@ class Sketch(resource.BaseResource):
         return story.Story(story_id=story_dict.get("id", 0), sketch=self, api=self.api)
 
     def delete(self):
-        """Deletes the sketch."""
+        """Deletes the sketch.
+
+        If a sketch is already archived, it can not be deleted.
+
+        """
         if self.is_archived():
             raise RuntimeError(
                 "Unable to delete an archived sketch, first unarchive then delete."
