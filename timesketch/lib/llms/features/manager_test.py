@@ -28,7 +28,7 @@ class MockSummarizeFeature:
         """Mock implementation of generate_prompt."""
         return "Summarize these events."
 
-    def process_response(self, llm_response: str, **kwargs: Any) -> dict[str, Any]:
+    def process_response(self, llm_response: str, **_kwargs: Any) -> dict[str, Any]:
         """Mock implementation of process_response."""
         return {"response": f"Summary: {llm_response}"}
 
