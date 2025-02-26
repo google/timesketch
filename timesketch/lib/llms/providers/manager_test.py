@@ -156,7 +156,9 @@ class TestLLMManager(BaseTest):
                 }
             },
         }
-        provider_instance = manager.LLMManager.create_provider(feature_name="llm_summarize")
+        provider_instance = manager.LLMManager.create_provider(
+            feature_name="llm_summarize"
+        )
         self.assertIsInstance(provider_instance, MockAistudioProvider)
         self.assertEqual(
             provider_instance.config,

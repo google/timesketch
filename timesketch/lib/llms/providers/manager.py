@@ -71,7 +71,7 @@ class LLMManager:
         the provider name.
         """
         llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
-        
+
         if feature_name and feature_name in llm_configs:
             config_mapping = llm_configs[feature_name]
             if config_mapping and len(config_mapping) == 1:
@@ -87,9 +87,7 @@ class LLMManager:
         # Fallback to default config
         config_mapping = llm_configs.get("default")
         if not config_mapping or len(config_mapping) != 1:
-            raise ValueError(
-                "Default configuration must specify exactly one provider."
-            )
+            raise ValueError("Default configuration must specify exactly one provider.")
         provider_name = next(iter(config_mapping))
         provider_config = config_mapping[provider_name]
 
