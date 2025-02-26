@@ -63,7 +63,7 @@ class LLMManager:
         """
         Create an instance of the provider for the given feature.
 
-        If a configuration exists for the feature in
+        If a valid configuration exists for the feature in
         current_app.config["LLM_PROVIDER_CONFIGS"], use it; otherwise,
         fall back to the configuration under the "default" key.
 
@@ -71,15 +71,23 @@ class LLMManager:
         the provider name.
         """
         llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
+
         if feature_name and feature_name in llm_configs:
             config_mapping = llm_configs[feature_name]
-        else:
-            config_mapping = llm_configs.get("default")
+            if config_mapping and len(config_mapping) == 1:
+                provider_name = next(iter(config_mapping))
+                provider_config = config_mapping[provider_name]
+                provider_class = cls.get_provider(provider_name)
+                # Check that provider specifies required fields
+                try:
+                    return provider_class(config=provider_config, **kwargs)
+                except ValueError:
+                    pass  # Fallback to default provider
 
+        # Fallback to default config
+        config_mapping = llm_configs.get("default")
         if not config_mapping or len(config_mapping) != 1:
-            raise ValueError(
-                "Configuration for the feature must specify exactly one provider."
-            )
+            raise ValueError("Default configuration must specify exactly one provider.")
         provider_name = next(iter(config_mapping))
         provider_config = config_mapping[provider_name]
 
