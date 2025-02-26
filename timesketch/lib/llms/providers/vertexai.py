@@ -16,8 +16,8 @@
 import json
 from typing import Optional
 
-from timesketch.lib.llms import interface
-from timesketch.lib.llms import manager
+from timesketch.lib.llms.providers import interface
+from timesketch.lib.llms.providers import manager
 
 # Check if the required dependencies are installed.
 has_required_deps = True
