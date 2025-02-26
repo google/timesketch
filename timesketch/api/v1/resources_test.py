@@ -1408,6 +1408,87 @@ class TestNl2qResource(BaseTest):
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(data.get("error"))
 
+    @mock.patch("timesketch.lib.llms.providers.manager.LLMManager.create_provider")
+    @mock.patch("timesketch.api.v1.utils.run_aggregator")
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_nl2q_strip_back_ticks(self, mock_aggregator, mock_create_provider):
+        """Test the result does not have any back tick."""
+
+        self.login()
+        data = dict(question="Question for LLM?")
+        mock_AggregationResult = mock.MagicMock()
+        mock_AggregationResult.values = [
+            {"data_type": "test:data_type:1"},
+            {"data_type": "test:data_type:2"},
+        ]
+        mock_aggregator.return_value = (mock_AggregationResult, {})
+        expected_input = (
+            "Examples:\n"
+            "example 1\n"
+            "\n"
+            "example 2\n"
+            "Types:\n"
+            '* "test:data_type:1" -> "field_test_1", "field_test_2"\n'
+            '* "test:data_type:2" -> "field_test_3", "field_test_4"\n'
+            "Question:\n"
+            "Question for LLM?"
+        )
+
+        mock_llm_1 = mock.Mock()
+        mock_llm_1.generate.return_value = " \t`LLM generated query`\n "
+        mock_create_provider.return_value = mock_llm_1
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        mock_llm_1.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(
+            response.json,
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
+        )
+        mock_llm_2 = mock.Mock()
+        mock_llm_2.generate.return_value = "```LLM generated query``"
+        mock_create_provider.return_value = mock_llm_2
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        mock_llm_2.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(
+            response.json,
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
+        )
+        mock_llm_3 = mock.Mock()
+        mock_llm_3.generate.return_value = " \t```LLM generated query```\n "
+        mock_create_provider.return_value = mock_llm_3
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        mock_llm_3.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(
+            response.json,
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
+        )
+
 
 class SystemSettingsResourceTest(BaseTest):
     """Test system settings resource."""
