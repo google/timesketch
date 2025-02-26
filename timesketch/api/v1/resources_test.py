@@ -1422,14 +1422,6 @@ class TestNl2qResource(BaseTest):
             {"data_type": "test:data_type:2"},
         ]
         mock_aggregator.return_value = (mock_AggregationResult, {})
-        mock_llm = mock.Mock()
-        mock_llm.generate.return_value = " \t`LLM generated query`\n "
-        mock_create_provider.return_value = mock_llm
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
         expected_input = (
             "Examples:\n"
             "example 1\n"
@@ -1441,7 +1433,52 @@ class TestNl2qResource(BaseTest):
             "Question:\n"
             "Question for LLM?"
         )
-        mock_llm.generate.assert_called_once_with(expected_input)
+
+        mock_llm_1 = mock.Mock()
+        mock_llm_1.generate.return_value = " \t`LLM generated query`\n "
+        mock_create_provider.return_value = mock_llm_1
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        mock_llm_1.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(
+            response.json,
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
+        )
+        mock_llm_2 = mock.Mock()
+        mock_llm_2.generate.return_value = "```LLM generated query``"
+        mock_create_provider.return_value = mock_llm_2
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        mock_llm_2.generate.assert_called_once_with(expected_input)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(
+            response.json,
+            {
+                "name": "AI generated search query",
+                "query_string": "LLM generated query",
+                "error": None,
+            },
+        )
+        mock_llm_3 = mock.Mock()
+        mock_llm_3.generate.return_value = " \t```LLM generated query```\n "
+        mock_create_provider.return_value = mock_llm_3
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        mock_llm_3.generate.assert_called_once_with(expected_input)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictEqual(
             response.json,
