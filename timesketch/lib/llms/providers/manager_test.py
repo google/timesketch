@@ -146,7 +146,7 @@ class TestLLMManager(BaseTest):
             manager.LLMManager.create_provider()
 
     def test_create_provider_empty_feature_fallback(self):
-        """Test that create_provider falls back to default when feature config is empty."""
+        """Test that create_provider falls back to default when feature config empty."""
         self.app.config["LLM_PROVIDER_CONFIGS"] = {
             "llm_summarize": {},  # Empty feature config
             "default": {
