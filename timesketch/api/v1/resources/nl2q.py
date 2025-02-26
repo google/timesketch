@@ -222,5 +222,5 @@ class Nl2qResource(Resource):
             )
             return jsonify(result_schema)
 
-        result_schema["query_string"] = prediction.strip("```")
+        result_schema["query_string"] = prediction.strip("`\n\r\t ")
         return jsonify(result_schema)
