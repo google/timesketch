@@ -82,6 +82,6 @@ class LLMFeatureInterface(ABC):
             A dictionary that will be JSON-serialized and returned through the API.
             This dictionary defines the data contract with the frontend and must include
             all fields that the frontend expects to render. Example for NL2Q:
-            - {"name": "AI generated search query", "query_string": "...", "error": null}
+            - {"name": "AI generated search query","query_string": "...","error":null}
         """
         raise NotImplementedError()
