@@ -13,9 +13,9 @@
 # limitations under the License.
 """Tests for LLM feature manager."""
 
-import mock
 import types
 from typing import Any
+import mock
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.llms.features import manager
 from timesketch.models.sketch import Sketch
@@ -53,20 +53,20 @@ class MockNl2qFeature(LLMFeatureInterface):
 class MockFeature(LLMFeatureInterface):
     NAME = "some_feature"
 
-    def generate_prompt(self, *args: Any, **kwargs: Any) -> str:
+    def generate_prompt(self, *_args: Any, **_kwargs: Any) -> str:
         return "some prompt"
 
-    def process_response(self, *args: Any, **kwargs: Any) -> dict:
+    def process_response(self, *_args: Any, **_kwargs: Any) -> dict:
         return {"response": "some response"}
 
 
 class DuplicateNl2qFeature(LLMFeatureInterface):
     NAME = "nl2q"
 
-    def generate_prompt(self, *args: Any, **kwargs: Any) -> str:
+    def generate_prompt(self, *_args: Any, **_kwargs: Any) -> str:
         return "duplicate prompt"
 
-    def process_response(self, *args: Any, **kwargs: Any) -> dict:
+    def process_response(self, *_args: Any, **_kwargs: Any) -> dict:
         return {"response": "duplicate response"}
 
 
