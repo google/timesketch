@@ -189,7 +189,7 @@ class TestFeatureManager(BaseTest):
         setattr(dummy_module, "DuplicateNl2qFeature", DuplicateNl2qFeature)
         mock_import_module.return_value = dummy_module
 
-        with self.assertLogs("timesketch.llm.manager", level="WARNING") as log_cm:
+        with self.assertLogs("timesketch.llm.manager", level="DEBUG") as log_cm:
             manager.FeatureManager.load_llm_features()
             features = list(manager.FeatureManager.get_features())
             self.assertEqual(len(features), 1)
