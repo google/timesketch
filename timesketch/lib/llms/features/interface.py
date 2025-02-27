@@ -19,7 +19,27 @@ from timesketch.models.sketch import Sketch
 
 
 class LLMFeatureInterface(ABC):
-    """Interface for LLM features."""
+    """Interface for LLM features.
+
+    This abstract class defines the required methods and attributes for implementing
+    an LLM-powered feature in Timesketch. Features must override the NAME constant
+    and implement the abstract methods.
+
+    Attributes:
+        NAME: String identifier for the feature. Must be overridden in subclasses.
+        RESPONSE_SCHEMA: Optional JSON schema that defines the expected format of
+            the LLM response. When defined, this schema will be passed to the LLM
+            provider to enforce structured outputs matching the defined format.
+            For example:
+
+            {
+                "type": "object",
+                "properties": {"summary": {"type": "string"}},
+                "required": ["summary"],
+            }
+
+            If None, the LLM will return unstructured text.
+    """
 
     NAME: str = "llm_feature_interface"  # Must be overridden in subclasses
     RESPONSE_SCHEMA: Optional[dict[str, Any]] = None
@@ -39,15 +59,29 @@ class LLMFeatureInterface(ABC):
 
     @abstractmethod
     def process_response(self, llm_response: str, **kwargs: Any) -> dict[str, Any]:
-        """Processes the raw LLM response.
+        """Processes the LLM response and formats it for API consumption.
+
+        This method takes the response from the LLM provider and transforms it into
+        a structured format to be returned to the frontend through the API. The
+        response handling varies depending on whether RESPONSE_SCHEMA is defined:
+
+        - If RESPONSE_SCHEMA is None: Typically receives a string response
+        - If RESPONSE_SCHEMA is defined: Typically receives a structured dict
+
+        The returned dictionary defines the data contract with the frontend, which will
+        use these fields to render the appropriate UI elements.
 
         Args:
-            llm_response:  The raw string response from the LLM provider.
-            kwargs: Feature-specific arguments.
+            llm_response: The response from the LLM provider. This may be a
+                        string or a structured dict depending on RESPONSE_SCHEMA.
+            **kwargs: Additional data needed for processing, which may include:
+                    - sketch_id: The ID of the sketch
+                    - sketch: The Sketch object
 
         Returns:
-            A dictionary containing the processed response data, suitable for
-            returning from the API.  Must include a "response" key with the
-            main result, and can optionally include other metadata.
+            A dictionary that will be JSON-serialized and returned through the API.
+            This dictionary defines the data contract with the frontend and must include
+            all fields that the frontend expects to render. Example for NL2Q:
+            - {"name": "AI generated search query", "query_string": "...", "error": null}
         """
         raise NotImplementedError()

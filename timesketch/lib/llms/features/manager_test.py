@@ -13,10 +13,13 @@
 # limitations under the License.
 """Tests for LLM feature manager."""
 
+import mock
+import types
 from typing import Any
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.llms.features import manager
 from timesketch.models.sketch import Sketch
+from timesketch.lib.llms.features.interface import LLMFeatureInterface
 
 
 class MockSummarizeFeature:
@@ -25,26 +28,46 @@ class MockSummarizeFeature:
     NAME = "llm_summarize"
 
     def generate_prompt(self, _sketch: Sketch, **_kwargs: Any) -> str:
-        """Mock implementation of generate_prompt."""
+        """Mocks implementation of generate_prompt."""
         return "Summarize these events."
 
     def process_response(self, llm_response: str, **_kwargs: Any) -> dict[str, Any]:
-        """Mock implementation of process_response."""
+        """Mocks implementation of process_response."""
         return {"response": f"Summary: {llm_response}"}
 
 
-class MockNl2qFeature:
+class MockNl2qFeature(LLMFeatureInterface):
     """A mock Natural Language to Query feature."""
 
     NAME = "nl2q"
 
     def generate_prompt(self, _sketch: Sketch, **_kwargs: Any) -> str:
-        """Mock implementation of generate_prompt."""
+        """Mocks implementation of generate_prompt."""
         return "Convert this question to a query."
 
     def process_response(self, llm_response: str, **_kwargs: Any) -> dict[str, Any]:
-        """Mock implementation of process_response."""
+        """Mocks implementation of process_response."""
         return {"response": f"Query: {llm_response}"}
+
+
+class MockFeature(LLMFeatureInterface):
+    NAME = "some_feature"
+
+    def generate_prompt(self, *args: Any, **kwargs: Any) -> str:
+        return "some prompt"
+
+    def process_response(self, *args: Any, **kwargs: Any) -> dict:
+        return {"response": "some response"}
+
+
+class DuplicateNl2qFeature(LLMFeatureInterface):
+    NAME = "nl2q"
+
+    def generate_prompt(self, *args: Any, **kwargs: Any) -> str:
+        return "duplicate prompt"
+
+    def process_response(self, *args: Any, **kwargs: Any) -> dict:
+        return {"response": "duplicate response"}
 
 
 class TestFeatureManager(BaseTest):
@@ -61,7 +84,7 @@ class TestFeatureManager(BaseTest):
         super().tearDown()
 
     def test_get_features(self):
-        """Test that get_features returns the registered features."""
+        """Tests that get_features returns the registered features."""
         features = manager.FeatureManager.get_features()
         feature_list = list(features)
         self.assertIsInstance(feature_list, list)
@@ -78,7 +101,7 @@ class TestFeatureManager(BaseTest):
         self.assertTrue(found_nl2q, "NL2Q feature not found.")
 
     def test_get_feature(self):
-        """Test retrieval of a feature class from the registry."""
+        """Tests retrieval of a feature class from the registry."""
         feature_class = manager.FeatureManager.get_feature("llm_summarize")
         self.assertEqual(feature_class, MockSummarizeFeature)
 
@@ -90,13 +113,13 @@ class TestFeatureManager(BaseTest):
         )
 
     def test_register_feature(self):
-        """Test that re-registering an already registered feature raises ValueError."""
+        """Tests that re-registering an already registered feature raises ValueError."""
         self.assertRaises(
             ValueError, manager.FeatureManager.register_feature, MockSummarizeFeature
         )
 
     def test_get_feature_instance(self):
-        """Test get_feature_instance creates the correct feature instance."""
+        """Tests that get_feature_instance creates the correct feature instance."""
         feature_instance = manager.FeatureManager.get_feature_instance("llm_summarize")
         self.assertIsInstance(feature_instance, MockSummarizeFeature)
 
@@ -108,7 +131,7 @@ class TestFeatureManager(BaseTest):
         )
 
     def test_feature_methods(self):
-        """Test that feature methods work correctly."""
+        """Tests that feature methods work correctly."""
         summarize_instance = manager.FeatureManager.get_feature_instance(
             "llm_summarize"
         )
@@ -133,10 +156,45 @@ class TestFeatureManager(BaseTest):
         )
 
     def test_clear_registration(self):
-        """Test clear_registration removes all registered features."""
+        """Tests that clear_registration removes all registered features."""
         self.assertEqual(len(list(manager.FeatureManager.get_features())), 2)
 
         manager.FeatureManager.clear_registration()
 
         self.assertEqual(len(list(manager.FeatureManager.get_features())), 0)
         self.assertRaises(KeyError, manager.FeatureManager.get_feature, "llm_summarize")
+
+    @mock.patch("importlib.import_module")
+    @mock.patch("pkgutil.iter_modules", return_value=[(None, "nl2q", False)])
+    def test_load_llm_feature(self, _, mock_import_module) -> None:
+        """Tests that load_llm_feature loads the expected features."""
+        mock_module = types.ModuleType("mock_module")
+        setattr(mock_module, "MockNl2qFeature", MockNl2qFeature)
+        mock_import_module.return_value = mock_module
+
+        manager.FeatureManager.load_llm_features()
+        features = list(manager.FeatureManager.get_features())
+        self.assertEqual(len(features), 1)
+        registered_name, registered_class = features[0]
+        self.assertEqual(registered_name, "nl2q")
+        self.assertEqual(registered_class, MockNl2qFeature)
+        mock_import_module.assert_called_with("timesketch.lib.llms.features.nl2q")
+
+    @mock.patch("importlib.import_module")
+    @mock.patch("pkgutil.iter_modules", return_value=[(None, "nl2q", False)])
+    def test_load_llm_feature_duplicate(self, _, mock_import_module) -> None:
+        """Tests that load_llm_feature handles registration of duplciate features."""
+        dummy_module = types.ModuleType("dummy_module")
+        setattr(dummy_module, "MockNl2qFeature", MockNl2qFeature)
+        setattr(dummy_module, "DuplicateNl2qFeature", DuplicateNl2qFeature)
+        mock_import_module.return_value = dummy_module
+
+        with self.assertLogs("timesketch.llm.manager", level="WARNING") as log_cm:
+            manager.FeatureManager.load_llm_features()
+            features = list(manager.FeatureManager.get_features())
+            self.assertEqual(len(features), 1)
+            registered_name, _ = features[0]
+            self.assertEqual(registered_name, "nl2q")
+            self.assertTrue(
+                any("already registered" in message for message in log_cm.output)
+            )

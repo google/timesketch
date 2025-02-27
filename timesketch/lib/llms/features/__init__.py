@@ -14,3 +14,5 @@
 """LLM features for Timesketch."""
 
 from timesketch.lib.llms.features import manager
+
+manager.FeatureManager.load_llm_features()
