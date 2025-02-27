@@ -234,6 +234,6 @@ class LLMResource(resources.ResourceMixin, Resource):
             )
             response = llm.generate(prompt, response_schema=response_schema)
             shared_response.update({"response": response})
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             logger.error("Error in LLM call within process: %s", e, exc_info=True)
             shared_response.update({"error": str(e)})
