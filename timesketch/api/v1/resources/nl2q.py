@@ -26,7 +26,7 @@ from flask_login import current_user
 import pandas as pd
 
 from timesketch.api.v1 import utils
-from timesketch.lib.llms import manager
+from timesketch.lib.llms.providers import manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -178,35 +178,33 @@ class Nl2qResource(Resource):
         Returns:
             JSON representing the LLM prediction.
         """
-        llm_provider = current_app.config.get("LLM_PROVIDER", "")
-        if not llm_provider:
-            logger.error("No LLM provider was defined in the main configuration file")
+        form = request.json
+        if not form:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "No JSON data provided")
+
+        if "question" not in form:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "The 'question' parameter is required!")
+
+        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS")
+        if not llm_configs:
+            logger.error("No LLM provider configuration defined.")
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 "No LLM provider was defined in the main configuration file",
             )
-        form = request.json
-        if not form:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "No JSON data provided",
-            )
-
-        if "question" not in form:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "The 'question' parameter is required!",
-            )
 
         question = form.get("question")
         prompt = self.build_prompt(question, sketch_id)
+
         result_schema = {
             "name": "AI generated search query",
             "query_string": None,
             "error": None,
         }
+
+        feature_name = "nl2q"
         try:
-            llm = manager.LLMManager().get_provider(llm_provider)()
+            llm = manager.LLMManager.create_provider(feature_name=feature_name)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error LLM Provider: {}".format(e))
             result_schema["error"] = (
@@ -223,7 +221,6 @@ class Nl2qResource(Resource):
                 "Please try again later!"
             )
             return jsonify(result_schema)
-        # The model sometimes output triple backticks that needs to be removed.
-        result_schema["query_string"] = prediction.strip("```")
 
+        result_schema["query_string"] = prediction.strip("`\n\r\t ")
         return jsonify(result_schema)

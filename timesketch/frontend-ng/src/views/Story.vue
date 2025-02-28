@@ -1,5 +1,5 @@
 <!--
-Copyright 2023 Google Inc. All rights reserved.
+Copyright 2025 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,11 +30,28 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
+      <v-dialog v-model="deleteStoryDialog" max-width="300">
+        <v-card>
+          <v-card-title class="headline">Delete Story</v-card-title>
+          <v-card-text>
+            Are you sure you want to delete this story?
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text @click="deleteStoryDialog = false">Cancel</v-btn>
+            <v-btn color="error" text @click="deleteStory">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
     <v-hover v-slot="{ hover }">
       <v-toolbar dense flat class="mt-n3" color="transparent">
         <v-toolbar-title @dblclick="renameStoryDialog = true"> {{ title }}</v-toolbar-title>
         <v-btn v-if="hover" icon small @click="renameStoryDialog = true">
           <v-icon small>mdi-pencil</v-icon>
+        </v-btn>
+        <v-btn v-if="hover" icon small @click="deleteStoryDialog = true">
+          <v-icon small title="Delete Story">mdi-trash-can-outline</v-icon>
         </v-btn>
       </v-toolbar>
     </v-hover>
@@ -328,6 +345,7 @@ export default {
       titleDraft: '',
       blocks: [],
       renameStoryDialog: false,
+      deleteStoryDialog: false,
     }
   },
   computed: {
@@ -525,6 +543,42 @@ export default {
       this.title = this.titleDraft
       this.save()
     },
+    deleteStory() {
+      this.deleteStoryDialog = false
+
+      ApiClient.deleteStory(this.sketchId, this.storyId)
+        .then((response) => {
+          this.blocks = []
+
+          ApiClient.getStoryList(this.sketchId)
+            .then((storyListResponse) => {
+              const stories = storyListResponse.data.objects[0]
+
+              if (stories && stories.length > 0) {
+                const nextStoryId = stories[0].id
+                this.$router.push({
+                  name: "Story",
+                  params: { sketchId: this.sketchId, storyId: nextStoryId },
+                })
+              } else {
+                this.$router.push({
+                  name: "Overview",
+                  params: { sketchId: this.sketchId },
+                })
+              }
+            })
+            .catch(e => {
+              console.error('Error getStoryList', e)
+              this.$router.push({ name: 'Sketches' })
+            })
+
+          this.$store.dispatch("updateSketch", this.sketchId)
+        })
+        .catch((error) => {
+          console.error("Error deleting story:", error)
+          this.$router.push({ name: 'Sketches' })
+        })
+    },
   },
   mounted() {
     if (this.storyId) {
@@ -561,3 +615,4 @@ export default {
   background-color: transparent !important;
 }
 </style>
+
