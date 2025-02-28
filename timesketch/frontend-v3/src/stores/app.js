@@ -57,11 +57,22 @@ export const useAppStore = defineStore("app", {
       this.testAppStore = "🚀 Pinia state storage is operational!";
     },
 
+    resetState() {
+      ApiClient.getLoggedInUser().then((response) => {
+        let currentUser = response.data.objects[0].username;
+        this.$reset();
+        this.currentUser = currentUser;
+      })
+    },
+
     async updateSketch(sketchId) {
       try {
         const response = await ApiClient.getSketch(sketchId);
           this.sketch = response.data.objects[0];
           this.meta = response.data.meta;
+        const userResp = await ApiClient.getLoggedInUser();
+        let currentUser = userResp.data.objects[0].username;
+        this.currentUser = currentUser;
         await this.updateTimelineTags(sketchId);
         await this.updateDataTypes(sketchId);
       } catch (e) {

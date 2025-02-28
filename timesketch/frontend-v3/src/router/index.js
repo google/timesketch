@@ -26,12 +26,12 @@ const routes = [
         component: Home,
         props: true,
       },
-      {
-        path: 'sketch/:sketchId',
-        component: Sketch,
-        props: true,
-      },
     ]
+  },
+  {
+    path: '/sketch/:sketchId',
+    component: Sketch,
+    props: true,
   },
 ];
 

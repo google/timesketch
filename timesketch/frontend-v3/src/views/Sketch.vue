@@ -17,6 +17,7 @@ limitations under the License.
   <div>
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
+
     <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
       <!-- Empty state -->
       <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" class="fill-height" fluid>
@@ -29,6 +30,205 @@ limitations under the License.
         </v-row>
       </v-container>
 
+      <!-- Archived state -->
+      <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
+        <v-row align="center" justify="center">
+          <v-sheet class="pa-4 text-center">
+              <v-img src="/empty-state.png" max-height="100" max-width="300"></v-img>
+              <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
+              <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+          </v-sheet>
+        </v-row>
+      </v-container>
+
+      <!-- Rename sketch dialog -->
+      <v-dialog v-model="renameSketchDialog" width="600">
+        <v-card class="pa-4">
+          <ts-rename-sketch @close="renameSketchDialog = false"></ts-rename-sketch>
+        </v-card>
+      </v-dialog>
+
+      <!-- Settings dialog -->
+      <v-dialog v-model="showSettingsDialog" width="700px">
+        <ts-settings-dialog></ts-settings-dialog>
+      </v-dialog>
+
+      <v-app-bar
+        v-if="!loadingSketch"
+        app
+        clipped-left
+        flat
+        :color="theme.global.current.value.dark ? '#121212' : 'white'"
+        :style="[
+          theme.global.current.value.dark
+            ? { 'border-bottom': '1px solid hsla(0,0%,100%,.12) !important' }
+            : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
+        ]"
+      >
+        <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="toggleDrawer()">
+          <v-icon title="Toggle left panel">mdi-menu</v-icon>
+        </v-btn>
+
+        <v-img
+          src="/timesketch-color.png"
+          width="30"
+          height="30"
+          class="ml-n2 mt-1 flex-sm-0-0"
+          style="cursor: pointer"
+          @click="navigate('/')"
+        >
+        </v-img>
+
+        <v-hover v-slot="{ isHovering, props }">
+          <div class="d-flex flex-wrap" v-bind="props">
+            <div
+              class="flex-1-0"
+              @dblclick="renameSketchDialog = true"
+              style="
+                font-size: 1.1em;
+                cursor: pointer;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 900px;
+              "
+              :title="sketch.name"
+            >
+              {{ sketch.name }}
+            </div>
+            <div>
+              <v-icon title="Rename sketch" small class="ml-1" v-if="isHovering" @click="renameSketchDialog = true"
+                >mdi-pencil</v-icon
+              >
+            </div>
+          </div>
+        </v-hover>
+        <v-spacer></v-spacer>
+
+        <v-avatar color="grey lighten-1" size="25" class="ml-3">
+          <span class="white--text">{{ $filters.initialLetter(currentUser) }}</span>
+        </v-avatar>
+        <v-menu offset-y>
+          <template v-slot:activator="{ props }">
+            <v-avatar>
+              <v-btn small icon v-bind="props">
+                <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
+              </v-btn>
+            </v-avatar>
+          </template>
+          <v-card>
+            <v-list two-line>
+              <v-list-item v-if="sketch.user">
+                  <v-list-item-title>
+                    <strong>Created:</strong> {{ $filters.shortDateTime(sketch.created_at) }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small>{{ $filters.shortDateTime(sketch.created_at) }} by {{ sketch.user.username }}</small>
+                  </v-list-item-subtitle>
+              </v-list-item>
+
+              <v-list-item>
+                  <v-list-item-title>
+                    <strong>Access: </strong>
+                    <span v-if="meta.permissions && meta.permissions.public">Public</span>
+                    <span v-else>Restricted</span>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small v-if="meta.permissions && meta.permissions.public"
+                      >Visible to all users on this server</small
+                    >
+                    <small v-else>Only people with access can open</small>
+                  </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+
+            <v-list>
+                <v-list-item
+                  v-on:click="toggleTheme"
+                  prepend-icon="mdi-brightness-6"
+                >
+                  <v-list-item-title>Toggle theme</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item
+                  @click="renameSketchDialog = true"
+                  prepend-icon="mdi-pencil"
+                >
+                  <v-list-item-title>Rename sketch</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item
+                  @click="archiveSketch()"
+                  :disabled="isArchived"
+                  prepend-icon="mdi-archive"
+                >
+                  <v-list-item-title>Archive sketch</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item
+                  v-if="meta.permissions && meta.permissions.delete"
+                  @click="deleteSketch()"
+                  prepend-icon="mdi-trash-can-outline"
+                >
+                  <v-list-item-title>Delete sketch</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item
+                  v-on:click="switchUI"
+                  prepend-icon="mdi-view-dashboard-outline"
+                >
+                  <v-list-item-title>Use the old UI</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item
+                  @click="showSettingsDialog = true"
+                  prepend-icon="mdi-cog-outline"
+                >
+                  <v-list-item-title>Settings</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item
+                  href="/logout/"
+                  prepend-icon="mdi-logout"
+                >
+                  <v-list-item-title>Logout</v-list-item-title>
+                </v-list-item>
+            </v-list>
+          </v-card>
+        </v-menu>
+      </v-app-bar>
+
+      <!-- Left panel -->
+      <v-navigation-drawer
+        v-model="showLeftPanel"
+        app
+        clipped
+        disable-resize-watcher
+        stateless
+        hide-overlay
+        :width="navigationDrawer.width"
+      >
+        <div class="pa-4" style="cursor: pointer">
+          <div><v-icon left>mdi-magnify</v-icon>
+            <template v-if="!isMiniDrawer">
+              Search
+            </template>
+          </div>
+        </div>
+      <!-- TODO: content of left panel -->
+      </v-navigation-drawer>
+
+      <!-- Main (canvas) view -->
+      <v-main class="notransition">
+        <!-- TODO: Scenario context -->
+
+        <router-view
+          v-if="sketch.status && hasTimelines && !isArchived"
+          @setTitle="(title) => (this.title = title)"
+          class="mt-4"
+        ></router-view>
+      </v-main>
+
     </div>
   </div>
 </template>
@@ -39,11 +239,20 @@ import dayjs from '@/plugins/dayjs'
 import EventBus from '../event-bus.js'
 import { useAppStore } from "@/stores/app";
 import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
+import { useTheme } from 'vuetify'
+import TsRenameSketch from '../components/RenameSketch.vue'
+import TsSettingsDialog from '../components/SettingsDialog.vue'
 
 export default {
   props: ['sketchId'],
   components: {
+    TsRenameSketch,
     TsUploadTimelineFormButton,
+    TsSettingsDialog,
+  },
+  setup() {
+    const theme = useTheme();
+    return { theme };
   },
   data() {
     return {
@@ -230,10 +439,8 @@ export default {
     },
 
     toggleTheme: function () {
-      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
-      let element = document.body
-      element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
+      localStorage.setItem('isDarkTheme', this.theme.global.current.value.dark);
+      this.theme.global.name.value = this.theme.global.current.value.dark ? 'light' : 'dark';
     },
     switchUI: function () {
       window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
