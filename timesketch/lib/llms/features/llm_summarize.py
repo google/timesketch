@@ -57,9 +57,11 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         try:
             with open(prompt_file_path, "r", encoding="utf-8") as file_handle:
                 prompt_template = file_handle.read()
-        except FileNotFoundError:
+        except FileNotFoundError as exc:
             logger.error("Prompt file not found: %s", prompt_file_path)
-            raise FileNotFoundError(f"LLM Prompt file not found: {prompt_file_path}")
+            raise FileNotFoundError(
+                f"LLM Prompt file not found: {prompt_file_path}"
+            ) from exc
         except IOError as e:
             logger.error("Error reading prompt file: %s", e)
             raise IOError("Error reading LLM prompt file.") from e
@@ -170,7 +172,7 @@ class LLMSummarizeFeature(LLMFeatureInterface):
                 - form: Form data containing query and filter information.
 
         Returns:
-            dict[str, Any]: Dictionary containing the processed response with additional context:
+            Dictionary containing the processed response with additional context:
                 - response: The summary text.
                 - summary_event_count: Total number of events summarized.
                 - summary_unique_event_count: Number of unique events summarized.
