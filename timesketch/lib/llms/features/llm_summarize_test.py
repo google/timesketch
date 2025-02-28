@@ -21,7 +21,8 @@ from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.llms.features.llm_summarize import LLMSummarizeFeature
 
-#pylint: disable=protected-access
+
+# pylint: disable=protected-access
 class TestLLMSummarizeFeature(BaseTest):
     """Tests for the LLMSummarizeFeature."""
 
