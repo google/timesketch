@@ -556,7 +556,8 @@ export default {
         aggregator_parameters: {
           field: this.eventKey,
           field_query_string: this.eventValue
-        }
+        },
+        include_processing_timelines: !!this.settings.showProcessingTimelineEvents,
       }).then((response) => {
         this.stats = response.data.objects[0].field_summary.buckets[0]
         this.statsReady = true
@@ -570,7 +571,8 @@ export default {
         aggregator_parameters: {
           field: this.eventKey,
           date_interval: this.selectedDistributionInterval
-        }
+        },
+        include_processing_timelines: !!this.settings.showProcessingTimelineEvents,
       }).then((response) => {
         this.eventDistributionData = response.data.objects[0].datefield_summary.buckets[0]
         this.eventDistributionReady = true
@@ -624,7 +626,8 @@ export default {
           supported_intervals: supportedIntervals,
           start_time: startTime.toISOString().slice(0, -1),
           end_time: endTime.toISOString().slice(0, -1),
-        }
+        },
+        include_processing_timelines: !!this.settings.showProcessingTimelineEvents,
       }).then((response) => {
         this.data = response.data.objects[0].date_histogram.buckets[0]
         this.recentHistogramSeries = [{
