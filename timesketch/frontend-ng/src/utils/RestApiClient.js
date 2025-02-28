@@ -525,4 +525,13 @@ export default {
     let formData = { question: question }
     return RestApiClient.post('/sketches/' + sketchId + '/nl2q/', formData)
   },
+  getEventSummary(sketchId, formData) {
+    return RestApiClient.post('/sketches/' + sketchId + '/events/summary/', formData)
+  },
+  llmRequest(sketchId, featureName, formData) {
+    formData = formData || {}
+    formData.feature = featureName
+  
+    return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
+  }
 }

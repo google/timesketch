@@ -28,6 +28,7 @@ nav:
           - Feature extraction analyzer: guides/analyzers/feature_extraction.md
           - Sigma analyzer: guides/analyzers/sigma_analyzer.md
           - HashR analyzer: guides/analyzers/hashR_lookup.md
+          - LLM Features: guides/user/llm-features-user.md
   - Admin Guide:
       - Install: guides/admin/install.md
       - Upgrade: guides/admin/upgrade.md
@@ -35,6 +36,7 @@ nav:
       - Troubleshooting: guides/admin/troubleshooting.md
       - Admin CLI: guides/admin/admin-cli.md
       - Context Links: guides/admin/context-links.md
+      - LLM Features: guides/admin/llm-features.md
   - Developers:
       - Getting started: developers/getting-started.md
       - Frontend development: developers/frontend-development.md
