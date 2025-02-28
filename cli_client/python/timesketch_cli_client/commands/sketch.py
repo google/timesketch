@@ -164,7 +164,7 @@ def unarchive_sketch(ctx):
     "delete", help="Delete a sketch, default will only mark the sketch as deleted"
 )
 @click.option(
-    "--execute",
+    "--force_delete",
     required=False,
     is_flag=True,
     help="Only execute the deletion if this is set.",
@@ -176,7 +176,7 @@ def unarchive_sketch(ctx):
     help="Delete metadata associated with the sketch.",
 )
 @click.pass_context
-def delete_sketch(ctx, execute, delete_metadata):
+def delete_sketch(ctx, force_delete, delete_metadata):
     """Delete a sketch.
 
     By default, a sketch will not be deleted. To execute the deletion provide the
@@ -216,8 +216,9 @@ def delete_sketch(ctx, execute, delete_metadata):
     #        f"  Story: {story.id} {story.title} {story.description} {story.status} {story.created_at} {story.updated_at}" # pylint: disable=line-too-long
     #    )
 
-    if execute:
+    if force_delete:
         click.echo("Will delete for real")
-
-        sketch.delete()
+        # breakpoint()
+        # sketch.delete()
+        sketch.z_delete(force_delete=force_delete)
         click.echo("Sketch deleted")
