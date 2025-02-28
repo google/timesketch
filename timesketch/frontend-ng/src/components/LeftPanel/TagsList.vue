@@ -15,50 +15,44 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div
-      v-for="label in labels"
-      :key="label.label"
-      @click="applyFilterChip(term=label.label, termType='label')"
-      style="cursor: pointer; font-size: 0.9em"
-    >
-      <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
-        <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-        <span>
-          {{ label.label | formatLabelText }} (<small
-            ><strong>{{ label.count | compactNumber }}</strong></small
-          >)
-        </span>
-      </v-row>
-    </div>
-    <div
-      v-for="tag in assignedQuickTags"
-      :key="tag.tag"
-      @click="applyFilterChip(term=tag.tag, termField='tag', termType='term')"
-      style="cursor: pointer; font-size: 0.9em"
-    >
-      <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <v-icon small left :color="getQuickTag(tag.tag).color">{{ getQuickTag(tag.tag).label }}</v-icon>
-        <span
-          >{{ tag.tag }} (<small
-            ><strong>{{ tag.count | compactNumber }}</strong></small
-          >)</span
+    <div>
+      <v-data-iterator
+          :items="allTagsAndLabels"
+          :items-per-page.sync="itemsPerPage"
+          :search="search"
+          :hide-default-footer="allTagsAndLabels.length <= itemsPerPage"
         >
-      </v-row>
-    </div>
-    <div
-      v-for="tag in customTags"
-      :key="tag.tag"
-      @click="applyFilterChip(term=tag.tag, termField='tag', termType='term')"
-      style="cursor: pointer; font-size: 0.9em"
-    >
-      <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <span
-          >{{ tag.tag }} (<small
-            ><strong>{{ tag.count | compactNumber }}</strong></small
-          >)</span
-        >
-      </v-row>
+        <template v-slot:header v-if="allTagsAndLabels.length > itemsPerPage">
+          <v-toolbar flat>
+            <v-text-field
+              v-model="search"
+              clearable
+              hide-details
+              outlined
+              dense
+              prepend-inner-icon="mdi-magnify"
+              label="Search for tags ..."
+            ></v-text-field>
+          </v-toolbar>
+        </template>
+        <template v-slot:default="props">
+          <div
+            v-for="item in props.items"
+            :key="item.tag || item.label"
+            @click="applyFilterChip(item.tag || item.label, item.tag ? 'tag' : '', item.tag ? 'term' : 'label')"
+            style="cursor: pointer; font-size: 0.9em"
+          >
+            <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+              <v-icon v-if="item.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
+              <v-icon v-if="item.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+              <v-icon v-if="getQuickTag(item.tag)" small left :color="getQuickTag(item.tag).color">{{ getQuickTag(item.tag).label }}</v-icon>
+              <span>
+                {{ (item.tag || item.label) | formatLabelText }} (<small><strong>{{ item.count | compactNumber }}</strong></small>)
+              </span>
+            </v-row>
+          </div>
+        </template>
+      </v-data-iterator>
     </div>
   </div>
 </template>
@@ -76,6 +70,8 @@ export default {
         { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
         { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
       ],
+      itemsPerPage: 10,
+      search: ''
     }
   },
   computed: {
@@ -93,6 +89,32 @@ export default {
     },
     assignedQuickTags() {
       return this.tags.filter((tag) => this.getQuickTag(tag.tag))
+    },
+    allTagsAndLabels() {
+      const labelOrder = ['__ts_star', '__ts_comment', 'bad', 'suspicious', 'good']
+      return [...this.labels, ...this.assignedQuickTags, ...this.customTags]
+        .filter(item => item.tag || item.label) // Filter out items without tag or label
+        .sort((a, b) => {
+          const aLabel = a.tag || a.label
+          const bLabel = b.tag || b.label
+
+          const aIsLabel = !!a.label
+          const bIsLabel = !!b.label
+
+          // Sort labels before tags
+          if (aIsLabel && !bIsLabel) return -1
+          if (!aIsLabel && bIsLabel) return 1
+
+          // Within labels and tags, sort by predefined order first, then alphabetically
+          const aOrder = labelOrder.indexOf(aLabel)
+          const bOrder = labelOrder.indexOf(bLabel)
+
+          if (aOrder > -1 && bOrder > -1) return aOrder - bOrder // Sort by predefined order
+          if (aOrder > -1) return -1 // Predefined labels come first
+          if (bOrder > -1) return 1 // Predefined labels come first
+
+          return aLabel.localeCompare(bLabel)
+        })
     },
   },
   methods: {

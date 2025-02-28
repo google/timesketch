@@ -1,0 +1,10 @@
+name: Test Facet
+description: Test Facet
+type: facet
+id: F1001
+uuid: 79c6d69d-4de0-4fc0-af5f-b02248430104
+tags:
+  - test
+parent_ids:
+ - S1001
+dfiq_version: 1.1.0

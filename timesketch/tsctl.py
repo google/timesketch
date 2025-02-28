@@ -49,14 +49,18 @@ def cli():
 
 
 @cli.command(name="list-users")
-def list_users():
+@click.option("--status", "-s", is_flag=True, help="Show status of the users.")
+def list_users(status):
     """List all users."""
     for user in User.query.all():
         if user.admin:
             extra = " (admin)"
         else:
             extra = ""
-        print(f"{user.username}{extra}")
+        if status:
+            print(f"{user.username}{extra} (active: {user.active})")
+        else:
+            print(f"{user.username}{extra}")
 
 
 @cli.command(name="create-user")
@@ -192,10 +196,17 @@ def list_sketches():
 
 
 @cli.command(name="list-groups")
-def list_groups():
+@click.option("--showmembership", is_flag=True, help="Show members of that group.")
+def list_groups(showmembership):
     """List all groups."""
     for group in Group.query.all():
-        print(group.name)
+        if showmembership:
+            users = []
+            for user in group.users:
+                users.append(user.username)
+            print(f"{group.name}:{','.join(users)}")
+        else:
+            print(group.name)
 
 
 @cli.command(name="create-group")
@@ -588,6 +599,7 @@ def sketch_info(sketch_id):
                 "created_at",
                 "user_id",
                 "description",
+                "status",
             ],
         ]
 
@@ -599,9 +611,9 @@ def sketch_info(sketch_id):
                     t.created_at,
                     t.user_id,
                     t.description,
+                    t.status[0].status,
                 ]
             )
-
         print_table(table_data)
 
         print("Shared with:")
@@ -631,6 +643,73 @@ def sketch_info(sketch_id):
             )
         print("Status:")
         print_table(status_table)
+
+
+@cli.command(name="timeline-status")
+@click.argument("timeline_id")
+@click.option(
+    "--action",
+    default="get",
+    type=click.Choice(["get", "set"]),
+    required=False,
+    help="get or set timeline status.",
+)
+@click.option(
+    "--status",
+    required=False,
+    type=click.Choice(["ready", "processing", "fail"]),
+    help="get or set timeline status.",
+)
+def timeline_status(timeline_id, action, status):
+    """Get or set a timeline status
+
+    If "action" is "set", the given value of status will be written in the status.
+
+    Args:
+        action: get or set timeline status.
+        status: timeline status. Only valid choices are ready, processing, fail.
+    """
+    if action == "get":
+        timeline = Timeline.query.filter_by(id=timeline_id).first()
+        if not timeline:
+            print("Timeline does not exist.")
+            return
+        # define the table data
+        table_data = [
+            [
+                "searchindex_id",
+                "index_name",
+                "created_at",
+                "user_id",
+                "description",
+                "status",
+            ],
+        ]
+        table_data.append(
+            [
+                timeline.searchindex_id,
+                timeline.searchindex.index_name,
+                timeline.created_at,
+                timeline.user_id,
+                timeline.description,
+                timeline.status[0].status,
+            ]
+        )
+        print_table(table_data)
+    elif action == "set":
+        timeline = Timeline.query.filter_by(id=timeline_id).first()
+        if not timeline:
+            print("Timeline does not exist.")
+            return
+        # exit if status is not set
+        if not status:
+            print("Status is not set.")
+            return
+        timeline.set_status(status)
+        db_session.commit()
+        print(f"Timeline {timeline_id} status set to {status}")
+        # to verify run:
+        print(f"To verify run: tsctl timeline-status {timeline_id} --action get")
 
 
 @cli.command(name="validate-context-links-conf")

@@ -56,6 +56,15 @@ limitations under the License.
                 </v-list-item-content>
               </v-list-item>
 
+              <v-list-item @click="showSettingsDialog = true">
+                  <v-list-item-icon>
+                    <v-icon>mdi-cog-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Settings</v-list-item-title>
+                  </v-list-item-content>
+              </v-list-item>
+
               <a href="/logout/" style="text-decoration: none; color: inherit">
                 <v-list-item>
                   <v-list-item-icon>
@@ -119,6 +128,12 @@ limitations under the License.
           <ts-sketch-list></ts-sketch-list>
         </div>
       </v-container>
+
+      <!-- Settings dialog -->
+      <v-dialog v-model="showSettingsDialog" width="700px">
+        <ts-settings-dialog></ts-settings-dialog>
+      </v-dialog>
+
     </v-main>
   </div>
 </template>
@@ -126,9 +141,13 @@ limitations under the License.
 <script>
 import ApiClient from '../utils/RestApiClient.js'
 import TsSketchList from '../components/SketchList.vue'
+import TsSettingsDialog from '../components/SettingsDialog.vue'
+
 
 export default {
-  components: { TsSketchList },
+  components: { TsSketchList,
+      TsSettingsDialog,
+ },
   data() {
     return {
       sketchForm: {
@@ -136,6 +155,7 @@ export default {
       },
       createSketchDialog: false,
       scenarioTemplates: [],
+      showSettingsDialog: false,
       sketchNameRules: [
         (v) => !!v || 'Sketch name is required.',
         (v) => (v && v.length <= 255) || 'Sketch name is too long.',
@@ -146,6 +166,16 @@ export default {
     currentUser() {
       return this.$store.state.currentUser
     },
+    userSettings() {
+      return this.$store.state.settings
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
+    },
+  },
+  mounted() {
+    this.$store.dispatch('updateSystemSettings')
+    this.$store.dispatch('updateUserSettings')
   },
   methods: {
     toggleTheme: function () {

@@ -81,10 +81,11 @@ class TestConfig(object):
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
     CONTEXT_LINKS_CONFIG_PATH = "./tests/test_events/mock_context_links.yaml"
     LLM_PROVIDER = "test"
+    LLM_PROVIDER_CONFIGS = {"default": {"test": "test"}}
     DFIQ_ENABLED = False
-    DATA_TYPES_PATH = "./test_data/nl2q/test_data_types.csv"
-    PROMPT_NL2Q = "./test_data/nl2q/test_prompt_nl2q"
-    EXAMPLES_NL2Q = "./test_data/nl2q/test_examples_nl2q"
+    DATA_TYPES_PATH = "./tests/test_data/nl2q/test_data_types.csv"
+    PROMPT_NL2Q = "./tests/test_data/nl2q/test_prompt_nl2q"
+    EXAMPLES_NL2Q = "./tests/test_data/nl2q/test_examples_nl2q"
 
 
 class MockOpenSearchClient(object):

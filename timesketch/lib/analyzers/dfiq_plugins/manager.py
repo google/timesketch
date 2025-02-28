@@ -43,7 +43,7 @@ def load_dfiq_analyzers():
         ):
             try:
                 analyzer_manager.AnalysisManager.deregister_analyzer(name)
-                logger.info("Deregistered DFIQ analyzer: %s", name)
+                logger.debug("Deregistered DFIQ analyzer: %s", name)
             except KeyError as e:
                 logger.error(str(e))
 
@@ -70,7 +70,7 @@ def load_dfiq_analyzers():
                             and obj.IS_DFIQ_ANALYZER
                         ):
                             analyzer_manager.AnalysisManager.register_analyzer(obj)
-                            logger.info("Registered DFIQ analyzer: %s", obj.NAME)
+                            logger.debug("Registered DFIQ analyzer: %s", obj.NAME)
                         else:
                             logger.error(
                                 'Skipped loading "%s" as analyzer, since it did'

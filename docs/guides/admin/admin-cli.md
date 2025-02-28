@@ -150,6 +150,17 @@ bar
 dev (admin)
 ```
 
+Adding `--status` will add the status of the user to the output.
+
+Example
+```shell
+tsctl list-users --status
+dev (active: True)
+admin (active: True)
+foobar2 (active: True)
+foobar (active: False)
+```
+
 #### Make admin
 
 tsctl provides a subcommand for granting administrator privileges to a user in a Timesketch instance. This subcommand is called `make-admin`, and it allows you to specify the username of the user you want to grant administrator privileges to.
@@ -200,6 +211,18 @@ Parameters:
 Not yet implemented.
 
 #### Managing group membership
+
+##### List groups
+
+To list groups, use `tsctl list-groups`. This can be extended  to show the members of a group using `tsctl list-groups --showmembershipt`
+
+Example:
+
+```bash
+tsctl list-groups --showmembership
+foobar:
+foobar-group:foobar2,foobar
+```
 
 ##### Add a suer to a group
 
@@ -484,6 +507,58 @@ Searchindex: 4c5afdf60c6e49499801368b7f238353 Name: sigma_events found in databa
 Corresponding Timeline id: 3 in Sketch Id: 2
 Corresponding Sketch id: 2 Sketch name: asdasd
 ```
+
+### Timeline status
+
+The `tsctl timeline-status` command allows to get or set a timeline status.
+This can be useful in the following scenarios:
+
+* Monitoring processing In large-scale investigations, timelines can take a considerable amount of time to process.
+This feature allows administrators or automated scripts to monitor the processing status of timelines, ensuring that they are progressing as expected.
+
+* Automated Status updates: Scripts can be used to automatically update the status of timelines based on the results of automated analysis or processing steps. For example, if an automated script detects a critical error during analysis, it can set the timeline status to "fail."
+
+* Toubeshooting and Error handling: 
+** Quickly identifying timelines with a "fail" status allows investigators to troubleshoot issues and re-process data if necessary.
+** By monitoring the status of timelines, administrators can identify potential bottlenecks or errors in the processing pipeline.
+** Set the status to `fail` is a task is stuck.
+
+Usage:
+
+```bash
+tsctl timeline-status [OPTIONS] TIMELINE_ID
+--action [get|set]
+        Specify whether to get or set the timeline status.
+        - "get": Retrieves the current status of the timeline.
+        - "set": Sets the status of the timeline to the value specified by "--status".
+        (Required)
+
+    --status [ready|processing|fail]
+        The desired status to set for the timeline.
+        This option is only valid when "--action" is set to "set".
+        Valid options are:
+        - "ready": Indicates that the timeline is ready for analysis.
+        - "processing": Indicates that the timeline is currently being processed.
+        - "fail": Indicates that the timeline processing failed.
+        (Required when --action is set to set)
+```
+
+Examples:
+```bash
+# Get the status of timeline with ID 123:
+    tsctl timeline-status --action get 123
+
+    # Set the status of timeline with ID 456 to "ready":
+    tsctl timeline-status --action set --status ready 456
+
+    # Set the status of timeline with ID 789 to "fail":
+    tsctl timeline-status --action set --status fail 789
+
+    # Try to set a status without the action set to set.
+    tsctl timeline-status --status fail 789
+    # This will fail and display an error message.
+```
+
 
 ### Sigma
 
