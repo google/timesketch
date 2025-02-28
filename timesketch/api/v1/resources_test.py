@@ -1821,3 +1821,86 @@ class LLMResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertIn("Invalid LLM feature: invalid_feature", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    def test_post_prompt_generation_error(
+        self,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test handling of errors during prompt generation."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.side_effect = ValueError(
+            "Prompt generation failed"
+        )
+        mock_get_feature.return_value = mock_feature
+
+        mock_get_validated_indices.return_value = (["index1"], [1])
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("Prompt generation failed", response_data["message"])
+
+        mock_feature.generate_prompt.assert_called_once()
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    @mock.patch("multiprocessing.Process")
+    def test_post_llm_execution_timeout(
+        self,
+        mock_process,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test handling of LLM execution timeouts."""
+        # Setup mocks
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.return_value = "test prompt"
+        mock_get_feature.return_value = mock_feature
+
+        mock_get_validated_indices.return_value = (["index1"], [1])
+
+        process_instance = mock.MagicMock()
+        process_instance.is_alive.return_value = True
+        mock_process.return_value = process_instance
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("LLM call timed out", response_data["message"])
+
+        process_instance.terminate.assert_called_once()
