@@ -19,6 +19,7 @@ from flask import current_app
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.llms.features.nl2q import Nl2qFeature
 
+
 # pylint: disable=protected-access
 class TestNl2qFeature(BaseTest):
     """Tests for the Nl2qFeature."""
