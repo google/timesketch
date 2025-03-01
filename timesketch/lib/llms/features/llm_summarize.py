@@ -16,14 +16,32 @@ import json
 import logging
 from typing import Any, Optional
 import pandas as pd
+import prometheus_client
 from flask import current_app
 from opensearchpy import OpenSearch
 from timesketch.lib import utils
 from timesketch.api.v1 import export
 from timesketch.models.sketch import Sketch
+from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib.llms.features.interface import LLMFeatureInterface
 
 logger = logging.getLogger("timesketch.llm.summarize_feature")
+
+# TODO(itsmvd): Remove 'feature' prefix after migration
+METRICS = {
+    "llm_summary_events_processed_total": prometheus_client.Counter(
+        "feature_llm_summary_events_processed_total",  # avoid duplicate registration
+        "Total number of events processed for LLM summarization",
+        ["sketch_id"],
+        namespace=METRICS_NAMESPACE,
+    ),
+    "llm_summary_unique_events_total": prometheus_client.Counter(
+        "feature_llm_summary_unique_events_total",  # avoid duplicate registration
+        "Total number of unique events sent to the LLM",
+        ["sketch_id"],
+        namespace=METRICS_NAMESPACE,
+    ),
+}
 
 
 class LLMSummarizeFeature(LLMFeatureInterface):
@@ -38,13 +56,10 @@ class LLMSummarizeFeature(LLMFeatureInterface):
 
     def _get_prompt_text(self, events_dict: list) -> str:
         """Reads the prompt template from file and injects events.
-
         Args:
             events_dict: List of event dictionaries to inject into prompt.
-
         Returns:
             str: Complete prompt text with injected events.
-
         Raises:
             ValueError: If the prompt path is not configured.
             FileNotFoundError: If the prompt file cannot be found.
@@ -78,7 +93,6 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         timeline_ids: Optional[list] = None,
     ) -> pd.DataFrame:
         """Runs a timesketch query and returns results as a DataFrame.
-
         Args:
             sketch: The Sketch object to query.
             query_string: Search query string.
@@ -86,10 +100,8 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             id_list: List of event IDs to retrieve.
             datastore: OpenSearch instance for querying.
             timeline_ids: List of timeline IDs to query.
-
         Returns:
             pd.DataFrame: DataFrame containing query results.
-
         Raises:
             ValueError: If datastore is not provided or no valid indices are found.
         """
@@ -121,17 +133,14 @@ class LLMSummarizeFeature(LLMFeatureInterface):
 
     def generate_prompt(self, sketch: Sketch, **kwargs: Any) -> str:
         """Generates the summarization prompt based on events from a query.
-
         Args:
             sketch: The Sketch object containing events to summarize.
             **kwargs: Additional arguments including:
                 - form: Form data containing query and filter information.
                 - datastore: OpenSearch instance for querying.
                 - timeline_ids: List of timeline IDs to query.
-
         Returns:
             str: Generated prompt text with events to summarize.
-
         Raises:
             ValueError: If required parameters are missing or if no events are found.
         """
@@ -151,17 +160,30 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         )
         if events_df is None or events_df.empty:
             return "No events to summarize based on the current filter."
+
+        # Count and record total events
+        total_events_count = len(events_df)
+        METRICS["llm_summary_events_processed_total"].labels(
+            sketch_id=str(sketch.id)
+        ).inc(total_events_count)
+
+        # Get unique events, count and record them
         unique_events_df = events_df[["message"]].drop_duplicates(
             subset="message", keep="first"
         )
+        unique_events_count = len(unique_events_df)
+        METRICS["llm_summary_unique_events_total"].labels(sketch_id=str(sketch.id)).inc(
+            unique_events_count
+        )
+
         events_dict = unique_events_df.to_dict(orient="records")
         if not events_dict:
             return "No events to summarize based on the current filter."
+
         return self._get_prompt_text(events_dict)
 
     def process_response(self, llm_response: Any, **kwargs: Any) -> dict[str, Any]:
         """Processes the LLM response and adds additional context information.
-
         Args:
             llm_response: The response from the LLM model, expected to be a dictionary.
             **kwargs: Additional arguments including:
@@ -170,13 +192,11 @@ class LLMSummarizeFeature(LLMFeatureInterface):
                 - datastore: OpenSearch instance for querying.
                 - timeline_ids: List of timeline IDs.
                 - form: Form data containing query and filter information.
-
         Returns:
             Dictionary containing the processed response with additional context:
                 - response: The summary text.
                 - summary_event_count: Total number of events summarized.
                 - summary_unique_event_count: Number of unique events summarized.
-
         Raises:
             ValueError: If required parameters are missing or if the LLM response
                         is not in the expected format.
