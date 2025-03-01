@@ -161,13 +161,11 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         if events_df is None or events_df.empty:
             return "No events to summarize based on the current filter."
 
-        # Count and record total events
         total_events_count = len(events_df)
         METRICS["llm_summary_events_processed_total"].labels(
             sketch_id=str(sketch.id)
         ).inc(total_events_count)
 
-        # Get unique events, count and record them
         unique_events_df = events_df[["message"]].drop_duplicates(
             subset="message", keep="first"
         )
