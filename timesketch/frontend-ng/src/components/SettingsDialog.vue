@@ -76,7 +76,7 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
-      <v-list-item>
+      <v-list-item v-if="systemSettings.SEARCH_PROCESSING_TIMELINES">
         <v-list-item-action>
           <v-switch v-model="settings.showProcessingTimelineEvents" color="primary" @change="saveSettings()"></v-switch>
         </v-list-item-action>

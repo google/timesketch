@@ -1371,7 +1371,11 @@ class SystemSettingsResourceTest(BaseTest):
 
         self.login()
         response = self.client.get(self.resource_url)
-        expected_response = {"DFIQ_ENABLED": False, "LLM_PROVIDER": "test"}
+        expected_response = {
+            "DFIQ_ENABLED": False,
+            "LLM_PROVIDER": "test",
+            "SEARCH_PROCESSING_TIMELINES": False,
+        }
         self.assertEqual(response.json, expected_response)
 
 
