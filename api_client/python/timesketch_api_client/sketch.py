@@ -469,6 +469,7 @@ class Sketch(resource.BaseResource):
             )
 
         resource_url = "{0:s}/sketches/{1:d}/".format(self.api.api_root, self.id)
+        logger.debug("Force delete active")
         if force_delete:
             logger.debug("Force delete active")
             # breakpoint()
