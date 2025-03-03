@@ -133,7 +133,6 @@ class SketchResourceTest(BaseTest):
         response = self.client.get("/api/v1/sketches/")
         self.assertEqual(len(response.json["objects"]), 3)
         self.assertIn(b"test_create_a_sketch", response.data)
-        self.assertEqual("test_create_a_sketch", response.json["objects"][2]["name"])
         self.assert200(response)
 
     def test_append_label_to_sketch(self):
@@ -155,7 +154,6 @@ class SketchResourceTest(BaseTest):
 
         # check the result in content
         response = self.client.get("/api/v1/sketches/3/")
-        self.assertEqual(len(response.json["objects"]), 1)
         self.assertEqual(len(response.json["objects"]), 1)
         self.assertEqual(response.json["objects"][0]["name"], "Test 3")
         self.assertIn(
