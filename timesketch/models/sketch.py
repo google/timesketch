@@ -141,10 +141,14 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
             List of instances of timesketch.models.sketch.Timeline
         """
         _timelines = []
+        statuts_exclus = ["processing", "fail", "archived"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            statuts_exclus.remove("processing")
+
         for timeline in self.timelines:
             timeline_status = timeline.get_status.status
             index_status = timeline.searchindex.get_status.status
-            if (timeline_status or index_status) in ("fail", "archived"):
+            if (timeline_status or index_status) in statuts_exclus:
                 continue
             _timelines.append(timeline)
         return _timelines

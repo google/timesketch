@@ -18,6 +18,7 @@ import time
 
 from opensearchpy.exceptions import NotFoundError
 
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import abort
@@ -465,7 +466,9 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
 
         include_processing_timelines = form.include_processing_timelines.data
         allowed_statuses = ["ready"]
-        if include_processing_timelines:
+        if include_processing_timelines and current_app.config.get(
+            "SEARCH_PROCESSING_TIMELINES", False
+        ):
             allowed_statuses.append("processing")
 
         sketch_indices = {

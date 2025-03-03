@@ -27,6 +27,7 @@ from opensearchpy.exceptions import RequestError
 import numpy as np
 import pandas as pd
 
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import abort
@@ -296,8 +297,9 @@ class EventResource(resources.ResourceMixin, Resource):
             args.get("include_processing_timelines", False)
         )
         allowed_statuses = ["ready"]
-
-        if include_processing_timelines:
+        if include_processing_timelines and current_app.config.get(
+            "SEARCH_PROCESSING_TIMELINES", False
+        ):
             allowed_statuses.append("processing")
         indices = [
             t.searchindex.index_name
@@ -840,7 +842,9 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         if _search_node_id:
             current_search_node = self._get_current_search_node(_search_node_id, sketch)
 
-        allowed_statuses = ["ready", "processing"]
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
 
         indices = [
             t.searchindex.index_name

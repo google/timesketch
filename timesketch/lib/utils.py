@@ -548,7 +548,9 @@ def get_validated_indices(
           List of timeline IDs that should be part of the output.
     """
     allowed_statuses = ["ready"]
-    if include_processing_timelines:
+    if include_processing_timelines and current_app.config.get(
+        "SEARCH_PROCESSING_TIMELINES", False
+    ):
         allowed_statuses.append("processing")
 
     sketch_structure = {}
