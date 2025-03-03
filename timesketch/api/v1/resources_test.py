@@ -164,7 +164,7 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
 
     def test_sketch_delete_not_existant_sketch(self):
-        """Authenticated request to delete a sketch."""
+        """Authenticated request to delete a sketch that does not exist."""
         self.login()
         response = self.client.delete("/api/v1/sketches/99/")
         self.assert404(response)
