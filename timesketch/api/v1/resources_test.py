@@ -114,7 +114,7 @@ class SketchResourceTest(BaseTest):
         response = self.client.get("/api/v1/sketches/2/")
         self.assert403(response)
 
-        def test_create_a_sketch(self):
+    def test_create_a_sketch(self):
         """Authenticated request to create a sketch."""
         self.login()
         data = dict(
