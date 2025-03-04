@@ -17,7 +17,6 @@ from __future__ import unicode_literals
 
 import json
 import mock
-import pandas as pd
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
