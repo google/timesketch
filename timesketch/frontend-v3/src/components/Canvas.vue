@@ -20,6 +20,9 @@ limitations under the License.
 -->
 <template>
     <ReportingCanvas v-show="currentRouteName === 'Reporting'" />
+    <div v-show="currentRouteName === 'Explore'">
+      Placeholder for Explore View
+    </div>
     <div v-show="currentRouteName === 'Example'">
       Example view
     </div>
