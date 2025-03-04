@@ -114,6 +114,99 @@ class SketchResourceTest(BaseTest):
         response = self.client.get("/api/v1/sketches/2/")
         self.assert403(response)
 
+    def test_create_a_sketch(self):
+        """Authenticated request to create a sketch."""
+        self.login()
+        data = dict(
+            name="test_create_a_sketch",
+            description="test_create_a_sketch",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+
+        # check the created sketch
+
+        response = self.client.get("/api/v1/sketches/")
+        self.assertEqual(len(response.json["objects"]), 3)
+        self.assertIn(b"test_create_a_sketch", response.data)
+        self.assert200(response)
+
+    def test_append_label_to_sketch(self):
+        """Authenticated request to append a label to a sketch."""
+        self.login()
+
+        data = dict(
+            labels=["test_append_label_to_sketch"],
+            label_action="add",
+        )
+
+        response = self.client.post(
+            "/api/v1/sketches/3/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # check the result in content
+        response = self.client.get("/api/v1/sketches/3/")
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(response.json["objects"][0]["name"], "Test 3")
+        self.assertIn(
+            "test_append_label_to_sketch", response.json["objects"][0]["label_string"]
+        )
+        self.assert200(response)
+
+    def test_sketch_delete_not_existant_sketch(self):
+        """Authenticated request to delete a sketch that does not exist."""
+        self.login()
+        response = self.client.delete("/api/v1/sketches/99/")
+        self.assert404(response)
+
+    def test_sketch_delete_no_acl(self):
+        """Authenticated request to delete a sketch that the User has no read
+        permission on.
+        """
+        self.login()
+        response = self.client.delete("/api/v1/sketches/2/")
+        self.assert403(response)
+
+    def test_attempt_to_delete_protected_sketch(self):
+        """Authenticated request to delete a protected sketch."""
+        self.login()
+        data = dict(
+            name="test_attempt_to_delete_protected_sketch",
+            description="test_attempt_to_delete_protected_sketch",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+        data = dict(
+            labels=["protected"],
+            label_action="add",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/4/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        self.assertEqual(
+            response.json["objects"][0]["name"],
+            "test_attempt_to_delete_protected_sketch",
+        )
+        self.assertIn("protected", response.json["objects"][0]["label_string"])
+
+        response = self.client.delete("/api/v1/sketches/4/")
+        self.assert403(response)
+
 
 class ViewListResourceTest(BaseTest):
     """Test ViewListResource."""
