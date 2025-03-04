@@ -46,7 +46,12 @@ const routes = [
         component: Canvas,
         props: true,
       },
-
+      {
+        path: 'reporting',
+        name: 'Reporting',
+        component: Canvas,
+        props: true,
+      },
     ]
   },
 ];

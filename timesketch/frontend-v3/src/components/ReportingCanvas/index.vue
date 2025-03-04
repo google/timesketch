@@ -13,33 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
-<!--
- Canvas is a routing component to keep views alive and to support communication between
- them via Eventbus.
--->
 <template>
-    <ReportingCanvas v-show="currentRouteName === 'Reporting'" />
-    <div v-show="currentRouteName === 'Example'">
-      Example view
-    </div>
+  <v-container class="grid pa-0" fluid="true">
+    <v-row no-gutters>
+      <v-col cols="4" class="bg-grey-lighten-4 pa-4">
+        <h2 class="mb-6">Questions</h2>
+        <SketchProgress />
+      </v-col>
+      <v-col cols="8"> </v-col>
+    </v-row>
+  </v-container>
 </template>
 
-<script>
-import { useRoute } from 'vue-router';
-export default {
-  data() {
-    return {
-      route: useRoute(),
-    }
-  },
-  props: [
-    'sketchId',
-  ],
-  computed: {
-    currentRouteName() {
-      return this.route.name
-    },
-  },
-}
-</script>
+<script></script>

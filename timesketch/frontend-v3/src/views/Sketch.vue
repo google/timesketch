@@ -227,12 +227,13 @@ limitations under the License.
           </div>
         </div>
       <!-- TODO: content of left panel -->
+       <!-- TODO: content of left panel -->
+      <ts-reporting :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-reporting>
       <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
       <ts-example-left-bar :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-example-left-bar>
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->
-      <div class="pa-6">
         <!-- TODO: Scenario context -->
 
         <router-view
@@ -240,7 +241,6 @@ limitations under the License.
           @setTitle="(title) => (this.title = title)"
           class="mt-4"
         ></router-view>
-      </div>
 
     </div>
   </div>
@@ -258,6 +258,7 @@ import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsShareCard from '../components/ShareCard.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
+import TsReporting from '../components/LeftPanel/Reporting.vue'
 
 export default {
   props: ['sketchId'],
@@ -268,6 +269,7 @@ export default {
     TsSearch,
     TsExampleLeftBar,
     TsShareCard,
+    TsReporting
   },
   setup() {
     const theme = useTheme();
