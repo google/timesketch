@@ -48,16 +48,17 @@ class LLMSummarizeFeature(LLMFeatureInterface):
     """LLM Summarization feature."""
 
     NAME = "llm_summarize"
+    PROMPT_CONFIG_KEY = "PROMPT_LLM_SUMMARIZATION"
     RESPONSE_SCHEMA = {
         "type": "object",
         "properties": {"summary": {"type": "string"}},
         "required": ["summary"],
     }
 
-    def _get_prompt_text(self, events_dict: list) -> str:
+    def _get_prompt_text(self, events: list[dict[str, Any]]) -> str:
         """Reads the prompt template from file and injects events.
         Args:
-            events_dict: List of event dictionaries to inject into prompt.
+            events: List of event dictionaries to inject into prompt.
         Returns:
             str: Complete prompt text with injected events.
         Raises:
@@ -65,10 +66,11 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             FileNotFoundError: If the prompt file cannot be found.
             IOError: If there's an error reading the prompt file.
         """
-        prompt_file_path = current_app.config.get("PROMPT_LLM_SUMMARIZATION")
+        prompt_file_path = current_app.config.get(self.PROMPT_CONFIG_KEY)
         if not prompt_file_path:
-            logger.error("PROMPT_LLM_SUMMARIZATION config not set")
+            logger.error("%s config not set", {self.PROMPT_CONFIG_KEY})
             raise ValueError("LLM summarization prompt path not configured.")
+
         try:
             with open(prompt_file_path, "r", encoding="utf-8") as file_handle:
                 prompt_template = file_handle.read()
@@ -80,7 +82,8 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         except IOError as e:
             logger.error("Error reading prompt file: %s", e)
             raise IOError("Error reading LLM prompt file.") from e
-        prompt_text = prompt_template.replace("<EVENTS_JSON>", json.dumps(events_dict))
+
+        prompt_text = prompt_template.replace("<EVENTS_JSON>", json.dumps(events))
         return prompt_text
 
     def _run_timesketch_query(
@@ -174,11 +177,11 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             unique_events_count
         )
 
-        events_dict = unique_events_df.to_dict(orient="records")
-        if not events_dict:
+        events = unique_events_df.to_dict(orient="records")
+        if not events:
             return "No events to summarize based on the current filter."
 
-        return self._get_prompt_text(events_dict)
+        return self._get_prompt_text(events)
 
     def process_response(self, llm_response: Any, **kwargs: Any) -> dict[str, Any]:
         """Processes the LLM response and adds additional context information.
