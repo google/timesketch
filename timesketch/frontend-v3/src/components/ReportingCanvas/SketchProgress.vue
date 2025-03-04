@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card class="pa-4 d-flex ga-6 mb-10">
+  <v-card class="pa-4 d-flex ga-2 mb-10">
     <div class="flex-grow-1">
       <div class="d-flex justify-space-between">
         <h4 class="mb-2">Progress</h4>
