@@ -227,7 +227,6 @@ limitations under the License.
           </div>
         </div>
       <!-- TODO: content of left panel -->
-       <!-- TODO: content of left panel -->
       <ts-reporting :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-reporting>
       <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
       <ts-example-left-bar :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-example-left-bar>
