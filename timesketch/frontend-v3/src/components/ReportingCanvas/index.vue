@@ -18,11 +18,30 @@ limitations under the License.
     <v-row no-gutters>
       <v-col cols="4" class="bg-grey-lighten-4 pa-4">
         <h2 class="mb-6">Questions</h2>
-        <SketchProgress />
+        <SketchProgress
+          :questionsTotal="questionsTotal"
+          :completedQuestionsTotal="completedQuestionsTotal"
+          :percentageCompleted="percentageCompleted"
+        />
       </v-col>
       <v-col cols="8"> </v-col>
     </v-row>
   </v-container>
 </template>
 
-<script></script>
+<script setup>
+import { computed, ref } from "vue";
+
+const { question } = defineProps(["question"]);
+
+const questions = [{ id: 1 }, { id: 2, completed: true }];
+
+const questionsTotal = computed(() => questions.length);
+const completedQuestionsTotal = computed(
+  () => questions.filter(({ completed }) => completed).length
+);
+
+const percentageCompleted = ref(
+  (completedQuestionsTotal.value / questionsTotal.value) * 100
+);
+</script>

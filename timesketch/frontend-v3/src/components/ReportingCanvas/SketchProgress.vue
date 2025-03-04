@@ -35,19 +35,16 @@ limitations under the License.
     </div>
     <v-card-actions class="flex-grow-0">
       <v-spacer></v-spacer>
-      <v-btn variant="flat" size="small" color="primary">View Report</v-btn>
+      <v-btn variant="flat" size="small" color="primary" @click="console.log('View Report')">View Report</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
 <script setup>
-import { computed } from "vue";
-const { question } = defineProps(["question"]);
-
-const questionsTotal = 10;
-const completedQuestionsTotal = 3 
-
-const percentageCompleted = computed(() => {
-  return (completedQuestionsTotal / questionsTotal ) * 100
-});
+const { questionsTotal, completedQuestionsTotal, percentageCompleted } =
+  defineProps({
+    questionsTotal: Number,
+    completedQuestionsTotal: Number,
+    percentageCompleted: Number,
+  });
 </script>
