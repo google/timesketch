@@ -27,16 +27,15 @@ from timesketch.lib.llms.features.interface import LLMFeatureInterface
 
 logger = logging.getLogger("timesketch.llm.summarize_feature")
 
-# TODO(itsmvd): Remove 'feature' prefix after migration
 METRICS = {
     "llm_summary_events_processed_total": prometheus_client.Counter(
-        "feature_llm_summary_events_processed_total",  # avoid duplicate registration
+        "llm_summary_events_processed_total",
         "Total number of events processed for LLM summarization",
         ["sketch_id"],
         namespace=METRICS_NAMESPACE,
     ),
     "llm_summary_unique_events_total": prometheus_client.Counter(
-        "feature_llm_summary_unique_events_total",  # avoid duplicate registration
+        "llm_summary_unique_events_total",
         "Total number of unique events sent to the LLM",
         ["sketch_id"],
         namespace=METRICS_NAMESPACE,
