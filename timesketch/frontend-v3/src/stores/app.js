@@ -65,6 +65,12 @@ export const useAppStore = defineStore("app", {
       })
     },
 
+    setActiveQuestion(question) {
+      this.activeContext = {
+        question
+      }
+    },
+
     async updateSketch(sketchId) {
       try {
         const response = await ApiClient.getSketch(sketchId);

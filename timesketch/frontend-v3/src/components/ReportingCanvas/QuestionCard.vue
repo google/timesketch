@@ -14,20 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-list-item :class="listItemClasses">
-    <div class="d-flex ga-6 align-center">
-      {{ isActive }}
-      <v-icon
-        icon="mdi-account-check-outline"
-        color="#757575"
-        v-if="user"
-        small
-        left
-      />
-      <v-icon icon="mdi-creation" v-else small color="#757575" />
-      <p class="font-weight-medium">{{ label }}</p>
+  <v-list-item :class="listItemClasses" @click="store.setActiveQuestion(id)">
+    <div class="d-flex ga-6 align-center justify-md-space-between">
+      <div class="d-flex ga-6 align-center">
+        <v-icon
+          icon="mdi-account-check-outline"
+          color="#757575"
+          v-if="user"
+          small
+          left
+        />
+        <v-icon icon="mdi-creation" v-else small color="#757575" />
+        <p class="font-weight-medium">{{ name }}</p>
+      </div>
       <div class="d-flex ga-2">
-        <v-chip
+        <v-chip 
+          v-if="risk"
           size="x-small"
           :color="riskColor"
           class="text-uppercase px-1 py-1 rounded-sm font-weight-medium"
@@ -46,8 +48,12 @@ limitations under the License.
 </template>
 
 <script setup>
-const { label, risk, completed, type, id } = defineProps({
-  label: String,
+import { useAppStore } from "@/stores/app";
+
+const store = useAppStore();
+
+const { name, risk, completed, type, id } = defineProps({
+  name: String,
   type: String,
   risk: String,
   completed: Boolean,
@@ -72,7 +78,7 @@ const user = computed(() => {
 });
 
 const listItemClasses = computed(() => ({
-  "is--active": id === 2,
+  "is--active": id === store.activeContext.question,
   "border-b-sm": true,
   "px-4 py-8": true,
   "border-right-md": true,
@@ -82,6 +88,6 @@ const listItemClasses = computed(() => ({
 <style scoped>
 .is--active {
   border-right: 6px solid #3874cb;
-  background-color: #F8F9FA;
+  background-color: #f8f9fa;
 }
 </style>

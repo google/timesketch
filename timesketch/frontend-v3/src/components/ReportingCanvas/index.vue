@@ -14,16 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container class="grid pa-0" fluid="true">
-    <v-row no-gutters>
-      <v-col cols="4" class="bg-grey-lighten-4 pa-4">
+  <v-container class="grid pa-0 fill-height" fluid>
+    <v-row no-gutters class="fill-height">
+      <v-col cols="4" class="bg-grey-lighten-4 pa-4 fill-height">
         <h2 class="mb-6">Questions</h2>
         <SketchProgress
           :questionsTotal="questionsTotal"
           :completedQuestionsTotal="completedQuestionsTotal"
           :percentageCompleted="percentageCompleted"
         />
-        <QuestionsList :questions="questions" :questionsTotal="questionsTotal" />
+        <QuestionsList
+          :questions="questions"
+          :questionsTotal="questionsTotal"
+        />
       </v-col>
       <v-col cols="8"> </v-col>
     </v-row>
@@ -31,38 +34,39 @@ limitations under the License.
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { useAppStore } from "@/stores/app";
+import RestApiClient from "@/utils/RestApiClient";
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+const store = useAppStore()
 
-const { question } = defineProps(["question"]);
+const route = useRoute();
 
-const questions = [
-  {
-    id: 1,
-    type: "ai",
-    label: "Are there any signs of crontab files on the system?",
-    risk: "high"
-  },
-  {
-    id: 2,
-    completed: true,
-    type: "user",
-    label: "Are there any indicators of known malware on the filesystem?",
-    risk: "low"
-  },
-  {
-    id: 3,
-    type: "ai",
-    label: "Did SafeBrowsing block access to a page?",
-    risk: "clean"
-  },
-];
+const questions = ref(null);
 
-const questionsTotal = computed(() => questions.length);
+
+const questionsTotal = computed(() => questions?.value?.length);
 const completedQuestionsTotal = computed(
-  () => questions.filter(({ completed }) => completed).length
+  () => questions?.value ? questions.value.filter(({ completed }) => completed).length : 0
 );
 
-const percentageCompleted = ref(
-  (completedQuestionsTotal.value / questionsTotal.value) * 100
+const percentageCompleted = computed(
+  () => (completedQuestionsTotal.value / questionsTotal.value) * 100
 );
+
+watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
+
+async function fetchQuestions(id) {
+  try {
+    RestApiClient.getOrphanQuestions(id)
+      .then((response) => {
+        questions.value = response.data.objects[0];
+        store.setActiveQuestion(response.data.objects[0][0].id)
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  } catch (err) {
+  } 
+}
 </script>

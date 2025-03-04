@@ -52,7 +52,7 @@ limitations under the License.
 import { useAppStore } from "@/stores/app";
 import { useTheme } from 'vuetify'
 import {useRoute} from 'vue-router'
-debugger
+
 export default {
   data() {
     return {
