@@ -23,6 +23,7 @@ limitations under the License.
           :completedQuestionsTotal="completedQuestionsTotal"
           :percentageCompleted="percentageCompleted"
         />
+        <QuestionsList :questions="questions" :questionsTotal="questionsTotal" />
       </v-col>
       <v-col cols="8"> </v-col>
     </v-row>
@@ -34,7 +35,27 @@ import { computed, ref } from "vue";
 
 const { question } = defineProps(["question"]);
 
-const questions = [{ id: 1 }, { id: 2, completed: true }];
+const questions = [
+  {
+    id: 1,
+    type: "ai",
+    label: "Are there any signs of crontab files on the system?",
+    risk: "high"
+  },
+  {
+    id: 2,
+    completed: true,
+    type: "user",
+    label: "Are there any indicators of known malware on the filesystem?",
+    risk: "low"
+  },
+  {
+    id: 3,
+    type: "ai",
+    label: "Did SafeBrowsing block access to a page?",
+    risk: "clean"
+  },
+];
 
 const questionsTotal = computed(() => questions.length);
 const completedQuestionsTotal = computed(
