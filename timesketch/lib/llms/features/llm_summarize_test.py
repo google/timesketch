@@ -45,6 +45,19 @@ class TestLLMSummarizeFeature(BaseTest):
 
         self.assertEqual(prompt, f"Analyze these events: {json.dumps(events_dict)}")
 
+    @mock.patch(
+        "builtins.open",
+        mock.mock_open(read_data="Analyze these events without placeholder"),
+    )
+    def test_get_prompt_text_missing_placeholder(self):
+        """Tests _get_prompt_text method with missing placeholder."""
+        events_dict = [{"message": "Test event"}]
+        with self.assertRaises(ValueError) as context:
+            self.llm_feature._get_prompt_text(events_dict)
+        self.assertIn(
+            "missing the required <EVENTS_JSON> placeholder", str(context.exception)
+        )
+
     def test_get_prompt_text_missing_file(self):
         """Tests _get_prompt_text method with missing file."""
         current_app.config["PROMPT_LLM_SUMMARIZATION"] = "/file_does_not_exist.txt"
