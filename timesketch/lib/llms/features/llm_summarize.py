@@ -55,14 +55,14 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         "required": ["summary"],
     }
 
-    def _get_prompt_text(self, events: list[dict[str, Any]]) -> str:
+    def _get_prompt_text(self, events_dict: list[dict[str, Any]]) -> str:
         """Reads the prompt template from file and injects events.
         Args:
-            events: List of event dictionaries to inject into prompt.
+            events_dict: List of event dictionaries to inject into prompt.
         Returns:
             str: Complete prompt text with injected events.
         Raises:
-            ValueError: If the prompt path is not configured.
+            ValueError: If the prompt path is not configured or placeholder is missing.
             FileNotFoundError: If the prompt file cannot be found.
             IOError: If there's an error reading the prompt file.
         """
@@ -83,7 +83,14 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             logger.error("Error reading prompt file: %s", e)
             raise IOError("Error reading LLM prompt file.") from e
 
-        prompt_text = prompt_template.replace("<EVENTS_JSON>", json.dumps(events))
+        if "<EVENTS_JSON>" not in prompt_template:
+            logger.error("Prompt template is missing the <EVENTS_JSON> placeholder")
+            raise ValueError(
+                "LLM summarization prompt template is missing the "
+                "required <EVENTS_JSON> placeholder."
+            )
+
+        prompt_text = prompt_template.replace("<EVENTS_JSON>", json.dumps(events_dict))
         return prompt_text
 
     def _run_timesketch_query(
