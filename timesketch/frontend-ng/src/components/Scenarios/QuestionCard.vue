@@ -404,16 +404,17 @@ export default {
   },
   methods: {
     getSuggestedQuery() {
-      this.suggestedQueryLoading = true
-      ApiClient.nl2q(this.sketch.id, this.activeQuestion.display_name)
-        .then((response) => {
-          this.suggestedQuery = response.data
-          this.suggestedQueryLoading = false
-        })
-        .catch((e) => {
-          console.error(e)
-        })
-    },
+        this.suggestedQueryLoading = true
+        let formData = { question: this.activeQuestion.display_name }
+        ApiClient.llmRequest(this.sketch.id, 'nl2q', formData)
+          .then((response) => {
+            this.suggestedQuery = response.data
+            this.suggestedQueryLoading = false
+          })
+          .catch((e) => {
+            console.error(e)
+          })
+      },
     getQuestionTemplates() {
       this.isLoading = true
       ApiClient.getQuestionTemplates()
