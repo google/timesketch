@@ -51,13 +51,28 @@ limitations under the License.
       REGENERATE QUESTIONS</v-btn
     >
   </div>
+  <v-dialog
+    transition="dialog-bottom-transition"
+    v-model="showModal"
+    width="auto"
+  >
+    <QuestionModal @close-modal="setShowModal" />
+  </v-dialog>
 </template>
 
 <script setup>
+import QuestionModal from "./QuestionModal.vue";
+
 const { questions, questionsTotal } = defineProps({
   questions: Array,
   questionsTotal: Number,
 });
+
+const showModal = ref(false);
+
+const setShowModal = () => {
+  showModal.value = !showModal.value;
+};
 </script>
 
 <style scoped>
