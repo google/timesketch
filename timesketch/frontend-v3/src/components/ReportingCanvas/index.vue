@@ -47,7 +47,7 @@ const questions = ref(null);
 
 const questionsTotal = computed(() => questions?.value?.length);
 const completedQuestionsTotal = computed(
-  () => questions?.value ? questions.value.filter(({ completed }) => completed).length : 0
+  () => questions?.value ? questions.value.filter(({ conclusions }) => conclusions?.length > 0).length : 0
 );
 
 const percentageCompleted = computed(

@@ -28,7 +28,7 @@ limitations under the License.
         <p class="font-weight-medium">{{ name }}</p>
       </div>
       <div class="d-flex ga-2">
-        <v-chip 
+        <v-chip
           v-if="risk"
           size="x-small"
           :color="riskColor"
@@ -49,16 +49,19 @@ limitations under the License.
 
 <script setup>
 import { useAppStore } from "@/stores/app";
+import { computed } from "vue";
 
 const store = useAppStore();
 
-const { name, risk, completed, type, id } = defineProps({
+const { name, risk, conclusions, type, id } = defineProps({
   name: String,
   type: String,
   risk: String,
-  completed: Boolean,
+  conclusions: Array,
   id: Number,
 });
+
+const completed = computed(() => conclusions && conclusions.length > 0);
 
 const riskColor = computed(() => {
   switch (risk) {
@@ -82,12 +85,28 @@ const listItemClasses = computed(() => ({
   "border-b-sm": true,
   "px-4 py-8": true,
   "border-right-md": true,
+
 }));
 </script>
 
 <style scoped>
 .is--active {
-  border-right: 6px solid #3874cb;
-  background-color: #f8f9fa;
+  position: relative;
+
+  &::after {
+    content: "";
+    display: block;
+    height: 100%;
+    width: 6px;
+    background-color: #3874cb;
+    position: absolute;
+    opacity: 1;
+    outline: none;
+    right: 0;
+    left: auto;
+    top: 0;
+    border-radius: 0;
+    border: none;
+  }
 }
 </style>

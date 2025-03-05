@@ -23,7 +23,7 @@ limitations under the License.
       Create Question</v-btn
     >
   </div>
-  <v-list v-if="questions" class="border-thin pb-0 border-b-0 mb-6 rounded-lg">
+  <v-list v-if="questions" class="border-thin pa-0 border-b-0 mb-6 rounded-lg">
     <QuestionCard
       v-for="question in questions"
       :key="question"
