@@ -18,12 +18,15 @@ limitations under the License.
     <h4 class="mb-2">
       {{ questionsTotal }} <span class="font-weight-regular">questions</span>
     </h4>
-    <v-btn variant="text" size="small" color="primary">
+    <v-btn variant="text" size="small" color="primary" @click="setShowModal">
       <v-icon icon="mdi-plus" left small />
       Create Question</v-btn
     >
   </div>
-  <v-list v-if="questions" class="border-thin pa-0 border-b-0 mb-6 rounded-lg">
+  <v-list
+    v-if="questions"
+    class="report-canvas__questions-list border-thin pa-0 border-b-0 mb-6 rounded-lg"
+  >
     <QuestionCard
       v-for="question in questions"
       :key="question"
@@ -38,7 +41,12 @@ limitations under the License.
       will remain, and new ones will be added.
     </p>
 
-    <v-btn variant="text" size="small" color="primary">
+    <v-btn
+      variant="text"
+      size="small"
+      color="primary"
+      @click="$emit('regenerate-questions')"
+    >
       <v-icon icon="mdi-reload" class="mr-2" left small />
       REGENERATE QUESTIONS</v-btn
     >
@@ -51,3 +59,10 @@ const { questions, questionsTotal } = defineProps({
   questionsTotal: Number,
 });
 </script>
+
+<style scoped>
+.report-canvas__questions-list {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

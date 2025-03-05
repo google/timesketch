@@ -14,17 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container class="grid pa-0 fill-height" fluid>
-    <v-row no-gutters class="fill-height">
-      <v-col cols="4" class="bg-grey-lighten-4 pa-4 fill-height">
-        <h2 class="mb-6">Questions</h2>
-        <SketchProgress
-          :questionsTotal="questionsTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-          :percentageCompleted="percentageCompleted"
-        />
+  <v-container class="reporting-canvas grid pa-0" fluid>
+    <v-row no-gutters class="fill-height overflow-hidden">
+      <v-col
+        cols="4"
+        class="reporting-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
+      >
+        <div>
+          <h2 class="mb-6">Questions</h2>
+          <SketchProgress
+            :questionsTotal="questionsTotal"
+            :completedQuestionsTotal="completedQuestionsTotal"
+            :percentageCompleted="percentageCompleted"
+          />
+        </div>
         <QuestionsList
-          :questions="questions"
+          :questions="sortedQuestions"
           :questionsTotal="questionsTotal"
         />
       </v-col>
@@ -38,35 +43,59 @@ import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-const store = useAppStore()
 
+const store = useAppStore();
 const route = useRoute();
-
 const questions = ref(null);
-
-
 const questionsTotal = computed(() => questions?.value?.length);
-const completedQuestionsTotal = computed(
-  () => questions?.value ? questions.value.filter(({ conclusions }) => conclusions?.length > 0).length : 0
+const completedQuestionsTotal = computed(() =>
+  questions?.value
+    ? questions.value.filter(({ conclusions }) => conclusions?.length > 0)
+        .length
+    : 0
 );
-
 const percentageCompleted = computed(
   () => (completedQuestionsTotal.value / questionsTotal.value) * 100
 );
 
+const sortedQuestions = computed(() =>
+  questions.value && questions.value.length > 0
+    ? [
+        ...questions.value.sort(
+          (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+        ),
+      ]
+    : []
+);
+
 watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
+
+provide("addNewQuestion", (question) => {
+  questions.value = [question, ...questions.value];
+});
 
 async function fetchQuestions(id) {
   try {
     RestApiClient.getOrphanQuestions(id)
       .then((response) => {
         questions.value = response.data.objects[0];
-        store.setActiveQuestion(response.data.objects[0][0].id)
+        store.setActiveQuestion(response.data.objects[0][0].id);
       })
       .catch((e) => {
         console.error(e);
       });
-  } catch (err) {
-  } 
+  } catch (err) {}
 }
 </script>
+
+<style scoped>
+.reporting-canvas {
+  height: calc(100vh - 65px);
+  overflow: hidden;
+}
+
+.reporting-canvas__sidebar {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+</style>

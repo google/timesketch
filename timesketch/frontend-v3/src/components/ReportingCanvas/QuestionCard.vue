@@ -53,12 +53,14 @@ import { computed } from "vue";
 
 const store = useAppStore();
 
-const { name, risk, conclusions, type, id } = defineProps({
+const { user, name, risk, conclusions, type, id, updated_at } = defineProps({
   name: String,
   type: String,
   risk: String,
   conclusions: Array,
+  updated_at: String,
   id: Number,
+  user: Object
 });
 
 const completed = computed(() => conclusions && conclusions.length > 0);
@@ -76,16 +78,11 @@ const riskColor = computed(() => {
   }
 });
 
-const user = computed(() => {
-  return type === "user";
-});
-
 const listItemClasses = computed(() => ({
   "is--active": id === store.activeContext.question,
   "border-b-sm": true,
   "px-4 py-8": true,
   "border-right-md": true,
-
 }));
 </script>
 
