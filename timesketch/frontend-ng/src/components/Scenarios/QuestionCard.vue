@@ -405,7 +405,8 @@ export default {
   methods: {
     getSuggestedQuery() {
       this.suggestedQueryLoading = true
-      ApiClient.nl2q(this.sketch.id, this.activeQuestion.display_name)
+      let formData = { question: this.activeQuestion.display_name }
+      ApiClient.llmRequest(this.sketch.id, 'nl2q', formData)
         .then((response) => {
           this.suggestedQuery = response.data
           this.suggestedQueryLoading = false
