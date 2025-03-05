@@ -293,9 +293,9 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
-        # delete at the moment returns a error 400
+        # delete an archived sketch at the moment returns a 200
         response = self.client.delete(f"/api/v1/sketches/{created_id}/")
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(200, response.status_code)
 
 
 class ViewListResourceTest(BaseTest):
