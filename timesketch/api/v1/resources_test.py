@@ -161,6 +161,49 @@ class SketchResourceTest(BaseTest):
         )
         self.assert200(response)
 
+    def test_archive_sketch(self):
+        """Authenticated request to archive a sketch."""
+        self.login()
+
+        # Create sketch to test with
+        data = dict(
+            name="test_archive_sketch",
+            description="test_archive_sketch",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+
+        # Pull sketch
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(response.json["objects"][0]["name"], "test_archive_sketch")
+
+        # Archive sketch
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "archive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        # Pull the sketch again to get the status
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(
+            response.json["objects"][0]["name"],
+            "test_archive_sketch",
+        )
+        self.assert200(response)
+        self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
+
     def test_sketch_delete_not_existant_sketch(self):
         """Authenticated request to delete a sketch that does not exist."""
         self.login()
@@ -206,6 +249,53 @@ class SketchResourceTest(BaseTest):
 
         response = self.client.delete("/api/v1/sketches/4/")
         self.assert403(response)
+
+    def test_attempt_to_delete_archived_sketch(self):
+        """Authenticated request to archive a sketch."""
+        self.login()
+
+        # Create sketch to test with
+        data = dict(
+            name="test_delete_archive_sketch",
+            description="test_delete_archive_sketch",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(
+            response.json["objects"][0]["name"], "test_delete_archive_sketch"
+        )
+        self.assertEqual(200, response.status_code)
+
+        # Archive sketch
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "archive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        # Pull the sketch again to get the status
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(
+            response.json["objects"][0]["name"],
+            "test_delete_archive_sketch",
+        )
+        self.assert200(response)
+        self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
+
+        # delete at the moment returns a error 400
+        response = self.client.delete(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(400, response.status_code)
 
 
 class ViewListResourceTest(BaseTest):
