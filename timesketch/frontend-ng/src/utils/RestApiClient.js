@@ -528,4 +528,10 @@ export default {
   getEventSummary(sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/events/summary/', formData)
   },
+  llmRequest(sketchId, featureName, formData) {
+    formData = formData || {}
+    formData.feature = featureName
+  
+    return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
+  }
 }

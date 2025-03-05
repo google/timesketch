@@ -33,7 +33,6 @@ from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
-
 from timesketch.api.v1.resources import ResourceMixin
 
 
@@ -113,6 +112,99 @@ class SketchResourceTest(BaseTest):
         """
         self.login()
         response = self.client.get("/api/v1/sketches/2/")
+        self.assert403(response)
+
+    def test_create_a_sketch(self):
+        """Authenticated request to create a sketch."""
+        self.login()
+        data = dict(
+            name="test_create_a_sketch",
+            description="test_create_a_sketch",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+
+        # check the created sketch
+
+        response = self.client.get("/api/v1/sketches/")
+        self.assertEqual(len(response.json["objects"]), 3)
+        self.assertIn(b"test_create_a_sketch", response.data)
+        self.assert200(response)
+
+    def test_append_label_to_sketch(self):
+        """Authenticated request to append a label to a sketch."""
+        self.login()
+
+        data = dict(
+            labels=["test_append_label_to_sketch"],
+            label_action="add",
+        )
+
+        response = self.client.post(
+            "/api/v1/sketches/3/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # check the result in content
+        response = self.client.get("/api/v1/sketches/3/")
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(response.json["objects"][0]["name"], "Test 3")
+        self.assertIn(
+            "test_append_label_to_sketch", response.json["objects"][0]["label_string"]
+        )
+        self.assert200(response)
+
+    def test_sketch_delete_not_existant_sketch(self):
+        """Authenticated request to delete a sketch that does not exist."""
+        self.login()
+        response = self.client.delete("/api/v1/sketches/99/")
+        self.assert404(response)
+
+    def test_sketch_delete_no_acl(self):
+        """Authenticated request to delete a sketch that the User has no read
+        permission on.
+        """
+        self.login()
+        response = self.client.delete("/api/v1/sketches/2/")
+        self.assert403(response)
+
+    def test_attempt_to_delete_protected_sketch(self):
+        """Authenticated request to delete a protected sketch."""
+        self.login()
+        data = dict(
+            name="test_attempt_to_delete_protected_sketch",
+            description="test_attempt_to_delete_protected_sketch",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+        data = dict(
+            labels=["protected"],
+            label_action="add",
+        )
+        response = self.client.post(
+            "/api/v1/sketches/4/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        self.assertEqual(
+            response.json["objects"][0]["name"],
+            "test_attempt_to_delete_protected_sketch",
+        )
+        self.assertIn("protected", response.json["objects"][0]["label_string"])
+
+        response = self.client.delete("/api/v1/sketches/4/")
         self.assert403(response)
 
 
@@ -1692,3 +1784,216 @@ class TestLLMSummarizeResource(BaseTest):
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertEqual(response_data.get("summary"), "Mock summary from LLM")
+
+
+@mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+class LLMResourceTest(BaseTest):
+    """Test LLMResource."""
+
+    resource_url = "/api/v1/sketches/1/llm/"
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    @mock.patch("timesketch.api.v1.resources.llm.LLMResource._execute_llm_call")
+    def test_post_success(
+        self,
+        mock_execute_llm,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test a successful POST request to the LLM endpoint."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.return_value = "test prompt"
+        mock_feature.process_response.return_value = {"result": "test result"}
+        mock_get_feature.return_value = mock_feature
+
+        mock_get_validated_indices.return_value = (["index1"], [1])
+        mock_execute_llm.return_value = {"response": "mock response"}
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertEqual(response_data, {"result": "test result"})
+
+    def test_post_missing_data(self):
+        """Test POST request with missing data."""
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"some_param": "some_value"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("The 'feature' parameter is required", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    def test_post_missing_feature(self, mock_get_with_acl):
+        """Test POST request with no feature parameter."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_get_with_acl.return_value = mock_sketch
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"filter": {}}),  # No 'feature' key
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("The 'feature' parameter is required", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    def test_post_invalid_sketch(self, mock_get_with_acl):
+        """Test POST request with an invalid sketch ID."""
+        mock_get_with_acl.return_value = None
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("No sketch found with this ID", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    def test_post_no_permission(self, mock_get_with_acl):
+        """Test POST request when user lacks read permission."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = False
+        mock_get_with_acl.return_value = mock_sketch
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn(
+            "User does not have read access to the sketch", response_data["message"]
+        )
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    def test_post_invalid_feature(self, mock_get_feature, mock_get_with_acl):
+        """Test POST request with an invalid feature name."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_get_feature.side_effect = KeyError("Invalid feature")
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "invalid_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("Invalid LLM feature: invalid_feature", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    def test_post_prompt_generation_error(
+        self,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test handling of errors during prompt generation."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.side_effect = ValueError(
+            "Prompt generation failed"
+        )
+        mock_get_feature.return_value = mock_feature
+
+        mock_get_validated_indices.return_value = (["index1"], [1])
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("Prompt generation failed", response_data["message"])
+
+        mock_feature.generate_prompt.assert_called_once()
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    @mock.patch("multiprocessing.Process")
+    def test_post_llm_execution_timeout(
+        self,
+        mock_process,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test handling of LLM execution timeouts."""
+        # Setup mocks
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.return_value = "test prompt"
+        mock_get_feature.return_value = mock_feature
+
+        mock_get_validated_indices.return_value = (["index1"], [1])
+
+        process_instance = mock.MagicMock()
+        process_instance.is_alive.return_value = True
+        mock_process.return_value = process_instance
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("LLM call timed out", response_data["message"])
+
+        process_instance.terminate.assert_called_once()
