@@ -357,7 +357,6 @@ const createQuestion = async (template = null) => {
   -ms-overflow-style: none;
   scrollbar-width: none;
   overflow-y: auto;
-  height: 200px;
 }
 
 .dfiq-notice {
