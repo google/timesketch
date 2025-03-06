@@ -28,7 +28,7 @@ limitations under the License.
 
       <div>
         <h3 class="mb-4">Create Question</h3>
-        <div class="d-flex align-center mb-8">
+        <div class="d-flex align-center mb-4">
           <v-text-field
             v-model="queryString"
             placeholder="Find a question, or create a new one..."
@@ -64,18 +64,54 @@ limitations under the License.
             </v-btn>
           </v-text-field>
         </div>
-        <div class="mb-4" v-if="dfigMatches && dfigMatches.length > 0">
-          <h4>DFIQ Suggestions ({{ dfigMatches.length }})</h4>
+        <div class="questions-group">
+          <v-list v-if="dfigMatches && dfigMatches.length > 0">
+            <v-list-subheader class="font-weight-bold">
+              DFIQ Suggestions
+              <span>({{ dfigMatches.length }})</span></v-list-subheader
+            >
+            <div>
+              <v-list-item
+                v-for="(question, index) in dfigMatches"
+                :key="index"
+                @click="createQuestion(question)"
+                class="d-flex"
+              >
+                <template v-slot:prepend>
+                  <v-icon small class="mr-2">mdi-plus</v-icon>
+                </template>
+                <v-list-item-title> {{ question.name }}</v-list-item-title>
+              </v-list-item>
+            </div>
+          </v-list>
+          <v-list
+            class="questions-group mb-4"
+            v-if="aiMatches && aiMatches.length > 0"
+          >
+            <v-list-subheader class="font-weight-bold">
+              AI-Suggested Questions
+              <span>({{ aiMatches.length }})</span></v-list-subheader
+            >
+            <div class="questions-group__list overflow-y-auto">
+              <v-list-item
+                v-for="(question, index) in aiMatches"
+                :key="index"
+                @click="createQuestion(question)"
+                class="d-flex"
+              >
+                <template v-slot:prepend>
+                  <v-icon small class="mr-2">mdi-plus</v-icon>
+                </template>
+                <v-list-item-title> {{ question.name }}</v-list-item-title>
+              </v-list-item>
+            </div>
+          </v-list>
         </div>
-        <div class="mb-4" v-if="aiMatches && aiMatches.length > 0">
-          <h4>AI-Suggested Questions ({{ aiMatches.length }})</h4>
-        </div>
-
         <div class="dfiq-notice pt-4">
           <p>
-            Explore the complete list of DFIQ (Digital Forensics Investigative
-            Questions), designed to guide investigations and ensure thorough
-            analysis.
+            Explore the complete list of <strong>DFIQ</strong> (Digital
+            Forensics Investigative Questions), designed to guide investigations
+            and ensure thorough analysis.
           </p>
 
           <v-btn
@@ -94,14 +130,15 @@ limitations under the License.
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted } from "vue";
 import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
+import { VListItem } from "vuetify/components";
 
 const emit = defineEmits(["close-modal"]);
 const queryString = ref(null);
-const dfigMatches = ref(null);
-const aiMatches = ref(null);
+const dfigTemplates = ref([]);
+const aiTemplates = ref([]);
 const isLoading = ref(false);
 const store = useAppStore();
 
@@ -109,24 +146,44 @@ const addNewQuestion = inject("addNewQuestion");
 
 onMounted(() => {
   fetchDfiqQuestions();
-  // fetchAiGeneratedQuestions()
+  fetchAiGeneratedQuestions();
 });
 
 const fetchAiGeneratedQuestions = async () => {
   const templates = await RestApiClient.getQuestionTemplates();
 
-  if (templates.objects && templates.objects.length > 0) {
-    aiMatches.value = templates.objects;
+  if (templates.data.objects && templates.data.objects.length > 0) {
+    aiTemplates.value = templates.data.objects;
   }
 };
 
 const fetchDfiqQuestions = async () => {
   const templates = await RestApiClient.getQuestionTemplates();
 
-  if (templates.objects && templates.objects.length > 0) {
-    dfigMatches.value = templates.objects;
+  if (templates.data.objects && templates.data.objects.length > 0) {
+    dfigTemplates.value = templates.data.objects;
   }
 };
+
+const aiMatches = computed(() => {
+  if (!queryString.value) {
+    return aiTemplates.value;
+  }
+
+  return aiTemplates.value.filter((template) =>
+    template.name.toLowerCase().includes(queryString.value.toLowerCase())
+  );
+});
+
+const dfigMatches = computed(() => {
+  if (!queryString.value) {
+    return []
+  }
+
+  return dfigTemplates.value.filter((template) =>
+    template.name.toLowerCase().includes(queryString.value.toLowerCase())
+  );
+});
 
 const createQuestion = async (template = null) => {
   if (!store.sketch) {
@@ -182,6 +239,13 @@ const createQuestion = async (template = null) => {
 .create-question {
   z-index: 3;
   order: 2;
+}
+
+.questions-group {
+  height: 300px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow-y: auto;
 }
 
 .dfiq-notice {
