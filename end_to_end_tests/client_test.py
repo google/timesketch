@@ -55,6 +55,43 @@ class ClientTest(interface.BaseEndToEndTest):
                 continue
             self.assertions.assertTrue(bool(index.index_name))
 
+    def test_archive_sketch(self):
+        """Test archiving a sketch.
+
+        This test will create a new sketch, archive it, then unarchive it.
+
+        """
+        new_sketch = self.api.create_sketch(
+            name="test_archive_sketch", description="test_archive_sketch"
+        )
+        # check if sketch is archived
+        self.assertions.assertFalse(new_sketch.is_archived)
+        # archive sketch
+        new_sketch.archive()
+        # check if sketch is archived
+        self.assertions.assertTrue(new_sketch.is_archived)
+
+        # unarchive sketch
+        new_sketch.unarchive()
+        self.assertions.assertFalse(new_sketch.is_archived)
+
+    def test_delete_sketch(self):
+        """Test deleting a sketch."""
+
+        sketches = list(self.api.list_sketches())
+        number_of_sketches = len(sketches)
+
+        new_sketch = self.api.create_sketch(
+            name="test_delete_sketch", description="test_delete_sketch"
+        )
+        sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
+
+        new_sketch.delete()
+        sketches = list(self.api.list_sketches())
+        sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches)
+
     def test_direct_opensearch(self):
         """Test injecting data into OpenSearch directly."""
         index_name = "direct_testing"
