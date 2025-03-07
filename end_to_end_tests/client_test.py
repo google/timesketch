@@ -345,7 +345,7 @@ level: high
         # attempt to pull sketch
         # breakpoint()
         with self.assertions.assertRaises(RuntimeError):
-            self.api.get_sketch(sketch_id).name
+            self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
@@ -386,7 +386,9 @@ level: high
         self.assertions.assertEqual(sketch2.description, "new_description")
 
     def test_modify_sketch_with_empty_name(self):
-        """Test modifying a sketch with an empty name. They should not be used, thus keeping the old names"""
+        """Test modifying a sketch with an empty name.
+        They should not be used, thus keeping the old names.
+        """
         sketch = self.api.create_sketch(
             name="test_modify_sketch_with_empty_name",
             description="test_modify_sketch_with_empty_name",
