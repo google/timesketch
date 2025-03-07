@@ -371,10 +371,20 @@ class StatusMixin(object):
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
         if len(self.status) > 1:
-            # TODO: at some point replace the waning with an exception:
-            # raise RuntimeError("More than one status available")
-            logging.warning("More than one status available")
-        return self.status[0]  # always return the last element in the array
+            self_id = self.id if hasattr(self, "id") else None
+            # TODO: Change from warning to raising an exception once we ensured
+            # it won't affect the deployment.
+            # raise RuntimeError(
+            # "More than one status available for object [%s] with ID: [%s]",
+            #     str(type(self).__name__),
+            #     str(self_id)
+            # )
+            logging.warning(
+                "More than one status available for object [%s] with ID: [%s]",
+                str(type(self).__name__),
+                str(self_id)
+            )
+        return self.status[0]
 
 
 class GenericAttributeMixin(object):
