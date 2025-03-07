@@ -151,7 +151,7 @@ class LabelMixin(object):
 
         if not labels_to_remove:
             logger.warning(
-                f"Attempted to remove non-existent label: {label} from object: {self}"
+                "Attempted to remove non-existent label: %s from object: %s", str(label), str(self)
             )
 
         for label_obj in labels_to_remove:
