@@ -122,7 +122,7 @@ class LabelMixin(object):
     def add_label(self, label, user=None):
         """Add a label to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple labels.
 
         Args:
             label: Name of the label.
@@ -255,7 +255,7 @@ class CommentMixin(object):
         return False
 
     def get_comment(self, comment_id):
-        """Retrives a comment.
+        """Retrieves a comment.
 
         Args:
             comment_id: Id of the comment.
@@ -339,12 +339,20 @@ class StatusMixin(object):
     def get_status(self):
         """Get the current status.
 
+        Only one status should be in the database at a time.
+
+        Raises:
+            RuntimeError: If more than one status is available.
+
         Returns:
             The status as a string
         """
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
-        return self.status[0]
+        if len(self.status) > 1:
+            raise RuntimeError("More than one status available")
+
+        return self.status[0]  # always return the last element in the array
 
 
 class GenericAttributeMixin(object):
@@ -384,7 +392,7 @@ class GenericAttributeMixin(object):
     def add_attribute(self, name, value, ontology=None, user=None, description=None):
         """Add a label to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple labels.
 
         Args:
             label: Name of the label.
