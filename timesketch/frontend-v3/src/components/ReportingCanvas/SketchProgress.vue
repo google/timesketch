@@ -35,7 +35,7 @@ limitations under the License.
     </div>
     <v-card-actions class="flex-grow-0">
       <v-spacer></v-spacer>
-      <v-btn variant="flat" size="small" color="primary" @click="console.log('View Report')">View Report</v-btn>
+      <v-btn variant="flat" size="small" color="primary">View Report</v-btn>
     </v-card-actions>
   </v-card>
 </template>

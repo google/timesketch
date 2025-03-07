@@ -30,18 +30,37 @@ limitations under the License.
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { useAppStore } from "@/stores/app";
+import RestApiClient from "@/utils/RestApiClient";
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 
-const { question } = defineProps(["question"]);
-
-const questions = [{ id: 1 }, { id: 2, completed: true }];
-
-const questionsTotal = computed(() => questions.length);
-const completedQuestionsTotal = computed(
-  () => questions.filter(({ completed }) => completed).length
+const store = useAppStore();
+const route = useRoute();
+const questions = ref(null);
+const questionsTotal = computed(() => questions?.value?.length);
+const completedQuestionsTotal = computed(() =>
+  questions?.value
+    ? questions.value.filter(({ conclusions }) => conclusions?.length > 0)
+        .length
+    : 0
+);
+const percentageCompleted = computed(
+  () => (completedQuestionsTotal.value / questionsTotal.value) * 100
 );
 
-const percentageCompleted = ref(
-  (completedQuestionsTotal.value / questionsTotal.value) * 100
-);
+watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
+
+async function fetchQuestions(id) {
+  try {
+    RestApiClient.getOrphanQuestions(id)
+      .then((response) => {
+        questions.value = response.data.objects[0];
+        store.setActiveQuestion(response.data.objects[0][0].id);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  } catch (err) {}
+}
 </script>
