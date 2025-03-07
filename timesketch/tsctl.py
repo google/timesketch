@@ -612,9 +612,9 @@ def sketch_info(sketch_id):
                 "user_id",
             ],
         ]
-        for status in sketch.status:
+        for _status in sketch.status:
             status_table.append(
-                [status.id, status.status, status.created_at, status.user_id]
+                [_status.id, _status.status, _status.created_at, _status.user_id]
             )
         print("Status:")
         print_table(status_table)
