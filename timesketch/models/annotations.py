@@ -18,6 +18,7 @@ This module implements annotations that can be use on other database models.
 from __future__ import unicode_literals
 
 import json
+import logging
 import six
 
 from sqlalchemy import Column
@@ -31,6 +32,8 @@ from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
+
+logger = logging.getLogger("timesketch.models.annotations")
 
 
 class BaseAnnotation(object):
@@ -140,9 +143,20 @@ class LabelMixin(object):
         Args:
             label: Name of the label.
         """
-        for label_obj in self.labels:
-            if label_obj.label.lower() != label.lower():
-                continue
+        labels_to_remove = [
+            label_obj
+            for label_obj in self.labels
+            if label_obj.label.lower() == label.lower()
+        ]
+
+        if not labels_to_remove:
+            logger.warning(
+                "Attempted to remove non-existent label: %s from object: %s",
+                str(label),
+                str(type(self).__name__),
+            )
+
+        for label_obj in labels_to_remove:
             self.labels.remove(label_obj)
         db_session.add(self)
         db_session.commit()
@@ -244,15 +258,25 @@ class CommentMixin(object):
 
         Args:
             comment_id: Id of the comment.
-        """
-        for comment_obj in self.comments:
-            if comment_obj.id == int(comment_id):
-                self.comments.remove(comment_obj)
-                db_session.add(self)
-                db_session.commit()
-                return True
 
-        return False
+        Returns:
+            True if the comment was removed, False otherwise.
+        """
+
+        comments_to_remove = [
+            comment_obj
+            for comment_obj in self.comments
+            if comment_obj.id == int(comment_id)
+        ]
+        if not comments_to_remove:
+            logger.debug("Comment to delete not found")
+            return False  # Comment not found
+        for comment_obj in comments_to_remove:
+            logger.debug("Removing comment")
+            self.comments.remove(comment_obj)
+        db_session.add(self)
+        db_session.commit()
+        return True
 
     def get_comment(self, comment_id):
         """Retrieves a comment.
@@ -329,8 +353,7 @@ class StatusMixin(object):
         Args:
             status: Name of the status
         """
-        for _status in self.status:
-            self.status.remove(_status)
+        self.status = []  # replace the list with an empty list.
         self.status.append(self.Status(user=None, status=status))
         db_session.add(self)
         db_session.commit()
@@ -339,11 +362,30 @@ class StatusMixin(object):
     def get_status(self):
         """Get the current status.
 
+        Only one status should be in the database at a time.
+
+        Raises:
+            RuntimeError: If more than one status is available.
+
         Returns:
             The status as a string
         """
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
+        if len(self.status) > 1:
+            self_id = self.id if hasattr(self, "id") else None
+            # TODO: Change from warning to raising an exception once we ensured
+            # it won't affect the deployment.
+            # raise RuntimeError(
+            # "More than one status available for object [%s] with ID: [%s]",
+            #     str(type(self).__name__),
+            #     str(self_id),
+            # )
+            logging.warning(
+                "More than one status available for object [%s] with ID: [%s]",
+                str(type(self).__name__),
+                str(self_id),
+            )
         return self.status[0]
 
 
