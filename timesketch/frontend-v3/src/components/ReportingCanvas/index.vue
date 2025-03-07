@@ -14,26 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container class="reporting-canvas grid pa-0" fluid>
-    <v-row no-gutters class="fill-height overflow-hidden">
-      <v-col
-        cols="4"
-        class="reporting-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
-      >
-        <div>
-          <h2 class="mb-6">Questions</h2>
-          <SketchProgress
-            :questionsTotal="questionsTotal"
-            :completedQuestionsTotal="completedQuestionsTotal"
-            :percentageCompleted="percentageCompleted"
-          />
-        </div>
-        <QuestionsList
-          :questions="sortedQuestions"
+  <v-container class="grid pa-0" fluid="true">
+    <v-row no-gutters>
+      <v-col cols="12" md="6" lg="4" class="bg-grey-lighten-4 pa-4">
+        <h2 class="mb-6">Questions</h2>
+        <SketchProgress
           :questionsTotal="questionsTotal"
+          :completedQuestionsTotal="completedQuestionsTotal"
+          :percentageCompleted="percentageCompleted"
         />
+        <QuestionsList :questions="sortedQuestions" />
       </v-col>
-      <v-col cols="8"> </v-col>
+      <v-col cols="12" md="6" lg="8">
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -68,11 +61,11 @@ const sortedQuestions = computed(() =>
     : []
 );
 
-watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
-
 provide("addNewQuestion", (question) => {
   questions.value = [question, ...questions.value];
 });
+
+watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
 
 async function fetchQuestions(id) {
   try {
