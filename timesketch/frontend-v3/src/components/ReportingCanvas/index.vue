@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-container class="grid pa-0" fluid="true">
     <v-row no-gutters>
-      <v-col cols="4" class="bg-grey-lighten-4 pa-4">
+      <v-col cols="12" md="6" lg="4" class="bg-grey-lighten-4 pa-4">
         <h2 class="mb-6">Questions</h2>
         <SketchProgress
           :questionsTotal="questionsTotal"
@@ -24,7 +24,7 @@ limitations under the License.
           :percentageCompleted="percentageCompleted"
         />
       </v-col>
-      <v-col cols="8"> </v-col>
+      <v-col cols="12" md="6" lg="8"> </v-col>
     </v-row>
   </v-container>
 </template>
