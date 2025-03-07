@@ -122,7 +122,7 @@ class LabelMixin(object):
     def add_label(self, label, user=None):
         """Add a label to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple labels.
 
         Args:
             label: Name of the label.
@@ -255,7 +255,7 @@ class CommentMixin(object):
         return False
 
     def get_comment(self, comment_id):
-        """Retrives a comment.
+        """Retrieves a comment.
 
         Args:
             comment_id: Id of the comment.
@@ -382,13 +382,16 @@ class GenericAttributeMixin(object):
         return relationship(self.GenericAttribute)
 
     def add_attribute(self, name, value, ontology=None, user=None, description=None):
-        """Add a label to an object.
+        """Add a attribute to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple generic attributes.
 
         Args:
-            label: Name of the label.
-            user: Optional user that adds the label (sketch.User).
+            name: Name of the attribute.
+            value: Value of the attribute.
+            ontology: Optional ontology of the attribute.
+            user: Optional user that adds the attribute (timesketch.models.user.User).
+            description: Optional description of the attribute.
         """
         self.genericattributes.append(
             self.GenericAttribute(
