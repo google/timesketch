@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 
 import json
 import six
+import logging
 
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -31,6 +32,8 @@ from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
+
+logger = logging.getLogger("timesketch.models.annotations")
 
 
 class BaseAnnotation(object):
@@ -331,7 +334,6 @@ class StatusMixin(object):
         """
         self.status = []  # replace the list with an empty list.
         self.status.append(self.Status(user=None, status=status))
-        self.status.append(self.Status(user=None, status=status))
         db_session.add(self)
         db_session.commit()
 
@@ -350,8 +352,9 @@ class StatusMixin(object):
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
         if len(self.status) > 1:
-            raise RuntimeError("More than one status available")
-
+            # TODO: at some point replace the waning with an exception:
+            # raise RuntimeError("More than one status available")
+            logging.warning("More than one status available")
         return self.status[0]  # always return the last element in the array
 
 
