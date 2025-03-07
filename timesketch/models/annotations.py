@@ -143,9 +143,18 @@ class LabelMixin(object):
         Args:
             label: Name of the label.
         """
-        for label_obj in self.labels:
-            if label_obj.label.lower() != label.lower():
-                continue
+        labels_to_remove = [
+            label_obj
+            for label_obj in self.labels
+            if label_obj.label.lower() == label.lower()
+        ]
+
+        if not labels_to_remove:
+            logger.warning(
+                f"Attempted to remove non-existent label: {label} from object: {self}"
+            )
+
+        for label_obj in labels_to_remove:
             self.labels.remove(label_obj)
         db_session.add(self)
         db_session.commit()
@@ -247,15 +256,25 @@ class CommentMixin(object):
 
         Args:
             comment_id: Id of the comment.
-        """
-        for comment_obj in self.comments:
-            if comment_obj.id == int(comment_id):
-                self.comments.remove(comment_obj)
-                db_session.add(self)
-                db_session.commit()
-                return True
 
-        return False
+        Returns:
+            True if the comment was removed, False otherwise.
+        """
+
+        comments_to_remove = [
+            comment_obj
+            for comment_obj in self.comments
+            if comment_obj.id == int(comment_id)
+        ]
+        if not comments_to_remove:
+            logger.debug("Comment to delete not found")
+            return False  # Comment not found
+        for comment_obj in comments_to_remove:
+            logger.debug("Removing comment")
+            self.comments.remove(comment_obj)
+        db_session.add(self)
+        db_session.commit()
+        return True
 
     def get_comment(self, comment_id):
         """Retrieves a comment.
