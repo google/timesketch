@@ -612,9 +612,9 @@ def sketch_info(sketch_id):
                 "user_id",
             ],
         ]
-        for status in sketch.status:
+        for _status in sketch.status:
             status_table.append(
-                [status.id, status.status, status.created_at, status.user_id]
+                [_status.id, _status.status, _status.created_at, _status.user_id]
             )
         print("Status:")
         print_table(status_table)
@@ -671,6 +671,22 @@ def timeline_status(timeline_id, action, status):
             ]
         )
         print_table(table_data)
+
+        status_table = [
+            [
+                "id",
+                "status",
+                "created_at",
+                "user_id",
+            ],
+        ]
+        for _status in timeline.status:
+            status_table.append(
+                [_status.id, _status.status, _status.created_at, _status.user_id]
+            )
+        print("Status:")
+        print_table(status_table)
+
     elif action == "set":
         timeline = Timeline.query.filter_by(id=timeline_id).first()
         if not timeline:
