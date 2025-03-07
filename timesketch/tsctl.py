@@ -612,9 +612,9 @@ def sketch_info(sketch_id):
                 "user_id",
             ],
         ]
-        for status in sketch.status:
+        for _status in sketch.status:
             status_table.append(
-                [status.id, status.status, status.created_at, status.user_id]
+                [_status.id, _status.status, _status.created_at, _status.user_id]
             )
         print("Status:")
         print_table(status_table)
@@ -671,6 +671,22 @@ def timeline_status(timeline_id, action, status):
             ]
         )
         print_table(table_data)
+
+        status_table = [
+            [
+                "id",
+                "status",
+                "created_at",
+                "user_id",
+            ],
+        ]
+        for _status in timeline.status:
+            status_table.append(
+                [_status.id, _status.status, _status.created_at, _status.user_id]
+            )
+        print("Status:")
+        print_table(status_table)
+
     elif action == "set":
         timeline = Timeline.query.filter_by(id=timeline_id).first()
         if not timeline:
@@ -807,6 +823,77 @@ def searchindex_info(searchindex_id):
     )
     sketch = Sketch.query.filter_by(id=timeline.sketch_id).first()
     print(f"Corresponding Sketch id: {sketch.id} Sketch name: {sketch.name}")
+
+
+@cli.command(name="searchindex-status")
+@click.argument("searchindex_id")
+@click.option(
+    "--action",
+    default="get",
+    type=click.Choice(["get", "set"]),
+    required=False,
+    help="get or set timeline status.",
+)
+@click.option(
+    "--status",
+    required=False,
+    type=click.Choice(["ready", "processing", "fail"]),
+    help="get or set timeline status.",
+)
+@click.option(
+    "--searchindex_id",
+    required=True,
+    help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+)
+def searchindex_status(searchindex_id, action, status):
+    """Get or set a searchindex status
+
+    If "action" is "set", the given value of status will be written in the status.
+
+    Args:
+        action: get or set searchindex status.
+        status: searchindex status. Only valid choices are ready, processing, fail.
+    """
+    if action == "get":
+        searchindex = SearchIndex.query.filter_by(id=searchindex_id).first()
+        if not searchindex:
+            print("Searchindex does not exist.")
+            return
+        table_data = [
+            [
+                "searchindex_id",
+                "index_name",
+                "created_at",
+                "user_id",
+                "description",
+                "status",
+            ],
+        ]
+        table_data.append(
+            [
+                searchindex.id,
+                searchindex.index_name,
+                searchindex.created_at,
+                searchindex.user_id,
+                searchindex.description,
+                searchindex.status[0].status,
+            ]
+        )
+        print_table(table_data)
+    elif action == "set":
+        searchindex = SearchIndex.query.filter_by(id=searchindex_id).first()
+        if not searchindex:
+            print("Searchindex does not exist.")
+            return
+        # exit if status is not set
+        if not status:
+            print("Status is not set.")
+            return
+        searchindex.set_status(status)
+        db_session.commit()
+        print(f"Searchindex {searchindex_id} status set to {status}")
+        # to verify run:
+        print(f"To verify run: tsctl searchindex-status {searchindex_id} --action get")
 
 
 # Analyzer stats cli command
