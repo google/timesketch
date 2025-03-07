@@ -15,9 +15,9 @@ limitations under the License.
 -->
 <template>
   <v-card class="mx-3" outlined>
-    <ts-chart-card 
+    <ts-chart-card
       v-if="aggregationId"
-        :chartSeries="chartSeries" 
+        :chartSeries="chartSeries"
         :chartLabels="chartLabels"
         :chartTitle="chartTitle"
         :chartType="chartType"
@@ -70,6 +70,9 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    settings() {
+      return this.$store.state.settings
+    },
   },
   methods: {
     loadAggregationData(savedAggregationId) {
@@ -80,7 +83,8 @@ export default {
           const agg = response.data.objects[0]
           this.aggregationType = agg.agg_type
           this.parameters = JSON.parse(agg.parameters)
-          
+          this.parameters['include_processing_timelines'] = !!this.settings.showProcessingTimelineEvents
+
           ApiClient.runAggregator(
             this.sketch.id, this.parameters
           ).then(
@@ -112,7 +116,7 @@ export default {
           console.error('Error requesting aggregation parameters: ' + e)
         }
       )
-    }, 
+    },
   },
   watch: {
     aggregationId: function (newAggregationId) {
