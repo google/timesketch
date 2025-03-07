@@ -1,0 +1,26 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: >
+  Has an attacker gained access to the cloud project? (Initial Access)
+type: facet
+description:
+uuid: ea928b04-bc7e-4650-8e5e-b99cd2e2c0e9
+id: F1013
+dfiq_version: 1.1.0
+tags:
+- TA0001
+parent_ids:
+- S1005

@@ -1,0 +1,198 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: What process made the DNS query?
+type: question
+description:
+uuid: 9f9d6a06-d4de-4abd-a5b7-0ac9964cf707
+id: Q1018
+dfiq_version: 1.1.0
+tags:
+- DNS
+parent_ids:
+- F1004
+approaches:
+- name: Use Crowdstrike event search to link source processes to DNS queries
+  description: >-
+    CrowdStrike records the source process ID (ContextProcessId) for DNSRequest event.
+
+    Crowdstrike is a detection platform, not a logging platform, so not all DNS requests
+    are logged. Content Filter needs to be enabled to capture DNS request queries.
+  tags:
+  - CrowdStrike
+  - DNS
+  - Splunk
+  references:
+  - https://www.crowdstrike.com/blog/hunt-threat-activity-falcon-host-endpoint-protection/bulk-domain-search-results/
+  notes:
+    covered:
+    - Mac, Linux, and Windows hosts with a CrowdStrike Falcon agent
+    not_covered:
+    - Hosts with the Falcon agent, but where the Content Filter is not enabled
+  steps:
+  - name: Collect DnsRequest from CrowdStrike
+    description:
+    stage: collection
+    type: CrowdStrike
+    value: DnsRequest
+  - name: Process data with Splunk
+    description:
+    stage: processing
+    type: command
+    value: Splunk
+  - name: Query joining DNS Request events and executions gives the source for each
+      DNS query
+    description:
+    stage: analysis
+    type: splunk-query
+    value: ComputerName="{hostname}" event_simpleName=ProcessRollup* | rename TargetProcessId_decimal
+      as ContextProcessId_decimal | join ContextProcessId_decimal [search ComputerName="{hostname}"
+      event_simpleName=DnsRequest | fields ContextProcessId_decimal, DomainName] |
+      table _time, DomainName, ImageFileName
+- name: Use Crowdstrike "Bulk Domains" to link source processes to DNS queries
+  description: >-
+    CrowdStrike records the source process ID (ContextProcessId) for DNSRequest event.
+
+    Crowdstrike is a detection platform, not a logging platform, so not all DNS requests
+    are logged. Content Filter needs to be enabled to capture DNS request queries.
+  tags:
+  - CrowdStrike
+  - DNS
+  - Crowdstrike Investigate (UI)
+  references:
+  - https://www.crowdstrike.com/blog/hunt-threat-activity-falcon-host-endpoint-protection/bulk-domain-search-results/
+  notes:
+    covered:
+    - Mac, Linux, and Windows hosts with a CrowdStrike Falcon agent
+    not_covered:
+    - Hosts with the Falcon agent, but where the Content Filter is not enabled
+  steps:
+  - name: Collect DnsRequest from CrowdStrike
+    description:
+    stage: collection
+    type: CrowdStrike
+    value: DnsRequest
+  - name: Process data with Crowdstrike Investigate (UI)
+    description:
+    stage: processing
+    type: command
+    value: Crowdstrike Investigate (UI)
+  - name: UI steps in Investigate Bulk domains
+    description:
+    stage: analysis
+    type: GUI
+    value: >
+      In the second table, `Process that looked up specified Domain(s)` the columns
+      `PID`, `Process ID`, and `File Name` give the source process information for
+      the DNS query.
+- name: Use Sysmon (Event ID 22) to link source processes to DNS queries (Splunk)
+  description: >-
+    Sysmon Event ID 22 DnsQuery stores source process ID
+
+    DNS Query, event ID 22, records a DNS query being issued by a specific host and
+    the originating process.
+  tags:
+  - Sysmon
+  - DNS
+  - Windows
+  - Splunk
+  references:
+  - https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventid=90022
+  notes:
+    covered:
+    - Windows
+    not_covered:
+    - Windows hosts without Sysmon installed
+  steps:
+  - name: Collect ForensicArtifact data
+    description:
+    stage: collection
+    type: ForensicArtifact
+    value: WindowsXMLEventLogSysmon
+  - name: Process data with Splunk
+    description:
+    stage: processing
+    type: command
+    value: Splunk
+  - name: Query for Sysmon Event ID 22 and extracting the parent process ID and path.
+    description:
+    stage: analysis
+    type: splunk-query
+    value: source="xmlwineventlog:microsoft-windows-sysmon/operational" EventCode=22
+      | table _time, host, process_id, process_path
+- name: Use Sysmon (Event ID 22) to link source processes to DNS queries (Plaso)
+  description: >-
+    Sysmon Event ID 22 DnsQuery stores source process ID
+
+    DNS Query, event ID 22, records a DNS query being issued by a specific host and
+    the originating process.
+  tags:
+  - Sysmon
+  - DNS
+  - Windows
+  - Plaso
+  references:
+  - https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventid=90022
+  notes:
+    covered:
+    - Windows
+    not_covered:
+    - Windows hosts without Sysmon installed
+  steps:
+  - name: Collect ForensicArtifact data
+    description:
+    stage: collection
+    type: ForensicArtifact
+    value: WindowsXMLEventLogSysmon
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Query for Sysmon Event ID 22 events
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"windows:evtx:record" source_name:"Microsoft-Windows-Sysmon"
+      event_identifier:22
+  - name: Determine the source process in relevant event(s)
+    description:
+    stage: analysis
+    type: manual
+    value: >
+      Plaso (as of v20230717) doesn't parse the `xml_string` into attributes. Examine
+      the `xml_string`; the value after `<Data Name="Image">` is the process that
+      made the DNS query.
+  - name: Query for Sysmon Event ID 22 events
+    description:
+    stage: analysis
+    type: pandas
+    value: df.query('data_type == "windows:evtx:record" and source_name == "Microsoft-Windows-Sysmon"
+      and event_identifier == 22')
+  - name: Extract `Image` attribute
+    description:
+    stage: analysis
+    type: pandas
+    value: df['process'] = df['xml_string'].str.extract(r'<Data Name="Image">(.*?)</Data>')
+  - name: Extract `QueryName` attribute
+    description:
+    stage: analysis
+    type: pandas
+    value: df['query'] = df['xml_string'].str.extract(r'<Data Name="QueryName">(.*?)</Data>')
+  - name: Filter down to DNS query of interest
+    description:
+    stage: analysis
+    type: pandas
+    value: df[df.query.str.contains('<domain>')]

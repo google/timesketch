@@ -1,0 +1,30 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Was a user's web browsing the cause of a given DNS query?
+type: facet
+description: >
+  Understanding if a user's actions in a web browser caused a particular DNS query
+  is valuable context when investigating a suspicious DNS query. If the query is related
+  to the user's actions, closer scrutiny of their browser activity may make sense.
+  If the DNS doesn't appear related, you may need to look into the actions of other
+  non-browser processes.
+uuid: b4ae098f-bc9a-404c-89a3-0e61279ba75f
+id: F1005
+dfiq_version: 1.1.0
+tags:
+- Web Browser
+parent_ids:
+- S1003

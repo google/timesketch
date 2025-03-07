@@ -1,0 +1,63 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: What web browsers were running at a given time?
+type: question
+description:
+uuid: ee3ccd42-9b45-4071-8a8d-c11bf00ddd0f
+id: Q1019
+dfiq_version: 1.1.0
+tags:
+- Web Browser
+parent_ids:
+- F1005
+approaches:
+- name: Collect process executions in Crowdstrike event search
+  description: >-
+    CrowdStrike records process executions in ProcessRollup event.
+
+    CrowdStrike is a detection platform, not a logging platform, so not all ProcessRollup
+    events might be logged.
+  tags:
+  - CrowdStrike
+  - Process Execution
+  - Splunk
+  references:
+  - https://www.crowdstrike.com/blog/understanding-indicators-attack-ioas-power-event-stream-processing-crowdstrike-falcon/
+  notes:
+    covered:
+    - Mac, Linux and Windows systems with the Falcon Agent
+    - Chrome, Firefox, Safari, and Edge web browsers
+    not_covered:
+    - Other browsers (including Chromium)
+    - One of those four browsers, but have had their process name changed
+  steps:
+  - name: Collect ProcessRollup from CrowdStrike
+    description:
+    stage: collection
+    type: CrowdStrike
+    value: ProcessRollup
+  - name: Process data with Splunk
+    description:
+    stage: processing
+    type: command
+    value: Splunk
+  - name: Query filtering the known browsers in execution event logs.
+    description:
+    stage: analysis
+    type: splunk-query
+    value: ComputerName="{hostname}" event_simpleName=ProcessRollup* ImageFileName
+      IN ("*chrome*", "*firefox*", "*safari*", "*edge*") | table _time, CommandLine,
+      ImageFileName

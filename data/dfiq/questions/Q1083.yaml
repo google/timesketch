@@ -1,0 +1,25 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Were any files sent via Bluetooth?
+type: question
+description:
+uuid: a8d41fc8-1b5e-45d2-9e11-7ddfd17137b3
+id: Q1083
+dfiq_version: 1.1.0
+tags:
+- T1011.001
+parent_ids:
+- F1026

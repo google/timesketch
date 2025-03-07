@@ -1,0 +1,143 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: What pages did web browsers visit?
+type: question
+description:
+uuid: e6fe3320-7051-4c0e-9d6e-61ee44b2b116
+id: Q1020
+dfiq_version: 1.1.0
+tags:
+- Web Browser
+parent_ids:
+- F1005
+- F1029
+approaches:
+- name: Collect URL visit records from local browser artifacts (Plaso)
+  description: >-
+    Parse URL visit records from web browsers' own databases.
+
+    Most web browsers track URL visits (at least in non-Incognito/private sessions)
+    in local artifacts on the system. We can collect and review these records. This
+    approach is useful when you have remote access to a system (via GRR for example)
+    or a disk image.
+  tags:
+  - Web Browser
+  - SQLite
+  - Chrome
+  - Safari
+  - Firefox
+  - Edge
+  - Internet Explorer
+  - Plaso
+  references:
+  - '[Chrome](https://forensics.wiki/google_chrome/#history), [Firefox](https://forensics.wiki/mozilla_firefox/#history),
+    and [Safari](https://forensics.wiki/apple_safari/#history) History on ForensicsWiki'
+  - '[Web Browsers on ForensicArtifacts](https://github.com/ForensicArtifacts/artifacts/blob/main/data/webbrowser.yaml)'
+  notes:
+    covered:
+    - Chrome URL visits. Beyond "stable" Chrome, this also includes Chromium, Chrome
+      Canary, Chrome Beta, and other Chromium-based browsers (Microsoft Edge, Brave,
+      and Opera) on Windows, macOS, and Linux
+    - Includes URL visits from all Chrome profiles
+    - Firefox URL visits
+    - Safari URL visits on Windows and macOS
+    - Internet Explorer (4 - 10) URL visits
+    not_covered:
+    - Other Chromium-based browsers not specified above
+    - Browsers installed in non-standard paths
+    - Visits made in Incognito/Private sessions
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Collect local browser history artifacts. These are often in the form
+      of SQLite databases and JSON files in multiple directories.
+    stage: collection
+    type: ForensicArtifact
+    value: BrowserHistory
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Filter the results to just URL page visits
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:("chrome:history:page_visited" OR "firefox:places:page_visited"
+      OR "safari:history:visit_sqlite")
+  - name: Filter the results to just URL page visits
+    description:
+    stage: analysis
+    type: pandas
+    value: query('data_type in ("chrome:history:page_visited", "firefox:places:page_visited",
+      "safari:history:visit_sqlite")')
+- name: Collect URL visit records from local browser artifacts (Hindsight)
+  description: >-
+    Parse URL visit records from web browsers' own databases.
+
+    Most web browsers track URL visits (at least in non-Incognito/private sessions)
+    in local artifacts on the system. We can collect and review these records. This
+    approach is useful when you have remote access to a system (via GRR for example)
+    or a disk image.
+  tags:
+  - Web Browser
+  - SQLite
+  - Chrome
+  - Safari
+  - Firefox
+  - Edge
+  - Internet Explorer
+  - Hindsight
+  references:
+  - '[Chrome](https://forensics.wiki/google_chrome/#history), [Firefox](https://forensics.wiki/mozilla_firefox/#history),
+    and [Safari](https://forensics.wiki/apple_safari/#history) History on ForensicsWiki'
+  - '[Web Browsers on ForensicArtifacts](https://github.com/ForensicArtifacts/artifacts/blob/main/data/webbrowser.yaml)'
+  notes:
+    covered:
+    - Chrome URL visits. Beyond "stable" Chrome, this also includes Chromium, Chrome
+      Canary, Chrome Beta, and other Chromium-based browsers (Microsoft Edge, Brave,
+      and Opera) on Windows, macOS, and Linux
+    - Includes URL visits from all Chrome profiles
+    - Firefox URL visits
+    - Safari URL visits on Windows and macOS
+    - Internet Explorer (4 - 10) URL visits
+    not_covered:
+    - Other Chromium-based browsers not specified above
+    - Browsers installed in non-standard paths
+    - Visits made in Incognito/Private sessions
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Collect local browser history artifacts. These are often in the form
+      of SQLite databases and JSON files in multiple directories.
+    stage: collection
+    type: ForensicArtifact
+    value: BrowserHistory
+  - name: Process data with Hindsight
+    description:
+    stage: processing
+    type: command
+    value: Hindsight
+  - name: Filter the results to just URL page visits. Hindsight only supports Chromium-based
+      browsers (including Microsoft Edge) and not Firefox or Safari.
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"chrome:history:page_visited"
+  - name: Filter the results to just URL page visits. Hindsight only supports Chromium-based
+      browsers (including Microsoft Edge) and not Firefox or Safari.
+    description:
+    stage: analysis
+    type: pandas
+    value: query('data_type == "chrome:history:page_visited"')

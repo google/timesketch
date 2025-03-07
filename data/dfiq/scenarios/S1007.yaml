@@ -1,0 +1,26 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Host Persistence Audit
+type: scenario
+description: >
+  Once an attacker is on a system, a main goal becomes trying to maintain that access.
+  Persistence mechanisms give the attacker the ability to run malware that will survive
+  reboots and credential changes.
+uuid: e8539ec2-53c2-492c-9070-6e4955d38f11
+id: S1007
+dfiq_version: 1.1.0
+tags:
+- TA0003

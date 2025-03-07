@@ -1,0 +1,28 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Are there indications of an attacker moving between resources?
+type: facet
+description: >
+  This may take the form of an attacker moving between cloud resources within the
+  project or between the cloud project and on-prem systems.
+uuid: 13f12c4c-f9b5-4fb3-b24d-5985913dc214
+id: F1016
+dfiq_version: 1.1.0
+tags:
+- TA0008
+- Cloud
+parent_ids:
+- S1005

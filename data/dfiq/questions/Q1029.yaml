@@ -1,0 +1,26 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Were any encryption programs used on a computer?
+type: question
+description: >
+  Unexpected use of encryption programs (built-in or 3rd-party) on a computer could
+  be an effort to hide data prior to removing it from company control.
+uuid: 72d9f83b-6a45-4688-bb61-593e1cb13573
+id: Q1029
+dfiq_version: 1.1.0
+tags:
+parent_ids:
+- F1007

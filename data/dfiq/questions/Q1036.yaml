@@ -1,0 +1,112 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Have there been any executions of PsExec?
+type: question
+description: >
+  PsExec is a command-line tool that allows you to execute commands on remote computers.
+  It is part of the Sysinternals suite of tools, which are a collection of free and
+  open-source utilities for Windows system administration.  It works by establishing
+  a remote connection to the target computer and then executing the specified command.
+  The command can be anything that you would normally run on a local computer, such
+  as a batch file, a PowerShell script, or a simple command-line instruction.
+uuid: b557f2d1-ecba-4660-992e-2d714398499f
+id: Q1036
+dfiq_version: 1.1.0
+tags:
+- Windows
+parent_ids:
+- F1027
+approaches:
+- name: Examine Windows Event Logs for PsExec executions
+  description: >-
+    Parse the Windows Security Event Log and look for PsExec processes being created.
+
+    Windows systems can be set to log new process creation events to the Security
+    event log. The logs contain the new process name, process ID, parent process name,
+    process creation time, and many more useful fields.
+  tags:
+  - Windows
+  - Event Logs
+  - Plaso
+  references:
+  - '[4688(S): A new process has been created](https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688)'
+  - '[PsExec on MITRE ATT&CK](https://attack.mitre.org/software/S0029/)'
+  - '[Detecting PsExec Usage by 13Cubed](https://www.youtube.com/watch?v=oVM1nQhDZQc)'
+  notes:
+    covered:
+    - Executions of PsExec on Windows systems with logging enabled.
+    not_covered:
+    - Many factors can impact log retention; if the event log containing the relevant
+      event has been deleted, it won't be found by this approach.
+    - Instances when the PsExec executable has been renamed.
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Windows Event Log files
+    stage: collection
+    type: ForensicArtifact
+    value: WindowsEventLogs
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Filter the results to Process Creation events containing "psexec.exe"
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"windows:evtx:record" event_identifier:4688 source_name:Microsoft-Windows-Security-Auditing
+      xml_string:"psexec.exe"
+- name: Examine Windows Prefetch for evidence of PsExec usage
+  description: >-
+    Parse Windows Prefetch files and look for PsExec.
+
+    Windows Prefetch files are designed to speed up application start times. To do
+    this, they store information about recently launched applications, including the
+    file name of the executable and the number of times it has been run.
+  tags:
+  - Windows
+  - Prefetch
+  - Plaso
+  references:
+  - '[Prefetch on the ForensicsWiki](https://forensics.wiki/prefetch/)'
+  - '[PsExec on MITRE ATT&CK](https://attack.mitre.org/software/S0029/)'
+  - '[Detecting PsExec Usage by 13Cubed](https://www.youtube.com/watch?v=oVM1nQhDZQc)'
+  notes:
+    covered:
+    - Executions of PsExec on Windows systems with Prefetch enabled.
+    not_covered:
+    - Systems where the Prefetch service has been disabled.
+    - There is a maximum number of `.pf` allowed by Windows (the number varies by
+      Windows version). If too many other Prefetch files were created, the PsExec
+      Prefetch file may have been deleted, and thus will not be parsed.
+    - Instances when the PsExec executable has been renamed.
+    - Non-Windows systems, as the Prefetch service is Windows-only.
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Files used by the Windows Prefetch service.
+    stage: collection
+    type: ForensicArtifact
+    value: WindowsPrefetchFiles
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Filter the results to just Prefetch files for psexec.exe
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"windows:prefetch:execution" AND executable:psexec\.exe

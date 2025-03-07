@@ -1,0 +1,103 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Were any system event logs cleared?
+type: question
+description:
+uuid: b85d4036-8c25-49c1-ab1a-04a45c57bf5a
+id: Q1074
+dfiq_version: 1.1.0
+tags:
+- T1070.001
+- T1070.002
+- Windows
+- macOS
+- Linux
+parent_ids:
+- F1007
+approaches:
+- name: Examine Windows Event Logs for Audit Log cleared
+  description: >-
+    Parse the Windows Security Event Log and look for "the audit log was cleared"
+    event.
+
+    On Windows systems, log clearance events for Security event log will be logged
+    with event ID 1102. The logs contain the actor account name, domain name, logon
+    id fields.
+  tags:
+  - Windows
+  - Event Logs
+  - Plaso
+  references:
+  - '[1102(S): The audit log was cleared.](https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-1102)'
+  - '[Indicator Removal: Clear Windows Event Logs on MITRE ATT&CK](https://attack.mitre.org/techniques/T1070/001/)'
+  notes:
+    covered:
+    - Security event log clearance events on Windows systems.
+    not_covered:
+    - If the log is deleted or otherwise altered, this event may not be logged.
+    - Only applies to Windows Security audit logs.
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Windows Event Log files
+    stage: collection
+    type: ForensicArtifact
+    value: WindowsEventLogs
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Filter the results to events containing audit log clearance.
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"windows:evtx:record" event_identifier:1102 source_name:"Microsoft-Windows-Security-Auditing"
+- name: Search CrowdStrike logs for indicator removal on host
+  description: >-
+    CrowdStrike has built-in detections for "indicator removal on host" events.
+
+    Clearance/deletion of system logs would be recorded in CrowdStrike as a part of
+    their "indicator removal on host" detections.
+  tags:
+  - CrowdStrike
+  - Linux
+  - Windows
+  - macOS
+  - Splunk
+  references:
+  - https://www.crowdstrike.com/blog/tech-center/hunt-threat-activity-falcon-endpoint-protection/
+  - '[Indicator Removal on MITRE ATT&CK](https://attack.mitre.org/techniques/T1070/)'
+  notes:
+    covered:
+    - CrowdStrike's built-in detection for "indicator removal on host" events.
+    not_covered:
+    - CrowdStrike may not have all log clear/delete events as part of this detection.
+  steps:
+  - name: Collect PlatformEvents from CrowdStrike
+    description:
+    stage: collection
+    type: CrowdStrike
+    value: PlatformEvents
+  - name: Process data with Splunk
+    description:
+    stage: processing
+    type: command
+    value: Splunk
+  - name: Query searching for indicator removal on host events.
+    description:
+    stage: analysis
+    type: splunk-query
+    value: ComputerName="{hostname}" Technique="Indicator Removal on Host"

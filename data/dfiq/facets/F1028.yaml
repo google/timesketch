@@ -1,0 +1,31 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: Are the indications of an attacker moving TO this host?
+type: facet
+description: >
+  Once an attacker has access to a system, they may want to use it to pivot to a different
+  system. This movement, from a source host to a destination host, leaves traces on
+  both the source and destination hosts. A given system may be both the source and
+  destination of lateral movement at different times. This facet examines a host for
+  indications it was the **destination** host, meaning an attacker moved **TO** it
+  from a different system.
+uuid: 54bec51c-6697-4dc8-8b89-f174a8b98776
+id: F1028
+dfiq_version: 1.1.0
+tags:
+- TA0008
+parent_ids:
+- S1008

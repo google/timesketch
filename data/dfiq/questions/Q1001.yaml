@@ -1,0 +1,260 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: What files were downloaded using a web browser?
+type: question
+description:
+uuid: 8620a183-d67f-481e-a63c-d8b8dfa5e968
+id: Q1001
+dfiq_version: 1.1.0
+tags:
+parent_ids:
+- F1008
+- F1002
+approaches:
+- name: Detect browser downloads via change journal records
+  description: >-
+    File downloads by some web browsers create a specific pattern of events on the
+    file system. We can use this to see browser downloads using NTFS change journal
+    (USN journal) records.
+
+    Chrome downloads on Windows create a specific pattern of events on the file system:
+
+    1.  **Download starts with a `FILE CREATE` event to `.tmp` file; older Chrome
+    versions
+        have been observed creating four character file names (like `7DEE.tmp`)
+        while newer versions use file names consistent with Version 4 UUIDs
+        (like `183011a0-f96c-4c98-b71b-ab8754fb0e0e.tmp`).
+    1.  That `.tmp` file might be `RENAME`d to `Unconfirmed [6 digits].crdownload`.
+    1.  If [2] `Unconfirmed...crdownload` `RENAME` didn't happen, the `.tmp` file
+    is
+        renamed to the eventual filename (with extension) with `.crdownload`
+    appended
+        at the end (like `cat.jpg.crdownload`). **In either case ([2] or [3]),
+    at
+        this point we have a file ending in .crdownload.**
+    1.  Once the download completes, the `.crdownload` suffix is removed via a
+        `USN_REASON_RENAME_OLD_NAME` event, leaving the downloaded file with its
+    final name.
+
+    Since [4] above captures the key information about the file download, we can search
+    change journal records for it.
+  tags:
+  - Web Browser
+  - Windows
+  - USN Journal
+  - NTFS
+  - Plaso
+  references:
+  - '[Change Journals](https://learn.microsoft.com/en-gb/windows/win32/fileio/change-journals)'
+  notes:
+    covered:
+    - Chrome downloads to an NTFS volume
+    not_covered:
+    - All other browsers.
+    - Downloads from other Chromium/Chrome-based browsers _might_ be collected via
+      this method, but testing is necessary to confirm.
+    - Downloads on file systems other than NTFS.
+    - Downloads that would be covered, but happened long enough ago that the USN Journal
+      records that would show it have been deleted.
+  steps:
+  - name: Collect ForensicArtifact data
+    description: The NTFS $UsnJnrl file system metadata file. This ForensicArtifact
+      definition does not include the $J alternate data stream, but many tools collect
+      it anyway.
+    stage: collection
+    type: ForensicArtifact
+    value: NTFSUSNJournal
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Filter the results to file system rename events where the original file
+      name ended with `.crdownload`.
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"fs:ntfs:usn_change" filename:crdownload "USN_REASON_RENAME_OLD_NAME"
+  - name: Select and search for the `file_reference` value for an event of interest
+      from the previous query. There should be one with the same timestamp as your
+      previous event and its `filename` value is the download's final name.
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"fs:ntfs:usn_change" {file_reference value} "USN_REASON_RENAME_NEW_NAME"
+- name: Detect browser downloads via file system event logs
+  description: >-
+    File downloads by some web browsers create a specific pattern of events on the
+    file system. We can use this to see browser downloads using file system logs (like
+    Santa).
+
+    Chrome downloads on macOS create a specific pattern of file system events:
+
+    1.  **Download starts with a `WRITE` event to a temp file named like
+        `.com.google.Chrome.avXx0U`** (the suffix looks to be 6
+    letters/numbers). 1.  That .com.google.Chrome... temp file might be `RENAME`d
+    to `Unconfirmed [6
+        digits].crdownload`.
+    1.  If [2] `Unconfirmed...crdownload` `RENAME` didn't happen, the .com.google.
+        temp file is renamed to the eventual filename (with extension) with
+        `.crdownload` appended at the end (like `cat.jpg.crdownload`). **In
+    either
+        case ([2] or [3]), at this point we have a file ending in .crdownload.**
+    1.  Once the download completes, the `.crdownload` suffix is removed via a
+        `RENAME` event, leaving the downloaded file with its final name.
+
+    Since [4] above captures the key information about the file download, we can search
+    file system logs for it.
+  tags:
+  - Web Browser
+  - macOS
+  - Plaso
+  references: []
+  notes:
+    covered:
+    - Chrome downloads on macOS (given that Santa was installed and logging enabled)
+    not_covered:
+    - All other browsers
+    - Downloads from other Chromium/Chrome-based browsers _might_ be collected via
+      this method, but testing is necessary to confirm.
+    - Downloads that occurred on macOS with Santa, but during a time period for which
+      there are no Santa logs (out of retention or Santa was disabled).
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Santa logs stored on the local disk; they may also be centralized
+      off-system, but this artifact does not include those.
+    stage: collection
+    type: ForensicArtifact
+    value: SantaLogs
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Filter the results to file system rename events where the original file
+      name ended with `.crdownload`.
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"santa:file_system_event" action:RENAME file_path:"*\.crdownload"
+- name: Collect download records from local browser artifacts (Plaso)
+  description: >-
+    Parse download records from web browsers' own databases.
+
+    Most web browsers track file downloads (at least in non-Incognito/private sessions)
+    in local artifacts on the system. We can collect and review these records. This
+    approach is useful when you have remote access to a system (via GRR for example)
+    or a disk image.
+  tags:
+  - Web Browser
+  - SQLite
+  - Chrome
+  - Safari
+  - Edge
+  - Plaso
+  references:
+  - '[Chrome](https://forensics.wiki/google_chrome/#downloadsstart_time), [Firefox](https://forensics.wiki/mozilla_firefox/#downloads),
+    and [Safari](https://forensics.wiki/apple_safari/#downloads) downloads on ForensicsWiki'
+  - '[Web Browsers on ForensicArtifacts](https://github.com/ForensicArtifacts/artifacts/blob/main/data/webbrowser.yaml)'
+  notes:
+    covered:
+    - Chrome downloads. Beyond "stable" Chrome, this also includes Chromium, Chrome
+      Canary, Chrome Beta, and other Chromium-based browsers (Microsoft Edge, Brave,
+      and Opera) on Windows, macOS, and Linux
+    - Safari downloads
+    - Includes downloads from all Chrome profiles
+    not_covered:
+    - Firefox downloads
+    - Downloads on any other browsers
+    - Browsers installed in non-standard paths
+    - Downloads made during Incognito sessions
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Collect local browser history artifacts. These are often in the form
+      of SQLite databases and JSON files in multiple directories.
+    stage: collection
+    type: ForensicArtifact
+    value: BrowserHistory
+  - name: Process data with Plaso
+    description:
+    stage: processing
+    type: command
+    value: Plaso
+  - name: Filter the results to just file downloads
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:("chrome:history:file_downloaded" OR "safari:downloads:entry")
+  - name: Filter the results to just file downloads
+    description:
+    stage: analysis
+    type: pandas
+    value: query('data_type in ("chrome:history:file_downloaded", "safari:downloads:entry")')
+- name: Collect download records from local browser artifacts (Hindsight)
+  description: >-
+    Parse download records from web browsers' own databases.
+
+    Most web browsers track file downloads (at least in non-Incognito/private sessions)
+    in local artifacts on the system. We can collect and review these records. This
+    approach is useful when you have remote access to a system (via GRR for example)
+    or a disk image.
+  tags:
+  - Web Browser
+  - SQLite
+  - Chrome
+  - Safari
+  - Edge
+  - Hindsight
+  references:
+  - '[Chrome](https://forensics.wiki/google_chrome/#downloadsstart_time), [Firefox](https://forensics.wiki/mozilla_firefox/#downloads),
+    and [Safari](https://forensics.wiki/apple_safari/#downloads) downloads on ForensicsWiki'
+  - '[Web Browsers on ForensicArtifacts](https://github.com/ForensicArtifacts/artifacts/blob/main/data/webbrowser.yaml)'
+  notes:
+    covered:
+    - Chrome downloads. Beyond "stable" Chrome, this also includes Chromium, Chrome
+      Canary, Chrome Beta, and other Chromium-based browsers (Microsoft Edge, Brave,
+      and Opera) on Windows, macOS, and Linux
+    - Safari downloads
+    - Includes downloads from all Chrome profiles
+    not_covered:
+    - Firefox downloads
+    - Downloads on any other browsers
+    - Browsers installed in non-standard paths
+    - Downloads made during Incognito sessions
+  steps:
+  - name: Collect ForensicArtifact data
+    description: Collect local browser history artifacts. These are often in the form
+      of SQLite databases and JSON files in multiple directories.
+    stage: collection
+    type: ForensicArtifact
+    value: BrowserHistory
+  - name: Process data with Hindsight
+    description:
+    stage: processing
+    type: command
+    value: Hindsight
+  - name: Filter the results to just file downloads. Hindsight only supports Chromium-based
+      browsers (including Microsoft Edge) and not Firefox or Safari.
+    description:
+    stage: analysis
+    type: opensearch-query
+    value: data_type:"chrome:history:file_downloaded"
+  - name: Filter the results to just file downloads. Hindsight only supports Chromium-based
+      browsers (including Microsoft Edge) and not Firefox or Safari.
+    description:
+    stage: analysis
+    type: pandas
+    value: query('data_type == "chrome:history:file_downloaded"')
