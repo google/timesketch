@@ -478,8 +478,14 @@ class SketchResource(resources.ResourceMixin, Resource):
         return self.to_json(sketch, meta=meta)
 
     @login_required
-    def delete(self, sketch_id):
-        """Handles DELETE request to the resource."""
+    def delete(self, sketch_id, force_delete=False, keep_metadata=False):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: sketch_id to delete
+            force_delete: since in the past Sketches where not actually deleted, it must be explicit to delete a sketch. Default: False (do not actually delete)
+            delete_metadata: Delete metadata associated with the sketch. (default:False)
+        """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -495,7 +501,48 @@ class SketchResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_FORBIDDEN,
                     "Sketch with the label [{0:s}] cannot be deleted.".format(label),
                 )
-        sketch.set_status(status="deleted")
+
+        if not force_delete:
+            # check if force_delete is maybe set in the url
+            force_delete = request.args.get("force")
+            if force_delete is None:
+                logger.debug("Force delete not present, will keep the OS data")
+                force_delete = False
+
+        # breakpoint()
+
+        # TODO(jaegeral): implement the medatada things
+        if keep_metadata:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Sketch [{0:s}] could not be deleted, keeping metadata is currently not supported".format(
+                    sketch_id
+                ),
+            )
+
+        abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            "Sketch [{0:d}] could be deleted".format(sketch_id),
+        )
+
+        # TODO(jaegeral: remova that before merging)
+        # sketch.set_status(status="deleted")
+
+        # Default behaviour for historical reasons: exit with 200 without deleting
+        if not force_delete:
+            return HTTP_STATUS_CODE_OK
+
+        # now the real deletion
+        for timeline in sketch.active_timelines:
+            timeline.set_status(status="deleted")
+            searchindex = timeline.searchindex
+            db_session.delete(searchindex)
+            db_session.delete(timeline)
+            # remove the opensearch index
+            self.datastore.client.indices.delete(index=searchindex.index_name)
+
+        db_session.delete(sketch)
+        db_session.commit()
         return HTTP_STATUS_CODE_OK
 
     @login_required
