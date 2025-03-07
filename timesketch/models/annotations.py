@@ -18,8 +18,8 @@ This module implements annotations that can be use on other database models.
 from __future__ import unicode_literals
 
 import json
-import six
 import logging
+import six
 
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
