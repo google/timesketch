@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-list-item :class="listItemClasses" @click="store.setActiveQuestion(id)">
+  <v-list-item :class="listItemClasses" @click="store.setActiveQuestion({user, name, risk, conclusions, type, id, updated_at})">
     <div class="d-flex ga-6 align-center justify-md-space-between">
       <div class="d-flex ga-6 align-center">
         <v-icon
@@ -79,7 +79,7 @@ const riskColor = computed(() => {
 });
 
 const listItemClasses = computed(() => ({
-  "is--active": id === store.activeContext.question,
+  "is--active": id === store.activeContext.question.id,
   "border-b-sm": true,
   "px-4 py-8": true,
   "border-right-md": true,

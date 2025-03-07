@@ -25,7 +25,14 @@ limitations under the License.
         />
         <QuestionsList :questions="sortedQuestions" />
       </v-col>
-      <v-col cols="12" md="6" lg="8">
+      <v-col cols="12" md="6" lg="8" class="pa-4 fill-height overflow-auto">
+        <ResultsView v-if="selectedQuestion.id" :question="selectedQuestion" />
+        <ReportView
+          v-else
+          :questions="questions"
+          :questionsTotal="questionsTotal"
+          :completedQuestionsTotal="completedQuestionsTotal"
+        />
       </v-col>
     </v-row>
   </v-container>
@@ -36,11 +43,19 @@ import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import ReportView from "./ReportView.vue";
+import ResultsView from "./ResultsView.vue";
 
 const store = useAppStore();
 const route = useRoute();
 const questions = ref(null);
 const questionsTotal = computed(() => questions?.value?.length);
+
+const selectedQuestion = computed(() => store.activeContext.question);
+
+
+console.log(selectedQuestion);
+
 const completedQuestionsTotal = computed(() =>
   questions?.value
     ? questions.value.filter(({ conclusions }) => conclusions?.length > 0)
@@ -72,7 +87,6 @@ async function fetchQuestions(id) {
     RestApiClient.getOrphanQuestions(id)
       .then((response) => {
         questions.value = response.data.objects[0];
-        store.setActiveQuestion(response.data.objects[0][0].id);
       })
       .catch((e) => {
         console.error(e);
@@ -89,6 +103,6 @@ async function fetchQuestions(id) {
 
 .reporting-canvas__sidebar {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: 1fr 1fr auto 1fr;
 }
 </style>
