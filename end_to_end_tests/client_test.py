@@ -315,27 +315,37 @@ level: high
 
     def test_delete_sketch(self):
         """Test deleting a sketch."""
+        sketches = list(self.api.list_sketches())
+        number_of_sketches = len(sketches)
+
         sketch = self.api.create_sketch(
             name="test_delete_sketch", description="test_delete_sketch"
         )
+
+        sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
 
         # store sketch_id of the newly created sketch
         sketch_id = sketch.id
 
         # check that sketch is in the sketch list
         sketches = self.api.list_sketches()
-        self.assertions.assertEqual(len(sketches), 1)
-        self.assertions.assertEqual(sketches[0].name, "test_delete_sketch")
-        # delete sketch
-        sketch.delete()
-        sketches = self.api.list_sketches()
-        # check if sketch is in the list
+        found = False
         for s in sketches:
             if s.name == "test_delete_sketch":
-                raise RuntimeError("Sketch not deleted")
+                found = True
+
+        self.assertions.assertEqual(found, True)
+
+        # delete sketch
+        sketch.delete()
+
+        sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches)
         # attempt to pull sketch
+        # breakpoint()
         with self.assertions.assertRaises(RuntimeError):
-            self.api.get_sketch(sketch_id)
+            self.api.get_sketch(sketch_id).name
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
