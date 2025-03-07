@@ -89,6 +89,7 @@ limitations under the License.
               :key="item.id + item.name"
               :is-selected="isEnabled(item)"
               @toggle="toggleTimeline"
+              @save="save"
               @disableAllOtherTimelines="disableAllOtherTimelines"
               :timeline="item"
             >
@@ -165,6 +166,7 @@ limitations under the License.
 
 <script>
 import EventBus from '../../event-bus.js'
+import ApiClient from '../../utils/RestApiClient.js'
 
 import TsUploadTimelineForm from '../UploadForm.vue'
 import TsTimelineComponent from '../Explore/TimelineComponent.vue'
@@ -224,6 +226,19 @@ export default {
         }
       }
       return count
+    },
+    save(timeline, newTimelineName = false) {
+      ApiClient.saveSketchTimeline(
+        this.sketch.id,
+        timeline.id,
+        newTimelineName || timeline.name,
+        timeline.description,
+        timeline.color
+      )
+        .then(() => this.$store.dispatch('updateSketch', this.sketch.id))
+        .catch((e) => {
+          console.error(e)
+        })
     },
   },
   data: function () {
