@@ -329,8 +329,8 @@ class StatusMixin(object):
         Args:
             status: Name of the status
         """
-        for _status in self.status:
-            self.status.remove(_status)
+        self.status = []  # replace the list with an empty list.
+        self.status.append(self.Status(user=None, status=status))
         self.status.append(self.Status(user=None, status=status))
         db_session.add(self)
         db_session.commit()
