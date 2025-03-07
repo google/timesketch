@@ -295,5 +295,100 @@ level: high
             new_event["objects"]["existing_attr"], "original_value"
         )
 
+    def test_create_sketch_empty_name(self):
+        """Test creating a sketch with an empty name."""
+        with self.assertions.assertRaises(ValueError) as context:
+            self.api.create_sketch(name="", description="test_create_sketch")
+        self.assertions.assertIn("Sketch name cannot be empty", str(context.exception))
+
+    def test_archive_sketch(self):
+        """Test archiving and unarchiving a sketch."""
+        sketch = self.api.create_sketch(
+            name="test_archive_sketch", description="test_archive_sketch"
+        )
+        # check status before archiving
+        self.assertions.assertEqual(sketch.status, "new")
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+
+    def test_delete_sketch(self):
+        """Test deleting a sketch."""
+        sketch = self.api.create_sketch(
+            name="test_delete_sketch", description="test_delete_sketch"
+        )
+
+        # store sketch_id of the newly created sketch
+        sketch_id = sketch.id
+
+        # check that sketch is in the sketch list
+        sketches = self.api.list_sketches()
+        self.assertions.assertEqual(len(sketches), 1)
+        self.assertions.assertEqual(sketches[0].name, "test_delete_sketch")
+        # delete sketch
+        sketch.delete()
+        sketches = self.api.list_sketches()
+        # check if sketch is in the list
+        for s in sketches:
+            if s.name == "test_delete_sketch":
+                raise RuntimeError("Sketch not deleted")
+        # attempt to pull sketch
+        with self.assertions.assertRaises(RuntimeError):
+            self.api.get_sketch(sketch_id)
+
+    # test to delete a sketch that is archived
+    def test_delete_archived_sketch(self):
+        """Test deleting an archived sketch."""
+        sketch = self.api.create_sketch(
+            name="test_delete_archived_sketch",
+            description="test_delete_archived_sketch",
+        )
+        sketch.archive()
+        with self.assertions.assertRaises(RuntimeError) as context:
+            sketch.delete()
+        self.assertions.assertIn(
+            "Unable to delete an archived sketch, first unarchive then delete.",
+            str(context.exception),
+        )
+
+    def test_modify_sketch_name_description(self):
+        """Test modifying a sketch's name and description."""
+        sketch = self.api.create_sketch(
+            name="test_modify_sletch_name_description",
+            description="test_modify_sletch_name_description",
+        )
+        sketch.name = "new_name"
+        sketch.description = "new_description"
+        self.assertions.assertEqual(sketch.name, "new_name")
+        self.assertions.assertEqual(sketch.description, "new_description")
+        # check in the sketch list
+        sketches = self.api.list_sketches()
+        # find the right one in the sketch list
+        for s in sketches:
+            if s.name == "new_name":
+                sketch2 = s
+                break
+        else:
+            raise RuntimeError("Sketch not found")
+
+        self.assertions.assertEqual(sketch2.name, "new_name")
+        self.assertions.assertEqual(sketch2.description, "new_description")
+
+    def test_modify_sketch_with_empty_name(self):
+        """Test modifying a sketch with an empty name. They should not be used, thus keeping the old names"""
+        sketch = self.api.create_sketch(
+            name="test_modify_sketch_with_empty_name",
+            description="test_modify_sketch_with_empty_name",
+        )
+        sketch.name = ""
+        sketch.description = ""
+
+        # values should not be changed
+        self.assertions.assertEqual(sketch.name, "test_modify_sketch_with_empty_name")
+        self.assertions.assertEqual(
+            sketch.description, "test_modify_sketch_with_empty_name"
+        )
+
 
 manager.EndToEndTestManager.register_test(ClientTest)
