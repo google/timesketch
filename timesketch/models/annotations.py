@@ -379,12 +379,12 @@ class StatusMixin(object):
             # raise RuntimeError(
             # "More than one status available for object [%s] with ID: [%s]",
             #     str(type(self).__name__),
-            #     str(self_id)
+            #     str(self_id),
             # )
             logging.warning(
                 "More than one status available for object [%s] with ID: [%s]",
                 str(type(self).__name__),
-                str(self_id)
+                str(self_id),
             )
         return self.status[0]
 
