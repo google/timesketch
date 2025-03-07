@@ -680,9 +680,9 @@ def timeline_status(timeline_id, action, status):
                 "user_id",
             ],
         ]
-        for status in timeline.status:
+        for _status in timeline.status:
             status_table.append(
-                [status.id, status.status, status.created_at, status.user_id]
+                [_status.id, _status.status, _status.created_at, _status.user_id]
             )
         print("Status:")
         print_table(status_table)
