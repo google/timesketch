@@ -1,7 +1,6 @@
 """Sessionizing sketch analyzer plugins for sessions based on the Windows EVTX
 log."""
 
-from __future__ import unicode_literals
 import re
 import opensearchpy.exceptions
 
@@ -90,7 +89,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                     self.annotateEvent(event, [session_id])
                     start_events[logon_id] = session_id
 
-                    view_query = 'session_id.{0:s}:"{1:s}"'.format(
+                    view_query = 'session_id.{:s}:"{:s}"'.format(
                         self.session_type, session_id
                     )
                     self.sketch.add_view(session_id, self.NAME, query_string=view_query)

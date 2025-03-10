@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """OpenSearch datastore."""
-from __future__ import unicode_literals
 
 from collections import Counter
 import copy
@@ -97,7 +96,7 @@ if (!removedLabel) {
 """
 
 
-class OpenSearchDataStore(object):
+class OpenSearchDataStore:
     """Implements the datastore."""
 
     DEFAULT_SIZE = 100
@@ -569,7 +568,7 @@ class OpenSearchDataStore(object):
                 count_result = self.client.count(body=query_dsl, index=list(indices))
             except NotFoundError:
                 es_logger.error(
-                    "Unable to count due to an index not found: {0:s}".format(
+                    "Unable to count due to an index not found: {:s}".format(
                         ",".join(indices)
                     )
                 )
@@ -614,7 +613,7 @@ class OpenSearchDataStore(object):
                 error_items = []
                 for cause in root_cause:
                     error_items.append(
-                        "[{0:s}] {1:s}".format(
+                        "[{:s}] {:s}".format(
                             cause.get("type", ""), cause.get("reason", "")
                         )
                     )
@@ -623,7 +622,7 @@ class OpenSearchDataStore(object):
                 cause = str(e)
 
             es_logger.error(
-                "Unable to run search query: {0:s}".format(cause), exc_info=True
+                f"Unable to run search query: {cause:s}", exc_info=True
             )
             raise ValueError(cause) from e
 
@@ -694,16 +693,14 @@ class OpenSearchDataStore(object):
         if isinstance(scroll_size, dict):
             scroll_size = scroll_size.get("value", 0)
 
-        for event in result["hits"]["hits"]:
-            yield event
+        yield from result["hits"]["hits"]
 
         while scroll_size > 0:
             # pylint: disable=unexpected-keyword-arg
             result = self.client.scroll(scroll_id=scroll_id, scroll="5m")
             scroll_id = result["_scroll_id"]
             scroll_size = len(result["hits"]["hits"])
-            for event in result["hits"]["hits"]:
-                yield event
+            yield from result["hits"]["hits"]
 
     def get_filter_labels(self, sketch_id, indices):
         """Aggregate labels for a sketch.
@@ -770,7 +767,7 @@ class OpenSearchDataStore(object):
             result = self.client.search(index=indices, body=aggregation, size=0)
         except NotFoundError:
             es_logger.error(
-                "Unable to find the index/indices: {0:s}".format(",".join(indices))
+                "Unable to find the index/indices: {:s}".format(",".join(indices))
             )
             return labels
 
@@ -958,7 +955,7 @@ class OpenSearchDataStore(object):
                 index_exists = self.client.indices.exists(index_name)
                 es_logger.warning(
                     "Attempting to create an index that already exists "
-                    "({0:s} - {1:s})".format(index_name, str(index_exists))
+                    "({:s} - {:s})".format(index_name, str(index_exists))
                 )
 
         return index_name
@@ -974,7 +971,7 @@ class OpenSearchDataStore(object):
                 self.client.indices.delete(index=index_name)
             except ConnectionError as e:
                 raise RuntimeError(
-                    "Unable to connect to Timesketch backend: {}".format(e)
+                    f"Unable to connect to Timesketch backend: {e}"
                 ) from e
 
     def import_event(
@@ -998,11 +995,11 @@ class OpenSearchDataStore(object):
         """
         if event:
             for k, v in event.items():
-                if not isinstance(k, six.text_type):
+                if not isinstance(k, str):
                     k = codecs.decode(k, "utf8")
 
                 # Make sure we have decoded strings in the event dict.
-                if isinstance(v, six.binary_type):
+                if isinstance(v, bytes):
                     v = codecs.decode(v, "utf8")
 
                 event[k] = v
@@ -1074,7 +1071,7 @@ class OpenSearchDataStore(object):
                 return {}
 
             es_logger.error(
-                "Unable to add events (retry {0:d}/{1:d})".format(
+                "Unable to add events (retry {:d}/{:d})".format(
                     retry_count, self.DEFAULT_FLUSH_RETRY_LIMIT
                 )
             )
@@ -1108,13 +1105,13 @@ class OpenSearchDataStore(object):
                 caused_reason = caused_by.get("reason", "Unknown Detailed Reason")
 
                 error_counter[error.get("type")] += 1
-                detail_msg = "{0:s}/{1:s}".format(
+                detail_msg = "{:s}/{:s}".format(
                     caused_by.get("type", "Unknown Detailed Type"),
                     " ".join(caused_reason.split()[:5]),
                 )
                 error_detail_counter[detail_msg] += 1
 
-                error_msg = "<{0:s}> {1:s} [{2:s}/{3:s}]".format(
+                error_msg = "<{:s}> {:s} [{:s}/{:s}]".format(
                     error.get("type", "Unknown Type"),
                     error.get("reason", "No reason given"),
                     caused_by.get("type", "Unknown Type"),
@@ -1123,8 +1120,8 @@ class OpenSearchDataStore(object):
                 error_list.append(error_msg)
                 try:
                     es_logger.error(
-                        "Unable to upload document: {0:s} to index {1:s} - "
-                        "[{2:d}] {3:s}".format(
+                        "Unable to upload document: {:s} to index {:s} - "
+                        "[{:d}] {:s}".format(
                             doc_id, index_name, status_code, error_msg
                         )
                     )

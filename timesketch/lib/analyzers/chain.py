@@ -1,6 +1,5 @@
 """The sketch analyzer for chained events."""
 
-from __future__ import unicode_literals
 
 import collections
 import uuid
@@ -130,14 +129,14 @@ class ChainSketchPlugin(interface.BaseAnalyzer):
 
         chain_string = " - ".join(
             [
-                "[{0:s}] {1:d}".format(x[0], x[1])
+                f"[{x[0]:s}] {x[1]:d}"
                 for x in counter.most_common()
                 if x[0] != "total"
             ]
         )
         return (
-            "{0:d} base events annotated with a chain UUID for {1:d} "
-            "chains for a total of {2:d} events. {3:s}".format(
+            "{:d} base events annotated with a chain UUID for {:d} "
+            "chains for a total of {:d} events. {:s}".format(
                 number_of_base_events, number_of_chains, counter["total"], chain_string
             )
         )

@@ -123,7 +123,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             form = request.data
 
         timeline_name = "Manual events"
-        index_name_seed = "timesketch_{0:d}".format(sketch_id)
+        index_name_seed = f"timesketch_{sketch_id:d}"
 
         date_string = form.get("date_string")
         if not date_string:
@@ -138,7 +138,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to add event, not able to convert the date "
                     "string. Was it properly formatted? Error: "
-                    "{0!s}".format(e),
+                    "{!s}".format(e),
                 )
 
         timestamp = int(time.mktime(date.utctimetuple())) * 1000000
@@ -224,7 +224,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         except Exception as e:  # pylint: disable=broad-except
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Failed to add event ({0!s})".format(e),
+                f"Failed to add event ({e!s})",
             )
 
         # Return Timeline if it was created.
@@ -247,10 +247,10 @@ class EventResource(resources.ResourceMixin, Resource):
         super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument(
-            "searchindex_id", type=six.text_type, required=True, location="args"
+            "searchindex_id", type=str, required=True, location="args"
         )
         self.parser.add_argument(
-            "event_id", type=six.text_type, required=True, location="args"
+            "event_id", type=str, required=True, location="args"
         )
 
     @login_required
@@ -299,7 +299,7 @@ class EventResource(resources.ResourceMixin, Resource):
         if searchindex_id not in indices:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Search index ID ({0!s}) does not belong to the list "
+                "Search index ID ({!s}) does not belong to the list "
                 "of indices".format(searchindex_id),
             )
 
@@ -576,7 +576,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         except json.JSONDecodeError as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to read the tags, with error: {0!s}".format(e),
+                f"Unable to read the tags, with error: {e!s}",
             )
 
         if not isinstance(tags_to_add, list):
@@ -595,13 +595,13 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             if field not in event_df:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Events need to have a [{0:s}] field associated "
+                    "Events need to have a [{:s}] field associated "
                     "to it.".format(field),
                 )
             if any(event_df[field].isna()):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "All events need to have a [{0:s}] field "
+                    "All events need to have a [{:s}] field "
                     "set, it cannot have a non-value.".format(field),
                 )
 
@@ -617,7 +617,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         if event_size > self.MAX_EVENTS_TO_TAG:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Cannot tag more than {0:d} events in a single "
+                "Cannot tag more than {:d} events in a single "
                 "request".format(self.MAX_EVENTS_TO_TAG),
             )
 
@@ -672,10 +672,10 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
                 except RequestError as e:
                     logger.error("Unable to query for events", exc_info=True)
-                    errors.append("Unable to query for events, {0!s}".format(e))
+                    errors.append(f"Unable to query for events, {e!s}")
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
-                        "Unable to query events, {0!s}".format(e),
+                        f"Unable to query events, {e!s}",
                     )
 
                 for result in search["hits"]["hits"]:
@@ -847,7 +847,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if searchindex_id not in indices:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Search index ID ({0!s}) does not belong to the list "
+                    "Search index ID ({!s}) does not belong to the list "
                     "of indices".format(searchindex_id),
                 )
 
@@ -910,7 +910,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Annotation type needs to be either label or comment, "
-                    "not {0!s}".format(annotation_type),
+                    "not {!s}".format(annotation_type),
                 )
 
             annotations.append(annotation)
@@ -961,7 +961,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if searchindex_id not in indices:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Search index ID ({0!s}) does not belong to the list "
+                    "Search index ID ({!s}) does not belong to the list "
                     "of indices".format(searchindex_id),
                 )
 
@@ -974,7 +974,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if not event:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
-                    "No event found with the id: " "{0!s}".format(event_id),
+                    "No event found with the id: " "{!s}".format(event_id),
                 )
 
             # Retrieve annotation type supplied in the request
@@ -990,7 +990,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     abort(
                         HTTP_STATUS_CODE_NOT_FOUND,
                         "No comment found with "
-                        "this id: {0!d}.".format(annotation["id"]),
+                        "this id: {!d}.".format(annotation["id"]),
                     )
 
                 # Make sure the current user is the owner of the comment
@@ -1016,7 +1016,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Annotation type needs to be a comment, "
-                    "not {0!s}".format(annotation_type),
+                    "not {!s}".format(annotation_type),
                 )
 
         return self.to_json(updated_annotations, status_code=HTTP_STATUS_CODE_OK)
@@ -1058,7 +1058,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         if not event:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "No event found with the id: " "{0!s}".format(event_id),
+                "No event found with the id: " "{!s}".format(event_id),
             )
 
         if "comment" in annotation_type:
@@ -1068,7 +1068,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if not comment:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
-                    "No comment found with " "this id: {0!d}.".format(annotation_id),
+                    "No comment found with " "this id: {!d}.".format(annotation_id),
                 )
 
             # Make sure the current user is the owner of the comment
@@ -1098,13 +1098,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Annotation type needs to be a comment, "
-                "not {0!s}".format(annotation_type),
+                "not {!s}".format(annotation_type),
             )
 
         return (
             HTTP_STATUS_CODE_BAD_REQUEST,
             "Could not delete the annotation"
-            " type {0!s} with the id {1!d}".format(annotation_type, annotation_id),
+            " type {!s} with the id {!d}".format(annotation_type, annotation_id),
         )
 
 
@@ -1215,8 +1215,8 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the timeline "
-                "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
+                "The sketch ID ({:d}) does not match with the timeline "
+                "sketch ID ({:d})".format(sketch.id, timeline.sketch.id),
             )
 
         query_dsl = {
@@ -1324,7 +1324,7 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
         if len(events) > self.MAX_EVENTS_TO_TAG:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Cannot untag more than {0:d} events in a single "
+                "Cannot untag more than {:d} events in a single "
                 "request".format(self.MAX_EVENTS_TO_TAG),
             )
 
@@ -1335,7 +1335,7 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
         if len(tags_to_remove) > self.MAX_TAGS_PER_REQUEST:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Cannot untag more than {0:d} tags in a single "
+                "Cannot untag more than {:d} tags in a single "
                 "request".format(self.MAX_TAGS_PER_REQUEST),
             )
 

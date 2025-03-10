@@ -57,22 +57,22 @@ def get_sigma_config_file(config_file=None):
 
     if not os.path.isfile(config_file_path):
         raise ValueError(
-            "Unable to open: [{0:s}], does not exist.".format(config_file_path)
+            f"Unable to open: [{config_file_path:s}], does not exist."
         )
 
     if not os.access(config_file_path, os.R_OK):
         raise ValueError(
-            "Unable to open file: [{0:s}], cannot open it for "
+            "Unable to open file: [{:s}], cannot open it for "
             "read, please check permissions.".format(config_file_path)
         )
 
-    with open(config_file_path, "r", encoding="utf-8") as config_file_read:
+    with open(config_file_path, encoding="utf-8") as config_file_read:
         sigma_config_file = config_file_read.read()
 
     try:
         sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
     except SigmaConfigParseError:
-        logger.error("Parsing error with {0:s}".format(sigma_config_file))
+        logger.error(f"Parsing error with {sigma_config_file:s}")
         raise
 
     return sigma_config
@@ -265,15 +265,15 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None, sanitize=True):
             rule_return.update(doc)
 
     except NotImplementedError as exception:
-        logger.error("Error generating rule {0!s}".format(exception))
+        logger.error(f"Error generating rule {exception!s}")
         raise
 
     except sigma_exceptions.SigmaParseError as exception:
-        logger.error("Sigma parsing error rule {0!s}".format(exception))
+        logger.error(f"Sigma parsing error rule {exception!s}")
         raise
 
     except yaml.parser.ParserError as exception:
-        logger.error("Yaml parsing error rule {0!s}".format(exception))
+        logger.error(f"Yaml parsing error rule {exception!s}")
         raise
 
     assert parsed_sigma_rules is not None

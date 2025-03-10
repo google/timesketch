@@ -174,7 +174,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         """Add a label to the timeline."""
         if timeline.has_label(label):
             logger.warning(
-                "Unable to apply the label [{0:s}] to timeline {1:s}, "
+                "Unable to apply the label [{:s}] to timeline {:s}, "
                 "already exists.".format(label, timeline.name)
             )
             return False
@@ -185,7 +185,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         """Removes a label from a timeline."""
         if not timeline.has_label(label):
             logger.warning(
-                "Unable to remove the label [{0:s}] from timeline {1:s}, "
+                "Unable to remove the label [{:s}] from timeline {:s}, "
                 "label does not exist.".format(label, timeline.name)
             )
             return False
@@ -219,8 +219,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the timeline "
-                "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
+                "The sketch ID ({:d}) does not match with the timeline "
+                "sketch ID ({:d})".format(sketch.id, timeline.sketch.id),
             )
 
         if not sketch.has_permission(user=current_user, permission="read"):
@@ -274,8 +274,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the timeline "
-                "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
+                "The sketch ID ({:d}) does not match with the timeline "
+                "sketch ID ({:d})".format(sketch.id, timeline.sketch.id),
             )
 
         if not sketch.has_permission(user=current_user, permission="write"):
@@ -330,7 +330,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             if not changed:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Label [{0:s}] not {1:s}".format(", ".join(labels), label_action),
+                    "Label [{:s}] not {:s}".format(", ".join(labels), label_action),
                 )
 
             db_session.add(timeline)
@@ -385,8 +385,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 timeline_string = str(timeline_use)
 
                 msg = (
-                    "The sketch ID ({0:s}) does not match with the timeline "
-                    "sketch ID ({1:s})".format(sketch_string, timeline_string)
+                    "The sketch ID ({:s}) does not match with the timeline "
+                    "sketch ID ({:s})".format(sketch_string, timeline_string)
                 )
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
@@ -401,7 +401,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             if timeline.has_label(label):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "Timelines with label [{0:s}] cannot be deleted.".format(label),
+                    f"Timelines with label [{label:s}] cannot be deleted.",
                 )
 
         # Check if this searchindex is used in other sketches.
@@ -433,13 +433,13 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 self.datastore.client.indices.close(index=searchindex.index_name)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to close index: {0:s} - index not "
+                    "Unable to close index: {:s} - index not "
                     "found".format(searchindex.index_name)
                 )
             except opensearchpy.RequestError as e:
                 error_msg = (
-                    "RequestError when closing index {0:s} - please try again in "
-                    "5 min or contact your admin. Error: {1:s}".format(
+                    "RequestError when closing index {:s} - please try again in "
+                    "5 min or contact your admin. Error: {:s}".format(
                         searchindex.index_name, str(e)
                     )
                 )
@@ -494,7 +494,7 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
         index_name = uuid.uuid4().hex
-        if not isinstance(index_name, six.text_type):
+        if not isinstance(index_name, str):
             index_name = codecs.decode(index_name, "utf-8")
 
         # Create the search index in the Timesketch database

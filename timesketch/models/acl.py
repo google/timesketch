@@ -40,7 +40,7 @@ from timesketch.models import BaseModel
 from timesketch.models import db_session
 
 
-class AccessControlEntry(object):
+class AccessControlEntry:
     """
     Access Control Entry database model. It has a user object (instance of
     timesketch.models.user.User) and a permission (read, write or delete).
@@ -86,7 +86,7 @@ class AccessControlEntry(object):
     permission = Column(Unicode(255))
 
 
-class AccessControlMixin(object):
+class AccessControlMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -217,7 +217,7 @@ class AccessControlMixin(object):
             not_(self.AccessControlEntry.group == None),
             self.AccessControlEntry.parent == self,
         ).all()
-        return set(ace.group for ace in group_aces)
+        return {ace.group for ace in group_aces}
 
     @property
     def is_public(self):
@@ -243,7 +243,7 @@ class AccessControlMixin(object):
             self.AccessControlEntry.permission == "read",
             self.AccessControlEntry.parent == self,
         ).all()
-        return set(ace.user for ace in aces)
+        return {ace.user for ace in aces}
 
     def get_all_permissions(self):
         """Get a dict of all users/groups that have permission on the object.
@@ -261,7 +261,7 @@ class AccessControlMixin(object):
         ).all()
 
         for ace in aces:
-            name = "user/{0:s}".format(ace.user.username)
+            name = f"user/{ace.user.username:s}"
             return_dict.setdefault(name, [])
             return_dict[name].append(ace.permission)
 
@@ -271,7 +271,7 @@ class AccessControlMixin(object):
         ).all()
 
         for ace in group_aces:
-            name = "group/{0:s}".format(ace.group.name)
+            name = f"group/{ace.group.name:s}"
             return_dict.setdefault(name, [])
             return_dict[name].append(ace.permission)
 
@@ -300,7 +300,7 @@ class AccessControlMixin(object):
             self.AccessControlEntry.parent == self,
         ).all()
 
-        return_dict["users"] = set(ace.user for ace in aces)
+        return_dict["users"] = {ace.user for ace in aces}
 
         group_aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.group == None),
@@ -308,7 +308,7 @@ class AccessControlMixin(object):
             self.AccessControlEntry.parent == self,
         ).all()
 
-        return_dict["groups"] = set(ace.group for ace in group_aces)
+        return_dict["groups"] = {ace.group for ace in group_aces}
 
         return_dict["is_public"] = self.is_public
         return return_dict
@@ -328,7 +328,7 @@ class AccessControlMixin(object):
         public_ace = self.is_public
         if public_ace and permission == "read":
             return public_ace
-        if isinstance(permission, six.binary_type):
+        if isinstance(permission, bytes):
             permission = codecs.decode(permission, "utf-8")
         return self._get_ace(permission=permission, user=user)
 

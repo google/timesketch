@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for Windows crash artefacts."""
 
-from __future__ import unicode_literals
 
 import re
 
@@ -97,7 +96,7 @@ class WinCrashSketchPlugin(interface.BaseAnalyzer):
         """
         conditions = list()
         for element_list in elements.values():
-            conditions += ["({0})".format(" AND ".join(element_list))]
+            conditions += ["({})".format(" AND ".join(element_list))]
         return " OR ".join(conditions)
 
     def extract_filename(self, text):
@@ -183,7 +182,7 @@ class WinCrashSketchPlugin(interface.BaseAnalyzer):
 
         return (
             "Windows Crash analyzer completed, "
-            + "{0:d} crashed application{1:s} identified: {2:s}".format(
+            + "{:d} crashed application{:s} identified: {:s}".format(
                 len(filenames), "s" if len(filenames) > 1 else "", ", ".join(filenames)
             )
         )

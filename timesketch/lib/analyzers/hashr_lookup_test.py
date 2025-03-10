@@ -1,13 +1,12 @@
 """Tests for OsshashdbLookupPlugin."""
 
-from __future__ import unicode_literals
 
 import copy
 import logging
 import json
 
 from flask import current_app
-import mock
+from unittest import mock
 import sqlalchemy
 
 from timesketch.lib.analyzers import hashr_lookup
@@ -525,7 +524,7 @@ class TestHashRLookup(BaseTest):
             event = copy.deepcopy(MockDataStore.event_dict)
             event["_source"].update(entry)
             analyzer.datastore.import_event(
-                "test_index", event["_source"], "{}".format(event_id)
+                "test_index", event["_source"], f"{event_id}"
             )
             event_id += 1
 
@@ -677,7 +676,7 @@ class TestHashRLookup(BaseTest):
             event = copy.deepcopy(MockDataStore.event_dict)
             event["_source"].update(entry)
             analyzer.datastore.import_event(
-                "test_index", event["_source"], "{}".format(event_id)
+                "test_index", event["_source"], f"{event_id}"
             )
             event_id += 1
 

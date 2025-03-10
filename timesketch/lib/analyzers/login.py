@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for login and logoff events."""
 
-from __future__ import unicode_literals
 
 import logging
 
@@ -163,14 +162,14 @@ class LoginSketchPlugin(interface.BaseAnalyzer):
             tags_to_add = []
             attribute_dict = {}
 
-            if isinstance(identifier, six.text_type):
+            if isinstance(identifier, str):
                 try:
                     identifier = int(identifier, 10)
                 except ValueError:
                     logger.warning(
                         (
                             "Unable to convert EVTX identifier to an integer, "
-                            "value is {0:s}"
+                            "value is {:s}"
                         ).format(identifier)
                     )
                     continue
@@ -211,7 +210,7 @@ class LoginSketchPlugin(interface.BaseAnalyzer):
         # TODO: Add support for Mac OS X logon/logoff events.
 
         return (
-            "Total number of login events processed: {0:d} and " "logoff events: {1:d}"
+            "Total number of login events processed: {:d} and " "logoff events: {:d}"
         ).format(login_counter, logoff_counter)
 
 

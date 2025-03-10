@@ -232,7 +232,7 @@ class SketchResource(resources.ResourceMixin, Resource):
         """Add a label to the sketch."""
         if sketch.has_label(label):
             logger.warning(
-                "Unable to apply the label [{0:s}] to sketch {1:d}, "
+                "Unable to apply the label [{:s}] to sketch {:d}, "
                 "already exists.".format(label, sketch.id)
             )
             return False
@@ -244,7 +244,7 @@ class SketchResource(resources.ResourceMixin, Resource):
         """Removes a label to the sketch."""
         if not sketch.has_label(label):
             logger.warning(
-                "Unable to remove the label [{0:s}] to sketch {1:d}, "
+                "Unable to remove the label [{:s}] to sketch {:d}, "
                 "label does not exist.".format(label, sketch.id)
             )
             return False
@@ -345,7 +345,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             except opensearchpy.NotFoundError:
                 logger.error(
                     "Unable to get indices mapping in datastore, for "
-                    "indices: {0:s}".format(",".join(sketch_indices))
+                    "indices: {:s}".format(",".join(sketch_indices))
                 )
                 mappings_settings = {}
 
@@ -493,7 +493,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             if sketch.has_label(label):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "Sketch with the label [{0:s}] cannot be deleted.".format(label),
+                    f"Sketch with the label [{label:s}] cannot be deleted.",
                 )
         sketch.set_status(status="deleted")
         return HTTP_STATUS_CODE_OK
@@ -536,7 +536,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Label actions needs to be either "add" or "remove", '
-                "not [{0:s}]".format(label_action),
+                "not [{:s}]".format(label_action),
             )
 
         if labels and isinstance(labels, (tuple, list)):

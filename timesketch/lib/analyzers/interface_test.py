@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for analysis interface."""
 
-from __future__ import unicode_literals
 
 import json
 

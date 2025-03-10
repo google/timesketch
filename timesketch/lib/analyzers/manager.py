@@ -13,10 +13,9 @@
 # limitations under the License.
 """This file contains a class for managing analyzers."""
 
-from __future__ import unicode_literals
 
 
-class AnalysisManager(object):
+class AnalysisManager:
     """The analyzer manager."""
 
     _class_registry = {}
@@ -57,10 +56,8 @@ class AnalysisManager(object):
 
             if not dependency_set:
                 raise KeyError(
-                    (
                         "Unable to build dependency tree, there is a circular "
                         "dependency somewhere"
-                    )
                 )
 
             dependency_tree.append(dependency_set)
@@ -145,7 +142,7 @@ class AnalysisManager(object):
         analyzer_name = analyzer_class.NAME.lower()
         if analyzer_name in cls._class_registry:
             raise KeyError(
-                "Class already set for name: {0:s}.".format(analyzer_class.NAME)
+                f"Class already set for name: {analyzer_class.NAME:s}."
             )
         cls._class_registry[analyzer_name] = analyzer_class
 
@@ -163,5 +160,5 @@ class AnalysisManager(object):
         """
         if analyzer_name not in cls._class_registry:
             # Do we really need a KeyError here? Isn't logging enough?
-            raise KeyError("Class not set for name: {0:s}.".format(analyzer_name))
+            raise KeyError(f"Class not set for name: {analyzer_name:s}.")
         _ = cls._class_registry.pop(analyzer_name, None)

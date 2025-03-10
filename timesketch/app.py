@@ -13,7 +13,6 @@
 # limitations under the License.
 """Entry point for the application."""
 
-from __future__ import unicode_literals
 
 import logging
 import os
@@ -71,7 +70,7 @@ def create_app(config=None, legacy_ui=False):
         else:
             config = legacy_path
 
-    if isinstance(config, six.text_type):
+    if isinstance(config, str):
         os.environ["TIMESKETCH_SETTINGS"] = config
         try:
             app.config.from_envvar("TIMESKETCH_SETTINGS")
@@ -81,8 +80,8 @@ def create_app(config=None, legacy_ui=False):
                     "Warning, EMAIL_USER_WHITELIST has been deprecated. "
                     "Please update timesketch.conf."
                 )
-        except IOError:
-            sys.stderr.write("Config file {0} does not exist.\n".format(config))
+        except OSError:
+            sys.stderr.write(f"Config file {config} does not exist.\n")
             sys.exit()
     else:
         app.config.from_object(config)

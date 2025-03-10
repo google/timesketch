@@ -1,9 +1,8 @@
 """Tests for expert sessionizers."""
 
-from __future__ import unicode_literals
 
 import unittest
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.expert_sessionizers import (
     WebActivitySessionizerSketchPlugin,

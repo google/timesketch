@@ -37,8 +37,7 @@ class LLMManager:
         Yields:
             A tuple of (provider_name, provider_class)
         """
-        for provider_name, provider_class in cls._class_registry.items():
-            yield provider_name, provider_class
+        yield from cls._class_registry.items()
 
     @classmethod
     def get_provider(cls, provider_name: str) -> type:

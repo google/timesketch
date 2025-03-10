@@ -1,7 +1,7 @@
 """Test for Hashlookup"""
 
 import copy
-import mock
+from unittest import mock
 
 from flask import current_app
 

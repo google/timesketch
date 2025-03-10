@@ -16,7 +16,6 @@
 This aggregator is primarily used for the event data analytics and not useful
 for the UI.  Therefore,  by default this aggregator is "hidden" from views.
 """
-from __future__ import unicode_literals
 
 from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
@@ -84,7 +83,7 @@ class SummaryAggregation(interface.BaseAggregator):
     def chart_title(self):
         """Returns a title for the chart."""
         if self.field:
-            return 'Summary aggregations for "{0:s}"'.format(self.field)
+            return f'Summary aggregations for "{self.field:s}"'
         return "Summary aggregations for an unknown field."
 
     # pylint: disable=arguments-differ
@@ -227,7 +226,7 @@ class DateSummaryAggregator(interface.BaseAggregator):
     def chart_title(self):
         """Returns a title for the chart."""
         if self.field:
-            return 'Date field summary aggregations for "{0:s}"'.format(self.field)
+            return f'Date field summary aggregations for "{self.field:s}"'
         return "Date field summary aggregations for an unknown field."
 
     # pylint: disable=arguments-differ

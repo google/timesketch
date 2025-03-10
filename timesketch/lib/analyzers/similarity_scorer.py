@@ -13,14 +13,13 @@
 # limitations under the License.
 """Calculate similarity scores based on the Jaccard distance between events."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib import similarity
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class SimilarityScorerConfig(object):
+class SimilarityScorerConfig:
     """Configuration for a similarity scorer."""
 
     # Parameters for Jaccard and Minhash calculations.
@@ -72,7 +71,7 @@ class SimilarityScorerConfig(object):
         # the query based on the data_type.
         if not config_dict:
             config_dict = self.DEFAULT_CONFIG
-            config_dict["query"] = 'data_type:"{0}"'.format(self._data_type)
+            config_dict["query"] = f'data_type:"{self._data_type}"'
 
         config_dict["index_name"] = self._index_name
         config_dict["data_type"] = self._data_type

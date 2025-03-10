@@ -15,7 +15,7 @@
 
 import logging
 import re
-from six.moves import urllib_parse as urlparse
+from urllib import parse as urlparse
 
 import numpy
 
@@ -319,7 +319,7 @@ def compile_regular_expression(
                 flags.add(getattr(re, flag))
             except AttributeError:
                 logger.warning(
-                    "Unknown regular expression flag defined " "-> {0:s}.".format(flag)
+                    "Unknown regular expression flag defined " "-> {:s}.".format(flag)
                 )
         re_flag = sum(flags)
     else:
@@ -332,7 +332,7 @@ def compile_regular_expression(
         expression = re.compile(expression_string, flags=re_flag)
     except re.error:
         logger.error(
-            "Regular expression [{0:s}] failed to " "compile".format(expression_string),
+            "Regular expression [{:s}] failed to " "compile".format(expression_string),
             exc_info=True,
         )
         expression = None

@@ -169,8 +169,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the ID in "
-                "the story ({1:d})".format(sketch.id, story.sketch_id),
+                "Sketch ID ({:d}) does not match with the ID in "
+                "the story ({:d})".format(sketch.id, story.sketch_id),
             )
 
         # Only allow editing if the current user is the author.
@@ -207,8 +207,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the ID in "
-                "the story ({1:d})".format(sketch.id, story.sketch_id),
+                "Sketch ID ({:d}) does not match with the ID in "
+                "the story ({:d})".format(sketch.id, story.sketch_id),
             )
 
         if not sketch.has_permission(current_user, "write"):
@@ -261,8 +261,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         # Check that this timeline belongs to the sketch
         if story.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the story"
-                "sketch ID ({1:d})".format(sketch.id, story.sketch_id)
+                "The sketch ID ({:d}) does not match with the story"
+                "sketch ID ({:d})".format(sketch.id, story.sketch_id)
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 

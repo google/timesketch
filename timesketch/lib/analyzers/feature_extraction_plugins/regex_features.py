@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for feature extraction."""
 
-from __future__ import unicode_literals
 
 import logging
 
@@ -87,7 +86,7 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
             "default_value": [],
             "options": [x.code for x in emojis.EMOJI_MAP.values()],
             "options-label": [
-                "{0:s} - {1:s}".format(x, y.help) for x, y in emojis.EMOJI_MAP.items()
+                f"{x:s} - {y.help:s}" for x, y in emojis.EMOJI_MAP.items()
             ],
             "optional": True,
         },
@@ -257,7 +256,7 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
         event_counter = 0
         for event in events:
             attribute_field = event.source.get(attribute)
-            if isinstance(attribute_field, six.text_type):
+            if isinstance(attribute_field, str):
                 attribute_value = attribute_field
             elif isinstance(attribute_field, (list, tuple)):
                 attribute_value = ",".join(attribute_field)
@@ -278,7 +277,7 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
             store_as_current_val = event.source.get(store_as)
             if store_as_current_val and not overwrite_store_as:
                 continue
-            if isinstance(store_as_current_val, six.text_type):
+            if isinstance(store_as_current_val, str):
                 store_type_list = False
             elif isinstance(store_as_current_val, (list, tuple)):
                 store_type_list = True
@@ -298,7 +297,7 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
             # Commit the event to the datastore.
             event.commit()
 
-        return "Feature extraction [{0:s}] extracted {1:d} features.".format(
+        return "Feature extraction [{:s}] extracted {:d} features.".format(
             name, event_counter
         )
 

@@ -238,7 +238,7 @@ def run_aggregator_group(group, sketch_id):
 
     meta = {
         "method": "aggregator_group",
-        "chart_type": "compound: {0:s}".format(orientation),
+        "chart_type": f"compound: {orientation:s}",
         "name": group.name,
         "description": group.description,
         "es_time": time_after - time_before,
@@ -267,11 +267,11 @@ def load_yaml_config(config_parameter_name):
     if not os.path.isfile(yaml_path):
         logger.error(
             "Unable to read the config, file: "
-            "[{0:s}] does not exist".format(yaml_path)
+            "[{:s}] does not exist".format(yaml_path)
         )
         return {}
 
-    with open(yaml_path, "r") as fh:
+    with open(yaml_path) as fh:
         return yaml.safe_load(fh)
 
 
@@ -293,7 +293,7 @@ def load_csv_file(config_parametre_name):
     if not os.path.isfile(csv_file):
         logger.error(
             "Unable to read the config, file: "
-            "[{0:s}] does not exist".format(csv_file)
+            "[{:s}] does not exist".format(csv_file)
         )
         return {}
 

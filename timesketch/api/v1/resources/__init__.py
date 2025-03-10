@@ -15,7 +15,6 @@
 
 The timesketch API is a RESTful API that exposes the following resources:
 """
-from __future__ import unicode_literals
 
 import logging
 
@@ -35,7 +34,7 @@ logging.basicConfig(
 )
 
 
-class ResourceMixin(object):
+class ResourceMixin:
     """Mixin for API resources."""
 
     # Schemas for database model resources

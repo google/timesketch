@@ -13,7 +13,6 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
-from __future__ import unicode_literals
 
 import codecs
 from hashlib import sha1
@@ -169,8 +168,8 @@ def get_import_errors(error_container, index_name, total_count):
         top_details = "Unknown Reasons"
 
     return (
-        "{0:d} out of {1:d} events imported. Most common error type "
-        'is "{2:s}" with the detail of "{3:s}"'
+        "{:d} out of {:d} events imported. Most common error type "
+        'is "{:s}" with the detail of "{:s}"'
     ).format(total_count - error_count, total_count, top_type, top_details)
 
 
@@ -214,7 +213,7 @@ def _close_index(index_name, data_store, timeline_id):
         data_store.client.indices.close(index=index_name)
     except NotFoundError:
         logger.error(
-            "Unable to close index: {0:s} - index not " "found".format(index_name)
+            "Unable to close index: {:s} - index not " "found".format(index_name)
         )
 
 
@@ -258,7 +257,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         datastore.client.indices.refresh(index=timeline.searchindex.index_name)
     except NotFoundError:
         logger.error(
-            "Unable to refresh index: {0:s}, not found, "
+            "Unable to refresh index: {:s}, not found, "
             "removing from list.".format(timeline.searchindex.index_name)
         )
 
@@ -317,7 +316,7 @@ def _get_index_task_class(file_extension):
     elif file_extension in ["csv", "jsonl", "json"]:
         index_class = run_csv_jsonl
     else:
-        raise KeyError("No task that supports {0:s}".format(file_extension))
+        raise KeyError(f"No task that supports {file_extension:s}")
     return index_class
 
 
@@ -602,7 +601,7 @@ def run_sketch_init(index_name_list):
     Returns:
         List with first entry of index_name_list.
     """
-    if isinstance(index_name_list, six.string_types):
+    if isinstance(index_name_list, str):
         index_name_list = [index_name_list]
     return index_name_list[:1][0]
 
@@ -635,10 +634,10 @@ def run_email_result_task(index_name, sketch_id=None):
         if sketch_id:
             sketch = Sketch.get_by_id(sketch_id)
 
-        subject = "Timesketch: [{0:s}] is ready".format(searchindex.name)
+        subject = f"Timesketch: [{searchindex.name:s}] is ready"
 
         # TODO: Use jinja templates.
-        body = "Your timeline [{0:s}] has been imported and is ready.".format(
+        body = "Your timeline [{:s}] has been imported and is ready.".format(
             searchindex.name
         )
 
@@ -647,13 +646,13 @@ def run_email_result_task(index_name, sketch_id=None):
             view_links = []
             for view_url, view_name in iter(view_urls.items()):
                 view_links.append(
-                    '<a href="{0:s}">{1:s}</a>'.format(view_url, view_name)
+                    f'<a href="{view_url:s}">{view_name:s}</a>'
                 )
 
-            body = body + "<br><br><b>Sketch</b><br>{0:s}".format(sketch.external_url)
+            body = body + f"<br><br><b>Sketch</b><br>{sketch.external_url:s}"
 
             analysis_results = searchindex.description.replace("\n", "<br>")
-            body = body + "<br><br><b>Analysis</b>{0:s}".format(analysis_results)
+            body = body + f"<br><br><b>Analysis</b>{analysis_results:s}"
 
             if view_links:
                 body = body + "<br><br><b>Views</b><br>" + "<br>".join(view_links)
@@ -663,7 +662,7 @@ def run_email_result_task(index_name, sketch_id=None):
         except RuntimeError as e:
             return repr(e)
 
-    return "Sent email to {0:s}".format(to_username)
+    return f"Sent email to {to_username:s}"
 
 
 @celery.task(track_started=True)
@@ -688,7 +687,7 @@ def run_sketch_analyzer(
     )
 
     result = analyzer.run_wrapper(analysis_id)
-    logger.info("[{0:s}] result: {1:s}".format(analyzer_name, result))
+    logger.info(f"[{analyzer_name:s}] result: {result:s}")
     if hasattr(analyzer_class, "IS_DFIQ_ANALYZER") and analyzer_class.IS_DFIQ_ANALYZER:
         analysis = Analysis.get_by_id(analysis_id)
         user_id = analysis.user.id
@@ -698,7 +697,7 @@ def run_sketch_analyzer(
         )
         if question_conclusion:
             logger.info(
-                '[{0:s}] added a conclusion to dfiq: "{1:s}"'.format(
+                '[{:s}] added a conclusion to dfiq: "{:s}"'.format(
                     analyzer_name, question_conclusion.investigativequestion.name
                 )
             )
@@ -726,14 +725,14 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     time_start = time.time()
     if not plaso:
         raise RuntimeError(
-            ("Plaso isn't installed, " "unable to continue processing plaso files.")
+            "Plaso isn't installed, " "unable to continue processing plaso files."
         )
 
     plaso_version = int(plaso.__version__)
     if plaso_version <= PLASO_MINIMUM_VERSION:
         raise RuntimeError(
-            "Plaso version is out of date (version {0:d}, please upgrade to a "
-            "version that is later than {1:d}".format(
+            "Plaso version is out of date (version {:d}, please upgrade to a "
+            "version that is later than {:d}".format(
                 plaso_version, PLASO_MINIMUM_VERSION
             )
         )
@@ -745,17 +744,17 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
     if os.path.isfile(mappings_file_path):
         try:
-            with open(mappings_file_path, "r") as mfh:
+            with open(mappings_file_path) as mfh:
                 mappings = json.load(mfh)
 
                 if not isinstance(mappings, dict):
                     raise RuntimeError(
                         "Unable to create mappings, the mappings are not a "
-                        "dict, please look at the file: {0:s}".format(
+                        "dict, please look at the file: {:s}".format(
                             mappings_file_path
                         )
                     )
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, OSError):
             logger.error("Unable to read in mapping", exc_info=True)
 
     opensearch_server = current_app.config.get("OPENSEARCH_HOST")
@@ -787,7 +786,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
+        logger.error(f"Error: {e!s}\n{error_msg:s}")
         return None
 
     message = "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})"
@@ -811,7 +810,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
+        logger.error(f"Error: {e!s}\n{error_msg:s}")
         return None
 
     _set_datasource_total_events(timeline_id, file_path, total_file_events)
@@ -948,7 +947,7 @@ def run_csv_jsonl(
     _set_datasource_status(timeline_id, file_path, "processing")
     # Log information to Celery
     logger.info(
-        "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})".format(
+        "Index timeline [{:s}] to index [{:s}] (source: {:s})".format(
             timeline_name, index_name, source_type
         )
     )
@@ -957,17 +956,17 @@ def run_csv_jsonl(
     mappings_file_path = current_app.config.get("GENERIC_MAPPING_FILE", "")
     if os.path.isfile(mappings_file_path):
         try:
-            with open(mappings_file_path, "r") as mfh:
+            with open(mappings_file_path) as mfh:
                 mappings = json.load(mfh)
 
                 if not isinstance(mappings, dict):
                     raise RuntimeError(
                         "Unable to create mappings, the mappings are not a "
-                        "dict, please look at the file: {0:s}".format(
+                        "dict, please look at the file: {:s}".format(
                             mappings_file_path
                         )
                     )
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, OSError):
             logger.error("Unable to read in mapping", exc_info=True)
 
     opensearch = OpenSearchDataStore(
@@ -1079,7 +1078,7 @@ def run_csv_jsonl(
         _set_datasource_status(
             timeline_id, file_path, "fail", error_message=str(error_msg)
         )
-        logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
+        logger.error(f"Error: {e!s}\n{error_msg:s}")
         return None
 
     METRICS["worker_events_added"].labels(
@@ -1087,8 +1086,8 @@ def run_csv_jsonl(
     ).set(final_counter)
     if error_count:
         logger.info(
-            "Index timeline: [{0:s}] to index [{1:s}] - {2:d} out of {3:d} "
-            "events imported (in total {4:d} errors were discovered) ".format(
+            "Index timeline: [{:s}] to index [{:s}] - {:d} out of {:d} "
+            "events imported (in total {:d} errors were discovered) ".format(
                 timeline_name,
                 index_name,
                 (final_counter - error_count),
@@ -1098,7 +1097,7 @@ def run_csv_jsonl(
         )
     else:
         logger.info(
-            "Index timeline: [{0:s}] to index [{1:s}] - {2:d} "
+            "Index timeline: [{:s}] to index [{:s}] - {:d} "
             "events imported.".format(timeline_name, index_name, final_counter)
         )
 
@@ -1156,7 +1155,7 @@ def find_data_task(
         return results
 
     data_finder_dict = {}
-    with open(data_finder_path, "r") as fh:
+    with open(data_finder_path) as fh:
         try:
             data_finder_dict = yaml.safe_load(fh)
         except yaml.parser.ParserError:

@@ -1,7 +1,7 @@
 """Tests for TaggerSketchPlugin."""
 
 import yaml
-import mock
+from unittest import mock
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import tagger

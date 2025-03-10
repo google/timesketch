@@ -13,12 +13,11 @@
 # limitations under the License.
 """This file contains the interface for a story exporter."""
 
-from __future__ import unicode_literals
 
 import json
 
 
-class StoryExporter(object):
+class StoryExporter:
     """Interface for a story exporter."""
 
     # String representing the output format of the story.
@@ -162,7 +161,7 @@ class StoryExporter(object):
         self.reset()
 
 
-class DataFetcher(object):
+class DataFetcher:
     """A data fetcher interface."""
 
     def __init__(self):

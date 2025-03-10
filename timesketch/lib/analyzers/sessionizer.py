@@ -1,6 +1,5 @@
 """Sessionizing sketch analyzer plugin."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -63,7 +62,7 @@ class SessionizerSketchPlugin(interface.BaseAnalyzer):
         except StopIteration:
             pass
 
-        return "Sessionizing completed, number of session created:" " {0:d}".format(
+        return "Sessionizing completed, number of session created:" " {:d}".format(
             session_num
         )
 

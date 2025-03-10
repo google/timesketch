@@ -74,14 +74,14 @@ class AggregationResource(resources.ResourceMixin, Resource):
         if not aggregation:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The aggregation ID ({0:d}) does not exist.".format(aggregation_id),
+                f"The aggregation ID ({aggregation_id:d}) does not exist.",
             )
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the defined "
-                "sketch in the aggregation ({1:d})".format(
+                "The sketch ID ({:d}) does not match with the defined "
+                "sketch in the aggregation ({:d})".format(
                     aggregation.sketch_id, sketch.id
                 ),
             )
@@ -193,8 +193,8 @@ class AggregationResource(resources.ResourceMixin, Resource):
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "sketch ID ({1:d})".format(sketch.id, aggregation.sketch_id)
+                "The sketch ID ({:d}) does not match with the aggregation "
+                "sketch ID ({:d})".format(sketch.id, aggregation.sketch_id)
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
@@ -299,8 +299,8 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "group sketch ID ({1:d})".format(sketch.id, group.sketch_id)
+                "The sketch ID ({:d}) does not match with the aggregation "
+                "group sketch ID ({:d})".format(sketch.id, group.sketch_id)
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
@@ -339,8 +339,8 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "group sketch ID ({1:d})".format(sketch.id, group.sketch_id)
+                "The sketch ID ({:d}) does not match with the aggregation "
+                "group sketch ID ({:d})".format(sketch.id, group.sketch_id)
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
@@ -373,7 +373,7 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
             if not aggregation:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "No aggregation found for ID: {0:d}".format(agg_id),
+                    f"No aggregation found for ID: {agg_id:d}",
                 )
             aggregations.append(aggregation)
 
@@ -405,8 +405,8 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "group sketch ID ({1:d})".format(sketch.id, group.sketch_id)
+                "The sketch ID ({:d}) does not match with the aggregation "
+                "group sketch ID ({:d})".format(sketch.id, group.sketch_id)
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
@@ -512,14 +512,14 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
                     "Attempting to run an aggregation on a non-existing "
-                    "index, index: {0:s} and parameters: {1!s}".format(
+                    "index, index: {:s} and parameters: {!s}".format(
                         ",".join(indices), aggregator_parameters
                     ),
                 )
             except ValueError as exc:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Unable to run the aggregation, with error: {0!s}".format(exc),
+                    f"Unable to run the aggregation, with error: {exc!s}",
                 )
             time_after = time.time()
 

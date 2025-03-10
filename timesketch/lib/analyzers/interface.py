@@ -13,7 +13,6 @@
 # limitations under the License.
 """Interface for analyzers."""
 
-from __future__ import unicode_literals
 
 import datetime
 import json
@@ -113,20 +112,20 @@ def get_yaml_config(file_name):
     if not path:
         return {}
 
-    with open(path, "r") as fh:
+    with open(path) as fh:
         try:
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
             # pylint: disable=logging-format-interpolation
             logger.warning(
-                ("Unable to read in YAML config file, " "with error: {0!s}").format(
+                ("Unable to read in YAML config file, " "with error: {!s}").format(
                     exception
                 )
             )
             return {}
 
 
-class Event(object):
+class Event:
     """Event object with helper methods.
 
     Attributes:
@@ -161,7 +160,7 @@ class Event(object):
             self.timeline_id = event.get("_source", {}).get("__ts_timeline_id")
             self.source = event.get("_source", None)
         except KeyError as e:
-            raise KeyError("Malformed event: {0!s}".format(e)) from e
+            raise KeyError(f"Malformed event: {e!s}") from e
 
     def _update(self, event):
         """Update event attributes to add.
@@ -353,7 +352,7 @@ class Event(object):
         """
         existing_human_readable = self.source.get("human_readable", [])
 
-        human_readable = "[{0:s}] {1:s}".format(analyzer_name, human_readable)
+        human_readable = f"[{analyzer_name:s}] {human_readable:s}"
 
         if human_readable in existing_human_readable:
             return
@@ -367,7 +366,7 @@ class Event(object):
         self._update(updated_human_readable)
 
 
-class Sketch(object):
+class Sketch:
     """Sketch object with helper methods.
 
     Attributes:
@@ -556,7 +555,7 @@ class Sketch(object):
         if additional_fields:
             query_filter["fields"] = [{"field": x.strip()} for x in additional_fields]
 
-        description = "analyzer: {0:s}".format(analyzer_name)
+        description = f"analyzer: {analyzer_name:s}"
         view = View.get_or_create(
             name=view_name, description=description, sketch=self.sql_sketch, user=None
         )
@@ -667,7 +666,7 @@ class Sketch(object):
         return indices
 
 
-class AggregationGroup(object):
+class AggregationGroup:
     """Aggregation Group object with helper methods.
 
     Attributes:
@@ -765,7 +764,7 @@ class AggregationGroup(object):
         self.commit()
 
 
-class Story(object):
+class Story:
     """Story object with helper methods.
 
     Attributes:
@@ -1000,7 +999,7 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to refresh index: {0:s}, not found, "
+                    "Unable to refresh index: {:s}, not found, "
                     "removing from list.".format(index)
                 )
                 broken_index = indices.index(index)
@@ -1085,7 +1084,7 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to find index: {0:s}, removing from "
+                    "Unable to find index: {:s}, removing from "
                     "result set.".format(index)
                 )
                 broken_index = indices.index(index)
@@ -1125,7 +1124,7 @@ class BaseAnalyzer:
             except opensearchpy.TransportError as e:
                 sleep_seconds = backoff_in_seconds * 2**x + random.uniform(3, 7)
                 logger.info(
-                    "Attempt: {0:d}/{1:d} sleeping {2:f} for query {3:s}".format(
+                    "Attempt: {:d}/{:d} sleeping {:f} for query {:s}".format(
                         x + 1, retries, sleep_seconds, query_string
                     )
                 )
@@ -1133,7 +1132,7 @@ class BaseAnalyzer:
 
                 if x == retries - 1:
                     logger.error(
-                        "Timeout executing search for {0:s}: {1!s}".format(
+                        "Timeout executing search for {:s}: {!s}".format(
                             query_string, e
                         ),
                         exc_info=True,
@@ -1166,7 +1165,7 @@ class BaseAnalyzer:
 
             if status == "fail":
                 logger.error(
-                    "Unable to run analyzer on a failed index ({0:s})".format(
+                    "Unable to run analyzer on a failed index ({:s})".format(
                         searchindex.index_name
                     )
                 )
@@ -1192,7 +1191,7 @@ class BaseAnalyzer:
             result = traceback.format_exc()
 
         # Update database analysis object with result and status
-        analysis.result = "{0:s}".format(result)
+        analysis.result = f"{result:s}"
         db_session.add(analysis)
         db_session.commit()
 

@@ -1,10 +1,9 @@
 """Tests for SafeBrowsingSketchPlugin."""
 
-from __future__ import unicode_literals
 
 from collections import OrderedDict
 
-import mock
+from unittest import mock
 from httmock import HTTMock, all_requests
 
 from timesketch.lib.analyzers import safebrowsing

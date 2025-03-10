@@ -13,7 +13,6 @@
 # limitations under the License.
 """Common functions and utilities."""
 
-from __future__ import unicode_literals
 
 import colorsys
 import csv
@@ -61,7 +60,7 @@ def random_color():
     hue += golden_ratio_conjugate
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
-    return "{0:02X}{1:02X}{2:02X}".format(rgb[0], rgb[1], rgb[2])
+    return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
 
 
 def _parse_tag_field(row):
@@ -111,7 +110,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
 
     if headers_mapping:
         check_mapping_errors(parsed_set, headers_mapping)
-        headers_mapping_set = set(m["target"] for m in headers_mapping)
+        headers_mapping_set = {m["target"] for m in headers_mapping}
         headers_missing = headers_missing - headers_mapping_set
     else:
         headers_mapping_set = {}
@@ -269,7 +268,7 @@ def read_and_validate_csv(
         mandatory_fields = TIMESKETCH_FIELDS
 
     # Ensures delimiter is a string.
-    if not isinstance(delimiter, six.text_type):
+    if not isinstance(delimiter, str):
         delimiter = codecs.decode(delimiter, "utf8")
 
     # Ensure that required headers are present
@@ -294,7 +293,7 @@ def read_and_validate_csv(
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
-                    "{0} rows skipped since they were missing datetime field "
+                    "{} rows skipped since they were missing datetime field "
                     "or it was empty ".format(len(skipped_rows))
                 )
 
@@ -311,7 +310,7 @@ def read_and_validate_csv(
                 chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
-                        "{0} rows dropped from Rows {1} to {2} due to invalid "
+                        "{} rows dropped from Rows {} to {} due to invalid "
                         "datetime values".format(
                             num_chunk_rows - len(chunk),
                             idx * reader.chunksize,
@@ -325,7 +324,7 @@ def read_and_validate_csv(
 
             except ValueError:
                 logger.warning(
-                    "Rows {0} to {1} skipped due to malformed "
+                    "Rows {} to {} skipped due to malformed "
                     "datetime values ".format(
                         idx * reader.chunksize,
                         idx * reader.chunksize + chunk.shape[0],
@@ -350,7 +349,7 @@ def read_and_validate_csv(
 
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
-        error_string = "Unable to read file, with error: {0!s}".format(e)
+        error_string = f"Unable to read file, with error: {e!s}"
         logger.error(error_string)
         raise errors.DataIngestionError(error_string) from e
 
@@ -495,14 +494,14 @@ def read_and_validate_jsonl(
                 except TypeError:
                     logger.error(
                         "Unable to parse timestamp, skipping line "
-                        "{0:d}".format(lineno),
+                        "{:d}".format(lineno),
                         exc_info=True,
                     )
                     continue
                 except parser.ParserError:
                     logger.error(
                         "Unable to parse timestamp, skipping line "
-                        "{0:d}".format(lineno),
+                        "{:d}".format(lineno),
                         exc_info=True,
                     )
                     continue
@@ -522,7 +521,7 @@ def read_and_validate_jsonl(
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                "Error parsing JSON at line {0:n}: {1:s}".format(lineno, str(e))
+                f"Error parsing JSON at line {lineno:n}: {str(e):s}"
             )
 
 
@@ -616,9 +615,9 @@ def send_email(subject, body, to_username, use_html=False):
     if to_username not in email_user_whitelist:
         return
 
-    from_address = "{0:s}@{1:s}".format(email_from_user, email_domain)
+    from_address = f"{email_from_user:s}@{email_domain:s}"
     # TODO: Add email address to user object and pick it up from there.
-    to_address = "{0:s}@{1:s}".format(to_username, email_domain)
+    to_address = f"{to_username:s}@{email_domain:s}"
     email_content_type = "text"
     if use_html:
         email_content_type = "text/html"

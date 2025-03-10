@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for the Safe Browsing API."""
 
-from __future__ import unicode_literals
 
 import fnmatch
 import logging
@@ -224,7 +223,7 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
                 url_allowlist.add("*.%s/*" % domain)
 
         logger.info(
-            "{0:d} entries on the allowlist.".format(len(url_allowlist)),
+            f"{len(url_allowlist):d} entries on the allowlist.",
         )
 
         safebrowsing_platforms = current_app.config.get(
@@ -285,7 +284,7 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
                 event.commit()
 
         return (
-            "{0:d} Safe Browsing result(s) on {1:d} URL(s), " "{2:d} on the allow list."
+            "{:d} Safe Browsing result(s) on {:d} URL(s), " "{:d} on the allow list."
         ).format(
             len(safebrowsing_results),
             len(urls),

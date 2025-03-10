@@ -1,6 +1,5 @@
 """Index analyzer plugin for sigma."""
 
-from __future__ import unicode_literals
 
 import logging
 
@@ -107,7 +106,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 rule_id=rule.get("id"),
             )
         except:  # pylint: disable=bare-except
-            error_msg = "* {0:s} {1:s}".format(rule_name, rule.get("id"))
+            error_msg = "* {:s} {:s}".format(rule_name, rule.get("id"))
             logger.error(
                 error_msg,
                 exc_info=True,

@@ -3,7 +3,6 @@
 # This code is auto generated. Ignore linter errors.
 # pylint: skip-file
 
-from __future__ import with_statement
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig

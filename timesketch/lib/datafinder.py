@@ -66,7 +66,7 @@ class DataFinder:
         for parameter in re_parameters:
             if not parameter in self._parameters:
                 logger.warning(
-                    "Parameters are defined, but parameter: [{0:s}] does not "
+                    "Parameters are defined, but parameter: [{:s}] does not "
                     "exist in parameter definitions for the rule.".format(parameter)
                 )
                 return False
@@ -190,7 +190,7 @@ class DataFinder:
             source = event.get("_source", {})
             value = source.get(attribute)
             if not value:
-                logger.warning("Attribute: [{0:s}] is empty".format(attribute))
+                logger.warning(f"Attribute: [{attribute:s}] is empty")
 
             result = expression.findall(value)
             if not result:

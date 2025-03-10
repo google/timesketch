@@ -14,7 +14,7 @@
 """Tests for the llm_summarize feature."""
 
 import json
-import mock
+from unittest import mock
 import pandas as pd
 from flask import current_app
 from timesketch.lib.testlib import BaseTest

@@ -187,8 +187,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
             logger.error(
                 "There is a timeline in the sketch that has the same name "
-                "but is stored in a different index: name {0:s} attempting "
-                "index: {1:s} but found index {2:s} - retrying with a "
+                "but is stored in a different index: name {:s} attempting "
+                "index: {:s} but found index {:s} - retrying with a "
                 "different timeline name.".format(
                     timeline_name,
                     searchindex.index_name,
@@ -196,7 +196,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 )
             )
 
-            timeline_name = "{0:s}_{1:s}".format(timeline_name, uuid.uuid4().hex[-5:])
+            timeline_name = f"{timeline_name:s}_{uuid.uuid4().hex[-5:]:s}"
             return self._upload_and_index(
                 file_extension=file_extension,
                 timeline_name=timeline_name,
@@ -427,7 +427,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         except OSError as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to write data with error: {0!s}.".format(e),
+                f"Unable to write data with error: {e!s}.",
             )
 
         if (chunk_index + 1) != chunk_total_chunks:
@@ -449,7 +449,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to save file correctly, inconsistent file size "
-                "({0:d} but should have been {1:d})".format(
+                "({:d} but should have been {:d})".format(
                     os.path.getsize(file_path), file_size
                 ),
             )

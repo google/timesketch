@@ -55,10 +55,10 @@ class AttributeResource(resources.ResourceMixin, Resource):
         """
         value = form.get(key_to_check)
         if not value:
-            return "Unable to save an attribute without a {0:s}.".format(key_to_check)
+            return f"Unable to save an attribute without a {key_to_check:s}."
 
         if not isinstance(value, str):
-            return "Unable to save an attribute without a {0:s}.".format(key_to_check)
+            return f"Unable to save an attribute without a {key_to_check:s}."
 
         return ""
 

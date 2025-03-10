@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for v1 of the Timesketch API."""
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import json
-import mock
+from unittest import mock
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED

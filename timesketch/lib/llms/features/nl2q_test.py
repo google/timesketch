@@ -13,7 +13,7 @@
 # limitations under the License.
 """Tests for the nl2q feature."""
 
-import mock
+from unittest import mock
 import pandas as pd
 from flask import current_app
 from timesketch.lib.testlib import BaseTest

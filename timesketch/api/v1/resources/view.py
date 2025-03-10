@@ -205,8 +205,8 @@ class ViewResource(resources.ResourceMixin, Resource):
         if view.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the sketch ID "
-                "that is defined in the view ({1:d})".format(view.sketch_id, sketch.id),
+                "Sketch ID ({:d}) does not match with the sketch ID "
+                "that is defined in the view ({:d})".format(view.sketch_id, sketch.id),
             )
 
         # If this is a user state view, check that it
@@ -255,8 +255,8 @@ class ViewResource(resources.ResourceMixin, Resource):
         if view.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The view does not belong to the sketch ({0:d} vs "
-                "{1:d})".format(view.sketch_id, sketch.id),
+                "The view does not belong to the sketch ({:d} vs "
+                "{:d})".format(view.sketch_id, sketch.id),
             )
 
         if not sketch.has_permission(user=current_user, permission="write"):

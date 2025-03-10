@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
-from __future__ import unicode_literals
 
 import codecs
 import json
@@ -60,7 +59,7 @@ level: high
 """
 
 
-class TestConfig(object):
+class TestConfig:
     """Config for the test environment."""
 
     DEBUG = True
@@ -88,7 +87,7 @@ class TestConfig(object):
     EXAMPLES_NL2Q = "./tests/test_data/nl2q/test_examples_nl2q"
 
 
-class MockOpenSearchClient(object):
+class MockOpenSearchClient:
     """A mock implementation of a OpenSearch client."""
 
     def __init__(self):
@@ -159,7 +158,7 @@ class MockOpenSearchClient(object):
         return aggregation_search_result
 
 
-class MockOpenSearchIndices(object):
+class MockOpenSearchIndices:
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
@@ -175,7 +174,7 @@ class MockOpenSearchIndices(object):
         return True
 
 
-class MockDataStore(object):
+class MockDataStore:
     """A mock implementation of a Datastore."""
 
     event_dict = {
@@ -352,7 +351,7 @@ class MockDataStore(object):
         """No-op mock to flush_queued_events for the datastore."""
 
 
-class MockGraphDatabase(object):
+class MockGraphDatabase:
     """A mock implementation of a Datastore."""
 
     def __init__(self, host, username, password):
@@ -366,7 +365,7 @@ class MockGraphDatabase(object):
         self.username = username
         self.password = password
 
-    class MockQuerySequence(object):
+    class MockQuerySequence:
         """A mock implementation of a QuerySequence."""
 
         MOCK_GRAPH = [
@@ -402,7 +401,7 @@ class MockGraphDatabase(object):
             self.rows = self.MOCK_ROWS
             self.stats = self.MOCK_ROWS
 
-    class MockEmptyQuerySequence(object):
+    class MockEmptyQuerySequence:
         def __init__(self):
             self.graph = None
             self.rows = {}
@@ -708,7 +707,7 @@ class BaseTest(TestCase):
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        if isinstance(response.data, six.binary_type):
+        if isinstance(response.data, bytes):
             response_data = codecs.decode(response.data, "utf-8")
         else:
             response_data = response.data

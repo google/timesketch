@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the sketch models."""
 
-from __future__ import unicode_literals
 
 import json
 

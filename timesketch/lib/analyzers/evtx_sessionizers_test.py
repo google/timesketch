@@ -1,11 +1,10 @@
 """Tests for WinEVTXSessionizerSketchPlugin, LogonSessionizerSketchPludin and
 UnlockSessionizerSketchPlugin"""
 
-from __future__ import unicode_literals
 
 import unittest
 import copy
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.evtx_sessionizers import LogonSessionizerSketchPlugin
 from timesketch.lib.analyzers.evtx_sessionizers import UnlockSessionizerSketchPlugin
@@ -254,7 +253,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             event3 = datastore.event_store["2"]
             self.assertEqual(
                 set(event3["_source"]["session_id"][analyzer.session_type]),
-                set(["0 (USER_1)", "1 (USER_2)"]),
+                {"0 (USER_1)", "1 (USER_2)"},
             )
             event4 = datastore.event_store["3"]
             self.assertTrue(

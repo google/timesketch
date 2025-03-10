@@ -292,7 +292,7 @@ def import_search_templates(path):
 
     for file_path in file_paths:
         search_templates = None
-        with open(file_path, "r") as fh:
+        with open(file_path) as fh:
             search_templates = yaml.safe_load(fh.read())
 
         if isinstance(search_templates, dict):
@@ -354,7 +354,7 @@ def import_sigma_rules(path):
         sigma_rule = None
         sigma_yaml = None
 
-        with open(file_path, "r") as fh:
+        with open(file_path) as fh:
             try:
                 sigma_yaml = fh.read()
                 sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
@@ -442,7 +442,7 @@ def remove_sigma_rule(rule_uuid):
     rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
     if not rule:
-        error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+        error_msg = f"No rule found with rule_uuid.{rule_uuid!s}"
         print(error_msg)  # only needed in debug cases
         return
 
@@ -472,7 +472,7 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{0:s} first".format(path)
+            "The directory needs to exist, please create: " "{:s} first".format(path)
         )
 
     all_sigma_rules = SigmaRule.query.all()
@@ -482,7 +482,7 @@ def export_sigma_rules(path):
     for rule in all_sigma_rules:
         file_path = os.path.join(path, f"{rule.title}.yml")
         if os.path.isfile(file_path):
-            print("File [{0:s}] already exists.".format(file_path))
+            print(f"File [{file_path:s}] already exists.")
             continue
 
         with open(file_path, "wb") as fw:
@@ -748,7 +748,7 @@ def validate_context_links_conf(path):
         print(f"Cannot load the config file: {path} does not exist!")
         return
 
-    with open(path, "r") as fh:
+    with open(path) as fh:
         context_link_config = yaml.safe_load(fh)
 
     if not context_link_config:

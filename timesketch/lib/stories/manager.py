@@ -13,10 +13,9 @@
 # limitations under the License.
 """This file contains a class for managing story exporters."""
 
-from __future__ import unicode_literals
 
 
-class StoryExportManager(object):
+class StoryExportManager:
     """The story export manager."""
 
     _class_registry = {}
@@ -75,7 +74,7 @@ class StoryExportManager(object):
         exporter_type = exporter_class.EXPORT_FORMAT.lower()
         if exporter_type in cls._class_registry:
             raise KeyError(
-                "Class already set for name: {0:s}.".format(
+                "Class already set for name: {:s}.".format(
                     exporter_class.EXPORT_FORMAT
                 )
             )

@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for ntfs timestomping detection."""
 
-from __future__ import unicode_literals
 
 from flask import current_app
 
@@ -8,7 +7,7 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class FileInfo(object):
+class FileInfo:
     """Datastructure to track all timestamps for a file and timestamp type."""
 
     def __init__(
@@ -118,7 +117,7 @@ class NtfsTimestompSketchPlugin(interface.BaseAnalyzer):
             if attribute_type not in [self.FILE_NAME, self.STD_INFO]:
                 continue
 
-            key = "{0:s}&{1:s}".format(timestamp_type, str(file_ref))
+            key = f"{timestamp_type:s}&{str(file_ref):s}"
 
             if key not in file_infos:
                 file_infos[key] = FileInfo()
@@ -146,7 +145,7 @@ class NtfsTimestompSketchPlugin(interface.BaseAnalyzer):
                 query_string="_exists_:time_delta or _exists:time_deltas",
             )
 
-        return "NtfsTimestomp Analyzer done, found {0:d} timestomped events".format(
+        return "NtfsTimestomp Analyzer done, found {:d} timestomped events".format(
             timestomps
         )
 

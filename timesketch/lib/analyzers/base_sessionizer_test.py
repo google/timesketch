@@ -1,9 +1,8 @@
 """Tests common to all sessionizing sketch plugins."""
 
-from __future__ import unicode_literals
 
 import copy
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 from timesketch.lib.analyzers.expert_sessionizers import (

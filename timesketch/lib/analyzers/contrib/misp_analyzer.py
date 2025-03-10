@@ -87,7 +87,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
 
         if results.status_code != 200:
             msg_error = "Error with MISP query: Status code"
-            logger.error("{} {}".format(msg_error, results.status_code))
+            logger.error(f"{msg_error} {results.status_code}")
             return []
         result_loc = results.json()
         if "name" in result_loc:

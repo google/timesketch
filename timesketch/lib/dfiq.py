@@ -24,7 +24,7 @@ from packaging.version import Version
 logger = logging.getLogger("timesketch.lib.dfiq")
 
 
-class Component(object):
+class Component:
     """Base class for all DFIQ components.
 
     Attributes:
@@ -293,7 +293,6 @@ class DFIQ:
                 continue
             with open(
                 os.path.join(yaml_data_path, self.plural_map.get(dfiq_type), dfiq_file),
-                mode="r",
             ) as file:
                 component_from_yaml = yaml.safe_load(file)
                 # Check if the file matches the min supported DFIQ version:

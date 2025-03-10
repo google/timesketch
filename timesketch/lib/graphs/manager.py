@@ -28,8 +28,7 @@ class GraphManager:
                 str: the uniquely identifying name of the graph
                 type: the graph class.
         """
-        for graph_name, graph_class in iter(cls._class_registry.items()):
-            yield graph_name, graph_class
+        yield from iter(cls._class_registry.items())
 
     @classmethod
     def get_graph(cls, graph_name):

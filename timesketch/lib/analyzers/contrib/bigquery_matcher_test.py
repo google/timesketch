@@ -2,7 +2,7 @@
 
 import sys
 import copy
-import mock
+from unittest import mock
 
 from timesketch.lib.testlib import MockDataStore
 

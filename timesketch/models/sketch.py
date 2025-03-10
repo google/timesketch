@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements the models for the Timesketch core system."""
 
-from __future__ import unicode_literals
 
 import json
 import logging
