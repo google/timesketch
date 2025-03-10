@@ -63,20 +63,15 @@ const { user, name, risk, conclusions, type, id, updated_at } = defineProps({
   user: Object
 });
 
-const completed = computed(() => conclusions && conclusions.length > 0);
+const riskColors = {
+  high: "#D93025",
+  medium: "#E37400",
+  low: "#FBBC04",
+  clean: "#3874CB",
+};
 
-const riskColor = computed(() => {
-  switch (risk) {
-    case "high":
-      return "#D9302533";
-    case "med":
-      return "#E3740033";
-    case "low":
-      return "#890E06";
-    default:
-      return "#3874CB33";
-  }
-});
+const completed = computed(() => conclusions && conclusions.length > 0);
+const riskColor = computed(() => riskColors[risk]);
 
 const listItemClasses = computed(() => ({
   "is--active": id === store.activeContext.question,
