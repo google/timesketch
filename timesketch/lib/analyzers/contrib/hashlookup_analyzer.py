@@ -64,7 +64,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         results = requests.get(f"{self.hashlookup_url}sha256/{hash_value}")
 
         result_loc = results.json()
-        if not "message" in result_loc and results.status_code != 200:
+        if "message" not in result_loc and results.status_code != 200:
             logger.error("Error with Hashlookup url")
             return []
         # If message in result_loc then the hash is not find in Hashlookup
@@ -118,7 +118,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
                 error_hash_counter += 1
                 continue
 
-            if not hash_value in self.request_set:
+            if hash_value not in self.request_set:
                 result = self.get_hash_info(hash_value)
                 if result:
                     self.total_event_counter += 1

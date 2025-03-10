@@ -145,7 +145,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
                     if not loc:
                         _, loc = ntpath.split(event.source.get(timesketch_attr))
 
-                if not loc in query_list:
+                if loc not in query_list:
                     query_list.append(loc)
                 self.result_dict[f"{attr}:{loc}"] = []
 

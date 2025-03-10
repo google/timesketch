@@ -14,7 +14,6 @@
 """Tests for analysis utils."""
 
 
-import six
 
 import pandas as pd
 

@@ -16,7 +16,6 @@
 
 import codecs
 import json
-import six
 
 from flask_testing import TestCase
 

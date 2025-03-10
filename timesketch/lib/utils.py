@@ -26,7 +26,6 @@ import time
 import codecs
 
 import pandas
-import six
 
 from dateutil import parser
 from flask import current_app
@@ -342,7 +341,7 @@ def read_and_validate_csv(
                 row.dropna(inplace=True)
 
                 # Make sure we always have a timestamp
-                if not "timestamp" in row:
+                if "timestamp" not in row:
                     row["timestamp"] = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
                     )

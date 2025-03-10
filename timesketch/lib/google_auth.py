@@ -21,7 +21,6 @@ import time
 import json
 import hashlib
 import os
-import six
 
 # six.moves is a dynamically-created namespace that doesn't actually
 # exist and therefore pylint can't statically analyze it.

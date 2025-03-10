@@ -20,7 +20,6 @@ import json
 import logging
 import socket
 from uuid import uuid4
-import six
 
 from dateutil import parser, relativedelta
 from opensearchpy import OpenSearch

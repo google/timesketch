@@ -23,7 +23,6 @@ The model has the following permissions: "read", "write" and "delete".
 import codecs
 import json
 
-import six
 
 from flask_login import current_user
 from sqlalchemy import Column

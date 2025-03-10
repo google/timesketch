@@ -23,7 +23,6 @@ import os
 import subprocess
 import time
 import traceback
-import six
 import yaml
 import prometheus_client
 

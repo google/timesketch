@@ -4,7 +4,6 @@
 import logging
 import re
 
-import six
 
 from urllib import parse as urlparse
 

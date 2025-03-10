@@ -64,7 +64,7 @@ class DataFinder:
 
         re_parameters = self._rule.get("re_parameters", [])
         for parameter in re_parameters:
-            if not parameter in self._parameters:
+            if parameter not in self._parameters:
                 logger.warning(
                     "Parameters are defined, but parameter: [{:s}] does not "
                     "exist in parameter definitions for the rule.".format(parameter)

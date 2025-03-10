@@ -18,7 +18,6 @@ import logging
 import os
 import sys
 
-import six
 
 from flask import Flask
 from celery import Celery

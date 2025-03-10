@@ -3,7 +3,6 @@
 
 import logging
 
-import six
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface

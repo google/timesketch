@@ -17,7 +17,6 @@ import codecs
 import json
 import logging
 import uuid
-import six
 
 import opensearchpy
 from flask import jsonify
