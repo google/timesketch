@@ -987,7 +987,7 @@ export default {
         })
     },
     generateForensicReport() {
-      if (this.totalHits > 500) {
+      if (this.totalHits > 1000) {
         this.warningSnackBar('This feature is currently limited to a 1000 starred events, try setting a timerange filter. ' +
         'This limit will be increased soon.', 10000);
         return;
