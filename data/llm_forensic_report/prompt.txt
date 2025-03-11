@@ -10,5 +10,4 @@ Focus on identifying:
 
 Use bolding (**...**) for key entities and findings.  Format the output as a Markdown document.
 
-Here are the starred events in JSON format:
-<EVENTS_JSON>
+Here are the events in JSON format: <events><EVENTS_JSON></events>

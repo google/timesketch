@@ -25,6 +25,7 @@ if [ "$1" = 'timesketch' ]; then
   ln -s /usr/local/src/timesketch/data/plaso_formatters.yaml /etc/timesketch/plaso_formatters.yaml
   ln -s /usr/local/src/timesketch/data/nl2q /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/llm_summarize /etc/timesketch/
+  ln -s /usr/local/src/timesketch/data/llm_forensic_report /etc/timesketch/
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then
