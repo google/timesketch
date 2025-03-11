@@ -1,5 +1,6 @@
 const defaultTimeout = 5000
 
+// These methods will be available to all components without any further imports.
 export const snackBarMixin = {
   methods: {
     successSnackBar(message, timeout = defaultTimeout) {
