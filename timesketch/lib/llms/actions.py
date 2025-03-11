@@ -15,41 +15,27 @@
 import json
 import logging
 import time
-from typing import Dict, Any
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch, Story
 
 logger = logging.getLogger("timesketch.llm.actions")
 
-def create_story(
-    sketch: Sketch, 
-    content: str, 
-    title: str = None
-) -> int:
+
+def create_story(sketch: Sketch, content: str, title: str = None) -> int:
     """Creates a Timesketch story with the given content.
-    
     Args:
         sketch: Sketch object.
         content: Text content to add to the story.
         title: Title for the story. If None, a default title with timestamp will be used.
-        
     Returns:
         The ID of the newly created story.
-        
     Raises:
         ValueError: If there's an error creating the story.
     """
     if title is None:
         title = f"AI Generated Report - {time.strftime('%Y-%m-%d %H:%M')}"
-    
     try:
-        # Create the story
-        story = Story(
-            title=title,
-            sketch=sketch,
-            user=sketch.user
-        )
-        
+        story = Story(title=title, sketch=sketch, user=sketch.user)
         content_blocks = [
             {
                 "componentName": "",
@@ -57,18 +43,14 @@ def create_story(
                 "content": content,
                 "edit": False,
                 "showPanel": False,
-                "isActive": False
+                "isActive": False,
             }
         ]
-        
         story.content = json.dumps(content_blocks)
-        
         db_session.add(story)
         db_session.commit()
-        
-        logger.info(f"Created story with ID {story.id} for sketch {sketch.id}")
+        logger.debug("Created story with ID %s for sketch %s", story.id, sketch.id)
         return story.id
-        
     except Exception as e:
-        logger.error(f"Error creating story: {e}")
-        raise ValueError(f"Error creating story: {e}")
+        logger.error("Error creating story: %s", e)
+        raise ValueError(f"Error creating story: {e}") from e
