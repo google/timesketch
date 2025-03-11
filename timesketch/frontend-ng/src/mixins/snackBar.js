@@ -23,32 +23,35 @@ const defaultSnackBar = {
     "timeout": defaultTimeout
 }
 
-// These methids will be available to all components without any further imports.
+// These methods will be available to all components without any further imports.
 Vue.mixin({
     methods: {
-        successSnackBar(message) {
+        successSnackBar(message, timeout) {
             let snackbar = defaultSnackBar
             snackbar.message = message
             snackbar.color = "success"
+            snackbar.timeout = timeout || defaultTimeout
             this.$store.dispatch('setSnackBar', snackbar)
         },
-        errorSnackBar(message) {
+        errorSnackBar(message, timeout) {
             let snackbar = defaultSnackBar
             snackbar.message = message
             snackbar.color = "error"
+            snackbar.timeout = timeout || defaultTimeout
             this.$store.dispatch('setSnackBar', snackbar)
         },
-        warningSnackBar(message) {
+        warningSnackBar(message, timeout) {
           let snackbar = defaultSnackBar
           snackbar.message = message
           snackbar.color = "warning"
+          snackbar.timeout = timeout || defaultTimeout
           this.$store.dispatch('setSnackBar', snackbar)
         },
-        infoSnackBar(message) {
+        infoSnackBar(message, timeout) {
           let snackbar = defaultSnackBar
           snackbar.message = message
           snackbar.color = "info"
-          snackbar.timeout = 2000
+          snackbar.timeout = timeout || defaultTimeout
           this.$store.dispatch('setSnackBar', snackbar)
       },
     }
