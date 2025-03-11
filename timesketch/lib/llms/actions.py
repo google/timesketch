@@ -26,7 +26,8 @@ def create_story(sketch: Sketch, content: str, title: str = None) -> int:
     Args:
         sketch: Sketch object.
         content: Text content to add to the story.
-        title: Title for the story. If None, a default title with timestamp will be used.
+        title: Title for the story. If None, a default title
+            with timestamp will be used.
     Returns:
         The ID of the newly created story.
     Raises:
