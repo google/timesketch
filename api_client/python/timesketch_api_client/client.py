@@ -578,9 +578,9 @@ class TimesketchApi:
                 line_dict["field_{0:d}_name".format(field_index + 1)] = field.get(
                     "name"
                 )
-                line_dict[
-                    "field_{0:d}_description".format(field_index + 1)
-                ] = field.get("description")
+                line_dict["field_{0:d}_description".format(field_index + 1)] = (
+                    field.get("description")
+                )
             lines.append(line_dict)
 
         return pandas.DataFrame(lines)
