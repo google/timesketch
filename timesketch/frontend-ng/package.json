@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",
+    "@popperjs/core": "^2.4.0",
     "apexcharts": "^3.27.1",
     "axios": "^1.7.2",
     "cytoscape": "^3.24.0",
@@ -48,8 +49,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-vue": "^5.0.0",
     "happy-dom": "^15.10.2",
-    "node-sass": "^8.0.0",
-    "sass": "~1.32",
+    "sass": "1.77.6",
     "sass-loader": "^10.1.1",
     "vite-plugin-vue2": "^2.0.3",
     "vitest": "~1.0.4",

@@ -98,6 +98,9 @@ limitations under the License.
         outlined
       >
         <v-card-title class="ts-ai-summary-card-title">
+          <v-btn icon small @click="toggleSummary" class="ts-ai-summary-fold-btn">
+            <v-icon>{{ summaryCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
+          </v-btn>
           <v-icon small color="primary" class="ml-1 mr-2 ts-ai-summary-icon">mdi-shimmer</v-icon>
           <div class="ts-ai-summary-text-group">
             <span class="ts-ai-summary-title">AI Summary</span>
@@ -107,9 +110,6 @@ limitations under the License.
           </div>
           <v-btn icon small class="ml-1 ts-ai-summary-info-btn" :title="summaryInfoMessage">
             <v-icon small>mdi-information-outline</v-icon>
-          </v-btn>
-          <v-btn icon small @click="toggleSummary" class="ts-ai-summary-fold-btn">
-            <v-icon>{{ summaryCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
           </v-btn>
         </v-card-title>
 
@@ -957,9 +957,9 @@ export default {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
       }
-      ApiClient.getEventSummary(this.sketch.id, formData)
+      ApiClient.llmRequest(this.sketch.id, 'llm_summarize', formData)
         .then((response) => {
-          this.$set(this.eventList.meta, 'summary', response.data.summary)
+          this.$set(this.eventList.meta, 'summary', response.data.response)
           this.$set(this.eventList.meta, 'summary_event_count', response.data.summary_event_count)
           this.$set(this.eventList.meta, 'summary_unique_event_count', response.data.summary_unique_event_count)
           this.isSummaryLoading = false
