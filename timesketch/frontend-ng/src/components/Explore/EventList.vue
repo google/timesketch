@@ -246,6 +246,17 @@ limitations under the License.
                   <v-icon title="Download current view as CSV">mdi-download</v-icon>
                 </v-btn>
 
+                <v-btn 
+                  icon 
+                  @click="generateForensicReport()" 
+                  class="ml-2" 
+                  :loading="isGeneratingReport"
+                  v-if="isStarredEventsFilterActive">
+                    <div class="ts-llm-icon-wrapper" v-if="!isGeneratingReport">
+                      <v-icon title="Generate forensic report with LLM from starred events">mdi-file-document-check</v-icon>
+                    </div>
+                </v-btn>
+
                 <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                   <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on">
@@ -583,6 +594,7 @@ export default {
         itemsPerPage: this.itemsPerPage,
       },
       isSummaryLoading: false,
+      isGeneratingReport: false,
       currentItemsPerPage: this.itemsPerPage,
       expandedRows: [],
       selectedFields: [{ field: 'message', type: 'text' }],
@@ -621,6 +633,11 @@ export default {
     }
   },
   computed: {
+    isStarredEventsFilterActive() {
+      return this.filterChips.some(chip => 
+        chip.type === 'label' && chip.value === '__ts_star'
+    )
+    },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count
       const uniqueEvents = this.eventList.meta.summary_unique_event_count
@@ -948,7 +965,6 @@ export default {
           } else {
             this.errorSnackBar(msg)
           }
-          console.error('Error message: ' + msg)
           console.error(e)
         })
     },
@@ -969,6 +985,35 @@ export default {
           this.$set(this.eventList.meta, 'summaryError', true)
           this.isSummaryLoading = false
         })
+    },
+    generateForensicReport() {
+      if (this.totalHits > 500) {
+        this.warningSnackBar('This feature is currently limited to a 1000 starred events, try setting a timerange filter. ' +
+        'This limit will be increased soon.', 10000);
+        return;
+      }
+
+      this.isGeneratingReport = true;
+      const requestData = {
+        filter: this.currentQueryFilter
+      };
+      
+      ApiClient.llmRequest(this.sketch.id, 'llm_forensic_report', requestData)
+        .then((response) => {
+          this.isGeneratingReport = false;
+          if (response.data && response.data.story_id) {
+            this.$store.dispatch('updateSketch', this.sketch.id);
+            this.successSnackBar('Forensic report generated! You can find it in the "Stories" section.');
+          } else {
+            this.errorSnackBar('Error generating report. No story was created.');
+          }
+        })
+        .catch((error) => {
+          this.isGeneratingReport = false;
+          const errorMessage = (error.response && error.response.data && error.response.data.message) || 'Unknown error occurred';
+          this.errorSnackBar(`Error generating report: ${errorMessage}`);
+          console.error('Error generating starred events report:', error);
+        });
     },
     exportSearchResult: function () {
       this.exportDialog = true
@@ -1247,20 +1292,19 @@ th:first-child {
   padding: 0 0 0 10px !important;
 }
 
+.ts-event-list-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%; 
+  gap: 20px;  
+}
 .ts-ai-summary-card {
   border: 1px solid transparent !important; 
   border-radius: 8px;
   background-color: #fafafa; 
   background-image:
       linear-gradient(white, white), 
-      linear-gradient(90deg,
-          #8ab4f8 0%,   
-          #81c995 20%, 
-          #f8c665 40%, 
-          #ec7764 60%,  
-          #b39ddb 80%,  
-          #8ab4f8 100%  
-      );
+      var(--llm-gradient);
   background-origin: border-box;
   background-clip: content-box, border-box;
   background-size: 300% 100%;
@@ -1269,11 +1313,9 @@ th:first-child {
   display: block;
   margin-bottom: 20px;
 }
-
 .v-data-table {
   display: block; /* Ensure block display for data table */
 }
-
 @keyframes borderBeamIridescent-subtle { 
     0% {
         background-position: 0% 50%;
@@ -1282,25 +1324,16 @@ th:first-child {
         background-position: 100% 50%;
     }
 }
-
 .theme--dark.ts-ai-summary-card {
   background-color: #1e1e1e; 
   border-color: hsla(0,0%,100%,.12) !important; 
   background-image:
       linear-gradient(#1e1e1e, #1e1e1e), 
-      linear-gradient(90deg,
-          #8ab4f8 0%,  
-          #81c995 20%,  
-          #f8c665 40%, 
-          #ec7764 60%, 
-          #b39ddb 80%,
-          #8ab4f8 100%  
-      );
-      box-shadow: 0 2px 5px rgba(255, 255, 255, 0.08);
+      var(--llm-gradient);;
+  box-shadow: 0 2px 5px rgba(255, 255, 255, 0.08);
   display: block;
   margin-bottom: 20px;
 }
-
 .ts-ai-summary-text {
   white-space: pre-line;
   word-wrap: break-word;
@@ -1309,15 +1342,12 @@ th:first-child {
   padding-left: 10px;
   padding-right: 10px;
 }
-
 .ts-ai-summary-card .v-btn--icon {
   cursor: pointer;
 }
-
 .ts-ai-summary-card .v-btn--icon:hover {
   opacity: 0.8;
 }
-
 .ts-summary-placeholder-line {
   height: 1em;
   background-color: #e0e0e0;
@@ -1325,21 +1355,17 @@ th:first-child {
   border-radius: 4px;
   width: 100%;
 }
-
 .ts-summary-placeholder-line.short {
   width: 60%;
 }
-
 .ts-summary-placeholder-line.long {
   width: 80%;
 }
-
 .shimmer {
   background: linear-gradient(to right, #e0e0e0 8%, #f0f0f0 18%, #e0e0e0 33%);
   background-size: 800px 100%;
   animation: shimmer-animation 1.5s infinite linear forwards;
 }
-
 @keyframes shimmer-animation {
   0% {
     background-position: -468px 0;
@@ -1348,32 +1374,44 @@ th:first-child {
     background-position: 468px 0;
   }
 }
-
-.ts-event-list-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%; 
-  gap: 20px;  
-}
-
 ::v-deep .no-transition {
   transition: none !important;
 }
-
 .ts-ai-summary-card-title {
   display: flex;
   align-items: baseline;
 }
-
 .ts-ai-summary-title {
   margin-right: 8px;
   font-weight: normal;
 }
-
 .ts-ai-summary-subtitle {
   font-size: 0.7em;
   color: grey;
   vertical-align: middle;
   display: inline-block;
+}
+.ts-llm-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ts-llm-icon-wrapper::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  background: var(--llm-gradient);
+  background-size: 300% 100%;
+  opacity: 0.2;
+  animation: borderBeamIridescent-subtle 6s linear infinite;
+  z-index: -1;
+}
+.v-btn:hover .ts-llm-icon-wrapper::after {
+  opacity: 0.4;
 }
 </style>
