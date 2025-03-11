@@ -213,18 +213,19 @@ class DateHistogramAggregation(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
         self,
-        field,
-        field_query_string="*",
-        supported_intervals="day",
-        supported_charts="heatmap",
-        start_time="",
-        end_time="",
+        field: str,
+        field_query_string: str = "*",
+        supported_intervals: str = "day",
+        supported_charts: str = "heatmap",
+        start_time: str = "",
+        end_time: str = "",
     ):
         """Runs the date_histogram aggregator.
 
         Args:
             field: What field to aggregate on.
             field_query_string: The field value(s) to aggregate on.
+            supported_intervals: The time interval to aggregate on.
             supported_charts: The chart type to render.  Defaults to table.
             start_time: Optional ISO formatted date string that limits the time range
                 for the aggregation.

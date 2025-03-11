@@ -173,8 +173,9 @@ class TimelineResource(resources.ResourceMixin, Resource):
         """Add a label to the timeline."""
         if timeline.has_label(label):
             logger.warning(
-                "Unable to apply the label [{:s}] to timeline {:s}, "
-                "already exists.".format(label, timeline.name)
+                "Unable to apply the label [%s] to timeline %s, already exists.",
+                label,
+                timeline.name,
             )
             return False
         timeline.add_label(label, user=current_user)
@@ -184,20 +185,22 @@ class TimelineResource(resources.ResourceMixin, Resource):
         """Removes a label from a timeline."""
         if not timeline.has_label(label):
             logger.warning(
-                "Unable to remove the label [{:s}] from timeline {:s}, "
-                "label does not exist.".format(label, timeline.name)
+                "Unable to remove the label [%s] from timeline %s, label does "
+                "not exist.",
+                label,
+                timeline.name,
             )
             return False
         timeline.remove_label(label)
         return True
 
     @login_required
-    def get(self, sketch_id, timeline_id):
+    def get(self, sketch_id: int, timeline_id: int):
         """Handles GET request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            timeline_id: Integer primary key for a timeline database model
+            sketch_id: (int) Integer primary key for a sketch database model
+            timeline_id: (int) Integer primary key for a timeline database model
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -218,8 +221,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({:d}) does not match with the timeline "
-                "sketch ID ({:d})".format(sketch.id, timeline.sketch.id),
+                f"The sketch ID ({sketch.id:d}) does not match with the timeline "
+                f"sketch ID ({timeline.sketch.id:d})",
             )
 
         if not sketch.has_permission(user=current_user, permission="read"):
@@ -250,12 +253,12 @@ class TimelineResource(resources.ResourceMixin, Resource):
         return self.to_json(timeline, meta=meta)
 
     @login_required
-    def post(self, sketch_id, timeline_id):
+    def post(self, sketch_id: int, timeline_id: int):
         """Handles POST request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            timeline_id: Integer primary key for a timeline database model
+            sketch_id: (int) Integer primary key for a sketch database model
+            timeline_id: (int) Integer primary key for a timeline database model
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -273,8 +276,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({:d}) does not match with the timeline "
-                "sketch ID ({:d})".format(sketch.id, timeline.sketch.id),
+                f"The sketch ID ({sketch.id:d}) does not match with the timeline "
+                f"sketch ID ({timeline.sketch.id:d})",
             )
 
         if not sketch.has_permission(user=current_user, permission="write"):
@@ -298,7 +301,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
                         "converts to a list of strings."
                     ),
                 )
-            if not all([isinstance(x, str) for x in labels]):
+            if not all(isinstance(x, str) for x in labels):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     (
@@ -327,9 +330,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 changed = any(changes)
 
             if not changed:
+                msg = ", ".join(labels)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Label [{:s}] not {:s}".format(", ".join(labels), label_action),
+                    f"Label [{msg:s}] not {label_action:s}",
                 )
 
             db_session.add(timeline)
@@ -348,12 +352,12 @@ class TimelineResource(resources.ResourceMixin, Resource):
         return HTTP_STATUS_CODE_OK
 
     @login_required
-    def delete(self, sketch_id, timeline_id):
+    def delete(self, sketch_id: int, timeline_id: int):
         """Handles DELETE request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            timeline_id: Integer primary key for a timeline database model
+            sketch_id: (int) Integer primary key for a sketch database model
+            timeline_id: (int) Integer primary key for a timeline database model
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -384,8 +388,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 timeline_string = str(timeline_use)
 
                 msg = (
-                    "The sketch ID ({:s}) does not match with the timeline "
-                    "sketch ID ({:s})".format(sketch_string, timeline_string)
+                    f"The sketch ID ({sketch_string:s}) does not match with the "
+                    f"timeline sketch ID ({timeline_string:s})"
                 )
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
@@ -432,15 +436,14 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 self.datastore.client.indices.close(index=searchindex.index_name)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to close index: {:s} - index not "
-                    "found".format(searchindex.index_name)
+                    "Unable to close index: %s - index not found",
+                    searchindex.index_name,
                 )
             except opensearchpy.RequestError as e:
                 error_msg = (
-                    "RequestError when closing index {:s} - please try again in "
-                    "5 min or contact your admin. Error: {:s}".format(
-                        searchindex.index_name, str(e)
-                    )
+                    f"RequestError when closing index {searchindex.index_name:s}"
+                    " - please try again in 5 min or contact your admin. "
+                    f"Error: {e:s}"
                 )
                 logger.error(error_msg)
                 abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)

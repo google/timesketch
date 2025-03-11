@@ -59,7 +59,7 @@ class StoryExporter:
         for block in blocks:
             self.from_block_dict(block)
 
-    def from_block_dict(self, block):
+    def from_block_dict(self, block: dict):
         """Feed the exporter with a single block dict.
 
         Args:

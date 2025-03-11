@@ -575,7 +575,7 @@ class BaseTest(TestCase):
         view = View(
             name=name,
             query_string=name,
-            query_filter=json.dumps(dict()),
+            query_filter=json.dumps({}),
             user=user,
             sketch=sketch,
         )
@@ -591,7 +591,7 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name, query_string=name, query_filter=json.dumps(dict()), user=user
+            name=name, query_string=name, query_filter=json.dumps({}), user=user
         )
         self._commit_to_database(searchtemplate)
         return searchtemplate
@@ -683,7 +683,7 @@ class BaseTest(TestCase):
         """Authenticate the test user."""
         self.client.post(
             "/login/",
-            data=dict(username="test1", password="test"),
+            data={"username": "test1", "password": "test"},
             follow_redirects=True,
         )
 
@@ -691,7 +691,7 @@ class BaseTest(TestCase):
         """Authenticate the test user with admin privileges."""
         self.client.post(
             "/login/",
-            data=dict(username="testadmin", password="test"),
+            data={"username": "testadmin", "password": "test"},
             follow_redirects=True,
         )
 
@@ -720,6 +720,5 @@ class ModelBaseTest(BaseTest):
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""
         db_obj = model_cls.get_by_id(1)
-        for x in expected_result:
-            k, v = x[0], x[1]
-            self.assertEqual(db_obj.__getattribute__(k), v)
+        for key, value in expected_result:
+            self.assertEqual(getattr(db_obj, key), value)

@@ -16,6 +16,7 @@
 import logging
 import re
 from urllib import parse as urlparse
+from pandas import DataFrame
 
 import numpy
 
@@ -261,7 +262,9 @@ def _fix_np_nan(source_dict, attribute, replace_with=None):
         pass
 
 
-def get_events_from_data_frame(frame, datastore):
+def get_events_from_data_frame(
+    frame: DataFrame, datastore: interface.OpenSearchDataStore
+):
     """Generates events from a data frame.
 
     Args:
@@ -291,7 +294,7 @@ def get_events_from_data_frame(frame, datastore):
             datetime_string = datetime.to_pydatetime().isoformat()
             source["datetime"] = datetime_string
 
-        event_dict = dict(_id=event_id, _index=event_index, _source=source)
+        event_dict = {"_id": event_id, "_index": event_index, "_source": source}
         yield interface.Event(event_dict, datastore)
 
 

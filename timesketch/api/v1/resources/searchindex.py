@@ -112,7 +112,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         try:
             mapping = self.datastore.client.indices.get_mapping(searchindex.index_name)
         except opensearchpy.NotFoundError:
-            logger.error(f"Unable to find index: {searchindex.index_name:s}")
+            logger.error("Unable to find index: %s", searchindex.index_name)
             mapping = {}
             searchindex.set_status("fail")
             db_session.commit()

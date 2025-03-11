@@ -18,6 +18,7 @@ import logging
 import os
 import uuid
 import json
+from typing import Optional, Dict, List
 
 from flask import jsonify
 from flask import request
@@ -47,7 +48,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
     def _get_index(
-        self, name, description, sketch, index_name="", data_label="", extension=""
+        self,
+        name: str,
+        description: str,
+        sketch: Sketch,
+        index_name: str = "",
+        data_label: str = "",
+        extension: str = "",
     ):
         """Returns a SearchIndex object to be used for uploads.
 
@@ -117,19 +124,19 @@ class UploadFileResource(resources.ResourceMixin, Resource):
     # pylint: disable=too-many-arguments
     def _upload_and_index(
         self,
-        file_extension,
-        timeline_name,
-        index_name,
-        sketch,
-        form,
-        enable_stream,
-        original_filename="",
-        data_label="",
-        file_path="",
-        events="",
-        meta=None,
-        headers_mapping=None,
-        delimiter=",",
+        file_extension: str,
+        timeline_name: str,
+        index_name: str,
+        sketch: Sketch,
+        form: Dict,
+        enable_stream: bool,
+        original_filename: str = "",
+        data_label: str = "",
+        file_path: str = "",
+        events: str = "",
+        meta: Optional[Dict] = None,
+        headers_mapping: Optional[List] = None,
+        delimiter: str = ",",
     ):
         """Creates a full pipeline for an uploaded file and returns the results.
 
@@ -317,13 +324,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
     def _upload_file(
         self,
-        file_storage,
-        form,
-        sketch,
-        index_name,
-        chunk_index_name="",
-        headers_mapping=None,
-        delimiter=",",
+        file_storage: object,
+        form: Dict,
+        sketch: Sketch,
+        index_name: str,
+        chunk_index_name: str = "",
+        headers_mapping: Optional[List] = None,
+        delimiter: str = ",",
     ):
         """Upload a file.
 

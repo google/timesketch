@@ -75,7 +75,7 @@ class AggregationResult:
         Returns:
             Dict with aggregation result.
         """
-        aggregation_data = dict(values=self.values)
+        aggregation_data = {"values": self.values}
         if encoding:
             aggregation_data["encoding"] = self.encoding
         return aggregation_data
@@ -90,12 +90,12 @@ class AggregationResult:
 
     def to_chart(
         self,
-        chart_name="",
-        chart_title="",
-        as_html=False,
-        interactive=False,
-        as_chart=False,
-        color="",
+        chart_name: str = "",
+        chart_title: str = "",
+        as_html: bool = False,
+        interactive: bool = False,
+        as_chart: bool = False,
+        color: str = "",
     ):
         """Encode aggregation result as Vega-Lite chart.
 
@@ -211,7 +211,7 @@ class BaseAggregator:
         }
 
     def _add_query_to_aggregation_spec(
-        self, aggregation_spec, start_time="", end_time=""
+        self, aggregation_spec: dict, start_time: str = "", end_time: str = ""
     ):
         """Returns an aggregation spec, adjusted for constraints.
 

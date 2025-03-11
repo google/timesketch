@@ -292,7 +292,7 @@ def import_search_templates(path):
 
     for file_path in file_paths:
         search_templates = None
-        with open(file_path) as fh:
+        with open(file_path, "r", encoding="utf-8") as fh:
             search_templates = yaml.safe_load(fh.read())
 
         if isinstance(search_templates, dict):
@@ -354,7 +354,7 @@ def import_sigma_rules(path):
         sigma_rule = None
         sigma_yaml = None
 
-        with open(file_path) as fh:
+        with open(file_path, "r", encoding="utf-8") as fh:
             try:
                 sigma_yaml = fh.read()
                 sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
@@ -420,7 +420,7 @@ def list_sigma_rules(columns):
                 relevant_data.append(rule.get_status.status)
             else:
                 try:
-                    relevant_data.append(rule.__getattribute__(column))
+                    relevant_data.append(getattr(rule, column))
                 except AttributeError:
                     print(f"Column {column} not found in SigmaRule")
                     return
@@ -472,7 +472,7 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{:s} first".format(path)
+            f"The directory needs to exist, please create: {path:s} first"
         )
 
     all_sigma_rules = SigmaRule.query.all()
@@ -635,14 +635,16 @@ def sketch_info(sketch_id):
     type=click.Choice(["ready", "processing", "fail"]),
     help="get or set timeline status.",
 )
-def timeline_status(timeline_id, action, status):
-    """Get or set a timeline status
+def timeline_status(timeline_id: str, action: str, status: str):
+    """Get or set a timeline status.
 
     If "action" is "set", the given value of status will be written in the status.
 
     Args:
-        action: get or set timeline status.
-        status: timeline status. Only valid choices are ready, processing, fail.
+        timeline_id (str): The ID of the timeline.
+        action (str):  The action to perform ("get" or "set").
+        status (str): The timeline status to set.  Must be one of "ready",
+                      "processing", or "fail".
     """
     if action == "get":
         timeline = Timeline.query.filter_by(id=timeline_id).first()
@@ -764,7 +766,7 @@ def validate_context_links_conf(path):
         print(f"Cannot load the config file: {path} does not exist!")
         return
 
-    with open(path) as fh:
+    with open(path, "r", encoding="utf-8") as fh:
         context_link_config = yaml.safe_load(fh)
 
     if not context_link_config:
@@ -800,12 +802,13 @@ def validate_context_links_conf(path):
     required=True,
     help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
-def searchindex_info(searchindex_id):
+def searchindex_info(searchindex_id: str):
     """Search for a searchindex and print information about it.
     Especially which sketch the searchindex belongs to.
 
     Args:
-        searchindex_id: to search for e.g. 4c5afdf60c6e49499801368b7f238353.
+        searchindex_id (str): The search index ID to search for (e.g.,
+                              "4c5afdf60c6e49499801368b7f238353").
     """
 
     index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
@@ -845,14 +848,16 @@ def searchindex_info(searchindex_id):
     required=True,
     help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
-def searchindex_status(searchindex_id, action, status):
-    """Get or set a searchindex status
+def searchindex_status(searchindex_id: str, action: str, status: str):
+    """Get or set a searchindex status.
 
     If "action" is "set", the given value of status will be written in the status.
 
     Args:
-        action: get or set searchindex status.
-        status: searchindex status. Only valid choices are ready, processing, fail.
+        searchindex_id (str): The ID of the search index.
+        action (str): The action to perform ("get" or "set").
+        status (str): The search index status to set ("ready", "processing", or
+                      "fail").
     """
     if action == "get":
         searchindex = SearchIndex.query.filter_by(id=searchindex_id).first()

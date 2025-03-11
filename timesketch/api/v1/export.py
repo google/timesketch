@@ -186,8 +186,11 @@ def query_to_filehandle(
         else:
             logger.warning(
                 "Data Frame returned from a search operation was "
-                "empty, count {:d} out of {:d} total. Query is: "
-                '"{:s}"'.format(event_count, total_count, query_string or query_dsl)
+                "empty, count %d out of %d total. Query is: "
+                '"%s"',
+                event_count,
+                total_count,
+                query_string or query_dsl,
             )
 
     fh = io.StringIO()

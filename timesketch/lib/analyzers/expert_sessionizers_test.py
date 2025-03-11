@@ -1,6 +1,5 @@
 """Tests for expert sessionizers."""
 
-
 import unittest
 from unittest import mock
 
@@ -73,7 +72,7 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest):
             message, "Sessionizing completed, number of session created: 1"
         )
 
-        test_message = "[sshd] [0]: Invalid user NoSuchUser from 0.0.0.0 " "port 0"
+        test_message = "[sshd] [0]: Invalid user NoSuchUser from 0.0.0.0 port 0"
         # pylint: disable=unexpected-keyword-arg
         event1 = datastore.event_store["0"]
         self.assertEqual(event1["_source"]["reporter"], "sshd")

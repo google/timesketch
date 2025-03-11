@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for the Safe Browsing API."""
 
-
 import fnmatch
 import logging
 import re
@@ -86,11 +85,11 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
 
         return False
 
-    def _do_safebrowsing_lookup(self, urls, platforms, types):
+    def _do_safebrowsing_lookup(self, urls: list, platforms: list, types: list):
         """URL lookup against the Safe Browsing API.
 
         Args:
-            urls: URLs
+            urls: URLs (list)
             platforms: platformTypes field of threatInfo
             types: threatTypes field of threatInfo
         Returns:
@@ -117,11 +116,16 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
                 },
             }
 
-            response = requests.post(
-                self._SAFE_BROWSING_THREATMATCHING_ENDPOINT,
-                params={"key": self._safebrowsing_api_key},
-                json=body,
-            )
+            try:
+                response = requests.post(
+                    self._SAFE_BROWSING_THREATMATCHING_ENDPOINT,
+                    params={"key": self._safebrowsing_api_key},
+                    json=body,
+                    timeout=60,
+                )
+            except requests.exceptions.Timeout as e:
+                logger.error(e)
+                continue
 
             try:
                 response.raise_for_status()
@@ -222,9 +226,7 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
             for domain in domain_analyzer_allowlisted:
                 url_allowlist.add("*.%s/*" % domain)
 
-        logger.info(
-            f"{len(url_allowlist):d} entries on the allowlist.",
-        )
+        logger.info("%d entries on the allowlist.", len(url_allowlist))
 
         safebrowsing_platforms = current_app.config.get(
             "SAFEBROWSING_PLATFORMS",

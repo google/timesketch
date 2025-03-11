@@ -14,7 +14,6 @@
 """This file contains a class for managing charts."""
 
 
-
 class ChartManager:
     """The chart manager."""
 
@@ -43,8 +42,8 @@ class ChartManager:
         """
         try:
             chart_class = cls._class_registry[chart_name.lower()]
-        except KeyError:
-            raise KeyError(f"No such chart type: {chart_name.lower():s}")
+        except KeyError as e:
+            raise KeyError(f"No such chart type: {chart_name.lower():s}") from e
         return chart_class
 
     @classmethod
@@ -61,9 +60,7 @@ class ChartManager:
         """
         chart_name = chart_class.NAME.lower()
         if chart_name in cls._class_registry:
-            raise KeyError(
-                f"Class already set for name: {chart_class.NAME:s}."
-            )
+            raise KeyError(f"Class already set for name: {chart_class.NAME:s}.")
         cls._class_registry[chart_name] = chart_class
 
     @classmethod

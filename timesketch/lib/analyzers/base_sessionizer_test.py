@@ -1,8 +1,8 @@
 """Tests common to all sessionizing sketch plugins."""
 
-
 import copy
 from unittest import mock
+from typing import Dict, List, Optional
 
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 from timesketch.lib.analyzers.expert_sessionizers import (
@@ -139,7 +139,11 @@ class BaseSessionizerTest(BaseTest):
 
 
 def _create_mock_event(
-    datastore, event_id, quantity, time_diffs=None, source_attrs=None
+    datastore: MockDataStore,
+    event_id: str,
+    quantity: int,
+    time_diffs: Optional[List] = None,
+    source_attrs: Optional[Dict] = None,
 ):
     """
     Loads in the datastore mock events that based on the given arguments.

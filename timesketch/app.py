@@ -17,6 +17,7 @@
 import logging
 import os
 import sys
+from typing import Optional, Union
 
 
 from flask import Flask
@@ -37,14 +38,14 @@ from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
 
 
-def create_app(config=None, legacy_ui=False):
+def create_app(config: Optional[Union[str, object]] = None, legacy_ui: bool = False):
     """Create the Flask app instance that is used throughout the application.
 
     Args:
-        config: Path to configuration file as a string or an object with config
-        directives.
-        legacy_ui: Temporary flag to indicate to serve the old UI.
-            TODO: Remove this when the old UI has been removed.
+        config: (str or object, optional) Path to configuration file as a string
+                or an object with config directives.
+        legacy_ui: (bool, optional) Temporary flag to indicate to serve the old UI.
+                  TODO: Remove this when the old UI has been removed.
 
     Returns:
         Application object (instance of flask.Flask).
@@ -227,7 +228,6 @@ def create_celery_app():
     celery.conf.update(app.config)
     TaskBase = celery.Task
 
-    # pylint: disable=no-init
     class ContextTask(TaskBase):
         """Add Flask context to the Celery tasks created."""
 

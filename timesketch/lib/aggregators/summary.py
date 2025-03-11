@@ -89,19 +89,18 @@ class SummaryAggregation(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
         self,
-        field,
-        field_query_string="*",
-        start_time="",
-        end_time="",
-        most_common_limit=10,
-        rare_value_document_limit=5,
+        field: str,
+        field_query_string: str = "*",
+        start_time: str = "",
+        end_time: str = "",
+        most_common_limit: int = 10,
+        rare_value_document_limit: int = 5,
     ):
         """Runs the SummaryAggregation aggregator.
 
         Args:
             field: What field to aggregate on.
             field_query_string: The field value(s) to aggregate on.
-            supported_charts: The chart type to render.  Defaults to table.
             start_time: Optional ISO formatted date string that limits the time range
                 for the aggregation.
             end_time: Optional ISO formatted date string that limits the time range
@@ -232,18 +231,17 @@ class DateSummaryAggregator(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
         self,
-        field,
-        field_query_string="*",
-        start_time="",
-        end_time="",
-        date_interval="year",
+        field: str,
+        field_query_string: str = "*",
+        start_time: str = "",
+        end_time: str = "",
+        date_interval: str = "year",
     ):
         """Runs the SummaryAggregation aggregator.
 
         Args:
             field: What field to aggregate on.
             field_query_string: The field value(s) to aggregate on.
-            supported_charts: The chart type to render.  Defaults to table.
             start_time: Optional ISO formatted date string that limits the time range
                 for the aggregation.
             end_time: Optional ISO formatted date string that limits the time range

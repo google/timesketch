@@ -189,7 +189,7 @@ def run_aggregator_group(group, sketch_id):
         if aggregator.sketch_id != group.sketch_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "All aggregations in a group must belong to the group " "sketch",
+                "All aggregations in a group must belong to the group sketch",
             )
 
         if aggregator.parameters:
@@ -261,17 +261,14 @@ def load_yaml_config(config_parameter_name):
     yaml_path = current_app.config.get(config_parameter_name, "")
     if not yaml_path:
         logger.error(
-            "The path to the YAML file isn't defined in the " "main configuration file"
+            "The path to the YAML file isn't defined in the main configuration file"
         )
         return {}
     if not os.path.isfile(yaml_path):
-        logger.error(
-            "Unable to read the config, file: "
-            "[{:s}] does not exist".format(yaml_path)
-        )
+        logger.error("Unable to read the config, file: [%s] does not exist", yaml_path)
         return {}
 
-    with open(yaml_path) as fh:
+    with open(yaml_path, encoding="utf-8") as fh:
         return yaml.safe_load(fh)
 
 
@@ -287,14 +284,11 @@ def load_csv_file(config_parametre_name):
     csv_file = current_app.config.get(config_parametre_name, "")
     if not csv_file:
         logger.error(
-            "The path to the CSV file isn't defined in the " "main configuration file"
+            "The path to the CSV file isn't defined in the main configuration file"
         )
         return {}
     if not os.path.isfile(csv_file):
-        logger.error(
-            "Unable to read the config, file: "
-            "[{:s}] does not exist".format(csv_file)
-        )
+        logger.error("Unable to read the config, file: [%s] does not exist", csv_file)
         return {}
 
     return pd.read_csv(csv_file)

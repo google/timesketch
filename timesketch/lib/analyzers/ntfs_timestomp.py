@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for ntfs timestomping detection."""
 
-
 from flask import current_app
 
 from timesketch.lib.analyzers import interface
@@ -49,7 +48,7 @@ class NtfsTimestompSketchPlugin(interface.BaseAnalyzer):
         )
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def is_suspicious(self, file_info):
+    def is_suspicious(self, file_info: FileInfo):
         """Compares timestamps to detect timestomping.
 
         Args:
@@ -103,7 +102,7 @@ class NtfsTimestompSketchPlugin(interface.BaseAnalyzer):
         events = self.event_stream(query_string=query, return_fields=return_fields)
 
         # Dict timestamp_type + "&" + file_ref -> FileInfo
-        file_infos = dict()
+        file_infos = {}
 
         for event in events:
             attribute_type = event.source.get("attribute_type")

@@ -14,7 +14,6 @@
 """This file contains a class for managing aggregators."""
 
 
-
 class AggregatorManager:
     """The aggregator manager."""
 
@@ -50,8 +49,8 @@ class AggregatorManager:
         """
         try:
             aggregator_class = cls._class_registry[aggregator_name.lower()]
-        except KeyError:
-            raise KeyError(f"No such chart type: {aggregator_name.lower():s}")
+        except KeyError as e:
+            raise KeyError(f"No such chart type: {aggregator_name.lower():s}") from e
         return aggregator_class
 
     @classmethod
@@ -71,9 +70,7 @@ class AggregatorManager:
         """
         aggregator_name = aggregator_class.NAME.lower()
         if aggregator_name in cls._class_registry:
-            raise KeyError(
-                f"Class already set for name: {aggregator_class.NAME:s}."
-            )
+            raise KeyError(f"Class already set for name: {aggregator_class.NAME:s}.")
         cls._class_registry[aggregator_name] = aggregator_class
         if exclude_from_list:
             cls._exclude_registry.add(aggregator_name)

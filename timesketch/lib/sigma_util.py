@@ -18,6 +18,7 @@ import os
 import logging
 import string
 from functools import lru_cache
+from typing import Optional
 import yaml
 
 from flask import current_app
@@ -33,7 +34,7 @@ from timesketch.models.sigma import SigmaRule
 logger = logging.getLogger("timesketch.lib.sigma")
 
 
-def get_sigma_config_file(config_file=None):
+def get_sigma_config_file(config_file: Optional[str] = None):
     """Get a sigma.configuration.SigmaConfiguration object.
 
     Args:
@@ -56,9 +57,7 @@ def get_sigma_config_file(config_file=None):
         raise ValueError("No config_file_path set via param or config file")
 
     if not os.path.isfile(config_file_path):
-        raise ValueError(
-            f"Unable to open: [{config_file_path:s}], does not exist."
-        )
+        raise ValueError(f"Unable to open: [{config_file_path:s}], does not exist.")
 
     if not os.access(config_file_path, os.R_OK):
         raise ValueError(
@@ -72,7 +71,7 @@ def get_sigma_config_file(config_file=None):
     try:
         sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
     except SigmaConfigParseError:
-        logger.error(f"Parsing error with {sigma_config_file:s}")
+        logger.error("Parsing error with %s", sigma_config_file)
         raise
 
     return sigma_config
@@ -211,7 +210,9 @@ def sanitize_incoming_sigma_rule_text(rule_text: string):
 
 
 @lru_cache(maxsize=8)
-def parse_sigma_rule_by_text(rule_text, sigma_config=None, sanitize=True):
+def parse_sigma_rule_by_text(
+    rule_text: str, sigma_config: object = None, sanitize: bool = True
+):
     """Returns a JSON representation for a rule
 
     Args:
@@ -265,15 +266,15 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None, sanitize=True):
             rule_return.update(doc)
 
     except NotImplementedError as exception:
-        logger.error(f"Error generating rule {exception!s}")
+        logger.error("Error generating rule %s", str(exception))
         raise
 
     except sigma_exceptions.SigmaParseError as exception:
-        logger.error(f"Sigma parsing error rule {exception!s}")
+        logger.error("Sigma parsing error rule %s", str(exception))
         raise
 
     except yaml.parser.ParserError as exception:
-        logger.error(f"Yaml parsing error rule {exception!s}")
+        logger.error("Yaml parsing error rule %s", str(exception))
         raise
 
     assert parsed_sigma_rules is not None

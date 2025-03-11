@@ -170,7 +170,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             f"The action: [{action:s}] is not supported.",
         )
 
-    def _get_all_events_with_a_label(self, label, sketch):
+    def _get_all_events_with_a_label(self, label: str, sketch: Sketch):
         """Returns a DataFrame with events in a sketch with a certain label.
 
         Args:
@@ -283,7 +283,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         string_io.seek(0)
         zip_file.writestr("events/tagged_event_stats.csv", data=string_io.read())
 
-    def _export_sketch(self, sketch):
+    def _export_sketch(self, sketch: Sketch):
         """Returns a ZIP file with the exported content of a sketch."""
         file_object = io.BytesIO()
         sketch_is_archived = sketch.get_status.status == "archived"
@@ -424,7 +424,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         }
         zip_file.writestr(f"views/{name:s}.meta", data=json.dumps(meta))
 
-    def _unarchive_sketch(self, sketch):
+    def _unarchive_sketch(self, sketch: Sketch):
         """Unarchives a sketch by opening up all indices and removing labels.
 
         Args:
@@ -461,7 +461,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         return HTTP_STATUS_CODE_OK
 
-    def _archive_sketch(self, sketch):
+    def _archive_sketch(self, sketch: Sketch):
         """Unarchives a sketch by opening up all indices and removing labels.
 
         Args:
@@ -482,8 +482,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             if sketch.has_label(label):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "A sketch with the label {:s} cannot be "
-                    "archived.".format(label),
+                    "A sketch with the label {:s} cannot be " "archived.".format(label),
                 )
 
         sketch.set_status(status="archived")
@@ -501,7 +500,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             search_index = timeline.searchindex
 
             if not all(
-                [x.get_status.status == "archived" for x in search_index.timelines]
+                x.get_status.status == "archived" for x in search_index.timelines
             ):
                 continue
             search_index.set_status(status="archived")

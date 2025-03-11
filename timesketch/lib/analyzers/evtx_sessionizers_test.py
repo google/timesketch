@@ -1,10 +1,10 @@
 """Tests for WinEVTXSessionizerSketchPlugin, LogonSessionizerSketchPludin and
 UnlockSessionizerSketchPlugin"""
 
-
 import unittest
 import copy
 from unittest import mock
+from typing import Optional
 
 from timesketch.lib.analyzers.evtx_sessionizers import LogonSessionizerSketchPlugin
 from timesketch.lib.analyzers.evtx_sessionizers import UnlockSessionizerSketchPlugin
@@ -485,7 +485,11 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
 
 def _create_mock_event(
-    datastore, event_id, quantity, time_diffs=None, source_attrs=None
+    datastore: MockDataStore,
+    event_id: str,
+    quantity: int,
+    time_diffs: Optional[list] = None,
+    source_attrs: Optional[list] = None,
 ):
     """
     Loads in the datastore mock events that based on the given arguments.

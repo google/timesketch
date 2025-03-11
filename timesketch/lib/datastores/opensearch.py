@@ -20,6 +20,7 @@ import json
 import logging
 import socket
 from uuid import uuid4
+from typing import Union, Optional, Dict
 
 from dateutil import parser, relativedelta
 from opensearchpy import OpenSearch
@@ -142,7 +143,7 @@ class OpenSearchDataStore:
         )
 
     @staticmethod
-    def _build_labels_query(sketch_id, labels):
+    def _build_labels_query(sketch_id: int, labels: list):
         """Build OpenSearch query for Timesketch labels.
 
         Args:
@@ -188,7 +189,7 @@ class OpenSearchDataStore:
         return query_dict
 
     @staticmethod
-    def _build_query_dsl(query_dsl, timeline_ids):
+    def _build_query_dsl(query_dsl: dict, timeline_ids: Union[int, list, None]):
         """Build OpenSearch Search DSL query by adding in timeline filtering.
 
         Args:
@@ -208,7 +209,7 @@ class OpenSearchDataStore:
             )
             return query_dsl
 
-        if not all([isinstance(x, int) for x in timeline_ids]):
+        if not all(isinstance(x, int) for x in timeline_ids):
             es_logger.error("All timeline IDs need to be an integer.")
             return query_dsl
 
@@ -248,7 +249,7 @@ class OpenSearchDataStore:
         return query_dsl
 
     @staticmethod
-    def _convert_to_time_range(interval):
+    def _convert_to_time_range(interval: str):
         """Convert an interval timestamp into start and end dates.
 
         Args:
@@ -260,8 +261,12 @@ class OpenSearchDataStore:
         """
         # return ('2018-12-05T00:00:00', '2018-12-05T23:59:59')
         TS_FORMAT = "%Y-%m-%dT%H:%M:%S"
-        get_digits = lambda s: int("".join(filter(str.isdigit, s)))
-        get_alpha = lambda s: "".join(filter(str.isalpha, s))
+        get_digits = lambda s: int(  # pylint: disable=unnecessary-lambda-assignment
+            "".join(filter(str.isdigit, s))
+        )
+        get_alpha = lambda s: "".join(  # pylint: disable=unnecessary-lambda-assignment
+            filter(str.isalpha, s)
+        )
 
         ts_parts = interval.split(" ")
         # The start date could be 1 or 2 first items
@@ -292,12 +297,12 @@ class OpenSearchDataStore:
 
     def build_query(
         self,
-        sketch_id,
-        query_string,
-        query_filter,
-        query_dsl=None,
-        aggregations=None,
-        timeline_ids=None,
+        sketch_id: int,
+        query_string: str,
+        query_filter: Dict,
+        query_dsl: Optional[Dict] = None,
+        aggregations: Optional[Dict] = None,
+        timeline_ids: Optional[list] = None,
     ):
         """Build OpenSearch DSL query.
 
@@ -414,7 +419,7 @@ class OpenSearchDataStore:
                         must_not_filters.append(term_filter)
 
                 elif chip["type"].startswith("datetime"):
-                    range_filter = lambda start, end: {
+                    range_filter = lambda start, end: {  # pylint: disable=unnecessary-lambda-assignment
                         "range": {"datetime": {"gte": start, "lte": end}}
                     }
                     if chip["type"] == "datetime_range":
@@ -497,16 +502,16 @@ class OpenSearchDataStore:
     # pylint: disable=too-many-arguments
     def search(
         self,
-        sketch_id,
-        query_string,
-        query_filter,
-        query_dsl,
-        indices,
-        count=False,
-        aggregations=None,
-        return_fields=None,
-        enable_scroll=False,
-        timeline_ids=None,
+        sketch_id: int,
+        query_string: str,
+        query_filter: Dict,
+        query_dsl: Dict,
+        indices: list,
+        count: bool = False,
+        aggregations: Optional[Dict] = None,
+        return_fields: Optional[list] = None,
+        enable_scroll: bool = False,
+        timeline_ids: Optional[list] = None,
     ):
         """Search OpenSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
@@ -620,25 +625,24 @@ class OpenSearchDataStore:
             else:
                 cause = str(e)
 
-            es_logger.error(
-                f"Unable to run search query: {cause:s}", exc_info=True
-            )
+            es_logger.error("Unable to run search query: %s", cause, exc_info=True)
             raise ValueError(cause) from e
 
         METRICS["search_requests"].labels(type="single").inc()
         return _search_result
 
     # pylint: disable=too-many-arguments
+
     def search_stream(
         self,
-        sketch_id=None,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        indices=None,
-        return_fields=None,
-        enable_scroll=True,
-        timeline_ids=None,
+        sketch_id: Optional[int] = None,
+        query_string: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        indices: Optional[list] = None,
+        return_fields: Optional[list] = None,
+        enable_scroll: bool = True,
+        timeline_ids: Optional[list] = None,
     ):
         """Search OpenSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
@@ -655,7 +659,7 @@ class OpenSearchDataStore:
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
-        Returns:
+        Yields:
             Generator of event documents in JSON format
         """
         # Make sure that the list of index names is uniq.
@@ -701,7 +705,7 @@ class OpenSearchDataStore:
             scroll_size = len(result["hits"]["hits"])
             yield from result["hits"]["hits"]
 
-    def get_filter_labels(self, sketch_id, indices):
+    def get_filter_labels(self, sketch_id: int, indices: list):
         """Aggregate labels for a sketch.
 
         Args:
@@ -786,7 +790,7 @@ class OpenSearchDataStore:
         return labels
 
     # pylint: disable=inconsistent-return-statements
-    def get_event(self, searchindex_id, event_id):
+    def get_event(self, searchindex_id: str, event_id: str):
         """Get one event from the datastore.
 
         Args:
@@ -819,7 +823,7 @@ class OpenSearchDataStore:
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
-    def count(self, indices):
+    def count(self, indices: list):
         """Count number of documents.
 
         Args:
@@ -862,14 +866,14 @@ class OpenSearchDataStore:
 
     def set_label(
         self,
-        searchindex_id,
-        event_id,
-        sketch_id,
-        user_id,
-        label,
-        toggle=False,
-        remove=False,
-        single_update=True,
+        searchindex_id: str,
+        event_id: str,
+        sketch_id: int,
+        user_id: int,
+        label: str,
+        toggle: bool = False,
+        remove: bool = False,
+        single_update: bool = True,
     ):
         """Set label on event in the datastore.
 
@@ -907,9 +911,11 @@ class OpenSearchDataStore:
 
         if not single_update:
             script = update_body["script"]
-            return dict(
-                source=script["source"], lang=script["lang"], params=script["params"]
-            )
+            return {
+                "source": script["source"],
+                "lang": script["lang"],
+                "params": script["params"],
+            }
 
         doc = self.client.get(index=searchindex_id, id=event_id)
         try:
@@ -922,7 +928,9 @@ class OpenSearchDataStore:
 
         return None
 
-    def create_index(self, index_name=uuid4().hex, mappings=None):
+    def create_index(
+        self, index_name: str = uuid4().hex, mappings: Optional[Dict] = None
+    ):
         """Create index with Timesketch settings.
 
         Args:
@@ -975,11 +983,11 @@ class OpenSearchDataStore:
 
     def import_event(
         self,
-        index_name,
-        event=None,
-        event_id=None,
-        flush_interval=None,
-        timeline_id=None,
+        index_name: str,
+        event: Optional[Dict] = None,
+        event_id: Optional[str] = None,
+        flush_interval: Optional[int] = None,
+        timeline_id: Optional[int] = None,
     ):
         """Add event to OpenSearch.
 
@@ -1120,9 +1128,7 @@ class OpenSearchDataStore:
                 try:
                     es_logger.error(
                         "Unable to upload document: {:s} to index {:s} - "
-                        "[{:d}] {:s}".format(
-                            doc_id, index_name, status_code, error_msg
-                        )
+                        "[{:d}] {:s}".format(doc_id, index_name, status_code, error_msg)
                     )
                 # We need to catch all exceptions here, since this is a crucial
                 # call that we do not want to break operation.

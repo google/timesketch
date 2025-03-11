@@ -132,13 +132,13 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
         self,
-        field,
-        query_string="",
-        query_dsl="",
-        supported_charts="table",
-        start_time="",
-        end_time="",
-        limit=10,
+        field: str,
+        query_string: str = "",
+        query_dsl: str = "",
+        supported_charts: str = "table",
+        start_time: str = "",
+        end_time: str = "",
+        limit: int = 10,
     ):
         """Run the aggregation.
 

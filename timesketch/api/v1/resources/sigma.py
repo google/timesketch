@@ -151,7 +151,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     """Resource to read / delete / create / update a Sigma rule."""
 
     @login_required
-    def get(self, rule_uuid):
+    def get(self, rule_uuid: str):
         """Fetches a single Sigma rule from the database.
 
         Fetches a single Sigma rule selected by the `UUID` in
@@ -159,7 +159,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         rule.
 
         Args:
-            rule_uuid: UUID of the rule.
+            rule_uuid: (str) UUID of the rule.
 
         Returns:
             JSON sigma rule representation
@@ -190,14 +190,14 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         return jsonify({"objects": return_rule, "meta": {}})
 
     @login_required
-    def delete(self, rule_uuid):
+    def delete(self, rule_uuid: str):
         """Deletes a Sigma rule from the database.
 
         Deletes a single Sigma rule selected by the `uuid` in
         `/sigmarule/<string:rule_uuid>/`.
 
         Args:
-            rule_uuid: UUID of the rule to be deleted.
+            rule_uuid: (str) UUID of the rule to be deleted.
 
         Returns:
             HTTP_STATUS_CODE_NOT_FOUND if rule not found.
@@ -219,7 +219,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         return HTTP_STATUS_CODE_OK
 
     @login_required
-    def put(self, rule_uuid):
+    def put(self, rule_uuid: str):
         """Update an existing Sigma rule in the database.
 
         Handles calls to `/sigmarule/<string:rule_uuid>/`, where
@@ -233,7 +233,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         If `rule_uuid` doesn't match the UUI in `rule_yaml`, the request will fail.
 
         Args:
-            rule_uuid: UUID of the rule.
+            rule_uuid: (str) UUID of the rule.
 
         Returns:
             The updated Sigma object in JSON.
@@ -254,9 +254,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if rule_uuid != parsed_rule.get("id"):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Rule ID mismatch parameter:{!s} and YAML content:{!s}".format(
-                    rule_uuid, parsed_rule.get("id")
-                ),
+                f"Rule ID mismatch parameter: {rule_uuid!s} and YAML content: "
+                f"{parsed_rule.get('id')!s}",
             )
 
         sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
@@ -309,9 +308,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
         try:
             sigma_rule = ts_sigma_lib.parse_sigma_rule_by_text(content)
         except ValueError as e:
-            error_msg = "Sigma rule Parsing error with provided rule {!s}".format(
-                str(e)
-            )
+            error_msg = f"Sigma rule Parsing error with provided rule {e!s}"
             logger.error(
                 error_msg,
                 exc_info=True,
@@ -324,7 +321,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
         except NotImplementedError as e:
             error_msg = (
                 "Sigma Parsing error: Feature in the rule provided"
-                " is not implemented in this backend {!s}".format(e)
+                f" is not implemented in this backend {e!s}"
             )
             logger.error(
                 error_msg,
@@ -336,8 +333,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
             )
 
         except sigma_exceptions.SigmaParseError as e:
-            error_msg = "Sigma parsing error generating rule"
-            f" with error: {str(e):s}"
+            error_msg = f"Sigma parsing error generating rule with error: {e!s}"
             logger.error(error_msg, exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,

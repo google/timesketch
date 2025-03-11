@@ -15,7 +15,7 @@
 
 
 import re
-
+from typing import Optional
 
 from datasketch.minhash import MinHash
 from datasketch.lsh import MinHashLSH
@@ -62,7 +62,13 @@ def minhash_from_text(text, num_perm, delimiters):
     return minhash
 
 
-def new_lsh_index(events, field, delimiters=None, num_perm=None, threshold=None):
+def new_lsh_index(
+    events: list,
+    field: str,
+    delimiters: Optional[str] = None,
+    num_perm: Optional[int] = None,
+    threshold: Optional[float] = None,
+):
     """Create a new LSH from a set of Timesketch events.
 
     Args:

@@ -45,8 +45,8 @@ class GraphManager:
         """
         try:
             graph_class = cls._class_registry[graph_name.lower()]
-        except KeyError:
-            raise KeyError(f"No such graph type: {graph_name.lower()}")
+        except KeyError as exc:
+            raise KeyError(f"No such graph type: {graph_name.lower()}") from exc
         return graph_class
 
     @classmethod

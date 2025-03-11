@@ -196,7 +196,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
     """Resource to update sketch collaborators."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -227,9 +227,8 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             if not sketch.has_permission(user=current_user, permission=permission):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "The user does not have {:s} permission on the sketch "
-                    "and therefore can't grant it to "
-                    "others".format(permission),
+                    f"The user does not have {permission:s} permission on the "
+                    "sketch and therefore can't grant it to others",
                 )
 
         for username in form.get("users", []):
@@ -251,7 +250,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             group = Group.query.filter_by(name=group_name).first()
 
             if not group:
-                logger.error(f"Group: {group_name:s} not found")
+                logger.error("Group: %s not found", group_name)
                 continue
 
             # Only add groups publicly visible or owned by the current user

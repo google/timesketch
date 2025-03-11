@@ -64,6 +64,7 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             ValueError: If the prompt path is not configured or placeholder is missing.
             FileNotFoundError: If the prompt file cannot be found.
             IOError: If there's an error reading the prompt file.
+            OSError: If there's an error reading the prompt file.
         """
         prompt_file_path = current_app.config.get(self.PROMPT_CONFIG_KEY)
         if not prompt_file_path:

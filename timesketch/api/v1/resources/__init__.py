@@ -17,6 +17,7 @@ The timesketch API is a RESTful API that exposes the following resources:
 """
 
 import logging
+from typing import Optional, Dict
 
 from flask import current_app
 from flask import jsonify
@@ -378,7 +379,11 @@ class ResourceMixin:
         )
 
     def to_json(
-        self, model, model_fields=None, meta=None, status_code=HTTP_STATUS_CODE_OK
+        self,
+        model: object,
+        model_fields: Optional[Dict] = None,
+        meta: Optional[Dict] = None,
+        status_code: int = HTTP_STATUS_CODE_OK,
     ):
         """Create json response from a database models.
 
@@ -392,7 +397,7 @@ class ResourceMixin:
             Response in json format (instance of flask.wrappers.Response)
         """
         if not meta:
-            meta = dict()
+            meta = {}
 
         schema = {"meta": meta, "objects": []}
 

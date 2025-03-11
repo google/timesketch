@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for domains."""
 
-
 import collections
 import difflib
 
@@ -103,7 +102,7 @@ class PhishyDomainsSketchPlugin(interface.BaseAnalyzer):
 
         return minhash
 
-    def _get_similar_domains(self, domain, domain_dict):
+    def _get_similar_domains(self, domain: str, domain_dict: dict):
         """Compare a domain to a list of domains and return similar domains.
 
         This function takes a domain and a dict object that contains

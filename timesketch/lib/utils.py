@@ -24,7 +24,7 @@ import random
 import smtplib
 import time
 import codecs
-
+from typing import List, Optional
 import pandas
 
 from dateutil import parser
@@ -89,7 +89,11 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
+def _validate_csv_fields(
+    mandatory_fields: List,
+    data: pandas.DataFrame,
+    headers_mapping: Optional[List] = None,
+):
     """Validate parsed CSV fields against mandatory fields.
 
     Args:
@@ -154,11 +158,11 @@ def validate_indices(indices, datastore):
     return [i for i in indices if datastore.client.indices.exists(index=i)]
 
 
-def check_mapping_errors(headers, headers_mapping):
+def check_mapping_errors(headers: List, headers_mapping: List):
     """Sanity check for headers mapping
 
     Args:
-        csv_headers: list of headers found in the CSV file.
+        headers: list of headers found in the CSV file.
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
                          (ii) sources header we want to rename/combine [key=source],
@@ -212,7 +216,7 @@ def check_mapping_errors(headers, headers_mapping):
         )
 
 
-def rename_csv_headers(chunk, headers_mapping):
+def rename_csv_headers(chunk: pandas.DataFrame, headers_mapping: List):
     """ "Rename the headers of the dataframe
 
     Args:
@@ -247,7 +251,10 @@ def rename_csv_headers(chunk, headers_mapping):
 
 
 def read_and_validate_csv(
-    file_handle, delimiter=",", mandatory_fields=None, headers_mapping=None
+    file_handle: object,
+    delimiter: str = ",",
+    mandatory_fields: Optional[List] = None,
+    headers_mapping: Optional[List] = None,
 ):
     """Generator for reading a CSV file.
 
@@ -353,7 +360,7 @@ def read_and_validate_csv(
         raise errors.DataIngestionError(error_string) from e
 
 
-def read_and_validate_redline(file_handle):
+def read_and_validate_redline(file_handle: object):
     """Generator for reading a Redline CSV file.
 
     Args:
@@ -394,7 +401,7 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def rename_jsonl_headers(linedict, headers_mapping, lineno):
+def rename_jsonl_headers(linedict: dict, headers_mapping: List, lineno: int):
     """Rename the headers of the dictionary
 
     Args:
@@ -451,7 +458,7 @@ def rename_jsonl_headers(linedict, headers_mapping, lineno):
 
 
 def read_and_validate_jsonl(
-    file_handle, delimiter=None, headers_mapping=None
+    file_handle: object, delimiter: str = "", headers_mapping: Optional[List] = None
 ):  # pylint: disable=unused-argument
     """Generator for reading a JSONL (json lines) file.
 
@@ -524,7 +531,7 @@ def read_and_validate_jsonl(
             )
 
 
-def get_validated_indices(indices, sketch):
+def get_validated_indices(indices: List, sketch: object):
     """Exclude any deleted search index references.
 
     Args:
@@ -578,7 +585,7 @@ def get_validated_indices(indices, sketch):
     return list(set(indices)), list(timelines)
 
 
-def send_email(subject, body, to_username, use_html=False):
+def send_email(subject: str, body: str, to_username: str, use_html: bool = False):
     """Send email using configure SMTP server.
 
     Args:

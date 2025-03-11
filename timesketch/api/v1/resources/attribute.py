@@ -133,7 +133,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
             ontology_lib.OntologyManager.encode_value(x, cast_as_string) for x in values
         ]
 
-        if any([not isinstance(x, str) for x in value_strings]):
+        if any(not isinstance(x, str) for x in value_strings):
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "All values needs to be stored as strings.",
