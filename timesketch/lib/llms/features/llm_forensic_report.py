@@ -16,43 +16,63 @@ import json
 import logging
 import time
 from typing import Any, Dict, List, Optional
+
 import pandas as pd
+import prometheus_client
 from flask import current_app
 from opensearchpy import OpenSearch
+
 from timesketch.lib import utils
 from timesketch.api.v1 import export
-from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.lib.llms import actions
+from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib.llms.features.interface import LLMFeatureInterface
 
 logger = logging.getLogger("timesketch.llm.forensic_report_feature")
+
+METRICS = {
+    "llm_forensic_report_events_processed_total": prometheus_client.Counter(
+        "llm_forensic_report_events_processed_total",
+        "Total number of events processed for LLM forensic reports",
+        ["sketch_id"],
+        namespace=METRICS_NAMESPACE,
+    ),
+    "llm_forensic_report_unique_events_total": prometheus_client.Counter(
+        "llm_forensic_report_unique_events_total",
+        "Total number of unique events sent to the LLM for forensic report generation",
+        ["sketch_id"],
+        namespace=METRICS_NAMESPACE,
+    ),
+    "llm_forensic_report_stories_created_total": prometheus_client.Counter(
+        "llm_forensic_report_stories_created_total",
+        "Total number of forensic report stories created",
+        ["sketch_id"],
+        namespace=METRICS_NAMESPACE,
+    ),
+}
 
 class LLMForensicReportFeature(LLMFeatureInterface):
     """LLM Forensic Report feature."""
     NAME = "llm_forensic_report"
     PROMPT_CONFIG_KEY = "PROMPT_LLM_FORENSIC_REPORT"
-    
     RESPONSE_SCHEMA = {
         "type": "object",
         "properties": {
             "summary": {
                 "type": "string",
-                "description": "Detailed forensic report summary of the events"
+                "description": "Detailed forensic report summary of the events",
             }
         },
-        "required": ["summary"]
+        "required": ["summary"],
     }
-    
+
     def _get_prompt_text(self, events_dict: List[Dict[str, Any]]) -> str:
         """Reads the prompt template from file and injects events.
-        
         Args:
             events_dict: List of event dictionaries to inject into prompt.
-            
         Returns:
-            str: Complete prompt text with injected events.
-            
+            Complete prompt text with injected events.
         Raises:
             ValueError: If the prompt path is not configured or placeholder is missing.
             FileNotFoundError: If the prompt file cannot be found.
@@ -62,7 +82,7 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         if not prompt_file_path:
             logger.error("%s config not set", self.PROMPT_CONFIG_KEY)
             raise ValueError("LLM forensic report prompt path not configured.")
-            
+        
         try:
             with open(prompt_file_path, "r", encoding="utf-8") as file_handle:
                 prompt_template = file_handle.read()
@@ -84,7 +104,7 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             
         prompt_text = prompt_template.replace("<EVENTS_JSON>", json.dumps(events_dict))
         return prompt_text
-    
+
     def _run_timesketch_query(
         self,
         sketch: Sketch,
@@ -95,7 +115,6 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         timeline_ids: Optional[List] = None,
     ) -> pd.DataFrame:
         """Runs a timesketch query and returns results as a DataFrame.
-        
         Args:
             sketch: The Sketch object to query.
             query_string: Search query string.
@@ -103,10 +122,8 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             id_list: List of event IDs to retrieve.
             datastore: OpenSearch instance for querying.
             timeline_ids: List of timeline IDs to query.
-            
         Returns:
             pd.DataFrame: DataFrame containing query results.
-            
         Raises:
             ValueError: If datastore is not provided or no valid indices are found.
         """
@@ -142,22 +159,18 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             timeline_ids=timeline_ids,
         )
         
-        logger.info("Number of hits from datastore search: %d", len(result))
         return export.query_results_to_dataframe(result, sketch)
-    
+
     def generate_prompt(self, sketch: Sketch, **kwargs: Any) -> str:
         """Generates the forensic report prompt based on events from a query.
-        
         Args:
             sketch: The Sketch object containing events to analyze.
             **kwargs: Additional arguments including:
                 - form: Form data containing query and filter information.
                 - datastore: OpenSearch instance for querying.
                 - timeline_ids: List of timeline IDs to query.
-                
         Returns:
             str: Generated prompt text with events to analyze.
-            
         Raises:
             ValueError: If required parameters are missing or if no events are found.
         """
@@ -182,48 +195,32 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         if events_df is None or events_df.empty:
             return "No events to analyze for forensic report."
         
-        # Ensure 'datetime' column exists and convert to datetime objects
-        if 'datetime' not in events_df.columns:
-            logger.error("The 'datetime' column is missing in the events DataFrame.")
-            raise ValueError("The 'datetime' column is missing in the events DataFrame.")
-            
-        # Convert 'datetime' column to datetime objects, handling potential errors
-        try:
-            events_df['datetime'] = pd.to_datetime(events_df['datetime'], errors='raise')
-        except Exception as e:
-            logger.error("Error converting 'datetime' column: %s", e)
-            raise ValueError(f"Error converting 'datetime' column to datetime objects: {e}")
-            
-        # Create a combined key of timestamp and message to uniquely identify events
-        events_df['combined_key'] = events_df['datetime'].astype(str) + events_df['message']
+        events_df["datetime_str"] = events_df["datetime"].astype(str)
+        events_df["combined_key"] = events_df["datetime_str"] + events_df["message"]
+        unique_df = events_df.drop_duplicates(subset="combined_key", keep="first")
         
-        # Drop duplicates based on the combined key
-        unique_df = events_df.drop_duplicates(subset='combined_key', keep='first')
-        
-        # Convert datetime to string BEFORE creating the dictionary
-        unique_df['datetime_str'] = unique_df['datetime'].astype(str)
-        
-        # Prepare the unique events for the LLM prompt, include timestamp string
-        events_dict = unique_df[['datetime_str', 'message']].rename(
-            columns={'datetime_str': 'datetime'}).to_dict(orient="records")
+        events_dict = unique_df[["datetime_str", "message"]].rename(
+            columns={"datetime_str": "datetime"}
+        ).to_dict(orient="records")
         
         total_events_count = len(events_df)
         unique_events_count = len(unique_df)
         
-        logger.info(
-            "Analyzing events for forensic report: %d events",
-            total_events_count,
-        )
-        logger.info("Reduced to %d unique events", unique_events_count)
+        METRICS["llm_forensic_report_events_processed_total"].labels(
+            sketch_id=str(sketch.id)
+        ).inc(total_events_count)
+        
+        METRICS["llm_forensic_report_unique_events_total"].labels(
+            sketch_id=str(sketch.id)
+        ).inc(unique_events_count)
         
         if not events_dict:
             return "No events to analyze for forensic report."
             
         return self._get_prompt_text(events_dict)
-    
+
     def process_response(self, llm_response: Any, **kwargs: Any) -> Dict[str, Any]:
         """Processes the LLM response and creates a Story in the sketch.
-        
         Args:
             llm_response: The response from the LLM model, expected to be a dictionary.
             **kwargs: Additional arguments including:
@@ -232,14 +229,12 @@ class LLMForensicReportFeature(LLMFeatureInterface):
                 - form: Form data containing query and filter information.
                 - datastore: OpenSearch instance for querying.
                 - timeline_ids: List of timeline IDs to query.
-                
         Returns:
             Dictionary containing the processed response:
                 - summary: The forensic report text
                 - summary_event_count: Total number of events analyzed
                 - summary_unique_event_count: Number of unique events analyzed
                 - story_id: ID of the created story
-                
         Raises:
             ValueError: If required parameters are missing or if the LLM response
                       is not in the expected format.
@@ -261,8 +256,7 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         summary_text = llm_response.get("summary")
         if summary_text is None:
             raise ValueError("LLM response missing 'summary' key")
-            
-        # Recalculate event counts for metrics in the response
+        
         query_filter = form.get("filter", {})
         query_string = form.get("query", "*") or "*"
         
@@ -276,30 +270,26 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         
         total_events_count = len(events_df)
         
-        # For unique count, use the same logic as in generate_prompt
-        if 'datetime' in events_df.columns:
-            events_df['datetime'] = pd.to_datetime(events_df['datetime'], errors='coerce')
-            events_df['combined_key'] = events_df['datetime'].astype(str) + events_df['message']
-            unique_events_count = len(events_df.drop_duplicates(subset='combined_key', keep='first'))
-        else:
-            unique_events_count = len(events_df.drop_duplicates(subset='message', keep='first'))
+        events_df["combined_key"] = events_df["datetime"].astype(str) + events_df["message"]
+        unique_events_count = len(events_df.drop_duplicates(subset="combined_key", keep="first"))
         
-        # Create a story using the actions module
-        try:            
-            # Create the story with a specific title for forensic reports
+        try:
             story_title = f"Forensic Report - {time.strftime('%Y-%m-%d %H:%M')}"
             story_id = actions.create_story(
-                sketch=sketch,
-                content=summary_text,
-                title=story_title
+                sketch=sketch, content=summary_text, title=story_title
             )
+            METRICS["llm_forensic_report_stories_created_total"].labels(
+                sketch_id=str(sketch.id)
+            ).inc()
         except Exception as e:
             logger.error("Error creating story for forensic report: %s", e)
-            raise ValueError(f"Error creating story to save forensic report: {e}") from e
-        
+            raise ValueError(
+                f"Error creating story to save forensic report: {e}"
+            ) from e
+            
         return {
             "summary": summary_text,
             "summary_event_count": total_events_count,
             "summary_unique_event_count": unique_events_count,
-            "story_id": story_id
+            "story_id": story_id,
         }
