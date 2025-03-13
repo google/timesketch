@@ -1081,7 +1081,7 @@ class Search(resource.SketchResource):
         self._scrolling = True
 
     def to_dict(self):
-        """Returns a dict with the respone of the query."""
+        """Returns a dict with the response of the query."""
         if self._raw_response is None:
             self._execute_query()
             if self._raw_response is None:

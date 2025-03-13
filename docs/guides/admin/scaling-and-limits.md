@@ -59,7 +59,7 @@ With a decent OpenSearch deployment you can have hundreds of millions events acr
 
 [This article](https://edward-cernera.medium.com/deploy-a-multi-node-elasticsearch-instance-with-docker-compose-ef63625f246e) will give you a good start to scale the OpenSearch cluster. Be careful to not expose your Cluster to systems other then the Timesketch node(s).
 
-The config and credentials to the OpenSearch cluster are stored in https://github.com/google/timesketch/blob/master/data/timesketch.conf. If those calues are changed, the Timesketch Instance needs to be restarted.
+The config and credentials to the OpenSearch cluster are stored in https://github.com/google/timesketch/blob/master/data/timesketch.conf. If those values are changed, the Timesketch Instance needs to be restarted.
 
 ### Celery workers
 
