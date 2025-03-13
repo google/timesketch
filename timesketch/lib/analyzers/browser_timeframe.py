@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for browser timeframe."""
 
-from __future__ import unicode_literals
-
 import collections
 import pandas as pd
 
@@ -11,7 +9,7 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 
 
-def get_list_of_consecutive_sequences(hour_list):
+def get_list_of_consecutive_sequences(hour_list: list):
     """Returns a list of runs from a list of numbers.
 
     Args:
@@ -49,7 +47,7 @@ def get_list_of_consecutive_sequences(hour_list):
     return runs
 
 
-def fix_gap_in_list(hour_list):
+def fix_gap_in_list(hour_list: list):
     """Returns a list with gaps in it fixed.
 
     Args:
@@ -91,7 +89,7 @@ def fix_gap_in_list(hour_list):
     return sorted(hours)
 
 
-def get_active_hours(frame):
+def get_active_hours(frame: pd.DataFrame):
     """Return a list of the hours with the most activity within a frame.
 
     Args:
@@ -212,8 +210,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
             event.add_attributes(
                 {
                     "activity_summary": (
-                        "Number of events for this hour ({0:d}): {1:d}, with the "
-                        "threshold value: {2:0.2f}"
+                        "Number of events for this hour ({:d}): {:d}, with the "
+                        "threshold value: {:0.2f}"
                     ).format(hour, this_hour_count, threshold),
                     "hour_count": this_hour_count,
                 }
@@ -224,7 +222,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
         tagged_events, _ = data_frame_outside.shape
         if tagged_events:
             story = self.sketch.add_story(
-                "{0:s} - {1:s}".format(utils.BROWSER_STORY_TITLE, self.timeline_name)
+                f"{utils.BROWSER_STORY_TITLE:s} - {self.timeline_name:s}"
             )
             story.add_text(utils.BROWSER_STORY_HEADER, skip_if_exists=True)
 
@@ -248,9 +246,9 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
 
             story.add_text(
                 "## Browser Timeframe Analyzer\n\nThe browser timeframe "
-                "analyzer discovered {0:d} browser events that occurred "
+                "analyzer discovered {:d} browser events that occurred "
                 "outside of the typical browsing window of this browser "
-                "history ({1:s}), or around {2:0.2f}%  of the {3:d} total "
+                "history ({:s}), or around {:0.2f}%  of the {:d} total "
                 "events.\n\nThe analyzer determines the activity hours by "
                 "finding the frequency of browsing events per hour, and then "
                 "discovering the longest block of most active hours before "
@@ -259,9 +257,9 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
                 "or by manually looking for other activity within the "
                 "inactive time period to find unusual actions.\n\n"
                 "The hours considered to be active hours are the hours "
-                "between {4:02d} and {5:02d} (hours in UTC) and the "
+                "between {:02d} and {:02d} (hours in UTC) and the "
                 "threshold used to determine if an hour was considered to be "
-                "active was: {6:0.2f}.".format(
+                "active was: {:0.2f}.".format(
                     tagged_events,
                     self.timeline_name,
                     percent,
@@ -280,12 +278,12 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
 
             params = {
                 "data": aggregation.to_dict(orient="records"),
-                "title": "Browser Activity Per Hour ({0:s})".format(self.timeline_name),
+                "title": f"Browser Activity Per Hour ({self.timeline_name:s})",
                 "field": "hour",
                 "order_field": "hour",
             }
             agg_obj = self.sketch.add_aggregation(
-                name="Browser Activity Per Hour ({0:s})".format(self.timeline_name),
+                name=f"Browser Activity Per Hour ({self.timeline_name:s})",
                 agg_name="manual_feed",
                 agg_params=params,
                 chart_type="barchart",
@@ -297,7 +295,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
             lines = [{"hour": x, "count": threshold} for x in range(0, 24)]
             params = {
                 "data": lines,
-                "title": "Browser Timeframe Threshold ({0:s})".format(
+                "title": "Browser Timeframe Threshold ({:s})".format(
                     self.timeline_name
                 ),
                 "field": "hour",
@@ -305,7 +303,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
                 "chart_color": "red",
             }
             agg_line = self.sketch.add_aggregation(
-                name="Browser Activity Per Hour ({0:s})".format(self.timeline_name),
+                name=f"Browser Activity Per Hour ({self.timeline_name:s})",
                 agg_name="manual_feed",
                 agg_params=params,
                 chart_type="linechart",
@@ -316,7 +314,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
             story.add_aggregation_group(group)
 
         return (
-            "Tagged {0:d} out of {1:d} events as outside of normal " "active hours."
+            "Tagged {:d} out of {:d} events as outside of normal " "active hours."
         ).format(tagged_events, total_count)
 
 

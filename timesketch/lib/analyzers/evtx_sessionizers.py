@@ -1,8 +1,8 @@
 """Sessionizing sketch analyzer plugins for sessions based on the Windows EVTX
 log."""
 
-from __future__ import unicode_literals
 import re
+from typing import Generator
 import opensearchpy.exceptions
 
 from timesketch.lib.analyzers import manager
@@ -34,7 +34,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
         ]
         last_login_time = 0
         session_num = 0
-        login_events = dict()
+        login_events = {}
         processed = False
 
         while not processed:
@@ -52,7 +52,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
         msg = "Sessionizing completed, number of sessions created: {0:d}"
         return msg.format(session_num)
 
-    def processSessions(self, events, session_num, start_events):
+    def processSessions(self, events: Generator, session_num: int, start_events: dict):
         """Iterate over the event stream, checking the event ID to find the
         type of event. Add session ID attribute to the start / end events. Add
         a view for each session.
@@ -90,7 +90,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                     self.annotateEvent(event, [session_id])
                     start_events[logon_id] = session_id
 
-                    view_query = 'session_id.{0:s}:"{1:s}"'.format(
+                    view_query = 'session_id.{:s}:"{:s}"'.format(
                         self.session_type, session_id
                     )
                     self.sketch.add_view(session_id, self.NAME, query_string=view_query)

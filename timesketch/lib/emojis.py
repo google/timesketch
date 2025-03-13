@@ -16,7 +16,6 @@
 See https://emojipedia.org for list of available unicode emojis.
 """
 
-from __future__ import unicode_literals
 
 import collections
 

@@ -63,7 +63,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
         Handler for /api/v1/sketches/:sketch_id/explore/
 
@@ -449,7 +449,7 @@ class QueryResource(resources.ResourceMixin, Resource):
     """Resource to get a query."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Args:

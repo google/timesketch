@@ -31,7 +31,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         self.misp_url = current_app.config.get("MISP_URL")
         self.misp_api_key = current_app.config.get("MISP_API_KEY")
         self.total_event_counter = 0
-        self.result_dict = dict()
+        self.result_dict = {}
         self._query_string = kwargs.get("query_string")
         self._attr = kwargs.get("attr")
         self._timesketch_attr = kwargs.get("timesketch_attr")
@@ -68,7 +68,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         ]
         return to_query
 
-    def get_misp_attributes(self, value, attr):
+    def get_misp_attributes(self, value: str, attr: str):
         """Search event on MISP.
 
         Args:
@@ -83,11 +83,12 @@ class MispAnalyzer(interface.BaseAnalyzer):
             json={"returnFormat": "json", "value": value, "type": attr},
             headers={"Authorization": self.misp_api_key},
             verify=False,
+            timeout=60,
         )
 
         if results.status_code != 200:
             msg_error = "Error with MISP query: Status code"
-            logger.error("{} {}".format(msg_error, results.status_code))
+            logger.error("%s %s", str(msg_error), str(results.status_code))
             return []
         result_loc = results.json()
         if "name" in result_loc:
@@ -122,7 +123,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         event.add_tags([f"MISP-{attr}"])
         event.commit()
 
-    def query_misp(self, query, attr, timesketch_attr):
+    def query_misp(self, query: str, attr: str, timesketch_attr: str):
         """Get event from timesketch, request MISP and mark event.
 
         Args:
@@ -132,8 +133,8 @@ class MispAnalyzer(interface.BaseAnalyzer):
         """
         events = self.event_stream(query_string=query, return_fields=[timesketch_attr])
         create_a_view = False
-        query_list = list()
-        events_list = list()
+        query_list = []
+        events_list = []
 
         # Create a list to make only one query to misp
         for event in events:
@@ -145,7 +146,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
                     if not loc:
                         _, loc = ntpath.split(event.source.get(timesketch_attr))
 
-                if not loc in query_list:
+                if loc not in query_list:
                     query_list.append(loc)
                 self.result_dict[f"{attr}:{loc}"] = []
 

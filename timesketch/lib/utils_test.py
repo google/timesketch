@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for utils."""
 
-from __future__ import unicode_literals
 
 import re
 import pandas as pd

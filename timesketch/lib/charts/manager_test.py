@@ -13,13 +13,12 @@
 # limitations under the License.
 """Tests for chart manager."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.charts import manager
 
 
-class MockChart(object):
+class MockChart:
     """Mock chart class."""
 
     NAME = "MockChart"

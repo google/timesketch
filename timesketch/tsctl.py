@@ -292,7 +292,7 @@ def import_search_templates(path):
 
     for file_path in file_paths:
         search_templates = None
-        with open(file_path, "r") as fh:
+        with open(file_path, "r", encoding="utf-8") as fh:
             search_templates = yaml.safe_load(fh.read())
 
         if isinstance(search_templates, dict):
@@ -354,7 +354,7 @@ def import_sigma_rules(path):
         sigma_rule = None
         sigma_yaml = None
 
-        with open(file_path, "r") as fh:
+        with open(file_path, "r", encoding="utf-8") as fh:
             try:
                 sigma_yaml = fh.read()
                 sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
@@ -420,7 +420,7 @@ def list_sigma_rules(columns):
                 relevant_data.append(rule.get_status.status)
             else:
                 try:
-                    relevant_data.append(rule.__getattribute__(column))
+                    relevant_data.append(getattr(rule, column))
                 except AttributeError:
                     print(f"Column {column} not found in SigmaRule")
                     return
@@ -442,7 +442,7 @@ def remove_sigma_rule(rule_uuid):
     rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
     if not rule:
-        error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+        error_msg = f"No rule found with rule_uuid.{rule_uuid!s}"
         print(error_msg)  # only needed in debug cases
         return
 
@@ -472,7 +472,7 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{0:s} first".format(path)
+            f"The directory needs to exist, please create: {path:s} first"
         )
 
     all_sigma_rules = SigmaRule.query.all()
@@ -482,7 +482,7 @@ def export_sigma_rules(path):
     for rule in all_sigma_rules:
         file_path = os.path.join(path, f"{rule.title}.yml")
         if os.path.isfile(file_path):
-            print("File [{0:s}] already exists.".format(file_path))
+            print(f"File [{file_path:s}] already exists.")
             continue
 
         with open(file_path, "wb") as fw:
@@ -574,6 +574,7 @@ def sketch_info(sketch_id):
                 "created_at",
                 "user_id",
                 "description",
+                "status",
             ],
         ]
 
@@ -585,9 +586,9 @@ def sketch_info(sketch_id):
                     t.created_at,
                     t.user_id,
                     t.description,
+                    t.status[0].status,
                 ]
             )
-
         print_table(table_data)
 
         print("Shared with:")
@@ -611,12 +612,97 @@ def sketch_info(sketch_id):
                 "user_id",
             ],
         ]
-        for status in sketch.status:
+        for _status in sketch.status:
             status_table.append(
-                [status.id, status.status, status.created_at, status.user_id]
+                [_status.id, _status.status, _status.created_at, _status.user_id]
             )
         print("Status:")
         print_table(status_table)
+
+
+@cli.command(name="timeline-status")
+@click.argument("timeline_id")
+@click.option(
+    "--action",
+    default="get",
+    type=click.Choice(["get", "set"]),
+    required=False,
+    help="get or set timeline status.",
+)
+@click.option(
+    "--status",
+    required=False,
+    type=click.Choice(["ready", "processing", "fail"]),
+    help="get or set timeline status.",
+)
+def timeline_status(timeline_id: str, action: str, status: str):
+    """Get or set a timeline status.
+
+    If "action" is "set", the given value of status will be written in the status.
+
+    Args:
+        timeline_id (str): The ID of the timeline.
+        action (str):  The action to perform ("get" or "set").
+        status (str): The timeline status to set.  Must be one of "ready",
+                      "processing", or "fail".
+    """
+    if action == "get":
+        timeline = Timeline.query.filter_by(id=timeline_id).first()
+        if not timeline:
+            print("Timeline does not exist.")
+            return
+        # define the table data
+        table_data = [
+            [
+                "searchindex_id",
+                "index_name",
+                "created_at",
+                "user_id",
+                "description",
+                "status",
+            ],
+        ]
+        table_data.append(
+            [
+                timeline.searchindex_id,
+                timeline.searchindex.index_name,
+                timeline.created_at,
+                timeline.user_id,
+                timeline.description,
+                timeline.status[0].status,
+            ]
+        )
+        print_table(table_data)
+
+        status_table = [
+            [
+                "id",
+                "status",
+                "created_at",
+                "user_id",
+            ],
+        ]
+        for _status in timeline.status:
+            status_table.append(
+                [_status.id, _status.status, _status.created_at, _status.user_id]
+            )
+        print("Status:")
+        print_table(status_table)
+
+    elif action == "set":
+        timeline = Timeline.query.filter_by(id=timeline_id).first()
+        if not timeline:
+            print("Timeline does not exist.")
+            return
+        # exit if status is not set
+        if not status:
+            print("Status is not set.")
+            return
+        timeline.set_status(status)
+        db_session.commit()
+        print(f"Timeline {timeline_id} status set to {status}")
+        # to verify run:
+        print(f"To verify run: tsctl timeline-status {timeline_id} --action get")
 
 
 @cli.command(name="validate-context-links-conf")
@@ -680,7 +766,7 @@ def validate_context_links_conf(path):
         print(f"Cannot load the config file: {path} does not exist!")
         return
 
-    with open(path, "r") as fh:
+    with open(path, "r", encoding="utf-8") as fh:
         context_link_config = yaml.safe_load(fh)
 
     if not context_link_config:
@@ -716,12 +802,13 @@ def validate_context_links_conf(path):
     required=True,
     help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
-def searchindex_info(searchindex_id):
+def searchindex_info(searchindex_id: str):
     """Search for a searchindex and print information about it.
     Especially which sketch the searchindex belongs to.
 
     Args:
-        searchindex_id: to search for e.g. 4c5afdf60c6e49499801368b7f238353.
+        searchindex_id (str): The search index ID to search for (e.g.,
+                              "4c5afdf60c6e49499801368b7f238353").
     """
 
     index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
@@ -739,6 +826,79 @@ def searchindex_info(searchindex_id):
     )
     sketch = Sketch.query.filter_by(id=timeline.sketch_id).first()
     print(f"Corresponding Sketch id: {sketch.id} Sketch name: {sketch.name}")
+
+
+@cli.command(name="searchindex-status")
+@click.argument("searchindex_id")
+@click.option(
+    "--action",
+    default="get",
+    type=click.Choice(["get", "set"]),
+    required=False,
+    help="get or set timeline status.",
+)
+@click.option(
+    "--status",
+    required=False,
+    type=click.Choice(["ready", "processing", "fail"]),
+    help="get or set timeline status.",
+)
+@click.option(
+    "--searchindex_id",
+    required=True,
+    help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+)
+def searchindex_status(searchindex_id: str, action: str, status: str):
+    """Get or set a searchindex status.
+
+    If "action" is "set", the given value of status will be written in the status.
+
+    Args:
+        searchindex_id (str): The ID of the search index.
+        action (str): The action to perform ("get" or "set").
+        status (str): The search index status to set ("ready", "processing", or
+                      "fail").
+    """
+    if action == "get":
+        searchindex = SearchIndex.query.filter_by(id=searchindex_id).first()
+        if not searchindex:
+            print("Searchindex does not exist.")
+            return
+        table_data = [
+            [
+                "searchindex_id",
+                "index_name",
+                "created_at",
+                "user_id",
+                "description",
+                "status",
+            ],
+        ]
+        table_data.append(
+            [
+                searchindex.id,
+                searchindex.index_name,
+                searchindex.created_at,
+                searchindex.user_id,
+                searchindex.description,
+                searchindex.status[0].status,
+            ]
+        )
+        print_table(table_data)
+    elif action == "set":
+        searchindex = SearchIndex.query.filter_by(id=searchindex_id).first()
+        if not searchindex:
+            print("Searchindex does not exist.")
+            return
+        # exit if status is not set
+        if not status:
+            print("Status is not set.")
+            return
+        searchindex.set_status(status)
+        db_session.commit()
+        print(f"Searchindex {searchindex_id} status set to {status}")
+        # to verify run:
+        print(f"To verify run: tsctl searchindex-status {searchindex_id} --action get")
 
 
 # Analyzer stats cli command

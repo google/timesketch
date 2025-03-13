@@ -12,19 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for v1 of the Timesketch API."""
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import json
-import mock
-import pandas as pd
+from unittest import mock
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.dfiq import DFIQ
@@ -33,7 +29,6 @@ from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
-
 from timesketch.api.v1.resources import ResourceMixin
 
 
@@ -81,7 +76,7 @@ class SketchListResourceTest(BaseTest):
     def test_sketch_post_resource(self):
         """Authenticated request to create a sketch."""
         self.login()
-        data = dict(name="test", description="test")
+        data = {"name": "test", "description": "test"}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -115,6 +110,177 @@ class SketchResourceTest(BaseTest):
         response = self.client.get("/api/v1/sketches/2/")
         self.assert403(response)
 
+    def test_create_a_sketch(self):
+        """Authenticated request to create a sketch."""
+        self.login()
+        data = {"name": "test_create_a_sketch", "description": "test_create_a_sketch"}
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+
+        # check the created sketch
+
+        response = self.client.get("/api/v1/sketches/")
+        self.assertEqual(len(response.json["objects"]), 3)
+        self.assertIn(b"test_create_a_sketch", response.data)
+        self.assert200(response)
+
+    def test_append_label_to_sketch(self):
+        """Authenticated request to append a label to a sketch."""
+        self.login()
+
+        data = {"labels": ["test_append_label_to_sketch"], "label_action": "add"}
+
+        response = self.client.post(
+            "/api/v1/sketches/3/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # check the result in content
+        response = self.client.get("/api/v1/sketches/3/")
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(response.json["objects"][0]["name"], "Test 3")
+        self.assertIn(
+            "test_append_label_to_sketch", response.json["objects"][0]["label_string"]
+        )
+        self.assert200(response)
+
+    def test_archive_sketch(self):
+        """Authenticated request to archive a sketch."""
+        self.login()
+
+        # Create sketch to test with
+        data = {"name": "test_archive_sketch", "description": "test_archive_sketch"}
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+
+        # Pull sketch
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(response.json["objects"][0]["name"], "test_archive_sketch")
+
+        # Archive sketch
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "archive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        # Pull the sketch again to get the status
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(
+            response.json["objects"][0]["name"],
+            "test_archive_sketch",
+        )
+        self.assert200(response)
+        self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
+
+    def test_sketch_delete_not_existant_sketch(self):
+        """Authenticated request to delete a sketch that does not exist."""
+        self.login()
+        response = self.client.delete("/api/v1/sketches/99/")
+        self.assert404(response)
+
+    def test_sketch_delete_no_acl(self):
+        """Authenticated request to delete a sketch that the User has no read
+        permission on.
+        """
+        self.login()
+        response = self.client.delete("/api/v1/sketches/2/")
+        self.assert403(response)
+
+    def test_attempt_to_delete_protected_sketch(self):
+        """Authenticated request to delete a protected sketch."""
+        self.login()
+        data = {
+            "name": "test_attempt_to_delete_protected_sketch",
+            "description": "test_attempt_to_delete_protected_sketch",
+        }
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+        data = {"labels": ["protected"], "label_action": "add"}
+        response = self.client.post(
+            "/api/v1/sketches/4/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        self.assertEqual(
+            response.json["objects"][0]["name"],
+            "test_attempt_to_delete_protected_sketch",
+        )
+        self.assertIn("protected", response.json["objects"][0]["label_string"])
+
+        response = self.client.delete("/api/v1/sketches/4/")
+        self.assert403(response)
+
+    def test_attempt_to_delete_archived_sketch(self):
+        """Authenticated request to archive a sketch."""
+        self.login()
+
+        # Create sketch to test with
+        data = {
+            "name": "test_delete_archive_sketch",
+            "description": "test_delete_archive_sketch",
+        }
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(
+            response.json["objects"][0]["name"], "test_delete_archive_sketch"
+        )
+        self.assertEqual(200, response.status_code)
+
+        # Archive sketch
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "archive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        # Pull the sketch again to get the status
+        response = self.client.get(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(
+            response.json["objects"][0]["name"],
+            "test_delete_archive_sketch",
+        )
+        self.assert200(response)
+        self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
+
+        # delete an archived sketch at the moment returns a 200
+        response = self.client.delete(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(200, response.status_code)
+
 
 class ViewListResourceTest(BaseTest):
     """Test ViewListResource."""
@@ -124,13 +290,13 @@ class ViewListResourceTest(BaseTest):
     def test_post_view_list_resource(self):
         """Authenticated request to create a view."""
         self.login()
-        data = dict(
-            name="test",
-            new_searchtemplate=False,
-            query="test",
-            filter={},
-            dsl={},
-        )
+        data = {
+            "name": "test",
+            "new_searchtemplate": False,
+            "query": "test",
+            "filter": {},
+            "dsl": {},
+        }
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -164,7 +330,7 @@ class ViewResourceTest(BaseTest):
     def test_post_view_resource(self):
         """Authenticated request to update a view."""
         self.login()
-        data = dict(name="test", query="test", filter="{}")
+        data = {"name": "test", "query": "test", "filter": "{}"}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -260,7 +426,7 @@ class ExploreResourceTest(BaseTest):
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
-        data = dict(query="test", filter={})
+        data = {"query": "test", "filter": {}}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -283,7 +449,7 @@ class AggregationExploreResourceTest(BaseTest):
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
         self.login()
-        data = dict(aggregation_dsl="test")
+        data = {"aggregation_dsl": "test"}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -591,7 +757,7 @@ class EventAddAttributeResourceTest(BaseTest):
             },
         )
         self.assertIn(
-            "Attribute '_invalid' for event_id '1' invalid, cannot start with " "'_'",
+            "Attribute '_invalid' for event_id '1' invalid, cannot start with '_'",
             response.json["meta"]["last_10_errors"],
         )
 
@@ -630,11 +796,11 @@ class EventAnnotationResourceTest(BaseTest):
         self.login()
         for annotation_type in ["comment", "label"]:
             event = {"_type": "test_event", "_index": "test", "_id": "test"}
-            data = dict(
-                annotation="test",
-                annotation_type=annotation_type,
-                events=[event],
-            )
+            data = {
+                "annotation": "test",
+                "annotation_type": annotation_type,
+                "events": [event],
+            }
             response = self.client.post(
                 self.resource_url,
                 data=json.dumps(data),
@@ -648,12 +814,12 @@ class EventAnnotationResourceTest(BaseTest):
         Authenticated request to create an annotation, but in the wrong index.
         """
         self.login()
-        data = dict(
-            annotation="test",
-            annotation_type="comment",
-            event_id="test",
-            searchindex_id="invalid_searchindex",
-        )
+        data = {
+            "annotation": "test",
+            "annotation_type": "comment",
+            "event_id": "test",
+            "searchindex_id": "invalid_searchindex",
+        }
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -671,7 +837,7 @@ class SearchIndexResourceTest(BaseTest):
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
-        data = dict(searchindex_name="test3", es_index_name="test3", public=False)
+        data = {"searchindex_name": "test3", "es_index_name": "test3", "public": False}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -689,7 +855,7 @@ class TimelineListResourceTest(BaseTest):
     def test_add_existing_timeline_resource(self):
         """Authenticated request to add a timeline to a sketch."""
         self.login()
-        data = dict(timeline=1)
+        data = {"timeline": 1}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -700,7 +866,7 @@ class TimelineListResourceTest(BaseTest):
     def test_add_new_timeline_resource(self):
         """Authenticated request to add a timeline to a sketch."""
         self.login()
-        data = dict(timeline=2)
+        data = {"timeline": 2}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -749,12 +915,12 @@ level: high
 
         self.login()
 
-        sigma = dict(
-            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-            title="Suspicious Installation of bbbbbb",
-            description="Detects suspicious installation of bbbbbb",
-            rule_yaml=MOCK_SIGMA_RULE,
-        )
+        sigma = {
+            "rule_uuid": "5266a592-b793-11ea-b3de-bbbbbb",
+            "title": "Suspicious Installation of bbbbbb",
+            "description": "Detects suspicious installation of bbbbbb",
+            "rule_yaml": MOCK_SIGMA_RULE,
+        }
 
         # Create a first rule
         response = self.client.post(
@@ -805,11 +971,11 @@ level: high
         """Authenticated request to update sigma rule."""
         self.login()
 
-        sigma = dict(
-            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-            title="Suspicious Installation of bbbbbb",
-            description="Detects suspicious installation of bbbbbb",
-            rule_yaml="""
+        sigma = {
+            "rule_uuid": "5266a592-b793-11ea-b3de-bbbbbb",
+            "title": "Suspicious Installation of bbbbbb",
+            "description": "Detects suspicious installation of bbbbbb",
+            "rule_yaml": """
 title: Suspicious Installation of bbbbbb
 id: 5266a592-b793-11ea-b3de-bbbbbb
 description: Detects suspicious installation of bbbbbb
@@ -830,7 +996,7 @@ falsepositives:
     - Unknown
 level: high
 """,
-        )
+        }
 
         # Create a first rule
         response = self.client.post(
@@ -851,11 +1017,11 @@ level: high
         response = self.client.put(
             "/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(
-                dict(
-                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-                    title="Suspicious Installation of cccccc",
-                    description="Detects suspicious installation of cccccc",
-                    rule_yaml="""
+                {
+                    "rule_uuid": "5266a592-b793-11ea-b3de-bbbbbb",
+                    "title": "Suspicious Installation of cccccc",
+                    "description": "Detects suspicious installation of cccccc",
+                    "rule_yaml": """
 title: Suspicious Installation of cccccc
 id: 5266a592-b793-11ea-b3de-bbbbbb
 description: Detects suspicious installation of cccccc
@@ -876,7 +1042,7 @@ falsepositives:
     - Unknown
 level: high
 """,
-                )
+                }
             ),
             content_type="application/json",
         )
@@ -969,7 +1135,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         """Authenticated request to get an sigma rule by text."""
         self.login()
 
-        data = dict(content=self.correct_rule)
+        data = {"content": self.correct_rule}
         response = self.client.post(
             "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
@@ -984,7 +1150,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         """Authenticated request to get an sigma rule by text with non parseable
         yaml text."""
         self.login()
-        data = dict(content="foobar: asd")
+        data = {"content": "foobar: asd"}
         response = self.client.post(
             "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
@@ -1001,7 +1167,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         self.login()
         response = self.client.post(
             "/api/v1/sigmarules/text/",
-            data=json.dumps(dict(action="post")),
+            data=json.dumps({"action": "post"}),
             content_type="application/json",
         )
         data = json.loads(response.get_data(as_text=True))
@@ -1130,7 +1296,7 @@ class UserListTest(BaseTest):
         """Authenticated request (admin user) to create another user."""
         self.login_admin()
 
-        data = dict(username="testuser", password="testpassword")
+        data = {"username": "testuser", "password": "testpassword"}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1143,7 +1309,7 @@ class UserListTest(BaseTest):
         which should not work."""
         self.login()
 
-        data = dict(username="testuser", password="testpassword")
+        data = {"username": "testuser", "password": "testpassword"}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1157,7 +1323,7 @@ class UserListTest(BaseTest):
         but with missing username, which should not work."""
         self.login_admin()
 
-        data = dict(username="", password="testpassword")
+        data = {"username": "", "password": "testpassword"}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1171,7 +1337,7 @@ class UserListTest(BaseTest):
         but with missing password, which should not work."""
         self.login_admin()
 
-        data = dict(username="testuser", password="")
+        data = {"username": "testuser", "password": ""}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1191,222 +1357,6 @@ class UserTest(BaseTest):
         response = self.client.get("/api/v1/users/1/")
         data = json.loads(response.get_data(as_text=True))
         self.assertEqual(data["objects"][0]["username"], "test1")
-
-
-class TestNl2qResource(BaseTest):
-    """Test Nl2qResource."""
-
-    resource_url = "/api/v1/sketches/1/nl2q/"
-
-    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
-    @mock.patch("timesketch.api.v1.utils.run_aggregator")
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_prompt(self, mock_aggregator, mock_create_provider):
-        """Test the prompt is created correctly."""
-
-        self.login()
-        data = dict(question="Question for LLM?")
-        mock_AggregationResult = mock.MagicMock()
-        mock_AggregationResult.values = [
-            {"data_type": "test:data_type:1"},
-            {"data_type": "test:data_type:2"},
-        ]
-        mock_aggregator.return_value = (mock_AggregationResult, {})
-        mock_llm = mock.Mock()
-        mock_llm.generate.return_value = "LLM generated query"
-        mock_create_provider.return_value = mock_llm
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        expected_input = (
-            "Examples:\n"
-            "example 1\n"
-            "\n"
-            "example 2\n"
-            "Types:\n"
-            '* "test:data_type:1" -> "field_test_1", "field_test_2"\n'
-            '* "test:data_type:2" -> "field_test_3", "field_test_4"\n'
-            "Question:\n"
-            "Question for LLM?"
-        )
-        mock_llm.generate.assert_called_once_with(expected_input)
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertDictEqual(
-            response.json,
-            {
-                "name": "AI generated search query",
-                "query_string": "LLM generated query",
-                "error": None,
-            },
-        )
-
-    @mock.patch("timesketch.api.v1.utils.run_aggregator")
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_no_prompt(self, mock_aggregator):
-        """Test error when the prompt file is missing or not configured."""
-
-        self.app.config["PROMPT_NL2Q"] = "/file_does_not_exist.txt"
-        self.login()
-        data = dict(question="Question for LLM?")
-        mock_AggregationResult = mock.MagicMock()
-        mock_AggregationResult.values = [
-            {"data_type": "test:data_type:1"},
-            {"data_type": "test:data_type:2"},
-        ]
-        mock_aggregator.return_value = (mock_AggregationResult, {})
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
-
-        del self.app.config["PROMPT_NL2Q"]
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
-        # data = json.loads(response.get_data(as_text=True))
-        # self.assertIsNotNone(data.get("error"))
-
-    @mock.patch("timesketch.api.v1.utils.run_aggregator")
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_no_examples(self, mock_aggregator):
-        """Test error when the prompt file is missing or not configured."""
-
-        self.app.config["EXAMPLES_NL2Q"] = "/file_does_not_exist.txt"
-        self.login()
-        data = dict(question="Question for LLM?")
-        mock_AggregationResult = mock.MagicMock()
-        mock_AggregationResult.values = [
-            {"data_type": "test:data_type:1"},
-            {"data_type": "test:data_type:2"},
-        ]
-        mock_aggregator.return_value = (mock_AggregationResult, {})
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
-
-        del self.app.config["EXAMPLES_NL2Q"]
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
-
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_no_question(self):
-        """Test nl2q without submitting a question."""
-
-        self.login()
-        data = dict()
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
-
-    @mock.patch("timesketch.api.v1.utils.run_aggregator")
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_wrong_llm_provider(self, mock_aggregator):
-        """Test nl2q with llm provider that does not exist."""
-
-        self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"DoesNotExists": {}}}
-        self.login()
-        self.login()
-        data = dict(question="Question for LLM?")
-        mock_AggregationResult = mock.MagicMock()
-        mock_AggregationResult.values = [
-            {"data_type": "test:data_type:1"},
-            {"data_type": "test:data_type:2"},
-        ]
-        mock_aggregator.return_value = (mock_AggregationResult, {})
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        data = json.loads(response.get_data(as_text=True))
-        self.assertIsNotNone(data.get("error"))
-
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_no_llm_provider(self):
-        """Test nl2q with no LLM provider configured."""
-
-        if "LLM_PROVIDER_CONFIGS" in self.app.config:
-            del self.app.config["LLM_PROVIDER_CONFIGS"]
-        self.login()
-        data = dict(question="Question for LLM?")
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
-
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_no_sketch(self):
-        """Test the nl2q with non existing sketch."""
-
-        self.login()
-        data = dict(question="Question for LLM?")
-        response = self.client.post(
-            "/api/v1/sketches/9999/nl2q/",
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
-
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_no_permission(self):
-        """Test the nl2q with no permission on the sketch."""
-
-        self.login()
-        data = dict(question="Question for LLM?")
-        response = self.client.post(
-            "/api/v1/sketches/2/nl2q/",
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
-
-    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
-    @mock.patch("timesketch.api.v1.utils.run_aggregator")
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_nl2q_llm_error(self, mock_aggregator, mock_create_provider):
-        """Test nl2q with llm error."""
-
-        self.login()
-        data = dict(question="Question for LLM?")
-        mock_AggregationResult = mock.MagicMock()
-        mock_AggregationResult.values = [
-            {"data_type": "test:data_type:1"},
-            {"data_type": "test:data_type:2"},
-        ]
-        mock_aggregator.return_value = (mock_AggregationResult, {})
-        mock_llm = mock.Mock()
-        mock_llm.generate.side_effect = Exception("Test exception")
-        mock_create_provider.return_value = mock_llm
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data),
-            content_type="application/json",
-        )
-        self.assertEqual(
-            response.status_code, HTTP_STATUS_CODE_OK
-        )  # Still expect 200 OK with error in JSON
-        data = json.loads(response.get_data(as_text=True))
-        self.assertIsNotNone(data.get("error"))
 
 
 class SystemSettingsResourceTest(BaseTest):
@@ -1548,66 +1498,214 @@ class ScenariosResourceTest(BaseTest):
         self.assertFalse(result)
 
 
-class MockLLM:
-    """Mock LLM class for testing."""
+@mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+class LLMResourceTest(BaseTest):
+    """Test LLMResource."""
 
-    def generate(self):
-        return {"summary": "Mock summary from LLM"}
+    resource_url = "/api/v1/sketches/1/llm/"
 
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    @mock.patch("timesketch.api.v1.resources.llm.LLMResource._execute_llm_call")
+    def test_post_success(
+        self,
+        mock_execute_llm,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test a successful POST request to the LLM endpoint."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
 
-class TestLLMSummarizeResource(BaseTest):
-    """Test LLMSummarizeResource."""
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.return_value = "test prompt"
+        mock_feature.process_response.return_value = {"result": "test result"}
+        mock_get_feature.return_value = mock_feature
 
-    resource_url = "/api/v1/sketches/1/events/summary/"
+        mock_get_validated_indices.return_value = (["index1"], [1])
+        mock_execute_llm.return_value = {"response": "mock response"}
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_llm_summarize_no_events(self):
-        """Test LLM summarizer when no events are returned from the Timesketch query."""
         self.login()
-        self.app.config["PROMPT_LLM_SUMMARIZATION"] = "data/llm_summarize/prompt.txt"
-
-        with mock.patch(
-            "timesketch.api.v1.resources.llm_summarize.LLMSummarizeResource._run_timesketch_query",  # pylint: disable=line-too-long
-            return_value=pd.DataFrame(),
-        ), mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore):
-            response = self.client.post(
-                self.resource_url,
-                data=json.dumps({"query": "*"}),
-                content_type="application/json",
-            )
-
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         response_data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(
-            response_data.get("summary"),
-            "No events to summarize based on the current filter.",
+        self.assertEqual(response_data, {"result": "test result"})
+
+    def test_post_missing_data(self):
+        """Test POST request with missing data."""
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"some_param": "some_value"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("The 'feature' parameter is required", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    def test_post_missing_feature(self, mock_get_with_acl):
+        """Test POST request with no feature parameter."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_get_with_acl.return_value = mock_sketch
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"filter": {}}),  # No 'feature' key
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("The 'feature' parameter is required", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    def test_post_invalid_sketch(self, mock_get_with_acl):
+        """Test POST request with an invalid sketch ID."""
+        mock_get_with_acl.return_value = None
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("No sketch found with this ID", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    def test_post_no_permission(self, mock_get_with_acl):
+        """Test POST request when user lacks read permission."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = False
+        mock_get_with_acl.return_value = mock_sketch
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn(
+            "User does not have read access to the sketch", response_data["message"]
         )
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    @mock.patch("timesketch.lib.llms.manager.LLMManager.create_provider")
-    def test_llm_summarize_with_events(self, mock_create_provider):
-        """Test LLM summarizer with events returned and mock LLM."""
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    def test_post_invalid_feature(self, mock_get_feature, mock_get_with_acl):
+        """Test POST request with an invalid feature name."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_get_feature.side_effect = KeyError("Invalid feature")
+
         self.login()
-        self.app.config["PROMPT_LLM_SUMMARIZATION"] = "data/llm_summarize/prompt.txt"
-        mock_create_provider.return_value = MockLLM()
-
-        sample_events = pd.DataFrame([{"message": "Test event message"}])
-
-        with mock.patch(
-            "timesketch.api.v1.resources.llm_summarize.LLMSummarizeResource._run_timesketch_query",  # pylint: disable=line-too-long
-            return_value=sample_events,
-        ), mock.patch(
-            "timesketch.api.v1.resources.llm_summarize.LLMSummarizeResource._get_content",  # pylint: disable=line-too-long
-            return_value={"summary": "Mock summary from LLM"},
-        ), mock.patch(
-            "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-        ):
-            response = self.client.post(
-                self.resource_url,
-                data=json.dumps({"query": "*"}),
-                content_type="application/json",
-            )
-
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "invalid_feature", "filter": {}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         response_data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(response_data.get("summary"), "Mock summary from LLM")
+        self.assertIn("Invalid LLM feature: invalid_feature", response_data["message"])
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    def test_post_prompt_generation_error(
+        self,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test handling of errors during prompt generation."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.side_effect = ValueError(
+            "Prompt generation failed"
+        )
+        mock_get_feature.return_value = mock_feature
+
+        mock_get_validated_indices.return_value = (["index1"], [1])
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("Prompt generation failed", response_data["message"])
+
+        mock_feature.generate_prompt.assert_called_once()
+
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    @mock.patch(
+        "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
+    )
+    @mock.patch("timesketch.lib.utils.get_validated_indices")
+    @mock.patch("multiprocessing.Process")
+    def test_post_llm_execution_timeout(
+        self,
+        mock_process,
+        mock_get_validated_indices,
+        mock_get_feature,
+        mock_get_with_acl,
+    ):
+        """Test handling of LLM execution timeouts."""
+        # Setup mocks
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_sketch.id = 1
+        mock_get_with_acl.return_value = mock_sketch
+
+        mock_feature = mock.MagicMock()
+        mock_feature.NAME = "test_feature"
+        mock_feature.generate_prompt.return_value = "test prompt"
+        mock_get_feature.return_value = mock_feature
+
+        mock_get_validated_indices.return_value = (["index1"], [1])
+
+        process_instance = mock.MagicMock()
+        process_instance.is_alive.return_value = True
+        mock_process.return_value = process_instance
+
+        self.login()
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps({"feature": "test_feature", "filter": {}}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_data = json.loads(response.get_data(as_text=True))
+        self.assertIn("LLM call timed out", response_data["message"])
+
+        process_instance.terminate.assert_called_once()

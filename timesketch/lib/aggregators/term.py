@@ -13,7 +13,6 @@
 # limitations under the License.
 """Term aggregations."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
@@ -127,19 +126,19 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     def chart_title(self):
         """Returns a title for the chart."""
         if self.field:
-            return 'Top filtered results for "{0:s}"'.format(self.field)
+            return f'Top filtered results for "{self.field:s}"'
         return "Top results for an unknown field after filtering"
 
     # pylint: disable=arguments-differ
     def run(
         self,
-        field,
-        query_string="",
-        query_dsl="",
-        supported_charts="table",
-        start_time="",
-        end_time="",
-        limit=10,
+        field: str,
+        query_string: str = "",
+        query_dsl: str = "",
+        supported_charts: str = "table",
+        start_time: str = "",
+        end_time: str = "",
+        limit: int = 10,
     ):
         """Run the aggregation.
 
@@ -206,7 +205,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             values.append(d)
 
         if query_string:
-            extra_query_url = "AND {0:s}".format(query_string)
+            extra_query_url = f"AND {query_string:s}"
         else:
             extra_query_url = ""
 

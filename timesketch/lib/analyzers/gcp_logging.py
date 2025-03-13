@@ -98,14 +98,14 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
             self.sketch.add_sketch_attribute(resource_type, resource_list, "text")
 
         for user in users:
-            view_name = "GCP User {0:s}".format(user)
-            query_string = 'principalEmail:"{0:s}"'.format(user)
+            view_name = f"GCP User {user:s}"
+            query_string = f'principalEmail:"{user:s}"'
             self.sketch.add_view(
                 view_name=view_name, analyzer_name=self.NAME, query_string=query_string
             )
 
         return (
-            "GCP logging analyzer completed with " "{0:d} resource types extracted."
+            "GCP logging analyzer completed with " "{:d} resource types extracted."
         ).format(len(resources))
 
 

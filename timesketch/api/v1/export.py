@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module holds methods and classes to export events."""
 
-from __future__ import unicode_literals
 
 import io
 import json
@@ -38,7 +37,7 @@ def export_aggregation(aggregation, sketch, zip_file):
         zip_file (ZipFile): a zip file handle that can be used to write
             content to.
     """
-    name = "{0:04d}_{1:s}".format(aggregation.id, aggregation.name)
+    name = f"{aggregation.id:04d}_{aggregation.name:s}"
     parameters = json.loads(aggregation.parameters)
     result_obj, meta = utils.run_aggregator(
         sketch.id,
@@ -46,7 +45,7 @@ def export_aggregation(aggregation, sketch, zip_file):
         aggregator_parameters=parameters,
     )
 
-    zip_file.writestr("aggregations/{0:s}.meta".format(name), data=json.dumps(meta))
+    zip_file.writestr(f"aggregations/{name:s}.meta", data=json.dumps(meta))
 
     html = result_obj.to_chart(
         chart_name=meta.get("chart_type"),
@@ -55,13 +54,13 @@ def export_aggregation(aggregation, sketch, zip_file):
         interactive=True,
         as_html=True,
     )
-    zip_file.writestr("aggregations/{0:s}.html".format(name), data=html)
+    zip_file.writestr(f"aggregations/{name:s}.html", data=html)
 
     string_io = io.StringIO()
     data_frame = result_obj.to_pandas()
     data_frame.to_csv(string_io, index=False)
     string_io.seek(0)
-    zip_file.writestr("aggregations/{0:s}.csv".format(name), data=string_io.read())
+    zip_file.writestr(f"aggregations/{name:s}.csv", data=string_io.read())
 
 
 def export_aggregation_group(group, sketch, zip_file):
@@ -74,11 +73,11 @@ def export_aggregation_group(group, sketch, zip_file):
         zip_file (ZipFile): a zip file handle that can be used to write
             content to.
     """
-    name = "{0:04d}_{1:s}".format(group.id, group.name)
+    name = f"{group.id:04d}_{group.name:s}"
     chart, _, meta = utils.run_aggregator_group(group, sketch_id=sketch.id)
 
-    zip_file.writestr("aggregation_groups/{0:s}.meta".format(name), json.dumps(meta))
-    zip_file.writestr("aggregation_groups/{0:s}.html".format(name), chart.to_html())
+    zip_file.writestr(f"aggregation_groups/{name:s}.meta", json.dumps(meta))
+    zip_file.writestr(f"aggregation_groups/{name:s}.html", chart.to_html())
 
 
 def export_story(story, sketch, story_exporter, zip_file):
@@ -107,7 +106,7 @@ def export_story(story, sketch, story_exporter, zip_file):
         exporter.set_title(story.title)
 
         zip_file.writestr(
-            "stories/{0:04d}_{1:s}.html".format(story.id, story.title),
+            f"stories/{story.id:04d}_{story.title:s}.html",
             data=exporter.export_story(),
         )
 
@@ -187,8 +186,11 @@ def query_to_filehandle(
         else:
             logger.warning(
                 "Data Frame returned from a search operation was "
-                "empty, count {0:d} out of {1:d} total. Query is: "
-                '"{2:s}"'.format(event_count, total_count, query_string or query_dsl)
+                "empty, count %d out of %d total. Query is: "
+                '"%s"',
+                event_count,
+                total_count,
+                query_string or query_dsl,
             )
 
     fh = io.StringIO()

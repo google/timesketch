@@ -1,7 +1,5 @@
 """Tests for BrowserTimeframePlugin."""
 
-from __future__ import unicode_literals
-
 import numpy as np
 import pandas as pd
 

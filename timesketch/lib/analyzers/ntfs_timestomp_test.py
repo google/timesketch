@@ -1,15 +1,13 @@
 """Tests for NtfsTimestompPlugin."""
 
-from __future__ import unicode_literals
-
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers import ntfs_timestomp
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
 
-class MockEvent(object):
+class MockEvent:
     def __init__(self, source=None):
         if source:
             self.source = source
@@ -27,7 +25,7 @@ class MockEvent(object):
         pass
 
 
-class FileInfoTestCase(object):
+class FileInfoTestCase:
     def __init__(
         self,
         name,

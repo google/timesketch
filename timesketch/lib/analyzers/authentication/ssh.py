@@ -93,8 +93,8 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
         authentication events before a successful authentication.
 
         The following thresholds are used in the analyzer:
-            - Minimum number of failed events: {0}
-            - Brute force window before successful login event: {1}
+            - Minimum number of failed events: {}
+            - Brute force window before successful login event: {}
             seconds""".format(
             BRUTE_FORCE_MIN_FAILED_EVENT, BRUTE_FORCE_WINDOW
         )

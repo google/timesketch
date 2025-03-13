@@ -1,9 +1,7 @@
 """Tests for WinCrashPlugin."""
 
-from __future__ import unicode_literals
-
 import unittest
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers import win_crash
 from timesketch.lib.testlib import BaseTest

@@ -1,7 +1,7 @@
 """Test for MISP"""
 
 import copy
-import mock
+from unittest import mock
 
 from flask import current_app
 
@@ -67,6 +67,7 @@ class TestMisp(BaseTest):
             json={"returnFormat": "json", "value": ["test.txt"], "type": "filename"},
             headers={"Authorization": "test"},
             verify=False,
+            timeout=60,
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -94,6 +95,7 @@ class TestMisp(BaseTest):
             json={"returnFormat": "json", "value": ["test.txt"], "type": "filename"},
             headers={"Authorization": "test"},
             verify=False,
+            timeout=60,
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)

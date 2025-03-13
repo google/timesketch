@@ -1,7 +1,5 @@
 """Tests for LoginPlugin."""
 
-from __future__ import unicode_literals
-
 from timesketch.lib.analyzers import login
 from timesketch.lib.testlib import BaseTest
 

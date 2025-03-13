@@ -13,13 +13,12 @@
 # limitations under the License.
 """Entry point for the application."""
 
-from __future__ import unicode_literals
 
 import logging
 import os
 import sys
+from typing import Optional, Union
 
-import six
 
 from flask import Flask
 from celery import Celery
@@ -39,14 +38,14 @@ from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
 
 
-def create_app(config=None, legacy_ui=False):
+def create_app(config: Optional[Union[str, object]] = None, legacy_ui: bool = False):
     """Create the Flask app instance that is used throughout the application.
 
     Args:
-        config: Path to configuration file as a string or an object with config
-        directives.
-        legacy_ui: Temporary flag to indicate to serve the old UI.
-            TODO: Remove this when the old UI has been removed.
+        config: (str or object, optional) Path to configuration file as a string
+                or an object with config directives.
+        legacy_ui: (bool, optional) Temporary flag to indicate to serve the old UI.
+                  TODO: Remove this when the old UI has been removed.
 
     Returns:
         Application object (instance of flask.Flask).
@@ -71,7 +70,7 @@ def create_app(config=None, legacy_ui=False):
         else:
             config = legacy_path
 
-    if isinstance(config, six.text_type):
+    if isinstance(config, str):
         os.environ["TIMESKETCH_SETTINGS"] = config
         try:
             app.config.from_envvar("TIMESKETCH_SETTINGS")
@@ -81,8 +80,8 @@ def create_app(config=None, legacy_ui=False):
                     "Warning, EMAIL_USER_WHITELIST has been deprecated. "
                     "Please update timesketch.conf."
                 )
-        except IOError:
-            sys.stderr.write("Config file {0} does not exist.\n".format(config))
+        except OSError:
+            sys.stderr.write(f"Config file {config} does not exist.\n")
             sys.exit()
     else:
         app.config.from_object(config)
@@ -229,7 +228,6 @@ def create_celery_app():
     celery.conf.update(app.config)
     TaskBase = celery.Task
 
-    # pylint: disable=no-init
     class ContextTask(TaskBase):
         """Add Flask context to the Celery tasks created."""
 

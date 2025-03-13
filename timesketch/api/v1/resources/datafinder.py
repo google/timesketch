@@ -80,7 +80,7 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         if not isinstance(rule_names, (list, tuple)):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Rule names needs to a list")
 
-        if any([not isinstance(x, str) for x in rule_names]):
+        if any(not isinstance(x, str) for x in rule_names):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Rule names needs to a list of string values.",

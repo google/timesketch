@@ -28,8 +28,7 @@ class GraphManager:
                 str: the uniquely identifying name of the graph
                 type: the graph class.
         """
-        for graph_name, graph_class in iter(cls._class_registry.items()):
-            yield graph_name, graph_class
+        yield from iter(cls._class_registry.items())
 
     @classmethod
     def get_graph(cls, graph_name):
@@ -46,8 +45,8 @@ class GraphManager:
         """
         try:
             graph_class = cls._class_registry[graph_name.lower()]
-        except KeyError:
-            raise KeyError(f"No such graph type: {graph_name.lower()}")
+        except KeyError as exc:
+            raise KeyError(f"No such graph type: {graph_name.lower()}") from exc
         return graph_class
 
     @classmethod

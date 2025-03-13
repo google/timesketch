@@ -40,7 +40,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
     """Resource to create a View."""
 
     @staticmethod
-    def create_view_from_form(sketch, form):
+    def create_view_from_form(sketch: Sketch, form: forms.SaveViewForm):
         """Creates a view from form data.
 
         Args:
@@ -122,7 +122,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
         return view
 
     @login_required
-    def get(self, sketch_id):
+    def get(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Args:
@@ -142,7 +142,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
         return self.to_json(sketch.get_named_views)
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -153,10 +153,11 @@ class ViewListResource(resources.ResourceMixin, Resource):
         """
         form = forms.SaveViewForm.build(request)
         if not form.validate_on_submit():
-            error_message = "Unable to save view, not able to validate form data: "
-            for error in form.errors.values():
-                error_message += f"{error}, "
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message[:-2])
+            error_message = (
+                "Unable to save view, not able to validate form data: "
+                + ", ".join(form.errors.values())
+            )
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message)
 
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -180,7 +181,7 @@ class ViewResource(resources.ResourceMixin, Resource):
     """Resource to get a view."""
 
     @login_required
-    def get(self, sketch_id, view_id):
+    def get(self, sketch_id: int, view_id: int):
         """Handles GET request to the resource.
 
         Args:
@@ -205,8 +206,8 @@ class ViewResource(resources.ResourceMixin, Resource):
         if view.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the sketch ID "
-                "that is defined in the view ({1:d})".format(view.sketch_id, sketch.id),
+                "Sketch ID ({:d}) does not match with the sketch ID "
+                "that is defined in the view ({:d})".format(view.sketch_id, sketch.id),
             )
 
         # If this is a user state view, check that it
@@ -214,13 +215,13 @@ class ViewResource(resources.ResourceMixin, Resource):
         if view.name == "" and view.user != current_user:
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                "Unable to view a state view that belongs to a " "different user.",
+                "Unable to view a state view that belongs to a different user.",
             )
 
         # Check if view has been deleted
         if view.get_status.status == "deleted":
-            meta = dict(deleted=True, name=view.name)
-            schema = dict(meta=meta, objects=[])
+            meta = {"deleted": True, "name": view.name}
+            schema = {"meta": meta, "objects": []}
             return jsonify(schema)
 
         # Make sure we have all expected attributes in the query filter.
@@ -231,7 +232,7 @@ class ViewResource(resources.ResourceMixin, Resource):
         return self.to_json(view)
 
     @login_required
-    def delete(self, sketch_id, view_id):
+    def delete(self, sketch_id: int, view_id: int):
         """Handles DELETE request to the resource.
 
         Args:
@@ -255,8 +256,8 @@ class ViewResource(resources.ResourceMixin, Resource):
         if view.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The view does not belong to the sketch ({0:d} vs "
-                "{1:d})".format(view.sketch_id, sketch.id),
+                "The view does not belong to the sketch ({:d} vs "
+                "{:d})".format(view.sketch_id, sketch.id),
             )
 
         if not sketch.has_permission(user=current_user, permission="write"):
@@ -273,7 +274,7 @@ class ViewResource(resources.ResourceMixin, Resource):
         return HTTP_STATUS_CODE_OK
 
     @login_required
-    def post(self, sketch_id, view_id):
+    def post(self, sketch_id: int, view_id: int):
         """Handles POST request to the resource.
 
         Args:

@@ -112,7 +112,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         try:
             mapping = self.datastore.client.indices.get_mapping(searchindex.index_name)
         except opensearchpy.NotFoundError:
-            logger.error("Unable to find index: {0:s}".format(searchindex.index_name))
+            logger.error("Unable to find index: %s", searchindex.index_name)
             mapping = {}
             searchindex.set_status("fail")
             db_session.commit()
@@ -210,7 +210,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         if sketches:
             error_strings = ["WARNING: This timeline is in use by:"]
             for sketch in sketches:
-                error_strings.append(" * {0:s}".format(sketch.name))
+                error_strings.append(f" * {sketch.name:s}")
             abort(HTTP_STATUS_CODE_FORBIDDEN, "\n".join(error_strings))
 
         searchindex.set_status(status="deleted")
@@ -222,7 +222,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         ).all()
         if len(other_indexes) > 1:
             logger.warning(
-                "Search index: {0:s} belongs to more than one "
+                "Search index: {:s} belongs to more than one "
                 "db entry.".format(searchindex.index_name)
             )
             return HTTP_STATUS_CODE_OK
@@ -231,7 +231,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             self.datastore.client.indices.close(index=searchindex.index_name)
         except opensearchpy.NotFoundError:
             logger.warning(
-                "Unable to close index: {0:s}, the index wasn't "
+                "Unable to close index: {:s}, the index wasn't "
                 "found.".format(searchindex.index_name)
             )
 

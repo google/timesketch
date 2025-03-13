@@ -1,7 +1,5 @@
 """Expert sesssionizer plugins, configured for specific types of activity"""
 
-from __future__ import unicode_literals
-
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 

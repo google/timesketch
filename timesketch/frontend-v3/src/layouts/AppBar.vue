@@ -68,6 +68,7 @@ limitations under the License.
 <script>
 import ApiClient from '../utils/RestApiClient.js'
 import { useTheme } from 'vuetify'
+import { useAppStore } from "@/stores/app";
 
 export default {
   setup() {
@@ -76,20 +77,21 @@ export default {
   },
   data() {
     return {
-      currentUser: '',
+      appStore: useAppStore(),
     };
   },
-  computed: {},
+  computed: {
+    currentUser() {
+      return this.appStore.currentUser;
+    }
+  },
   methods: {
     toggleTheme: function () {
       this.theme.global.name.value = this.theme.global.current.value.dark ? 'light' : 'dark';
     },
   },
   created: function () {
-    ApiClient.getLoggedInUser().then((response) => {
-      let currentUser = response.data.objects[0].username;
-      this.currentUser = currentUser;
-    });
+    this.appStore.resetState();
   },
 };
 </script>

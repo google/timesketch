@@ -13,7 +13,6 @@
 # limitations under the License.
 """This file contains a markdown story exporter."""
 
-from __future__ import unicode_literals
 
 import datetime
 import markdown
@@ -57,9 +56,9 @@ class HTMLStoryExporter(interface.StoryExporter):
             index=False, max_rows=self._DATAFRAME_HEADER_ROWS
         )
         return (
-            "{0:s}\n<b>...</b><br/>"
+            "{:s}\n<b>...</b><br/>"
             "<i>Table contains more records than are displayed. "
-            "Only the first {1:d} records out of total {2:d} are "
+            "Only the first {:d} records out of total {:d} are "
             "printed out. View the full view in Timesketch to get all "
             "the results.</i>"
         ).format(html_code, self._DATAFRAME_HEADER_ROWS, nr_rows)
@@ -68,13 +67,13 @@ class HTMLStoryExporter(interface.StoryExporter):
         """Export the story as HTML."""
         return_strings = [self.HTML_HEADER]
 
-        return_strings.append("<h1>{0:s}</h1>".format(self._story_title))
+        return_strings.append(f"<h1>{self._story_title:s}</h1>")
         date_now = datetime.datetime.utcnow()
         return_strings.append(
-            "Story Metadata:<br/><ul><li><b>Creation Date:</b> {0:s}</li>"
-            "<li><b>Created by:</b> {1:s}</li>"
-            "<li><b>Report Generated:</b> {2:s}</li>"
-            "<li><b>Report Exported by:</b> {3:s}</li></ul>".format(
+            "Story Metadata:<br/><ul><li><b>Creation Date:</b> {:s}</li>"
+            "<li><b>Created by:</b> {:s}</li>"
+            "<li><b>Report Generated:</b> {:s}</li>"
+            "<li><b>Report Exported by:</b> {:s}</li></ul>".format(
                 self._creation_date,
                 self._story_author,
                 date_now.isoformat(),
@@ -112,9 +111,7 @@ class HTMLStoryExporter(interface.StoryExporter):
                     )
 
                     charts.append(chart)
-                    return_strings.append(
-                        '<div id="vis{0:d}"></div>'.format(chart_number)
-                    )
+                    return_strings.append(f'<div id="vis{chart_number:d}"></div>')
                     chart_number += 1
 
             elif line_type == "dataframe":
@@ -125,7 +122,7 @@ class HTMLStoryExporter(interface.StoryExporter):
                 chart = data_dict.get("chart")
 
                 charts.append(chart)
-                return_strings.append('<div id="vis{0:d}"></div>'.format(chart_number))
+                return_strings.append(f'<div id="vis{chart_number:d}"></div>')
                 chart_number += 1
 
         if charts:
@@ -133,7 +130,7 @@ class HTMLStoryExporter(interface.StoryExporter):
             for index, chart in enumerate(charts):
                 vis_nr = index + 1
                 return_strings.append(
-                    "vegaEmbed('#vis{0:d}', {1:s})."
+                    "vegaEmbed('#vis{:d}', {:s})."
                     "catch(console.error);".format(vis_nr, chart.to_json(indent=None))
                 )
             return_strings.append("</script>")

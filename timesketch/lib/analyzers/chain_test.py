@@ -1,10 +1,8 @@
 """Tests for Chain analyzer."""
 
-from __future__ import unicode_literals
-
 import uuid
 
-import mock
+from unittest import mock
 
 from timesketch.lib import emojis
 from timesketch.lib import testlib
@@ -14,7 +12,7 @@ from timesketch.lib.analyzers.chain_plugins import interface
 from timesketch.lib.analyzers.chain_plugins import manager
 
 
-class FakeEvent(object):
+class FakeEvent:
     """Fake event object."""
 
     def __init__(self, source_dict):
@@ -109,8 +107,7 @@ class FakeChainPlugin(interface.BaseChainPlugin):
                 FakeEvent({"f": "y"}),
             ]
             self.ALL_EVENTS.extend(events)
-            for event in events:
-                yield event
+            yield from events
 
 
 class TestChainAnalyzer(testlib.BaseTest):

@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for aggregations."""
-from __future__ import unicode_literals
 
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.similarity_scorer import SimilarityScorer
 from timesketch.lib.analyzers.similarity_scorer import SimilarityScorerConfig
@@ -32,9 +31,9 @@ class TestSimilarityScorerConfig(BaseTest):
         config = SimilarityScorerConfig(data_type=data_type, index_name=index)
 
         compare_config = {
-            "index_name": "{0}".format(index),
-            "data_type": "{0}".format(data_type),
-            "query": 'data_type:"{0}"'.format(data_type),
+            "index_name": f"{index}",
+            "data_type": f"{data_type}",
+            "query": f'data_type:"{data_type}"',
             "field": "message",
             "delimiters": [" ", "-", "/"],
             "threshold": config.DEFAULT_THRESHOLD,

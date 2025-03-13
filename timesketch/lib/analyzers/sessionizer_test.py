@@ -1,9 +1,7 @@
 """Tests for SessionizerSketchPlugin."""
 
-from __future__ import unicode_literals
-
 import unittest
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 from timesketch.lib.analyzers.base_sessionizer_test import _create_mock_event

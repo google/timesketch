@@ -957,9 +957,9 @@ export default {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
       }
-      ApiClient.getEventSummary(this.sketch.id, formData)
+      ApiClient.llmRequest(this.sketch.id, 'llm_summarize', formData)
         .then((response) => {
-          this.$set(this.eventList.meta, 'summary', response.data.summary)
+          this.$set(this.eventList.meta, 'summary', response.data.response)
           this.$set(this.eventList.meta, 'summary_event_count', response.data.summary_event_count)
           this.$set(this.eventList.meta, 'summary_unique_event_count', response.data.summary_unique_event_count)
           this.isSummaryLoading = false

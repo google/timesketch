@@ -4,6 +4,7 @@ import logging
 import sys
 
 from math import ceil
+from typing import Optional, Union
 from flask import current_app
 import sqlalchemy as sqla
 from timesketch.lib.analyzers import interface, manager
@@ -83,7 +84,7 @@ class HashRLookup(interface.BaseAnalyzer):
                 "connection details!"
             )
             sys.tracebacklimit = 0
-            raise Exception(msg)
+            raise Exception(msg)  # pylint: disable=broad-exception-raised
 
         db_string = (
             f"postgresql://{db_user}:{db_pass}@" f"{db_address}:{db_port}/{db_name}"
@@ -109,7 +110,7 @@ class HashRLookup(interface.BaseAnalyzer):
             )
             logger.error(msg)
             sys.tracebacklimit = 0
-            raise Exception(msg) from err
+            raise Exception(msg) from err  # pylint: disable=broad-exception-raised
 
         # Check if the required tables are present in the hashR database
         meta_data = sqla.MetaData(bind=self.hashr_conn)
@@ -126,7 +127,7 @@ class HashRLookup(interface.BaseAnalyzer):
             )
             logger.error(msg)
             sys.tracebacklimit = 0
-            raise Exception(msg) from KeyError
+            raise Exception(msg) from KeyError  # pylint: disable=broad-exception-raised
 
         return True
 
@@ -140,7 +141,7 @@ class HashRLookup(interface.BaseAnalyzer):
         for i in range(0, len(hash_list), batch_size):
             yield hash_list[i : i + batch_size]
 
-    def check_against_hashr(self, sample_hashes):
+    def check_against_hashr(self, sample_hashes: list):
         """Check a list of hashes against the hashR database.
 
         Args:
@@ -158,7 +159,7 @@ class HashRLookup(interface.BaseAnalyzer):
                       parameter is not of type list or dict.
         """
         if not isinstance(sample_hashes, list):
-            raise Exception(
+            raise Exception(  # pylint: disable=broad-exception-raised
                 "The check_against_hashR function only accepts "
                 "type<list> as input. But type "
                 f"{type(sample_hashes)} was provided!"
@@ -228,7 +229,12 @@ class HashRLookup(interface.BaseAnalyzer):
         logger.debug("Closed database conenction.")
         return matching_hashes
 
-    def annotate_event(self, hash_value, sources, event):
+    def annotate_event(
+        self,
+        hash_value: str,
+        sources: Optional[Union[list, bool]],
+        event: interface.Event,
+    ):
         """Add tags and attributes to the given event, based on the rules for
         the analyzer.
 
@@ -328,12 +334,10 @@ class HashRLookup(interface.BaseAnalyzer):
         matching_hashes = self.check_against_hashr(list(hash_events_dict.keys()))
         if self.add_source_attribute:
             logger.debug("Start adding tags and attributes to events.")
-            for sample_hash in matching_hashes:
+            for sample_hash, hashr_value in matching_hashes.items():
                 for event in hash_events_dict[sample_hash]:
                     known_hash_counter += 1
-                    self.annotate_event(
-                        sample_hash, matching_hashes[sample_hash], event
-                    )
+                    self.annotate_event(sample_hash, hashr_value, event)
             self.unique_known_hash_counter = len(matching_hashes)
         else:
             logger.debug("Start adding tags to events.")

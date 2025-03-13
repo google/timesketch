@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for domain."""
 
-from __future__ import unicode_literals
-
 import collections
 import logging
 import numpy
@@ -125,8 +123,7 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
         self.output.result_status = "SUCCESS"
         self.output.result_priority = "NOTE"
         self.output.result_summary = (
-            "{0:d} domains discovered ({1:d} TLDs) and {2:d} known "
-            "CDN networks found."
+            "{:d} domains discovered ({:d} TLDs) and {:d} known " "CDN networks found."
         ).format(len(domains), len(tld_counter), len(cdn_counter))
         return str(self.output)
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
-from __future__ import unicode_literals
 
 from flask import abort
 from flask_login import current_user
@@ -64,7 +63,7 @@ def drop_all():
 
 
 @as_declarative()
-class BaseModel(object):
+class BaseModel:
     """Base class used for database models. It adds common model fields to all
     models classes that subclass it.
     """

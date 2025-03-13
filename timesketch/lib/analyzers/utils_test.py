@@ -13,9 +13,6 @@
 # limitations under the License.
 """Tests for analysis utils."""
 
-from __future__ import unicode_literals
-
-import six
 
 import pandas as pd
 
@@ -60,12 +57,12 @@ class TestAnalyzerUtils(BaseTest):
         """Test get_cdn_provider function."""
         domain = "foobar.gstatic.com"
         provider = utils.get_cdn_provider(domain)
-        self.assertIsInstance(provider, six.text_type)
+        self.assertIsInstance(provider, str)
         self.assertEqual(provider, "Google")
 
         domain = "www.mbl.is"
         provider = utils.get_cdn_provider(domain)
-        self.assertIsInstance(provider, six.text_type)
+        self.assertIsInstance(provider, str)
         self.assertEqual(provider, "")
 
     def test_get_events_from_data_frame(self):
@@ -80,7 +77,7 @@ class TestAnalyzerUtils(BaseTest):
         events = list(utils.get_events_from_data_frame(frame, None))
         self.assertEqual(len(events), 3)
         ids = [x.event_id for x in events]
-        self.assertEqual(set(ids), set(["123", "124", "125"]))
+        self.assertEqual(set(ids), {"123", "124", "125"})
 
     def test_regular_expression_compile(self):
         """Test compiling regular expressions."""

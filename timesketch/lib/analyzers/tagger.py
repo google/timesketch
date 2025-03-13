@@ -60,7 +60,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         ]
         return tags_kwargs
 
-    def tagger(self, name, config):
+    def tagger(self, name: str, config: dict):
         """Tag and add emojis to events.
 
         Args:
@@ -147,7 +147,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
             self.sketch.add_view(
                 search_name, self.NAME, query_string=query, query_dsl=query_dsl
             )
-        return "{0:d} events tagged for [{1:s}]".format(event_counter, name)
+        return f"{event_counter:d} events tagged for [{name:s}]"
 
 
 manager.AnalysisManager.register_analyzer(TaggerSketchPlugin)

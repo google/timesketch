@@ -15,7 +15,8 @@
 
 import logging
 import re
-from six.moves import urllib_parse as urlparse
+from urllib import parse as urlparse
+from pandas import DataFrame
 
 import numpy
 
@@ -261,7 +262,9 @@ def _fix_np_nan(source_dict, attribute, replace_with=None):
         pass
 
 
-def get_events_from_data_frame(frame, datastore):
+def get_events_from_data_frame(
+    frame: DataFrame, datastore: interface.OpenSearchDataStore
+):
     """Generates events from a data frame.
 
     Args:
@@ -291,7 +294,7 @@ def get_events_from_data_frame(frame, datastore):
             datetime_string = datetime.to_pydatetime().isoformat()
             source["datetime"] = datetime_string
 
-        event_dict = dict(_id=event_id, _index=event_index, _source=source)
+        event_dict = {"_id": event_id, "_index": event_index, "_source": source}
         yield interface.Event(event_dict, datastore)
 
 
@@ -319,7 +322,7 @@ def compile_regular_expression(
                 flags.add(getattr(re, flag))
             except AttributeError:
                 logger.warning(
-                    "Unknown regular expression flag defined " "-> {0:s}.".format(flag)
+                    "Unknown regular expression flag defined " "-> {:s}.".format(flag)
                 )
         re_flag = sum(flags)
     else:
@@ -332,7 +335,7 @@ def compile_regular_expression(
         expression = re.compile(expression_string, flags=re_flag)
     except re.error:
         logger.error(
-            "Regular expression [{0:s}] failed to " "compile".format(expression_string),
+            "Regular expression [{:s}] failed to " "compile".format(expression_string),
             exc_info=True,
         )
         expression = None

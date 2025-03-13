@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for detecting gaps in EVTX files."""
 
-from __future__ import unicode_literals
-
 import logging
 
 import datetime
@@ -165,13 +163,11 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
                 "to find ones."
             )
 
-        story = self.sketch.add_story(
-            "{0:s} - {1:s}".format(self.STORY_TITLE, self.timeline_name)
-        )
+        story = self.sketch.add_story(f"{self.STORY_TITLE:s} - {self.timeline_name:s}")
         story.add_text(
             "This story is the result of the EVTX Gap analyzer. It attempts "
             "to detect gaps in EVTX files found in index "
-            "[{0:s}](/sketch/{1:d}/explore?index={2:s}) using two different "
+            "[{:s}](/sketch/{:d}/explore?index={:s}) using two different "
             "methods.\n\nFirst of all it looks at missing entries in record "
             "numbers and secondly it attempts to look at gaps in days with "
             "no records.\n\nThis may be an indication of someone clearing "
@@ -190,10 +186,10 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
         text_items = [
             "Overview of file:",
             "",
-            " + First day of logs: {0:s}".format(first_date.strftime("%Y-%m-%d")),
-            " + Last day of logs: {0:s}".format(last_date.strftime("%Y-%m-%d")),
-            " + Number of entries: {0:d}".format(event_frame.shape[0]),
-            " + Number of unique log sources: {0:d}".format(
+            " + First day of logs: {:s}".format(first_date.strftime("%Y-%m-%d")),
+            " + Last day of logs: {:s}".format(last_date.strftime("%Y-%m-%d")),
+            f" + Number of entries: {event_frame.shape[0]:d}",
+            " + Number of unique log sources: {:d}".format(
                 len(event_frame.source_name.unique())
             ),
         ]
@@ -220,11 +216,11 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
             for day_range in missing_ranges:
                 first, last = day_range
                 if first == last:
-                    text_items.append(" + Missing logs from **{0:d}**".format(first))
+                    text_items.append(f" + Missing logs from **{first:d}**")
                 else:
                     text_items.append(
-                        " + Missing logs from: **{0:d}** all the way up to "
-                        "**{1:d}**".format(first, last)
+                        " + Missing logs from: **{:d}** all the way up to "
+                        "**{:d}**".format(first, last)
                     )
 
         counter_array = event_count["count"].values
@@ -234,11 +230,11 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
 
         for _, day in rare_days.iterrows():
             text_items.append(
-                " + Day {0:s} only had {1:d} entries".format(day.day, day["count"])
+                " + Day {:s} only had {:d} entries".format(day.day, day["count"])
             )
 
         text_items.append(
-            '\n**"Rare days" reference days that had fewer than {0:d} '
+            '\n**"Rare days" reference days that had fewer than {:d} '
             "records in them, which is considered to be less than the 25th "
             "percentile of all events in a given day.**".format(int(quarter))
         )
@@ -247,7 +243,7 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
             story.add_text(
                 "## Event Frequency Analysis.\n\nBy looking at the number of "
                 "entries per day and analyzing days that had few or no "
-                "records the following gaps were discovered:\n\n{0:s}".format(
+                "records the following gaps were discovered:\n\n{:s}".format(
                     "\n".join(text_items)
                 )
             )
@@ -286,7 +282,7 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
         if record_gaps:
             text_items = []
             for source, record_dict in record_gaps.items():
-                text_items.append("  + Source: **{0:s}**".format(source))
+                text_items.append(f"  + Source: **{source:s}**")
                 if "missing" in record_dict:
                     text = "missing"
                     record_gap = record_dict["missing"]
@@ -298,18 +294,16 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
                     first, last = gap
 
                     if first == last:
-                        text_items.append(
-                            "    - Record number: {0:d} is {1:s}".format(first, text)
-                        )
+                        text_items.append(f"    - Record number: {first:d} is {text:s}")
                     else:
                         text_items.append(
-                            "    - Records from number {0:d} all the way "
-                            "up to {1:d} are {2:s}".format(first, last, text)
+                            "    - Records from number {:d} all the way "
+                            "up to {:d} are {:s}".format(first, last, text)
                         )
             story.add_text(
                 "## Event Record Number Analysis.\n\nBy looking at the record "
                 "numbers and attempting to identify jumps in numbers "
-                "the following gaps were discovered:\n\n{0:s}".format(
+                "the following gaps were discovered:\n\n{:s}".format(
                     "\n".join(text_items)
                 )
             )

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the user model."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.testlib import ModelBaseTest
 from timesketch.models.user import Group

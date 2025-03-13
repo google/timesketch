@@ -13,7 +13,6 @@
 # limitations under the License.
 """Error classes."""
 
-from __future__ import unicode_literals
 
 from flask import jsonify
 

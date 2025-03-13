@@ -13,7 +13,6 @@
 # limitations under the License.
 """Circle chart class.."""
 
-from __future__ import unicode_literals
 
 import altair as alt
 

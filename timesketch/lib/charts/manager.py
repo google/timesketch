@@ -13,10 +13,8 @@
 # limitations under the License.
 """This file contains a class for managing charts."""
 
-from __future__ import unicode_literals
 
-
-class ChartManager(object):
+class ChartManager:
     """The chart manager."""
 
     _class_registry = {}
@@ -30,8 +28,7 @@ class ChartManager(object):
                 unicode: the uniquely identifying name of the chart
                 type: the chart class.
         """
-        for agg_name, agg_class in iter(cls._class_registry.items()):
-            yield agg_name, agg_class
+        yield from iter(cls._class_registry.items())
 
     @classmethod
     def get_chart(cls, chart_name):
@@ -45,8 +42,8 @@ class ChartManager(object):
         """
         try:
             chart_class = cls._class_registry[chart_name.lower()]
-        except KeyError:
-            raise KeyError("No such chart type: {0:s}".format(chart_name.lower()))
+        except KeyError as e:
+            raise KeyError(f"No such chart type: {chart_name.lower():s}") from e
         return chart_class
 
     @classmethod
@@ -63,9 +60,7 @@ class ChartManager(object):
         """
         chart_name = chart_class.NAME.lower()
         if chart_name in cls._class_registry:
-            raise KeyError(
-                "Class already set for name: {0:s}.".format(chart_class.NAME)
-            )
+            raise KeyError(f"Class already set for name: {chart_class.NAME:s}.")
         cls._class_registry[chart_name] = chart_class
 
     @classmethod

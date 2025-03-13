@@ -98,7 +98,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, "write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                ("User does not have sufficient write access to " "to the sketch."),
+                ("User does not have sufficient write access to the sketch."),
             )
 
         form = request.json
@@ -109,7 +109,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         if not timeline_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to create a data source without a timeline " "identifier.",
+                "Unable to create a data source without a timeline identifier.",
             )
 
         timeline = Timeline.get_by_id(timeline_id)
@@ -119,7 +119,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         if timeline not in sketch.active_timelines:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The timeline is not part of the active timelines in " "the sketch.",
+                "The timeline is not part of the active timelines in the sketch.",
             )
 
         datasource = DataSource(

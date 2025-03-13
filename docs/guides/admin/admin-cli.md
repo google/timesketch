@@ -508,6 +508,98 @@ Corresponding Timeline id: 3 in Sketch Id: 2
 Corresponding Sketch id: 2 Sketch name: asdasd
 ```
 
+### Timeline status
+
+The `tsctl timeline-status` command allows to get or set a timeline status.
+This can be useful in the following scenarios:
+
+* Monitoring processing In large-scale investigations, timelines can take a considerable amount of time to process.
+This feature allows administrators or automated scripts to monitor the processing status of timelines, ensuring that they are progressing as expected.
+
+* Automated Status updates: Scripts can be used to automatically update the status of timelines based on the results of automated analysis or processing steps. For example, if an automated script detects a critical error during analysis, it can set the timeline status to "fail."
+
+* Toubeshooting and Error handling: 
+** Quickly identifying timelines with a "fail" status allows investigators to troubleshoot issues and re-process data if necessary.
+** By monitoring the status of timelines, administrators can identify potential bottlenecks or errors in the processing pipeline.
+** Set the status to `fail` is a task is stuck.
+
+Usage:
+
+```bash
+tsctl timeline-status [OPTIONS] TIMELINE_ID
+--action [get|set]
+        Specify whether to get or set the timeline status.
+        - "get": Retrieves the current status of the timeline.
+        - "set": Sets the status of the timeline to the value specified by "--status".
+        (Required)
+
+    --status [ready|processing|fail]
+        The desired status to set for the timeline.
+        This option is only valid when "--action" is set to "set".
+        Valid options are:
+        - "ready": Indicates that the timeline is ready for analysis.
+        - "processing": Indicates that the timeline is currently being processed.
+        - "fail": Indicates that the timeline processing failed.
+        (Required when --action is set to set)
+```
+
+Examples:
+```bash
+# Get the status of timeline with ID 123:
+    tsctl timeline-status --action get 123
+
+    # Set the status of timeline with ID 456 to "ready":
+    tsctl timeline-status --action set --status ready 456
+
+    # Set the status of timeline with ID 789 to "fail":
+    tsctl timeline-status --action set --status fail 789
+
+    # Try to set a status without the action set to set.
+    tsctl timeline-status --status fail 789
+    # This will fail and display an error message.
+```
+
+### Searchindex-status
+
+The `tsctl searchindex-status` command allows to get or set a searchindex status.
+
+Usage:
+```
+tsctl searchindex-status --help
+Usage: tsctl searchindex-status [OPTIONS] SEARCHINDEX_ID
+
+  Get or set a searchindex status
+
+  If "action" is "set", the given value of status will be written in the
+  status.
+
+  Args:     action: get or set searchindex status.     status: searchindex
+  status. Only valid choices are ready, processing, fail.
+
+Options:
+  --action [get|set]              get or set timeline status.
+  --status [ready|processing|fail]
+                                  get or set timeline status.
+  --searchindex_id TEXT           Searchindex ID to search for e.g.
+                                  4c5afdf60c6e49499801368b7f238353.
+                                  [required]
+  --help                          Show this message and exit.
+```
+
+
+Examples:
+```bash
+tsctl searchindex-status --action set 1 --status fail
+Searchindex 1 status set to fail
+To verify run: tsctl searchindex-status 1 --action get
+tsctl searchindex-status --action set --status fail 1
+Searchindex 1 status set to fail
+To verify run: tsctl searchindex-status 1 --action get
+tsctl searchindex-status 1 --action get
+searchindex_id index_name                       created_at                 user_id description status
+1              f609b138aa1e4c448ece6c012dcb2bab 2025-03-07 09:23:37.172143 1       #           fail
+```
+
 ### Sigma
 
 #### List Sigma rules

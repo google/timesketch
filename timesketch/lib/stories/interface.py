@@ -13,12 +13,11 @@
 # limitations under the License.
 """This file contains the interface for a story exporter."""
 
-from __future__ import unicode_literals
 
 import json
 
 
-class StoryExporter(object):
+class StoryExporter:
     """Interface for a story exporter."""
 
     # String representing the output format of the story.
@@ -60,7 +59,7 @@ class StoryExporter(object):
         for block in blocks:
             self.from_block_dict(block)
 
-    def from_block_dict(self, block):
+    def from_block_dict(self, block: dict):
         """Feed the exporter with a single block dict.
 
         Args:
@@ -162,7 +161,7 @@ class StoryExporter(object):
         self.reset()
 
 
-class DataFetcher(object):
+class DataFetcher:
     """A data fetcher interface."""
 
     def __init__(self):

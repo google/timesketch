@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the auth views."""
 
-from __future__ import unicode_literals
 
 from flask import current_app
 from flask_login import current_user

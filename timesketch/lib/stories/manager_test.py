@@ -13,25 +13,24 @@
 # limitations under the License.
 """Tests for story export manager."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.stories import manager
 
 
-class MockStoryExporter(object):
+class MockStoryExporter:
     """Mock story exporter class,"""
 
     EXPORT_FORMAT = "MockFormat"
 
 
-class MockStoryExporter2(object):
+class MockStoryExporter2:
     """Mock story exporter class,"""
 
     EXPORT_FORMAT = "MockFormat2"
 
 
-class MockStoryExporter3(object):
+class MockStoryExporter3:
     """Mock story exporter class,"""
 
     EXPORT_FORMAT = "MockFormat3"

@@ -672,8 +672,10 @@ export default {
     let formData = { settings: settings };
     return RestApiClient.post("/users/me/settings/", formData);
   },
-  nl2q(sketchId, question) {
-    let formData = { question: question };
-    return RestApiClient.post("/sketches/" + sketchId + "/nl2q/", formData);
-  },
+  llmRequest(sketchId, featureName, formData) {
+    formData = formData || {}
+    formData.feature = featureName
+  
+    return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
+  }
 };

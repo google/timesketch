@@ -321,7 +321,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
             except KeyError as e:
                 logger.warning(
                     "Unable to build analyzer pipeline, analyzer does not "
-                    "exists. Error message: {0!s}".format(e)
+                    "exists. Error message: {!s}".format(e)
                 )
                 continue
 

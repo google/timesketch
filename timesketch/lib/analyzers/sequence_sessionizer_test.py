@@ -1,8 +1,7 @@
 """Tests for SequenceSessionizerSketchPlugin."""
 
-from __future__ import unicode_literals
-
-import mock
+from typing import Optional
+from unittest import mock
 
 from timesketch.lib.analyzers.psexec_sessionizers import (
     DestPsexecSessionizerSketchPlugin,
@@ -216,7 +215,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 1".format(
+                "Sessionizing completed, number of {:s} sessions created: 1".format(
                     sessionizer.session_type
                 ),
             )
@@ -251,7 +250,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 2".format(
+                "Sessionizing completed, number of {:s} sessions created: 2".format(
                     sessionizer.session_type
                 ),
             )
@@ -291,7 +290,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 2".format(
+                "Sessionizing completed, number of {:s} sessions created: 2".format(
                     sessionizer.session_type
                 ),
             )
@@ -324,7 +323,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 1".format(
+                "Sessionizing completed, number of {:s} sessions created: 1".format(
                     sessionizer.session_type
                 ),
             )
@@ -357,7 +356,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 0".format(
+                "Sessionizing completed, number of {:s} sessions created: 0".format(
                     sessionizer.session_type
                 ),
             )
@@ -385,7 +384,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 0".format(
+                "Sessionizing completed, number of {:s} sessions created: 0".format(
                     sessionizer.session_type
                 ),
             )
@@ -428,7 +427,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 1".format(
+                "Sessionizing completed, number of {:s} sessions created: 1".format(
                     sessionizer.session_type
                 ),
             )
@@ -460,7 +459,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 2".format(
+                "Sessionizing completed, number of {:s} sessions created: 2".format(
                     sessionizer.session_type
                 ),
             )
@@ -498,7 +497,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 2".format(
+                "Sessionizing completed, number of {:s} sessions created: 2".format(
                     sessionizer.session_type
                 ),
             )
@@ -525,13 +524,19 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                "Sessionizing completed, number of {0:s} sessions created: 0".format(
+                "Sessionizing completed, number of {:s} sessions created: 0".format(
                     sessionizer.session_type
                 ),
             )
 
 
-def _create_mock_event(datastore, event_id, quantity, attributes, time_diffs=None):
+def _create_mock_event(
+    datastore: MockDataStore,
+    event_id: str,
+    quantity: int,
+    attributes: list,
+    time_diffs: Optional[list] = None,
+):
     """Loads in the datastore mock events that based on the given arguments.
     Args:
         datastore: An instance of MockDataStore.

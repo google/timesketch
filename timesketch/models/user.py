@@ -17,7 +17,6 @@
 
 import codecs
 
-import six
 
 from flask_bcrypt import generate_password_hash
 from flask_bcrypt import check_password_hash
@@ -102,7 +101,7 @@ class User(UserMixin, BaseModel):
             rounds: Number of rounds to use for the bcrypt hashing
         """
         password_hash = generate_password_hash(plaintext, rounds)
-        if isinstance(password_hash, six.binary_type):
+        if isinstance(password_hash, bytes):
             password_hash = codecs.decode(password_hash, "utf-8")
         self.password = password_hash
 

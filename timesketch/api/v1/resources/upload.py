@@ -18,6 +18,7 @@ import logging
 import os
 import uuid
 import json
+from typing import Optional, Dict, List
 
 from flask import jsonify
 from flask import request
@@ -47,7 +48,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
     def _get_index(
-        self, name, description, sketch, index_name="", data_label="", extension=""
+        self,
+        name: str,
+        description: str,
+        sketch: Sketch,
+        index_name: str = "",
+        data_label: str = "",
+        extension: str = "",
     ):
         """Returns a SearchIndex object to be used for uploads.
 
@@ -117,19 +124,19 @@ class UploadFileResource(resources.ResourceMixin, Resource):
     # pylint: disable=too-many-arguments
     def _upload_and_index(
         self,
-        file_extension,
-        timeline_name,
-        index_name,
-        sketch,
-        form,
-        enable_stream,
-        original_filename="",
-        data_label="",
-        file_path="",
-        events="",
-        meta=None,
-        headers_mapping=None,
-        delimiter=",",
+        file_extension: str,
+        timeline_name: str,
+        index_name: str,
+        sketch: Sketch,
+        form: Dict,
+        enable_stream: bool,
+        original_filename: str = "",
+        data_label: str = "",
+        file_path: str = "",
+        events: str = "",
+        meta: Optional[Dict] = None,
+        headers_mapping: Optional[List] = None,
+        delimiter: str = ",",
     ):
         """Creates a full pipeline for an uploaded file and returns the results.
 
@@ -187,8 +194,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
             logger.error(
                 "There is a timeline in the sketch that has the same name "
-                "but is stored in a different index: name {0:s} attempting "
-                "index: {1:s} but found index {2:s} - retrying with a "
+                "but is stored in a different index: name {:s} attempting "
+                "index: {:s} but found index {:s} - retrying with a "
                 "different timeline name.".format(
                     timeline_name,
                     searchindex.index_name,
@@ -196,7 +203,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 )
             )
 
-            timeline_name = "{0:s}_{1:s}".format(timeline_name, uuid.uuid4().hex[-5:])
+            timeline_name = f"{timeline_name:s}_{uuid.uuid4().hex[-5:]:s}"
             return self._upload_and_index(
                 file_extension=file_extension,
                 timeline_name=timeline_name,
@@ -317,13 +324,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
     def _upload_file(
         self,
-        file_storage,
-        form,
-        sketch,
-        index_name,
-        chunk_index_name="",
-        headers_mapping=None,
-        delimiter=",",
+        file_storage: object,
+        form: Dict,
+        sketch: Sketch,
+        index_name: str,
+        chunk_index_name: str = "",
+        headers_mapping: Optional[List] = None,
+        delimiter: str = ",",
     ):
         """Upload a file.
 
@@ -427,7 +434,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         except OSError as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to write data with error: {0!s}.".format(e),
+                f"Unable to write data with error: {e!s}.",
             )
 
         if (chunk_index + 1) != chunk_total_chunks:
@@ -449,7 +456,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to save file correctly, inconsistent file size "
-                "({0:d} but should have been {1:d})".format(
+                "({:d} but should have been {:d})".format(
                     os.path.getsize(file_path), file_size
                 ),
             )

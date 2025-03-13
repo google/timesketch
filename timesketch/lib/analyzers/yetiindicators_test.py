@@ -1,7 +1,7 @@
 """Tests for ThreatintelPlugin."""
 
 import json
-import mock
+from unittest import mock
 
 from flask import current_app
 
