@@ -84,8 +84,7 @@ class FeatureManager:
         Yields:
             A tuple of (feature_name, feature_class)
         """
-        for feature_name, feature_class in cls._feature_registry.items():
-            yield feature_name, feature_class
+        yield from cls._feature_registry.items()
 
     @classmethod
     def get_feature_instance(cls, feature_name: str) -> LLMFeatureInterface:

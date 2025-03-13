@@ -17,7 +17,7 @@ import logging
 from typing import List, Type
 
 
-class PluginManager(object):
+class PluginManager:
     """ "A class that implements the plugins manager."""
 
     _plugin_classes: dict = {}

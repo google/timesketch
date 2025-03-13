@@ -207,9 +207,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
         form = forms.NameDescriptionForm.build(request)
         if not form.validate_on_submit():
             error_message = "Unable to validate form data: "
-            for error in form.errors.values():
-                error_message += f"{error}, "
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message[:-2])
+            error_message += ", ".join(form.errors.values())
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message)
 
         sketch = Sketch(name=form.name.data, description=form.description.data)
         db_session.add(sketch)
@@ -232,8 +231,9 @@ class SketchResource(resources.ResourceMixin, Resource):
         """Add a label to the sketch."""
         if sketch.has_label(label):
             logger.warning(
-                "Unable to apply the label [{0:s}] to sketch {1:d}, "
-                "already exists.".format(label, sketch.id)
+                "Unable to apply the label [%s] to sketch %s, already exists.",
+                label,
+                sketch.id,
             )
             return False
         sketch.add_label(label, user=current_user)
@@ -244,15 +244,16 @@ class SketchResource(resources.ResourceMixin, Resource):
         """Removes a label to the sketch."""
         if not sketch.has_label(label):
             logger.warning(
-                "Unable to remove the label [{0:s}] to sketch {1:d}, "
-                "label does not exist.".format(label, sketch.id)
+                "Unable to remove the label [%s] to sketch %s, label does not exist.",
+                label,
+                sketch.id,
             )
             return False
         sketch.remove_label(label)
         return True
 
     @staticmethod
-    def _get_sketch_for_admin(sketch):
+    def _get_sketch_for_admin(sketch: Sketch):
         """Returns a limited sketch view for administrators.
 
         An administrator needs to get information about all sketches
@@ -264,7 +265,7 @@ class SketchResource(resources.ResourceMixin, Resource):
         to the underlying data of the sketch.
 
         Args:
-            sketch: a sketch object (instance of models.Sketch)
+            sketch: (object) a sketch object (instance of models.Sketch)
 
         Returns:
             A limited view of a sketch in JSON (instance of
@@ -344,8 +345,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                 )
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to get indices mapping in datastore, for "
-                    "indices: {0:s}".format(",".join(sketch_indices))
+                    "Unable to get indices mapping in datastore, for indices: [%s]",
+                    ",".join(sketch_indices),
                 )
                 mappings_settings = {}
 
@@ -444,37 +445,37 @@ class SketchResource(resources.ResourceMixin, Resource):
                 "updated_at": story.updated_at,
             }
             stories.append(story)
-        meta = dict(
-            aggregators=aggregators,
-            views=views,
-            stories=stories,
-            searchtemplates=[
+        meta = {
+            "aggregators": aggregators,
+            "views": views,
+            "stories": stories,
+            "searchtemplates": [
                 {"name": searchtemplate.name, "id": searchtemplate.id}
                 for searchtemplate in SearchTemplate.query.all()
             ],
-            emojis=get_emojis_as_dict(),
-            permissions={
+            "emojis": get_emojis_as_dict(),
+            "permissions": {
                 "public": bool(sketch.is_public),
                 "read": bool(sketch.has_permission(current_user, "read")),
                 "write": bool(sketch.has_permission(current_user, "write")),
                 "delete": bool(sketch.has_permission(current_user, "delete")),
             },
-            collaborators={
+            "collaborators": {
                 "users": [user.username for user in sketch.collaborators],
                 "groups": [group.name for group in sketch.groups],
             },
-            attributes=utils.get_sketch_attributes(sketch),
-            mappings=list(mappings),
-            indices_metadata=indices_metadata,
-            stats_per_timeline=stats_per_timeline,
-            last_activity=utils.get_sketch_last_activity(sketch),
-            sketch_labels=[label.label for label in sketch.labels],
-            filter_labels=(
+            "attributes": utils.get_sketch_attributes(sketch),
+            "mappings": list(mappings),
+            "indices_metadata": indices_metadata,
+            "stats_per_timeline": stats_per_timeline,
+            "last_activity": utils.get_sketch_last_activity(sketch),
+            "sketch_labels": [label.label for label in sketch.labels],
+            "filter_labels": (
                 self.datastore.get_filter_labels(sketch.id, sketch_indices)
                 if sketch_indices
                 else []
             ),
-        )
+        }
         return self.to_json(sketch, meta=meta)
 
     @login_required
@@ -486,14 +487,14 @@ class SketchResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, "delete"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                ("User does not have sufficient access rights to " "delete a sketch."),
+                ("User does not have sufficient access rights to delete a sketch."),
             )
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
             if sketch.has_label(label):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "Sketch with the label [{0:s}] cannot be deleted.".format(label),
+                    f"Sketch with the label [{label:s}] cannot be deleted.",
                 )
         sketch.set_status(status="deleted")
         return HTTP_STATUS_CODE_OK
@@ -536,7 +537,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Label actions needs to be either "add" or "remove", '
-                "not [{0:s}]".format(label_action),
+                f"not [{label_action:s}]",
             )
 
         if labels and isinstance(labels, (tuple, list)):

@@ -127,15 +127,15 @@ class Nl2qFeature(LLMFeatureInterface):
         prompt_file = current_app.config.get("PROMPT_NL2Q", "")
         examples_file = current_app.config.get("EXAMPLES_NL2Q", "")
         try:
-            with open(prompt_file, "r") as file:
+            with open(prompt_file, "r", encoding="utf-8") as file:
                 prompt = file.read()
-        except (OSError, IOError):
+        except OSError:
             logger.error("No prompt file found")
             raise
         try:
-            with open(examples_file, "r") as file:
+            with open(examples_file, "r", encoding="utf-8") as file:
                 examples = file.read()
-        except (OSError, IOError):
+        except OSError:
             logger.error("No examples file found")
             raise  # Re-raise the exception
         prompt = prompt.format(

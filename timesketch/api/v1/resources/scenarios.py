@@ -15,6 +15,7 @@
 
 import logging
 import json
+from typing import Optional
 
 from flask import jsonify
 from flask import request
@@ -59,7 +60,11 @@ def load_dfiq_from_config():
     return DFIQ(dfiq_path)
 
 
-def check_and_run_dfiq_analysis_steps(dfiq_obj, sketch, analyzer_manager=None):
+def check_and_run_dfiq_analysis_steps(
+    dfiq_obj: object,
+    sketch: Sketch,
+    analyzer_manager: Optional[DFIQAnalyzerManager] = None,
+):
     """Checks if any DFIQ analyzers need to be executed for the given DFIQ object.
 
     Args:

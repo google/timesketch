@@ -21,7 +21,6 @@ also be used by those manually generating charts in notebooks.
 This aggregator is not useful for UI and therefore is "hidden" from
 views.
 """
-from __future__ import unicode_literals
 
 import altair as alt
 import pandas as pd
@@ -76,12 +75,12 @@ class VegaResult:
     # pylint: disable=unused-argument
     def to_chart(
         self,
-        chart_name="",
-        chart_title="",
-        as_html=False,
-        interactive=False,
-        as_chart=False,
-        color="",
+        chart_name: str = "",
+        chart_title: str = "",
+        as_html: bool = False,
+        interactive: bool = False,
+        as_chart: bool = False,
+        color: str = "",
     ):
         """Encode aggregation result as Vega-Lite chart.
 

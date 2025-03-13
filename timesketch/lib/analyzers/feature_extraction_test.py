@@ -18,8 +18,8 @@ import re
 import textwrap
 from typing import List, Dict
 
+from unittest import mock
 import yaml
-import mock
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers.feature_extraction import (
@@ -43,7 +43,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         config_file = os.path.join("data", "winevt_features.yaml")
         self.assertTrue(os.path.isfile(config_file))
 
-        with open(config_file, "r", encoding="utf-8") as fh:
+        with open(config_file, encoding="utf-8") as fh:
             config = yaml.safe_load(fh)
 
         self.assertIsInstance(config, dict)
@@ -85,7 +85,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         """
         path = os.path.join("data", file_name)
 
-        with open(path, "r", encoding="utf-8") as fh:
+        with open(path, encoding="utf-8") as fh:
             config = yaml.safe_load(fh)
 
         for name, config in config.items():
@@ -203,7 +203,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         config_file = os.path.join("data", "regex_features.yaml")
         self.assertTrue(os.path.isfile(config_file))
 
-        with open(config_file) as fh:
+        with open(config_file, "r", encoding="utf-8") as fh:
             config = yaml.safe_load(fh)
 
         self.assertIsInstance(config, dict)
