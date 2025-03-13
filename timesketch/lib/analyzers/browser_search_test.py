@@ -1,8 +1,6 @@
 """Tests for BrowserSearchPlugin."""
 
-from __future__ import unicode_literals
-
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers import browser_search
 from timesketch.lib.testlib import BaseTest

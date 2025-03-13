@@ -13,10 +13,9 @@
 # limitations under the License.
 """Tests for Cloud IAP."""
 
-from __future__ import unicode_literals
 
 import time
-import mock
+from unittest import mock
 import jwt
 
 from cryptography.hazmat.primitives.asymmetric import rsa

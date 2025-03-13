@@ -559,6 +559,46 @@ Examples:
     # This will fail and display an error message.
 ```
 
+### Searchindex-status
+
+The `tsctl searchindex-status` command allows to get or set a searchindex status.
+
+Usage:
+```
+tsctl searchindex-status --help
+Usage: tsctl searchindex-status [OPTIONS] SEARCHINDEX_ID
+
+  Get or set a searchindex status
+
+  If "action" is "set", the given value of status will be written in the
+  status.
+
+  Args:     action: get or set searchindex status.     status: searchindex
+  status. Only valid choices are ready, processing, fail.
+
+Options:
+  --action [get|set]              get or set timeline status.
+  --status [ready|processing|fail]
+                                  get or set timeline status.
+  --searchindex_id TEXT           Searchindex ID to search for e.g.
+                                  4c5afdf60c6e49499801368b7f238353.
+                                  [required]
+  --help                          Show this message and exit.
+```
+
+
+Examples:
+```bash
+tsctl searchindex-status --action set 1 --status fail
+Searchindex 1 status set to fail
+To verify run: tsctl searchindex-status 1 --action get
+tsctl searchindex-status --action set --status fail 1
+Searchindex 1 status set to fail
+To verify run: tsctl searchindex-status 1 --action get
+tsctl searchindex-status 1 --action get
+searchindex_id index_name                       created_at                 user_id description status
+1              f609b138aa1e4c448ece6c012dcb2bab 2025-03-07 09:23:37.172143 1       #           fail
+```
 
 ### Sigma
 

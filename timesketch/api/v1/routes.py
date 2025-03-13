@@ -13,7 +13,6 @@
 # limitations under the License.
 """URL routes for API resources."""
 
-from __future__ import unicode_literals
 
 from .resources.aggregation import AggregationGroupResource
 from .resources.aggregation import AggregationGroupListResource
@@ -76,8 +75,6 @@ from .resources.graph import GraphCacheResource
 from .resources.intelligence import TagMetadataResource
 from .resources.contextlinks import ContextLinkConfigResource
 from .resources.unfurl import UnfurlResource
-from .resources.nl2q import Nl2qResource
-from .resources.llm_summarize import LLMSummarizeResource
 from .resources.llm import LLMResource
 from .resources.settings import SystemSettingsResource
 
@@ -203,8 +200,6 @@ API_ROUTES = [
     (TagMetadataResource, "/intelligence/tagmetadata/"),
     (ContextLinkConfigResource, "/contextlinks/"),
     (UnfurlResource, "/unfurl/"),
-    (Nl2qResource, "/sketches/<int:sketch_id>/nl2q/"),
-    (LLMSummarizeResource, "/sketches/<int:sketch_id>/events/summary/"),
     (LLMResource, "/sketches/<int:sketch_id>/llm/"),
     (SystemSettingsResource, "/settings/"),
     # Scenario templates

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the sketch models."""
 
-from __future__ import unicode_literals
 
 import json
 
@@ -125,7 +124,7 @@ class SketchModelTest(ModelBaseTest):
             "order": "asc",
             "chips": [],
         }
-        test_filter = dict(indices=[])
+        test_filter = {"indices": []}
         test_filter_json = json.dumps(test_filter)
         validated_filter_dict = self.view1.validate_filter(test_filter)
         validated_filter_json = self.view1.validate_filter(test_filter_json)

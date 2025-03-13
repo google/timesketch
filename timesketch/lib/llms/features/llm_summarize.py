@@ -27,16 +27,15 @@ from timesketch.lib.llms.features.interface import LLMFeatureInterface
 
 logger = logging.getLogger("timesketch.llm.summarize_feature")
 
-# TODO(itsmvd): Remove 'feature' prefix after migration
 METRICS = {
     "llm_summary_events_processed_total": prometheus_client.Counter(
-        "feature_llm_summary_events_processed_total",  # avoid duplicate registration
+        "llm_summary_events_processed_total",
         "Total number of events processed for LLM summarization",
         ["sketch_id"],
         namespace=METRICS_NAMESPACE,
     ),
     "llm_summary_unique_events_total": prometheus_client.Counter(
-        "feature_llm_summary_unique_events_total",  # avoid duplicate registration
+        "llm_summary_unique_events_total",
         "Total number of unique events sent to the LLM",
         ["sketch_id"],
         namespace=METRICS_NAMESPACE,
@@ -65,6 +64,7 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             ValueError: If the prompt path is not configured or placeholder is missing.
             FileNotFoundError: If the prompt file cannot be found.
             IOError: If there's an error reading the prompt file.
+            OSError: If there's an error reading the prompt file.
         """
         prompt_file_path = current_app.config.get(self.PROMPT_CONFIG_KEY)
         if not prompt_file_path:
@@ -72,16 +72,16 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             raise ValueError("LLM summarization prompt path not configured.")
 
         try:
-            with open(prompt_file_path, "r", encoding="utf-8") as file_handle:
+            with open(prompt_file_path, encoding="utf-8") as file_handle:
                 prompt_template = file_handle.read()
         except FileNotFoundError as exc:
             logger.error("Prompt file not found: %s", prompt_file_path)
             raise FileNotFoundError(
                 f"LLM Prompt file not found: {prompt_file_path}"
             ) from exc
-        except IOError as e:
+        except OSError as e:
             logger.error("Error reading prompt file: %s", e)
-            raise IOError("Error reading LLM prompt file.") from e
+            raise OSError("Error reading LLM prompt file.") from e
 
         if "<EVENTS_JSON>" not in prompt_template:
             logger.error("Prompt template is missing the <EVENTS_JSON> placeholder")

@@ -15,10 +15,9 @@
 This module implements annotations that can be use on other database models.
 """
 
-from __future__ import unicode_literals
 
 import json
-import six
+import logging
 
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -32,8 +31,10 @@ from sqlalchemy.orm import subqueryload
 from timesketch.models import BaseModel
 from timesketch.models import db_session
 
+logger = logging.getLogger("timesketch.models.annotations")
 
-class BaseAnnotation(object):
+
+class BaseAnnotation:
     """Base class with common attributes."""
 
     @declared_attr
@@ -82,7 +83,7 @@ class GenericAttribute(BaseAnnotation):
     description = Column(UnicodeText())
 
 
-class LabelMixin(object):
+class LabelMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -98,10 +99,7 @@ class LabelMixin(object):
         Returns:
             A relationship to an label (timesketch.models.annotation.Label)
         """
-        if six.PY2:
-            class_name = b"{0:s}Label".format(self.__name__)
-        else:
-            class_name = "{0:s}Label".format(self.__name__)
+        class_name = f"{self.__name__:s}Label"
 
         self.Label = type(
             class_name,
@@ -109,20 +107,18 @@ class LabelMixin(object):
                 Label,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_label".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_label",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Label)
 
     def add_label(self, label, user=None):
         """Add a label to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple labels.
 
         Args:
             label: Name of the label.
@@ -140,9 +136,20 @@ class LabelMixin(object):
         Args:
             label: Name of the label.
         """
-        for label_obj in self.labels:
-            if label_obj.label.lower() != label.lower():
-                continue
+        labels_to_remove = [
+            label_obj
+            for label_obj in self.labels
+            if label_obj.label.lower() == label.lower()
+        ]
+
+        if not labels_to_remove:
+            logger.warning(
+                "Attempted to remove non-existent label: %s from object: %s",
+                str(label),
+                str(type(self).__name__),
+            )
+
+        for label_obj in labels_to_remove:
             self.labels.remove(label_obj)
         db_session.add(self)
         db_session.commit()
@@ -187,7 +194,7 @@ class LabelMixin(object):
         return json.dumps([x.label for x in self.labels])
 
 
-class CommentMixin(object):
+class CommentMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -203,10 +210,7 @@ class CommentMixin(object):
         Returns:
             A relationship to a comment (timesketch.models.annotation.Comment)
         """
-        if six.PY2:
-            class_name = b"{0:s}Comment".format(self.__name__)
-        else:
-            class_name = "{0:s}Comment".format(self.__name__)
+        class_name = f"{self.__name__:s}Comment"
 
         self.Comment = type(
             class_name,
@@ -214,13 +218,11 @@ class CommentMixin(object):
                 Comment,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_comment".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_comment",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Comment)
 
@@ -244,18 +246,28 @@ class CommentMixin(object):
 
         Args:
             comment_id: Id of the comment.
-        """
-        for comment_obj in self.comments:
-            if comment_obj.id == int(comment_id):
-                self.comments.remove(comment_obj)
-                db_session.add(self)
-                db_session.commit()
-                return True
 
-        return False
+        Returns:
+            True if the comment was removed, False otherwise.
+        """
+
+        comments_to_remove = [
+            comment_obj
+            for comment_obj in self.comments
+            if comment_obj.id == int(comment_id)
+        ]
+        if not comments_to_remove:
+            logger.debug("Comment to delete not found")
+            return False  # Comment not found
+        for comment_obj in comments_to_remove:
+            logger.debug("Removing comment")
+            self.comments.remove(comment_obj)
+        db_session.add(self)
+        db_session.commit()
+        return True
 
     def get_comment(self, comment_id):
-        """Retrives a comment.
+        """Retrieves a comment.
 
         Args:
             comment_id: Id of the comment.
@@ -284,7 +296,7 @@ class CommentMixin(object):
         return False
 
 
-class StatusMixin(object):
+class StatusMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -300,10 +312,7 @@ class StatusMixin(object):
         Returns:
             A relationship to a status (timesketch.models.annotation.Status)
         """
-        if six.PY2:
-            class_name = b"{0:s}Status".format(self.__name__)
-        else:
-            class_name = "{0:s}Status".format(self.__name__)
+        class_name = f"{self.__name__:s}Status"
 
         self.Status = type(
             class_name,
@@ -311,13 +320,11 @@ class StatusMixin(object):
                 Status,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_status".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_status",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Status)
 
@@ -329,8 +336,7 @@ class StatusMixin(object):
         Args:
             status: Name of the status
         """
-        for _status in self.status:
-            self.status.remove(_status)
+        self.status = []  # replace the list with an empty list.
         self.status.append(self.Status(user=None, status=status))
         db_session.add(self)
         db_session.commit()
@@ -339,15 +345,34 @@ class StatusMixin(object):
     def get_status(self):
         """Get the current status.
 
+        Only one status should be in the database at a time.
+
+        Raises:
+            RuntimeError: If more than one status is available.
+
         Returns:
             The status as a string
         """
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
+        if len(self.status) > 1:
+            self_id = self.id if hasattr(self, "id") else None
+            # TODO: Change from warning to raising an exception once we ensured
+            # it won't affect the deployment.
+            # raise RuntimeError(
+            # "More than one status available for object [%s] with ID: [%s]",
+            #     str(type(self).__name__),
+            #     str(self_id),
+            # )
+            logging.warning(
+                "More than one status available for object [%s] with ID: [%s]",
+                str(type(self).__name__),
+                str(self_id),
+            )
         return self.status[0]
 
 
-class GenericAttributeMixin(object):
+class GenericAttributeMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -363,7 +388,7 @@ class GenericAttributeMixin(object):
         Returns:
             A relationship with (timesketch.models.annotation.GenericAttribute)
         """
-        class_name = "{0:s}GenericAttribute".format(self.__name__)
+        class_name = f"{self.__name__:s}GenericAttribute"
 
         self.GenericAttribute = type(
             class_name,
@@ -371,24 +396,25 @@ class GenericAttributeMixin(object):
                 GenericAttribute,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_genericattribute".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_genericattribute",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.GenericAttribute)
 
     def add_attribute(self, name, value, ontology=None, user=None, description=None):
-        """Add a label to an object.
+        """Add a attribute to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple generic attributes.
 
         Args:
-            label: Name of the label.
-            user: Optional user that adds the label (sketch.User).
+            name: Name of the attribute.
+            value: Value of the attribute.
+            ontology: Optional ontology of the attribute.
+            user: Optional user that adds the attribute (timesketch.models.user.User).
+            description: Optional description of the attribute.
         """
         self.genericattributes.append(
             self.GenericAttribute(

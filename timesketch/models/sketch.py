@@ -13,10 +13,10 @@
 # limitations under the License.
 """This module implements the models for the Timesketch core system."""
 
-from __future__ import unicode_literals
 
 import json
 import logging
+from typing import Optional, Union
 from uuid import uuid4
 
 from flask import current_app
@@ -301,7 +301,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
     aggregations = relationship("Aggregation", backref="view", lazy="select")
     aggregationgroups = relationship("AggregationGroup", backref="view", lazy="select")
 
-    def validate_filter(self, query_filter=None):
+    def validate_filter(self, query_filter: Optional[Union[str, dict]] = None):
         """Validate the Query Filter.
 
         Make sure that we have all expected attributes in the query filter

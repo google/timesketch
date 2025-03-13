@@ -1,8 +1,6 @@
 """Tests for SSHSessionizerSketchPlugin"""
 
-from __future__ import unicode_literals
-
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.ssh_sessionizer import SSHSessionizerSketchPlugin
 from timesketch.lib.testlib import BaseTest

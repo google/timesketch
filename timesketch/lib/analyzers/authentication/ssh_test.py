@@ -17,7 +17,7 @@ import json
 import logging
 import textwrap
 
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.authentication.ssh import SSHBruteForceAnalyzer
 from timesketch.lib.analyzers.interface import AnalyzerOutput
@@ -64,10 +64,11 @@ class TestSSHBruteForceAnalyzer(BaseTest):
         self.assertDictEqual(json.loads(expected_output), json.loads(output))
 
 
-def _create_mock_events(datastore, count: int = 200) -> None:
+def _create_mock_events(datastore: MockDataStore, count: int = 200) -> None:
     """Creates mock TimeSketch events.
 
     Args:
+        datastore (MockDataStore): Mock datastore.
         count (int): Number of events to generate.
     """
 
