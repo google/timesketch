@@ -228,7 +228,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
     aggregations = relationship("Aggregation", backref="view", lazy="select")
     aggregationgroups = relationship("AggregationGroup", backref="view", lazy="select")
 
-    def validate_filter(self, query_filter: Optional[Union[str, dict]]=None):
+    def validate_filter(self, query_filter: Optional[Union[str, dict]] = None):
         """Validate the Query Filter.
 
         Make sure that we have all expected attributes in the query filter

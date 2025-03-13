@@ -1,6 +1,5 @@
 """Tests for Chain analyzer."""
 
-
 import uuid
 
 from unittest import mock

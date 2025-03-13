@@ -942,7 +942,7 @@ def run_csv_jsonl(
         file_handle = io.StringIO(events)
         source_type = "jsonl"
     else:
-        file_handle = codecs.open( # pylint: disable=consider-using-with
+        file_handle = codecs.open(  # pylint: disable=consider-using-with
             file_path, "r", encoding="utf-8", errors="replace"
         )
         METRICS["worker_files_parsed"].labels(source_type=source_type).inc()

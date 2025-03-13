@@ -1,6 +1,5 @@
 """Tests for SessionizerSketchPlugin."""
 
-
 import unittest
 from unittest import mock
 

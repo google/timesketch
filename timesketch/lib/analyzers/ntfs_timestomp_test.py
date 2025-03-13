@@ -1,6 +1,5 @@
 """Tests for NtfsTimestompPlugin."""
 
-
 from unittest import mock
 
 from timesketch.lib.analyzers import ntfs_timestomp

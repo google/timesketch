@@ -1,6 +1,5 @@
 """Expert sesssionizer plugins, configured for specific types of activity"""
 
-
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 

@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for detecting gaps in EVTX files."""
 
-
 import logging
 
 import datetime
@@ -164,9 +163,7 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
                 "to find ones."
             )
 
-        story = self.sketch.add_story(
-            f"{self.STORY_TITLE:s} - {self.timeline_name:s}"
-        )
+        story = self.sketch.add_story(f"{self.STORY_TITLE:s} - {self.timeline_name:s}")
         story.add_text(
             "This story is the result of the EVTX Gap analyzer. It attempts "
             "to detect gaps in EVTX files found in index "
@@ -297,9 +294,7 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
                     first, last = gap
 
                     if first == last:
-                        text_items.append(
-                            f"    - Record number: {first:d} is {text:s}"
-                        )
+                        text_items.append(f"    - Record number: {first:d} is {text:s}")
                     else:
                         text_items.append(
                             "    - Records from number {:d} all the way "

@@ -67,7 +67,7 @@ class TestMisp(BaseTest):
             json={"returnFormat": "json", "value": ["test.txt"], "type": "filename"},
             headers={"Authorization": "test"},
             verify=False,
-            timeout=60
+            timeout=60,
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -95,7 +95,7 @@ class TestMisp(BaseTest):
             json={"returnFormat": "json", "value": ["test.txt"], "type": "filename"},
             headers={"Authorization": "test"},
             verify=False,
-            timeout=60
+            timeout=60,
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)

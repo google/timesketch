@@ -613,7 +613,9 @@ class AggregationListResource(resources.ResourceMixin, Resource):
         return self.to_json(aggregations)
 
     @staticmethod
-    def create_aggregation_from_form(sketch: Sketch, form: forms.AggregationExploreForm):
+    def create_aggregation_from_form(
+        sketch: Sketch, form: forms.AggregationExploreForm
+    ):
         """Creates an aggregation from form data.
 
         Args:

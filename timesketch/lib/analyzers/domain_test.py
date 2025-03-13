@@ -1,6 +1,5 @@
 """Tests for DomainPlugin."""
 
-
 from unittest import mock
 
 from timesketch.lib.analyzers import domain

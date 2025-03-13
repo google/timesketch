@@ -111,9 +111,7 @@ class HTMLStoryExporter(interface.StoryExporter):
                     )
 
                     charts.append(chart)
-                    return_strings.append(
-                        f'<div id="vis{chart_number:d}"></div>'
-                    )
+                    return_strings.append(f'<div id="vis{chart_number:d}"></div>')
                     chart_number += 1
 
             elif line_type == "dataframe":

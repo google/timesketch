@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for GCP Service Key usage."""
 
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 

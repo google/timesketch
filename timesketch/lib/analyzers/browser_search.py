@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for browser search."""
 
-
 import logging
 import re
 
@@ -132,9 +131,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
             except UnicodeDecodeError as exception:
                 decoded_url = decoded_url.decode("utf-8", errors="replace")
                 logger.warning(
-                    "Unable to decode URL: {:s} with error: {!s}".format(
-                        url, exception
-                    )
+                    "Unable to decode URL: {:s} with error: {!s}".format(url, exception)
                 )
 
         return decoded_url

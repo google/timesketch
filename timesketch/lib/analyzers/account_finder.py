@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for feature extraction."""
 
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 

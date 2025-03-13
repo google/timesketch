@@ -1,6 +1,5 @@
 """Tests for DomainsPlugin."""
 
-
 from unittest import mock
 
 from flask import current_app

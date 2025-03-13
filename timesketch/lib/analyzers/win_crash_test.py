@@ -1,6 +1,5 @@
 """Tests for WinCrashPlugin."""
 
-
 import unittest
 from unittest import mock
 

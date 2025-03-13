@@ -1,6 +1,5 @@
 """Tests for BrowserSearchPlugin."""
 
-
 from unittest import mock
 
 from timesketch.lib.analyzers import browser_search

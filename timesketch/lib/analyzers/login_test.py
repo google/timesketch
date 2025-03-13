@@ -1,6 +1,5 @@
 """Tests for LoginPlugin."""
 
-
 from timesketch.lib.analyzers import login
 from timesketch.lib.testlib import BaseTest
 

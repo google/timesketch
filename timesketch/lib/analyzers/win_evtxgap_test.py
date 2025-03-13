@@ -1,6 +1,5 @@
 """Tests for EvtxGapPlugin."""
 
-
 import unittest
 from unittest import mock
 

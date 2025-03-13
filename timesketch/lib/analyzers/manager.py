@@ -14,7 +14,6 @@
 """This file contains a class for managing analyzers."""
 
 
-
 class AnalysisManager:
     """The analyzer manager."""
 
@@ -56,8 +55,8 @@ class AnalysisManager:
 
             if not dependency_set:
                 raise KeyError(
-                        "Unable to build dependency tree, there is a circular "
-                        "dependency somewhere"
+                    "Unable to build dependency tree, there is a circular "
+                    "dependency somewhere"
                 )
 
             dependency_tree.append(dependency_set)
@@ -141,9 +140,7 @@ class AnalysisManager:
         """
         analyzer_name = analyzer_class.NAME.lower()
         if analyzer_name in cls._class_registry:
-            raise KeyError(
-                f"Class already set for name: {analyzer_class.NAME:s}."
-            )
+            raise KeyError(f"Class already set for name: {analyzer_class.NAME:s}.")
         cls._class_registry[analyzer_name] = analyzer_class
 
     @classmethod

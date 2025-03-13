@@ -1,6 +1,5 @@
 """Tests for SSHSessionizerSketchPlugin"""
 
-
 from unittest import mock
 
 from timesketch.lib.analyzers.ssh_sessionizer import SSHSessionizerSketchPlugin

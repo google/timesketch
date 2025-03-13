@@ -14,7 +14,6 @@
 """This file contains a class for managing story exporters."""
 
 
-
 class StoryExportManager:
     """The story export manager."""
 
@@ -74,9 +73,7 @@ class StoryExportManager:
         exporter_type = exporter_class.EXPORT_FORMAT.lower()
         if exporter_type in cls._class_registry:
             raise KeyError(
-                "Class already set for name: {:s}.".format(
-                    exporter_class.EXPORT_FORMAT
-                )
+                "Class already set for name: {:s}.".format(exporter_class.EXPORT_FORMAT)
             )
 
         cls._class_registry[exporter_type] = exporter_class

@@ -1,6 +1,5 @@
 """Tests for SigmaPlugin."""
 
-
 from unittest import mock
 
 from timesketch.lib.analyzers import sigma_tagger
