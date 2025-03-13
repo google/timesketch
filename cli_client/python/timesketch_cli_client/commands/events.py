@@ -14,7 +14,7 @@
 """Commands for events."""
 
 import sys
-from typing import Optional, Union, List
+from typing import Optional
 import click
 
 
