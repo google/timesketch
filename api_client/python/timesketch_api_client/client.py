@@ -525,19 +525,18 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
-    def get_aggregator_info(self, name="", as_pandas=False):
+    def get_aggregator_info(self, name="", as_dict=True):
         """Returns information about available aggregators.
 
         Args:
             name: String with the name of an aggregator. If the name is not
                 provided, a list with all aggregators is returned.
-            as_pandas: Boolean indicating that the results will be returned
-                as a Pandas DataFrame instead of a list of dicts.
+            as_dict: Boolean indicating that the results will be returned
+                as a dict.
 
         Returns:
             A list with dict objects with the information about aggregators,
-            unless as_pandas is set, then the function returns a DataFrame
-            object.
+            unless as_dict is set to False, then the function returns a DataFrame object.
         """
         resource_uri = "aggregation/info/"
 
@@ -549,7 +548,7 @@ class TimesketchApi:
         else:
             response_json = self.fetch_resource_data(resource_uri)
 
-        if not as_pandas:
+        if as_dict:
             return response_json
 
         lines = []
@@ -672,19 +671,18 @@ class TimesketchApi:
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
 
-    def list_sigmarules(self, as_pandas=False):
+    def list_sigmarules(self, as_dict=True):
         """Fetches Sigma rules from the database.
         Fetches all Sigma rules stored in the database on the system
         and returns a list of SigmaRule objects of the rules.
 
         Args:
-            as_pandas: Boolean indicating that the results will be returned
-                as a Pandas DataFrame instead of a list of SigmaRuleObjects.
+            as_dict: Boolean indicating that the results will be returned a list of SigmaRuleObjects as a dict or Pandas DataFrame.
 
         Returns:
             - List of Sigme rule object instances
             or
-            - a pandas Dataframe with all rules if as_pandas is True.
+            - a pandas Dataframe with all rules if as_dict is False.
 
         Raises:
             ValueError: If no rules are found.
@@ -695,7 +693,7 @@ class TimesketchApi:
         if not response:
             raise ValueError("No rules found.")
 
-        if as_pandas:
+        if not as_dict:
             return pandas.DataFrame.from_records(response.get("objects"))
 
         for rule_dict in response["objects"]:

@@ -712,7 +712,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         event_id: The datastore event id as string
         annotation_type: The annotation type (comment,label) as string
         annotation_id: The annotation id as integer
-        currentSearchNode_id: The search node id as string
     """
 
     def __init__(self):
@@ -727,9 +726,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         )
         self.parser.add_argument(
             "annotation_id", type=int, required=False, location="args"
-        )
-        self.parser.add_argument(
-            "currentSearchNode_id", type=int, required=False, location="args"
         )
 
     def _get_sketch(self, sketch_id):
@@ -863,8 +859,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 toggle = False
                 if "__ts_star" in form.annotation.data:
                     toggle = True
-                if "__ts_hidden" in form.annotation.data:
-                    toggle = True
+
                 if form.remove.data:
                     toggle = True
 
@@ -1002,8 +997,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
     @login_required
     def delete(self, sketch_id):
-        """Handles delete request of annotations (currently only comments are
-            supported).
+        """Handles delete request of annotations.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -1013,12 +1007,16 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             otherwise
         """
 
-        # Retrieve request arguments
-        args = self.parser.parse_args()
-        annotation_type = args.get("annotation_type")
-        annotation_id = args.get("annotation_id")
-        event_id = args.get("event_id")
-        searchindex_id = args.get("searchindex_id")
+        form = forms.EventAnnotationForm.build(request)
+        if not form.validate_on_submit():
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
+
+        annotation = form.annotation.data
+        annotation_type = form.annotation_type.data
+        annotation_id = form.annotation_id.data
+        event_id = form.event_id.data
+        searchindex_id = form.searchindex_id.data
+
         # In case the index is part of an alias index, the alias name is used as searchindex
         searchindex_id, searchindex_name = self.datastore.resolve_index_alias(
             searchindex_id
@@ -1026,10 +1024,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         sketch = self._get_sketch(sketch_id)
 
-        current_search_node = None
-        _search_node_id = args.get("currentSearchNode_id")
-        if _search_node_id:
-            current_search_node = self._get_current_search_node(_search_node_id, sketch)
         searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
 
         # Retrieve the event from the SQL database based on the event_id
@@ -1044,7 +1038,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 "No event found with the id: " "{0!s}".format(event_id),
             )
 
-        if "comment" in annotation_type:
+        if annotation_type == "comment":
             # Retrieve the comment attached to the event bases on the comment
             # id supplied in the request
             comment = event.get_comment(annotation_id)
@@ -1072,17 +1066,26 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                         "__ts_comment",
                         toggle=True,
                     )
-                    if current_search_node:
-                        current_search_node.remove_label("__ts_comment")
 
                 return HTTP_STATUS_CODE_OK
 
-        else:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Annotation type needs to be a comment, "
-                "not {0!s}".format(annotation_type),
+        elif annotation_type == "label":
+            self.datastore.set_label(
+                searchindex_name,
+                event_id,
+                sketch.id,
+                current_user.id,
+                annotation,
+                remove=True,
+                toggle=True,
             )
+
+            event.remove_label(annotation)
+
+            db_session.add(event)
+            db_session.commit()
+
+            return HTTP_STATUS_CODE_OK
 
         return (
             HTTP_STATUS_CODE_BAD_REQUEST,

@@ -1124,16 +1124,11 @@ class Search(resource.SketchResource):
 
         for result in self._raw_response.get("objects", []):
             source = result.get("_source", {})
-            if not return_fields or "_id" in return_field_list:
-                source["_id"] = result.get("_id")
-            if not return_fields or "_type" in return_field_list:
-                source["_type"] = result.get("_type")
-            if not return_fields or "_index" in return_field_list:
-                source["_index"] = result.get("_index")
-            if not return_fields or "_source" in return_field_list:
-                source["_source"] = timelines.get(result.get("__ts_timeline_id"))
-            if not return_fields or "__ts_timeline_id" in return_field_list:
-                source["_source"] = timelines.get(result.get("__ts_timeline_id"))
+
+            # Remove internal Timesketch fields
+            for key in list(source.keys()):
+                if key.startswith("__"):
+                    source.pop(key)
 
             return_list.append(source)
 

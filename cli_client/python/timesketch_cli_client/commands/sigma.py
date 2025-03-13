@@ -47,7 +47,7 @@ def list_sigmarules(ctx, header, columns):
 
     output = ctx.obj.output_format
     try:
-        sigma_rules = api_client.list_sigmarules(as_pandas=True)
+        sigma_rules = api_client.list_sigmarules()
     except ValueError as e:
         click.echo(e)
         sys.exit(1)

@@ -392,10 +392,6 @@ class Sketch(resource.BaseResource):
         Returns:
             A search.Search object that has been saved to the database.
         """
-        logger.warning(
-            "View objects will be deprecated shortly, use search.Search "
-            "and call the search_obj.save() function to save a search."
-        )
 
         if not (query_string or query_dsl):
             raise ValueError("You need to supply a query string or a dsl")
@@ -749,10 +745,6 @@ class Sketch(resource.BaseResource):
             Returns a None if neither view_id or view_name is defined or if
             the search does not exist.
         """
-        logger.warning(
-            "This function is about to be deprecated, use "
-            "get_saved_search() instead."
-        )
 
         return self.get_saved_search(search_id=view_id, search_name=view_name)
 
@@ -865,10 +857,6 @@ class Sketch(resource.BaseResource):
         Returns:
             List of search object (instance of search.Search).
         """
-        logger.warning(
-            "This function will soon be deprecated, use list_saved_searches() "
-            "instead."
-        )
         return self.list_saved_searches()
 
     def list_saved_searches(self):
@@ -993,9 +981,9 @@ class Sketch(resource.BaseResource):
         query_filter=None,
         view=None,
         return_fields=None,
-        as_pandas=False,
         max_entries=None,
         file_name="",
+        as_dict=False,
         as_object=False,
     ):
         """Explore the sketch.
@@ -1008,8 +996,6 @@ class Sketch(resource.BaseResource):
             return_fields (str): A comma separated string with a list of fields
                 that should be included in the response. Optional and defaults
                 to None.
-            as_pandas (bool): Optional bool that determines if the results
-                should be returned back as a dictionary or a Pandas DataFrame.
             max_entries (int): Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
@@ -1019,15 +1005,15 @@ class Sketch(resource.BaseResource):
                 returned back as a dict or a pandas DataFrame. The ZIP file
                 will contain a METADATA file and a CSV with the results from
                 the query.
+            as_dict (bool): Optional bool that determines whether the
+                function will return a dict.
             as_object (bool): Optional bool that determines whether the
-                function will return a search object back instead of raw
-                results.
+                function will return a search object back.
 
         Returns:
-            Dictionary with query results, a pandas DataFrame if as_pandas
-            is set to True or a search.Search object if as_object is set
-            to True. If file_name is provided then no value will be
-            returned.
+            pandas DataFrame with query results, a dict if as_dict is set to
+            True or a search.Search object if as_object is set to True.
+            If file_name is provided then no value will be returned.
 
         Raises:
             ValueError: if unable to query for the results.
@@ -1044,10 +1030,6 @@ class Sketch(resource.BaseResource):
         search_obj = search.Search(sketch=self)
 
         if view:
-            logger.warning(
-                "View objects will be deprecated soon, use search.Search "
-                "objects instead."
-            )
             search_obj.from_saved(view.id)
 
         else:
@@ -1064,10 +1046,10 @@ class Sketch(resource.BaseResource):
         if file_name:
             return search_obj.to_file(file_name)
 
-        if as_pandas:
-            return search_obj.to_pandas()
+        if as_dict:
+            return search_obj.to_dict()
 
-        return search_obj.to_dict()
+        return search_obj.to_pandas()
 
     def list_available_analyzers(self):
         """Returns a list of available analyzers."""
@@ -1108,14 +1090,6 @@ class Sketch(resource.BaseResource):
             If the analyzer runs successfully return back an AnalyzerResult
             object.
         """
-        # TODO: Deprecate this function.
-        logger.warning(
-            "This function is about to be deprecated, please use the "
-            "`.run_analyzer()` function of a timeline object instead. "
-            "This function does not support all functionality of the newer "
-            "implementation in the timeline object."
-        )
-
         if self.is_archived():
             raise error.UnableToRunAnalyzer(
                 "Unable to run an analyzer on an archived sketch."
@@ -1320,12 +1294,6 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError("Unable to store an aggregator on an archived sketch.")
 
-        # TODO: Deprecate this function.
-        logger.warning(
-            "This function is about to be deprecated, please use the "
-            "`.save()` function of an aggregation object instead"
-        )
-
         aggregator_obj = self.run_aggregator(aggregator_name, aggregator_parameters)
         aggregator_obj.name = name
         aggregator_obj.description = description
@@ -1436,18 +1404,67 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
+    def remove_label_event(self, event, label_name):
+        """Remove a label from an event.
+
+        Args:
+            event: JSON object representing an event.
+            label_name: String to label the event with.
+
+        Returns:
+            Dictionary with query results.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to label events in an archived sketch.")
+
+        form_data = {
+            "annotation": label_name,
+            "annotation_type": "label",
+            "event_id": event.get("_id"),
+            "searchindex_id": event.get("_index"),
+        }
+        resource_url = "{0:s}/sketches/{1:d}/event/annotate/".format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.delete(resource_url, json=form_data)
+        return error.get_response_json(response, logger)
+
+    def build_event(self, event):
+        event = [
+            {
+                "_id": event.get("_id"),
+                "_index": event.get("_index"),
+                "_type": "generic_event",
+            }
+        ]
+
+        return event
+
+    def star_events(self, events):
+        for event in events["objects"]:
+
+            if "__ts_star" in event.get("_source").get("label"):
+                continue
+
+            event = self.build_event(event)
+
+            self.label_events(event, "__ts_star")
+
+    def remove_star_events(self, events):
+        for event in events["objects"]:
+
+            if not "__ts_star" in event.get("_source").get("label"):
+                continue
+
+            self.remove_label_event(event, "__ts_star")
+
     def untag_events(self, events, tags_to_remove: list):
         """Removes a list of tags from a list of events.
 
         The upper limit is 500 (events or tags) based on the API.
 
         Args:
-            events: events dict. Must have the structure:
-                "events": [
-                {
-                    "_id": event_id,
-                    "_index": index,
-                }
+            events: events dict.
             tags_to_remove: list of tags to remove
 
         Returns:
@@ -1458,7 +1475,7 @@ class Sketch(resource.BaseResource):
 
         form_data = {
             "tags_to_remove": tags_to_remove,
-            "events": events,
+            "events": events["objects"],
         }
         resource_url = "{0:s}/sketches/{1:d}/event/untag/".format(
             self.api.api_root, self.id
@@ -1527,6 +1544,8 @@ class Sketch(resource.BaseResource):
         if not all(isinstance(x, str) for x in tags):
             raise ValueError("Tags need to be a list of strings.")
 
+        events = [self.build_event(event)[0] for event in events["objects"]]
+
         form_data = {
             "tag_string": json.dumps(tags),
             "events": events,
@@ -1536,21 +1555,10 @@ class Sketch(resource.BaseResource):
             self.api.api_root, self.id
         )
         response = self.api.session.post(resource_url, json=form_data)
-        status = error.check_return_status(response, logger)
-        if not status:
-            return {
-                "number_of_events": len(events),
-                "number_of_events_with_tag": 0,
-                "success": status,
-            }
-
-        response_json = error.get_response_json(response, logger)
-        meta = response_json.get("meta", {})
-        meta["total_number_of_events_sent_by_client"] = len(events)
-        return meta
+        return error.get_response_json(response, logger)
 
     def search_by_label(
-        self, label_name, return_fields=None, max_entries=None, as_pandas=False
+        self, label_name, return_fields=None, max_entries=None, as_dict=True
     ):
         """Searches for all events containing a given label.
 
@@ -1563,7 +1571,7 @@ class Sketch(resource.BaseResource):
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
-            as_pandas: Optional bool that determines if the results should
+            as_dict: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
 
         Returns:
@@ -1571,11 +1579,6 @@ class Sketch(resource.BaseResource):
         """
         if self.is_archived():
             raise RuntimeError("Unable to search for labels in an archived sketch.")
-
-        logger.warning(
-            "This function will be deprecated soon. Use the search.Search "
-            "object instead and add a search.LabelChip to search for labels."
-        )
 
         query = {
             "nested": {
@@ -1594,7 +1597,7 @@ class Sketch(resource.BaseResource):
             query_dsl=json.dumps({"query": query}),
             return_fields=return_fields,
             max_entries=max_entries,
-            as_pandas=as_pandas,
+            as_dict=as_dict,
         )
 
     def add_scenario(self, uuid=None, dfiq_id=None, name=None):

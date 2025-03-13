@@ -17,18 +17,17 @@ from __future__ import unicode_literals
 
 from flask_wtf import FlaskForm
 from wtforms import widgets
-from wtforms.fields import BooleanField
-from wtforms.fields import HiddenField
-from wtforms.fields import IntegerField
-from wtforms.fields import PasswordField
-from wtforms.fields import RadioField
-from wtforms.fields import SelectField
-from wtforms.fields import SelectMultipleField
-from wtforms.fields import StringField
-from wtforms.validators import DataRequired
-from wtforms.validators import Length
-from wtforms.validators import Optional
-from wtforms.validators import Regexp
+from wtforms.fields import (
+    BooleanField,
+    HiddenField,
+    IntegerField,
+    PasswordField,
+    RadioField,
+    SelectField,
+    SelectMultipleField,
+    StringField,
+)
+from wtforms.validators import DataRequired, Length, Optional, Regexp
 
 
 class MultiDict(dict):
@@ -257,9 +256,12 @@ class EventAnnotationForm(BaseForm):
     """Generic form to handle event annotation. E.g. comment and labels."""
 
     annotation = StringField("Annotation", validators=[DataRequired()])
+    annotation_id = IntegerField("Annotation ID", validators=[Optional()])
     annotation_type = StringField("Type", validators=[DataRequired()])
-    events = StringField("Events", validators=[DataRequired()])
+    events = StringField("Events", validators=[Optional()])
     remove = BooleanField("Remove", false_values={False, "false", ""}, default=False)
+    event_id = StringField("Event ID", validators=[Optional()])
+    searchindex_id = StringField("Searchindex ID", validators=[Optional()])
 
 
 class StoryForm(BaseForm):

@@ -48,7 +48,7 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
-        events = sketch.explore("*", as_pandas=True)
+        events = sketch.explore("*")
         self.assertions.assertEqual(len(events), 4)
 
     def test_large_upload_jsonl(self):
@@ -84,7 +84,7 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(search_obj.table), 4123)
 
         # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:foobarjson", as_pandas=True)
+        events = sketch.explore("data_type:foobarjson")
         self.assertions.assertEqual(len(events), 4123)
 
     def test_upload_jsonl_mapping_exceeds_limit(self):
@@ -183,9 +183,7 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(search_obj.table), 74251)
 
         # check that the number of events is correct with a different method
-        events = sketch.explore(
-            "data_type:foobarjsonverlarge", as_pandas=True, max_entries=100000
-        )
+        events = sketch.explore("data_type:foobarjsonverlarge", max_entries=100000)
         self.assertions.assertEqual(len(events), 74251)
 
     def test_large_upload_csv(self):
@@ -230,7 +228,7 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(search_obj.table), 3251)
 
         # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:foobarcsv", as_pandas=True)
+        events = sketch.explore("data_type:foobarcsv")
         self.assertions.assertEqual(len(events), 3251)
 
     def test_large_upload_csv_over_flush_limit(self):
@@ -283,7 +281,7 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(search_obj.table), 73251)
 
         # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:73kcsv", as_pandas=True, max_entries=100000)
+        events = sketch.explore("data_type:73kcsv", max_entries=100000)
         self.assertions.assertEqual(len(events), 73251)
 
     def test_csv_different_timestamps(self):
@@ -343,15 +341,15 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(search_obj.table), 3)
 
         # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:timestamptest", as_pandas=True)
+        events = sketch.explore("data_type:timestamptest")
         self.assertions.assertEqual(len(events), 3)
 
         # check that events with no timestamp
-        events = sketch.explore("data_type:no_timestamp", as_pandas=True)
+        events = sketch.explore("data_type:no_timestamp")
         self.assertions.assertEqual(len(events), 1)
 
         # check number of events with no datetime
-        events = sketch.explore("data_type:no_datetime", as_pandas=True)
+        events = sketch.explore("data_type:no_datetime")
         self.assertions.assertEqual(len(events), 1)
 
 

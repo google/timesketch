@@ -543,7 +543,7 @@ To add tags to multiple events:
 
 ```python
 # first search for the events that you want to search for
-events = sketch.explore('foobarsearchterm')
+events = sketch.explore('foobarsearchterm', as_dict=True)
 events['objects']
 for event in events['objects']:
  print(event.get('_id'))
