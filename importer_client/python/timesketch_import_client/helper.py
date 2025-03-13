@@ -92,7 +92,7 @@ class ImportHelper:
                 "Unable to read config file since it does not produce a dict"
             )
 
-        if not all([isinstance(x, dict) for x in config.values()]):
+        if not all(isinstance(x, dict) for x in config.values()):
             raise ValueError(
                 "The config needs to a dict that contains other dict attributes."
             )

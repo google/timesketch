@@ -96,7 +96,7 @@ output_format = tabular
             config_obj.save_config(fw.name)
 
             fw.seek(0)
-            with open(fw.name, "r") as fh:
+            with open(fw.name, "r", encoding="utf-8") as fh:
                 data = fh.read()
 
         lines = [x.strip() for x in data.split("\n") if x]
