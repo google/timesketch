@@ -33,8 +33,24 @@ sketch_group.add_command(attribute_command.attribute_group)
 
 @sketch_group.command("list", help="List all sketches.")
 @click.pass_context
-def list_sketches(ctx):
-    """List all sketches."""
+def list_sketches(ctx: click.Context):
+    """List all sketches from the API.
+
+    Retrieves a list of sketches from the API associated with the given context.
+    The output is formatted based on the 'output_format' setting within the context's object.
+    Supported output formats are 'json' and 'text'.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the API client and output format.
+
+    Raises:
+        click.exceptions.Exit: If an unsupported output format is specified.
+
+    Outputs:
+        JSON: If the output format is 'json', a JSON representation of the sketches is printed.
+        Text: If the output format is 'text', a formatted table of sketches is printed.
+        Error message: If an unsupported output format is specified, an error message is printed.
+    """
     api_client = ctx.obj.api
     output = ctx.obj.output_format
     sketches = []
