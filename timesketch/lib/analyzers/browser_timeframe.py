@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for browser timeframe."""
 
-
 import collections
 import pandas as pd
 
@@ -10,7 +9,7 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 
 
-def get_list_of_consecutive_sequences(hour_list):
+def get_list_of_consecutive_sequences(hour_list: list):
     """Returns a list of runs from a list of numbers.
 
     Args:
@@ -48,7 +47,7 @@ def get_list_of_consecutive_sequences(hour_list):
     return runs
 
 
-def fix_gap_in_list(hour_list):
+def fix_gap_in_list(hour_list: list):
     """Returns a list with gaps in it fixed.
 
     Args:
@@ -90,7 +89,7 @@ def fix_gap_in_list(hour_list):
     return sorted(hours)
 
 
-def get_active_hours(frame):
+def get_active_hours(frame: pd.DataFrame):
     """Return a list of the hours with the most activity within a frame.
 
     Args:

@@ -22,6 +22,7 @@ The model has the following permissions: "read", "write" and "delete".
 
 import codecs
 import json
+from typing import Optional
 
 
 from flask_login import current_user
@@ -37,6 +38,7 @@ from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
+from timesketch.models.user import Group, User
 
 
 class AccessControlEntry:
@@ -107,11 +109,11 @@ class AccessControlMixin:
                 AccessControlEntry,
                 BaseModel,
             ),
-            dict(
-                __tablename__="%s_accesscontrolentry" % self.__tablename__,
-                parent_id=Column(Integer, ForeignKey("%s.id" % self.__tablename__)),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": "%s_accesscontrolentry" % self.__tablename__,
+                "parent_id": Column(Integer, ForeignKey("%s.id" % self.__tablename__)),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.AccessControlEntry)
 
@@ -148,7 +150,13 @@ class AccessControlMixin:
             cls.AccessControlEntry.parent,
         )
 
-    def _get_ace(self, permission, user=None, group=None, check_group=True):
+    def _get_ace(
+        self,
+        permission: str,
+        user: Optional[User] = None,
+        group: Optional[Group] = None,
+        check_group: bool = True,
+    ):
         """Get the specific access control entry for the user and permission.
 
         Args:

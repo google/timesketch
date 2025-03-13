@@ -156,10 +156,7 @@ class SketchResourceTest(BaseTest):
         self.login()
 
         # Create sketch to test with
-        data = dict(
-            name="test_archive_sketch",
-            description="test_archive_sketch",
-        )
+        data = {"name": "test_archive_sketch", "description": "test_archive_sketch"}
         response = self.client.post(
             "/api/v1/sketches/",
             data=json.dumps(data, ensure_ascii=False),
@@ -242,10 +239,10 @@ class SketchResourceTest(BaseTest):
         self.login()
 
         # Create sketch to test with
-        data = dict(
-            name="test_delete_archive_sketch",
-            description="test_delete_archive_sketch",
-        )
+        data = {
+            "name": "test_delete_archive_sketch",
+            "description": "test_delete_archive_sketch",
+        }
         response = self.client.post(
             "/api/v1/sketches/",
             data=json.dumps(data, ensure_ascii=False),

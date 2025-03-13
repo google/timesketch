@@ -1,7 +1,7 @@
 """Index analyzer plugin for sigma."""
 
-
 import logging
+from typing import Optional
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -29,7 +29,13 @@ class SigmaPlugin(interface.BaseAnalyzer):
         self._rule = kwargs.get("rule")
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def run_sigma_rule(self, query, rule_title, tag_list=None, rule_id=None):
+    def run_sigma_rule(
+        self,
+        query: str,
+        rule_title: str,
+        tag_list: Optional[list] = None,
+        rule_id: Optional[str] = None,
+    ):
         """Runs a sigma rule and applies the tags from the rule.
 
         This method is only intended to be called if the Status of a rule is

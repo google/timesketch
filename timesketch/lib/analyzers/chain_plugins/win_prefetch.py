@@ -29,7 +29,7 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
         target = base_event.source.get("executable", "")
         return target.lower().endswith(".exe")
 
-    def get_chained_events(self, base_event):
+    def get_chained_events(self, base_event: object):
         """Yields an event that is chained or linked to the base event.
 
         Args:

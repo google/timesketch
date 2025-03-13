@@ -1,6 +1,5 @@
 """SSH sessionizing sketch analyzer plugin."""
 
-
 import re
 
 from timesketch.lib.analyzers import manager
@@ -81,7 +80,7 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             ssh_match = SSH_PATTERN.match(event_message)
             if ssh_match:
                 process_id = ssh_match.group("process_id")
-                if process_id in started_sessions_ids.keys():
+                if process_id in started_sessions_ids:
                     self.annotateEvent(event, started_sessions_ids[process_id])
 
         if self.session_num:

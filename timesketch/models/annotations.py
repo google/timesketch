@@ -107,13 +107,11 @@ class LabelMixin:
                 Label,
                 BaseModel,
             ),
-            dict(
-                __tablename__=f"{self.__tablename__:s}_label",
-                parent_id=Column(
-                    Integer, ForeignKey(f"{self.__tablename__:s}.id")
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_label",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Label)
 
@@ -220,13 +218,11 @@ class CommentMixin:
                 Comment,
                 BaseModel,
             ),
-            dict(
-                __tablename__=f"{self.__tablename__:s}_comment",
-                parent_id=Column(
-                    Integer, ForeignKey(f"{self.__tablename__:s}.id")
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_comment",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Comment)
 
@@ -324,13 +320,11 @@ class StatusMixin:
                 Status,
                 BaseModel,
             ),
-            dict(
-                __tablename__=f"{self.__tablename__:s}_status",
-                parent_id=Column(
-                    Integer, ForeignKey(f"{self.__tablename__:s}.id")
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_status",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Status)
 
@@ -402,13 +396,11 @@ class GenericAttributeMixin:
                 GenericAttribute,
                 BaseModel,
             ),
-            dict(
-                __tablename__=f"{self.__tablename__:s}_genericattribute",
-                parent_id=Column(
-                    Integer, ForeignKey(f"{self.__tablename__:s}.id")
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_genericattribute",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.GenericAttribute)
 

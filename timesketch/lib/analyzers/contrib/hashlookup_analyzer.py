@@ -32,7 +32,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         self.hashlookup_url = kwargs.get("hashlookup_url")
         self.total_event_counter = 0
         self.request_set = set()
-        self.result_dict = dict()
+        self.result_dict = {}
 
     @staticmethod
     def get_kwargs():
@@ -61,7 +61,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         Returns:
             JSON of Hashlookup's results.
         """
-        results = requests.get(f"{self.hashlookup_url}sha256/{hash_value}")
+        results = requests.get(f"{self.hashlookup_url}sha256/{hash_value}", timeout=30)
 
         result_loc = results.json()
         if "message" not in result_loc and results.status_code != 200:
@@ -90,7 +90,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         event.add_emojis([emojis.get_emoji("VALIDATE")])
         event.commit()
 
-    def query_hashlookup(self, query, return_fields):
+    def query_hashlookup(self, query: str, return_fields: list):
         """Get event from timesketch, request Hashlookup and mark event.
 
         Args:

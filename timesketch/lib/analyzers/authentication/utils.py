@@ -863,6 +863,7 @@ class BruteForceUtils(BaseAuthenticationUtils):
 
         Args:
             authsummaries (List[AuthSummary]): A list of AuthSummary objects.
+            output (AnalyzerOutput): An AnalyzerOutput object.
 
         Returns:
             AnalyzerOutput: An AnalyzerOutput object containing brute for analyzer

@@ -1,6 +1,5 @@
 """Sequenced activity sessionizing sketch analyzer plugin."""
 
-
 from timesketch.lib.analyzers import sessionizer
 
 
@@ -39,7 +38,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         """
         if self.session_type is None or self.session_type == "":
             raise ValueError("No session_type provided.")
-        if self.event_seq is None or self.event_seq == []:
+        if self.event_seq is None or not self.event_seq:
             raise ValueError("No event_seq provided.")
         # If return_fields in None, then all attributes are provided.
         if self.return_fields is not None:

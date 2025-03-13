@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for feature extraction."""
 
-
 import logging
 
 
@@ -162,7 +161,11 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
 
     @staticmethod
     def _get_attribute_value(
-        current_val, extracted_value, keep_multi, merge_values, type_list
+        current_val: list,
+        extracted_value: list,
+        keep_multi: bool,
+        merge_values: bool,
+        type_list: bool,
     ):
         """Returns the attribute value as it should be stored.
 
@@ -203,7 +206,7 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
             return ",".join(extracted_value)
         return extracted_value[0]
 
-    def extract_feature(self, name, config):
+    def extract_feature(self, name: str, config: dict):
         """Extract features from events.
 
         Args:

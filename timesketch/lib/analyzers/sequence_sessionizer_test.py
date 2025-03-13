@@ -1,6 +1,6 @@
 """Tests for SequenceSessionizerSketchPlugin."""
 
-
+from typing import Optional
 from unittest import mock
 
 from timesketch.lib.analyzers.psexec_sessionizers import (
@@ -530,7 +530,13 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             )
 
 
-def _create_mock_event(datastore, event_id, quantity, attributes, time_diffs=None):
+def _create_mock_event(
+    datastore: MockDataStore,
+    event_id: str,
+    quantity: int,
+    attributes: list,
+    time_diffs: Optional[list] = None,
+):
     """Loads in the datastore mock events that based on the given arguments.
     Args:
         datastore: An instance of MockDataStore.

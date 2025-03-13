@@ -1,6 +1,5 @@
 """Sketch analyzer plugin for login and logoff events."""
 
-
 import logging
 
 
@@ -47,7 +46,7 @@ def parse_evtx_logoff_event(string_list):
     return attributes
 
 
-def parse_evtx_logon_event(string_list, string_parsed):
+def parse_evtx_logon_event(string_list: list, string_parsed: dict):
     """Parse logon events and return a count of event processed.
 
     Args:

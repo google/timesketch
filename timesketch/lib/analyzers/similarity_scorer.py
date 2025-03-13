@@ -129,7 +129,7 @@ class SimilarityScorer(interface.BaseAnalyzer):
         total_num_events = len(minhashes)
         for key, minhash in minhashes.items():
             event_id, index_name = key
-            event_dict = dict(_id=event_id, _index=index_name)
+            event_dict = {"_id": event_id, "_index": index_name}
             event = interface.Event(event_dict, self.datastore)
             score = similarity.calculate_score(lsh, minhash, total_num_events)
             attributes_to_add = {"similarity_score": score}

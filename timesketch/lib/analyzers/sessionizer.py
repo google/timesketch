@@ -1,6 +1,5 @@
 """Sessionizing sketch analyzer plugin."""
 
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -25,7 +24,7 @@ class SessionizerSketchPlugin(interface.BaseAnalyzer):
     NAME = "sessionizer"
     DISPLAY_NAME = "Time based sessions"
     DESCRIPTION = (
-        "Events are grouped in sessions based on the time difference" " between them"
+        "Events are grouped in sessions based on the time difference between them"
     )
 
     # TODO max_time_diff_micros should be configurable

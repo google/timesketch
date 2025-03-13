@@ -16,7 +16,7 @@ class ChromeDownloadFilesystemChainPlugin(interface.BaseChainPlugin):
     SEARCH_QUERY = 'data_type:"chrome:history:file_downloaded"'
     EVENT_FIELDS = ["full_path"]
 
-    def get_chained_events(self, base_event):
+    def get_chained_events(self, base_event: object):
         """Yields an event that is chained or linked to the base event.
 
         Args:

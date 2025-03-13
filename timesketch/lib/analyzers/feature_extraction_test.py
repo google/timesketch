@@ -18,8 +18,8 @@ import re
 import textwrap
 from typing import List, Dict
 
-import yaml
 from unittest import mock
+import yaml
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers.feature_extraction import (
@@ -203,7 +203,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         config_file = os.path.join("data", "regex_features.yaml")
         self.assertTrue(os.path.isfile(config_file))
 
-        with open(config_file) as fh:
+        with open(config_file, "r", encoding="utf-8") as fh:
             config = yaml.safe_load(fh)
 
         self.assertIsInstance(config, dict)

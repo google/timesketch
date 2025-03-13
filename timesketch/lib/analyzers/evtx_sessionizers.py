@@ -2,6 +2,7 @@
 log."""
 
 import re
+from typing import Generator
 import opensearchpy.exceptions
 
 from timesketch.lib.analyzers import manager
@@ -33,7 +34,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
         ]
         last_login_time = 0
         session_num = 0
-        login_events = dict()
+        login_events = {}
         processed = False
 
         while not processed:
@@ -51,7 +52,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
         msg = "Sessionizing completed, number of sessions created: {0:d}"
         return msg.format(session_num)
 
-    def processSessions(self, events, session_num, start_events):
+    def processSessions(self, events: Generator, session_num: int, start_events: dict):
         """Iterate over the event stream, checking the event ID to find the
         type of event. Add session ID attribute to the start / end events. Add
         a view for each session.

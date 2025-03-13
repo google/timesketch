@@ -118,10 +118,10 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
         try:
             response = self.city(ip_address)
         except geoip2.errors.AddressNotFoundError:
-            logging.debug(f"IP address {ip_address} not found.")
+            logging.debug("IP address %s not found.", ip_address)
             return None
         except maxminddb.InvalidDatabaseError as error:
-            logging.error(f"Error while geolocating {ip_address} - {error}")
+            logging.error("Error while geolocating %s - %s", ip_address, error)
             return None
 
         latitude = response.location.latitude
@@ -179,10 +179,10 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         try:
             response = self.city(ip_address)
         except geoip2.errors.AddressNotFoundError:
-            logging.debug(f"IP address {ip_address} not found.")
+            logging.debug("IP address %s not found.", ip_address)
             return None
         except geoip2.errors.GeoIP2Error as error:
-            logging.error(f"Error while geolocating {ip_address} - {error}")
+            logging.error("Error while geolocating %s - %s", ip_address, error)
             return None
 
         latitude = response.location.latitude

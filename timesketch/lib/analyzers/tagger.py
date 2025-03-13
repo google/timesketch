@@ -60,7 +60,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         ]
         return tags_kwargs
 
-    def tagger(self, name, config):
+    def tagger(self, name: str, config: dict):
         """Tag and add emojis to events.
 
         Args:

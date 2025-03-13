@@ -227,13 +227,13 @@ def validate_api_token():
     # Sending a request to Google to verify that the access token
     # is valid, to be able to validate the session.
     data = {"access_token": token}
-    bearer_token_response = requests.post(TOKEN_URI, data=data)
+    bearer_token_response = requests.post(TOKEN_URI, data=data, timeout=60)
     if bearer_token_response.status_code != HTTP_STATUS_CODE_OK:
         return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate access token.")
     bearer_token_json = bearer_token_response.json()
 
     data = {"id_token": id_token}
-    token_response = requests.post(TOKEN_URI, data=data)
+    token_response = requests.post(TOKEN_URI, data=data, timeout=60)
     token_json = token_response.json()
 
     verified = token_json.get("email_verified", False)
@@ -361,9 +361,7 @@ def google_openid_connect():
 
     if error:
         current_app.logger.error(f"OAuth2 flow error: {error}")
-        return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST, f"OAuth2 flow error: {error!s}"
-        )
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST, f"OAuth2 flow error: {error!s}")
 
     try:
         code = request.args["code"]
