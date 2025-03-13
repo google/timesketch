@@ -397,7 +397,7 @@ class TimesketchApi:
                     ) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the repsonse for request '{2:s}'"
+                    "[{0:d}/{1:d}] Parsing the response for request '{2:s}'"
                     "failed. Trying again...".format(
                         retry_count, self.DEFAULT_RETRY_COUNT, resource_url
                     )
@@ -411,7 +411,7 @@ class TimesketchApi:
                     ) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the JSON repsonse for request "
+                    "[{0:d}/{1:d}] Parsing the JSON response for request "
                     "'{2:s}' failed. Trying again...".format(
                         retry_count, self.DEFAULT_RETRY_COUNT, resource_url
                     )
@@ -436,9 +436,13 @@ class TimesketchApi:
         Raises:
             RuntimeError: If response does not contain an 'objects' key after
                 DEFAULT_RETRY_COUNT attempts.
+            ValueError: If name is empty
         """
         if not description:
             description = name
+
+        if not name:
+            raise ValueError("Sketch name cannot be empty")
 
         retry_count = 0
         objects = None
