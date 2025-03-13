@@ -301,7 +301,7 @@ class ImportStreamer(object):
             if retry_count >= self.DEFAULT_RETRY_LIMIT:
                 raise RuntimeError(
                     "Error uploading data: [{0:d}] {1!s} {2!s}, "
-                    "index {3:s}".format(
+                    "index {3!s}".format(
                         response.status_code,
                         response.reason,
                         response.text,
