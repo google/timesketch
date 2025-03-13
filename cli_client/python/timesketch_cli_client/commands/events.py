@@ -14,6 +14,7 @@
 """Commands for events."""
 
 import sys
+from typing import Optional
 import click
 
 
@@ -139,25 +140,28 @@ def add_event(ctx, message, date, attributes, timestamp_desc):
     help="Tag to remove from the event.",
 )
 @click.pass_context
-def tag_mod(ctx, timeline_id, event_id, tag):
-    """Remove a Tag from a event.
+def tag_mod(
+    ctx: click.Context, timeline_id: int, event_id: str, tag: Optional[str] = None
+) -> None:
+    """Removes a tag from an event or lists the event's current tags.
 
-    This can be used to remove a tag from an event.
-
-    If no tag is specified, the command will return the
-    current tags for the event.
+    Removes a specified tag from an event within a timeline. If no tag is provided,
+    the command lists the event's current tags.
 
     Args:
-        ctx: Click context object.
-        timeline_id: The ID of the timeline.
-        event_id: The ID of the event.
-        tag: The tag to remove from the event.
+        ctx (click.Context): The Click context object, containing the sketch.
+        timeline_id (int): The ID of the timeline containing the event.
+        event_id (str): The ID of the event to modify.
+        tag (Optional[str]): The tag to remove from the event, or a comma-separated
+                             list of tags. If None, lists the event's tags.
 
-    Returns:
-        HTTP response from the API server.
+    Errors:
+        * If the specified timeline or event does not exist.
+        * If the specified event does not exist.
 
-    Raises:
-        KeyError: If the event does not exist.
+    Outputs:
+        Text: If a tag is specified, a message indicating the tag was removed.
+              If no tag is specified, the event's current tags are printed.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)

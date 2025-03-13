@@ -42,13 +42,13 @@ def analysis_group():
     help="The id of the timeline you want to analyze.",
 )
 @click.pass_context
-def run_analyzer(ctx, analyzer_name, timeline_id):
+def run_analyzer(ctx: click.Context, analyzer_name: str, timeline_id: int):
     """Run an analyzer on one or more timelines.
 
     Args:
-        ctx: Click CLI context object.
-        analyzer_name: Name of the analyzer to run.
-        timeline_id: Timeline ID of the timeline to analyze.
+        ctx (click.Context) (required): Click CLI context object.
+        analyzer_name (str) (required): Name of the analyzer to run.
+        timeline_id (int) (required): Timeline ID of the timeline to analyze.
     """
     sketch = ctx.obj.sketch
     timelines = []
@@ -87,11 +87,11 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
 
 @analysis_group.command("list")
 @click.pass_context
-def list_analyzers(ctx):
+def list_analyzers(ctx: click.Context):
     """List all available analyzers.
 
     Args:
-        ctx: Click CLI context object.
+        ctx (click.Context) (required): Click CLI context object.
         output-format: Output format to use. Available values:
             'json','text' or 'tabular'
     """
@@ -143,14 +143,16 @@ def list_analyzers(ctx):
     help="Show the results of an analyzer run dependent from the original one.",
 )
 @click.pass_context
-def analyzer_results(ctx, analyzer_name, timeline_id, show_dependent):
+def analyzer_results(
+    ctx: click.Context, analyzer_name: str, timeline_id: int, show_dependent: bool
+):
     """Show the results of an analyzer run on one or more timelines.
 
     Args:
-        ctx: Click CLI context object.
-        analyzer_name: Name of the analyzer that was run.
-        timeline_id: Timeline ID of the timeline to analyze.
-        show_dependent: Show dependent analyzers. (default: False)
+        ctx (click.Context) (required): Click CLI context object.
+        analyzer_name (str) (required): Name of the analyzer that was run.
+        timeline_id (int) (required): Timeline ID of the timeline to analyze.
+        show_dependent (bool) (optional): Show dependent analyzers. (default: False)
             using output_format json will always include the dependent analyzers
     """
     sketch = ctx.obj.sketch
