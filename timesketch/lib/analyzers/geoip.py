@@ -43,7 +43,7 @@ class GeoIPClientError(Exception):
     """An error raised by the GeoIP client"""
 
 
-class GeoIpClientAdapter(object):
+class GeoIpClientAdapter:
     """Base adapter interface for a third party geolocation service."""
 
     def __enter__(self):
@@ -118,10 +118,10 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
         try:
             response = self.city(ip_address)
         except geoip2.errors.AddressNotFoundError:
-            logging.debug("IP address {0} not found.".format(ip_address))
+            logging.debug("IP address %s not found.", ip_address)
             return None
         except maxminddb.InvalidDatabaseError as error:
-            logging.error("Error while geolocating {0} - {1}".format(ip_address, error))
+            logging.error("Error while geolocating %s - %s", ip_address, error)
             return None
 
         latitude = response.location.latitude
@@ -179,10 +179,10 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         try:
             response = self.city(ip_address)
         except geoip2.errors.AddressNotFoundError:
-            logging.debug("IP address {0} not found.".format(ip_address))
+            logging.debug("IP address %s not found.", ip_address)
             return None
         except geoip2.errors.GeoIP2Error as error:
-            logging.error("Error while geolocating {0} - {1}".format(ip_address, error))
+            logging.error("Error while geolocating %s - %s", ip_address, error)
             return None
 
         latitude = response.location.latitude
@@ -307,7 +307,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                     "GeoIP client must return 5 fields: "
                     "<iso_code, latitude, longitude, country_name, "
                     "city_name>. "
-                    " Number of fields returned: {0:d}".format(len(response))
+                    " Number of fields returned: {:d}".format(len(response))
                 )
                 continue
 
@@ -315,7 +315,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
 
             if flag_emoji is None:
                 logger.error(
-                    "Invalid ISO code {0} encountered for IP {1}.".format(
+                    "Invalid ISO code {} encountered for IP {}.".format(
                         iso_code, ip_address
                     )
                 )

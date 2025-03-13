@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 """This file contains an interface for chain analyzer plugins."""
+
 import abc
 
 from timesketch.lib import emojis
 
 
-class BaseChainPlugin(object):
+class BaseChainPlugin:
     """A base plugin for the chain analyzer.
 
     This is an interface for the chain analyzer plugins.

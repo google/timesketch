@@ -1,7 +1,5 @@
 """Psexec sequence activity sessionizing sketch analyzer plugins."""
 
-from __future__ import unicode_literals
-
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import sequence_sessionizer
 

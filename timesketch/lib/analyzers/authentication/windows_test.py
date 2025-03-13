@@ -19,7 +19,7 @@ import json
 import logging
 import textwrap
 
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.authentication import windows
 from timesketch.lib.analyzers.interface import AnalyzerOutput

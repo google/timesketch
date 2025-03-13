@@ -13,7 +13,6 @@
 # limitations under the License.
 """Definitions for Timesketch."""
 
-from __future__ import unicode_literals
 
 # HTTP status codes
 HTTP_STATUS_CODE_OK = 200

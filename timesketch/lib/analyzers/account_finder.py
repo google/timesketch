@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for feature extraction."""
 
-from __future__ import unicode_literals
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -51,7 +49,7 @@ class AccountFinderSketchPlugin(interface.BaseAnalyzer):
             self.output.result_status = "SUCCESS"
             self.output.result_priority = "LOW"
             self.output.result_summary = (
-                "{0:s} identified use of the following accounts: {1!s}".format(
+                "{:s} identified use of the following accounts: {!s}".format(
                     self.DISPLAY_NAME, accounts_found
                 )
             )
@@ -59,7 +57,7 @@ class AccountFinderSketchPlugin(interface.BaseAnalyzer):
 
         self.output.result_status = "SUCCESS"
         self.output.result_priority = "NOTE"
-        self.output.result_summary = "{0:s} was unable to extract any accounts.".format(
+        self.output.result_summary = "{:s} was unable to extract any accounts.".format(
             self.DISPLAY_NAME
         )
         return str(self.output)

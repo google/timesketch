@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements HTTP request handler."""
 
-from __future__ import unicode_literals
 
 from flask import Blueprint
 from flask import redirect
@@ -33,7 +32,7 @@ def redirect_view(sketch_id, view_id):
     Returns:
         Redirect to new URL scheme.
     """
-    return redirect("/sketch/{0:d}/explore?view={1:d}".format(sketch_id, view_id))
+    return redirect(f"/sketch/{sketch_id:d}/explore?view={view_id:d}")
 
 
 @spa_views.route("/", defaults={"path": ""})

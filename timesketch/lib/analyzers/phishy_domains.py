@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for domains."""
 
-from __future__ import unicode_literals
-
 import collections
 import difflib
 
@@ -104,7 +102,7 @@ class PhishyDomainsSketchPlugin(interface.BaseAnalyzer):
 
         return minhash
 
-    def _get_similar_domains(self, domain, domain_dict):
+    def _get_similar_domains(self, domain: str, domain_dict: dict):
         """Compare a domain to a list of domains and return similar domains.
 
         This function takes a domain and a dict object that contains
@@ -140,7 +138,7 @@ class PhishyDomainsSketchPlugin(interface.BaseAnalyzer):
         if domain in domain_dict:
             return similar
 
-        if any(domain.endswith(".{0:s}".format(x)) for x in domain_dict):
+        if any(domain.endswith(f".{x:s}") for x in domain_dict):
             return similar
 
         # We want to get rid of the TLD extension of the domain.
@@ -277,10 +275,10 @@ class PhishyDomainsSketchPlugin(interface.BaseAnalyzer):
                 emojis_to_add.append(phishing_emoji)
                 tags_to_add.append("phishy-domain")
                 similar_text_list = [
-                    "{0:s} [score: {1:.2f}]".format(phishy_domain, score)
+                    f"{phishy_domain:s} [score: {score:.2f}]"
                     for phishy_domain, score in similar_domains
                 ]
-                text = "Domain {0:s} is similar to {1:s}".format(
+                text = "Domain {:s} is similar to {:s}".format(
                     domain, ", ".join(similar_text_list)
                 )
                 if any(domain.endswith(x) for x in self.domain_scoring_exclude_domains):
@@ -310,7 +308,7 @@ class PhishyDomainsSketchPlugin(interface.BaseAnalyzer):
                     query_string=('tag:"phishy-domain" AND NOT tag:"known-domain"'),
                 )
 
-        return ("{0:d} potentially phishy domains discovered.").format(
+        return ("{:d} potentially phishy domains discovered.").format(
             similar_domain_counter
         )
 

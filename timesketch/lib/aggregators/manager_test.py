@@ -13,13 +13,12 @@
 # limitations under the License.
 """Tests for aggregator manager."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.aggregators import manager
 
 
-class MockAggregator(object):
+class MockAggregator:
     """Mock aggregator class."""
 
     NAME = "MockAggregator"
@@ -29,7 +28,7 @@ class MockAggregator(object):
     SUPPORTED_CHARTS = frozenset()
 
 
-class MockAggregator2(object):
+class MockAggregator2:
     """Mock aggregator class."""
 
     NAME = "MockAggregatorAgain"

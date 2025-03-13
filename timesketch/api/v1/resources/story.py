@@ -40,7 +40,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
     """Resource to get all stories for a sketch or to create a new story."""
 
     @login_required
-    def get(self, sketch_id):
+    def get(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Args:
@@ -66,7 +66,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
         return self.to_json(stories)
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -104,7 +104,7 @@ class StoryResource(resources.ResourceMixin, Resource):
     """Resource to get a story."""
 
     @staticmethod
-    def _export_story(story, sketch_id, export_format="markdown"):
+    def _export_story(story: Story, sketch_id: int, export_format: str = "markdown"):
         """Returns a story in a format as requested in export_format.
 
         Args:
@@ -138,7 +138,7 @@ class StoryResource(resources.ResourceMixin, Resource):
             return exporter.export_story()
 
     @login_required
-    def get(self, sketch_id, story_id):
+    def get(self, sketch_id: int, story_id: int):
         """Handles GET request to the resource.
 
         Args:
@@ -169,21 +169,21 @@ class StoryResource(resources.ResourceMixin, Resource):
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the ID in "
-                "the story ({1:d})".format(sketch.id, story.sketch_id),
+                "Sketch ID ({:d}) does not match with the ID in "
+                "the story ({:d})".format(sketch.id, story.sketch_id),
             )
 
         # Only allow editing if the current user is the author.
         # This is needed until we have proper collaborative editing and
         # locking implemented.
-        meta = dict(is_editable=False)
+        meta = {"is_editable": False}
         if current_user == story.user:
             meta["is_editable"] = True
 
         return self.to_json(story, meta=meta)
 
     @login_required
-    def post(self, sketch_id, story_id):
+    def post(self, sketch_id: int, story_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -207,8 +207,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the ID in "
-                "the story ({1:d})".format(sketch.id, story.sketch_id),
+                "Sketch ID ({:d}) does not match with the ID in "
+                "the story ({:d})".format(sketch.id, story.sketch_id),
             )
 
         if not sketch.has_permission(current_user, "write"):
@@ -240,7 +240,7 @@ class StoryResource(resources.ResourceMixin, Resource):
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
-    def delete(self, sketch_id, story_id):
+    def delete(self, sketch_id: int, story_id: int):
         """Handles DELETE request to the resource.
 
         Args:
@@ -261,8 +261,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         # Check that this timeline belongs to the sketch
         if story.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the story"
-                "sketch ID ({1:d})".format(sketch.id, story.sketch_id)
+                "The sketch ID ({:d}) does not match with the story"
+                "sketch ID ({:d})".format(sketch.id, story.sketch_id)
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
