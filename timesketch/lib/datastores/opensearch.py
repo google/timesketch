@@ -633,77 +633,80 @@ class OpenSearchDataStore:
 
     # pylint: disable=too-many-arguments
 
-    def search_stream(
-        self,
-        sketch_id: Optional[int] = None,
-        query_string: Optional[str] = None,
-        query_filter: Optional[Dict] = None,
-        query_dsl: Optional[Dict] = None,
-        indices: Optional[list] = None,
-        return_fields: Optional[list] = None,
-        enable_scroll: bool = True,
-        timeline_ids: Optional[list] = None,
-    ):
-        """Search OpenSearch. This will take a query string from the UI
-        together with a filter definition. Based on this it will execute the
-        search request on OpenSearch and get result back.
+    ddef search_stream(
+    self,
+    sketch_id=None,
+    query_string=None,
+    query_filter=None,
+    query_dsl=None,
+    indices=None,
+    return_fields=None,
+    enable_scroll=True,
+    timeline_ids=None,
+):
+    """Search OpenSearch. This will take a query string from the UI
+    together with a filter definition. Based on this it will execute the
+    search request on OpenSearch and get result back.
 
-        Args :
-            sketch_id: Integer of sketch primary key
-            query_string: Query string
-            query_filter: Dictionary containing filters to apply
-            query_dsl: Dictionary containing OpenSearch DSL query
-            indices: List of indices to query
-            return_fields: List of fields to return
-            enable_scroll: Boolean determining whether scrolling is enabled.
-            timeline_ids: Optional list of IDs of Timeline objects that should
-                be queried as part of the search.
+    Args:
+        sketch_id: Integer of sketch primary key
+        query_string: Query string
+        query_filter: Dictionary containing filters to apply
+        query_dsl: Dictionary containing OpenSearch DSL query
+        indices: List of indices to query
+        return_fields: List of fields to return
+        enable_scroll: Boolean determining whether scrolling is enabled.
+        timeline_ids: Optional list of IDs of Timeline objects that should
+            be queried as part of the search.
 
-        Yields:
-            Generator of event documents in JSON format
-        """
-        # Make sure that the list of index names is uniq.
-        indices = list(set(indices))
+    Returns:
+        Generator of event documents in JSON format
+    """
+    # Make sure that the list of index names is unique.
+    indices = list(set(indices))
 
-        METRICS["search_requests"].labels(type="stream").inc()
+    METRICS["search_requests"].labels(type="stream").inc()
 
-        if not query_filter.get("size"):
-            query_filter["size"] = self.DEFAULT_STREAM_LIMIT
+    if not query_filter.get("size"):
+        query_filter["size"] = self.DEFAULT_STREAM_LIMIT
 
-        if not query_filter.get("terminate_after"):
-            query_filter["terminate_after"] = self.DEFAULT_STREAM_LIMIT
+    if not query_filter.get("terminate_after"):
+        query_filter["terminate_after"] = self.DEFAULT_STREAM_LIMIT
 
-        result = self.search(
-            sketch_id=sketch_id,
-            query_string=query_string,
-            query_dsl=query_dsl,
-            query_filter=query_filter,
-            indices=indices,
-            return_fields=return_fields,
-            enable_scroll=enable_scroll,
-            timeline_ids=timeline_ids,
-        )
+    # Perform the initial search
+    result = self.search(
+        sketch_id=sketch_id,
+        query_string=query_string,
+        query_dsl=query_dsl,
+        query_filter=query_filter,
+        indices=indices,
+        return_fields=return_fields,
+        enable_scroll=enable_scroll,
+        timeline_ids=timeline_ids,
+    )
 
-        if enable_scroll:
-            scroll_id = result["_scroll_id"]
-            scroll_size = result["hits"]["total"]
-        else:
-            scroll_id = None
-            scroll_size = 0
+    # Check if scrolling is enabled and initialize scroll_id and scroll_size
+    scroll_id = result.get("_scroll_id")
+    scroll_size = result["hits"]["total"]
 
-        # Elasticsearch version 7.x returns total hits as a dictionary.
-        # TODO: Refactor when version 6.x has been deprecated.
-        if isinstance(scroll_size, dict):
-            scroll_size = scroll_size.get("value", 0)
+    # Elasticsearch version 7.x returns total hits as a dictionary.
+    if isinstance(scroll_size, dict):
+        scroll_size = scroll_size.get("value", 0)
 
-        yield from result["hits"]["hits"]
+    # Yield the initial batch of results
+    for event in result["hits"]["hits"]:
+        yield event
 
-        while scroll_size > 0:
-            # pylint: disable=unexpected-keyword-arg
-            result = self.client.scroll(scroll_id=scroll_id, scroll="5m")
-            scroll_id = result["_scroll_id"]
-            scroll_size = len(result["hits"]["hits"])
-            yield from result["hits"]["hits"]
+    # Continue scrolling until there are no more results
+    while scroll_size > 0:
+        # Fetch the next batch of results using the scroll_id
+        result = self.client.scroll(scroll_id=scroll_id, scroll="5m")
+        scroll_id = result["_scroll_id"]
+        scroll_size = len(result["hits"]["hits"])
+
+        # Yield the new batch of results
+        for event in result["hits"]["hits"]:
+            yield event
 
     def get_filter_labels(self, sketch_id: int, indices: list):
         """Aggregate labels for a sketch.
