@@ -16,8 +16,8 @@
 import sys
 import time
 
-import click
 from typing import Optional
+import click
 from timesketch_import_client import importer as import_client
 
 

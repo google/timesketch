@@ -33,12 +33,17 @@ def list_attributes(ctx: click.Context):
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch and output format.
+        ctx (click.Context): The Click context object, containing the sketch and
+        output format.
 
     Outputs:
-        JSON: If the output format is 'json', the attributes are printed as a JSON object.
-        Text: If the output format is 'text' (or an unsupported format), the attributes are printed in a human-readable format, showing the name, ontology, and value of each attribute.
-        Error message: if no attributes are found, or an unsupported output type is selected.
+        JSON: If the output format is 'json', the attributes are printed as a
+        JSON object.
+        Text: If the output format is 'text' (or an unsupported format), the
+        attributes are printed in a human-readable format, showing the name,
+        ontology, and value of each attribute.
+        Error message: if no attributes are found, or an unsupported output
+        type is selected.
 
     Example:
         attribute list  # Lists all attributes for the current sketch.
@@ -78,10 +83,11 @@ def remove_attribute(ctx: click.Context, name: str, ontology: str):
         * If an unsupported output format is used.
 
     Outputs:
-        Text: A message indicating whether the attribute was successfully removed or not.
+        Text: A message indicating whether the attribute was successfully
+        removed or not.
 
     Example:
-        attribute remove --name "malware_family" --ontology "threat_intelligence"  # Removes the specified attribute.
+        attribute remove --name "malware_fam" --ontology "threat_intelligence"
     """
     sketch = ctx.obj.sketch
     if ctx.obj.output_format != "text":
@@ -114,10 +120,11 @@ def add_attribute(ctx: click.Context, name: str, ontology: str, value: str):
         value (str): The value of the attribute to add.
 
     Outputs:
-        Text: A message confirming the attribute was added, including its name, ontology, and value.
+        Text: A message confirming the attribute was added, including its name,
+        ontology, and value.
 
     Example:
-        attribute add --name ticket_id --ontology text --value 12345  # Adds an attribute to the sketch.
+        attribute add --name ticket_id --ontology text --value 12345
     """
     sketch = ctx.obj.sketch
     if ctx.obj.output_format != "text":

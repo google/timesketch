@@ -15,9 +15,8 @@
 
 import sys
 import json
-import click
-
 from typing import Optional, Literal
+import click
 
 
 @click.group("intelligence")
@@ -129,7 +128,7 @@ def add_intelligence(
     Reference: https://timesketch.org/guides/user/intelligence/
 
     Args:
-        ctx (click.Context) (required): Click context object.
+        ctx:  (click.Context) (required) Click context object.
         ioc: IOC value.
         ioc_type: Type of the intelligence. This is defined in the ontology file.
             If a string doesn't match any of the aforementioned IOC types,
