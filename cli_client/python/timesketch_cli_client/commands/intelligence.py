@@ -44,7 +44,8 @@ def list_intelligence(
     Args:
         ctx (click.Context) (required): Click context object.
         header (bool) (optional): Include header in output. (default is to show header)
-        columns (str) (optional): Comma separated list of columns to show. (default: ioc,type)
+        columns (str) (optional): Comma separated list of columns to show.
+            (default: ioc,type)
                 Other options: externalURI, tags
     """
 

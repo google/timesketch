@@ -38,19 +38,21 @@ def list_sketches(ctx: click.Context):
     """List all sketches from the API.
 
     Retrieves a list of sketches from the API associated with the given context.
-    The output is formatted based on the 'output_format' setting within the context's object.
+    The output is formatted based on the 'output_format' setting within the
+    context's object.
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the API client and output format.
+        ctx (click.Context): The Click context object, containing the API
+        client and output format.
 
     Raises:
         click.exceptions.Exit: If an unsupported output format is specified.
 
     Outputs:
-        JSON: If the output format is 'json', a JSON representation of the sketches is printed.
-        Text: If the output format is 'text', a formatted table of sketches is printed.
-        Error message: If an unsupported output format is specified, an error message is printed.
+        JSON: If the output format is 'json', a JSON representation is printed.
+        Text: If the output format is 'text', a formatted table is printed.
+        Error message: If an unsupported output format is specified
     """
     api_client = ctx.obj.api
     output = ctx.obj.output_format
@@ -81,7 +83,8 @@ def describe_sketch(ctx: click.Context) -> None:
     If the output format is 'json', all sketch attributes are displayed.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch and output format.
+        ctx (click.Context): The Click context object, containing the sketch
+        and output format.
 
     Raises:
         * If an unsupported output format is specified.
@@ -127,7 +130,8 @@ def create_sketch(
     Args:
         ctx (click.Context): The Click context object, containing the API client.
         name (str): The name of the new sketch.
-        description (Optional[str]): The description of the new sketch (defaults to the name if not provided).
+        description (Optional[str]): The description of the new sketch
+            (defaults to the name if not provided).
 
     Outputs:
         Text: A message confirming the sketch creation and its name.
@@ -149,7 +153,8 @@ def export_sketch(ctx: click.Context, filename: str) -> None:
     """Export a sketch to a file.
 
     Exports all events within the active sketch to a specified file.
-    The export process can take a significant amount of time depending on the sketch size.
+    The export process can take a significant amount of time depending on the
+    sketch size.
 
     Args:
         ctx (click.Context): The Click context object, containing the sketch.
@@ -159,7 +164,8 @@ def export_sketch(ctx: click.Context, filename: str) -> None:
         click.exceptions.Exit: If a ValueError occurs during the export process.
 
     Outputs:
-        Text: Messages indicating the start, progress, and completion of the export process, including the time taken.
+        Text: Messages indicating the start, progress, and completion of the
+            export process, including the time taken.
         Error message: If a ValueError occurs during export.
     """
     sketch = ctx.obj.sketch
@@ -188,13 +194,15 @@ def export_sketch(ctx: click.Context, filename: str) -> None:
 def archive_sketch(ctx: click.Context) -> None:
     """Archive a sketch.
 
-    Archives the active sketch, making it read-only and preventing further modifications.
+    Archives the active sketch, making it read-only and preventing further
+    modifications.
 
     Args:
         ctx (click.Context): The Click context object, containing the sketch.
 
     Raises:
-        click.exceptions.Exit: If the sketch is already archived or the user lacks permissions to archive it.
+        click.exceptions.Exit: If the sketch is already archived or the user
+        lacks permissions to archive it.
 
     Outputs:
         Text: A message indicating whether the sketch was successfully archived.
@@ -248,7 +256,8 @@ def unarchive_sketch(ctx: click.Context) -> None:
 def add_label(ctx: click.Context, label: str) -> None:
     """Add a label to a sketch.
 
-    Adds a specified label to the active sketch. Labels can be used to categorize and organize sketches.
+    Adds a specified label to the active sketch. Labels can be used to
+    categorize and organize sketches.
 
     Args:
         ctx (click.Context): The Click context object, containing the sketch.

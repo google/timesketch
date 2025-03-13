@@ -16,8 +16,8 @@
 import json
 import sys
 
+from typing import Tuple, Optional
 import click
-from typing import Tuple, List, Optional
 from tabulate import tabulate
 
 from timesketch_api_client import search
@@ -31,25 +31,29 @@ def format_output(
 ):
     """Formats search results from a search object into a specified output format.
 
-    Converts search results from an API Search object into a pandas DataFrame and then formats it
-    according to the provided output format, header visibility, and internal column visibility.
+    Converts search results from an API Search object into a pandas DataFrame
+    and then formats it according to the provided output format,
+    header visibility, and internal column visibility.
     Supported output formats are 'text', 'csv', 'json', 'jsonl', and 'tabular'.
 
     Args:
         search_obj (search.Search): The API Search object containing search results.
-        output_format (str): The desired output format ('text', 'csv', 'json', 'jsonl', or 'tabular').
+        output_format (str): The desired output format
+            ('text', 'csv', 'json', 'jsonl', or 'tabular').
         show_headers (bool): If True, includes headers in the output.
         show_internal_columns (bool): If True, includes internal columns in the output.
 
     Returns:
-        Optional[str]: The formatted search results as a string, or None if an error occurs.
-                      Returns None if the search_obj.to_pandas() returns an empty data frame.
+        The formatted search results as a string, or None if an error occurs.
+
+        Returns None if the search_obj.to_pandas() returns an empty data frame.
 
     Raises:
-        ImportError: If the 'tabulate' library is not installed and 'tabular' format is selected.
+        ImportError: If the 'tabulate' library is not installed and 'tabular'
+        format is selected.
 
     Example:
-        format_output(search_object, "csv", True, False)  # Formats search results as CSV with headers, excluding internal columns.
+        format_output(search_object, "csv", True, False)
     """
     dataframe = search_obj.to_pandas()
 
@@ -88,13 +92,15 @@ def format_output(
 def describe_query(search_obj: search.Search):
     """Displays details of a search query and its associated filter.
 
-    Prints the query string, return fields, and formatted filter associated with a search object.
+    Prints the query string, return fields, and formatted filter associated
+    with a search object.
 
     Args:
         search_obj (search.Search): The search object to describe.
 
     Outputs:
-        Text: The query string, return fields, and a formatted JSON representation of the query filter.
+        Text: The query string, return fields, and a formatted JSON
+        representation of the query filter.
 
     Example:
         describe_query(my_search_object)  # Prints details of the search object.
@@ -179,34 +185,43 @@ def search_group(
 ):
     """Searches and explores events within a Timesketch sketch.
 
-    Executes a search query against a Timesketch sketch, applying various filters and formatting the output.
-    Supports queries using OpenSearch query string syntax, date/time filtering, label filtering, and saved searches.
-    The output can be formatted as text, CSV, JSON, JSONL, or tabular, depending on the context's 'output_format' setting.
+    Executes a search query against a Timesketch sketch, applying various
+    filters and formatting the output.
+    Supports queries using OpenSearch query string syntax, date/time filtering,
+    label filtering, and saved searches.
+    The output can be formatted as text, CSV, JSON, JSONL, or tabular,
+    depending on the context's 'output_format' setting.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch and output format.
-        query (str): The search query in OpenSearch query string format (default: "*").
+        ctx (click.Context): The Click context object,
+            containing the sketch and output format.
+        query (str): The search query in OpenSearch query string format
+            (default: "*").
         times (Tuple[str, ...]): Datetime filters (e.g., "2020-01-01T12:00").
-        time_ranges (Tuple[Tuple[str, str], ...]): Datetime range filters (e.g., ("2020-01-01", "2020-02-01")).
+        time_ranges (Tuple[Tuple[str, str], ...]): Datetime range filters
+            (e.g., ("2020-01-01", "2020-02-01")).
         labels (Tuple[str, ...]): Filters events with the specified labels.
         header (bool): Toggles header information in the output (default: True).
         return_fields (str): Specifies which event fields to show.
-        order (str): Orders the output ("asc" or "desc") based on the time field (default: "asc").
+        order (str): Orders the output ("asc" or "desc") based on the time field
+            (default: "asc").
         limit (int): Limits the number of events to show (default: 40).
         saved_search (Optional[int]): Uses a saved search query and filters by its ID.
         describe (bool): Shows the query and filter details and then exits.
-        show_internal_columns (bool): Shows all columns, including Timesketch internal ones.
+        show_internal_columns (bool): Shows all columns, including Timesketch
+            internal ones.
 
     Raises:
-        click.ClickException: If an error occurs during date parsing or if a saved search is not found.
-        SystemExit: If an error occurs during date parsing.
+        * If an error occurs during date parsing or if a saved search is not found.
+        * If an error occurs during date parsing.
 
     Outputs:
-        Formatted search results in the specified output format (text, CSV, JSON, JSONL, or tabular).
+        Formatted search results in the specified output format
+            (text, CSV, JSON, JSONL, or tabular).
         If '--describe' is used, query details are printed instead.
 
     Example:
-        search --query "malware" --time-range "2023-01-01" "2023-01-31" --label "malware" --limit 10
+        search --query "mal" --time-range "2023-01-01" "2023-01-31" --limit 10
         search --saved-search 123 --describe
     """
     sketch = ctx.obj.sketch
@@ -302,7 +317,8 @@ def saved_searches_group():
 def list_saved_searches(ctx: click.Context):
     """Lists all saved searches within the current sketch.
 
-    Retrieves and displays a list of saved searches from the sketch, showing their IDs and names.
+    Retrieves and displays a list of saved searches from the sketch, showing
+    their IDs and names.
 
     Args:
         ctx (click.Context): The Click context object, containing the sketch.
@@ -335,7 +351,8 @@ def describe_saved_search(ctx: click.Context, search_id: int):
         click.ClickException: If the specified saved search ID does not exist.
 
     Outputs:
-        Text: The query string and formatted JSON representation of the query filter for the saved search.
+        Text: The query string and formatted JSON representation of the query
+        filter for the saved search.
 
     Example:
         saved-searches describe 123  # Describes the saved search with ID 123.

@@ -41,17 +41,22 @@ def describe_timeline(ctx: click.Context, timeline_id: int):
     """Displays detailed information about a timeline.
 
     Retrieves and displays details about a timeline within the current sketch,
-    including its name, index, status, event count, color, fields, and associated datasources.
+    including its name, index, status, event count, color, fields, and
+    associated datasources.
     The output format is determined by the context's 'output_format' setting.
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch and output format.
+        ctx (click.Context): The Click context object, containing the sketch
+            and output format.
         timeline_id (int): The ID of the timeline to describe.
 
     Outputs:
-        JSON: If the output format is 'json', the timeline's resource data is printed as JSON.
-        Text: If the output format is 'text' (or an unsupported format), detailed information about the timeline is printed in a human-readable format.
+        JSON: If the output format is 'json', the timeline's resource data
+            is printed as JSON.
+        Text: If the output format is 'text' (or an unsupported format),
+            detailed information about the timeline is printed in a
+            human-readable format.
         Error message: if the timeline id is not found.
 
     Example:
@@ -101,18 +106,22 @@ def describe_timeline(ctx: click.Context, timeline_id: int):
 def rename_timeline(ctx: click.Context, timeline_id: int, new_name: str):
     """Renames a timeline within the current sketch.
 
-    The timeline is identified by its integer ID, and its name is changed to the provided new name.
+    The timeline is identified by its integer ID, and its name is changed to
+    the provided new name.
     The output format is determined by the context's 'output_format' setting.
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch and output format.
+        ctx (click.Context): The Click context object, containing the
+            sketch and output format.
         timeline_id (int): The ID of the timeline to rename.
         new_name (str): The new name for the timeline.
 
     Outputs:
-        JSON: If the output format is 'json', the timeline's resource data is printed as JSON.
-        Text: If the output format is 'text' (or an unsupported format), the new timeline name is printed.
+        JSON: If the output format is 'json', the timeline's resource data is
+            printed as JSON.
+        Text: If the output format is 'text' (or an unsupported format),
+            the new timeline name is printed.
         Error message: if the timeline id is not found.
 
     Example:
