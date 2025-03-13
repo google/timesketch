@@ -183,7 +183,7 @@ class TestFeatureManager(BaseTest):
     @mock.patch("importlib.import_module")
     @mock.patch("pkgutil.iter_modules", return_value=[(None, "nl2q", False)])
     def test_load_llm_feature_duplicate(self, _, mock_import_module) -> None:
-        """Tests that load_llm_feature handles registration of duplciate features."""
+        """Tests that load_llm_feature handles registration of duplicate features."""
         dummy_module = types.ModuleType("dummy_module")
         setattr(dummy_module, "MockNl2qFeature", MockNl2qFeature)
         setattr(dummy_module, "DuplicateNl2qFeature", DuplicateNl2qFeature)

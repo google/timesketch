@@ -214,7 +214,7 @@ class AccessControlMixin:
 
     @property
     def groups(self):
-        """List what groups have acess to this sketch.
+        """List what groups have access to this sketch.
 
         Returns:
             Set of groups (instance of timesketch.models.user.Group)

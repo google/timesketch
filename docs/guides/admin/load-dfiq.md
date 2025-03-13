@@ -6,7 +6,7 @@ hide:
 
 This guide explains how to load DFIQ (Digital Forensics Investigative Questions)
 template data into Timesketch. DFIQ data provides a structured way to ask
-questions and provices approaches for digital forensic investigations.
+questions and provides approaches for digital forensic investigations.
 
 ## Steps
 

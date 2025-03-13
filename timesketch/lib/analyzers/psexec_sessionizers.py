@@ -17,7 +17,7 @@ DEST_SEQ = [
 class DestPsexecSessionizerSketchPlugin(
     sequence_sessionizer.SequenceSessionizerSketchPlugin
 ):
-    """Sessionizer for seqeunced psexec activity on the server."""
+    """Sessionizer for sequenced psexec activity on the server."""
 
     NAME = "dest_psexec_sessionizer"
     query = "PSEXEC OR PSEXESVC OR PSEXESVC.EXE"

@@ -200,7 +200,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_one_session(self):
-        """Test one sequence of events is finded and allocated as a session."""
+        """Test one sequence of events is found and allocated as a session."""
         index = "test_index"
         sketch_id = 1
         for seq_sessionizer_class in self.seq_sessionizer_classes:
@@ -414,7 +414,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_one_session(self):
-        """Test one sequence of events is finded and allocated as a session."""
+        """Test one sequence of events is found and allocated as a session."""
         index = "test_index"
         sketch_id = 1
         for seq_sessionizer_class in self.seq_sessionizer_classes:
@@ -440,7 +440,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_multiple_sessions(self):
-        """Test multiple sessions are finded and allocated correctly."""
+        """Test multiple sessions are found and allocated correctly."""
         index = "test_index"
         sketch_id = 1
         for seq_sessionizer_class in self.seq_sessionizer_classes:

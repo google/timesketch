@@ -312,7 +312,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         db_session.add(scenario_sql)
         db_session.commit()
 
-        # This does not work, since we don't have Scnearios linked down to
+        # This does not work, since we don't have Scenarios linked down to
         # Approaches anymore! We intentionally broke the link to facets to show
         # Questions in the frontend.
         # check_and_run_dfiq_analysis_steps(scenario_sql, sketch)
