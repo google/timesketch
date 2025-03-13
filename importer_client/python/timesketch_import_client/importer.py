@@ -423,7 +423,7 @@ class ImportStreamer(object):
             data["context"] = self._upload_context
 
         if file_size <= self._threshold_filesize:
-            with open(file_path, "rb", encoding="utf-8") as fh:
+            with open(file_path, "rb") as fh:
                 file_dict = {"file": fh}
                 response = self._sketch.api.session.post(
                     self._resource_url, files=file_dict, data=data
@@ -437,7 +437,7 @@ class ImportStreamer(object):
                 data["chunk_index"] = index
                 start = self._threshold_filesize * index
                 data["chunk_byte_offset"] = start
-                with open(file_path, "rb", encoding="utf-8") as fh:
+                with open(file_path, "rb") as fh:
                     fh.seek(start)
                     binary_data = fh.read(self._threshold_filesize)
                     file_stream = io.BytesIO(binary_data)
