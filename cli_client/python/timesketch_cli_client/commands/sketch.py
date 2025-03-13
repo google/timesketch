@@ -160,29 +160,65 @@ def unarchive_sketch(ctx):
         click.echo("Sketch unarchived")
 
 
-@sketch_group.command("add_label", help="Add a label to a sketch")
-@click.option("--label", required=True, help="Name of label to add.")
+@sketch_group.command(
+    "delete", help="Delete a sketch, default will only mark the sketch as deleted"
+)
+@click.option(
+    "--force_delete",
+    required=False,
+    is_flag=True,
+    help="Only execute the deletion if this is set.",
+)
+@click.option(
+    "--delete_metadata",
+    required=False,
+    is_flag=True,
+    help="Delete metadata associated with the sketch.",
+)
 @click.pass_context
-def add_label(ctx, label):
-    """Add a label to a sketch."""
+def delete_sketch(ctx, force_delete, delete_metadata):
+    """Delete a sketch.
+
+    By default, a sketch will not be deleted. To execute the deletion provide the
+    flag --execute.
+
+    To also delete the metadata to a sketch, provide the flag --delete_metadata.
+
+    Args:
+        execute: Only execute the deletion if this is set.
+        delete_metadata: Delete metadata associated with the sketch.
+    """
     sketch = ctx.obj.sketch
-    sketch.add_sketch_label(label)
-    click.echo("Label added")
 
+    # check if sketch exists
+    if not sketch:
+        click.echo("Error Sketch does not exist")
+        ctx.exit(1)
 
-@sketch_group.command("list_label", help="List labels of sketch")
-@click.pass_context
-def list_label(ctx):
-    """List labels of a sketch."""
-    sketch = ctx.obj.sketch
-    click.echo(sketch.labels)
+    # if sketch is archived, exit
+    if sketch.is_archived():
+        click.echo("Error Sketch is archived")
+        ctx.exit(1)
 
+    # Dryrun:
+    click.echo("Would delete the following things")
+    click.echo(
+        f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
+    )
 
-@sketch_group.command("remove_label", help="Remove a label from a sketch")
-@click.option("--label", required=True, help="Name of label to remove.")
-@click.pass_context
-def remove_label(ctx, label):
-    """Remove a label from a sketch."""
-    sketch = ctx.obj.sketch
-    sketch.remove_sketch_label(label)
-    click.echo("Label removed.")
+    for timeline in sketch.list_timelines():
+        click.echo(
+            f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
+        )
+
+    # for story in sketch.stories:
+    #    click.echo(
+    #        f"  Story: {story.id} {story.title} {story.description} {story.status} {story.created_at} {story.updated_at}" # pylint: disable=line-too-long
+    #    )
+
+    if force_delete:
+        click.echo("Will delete for real")
+        # breakpoint()
+        # sketch.delete()
+        sketch.z_delete(force_delete=force_delete)
+        click.echo("Sketch deleted")
