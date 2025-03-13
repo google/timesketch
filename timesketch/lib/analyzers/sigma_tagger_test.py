@@ -1,8 +1,6 @@
 """Tests for SigmaPlugin."""
 
-from __future__ import unicode_literals
-
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers import sigma_tagger
 from timesketch.lib.testlib import BaseTest

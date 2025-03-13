@@ -1,8 +1,6 @@
 """Tests for DomainPlugin."""
 
-from __future__ import unicode_literals
-
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers import domain
 from timesketch.lib.testlib import BaseTest

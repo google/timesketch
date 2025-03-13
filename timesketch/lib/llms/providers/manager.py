@@ -14,7 +14,7 @@
 """This file contains a class for managing Large Language Model (LLM) providers."""
 
 from flask import current_app
-from timesketch.lib.llms.interface import LLMProvider
+from timesketch.lib.llms.providers.interface import LLMProvider
 
 
 class LLMManager:
@@ -37,8 +37,7 @@ class LLMManager:
         Yields:
             A tuple of (provider_name, provider_class)
         """
-        for provider_name, provider_class in cls._class_registry.items():
-            yield provider_name, provider_class
+        yield from cls._class_registry.items()
 
     @classmethod
     def get_provider(cls, provider_name: str) -> type:
@@ -63,7 +62,7 @@ class LLMManager:
         """
         Create an instance of the provider for the given feature.
 
-        If a configuration exists for the feature in
+        If a valid configuration exists for the feature in
         current_app.config["LLM_PROVIDER_CONFIGS"], use it; otherwise,
         fall back to the configuration under the "default" key.
 
@@ -71,16 +70,23 @@ class LLMManager:
         the provider name.
         """
         llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
+
         if feature_name and feature_name in llm_configs:
             config_mapping = llm_configs[feature_name]
-        else:
-            config_mapping = llm_configs.get("default")
+            if config_mapping and len(config_mapping) == 1:
+                provider_name = next(iter(config_mapping))
+                provider_config = config_mapping[provider_name]
+                provider_class = cls.get_provider(provider_name)
+                # Check that provider specifies required fields
+                try:
+                    return provider_class(config=provider_config, **kwargs)
+                except ValueError:
+                    pass  # Fallback to default provider
 
+        # Fallback to default config
+        config_mapping = llm_configs.get("default")
         if not config_mapping or len(config_mapping) != 1:
-            raise ValueError(
-                "Configuration for the feature must specify exactly one provider."
-            )
-
+            raise ValueError("Default configuration must specify exactly one provider.")
         provider_name = next(iter(config_mapping))
         provider_config = config_mapping[provider_name]
 

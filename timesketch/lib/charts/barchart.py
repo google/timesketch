@@ -13,7 +13,6 @@
 # limitations under the License.
 """Barcharts."""
 
-from __future__ import unicode_literals
 
 import altair as alt
 
@@ -69,7 +68,7 @@ class HorizontalBarChart(interface.BaseChart):
         bars.encoding = alt.FacetedEncoding.from_dict(encoding)
 
         text = bars.mark_text(align="left", baseline="middle", dx=3).encode(
-            text="{0:s}:{1:s}".format(encoding["x"]["field"], encoding["x"]["type"])
+            text="{:s}:{:s}".format(encoding["x"]["field"], encoding["x"]["type"])
         )
 
         chart = bars + text

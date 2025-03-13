@@ -251,8 +251,8 @@ class ConfigAssistant:
             config_file_path = os.path.join(home_path, self.RC_FILENAME)
 
         if not os.path.isfile(config_file_path):
-            fw = open(config_file_path, "a")
-            fw.close()
+            with open(config_file_path, "a", encoding="utf-8") as fw:
+                fw.close()
 
         config = configparser.ConfigParser()
         try:
@@ -340,8 +340,8 @@ class ConfigAssistant:
         config = configparser.ConfigParser()
 
         if not os.path.isfile(file_path):
-            fw = open(file_path, "a")
-            fw.close()
+            with open(file_path, "a", encoding="utf-8") as fw:
+                fw.close()
 
         # Read in other sections in the config file as well.
         try:
@@ -379,7 +379,7 @@ class ConfigAssistant:
                 cred_key = cred_key.decode("utf-8")
             config[section]["cred_key"] = cred_key
 
-        with open(file_path, "w") as fw:
+        with open(file_path, "w", encoding="utf-8") as fw:
             config.write(fw)
 
     def set_config(self, name: Text, value: Any):
@@ -435,6 +435,7 @@ def get_client(
     except IOError as e:
         logger.error("Unable to load the config file, is it valid?")
         logger.error("Error: %s", e)
+        return None
 
     try:
         configure_missing_parameters(
@@ -452,6 +453,7 @@ def get_client(
             "message is %s",
             e,
         )
+        return None
     except IOError as e:
         logger.error("Unable to get a client, with error: %s", e)
         logger.error(
@@ -461,6 +463,7 @@ def get_client(
             "both files. Or you could have supplied a wrong "
             "password to undecrypt the token file."
         )
+        return None
 
 
 def configure_missing_parameters(
