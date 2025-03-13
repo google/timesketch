@@ -84,7 +84,7 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
     """Resource to parse a search template query string using Jinja2 template."""
 
     @login_required
-    def post(self, searchtemplate_id):
+    def post(self, searchtemplate_id: int):
         """Parse the query string template with Jinja2.
 
         This resource take a form with parameters to be parsed with the Jinja2
@@ -95,7 +95,7 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
         }
 
         Args:
-            searchtemplate_id: Primary key for a search template database model
+            searchtemplate_id: (int) Primary key for a search template database model
 
         Returns:
             Parsed and sanitized search query string.
@@ -164,7 +164,7 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         if not search_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to save the searchtemplate, the saved search ID is " "missing.",
+                "Unable to save the searchtemplate, the saved search ID is missing.",
             )
 
         search_obj = View.get_by_id(search_id)

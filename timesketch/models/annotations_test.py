@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the annotation models."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.testlib import BaseTest
 

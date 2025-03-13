@@ -15,6 +15,7 @@
 
 import hashlib
 
+from typing import Dict, List, Optional
 from flask import current_app
 import networkx as nx
 
@@ -68,7 +69,14 @@ class Graph:
             self._nodes[node.id] = node
         return node
 
-    def add_edge(self, source, target, label, event, attributes=None):
+    def add_edge(
+        self,
+        source: "Node",
+        target: "Node",
+        label: str,
+        event: dict,
+        attributes: Optional[Dict] = None,
+    ):
         """Add edge to graph.
 
         Args:
@@ -252,12 +260,12 @@ class BaseGraphPlugin:
     # TODO: Refactor this to reuse across analyzers and graphs.
     def event_stream(
         self,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        indices=None,
-        return_fields=None,
-        scroll=True,
+        query_string: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        indices: Optional[List] = None,
+        return_fields: Optional[List] = None,
+        scroll: bool = True,
     ):
         """Search OpenSearch.
 

@@ -196,7 +196,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
     """Resource to update sketch collaborators."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -227,9 +227,8 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             if not sketch.has_permission(user=current_user, permission=permission):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "The user does not have {0:s} permission on the sketch "
-                    "and therefore can't grant it to "
-                    "others".format(permission),
+                    f"The user does not have {permission:s} permission on the "
+                    "sketch and therefore can't grant it to others",
                 )
 
         for username in form.get("users", []):
@@ -251,7 +250,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             group = Group.query.filter_by(name=group_name).first()
 
             if not group:
-                logger.error("Group: {0:s} not found".format(group_name))
+                logger.error("Group: %s not found", group_name)
                 continue
 
             # Only add groups publicly visible or owned by the current user
@@ -264,7 +263,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         for username in form.get("remove_users", []):
             user = User.query.filter_by(username=username).first()
             permission_list = permissions or all_permissions.get(
-                "user/{0:s}".format(username), []
+                f"user/{username:s}", []
             )
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, user=user)
@@ -272,7 +271,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         for group_name in form.get("remove_groups", []):
             group = Group.query.filter_by(name=group_name).first()
             permission_list = permissions or all_permissions.get(
-                "group/{0:s}".format(group_name), []
+                f"group/{group_name:s}", []
             )
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, group=group)

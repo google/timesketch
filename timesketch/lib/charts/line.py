@@ -13,7 +13,6 @@
 # limitations under the License.
 """Line Chart object."""
 
-from __future__ import unicode_literals
 
 import altair as alt
 

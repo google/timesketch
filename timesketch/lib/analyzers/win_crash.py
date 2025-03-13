@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for Windows crash artefacts."""
 
-from __future__ import unicode_literals
-
 import re
 
 from timesketch.lib.analyzers import interface
@@ -95,9 +93,9 @@ class WinCrashSketchPlugin(interface.BaseAnalyzer):
         Returns:
             The OpenSearch query
         """
-        conditions = list()
+        conditions = []
         for element_list in elements.values():
-            conditions += ["({0})".format(" AND ".join(element_list))]
+            conditions += ["({})".format(" AND ".join(element_list))]
         return " OR ".join(conditions)
 
     def extract_filename(self, text):
@@ -114,7 +112,7 @@ class WinCrashSketchPlugin(interface.BaseAnalyzer):
             if match:
                 # The regex can match on full file paths and filenames,
                 # so only return the filename.
-                return min([m for m in match.groups() if m])
+                return min(m for m in match.groups() if m)
         return ""
 
     def mark_as_crash(self, event, filename):
@@ -183,7 +181,7 @@ class WinCrashSketchPlugin(interface.BaseAnalyzer):
 
         return (
             "Windows Crash analyzer completed, "
-            + "{0:d} crashed application{1:s} identified: {2:s}".format(
+            + "{:d} crashed application{:s} identified: {:s}".format(
                 len(filenames), "s" if len(filenames) > 1 else "", ", ".join(filenames)
             )
         )

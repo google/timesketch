@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for GCP Service Key usage."""
 
-from __future__ import unicode_literals
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -57,7 +55,7 @@ class GcpServiceKeySketchPlugin(interface.BaseAnalyzer):
             )
 
         return (
-            "GCP ServiceKey analyzer completed with " "{0:d} service key marked"
+            "GCP ServiceKey analyzer completed with " "{:d} service key marked"
         ).format(simple_counter)
 
 

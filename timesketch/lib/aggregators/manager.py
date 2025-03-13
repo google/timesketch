@@ -13,10 +13,8 @@
 # limitations under the License.
 """This file contains a class for managing aggregators."""
 
-from __future__ import unicode_literals
 
-
-class AggregatorManager(object):
+class AggregatorManager:
     """The aggregator manager."""
 
     _class_registry = {}
@@ -51,8 +49,8 @@ class AggregatorManager(object):
         """
         try:
             aggregator_class = cls._class_registry[aggregator_name.lower()]
-        except KeyError:
-            raise KeyError("No such chart type: {0:s}".format(aggregator_name.lower()))
+        except KeyError as e:
+            raise KeyError(f"No such chart type: {aggregator_name.lower():s}") from e
         return aggregator_class
 
     @classmethod
@@ -72,9 +70,7 @@ class AggregatorManager(object):
         """
         aggregator_name = aggregator_class.NAME.lower()
         if aggregator_name in cls._class_registry:
-            raise KeyError(
-                "Class already set for name: {0:s}.".format(aggregator_class.NAME)
-            )
+            raise KeyError(f"Class already set for name: {aggregator_class.NAME:s}.")
         cls._class_registry[aggregator_name] = aggregator_class
         if exclude_from_list:
             cls._exclude_registry.add(aggregator_name)

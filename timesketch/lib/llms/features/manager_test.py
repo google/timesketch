@@ -15,7 +15,7 @@
 
 import types
 from typing import Any
-import mock
+from unittest import mock
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.llms.features import manager
 from timesketch.models.sketch import Sketch
