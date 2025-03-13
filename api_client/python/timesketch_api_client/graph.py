@@ -308,11 +308,11 @@ class Graph(resource.SketchResource):
         self._parse_graph_dict(cache_dict)
         self._description = f"Graph created from the {plugin_name} plugin."
 
-    def from_saved(self, graph_id):  # pylint: disable=arguments-differ
+    def from_saved(self, graph_id):  # pylint: disable=arguments-renamed
         """Initialize the graph object from a saved graph.
 
         Args:
-            graph_id: integer value for the saved graph (primary key).
+            graph_id (int): integer value for the saved graph (primary key).
 
         Raises:
             ValueError: If issues came up during processing.
