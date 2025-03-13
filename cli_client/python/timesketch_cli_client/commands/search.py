@@ -16,24 +16,44 @@
 import json
 import sys
 
+from typing import Tuple, Optional
 import click
 from tabulate import tabulate
 
 from timesketch_api_client import search
 
 
-def format_output(search_obj, output_format, show_headers, show_internal_columns):
-    """Format search result output.
+def format_output(
+    search_obj: search.Search,
+    output_format: str,
+    show_headers: bool,
+    show_internal_columns: bool,
+):
+    """Formats search results from a search object into a specified output format.
+
+    Converts search results from an API Search object into a pandas DataFrame
+    and then formats it according to the provided output format,
+    header visibility, and internal column visibility.
+    Supported output formats are 'text', 'csv', 'json', 'jsonl', and 'tabular'.
 
     Args:
-        search_obj: API Search object.
-        output_format: The format to use (text, csv, json, jsonl, tabular).
-        show_headers: Boolean indicating if header row should be displayed.
-        show_internal_columns: Boolean indicating if internal columns should
-        be displayed.
+        search_obj (search.Search): The API Search object containing search results.
+        output_format (str): The desired output format
+            ('text', 'csv', 'json', 'jsonl', or 'tabular').
+        show_headers (bool): If True, includes headers in the output.
+        show_internal_columns (bool): If True, includes internal columns in the output.
 
     Returns:
-        Search results in the requested output format.
+        The formatted search results as a string, or None if an error occurs.
+
+        Returns None if the search_obj.to_pandas() returns an empty data frame.
+
+    Raises:
+        ImportError: If the 'tabulate' library is not installed and 'tabular'
+        format is selected.
+
+    Example:
+        format_output(search_object, "csv", True, False)
     """
     dataframe = search_obj.to_pandas()
 
@@ -69,8 +89,22 @@ def format_output(search_obj, output_format, show_headers, show_internal_columns
     return result
 
 
-def describe_query(search_obj):
-    """Print details of a search query and filter."""
+def describe_query(search_obj: search.Search):
+    """Displays details of a search query and its associated filter.
+
+    Prints the query string, return fields, and formatted filter associated
+    with a search object.
+
+    Args:
+        search_obj (search.Search): The search object to describe.
+
+    Outputs:
+        Text: The query string, return fields, and a formatted JSON
+        representation of the query filter.
+
+    Example:
+        describe_query(my_search_object)  # Prints details of the search object.
+    """
     filter_pretty = json.dumps(search_obj.query_filter, indent=2)
     click.echo(f"Query string: {search_obj.query_string}")
     click.echo(f"Return fields: {search_obj.return_fields}")
@@ -136,20 +170,60 @@ def describe_query(search_obj):
 @click.pass_context
 # pylint: disable=too-many-arguments
 def search_group(
-    ctx,
-    query,
-    times,
-    time_ranges,
-    labels,
-    header,
-    return_fields,
-    order,
-    limit,
-    saved_search,
-    describe,
-    show_internal_columns,
+    ctx: click.Context,
+    query: str,
+    times: Tuple[str, ...] = (),
+    time_ranges: Tuple[Tuple[str, str], ...] = (),
+    labels: Tuple[str, ...] = (),
+    header: bool = True,
+    return_fields: str = "",
+    order: str = "asc",
+    limit: int = 40,
+    saved_search: Optional[int] = None,
+    describe: bool = False,
+    show_internal_columns: bool = False,
 ):
-    """Search and explore."""
+    """Searches and explores events within a Timesketch sketch.
+
+    Executes a search query against a Timesketch sketch, applying various
+    filters and formatting the output.
+    Supports queries using OpenSearch query string syntax, date/time filtering,
+    label filtering, and saved searches.
+    The output can be formatted as text, CSV, JSON, JSONL, or tabular,
+    depending on the context's 'output_format' setting.
+
+    Args:
+        ctx (click.Context): The Click context object,
+            containing the sketch and output format.
+        query (str): The search query in OpenSearch query string format
+            (default: "*").
+        times (Tuple[str, ...]): Datetime filters (e.g., "2020-01-01T12:00").
+        time_ranges (Tuple[Tuple[str, str], ...]): Datetime range filters
+            (e.g., ("2020-01-01", "2020-02-01")).
+        labels (Tuple[str, ...]): Filters events with the specified labels.
+        header (bool): Toggles header information in the output (default: True).
+        return_fields (str): Specifies which event fields to show.
+        order (str): Orders the output ("asc" or "desc") based on the time field
+            (default: "asc").
+        limit (int): Limits the number of events to show (default: 40).
+        saved_search (Optional[int]): Uses a saved search query and filters by its ID.
+        describe (bool): Shows the query and filter details and then exits.
+        show_internal_columns (bool): Shows all columns, including Timesketch
+            internal ones.
+
+    Raises:
+        * If an error occurs during date parsing or if a saved search is not found.
+        * If an error occurs during date parsing.
+
+    Outputs:
+        Formatted search results in the specified output format
+            (text, CSV, JSON, JSONL, or tabular).
+        If '--describe' is used, query details are printed instead.
+
+    Example:
+        search --query "mal" --time-range "2023-01-01" "2023-01-31" --limit 10
+        search --saved-search 123 --describe
+    """
     sketch = ctx.obj.sketch
     output_format = ctx.obj.output_format
     search_obj = search.Search(sketch=sketch)
@@ -240,18 +314,49 @@ def saved_searches_group():
 
 @saved_searches_group.command("list")
 @click.pass_context
-def list_saved_searches(ctx):
-    """List saved searches in the sketch."""
+def list_saved_searches(ctx: click.Context):
+    """Lists all saved searches within the current sketch.
+
+    Retrieves and displays a list of saved searches from the sketch, showing
+    their IDs and names.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+
+    Outputs:
+        Text: A list of saved searches, with each line showing the search ID and name.
+
+    Example:
+        saved-searches list  # Lists all saved searches in the current sketch.
+    """
     sketch = ctx.obj.sketch
     for saved_search in sketch.list_saved_searches():
         click.echo(f"{saved_search.id} {saved_search.name}")
 
 
 @saved_searches_group.command("describe")
-@click.argument("search_id", type=int, required=False)
+@click.argument("search_id", type=int, required=True)
 @click.pass_context
-def describe_saved_search(ctx, search_id):
-    """Show details for saved search."""
+def describe_saved_search(ctx: click.Context, search_id: int):
+    """Displays details of a specific saved search.
+
+    Retrieves and displays the query string and filter details of a saved search,
+    identified by its ID.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+        search_id (int): The ID of the saved search to describe.
+
+    Raises:
+        click.ClickException: If the specified saved search ID does not exist.
+
+    Outputs:
+        Text: The query string and formatted JSON representation of the query
+        filter for the saved search.
+
+    Example:
+        saved-searches describe 123  # Describes the saved search with ID 123.
+    """
     sketch = ctx.obj.sketch
     # TODO (berggren): Add support for saved search name.
     saved_search = sketch.get_saved_search(search_id=search_id)
