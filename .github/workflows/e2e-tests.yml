@@ -2,6 +2,12 @@ name: e2e-tests
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
+      - 'README.md'
+      - '*.md'
+
 jobs:
   # OpenSearch version 1.x.x
   PyPi-plaso-stable-opensearch-v1:
