@@ -8,6 +8,8 @@ on:
       - '.gitignore'
       - 'README.md'
       - '*.md'
+    paths:
+      - '**/requirements.txt'
 
 jobs:
   # Backend tests (Python/Flask)
