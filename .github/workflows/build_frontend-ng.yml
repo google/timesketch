@@ -1,0 +1,39 @@
+name: Build and Deploy Frontend-NG
+
+on:
+  push:
+    branches:
+      - main # Or your main development branch
+    paths:
+      - 'timesketch/frontend-ng/**'
+      - '!timesketch/frontend-ng/dist/**' # Exclude changes in the dist folder
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Or your preferred Node.js version
+
+      - name: Install dependencies
+        working-directory: timesketch/frontend-ng
+        run: yarn install
+
+      - name: Build frontend
+        working-directory: timesketch/frontend-ng
+        run: yarn build
+
+      - name: Deploy to dist branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: dist # The branch the dist folder will be pushed to
+          folder: timesketch/frontend-ng/dist # The folder to deploy
+          clean: true # Remove previous files in the dist branch
+          token: ${{ secrets.GITHUB_TOKEN }} # Use the default GITHUB_TOKEN
+          #target-folder: frontend-ng # Optional: If you want to deploy to a subfolder in the dist branch
