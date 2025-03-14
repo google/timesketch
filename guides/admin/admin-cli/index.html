@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.8">
     
     
       
@@ -1275,6 +1275,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#searchindex-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Searchindex-status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#sigma" class="md-nav__link">
     <span class="md-ellipsis">
       Sigma
@@ -1409,6 +1418,28 @@
   
   <span class="md-ellipsis">
     LLM Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-dfiq/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DFIQ Templates
     
   </span>
   
@@ -2487,6 +2518,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#searchindex-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Searchindex-status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#sigma" class="md-nav__link">
     <span class="md-ellipsis">
       Sigma
@@ -2948,6 +2988,40 @@ This feature allows administrators or automated scripts to monitor the processin
     tsctl timeline-status --status fail 789
     # This will fail and display an error message.
 </code></pre>
+<h3 id="searchindex-status">Searchindex-status</h3>
+<p>The <code>tsctl searchindex-status</code> command allows to get or set a searchindex status.</p>
+<p>Usage:</p>
+<pre><code>tsctl searchindex-status --help
+Usage: tsctl searchindex-status [OPTIONS] SEARCHINDEX_ID
+
+  Get or set a searchindex status
+
+  If &quot;action&quot; is &quot;set&quot;, the given value of status will be written in the
+  status.
+
+  Args:     action: get or set searchindex status.     status: searchindex
+  status. Only valid choices are ready, processing, fail.
+
+Options:
+  --action [get|set]              get or set timeline status.
+  --status [ready|processing|fail]
+                                  get or set timeline status.
+  --searchindex_id TEXT           Searchindex ID to search for e.g.
+                                  4c5afdf60c6e49499801368b7f238353.
+                                  [required]
+  --help                          Show this message and exit.
+</code></pre>
+<p>Examples:</p>
+<pre><code class="language-bash">tsctl searchindex-status --action set 1 --status fail
+Searchindex 1 status set to fail
+To verify run: tsctl searchindex-status 1 --action get
+tsctl searchindex-status --action set --status fail 1
+Searchindex 1 status set to fail
+To verify run: tsctl searchindex-status 1 --action get
+tsctl searchindex-status 1 --action get
+searchindex_id index_name                       created_at                 user_id description status
+1              f609b138aa1e4c448ece6c012dcb2bab 2025-03-07 09:23:37.172143 1       #           fail
+</code></pre>
 <h3 id="sigma">Sigma</h3>
 <h4 id="list-sigma-rules">List Sigma rules</h4>
 <p>Lists all Sigma rules installed on a system</p>
@@ -3109,7 +3183,7 @@ tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
     
   </body>
