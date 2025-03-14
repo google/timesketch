@@ -80,7 +80,7 @@ def new_lsh_index(
             be indexed.
         threshold: a float for the Jaccard similarity threshold between 0.0 and
             1.0. The initialized MinHash LSH will be optimized for the
-            threshold by minizing the false positive and false negative.
+            threshold by minimizing the false positive and false negative.
 
     Returns:
         A tuple with an LSH (instance of datasketch.lsh.LSH) and a

@@ -758,7 +758,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         )
 
     def _get_sketch(self, sketch_id):
-        """Helper function: Returns Sketch object givin a sketch id.
+        """Helper function: Returns Sketch object given a sketch id.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -777,7 +777,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         return sketch
 
     def _get_current_search_node(self, current_search_node_id: str, sketch: Sketch):
-        """Helper function: Returns Current Search Node object givin a search
+        """Helper function: Returns Current Search Node object given a search
             node id
 
         Args:
