@@ -12,7 +12,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         event_storage: List of events.
         num_event_to_find: Number that shows which event from the sequence
             should be matched.
-        recording: Shows if currently are finded and stored events that match
+        recording: Shows if currently are found and stored events that match
             the specified sequence of events.
         session_num: Counter for the number of sessions.
     """
