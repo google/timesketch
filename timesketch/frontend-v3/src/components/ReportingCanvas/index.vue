@@ -53,14 +53,11 @@ watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
 
 async function fetchQuestions(id) {
   try {
-    RestApiClient.getOrphanQuestions(id)
-      .then((response) => {
-        questions.value = response.data.objects[0];
-        store.setActiveQuestion(response.data.objects[0][0].id);
-      })
-      .catch((e) => {
-        console.error(e);
-      });
-  } catch (err) {}
+    const response = RestApiClient.getOrphanQuestions(id);
+
+    store.setActiveQuestion(response.data.objects[0]);
+  } catch (err) {
+    console.error(err);
+  }
 }
 </script>
