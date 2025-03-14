@@ -29,11 +29,11 @@ jobs:
         working-directory: timesketch/frontend-ng
         run: yarn build
 
-      - name: Deploy to dist branch
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: dist # The branch the dist folder will be pushed to
-          folder: timesketch/frontend-ng/dist # The folder to deploy
-          clean: true # Remove previous files in the dist branch
-          token: ${{ secrets.GITHUB_TOKEN }} # Use the default GITHUB_TOKEN
-          #target-folder: frontend-ng # Optional: If you want to deploy to a subfolder in the dist branch
+      - name: Commit and push dist folder
+        working-directory: timesketch/frontend-ng
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add dist
+          git commit -m "chore: Update frontend-ng dist [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:${{ github.ref_name }}
