@@ -55,7 +55,7 @@ async function fetchQuestions(id) {
   try {
     const response = await RestApiClient.getOrphanQuestions(id);
 
-    store.setActiveQuestion(response.data.objects[0]);
+    questions.value = response.data.objects[0]
   } catch (err) {
     console.error(err);
   }
