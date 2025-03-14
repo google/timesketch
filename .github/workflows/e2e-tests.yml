@@ -8,6 +8,8 @@ on:
       - 'README.md'
       - '*.md'
       - '*.txt'
+    paths:
+      - '**/requirements.txt'
 
 jobs:
   # OpenSearch version 1.x.x
