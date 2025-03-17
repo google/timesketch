@@ -12,52 +12,167 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 -->
 <template>
-  <v-container class="grid pa-0" fluid="true">
-    <v-row no-gutters>
-      <v-col cols="12" md="6" lg="4" class="bg-grey-lighten-4 pa-4">
-        <h2 class="mb-6">Questions</h2>
-        <SketchProgress
-          :questionsTotal="questionsTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-          :percentageCompleted="percentageCompleted"
-        />
-      </v-col>
-      <v-col cols="12" md="6" lg="8"> </v-col>
+  <v-container class="reporting-canvas grid pa-0" fluid>
+    <v-row no-gutters class="fill-height overflow-hidden">
+      <Sidebar
+        :questions="filteredQuestions"
+        :questionsTotal="questionsTotal"
+        :completedQuestionsTotal="completedQuestionsTotal"
+        :isLoading="isLoading"
+      />
+      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"> </v-col>
     </v-row>
   </v-container>
 </template>
 
-<script setup>
+<script>
 import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
-import { computed, ref, watch } from "vue";
+import { useTheme } from "vuetify";
 import { useRoute } from "vue-router";
+import Sidebar from "./Sidebar";
 
-const store = useAppStore();
-const route = useRoute();
-const questions = ref(null);
-const questionsTotal = computed(() => questions?.value?.length);
-const completedQuestionsTotal = computed(() =>
-  questions?.value
-    ? questions.value.filter(({ conclusions }) => conclusions?.length > 0)
-        .length
-    : 0
-);
-const percentageCompleted = computed(
-  () => (completedQuestionsTotal.value / questionsTotal.value) * 100
-);
+export default {
+  data() {
+    return {
+      appStore: useAppStore(),
+      route: useRoute(),
+      isLoading: false,
+      questions: [],
+    };
+  },
+  created() {
+    // watch the params of the route to fetch the data again
+    this.$watch(
+      () => this.route.params.id,
+      this.fetchData,
+      // fetch the data when the view is created and the data is
+      // already being observed
+      { immediate: true }
+    );
+  },
+  methods: {
+    async fetchData() {
+      this.isLoading = true;
+      let questionsArray = [];
 
-watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
+      try {
+        const [aiQuestions, existingQuestions, storyList] =
+          await Promise.allSettled([
+            RestApiClient.llmRequest(store.sketch.id, "log_analyzer"),
+            RestApiClient.getOrphanQuestions(store.sketch.id),
+            RestApiClient.getStoryList(store.sketch.id),
+          ]);
 
-async function fetchQuestions(id) {
-  try {
-    const response = await RestApiClient.getOrphanQuestions(id);
+        if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
+          const reportResponse = await RestApiClient.createStory(
+            "ai-report",
+            JSON.stringify([{ type: "ai-report" }]),
+            store.sketch.id
+          );
 
-    questions.value = response.data.objects[0]
-  } catch (err) {
-    console.error(err);
-  }
-}
+          store.report = {
+            ...reportResponse.value.data.objects[0],
+            content: JSON.parse(reportResponse.value.data.objects[0].content),
+          };
+        } else {
+          const existingAiReport = storyList.value.data.objects[0].find(
+            ({ title }) => title === "ai-report"
+          );
+
+          if (existingAiReport) {
+            store.report = {
+              ...existingAiReport,
+              content: JSON.parse(existingAiReport.content),
+            };
+          } else {
+            const reportResponse = await RestApiClient.createStory(
+              "ai-report",
+              JSON.stringify([{ type: "ai-report" }]),
+              store.sketch.id
+            );
+
+            store.report = {
+              ...reportResponse.value.data.objects[0],
+              content: JSON.parse(reportResponse.value.data.objects[0].content),
+            };
+          }
+        }
+
+        const existingQuestionsList =
+          existingQuestions.value.data.objects &&
+          existingQuestions.value.data.objects.length > 0
+            ? existingQuestions.value.data.objects[0]
+            : [];
+
+        questionsArray = [
+          ...existingQuestionsList.map(({ conclusions, ...question }) => ({
+            ...question,
+            conclusion:
+              conclusions?.length > 0
+                ? conclusions.map(({ conclusion }) => conclusion).join()
+                : "",
+          })),
+        ];
+
+        if (
+          aiQuestions.status === "fulfilled" &&
+          aiQuestions?.value?.data?.questions
+        ) {
+          metadata.value = aiQuestions.value.data.meta;
+          questionsArray = [
+            ...questionsArray,
+            ...aiQuestions.value.data.questions,
+          ];
+        }
+
+        this.questions = questionsArray;
+      } catch (err) {
+        console.error(err);
+
+        // appStore.store.setNotification({
+        //   text: `Unable to retrieve questions`,
+        //   icon: "mdi-plus-circle-outline",
+        //   type: "error",
+        // });
+      } finally {
+        this.isLoading = false;
+      }
+    },
+  },
+  computed: {
+    questionsTotal() {
+      return this.filteredQuestions?.value?.length;
+    },
+    filteredQuestions() {
+      return questions.value
+        ? questions.value.filter(({ id }) => {
+            return store.report.content.removedQuestions
+              ? !store.report.content.removedQuestions.includes(id)
+              : true;
+          })
+        : [];
+    },
+    completedQuestionsTotal() {
+      return store.report?.content?.approvedQuestions?.length || 0;
+    },
+    sketchId() {
+      return this.appStore.sketch.id;
+    },
+  },
+  setup() {
+    return {
+      theme: useTheme(),
+    };
+  },
+};
 </script>
+
+<style scoped>
+.reporting-canvas {
+  height: calc(100vh - 65px);
+  overflow: hidden;
+}
+</style>
