@@ -1,0 +1,76 @@
+<!--
+Copyright 2025 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<template>
+  <v-select
+    v-model="riskLevel"
+    class="risk-level-selector text-uppercase font-weight-medium"
+    rounded
+    :disabled="disabled"
+    hide-details
+    small
+    plain
+    flat
+    placeholder="Risk level"
+    min-width="100"
+    :bg-color="riskColor"
+    :items="[
+      { value: 'high', title: 'High' },
+      { value: 'medium', title: 'Medium' },
+      { value: 'low', title: 'Low' },
+      { value: 'clean', title: 'Clean' },
+    ]"
+    variant="solo"
+    @update:modelValue="
+      (value) => {
+        $emit('update:riskLevel', value);
+      }
+    "
+  ></v-select>
+</template>
+
+<script>
+const riskColors = {
+  high: "#D93025",
+  medium: "#E37400",
+  low: "#FBBC04",
+  clean: "#3874CB",
+};
+
+export default {
+  data() {
+    return {
+      riskLevel: false,
+    };
+  },
+  computed: {
+    notification() {
+      return riskColors[this.riskLevel];
+    },
+  },
+};
+</script>
+
+<style>
+.risk-level-selector .v-field {
+  font-size: 12px !important;
+}
+
+.risk-level-selector .v-field .v-field__input {
+  min-height: 20px !important;
+  padding-bottom: 0;
+  padding-top: 0;
+}
+</style>

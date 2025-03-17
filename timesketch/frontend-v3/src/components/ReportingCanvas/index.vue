@@ -18,16 +18,130 @@ limitations under the License.
   <v-container class="reporting-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
+        :questions="filteredQuestions"
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
         :isLoading="isLoading"
-        :questions="filteredQuestions"
+        :reportLocked="reportLocked"
       />
-      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
-        ><!-- Main content to go here -->
+      <v-col
+        cols="12"
+        md="6"
+        lg="8"
+        class="fill-height overflow-auto pa-4"
+        v-if="isLoading"
+      >
+        <v-skeleton-loader height="60" class="mb-2"></v-skeleton-loader>
+
+        <div class="d-flex justify-space-between mb-10">
+          <v-skeleton-loader
+            height="20"
+            width="80"
+            class="ma-0"
+          ></v-skeleton-loader>
+          <div class="d-flex justify-space-between mb-5">
+            <v-skeleton-loader
+              height="20"
+              width="95"
+              class="mr-5"
+            ></v-skeleton-loader>
+            <v-skeleton-loader
+              height="20"
+              width="240"
+              class="ma-0"
+            ></v-skeleton-loader>
+          </div>
+        </div>
+
+        <div class="d-flex mb-3 ga-4">
+          <v-skeleton-loader
+            height="40"
+            width="100"
+            class="ma-0"
+          ></v-skeleton-loader>
+          <v-skeleton-loader
+            height="40"
+            width="500"
+            class="ma-0"
+          ></v-skeleton-loader>
+        </div>
+        <div class="d-flex mb-3 ga-4">
+          <v-skeleton-loader
+            height="40"
+            width="100"
+            class="ma-0"
+          ></v-skeleton-loader>
+          <v-skeleton-loader
+            height="40"
+            width="500"
+            class="ma-0"
+          ></v-skeleton-loader>
+        </div>
+        <div class="d-flex mb-3 ga-4">
+          <v-skeleton-loader
+            height="40"
+            width="100"
+            class="ma-0"
+          ></v-skeleton-loader>
+          <v-skeleton-loader
+            height="40"
+            width="500"
+            class="ma-0"
+          ></v-skeleton-loader>
+        </div>
+        <div class="d-flex mb-15 ga-4">
+          <v-skeleton-loader
+            height="40"
+            width="100"
+            class="ma-0"
+          ></v-skeleton-loader>
+          <v-skeleton-loader
+            height="40"
+            width="500"
+            class="ma-0"
+          ></v-skeleton-loader>
+        </div>
+
+        <div class="d-flex justify-space-between align-center mb-3 ga-4">
+          <v-skeleton-loader
+            height="20"
+            width="100"
+            class="mb-5"
+          ></v-skeleton-loader>
+          <v-skeleton-loader
+            height="20"
+            width="220"
+            class="mb-5"
+          ></v-skeleton-loader>
+        </div>
+
+        <v-skeleton-loader height="172" class="mb-10"></v-skeleton-loader>
+        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
+        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
+        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
+        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
+      </v-col>
+      <v-col v-else cols="12" md="6" lg="8" class="fill-height overflow-auto">
+        <ReportView
+          :questions="filteredQuestions"
+          :questionsTotal="questionsTotal"
+          :completedQuestionsTotal="completedQuestionsTotal"
+          :summary="metadata ? metadata.summary : ''"
+          :reportLocked="reportLocked"
+        />
       </v-col>
     </v-row>
   </v-container>
+  <v-dialog
+    transition="dialog-bottom-transition"
+    v-model="targetQuestionId"
+    width="auto"
+  >
+    <RemoveQuestionModal
+      @close-modal="closeModal"
+      :questionId="targetQuestionId"
+    />
+  </v-dialog>
 </template>
 
 <script>
@@ -43,6 +157,7 @@ export default {
       appStore: useAppStore(),
       route: useRoute(),
       isLoading: false,
+      targetQuestionId: null,
       questions: [],
     };
   },
@@ -135,6 +250,10 @@ export default {
     addNewQuestion(question) {
       this.questions = [question, ...this.questions];
     },
+    confirmRemoveQuestion(questionId) {
+      debugger
+      this.targetQuestionId = questionId;
+    },
   },
   computed: {
     filteredQuestions() {
@@ -159,6 +278,7 @@ export default {
   provide() {
     return {
       addNewQuestion: this.addNewQuestion,
+      confirmRemoveQuestion: this.confirmRemoveQuestion,
       regenerateQuestions: this.fetchData,
     };
   },
