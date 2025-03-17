@@ -14,6 +14,8 @@
 """End to end tests of Timesketch client functionality."""
 
 import json
+import random
+import os
 import time
 
 from timesketch_api_client import search
@@ -401,6 +403,72 @@ level: high
         self.assertions.assertEqual(
             sketch.description, "test_modify_sketch_with_empty_name"
         )
+
+    def test_delete_timeline(self):
+        """Test deleting a timeline."""
+
+        # create a new sketch
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(
+            name=f"test_delete_timeline {rand}", description="test_delete_timeline"
+        )
+        self.sketch = sketch
+
+        file_path = (
+            "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
+        )
+
+        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        timeline = sketch.list_timelines()[0]
+        # check that timeline was uploaded correctly
+        self.assertions.assertEqual(timeline.name, file_path)
+        self.assertions.assertEqual(timeline.index.name, str(rand))
+        self.assertions.assertEqual(timeline.index.status, "ready")
+
+        events = sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), 4)
+
+        # second import
+
+        file_path = "/tmp/large.csv"
+
+        with open(file_path, "w", encoding="utf-8") as file_object:
+            file_object.write(
+                '"message","timestamp","datetime","timestamp_desc","data_type"\n'
+            )
+
+            for i in range(5):
+                # write a line with random values for message
+                string = (
+                    f'"CSV Count: {i} {rand}","123456789",'
+                    '"2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
+                )
+                file_object.write(string)
+
+        self.import_timeline("/tmp/large.csv", index_name="foobar", sketch=sketch)
+        os.remove(file_path)
+
+        timeline = sketch.list_timelines()[0]
+
+        # Wait for events to be indexed
+        time.sleep(5)
+
+        # Check that there are 6 events in total
+        search_client = search.Search(sketch)
+        search_response = json.loads(search_client.json)
+        self.assertions.assertEqual(len(search_response["objects"]), 9)
+
+        events = sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), 9)
+
+        # delete timeline 1
+        timeline.delete()
+
+        # Wait for timeline to be deleted
+        time.sleep(5)
+
+        events = sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), 5)
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
