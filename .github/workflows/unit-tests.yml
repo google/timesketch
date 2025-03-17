@@ -3,6 +3,10 @@ name: unit-tests
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
+      - 'README.md'
 
 jobs:
   # Backend tests (Python/Flask)

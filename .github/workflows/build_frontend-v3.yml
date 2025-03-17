@@ -1,16 +1,16 @@
-name: Build and Deploy frontend-ng
+name: Build and Deploy frontend-v3
 
 on:
   push:
     branches:
       - master
     paths:
-      - 'timesketch/frontend-ng/**'
-      - '!timesketch/frontend-ng/dist/**' # Exclude changes in the dist folder
+      - 'timesketch/frontend-v3/**'
+      - '!timesketch/frontend-v3/dist/**' # Exclude changes in the dist folder
   workflow_dispatch:
 
 jobs:
-  build-frontend-ng:
+  build-frontend-v3:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,12 +22,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install frontend-ng dependencies
-        working-directory: timesketch/frontend-ng
+      - name: Install frontend-v3 dependencies
+        working-directory: timesketch/frontend-v3
         run: yarn install
 
-      - name: Build frontend-ng
-        working-directory: timesketch/frontend-ng
+      - name: Build frontend-v3
+        working-directory: timesketch/frontend-v3
         run: yarn build
 
       - name: Configure git for deploy key
@@ -40,11 +40,11 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Commit and push dist folder
-        working-directory: timesketch/frontend-ng
+        working-directory: timesketch/frontend-v3
         run: |
           git remote set-url origin git@github.com:${{ github.repository }}.git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add dist
-          git commit -m "chore: Update frontend-ng build [skip ci]" || echo "No changes to commit"
+          git commit -m "chore: Update frontend-v3 build [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${{ github.ref_name }}
