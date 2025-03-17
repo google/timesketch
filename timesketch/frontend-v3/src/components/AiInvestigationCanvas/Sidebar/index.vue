@@ -41,9 +41,18 @@ limitations under the License.
 <script>
 export default {
   props: {
-    questionsTotal: Number,
-    completedQuestionsTotal: Number,
-    isLoading: Boolean,
+    questionsTotal: {
+      type: Number,
+      default: 0
+    },
+    completedQuestionsTotal: {
+      type: Number,
+      default: 0
+    },
+    isLoading:  {
+      type: Boolean,
+      default: true
+    }
   },
 };
 </script>
