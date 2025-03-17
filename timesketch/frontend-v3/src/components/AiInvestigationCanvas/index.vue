@@ -41,7 +41,7 @@ export default {
     return {
       appStore: useAppStore(),
       route: useRoute(),
-      isLoading: false,
+      isLoading: true,
       questions: [],
     };
   },

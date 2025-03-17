@@ -14,39 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-col cols="4" class="bg-grey-lighten-4 pa-4 fill-height overflow-hidden">
-    <v-skeleton-loader height="25" width="110" class="mb-8"></v-skeleton-loader>
-    <v-skeleton-loader height="80" class="mb-15"></v-skeleton-loader>
-    <div class="d-flex justify-space-between px-2 mb-2">
-      <v-skeleton-loader height="14" width="100"></v-skeleton-loader>
-      <v-skeleton-loader height="14" width="120"></v-skeleton-loader>
-    </div>
-    <v-list
-      class="report-canvas__questions-list border-thin pa-0 border-b-0 mb-6 rounded-lg"
-    >
-      <v-skeleton-loader height="100" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader height="100" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader height="100" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader height="100" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader height="100" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader height="100" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader height="100" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader height="50" class="card-spacer"></v-skeleton-loader
-      ><v-skeleton-loader
-        height="100"
-        class="border-b-thin"
-      ></v-skeleton-loader>
-    </v-list>
+  <v-skeleton-loader height="25" width="110" class="mb-8"></v-skeleton-loader>
+  <v-skeleton-loader height="80" class="mb-15"></v-skeleton-loader>
+  <div class="d-flex justify-space-between px-2 mb-2">
+    <v-skeleton-loader height="14" width="100"></v-skeleton-loader>
+    <v-skeleton-loader height="14" width="120"></v-skeleton-loader>
+  </div>
+  <v-list class="border-thin pa-0 border-b-0 mb-6 rounded-lg">
+    <v-skeleton-loader
+      v-for="item in 6"
+      height="100"
+      class="card-spacer"
+    ></v-skeleton-loader>
+  </v-list>
 
-    <div class="d-flex flex-column align-center">
-      <v-skeleton-loader height="8" class="mb-3 w-100"></v-skeleton-loader>
-      <v-skeleton-loader
-        height="8"
-        width="250"
-        class="mb-5"
-      ></v-skeleton-loader>
-      <v-skeleton-loader height="10" width="150"></v-skeleton-loader></div
-  ></v-col>
+  <div class="d-flex flex-column align-center">
+    <v-skeleton-loader height="8" class="mb-3 w-100"></v-skeleton-loader>
+    <v-skeleton-loader height="8" width="250" class="mb-5"></v-skeleton-loader>
+    <v-skeleton-loader height="10" width="150"></v-skeleton-loader>
+  </div>
 </template>
 
 <style>

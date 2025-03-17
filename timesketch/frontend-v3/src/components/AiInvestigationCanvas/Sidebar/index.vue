@@ -14,15 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <QuestionsListLoader v-if="isLoading" />
   <v-col
-    v-else
     cols="12"
     md="6"
     lg="4"
     class="reporting-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
   >
-    <div>
+    <QuestionsListLoader v-if="isLoading" />
+    <div v-else>
       <h2 class="mb-5 h5">Questions</h2>
       <QuestionsProgress
         :questionsTotal="questionsTotal"
@@ -40,9 +39,6 @@ limitations under the License.
 </style>
 
 <script>
-import QuestionsListLoader from "../Loaders/QuestionsListLoader.vue";
-import QuestionsProgress from "./QuestionsProgress.vue";
-
 export default {
   props: {
     questionsTotal: Number,
