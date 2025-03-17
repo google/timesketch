@@ -31,24 +31,27 @@ limitations under the License.
       </div>
 
       <QuestionsListLoader v-if="isLoading" />
-      <QuestionsList
-        :questions="sortedQuestions"
-        :questionsTotal="questionsTotal"
+      <QuestionsList :questions="sortedQuestions"
     /></template>
   </v-col>
 </template>
 
 <script>
-import QuestionsListLoader from "../Loaders/QuestionsListLoader.vue";
-import QuestionsProgress from "./QuestionsProgress.vue";
-import QuestionsList from "./QuestionsList.vue";
-
 export default {
   props: {
-    questions: Array,
-    questionsTotal: Number,
-    completedQuestionsTotal: Number,
-    isLoading: Boolean,
+    questionsTotal: {
+      type: Number,
+      default: 0,
+    },
+    completedQuestionsTotal: {
+      type: Number,
+      default: 0,
+    },
+    isLoading: {
+      type: Boolean,
+      default: true,
+    },
+    questions: Array
   },
   computed: {
     sortedQuestions() {
@@ -63,7 +66,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 .reporting-canvas__sidebar {
