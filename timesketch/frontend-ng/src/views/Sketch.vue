@@ -278,7 +278,15 @@ limitations under the License.
       <v-main class="notransition">
         <!-- Scenario context -->
         <!--<ts-scenario-navigation v-if="sketch.status && hasTimelines && !isArchived"></ts-scenario-navigation>-->
-        <ts-question-card v-if="sketch.status && hasTimelines && !isArchived && systemSettings.DFIQ_ENABLED"></ts-question-card>
+        <ts-question-card
+          v-if="
+            sketch.status &&
+            hasTimelines &&
+            !isArchived &&
+            systemSettings.DFIQ_ENABLED &&
+            !questionCardExclusionRoutes.includes(currentRouteName)
+          "
+        ></ts-question-card>
 
         <router-view
           v-if="sketch.status && hasTimelines && !isArchived"
@@ -412,6 +420,12 @@ export default {
       showQuestionMenu: false,
       showRightSidePanel: false,
       showSettingsDialog: false,
+      questionCardExclusionRoutes: [
+        'VisualizationNew',
+        'SigmaNewRule',
+        'Analyze',
+        'Story'
+      ],
     }
   },
   mounted() {
