@@ -47,17 +47,26 @@ limitations under the License.
   </v-card>
 </template>
 
-<script setup>
+<script>
 import { useAppStore } from "@/stores/app";
-const store = useAppStore();
 
-const { questionsTotal, completedQuestionsTotal = 0 } = defineProps({
-  questionsTotal: Number,
-  completedQuestionsTotal: Number,
-});
-
-const disableCta = computed(() => !store.activeContext.question?.id);
-const percentageCompleted = computed(
-  () => (completedQuestionsTotal / questionsTotal) * 100
-);
+export default {
+  data() {
+    return {
+      store: useAppStore(),
+    };
+  },
+  props: {
+    questionsTotal: Number,
+    completedQuestionsTotal: Number,
+  },
+  computed: {
+    disableCta() {
+      return !this.store.activeContext.question?.id;
+    },
+    percentageCompleted() {
+      return (this.completedQuestionsTotal / this.questionsTotal) * 100;
+    },
+  },
+};
 </script>

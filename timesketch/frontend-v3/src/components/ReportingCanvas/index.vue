@@ -18,12 +18,13 @@ limitations under the License.
   <v-container class="reporting-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
-        :questions="filteredQuestions"
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
         :isLoading="isLoading"
       />
-      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"> </v-col>
+      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
+        ><!-- Main content to go here -->
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -45,14 +46,9 @@ export default {
     };
   },
   created() {
-    // watch the params of the route to fetch the data again
-    this.$watch(
-      () => this.route.params.id,
-      this.fetchData,
-      // fetch the data when the view is created and the data is
-      // already being observed
-      { immediate: true }
-    );
+    this.$watch(() => this.route.params.id, this.fetchData, {
+      immediate: true,
+    });
   },
   methods: {
     async fetchData() {
@@ -128,25 +124,15 @@ export default {
             ...aiQuestions.value.data.questions,
           ];
         }
-
         this.questions = questionsArray;
       } catch (err) {
         console.error(err);
-
-        // appStore.this.appStore.setNotification({
-        //   text: `Unable to retrieve questions`,
-        //   icon: "mdi-plus-circle-outline",
-        //   type: "error",
-        // });
       } finally {
         this.isLoading = false;
       }
     },
   },
   computed: {
-    questionsTotal() {
-      return this.filteredQuestions?.value?.length;
-    },
     filteredQuestions() {
       return this.questions
         ? this.questions.filter(({ id }) => {
@@ -155,6 +141,9 @@ export default {
               : true;
           })
         : [];
+    },
+    questionsTotal() {
+      return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
       return this.appStore.report?.content?.approvedQuestions?.length || 0;

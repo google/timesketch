@@ -29,7 +29,6 @@ limitations under the License.
         :completedQuestionsTotal="completedQuestionsTotal"
       />
     </div>
-
   </v-col>
 </template>
 
@@ -40,19 +39,15 @@ limitations under the License.
 }
 </style>
 
-<script setup>
+<script>
 import QuestionsListLoader from "../Loaders/QuestionsListLoader.vue";
 import QuestionsProgress from "./QuestionsProgress.vue";
 
-const {
-  questions,
-  questionsTotal,
-  completedQuestionsTotal,
-  isLoading,
-} = defineProps({
-  questions: Array,
-  questionsTotal: Number,
-  completedQuestionsTotal: Number,
-  isLoading: Boolean,
-});
+export default {
+  props: {
+    questionsTotal: Number,
+    completedQuestionsTotal: Number,
+    isLoading: Boolean,
+  },
+};
 </script>
