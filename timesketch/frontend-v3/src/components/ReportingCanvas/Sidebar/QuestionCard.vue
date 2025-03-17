@@ -30,7 +30,6 @@ limitations under the License.
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
         <p class="font-weight-medium">{{ name }}</p>
-        {{ id }}
       </div>
       <div class="d-flex ga-2 align-center">
         <v-chip
