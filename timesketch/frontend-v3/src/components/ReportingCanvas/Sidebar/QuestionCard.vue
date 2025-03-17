@@ -117,7 +117,7 @@ export default {
         this.store.report?.content?.approvedQuestions.length > 0
       ) {
         isApproved = !!this.store.report.content.approvedQuestions.find(
-          (approvedId) => approvedId === id
+          (approvedId) => approvedId === this.id
         );
       }
 

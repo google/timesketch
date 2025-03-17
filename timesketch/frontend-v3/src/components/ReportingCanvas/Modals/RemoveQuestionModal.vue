@@ -43,7 +43,7 @@ limitations under the License.
 </template>
 
 <script>
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from "@/stores/app";
 
 export default {
   props: {
@@ -60,34 +60,20 @@ export default {
       try {
         this.isSubmitting = true;
 
-        try {
-          const existingRemovedQuestions =
-            this.store.report?.content?.removedQuestions || [];
+        const existingRemovedQuestions =
+          this.store.report?.content?.removedQuestions || [];
 
-          const filteredApprovedQuestions =
-            this.store.report?.content?.approvedQuestions.filter(
+        const filteredApprovedQuestions = this.store.report?.content
+          ?.approvedQuestions
+          ? this.store.report?.content?.approvedQuestions.filter(
               (id) => id !== this.questionId
-            );
+            )
+          : [];
 
-          await this.store.updateReport({
-            approvedQuestions: filteredApprovedQuestions,
-            removedQuestions: [...existingRemovedQuestions, this.questionId],
-          });
-
-          this.store.setNotification({
-            text: `Question removed from report`,
-            icon: "mdi-check-circle-outline",
-            type: "success",
-          });
-        } catch (error) {
-          this.store.setNotification({
-            text: `Unable to remove question from the report`,
-            icon: "mdi-close-circle-outline",
-            type: "error",
-          });
-        } finally {
-          this.isSubmitting = false;
-        }
+        await this.store.updateReport({
+          approvedQuestions: filteredApprovedQuestions,
+          removedQuestions: [...existingRemovedQuestions, this.questionId],
+        });
 
         this.$emit("close-modal");
 

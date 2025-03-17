@@ -251,7 +251,6 @@ export default {
       this.questions = [question, ...this.questions];
     },
     confirmRemoveQuestion(questionId) {
-      debugger
       this.targetQuestionId = questionId;
     },
   },
