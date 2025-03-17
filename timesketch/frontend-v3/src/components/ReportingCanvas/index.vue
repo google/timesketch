@@ -15,30 +15,16 @@ limitations under the License.
 
 -->
 <template>
-<<<<<<< HEAD
-  <v-container class="grid pa-0" fluid="true">
-    <v-row no-gutters>
-      <v-col cols="12" md="6" lg="4" class="bg-grey-lighten-4 pa-4">
-        <h2 class="mb-6">Questions</h2>
-        <SketchProgress
-          :questionsTotal="questionsTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-          :percentageCompleted="percentageCompleted"
-        />
-        <QuestionsList :questions="sortedQuestions" />
-      </v-col>
-      <v-col cols="12" md="6" lg="8">
-=======
   <v-container class="reporting-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
         :isLoading="isLoading"
+        :questions="filteredQuestions"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
         ><!-- Main content to go here -->
->>>>>>> iamdcj/questions-list-progress-bar
       </v-col>
     </v-row>
   </v-container>
@@ -70,23 +56,6 @@ export default {
       this.isLoading = true;
       let questionsArray = [];
 
-<<<<<<< HEAD
-const sortedQuestions = computed(() =>
-  questions.value && questions.value.length > 0
-    ? [
-        ...questions.value.sort(
-          (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-        ),
-      ]
-    : []
-);
-
-provide("addNewQuestion", (question) => {
-  questions.value = [question, ...questions.value];
-});
-
-watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
-=======
       try {
         const [aiQuestions, existingQuestions, storyList] =
           await Promise.allSettled([
@@ -94,7 +63,6 @@ watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
             RestApiClient.getOrphanQuestions(this.appStore.sketch.id),
             RestApiClient.getStoryList(this.appStore.sketch.id),
           ]);
->>>>>>> iamdcj/questions-list-progress-bar
 
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
@@ -185,6 +153,11 @@ watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
       return this.appStore.sketch.id;
     },
   },
+  provide() {
+    return {
+      regenerateQuestions: this.fetchData,
+    };
+  },
   setup() {
     return {
       theme: useTheme(),
@@ -198,12 +171,9 @@ watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
   height: calc(100vh - 65px);
   overflow: hidden;
 }
-<<<<<<< HEAD
 
 .reporting-canvas__sidebar {
   display: grid;
   grid-template-rows: auto 1fr;
 }
-=======
->>>>>>> iamdcj/questions-list-progress-bar
 </style>

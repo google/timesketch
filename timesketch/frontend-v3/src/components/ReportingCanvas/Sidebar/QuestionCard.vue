@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-list-item :class="listItemClasses" @click="store.setActiveQuestion(id)">
+  <v-list-item
+    :class="listItemClasses"
+    :active="isActive"
+    @click="setActiveQuestion()"
+  >
     <div class="d-flex ga-6 align-center justify-md-space-between">
       <div class="d-flex ga-6 align-center">
         <v-icon
@@ -26,15 +30,16 @@ limitations under the License.
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
         <p class="font-weight-medium">{{ name }}</p>
+        {{ id }}
       </div>
-      <div class="d-flex ga-2">
+      <div class="d-flex ga-2 align-center">
         <v-chip
-          v-if="risk"
+          v-if="riskLevel"
           size="x-small"
           :color="riskColor"
-          class="text-uppercase px-1 py-1 rounded-sm font-weight-medium"
+          class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
         >
-          {{ risk }}
+          {{ riskLevel }}
         </v-chip>
         <v-icon
           icon="mdi-check-circle"
@@ -47,21 +52,8 @@ limitations under the License.
   </v-list-item>
 </template>
 
-<script setup>
+<script>
 import { useAppStore } from "@/stores/app";
-import { computed } from "vue";
-
-const store = useAppStore();
-
-const { user, name, risk, conclusions, type, id, updated_at } = defineProps({
-  name: String,
-  type: String,
-  risk: String,
-  conclusions: Array,
-  updated_at: String,
-  id: Number,
-  user: Object
-});
 
 const riskColors = {
   high: "#D93025",
@@ -70,15 +62,83 @@ const riskColors = {
   clean: "#3874CB",
 };
 
-const completed = computed(() => conclusions && conclusions.length > 0);
-const riskColor = computed(() => riskColors[risk]);
+export default {
+  props: {
+    name: String,
+    type: String,
+    conclusion: String,
+    observables: Array,
+    updated_at: String,
+    risk_level: String,
+    id: Number,
+    user: Object,
+  },
+  data() {
+    return {
+      store: useAppStore(),
+    };
+  },
+  methods: {
+    setActiveQuestion() {
+      this.store.setActiveQuestion({
+        user: this.user,
+        name: this.name,
+        riskLevel: this.riskLevel,
+        observables: this.observables,
+        conclusion: this.conclusion,
+        type: this.type,
+        id: this.id,
+        updated_at: this.updated_at,
+        completed: this.completed,
+      });
+    },
+  },
+  computed: {
+    sortedQuestions() {
+      return this.questions && this.questions.length > 0
+        ? [
+            ...this.questions.sort(
+              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+            ),
+          ]
+        : [];
+    },
 
-const listItemClasses = computed(() => ({
-  "is--active": id === store.activeContext.question,
-  "border-b-sm": true,
-  "px-4 py-8": true,
-  "border-right-md": true,
-}));
+    isActive() {
+      return this.store.activeContext.question?.id
+        ? this.id === this.store.activeContext.question?.id
+        : false;
+    },
+
+    completed() {
+      let isApproved = false;
+
+      if (
+        this.store.report?.content?.approvedQuestions &&
+        this.store.report?.content?.approvedQuestions.length > 0
+      ) {
+        isApproved = !!this.store.report.content.approvedQuestions.find(
+          (approvedId) => approvedId === id
+        );
+      }
+
+      return isApproved;
+    },
+
+    riskColor() {
+      return riskColors[riskLevel];
+    },
+
+    listItemClasses() {
+      return {
+        "is--active": this.isActive,
+        "border-b-sm": true,
+        "px-4 py-8": true,
+        "border-right-md": true,
+      };
+    },
+  },
+};
 </script>
 
 <style scoped>

@@ -29,6 +29,12 @@ limitations under the License.
         :completedQuestionsTotal="completedQuestionsTotal"
       />
     </div>
+
+    <QuestionsListLoader v-if="isLoading" />
+    <QuestionsList
+      :questions="sortedQuestions"
+      :questionsTotal="questionsTotal"
+    />
   </v-col>
 </template>
 
@@ -42,12 +48,25 @@ limitations under the License.
 <script>
 import QuestionsListLoader from "../Loaders/QuestionsListLoader.vue";
 import QuestionsProgress from "./QuestionsProgress.vue";
+import QuestionsList from "./QuestionsList.vue"
 
 export default {
   props: {
+    questions: Array,
     questionsTotal: Number,
     completedQuestionsTotal: Number,
     isLoading: Boolean,
+  },
+  computed: {
+    sortedQuestions() {
+      return this.questions && this.questions.length > 0
+        ? [
+            ...this.questions.sort(
+              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+            ),
+          ]
+        : [];
+    },
   },
 };
 </script>
