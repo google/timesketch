@@ -143,82 +143,79 @@ limitations under the License.
     v-model="showModal"
     width="auto"
   >
-    <CompleteInvestigationModal
-      @close-modal="setShowModal"
-    />
+    <CompleteInvestigationModal @close-modal="setShowModal" />
   </v-dialog>
 </template>
 
-<script setup>
-import CompleteInvestigationModal from "../Modals/CompleteInvestigationModal.vue";
-import KeyFindingItem from "./KeyFindingItem.vue";
+<script>
 import { useAppStore } from "@/stores/app";
 import { debounce } from "lodash";
 
-const store = useAppStore();
+export default {
+  props: {
+    questions: Array,
+    questionsTotal: Number,
+    completedQuestionsTotal: Number,
+    reportLocked: Boolean,
+  },
+  created() {
+    // this seems convoluted? 
+    this.summary = this.store?.report?.content?.summary;
+    this.name = this.store?.report?.content?.name;
+    this.analysts = this.store?.report?.content?.analysts;
+  },
+  data() {
+    return {
+      store: useAppStore(),
+      summary: "",
+      name: "",
+      analysts: "",
+      showModal: false,
+    };
+  },
+  methods: {
+    async unlockReport() {
+      try {
+        this.store.updateReport({ approved: false });
 
-const {
-  completedQuestionsTotal,
-  questionsTotal,
-  questions,
-  string,
-  reportLocked,
-} = defineProps({
-  questions: Array,
-  questionsTotal: Number,
-  completedQuestionsTotal: Number,
-  reportLocked: Boolean,
-});
+        this.store.setNotification({
+          text: `Report Unlocked`,
+          icon: "mdi-plus-circle-outline",
+          type: "success",
+        });
+      } catch (error) {
+        console.error(error);
 
-const summary = ref(store.report.content?.summary);
-const name = ref(store.report.content?.name);
-const analysts = ref(store.report.content?.analysts);
-const showModal = ref(false);
-
-const setShowModal = () => {
-  showModal.value = !showModal.value;
+        this.store.setNotification({
+          text: "Unable to unlock this report. Please try again.",
+          icon: "mdi-alert-circle-outline",
+          type: "error",
+        });
+      } finally {
+      }
+    },
+    async downloadReport() {
+      // keep it local
+    },
+    updateContent: debounce(function (key, value) {
+      this.store.updateReport({ [key]: value });
+    }, 500),
+  },
+  watch: {
+    riskLevel(riskLevel) {
+      this.riskLevel = riskLevel;
+    },
+    summary(summary) {
+      this.updateContent("summary", summary);
+    },
+    name(name) {
+      this.updateContent("name", name);
+    },
+    analysts(analysts) {
+      this.updateContent("analysts", analysts);
+    },
+  },
 };
-
-async function downloadReport() {
-  // keep it local
-}
-
-const unlockReport = async () => {
-  try {
-    store.updateReport({ approved: false });
-
-    store.setNotification({
-      text: `Report Unlocked`,
-      icon: "mdi-plus-circle-outline",
-      type: "success",
-    });
-  } catch (error) {
-    console.error(error);
-
-    store.setNotification({
-      text: "Unable to unlock this report. Please try again.",
-      icon: "mdi-alert-circle-outline",
-      type: "error",
-    });
-  } finally {
-  }
-};
-
-watch(summary, async (summary) => {
-  await updateContent("summary", summary);
-});
-
-watch(name, async (name) => {
-  await updateContent("name", name);
-});
-
-watch(analysts, async (analysts) => {
-  await updateContent("analysts", analysts);
-});
-
-const updateContent = debounce((key, value) => {
-  store.updateReport({ [key]: value });
-}, 500);
 </script>
 
 <style scoped>
