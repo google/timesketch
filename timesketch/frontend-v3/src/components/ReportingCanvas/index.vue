@@ -12,8 +12,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 -->
 <template>
+<<<<<<< HEAD
   <v-container class="grid pa-0" fluid="true">
     <v-row no-gutters>
       <v-col cols="12" md="6" lg="4" class="bg-grey-lighten-4 pa-4">
@@ -26,31 +28,49 @@ limitations under the License.
         <QuestionsList :questions="sortedQuestions" />
       </v-col>
       <v-col cols="12" md="6" lg="8">
+=======
+  <v-container class="reporting-canvas grid pa-0" fluid>
+    <v-row no-gutters class="fill-height overflow-hidden">
+      <Sidebar
+        :questionsTotal="questionsTotal"
+        :completedQuestionsTotal="completedQuestionsTotal"
+        :isLoading="isLoading"
+      />
+      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
+        ><!-- Main content to go here -->
+>>>>>>> iamdcj/questions-list-progress-bar
       </v-col>
     </v-row>
   </v-container>
 </template>
 
-<script setup>
+<script>
 import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
-import { computed, ref, watch } from "vue";
+import { useTheme } from "vuetify";
 import { useRoute } from "vue-router";
+import Sidebar from "./Sidebar";
+import RestApiClient from "@/utils/RestApiClient";
 
-const store = useAppStore();
-const route = useRoute();
-const questions = ref(null);
-const questionsTotal = computed(() => questions?.value?.length);
-const completedQuestionsTotal = computed(() =>
-  questions?.value
-    ? questions.value.filter(({ conclusions }) => conclusions?.length > 0)
-        .length
-    : 0
-);
-const percentageCompleted = computed(
-  () => (completedQuestionsTotal.value / questionsTotal.value) * 100
-);
+export default {
+  data() {
+    return {
+      appStore: useAppStore(),
+      route: useRoute(),
+      isLoading: false,
+      questions: [],
+    };
+  },
+  created() {
+    this.$watch(() => this.route.params.id, this.fetchData, {
+      immediate: true,
+    });
+  },
+  methods: {
+    async fetchData() {
+      this.isLoading = true;
+      let questionsArray = [];
 
+<<<<<<< HEAD
 const sortedQuestions = computed(() =>
   questions.value && questions.value.length > 0
     ? [
@@ -66,19 +86,111 @@ provide("addNewQuestion", (question) => {
 });
 
 watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
+=======
+      try {
+        const [aiQuestions, existingQuestions, storyList] =
+          await Promise.allSettled([
+            RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"),
+            RestApiClient.getOrphanQuestions(this.appStore.sketch.id),
+            RestApiClient.getStoryList(this.appStore.sketch.id),
+          ]);
+>>>>>>> iamdcj/questions-list-progress-bar
 
-async function fetchQuestions(id) {
-  try {
-    RestApiClient.getOrphanQuestions(id)
-      .then((response) => {
-        questions.value = response.data.objects[0];
-        store.setActiveQuestion(response.data.objects[0][0].id);
-      })
-      .catch((e) => {
-        console.error(e);
-      });
-  } catch (err) {}
-}
+        if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
+          const reportResponse = await RestApiClient.createStory(
+            "ai-report",
+            JSON.stringify([{ type: "ai-report" }]),
+            this.appStore.sketch.id
+          );
+
+          this.appStore.report = {
+            ...reportResponse.value.data.objects[0],
+            content: JSON.parse(reportResponse.value.data.objects[0].content),
+          };
+        } else {
+          const existingAiReport = storyList.value.data.objects[0].find(
+            ({ title }) => title === "ai-report"
+          );
+
+          if (existingAiReport) {
+            this.appStore.report = {
+              ...existingAiReport,
+              content: JSON.parse(existingAiReport.content),
+            };
+          } else {
+            const reportResponse = await RestApiClient.createStory(
+              "ai-report",
+              JSON.stringify([{ type: "ai-report" }]),
+              this.appStore.sketch.id
+            );
+
+            this.appStore.report = {
+              ...reportResponse.value.data.objects[0],
+              content: JSON.parse(reportResponse.value.data.objects[0].content),
+            };
+          }
+        }
+
+        const existingQuestionsList =
+          existingQuestions.value.data.objects &&
+          existingQuestions.value.data.objects.length > 0
+            ? existingQuestions.value.data.objects[0]
+            : [];
+
+        questionsArray = [
+          ...existingQuestionsList.map(({ conclusions, ...question }) => ({
+            ...question,
+            conclusion:
+              conclusions?.length > 0
+                ? conclusions.map(({ conclusion }) => conclusion).join()
+                : "",
+          })),
+        ];
+
+        if (
+          aiQuestions.status === "fulfilled" &&
+          aiQuestions?.value?.data?.questions
+        ) {
+          metadata.value = aiQuestions.value.data.meta;
+          questionsArray = [
+            ...questionsArray,
+            ...aiQuestions.value.data.questions,
+          ];
+        }
+        this.questions = questionsArray;
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+  },
+  computed: {
+    filteredQuestions() {
+      return this.questions
+        ? this.questions.filter(({ id }) => {
+            return this.appStore.report.content.removedQuestions
+              ? !this.appStore.report.content.removedQuestions.includes(id)
+              : true;
+          })
+        : [];
+    },
+    questionsTotal() {
+      return this.filteredQuestions?.length || 0;
+    },
+    completedQuestionsTotal() {
+      return this.appStore.report?.content?.approvedQuestions?.length || 0;
+    },
+    sketchId() {
+      return this.appStore.sketch.id;
+    },
+  },
+  setup() {
+    return {
+      theme: useTheme(),
+    };
+  },
+};
 </script>
 
 <style scoped>
@@ -86,9 +198,12 @@ async function fetchQuestions(id) {
   height: calc(100vh - 65px);
   overflow: hidden;
 }
+<<<<<<< HEAD
 
 .reporting-canvas__sidebar {
   display: grid;
   grid-template-rows: auto 1fr;
 }
+=======
+>>>>>>> iamdcj/questions-list-progress-bar
 </style>
