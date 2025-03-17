@@ -52,6 +52,7 @@ export default {
   },
   methods: {
     async fetchData() {
+      // TODO revist once the API work has been completed
       this.isLoading = true;
       let questionsArray = [];
 
@@ -118,7 +119,6 @@ export default {
           aiQuestions.status === "fulfilled" &&
           aiQuestions?.value?.data?.questions
         ) {
-          metadata.value = aiQuestions.value.data.meta;
           questionsArray = [
             ...questionsArray,
             ...aiQuestions.value.data.questions,
