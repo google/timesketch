@@ -18,15 +18,6 @@ limitations under the License.
     <h4 class="mb-2">
       {{ questionsTotal }} <span class="font-weight-regular">questions</span>
     </h4>
-    <v-btn
-      variant="text"
-      size="small"
-      color="primary"
-      @click="setShowModal"
-    >
-      <v-icon icon="mdi-plus" left small />
-      Create Question</v-btn
-    >
   </div>
   <v-list
     v-if="sortedQuestions"
@@ -63,16 +54,6 @@ export default {
   props: {
     questions: Array,
     questionsTotal: Number,
-  },
-  data() {
-    return {
-      showModal: false,
-    };
-  },
-  methods: {
-    setShowModa() {
-      this.showModal.value = !this.showModal.value;
-    },
   },
   inject: ['regenerateQuestions'],
   computed: {
