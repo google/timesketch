@@ -450,9 +450,6 @@ level: high
 
         timeline = sketch.list_timelines()[0]
 
-        # Wait for events to be indexed
-        time.sleep(5)
-
         # Check that there are 6 events in total
         search_client = search.Search(sketch)
         search_response = json.loads(search_client.json)
@@ -463,9 +460,6 @@ level: high
 
         # delete timeline 1
         timeline.delete()
-
-        # Wait for timeline to be deleted
-        time.sleep(5)
 
         events = sketch.explore("*", as_pandas=True)
         self.assertions.assertEqual(len(events), 5)
