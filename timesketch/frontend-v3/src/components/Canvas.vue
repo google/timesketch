@@ -19,14 +19,13 @@ limitations under the License.
  them via Eventbus.
 -->
 <template>
-  <div>
+    <AiInvestigationCanvas v-show="currentRouteName === 'AiInvestigation'" />
     <div v-show="currentRouteName === 'Explore'">
       Placeholder for Explore View
     </div>
     <div v-show="currentRouteName === 'Example'">
       Example view
     </div>
-  </div>
 </template>
 
 <script>
