@@ -155,7 +155,7 @@ export default {
   },
   provide() {
     return {
-      regenerateQuestions: this.fetchData,
+      regenerateQuestions: this.fetchData, // TODO: Revisit this once the API is in place for this async op
     };
   },
   setup() {
