@@ -33,6 +33,7 @@ import { useAppStore } from "@/stores/app";
 import { useTheme } from "vuetify";
 import { useRoute } from "vue-router";
 import Sidebar from "./Sidebar";
+import RestApiClient from "@/utils/RestApiClient";
 
 export default {
   data() {
@@ -61,19 +62,19 @@ export default {
       try {
         const [aiQuestions, existingQuestions, storyList] =
           await Promise.allSettled([
-            RestApiClient.llmRequest(store.sketch.id, "log_analyzer"),
-            RestApiClient.getOrphanQuestions(store.sketch.id),
-            RestApiClient.getStoryList(store.sketch.id),
+            RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"),
+            RestApiClient.getOrphanQuestions(this.appStore.sketch.id),
+            RestApiClient.getStoryList(this.appStore.sketch.id),
           ]);
 
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",
             JSON.stringify([{ type: "ai-report" }]),
-            store.sketch.id
+            this.appStore.sketch.id
           );
 
-          store.report = {
+          this.appStore.report = {
             ...reportResponse.value.data.objects[0],
             content: JSON.parse(reportResponse.value.data.objects[0].content),
           };
@@ -83,7 +84,7 @@ export default {
           );
 
           if (existingAiReport) {
-            store.report = {
+            this.appStore.report = {
               ...existingAiReport,
               content: JSON.parse(existingAiReport.content),
             };
@@ -91,10 +92,10 @@ export default {
             const reportResponse = await RestApiClient.createStory(
               "ai-report",
               JSON.stringify([{ type: "ai-report" }]),
-              store.sketch.id
+              this.appStore.sketch.id
             );
 
-            store.report = {
+            this.appStore.report = {
               ...reportResponse.value.data.objects[0],
               content: JSON.parse(reportResponse.value.data.objects[0].content),
             };
@@ -132,7 +133,7 @@ export default {
       } catch (err) {
         console.error(err);
 
-        // appStore.store.setNotification({
+        // appStore.this.appStore.setNotification({
         //   text: `Unable to retrieve questions`,
         //   icon: "mdi-plus-circle-outline",
         //   type: "error",
@@ -147,16 +148,16 @@ export default {
       return this.filteredQuestions?.value?.length;
     },
     filteredQuestions() {
-      return questions.value
-        ? questions.value.filter(({ id }) => {
-            return store.report.content.removedQuestions
-              ? !store.report.content.removedQuestions.includes(id)
+      return this.questions
+        ? this.questions.filter(({ id }) => {
+            return this.appStore.report.content.removedQuestions
+              ? !this.appStore.report.content.removedQuestions.includes(id)
               : true;
           })
         : [];
     },
     completedQuestionsTotal() {
-      return store.report?.content?.approvedQuestions?.length || 0;
+      return this.appStore.report?.content?.approvedQuestions?.length || 0;
     },
     sketchId() {
       return this.appStore.sketch.id;
