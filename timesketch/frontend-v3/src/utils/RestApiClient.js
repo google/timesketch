@@ -41,14 +41,14 @@ RestApiClient.interceptors.response.use(
     return response;
   },
   function (error) {
-    if (error.response.status === 500) {
-      EventBus.$emit(
-        "errorSnackBar",
-        "Server side error. Please contact your server administrator for troubleshooting."
-      );
-    } else {
-      EventBus.$emit("errorSnackBar", error.response.data.message);
-    }
+    // if (error.response.status === 500) {
+    //   EventBus.$emit(
+    //     "errorSnackBar",
+    //     "Server side error. Please contact your server administrator for troubleshooting."
+    //   );
+    // } else {
+    //   EventBus.$emit("errorSnackBar", error.response.data.message);
+    // }
     return Promise.reject(error);
   }
 );
@@ -676,4 +676,10 @@ export default {
     let formData = { question: question };
     return RestApiClient.post("/sketches/" + sketchId + "/nl2q/", formData);
   },
+  llmRequest(sketchId, featureName, formData) {
+    formData = formData || {}
+    formData.feature = featureName
+  
+    return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
+  }
 };

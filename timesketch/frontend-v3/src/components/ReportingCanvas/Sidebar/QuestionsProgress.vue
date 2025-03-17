@@ -18,7 +18,7 @@ limitations under the License.
     <div class="flex-grow-1">
       <div class="d-flex justify-space-between">
         <h4 class="mb-2">Progress</h4>
-        <p>
+        <p v-if="questionsTotal">
           <span class="font-weight-bold"
             >{{ completedQuestionsTotal }}/{{ questionsTotal }}</span
           >
@@ -35,16 +35,38 @@ limitations under the License.
     </div>
     <v-card-actions class="flex-grow-0">
       <v-spacer></v-spacer>
-      <v-btn variant="flat" size="small" color="primary">View Report</v-btn>
+      <v-btn
+        variant="flat"
+        size="small"
+        color="primary"
+        :disabled="disableCta"
+        @click="store.setActiveQuestion(null)"
+        >View Report</v-btn
+      >
     </v-card-actions>
   </v-card>
 </template>
 
-<script setup>
-const { questionsTotal, completedQuestionsTotal, percentageCompleted } =
-  defineProps({
+<script>
+import { useAppStore } from "@/stores/app";
+
+export default {
+  data() {
+    return {
+      store: useAppStore(),
+    };
+  },
+  props: {
     questionsTotal: Number,
     completedQuestionsTotal: Number,
-    percentageCompleted: Number,
-  });
+  },
+  computed: {
+    disableCta() {
+      return !this.store.activeContext.question?.id;
+    },
+    percentageCompleted() {
+      return (this.completedQuestionsTotal / this.questionsTotal) * 100;
+    },
+  },
+};
 </script>

@@ -23,6 +23,8 @@ limitations under the License.
         indeterminate
       ></v-progress-circular>
     </div>
+    {{ isLoading }}
+
     <div :class="{ modal__content: true, 'no-pointer-events': isSubmitting }">
       <div>
         <h3 class="mb-4">Create Question</h3>
@@ -214,111 +216,128 @@ limitations under the License.
   </v-container>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
+<script>
 import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
-import { VListItem } from "vuetify/components";
 
-const store = useAppStore();
-const emit = defineEmits(["close-modal"]);
-const addNewQuestion = inject("addNewQuestion");
+export default {
+  inject: ["addNewQuestion"],
+  props: {
+    questions: Array,
+    questionsTotal: Number,
+    completedQuestionsTotal: Number,
+    isLoading: Boolean,
+  },
+  data() {
+    return {
+      isLoading: true,
+      queryString: null,
+      dfiqTemplates: [],
+      aiTemplates: [],
+      isSubmitting: false,
+      store: useAppStore(),
+    };
+  },
+  created() {
+    this.fetchQuestionTemplates();
+  },
+  computed: {
+    sortedQuestions() {
+      return this.questions && this.questions.length > 0
+        ? [
+            ...this.questions.sort(
+              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+            ),
+          ]
+        : [];
+    },
+    aiMatches() {
+      if (!this.queryString) {
+        return [];
+      }
 
-onMounted(() => {
-  fetchQuestionTemplates();
-});
+      return this.aiTemplates.filter((template) =>
+        template.name.toLowerCase().includes(this.queryString.toLowerCase())
+      );
+    },
+    dfiqMatches() {
+      if (!this.queryString) {
+        return [];
+      }
 
-const isLoading = ref(true);
-const queryString = ref(null);
-const dfiqTemplates = ref([]);
-const aiTemplates = ref([]);
+      return this.dfiqTemplates.filter((template) =>
+        template.name.toLowerCase().includes(this.queryString.toLowerCase())
+      );
+    },
+  },
+  methods: {
+    async fetchQuestionTemplates() {
+      try {
+        const [dfiqTemplatesRes, aiTemplatesRes] = await Promise.allSettled([
+          RestApiClient.getQuestionTemplates(),
+          // RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"),
+        ]);
 
-const fetchQuestionTemplates = async () => {
-  try {
-    const [dfiqTemplatesRes, aiTemplatesRes] = await Promise.all([
-      await RestApiClient.getQuestionTemplates(),
-      await RestApiClient.getQuestionTemplates(), // TODO - replace with ai request
-    ]);
+        if (
+          aiTemplatesRes.data.objects &&
+          aiTemplatesRes.data.objects.length > 0
+        ) {
+          this.aiTemplates = aiTemplatesRes.data.objects.splice(1, 4);
+        }
 
-    if (aiTemplatesRes.data.objects && aiTemplatesRes.data.objects.length > 0) {
-      aiTemplates.value = aiTemplatesRes.data.objects.splice(1, 4);
-    }
+        if (
+          dfiqTemplatesRes.data.objects &&
+          dfiqTemplatesRes.data.objects.length > 0
+        ) {
+          this.dfiqTemplates = dfiqTemplatesRes.data.objects;
+        }
+      } catch (error) {
+        console.log(error);
+        
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async createQuestion(template) {
+      this.isSubmitting = true;
 
-    if (
-      dfiqTemplatesRes.data.objects &&
-      dfiqTemplatesRes.data.objects.length > 0
-    ) {
-      dfiqTemplates.value = dfiqTemplatesRes.data.objects;
-    }
-  } catch (error) {
-  } finally {
-    isLoading.value = false;
-  }
-};
+      let questionText = this.queryString;
+      let templateId = null;
 
-const aiMatches = computed(() => {
-  if (!queryString.value) {
-    return aiTemplates.value;
-  }
+      if (template) {
+        questionText = template?.name;
+        templateId = template?.id;
+      }
 
-  return aiTemplates.value.filter((template) =>
-    template.name.toLowerCase().includes(queryString.value.toLowerCase())
-  );
-});
+      try {
+        const question = await RestApiClient.createQuestion(
+          this.store.sketch.id,
+          null,
+          null,
+          questionText,
+          templateId
+        );
 
-const dfiqMatches = computed(() => {
-  if (!queryString.value) {
-    return [];
-  }
+        this.addNewQuestion(question.data.objects[0]);
 
-  return dfiqTemplates.value.filter((template) =>
-    template.name.toLowerCase().includes(queryString.value.toLowerCase())
-  );
-});
+        this.$emit("close-modal");
 
-const isSubmitting = ref(false);
-const createQuestion = async (template = null) => {
-  if (!store.sketch) {
-    return;
-  }
-
-  isSubmitting.value = true;
-
-  let questionText = queryString;
-  let templateId = null;
-
-  if (template !== null) {
-    questionText = template.name;
-    templateId = template.id;
-  }
-
-  try {
-    const question = await RestApiClient.createQuestion(
-      store.sketch.id,
-      null,
-      null,
-      questionText.value,
-      templateId
-    );
-
-    addNewQuestion(question.data.objects[0]);
-
-    emit("close-modal");
-
-    store.setNotification({
-      text: `You added the question "${question.data.objects[0].name}" to this Sketch`,
-      icon: "mdi-plus-circle-outline",
-      type: "success",
-    });
-  } catch (error) {
-    store.setNotification({
-      text: "Unable to add question to this Sketch. Please try again.",
-      icon: "mdi-alert-circle-outline",
-      type: "error",
-    });
-  } finally {
-    isSubmitting.value = false;
-  }
+        this.store.setNotification({
+          text: `You added the question "${question.data.objects[0].name}" to this Sketch`,
+          icon: "mdi-plus-circle-outline",
+          type: "success",
+        });
+      } catch (error) {
+        this.store.setNotification({
+          text: "Unable to add question to this Sketch. Please try again.",
+          icon: "mdi-alert-circle-outline",
+          type: "error",
+        });
+      } finally {
+        this.isSubmitting = false;
+      }
+    },
+  },
 };
 </script>
 

@@ -12,87 +12,162 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 -->
 <template>
-  <v-container class="grid pa-0" fluid="true">
-    <v-row no-gutters>
-      <v-col cols="12" md="6" lg="4" class="bg-grey-lighten-4 pa-4">
-        <h2 class="mb-6">Questions</h2>
-        <SketchProgress
-          :questionsTotal="questionsTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-          :percentageCompleted="percentageCompleted"
-        />
-        <QuestionsList :questions="sortedQuestions" />
-      </v-col>
-      <v-col cols="12" md="6" lg="8" class="pa-4 fill-height overflow-auto">
-        <ResultsView v-if="selectedQuestion.id" :question="selectedQuestion" />
-        <ReportView
-          v-else
-          :questions="questions"
-          :questionsTotal="questionsTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-        />
+  <v-container class="reporting-canvas grid pa-0" fluid>
+    <v-row no-gutters class="fill-height overflow-hidden">
+      <Sidebar
+        :questionsTotal="questionsTotal"
+        :completedQuestionsTotal="completedQuestionsTotal"
+        :isLoading="isLoading"
+        :questions="filteredQuestions"
+      />
+      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
+        ><!-- Main content to go here -->
       </v-col>
     </v-row>
   </v-container>
 </template>
 
-<script setup>
+<script>
 import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
-import { computed, ref, watch } from "vue";
+import { useTheme } from "vuetify";
 import { useRoute } from "vue-router";
-import ReportView from "./ReportView.vue";
-import ResultsView from "./ResultsView.vue";
+import Sidebar from "./Sidebar";
+import RestApiClient from "@/utils/RestApiClient";
 
-const store = useAppStore();
-const route = useRoute();
-const questions = ref(null);
-const questionsTotal = computed(() => questions?.value?.length);
+export default {
+  data() {
+    return {
+      appStore: useAppStore(),
+      route: useRoute(),
+      isLoading: false,
+      questions: [],
+    };
+  },
+  created() {
+    this.$watch(() => this.route.params.id, this.fetchData, {
+      immediate: true,
+    });
+  },
+  methods: {
+    async fetchData() {
+      this.isLoading = true;
+      let questionsArray = [];
 
-const selectedQuestion = computed(() => store.activeContext.question);
+      try {
+        const [aiQuestions, existingQuestions, storyList] =
+          await Promise.allSettled([
+            RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"),
+            RestApiClient.getOrphanQuestions(this.appStore.sketch.id),
+            RestApiClient.getStoryList(this.appStore.sketch.id),
+          ]);
 
+        if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
+          const reportResponse = await RestApiClient.createStory(
+            "ai-report",
+            JSON.stringify([{ type: "ai-report" }]),
+            this.appStore.sketch.id
+          );
 
-console.log(selectedQuestion);
+          this.appStore.report = {
+            ...reportResponse.value.data.objects[0],
+            content: JSON.parse(reportResponse.value.data.objects[0].content),
+          };
+        } else {
+          const existingAiReport = storyList.value.data.objects[0].find(
+            ({ title }) => title === "ai-report"
+          );
 
-const completedQuestionsTotal = computed(() =>
-  questions?.value
-    ? questions.value.filter(({ conclusions }) => conclusions?.length > 0)
-        .length
-    : 0
-);
-const percentageCompleted = computed(
-  () => (completedQuestionsTotal.value / questionsTotal.value) * 100
-);
+          if (existingAiReport) {
+            this.appStore.report = {
+              ...existingAiReport,
+              content: JSON.parse(existingAiReport.content),
+            };
+          } else {
+            const reportResponse = await RestApiClient.createStory(
+              "ai-report",
+              JSON.stringify([{ type: "ai-report" }]),
+              this.appStore.sketch.id
+            );
 
-const sortedQuestions = computed(() =>
-  questions.value && questions.value.length > 0
-    ? [
-        ...questions.value.sort(
-          (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-        ),
-      ]
-    : []
-);
+            this.appStore.report = {
+              ...reportResponse.value.data.objects[0],
+              content: JSON.parse(reportResponse.value.data.objects[0].content),
+            };
+          }
+        }
 
-provide("addNewQuestion", (question) => {
-  questions.value = [question, ...questions.value];
-});
+        const existingQuestionsList =
+          existingQuestions.value.data.objects &&
+          existingQuestions.value.data.objects.length > 0
+            ? existingQuestions.value.data.objects[0]
+            : [];
 
-watch(() => route.params.sketchId, fetchQuestions, { immediate: true });
+        questionsArray = [
+          ...existingQuestionsList.map(({ conclusions, ...question }) => ({
+            ...question,
+            conclusion:
+              conclusions?.length > 0
+                ? conclusions.map(({ conclusion }) => conclusion).join()
+                : "",
+          })),
+        ];
 
-async function fetchQuestions(id) {
-  try {
-    RestApiClient.getOrphanQuestions(id)
-      .then((response) => {
-        questions.value = response.data.objects[0];
-      })
-      .catch((e) => {
-        console.error(e);
-      });
-  } catch (err) {}
-}
+        if (
+          aiQuestions.status === "fulfilled" &&
+          aiQuestions?.value?.data?.questions
+        ) {
+          metadata.value = aiQuestions.value.data.meta;
+          questionsArray = [
+            ...questionsArray,
+            ...aiQuestions.value.data.questions,
+          ];
+        }
+        this.questions = questionsArray;
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    addNewQuestion(question) {
+      this.questions = [question, ...this.questions];
+    },
+  },
+  computed: {
+    filteredQuestions() {
+      return this.questions
+        ? this.questions.filter(({ id }) => {
+            return this.appStore.report.content.removedQuestions
+              ? !this.appStore.report.content.removedQuestions.includes(id)
+              : true;
+          })
+        : [];
+    },
+    questionsTotal() {
+      return this.filteredQuestions?.length || 0;
+    },
+    completedQuestionsTotal() {
+      return this.appStore.report?.content?.approvedQuestions?.length || 0;
+    },
+    sketchId() {
+      return this.appStore.sketch.id;
+    },
+  },
+  provide() {
+    return {
+      addNewQuestion: this.addNewQuestion,
+      regenerateQuestions: this.fetchData,
+    };
+  },
+  setup() {
+    return {
+      theme: useTheme(),
+    };
+  },
+};
 </script>
 
 <style scoped>
@@ -103,6 +178,6 @@ async function fetchQuestions(id) {
 
 .reporting-canvas__sidebar {
   display: grid;
-  grid-template-rows: 1fr 1fr auto 1fr;
+  grid-template-rows: auto 1fr;
 }
 </style>

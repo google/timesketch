@@ -22,6 +22,7 @@ export const useAppStore = defineStore("app", {
     sketch: {},
     meta: {},
     searchHistory: {},
+    report: {},
     scenarios: [],
     hiddenScenarios: [],
     scenarioTemplates: [],

@@ -1149,7 +1149,6 @@ export default {
   },
   created() {
     if (this.queryRequest && Object.keys(this.queryRequest).length) {
-      debugger
       this.currentQueryString = this.queryRequest.queryString
       this.currentQueryFilter = { ...this.queryRequest.queryFilter } || defaultQueryFilter()
       this.currentQueryDsl = { ...this.queryRequest.queryDsl }

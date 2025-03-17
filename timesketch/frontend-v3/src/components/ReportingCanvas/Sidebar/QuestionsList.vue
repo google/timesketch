@@ -14,27 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="d-flex justify-space-between">
+  <div class="d-flex justify-space-between px-2">
     <h4 class="mb-2">
       {{ questionsTotal }} <span class="font-weight-regular">questions</span>
     </h4>
-    <v-btn variant="text" size="small" color="primary" @click="setShowModal">
+    <v-btn
+      variant="text"
+      size="small"
+      color="primary"
+      @click="setShowModal"
+      :disabled="reportLocked"
+    >
       <v-icon icon="mdi-plus" left small />
       Create Question</v-btn
     >
   </div>
   <v-list
-    v-if="questions"
+    v-if="sortedQuestions"
     class="report-canvas__questions-list border-thin pa-0 border-b-0 mb-6 rounded-lg"
   >
     <QuestionCard
-      v-for="question in questions"
+      v-for="question in sortedQuestions"
       :key="question"
       :value="question"
       v-bind="question"
     />
   </v-list>
-
   <div class="p-2 text-center">
     <p class="mb-2">
       Before regenerating, review existing questions. Previous unsaved questions
@@ -45,10 +50,11 @@ limitations under the License.
       variant="text"
       size="small"
       color="primary"
-      @click="$emit('regenerate-questions')"
+      @click="regenerateQuestions()"
+      class="text-uppercase"
     >
       <v-icon icon="mdi-reload" class="mr-2" left small />
-      REGENERATE QUESTIONS</v-btn
+      Regenerate Questions</v-btn
     >
   </div>
   <v-dialog
@@ -56,26 +62,45 @@ limitations under the License.
     v-model="showModal"
     width="auto"
   >
-    <QuestionModal @close-modal="setShowModal" />
+    <AddQuestionModal @close-modal="setShowModal" />
   </v-dialog>
 </template>
 
-<script setup>
-import QuestionModal from "./QuestionModal.vue";
+<script>
+import AddQuestionModal from '../Modals/AddQuestionModal.vue';
+import QuestionCard from './QuestionCard.vue';
 
-const { questions, questionsTotal } = defineProps({
-  questions: Array,
-  questionsTotal: Number,
-});
-
-const showModal = ref(false);
-
-const setShowModal = () => {
-  showModal.value = !showModal.value;
+export default {
+  props: {
+    questions: Array,
+    questionsTotal: Number,
+  },
+  data() {
+    return {
+      showModal: false,
+    };
+  },
+  inject: ["regenerateQuestions"],
+  methods: {
+    setShowModal() {
+      this.showModal = !this.showModal;
+    },
+  },
+  computed: {
+    sortedQuestions() {
+      return this.questions && this.questions.length > 0
+        ? [
+            ...this.questions.sort(
+              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+            ),
+          ]
+        : [];
+    },
+  },
 };
 </script>
 
-<style scoped>
+<style>
 .report-canvas__questions-list {
   -ms-overflow-style: none;
   scrollbar-width: none;
