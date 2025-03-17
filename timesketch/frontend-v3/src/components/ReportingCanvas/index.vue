@@ -253,12 +253,15 @@ export default {
     confirmRemoveQuestion(questionId) {
       this.targetQuestionId = questionId;
     },
+    closeModal() {
+      this.targetQuestionId = null;
+    },
   },
   computed: {
     filteredQuestions() {
       return this.questions
         ? this.questions.filter(({ id }) => {
-            return this.appStore.report.content.removedQuestions
+            return this.appStore.report?.content?.removedQuestions
               ? !this.appStore.report.content.removedQuestions.includes(id)
               : true;
           })

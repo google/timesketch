@@ -94,10 +94,10 @@ export default {
 
       try {
         const existingQuestions =
-          this.store.report?.content?.approvedQuestions || [];
+        this.store.report?.content?.approvedQuestions || [];
 
         await this.store.updateReport({
-          approvedQuestions: new Set([...existingQuestions, this.question.id]),
+          approvedQuestions: Array.from(new Set([...existingQuestions, this.question.id]))
         });
 
         this.store.setNotification({
@@ -106,6 +106,8 @@ export default {
           type: "success",
         });
       } catch (error) {
+        console.error(error);
+        
         this.store.setNotification({
           text: `Unable to approve question`,
           icon: "mdi-close-circle-outline",
