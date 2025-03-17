@@ -23,7 +23,7 @@ limitations under the License.
         :isLoading="isLoading"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
-        ><!-- Main content to go here -->
+        ><!-- TODO: Main content to go here -->
       </v-col>
     </v-row>
   </v-container>
@@ -143,7 +143,7 @@ export default {
         : [];
     },
     questionsTotal() {
-      return this.filteredQuestions?.length || 0;
+      return this.filteredQuestions?.length;
     },
     completedQuestionsTotal() {
       return this.appStore.report?.content?.approvedQuestions?.length || 0;
