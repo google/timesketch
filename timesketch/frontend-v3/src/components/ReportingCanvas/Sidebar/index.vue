@@ -14,41 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <QuestionsListLoader v-if="isLoading" />
   <v-col
-    v-else
     cols="12"
     md="6"
     lg="4"
     class="reporting-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
   >
-    <div>
-      <h2 class="mb-5 h5">Questions</h2>
-      <QuestionsProgress
-        :questionsTotal="questionsTotal"
-        :completedQuestionsTotal="completedQuestionsTotal"
-      />
-    </div>
-
     <QuestionsListLoader v-if="isLoading" />
-    <QuestionsList
-      :questions="sortedQuestions"
-      :questionsTotal="questionsTotal"
-    />
+    <template v-else>
+      <div>
+        <h2 class="mb-5 h5">Questions</h2>
+        <QuestionsProgress
+          :questionsTotal="questionsTotal"
+          :completedQuestionsTotal="completedQuestionsTotal"
+        />
+      </div>
+
+      <QuestionsListLoader v-if="isLoading" />
+      <QuestionsList
+        :questions="sortedQuestions"
+        :questionsTotal="questionsTotal"
+    /></template>
   </v-col>
 </template>
-
-<style scoped>
-.reporting-canvas__sidebar {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-}
-</style>
 
 <script>
 import QuestionsListLoader from "../Loaders/QuestionsListLoader.vue";
 import QuestionsProgress from "./QuestionsProgress.vue";
-import QuestionsList from "./QuestionsList.vue"
+import QuestionsList from "./QuestionsList.vue";
 
 export default {
   props: {
@@ -70,3 +63,11 @@ export default {
   },
 };
 </script>
+
+
+<style scoped>
+.reporting-canvas__sidebar {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+}
+</style>

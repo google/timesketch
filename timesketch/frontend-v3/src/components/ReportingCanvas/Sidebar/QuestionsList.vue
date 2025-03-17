@@ -55,7 +55,7 @@ export default {
     questions: Array,
     questionsTotal: Number,
   },
-  inject: ['regenerateQuestions'],
+  inject: ["regenerateQuestions"],
   computed: {
     sortedQuestions() {
       return this.questions && this.questions.length > 0
@@ -70,7 +70,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .report-canvas__questions-list {
   -ms-overflow-style: none;
   scrollbar-width: none;
