@@ -79,6 +79,7 @@ export default {
   },
   methods: {
     setActiveQuestion() {
+      debugger
       this.store.setActiveQuestion({
         user: this.user,
         name: this.name,
