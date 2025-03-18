@@ -31,7 +31,7 @@ limitations under the License.
       </div>
 
       <QuestionsListLoader v-if="isLoading" />
-      <QuestionsList :questions="sortedQuestions"
+      <QuestionsList :questions="sortedQuestions" :reportLocked="reportLocked"
     /></template>
   </v-col>
 </template>
@@ -51,7 +51,8 @@ export default {
       type: Boolean,
       default: true,
     },
-    questions: Array
+    questions: Array,
+    reportLocked: Boolean,
   },
   computed: {
     sortedQuestions() {
