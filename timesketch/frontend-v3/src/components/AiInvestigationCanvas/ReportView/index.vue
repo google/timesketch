@@ -47,7 +47,7 @@ limitations under the License.
               small
               @click="downloadReport()"
             />
-            Download</v-btn
+            Download (TODO)</v-btn
           >
           <v-btn
             v-if="!reportLocked"
@@ -111,7 +111,7 @@ limitations under the License.
             class="text-uppercase"
           >
             <v-icon icon="mdi-reload" class="mr-2" left small />
-            Regenerate Summary</v-btn
+            Regenerate Summary (TODO)</v-btn
           >
         </div>
         <v-textarea
@@ -134,7 +134,7 @@ limitations under the License.
           :question="question"
           :index="index"
           :key="question.id"
-          :reportedLocked="reportLocked"
+          :reportLocked="reportLocked"
         />
       </ol>
     </div>
@@ -169,7 +169,7 @@ export default {
   computed: {
     summary: {
       get: function () {
-        return this.store.report.content.summary;
+        return this.store.report?.content?.summary;
       },
       set: function (value) {
         this.store.report.content.summary = value;
@@ -178,7 +178,7 @@ export default {
     },
     analysts: {
       get: function () {
-        return this.store.report.content.analysts;
+        return this.store.report?.content?.analysts;
       },
       set: function (value) {
         this.store.report.content.analysts = value;
@@ -187,7 +187,7 @@ export default {
     },
     name: {
       get: function () {
-        return this.store.report.content.name;
+        return this.store.report?.content?.name;
       },
       set: function (value) {
         this.store.report.content.name = value;
@@ -196,13 +196,16 @@ export default {
     },
   },
   methods: {
+    setShowModal() {
+      this.showModal = !this.showModal;
+    },
     async unlockReport() {
       try {
         await this.store.updateReport({ approved: false });
 
         this.store.setNotification({
           text: `Report Unlocked`,
-          icon: "mdi-plus-circle-outline",
+          icon: "mdi-lock-open-variant-outline",
           type: "success",
         });
       } catch (error) {
