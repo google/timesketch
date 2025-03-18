@@ -175,8 +175,7 @@ export default {
       });
     }, 200),
     riskLevel(riskLevel) {
-      this.updateQuestion({ ...this.question, riskLevel });
-      this.store.setActiveQuestion({ ...this.question, riskLevel });
+      this.updateQuestion({ ...this.question, risk_level: riskLevel });
     },
   },
 };

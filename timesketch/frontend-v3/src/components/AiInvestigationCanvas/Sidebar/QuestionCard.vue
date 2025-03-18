@@ -33,12 +33,12 @@ limitations under the License.
       </div>
       <div class="d-flex ga-2 align-center">
         <v-chip
-          v-if="riskLevel"
+          v-show="risk_level"
           size="x-small"
           :color="riskColor"
           class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
         >
-          {{ riskLevel }}
+          {{ risk_level }}
         </v-chip>
         <v-icon
           icon="mdi-check-circle"
@@ -52,14 +52,8 @@ limitations under the License.
 </template>
 
 <script>
+import { riskColors } from "@/constants";
 import { useAppStore } from "@/stores/app";
-
-const riskColors = {
-  high: "#D93025",
-  medium: "#E37400",
-  low: "#FBBC04",
-  clean: "#3874CB",
-};
 
 export default {
   props: {
@@ -82,7 +76,7 @@ export default {
       this.store.setActiveQuestion({
         user: this.user,
         name: this.name,
-        riskLevel: this.riskLevel,
+        riskLevel: this.risk_level,
         observables: this.observables,
         conclusion: this.conclusion,
         type: this.type,
@@ -102,13 +96,11 @@ export default {
           ]
         : [];
     },
-
     isActive() {
       return this.store.activeContext.question?.id
         ? this.id === this.store.activeContext.question?.id
         : false;
     },
-
     completed() {
       let isApproved = false;
 
@@ -123,11 +115,9 @@ export default {
 
       return isApproved;
     },
-
     riskColor() {
-      return riskColors[riskLevel];
+      return riskColors[this.risk_level];
     },
-
     listItemClasses() {
       return {
         "is--active": this.isActive,

@@ -18,6 +18,7 @@ limitations under the License.
     <div class="d-inline-flex align-center justify-start">
       <RiskLevelControl
         :riskLevel="riskLevel"
+        :disabled="reportLocked"
         @update:riskLevel="($event) => (riskLevel = $event)"
       />
       <v-icon
@@ -48,6 +49,7 @@ import { useAppStore } from "@/stores/app";
 
 export default {
   props: { question: Object, index: Number, reportLocked: Boolean },
+  inject: ["updateQuestion", "confirmRemoveQuestion"],
   data() {
     return {
       store: useAppStore(),
@@ -75,7 +77,7 @@ export default {
   },
   watch: {
     riskLevel(riskLevel) {
-      this.riskLevel = riskLevel;
+      this.updateQuestion({ ...this.question, risk_level: riskLevel });
     },
   },
 };

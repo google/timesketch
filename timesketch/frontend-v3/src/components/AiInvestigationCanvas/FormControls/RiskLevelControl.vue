@@ -33,27 +33,26 @@ limitations under the License.
       { value: 'clean', title: 'Clean' },
     ]"
     variant="solo"
-    @update:modelValue="
-      (value) => {
-        $emit('update:riskLevel', value);
-      }
-    "
+    @update:modelValue="onChange"
   ></v-select>
 </template>
 
 <script>
-const riskColors = {
-  high: "#D93025",
-  medium: "#E37400",
-  low: "#FBBC04",
-  clean: "#3874CB",
-};
+import { riskColors } from "@/constants";
 
 export default {
+  props: {
+    riskLevel: String,
+  },
   data() {
     return {
-      riskLevel: null,
+      riskLevel: this.riskLevel,
     };
+  },
+  methods: {
+    onChange(value) {
+      this.$emit("update:riskLevel", value);
+    },
   },
   computed: {
     riskColor() {
