@@ -931,20 +931,46 @@ class Sketch(resource.BaseResource):
     def list_timelines(self):
         """List all timelines for this sketch.
 
+        Retrieves a list of all timelines associated with the current sketch.
+        This method fetches the sketch data and parses the 'timelines'
+        information to create a list of Timeline objects.
+
         Returns:
-            List of timelines (instances of Timeline objects)
+            list[Timeline]: A list of Timeline objects representing the
+                timelines in the sketch. Returns an empty list if:
+                - The sketch is archived.
+                - The sketch has no timelines.
+                - The sketch data is malformed or missing the expected
+                  'timelines' structure.
+                - The 'objects' key is not a list.
+                - The first element of the 'objects' list is not a dict.
+                - The 'timelines' key is not a list.
+
+        Raises:
+            RuntimeError: If the sketch is archived.
         """
         if self.is_archived():
             raise RuntimeError("Unable to list timelines on an archived sketch.")
 
         timelines = []
-
         data = self.lazyload_data()
         objects = data.get("objects")
+
+        if not isinstance(objects, list):
+            return timelines
+
         if not objects:
             return timelines
 
-        for timeline_dict in objects[0].get("timelines", []):
+        first_object = objects[0]
+        if not isinstance(first_object, dict):
+            return timelines
+
+        timeline_list = first_object.get("timelines")
+        if not isinstance(timeline_list, list):
+            return timelines
+
+        for timeline_dict in timeline_list:
             timeline_obj = timeline.Timeline(
                 timeline_id=timeline_dict["id"],
                 sketch_id=self.id,
