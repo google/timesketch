@@ -22,7 +22,7 @@ limitations under the License.
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
         :isLoading="isLoading"
-        :reportLocked="reportLocked"
+        :reportLocked="store.reportLocked"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
         <ReportView
@@ -30,7 +30,7 @@ limitations under the License.
           :questionsTotal="questionsTotal"
           :completedQuestionsTotal="completedQuestionsTotal"
           :summary="metadata ? metadata.summary : ''"
-          :reportLocked="reportLocked"
+          :reportLocked="store.reportLocked"
           :isLoading="isLoading"
         />
       </v-col>

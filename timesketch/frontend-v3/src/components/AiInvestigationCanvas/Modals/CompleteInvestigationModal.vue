@@ -50,6 +50,8 @@ limitations under the License.
 </template>
 
 <script>
+import { useAppStore } from '@/stores/app';
+
 export default {
   data() {
     return {

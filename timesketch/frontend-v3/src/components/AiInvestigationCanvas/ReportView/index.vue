@@ -196,6 +196,9 @@ export default {
     },
   },
   methods: {
+    setShowModal() {
+      this.showModal = !this.showModal;
+    },
     async unlockReport() {
       try {
         await this.store.updateReport({ approved: false });

@@ -52,6 +52,7 @@ limitations under the License.
       color="primary"
       @click="regenerateQuestions()"
       class="text-uppercase"
+      :disabled="reportLocked"
     >
       <v-icon icon="mdi-reload" class="mr-2" left small />
       Regenerate Questions</v-btn
@@ -74,6 +75,7 @@ export default {
   props: {
     questions: Array,
     questionsTotal: Number,
+    reportLocked: Boolean
   },
   data() {
     return {
