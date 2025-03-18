@@ -289,10 +289,8 @@ export default {
         ) {
           this.dfiqTemplates = dfiqTemplatesRes.data.objects;
         }
-
       } catch (error) {
         console.log(error);
-        
       } finally {
         this.isLoading = false;
       }
@@ -318,7 +316,7 @@ export default {
         );
 
         this.addNewQuestion(question.data.objects[0]);
-
+        this.store.setActiveQuestion(question.data.objects[0]);
         this.$emit("close-modal");
 
         this.store.setNotification({
@@ -328,7 +326,6 @@ export default {
         });
       } catch (error) {
         console.log(error);
-        debugger
         this.store.setNotification({
           text: "Unable to add question to this Sketch. Please try again.",
           icon: "mdi-alert-circle-outline",
