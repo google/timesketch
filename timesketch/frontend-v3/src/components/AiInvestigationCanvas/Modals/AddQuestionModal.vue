@@ -23,8 +23,6 @@ limitations under the License.
         indeterminate
       ></v-progress-circular>
     </div>
-    {{ isLoading }}
-
     <div :class="{ modal__content: true, 'no-pointer-events': isSubmitting }">
       <div>
         <h3 class="mb-4">Create Question</h3>
@@ -275,7 +273,7 @@ export default {
       try {
         const [dfiqTemplatesRes, aiTemplatesRes] = await Promise.allSettled([
           RestApiClient.getQuestionTemplates(),
-          // RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"),
+          // RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"), // TODO : add AI suggestions
         ]);
 
         if (
@@ -291,6 +289,7 @@ export default {
         ) {
           this.dfiqTemplates = dfiqTemplatesRes.data.objects;
         }
+
       } catch (error) {
         console.log(error);
         
@@ -328,6 +327,8 @@ export default {
           type: "success",
         });
       } catch (error) {
+        console.log(error);
+        debugger
         this.store.setNotification({
           text: "Unable to add question to this Sketch. Please try again.",
           icon: "mdi-alert-circle-outline",

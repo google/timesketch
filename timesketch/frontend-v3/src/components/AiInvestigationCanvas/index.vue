@@ -15,7 +15,7 @@ limitations under the License.
 
 -->
 <template>
-  <v-container class="reporting-canvas grid pa-0" fluid>
+  <v-container class="ai-investigation-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
         :questionsTotal="questionsTotal"
@@ -24,7 +24,7 @@ limitations under the License.
         :questions="filteredQuestions"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
-        ><!-- Main content to go here -->
+        ><!-- TODO: Main content to go here -->
       </v-col>
     </v-row>
   </v-container>
@@ -53,6 +53,7 @@ export default {
   },
   methods: {
     async fetchData() {
+      // TODO revist once the API work has been completed
       this.isLoading = true;
       let questionsArray = [];
 
@@ -171,12 +172,12 @@ export default {
 </script>
 
 <style scoped>
-.reporting-canvas {
+.ai-investigation-canvas {
   height: calc(100vh - 65px);
   overflow: hidden;
 }
 
-.reporting-canvas__sidebar {
+.ai-investigation-canvas__sidebar {
   display: grid;
   grid-template-rows: auto 1fr;
 }
