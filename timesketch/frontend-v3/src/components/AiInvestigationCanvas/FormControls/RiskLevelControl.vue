@@ -24,7 +24,7 @@ limitations under the License.
     plain
     flat
     placeholder="Risk level"
-    min-width="100"
+    :min-width="riskLevel ? 'auto' : 85"
     :bg-color="riskColor"
     :items="[
       { value: 'high', title: 'High' },
@@ -33,30 +33,29 @@ limitations under the License.
       { value: 'clean', title: 'Clean' },
     ]"
     variant="solo"
-    @update:modelValue="
-      (value) => {
-        $emit('update:riskLevel', value);
-      }
-    "
+    @update:modelValue="onChange"
   ></v-select>
 </template>
 
 <script>
-const riskColors = {
-  high: "#D93025",
-  medium: "#E37400",
-  low: "#FBBC04",
-  clean: "#3874CB",
-};
+import { riskColors } from "@/constants";
 
 export default {
+  props: {
+    riskLevel: String,
+  },
   data() {
     return {
-      riskLevel: false,
+      riskLevel: this.riskLevel,
     };
   },
+  methods: {
+    onChange(value) {
+      this.$emit("update:riskLevel", value);
+    },
+  },
   computed: {
-    notification() {
+    riskColor() {
       return riskColors[this.riskLevel];
     },
   },
@@ -66,11 +65,15 @@ export default {
 <style>
 .risk-level-selector .v-field {
   font-size: 12px !important;
+  padding: 5px 0 5px 10px !important;
+}
+
+.risk-level-selector .v-icon {
+  margin: 0 !important;
 }
 
 .risk-level-selector .v-field .v-field__input {
   min-height: 20px !important;
-  padding-bottom: 0;
-  padding-top: 0;
+  padding: 0;
 }
 </style>
