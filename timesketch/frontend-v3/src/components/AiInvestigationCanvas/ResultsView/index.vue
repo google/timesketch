@@ -17,50 +17,12 @@ limitations under the License.
   <section>
     <header class="report-header px-6 pa-4">
       <h2 class="text-h5 font-weight-bold mb-6">Results</h2>
-      <v-card
-        :color="completed || reportLocked ? '#F8F9FA' : '#3874CB'"
-        class="mb-14 d-flex align-center justify-space-between pa-2"
-        flat
-      >
-        <v-card-item>
-          <p class="font-weight-medium mb-1">
-            Would you like to save the results to the report?
-          </p>
-        </v-card-item>
-
-        <v-card-actions>
-          <v-btn
-            :disabled="reportLocked"
-            @click="confirmRemoveQuestion(question.id)"
-            :color="completed ? 'primary' : '#fff'"
-            size="small"
-            >Remove Question</v-btn
-          >
-          <v-btn
-            :disabled="isConfirming || completed || reportLocked"
-            rounded
-            variant="flat"
-            :color="isConfirming || completed || reportLocked ? 'primary' : '#fff'"
-            size="small"
-            @click="confirmAndSave()"
-            >{{
-              isConfirming
-                ? "Saving"
-                : completed
-                ? "Saved"
-                : "Confirm &amp; Save"
-            }}
-            <v-progress-circular
-              v-if="isConfirming"
-              :size="20"
-              :width="2"
-              color="#fff"
-              indeterminate
-              class="ml-2"
-            />
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+      <QuestionActionsStrip
+        v-if="!reportLocked"
+        :completed="completed"
+        :question="question"
+        variant="b"
+      />
       <div class="d-inline-flex ga-2 align-center mb-4">
         <RiskLevelControl
           :riskLevel="riskLevel"
@@ -153,93 +115,72 @@ limitations under the License.
   </section>
 </template>
 
-<script setup>
-import RestApiClient from "@/utils/RestApiClient";
-// import EventsList from "../EventsList.vue";
+<script>
 import { useAppStore } from "@/stores/app";
-import { watch } from "vue";
+import RestApiClient from "@/utils/RestApiClient";
 import { debounce } from "lodash";
 
-const store = useAppStore();
+export default {
+  props: {
+    question: Object,
+    reportLocked: Boolean,
+  },
+  inject: ["updateQuestion", "confirmRemoveQuestion"],
+  data() {
+    return {
+      store: useAppStore(),
+      showModal: false,
+      isConfirming: false,
+      riskLevel: this.question.riskLevel,
+      conclusion: this.question.conclusion,
+    };
+  },
+  computed: {
+    completed() {
+      let isApproved = false;
 
-const { question, reportLocked } = defineProps({
-  question: Object,
-  reportLocked: Boolean
-});
+      if (
+        this.store.report?.content?.approvedQuestions &&
+        this.store.report?.content?.approvedQuestions.length > 0
+      ) {
+        isApproved = !!this.store.report.content.approvedQuestions.find(
+          (approvedId) => approvedId === this,
+          question.id
+        );
+      }
 
-const completed = computed(() => {
-  let isApproved = false;
+      return isApproved;
+    },
+  },
+  methods: {
+    async regenerateConclusion() {
+      // TODO : Implement when API work is completed
+    },
+  },
+  watch: {
+    conclusion: debounce(async function (conclusion) {
+      const response = await RestApiClient.createQuestionConclusion(
+        this.store.sketch.id,
+        this.question.id,
+        conclusion
+      );
 
-  if (store.report?.content?.approvedQuestions && store.report?.content?.approvedQuestions.length > 0) {
-    isApproved = !!store.report.content.approvedQuestions.find(
-      (approvedId) => approvedId === question.id
-    );
-  }
-
-  return isApproved;
-});
-
-const isConfirming = ref(false);
-const riskLevel = ref(question.riskLevel);
-const conclusion = ref(question.conclusion);
-
-async function regenerateConclusion() {}
-
-watch(
-  conclusion,
-  debounce(async (conclusion) => {
-    const response = await RestApiClient.createQuestionConclusion(
-      store.sketch.id,
-      question.id,
-      conclusion
-    );
-
-    updateQuestion({
-      ...response.data.objects[0],
-      conclusion:
-        response.data.objects[0].conclusions?.length > 0
-          ? response.data.objects[0].conclusions
-              .map(({ conclusion }) => conclusion)
-              .join()
-          : "",
-    });
-  }, 500)
-);
-
-const updateQuestion = inject("updateQuestion");
-
-watch(riskLevel, (riskLevel) => {
-  updateQuestion({ ...question, riskLevel });
-  store.setActiveQuestion({ ...question, riskLevel });
-});
-
-const confirmRemoveQuestion = inject("confirmRemoveQuestion");
-
-async function confirmAndSave() {
-  isConfirming.value = true;
-
-  try {
-    const existingQuestions = store.report?.content?.approvedQuestions || [];
-
-    await store.updateReport({
-      approvedQuestions: new Set([...existingQuestions, question.id]),
-    });
-
-    store.setNotification({
-      text: `Question approved`,
-      icon: "mdi-check-circle-outline",
-      type: "success",
-    });
-  } catch (error) {
-    store.setNotification({
-      text: `Unable to approve question`,
-      icon: "mdi-close-circle-outline",
-      type: "error",
-    });
-  } finally {
-    isConfirming.value = false;
-  }
-}
+      this.updateQuestion({
+        ...response.data.objects[0],
+        conclusion:
+          response.data.objects[0].conclusions?.length > 0
+            ? response.data.objects[0].conclusions
+                .map(({ conclusion }) => conclusion)
+                .join()
+            : "",
+      });
+    }, 200),
+    riskLevel(riskLevel) {
+      this.updateQuestion({ ...this.question, riskLevel });
+      this.store.setActiveQuestion({ ...this.question, riskLevel });
+    },
+  },
+};
 </script>
 
 <style>
