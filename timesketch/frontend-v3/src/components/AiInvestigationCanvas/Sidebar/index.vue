@@ -18,7 +18,7 @@ limitations under the License.
     cols="12"
     md="6"
     lg="4"
-    class="reporting-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
+    class="ai-investigation-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
   >
     <QuestionsListLoader v-if="isLoading" />
     <template v-else>
@@ -68,7 +68,7 @@ export default {
 </script>
 
 <style scoped>
-.reporting-canvas__sidebar {
+.ai-investigation-canvas__sidebar {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
 }
