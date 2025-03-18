@@ -174,6 +174,6 @@ export default {
 
 .ai-investigation-canvas__sidebar {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
 }
 </style>

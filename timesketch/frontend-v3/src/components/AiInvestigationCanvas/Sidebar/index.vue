@@ -31,7 +31,7 @@ limitations under the License.
       </div>
 
       <QuestionsListLoader v-if="isLoading" />
-      <QuestionsList :questions="sortedQuestions"
+      <QuestionsList :questions="sortedQuestions" :questionsTotal="questionsTotal"
     /></template>
   </v-col>
 </template>
