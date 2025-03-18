@@ -31,7 +31,7 @@ limitations under the License.
       </div>
 
       <QuestionsListLoader v-if="isLoading" />
-      <QuestionsList :questions="sortedQuestions" :reportLocked="reportLocked"
+      <QuestionsList :questions="sortedQuestions" :questionsTotal="questionsTotal" :reportLocked="reportLocked"
     /></template>
   </v-col>
 </template>

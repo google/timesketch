@@ -289,10 +289,8 @@ export default {
         ) {
           this.dfiqTemplates = dfiqTemplatesRes.data.objects;
         }
-
       } catch (error) {
         console.log(error);
-        
       } finally {
         this.isLoading = false;
       }
@@ -318,6 +316,7 @@ export default {
         );
 
         this.addNewQuestion(question.data.objects[0]);
+        this.store.setActiveQuestion(question.data.objects[0]);
 
         this.$emit("close-modal");
 

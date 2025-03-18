@@ -77,9 +77,11 @@ export default {
 
         this.$emit("close-modal");
 
+        this.store.setActiveQuestion(null);
+
         this.store.setNotification({
           text: `You successfully deleted question ${this.questionId}`,
-          icon: "mdi-plus-circle-outline",
+          icon: "mdi-minus-circle-outline",
           type: "success",
         });
       } catch (error) {

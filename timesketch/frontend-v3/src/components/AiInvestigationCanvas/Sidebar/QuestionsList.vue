@@ -15,8 +15,11 @@ limitations under the License.
 -->
 <template>
   <div class="d-flex justify-space-between px-2">
-    <h4 class="mb-2">
-      {{ questionsTotal }} <span class="font-weight-regular">questions</span>
+    <h4 class="mb-2" v-if="questionsTotal">
+      {{ questionsTotal }}
+      <span class="font-weight-regular"
+        >question{{ questionsTotal > 1 && "s" }}</span
+      >
     </h4>
     <v-btn
       variant="text"
@@ -75,7 +78,7 @@ export default {
   props: {
     questions: Array,
     questionsTotal: Number,
-    reportLocked: Boolean
+    reportLocked: Boolean,
   },
   data() {
     return {

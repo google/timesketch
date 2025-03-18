@@ -37,6 +37,7 @@ limitations under the License.
     <QuestionActionsStrip
       :question="question"
       :reportLocked="reportLocked"
+      :completed="completed"
       variant="a"
     />
   </li>

@@ -80,7 +80,6 @@ export default {
   computed: {
     backgroundColor() {
       let defaultColor = this.variant === "a" ? "#F8F9FA" : "#3874CB";
-      const lockedColor = this.variant === "b" ? "#3874CB" : "#F8F9FA";
 
       if (this.completed || this.reportLocked) {
         defaultColor = "#F8F9FA";
@@ -91,8 +90,13 @@ export default {
     textColor() {
       let defaultColor = "#fff";
 
-      if (this.isConfirming || this.completed || this.reportLocked) {
-        defaultColor = "#primary";
+      if (
+        this.variant === "a" ||
+        this.isConfirming ||
+        this.completed ||
+        this.reportLocked
+      ) {
+        defaultColor = "primary";
       }
 
       return defaultColor;
@@ -103,8 +107,11 @@ export default {
       this.isConfirming = true;
 
       try {
-        const existingQuestions =
-          Array.isArray(this.store.report?.content?.approvedQuestions) || [];
+        const existingQuestions = Array.isArray(
+          this.store.report?.content?.approvedQuestions
+        )
+          ? this.store.report?.content?.approvedQuestions
+          : [];
 
         await this.store.updateReport({
           approvedQuestions: Array.from(

@@ -189,8 +189,6 @@ export default {
         : [];
     },
     questionsTotal() {
-      console.log(this.filteredQuestions?.length);
-
       return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {

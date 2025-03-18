@@ -180,8 +180,7 @@ export default {
         store.report?.content?.approvedQuestions.length > 0
       ) {
         isApproved = !!this.store.report.content.approvedQuestions.find(
-          (approvedId) => approvedId === this,
-          question.id
+          (approvedId) => approvedId === this.question.id
         );
       }
 
