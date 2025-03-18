@@ -134,7 +134,7 @@ limitations under the License.
           :question="question"
           :index="index"
           :key="question.id"
-          :reportedLocked="reportLocked"
+          :reportLocked="reportLocked"
         />
       </ol>
     </div>
@@ -144,7 +144,10 @@ limitations under the License.
     v-model="showModal"
     width="auto"
   >
-    <CompleteInvestigationModal @close-modal="setShowModal" />
+    <CompleteInvestigationModal
+      @close-modal="setShowModal"
+      :questions="questions"
+    />
   </v-dialog>
 </template>
 
@@ -169,7 +172,7 @@ export default {
   computed: {
     summary: {
       get: function () {
-        return this.store.report.content.summary;
+        return this.store.report?.content?.summary;
       },
       set: function (value) {
         this.store.report.content.summary = value;
@@ -178,7 +181,7 @@ export default {
     },
     analysts: {
       get: function () {
-        return this.store.report.content.analysts;
+        return this.store.report?.content?.analysts;
       },
       set: function (value) {
         this.store.report.content.analysts = value;
@@ -187,7 +190,7 @@ export default {
     },
     name: {
       get: function () {
-        return this.store.report.content.name;
+        return this.store.report?.content?.name;
       },
       set: function (value) {
         this.store.report.content.name = value;
@@ -205,12 +208,11 @@ export default {
 
         this.store.setNotification({
           text: `Report Unlocked`,
-          icon: "mdi-plus-circle-outline",
+          icon: "mdi-lock-open-variant-outline",
           type: "success",
         });
       } catch (error) {
         console.error(error);
-
         this.store.setNotification({
           text: "Unable to unlock this report. Please try again.",
           icon: "mdi-alert-circle-outline",

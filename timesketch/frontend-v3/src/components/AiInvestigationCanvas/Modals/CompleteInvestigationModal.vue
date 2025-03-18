@@ -36,7 +36,7 @@ limitations under the License.
           variant="text"
           size="small"
           color="primary"
-          @click="emit('close-modal')"
+          @click="$emit('close-modal')"
         >
           <v-icon class="mr-1" left small />
           Cancel</v-btn
@@ -50,9 +50,12 @@ limitations under the License.
 </template>
 
 <script>
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from "@/stores/app";
 
 export default {
+  props: {
+    questions: Array
+  },
   data() {
     return {
       store: useAppStore(),
@@ -84,6 +87,13 @@ export default {
       } finally {
         this.isSubmitting = false;
       }
+    },
+  },
+  computed: {
+    unsavedQuestions() {
+      return this.questions.filter(
+        ({ id }) => !this.store.report.content.approvedQuestions.includes(id)
+      );
     },
   },
 };
