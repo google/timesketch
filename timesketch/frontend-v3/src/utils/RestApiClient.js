@@ -271,8 +271,6 @@ export default {
       content: content,
     };
 
-    debugger
-
     if(!storyId) {
       return
     }

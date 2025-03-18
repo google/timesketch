@@ -143,7 +143,7 @@ export default {
       return isApproved;
     },
     order() {
-      return this.index;
+      return this.index + 1;
     },
   },
   watch: {

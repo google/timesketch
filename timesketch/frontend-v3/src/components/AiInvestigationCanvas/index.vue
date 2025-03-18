@@ -22,23 +22,23 @@ limitations under the License.
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
         :isLoading="isLoading"
-        :reportLocked="reportLocked"
+        :reportLocked="store.reportLocked"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
         <ResultsView
           v-if="selectedQuestion && selectedQuestion.id"
           :question="selectedQuestion"
           :key="selectedQuestion.id"
-          :reportLocked="reportLocked"
+          :reportLocked="store.reportLocked"
         />
         <ReportView
           v-else
+          :isLoading="isLoading"
+          :reportLocked="store.reportLocked"
           :questions="filteredQuestions"
           :questionsTotal="questionsTotal"
           :completedQuestionsTotal="completedQuestionsTotal"
           :summary="metadata ? metadata.summary : ''"
-          :reportLocked="reportLocked"
-          :isLoading="isLoading"
         />
       </v-col>
     </v-row>
@@ -162,6 +162,12 @@ export default {
     addNewQuestion(question) {
       this.questions = [question, ...this.questions];
     },
+    updateQuestion(question) {
+      this.questions = [
+        question,
+        ...this.questions.filter(({ id }) => id !== question.id),
+      ];
+    },
     confirmRemoveQuestion(questionId) {
       this.targetQuestionId = questionId;
     },
@@ -183,6 +189,8 @@ export default {
         : [];
     },
     questionsTotal() {
+      console.log(this.filteredQuestions?.length);
+
       return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
@@ -194,6 +202,7 @@ export default {
   },
   provide() {
     return {
+      updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
       confirmRemoveQuestion: this.confirmRemoveQuestion,
       regenerateQuestions: this.fetchData,
