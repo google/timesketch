@@ -144,7 +144,10 @@ limitations under the License.
     v-model="showModal"
     width="auto"
   >
-    <CompleteInvestigationModal @close-modal="setShowModal" />
+    <CompleteInvestigationModal
+      @close-modal="setShowModal"
+      :questions="questions"
+    />
   </v-dialog>
 </template>
 
