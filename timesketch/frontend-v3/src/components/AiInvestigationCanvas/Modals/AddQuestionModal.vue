@@ -317,7 +317,6 @@ export default {
 
         this.addNewQuestion(question.data.objects[0]);
         this.store.setActiveQuestion(question.data.objects[0]);
-
         this.$emit("close-modal");
 
         this.store.setNotification({

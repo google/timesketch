@@ -24,7 +24,7 @@ limitations under the License.
     plain
     flat
     placeholder="Risk level"
-    min-width="100"
+    :min-width="riskLevel ? 'auto' : 85"
     :bg-color="riskColor"
     :items="[
       { value: 'high', title: 'High' },
@@ -52,11 +52,11 @@ const riskColors = {
 export default {
   data() {
     return {
-      riskLevel: false,
+      riskLevel: null,
     };
   },
   computed: {
-    notification() {
+    riskColor() {
       return riskColors[this.riskLevel];
     },
   },
@@ -66,11 +66,15 @@ export default {
 <style>
 .risk-level-selector .v-field {
   font-size: 12px !important;
+  padding: 5px 0 5px 10px !important;
+}
+
+.risk-level-selector .v-icon {
+  margin: 0 !important;
 }
 
 .risk-level-selector .v-field .v-field__input {
   min-height: 20px !important;
-  padding-bottom: 0;
-  padding-top: 0;
+  padding: 0;
 }
 </style>
