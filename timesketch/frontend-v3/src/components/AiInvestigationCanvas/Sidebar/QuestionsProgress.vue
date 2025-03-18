@@ -65,7 +65,9 @@ export default {
       return !this.store.activeContext.question?.id;
     },
     percentageCompleted() {
-      return (this.completedQuestionsTotal / this.questionsTotal) * 100;
+      return this.questionsTotal
+        ? (this.completedQuestionsTotal / this.questionsTotal) * 100
+        : 0;
     },
   },
 };

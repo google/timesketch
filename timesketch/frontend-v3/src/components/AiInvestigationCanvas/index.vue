@@ -15,7 +15,7 @@ limitations under the License.
 
 -->
 <template>
-  <v-container class="reporting-canvas grid pa-0" fluid>
+  <v-container class="ai-investigation-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
         :questions="filteredQuestions"
@@ -24,112 +24,14 @@ limitations under the License.
         :isLoading="isLoading"
         :reportLocked="reportLocked"
       />
-      <v-col
-        cols="12"
-        md="6"
-        lg="8"
-        class="fill-height overflow-auto pa-4"
-        v-if="isLoading"
-      >
-        <v-skeleton-loader height="60" class="mb-2"></v-skeleton-loader>
-
-        <div class="d-flex justify-space-between mb-10">
-          <v-skeleton-loader
-            height="20"
-            width="80"
-            class="ma-0"
-          ></v-skeleton-loader>
-          <div class="d-flex justify-space-between mb-5">
-            <v-skeleton-loader
-              height="20"
-              width="95"
-              class="mr-5"
-            ></v-skeleton-loader>
-            <v-skeleton-loader
-              height="20"
-              width="240"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-        </div>
-
-        <div class="d-flex mb-3 ga-4">
-          <v-skeleton-loader
-            height="40"
-            width="100"
-            class="ma-0"
-          ></v-skeleton-loader>
-          <v-skeleton-loader
-            height="40"
-            width="500"
-            class="ma-0"
-          ></v-skeleton-loader>
-        </div>
-        <div class="d-flex mb-3 ga-4">
-          <v-skeleton-loader
-            height="40"
-            width="100"
-            class="ma-0"
-          ></v-skeleton-loader>
-          <v-skeleton-loader
-            height="40"
-            width="500"
-            class="ma-0"
-          ></v-skeleton-loader>
-        </div>
-        <div class="d-flex mb-3 ga-4">
-          <v-skeleton-loader
-            height="40"
-            width="100"
-            class="ma-0"
-          ></v-skeleton-loader>
-          <v-skeleton-loader
-            height="40"
-            width="500"
-            class="ma-0"
-          ></v-skeleton-loader>
-        </div>
-        <div class="d-flex mb-15 ga-4">
-          <v-skeleton-loader
-            height="40"
-            width="100"
-            class="ma-0"
-          ></v-skeleton-loader>
-          <v-skeleton-loader
-            height="40"
-            width="500"
-            class="ma-0"
-          ></v-skeleton-loader>
-        </div>
-
-        <div class="d-flex justify-space-between align-center mb-3 ga-4">
-          <v-skeleton-loader
-            height="20"
-            width="100"
-            class="mb-5"
-          ></v-skeleton-loader>
-          <v-skeleton-loader
-            height="20"
-            width="220"
-            class="mb-5"
-          ></v-skeleton-loader>
-        </div>
-
-        <v-skeleton-loader height="172" class="mb-10"></v-skeleton-loader>
-        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
-        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
-        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
-        <v-skeleton-loader height="172" class="mb-5"></v-skeleton-loader>
-      </v-col>
-      <v-col v-else cols="12" md="6" lg="8" class="fill-height overflow-auto">
-        <ReportView
-          :questions="filteredQuestions"
-          :questionsTotal="questionsTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-          :summary="metadata ? metadata.summary : ''"
-          :reportLocked="reportLocked"
-        />
-      </v-col>
+      <ReportView
+        :questions="filteredQuestions"
+        :questionsTotal="questionsTotal"
+        :completedQuestionsTotal="completedQuestionsTotal"
+        :summary="metadata ? metadata.summary : ''"
+        :reportLocked="reportLocked"
+        :isLoading="isLoading"
+      />
     </v-row>
   </v-container>
   <v-dialog
@@ -168,6 +70,7 @@ export default {
   },
   methods: {
     async fetchData() {
+      // TODO revist once the API work has been completed
       this.isLoading = true;
       let questionsArray = [];
 
@@ -293,13 +196,13 @@ export default {
 </script>
 
 <style scoped>
-.reporting-canvas {
+.ai-investigation-canvas {
   height: calc(100vh - 65px);
   overflow: hidden;
 }
 
-.reporting-canvas__sidebar {
+.ai-investigation-canvas__sidebar {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
 }
 </style>

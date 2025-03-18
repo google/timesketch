@@ -215,7 +215,7 @@ limitations under the License.
         :width="navigationDrawer.width"
       >
       <!-- TODO: content of left panel -->
-      <ts-reporting :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-reporting>
+      <ts-ai-investigation :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-ai-investigation>
       <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
       <!-- <ts-example-left-bar :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-example-left-bar> -->
       </v-navigation-drawer>
@@ -245,8 +245,8 @@ import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsShareCard from '../components/ShareCard.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
-import TsReporting from '../components/LeftPanel/Reporting.vue'
 import Notifications from '../components/Notifications.vue'
+import TsAiInvestigation from '../components/LeftPanel/AiInvestigation.vue'
 
 export default {
   props: ['sketchId'],
@@ -257,7 +257,7 @@ export default {
     TsSearch,
     TsExampleLeftBar,
     TsShareCard,
-    TsReporting
+    TsAiInvestigation
   },
   setup() {
     const theme = useTheme();

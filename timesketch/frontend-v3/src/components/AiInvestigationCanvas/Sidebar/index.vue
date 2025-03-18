@@ -18,7 +18,7 @@ limitations under the License.
     cols="12"
     md="6"
     lg="4"
-    class="reporting-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
+    class="ai-investigation-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
   >
     <QuestionsListLoader v-if="isLoading" />
     <template v-else>
@@ -29,24 +29,29 @@ limitations under the License.
           :completedQuestionsTotal="completedQuestionsTotal"
         />
       </div>
-      <QuestionsList
-        :questions="sortedQuestions"
-        :questionsTotal="questionsTotal"
+
+      <QuestionsListLoader v-if="isLoading" />
+      <QuestionsList :questions="sortedQuestions"
     /></template>
   </v-col>
 </template>
 
 <script>
-import QuestionsListLoader from "../Loaders/QuestionsListLoader.vue";
-import QuestionsProgress from "./QuestionsProgress.vue";
-import QuestionsList from "./QuestionsList.vue";
-
 export default {
   props: {
-    questions: Array,
-    questionsTotal: Number,
-    completedQuestionsTotal: Number,
-    isLoading: Boolean,
+    questionsTotal: {
+      type: Number,
+      default: 0,
+    },
+    completedQuestionsTotal: {
+      type: Number,
+      default: 0,
+    },
+    isLoading: {
+      type: Boolean,
+      default: true,
+    },
+    questions: Array
   },
   computed: {
     sortedQuestions() {
@@ -63,7 +68,7 @@ export default {
 </script>
 
 <style scoped>
-.reporting-canvas__sidebar {
+.ai-investigation-canvas__sidebar {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
 }

@@ -47,8 +47,8 @@ const routes = [
         props: true,
       },
       {
-        path: 'reporting',
-        name: 'Reporting',
+        path: 'ai-investigation',
+        name: 'AiInvestigation',
         component: Canvas,
         props: true,
       },

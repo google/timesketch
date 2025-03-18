@@ -270,6 +270,13 @@ export default {
       title: title,
       content: content,
     };
+
+    debugger
+
+    if(!storyId) {
+      return
+    }
+
     return RestApiClient.post(
       "/sketches/" + sketchId + "/stories/" + storyId + "/",
       formData

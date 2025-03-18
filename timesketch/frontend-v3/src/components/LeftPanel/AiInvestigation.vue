@@ -13,13 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
-<!--
-  Example component to demonstrate use of left bar in combination with Canvas.
--->
 <template>
-  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
-    <router-link :to="{ name: 'Reporting', params: { sketchId: sketch.id } }">
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="$emit('toggleDrawer')"
+  >
+    <router-link
+      :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
+    >
       <v-icon icon="mdi-creation" left />
       <div style="height: 1px"></div>
     </router-link>
@@ -27,7 +30,7 @@ limitations under the License.
 
   <div v-else>
     <router-link
-      :to="{ name: 'Reporting', params: { sketchId: sketch.id } }"
+      :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
       custom
       v-slot="{ navigate }"
       class="pa-4"
@@ -42,7 +45,9 @@ limitations under the License.
       "
       style="cursor: pointer"
     >
-      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon icon="mdi-creation" left />Reporting</div>
+      <div @click="navigate" @keypress.enter="navigate" role="link">
+        <v-icon icon="mdi-creation" left />AI Investigation
+      </div>
     </router-link>
     <v-divider></v-divider>
   </div>
@@ -50,35 +55,34 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import { useTheme } from 'vuetify'
-import {useRoute} from 'vue-router'
+import { useTheme } from "vuetify";
+import { useRoute } from "vue-router";
 
 export default {
   data() {
     return {
       appStore: useAppStore(),
       route: useRoute(),
-    }
+    };
   },
   props: {
     iconOnly: Boolean,
   },
   computed: {
     sketch() {
-      return this.appStore.sketch
+      return this.appStore.sketch;
     },
     isActive() {
-      return this.route.name === 'Reporting'
+      return this.route.name === "AiInvestigation";
     },
     sketchId() {
-      return this.appStore.sketch.id
+      return this.appStore.sketch.id;
     },
   },
   setup() {
     return {
       theme: useTheme(),
-    }
-  }
-}
+    };
+  },
+};
 </script>
-
