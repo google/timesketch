@@ -24,14 +24,16 @@ limitations under the License.
         :isLoading="isLoading"
         :reportLocked="reportLocked"
       />
-      <ReportView
-        :questions="filteredQuestions"
-        :questionsTotal="questionsTotal"
-        :completedQuestionsTotal="completedQuestionsTotal"
-        :summary="metadata ? metadata.summary : ''"
-        :reportLocked="reportLocked"
-        :isLoading="isLoading"
-      />
+      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
+        <ReportView
+          :questions="filteredQuestions"
+          :questionsTotal="questionsTotal"
+          :completedQuestionsTotal="completedQuestionsTotal"
+          :summary="metadata ? metadata.summary : ''"
+          :reportLocked="reportLocked"
+          :isLoading="isLoading"
+        />
+      </v-col>
     </v-row>
   </v-container>
   <v-dialog
@@ -56,7 +58,7 @@ import RestApiClient from "@/utils/RestApiClient";
 export default {
   data() {
     return {
-      appStore: useAppStore(),
+      store: useAppStore(),
       route: useRoute(),
       isLoading: false,
       targetQuestionId: null,
@@ -77,19 +79,19 @@ export default {
       try {
         const [aiQuestions, existingQuestions, storyList] =
           await Promise.allSettled([
-            RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"),
-            RestApiClient.getOrphanQuestions(this.appStore.sketch.id),
-            RestApiClient.getStoryList(this.appStore.sketch.id),
+            RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer"),
+            RestApiClient.getOrphanQuestions(this.store.sketch.id),
+            RestApiClient.getStoryList(this.store.sketch.id),
           ]);
 
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",
             JSON.stringify([{ type: "ai-report" }]),
-            this.appStore.sketch.id
+            this.store.sketch.id
           );
 
-          this.appStore.report = {
+          this.store.report = {
             ...reportResponse.value.data.objects[0],
             content: JSON.parse(reportResponse.value.data.objects[0].content),
           };
@@ -99,7 +101,7 @@ export default {
           );
 
           if (existingAiReport) {
-            this.appStore.report = {
+            this.store.report = {
               ...existingAiReport,
               content: JSON.parse(existingAiReport.content),
             };
@@ -107,10 +109,10 @@ export default {
             const reportResponse = await RestApiClient.createStory(
               "ai-report",
               JSON.stringify([{ type: "ai-report" }]),
-              this.appStore.sketch.id
+              this.store.sketch.id
             );
 
-            this.appStore.report = {
+            this.store.report = {
               ...reportResponse.value.data.objects[0],
               content: JSON.parse(reportResponse.value.data.objects[0].content),
             };
@@ -161,11 +163,14 @@ export default {
     },
   },
   computed: {
+    selectedQuestion() {
+      return this.store.activeContext.question;
+    },
     filteredQuestions() {
       return this.questions
         ? this.questions.filter(({ id }) => {
-            return this.appStore.report?.content?.removedQuestions
-              ? !this.appStore.report.content.removedQuestions.includes(id)
+            return this.store.report?.content?.removedQuestions
+              ? !this.store.report.content.removedQuestions.includes(id)
               : true;
           })
         : [];
@@ -174,10 +179,10 @@ export default {
       return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
-      return this.appStore.report?.content?.approvedQuestions?.length || 0;
+      return this.store.report?.content?.approvedQuestions?.length || 0;
     },
     sketchId() {
-      return this.appStore.sketch.id;
+      return this.store.sketch.id;
     },
   },
   provide() {
