@@ -42,6 +42,19 @@ limitations under the License.
         />
       </v-col>
     </v-row>
+    <v-dialog
+      transition="dialog-bottom-transition"
+      v-model="showEventLog"
+      width="100%"
+      max-width="100%"
+      height="60%"
+      content-class="ma-0 bg-white"
+      class="align-end"
+      persistent="true"
+      opacity="0"
+    >
+      <EventsLog />
+    </v-dialog>
   </v-container>
   <v-dialog
     transition="dialog-bottom-transition"
@@ -70,6 +83,7 @@ export default {
       isLoading: false,
       targetQuestionId: null,
       questions: [],
+      showEventLog: false,
     };
   },
   created() {
@@ -91,8 +105,7 @@ export default {
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
 
-          debugger
-
+          
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",
@@ -151,10 +164,12 @@ export default {
           // metadata.value = aiQuestions.value.data.meta;
           questionsArray = [
             ...questionsArray,
-            ...aiQuestions.value.data.questions.map(({ text, ...question}) => ({
-              name: text,
-              ...question
-            })),
+            ...aiQuestions.value.data.questions.map(
+              ({ text, ...question }) => ({
+                name: text,
+                ...question,
+              })
+            ),
           ];
         }
         this.questions = questionsArray;
@@ -178,6 +193,12 @@ export default {
     },
     closeModal() {
       this.targetQuestionId = null;
+    },
+    closeEventLog() {
+      this.showEventLog = false;
+    },
+    openEventLog() {
+      this.showEventLog = true;
     },
   },
   computed: {
@@ -205,6 +226,8 @@ export default {
   },
   provide() {
     return {
+      openEventLog: this.openEventLog,
+      closeEventLog: this.closeEventLog,
       updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
       confirmRemoveQuestion: this.confirmRemoveQuestion,

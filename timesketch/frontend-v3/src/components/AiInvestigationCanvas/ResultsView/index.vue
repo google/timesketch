@@ -48,6 +48,7 @@ limitations under the License.
           >Conclusion</label
         >
         <v-chip
+          v-if="!question.user"
           size="x-small"
           variant="outlined"
           class="px-2 py-2 rounded-l"
@@ -99,6 +100,7 @@ limitations under the License.
           variant="outlined"
           class="px-2 py-2 rounded-l"
           color="#5F6368"
+          v-if="!question.user"
         >
           Pre-Detected by AI
         </v-chip>
@@ -107,6 +109,7 @@ limitations under the License.
       <v-expansion-panels class="mb-6">
         <v-expansion-panel
           color="#F8F9FA"
+          v-if="question.observables"
           v-for="observable in question.observables"
         >
           <v-expansion-panel-title color="#F8F9FA">
@@ -120,7 +123,40 @@ limitations under the License.
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <!-- <EventsList :query-request="activeQueryRequest"></EventsList> -->
+            <ObservableEvents :events="observable.entities" :details="observable.log_details" />
+            <v-btn
+              size="small"
+              variant="text"
+              depressed
+              @click="openEventLog()"
+              color="primary"
+            >
+              <v-icon left small icon="mdi-plus" />
+              Add more facts
+            </v-btn>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+
+        <v-expansion-panel color="#F8F9FA" v-else>
+          <v-expansion-panel-title color="#F8F9FA">
+            <div>
+              <h5 class="h4 font-weight-bold mb-2">Dave's observable</h5>
+              <p>
+                {{ conclusion }}
+              </p>
+            </div>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <v-btn
+              size="small"
+              variant="text"
+              depressed
+              @click="openEventLog()"
+              color="primary"
+            >
+              <v-icon left small icon="mdi-plus" />
+              Add more facts
+            </v-btn>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -138,11 +174,12 @@ export default {
     question: Object,
     reportLocked: Boolean,
   },
-  inject: ["updateQuestion", "confirmRemoveQuestion"],
+  inject: ["updateQuestion", "confirmRemoveQuestion", "openEventLog"],
   data() {
     return {
       store: useAppStore(),
       showModal: false,
+      showEventList: false,
       isConfirming: false,
       riskLevel: this.question.riskLevel,
       conclusion: this.question.conclusion,
@@ -167,6 +204,9 @@ export default {
   methods: {
     async regenerateConclusion() {
       // TODO : Implement when API work is completed
+    },
+    async toggleEventList() {
+      this.showEventList = !this.showEventList;
     },
   },
   watch: {
