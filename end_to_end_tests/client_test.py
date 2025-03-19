@@ -405,7 +405,29 @@ level: high
         )
 
     def test_delete_timeline(self):
-        """Test deleting a timeline."""
+        """Test deleting a timeline.
+
+        This test verifies the following:
+            - A new sketch can be created.
+            - A timeline can be imported into the sketch.
+            - The timeline's name, index name, and index status are correct.
+            - The number of events in the sketch is correct
+                after importing the timeline.
+            - A second timeline can be imported into the sketch.
+            - The total number of events in the sketch is correct after
+                importing the second timeline.
+            - A timeline can be deleted.
+            - The number of events in the sketch is correct after deleting
+                 a timeline.
+            - The number of timelines in the sketch is correct after
+                deleting a timeline.
+
+        Raises:
+            AssertionError: If any of the assertions fail.
+            RuntimeError: If the event creation fails.
+            RuntimeError: If the sketch is not found.
+
+        """
 
         # create a new sketch
         rand = random.randint(0, 10000)
@@ -460,9 +482,11 @@ level: high
 
         # delete timeline 1
         timeline.delete()
-
         events = sketch.explore("*", as_pandas=True)
         self.assertions.assertEqual(len(events), 5)
+
+        # check number of timelines
+        self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
