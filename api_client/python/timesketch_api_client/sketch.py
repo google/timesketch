@@ -929,9 +929,7 @@ class Sketch(resource.BaseResource):
         return template_list
 
     def list_timelines(self):
-        """List all timelines for this sketch.
-
-        Retrieves a list of all timelines associated with the current sketch.
+        """Retrieves a list of all timelines associated with the current sketch.
         This method fetches the sketch data and parses the 'timelines'
         information to create a list of Timeline objects.
 
@@ -953,24 +951,13 @@ class Sketch(resource.BaseResource):
             raise RuntimeError("Unable to list timelines on an archived sketch.")
 
         timelines = []
+
         data = self.lazyload_data()
         objects = data.get("objects")
-
-        if not isinstance(objects, list):
-            return timelines
-
         if not objects:
             return timelines
 
-        first_object = objects[0]
-        if not isinstance(first_object, dict):
-            return timelines
-
-        timeline_list = first_object.get("timelines")
-        if not isinstance(timeline_list, list):
-            return timelines
-
-        for timeline_dict in timeline_list:
+        for timeline_dict in objects[0].get("timelines", []):
             timeline_obj = timeline.Timeline(
                 timeline_id=timeline_dict["id"],
                 sketch_id=self.id,
