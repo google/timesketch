@@ -91,6 +91,8 @@ export default {
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
 
+          debugger
+
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",
@@ -146,10 +148,13 @@ export default {
           aiQuestions.status === "fulfilled" &&
           aiQuestions?.value?.data?.questions
         ) {
-          metadata.value = aiQuestions.value.data.meta;
+          // metadata.value = aiQuestions.value.data.meta;
           questionsArray = [
             ...questionsArray,
-            ...aiQuestions.value.data.questions,
+            ...aiQuestions.value.data.questions.map(({ text, ...question}) => ({
+              name: text,
+              ...question
+            })),
           ];
         }
         this.questions = questionsArray;
