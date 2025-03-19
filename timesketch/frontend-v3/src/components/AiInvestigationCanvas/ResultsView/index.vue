@@ -66,17 +66,30 @@ limitations under the License.
         class="mb-2"
         rows="3"
       ></v-textarea>
-      <v-btn
-        :disabled="reportLocked"
-        variant="text"
-        size="small"
-        color="primary"
-        class="text-uppercase pa-0"
-        @click="regenerateConclusion()"
-      >
-        <v-icon icon="mdi-reload" left small class="mr-1" />
-        Regenerate Conclusion (TODO)</v-btn
-      >
+      <div>
+        <v-btn
+          :disabled="reportLocked"
+          variant="text"
+          size="small"
+          color="primary"
+          class="text-uppercase pa-0"
+          @click="regenerateConclusion()"
+        >
+          <v-icon icon="mdi-reload" left small class="mr-1" />
+          Regenerate Conclusion (TODO)</v-btn
+        >
+        <v-btn
+          variant="text"
+          size="small"
+          color="primary"
+          @click="showRevisionHistory()"
+          :disabled="reportLocked"
+          class="text-uppercase ml-5"
+        >
+          <v-icon icon="mdi-invoice-list-outline" class="mr-2" left small />
+          View History (TODO)</v-btn
+        >
+      </div>
     </div>
     <div class="px-6">
       <div class="d-flex justify-space-between">

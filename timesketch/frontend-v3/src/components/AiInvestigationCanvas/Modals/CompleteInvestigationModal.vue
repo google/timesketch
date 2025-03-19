@@ -73,7 +73,7 @@ export default {
 
         this.store.setNotification({
           text: `Report Filed`,
-          icon: "mdi-plus-circle-outline",
+          icon: "mdi-file-check-outline",
           type: "success",
         });
       } catch (error) {

@@ -243,7 +243,7 @@ export const useAppStore = defineStore("app", {
       return this.report?.content?.summary;
     },
     reportLocked() {
-      return this.report?.content?.approved
-    }
+      return this.report?.content?.approved;
+    },
   },
 });

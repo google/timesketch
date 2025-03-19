@@ -159,7 +159,7 @@ limitations under the License.
               <v-list-item
                 v-for="(question, index) in dfiqMatches"
                 :key="index"
-                @click="createQuestion(question)"
+                @click="createQuestion(question, question.id)"
                 class="d-flex"
               >
                 <template v-slot:prepend>
@@ -181,7 +181,7 @@ limitations under the License.
               <v-list-item
                 v-for="(question, index) in aiMatches"
                 :key="index"
-                @click="createQuestion(question)"
+                @click="createQuestion(question.name)"
                 class="d-flex"
               >
                 <template v-slot:prepend>
@@ -251,7 +251,7 @@ export default {
     },
     aiMatches() {
       if (!this.queryString) {
-        return [];
+        return this.aiTemplates;
       }
 
       return this.aiTemplates.filter((template) =>
@@ -273,21 +273,21 @@ export default {
       try {
         const [dfiqTemplatesRes, aiTemplatesRes] = await Promise.allSettled([
           RestApiClient.getQuestionTemplates(),
-          // RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"), // TODO : add AI suggestions
+          RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer"), // TODO : add AI suggestions
         ]);
 
         if (
-          aiTemplatesRes.data.objects &&
-          aiTemplatesRes.data.objects.length > 0
+          aiTemplatesRes.value.data.questions &&
+          aiTemplatesRes.value.data.questions.length > 0
         ) {
-          this.aiTemplates = aiTemplatesRes.data.objects.splice(1, 4);
+          this.aiTemplates = aiTemplatesRes.value.data.questions;
         }
 
         if (
-          dfiqTemplatesRes.data.objects &&
-          dfiqTemplatesRes.data.objects.length > 0
+          dfiqTemplatesRes.value.data.objects &&
+          dfiqTemplatesRes.value.data.objects.length > 0
         ) {
-          this.dfiqTemplates = dfiqTemplatesRes.data.objects;
+          this.dfiqTemplates = dfiqTemplatesRes.value.data.objects;
         }
       } catch (error) {
         console.log(error);
@@ -295,15 +295,14 @@ export default {
         this.isLoading = false;
       }
     },
-    async createQuestion(template) {
+    async createQuestion(question, templateId) {
       this.isSubmitting = true;
 
-      let questionText = this.queryString;
-      let templateId = null;
+      let questionText = question || this.queryString;
 
-      if (template) {
-        questionText = template?.name;
-        templateId = template?.id;
+      if (templateId) {
+        questionText = question?.name;
+        templateId = templateId;
       }
 
       try {
@@ -315,12 +314,14 @@ export default {
           templateId
         );
 
-        this.addNewQuestion(question.data.objects[0]);
-        this.store.setActiveQuestion(question.data.objects[0]);
+        const questionData = question.data.objects[0];
+
+        this.addNewQuestion(questionData);
+        this.store.setActiveQuestion(questionData);
         this.$emit("close-modal");
 
         this.store.setNotification({
-          text: `You added the question "${question.data.objects[0].name}" to this Sketch`,
+          text: `You added the question "${questionData.name}" to this Sketch`,
           icon: "mdi-plus-circle-outline",
           type: "success",
         });

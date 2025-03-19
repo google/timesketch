@@ -14,7 +14,7 @@
 """LogAnalyzer feature for automated log analysis using LLMs."""
 
 # file should be placed in timesketch/lib/llms/features/log_analyzer.py
-
+import random
 import logging
 import json
 from typing import Any, Dict, List
@@ -27,7 +27,7 @@ class LogAnalyzer(LLMFeatureInterface):
     """LogAnalyzer feature for automated log analysis."""
     
     NAME = "log_analyzer"
-    
+
     def _get_prompt_template(self) -> str:
         """Returns a hardcoded prompt template for log analysis."""
         return """
@@ -80,7 +80,8 @@ class LogAnalyzer(LLMFeatureInterface):
             Dict containing hierarchically structured analysis results.
         """
         sketch_id = kwargs.get("sketch_id")
-        
+        RISK_LEVELS = ['high','low','medium','clean']
+
         # Handle JSON string response from Arcadia
         if isinstance(llm_response, str):
             try:
@@ -104,6 +105,7 @@ class LogAnalyzer(LLMFeatureInterface):
                 
                 if question_text not in questions_dict:
                     questions_dict[question_text] = {
+                        "record_id": int(record_id),
                         "text": question_text,
                         "conclusion": conclusion.get("conclusion", ""),  # Use first conclusion as main
                         "observables": []
@@ -117,20 +119,22 @@ class LogAnalyzer(LLMFeatureInterface):
                     "observable_type": record_data.get("observable_type"),
                     "conclusion": conclusion.get("conclusion", ""),
                     "entities": conclusion.get("entities", []),
-                    "log_details": record_data.get("log_details", {})
+                    "log_details": record_data.get("log_details", {}),
+                    "risk_level": random.choice(RISK_LEVELS)
                 }
                 
                 questions_dict[question_text]["observables"].append(observable)
         
         questions_list = []
+
         for question_text, data in questions_dict.items():
             questions_list.append({
-                "id": int(record_id),
-                "text": question_text,
+                "id": data['record_id'],
+                "name": question_text,
                 "conclusion": data["conclusion"],
                 "observables": data["observables"],
                 "total_observables": len(data["observables"]),
-                "risk_level": "high"
+                "risk_level": random.choice(RISK_LEVELS)
             })
         
         response = {

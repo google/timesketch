@@ -32,10 +32,10 @@ limitations under the License.
           @click="$emit('close-modal')"
         >
           <v-icon class="mr-1" left small />
-          Cancel</v-btn
+          No, keep question</v-btn
         >
         <v-btn rounded color="primary" @click="deleteQuestion()">
-          Yes, delete question</v-btn
+          Yes, remove question</v-btn
         >
       </div>
     </div>

@@ -102,17 +102,30 @@ limitations under the License.
           <label for="summary" class="text-h6 font-weight-bold mb-2 d-block"
             >Summary</label
           >
-          <v-btn
-            variant="text"
-            size="small"
-            color="primary"
-            @click="reqenerateSummary()"
-            :disabled="reportLocked"
-            class="text-uppercase"
-          >
-            <v-icon icon="mdi-reload" class="mr-2" left small />
-            Regenerate Summary (TODO)</v-btn
-          >
+          <div>
+            <v-btn
+              variant="text"
+              size="small"
+              color="primary"
+              @click="reqenerateSummary()"
+              :disabled="reportLocked"
+              class="text-uppercase"
+            >
+              <v-icon icon="mdi-reload" class="mr-2" left small />
+              Regenerate Summary (TODO)</v-btn
+            >
+            <v-btn
+              variant="text"
+              size="small"
+              color="primary"
+              @click="showRevisionHistory()"
+              :disabled="reportLocked"
+              class="text-uppercase"
+            >
+              <v-icon icon="mdi-invoice-list-outline" class="mr-2" left small />
+              View History (TODO)</v-btn
+            >
+          </div>
         </div>
         <v-textarea
           v-model="summary"
