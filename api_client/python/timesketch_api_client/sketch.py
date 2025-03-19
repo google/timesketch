@@ -969,29 +969,6 @@ class Sketch(resource.BaseResource):
         return timelines
 
     # pylint: disable=unused-argument
-    def upload(self, timeline_name, file_path, es_index=None):
-        """Deprecated function to upload data, does nothing.
-
-        Args:
-            timeline_name: Name of the resulting timeline.
-            file_path: Path to the file to be uploaded.
-            es_index: Index name for the ES database
-
-        Raises:
-            RuntimeError: If this function is used, since it has been
-                deprecated in favor of the importer client.
-        """
-        message = (
-            "This function has been deprecated, use the CLI tool: "
-            "timesketch_importer: https://github.com/google/timesketch/blob/"
-            "master/docs/UploadData.md#using-the-importer-clie-tool or the "
-            "importer library: https://github.com/google/timesketch/blob/"
-            "master/docs/UploadDataViaAPI.md"
-        )
-        logger.error(message)
-        raise RuntimeError(message)
-
-    # pylint: disable=unused-argument
     def add_timeline(self, searchindex):
         """Deprecated function to add timeline to sketch.
 
