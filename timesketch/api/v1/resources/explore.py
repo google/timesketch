@@ -171,7 +171,11 @@ class ExploreResource(resources.ResourceMixin, Resource):
         # the timeline_ids seem to be [] all the time, make a check if it its empty
         if not timeline_ids:
             timeline_ids = all_timeline_ids
-
+        if not timeline_ids:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "No valid timeline ids were found to perform the search on.",
+            )
         # Remove indices that don't exist from search.
         indices = utils.validate_indices(indices, self.datastore)
 
