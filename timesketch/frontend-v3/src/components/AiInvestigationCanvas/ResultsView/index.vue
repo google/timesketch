@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <section>
+  <ResultsViewLoader v-if="isLoading" />
+  <section v-else>
     <header class="report-header px-6 pa-4">
       <h2 class="text-h5 font-weight-bold mb-6">Results</h2>
       <QuestionActionsStrip
@@ -173,6 +174,7 @@ export default {
   props: {
     question: Object,
     reportLocked: Boolean,
+    isLoading: Boolean,
   },
   inject: ["updateQuestion", "confirmRemoveQuestion", "openEventLog"],
   data() {

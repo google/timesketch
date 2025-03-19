@@ -30,6 +30,7 @@ limitations under the License.
           :question="selectedQuestion"
           :key="selectedQuestion.id"
           :reportLocked="store.reportLocked"
+          :isLoading="isLoading"
         />
         <ReportView
           v-else
@@ -105,7 +106,7 @@ export default {
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
 
-          
+
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",

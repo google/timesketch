@@ -32,8 +32,11 @@ limitations under the License.
       <v-icon icon="mdi-close" small />
     </v-btn>
   </v-toolbar>
-  <div class="pt-8">
-    <EventsList />
+  <div class="pa-8">
+    <EventsList 
+    :disableToolbar="true"
+    :showAddToFindings="true"
+    />
   </div>
 </template>
 
