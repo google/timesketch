@@ -353,11 +353,32 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
     @login_required
     def delete(self, sketch_id: int, timeline_id: int):
-        """Handles DELETE request to the resource.
+        """Deletes a timeline from a sketch. If the timeline's search index is not
+        used by any other timelines in other sketches, the search index will
+        also be closed and archived.
 
         Args:
             sketch_id: (int) Integer primary key for a sketch database model
             timeline_id: (int) Integer primary key for a timeline database model
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write
+                permission on the sketch or if the timeline has a label that
+                prevents deletion.
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If there is an error
+                closing the search index.
+
+        Returns:
+            HTTP_STATUS_CODE_OK: If the timeline is successfully deleted.
+
+        Behavior:
+            - Checks if the sketch and timeline exist.
+            - Verifies the user has write permission on the sketch.
+            - Prevents deletion if the timeline has a label in the
+              LABELS_TO_PREVENT_DELETION config.
+            - Closes and archives the search index if it's not used by other
+              timelines in other sketches.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:

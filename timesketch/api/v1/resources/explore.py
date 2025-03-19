@@ -156,6 +156,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         all_indices = list({t.searchindex.index_name for t in sketch.timelines})
         indices = query_filter.get("indices", all_indices)
+        all_timeline_ids = [t.id for t in sketch.timelines]
+        timeline_ids = query_filter.get("timelines", all_timeline_ids)
 
         # If _all in indices then execute the query on all indices
         if "_all" in indices:
@@ -163,7 +165,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
+        # comment: jaegeral: since we write all things now to only one
+        # searchindex, this will be pointless
         indices, timeline_ids = get_validated_indices(indices, sketch)
+        # the timeline_ids seem to be [] all the time, make a check if it its empty
+        if not timeline_ids:
+            timeline_ids = all_timeline_ids
 
         # Remove indices that don't exist from search.
         indices = utils.validate_indices(indices, self.datastore)
@@ -187,6 +194,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
             )
 
         # Aggregate hit count per index.
+        # TODO: the value for indices might be misleading since we only have one
+        # one index per sketch since a while.
         index_stats_agg = {
             "indices": {
                 "terms": {
