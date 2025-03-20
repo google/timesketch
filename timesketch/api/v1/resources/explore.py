@@ -164,9 +164,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
             indices = all_indices
 
         # Make sure that the indices in the filter are part of the sketch.
-        # This will also remove any deleted timeline from the search result.
-        # comment: jaegeral: since we write all things now to only one
-        # searchindex, this will be pointless
         indices, timeline_ids = get_validated_indices(indices, sketch)
         # the timeline_ids seem to be [] all the time, make a check if it its empty
         if not timeline_ids:
@@ -198,8 +195,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
             )
 
         # Aggregate hit count per index.
-        # TODO: the value for indices might be misleading since we only have one
-        # one index per sketch since a while.
         index_stats_agg = {
             "indices": {
                 "terms": {
