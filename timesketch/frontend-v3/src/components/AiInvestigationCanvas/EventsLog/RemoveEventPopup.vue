@@ -1,0 +1,145 @@
+<!--
+Copyright 2025 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<template>
+  <div class="position-relative">
+    <div
+      class="position-absolute left-0 color-white pa-6 rounded-lg dialog"
+      v-if="showRemoveLog"
+      style="width: 420px"
+      v-click-outside="() => setShowRemoveLog()"
+    >
+      <div
+        v-if="isLoading"
+        class="d-flex justify-center align-center pa-6 fill-height"
+      >
+        <v-progress-circular
+          :size="80"
+          :width="4"
+          color="#fff"
+          indeterminate
+        ></v-progress-circular>
+      </div>
+      <div v-else>
+        <h4 class="mb-3">Removing Log</h4>
+        <p class="mb-5">
+          Are you sure you want to remove this log? This action may not be
+          reversible.
+        </p>
+
+        <div class="d-flex justify-end">
+          <v-btn variant="text" size="small" @click="setShowRemoveLog()">
+            No, keep it
+          </v-btn>
+          <v-btn
+            color="#fff"
+            size="small"
+            rounded
+            @click="removeEventFromObservable()"
+          >
+            Yes, remove It
+          </v-btn>
+        </div>
+      </div>
+    </div>
+    <v-btn variant="text" @click="setShowRemoveLog()">
+      <v-icon small icon="mdi-close-circle-outline" />
+    </v-btn>
+  </div>
+</template>
+
+<script>
+import { useAppStore } from "@/stores/app";
+import RestApiClient from "@/utils/RestApiClient";
+
+export default {
+  props: {
+    eventId: String,
+    sketchId: String,
+  },
+  data() {
+    return {
+      store: useAppStore(),
+      eventId: null,
+      isLoading: false,
+      showRemoveLog: false,
+    };
+  },
+  methods: {
+    async removeEventFromObservable() {
+      this.isLoading = true;
+      try {
+        const queryResponse = await RestApiClient.search(this.sketchId, {
+          query: `event_id: ${this.eventId}`,
+        });
+
+        if (!queryResponse.data.objects?.[0]) {
+          throw error;
+        }
+
+        this.showRemoveLog = false;
+
+        this.store.setNotification({
+          text: "Event removed from observable",
+          icon: "mdi-check-circle-outline",
+          type: "success",
+        });
+      } catch (error) {
+        this.store.setNotification({
+          text: "Unable to remove event from observable. Please try again.",
+          icon: "mdi-alert-circle-outline",
+          type: "error",
+        });
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    setShowRemoveLog() {
+      this.showRemoveLog = !this.showRemoveLog;
+    },
+  },
+};
+</script>
+
+<style>
+.event-log .v-table__wrapper {
+  overflow: visible;
+}
+
+.dialog {
+  background-color: #424242;
+  color: #fff;
+  bottom: 100%;
+  z-index: 3;
+}
+
+.dialog:after {
+  display: block;
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #424242;
+  position: absolute;
+  bottom: -8px;
+  left: 22px;
+}
+
+.bg-none {
+  background: transparent;
+  color: #fff;
+}
+</style>

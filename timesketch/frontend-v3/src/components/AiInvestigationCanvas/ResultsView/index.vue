@@ -124,7 +124,11 @@ limitations under the License.
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <ObservableEvents :events="observable.entities" :details="observable.log_details" />
+            <ObservableEvents
+              :events="observable.entities"
+              :details="observable.log_details"
+              :recordId="observable.record_id"
+            />
             <v-btn
               size="small"
               variant="text"
