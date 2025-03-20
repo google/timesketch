@@ -51,7 +51,7 @@ limitations under the License.
         :disabled="reportLocked || completed"
         size="small"
       >
-        {{ completed ? "Saved" : "Confirm &amp; Save" }}
+        {{ completed ? "Verified" : "Verify &amp; Save" }}
       </v-btn>
     </v-card-actions>
   </v-card>

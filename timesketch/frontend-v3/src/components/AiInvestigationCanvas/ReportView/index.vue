@@ -39,15 +39,19 @@ limitations under the License.
             Edit</v-btn
           >
 
-          <v-btn variant="text" size="small" color="primary">
+          <v-btn
+            variant="text"
+            size="small"
+            color="primary"
+            @click="downloadReport()"
+          >
             <v-icon
               icon="mdi-download-circle-outline"
               class="mr-1"
               left
               small
-              @click="downloadReport()"
             />
-            Download (TODO)</v-btn
+            Download</v-btn
           >
           <v-btn
             v-if="!reportLocked"
@@ -167,6 +171,7 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 import { debounce } from "lodash";
+import { jsPDF } from "jspdf";
 
 export default {
   props: {
@@ -233,6 +238,31 @@ export default {
         });
       } finally {
       }
+    },
+    downloadReport() {
+      debugger;
+      const doc = new jsPDF({ format: "letter" }).setFontSize(12);
+
+      doc.addImage("/timesketch-color.png", "png", 10, 5, 20, 20);
+
+      doc.text(`Report name: ${this.name}`, 10, 30);
+      doc.text(`Analysts: ${this.analysts}`, 10, 40);
+      doc.text(`Summary: ${this.summary}`, 10, 50);
+      doc.text(`Timestamp: 13/05/1987`, 10, 60);
+      doc.text(`-----------------------------`, 10, 70);
+
+      doc.setFont("Helvetica", "bold");
+      doc.text("Key Findings:", 10, 80);
+      this.questions.forEach((question, i) => {
+        const leading = 80 + i * 10 + 20;
+        doc.text(question.name, 10, leading);
+        doc.setFont("Helvetica", "regular");
+        doc.text(`- ${question.conclusion}`, 15, leading + 5);
+        doc.setFont("Helvetica", "bold");
+        doc.text('   ', 15, leading + 15);
+      });
+
+      doc.save(`report.pdf`);
     },
     async reqenerateSummary() {
       // TODO : Implement when API work is completed

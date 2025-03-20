@@ -142,7 +142,6 @@ limitations under the License.
         must-sort
         :sort-desc.sync="sortOrderAsc"
         @update:sort-desc="sortEvents"
-        sort-by="_source.timestamp"
         :hide-default-footer="totalHits < 11 || disablePagination"
         :expanded="expandedRows"
         :dense="displayOptions.isCompact"
@@ -398,29 +397,6 @@ limitations under the License.
             </td>
           </template>
 
-          <!-- Actions field -->
-          <template v-slot:item.actions="{ item }">
-            <v-btn small icon @click="toggleStar(item)">
-              <v-icon title="Toggle star status" v-if="item._source.label.includes('__ts_star')" color="amber"
-                >mdi-star</v-icon
-              >
-              <v-icon title="Toggle star status" v-else>mdi-star-outline</v-icon>
-            </v-btn>
-
-            <!-- Tag menu -->
-            <ts-event-tag-menu :event="item"></ts-event-tag-menu>
-
-            <!-- Action sub-menu -->
-            <ts-event-action-menu :event="item" @showContextWindow="showContextWindow($event)"></ts-event-action-menu>
-          </template>
-
-          <!-- Datetime field with action buttons -->
-          <template v-slot:item._source.timestamp="{ item }">
-            <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-              {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-            </div>
-          </template>
-
           <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
           <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
             <div
@@ -507,6 +483,7 @@ import TsEventDetail from './EventDetail.vue'
 import TsEventTagMenu from './EventTagMenu.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
+import { useAppStore } from '@/stores/app.js'
 
 const defaultQueryFilter = () => {
   return {
@@ -585,6 +562,7 @@ export default {
   },
   data() {
     return {
+      store: useAppStore(),
       columnHeaders: [
         {
           text: '',
@@ -639,10 +617,10 @@ export default {
       return `[experimental] This summary is based on the message field on your current page (${totalEvents} rows, ${uniqueEvents} unique message fields).`
     },
     sketch() {
-      return this.$store.state.sketch
+      return this.store.sketch
     },
     meta() {
-      return this.$store.state.meta
+      return this.store.meta
     },
     highlightEventId() {
       if (this.highlightEvent) {
@@ -676,10 +654,10 @@ export default {
       return this.currentQueryFilter.chips.filter((chip) => chip.type.startsWith('datetime'))
     },
     currentSearchNode() {
-      return this.$store.state.currentSearchNode
+      return this.store.currentSearchNode
     },
     userSettings() {
-      return this.$store.state.settings
+      return this.store.settings
     },
     headers() {
       let baseHeaders = [
@@ -736,7 +714,7 @@ export default {
       return baseHeaders
     },
     activeContext() {
-      return this.$store.state.activeContext
+      return this.store.activeContext
     },
     filterChips: function () {
       return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
@@ -795,9 +773,10 @@ export default {
         if (index < 1) {
           return
         }
+
         let prevEvent = this.eventList.objects[index - 1]
-        let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
-        let prevTimestampMillis = this.$options.filters.formatTimestamp(prevEvent._source.timestamp)
+        let timestampMillis = this.$filters.formatTimestamp(event._source.timestamp)
+        let prevTimestampMillis = this.$filters.formatTimestamp(prevEvent._source.timestamp)
         let timestamp = Math.floor(timestampMillis / 1000)
         let prevTimestamp = Math.floor(prevTimestampMillis / 1000)
         let delta = Math.floor(timestamp - prevTimestamp)
@@ -940,28 +919,18 @@ export default {
           this.addTimeBubbles()
 
           if (!incognito) {
-            EventBus.$emit('createBranch', this.eventList.meta.search_node)
-            this.$store.dispatch('updateSearchHistory')
+            // EventBus.$emit('createBranch', this.eventList.meta.search_node)
+            this.store.updateSearchHistory(this.sketch.id)
             this.branchParent = this.eventList.meta.search_node.id
           }
-          if (this.userSettings.eventSummarization) {
-            this.fetchEventSummary()
-          }
+          // if (this.userSettings.eventSummarization) {
+          //   this.fetchEventSummary()
+          // }
         })
         .catch((e) => {
-          let msg = 'Sorry, there was a problem fetching your search results. Error: "' + e.response.data.message + '"'
-          if (
-            e.response.data.message.includes('too_many_nested_clauses') ||
-            e.response.data.message.includes('query_shard_exception')
-          ) {
-            msg =
-              'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
-            this.warningSnackBar(msg)
-          } else {
-            this.errorSnackBar(msg)
-          }
-          console.error('Error message: ' + msg)
-          console.error(e)
+        
+          console.log(e);
+          
         })
     },
     fetchEventSummary: function() {
@@ -1115,7 +1084,7 @@ export default {
           this.saveSearchFormName = ''
           this.saveSearchMenu = false
           let newView = response.data.objects[0]
-          this.$store.state.meta.views.push(newView)
+          this.store.meta.views.push(newView)
         })
         .catch((e) => {})
     },
