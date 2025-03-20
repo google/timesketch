@@ -354,7 +354,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
     @login_required
     def delete(self, sketch_id: int, timeline_id: int):
         """Deletes a timeline from a sketch. If the timeline's search index is not
-        used by any other timelines in other sketches, the search index will
+        used by any other timelines or in other sketches, the search index will
         also be closed and archived.
 
         Args:
