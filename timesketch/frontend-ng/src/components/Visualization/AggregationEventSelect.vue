@@ -20,6 +20,7 @@ limitations under the License.
         <!-- <v-container class="ma-0"> -->
           <ts-timeline-search
             componentName="visualization"
+            :includeProcessingTimelines="this.settings.showProcessingTimelineEvents"
             :analyzer-timeline-id="timelineIDs"
             @selectedTimelines="selectedTimelineIDs = $event"
           >
@@ -104,6 +105,9 @@ export default {
     }
   },
   computed: {
+    settings(){
+      return this.$store.state.settings
+    },
     sketch() {
       return this.$store.state.sketch
     },

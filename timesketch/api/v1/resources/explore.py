@@ -22,6 +22,7 @@ import prometheus_client
 
 from flask import abort
 from flask import jsonify
+from flask import current_app
 from flask import request
 from flask import send_file
 from flask_restful import Resource
@@ -143,6 +144,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
         parent = request.json.get("parent", None)
         incognito = request.json.get("incognito", False)
 
+        include_processing_timelines = False
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            include_processing_timelines = request.json.get(
+                "include_processing_timelines", False
+            )
+
         return_field_string = form.fields.data
         if return_field_string:
             return_fields = [x.strip() for x in return_field_string.split(",")]
@@ -163,7 +170,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
-        indices, timeline_ids = get_validated_indices(indices, sketch)
+        indices, timeline_ids = get_validated_indices(
+            indices, sketch, include_processing_timelines
+        )
 
         # Remove indices that don't exist from search.
         indices = utils.validate_indices(indices, self.datastore)

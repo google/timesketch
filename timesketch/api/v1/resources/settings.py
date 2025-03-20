@@ -62,4 +62,11 @@ class SystemSettingsResource(Resource):
             result["llm_config_warning"] = warning_message
             logger.warning(warning_message)
 
+        # Get the search processing timelines setting, default is False if not set.
+        # if set to True, the search processing timelines will be displayed in the UI.
+        search_processing_timelines = current_app.config.get(
+            "SEARCH_PROCESSING_TIMELINES", False
+        )
+        result["SEARCH_PROCESSING_TIMELINES"] = search_processing_timelines
+
         return jsonify(result)
