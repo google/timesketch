@@ -19,6 +19,8 @@ import json
 import re
 import subprocess
 import yaml
+import time
+import redis
 
 
 import click
@@ -27,9 +29,12 @@ import pandas as pd
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
+from celery.result import AsyncResult
+
 
 from timesketch import version
 from timesketch.app import create_app
+from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
 from timesketch.models import db_session
 from timesketch.models import drop_all
@@ -1017,3 +1022,231 @@ def analyzer_stats(
     else:
         pd.options.display.max_colwidth = 500
         print(df)
+
+
+@cli.command(name="celery-tasks-redis")
+def celery_tasks_redis():
+    """Check and display the status of all Celery tasks stored in Redis.
+
+    This command connects to the Redis instance used by Celery to store
+    task metadata and retrieves information about all tasks. It then
+    presents this information in a formatted table, including the task ID,
+    name, status, and result.
+
+    The command handles potential connection errors to Redis and gracefully
+    exits if no tasks are found. It also handles exceptions that might occur
+    when retrieving task details, displaying "N/A" for any unavailable
+    information.
+
+    Note: Celery tasks have a `result_expire` date, which by default is
+        one day. After that, the results will no longer be available.
+
+    Returns:
+        None: Prints the task information to the console.
+    """
+    celery = create_celery_app()
+    redis_url = celery.conf.broker_url
+
+    try:
+        redis_client = redis.from_url(redis_url)
+    except redis.exceptions.ConnectionError:
+        print("Could not connect to Redis.")
+        return
+
+    # Get all keys matching the pattern for Celery task metadata
+    task_meta_keys = redis_client.keys("celery-task-meta-*")
+
+    if not task_meta_keys:
+        print("No Celery tasks found in Redis.")
+        return
+
+    table_data = [["Task ID", "Name", "Status", "Result"]]
+    for key in task_meta_keys:
+        task_id = key.decode("utf-8").split("celery-task-meta-")[1]
+        task_result = AsyncResult(task_id, app=celery)
+
+        try:
+            task_name = task_result.name
+        except Exception:
+            task_name = "N/A"
+
+        try:
+            task_status = task_result.status
+        except Exception:
+            task_status = "N/A"
+
+        try:
+            task_result_value = str(task_result.result)
+        except Exception:
+            task_result_value = "N/A"
+
+        table_data.append([task_id, task_name, task_status, task_result_value])
+
+    max_lengths = [0] * len(table_data[0])
+    for row in table_data:
+        for i, cell in enumerate(row):
+            max_lengths[i] = max(max_lengths[i], len(str(cell)))
+
+    # create the table
+    for row in table_data:
+        for i, cell in enumerate(row):
+            print(str(cell).ljust(max_lengths[i]), end=" ")
+        print()
+
+
+@cli.command(name="celery-tasks")
+@click.option(
+    "--task_id",
+    required=False,
+    help="Show information about a specific task ID.",
+)
+@click.option(
+    "--active",
+    is_flag=True,
+    help="Show only active tasks.",
+)
+@click.option(
+    "--show_all",
+    is_flag=True,
+    help="Show all tasks, including pending, active, and failed.",
+)
+@click.option(
+    "--revoked",
+    is_flag=True,
+    help="Show revoked tasks.",
+)
+def celery_tasks(task_id, active, show_all):
+    """Show running or past Celery tasks.
+    This command provides various ways to inspect and view the status of
+    Celery tasks within the Timesketch application. It can display
+    information about a specific task, list active tasks, show all tasks
+    (including pending, active, and failed).
+
+    Args:
+        task_id (str): If provided, display detailed information about the
+            task with this ID.
+        active (bool): If True, display only currently active tasks.
+        show_all (bool): If True, display all tasks, including active, pending,
+            reserved, scheduled, and failed tasks.
+
+    Returns:
+        None: Prints task information to the console.
+
+    Notes:
+        - Celery tasks have a `result_expire` date, which defaults to one day.
+          After this period, task results may no longer be available.
+        - When displaying all tasks, the status of each task is retrieved,
+          which may take some time.
+        - If no arguments are provided, it will print a message to use
+            --active or --show_all.
+
+    Examples:
+        # Show information about a specific task:
+        tsctl celery-tasks --task_id <task_id>
+
+        # Show all active tasks:
+        tsctl celery-tasks --active
+
+        # Show all tasks (including pending, active, and failed):
+        tsctl celery-tasks --show_all
+    """
+    celery = create_celery_app()
+
+    if task_id:
+        # Show information about a specific task
+        task_result = AsyncResult(task_id, app=celery)
+        print(f"Task ID: {task_id}")
+        print(f"Status: {task_result.status}")
+        if task_result.status == "FAILURE":
+            print(f"Traceback: {task_result.traceback}")
+        if task_result.status == "SUCCESS":
+            print(f"Result: {task_result.result}")
+        return
+
+    # Show a list of tasks
+    inspector = celery.control.inspect()
+
+    if active:
+        active_tasks = inspector.active()
+        if not active_tasks:
+            print("No active tasks found.")
+            return
+        table_data = [["Task ID", "Name", "Time Start"]]
+        for worker, tasks in active_tasks.items():
+            for task in tasks:
+                table_data.append(
+                    [
+                        task["id"],
+                        task["name"],
+                        time.strftime(
+                            "%Y-%m-%d %H:%M:%S", time.localtime(task["time_start"])
+                        ),
+                    ]
+                )
+        print_table(table_data)
+        return
+
+    if show_all:
+        # Show all tasks (active, pending, reserved, scheduled, failed)
+        all_tasks = {}
+        all_tasks.update(inspector.active() or {})
+        all_tasks.update(inspector.reserved() or {})
+        all_tasks.update(inspector.scheduled() or {})
+
+        if not all_tasks:
+            print("No tasks found.")
+            return
+
+        table_data = [["Task ID", "Name", "Status", "Time Start"]]
+        for worker, tasks in all_tasks.items():
+            for task in tasks:
+                task_id = task["id"]
+                task_result = AsyncResult(task_id, app=celery)
+                status = task_result.status
+                time_start = task.get("time_start", "N/A")
+                if time_start != "N/A":
+                    time_start = time.strftime(
+                        "%Y-%m-%d %H:%M:%S", time.localtime(time_start)
+                    )
+                table_data.append(
+                    [
+                        task_id,
+                        task["name"],
+                        status,
+                        time_start,
+                    ]
+                )
+        print_table(table_data)
+        return
+
+    print("Please use --active or --show_all to show tasks")
+
+
+@cli.command(name="celery-revoke-task")
+@click.argument("task_id")
+def celery_revoke_task(task_id):
+    """Revoke (cancel) a Celery task.
+
+     This command attempts to revoke a running Celery task, effectively
+    canceling its execution.  It uses the task ID to identify the specific
+    task to revoke. If the task is successfully revoked, a confirmation
+    message is printed. If an error occurs during the revocation process,
+    an error message is displayed.
+
+    Args:
+        task_id (str): The ID of the Celery task to revoke.
+
+    Returns:
+        None: Prints a message indicating success or failure to the console.
+
+    Raises:
+        Exception: If there is an error communicating with Celery or if the
+            task cannot be revoked.
+
+    """
+    celery = create_celery_app()
+    try:
+        celery.control.revoke(task_id, terminate=True)
+        print(f"Task {task_id} has been revoked.")
+    except Exception as e:
+        print(f"Error revoking task {task_id}: {e}")
