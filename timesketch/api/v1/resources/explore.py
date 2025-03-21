@@ -161,7 +161,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # If _all in indices then execute the query on all indices
         if "_all" in indices:
-            indices = all_indices
+            indices = all_timeline_ids
 
         # Make sure that the indices in the filter are part of the sketch.
         indices, timeline_ids = get_validated_indices(indices, sketch)
