@@ -86,6 +86,7 @@ limitations under the License.
 </template>
 
 <script>
+import { useAppStore } from '@/stores/app.js'
 import EventBus from '../../event-bus.js'
 import ApiClient from '../../utils/RestApiClient'
 
@@ -93,19 +94,20 @@ export default {
   props: ['comments', 'event', 'currentSearchNode'],
   data() {
     return {
+      store: useAppStore(),
       comment: '',
       selectedComment: false,
     }
   },
   computed: {
     sketch() {
-      return this.$store.state.sketch
+      return this.store.sketch
     },
     meta() {
-      return this.$store.state.meta
+      return this.store.meta
     },
     currentUser() {
-      return this.$store.state.currentUser
+      return this.store.currentUser
     },
   },
   methods: {

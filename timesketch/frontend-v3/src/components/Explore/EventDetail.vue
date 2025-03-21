@@ -182,6 +182,7 @@ import TsFormatXmlString from './FormatXMLString.vue'
 import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
 import TsComments from './Comments.vue'
 import TsUnfurlDialog from './UnfurlDialog.vue'
+import { useAppStore } from '@/stores/app.js'
 
 export default {
   components: {
@@ -194,6 +195,7 @@ export default {
   props: ['event'],
   data() {
     return {
+      store: useAppStore(),
       fullEvent: {},
       comments: [],
       aggregatorDialog: false,
@@ -223,16 +225,16 @@ export default {
   },
   computed: {
     sketch() {
-      return this.$store.state.sketch
+      return this.store.sketch
     },
     meta() {
-      return this.$store.state.meta
+      return this.store.meta
     },
     currentUser() {
-      return this.$store.state.currentUser
+      return this.store.currentUser
     },
     currentSearchNode() {
-      return this.$store.state.currentSearchNode
+      return this.store.currentSearchNode
     },
     fullEventFiltered() {
       Object.getOwnPropertyNames(this.fullEvent).forEach((key) => {
@@ -244,7 +246,7 @@ export default {
       return this.fullEvent
     },
     contextLinkConf() {
-      return this.$store.state.contextLinkConf
+      return this.store.contextLinkConf
     },
   },
   methods: {

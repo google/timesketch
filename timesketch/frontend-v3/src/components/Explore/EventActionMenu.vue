@@ -57,7 +57,7 @@ export default {
   },
   computed: {
     sketch() {
-      return this.$store.state.sketch
+      return this.store.sketch
     },
   },
   methods: {

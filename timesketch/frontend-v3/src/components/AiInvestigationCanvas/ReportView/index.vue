@@ -240,28 +240,36 @@ export default {
       }
     },
     downloadReport() {
-      debugger;
       const doc = new jsPDF({ format: "letter" }).setFontSize(12);
-
-      doc.addImage("/timesketch-color.png", "png", 10, 5, 20, 20);
-
-      doc.text(`Report name: ${this.name}`, 10);
-      doc.text(`Analysts: ${this.analysts}`, 10);
-      doc.text(`Summary: ${this.summary}`, 10);
-      doc.text(`Timestamp: 13/05/1987`, 10);
-      doc.text(`-----------------------------`, 10);
-
-      doc.setFont("Helvetica", "bold");
-      doc.text("Key Findings:", 10);
-      this.questions.forEach((question, i) => {
-        const leading = 80 + i * 10 + 20;
-        doc.text(question.name, 10);
-        doc.setFont("Helvetica", "regular");
-        doc.text(`- ${question.conclusion}`, 15);
-        doc.setFont("Helvetica", "bold");
+      doc.html(document.body, {
+        callback: function (doc) {
+          doc.save("report.pdf");
+        },
+        x: 10,
+        y: 10,
       });
 
-      doc.save(`report.pdf`);
+      // const doc = new jsPDF({ format: "letter" }).setFontSize(12);
+
+      // doc.addImage("/timesketch-color.png", "png", 10, 5, 20, 20);
+
+      // doc.text(`Report name: ${this.name}`, 10);
+      // doc.text(`Analysts: ${this.analysts}`, 10);
+      // doc.text(`Summary: ${this.summary}`, 10);
+      // doc.text(`Timestamp: 13/05/1987`, 10);
+      // doc.text(`-----------------------------`, 10);
+
+      // doc.setFont("Helvetica", "bold");
+      // doc.text("Key Findings:", 10);
+      // this.questions.forEach((question, i) => {
+      //   const leading = 80 + i * 10 + 20;
+      //   doc.text(question.name, 10);
+      //   doc.setFont("Helvetica", "regular");
+      //   doc.text(`- ${question.conclusion}`, 15);
+      //   doc.setFont("Helvetica", "bold");
+      // });
+
+      // doc.save(`report.pdf`);
     },
     async reqenerateSummary() {
       // TODO : Implement when API work is completed
