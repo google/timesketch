@@ -171,7 +171,6 @@ limitations under the License.
       </v-card>
     </div>
 
-    {{ selectedEvents }}
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
@@ -196,7 +195,6 @@ limitations under the License.
         fixed-header
         :expanded.sync="expandedRows"
         show-select
-        show-expand
       >
         <template v-slot:top="{ pagination, options, updateOptions }">
           <v-toolbar dense flat color="transparent" v-if="!disableToolbar">
@@ -553,7 +551,7 @@ limitations under the License.
             <span
               class="timeline-name-ellipsis"
               style="width: 130px; text-align: center"
-              >{{ getTimeline(item).i }}</span
+              >{{ getTimeline(item).name }}</span
             ></v-chip
           >
         </template>
