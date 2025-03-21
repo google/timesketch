@@ -1193,7 +1193,7 @@ def celery_tasks(task_id, active, show_all):
             return
 
         table_data = [["Task ID", "Name", "Status", "Time Start"]]
-        for worker, tasks in all_tasks.items():
+        for tasks in all_tasks.items():
             for task in tasks:
                 task_id = task["id"]
                 task_result = AsyncResult(task_id, app=celery)
