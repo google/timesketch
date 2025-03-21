@@ -18,8 +18,8 @@ import pathlib
 import json
 import re
 import subprocess
-import yaml
 import time
+import yaml
 import redis
 
 
@@ -1041,8 +1041,6 @@ def celery_tasks_redis():
     Note: Celery tasks have a `result_expire` date, which by default is
         one day. After that, the results will no longer be available.
 
-    Returns:
-        None: Prints the task information to the console.
     """
     celery = create_celery_app()
     redis_url = celery.conf.broker_url
@@ -1067,17 +1065,17 @@ def celery_tasks_redis():
 
         try:
             task_name = task_result.name
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             task_name = "N/A"
 
         try:
             task_status = task_result.status
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             task_status = "N/A"
 
         try:
             task_result_value = str(task_result.result)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             task_result_value = "N/A"
 
         table_data.append([task_id, task_name, task_status, task_result_value])
@@ -1129,9 +1127,6 @@ def celery_tasks(task_id, active, show_all):
         show_all (bool): If True, display all tasks, including active, pending,
             reserved, scheduled, and failed tasks.
 
-    Returns:
-        None: Prints task information to the console.
-
     Notes:
         - Celery tasks have a `result_expire` date, which defaults to one day.
           After this period, task results may no longer be available.
@@ -1172,7 +1167,7 @@ def celery_tasks(task_id, active, show_all):
             print("No active tasks found.")
             return
         table_data = [["Task ID", "Name", "Time Start"]]
-        for worker, tasks in active_tasks.items():
+        for tasks in active_tasks.items():
             for task in tasks:
                 table_data.append(
                     [
@@ -1236,9 +1231,6 @@ def celery_revoke_task(task_id):
     Args:
         task_id (str): The ID of the Celery task to revoke.
 
-    Returns:
-        None: Prints a message indicating success or failure to the console.
-
     Raises:
         Exception: If there is an error communicating with Celery or if the
             task cannot be revoked.
@@ -1248,5 +1240,5 @@ def celery_revoke_task(task_id):
     try:
         celery.control.revoke(task_id, terminate=True)
         print(f"Task {task_id} has been revoked.")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Error revoking task {task_id}: {e}")
