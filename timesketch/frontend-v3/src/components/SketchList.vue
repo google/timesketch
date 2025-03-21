@@ -57,6 +57,7 @@ limitations under the License.
           item.name
         }}</router-link>
       </template>
+      {{ $filters}}
       <template v-slot:item.created_at="{ item }">
         {{ $filters.shortDateTime(item.created_at)}} <small>({{ $filters.timeSince(item.created_at) }})</small>
       </template>

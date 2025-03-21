@@ -48,11 +48,11 @@ limitations under the License.
       v-model="showEventLog"
       width="100%"
       max-width="100%"
-      height="60%"
+      height="80%"
       content-class="ma-0 bg-white"
       class="align-end"
-      persistent="true"
-      opacity="0"
+      opacity="0.25"
+      :scrollable="true"
     >
       <EventsLog />
     </v-dialog>

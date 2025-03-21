@@ -26,21 +26,35 @@ limitations under the License.
       placeholder="Enter a query"
       :disabled="reportLocked"
       class="bg-white"
+      @=""
     ></v-text-field>
     <div class="v-spacer"></div>
     <v-btn text @click="closeEventLog()">
       <v-icon icon="mdi-close" small />
     </v-btn>
   </v-toolbar>
-  <div class="pa-8">
-    <EventsList 
-    :disableToolbar="true"
-    :showAddToFindings="true"
+  <div class="px-8 overflow-auto">
+    <EventList
+      :disableToolbar="true"
+      :disableSettings="true"
+      :showAddToFindings="true"
+      :queryRequest="{
+        queryString: '*',
+        queryFilter: {
+          from: 0,
+          terminate_after: 10,
+          size: 10,
+          indices: ['_all'],
+          order: 'asc',
+          chips: [],
+        },
+      }"
     />
   </div>
 </template>
 
 <script>
+import EventList from "@/components/Explore/EventList.vue";
 import { useAppStore } from "@/stores/app";
 
 export default {
@@ -49,6 +63,22 @@ export default {
     return {
       store: useAppStore(),
     };
+  },
+  methods: {
+    search: function (
+      resetPagination = true,
+      incognito = false,
+      parent = false
+    ) {
+      let queryRequest = {};
+      queryRequest["queryString"] = this.currentQueryString;
+      queryRequest["queryFilter"] = this.currentQueryFilter;
+      queryRequest["resetPagination"] = resetPagination;
+      queryRequest["incognito"] = incognito;
+      queryRequest["parent"] = parent;
+      this.activeQueryRequest = queryRequest;
+      this.showSearchDropdown = false;
+    },
   },
 };
 </script>

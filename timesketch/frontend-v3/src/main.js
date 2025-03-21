@@ -9,7 +9,7 @@ import { registerPlugins } from "@/plugins";
 
 // Components
 import App from "./App.vue";
-import {initialLetter, shortDateTime, timeSince} from "./filters.js";
+import {initialLetter, shortDateTime, timeSince, formatTimestamp} from "./filters.js";
 import {snackBarMixin} from "./mixins.js";
 
 // Composables
@@ -26,4 +26,5 @@ app.config.globalProperties.$filters = {
   initialLetter,
   shortDateTime,
   timeSince,
+  formatTimestamp
 }

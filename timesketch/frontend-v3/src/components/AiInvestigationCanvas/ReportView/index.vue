@@ -245,21 +245,20 @@ export default {
 
       doc.addImage("/timesketch-color.png", "png", 10, 5, 20, 20);
 
-      doc.text(`Report name: ${this.name}`, 10, 30);
-      doc.text(`Analysts: ${this.analysts}`, 10, 40);
-      doc.text(`Summary: ${this.summary}`, 10, 50);
-      doc.text(`Timestamp: 13/05/1987`, 10, 60);
-      doc.text(`-----------------------------`, 10, 70);
+      doc.text(`Report name: ${this.name}`, 10);
+      doc.text(`Analysts: ${this.analysts}`, 10);
+      doc.text(`Summary: ${this.summary}`, 10);
+      doc.text(`Timestamp: 13/05/1987`, 10);
+      doc.text(`-----------------------------`, 10);
 
       doc.setFont("Helvetica", "bold");
-      doc.text("Key Findings:", 10, 80);
+      doc.text("Key Findings:", 10);
       this.questions.forEach((question, i) => {
         const leading = 80 + i * 10 + 20;
-        doc.text(question.name, 10, leading);
+        doc.text(question.name, 10);
         doc.setFont("Helvetica", "regular");
-        doc.text(`- ${question.conclusion}`, 15, leading + 5);
+        doc.text(`- ${question.conclusion}`, 15);
         doc.setFont("Helvetica", "bold");
-        doc.text('   ', 15, leading + 15);
       });
 
       doc.save(`report.pdf`);
