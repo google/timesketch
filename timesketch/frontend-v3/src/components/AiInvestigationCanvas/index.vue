@@ -101,8 +101,8 @@ export default {
         }
 
         const existingQuestionsList =
-          existingQuestions.value.data.objects &&
-          existingQuestions.value.data.objects.length > 0
+          existingQuestions.value.data?.objects &&
+          existingQuestions.value.data?.objects.length > 0
             ? existingQuestions.value.data.objects[0]
             : [];
 

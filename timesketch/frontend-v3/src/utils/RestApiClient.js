@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from "axios";
-//import EventBus from '../event-bus.js'
+import EventBus from '../event-bus.js'
 
 const RestApiClient = axios.create({
   baseURL: "/api/v1",
@@ -41,14 +41,14 @@ RestApiClient.interceptors.response.use(
     return response;
   },
   function (error) {
-    // if (error.response.status === 500) {
-    //   EventBus.$emit(
-    //     "errorSnackBar",
-    //     "Server side error. Please contact your server administrator for troubleshooting."
-    //   );
-    // } else {
-    //   EventBus.$emit("errorSnackBar", error.response.data.message);
-    // }
+    if (error.response.status === 500) {
+      EventBus.$emit(
+        "errorSnackBar",
+        "Server side error. Please contact your server administrator for troubleshooting."
+      );
+    } else {
+      EventBus.$emit("errorSnackBar", error.response.data.message);
+    }
     return Promise.reject(error);
   }
 );
