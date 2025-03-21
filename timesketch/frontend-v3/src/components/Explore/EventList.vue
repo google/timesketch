@@ -171,6 +171,7 @@ limitations under the License.
       </v-card>
     </div>
 
+    {{ selectedEvents }}
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
@@ -629,6 +630,7 @@ import TsEventTagMenu from "./EventTagMenu.vue";
 import TsEventActionMenu from "./EventActionMenu.vue";
 import TsEventTags from "./EventTags.vue";
 import { useAppStore } from "@/stores/app.js";
+import RestApiClient from "../../utils/RestApiClient.js";
 
 const defaultQueryFilter = () => {
   return {
@@ -878,6 +880,16 @@ export default {
     },
   },
   methods: {
+    async addEventsToObservable() {
+      try {
+        const response = await RestApiClient.updateObservable(
+          "id",
+          this.selectedFields
+        );
+
+        console.log("update observale with select events");
+      } catch (error) {}
+    },
     toggleSummary() {
       this.summaryCollapsed = !this.summaryCollapsed;
       localStorage.setItem("aiSummaryCollapsed", String(this.summaryCollapsed));
