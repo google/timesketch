@@ -157,7 +157,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
         all_indices = list({t.searchindex.index_name for t in sketch.timelines})
         indices = query_filter.get("indices", all_indices)
         all_timeline_ids = [t.id for t in sketch.timelines]
-        timeline_ids = query_filter.get("timelines", all_timeline_ids)
 
         # If _all in indices then execute the query on all indices
         if "_all" in indices:
