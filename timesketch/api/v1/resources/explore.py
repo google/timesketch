@@ -164,9 +164,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Make sure that the indices in the filter are part of the sketch.
         indices, timeline_ids = get_validated_indices(indices, sketch)
-        # the timeline_ids seem to be [] all the time, make a check if it its empty
-        if not timeline_ids:
-            timeline_ids = all_timeline_ids
         if not timeline_ids:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
