@@ -148,6 +148,7 @@ limitations under the License.
               class="ma-0"
             ></v-skeleton-loader>
           </div>
+          {{  dfiqMatches }}
         </div>
         <div v-else>
           <v-list v-if="dfiqMatches && dfiqMatches.length > 0">
@@ -260,7 +261,7 @@ export default {
     },
     dfiqMatches() {
       if (!this.queryString) {
-        return [];
+        return this.dfiqTemplates;
       }
 
       return this.dfiqTemplates.filter((template) =>
@@ -277,17 +278,10 @@ export default {
         ]);
 
         if (
-          aiTemplatesRes.data.objects &&
-          aiTemplatesRes.data.objects.length > 0
+          dfiqTemplatesRes.value.data.objects &&
+          dfiqTemplatesRes.value.data.objects.length > 0
         ) {
-          this.aiTemplates = aiTemplatesRes.data.objects.splice(1, 4);
-        }
-
-        if (
-          dfiqTemplatesRes.data.objects &&
-          dfiqTemplatesRes.data.objects.length > 0
-        ) {
-          this.dfiqTemplates = dfiqTemplatesRes.data.objects;
+          this.dfiqTemplates = dfiqTemplatesRes.value.data.objects;
         }
       } catch (error) {
         console.log(error);
