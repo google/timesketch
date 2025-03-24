@@ -25,7 +25,7 @@ limitations under the License.
       <div>
         <h2 class="mb-5 h5">Questions</h2>
         <QuestionsProgress
-          :questionsTotal="questionsTotal"
+          :questionsTotal="verifiedTotal"
           :completedQuestionsTotal="completedQuestionsTotal"
         />
       </div>
@@ -44,6 +44,10 @@ export default {
       default: 0,
     },
     completedQuestionsTotal: {
+      type: Number,
+      default: 0,
+    },
+    verifiedTotal: {
       type: Number,
       default: 0,
     },

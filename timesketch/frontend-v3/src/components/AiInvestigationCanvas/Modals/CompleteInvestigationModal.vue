@@ -67,7 +67,7 @@ export default {
       this.isSubmitting = true;
 
       try {
-        await this.store.updateReport({ approved: true });
+        await this.store.updateReport({ verified: true });
 
         this.$emit("close-modal");
 

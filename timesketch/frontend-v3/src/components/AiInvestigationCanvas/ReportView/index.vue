@@ -222,7 +222,7 @@ export default {
     },
     async unlockReport() {
       try {
-        await this.store.updateReport({ approved: false });
+        await this.store.updateReport({ verified: false });
 
         this.store.setNotification({
           text: `Report Unlocked`,

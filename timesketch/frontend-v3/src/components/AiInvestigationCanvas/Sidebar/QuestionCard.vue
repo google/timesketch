@@ -18,6 +18,7 @@ limitations under the License.
     :class="listItemClasses"
     :active="isActive"
     @click="setActiveQuestion()"
+    :disabled="isDisabled"
   >
     <div class="d-flex ga-6 align-center justify-md-space-between">
       <div class="d-flex ga-6 align-center">
@@ -65,6 +66,7 @@ export default {
     risk_level: String,
     id: Number,
     user: Object,
+    reportLocked: Boolean
   },
   data() {
     return {
@@ -100,6 +102,9 @@ export default {
       return this.store.activeContext.question?.id
         ? this.id === this.store.activeContext.question?.id
         : false;
+    },
+    isDisabled() {
+      return !this.completed && this.reportLocked
     },
     completed() {
       let isApproved = false;

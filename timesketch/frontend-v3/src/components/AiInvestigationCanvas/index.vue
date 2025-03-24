@@ -21,6 +21,7 @@ limitations under the License.
         :questions="filteredQuestions"
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
+        :verifiedTotal="verifiedTotal"
         :isLoading="isLoading"
         :reportLocked="store.reportLocked"
       />
@@ -223,6 +224,11 @@ export default {
     },
     sketchId() {
       return this.store.sketch.id;
+    },
+    verifiedTotal() {
+      return this.store.reportLocked
+        ? this.filteredQuestions.filter(({ id }) => this.store.approvedReportQuestions.includes(id)).length
+        : this.questionsTotal;
     },
   },
   provide() {

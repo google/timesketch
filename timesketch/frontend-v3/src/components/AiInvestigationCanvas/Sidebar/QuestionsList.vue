@@ -40,6 +40,7 @@ limitations under the License.
       v-for="question in sortedQuestions"
       :key="question"
       :value="question"
+      :reportLocked="reportLocked"
       v-bind="question"
     />
   </v-list>
