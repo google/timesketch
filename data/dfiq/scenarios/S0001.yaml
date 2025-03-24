@@ -1,0 +1,13 @@
+display_name: Windows Lateral Movement
+description: |
+  Lateral movement is the process of an attacker moving from one system to another within a network
+  after they have gained initial access to a system. This can be done through a variety of methods,
+  such as exploiting vulnerabilities in software or using stolen credentials.
+
+  Once an attacker has gained lateral movement within a network, they can then access sensitive data,
+  install malware, or disrupt operations. Lateral movement is a critical step in many cyberattacks,
+  as it allows attackers to gain deeper access to a network and ultimately achieve their goals.
+type: scenario
+id: S0001
+tags:
+  - windows

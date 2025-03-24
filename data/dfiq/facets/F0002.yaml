@@ -1,0 +1,8 @@
+display_name: Remote Execution
+description: Remote executions can indicate lateral movements.
+type: facet
+id: F0002
+tags:
+  - windows
+parent_ids:
+ - S0001
