@@ -14,11 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
-    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
+    <div v-if="sketch.id && !loadingSketch" class="fill-height">
       <!-- Empty state -->
       <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" class="fill-height" fluid>
         <v-row align="center" justify="center" class="text-center">
@@ -242,7 +241,6 @@ limitations under the License.
         ></router-view>
 
     </div>
-  </div>
 </template>
 
 <script>

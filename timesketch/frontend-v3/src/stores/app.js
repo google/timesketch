@@ -52,6 +52,7 @@ export const useAppStore = defineStore("app", {
     activeAnalyses: [],
     analyzerResults: [],
     enabledTimelines: [],
+    notification: null
   }),
   actions: {
     async setTestAppStore() {
@@ -64,6 +65,17 @@ export const useAppStore = defineStore("app", {
         this.$reset();
         this.currentUser = currentUser;
       })
+    },
+
+    setActiveQuestion(question) {
+      this.activeContext = {
+        ...this.activeContext,
+        question
+      }
+    },
+
+    setNotification(notification) {
+      this.notification = notification
     },
 
     async updateSketch(sketchId) {

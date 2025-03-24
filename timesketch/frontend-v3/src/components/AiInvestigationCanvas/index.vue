@@ -15,12 +15,13 @@ limitations under the License.
 
 -->
 <template>
-  <v-container class="reporting-canvas grid pa-0" fluid>
+  <v-container class="ai-investigation-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
         :isLoading="isLoading"
+        :questions="filteredQuestions"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
         ><!-- TODO: Main content to go here -->
@@ -100,8 +101,8 @@ export default {
         }
 
         const existingQuestionsList =
-          existingQuestions.value.data.objects &&
-          existingQuestions.value.data.objects.length > 0
+          existingQuestions.value.data?.objects &&
+          existingQuestions.value.data?.objects.length > 0
             ? existingQuestions.value.data.objects[0]
             : [];
 
@@ -152,6 +153,11 @@ export default {
       return this.appStore.sketch.id;
     },
   },
+  provide() {
+    return {
+      regenerateQuestions: this.fetchData, // TODO: Revisit this once the API is in place for this async op
+    };
+  },
   setup() {
     return {
       theme: useTheme(),
@@ -161,8 +167,13 @@ export default {
 </script>
 
 <style scoped>
-.reporting-canvas {
+.ai-investigation-canvas {
   height: calc(100vh - 65px);
   overflow: hidden;
+}
+
+.ai-investigation-canvas__sidebar {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
 }
 </style>

@@ -18,41 +18,58 @@ limitations under the License.
     cols="12"
     md="6"
     lg="4"
-    class="reporting-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
+    class="ai-investigation-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
   >
     <QuestionsListLoader v-if="isLoading" />
-    <div v-else>
-      <h2 class="mb-5 h5">Questions</h2>
-      <QuestionsProgress
-        :questionsTotal="questionsTotal"
-        :completedQuestionsTotal="completedQuestionsTotal"
-      />
-    </div>
+    <template v-else>
+      <div>
+        <h2 class="mb-5 h5">Questions</h2>
+        <QuestionsProgress
+          :questionsTotal="questionsTotal"
+          :completedQuestionsTotal="completedQuestionsTotal"
+        />
+      </div>
+
+      <QuestionsListLoader v-if="isLoading" />
+      <QuestionsList :questions="sortedQuestions" :questionsTotal="questionsTotal"
+    /></template>
   </v-col>
 </template>
-
-<style scoped>
-.reporting-canvas__sidebar {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-}
-</style>
 
 <script>
 export default {
   props: {
     questionsTotal: {
       type: Number,
-      default: 0
+      default: 0,
     },
     completedQuestionsTotal: {
       type: Number,
-      default: 0
+      default: 0,
     },
-    isLoading:  {
+    isLoading: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
+    questions: Array
+  },
+  computed: {
+    sortedQuestions() {
+      return this.questions && this.questions.length > 0
+        ? [
+            ...this.questions.sort(
+              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+            ),
+          ]
+        : [];
+    },
   },
 };
 </script>
+
+<style scoped>
+.ai-investigation-canvas__sidebar {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+}
+</style>
