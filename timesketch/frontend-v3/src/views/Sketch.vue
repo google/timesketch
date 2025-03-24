@@ -211,9 +211,20 @@ limitations under the License.
       <!-- Left panel -->
       <v-navigation-drawer
         v-model="showLeftPanel"
+        app
+        clipped
         disable-resize-watcher
+        stateless
+        hide-overlay
         :width="navigationDrawer.width"
       >
+        <div class="pa-4" style="cursor: pointer">
+          <div><v-icon left>mdi-magnify</v-icon>
+            <template v-if="!isMiniDrawer">
+              Search
+            </template>
+          </div>
+        </div>
       <!-- TODO: content of left panel -->
       <ts-ai-investigation :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-ai-investigation>
       <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
@@ -245,8 +256,8 @@ import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsShareCard from '../components/ShareCard.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
-import Notifications from '../components/Notifications.vue'
 import TsAiInvestigation from '../components/LeftPanel/AiInvestigation.vue'
+import Notifications from '../components/Notifications.vue'
 
 export default {
   props: ['sketchId'],
