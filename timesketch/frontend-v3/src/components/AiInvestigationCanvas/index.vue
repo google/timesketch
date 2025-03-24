@@ -55,7 +55,7 @@ limitations under the License.
       opacity="0.25"
       :scrollable="true"
     >
-      <EventsLog />
+      <EventsLog :targetObservableId="targetObservableId" />
     </v-dialog>
   </v-container>
   <v-dialog
@@ -84,6 +84,7 @@ export default {
       route: useRoute(),
       isLoading: false,
       targetQuestionId: null,
+      targetObservableId: null,
       questions: [],
       showEventLog: false,
     };
@@ -199,7 +200,10 @@ export default {
     closeEventLog() {
       this.showEventLog = false;
     },
-    openEventLog() {
+    openEventLog(targetId) {
+
+      debugger
+      this.targetObservableId = targetId;
       this.showEventLog = true;
     },
   },

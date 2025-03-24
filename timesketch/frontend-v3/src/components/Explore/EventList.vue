@@ -198,240 +198,237 @@ limitations under the License.
       >
         <template v-slot:top="{ pagination, options, updateOptions }">
           <v-toolbar dense flat color="transparent">
-            <template v-if="!disableToolbar">
-              <div v-if="!selectedEvents.length">
-                <span style="display: inline-block; min-width: 200px">
-                  <small
-                    >{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{
-                      totalTime
-                    }}s)</small
-                  >
-                </span>
-
-                <v-dialog
-                  v-model="saveSearchMenu"
-                  v-if="!disableSaveSearch"
-                  width="500"
+            <div v-if="!selectedEvents.length">
+              <span style="display: inline-block; min-width: 200px">
+                <small
+                  >{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{
+                    totalTime
+                  }}s)</small
                 >
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-btn icon v-bind="attrs" v-on="on">
-                      <v-icon title="Save current search"
-                        >mdi-content-save-outline</v-icon
-                      >
-                    </v-btn>
-                  </template>
+              </span>
 
-                  <v-card class="pa-4">
-                    <h3>Save Search</h3>
-                    <br />
-                    <v-text-field
-                      clearable
-                      v-model="saveSearchFormName"
-                      required
-                      placeholder="Name your saved search"
-                      outlined
-                      dense
-                      autofocus
-                      @focus="$event.target.select()"
-                      :rules="saveSearchNameRules"
-                    >
-                    </v-text-field>
-                    <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn text @click="saveSearchMenu = false">
-                        Cancel
-                      </v-btn>
-                      <v-btn
-                        text
-                        color="primary"
-                        @click="saveSearch"
-                        :disabled="
-                          !saveSearchFormName || saveSearchFormName.length > 255
-                        "
-                      >
-                        Save
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
-
-                <template>
-                  <v-btn
-                    icon
-                    @click="showHistogram = !showHistogram"
-                    v-if="!disableHistogram"
-                  >
-                    <v-icon title="Toggle event histogram"
-                      >mdi-chart-bar</v-icon
+              <v-dialog
+                v-model="saveSearchMenu"
+                v-if="!disableSaveSearch"
+                width="500"
+              >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon title="Save current search"
+                      >mdi-content-save-outline</v-icon
                     >
                   </v-btn>
                 </template>
 
-                <v-dialog
-                  v-model="columnDialog"
-                  v-if="!disableColumns"
-                  max-width="500px"
-                  scrollable
-                >
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-btn icon v-bind="attrs" v-on="on">
-                      <v-icon title="Modify columns"
-                        >mdi-view-column-outline</v-icon
-                      >
+                <v-card class="pa-4">
+                  <h3>Save Search</h3>
+                  <br />
+                  <v-text-field
+                    clearable
+                    v-model="saveSearchFormName"
+                    required
+                    placeholder="Name your saved search"
+                    outlined
+                    dense
+                    autofocus
+                    @focus="$event.target.select()"
+                    :rules="saveSearchNameRules"
+                  >
+                  </v-text-field>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="saveSearch"
+                      :disabled="
+                        !saveSearchFormName || saveSearchFormName.length > 255
+                      "
+                    >
+                      Save
                     </v-btn>
-                  </template>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
 
-                  <v-card height="50vh">
-                    <v-card-title>Select columns</v-card-title>
+              <template>
+                <v-btn
+                  icon
+                  @click="showHistogram = !showHistogram"
+                  v-if="!disableHistogram"
+                >
+                  <v-icon title="Toggle event histogram">mdi-chart-bar</v-icon>
+                </v-btn>
+              </template>
 
-                    <v-card-text>
-                      <v-text-field
-                        v-model="searchColumns"
-                        append-icon="mdi-magnify"
-                        label="Search"
-                        single-line
-                        hide-details
-                      ></v-text-field>
-                      <br />
-                      <v-data-table
-                        v-model="selectedFields"
-                        :headers="columnHeaders"
-                        :items="meta.mappings"
-                        :search="searchColumns"
-                        :hide-default-footer="true"
-                        item-key="field"
-                        disable-pagination
-                        show-select
-                        dense
-                        @input="updateSelectedFields"
-                      >
-                      </v-data-table>
-                    </v-card-text>
+              <v-dialog
+                v-model="columnDialog"
+                v-if="!disableColumns"
+                max-width="500px"
+                scrollable
+              >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon title="Modify columns"
+                      >mdi-view-column-outline</v-icon
+                    >
+                  </v-btn>
+                </template>
 
+                <v-card height="50vh">
+                  <v-card-title>Select columns</v-card-title>
+
+                  <v-card-text>
+                    <v-text-field
+                      v-model="searchColumns"
+                      append-icon="mdi-magnify"
+                      label="Search"
+                      single-line
+                      hide-details
+                    ></v-text-field>
+                    <br />
+                    <v-data-table
+                      v-model="selectedFields"
+                      :headers="columnHeaders"
+                      :items="meta.mappings"
+                      :search="searchColumns"
+                      :hide-default-footer="true"
+                      item-key="field"
+                      disable-pagination
+                      show-select
+                      dense
+                      @input="updateSelectedFields"
+                    >
+                    </v-data-table>
+                  </v-card-text>
+
+                  <v-divider></v-divider>
+
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      text
+                      @click="
+                        selectedFields = [{ field: 'message', type: 'text' }]
+                      "
+                    >
+                      Reset
+                    </v-btn>
+                    <v-btn text color="primary" @click="columnDialog = false">
+                      Set columns
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+
+              <v-btn icon @click="exportSearchResult()">
+                <v-icon title="Download current view as CSV"
+                  >mdi-download</v-icon
+                >
+              </v-btn>
+
+              <v-menu
+                v-if="!disableSettings"
+                offset-y
+                :close-on-content-click="false"
+              >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon title="View settings">mdi-dots-horizontal</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-card outlined max-width="475" class="mx-auto">
+                  <v-list subheader two-line flat dense>
+                    <v-list-subheader>Density</v-list-subheader>
+
+                    <v-list-item :ripple="false" value="">
+                      <template>
+                        <v-list-item-action>
+                          <v-radio-group v-model="displayOptions.isCompact">
+                            <v-radio :value="false"></v-radio>
+                          </v-radio-group>
+                        </v-list-item-action>
+
+                        <v-list-item-title>Comfortable</v-list-item-title>
+                        <v-list-item-subtitle
+                          >More space between rows</v-list-item-subtitle
+                        >
+                      </template>
+                    </v-list-item>
+
+                    <v-list-item :ripple="false">
+                      <template>
+                        <v-list-item-action>
+                          <v-radio-group v-model="displayOptions.isCompact">
+                            <v-radio :value="true"></v-radio>
+                          </v-radio-group>
+                        </v-list-item-action>
+
+                        <v-list-item-title>Compact</v-list-item-title>
+                        <v-list-item-subtitle
+                          >Less space between rows</v-list-item-subtitle
+                        >
+                      </template>
+                    </v-list-item>
                     <v-divider></v-divider>
 
-                    <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn
-                        text
-                        @click="
-                          selectedFields = [{ field: 'message', type: 'text' }]
-                        "
-                      >
-                        Reset
-                      </v-btn>
-                      <v-btn text color="primary" @click="columnDialog = false">
-                        Set columns
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
-
-                <v-btn icon @click="exportSearchResult()">
-                  <v-icon title="Download current view as CSV"
-                    >mdi-download</v-icon
-                  >
-                </v-btn>
-
-                <v-menu
-                  v-if="!disableSettings"
-                  offset-y
-                  :close-on-content-click="false"
-                >
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-btn icon v-bind="attrs" v-on="on">
-                      <v-icon title="View settings">mdi-dots-horizontal</v-icon>
-                    </v-btn>
-                  </template>
-
-                  <v-card outlined max-width="475" class="mx-auto">
-                    <v-list subheader two-line flat dense>
-                      <v-list-subheader>Density</v-list-subheader>
-
-                      <v-list-item :ripple="false" value="">
-                        <template>
-                          <v-list-item-action>
-                            <v-radio-group v-model="displayOptions.isCompact">
-                              <v-radio :value="false"></v-radio>
-                            </v-radio-group>
-                          </v-list-item-action>
-
-                          <v-list-item-title>Comfortable</v-list-item-title>
-                          <v-list-item-subtitle
-                            >More space between rows</v-list-item-subtitle
-                          >
-                        </template>
-                      </v-list-item>
-
+                    <v-list subheader two-line flat>
+                      <v-list-subheader>Misc</v-list-subheader>
                       <v-list-item :ripple="false">
-                        <template>
-                          <v-list-item-action>
-                            <v-radio-group v-model="displayOptions.isCompact">
-                              <v-radio :value="true"></v-radio>
-                            </v-radio-group>
-                          </v-list-item-action>
+                        <v-list-item-action>
+                          <v-switch
+                            dense
+                            color=""
+                            v-model="displayOptions.showTags"
+                          ></v-switch>
+                        </v-list-item-action>
 
-                          <v-list-item-title>Compact</v-list-item-title>
-                          <v-list-item-subtitle
-                            >Less space between rows</v-list-item-subtitle
-                          >
-                        </template>
+                        <v-list-item-title>Tags</v-list-item-title>
+                        <v-list-item-subtitle>Show tags</v-list-item-subtitle>
                       </v-list-item>
-                      <v-divider></v-divider>
+                      <v-list-item :ripple="false">
+                        <v-list-item-action>
+                          <v-switch
+                            dense
+                            v-model="displayOptions.showEmojis"
+                          ></v-switch>
+                        </v-list-item-action>
 
-                      <v-list subheader two-line flat>
-                        <v-list-subheader>Misc</v-list-subheader>
-                        <v-list-item :ripple="false">
-                          <v-list-item-action>
-                            <v-switch
-                              dense
-                              color=""
-                              v-model="displayOptions.showTags"
-                            ></v-switch>
-                          </v-list-item-action>
+                        <v-list-item-title>Emojis</v-list-item-title>
+                        <v-list-item-subtitle>Show emojis</v-list-item-subtitle>
+                      </v-list-item>
+                      <v-list-item :ripple="false">
+                        <v-list-item-action>
+                          <v-switch
+                            dense
+                            v-model="displayOptions.showTimelineName"
+                          ></v-switch>
+                        </v-list-item-action>
 
-                          <v-list-item-title>Tags</v-list-item-title>
-                          <v-list-item-subtitle>Show tags</v-list-item-subtitle>
-                        </v-list-item>
-                        <v-list-item :ripple="false">
-                          <v-list-item-action>
-                            <v-switch
-                              dense
-                              v-model="displayOptions.showEmojis"
-                            ></v-switch>
-                          </v-list-item-action>
-
-                          <v-list-item-title>Emojis</v-list-item-title>
-                          <v-list-item-subtitle
-                            >Show emojis</v-list-item-subtitle
-                          >
-                        </v-list-item>
-                        <v-list-item :ripple="false">
-                          <v-list-item-action>
-                            <v-switch
-                              dense
-                              v-model="displayOptions.showTimelineName"
-                            ></v-switch>
-                          </v-list-item-action>
-
-                          <v-list-item-title>Timeline name</v-list-item-title>
-                          <v-list-item-subtitle
-                            >Show timeline name</v-list-item-subtitle
-                          >
-                        </v-list-item>
-                      </v-list>
+                        <v-list-item-title>Timeline name</v-list-item-title>
+                        <v-list-item-subtitle
+                          >Show timeline name</v-list-item-subtitle
+                        >
+                      </v-list-item>
                     </v-list>
-                  </v-card>
-                </v-menu>
-              </div>
-              <div v-else>
-                <small class="mr-2">Actions:</small>
-                <v-btn x-small outlined @click="toggleMultipleStars()">
-                  <v-icon left color="amber">mdi-star</v-icon>
-                  Toggle star
-                </v-btn>
-              </div>
-            </template>
+                  </v-list>
+                </v-card>
+              </v-menu>
+            </div>
+            <div v-else>
+              <small class="mr-2">Actions:</small>
+              <v-btn x-small outlined @click="toggleMultipleStars()">
+                <v-icon left color="amber">mdi-star</v-icon>
+                Toggle star
+              </v-btn>
+
+              <v-btn x-small outlined @click="addEventsToObservable()">
+                <v-icon left>mdi-plus</v-icon>
+                Add to Findings
+              </v-btn>
+            </div>
 
             <v-spacer></v-spacer>
 
@@ -470,6 +467,11 @@ limitations under the License.
           </v-card>
         </template>
 
+        <template v-slot:item.actions="{ item }">
+          <v-btn x-small variant="text" flat @click=addEventsToObservable(item.id)>
+            <v-icon left>mdi-plus</v-icon>
+          </v-btn>
+        </template>
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
         <template
           v-for="(field, index) in headers"
@@ -667,6 +669,7 @@ export default {
     TsEventActionMenu,
     TsEventTags,
   },
+  inject: ["closeEventLog"],
   props: {
     queryRequest: {
       type: Object,
@@ -838,6 +841,11 @@ export default {
     headers() {
       let baseHeaders = [
         {
+          value: 'actions',
+          width: '105',
+          sortable: false,
+        },
+        {
           title: "Datetime (UTC) ",
           align: "start",
           value: "_source.datetime",
@@ -886,15 +894,29 @@ export default {
     },
   },
   methods: {
-    async addEventsToObservable() {
+    async addEventsToObservable(id) {
+      const payload = id ? [id] : this.selectedFields;
+
       try {
-        const response = await RestApiClient.updateObservable(
+        const response = await RestApiClient.updateStory(
           "id",
-          this.selectedFields
+          payload
         );
 
-        console.log("update observale with select events");
-      } catch (error) {}
+        this.closeEventLog();
+
+        this.store.setNotification({
+          text: `${payload.length} event(s) added to the observable.`,
+          icon: "mdi-plus-circle-outline",
+          type: "success",
+        });
+      } catch (error) {
+        this.store.setNotification({
+          text: "Unable to add events to the observable.",
+          icon: "mdi-alert-circle-outline",
+          type: "error",
+        });
+      }
     },
     toggleSummary() {
       this.summaryCollapsed = !this.summaryCollapsed;

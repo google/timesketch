@@ -35,6 +35,8 @@ limitations under the License.
   </v-toolbar>
   <div class="px-8 overflow-auto">
     <EventList
+      v-if="targetObservableId"
+      :targetObservableId="targetObservableId"
       :disableToolbar="true"
       :disableSettings="true"
       :showAddToFindings="true"
@@ -59,6 +61,9 @@ import { useAppStore } from "@/stores/app";
 
 export default {
   inject: ["closeEventLog"],
+  props: {
+    targetObservableId: String,
+  },
   data() {
     return {
       store: useAppStore(),

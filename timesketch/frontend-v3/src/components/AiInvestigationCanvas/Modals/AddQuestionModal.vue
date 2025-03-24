@@ -53,102 +53,7 @@ limitations under the License.
         </div>
       </div>
       <div class="questions-group">
-        <div v-if="isLoading">
-          <v-skeleton-loader
-            type="list-item"
-            height="44"
-            width="220"
-            class="ma-0"
-          ></v-skeleton-loader>
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="500"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="490"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="460"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="590"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="580"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="530"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-        </div>
+        <AddQuestionModalLoader v-if="isLoading" />
         <div v-else>
           <v-list v-if="dfiqMatches && dfiqMatches.length > 0">
             <v-list-subheader class="font-weight-bold">
@@ -217,6 +122,7 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
+import AddQuestionModalLoader from "../Loaders/AddQuestionModalLoader.vue";
 
 export default {
   inject: ["addNewQuestion"],

@@ -133,7 +133,7 @@ limitations under the License.
               size="small"
               variant="text"
               depressed
-              @click="openEventLog()"
+              @click="openEventLog(observable.record_id)"
               color="primary"
             >
               <v-icon left small icon="mdi-plus" />
@@ -156,7 +156,7 @@ limitations under the License.
               size="small"
               variant="text"
               depressed
-              @click="openEventLog()"
+              @click="openEventLog('test')"
               color="primary"
             >
               <v-icon left small icon="mdi-plus" />
