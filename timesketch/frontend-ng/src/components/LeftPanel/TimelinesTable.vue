@@ -307,9 +307,10 @@ export default {
 .chip-content {
   flex: 1;
   margin: 0;
-  padding: 0 10px;
+  padding-left: 10px;
   display: flex;
   align-items: center;
+  width:340px;
 }
 
 .timeline-name.disabled {
@@ -319,5 +320,11 @@ export default {
   align-items: center;
   display: flex;
   margin-left: auto;
+  max-width: 50%;
 }
+
+.timeline-name-ellipsis {
+  width: 50%;
+}
+
 </style>
