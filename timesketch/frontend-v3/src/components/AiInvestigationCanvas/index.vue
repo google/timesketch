@@ -18,9 +18,9 @@ limitations under the License.
   <v-container class="ai-investigation-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
+        :isLoading="isLoading"
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
-        :isLoading="isLoading"
         :questions="filteredQuestions"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
@@ -147,10 +147,10 @@ export default {
         : [];
     },
     questionsTotal() {
-      return this.filteredQuestions?.length || 0;
+      return this.filteredQuestions?.length;
     },
     completedQuestionsTotal() {
-      return this.appStore.report?.content?.approvedQuestions?.length || 0;
+      return this.appStore.report?.content?.approvedQuestions?.length;
     },
     sketchId() {
       return this.appStore.sketch.id;
