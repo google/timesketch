@@ -42,7 +42,7 @@ export default {
     return {
       appStore: useAppStore(),
       route: useRoute(),
-      isLoading: false,
+      isLoading: true,
       questions: [],
     };
   },
@@ -101,8 +101,8 @@ export default {
         }
 
         const existingQuestionsList =
-          existingQuestions.value.data.objects &&
-          existingQuestions.value.data.objects.length > 0
+          existingQuestions.value.data?.objects &&
+          existingQuestions.value.data?.objects.length > 0
             ? existingQuestions.value.data.objects[0]
             : [];
 
@@ -120,7 +120,6 @@ export default {
           aiQuestions.status === "fulfilled" &&
           aiQuestions?.value?.data?.questions
         ) {
-          metadata.value = aiQuestions.value.data.meta;
           questionsArray = [
             ...questionsArray,
             ...aiQuestions.value.data.questions,
@@ -179,6 +178,6 @@ export default {
 
 .ai-investigation-canvas__sidebar {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
 }
 </style>

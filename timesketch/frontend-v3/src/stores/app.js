@@ -69,6 +69,7 @@ export const useAppStore = defineStore("app", {
 
     setActiveQuestion(question) {
       this.activeContext = {
+        ...this.activeContext,
         question
       }
     },

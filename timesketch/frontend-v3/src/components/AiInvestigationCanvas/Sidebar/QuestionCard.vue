@@ -42,7 +42,7 @@ limitations under the License.
         </v-chip>
         <v-icon
           icon="mdi-check-circle"
-          v-if="completed"
+          v-if="isApproved"
           small
           color="#34A853"
         />
@@ -93,35 +93,23 @@ export default {
     },
   },
   computed: {
-    sortedQuestions() {
-      return this.questions && this.questions.length > 0
-        ? [
-            ...this.questions.sort(
-              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-            ),
-          ]
-        : [];
-    },
-
     isActive() {
       return this.store.activeContext.question?.id
         ? this.id === this.store.activeContext.question?.id
         : false;
     },
 
-    completed() {
-      let isApproved = false;
-
+    isApproved() {
       if (
         this.store.report?.content?.approvedQuestions &&
         this.store.report?.content?.approvedQuestions.length > 0
       ) {
-        isApproved = !!this.store.report.content.approvedQuestions.find(
-          (approvedId) => approvedId === id
+        return !!this.store.report.content.approvedQuestions.find(
+          (approvedId) => approvedId === this.id
         );
+      } else {
+        return false;
       }
-
-      return isApproved;
     },
 
     riskColor() {

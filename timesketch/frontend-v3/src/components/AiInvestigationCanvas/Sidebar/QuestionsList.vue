@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div class="d-flex justify-space-between px-2">
-    <h4 class="mb-2">
+    <h4 class="mb-2" v-if="questionsTotal">
       {{ questionsTotal }} <span class="font-weight-regular">questions</span>
     </h4>
     <v-btn
