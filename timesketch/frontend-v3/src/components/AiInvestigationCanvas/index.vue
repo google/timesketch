@@ -53,7 +53,7 @@ limitations under the License.
       v-model="showEventLog"
       width="100%"
       max-width="100%"
-      height="80%"
+      height="75vh"
       content-class="ma-0 bg-white"
       class="align-end"
       opacity="0.25"
@@ -112,7 +112,6 @@ export default {
             RestApiClient.getOrphanQuestions(this.store.sketch.id),
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
-
 
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
@@ -210,25 +209,34 @@ export default {
       this.showEventLog = true;
     },
     updateObservables(selectedEvents) {
-        // 1. Find Question
-        let targetQuestion = this.questions.find(({ id}) => id === this.store.activeContext.question.id)
+      // 1. Find Question
+      let targetQuestion = this.questions.find(
+        ({ id }) => id === this.store.activeContext.question.id
+      );
 
-        // 2. Find observable -
-        let targetObservable = this.targetQuestion.observables.find(({ id}) => id === this.targetObservable.id)
+      // 2. Find observable -
+      let targetObservable = targetQuestion.observables.find(
+        ({ record_id }) => record_id === this.targetObservableId
+      );
 
-        // 3. Update observable with new log entries
-        targetObservable = {
-          ...targetObservable,
-          logs: [...targetObservable.logs, ...selectedEvents]
-        }
+      // 3. Update observable with new log entries
+      targetObservable = {
+        ...targetObservable,
+        logs: [...selectedEvents],
+      };
 
-        targetQuestion = {
-          ...targetQuestion,
-          observables: [targetObservable, ...targetQuestion.observables.filter(({ id}) => id !== this.targetObservable.id)]
-        }
+      targetQuestion = {
+        ...targetQuestion,
+        observables: [
+          targetObservable,
+          ...targetQuestion.observables.filter(
+            ({ record_id }) => record_id !== this.targetObservableId
+          ),
+        ],
+      };
 
-        this.updateQuestion(targetQuestion)
-    }
+      this.updateQuestion(targetQuestion);
+    },
   },
   computed: {
     selectedQuestion() {
@@ -254,13 +262,15 @@ export default {
     },
     verifiedTotal() {
       return this.store.reportLocked
-        ? this.filteredQuestions.filter(({ id }) => this.store.approvedReportQuestions.includes(id)).length
+        ? this.filteredQuestions.filter(({ id }) =>
+            this.store.approvedReportQuestions.includes(id)
+          ).length
         : this.questionsTotal;
     },
   },
   provide() {
     return {
-      addToObservable: this.addToObservable,
+      updateObservables: this.updateObservables,
       openEventLog: this.openEventLog,
       closeEventLog: this.closeEventLog,
       updateQuestion: this.updateQuestion,
