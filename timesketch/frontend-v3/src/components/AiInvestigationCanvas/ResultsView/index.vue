@@ -107,11 +107,12 @@ limitations under the License.
         </v-chip>
       </div>
 
-      <v-expansion-panels class="mb-6">
+      <v-expansion-panels class="mb-6" v-model="panels">
         <v-expansion-panel
           color="#F8F9FA"
           v-if="question.observables"
           v-for="observable in question.observables"
+          :value="observable.record_id"
         >
           <v-expansion-panel-title color="#F8F9FA">
             <div>
@@ -141,8 +142,7 @@ limitations under the License.
             </v-btn>
           </v-expansion-panel-text>
         </v-expansion-panel>
-
-        <v-expansion-panel color="#F8F9FA" v-else>
+        <v-expansion-panel color="#F8F9FA" value="fallback" v-else>
           <v-expansion-panel-title color="#F8F9FA">
             <div>
               <h5 class="h4 font-weight-bold mb-2">Dave's observable</h5>
@@ -189,6 +189,9 @@ export default {
       isConfirming: false,
       riskLevel: this.question.riskLevel,
       conclusion: this.question.conclusion,
+      panels: this.question.observables
+        ? [this.question.observables[0].record_id]
+        : ["fallback"],
     };
   },
   computed: {
