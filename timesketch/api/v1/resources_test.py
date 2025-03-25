@@ -434,8 +434,10 @@ class ExploreResourceTest(BaseTest):
         )
         response_json = response.json
         # Remove flaky properties (dynamically generated)
-        del response_json["meta"]["search_node"]["created_at"]
-        del response_json["meta"]["search_node"]["query_time"]
+        if "meta" in response_json:
+            if "search_node" in response_json["meta"]:
+                del response_json["meta"]["search_node"]["created_at"]
+                del response_json["meta"]["search_node"]["query_time"]
         self.assertDictEqual(response_json, self.expected_response)
         self.assert200(response)
 
