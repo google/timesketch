@@ -150,7 +150,7 @@ limitations under the License.
           >
 
           <time class="font-italic text-body-2">
-            Last updated:
+            Last updated
             {{ formatDate(store.report.content.summary[0].timestamp) }}
           </time>
         </div>
@@ -181,11 +181,11 @@ limitations under the License.
     />
   </v-dialog>
   <v-dialog
-    :scrollable="true"
     transition="dialog-bottom-transition"
     v-model="showSummaryHistoryModal"
     width="865px"
     max-height="420px"
+    opacity="0"
   >
     <SummaryHistoryModal
       @close-modal="setShowSummaryHistoryModal"

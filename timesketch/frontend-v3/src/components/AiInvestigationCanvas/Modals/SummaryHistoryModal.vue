@@ -14,18 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="modal">
+  <v-card class="modal">
     <ModalLoader :isSubmitting="isSubmitting" />
     <div :class="modal__content">
-      <div class="modal__header">
-        <h3 class="mb-4">Summary History</h3>
+      <div class="modal__header pl-6 pr-1">
+        <h3>
+          <v-icon icon="mdi-creation" large class="mr-2" /> Summary History
+        </h3>
         <v-btn
           variant="text"
-          size="small"
+          size="x-large"
           color="primary"
           @click="$emit('close-modal')"
         >
-          <v-icon icon="mdi-close" class="mr-1" left small />
+          <v-icon icon="mdi-close" large />
         </v-btn>
       </div>
 
@@ -35,7 +37,8 @@ limitations under the License.
 
           <div class="d-flex align-center ga-2">
             <div class="summary__time">
-              <span class="mr-2">{{ index + 1 }} / {{ summaries.length }}</span>
+              <span>{{ index + 1 }} / {{ summaries.length }}</span>
+              &#8226;
               <time>{{ formatDate(summary.timestamp) }}</time>
             </div>
             <v-chip
@@ -48,11 +51,11 @@ limitations under the License.
         </div>
       </div>
     </div>
-  </div>
+  </v-card>
 </template>
 
 <script>
-import { formatDate } from '@/utils/TimeDate';
+import { formatDate } from "@/utils/TimeDate";
 
 export default {
   props: {
@@ -64,18 +67,23 @@ export default {
     };
   },
   methods: {
-    formatDate
-  }
+    formatDate,
+  },
 };
 </script>
 
 <style scoped>
 .modal {
   background-color: #fff;
+  overflow: hidden;
 }
 
 .modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background-color: #f3f4f5;
+  height: 70px;
 }
 
 .modal__content {
