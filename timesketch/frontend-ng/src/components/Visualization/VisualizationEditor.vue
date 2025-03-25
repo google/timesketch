@@ -314,6 +314,9 @@ export default {
       }
       return undefined
     },
+    settings() {
+      return this.$store.state.settings
+    },
   },
   methods: {
     rename() {
@@ -438,7 +441,8 @@ export default {
             xTitle: this.selectedXTitle,
             yTitle: this.selectedYTitle,
           },
-        }
+        },
+        include_processing_timelines: !!this.settings.showProcessingTimelineEvents,
       }
     },
     loadAggregationData() {

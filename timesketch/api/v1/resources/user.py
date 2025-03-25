@@ -16,6 +16,7 @@ import json
 import logging
 
 from flask import abort
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask_restful import Resource
@@ -170,6 +171,14 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
         """
         profile = UserProfile.get_or_create(user=current_user)
         settings = json.loads(profile.settings)
+
+        # If the value of SEARCH_PROCESSING_TIMELINES changes to false while the user
+        # had the option enabled, it remains enabled without functioning.
+        # Therefore, if SEARCH_PROCESSING_TIMELINES changes to false, we disable the
+        # showProcessingTimelineEvents option in the user's settings for display
+        # consistency.
+        if not current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            settings["showProcessingTimelineEvents"] = False
         schema = {"objects": [settings], "meta": {}}
         return jsonify(schema)
 
