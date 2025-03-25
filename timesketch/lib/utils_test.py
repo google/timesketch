@@ -28,7 +28,6 @@ from timesketch.lib import utils
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
 from timesketch.models.user import User
 
 
