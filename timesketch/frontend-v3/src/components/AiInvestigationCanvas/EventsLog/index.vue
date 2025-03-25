@@ -40,7 +40,7 @@ limitations under the License.
       <v-icon icon="mdi-close" small />
     </v-btn>
   </v-toolbar>
-  <div class="px-8 overflow-auto">
+  <div class="px-8 py-4 overflow-auto">
     <EventList
       v-if="targetObservableId"
       :targetObservableId="targetObservableId"
@@ -69,7 +69,7 @@ export default {
   data() {
     return {
       store: useAppStore(),
-      query: "",
+      queryString: "",
       queryRequest: {
         queryString: "*",
         queryFilter: {
