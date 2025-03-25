@@ -1914,7 +1914,7 @@ class Sketch(resource.BaseResource):
         with open(file_path, "wb") as fw:
             fw.write(response.content)
 
-    def create_timeline(self, searchindex_id, timeline_name):
+    def create_timeline(self, searchindex_id: int, timeline_name: str):
         """Creates a Timeline in this Sketch
 
         Args:
@@ -1957,7 +1957,7 @@ class Sketch(resource.BaseResource):
         )
         return timeline_obj
 
-    def create_datasource(self, timeline_id, provider, context, data_label):
+    def create_datasource(self, timeline_id: int, provider: str, context: str, data_label: str):
         """Creates a datasource
 
         Args:
