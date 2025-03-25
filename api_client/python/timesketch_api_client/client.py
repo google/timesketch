@@ -639,7 +639,7 @@ class TimesketchApi:
         """
         return index.SearchIndex(searchindex_id, api=self)
 
-    def create_searchindex(self, searchindex_name: str, opensearch_index_name:str):
+    def create_searchindex(self, searchindex_name: str, opensearch_index_name: str):
         """Create a new SearchIndex.
         Args:
             searchindex_name: Name for the searchindex.
