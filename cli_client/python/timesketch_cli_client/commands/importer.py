@@ -16,6 +16,7 @@
 import sys
 import time
 
+from typing import Optional
 import click
 from timesketch_import_client import importer as import_client
 
@@ -25,14 +26,14 @@ from timesketch_import_client import importer as import_client
 @click.option("--timeout", type=int, default=600, help="Seconds to wait for indexing.")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
-def importer(ctx, name, timeout, file_path):
+def importer(ctx: click.Context, name: str, timeout: Optional[int], file_path: str):
     """Import timeline.
 
     Args:
-        ctx: Click CLI context object.
-        name: Name of the timeline to create.
-        timeout: Seconds to wait for indexing.
-        file_path: File path to the file to import.
+        ctx (click.Context) (required): Click CLI context object.
+        name (str) (required): Name of the timeline to create.
+        timeout (int) (optional): Seconds to wait for indexing.
+        file_path (str) (required): File path to the file to import.
     """
     sketch = ctx.obj.sketch
     if not name:

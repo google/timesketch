@@ -25,8 +25,29 @@ def attribute_group():
 
 @attribute_group.command("list", help="List all attributes.")
 @click.pass_context
-def list_attributes(ctx):
-    """List all attributes."""
+def list_attributes(ctx: click.Context):
+    """Lists all attributes associated with the current sketch.
+
+    Retrieves and displays a list of attributes from the current sketch.
+    The output format is determined by the context's 'output_format' setting.
+    Supported output formats are 'json' and 'text'.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch and
+        output format.
+
+    Outputs:
+        JSON: If the output format is 'json', the attributes are printed as a
+        JSON object.
+        Text: If the output format is 'text' (or an unsupported format), the
+        attributes are printed in a human-readable format, showing the name,
+        ontology, and value of each attribute.
+        Error message: if no attributes are found, or an unsupported output
+        type is selected.
+
+    Example:
+        attribute list  # Lists all attributes for the current sketch.
+    """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
     attributes = sketch.attributes
@@ -46,12 +67,27 @@ def list_attributes(ctx):
 @click.option("--name", required=True, help="Name of the attribute.")
 @click.option("--ontology", required=True, help="Ontology of the attribute.")
 @click.pass_context
-def remove_attribute(ctx, name, ontology):
-    """Remove an attribute from a sketch.
+def remove_attribute(ctx: click.Context, name: str, ontology: str):
+    """Removes an attribute from the current sketch.
+
+    Removes the attribute specified by its name and ontology from the sketch.
+    The output format is forced to 'text' for this command.
 
     Args:
-        name: Name of the attribute.
-        ontology: Ontology of the attribute.
+        ctx (click.Context): The Click context object, containing the sketch.
+        name (str): The name of the attribute to remove.
+        ontology (str): The ontology of the attribute to remove.
+
+    Errors:
+        * If the specified attribute is not found in the sketch.
+        * If an unsupported output format is used.
+
+    Outputs:
+        Text: A message indicating whether the attribute was successfully
+        removed or not.
+
+    Example:
+        attribute remove --name "malware_fam" --ontology "threat_intelligence"
     """
     sketch = ctx.obj.sketch
     if ctx.obj.output_format != "text":
@@ -71,18 +107,24 @@ def remove_attribute(ctx, name, ontology):
 @click.option("--ontology", required=True, help="Ontology of the attribute.")
 @click.option("--value", required=True, help="Value of the attribute.")
 @click.pass_context
-def add_attribute(ctx, name, ontology, value):
-    """Add an attribute to a sketch.
+def add_attribute(ctx: click.Context, name: str, ontology: str, value: str):
+    """Adds an attribute to the current sketch.
+
+    Adds an attribute with the specified name, ontology, and value to the sketch.
+    The output format is forced to 'text' for this command.
 
     Args:
-        name: Name of the attribute.
-        ontology: Ontology of the attribute.
-        value: Value of the attribute.
+        ctx (click.Context): The Click context object, containing the sketch.
+        name (str): The name of the attribute to add.
+        ontology (str): The ontology of the attribute to add.
+        value (str): The value of the attribute to add.
+
+    Outputs:
+        Text: A message confirming the attribute was added, including its name,
+        ontology, and value.
 
     Example:
-        timesketch sketch add_attribute
-            --name ticket_id --ontology text --value 12345
-
+        attribute add --name ticket_id --ontology text --value 12345
     """
     sketch = ctx.obj.sketch
     if ctx.obj.output_format != "text":

@@ -15,11 +15,9 @@
 This module implements annotations that can be use on other database models.
 """
 
-from __future__ import unicode_literals
 
 import json
 import logging
-import six
 
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -36,7 +34,7 @@ from timesketch.models import db_session
 logger = logging.getLogger("timesketch.models.annotations")
 
 
-class BaseAnnotation(object):
+class BaseAnnotation:
     """Base class with common attributes."""
 
     @declared_attr
@@ -85,7 +83,7 @@ class GenericAttribute(BaseAnnotation):
     description = Column(UnicodeText())
 
 
-class LabelMixin(object):
+class LabelMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -101,10 +99,7 @@ class LabelMixin(object):
         Returns:
             A relationship to an label (timesketch.models.annotation.Label)
         """
-        if six.PY2:
-            class_name = b"{0:s}Label".format(self.__name__)
-        else:
-            class_name = "{0:s}Label".format(self.__name__)
+        class_name = f"{self.__name__:s}Label"
 
         self.Label = type(
             class_name,
@@ -112,13 +107,11 @@ class LabelMixin(object):
                 Label,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_label".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_label",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Label)
 
@@ -201,7 +194,7 @@ class LabelMixin(object):
         return json.dumps([x.label for x in self.labels])
 
 
-class CommentMixin(object):
+class CommentMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -217,10 +210,7 @@ class CommentMixin(object):
         Returns:
             A relationship to a comment (timesketch.models.annotation.Comment)
         """
-        if six.PY2:
-            class_name = b"{0:s}Comment".format(self.__name__)
-        else:
-            class_name = "{0:s}Comment".format(self.__name__)
+        class_name = f"{self.__name__:s}Comment"
 
         self.Comment = type(
             class_name,
@@ -228,13 +218,11 @@ class CommentMixin(object):
                 Comment,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_comment".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_comment",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Comment)
 
@@ -308,7 +296,7 @@ class CommentMixin(object):
         return False
 
 
-class StatusMixin(object):
+class StatusMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -324,10 +312,7 @@ class StatusMixin(object):
         Returns:
             A relationship to a status (timesketch.models.annotation.Status)
         """
-        if six.PY2:
-            class_name = b"{0:s}Status".format(self.__name__)
-        else:
-            class_name = "{0:s}Status".format(self.__name__)
+        class_name = f"{self.__name__:s}Status"
 
         self.Status = type(
             class_name,
@@ -335,13 +320,11 @@ class StatusMixin(object):
                 Status,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_status".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_status",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.Status)
 
@@ -389,7 +372,7 @@ class StatusMixin(object):
         return self.status[0]
 
 
-class GenericAttributeMixin(object):
+class GenericAttributeMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -405,7 +388,7 @@ class GenericAttributeMixin(object):
         Returns:
             A relationship with (timesketch.models.annotation.GenericAttribute)
         """
-        class_name = "{0:s}GenericAttribute".format(self.__name__)
+        class_name = f"{self.__name__:s}GenericAttribute"
 
         self.GenericAttribute = type(
             class_name,
@@ -413,13 +396,11 @@ class GenericAttributeMixin(object):
                 GenericAttribute,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_genericattribute".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self, viewonly=True),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_genericattribute",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.GenericAttribute)
 

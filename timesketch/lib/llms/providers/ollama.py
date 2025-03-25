@@ -37,9 +37,17 @@ class Ollama(interface.LLMProvider):
         """
         api_resource = "/api/chat"
         url = self.config.get("server_url") + api_resource
-        return requests.post(
-            url, data=request_body, headers={"Content-Type": "application/json"}
-        )
+        try:
+            return requests.post(
+                url,
+                data=request_body,
+                headers={"Content-Type": "application/json"},
+                timeout=60,
+            )
+        except requests.exceptions.Timeout as error:
+            raise ValueError(f"Request timed out: {error}") from error
+        except requests.exceptions.RequestException as error:
+            raise ValueError(f"Error making request: {error}") from error
 
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """

@@ -69,8 +69,8 @@ class SearchTemplate(resource.BaseResource):
         """Initialize the search template from a saved template, by ID value.
 
         Args:
-            template_id: integer value for the saved search template.
-            sketch_id: optional integer value for a sketch ID. If not
+            template_id (int): integer value for the saved search template.
+            sketch_id (int): optional integer value for a sketch ID. If not
                 provided, an attempt is made to figure it out.
 
         Raises:

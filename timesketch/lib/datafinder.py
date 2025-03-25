@@ -49,13 +49,13 @@ class DataFinder:
 
         if not self._start_date:
             logger.warning(
-                "Unable to run data finder since no start date has been " "defined."
+                "Unable to run data finder since no start date has been defined."
             )
             return False
 
         if not self._end_date:
             logger.warning(
-                "Unable to run data finder since no end date has been " "defined."
+                "Unable to run data finder since no end date has been defined."
             )
             return False
 
@@ -64,9 +64,9 @@ class DataFinder:
 
         re_parameters = self._rule.get("re_parameters", [])
         for parameter in re_parameters:
-            if not parameter in self._parameters:
+            if parameter not in self._parameters:
                 logger.warning(
-                    "Parameters are defined, but parameter: [{0:s}] does not "
+                    "Parameters are defined, but parameter: [{:s}] does not "
                     "exist in parameter definitions for the rule.".format(parameter)
                 )
                 return False
@@ -190,7 +190,7 @@ class DataFinder:
             source = event.get("_source", {})
             value = source.get(attribute)
             if not value:
-                logger.warning("Attribute: [{0:s}] is empty".format(attribute))
+                logger.warning("Attribute: [%s] is empty", attribute)
 
             result = expression.findall(value)
             if not result:

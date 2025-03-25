@@ -13,7 +13,6 @@
 # limitations under the License.
 """URL routes for API resources."""
 
-from __future__ import unicode_literals
 
 from .resources.aggregation import AggregationGroupResource
 from .resources.aggregation import AggregationGroupListResource
