@@ -149,7 +149,7 @@ limitations under the License.
         fixed-header
       >
           <template v-slot:top="{ pagination, options, updateOptions }">
-            <v-toolbar dense flat color="transparent" v-if="!disableToolbar">
+            <v-toolbar dense flat color="transparent">
               <div v-if="!selectedEvents.length">
                 <span style="display: inline-block; min-width: 200px">
                   <small>{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</small>
@@ -542,14 +542,6 @@ export default {
       type: Object,
       default: () => {},
     },
-    showAddToFindings: {
-      type: Boolean,
-      default: false,
-    },
-    disableToolbar: {
-      type: Boolean,
-      default: false,
-    },
     itemsPerPage: {
       type: Number,
       default: 40,
@@ -578,10 +570,6 @@ export default {
       type: Object,
       default: () => {},
     },
-    observableId: {
-      type: String,
-      default: ''
-    }
   },
   data() {
     return {
