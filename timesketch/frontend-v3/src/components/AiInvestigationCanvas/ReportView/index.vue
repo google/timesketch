@@ -126,7 +126,6 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import dayjs from "dayjs";
 import { debounce } from "lodash";
 import SummarySection from "./SummarySection.vue";
 
