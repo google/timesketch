@@ -26,6 +26,8 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
+    {{  questions }}
+
     <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
       <p>
         Your search
@@ -669,7 +671,7 @@ export default {
     TsEventActionMenu,
     TsEventTags,
   },
-  inject: ["closeEventLog"],
+  inject: ["closeEventLog", "updateObservables"],
   props: {
     queryRequest: {
       type: Object,
@@ -895,13 +897,16 @@ export default {
   },
   methods: {
     async addEventsToObservable(id) {
-      const payload = id ? [id] : this.selectedFields;
+      const payload = id ? [id] : this.selectedEvents;
 
       try {
         const response = await RestApiClient.updateStory(
           "id",
           payload
         );
+
+
+        this.updateObservables(this.selectedEvents)
 
         this.closeEventLog();
 
@@ -911,6 +916,8 @@ export default {
           type: "success",
         });
       } catch (error) {
+        console.error(error);
+        
         this.store.setNotification({
           text: "Unable to add events to the observable.",
           icon: "mdi-alert-circle-outline",

@@ -201,11 +201,31 @@ export default {
       this.showEventLog = false;
     },
     openEventLog(targetId) {
-
-      debugger
       this.targetObservableId = targetId;
       this.showEventLog = true;
     },
+    updateObservables(selectedEvents) {
+
+
+        // 1. Find Question
+        let targetQuestion = this.questions.find(({ id}) => id === this.store.activeContext.question.id)
+        
+        // 2. Find observable - 
+        let targetObservable = this.targetQuestion.observables.find(({ id}) => id === this.targetObservable.id)
+
+        // 3. Update observable with new log entries
+        targetObservable = {
+          ...targetObservable,
+          logs: [...targetObservable.logs, ...selectedEvents]
+        }
+
+        targetQuestion = {
+          ...targetQuestion,
+          observables: [targetObservable, ...targetQuestion.observables.filter(({ id}) => id !== this.targetObservable.id)]
+        }
+        
+        this.updateQuestion(targetQuestion)
+    }
   },
   computed: {
     selectedQuestion() {
@@ -237,6 +257,7 @@ export default {
   },
   provide() {
     return {
+      addToObservable: this.addToObservable,
       openEventLog: this.openEventLog,
       closeEventLog: this.closeEventLog,
       updateQuestion: this.updateQuestion,
