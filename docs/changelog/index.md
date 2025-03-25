@@ -38,7 +38,7 @@ Released: 2024-02-07
 ### What's Changed
 #### ✨ Features
 
-* Collapsable left panel by @berggren in [#3008](https://github.com/google/timesketch/pull/3008)
+* Collapsible left panel by @berggren in [#3008](https://github.com/google/timesketch/pull/3008)
 * Support for Large Language Model (LLM) services by @berggren in [#3019](https://github.com/google/timesketch/pull/3019)
 * Implement user management (create, list, get) via API by @lo-chr in [#3024](https://github.com/google/timesketch/pull/3024)
 * Setup frontend unit tests with vitest by @Annoraaq in [#3013](https://github.com/google/timesketch/pull/3013)
@@ -166,7 +166,7 @@ Released: 2023-09-13
 * Adding tag filter chips to sigma rules by @jkppr in https://github.com/google/timesketch/pull/2890
 
 #### 🐞 Fixes
-* correct paramters in cli attributes method by @jaegeral in https://github.com/google/timesketch/pull/2863
+* correct parameters in cli attributes method by @jaegeral in https://github.com/google/timesketch/pull/2863
 * Update troubleshooting.md by @jaegeral in https://github.com/google/timesketch/pull/2866
 * Update Date chip to support milliseconds by @sydp in https://github.com/google/timesketch/pull/2867
 * Allow API port to listen on localhost by @tomchop in https://github.com/google/timesketch/pull/2875
@@ -198,7 +198,7 @@ Released: 2023-07-21
 * Support event list sorting (asc/desc) by @berggren in https://github.com/google/timesketch/pull/2843
 
 #### 🐞 Fixes
-* Consitent forms and cleaned up XML viewer by @berggren in https://github.com/google/timesketch/pull/2812
+* Consistent forms and cleaned up XML viewer by @berggren in https://github.com/google/timesketch/pull/2812
 * Remove ports from e2e-tests by @berggren in https://github.com/google/timesketch/pull/2816
 * Update Account Finder Analyzer by @jkppr in https://github.com/google/timesketch/pull/2803
 * Adding hashR user documentation by @jkppr in https://github.com/google/timesketch/pull/2824

@@ -122,7 +122,7 @@ class ImportStreamer(object):
           * All keys that start with an underscore ("_") are removed.
 
         Args:
-            my_dict: a dictionary that may be missing few fields needed
+            my_dict (dict): a dictionary that may be missing few fields needed
                     for Timesketch.
         """
         if "message" not in my_dict:
@@ -170,7 +170,7 @@ class ImportStreamer(object):
         """Returns a data frame with added columns for Timesketch upload.
 
         Args:
-            data_frame: a pandas data frame.
+            data_frame (DataFrame): a pandas data frame.
 
         Returns:
             A pandas data frame with added columns needed for Timesketch.
@@ -213,7 +213,7 @@ class ImportStreamer(object):
                         break
                     except ValueError as e:
                         logger.info(
-                            "Unable to convert timestamp in column: " "%s, error %s",
+                            "Unable to convert timestamp in column: %s, error %s",
                             column,
                             e,
                         )
@@ -265,9 +265,9 @@ class ImportStreamer(object):
         """Upload data to Timesketch.
 
         Args:
-            end_stream: boolean indicating whether this is the last chunk of
+            end_stream (bool): boolean indicating whether this is the last chunk of
                 the stream.
-            retry_count: optional int that is only set if this is a retry
+            retry_count (int): optional int that is only set if this is a retry
                 of the upload.
 
         Raises:
@@ -301,7 +301,7 @@ class ImportStreamer(object):
             if retry_count >= self.DEFAULT_RETRY_LIMIT:
                 raise RuntimeError(
                     "Error uploading data: [{0:d}] {1!s} {2!s}, "
-                    "index {3:s}".format(
+                    "index {3!s}".format(
                         response.status_code,
                         response.reason,
                         response.text,
@@ -336,10 +336,10 @@ class ImportStreamer(object):
         """Upload data to Timesketch.
 
         Args:
-            data_frame: a pandas DataFrame with the content to upload.
-            end_stream: boolean indicating whether this is the last chunk of
+            data_frame (DataFrame): a pandas DataFrame with the content to upload.
+            end_stream (bool): boolean indicating whether this is the last chunk of
                 the stream.
-            retry_count: optional int that is only set if this is a retry
+            retry_count (int): optional int that is only set if this is a retry
                 of the upload.
 
         Raises:
@@ -398,7 +398,7 @@ class ImportStreamer(object):
         """Upload binary data to Timesketch, potentially chunking it up.
 
         Args:
-            file_path: a full path to the file that is about to be uploaded.
+            file_path (str): a full path to the file that is about to be uploaded.
         """
         file_size = os.path.getsize(file_path)
 
@@ -423,10 +423,11 @@ class ImportStreamer(object):
             data["context"] = self._upload_context
 
         if file_size <= self._threshold_filesize:
-            file_dict = {"file": open(file_path, "rb")}
-            response = self._sketch.api.session.post(
-                self._resource_url, files=file_dict, data=data
-            )
+            with open(file_path, "rb") as fh:
+                file_dict = {"file": fh}
+                response = self._sketch.api.session.post(
+                    self._resource_url, files=file_dict, data=data
+                )
         else:
             chunks = int(math.ceil(float(file_size) / self._threshold_filesize))
             data["chunk_total_chunks"] = chunks
@@ -436,12 +437,12 @@ class ImportStreamer(object):
                 data["chunk_index"] = index
                 start = self._threshold_filesize * index
                 data["chunk_byte_offset"] = start
-                fh = open(file_path, "rb")
-                fh.seek(start)
-                binary_data = fh.read(self._threshold_filesize)
-                file_stream = io.BytesIO(binary_data)
-                file_stream.name = file_path
-                file_dict = {"file": file_stream}
+                with open(file_path, "rb") as fh:
+                    fh.seek(start)
+                    binary_data = fh.read(self._threshold_filesize)
+                    file_stream = io.BytesIO(binary_data)
+                    file_stream.name = file_path
+                    file_dict = {"file": file_stream}
 
                 retry_count = 0
                 while True:
@@ -500,14 +501,15 @@ class ImportStreamer(object):
         """Add a data frame into the buffer.
 
         Args:
-              data_frame: a pandas data frame object to add to the buffer.
-              part_of_iter: if it is expected that this function is called
+              data_frame (DataFrame): a pandas data frame object to add to the buffer.
+              part_of_iter (bool): if it is expected that this function is called
                   as part of an iterator, or that many data frames may be
                   added to the importer set to True, defaults to False.
 
         Raises:
               ValueError: if the data frame does not contain the correct
                   columns for Timesketch upload.
+              TypeError: if the entry is not a DataFrame.
         """
         self._ready()
 
@@ -566,7 +568,7 @@ class ImportStreamer(object):
         """Add an entry into the buffer.
 
         Args:
-            entry: a dict object to add to the buffer.
+            entry (dict): a dict object to add to the buffer.
 
         Raises:
             TypeError: if the entry is not a dict.
@@ -597,7 +599,7 @@ class ImportStreamer(object):
         """Add a Microsoft Excel sheet to importer.
 
         Args:
-            filepath: full file path to a XLS or XLSX file to add to the
+            filepath (str): full file path to a XLS or XLSX file to add to the
                 importer.
             kwargs:
                 Other parameters can be passed in that match the
@@ -643,8 +645,8 @@ class ImportStreamer(object):
         """Add a CSV, JSONL or a PLASO file to the buffer.
 
         Args:
-            filepath: the path to the file to add.
-            delimiter: if this is a CSV file then a delimiter can be defined.
+            filepath (str): the path to the file to add.
+            delimiter (str): if this is a CSV file then a delimiter can be defined.
 
         Raises:
             TypeError: if the entry does not fulfill requirements.
@@ -690,15 +692,15 @@ class ImportStreamer(object):
 
         else:
             raise TypeError(
-                "File needs to have a file extension of: .csv, .jsonl or " ".plaso"
+                "File needs to have a file extension of: .csv, .jsonl or .plaso"
             )
 
     def add_json(self, json_entry, column_names=None):
         """Add an entry that is in a JSON format.
 
         Args:
-            json_entry: a single entry encoded in JSON.
-            column_names: a list of column names if the JSON object
+            json_entry (str): a single entry encoded in JSON.
+            column_names (list): a list of column names if the JSON object
                 is a list as an opposed to a dict.
 
         Raises:

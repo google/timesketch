@@ -1,7 +1,5 @@
 """Sketch analyzer plugin for the Safe Browsing API."""
 
-from __future__ import unicode_literals
-
 import fnmatch
 import logging
 import re
@@ -87,11 +85,11 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
 
         return False
 
-    def _do_safebrowsing_lookup(self, urls, platforms, types):
+    def _do_safebrowsing_lookup(self, urls: list, platforms: list, types: list):
         """URL lookup against the Safe Browsing API.
 
         Args:
-            urls: URLs
+            urls: URLs (list)
             platforms: platformTypes field of threatInfo
             types: threatTypes field of threatInfo
         Returns:
@@ -118,11 +116,16 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
                 },
             }
 
-            response = requests.post(
-                self._SAFE_BROWSING_THREATMATCHING_ENDPOINT,
-                params={"key": self._safebrowsing_api_key},
-                json=body,
-            )
+            try:
+                response = requests.post(
+                    self._SAFE_BROWSING_THREATMATCHING_ENDPOINT,
+                    params={"key": self._safebrowsing_api_key},
+                    json=body,
+                    timeout=60,
+                )
+            except requests.exceptions.Timeout as e:
+                logger.error(e)
+                continue
 
             try:
                 response.raise_for_status()
@@ -223,9 +226,7 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
             for domain in domain_analyzer_allowlisted:
                 url_allowlist.add("*.%s/*" % domain)
 
-        logger.info(
-            "{0:d} entries on the allowlist.".format(len(url_allowlist)),
-        )
+        logger.info("%d entries on the allowlist.", len(url_allowlist))
 
         safebrowsing_platforms = current_app.config.get(
             "SAFEBROWSING_PLATFORMS",
@@ -285,7 +286,7 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
                 event.commit()
 
         return (
-            "{0:d} Safe Browsing result(s) on {1:d} URL(s), " "{2:d} on the allow list."
+            "{:d} Safe Browsing result(s) on {:d} URL(s), " "{:d} on the allow list."
         ).format(
             len(safebrowsing_results),
             len(urls),

@@ -138,6 +138,7 @@ class CredentialStorage:
 
         Raises:
             IOError: If not able to decrypt the data.
+            OSError: If the file does not exist.
 
         Returns:
             Credential object (oauth2.credentials.Credentials) read from

@@ -64,6 +64,7 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             ValueError: If the prompt path is not configured or placeholder is missing.
             FileNotFoundError: If the prompt file cannot be found.
             IOError: If there's an error reading the prompt file.
+            OSError: If there's an error reading the prompt file.
         """
         prompt_file_path = current_app.config.get(self.PROMPT_CONFIG_KEY)
         if not prompt_file_path:
@@ -71,16 +72,16 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             raise ValueError("LLM summarization prompt path not configured.")
 
         try:
-            with open(prompt_file_path, "r", encoding="utf-8") as file_handle:
+            with open(prompt_file_path, encoding="utf-8") as file_handle:
                 prompt_template = file_handle.read()
         except FileNotFoundError as exc:
             logger.error("Prompt file not found: %s", prompt_file_path)
             raise FileNotFoundError(
                 f"LLM Prompt file not found: {prompt_file_path}"
             ) from exc
-        except IOError as e:
+        except OSError as e:
             logger.error("Error reading prompt file: %s", e)
-            raise IOError("Error reading LLM prompt file.") from e
+            raise OSError("Error reading LLM prompt file.") from e
 
         if "<EVENTS_JSON>" not in prompt_template:
             logger.error("Prompt template is missing the <EVENTS_JSON> placeholder")

@@ -40,12 +40,12 @@ class TaskResource(resources.ResourceMixin, Resource):
     def _get_celery_information(self, job_id):
         # pylint: disable=too-many-function-args
         celery_task = self.celery.AsyncResult(job_id)
-        task = dict(
-            task_id=celery_task.task_id,
-            state=celery_task.state,
-            successful=celery_task.successful(),
-            result=False,
-        )
+        task = {
+            "task_id": celery_task.task_id,
+            "state": celery_task.state,
+            "successful": celery_task.successful(),
+            "result": False,
+        }
 
         if task.get("state", "") == "SUCCESS":
             task["result"] = celery_task.result

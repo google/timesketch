@@ -1,7 +1,5 @@
 """Psexec sequence activity sessionizing sketch analyzer plugins."""
 
-from __future__ import unicode_literals
-
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import sequence_sessionizer
 
@@ -19,7 +17,7 @@ DEST_SEQ = [
 class DestPsexecSessionizerSketchPlugin(
     sequence_sessionizer.SequenceSessionizerSketchPlugin
 ):
-    """Sessionizer for seqeunced psexec activity on the server."""
+    """Sessionizer for sequenced psexec activity on the server."""
 
     NAME = "dest_psexec_sessionizer"
     query = "PSEXEC OR PSEXESVC OR PSEXESVC.EXE"

@@ -93,11 +93,11 @@ class Aggregation(resource.SketchResource):
         """Run an aggregator class.
 
         Args:
-            aggregator_name: the name of the aggregator class.
-            parameters: a dict with the parameters for the aggregation class.
-            search_id: an optional integer value with a primary key to a
+            aggregator_name (str): the name of the aggregator class.
+            parameters (dict): a dict with the parameters for the aggregation class.
+            search_id (int): an optional integer value with a primary key to a
                 saved search.
-            chart_type: string with the chart type.
+            chart_type (str): string with the chart type.
 
         Returns:
             A dict with the aggregation results.
@@ -136,13 +136,13 @@ class Aggregation(resource.SketchResource):
 
         return error.get_response_json(response, logger)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-renamed
     def from_saved(self, aggregation_id):
         """Initialize the aggregation object from a saved aggregation.
 
         Args:
-            aggregation_id: integer value for the stored
-                aggregation (primary key).
+            aggregation_id (int): integer value for the stored
+                                  aggregation (primary key).
         """
         resource_uri = "sketches/{0:d}/aggregation/{1:d}/".format(
             self._sketch.id, aggregation_id
@@ -188,7 +188,8 @@ class Aggregation(resource.SketchResource):
         """Initialize the aggregation object by running an aggregation DSL.
 
         Args:
-            aggregate_dsl: OpenSearch aggregation query DSL string.
+            aggregate_dsl (str): OpenSearch aggregation query DSL string.
+            kwargs: Optional arguments
         """
         super().from_manual(**kwargs)
         resource_url = "{0:s}/sketches/{1:d}/aggregation/explore/".format(
@@ -225,12 +226,12 @@ class Aggregation(resource.SketchResource):
         """Initialize the aggregation object by running an aggregator class.
 
         Args:
-            aggregator_name: name of the aggregator class to run.
-            aggregator_parameters: a dict with the parameters of the aggregator
+            aggregator_name (str): name of the aggregator class to run.
+            aggregator_parameters (dict): a dict with the parameters of the aggregator
                 class.
-            search_id: an optional integer value with a primary key to a saved
+            search_id (int): an optional integer value with a primary key to a saved
                 search.
-            chart_type: optional string with the chart type.
+            chart_type (str): optional string with the chart type.
         """
         self.type = "aggregator_run"
         self._parameters = aggregator_parameters
@@ -600,7 +601,7 @@ class AggregationGroup(resource.SketchResource):
             agg_obj.from_saved(agg_id)
             self._aggregations.append(agg_obj)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-renamed
     def from_saved(self, group_id):
         """Feed group data from a group ID.
 

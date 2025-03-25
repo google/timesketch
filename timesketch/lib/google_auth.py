@@ -16,21 +16,20 @@ Based on the example code from the public Google IAP documentation:
 https://cloud.google.com/iap/docs/signed-headers-howto
 """
 
-from __future__ import unicode_literals
 
 import time
 import json
 import hashlib
 import os
-import six
 
 # six.moves is a dynamically-created namespace that doesn't actually
 # exist and therefore pylint can't statically analyze it.
 # pylint: disable-msg=import-error
-from six.moves.urllib import parse as urlparse
+from urllib import parse as urlparse
 
 import jwt
 import requests
+from requests.exceptions import RequestException, Timeout
 
 from flask import url_for
 from flask import current_app
@@ -72,12 +71,15 @@ def _fetch_public_keys(url):
         HTTP response.
     """
     try:
-        resp = requests.get(url)
-    except requests.exceptions.RequestException as e:
-        raise JwtKeyError("Cannot fetch public keys: {}".format(e)) from e
-    if resp.status_code != HTTP_STATUS_CODE_OK:
-        raise JwtKeyError("Cannot fetch public keys: {}".format(resp.status_code))
-    return resp.json()
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Timeout as e:
+        raise JwtKeyError(f"Timeout fetching public keys: {e}") from e
+    except RequestException as e:
+        raise JwtKeyError(f"Cannot fetch public keys: {e}") from e
+    except ValueError as e:
+        raise JwtKeyError(f"Cannot parse public keys: {e}") from e
 
 
 def _fetch_oauth2_discovery_document():
@@ -91,16 +93,15 @@ def _fetch_oauth2_discovery_document():
     """
     discovery_url = current_app.config.get("GOOGLE_OIDC_DISCOVERY_URL", DISCOVERY_URL)
     try:
-        resp = requests.get(discovery_url)
-    except requests.exceptions.RequestException as e:
-        raise DiscoveryDocumentError(
-            "Cannot fetch discovery document: {}".format(e)
-        ) from e
-    if resp.status_code != HTTP_STATUS_CODE_OK:
-        raise DiscoveryDocumentError(
-            "Cannot fetch discovery_document: {}".format(resp.status_code)
-        )
-    return resp.json()
+        resp = requests.get(discovery_url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Timeout as e:
+        raise DiscoveryDocumentError(f"Timeout fetching discovery document: {e}") from e
+    except RequestException as e:
+        raise DiscoveryDocumentError(f"Cannot fetch discovery document: {e}") from e
+    except ValueError as e:
+        raise DiscoveryDocumentError(f"Cannot parse discovery document: {e}") from e
 
 
 def _generate_random_token():
@@ -112,7 +113,7 @@ def _generate_random_token():
     return hashlib.sha256(os.urandom(1024)).hexdigest()
 
 
-def get_oauth2_authorize_url(hosted_domain=None):
+def get_oauth2_authorize_url(hosted_domain: str = ""):
     """Generate an authorization URL for Google's OAuth2 service.
 
     Args:
@@ -133,24 +134,24 @@ def get_oauth2_authorize_url(hosted_domain=None):
     session[CSRF_KEY] = csrf_token
 
     # Generate authorization URL
-    params = dict(
-        client_id=current_app.config.get("GOOGLE_OIDC_CLIENT_ID"),
-        scope=" ".join(scopes),
-        response_type="code",
-        access_type="online",  # Because we don't need a refresh token.
-        state=csrf_token,
-        nonce=nonce,  # Enable replay attack protection attack.
-        redirect_uri=redirect_uri,
-    )
+    params = {
+        "client_id": current_app.config.get("GOOGLE_OIDC_CLIENT_ID"),
+        "scope": " ".join(scopes),
+        "response_type": "code",
+        "access_type": "online",  # Because we don't need a refresh token.
+        "state": csrf_token,
+        "nonce": nonce,  # Enable replay attack protection attack.
+        "redirect_uri": redirect_uri,
+    }
     if hosted_domain:
         params["hd"] = hosted_domain
 
     urlencoded_params = urlparse.urlencode(params)
-    google_authorization_url = "{}?{}".format(auth_uri, urlencoded_params)
+    google_authorization_url = f"{auth_uri}?{urlencoded_params}"
     return google_authorization_url
 
 
-def get_encoded_jwt_over_https(code):
+def get_encoded_jwt_over_https(code: str):
     """Fetch a JSON Web Token (JWT) using a authentication code.
 
     Args:
@@ -176,12 +177,14 @@ def get_encoded_jwt_over_https(code):
     }
     token_url = discovery_document.get("token_endpoint")
     try:
-        response = requests.post(token_url, data=post_data)
+        response = requests.post(token_url, data=post_data, timeout=60)
         encoded_jwt = response.json().get("id_token")
-    except requests.exceptions.RequestException as e:
-        raise JwtFetchError("Cannot fetch JWT: {}".format(e)) from e
+    except Timeout as e:
+        raise JwtFetchError(f"Timeout fetching JWT: {e}") from e
+    except RequestException as e:
+        raise JwtFetchError(f"Cannot fetch JWT: {e}") from e
     if response.status_code != HTTP_STATUS_CODE_OK:
-        raise JwtFetchError("Cannot fetch JWT: {}".format(response.status_code))
+        raise JwtFetchError(f"Cannot fetch JWT: {response.status_code}")
 
     if not encoded_jwt:
         raise JwtFetchError("Cannot fetch JWT: Missing id_token in response")
@@ -189,7 +192,9 @@ def get_encoded_jwt_over_https(code):
     return encoded_jwt
 
 
-def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
+def decode_jwt(
+    encoded_jwt: str, public_key: str, algorithm: str, expected_audience: str
+):
     """Decode a JSON Web Token (JWT).
 
     Args:
@@ -216,12 +221,12 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
         )
         return decoded_jwt
     except (jwt.exceptions.InvalidTokenError, jwt.exceptions.InvalidKeyError) as e:
-        raise JwtValidationError("JWT validation error: {}".format(e)) from e
+        raise JwtValidationError(f"JWT validation error: {e}") from e
 
     return None
 
 
-def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
+def validate_jwt(decoded_jwt: str, expected_issuer: str, expected_domain: str = ""):
     """Decode and validate a JSON Web token (JWT).
 
     Cloud IAP:
@@ -242,11 +247,11 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
     try:
         now = int(time.time())
         issued_at = decoded_jwt["iat"]
-        if isinstance(issued_at, six.string_types):
+        if isinstance(issued_at, str):
             issued_at = int(issued_at, 10)
 
         expires_at = decoded_jwt["exp"]
-        if isinstance(expires_at, six.string_types):
+        if isinstance(expires_at, str):
             expires_at = int(expires_at, 10)
 
         if issued_at > now:
@@ -254,13 +259,13 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
         if expires_at < now:
             raise JwtValidationError("Token has expired")
     except KeyError as e:
-        raise JwtValidationError("Missing timestamp: {}".format(e)) from e
+        raise JwtValidationError(f"Missing timestamp: {e}") from e
 
     # Check that the issuer of the token is correct.
     try:
         issuer = decoded_jwt["iss"]
         if issuer != expected_issuer:
-            raise JwtValidationError("Wrong issuer: {}".format(issuer))
+            raise JwtValidationError(f"Wrong issuer: {issuer}")
     except KeyError as e:
         raise JwtValidationError("Missing issuer") from e
 
@@ -271,12 +276,12 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
         try:
             domain = decoded_jwt["hd"]
             if not domain == expected_domain:
-                raise JwtValidationError("Wrong domain: {}".format(domain))
+                raise JwtValidationError(f"Wrong domain: {domain}")
         except KeyError as e:
-            raise JwtValidationError("Missing domain: {}".format(e)) from e
+            raise JwtValidationError(f"Missing domain: {e}") from e
 
 
-def get_public_key_for_jwt(encoded_jwt, url):
+def get_public_key_for_jwt(encoded_jwt: str, url: str):
     """Get public key for JWT in order to verify the signature.
 
     The keys get cached in order to limit the amount of network round trips.
@@ -313,7 +318,7 @@ def get_public_key_for_jwt(encoded_jwt, url):
     get_public_key_for_jwt.key_cache = key_cache
     key = key_cache.get(key_id)
     if not key:
-        raise JwtKeyError("IAP public key {!r} not found".format(key_id))
+        raise JwtKeyError(f"IAP public key {key_id!r} not found")
 
     return key
 
