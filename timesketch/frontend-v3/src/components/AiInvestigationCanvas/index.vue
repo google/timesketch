@@ -26,22 +26,26 @@ limitations under the License.
         :reportLocked="store.reportLocked"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
-        <ResultsView
-          v-if="selectedQuestion && selectedQuestion.id"
-          :question="selectedQuestion"
-          :key="selectedQuestion.id"
-          :reportLocked="store.reportLocked"
-          :isLoading="isLoading"
-        />
-        <ReportView
-          v-else
-          :isLoading="isLoading"
-          :reportLocked="store.reportLocked"
-          :questions="filteredQuestions"
-          :questionsTotal="questionsTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-          :summary="metadata ? metadata.summary : ''"
-        />
+        <div v-if="selectedQuestion && selectedQuestion.id">
+          <ResultsViewLoader v-if="isLoading" />
+          <ResultsView
+            :question="selectedQuestion"
+            :key="selectedQuestion.id"
+            :reportLocked="store.reportLocked"
+            :isLoading="isLoading"
+          />
+        </div>
+        <div v-else>
+          <ReportViewLoader v-if="isLoading" />
+          <ReportView
+            v-else
+            :reportLocked="store.reportLocked"
+            :questions="filteredQuestions"
+            :questionsTotal="questionsTotal"
+            :completedQuestionsTotal="completedQuestionsTotal"
+            :summary="metadata ? metadata.summary : ''"
+          />
+        </div>
       </v-col>
     </v-row>
     <v-dialog
@@ -76,6 +80,7 @@ import { useTheme } from "vuetify";
 import { useRoute } from "vue-router";
 import Sidebar from "./Sidebar";
 import RestApiClient from "@/utils/RestApiClient";
+import ResultsViewLoader from "./Loaders/ResultsViewLoader.vue";
 
 export default {
   data() {
@@ -205,12 +210,10 @@ export default {
       this.showEventLog = true;
     },
     updateObservables(selectedEvents) {
-
-
         // 1. Find Question
         let targetQuestion = this.questions.find(({ id}) => id === this.store.activeContext.question.id)
-        
-        // 2. Find observable - 
+
+        // 2. Find observable -
         let targetObservable = this.targetQuestion.observables.find(({ id}) => id === this.targetObservable.id)
 
         // 3. Update observable with new log entries
@@ -223,7 +226,7 @@ export default {
           ...targetQuestion,
           observables: [targetObservable, ...targetQuestion.observables.filter(({ id}) => id !== this.targetObservable.id)]
         }
-        
+
         this.updateQuestion(targetQuestion)
     }
   },
