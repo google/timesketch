@@ -150,9 +150,8 @@ limitations under the License.
               Save</v-btn
             >
 
-            <time class="font-italic text-body-2">
-              Last updated
-              {{ formatDate(store.report.content.summary[0].timestamp) }}
+            <time class="font-italic text-body-2" v-if="lastUpdated">
+              Last updated {{ lastUpdated }}
             </time>
           </div>
         </div>
@@ -202,7 +201,6 @@ import dayjs from "dayjs";
 import { debounce } from "lodash";
 import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
 import { formatDate } from "@/utils/TimeDate";
-import { watch } from "vue";
 
 export default {
   props: {
@@ -242,10 +240,28 @@ export default {
         this.updateContent("name", value);
       },
     },
+    lastUpdated() {
+      const latestSummary = this.store.report?.content?.summary?.[0];
+
+      if (!latestSummary) {
+        return null;
+      }
+
+      return `${formatDate(latestSummary.timestamp)}${
+        latestSummary.user
+          ? ` by
+      ${latestSummary.user}`
+          : null
+      }`;
+    },
     cannotUpdateSummary() {
       const savedSummary = this.store.report.content.summary[0].value;
 
-      return this.isSavingSummary || this.reportLocked || savedSummary === this.summary
+      return (
+        this.isSavingSummary ||
+        this.reportLocked ||
+        savedSummary === this.summary
+      );
     },
   },
   methods: {
@@ -282,7 +298,11 @@ export default {
 
         await this.store.updateReport({
           summary: [
-            { timestamp: dayjs(), value: this.summary },
+            {
+              timestamp: dayjs(),
+              value: this.summary,
+              user: this.store.currentUser,
+            },
             ...this.store.report.content.summary,
           ],
         });
@@ -316,7 +336,7 @@ export default {
 };
 </script>
 
-<style >
+<style>
 .questions-list {
   list-style: none;
 }
@@ -349,7 +369,7 @@ export default {
 }
 
 .summary-field__actions {
-  bottom: 10px
+  bottom: 10px;
 }
 
 .summary-field .v-field {
