@@ -142,20 +142,23 @@ def _validate_csv_fields(
     )
 
 
-def validate_indices(indices, datastore):
-    """Returns a list of valid indices.
+def validate_indices(indices: List[str], datastore: object) -> List[str]:
+    """Validates a list of indices against the datastore.
 
-    This function takes a list of indices, checks to see if they exist
-    and then returns the list of indices that exist within the datastore.
+    This function checks if each index in the provided list exists within the
+    datastore. It returns a new list containing only the indices that are
+    present in the datastore.
 
     Args:
-        indices (list): List of indices.
-        datastore (OpenSearchDataStore): a data store object.
+        indices: A list of index names (strings) to validate.
+        datastore: A datastore object (e.g., OpenSearchDataStore) with a
+            client attribute that has an indices.exists method.
 
     Returns:
-        list of indices that exist within the datastore.
+        A list of index names (strings) that exist within the datastore.
     """
-    return [i for i in indices if datastore.client.indices.exists(index=i)]
+    valid_indices = [i for i in indices if datastore.client.indices.exists(index=i)]
+    return list(set(valid_indices))
 
 
 def check_mapping_errors(headers: List, headers_mapping: List):
