@@ -85,7 +85,6 @@ export default {
   },
   methods: {
     handleSubmission() {
-      debugger;
       this.queryRequest = {
         ...this.queryRequest,
         queryString: this.queryString,

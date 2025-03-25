@@ -481,7 +481,7 @@ export default {
           }
         })
         .catch((e) => {
-          console.log(e)
+          console.error(e)
         })
     },
     dataSourceStatus(datasource) {

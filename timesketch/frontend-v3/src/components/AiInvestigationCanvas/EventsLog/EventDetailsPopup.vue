@@ -89,8 +89,6 @@ export default {
         return [];
       }
 
-      console.log(Object.entries(this.eventDetails));
-
       return Object.entries(this.eventDetails);
     },
   },

@@ -196,7 +196,7 @@ export default {
           this.dfiqTemplates = dfiqTemplatesRes.value.data.objects;
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       } finally {
         this.isLoading = false;
       }
@@ -232,7 +232,7 @@ export default {
           type: "success",
         });
       } catch (error) {
-        console.log(error);
+        console.error(error);
         this.store.setNotification({
           text: "Unable to add question to this Sketch. Please try again.",
           icon: "mdi-alert-circle-outline",

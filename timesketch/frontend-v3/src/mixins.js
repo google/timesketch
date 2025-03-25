@@ -13,7 +13,6 @@ export const snackBarMixin = {
         let snackbar = defaultSnackBar
         snackbar.message = message
         snackbar.color = "success"
-        console.log('success snack bar', message)
         this.appStore.setSnackBar(snackbar)
     },
     errorSnackBar(message) {

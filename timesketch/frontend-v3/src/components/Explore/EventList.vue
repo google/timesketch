@@ -903,7 +903,7 @@ export default {
       ];
       let extraHeaders = [];
       this.selectedFields.forEach((field) => {
-        console.log("field:", field.field);
+        console.error("field:", field.field);
 
         let header = {
           title: field.field,
@@ -1063,8 +1063,6 @@ export default {
     getTimeBubbleColor() {
       let backgroundColor = "#f5f5f5";
 
-      console.log(backgroundColor);
-
       if (this.$vuetify.theme.dark) {
         backgroundColor = "#333";
       }
@@ -1188,7 +1186,7 @@ export default {
           // }
         })
         .catch((e) => {
-          console.log(e);
+          console.error(e);
         });
     },
     fetchEventSummary: function () {
