@@ -639,6 +639,41 @@ class TimesketchApi:
         """
         return index.SearchIndex(searchindex_id, api=self)
 
+    def create_searchindex(self, searchindex_name: str, opensearch_index_name: str):
+        """Create a new SearchIndex.
+        Args:
+            searchindex_name: Name for the searchindex.
+            opensearch_index_name: The name of the index in opensearch.
+        Returns:
+            Instance of a SearchIndex object.
+        Raises:
+            ValueError: If the SearchIndex fails to create.
+        """
+        resource_url = f"{self.api_root}/searchindices/"
+        form_data = {
+            "searchindex_name": searchindex_name,
+            "es_index_name": opensearch_index_name,
+        }
+        response = self.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response,
+                message="Error creating searchindex",
+                error=ValueError,
+            )
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get("objects")
+        if not objects:
+            raise ValueError(
+                "Unable to create a SearchIndex, try again or file an "
+                "issue on GitHub."
+            )
+
+        searchindex_id = objects[0].get("id")
+        return index.SearchIndex(searchindex_id, api=self)
+
     def check_celery_status(self, job_id=""):
         """Return information about outstanding celery tasks or a specific one.
 
