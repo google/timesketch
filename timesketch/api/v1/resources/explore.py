@@ -162,6 +162,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
             query_filter = {}
 
         # Searchindices and timelines
+
+        # Searchindices and timelines
+        # Check if the sketch has any timelines.
+        if not sketch.timelines:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "The sketch has no timelines to search on.",
+            )
+
         # Indices here can be either a list of timeline names, IDs or a list
         # of search indices.
         all_indices = list({t.searchindex.index_name for t in sketch.timelines})
@@ -185,11 +194,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         # Check if there are any valid timelines or indices.
         # If either of the two exist, the search is good to go.
         if not timeline_ids and not indices:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "No valid timeline ids or search indices were found "
-                "to perform the search on.",
-            )
+            indices = all_timeline_ids
 
         # Make sure we have a query string or star filter
         if not (
