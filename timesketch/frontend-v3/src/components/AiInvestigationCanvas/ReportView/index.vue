@@ -143,7 +143,7 @@ limitations under the License.
               size="small"
               color="primary"
               @click="submitSummary()"
-              :disabled="isSavingSummary || reportLocked"
+              :disabled="cannotUpdateSummary"
               class="text-uppercase"
             >
               <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
@@ -202,6 +202,7 @@ import dayjs from "dayjs";
 import { debounce } from "lodash";
 import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
 import { formatDate } from "@/utils/TimeDate";
+import { watch } from "vue";
 
 export default {
   props: {
@@ -240,6 +241,11 @@ export default {
         this.store.report.content.name = value;
         this.updateContent("name", value);
       },
+    },
+    cannotUpdateSummary() {
+      const savedSummary = this.store.report.content.summary[0].value;
+
+      return this.isSavingSummary || this.reportLocked || savedSummary === this.summary
     },
   },
   methods: {
@@ -280,8 +286,20 @@ export default {
             ...this.store.report.content.summary,
           ],
         });
+
+        this.store.setNotification({
+          text: `Summary saved.`,
+          icon: "mdi-content-save-edit-outline",
+          type: "success",
+        });
       } catch (error) {
         console.error(error);
+
+        this.store.setNotification({
+          text: `Unable to save summary`,
+          icon: "mdi-lock-open-variant-outline",
+          type: "error",
+        });
       } finally {
         this.isSavingSummary = false;
       }
