@@ -1957,7 +1957,9 @@ class Sketch(resource.BaseResource):
         )
         return timeline_obj
 
-    def create_datasource(self, timeline_id: int, provider: str, context: str, data_label: str):
+    def create_datasource(
+            self, timeline_id: int, provider: str, context: str, data_label: str
+    ):
         """Creates a datasource
 
         Args:
