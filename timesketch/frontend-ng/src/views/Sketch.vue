@@ -417,15 +417,15 @@ export default {
   mounted() {
     this.loadingSketch = true
     this.showLeftPanel = false
-    this.$store.dispatch('updateSketch', this.sketchId).then(() => {
+    this.$store.dispatch('updateUserSettings').then(() =>
+      this.$store.dispatch('updateSketch', this.sketchId)).then(() => {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
-      this.$store.dispatch('updateSystemSettings')
-      this.$store.dispatch('updateUserSettings').then(() => {
+      this.$store.dispatch('updateSystemSettings').then(() => {
         if (this.userSettings.showLeftPanel) {
           this.toggleDrawer()
         }
