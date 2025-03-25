@@ -133,26 +133,28 @@ limitations under the License.
             rows="5"
             noResize
             hide-details
-            class="mb-2"
+            class="summary-field mb-2"
           ></v-textarea>
-        </div>
-        <div class="d-flex justify-space-between">
-          <v-btn
-            variant="text"
-            size="small"
-            color="primary"
-            @click="submitSummary()"
-            :disabled="isSavingSummary || reportLocked"
-            class="text-uppercase"
+          <div
+            class="summary-field__actions position-absolute left-0 w-100 d-flex justify-space-between pr-5"
           >
-            <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
-            Save</v-btn
-          >
+            <v-btn
+              variant="text"
+              size="small"
+              color="primary"
+              @click="submitSummary()"
+              :disabled="isSavingSummary || reportLocked"
+              class="text-uppercase"
+            >
+              <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
+              Save</v-btn
+            >
 
-          <time class="font-italic text-body-2">
-            Last updated
-            {{ formatDate(store.report.content.summary[0].timestamp) }}
-          </time>
+            <time class="font-italic text-body-2">
+              Last updated
+              {{ formatDate(store.report.content.summary[0].timestamp) }}
+            </time>
+          </div>
         </div>
       </div>
     </form>
@@ -296,7 +298,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style >
 .questions-list {
   list-style: none;
 }
@@ -326,5 +328,13 @@ export default {
 .summary-loader {
   z-index: 1;
   background: rgba(255, 255, 255, 0.75);
+}
+
+.summary-field__actions {
+  bottom: 10px
+}
+
+.summary-field .v-field {
+  padding-bottom: 60px;
 }
 </style>
