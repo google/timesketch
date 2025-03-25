@@ -13,7 +13,7 @@
 # limitations under the License.
 """Tests for utils."""
 
-
+from unittest import mock
 import re
 import pandas as pd
 
@@ -24,6 +24,14 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
+from timesketch.lib import utils
+from timesketch.models import db_session
+from timesketch.models.user import User
+from timesketch.models import db_session
+from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Timeline
+from timesketch.models.user import User
 
 
 TEST_CSV = "tests/test_events/sigma_events.csv"
@@ -36,6 +44,90 @@ ISO8601_REGEX = (
 
 class TestUtils(BaseTest):
     """Tests for the functionality on the utils module."""
+
+    def setUp(self):
+        """Setup test case."""
+        try:
+            super().setUp()
+            self.datastore = mock.Mock()
+            self.datastore.client.indices.exists.return_value = True
+            self.user = User(username="testuser", email="test@example.com")
+            self.sketch1 = Sketch(
+                name="Test 1", description="Test Sketch", user=self.user1
+            )
+            db_session.add(self.sketch1)
+            db_session.commit()
+
+            # Create a test search index
+            self.searchindex1 = SearchIndex(
+                name="test", description="test", user=self.user1, index_name="test"
+            )
+            db_session.add(self.searchindex1)
+            db_session.commit()
+            db_session.add(self.user)
+            db_session.commit()
+        except Exception as e:
+            db_session.rollback()
+            raise e
+
+    def tearDown(self):
+        """Teardown test case."""
+        db_session.delete(self.user)
+        db_session.commit()
+        db_session.rollback()
+        db_session.close()
+
+    def test_all_indices_exist(self):
+        """Test when all indices exist."""
+        indices = ["index1", "index2", "index3"]
+        result = utils.validate_indices(indices, self.datastore)
+        self.assertCountEqual(result, indices)
+        # Check if every element in indices exists in result
+        for index in indices:
+            self.assertIn(index, result)
+
+    def test_empty_indices_list(self):
+        """Test when an empty list of indices is provided."""
+        indices = []
+        result = utils.validate_indices(indices, self.datastore)
+        self.assertEqual(result, [])
+
+    def test_mixed_valid_invalid_indices(self):
+        """Test when a mix of valid and invalid indices is provided."""
+        self.datastore.client.indices.exists.side_effect = lambda index: index in [
+            "test",
+            "valid2",
+        ]
+        indices = ["test", "invalid1", "valid2", "invalid2"]
+        result = utils.validate_indices(indices, self.datastore)
+        self.assertEqual(sorted(result), sorted(["test", "valid2"]))
+
+    def test_duplicate_indices(self):
+        """Test when duplicate indices are provided."""
+        indices = ["test", "test", "test"]
+        result = utils.validate_indices(indices, self.datastore)
+        self.assertEqual(result, ["test"])
+
+    def test_indices_with_special_characters(self):
+        """Test when indices have special characters."""
+        self.datastore.client.indices.exists.side_effect = lambda index: index in [
+            "test-index",
+            "test_index",
+        ]
+        indices = ["test-index", "test_index"]
+        result = utils.validate_indices(indices, self.datastore)
+        self.assertEqual(sorted(result), sorted(indices))
+
+    def test_no_indices_in_sketch(self):
+        """Test when the sketch has no indices."""
+        sketch = Sketch(name="Test Sketch", description="Test Sketch", user=self.user1)
+        db_session.add(sketch)
+        db_session.commit()
+        indices = ["test"]
+        # Set up the mock to return False for any index
+        self.datastore.client.indices.exists.return_value = False
+        result = utils.validate_indices(indices, self.datastore)
+        self.assertEqual(result, [])
 
     def test_random_color(self):
         """Test to generate a random color."""
