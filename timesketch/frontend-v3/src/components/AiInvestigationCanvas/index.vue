@@ -25,8 +25,9 @@ limitations under the License.
         :reportLocked="store.reportLocked"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
+        <ReportViewLoader v-if="isLoading" />
         <ReportView
-          :isLoading="isLoading"
+          v-else
           :reportLocked="store.reportLocked"
           :questions="filteredQuestions"
           :questionsTotal="questionsTotal"

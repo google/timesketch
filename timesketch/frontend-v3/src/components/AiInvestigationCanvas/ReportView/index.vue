@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <ReportViewLoader v-if="isLoading" />
-  <section v-else>
+  <section>
     <header class="report-header px-6 pt-8 pb-8 mb-8 border-b-thin">
       <h2 class="mb-4 text-h3 font-weight-bold">Investigation Report</h2>
       <div class="d-flex align-center justify-space-between">
@@ -53,7 +52,7 @@ limitations under the License.
             v-if="!reportLocked"
             rounded
             color="primary"
-            @click="setShowModal()"
+            @click="setShowConfirmationModal()"
           >
             Complete investigation</v-btn
           >
@@ -61,7 +60,7 @@ limitations under the License.
       </div>
     </header>
 
-    <form class="px-6 mb-10">
+    <form class="px-6 mb-12">
       <div class="report-form-group mb-6 w-75">
         <label for="name" class="font-weight-bold">Name</label>
         <v-text-field
@@ -106,23 +105,55 @@ limitations under the License.
             variant="text"
             size="small"
             color="primary"
-            @click="reqenerateSummary()"
-            :disabled="reportLocked"
+            @click="setShowSummaryHistoryModal()"
             class="text-uppercase"
           >
-            <v-icon icon="mdi-reload" class="mr-2" left small />
-            Regenerate Summary (TODO)</v-btn
+            <v-icon icon="mdi-open-in-new" class="mr-2" left small />
+            View History</v-btn
           >
         </div>
-        <v-textarea
-          v-model="summary"
-          id="summary"
-          name="summary"
-          variant="outlined"
-          :disabled="reportLocked"
-          rows="5"
-          noResize
-        ></v-textarea>
+        <div class="position-relative">
+          <div
+            v-if="isSavingSummary"
+            class="summary-loader position-absolute top-0 left-0 d-flex align-center justify-center w-100 fill-height"
+          >
+            <v-progress-circular
+              indeterminate
+              size="60"
+              width="3"
+              color="primary"
+            ></v-progress-circular>
+          </div>
+          <v-textarea
+            v-model="summary"
+            id="summary"
+            name="summary"
+            variant="outlined"
+            :disabled="reportLocked"
+            rows="5"
+            noResize
+            hide-details
+            class="mb-2"
+          ></v-textarea>
+        </div>
+        <div class="d-flex justify-space-between">
+          <v-btn
+            variant="text"
+            size="small"
+            color="primary"
+            @click="submitSummary()"
+            :disabled="isSavingSummary || reportLocked"
+            class="text-uppercase"
+          >
+            <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
+            Save</v-btn
+          >
+
+          <time class="font-italic text-body-2">
+            Last updated:
+            {{ formatDate(store.report.content.summary[0].timestamp) }}
+          </time>
+        </div>
       </div>
     </form>
 
@@ -141,19 +172,34 @@ limitations under the License.
   </section>
   <v-dialog
     transition="dialog-bottom-transition"
-    v-model="showModal"
+    v-model="showConfirmationModal"
     width="auto"
   >
     <CompleteInvestigationModal
-      @close-modal="setShowModal"
+      @close-modal="setShowConfirmationModal"
       :questions="questions"
+    />
+  </v-dialog>
+  <v-dialog
+    :scrollable="true"
+    transition="dialog-bottom-transition"
+    v-model="showSummaryHistoryModal"
+    width="865px"
+    max-height="420px"
+  >
+    <SummaryHistoryModal
+      @close-modal="setShowSummaryHistoryModal"
+      :summaries="store.report.content.summary"
     />
   </v-dialog>
 </template>
 
 <script>
 import { useAppStore } from "@/stores/app";
+import dayjs from "dayjs";
 import { debounce } from "lodash";
+import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
+import { formatDate } from "@/utils/TimeDate";
 
 export default {
   props: {
@@ -164,21 +210,17 @@ export default {
     isLoading: Boolean,
   },
   data() {
+    const store = useAppStore();
+
     return {
-      store: useAppStore(),
-      showModal: false,
+      store,
+      showConfirmationModal: false,
+      showSummaryHistoryModal: false,
+      isSavingSummary: false,
+      summary: store.report?.content?.summary?.[0].value,
     };
   },
   computed: {
-    summary: {
-      get: function () {
-        return this.store.report?.content?.summary;
-      },
-      set: function (value) {
-        this.store.report.content.summary = value;
-        this.updateContent("summary", value);
-      },
-    },
     analysts: {
       get: function () {
         return this.store.report?.content?.analysts;
@@ -199,8 +241,12 @@ export default {
     },
   },
   methods: {
-    setShowModal() {
-      this.showModal = !this.showModal;
+    formatDate,
+    setShowConfirmationModal() {
+      this.showConfirmationModal = !this.showConfirmationModal;
+    },
+    setShowSummaryHistoryModal() {
+      this.showSummaryHistoryModal = !this.showSummaryHistoryModal;
     },
     async unlockReport() {
       try {
@@ -221,8 +267,22 @@ export default {
       } finally {
       }
     },
-    async reqenerateSummary() {
-      // TODO : Implement when API work is completed
+    async retrieveHistory() {},
+    async submitSummary() {
+      try {
+        this.isSavingSummary = true;
+
+        await this.store.updateReport({
+          summary: [
+            { timestamp: dayjs(), value: this.summary },
+            ...this.store.report.content.summary,
+          ],
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        this.isSavingSummary = false;
+      }
     },
     updateContent: debounce(function (key, value) {
       this.store.updateReport({ [key]: value });
@@ -261,5 +321,10 @@ export default {
 
 .report-auto-timestamp {
   color: #5f6368;
+}
+
+.summary-loader {
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.75);
 }
 </style>

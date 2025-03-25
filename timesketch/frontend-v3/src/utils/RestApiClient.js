@@ -271,10 +271,8 @@ export default {
       content: content,
     };
 
-    debugger
-
-    if(!storyId) {
-      return
+    if (!storyId) {
+      return;
     }
 
     return RestApiClient.post(
@@ -684,9 +682,9 @@ export default {
     return RestApiClient.post("/sketches/" + sketchId + "/nl2q/", formData);
   },
   llmRequest(sketchId, featureName, formData) {
-    formData = formData || {}
-    formData.feature = featureName
-  
-    return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
-  }
+    formData = formData || {};
+    formData.feature = featureName;
+
+    return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData);
+  },
 };
