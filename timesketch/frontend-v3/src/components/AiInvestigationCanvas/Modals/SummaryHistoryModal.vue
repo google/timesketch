@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card class="modal">
+  <v-card class="modal overflow-hidden">
     <ModalLoader :isSubmitting="isSubmitting" />
     <div :class="modal__content">
       <div class="modal__header pl-6 pr-1">
@@ -75,7 +75,6 @@ export default {
 <style scoped>
 .modal {
   background-color: #fff;
-  overflow: hidden;
 }
 
 .modal__header {
