@@ -272,7 +272,7 @@ export default {
         this.store.setNotification({
           text: `Report Unlocked`,
           icon: "mdi-lock-open-variant-outline",
-          type: "success",
+          type: "info",
         });
       } catch (error) {
         console.error(error);
