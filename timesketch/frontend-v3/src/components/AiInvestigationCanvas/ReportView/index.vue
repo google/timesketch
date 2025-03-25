@@ -96,66 +96,7 @@ limitations under the License.
           finalized
         </p>
       </div>
-      <div>
-        <div class="d-flex justify-space-between">
-          <label for="summary" class="text-h6 font-weight-bold mb-2 d-block"
-            >Summary</label
-          >
-          <v-btn
-            variant="text"
-            size="small"
-            color="primary"
-            @click="setShowSummaryHistoryModal()"
-            class="text-uppercase"
-          >
-            <v-icon icon="mdi-open-in-new" class="mr-2" left small />
-            View History</v-btn
-          >
-        </div>
-        <div class="position-relative">
-          <div
-            v-if="isSavingSummary"
-            class="summary-loader position-absolute top-0 left-0 d-flex align-center justify-center w-100 fill-height"
-          >
-            <v-progress-circular
-              indeterminate
-              size="60"
-              width="3"
-              color="primary"
-            ></v-progress-circular>
-          </div>
-          <v-textarea
-            v-model="summary"
-            id="summary"
-            name="summary"
-            variant="outlined"
-            :disabled="reportLocked"
-            rows="5"
-            noResize
-            hide-details
-            class="summary-field mb-2"
-          ></v-textarea>
-          <div
-            class="summary-field__actions position-absolute left-0 w-100 d-flex justify-space-between pr-5"
-          >
-            <v-btn
-              variant="text"
-              size="small"
-              color="primary"
-              @click="submitSummary()"
-              :disabled="cannotUpdateSummary"
-              class="text-uppercase"
-            >
-              <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
-              Save</v-btn
-            >
-
-            <time class="font-italic text-body-2" v-if="lastUpdated">
-              Last updated {{ lastUpdated }}
-            </time>
-          </div>
-        </div>
-      </div>
+      <SummarySection :reportLocked="reportLocked" />
     </form>
 
     <div class="px-6" v-if="questionsTotal">
@@ -181,26 +122,13 @@ limitations under the License.
       :questions="questions"
     />
   </v-dialog>
-  <v-dialog
-    transition="dialog-bottom-transition"
-    v-model="showSummaryHistoryModal"
-    width="865px"
-    max-height="420px"
-    opacity="0"
-  >
-    <SummaryHistoryModal
-      @close-modal="setShowSummaryHistoryModal"
-      :summaries="store.report.content.summary"
-    />
-  </v-dialog>
 </template>
 
 <script>
 import { useAppStore } from "@/stores/app";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
-import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
-import { formatDate } from "@/utils/TimeDate";
+import SummarySection from "./SummarySection.vue";
 
 export default {
   props: {
@@ -216,9 +144,6 @@ export default {
     return {
       store,
       showConfirmationModal: false,
-      showSummaryHistoryModal: false,
-      isSavingSummary: false,
-      summary: store.report?.content?.summary?.[0].value,
     };
   },
   computed: {
@@ -240,37 +165,10 @@ export default {
         this.updateContent("name", value);
       },
     },
-    lastUpdated() {
-      const latestSummary = this.store.report?.content?.summary?.[0];
-
-      if (!latestSummary) {
-        return null;
-      }
-
-      return `${formatDate(latestSummary.timestamp)}${
-        latestSummary.user
-          ? ` by
-      ${latestSummary.user}`
-          : null
-      }`;
-    },
-    cannotUpdateSummary() {
-      const savedSummary = this.store.report.content.summary[0].value;
-
-      return (
-        this.isSavingSummary ||
-        this.reportLocked ||
-        savedSummary === this.summary
-      );
-    },
   },
   methods: {
-    formatDate,
     setShowConfirmationModal() {
       this.showConfirmationModal = !this.showConfirmationModal;
-    },
-    setShowSummaryHistoryModal() {
-      this.showSummaryHistoryModal = !this.showSummaryHistoryModal;
     },
     async unlockReport() {
       try {
@@ -289,39 +187,6 @@ export default {
           type: "error",
         });
       } finally {
-      }
-    },
-    async retrieveHistory() {},
-    async submitSummary() {
-      try {
-        this.isSavingSummary = true;
-
-        await this.store.updateReport({
-          summary: [
-            {
-              timestamp: dayjs(),
-              value: this.summary,
-              user: this.store.currentUser,
-            },
-            ...this.store.report.content.summary,
-          ],
-        });
-
-        this.store.setNotification({
-          text: `Summary saved.`,
-          icon: "mdi-content-save-edit-outline",
-          type: "success",
-        });
-      } catch (error) {
-        console.error(error);
-
-        this.store.setNotification({
-          text: `Unable to save summary`,
-          icon: "mdi-lock-open-variant-outline",
-          type: "error",
-        });
-      } finally {
-        this.isSavingSummary = false;
       }
     },
     updateContent: debounce(function (key, value) {
@@ -361,18 +226,5 @@ export default {
 
 .report-auto-timestamp {
   color: #5f6368;
-}
-
-.summary-loader {
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.75);
-}
-
-.summary-field__actions {
-  bottom: 10px;
-}
-
-.summary-field .v-field {
-  padding-bottom: 60px;
 }
 </style>
