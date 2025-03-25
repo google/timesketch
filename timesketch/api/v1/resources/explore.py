@@ -187,7 +187,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if not timeline_ids and not indices:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "No valid timeline ids or search indices were found to perform the search on.",
+                "No valid timeline ids or search indices were found "
+                "to perform the search on.",
             )
 
         # Make sure we have a query string or star filter
