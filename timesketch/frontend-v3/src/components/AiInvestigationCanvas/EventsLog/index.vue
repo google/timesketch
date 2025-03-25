@@ -38,8 +38,13 @@ limitations under the License.
       v-if="targetObservableId"
       :targetObservableId="targetObservableId"
       :disableToolbar="true"
+      :disableDownload="true"
       :disableSettings="true"
+      :disableColumns="true"
+      :disableStarring="true"
+      :disableSaveSearch="true"
       :showAddToFindings="true"
+      :disableTags="true"
       :queryRequest="{
         queryString: '*',
         queryFilter: {

@@ -26,7 +26,7 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    {{  questions }}
+    {{ questions }}
 
     <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
       <p>
@@ -210,8 +210,8 @@ limitations under the License.
               </span>
 
               <v-dialog
-                v-model="saveSearchMenu"
                 v-if="!disableSaveSearch"
+                v-model="saveSearchMenu"
                 width="500"
               >
                 <template v-slot:activator="{ on, attrs }">
@@ -324,7 +324,7 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-btn icon @click="exportSearchResult()">
+              <v-btn icon @click="exportSearchResult()" v-if="!disableDownload">
                 <v-icon title="Download current view as CSV"
                   >mdi-download</v-icon
                 >
@@ -421,7 +421,12 @@ limitations under the License.
             </div>
             <div v-else>
               <small class="mr-2">Actions:</small>
-              <v-btn x-small outlined @click="toggleMultipleStars()">
+              <v-btn
+                v-if="!disableStarring"
+                x-small
+                outlined
+                @click="toggleMultipleStars()"
+              >
                 <v-icon left color="amber">mdi-star</v-icon>
                 Toggle star
               </v-btn>
@@ -469,11 +474,51 @@ limitations under the License.
           </v-card>
         </template>
 
+        <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <v-btn x-small variant="text" flat @click=addEventsToObservable(item.id)>
+          <v-btn v-if="!disableStarring" small icon @click="toggleStar(item)">
+            <v-icon
+              title="Toggle star status"
+              v-if="item._source.label.includes('__ts_star')"
+              color="amber"
+              >mdi-star</v-icon
+            >
+            <v-icon title="Toggle star status" v-else>mdi-star-outline</v-icon>
+          </v-btn>
+
+          <!-- Tag menu -->
+          <ts-event-tag-menu
+            v-if="!disableTags"
+            :event="item"
+          ></ts-event-tag-menu>
+
+          <!-- Action sub-menu -->
+          <ts-event-action-menu
+            v-if="!disableSettings"
+            :event="item"
+            @showContextWindow="showContextWindow($event)"
+          ></ts-event-action-menu>
+
+          <v-btn
+            x-small
+            variant="text"
+            flat
+            @click="addEventsToObservable(item.id)"
+          >
             <v-icon left>mdi-plus</v-icon>
           </v-btn>
         </template>
+
+        <!-- Datetime field with action buttons -->
+        <template v-slot:item._source.timestamp="{ item }">
+          <div
+            v-bind:style="getTimelineColor(item)"
+            class="datetime-table-cell"
+          >
+            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+          </div>
+        </template>
+
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
         <template
           v-for="(field, index) in headers"
@@ -685,6 +730,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    disableTags: {
+      type: Boolean,
+      default: false,
+    },
     itemsPerPage: {
       type: Number,
       default: 40,
@@ -693,7 +742,15 @@ export default {
       type: Boolean,
       default: false,
     },
+    disableStarring: {
+      type: Boolean,
+      default: false,
+    },
     disableHistogram: {
+      type: Boolean,
+      default: false,
+    },
+    disableDownload: {
       type: Boolean,
       default: false,
     },
@@ -843,8 +900,8 @@ export default {
     headers() {
       let baseHeaders = [
         {
-          value: 'actions',
-          width: '105',
+          value: "actions",
+          width: "105",
           sortable: false,
         },
         {
@@ -900,13 +957,9 @@ export default {
       const payload = id ? [id] : this.selectedEvents;
 
       try {
-        const response = await RestApiClient.updateStory(
-          "id",
-          payload
-        );
+        const response = await RestApiClient.updateStory("id", payload);
 
-
-        this.updateObservables(this.selectedEvents)
+        this.updateObservables(this.selectedEvents);
 
         this.closeEventLog();
 
@@ -917,7 +970,7 @@ export default {
         });
       } catch (error) {
         console.error(error);
-        
+
         this.store.setNotification({
           text: "Unable to add events to the observable.",
           icon: "mdi-alert-circle-outline",
