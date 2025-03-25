@@ -39,7 +39,8 @@ limitations under the License.
             <div class="summary__time">
               <span>{{ index + 1 }} / {{ summaries.length }}</span>
               &#8226;
-              <time>{{ formatDate(summary.timestamp) }}</time>
+              <time>{{ formatDate(summary.timestamp) }}</time
+              ><span v-if="summary.user"> by {{ summary.user }}</span>
             </div>
             <v-chip
               class="text-uppercase font-weight-bold"

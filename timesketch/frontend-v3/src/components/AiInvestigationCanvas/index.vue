@@ -26,7 +26,7 @@ limitations under the License.
         :reportLocked="store.reportLocked"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
-        <div v-if="selectedQuestion && selectedQuestion.id">
+        <template v-if="selectedQuestion && selectedQuestion.id">
           <ResultsViewLoader v-if="isLoading" />
           <ResultsView
             :question="selectedQuestion"
@@ -34,8 +34,8 @@ limitations under the License.
             :reportLocked="store.reportLocked"
             :isLoading="isLoading"
           />
-        </div>
-        <div v-else>
+        </template>
+        <template v-else>
           <ReportViewLoader v-if="isLoading" />
           <ReportView
             v-else
@@ -45,7 +45,7 @@ limitations under the License.
             :completedQuestionsTotal="completedQuestionsTotal"
             :summary="metadata ? metadata.summary : ''"
           />
-        </div>
+        </template>
       </v-col>
     </v-row>
     <v-dialog

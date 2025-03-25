@@ -38,19 +38,15 @@ limitations under the License.
             Edit</v-btn
           >
 
-          <v-btn
-            variant="text"
-            size="small"
-            color="primary"
-            @click="downloadReport()"
-          >
+          <v-btn variant="text" size="small" color="primary">
             <v-icon
               icon="mdi-download-circle-outline"
               class="mr-1"
               left
               small
+              @click="downloadReport()"
             />
-            Download</v-btn
+            Download (TODO)</v-btn
           >
           <v-btn
             v-if="!reportLocked"
@@ -100,78 +96,7 @@ limitations under the License.
           finalized
         </p>
       </div>
-      <div>
-        <div class="d-flex justify-space-between">
-          <label for="summary" class="text-h6 font-weight-bold mb-2 d-block"
-            >Summary</label
-          >
-          <!-- <v-btn
-              variant="text"
-              size="small"
-              color="primary"
-              @click="reqenerateSummary()"
-              :disabled="reportLocked"
-              class="text-uppercase"
-            >
-              <v-icon icon="mdi-reload" class="mr-2" left small />
-              Regenerate Summary (TODO)</v-btn
-            > -->
-          <v-btn
-            variant="text"
-            size="small"
-            color="primary"
-            @click="setShowSummaryHistoryModal()"
-            class="text-uppercase"
-          >
-            <v-icon icon="mdi-open-in-new" class="mr-2" left small />
-            View History</v-btn
-          >
-        </div>
-        <div class="position-relative">
-          <div
-            v-if="isSavingSummary"
-            class="summary-loader position-absolute top-0 left-0 d-flex align-center justify-center w-100 fill-height"
-          >
-            <v-progress-circular
-              indeterminate
-              size="60"
-              width="3"
-              color="primary"
-            ></v-progress-circular>
-          </div>
-          <v-textarea
-            v-model="summary"
-            id="summary"
-            name="summary"
-            variant="outlined"
-            :disabled="reportLocked"
-            rows="5"
-            noResize
-            hide-details
-            class="summary-field mb-2"
-          ></v-textarea>
-          <div
-            class="summary-field__actions position-absolute left-0 w-100 d-flex justify-space-between pr-5"
-          >
-            <v-btn
-              variant="text"
-              size="small"
-              color="primary"
-              @click="submitSummary()"
-              :disabled="isSavingSummary || reportLocked"
-              class="text-uppercase"
-            >
-              <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
-              Save</v-btn
-            >
-
-            <time class="font-italic text-body-2">
-              Last updated
-              {{ formatDate(store.report.content.summary[0].timestamp) }}
-            </time>
-          </div>
-        </div>
-      </div>
+      <SummarySection :reportLocked="reportLocked" />
     </form>
 
     <div class="px-6" v-if="questionsTotal">
@@ -197,26 +122,12 @@ limitations under the License.
       :questions="questions"
     />
   </v-dialog>
-  <v-dialog
-    transition="dialog-bottom-transition"
-    v-model="showSummaryHistoryModal"
-    width="865px"
-    max-height="420px"
-    opacity="0"
-  >
-    <SummaryHistoryModal
-      @close-modal="setShowSummaryHistoryModal"
-      :summaries="store.report.content.summary"
-    />
-  </v-dialog>
 </template>
 
 <script>
 import { useAppStore } from "@/stores/app";
-import dayjs from "dayjs";
 import { debounce } from "lodash";
-import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
-import { formatDate } from "@/utils/TimeDate";
+import SummarySection from "./SummarySection.vue";
 
 export default {
   props: {
@@ -232,9 +143,6 @@ export default {
     return {
       store,
       showConfirmationModal: false,
-      showSummaryHistoryModal: false,
-      isSavingSummary: false,
-      summary: store.report?.content?.summary?.[0].value,
     };
   },
   computed: {
@@ -258,16 +166,12 @@ export default {
     },
   },
   methods: {
-    formatDate,
     setShowConfirmationModal() {
       this.showConfirmationModal = !this.showConfirmationModal;
     },
-    setShowSummaryHistoryModal() {
-      this.showSummaryHistoryModal = !this.showSummaryHistoryModal;
-    },
     async unlockReport() {
       try {
-        await this.store.updateReport({ verified: false });
+        await this.store.updateReport({ approved: false });
 
         this.store.setNotification({
           text: `Report Unlocked`,
@@ -284,23 +188,6 @@ export default {
       } finally {
       }
     },
-    downloadReport() {},
-    async submitSummary() {
-      try {
-        this.isSavingSummary = true;
-
-        await this.store.updateReport({
-          summary: [
-            { timestamp: dayjs(), value: this.summary },
-            ...this.store.report.content.summary,
-          ],
-        });
-      } catch (error) {
-        console.error(error);
-      } finally {
-        this.isSavingSummary = false;
-      }
-    },
     updateContent: debounce(function (key, value) {
       this.store.updateReport({ [key]: value });
     }, 200),
@@ -313,7 +200,7 @@ export default {
 };
 </script>
 
-<style >
+<style>
 .questions-list {
   list-style: none;
 }
@@ -338,18 +225,5 @@ export default {
 
 .report-auto-timestamp {
   color: #5f6368;
-}
-
-.summary-loader {
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.75);
-}
-
-.summary-field__actions {
-  bottom: 10px
-}
-
-.summary-field .v-field {
-  padding-bottom: 60px;
 }
 </style>

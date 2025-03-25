@@ -68,7 +68,7 @@ limitations under the License.
         class="mb-2"
         rows="3"
       ></v-textarea>
-      <div>
+      <!-- <div>
         <v-btn
           :disabled="reportLocked"
           variant="text"
@@ -91,7 +91,7 @@ limitations under the License.
           <v-icon icon="mdi-invoice-list-outline" class="mr-2" left small />
           View History (TODO)</v-btn
         >
-      </div>
+      </div> -->
     </div>
     <div class="px-6">
       <div class="d-flex justify-space-between">
