@@ -16,18 +16,25 @@ limitations under the License.
 <template>
   <v-toolbar>
     <v-toolbar-title class="font-weight-bold">Add More Facts</v-toolbar-title>
-    <v-text-field
-      hide-details="auto"
-      id="name"
-      name="name"
-      v-model="name"
-      variant="outlined"
-      density="compact"
-      placeholder="Enter a query"
-      :disabled="reportLocked"
-      class="bg-white"
-      @=""
-    ></v-text-field>
+    <form
+      @submit.prevent="handleSubmission"
+      class="search-form w-50 position-relative"
+    >
+      <v-text-field
+        hide-details="auto"
+        id="name"
+        name="name"
+        variant="outlined"
+        density="compact"
+        placeholder="Enter a query"
+        :disabled="reportLocked"
+        class="bg-white"
+        v-model="queryString"
+      ></v-text-field>
+      <v-btn type="submit" class="search-button position-absolute">
+        <v-icon icon="mdi-magnify"
+      /></v-btn>
+    </form>
     <div class="v-spacer"></div>
     <v-btn text @click="closeEventLog()">
       <v-icon icon="mdi-close" small />
@@ -45,17 +52,7 @@ limitations under the License.
       :disableSaveSearch="true"
       :showAddToFindings="true"
       :disableTags="true"
-      :queryRequest="{
-        queryString: '*',
-        queryFilter: {
-          from: 0,
-          terminate_after: 10,
-          size: 10,
-          indices: ['_all'],
-          order: 'asc',
-          chips: [],
-        },
-      }"
+      :queryRequest="queryRequest"
     />
   </div>
 </template>
@@ -72,23 +69,36 @@ export default {
   data() {
     return {
       store: useAppStore(),
+      query: "",
+      queryRequest: {
+        queryString: "*",
+        queryFilter: {
+          from: 0,
+          terminate_after: 10,
+          size: 10,
+          indices: ["_all"],
+          order: "asc",
+          chips: [],
+        },
+      },
     };
   },
   methods: {
-    search: function (
-      resetPagination = true,
-      incognito = false,
-      parent = false
-    ) {
-      let queryRequest = {};
-      queryRequest["queryString"] = this.currentQueryString;
-      queryRequest["queryFilter"] = this.currentQueryFilter;
-      queryRequest["resetPagination"] = resetPagination;
-      queryRequest["incognito"] = incognito;
-      queryRequest["parent"] = parent;
-      this.activeQueryRequest = queryRequest;
-      this.showSearchDropdown = false;
+    handleSubmission() {
+      debugger;
+      this.queryRequest = {
+        ...this.queryRequest,
+        queryString: this.queryString,
+      };
     },
   },
 };
 </script>
+
+<style scoped>
+.search-button {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+</style>
