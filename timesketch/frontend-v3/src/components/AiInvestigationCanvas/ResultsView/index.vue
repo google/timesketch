@@ -76,7 +76,6 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
 import ConclusionSummary from "./ConclusionSummary.vue";
 
 export default {
