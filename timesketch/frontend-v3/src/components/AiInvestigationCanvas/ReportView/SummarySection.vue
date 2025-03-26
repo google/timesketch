@@ -25,6 +25,7 @@ limitations under the License.
         color="primary"
         @click="setShowSummaryHistoryModal()"
         class="text-uppercase"
+        :disabled="!summaries || summaries.length < 1"
       >
         <v-icon icon="mdi-open-in-new" class="mr-2" left small />
         View History</v-btn
@@ -83,7 +84,7 @@ limitations under the License.
   >
     <SummaryHistoryModal
       @close-modal="setShowSummaryHistoryModal"
-      :summaries="store.report.content.summary"
+      :summaries="summaries"
     />
   </v-dialog>
 </template>
@@ -91,7 +92,6 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 import dayjs from "dayjs";
-import { debounce } from "lodash";
 import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
 import { formatDate } from "@/utils/TimeDate";
 
@@ -110,22 +110,26 @@ export default {
     };
   },
   computed: {
+    summaries() {
+      return this.store.report?.content?.summary
+    },
+    lastestSummary() {
+      return this.store.report?.content?.summary?.[0];
+    },
     lastUpdated() {
-      const latestSummary = this.store.report?.content?.summary?.[0];
-
-      if (!latestSummary) {
+      if (!this.latestSummary) {
         return null;
       }
 
-      return `${formatDate(latestSummary.timestamp)}${
-        latestSummary.user
+      return `${formatDate(this.latestSummary.timestamp)}${
+        this.latestSummary.user
           ? ` by
-      ${latestSummary.user}`
+      ${this.latestSummary.user}`
           : null
       }`;
     },
     cannotUpdateSummary() {
-      const savedSummary = this.store.report.content.summary[0].value;
+      const savedSummary = this.lastestSummary?.value;
 
       return (
         this.isSavingSummary ||
@@ -150,7 +154,7 @@ export default {
               value: this.summary,
               user: this.store.currentUser,
             },
-            ...this.store.report.content.summary,
+            ...(this.store.report.content.summary ?? []),
           ],
         });
 
