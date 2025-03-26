@@ -164,7 +164,7 @@ export default {
       },
     },
     finalizedTime() {
-      return this.store.report.content.completedDateTime
+      return this.store.report?.content?.completedDateTime
         ? dayjs(this.store.report.content.completedDateTime).utc()
         : "It will be automatically recorded upon completion.";
     },

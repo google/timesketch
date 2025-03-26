@@ -22,7 +22,7 @@ limitations under the License.
         variant="outlined"
         class="px-2 py-2 rounded-l"
         color="#5F6368"
-        v-if="!question.user"
+        v-if="!question?.user"
       >
         Pre-Detected by AI
       </v-chip>
@@ -101,7 +101,7 @@ export default {
       showModal: false,
       showEventList: false,
       isConfirming: false,
-      panels: this.question.conclusions
+      panels: this.question?.conclusions && this.question.conclusions.length > 0
         ? [this.question.conclusions[0].id]
         : ["fallback"],
     };

@@ -44,30 +44,7 @@ limitations under the License.
     </header>
 
     <div class="px-6 mb-8">
-      <div class="d-flex justify-space-between">
-        <label for="conclusion" class="text-h6 font-weight-bold d-block mb-2"
-          >Conclusion(s) Summary</label
-        >
-        <v-chip
-          v-if="!question.user"
-          size="x-small"
-          variant="outlined"
-          class="px-2 py-2 rounded-l"
-          color="#5F6368"
-        >
-          Pre-Suggested by AI
-        </v-chip>
-      </div>
-      <v-textarea
-        :disabled="reportLocked"
-        v-model="question.conclusionSummary"
-        hide-details="auto"
-        id="conclusion"
-        name="conclusion"
-        variant="outlined"
-        class="mb-2"
-        rows="3"
-      ></v-textarea>
+      <ConclusionSummary :question="question" />
       <!-- <div>
         <v-btn
           :disabled="reportLocked"
@@ -100,6 +77,7 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
+import ConclusionSummary from "./ConclusionSummary.vue";
 
 export default {
   props: {
@@ -112,7 +90,7 @@ export default {
     return {
       store: useAppStore(),
       riskLevel: this.question.riskLevel,
-      panels: this.question.conclusions
+      panels: this.question.conclusions && this.question.conclusions.length
         ? [this.question.conclusions[0].id]
         : ["fallback"],
     };

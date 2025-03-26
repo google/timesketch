@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <div class="d-flex justify-space-between">
       <label for="summary" class="text-h6 font-weight-bold mb-2 d-block"
-        >Summary</label
+        >Conclusion Summary</label
       >
       <v-btn
         variant="text"
@@ -30,6 +30,7 @@ limitations under the License.
         View History</v-btn
       >
     </div>
+
     <div class="position-relative">
       <div
         v-if="isSavingSummary"
@@ -83,7 +84,7 @@ limitations under the License.
   >
     <SummaryHistoryModal
       @close-modal="setShowSummaryHistoryModal"
-      :summaries="store.report.content.summary"
+      :summaries="summaries"
     />
   </v-dialog>
 </template>
@@ -91,13 +92,13 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 import dayjs from "dayjs";
-import { debounce } from "lodash";
 import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
 import { formatDate } from "@/utils/TimeDate";
 
 export default {
   props: {
     reportLocked: Boolean,
+    question: Object,
   },
   data() {
     const store = useAppStore();
@@ -106,12 +107,47 @@ export default {
       store,
       showSummaryHistoryModal: false,
       isSavingSummary: false,
-      summary: store.report?.content?.summary?.[0].value,
+      summary: "",
     };
   },
+  created() {
+    debugger
+    if (
+      !this.store.report?.content?.conclusionSummaries ||
+      this.store.report.content.conclusionSummaries.length < 1
+    ) {
+      this.summary = this.question.conclusionSummary;
+    } else {
+      const summaries = this.store.report.content.conclusionSummaries.filter(
+        ({ questionId }) => questionId === this.question.id
+      );
+
+      if (!summaries || summaries.length < 1) {
+
+        console.log(this.question.conclusionSummary)
+        this.summary = this.question.conclusionSummary;
+      } else {
+
+        console.log(summaries)
+        this.summary = summaries?.[0]?.value;
+      }
+    }
+  },
   computed: {
+    summaries() {
+      if (
+        !this.store.report?.content?.conclusionSummaries ||
+        this.store.report.content.conclusionSummaries.length < 1
+      ) {
+        return [];
+      }
+
+      return this.store.report.content.conclusionSummaries.filter(
+        ({ questionId }) => questionId === this.question.id
+      );
+    },
     lastUpdated() {
-      const latestSummary = this.store.report?.content?.summary?.[0];
+      const latestSummary = this.summaries[0];
 
       if (!latestSummary) {
         return null;
@@ -143,19 +179,24 @@ export default {
       try {
         this.isSavingSummary = true;
 
+        if (!this.question.id) {
+          throw new Error("No question ID to work with");
+        }
+
         await this.store.updateReport({
-          summary: [
+          conclusionSummaries: [
             {
+              questionId: this.question.id,
               timestamp: dayjs(),
               value: this.summary,
               user: this.store.currentUser,
             },
-            ...this.store.report.content.summary,
+            ...(this.store.report.content.conclusionSummaries || []),
           ],
         });
 
         this.store.setNotification({
-          text: `Summary saved.`,
+          text: `Conclusion Summary saved.`,
           icon: "mdi-content-save-edit-outline",
           type: "success",
         });
@@ -163,7 +204,7 @@ export default {
         console.error(error);
 
         this.store.setNotification({
-          text: `Unable to save summary`,
+          text: `Unable to save Conclusion Summary`,
           icon: "mdi-lock-open-variant-outline",
           type: "error",
         });
@@ -176,16 +217,16 @@ export default {
 </script>
 
 <style>
-.summary-loader {
+.conclusion-summary-loader {
   z-index: 1;
   background: rgba(255, 255, 255, 0.75);
 }
 
-.summary-field__actions {
+.conclusion-summary-field__actions {
   bottom: 10px;
 }
 
-.summary-field .v-field {
+.conclusion-summary-field .v-field {
   padding-bottom: 60px;
 }
 </style>

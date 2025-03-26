@@ -177,23 +177,13 @@ export default {
   methods: {
     async fetchQuestionTemplates() {
       try {
-        const [dfiqTemplatesRes, aiTemplatesRes] = await Promise.allSettled([
-          RestApiClient.getQuestionTemplates(),
-          RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer"), // TODO : add AI suggestions
-        ]);
+        const dfiqTemplatesRes = await RestApiClient.getQuestionTemplates();
 
         if (
-          aiTemplatesRes.value.data.questions &&
-          aiTemplatesRes.value.data.questions.length > 0
+          dfiqTemplatesRes.data?.objects &&
+          dfiqTemplatesRes.data?.objects.length > 0
         ) {
-          this.aiTemplates = aiTemplatesRes.value.data.questions;
-        }
-
-        if (
-          dfiqTemplatesRes.value.data.objects &&
-          dfiqTemplatesRes.value.data.objects.length > 0
-        ) {
-          this.dfiqTemplates = dfiqTemplatesRes.value.data.objects;
+          this.dfiqTemplates = dfiqTemplatesRes.data.objects;
         }
       } catch (error) {
         console.error(error);

@@ -33,7 +33,7 @@ limitations under the License.
 
       <div class="modal__content mb-5 px-16 py-6">
         <div class="summary" v-for="(summary, index) in summaries">
-          <p class="mb-4">{{ summary.value }}</p>
+          <p class="summary__text mb-4">{{ summary.value }}</p>
 
           <div class="d-flex align-center ga-2">
             <div class="summary__time">
@@ -104,5 +104,9 @@ export default {
 .summary__time {
   font-size: 14px;
   color: #5f6368;
+}
+
+.summary__text {
+  white-space: pre-line;
 }
 </style>
