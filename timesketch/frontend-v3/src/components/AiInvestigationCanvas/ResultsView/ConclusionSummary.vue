@@ -25,6 +25,7 @@ limitations under the License.
         color="primary"
         @click="setShowSummaryHistoryModal()"
         class="text-uppercase"
+        :disabled="!summaries || summaries.length < 1"
       >
         <v-icon icon="mdi-open-in-new" class="mr-2" left small />
         View History</v-btn
