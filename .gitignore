@@ -53,3 +53,6 @@ vagrant/*.log
 
 # Exclude JetBrains IDE files
 .idea/
+
+# Exclude Docker Compose .env file
+.env
