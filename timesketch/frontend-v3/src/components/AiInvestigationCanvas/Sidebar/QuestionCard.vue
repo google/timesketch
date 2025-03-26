@@ -18,7 +18,6 @@ limitations under the License.
     :class="listItemClasses"
     :active="isActive"
     @click="setActiveQuestion()"
-    :disabled="isDisabled"
   >
     <div class="d-flex ga-6 align-center justify-md-space-between">
       <div class="d-flex ga-6 align-center">
@@ -33,14 +32,15 @@ limitations under the License.
         <p class="font-weight-medium">{{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
-        <!-- <v-chip
+        <v-chip
           v-show="risk_level"
+          v-if="riskLevel"
           size="x-small"
           :color="riskColor"
           class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
         >
           {{ risk_level }}
-        </v-chip> -->
+        </v-chip>
         <v-icon
           icon="mdi-check-circle"
           v-if="completed"
@@ -60,13 +60,12 @@ export default {
   props: {
     name: String,
     type: String,
-    conclusions: String,
-    conclusionSummary: String,
+    conclusion: String,
+    observables: Array,
     updated_at: String,
     risk_level: String,
     id: Number,
     user: Object,
-    reportLocked: Boolean
   },
   data() {
     return {
@@ -78,9 +77,9 @@ export default {
       this.store.setActiveQuestion({
         user: this.user,
         name: this.name,
-        riskLevel: this.risk_level,
-        conclusions: this.conclusions,
-        conclusionSummary: this.conclusionSummary,
+        riskLevel: this.riskLevel,
+        observables: this.observables,
+        conclusion: this.conclusion,
         type: this.type,
         id: this.id,
         updated_at: this.updated_at,
@@ -89,40 +88,29 @@ export default {
     },
   },
   computed: {
-    sortedQuestions() {
-      return this.questions && this.questions.length > 0
-        ? [
-            ...this.questions.sort(
-              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-            ),
-          ]
-        : [];
-    },
     isActive() {
       return this.store.activeContext.question?.id
         ? this.id === this.store.activeContext.question?.id
         : false;
     },
-    isDisabled() {
-      return !this.completed && this.reportLocked
-    },
-    completed() {
-      let isApproved = false;
 
+    isApproved() {
       if (
         this.store.report?.content?.approvedQuestions &&
         this.store.report?.content?.approvedQuestions.length > 0
       ) {
-        isApproved = !!this.store.report.content.approvedQuestions.find(
+        return !!this.store.report.content.approvedQuestions.find(
           (approvedId) => approvedId === this.id
         );
+      } else {
+        return false;
       }
+    },
 
-      return isApproved;
-    },
     riskColor() {
-      return riskColors[this.risk_level];
+      return riskColors[riskLevel];
     },
+
     listItemClasses() {
       return {
         "is--active": this.isActive,

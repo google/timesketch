@@ -149,8 +149,8 @@ export default {
         }
 
         const existingQuestionsList =
-          existingQuestions.value.data.objects &&
-          existingQuestions.value.data.objects.length > 0
+          existingQuestions.value.data?.objects &&
+          existingQuestions.value.data?.objects.length > 0
             ? existingQuestions.value.data.objects[0]
             : [];
 
@@ -262,7 +262,7 @@ export default {
       updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
       confirmRemoveQuestion: this.confirmRemoveQuestion,
-      regenerateQuestions: this.fetchData,
+      regenerateQuestions: this.fetchData, // TODO: Revisit this once the API is in place for this async op
     };
   },
   setup() {

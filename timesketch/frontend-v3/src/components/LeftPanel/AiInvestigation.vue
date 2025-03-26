@@ -14,15 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div
-    v-if="iconOnly"
-    class="pa-4"
-    style="cursor: pointer"
-    @click="$emit('toggleDrawer')"
-  >
-    <router-link
-      :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
-    >
+  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
+    <router-link :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }">
       <v-icon icon="mdi-creation" left />
       <div style="height: 1px"></div>
     </router-link>
@@ -45,9 +38,7 @@ limitations under the License.
       "
       style="cursor: pointer"
     >
-      <div @click="navigate" @keypress.enter="navigate" role="link">
-        <v-icon icon="mdi-creation" left />AI Investigation
-      </div>
+      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon icon="mdi-creation" left />AI Investigation</div>
     </router-link>
     <v-divider></v-divider>
   </div>
@@ -73,7 +64,7 @@ export default {
       return this.appStore.sketch;
     },
     isActive() {
-      return this.route.name === "AiInvestigation";
+      return this.route.name === 'AiInvestigation'
     },
     sketchId() {
       return this.appStore.sketch.id;
