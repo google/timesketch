@@ -16,11 +16,11 @@ limitations under the License.
 <template>
   <li class="question mb-10">
     <div class="d-inline-flex align-center justify-start">
-      <RiskLevelControl
+      <!-- <RiskLevelControl
         :riskLevel="riskLevel"
         :disabled="reportLocked"
         @update:riskLevel="($event) => (riskLevel = $event)"
-      />
+      /> -->
       <v-icon
         icon="mdi-check-circle"
         v-if="completed"

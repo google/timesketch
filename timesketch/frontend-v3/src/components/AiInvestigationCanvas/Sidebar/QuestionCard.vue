@@ -33,14 +33,14 @@ limitations under the License.
         <p class="font-weight-medium">{{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
-        <v-chip
+        <!-- <v-chip
           v-show="risk_level"
           size="x-small"
           :color="riskColor"
           class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
         >
           {{ risk_level }}
-        </v-chip>
+        </v-chip> -->
         <v-icon
           icon="mdi-check-circle"
           v-if="completed"

@@ -44,7 +44,7 @@ limitations under the License.
       v-bind="question"
     />
   </v-list>
-  <div class="p-2 text-center">
+  <!-- <div class="p-2 text-center">
     <p class="mb-2">
       Before regenerating, review existing questions. Previous unsaved questions
       will remain, and new ones will be added.
@@ -61,7 +61,7 @@ limitations under the License.
       <v-icon icon="mdi-reload" class="mr-2" left small />
       Regenerate Questions</v-btn
     >
-  </div>
+  </div> -->
   <v-dialog
     transition="dialog-bottom-transition"
     v-model="showModal"

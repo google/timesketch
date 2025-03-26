@@ -25,11 +25,11 @@ limitations under the License.
         variant="b"
       />
       <div class="d-inline-flex ga-2 align-center mb-4">
-        <RiskLevelControl
+        <!-- <RiskLevelControl
           :riskLevel="riskLevel"
           :disabled="reportLocked"
           @update:riskLevel="($event) => (riskLevel = $event)"
-        />
+        /> -->
         <v-icon
           icon="mdi-check-circle"
           v-if="completed"
@@ -46,7 +46,7 @@ limitations under the License.
     <div class="px-6 mb-8">
       <div class="d-flex justify-space-between">
         <label for="conclusion" class="text-h6 font-weight-bold d-block mb-2"
-          >Conclusion</label
+          >Conclusion(s) Summary</label
         >
         <v-chip
           v-if="!question.user"
