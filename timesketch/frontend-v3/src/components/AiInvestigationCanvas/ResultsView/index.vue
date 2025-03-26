@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <ResultsViewLoader v-if="isLoading" />
   <section v-else>
-    <header class="report-header px-6 pa-4">
+    <header class="report-header px-6 pa-4 mb-6">
       <h2 class="text-h5 font-weight-bold mb-6">Results</h2>
       <QuestionActionsStrip
         v-if="!reportLocked"

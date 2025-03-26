@@ -50,11 +50,12 @@ limitations under the License.
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
+import { ReportStatus, useAppStore } from "@/stores/app";
+import dayjs from "dayjs";
 
 export default {
   props: {
-    questions: Array
+    questions: Array,
   },
   data() {
     return {
@@ -67,7 +68,10 @@ export default {
       this.isSubmitting = true;
 
       try {
-        await this.store.updateReport({ verified: true });
+        await this.store.updateReport({
+          status: ReportStatus.VERIFIED,
+          completedDateTime: dayjs(),
+        });
 
         this.$emit("close-modal");
 

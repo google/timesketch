@@ -17,6 +17,12 @@ limitations under the License.
 import ApiClient from "../utils/RestApiClient.js";
 import { defineStore } from "pinia";
 
+
+export const ReportStatus = Object.freeze({
+  VERIFIED: 'VERIFIED',
+  UNVERIFIED: 'UNVERIFIED'
+})
+
 export const useAppStore = defineStore("app", {
   state: () => ({
     sketch: {},
@@ -243,7 +249,7 @@ export const useAppStore = defineStore("app", {
       return this.report?.content?.summary;
     },
     reportLocked() {
-      return this.report?.content?.verified;
+      return this.report?.content?.status === ReportStatus.VERIFIED;
     },
     approvedReportQuestions() {
       return this.report?.content?.approvedQuestions &&

@@ -85,9 +85,7 @@ limitations under the License.
       </div>
       <div class="report-form-group ga-6 mb-6 w-75">
         <p class="font-weight-bold">Finalized Date & Time</p>
-        <p class="font-italic report-auto-timestamp">
-          It will be automatically recorded upon completion.
-        </p>
+        <p class="font-italic report-auto-timestamp">{{ finalizedTime }}</p>
       </div>
       <div class="report-form-group ga-6 mb-12 w-75" v-if="questionsTotal">
         <p class="font-weight-bold">Progress</p>
@@ -125,9 +123,10 @@ limitations under the License.
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
+import { ReportStatus, useAppStore } from "@/stores/app";
 import { debounce } from "lodash";
 import SummarySection from "./SummarySection.vue";
+import dayjs from "dayjs";
 
 export default {
   props: {
@@ -164,6 +163,11 @@ export default {
         this.updateContent("name", value);
       },
     },
+    finalizedTime() {
+      return this.store.report.content.completedDateTime
+        ? dayjs(this.store.report.content.completedDateTime).utc()
+        : "It will be automatically recorded upon completion.";
+    },
   },
   methods: {
     setShowConfirmationModal() {
@@ -171,7 +175,10 @@ export default {
     },
     async unlockReport() {
       try {
-        await this.store.updateReport({ verified: false });
+        await this.store.updateReport({
+          status: ReportStatus.UNVERIFIED,
+          completedDateTime: null,
+        });
 
         this.store.setNotification({
           text: `Report Unlocked`,
