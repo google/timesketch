@@ -1,0 +1,155 @@
+name: timesketch-dev
+
+networks:
+  timesketch-dev:
+
+volumes:
+  opensearch-data:
+  postgresql-data:
+  redis-data:
+  prometheus-data:
+  notebook-data:
+
+services:
+  timesketch:
+    image: timesketch-timesketch/dev:latest
+    build:
+      context: ../../..
+      dockerfile: contrib/docker/dev/timesketch/Dockerfile
+      args:
+        BASE_IMAGE: "${TIMESKETCH_BASE_IMAGE:?}"
+        GIFT_PPA_TRACK: "${GIFT_PPA_TRACK:?}"
+        GIFT_PPA_URL: "${GIFT_PPA_URL:?}"
+        NODE_VERSION: "${NODE_VERSION:?}"
+        NODE_PPA_URL: "${NODE_PPA_URL:?}"
+        NODE_NPMRC: "${NODE_NPMRC?}"
+        YARN_YARNRC: "${YARN_YARNRC?}"
+        PYTHON_PIP_CONF: "${PYTHON_PIP_CONF?}"
+    command: timesketch
+    ports:
+      - name: gunicorn
+        published: "5000"
+        target: 5000
+      - name: vite
+        published: "5001"
+        target: 5001
+      - name: metrics
+        published: "8080"
+        target: 8080
+    env_file:
+      - timesketch/timesketch.env
+    volumes:
+      - "../../../:/usr/local/src/timesketch/"
+      - "./timesketch/timesketch.conf:${TIMESKETCH_CONF_DIR:?}/timesketch.conf:ro"
+      - "./timesketch/sigma_rules.txt:${TIMESKETCH_CONF_DIR:?}/sigma_rules.txt:ro"
+      - "../../../data/regex_features.yaml:${TIMESKETCH_CONF_DIR:?}/regex_features.yaml:ro"
+      - "../../../data/winevt_features.yaml:${TIMESKETCH_CONF_DIR:?}/winevt_features.yaml:ro"
+      - "../../../data/tags.yaml:${TIMESKETCH_CONF_DIR:?}/tags.yaml:ro"
+      - "../../../data/intelligence_tag_metadata.yaml:${TIMESKETCH_CONF_DIR:?}/intelligence_tag_metadata.yaml:ro"
+      - "../../../data/plaso.mappings:${TIMESKETCH_CONF_DIR:?}/plaso.mappings:ro"
+      - "../../../data/generic.mappings:${TIMESKETCH_CONF_DIR:?}/generic.mappings:ro"
+      - "../../../data/ontology.yaml:${TIMESKETCH_CONF_DIR:?}/ontology.yaml:ro"
+      - "../../../data/data_finder.yaml:${TIMESKETCH_CONF_DIR:?}/data_finder.yaml:ro"
+      - "../../../data/bigquery_matcher.yaml:${TIMESKETCH_CONF_DIR:?}/bigquery_matcher.yaml:ro"
+      - "../../../data/sigma_config.yaml:${TIMESKETCH_CONF_DIR:?}/sigma_config.yaml:ro"
+      - "../../../data/sigma:${TIMESKETCH_CONF_DIR:?}/sigma:ro"
+      - "../../../data/dfiq:${TIMESKETCH_CONF_DIR:?}/dfiq:ro"
+      - "../../../data/context_links.yaml:${TIMESKETCH_CONF_DIR:?}/context_links.yaml:ro"
+      - "../../../data/plaso_formatters.yaml:${TIMESKETCH_CONF_DIR:?}/plaso_formatters.yaml:ro"
+      - "../../../data/nl2q:${TIMESKETCH_CONF_DIR:?}/nl2q:ro"
+      - "../../../data/llm_summarize:${TIMESKETCH_CONF_DIR:?}/llm_summarize:ro"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - timesketch-dev
+
+  opensearch:
+    image: timesketch-opensearch:latest
+    build:
+      context: opensearch
+    env_file:
+      - opensearch/opensearch.env
+    ports:
+      - name: api
+        published: "9200"
+        target: 9200
+    volumes:
+      - "opensearch-data:/usr/share/opensearch/data"
+    networks:
+      - timesketch-dev
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  postgresql:
+    image: timesketch-postgresql:latest
+    build:
+      context: postgresql
+    env_file:
+      - postgresql/postgresql.env
+    ports:
+      - name: database
+        published: "5432"
+        target: 5432
+    volumes:
+      - "postgresql-data:/var/lib/postgresql/data"
+    networks:
+      - timesketch-dev
+
+  redis:
+    image: timesketch-redis
+    build:
+      context: redis
+    ports:
+      - name: database
+        published: "6379"
+        target: 6379
+    volumes:
+      - "redis-data:/data"
+    networks:
+      - timesketch-dev
+
+  prometheus:
+    image: prom/prometheus:v2.24.1
+    volumes:
+      - "./prometheus:/etc/prometheus:ro"
+      - "prometheus-data:/prometheus"
+    ports:
+      - name: database
+        published: "9090"
+        target: 9090
+
+    command: --config.file=/etc/prometheus/prometheus.yml
+    depends_on:
+      - timesketch
+    networks:
+      - timesketch-dev
+
+  notebook:
+    image: timesketch-notebook:latest
+    build:
+      context: ../../..
+      dockerfile: contrib/docker/dev/notebook/Dockerfile
+      args:
+        PYTHON_PIP_CONF: "${PYTHON_PIP_CONF?}"
+    ports:
+      - name: web
+        published: "8844"
+        target: 8844
+    volumes:
+      - "../../../:/usr/local/src/timesketch/:ro"
+      - "notebook-data:/usr/local/src/picadata"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    networks:
+      - timesketch-dev
