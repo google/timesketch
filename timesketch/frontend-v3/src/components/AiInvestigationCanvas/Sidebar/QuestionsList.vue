@@ -72,9 +72,6 @@ limitations under the License.
 </template>
 
 <script>
-import AddQuestionModal from "../Modals/AddQuestionModal.vue";
-import QuestionCard from "./QuestionCard.vue";
-
 export default {
   props: {
     questions: Array,

@@ -106,12 +106,12 @@ export default {
       let questionsArray = [];
 
       try {
-        const [aiQuestions, existingQuestions, storyList] =
-          await Promise.allSettled([
-            RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer"),
-            RestApiClient.getOrphanQuestions(this.store.sketch.id),
-            RestApiClient.getStoryList(this.store.sketch.id),
-          ]);
+        await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
+
+        const [existingQuestions, storyList] = await Promise.allSettled([
+          RestApiClient.getOrphanQuestions(this.store.sketch.id),
+          RestApiClient.getStoryList(this.store.sketch.id),
+        ]);
 
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
@@ -157,28 +157,14 @@ export default {
         questionsArray = [
           ...existingQuestionsList.map(({ conclusions, ...question }) => ({
             ...question,
-            conclusion:
+            conclusions,
+            conclusionSummary:
               conclusions?.length > 0
                 ? conclusions.map(({ conclusion }) => conclusion).join()
                 : "",
           })),
         ];
 
-        if (
-          aiQuestions.status === "fulfilled" &&
-          aiQuestions?.value?.data?.questions
-        ) {
-          // metadata.value = aiQuestions.value.data.meta;
-          questionsArray = [
-            ...questionsArray,
-            ...aiQuestions.value.data.questions.map(
-              ({ text, ...question }) => ({
-                name: text,
-                ...question,
-              })
-            ),
-          ];
-        }
         this.questions = questionsArray;
       } catch (err) {
         console.error(err);

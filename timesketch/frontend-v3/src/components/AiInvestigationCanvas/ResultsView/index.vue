@@ -60,7 +60,7 @@ limitations under the License.
       </div>
       <v-textarea
         :disabled="reportLocked"
-        v-model="conclusion"
+        v-model="question.conclusionSummary"
         hide-details="auto"
         id="conclusion"
         name="conclusion"
@@ -78,13 +78,13 @@ limitations under the License.
           @click="regenerateConclusion()"
         >
           <v-icon icon="mdi-reload" left small class="mr-1" />
-          Regenerate Conclusion (TODO)</v-btn
+          Regenerate Conclusion Summary</v-btn
         >
         <v-btn
           variant="text"
           size="small"
           color="primary"
-          @click="showRevisionHistory()"
+          @click="regenerateConclusionSummary()"
           :disabled="reportLocked"
           class="text-uppercase ml-5"
         >
@@ -93,86 +93,13 @@ limitations under the License.
         >
       </div> -->
     </div>
-    <div class="px-6">
-      <div class="d-flex justify-space-between">
-        <h3 class="text-h6 font-weight-bold mb-3">Key Observables</h3>
-        <v-chip
-          size="x-small"
-          variant="outlined"
-          class="px-2 py-2 rounded-l"
-          color="#5F6368"
-          v-if="!question.user"
-        >
-          Pre-Detected by AI
-        </v-chip>
-      </div>
-
-      <v-expansion-panels class="mb-6" v-model="panels">
-        <v-expansion-panel
-          color="#F8F9FA"
-          v-if="question.observables"
-          v-for="observable in question.observables"
-          :value="observable.record_id"
-        >
-          <v-expansion-panel-title color="#F8F9FA">
-            <div>
-              <h5 class="h4 font-weight-bold mb-2">
-                {{ observable.observable_type }}
-              </h5>
-              <p>
-                {{ observable.conclusion }}
-              </p>
-            </div>
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <ObservableEvents
-              :events="observable.entities"
-              :details="observable.log_details"
-              :recordId="observable.record_id"
-            />
-            <v-btn
-              size="small"
-              variant="text"
-              depressed
-              @click="openEventLog(observable.record_id)"
-              color="primary"
-            >
-              <v-icon left small icon="mdi-plus" />
-              Add more facts
-            </v-btn>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-        <v-expansion-panel color="#F8F9FA" value="fallback" v-else>
-          <v-expansion-panel-title color="#F8F9FA">
-            <div>
-              <h5 class="h4 font-weight-bold mb-2">Dave's observable</h5>
-              <p>
-                {{ conclusion }}
-              </p>
-            </div>
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <v-btn
-              size="small"
-              variant="text"
-              depressed
-              @click="openEventLog('test')"
-              color="primary"
-            >
-              <v-icon left small icon="mdi-plus" />
-              Add more facts
-            </v-btn>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </div>
+    <ConclusionsAccordion :question="question" />
   </section>
 </template>
 
 <script>
 import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
-import { debounce } from "lodash";
 
 export default {
   props: {
@@ -184,13 +111,9 @@ export default {
   data() {
     return {
       store: useAppStore(),
-      showModal: false,
-      showEventList: false,
-      isConfirming: false,
       riskLevel: this.question.riskLevel,
-      conclusion: this.question.conclusion,
-      panels: this.question.observables
-        ? [this.question.observables[0].record_id]
+      panels: this.question.conclusions
+        ? [this.question.conclusions[0].id]
         : ["fallback"],
     };
   },
@@ -211,31 +134,11 @@ export default {
     },
   },
   methods: {
-    async regenerateConclusion() {
+    async regenerateConclusionSummary() {
       // TODO : Implement when API work is completed
-    },
-    async toggleEventList() {
-      this.showEventList = !this.showEventList;
     },
   },
   watch: {
-    conclusion: debounce(async function (conclusion) {
-      const response = await RestApiClient.createQuestionConclusion(
-        this.store.sketch.id,
-        this.question.id,
-        conclusion
-      );
-
-      this.updateQuestion({
-        ...response.data.objects[0],
-        conclusion:
-          response.data.objects[0].conclusions?.length > 0
-            ? response.data.objects[0].conclusions
-                .map(({ conclusion }) => conclusion)
-                .join()
-            : "",
-      });
-    }, 200),
     riskLevel(riskLevel) {
       this.updateQuestion({ ...this.question, risk_level: riskLevel });
     },
