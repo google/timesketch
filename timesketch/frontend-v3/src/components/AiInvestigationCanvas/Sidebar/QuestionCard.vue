@@ -34,6 +34,7 @@ limitations under the License.
       <div class="d-flex ga-2 align-center">
         <v-chip
           v-show="risk_level"
+          v-if="riskLevel"
           size="x-small"
           :color="riskColor"
           class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
@@ -76,7 +77,7 @@ export default {
       this.store.setActiveQuestion({
         user: this.user,
         name: this.name,
-        riskLevel: this.risk_level,
+        riskLevel: this.riskLevel,
         observables: this.observables,
         conclusion: this.conclusion,
         type: this.type,
@@ -87,37 +88,29 @@ export default {
     },
   },
   computed: {
-    sortedQuestions() {
-      return this.questions && this.questions.length > 0
-        ? [
-            ...this.questions.sort(
-              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-            ),
-          ]
-        : [];
-    },
     isActive() {
       return this.store.activeContext.question?.id
         ? this.id === this.store.activeContext.question?.id
         : false;
     },
-    completed() {
-      let isApproved = false;
 
+    isApproved() {
       if (
         this.store.report?.content?.approvedQuestions &&
         this.store.report?.content?.approvedQuestions.length > 0
       ) {
-        isApproved = !!this.store.report.content.approvedQuestions.find(
+        return !!this.store.report.content.approvedQuestions.find(
           (approvedId) => approvedId === this.id
         );
+      } else {
+        return false;
       }
+    },
 
-      return isApproved;
-    },
     riskColor() {
-      return riskColors[this.risk_level];
+      return riskColors[riskLevel];
     },
+
     listItemClasses() {
       return {
         "is--active": this.isActive,

@@ -91,8 +91,9 @@ export const useAppStore = defineStore("app", {
 
     setActiveQuestion(question) {
       this.activeContext = {
-        question,
-      };
+        ...this.activeContext,
+        question
+      }
     },
 
     setNotification(notification) {

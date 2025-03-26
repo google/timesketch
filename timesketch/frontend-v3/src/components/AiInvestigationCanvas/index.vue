@@ -121,8 +121,8 @@ export default {
         }
 
         const existingQuestionsList =
-          existingQuestions.value.data.objects &&
-          existingQuestions.value.data.objects.length > 0
+          existingQuestions.value.data?.objects &&
+          existingQuestions.value.data?.objects.length > 0
             ? existingQuestions.value.data.objects[0]
             : [];
 
@@ -140,7 +140,6 @@ export default {
           aiQuestions.status === "fulfilled" &&
           aiQuestions?.value?.data?.questions
         ) {
-          metadata.value = aiQuestions.value.data.meta;
           questionsArray = [
             ...questionsArray,
             ...aiQuestions.value.data.questions,
@@ -197,7 +196,7 @@ export default {
       updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
       confirmRemoveQuestion: this.confirmRemoveQuestion,
-      regenerateQuestions: this.fetchData,
+      regenerateQuestions: this.fetchData, // TODO: Revisit this once the API is in place for this async op
     };
   },
   setup() {
