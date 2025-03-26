@@ -159,8 +159,8 @@ export default {
             ...question,
             conclusions,
             conclusionSummary:
-              conclusions?.length > 0
-                ? conclusions.map(({ conclusion }) => conclusion).join()
+            conclusions && conclusions.length > 0
+                ? conclusions.map(({ conclusion }) => conclusion).join("'\n \r'")
                 : "",
           })),
         ];

@@ -110,27 +110,12 @@ export default {
       summary: "",
     };
   },
-  created() {
-    debugger
-    if (
-      !this.store.report?.content?.conclusionSummaries ||
-      this.store.report.content.conclusionSummaries.length < 1
-    ) {
+  mounted() {
+    console.log(this.summaries)
+    if (!this.summaries || this.summaries.length < 1) {
       this.summary = this.question.conclusionSummary;
     } else {
-      const summaries = this.store.report.content.conclusionSummaries.filter(
-        ({ questionId }) => questionId === this.question.id
-      );
-
-      if (!summaries || summaries.length < 1) {
-
-        console.log(this.question.conclusionSummary)
-        this.summary = this.question.conclusionSummary;
-      } else {
-
-        console.log(summaries)
-        this.summary = summaries?.[0]?.value;
-      }
+      this.summary = this.summaries?.[0]?.value;
     }
   },
   computed: {
@@ -161,7 +146,7 @@ export default {
       }`;
     },
     cannotUpdateSummary() {
-      const savedSummary = this.store.report.content.summary?.[0].value;
+      const savedSummary = this.summaries?.[0]?.value || "";
 
       return (
         this.isSavingSummary ||
