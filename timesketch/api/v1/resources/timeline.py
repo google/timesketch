@@ -18,7 +18,6 @@ import json
 import logging
 import uuid
 
-from typing import Union
 import opensearchpy
 from flask import jsonify
 from flask import request
@@ -99,8 +98,9 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             with the sketch.
         Running Sketch Analyzers: If the `AUTO_SKETCH_ANALYZERS` config is enabled,
             sketch analyzers will be run on the newly created or associated timeline.
-        Adding Labels: If the sketch has labels that are in the `LABELS_TO_PREVENT_DELETION`
-            config, those labels will be added to the timeline and search index.
+        Adding Labels: If the sketch has labels that are in the
+            `LABELS_TO_PREVENT_DELETION` config, those labels will be added
+            to the timeline and search index.
 
         The method ensures that:
         - The sketch exists.
