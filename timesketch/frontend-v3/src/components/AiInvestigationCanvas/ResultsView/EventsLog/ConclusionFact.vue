@@ -1,0 +1,84 @@
+<!--
+Copyright 2025 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<template>
+  <td class="d-flex">
+    <div class="position-relative">
+      <EventDetailsPopup
+        v-if="showLogDetail"
+        :eventId="fact.event_id"
+        :sketchId="sketchId"
+        @close-detail-popup="setShowLogDetail()"
+      />
+      <v-btn variant="text" @click="setShowLogDetail()">
+        <v-icon left small icon="mdi-file-code-outline" />
+      </v-btn>
+    </div>
+    <RemoveEventPopup :eventId="fact.event_id" :sketchId="sketchId" />
+  </td>
+  <td>{{ fact.message }}</td>
+  <td>{{ fact.datetime }} ({{ fact.timestamp_desc }})</td>
+  <td class="font-weight-bold">{{ fact.data_type }}</td>
+</template>
+
+<script>
+export default {
+  props: {
+    fact: Array,
+    sketchId: String,
+  },
+  data() {
+    return {
+      showLogDetail: false,
+    };
+  },
+  methods: {
+    setShowLogDetail() {
+      this.showLogDetail = !this.showLogDetail;
+    },
+  },
+};
+</script>
+
+<style>
+.event-log .v-table__wrapper {
+  overflow: visible;
+}
+
+.dialog {
+  background-color: #424242;
+  color: #fff;
+  bottom: 100%;
+  z-index: 3;
+}
+
+.dialog:after {
+  display: block;
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #424242;
+  position: absolute;
+  bottom: -8px;
+  left: 22px;
+}
+
+.bg-none {
+  background: transparent;
+  color: #fff;
+}
+</style>

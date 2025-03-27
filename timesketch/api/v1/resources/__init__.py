@@ -15,9 +15,9 @@
 
 The timesketch API is a RESTful API that exposes the following resources:
 """
-from __future__ import unicode_literals
 
 import logging
+from typing import Optional, Dict
 
 from flask import current_app
 from flask import jsonify
@@ -35,7 +35,7 @@ logging.basicConfig(
 )
 
 
-class ResourceMixin(object):
+class ResourceMixin:
     """Mixin for API resources."""
 
     # Schemas for database model resources
@@ -270,6 +270,14 @@ class ResourceMixin(object):
         "updated_at": fields.DateTime("iso8601"),
     }
 
+    question_conclusion_event_fields = {
+        "event_id": fields.Integer,
+        "datetime": fields.String,
+        "message": fields.String,
+        "data_type": fields.String,
+        "timestamp_desc": fields.String,
+    }
+
     question_conclusion_fields = {
         "id": fields.Integer,
         "user": fields.Nested(user_fields),
@@ -277,6 +285,7 @@ class ResourceMixin(object):
         "automated": fields.Boolean,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "conclusion_events": fields.List(fields.Nested(question_conclusion_event_fields)),
     }
 
     question_fields = {
@@ -379,7 +388,11 @@ class ResourceMixin(object):
         )
 
     def to_json(
-        self, model, model_fields=None, meta=None, status_code=HTTP_STATUS_CODE_OK
+        self,
+        model: object,
+        model_fields: Optional[Dict] = None,
+        meta: Optional[Dict] = None,
+        status_code: int = HTTP_STATUS_CODE_OK,
     ):
         """Create json response from a database models.
 
@@ -393,7 +406,7 @@ class ResourceMixin(object):
             Response in json format (instance of flask.wrappers.Response)
         """
         if not meta:
-            meta = dict()
+            meta = {}
 
         schema = {"meta": meta, "objects": []}
 

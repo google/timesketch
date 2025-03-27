@@ -27,7 +27,7 @@ limitations under the License.
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
         <template v-if="selectedQuestion && selectedQuestion.id">
-          <ResultsViewLoader v-if="isLoading" />
+          <ResultsViewLoader v-if="isLoading || !store.report.content" />
           <ResultsView
             :question="selectedQuestion"
             :key="selectedQuestion.id"
@@ -36,7 +36,7 @@ limitations under the License.
           />
         </template>
         <template v-else>
-          <ReportViewLoader v-if="isLoading" />
+          <ReportViewLoader v-if="isLoading || !store.report.content" />
           <ReportView
             v-else
             :reportLocked="store.reportLocked"
@@ -59,7 +59,7 @@ limitations under the License.
       opacity="0.25"
       :scrollable="true"
     >
-      <EventsLog :targetObservableId="targetObservableId" />
+      <EventsLog :conclusionId="conclusionId" />
     </v-dialog>
   </v-container>
   <v-dialog
@@ -89,7 +89,7 @@ export default {
       route: useRoute(),
       isLoading: false,
       targetQuestionId: null,
-      targetObservableId: null,
+      conclusionId: null,
       questions: [],
       showEventLog: false,
     };
@@ -106,7 +106,7 @@ export default {
       let questionsArray = [];
 
       try {
-        await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
+        // await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
 
         const [existingQuestions, storyList] = await Promise.allSettled([
           RestApiClient.getOrphanQuestions(this.store.sketch.id),
@@ -159,8 +159,10 @@ export default {
             ...question,
             conclusions,
             conclusionSummary:
-            conclusions && conclusions.length > 0
-                ? conclusions.map(({ conclusion }) => conclusion).join("'\n \r'")
+              conclusions && conclusions.length > 0
+                ? conclusions
+                    .map(({ conclusion }) => conclusion)
+                    .join("'\n \r'")
                 : "",
           })),
         ];
@@ -190,38 +192,34 @@ export default {
     closeEventLog() {
       this.showEventLog = false;
     },
-    openEventLog(targetId) {
-      this.targetObservableId = targetId;
+    openEventLog(conclusionId) {
+      this.conclusionId = conclusionId;
       this.showEventLog = true;
     },
-    updateObservables(selectedEvents) {
-      // 1. Find Question
-      let targetQuestion = this.questions.find(
-        ({ id }) => id === this.store.activeContext.question.id
+    async updateObservables(event) {
+      const annotationResponse = await RestApiClient.saveEventAnnotation(
+        this.store.sketch.id,
+        "label",
+        "__ts_fact",
+        event.events,
+        null,
+        false,
+        event.conclusionId
       );
 
-      // 2. Find observable -
-      let targetObservable = targetQuestion.observables.find(
-        ({ record_id }) => record_id === this.targetObservableId
+      if (
+        !annotationResponse.data.objects ||
+        annotationResponse.data.objects.length < 1
+      ) {
+        throw new Error("Unable to add event to conclusion");
+      }
+
+      const currentQuestion = await RestApiClient.getQuestion(
+        this.store.sketch.id,
+        this.selectedQuestion.id
       );
 
-      // 3. Update observable with new log entries
-      targetObservable = {
-        ...targetObservable,
-        logs: [...selectedEvents],
-      };
-
-      targetQuestion = {
-        ...targetQuestion,
-        observables: [
-          targetObservable,
-          ...targetQuestion.observables.filter(
-            ({ record_id }) => record_id !== this.targetObservableId
-          ),
-        ],
-      };
-
-      this.updateQuestion(targetQuestion);
+      this.store.activeContext.question = currentQuestion.data.objects[0];
     },
   },
   computed: {

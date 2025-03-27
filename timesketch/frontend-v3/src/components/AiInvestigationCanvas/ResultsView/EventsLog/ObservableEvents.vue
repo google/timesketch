@@ -14,32 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-table :items="[details]" hide-default-footer="true" class="event-log">
+  <v-table :items="events" hide-default-footer="true" class="event-log">
     <thead>
       <tr>
         <th></th>
-        <th v-for="item in headers">{{ item.text }}</th>
+        <th v-for="header in headers">{{ header.text }}</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="item in [details]" :key="item.description">
-        <td class="d-flex">
-          <div class="position-relative">
-            <EventDetailsPopup
-              v-if="showLogDetail"
-              :eventId="recordId"
-              :sketchId="store.sketch.id"
-              @close-detail-popup="setShowLogDetail()"
-            />
-            <v-btn variant="text" @click="setShowLogDetail()">
-              <v-icon left small icon="mdi-file-code-outline" />
-            </v-btn>
-          </div>
-          <RemoveEventPopup />
-        </td>
-        <td>{{ item.description }}</td>
-        <td>{{ item.timestamp }}</td>
-        <td class="font-weight-bold">{{ item.source_file }}</td>
+      <tr v-for="fact in events" :key="fact.event_id">
+        <ConclusionFact :fact="fact" :sketchId="store.sketch.id" />
       </tr>
     </tbody>
   </v-table>
@@ -47,14 +31,10 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import EventDetailsPopup from "./EventDetailsPopup.vue";
-import RemoveEventPopup from "./RemoveEventPopup.vue";
 
 export default {
   props: {
     events: Array,
-    details: Object,
-    recordId: String
   },
   data() {
     return {

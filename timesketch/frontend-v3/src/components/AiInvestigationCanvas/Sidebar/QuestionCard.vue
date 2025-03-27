@@ -29,7 +29,7 @@ limitations under the License.
           left
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
-        <p class="font-weight-medium">{{ name }}</p>
+        <p class="font-weight-medium">{{id}}: {{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
         <!-- <v-chip
@@ -61,7 +61,8 @@ export default {
     name: String,
     type: String,
     conclusion: String,
-    observables: Array,
+    conclusionSummary: String,
+    conclusions: Array,
     updated_at: String,
     risk_level: String,
     id: Number,
@@ -78,8 +79,8 @@ export default {
         user: this.user,
         name: this.name,
         riskLevel: this.riskLevel,
-        observables: this.observables,
-        conclusion: this.conclusion,
+        conclusionSummary: this.conclusionSummary,
+        conclusions: this.conclusions,
         type: this.type,
         id: this.id,
         updated_at: this.updated_at,

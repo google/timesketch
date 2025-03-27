@@ -43,11 +43,9 @@ limitations under the License.
           </div>
         </v-expansion-panel-title>
         <v-expansion-panel-text>
-          <!-- <ObservableEvents
-              :events="conclusion.entities"
-              :details="conclusion.log_details"
-              :recordId="conclusion.id"
-            /> -->
+          <ObservableEvents
+            :events="conclusion.conclusion_events"
+          />
           <v-btn
             size="small"
             variant="text"
@@ -101,9 +99,10 @@ export default {
       showModal: false,
       showEventList: false,
       isConfirming: false,
-      panels: this.question?.conclusions && this.question.conclusions.length > 0
-        ? [this.question.conclusions[0].id]
-        : ["fallback"],
+      panels:
+        this.question?.conclusions && this.question.conclusions.length > 0
+          ? [this.question.conclusions[0].id]
+          : ["fallback"],
     };
   },
   methods: {

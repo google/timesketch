@@ -175,14 +175,16 @@ export default {
     annotation,
     events,
     currentSearchNode,
-    remove = false
+    remove = false,
+    conclusionId = null
   ) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
-      current_search_node_id: currentSearchNode.id,
+      current_search_node_id: currentSearchNode?.id,
       remove: remove,
+      conclusion_id: conclusionId
     };
     return RestApiClient.post(
       "/sketches/" + sketchId + "/event/annotate/",
@@ -621,6 +623,19 @@ export default {
   },
   editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
     let formData = { conclusionText: conclusionText };
+    return RestApiClient.put(
+      "/sketches/" +
+        sketchId +
+        "/questions/" +
+        questionId +
+        "/conclusions/" +
+        conclusionId +
+        "/",
+      formData
+    );
+  },
+  addConclusionEvents(sketchId, questionId, conclusionId, conclusionEvents) {
+    let formData = { conclusionEvents: 1 };
     return RestApiClient.put(
       "/sketches/" +
         sketchId +

@@ -32,7 +32,7 @@ limitations under the License.
       >
     </div>
 
-    <div class="position-relative">
+    <form class="position-relative" @submit.prevent="submitSummary()">
       <div
         v-if="isSavingSummary"
         class="summary-loader position-absolute top-0 left-0 d-flex align-center justify-center w-100 fill-height"
@@ -62,7 +62,7 @@ limitations under the License.
           variant="text"
           size="small"
           color="primary"
-          @click="submitSummary()"
+          type="submit"
           :disabled="cannotUpdateSummary"
           class="text-uppercase"
         >
@@ -74,7 +74,7 @@ limitations under the License.
           Last updated {{ lastUpdated }}
         </time>
       </div>
-    </div>
+    </form>
   </div>
   <v-dialog
     transition="dialog-bottom-transition"
@@ -112,7 +112,7 @@ export default {
     };
   },
   mounted() {
-    console.log(this.summaries)
+    console.log(this.summaries);
     if (!this.summaries || this.summaries.length < 1) {
       this.summary = this.question.conclusionSummary;
     } else {
@@ -132,8 +132,11 @@ export default {
         ({ questionId }) => questionId === this.question.id
       );
     },
+    latestSummary() {
+      return this.summaries[0];
+    },
     lastUpdated() {
-      const latestSummary = this.summaries[0];
+      const latestSummary = this.latestSummary;
 
       if (!latestSummary) {
         return null;
@@ -152,6 +155,7 @@ export default {
       return (
         this.isSavingSummary ||
         this.reportLocked ||
+        !this.summary ||
         savedSummary === this.summary
       );
     },

@@ -15,6 +15,7 @@
 
 import logging
 import json
+from typing import Optional
 
 from flask import jsonify
 from flask import request
@@ -59,7 +60,11 @@ def load_dfiq_from_config():
     return DFIQ(dfiq_path)
 
 
-def check_and_run_dfiq_analysis_steps(dfiq_obj, sketch, analyzer_manager=None):
+def check_and_run_dfiq_analysis_steps(
+    dfiq_obj: object,
+    sketch: Sketch,
+    analyzer_manager: Optional[DFIQAnalyzerManager] = None,
+):
     """Checks if any DFIQ analyzers need to be executed for the given DFIQ object.
 
     Args:
@@ -307,7 +312,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         db_session.add(scenario_sql)
         db_session.commit()
 
-        # This does not work, since we don't have Scnearios linked down to
+        # This does not work, since we don't have Scenarios linked down to
         # Approaches anymore! We intentionally broke the link to facets to show
         # Questions in the frontend.
         # check_and_run_dfiq_analysis_steps(scenario_sql, sketch)
@@ -466,7 +471,26 @@ class QuestionOrphanListResource(resources.ResourceMixin, Resource):
         questions = InvestigativeQuestion.query.filter_by(
             sketch=sketch, scenario=None, facet=None
         ).all()
-        return self.to_json(questions)
+        
+        for question in questions:
+            print('question',question)
+            for conclusion in question.conclusions: 
+                print('conclusion',conclusion)
+                conclusion.conclusion_events = []
+                for event in conclusion.events:
+                    print('conclusion',conclusion)
+                    query_string = f"_id:{event.document_id}"
+                    result = self.datastore.search(
+                        sketch_id=event.sketch_id,
+                        query_string=query_string,
+                        query_filter={},
+                        query_dsl={},
+                        indices=[event.searchindex.index_name],
+                    )
+                    print(result)
+                    conclusion.conclusion_events.append(result['hits']['hits'][0]['_source'])
+        
+                return self.to_json(questions)
 
 
 class QuestionWithScenarioListResource(resources.ResourceMixin, Resource):
@@ -679,6 +703,18 @@ class QuestionResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.get_with_acl(sketch_id)
         question = InvestigativeQuestion.get_by_id(question_id)
+        for conclusion in question.conclusions:
+            conclusion.conclusion_events = []
+            for event in conclusion.events:
+                query_string = f"_id:{event.document_id}"
+                result = self.datastore.search(
+                    sketch_id=event.sketch_id,
+                    query_string=query_string,
+                    query_filter={},
+                    query_dsl={},
+                    indices=[event.searchindex.index_name],
+                )
+                conclusion.conclusion_events.append(result['hits']['hits'][0]['_source'])
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")

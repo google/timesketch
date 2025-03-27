@@ -494,7 +494,7 @@ limitations under the License.
           variant="text"
           min-width="auto"
           slim="true"
-          @click="addEventsToObservable(item.id)"
+          @click="addEventsToObservable(item)"
           ><v-icon left icon="mdi-plus-circle-outline" />
         </v-btn>
       </template>
@@ -754,7 +754,7 @@ export default {
       type: Object,
       default: () => {},
     },
-    observableId: {
+    conclusionId: {
       type: String,
       default: "",
     },
@@ -943,18 +943,23 @@ export default {
     },
   },
   methods: {
-    async addEventsToObservable(id) {
-      const payload = id ? [id] : this.selectedEvents;
+    async addEventsToObservable(event) {
+      const events = event
+        ? [event]
+        : this.eventList.objects.filter(({ _id }) =>
+            this.selectedEvents.includes(_id)
+          );
 
       try {
-        const response = await RestApiClient.updateStory("id", payload);
-
-        this.updateObservables(this.selectedEvents);
+        await this.updateObservables({
+          conclusionId: this.conclusionId,
+          events,
+        });
 
         this.closeEventLog();
 
         this.store.setNotification({
-          text: `${payload.length} event(s) added to the observable.`,
+          text: `${events.length} event(s) added to the observable.`,
           icon: "mdi-plus-circle-outline",
           type: "success",
         });

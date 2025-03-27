@@ -1,7 +1,6 @@
 <!--
 Copyright 2025 Google Inc. All rights reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
+pe "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
@@ -42,8 +41,8 @@ limitations under the License.
   </v-toolbar>
   <div class="px-8 py-4 overflow-auto">
     <EventList
-      v-if="targetObservableId"
-      :targetObservableId="targetObservableId"
+      v-if="conclusionId"
+      :conclusionId="conclusionId"
       :disableToolbar="true"
       :disableDownload="true"
       :disableSettings="true"
@@ -64,7 +63,7 @@ import { useAppStore } from "@/stores/app";
 export default {
   inject: ["closeEventLog"],
   props: {
-    targetObservableId: String,
+    conclusionId: String,
   },
   data() {
     return {
