@@ -337,7 +337,6 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         # Make sure the list of index names is uniq
         sketch_indices = list(set(sketch_indices))
-        print(f"Sketch indices: {sketch_indices}")
 
         # Handle race-condition by checking which indices already exist in OpenSearch
         existing_indices = []
@@ -355,7 +354,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                     ",".join(sketch_indices),
                 )
 
-        print(f"Existing indices: {existing_indices}")
         # Get event count and size on disk for each index in the sketch.
         indices_metadata = {}
         stats_per_timeline = {}
