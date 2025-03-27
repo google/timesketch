@@ -404,6 +404,45 @@ level: high
             sketch.description, "test_modify_sketch_with_empty_name"
         )
 
+    def test_list_timelines(self):
+        """Test listing timelines in a sketch."""
+        # Create a new sketch
+        sketch = self.api.create_sketch(
+            name="test_list_timelines", description="test_list_timelines"
+        )
+
+        # Import a timeline into the sketch
+        self.import_timeline("evtx.plaso", sketch=sketch)
+
+        # List the timelines in the sketch
+        timelines = sketch.list_timelines()
+
+        # Check that there is at least one timeline
+        self.assertions.assertGreaterEqual(len(timelines), 1)
+
+        # Check that the timeline has a name
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.name)
+
+        # Check that the timeline has an index name
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.index_name)
+
+        # Check that the timeline has an ID
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.id)
+
+        # Import a second timeline into the sketch
+        self.import_timeline("evtx_part.csv", sketch=sketch)
+
+        _ = sketch.lazyload_data(refresh_cache=True)
+
+        # List the timelines in the sketch
+        timelines = sketch.list_timelines()
+
+        # Check that there are two timelines
+        self.assertions.assertEqual(len(timelines), 2)
+
     def test_delete_timeline(self):
         """Test deleting a timeline.
         This test verifies the following:
@@ -467,6 +506,8 @@ level: high
 
         self.import_timeline("/tmp/second.csv", index_name="second", sketch=sketch)
         os.remove(file_path)
+        # refresh data after import
+        _ = sketch.lazyload_data(refresh_cache=True)
 
         timeline = sketch.list_timelines()[0]
         self.assertions.assertEqual(len(sketch.list_timelines()), 2)
