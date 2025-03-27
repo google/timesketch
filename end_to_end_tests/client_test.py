@@ -443,13 +443,14 @@ level: high
         self.assertions.assertEqual(timeline.name, file_path)
         self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
+        self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 
         events = sketch.explore("*", as_pandas=True)
         self.assertions.assertEqual(len(events), 4)
 
         # second import
 
-        file_path = "/tmp/large.csv"
+        file_path = "/tmp/second.csv"
 
         with open(file_path, "w", encoding="utf-8") as file_object:
             file_object.write(
@@ -464,12 +465,13 @@ level: high
                 )
                 file_object.write(string)
 
-        self.import_timeline("/tmp/large.csv", index_name="foobar", sketch=sketch)
+        self.import_timeline("/tmp/second.csv", index_name="second", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
+        self.assertions.assertEqual(len(sketch.list_timelines()), 2)
 
-        # Check that there are 6 events in total
+        # Check that there are 9 (5+4) events in total
         search_client = search.Search(sketch)
         search_response = json.loads(search_client.json)
         self.assertions.assertEqual(len(search_response["objects"]), 9)
@@ -478,6 +480,7 @@ level: high
         self.assertions.assertEqual(len(events), 9)
 
         # delete timeline 1
+        # now it should be 5 events in one timeline
         timeline.delete()
         events = sketch.explore("*", as_pandas=True)
         self.assertions.assertEqual(len(events), 5)
