@@ -531,9 +531,20 @@ class Search(resource.SketchResource):
             f"{self.api.api_root}/{self.resource_uri}", json=form_data
         )
         if not error.check_return_status(response, logger):
-            error.error_message(
-                response, message="Unable to query results", error=ValueError
+            status_code = response.status_code
+            try:
+                response_json = response.json()
+                error_message_content = json.dumps(response_json, indent=2)
+            except json.JSONDecodeError:
+                error_message_content = response.text
+
+            logger.debug(f"Full response content: {error_message_content}")
+
+            error_message = (
+                f"Unable to query results. HTTP Status Code: {status_code}. "
+                f"Response content: {error_message_content}"
             )
+            error.error_message(response, message=error_message, error=ValueError)
 
         if file_name:
             with open(file_name, "wb") as fw:

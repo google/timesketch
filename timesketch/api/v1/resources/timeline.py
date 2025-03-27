@@ -483,8 +483,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 prevents deletion.
             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If there is an error
                 closing the search index.
+
         Returns:
             HTTP_STATUS_CODE_OK: If the timeline is successfully deleted.
+
         Behavior:
             - Checks if the sketch and timeline exist.
             - Verifies the user has write permission on the sketch.

@@ -16,6 +16,7 @@
 
 import codecs
 import json
+import uuid
 
 from flask_testing import TestCase
 
@@ -465,7 +466,8 @@ class BaseTest(TestCase):
             A group (instance of timesketch.models.user.Group)
         """
         group = Group.get_or_create(name=name, display_name=name, description=name)
-        user.groups.append(group)
+        if group not in user.groups:
+            user.groups.append(group)
         self._commit_to_database(group)
         return group
 
@@ -591,7 +593,11 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name, query_string=name, query_filter=json.dumps({}), user=user
+            name=name,
+            query_string=name,
+            query_filter=json.dumps({}),
+            user=user,
+            template_uuid=uuid.uuid4().hex,  # Generate a unique UUID
         )
         self._commit_to_database(searchtemplate)
         return searchtemplate
@@ -621,11 +627,20 @@ class BaseTest(TestCase):
         """Setup the test database."""
         init_db()
 
-        self.user1 = self._create_user(username="test1", set_password=True)
-        self.user2 = self._create_user(username="test2", set_password=False)
-        self.useradmin = self._create_user(
-            username="testadmin", set_password=True, set_admin=True
-        )
+        # Check if user already exists
+        self.user1 = User.query.filter_by(username="test1").first()
+        if not self.user1:
+            self.user1 = self._create_user(username="test1", set_password=True)
+
+        self.user2 = User.query.filter_by(username="test2").first()
+        if not self.user2:
+            self.user2 = self._create_user(username="test2", set_password=False)
+
+        self.useradmin = User.query.filter_by(username="testadmin").first()
+        if not self.useradmin:
+            self.useradmin = self._create_user(
+                username="testadmin", set_password=True, set_admin=True
+            )
 
         self.group1 = self._create_group(name="test_group1", user=self.user1)
         self.group2 = self._create_group(name="test_group2", user=self.user1)
@@ -666,13 +681,18 @@ class BaseTest(TestCase):
 
         self.story = self._create_story(sketch=self.sketch1, user=self.user1)
 
-        self.sigma1 = self._create_sigma(
-            user=self.user1,
-            rule_uuid="5266a592-b793-11ea-b3de-0242ac130004",
-            rule_yaml=SIGMA_RULE,
-            title="Suspicious Installation of Zenmap",
-            description="Detects suspicious installation of Zenmap",
-        )
+        # Check if sigma rule already exists
+        self.sigma1 = SigmaRule.query.filter_by(
+            rule_uuid="5266a592-b793-11ea-b3de-0242ac130004"
+        ).first()
+        if not self.sigma1:
+            self.sigma1 = self._create_sigma(
+                user=self.user1,
+                rule_uuid="5266a592-b793-11ea-b3de-0242ac130004",
+                rule_yaml=SIGMA_RULE,
+                title="Suspicious Installation of Zenmap",
+                description="Detects suspicious installation of Zenmap",
+            )
 
     def tearDown(self):
         """Tear down the test database."""

@@ -161,27 +161,40 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if not query_filter:
             query_filter = {}
 
-        all_indices = list({t.searchindex.index_name for t in sketch.timelines})
-        indices = query_filter.get("indices", all_indices)
+        # Searchindices and timelines
 
-        # If _all in indices then execute the query on all indices
-        if "_all" in indices:
-            indices = all_indices
+        # Searchindices and timelines
+        # Check if the sketch has any timelines.
+        if not sketch.timelines:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "The sketch has no timelines to search on.",
+            )
+
+        # Indices here can be either a list of timeline names, IDs or a list
+        # of search indices.
+        all_indices = list({t.searchindex.index_name for t in sketch.timelines})
+        all_timeline_ids = [t.id for t in sketch.timelines]
+        indices_param = query_filter.get("indices", all_indices)
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
         indices, timeline_ids = get_validated_indices(
-            indices, sketch, include_processing_timelines
+            indices_param, sketch, include_processing_timelines
         )
+
+        # If _all in indices then execute the query on all timelines in that
+        # sketch
+        if "_all" in indices:
+            indices = all_timeline_ids
 
         # Remove indices that don't exist from search.
         indices = utils.validate_indices(indices, self.datastore)
 
-        if not indices:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "No valid search indices were found to perform the search on.",
-            )
+        # Check if there are any valid timelines or indices.
+        # If either of the two exist, the search is good to go.
+        if not timeline_ids and not indices:
+            indices = all_timeline_ids
 
         # Make sure we have a query string or star filter
         if not (
