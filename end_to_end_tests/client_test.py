@@ -164,7 +164,7 @@ level: high
         self.assertions.assertIn("Installation of eeeee", rule.title)
         self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("sigmarules/5266a592", rule.resource_uri)
+        self.assertions.assertIn(self.RULEID2, rule.resource_uri)
         self.assertions.assertIn("installation of eeeee", rule.description)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertEqual(len(rule.falsepositives), 1)
