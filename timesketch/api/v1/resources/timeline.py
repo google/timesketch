@@ -52,7 +52,8 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self, sketch_id):
-        """Handles GET requests to retrieve a list of timelines associated with a sketch.
+        """Handles GET requests to retrieve a list of timelines associated with
+        a sketch.
 
         This method fetches all timelines that are linked to a specific sketch.
         It verifies that the sketch exists and that the current user has read
@@ -83,38 +84,47 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, sketch_id):
-        """Handles POST requests to modify an existing timeline.
+        """Handles POST requests to create or associate a timeline with a sketch.
 
-        This method allows for updating the properties of a timeline, such as
-        its name, description, and color. It also supports adding or removing
-        labels from the timeline. The method verifies that the sketch and
-        timeline exist, that the timeline belongs to the sketch, and that the
-        current user has write permission on the sketch.
+        This method either creates a new timeline and associates it with a sketch,
+        or associates an existing timeline (identified by its search index ID)
+        with a sketch. It handles the following scenarios:
+
+        Creating a New Timeline: If a timeline with the given search index ID
+            does not already exist within the sketch, a new timeline is created.
+            The new timeline's name and description are derived from the search
+            index, and it is associated with the provided sketch.
+        Associating an Existing Timeline: If a timeline with the given
+            search index ID already exists within the sketch, it is associated
+            with the sketch.
+        Running Sketch Analyzers: If the `AUTO_SKETCH_ANALYZERS` config is enabled,
+            sketch analyzers will be run on the newly created or associated timeline.
+        Adding Labels: If the sketch has labels that are in the `LABELS_TO_PREVENT_DELETION`
+            config, those labels will be added to the timeline and search index.
+
+        The method ensures that:
+        - The sketch exists.
+        - The current user has write access to the sketch.
+        - The provided search index ID is valid and not associated with a deleted index.
 
         Args:
-            sketch_id (int): The ID of the sketch to which the timeline belongs.
-            timeline_id (int): The ID of the timeline to modify.
+            sketch_id (int): The ID of the sketch to which the timeline should be
+                associated.
 
         Returns:
-            flask.wrappers.Response:
-                - HTTP_STATUS_CODE_OK (200): If the timeline is successfully
-                  modified.
-                - HTTP_STATUS_CODE_BAD_REQUEST (400): If the form data is
-                  invalid or if there's an issue with the label action or
-                  label format.
-                - HTTP_STATUS_CODE_NOT_FOUND (404): If the sketch or timeline
-                  is not found.
-                - HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have
-                  write permission on the sketch.
+            flask.wrappers.Response: A JSON response containing the timeline object
+                and metadata.
+                - HTTP_STATUS_CODE_CREATED (201): If a new timeline was created.
+                - HTTP_STATUS_CODE_OK (200): If an existing timeline was associated.
+                The metadata indicates whether a new timeline was created or not.
 
         Raises:
-            HTTP_STATUS_CODE_BAD_REQUEST: If the form data is invalid, if the
-                label action is not "add" or "remove", or if the label format
-                is incorrect.
-            HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found,
-                or if the timeline does not belong to the sketch.
-            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write
-                permission on the sketch.
+            HTTP_STATUS_CODE_NOT_FOUND: If no sketch is found with the given ID.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write access to
+                the sketch.
+            HTTP_STATUS_CODE_BAD_REQUEST: If the request data is invalid, such as:
+                - The timeline (searchindex id) is not an integer.
+                - The search index is deleted.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -466,7 +476,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             sketch_id: (int) Integer primary key for a sketch database model
             timeline_id: (int) Integer primary key for a timeline database model
 
-                Raises:
+        Raises:
             HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found.
             HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write
                 permission on the sketch or if the timeline has a label that
