@@ -95,7 +95,7 @@ class ClientTest(interface.BaseEndToEndTest):
 
         MOCK_SIGMA_RULE = f"""
 title: Suspicious Installation of bbbbbb
-id: {RULEID1}
+id: {self.RULEID1}
 description: Detects suspicious installation of bbbbbb
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
@@ -132,7 +132,7 @@ level: high
         rule = self.api.create_sigmarule(
             rule_yaml=f"""
 title: Suspicious Installation of eeeee
-id: {RULEID2}
+id: {self.RULEID2}
 description: Detects suspicious installation of eeeee
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
@@ -154,13 +154,13 @@ level: high
         )
         self.assertions.assertIsNotNone(rule)
 
-        rule = self.api.get_sigmarule(rule_uuid=RULEID2)
-        rule.from_rule_uuid(RULEID2)
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
+        rule.from_rule_uuid(self.RULEID2)
         self.assertions.assertGreater(len(rule.attributes), 5)
         self.assertions.assertIsNotNone(rule)
         self.assertions.assertIn("Alexander", rule.author)
         self.assertions.assertIn("Alexander", rule.get_attribute("author"))
-        self.assertions.assertIn(RULEID2, rule.id)
+        self.assertions.assertIn(self.RULEID2, rule.id)
         self.assertions.assertIn("Installation of eeeee", rule.title)
         self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
@@ -188,14 +188,14 @@ level: high
         """Client Sigma delete tests.
         The test is called remove to avoid running it before the create test.
         """
-        rule = self.api.get_sigmarule(rule_uuid=RULEID1)
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID1)
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
 
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
 
-        rule = self.api.get_sigmarule(rule_uuid=RULEID2)
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
         rules = self.api.list_sigmarules()
