@@ -50,7 +50,7 @@ limitations under the License.
         name="summary"
         variant="outlined"
         :disabled="reportLocked"
-        rows="5"
+        rows="3"
         noResize
         hide-details
         class="summary-field mb-2"

@@ -38,7 +38,7 @@ limitations under the License.
             Edit</v-btn
           >
 
-          <v-btn variant="text" size="small" color="primary">
+          <v-btn variant="text" size="small" color="primary" v-if="reportLocked">
             <v-icon
               icon="mdi-download-circle-outline"
               class="mr-1"
