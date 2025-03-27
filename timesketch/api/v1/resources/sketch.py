@@ -322,67 +322,103 @@ class SketchResource(resources.ResourceMixin, Resource):
                 "description": cls.DESCRIPTION,
             }
 
-        # Get mappings for all indices in the sketch. This is used to set
-        # columns shown in the event list.
-        sketch_indices = [t.searchindex.index_name for t in sketch.active_timelines]
+        # Determine initial list of indices based on database status and config
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
+        # Get mappings for all indices in the sketch (from DB). This is used to
+        # set columns shown in the event list.
+        sketch_indices = [
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() in allowed_statuses
+        ]
 
         # Make sure the list of index names is uniq
         sketch_indices = list(set(sketch_indices))
+        print(f"Sketch indices: {sketch_indices}")
 
+        # Handle race-condition by checking which indices already exist in OpenSearch
+        existing_indices = []
+        if sketch_indices:
+            existing_indices = [
+                idx
+                for idx in sketch_indices
+                if self.datastore.client.indices.exists(index=idx)
+            ]
+            if not existing_indices and sketch_indices:
+                logger.warning(
+                    "No existing indices found for sketch %d . "
+                    "Expected indices based on DB status: [%s]",
+                    sketch_id,
+                    ",".join(sketch_indices),
+                )
+
+        print(f"Existing indices: {existing_indices}")
         # Get event count and size on disk for each index in the sketch.
         indices_metadata = {}
         stats_per_timeline = {}
         for timeline in sketch.active_timelines:
-            indices_metadata[timeline.searchindex.index_name] = {}
+            indices_metadata.setdefault(timeline.searchindex.index_name, {})
             stats_per_timeline[timeline.id] = {"count": 0}
 
-        if not sketch_indices:
-            mappings_settings = {}
-        else:
+        mappings = []
+        mappings_settings = {}
+        if existing_indices:  # Only call get_mapping if indices actually exist
             try:
                 mappings_settings = self.datastore.client.indices.get_mapping(
-                    index=sketch_indices
+                    index=existing_indices
                 )
             except opensearchpy.NotFoundError:
+                # Catch in the unlikely case the index gets deleted between check
+                # and here.
                 logger.error(
-                    "Unable to get indices mapping in datastore, for indices: [%s]",
-                    ",".join(sketch_indices),
+                    "Unable to get indices mapping in datastore for indices: [%s]",
+                    ",".join(existing_indices),
                 )
                 mappings_settings = {}
 
-        mappings = []
+            for index_name, value in mappings_settings.items():
+                # The structure is different in ES version 6.x and lower. This
+                # check makes sure we support both old and new versions.
+                properties = value["mappings"].get("properties")
+                if not properties:
+                    properties = next(iter(value["mappings"].values())).get(
+                        "properties"
+                    )
 
-        for index_name, value in mappings_settings.items():
-            # The structure is different in ES version 6.x and lower. This check
-            # makes sure we support both old and new versions.
-            properties = value["mappings"].get("properties")
-            if not properties:
-                properties = next(iter(value["mappings"].values())).get("properties")
+                is_legacy = bool("__ts_timeline_id" not in properties)
+                indices_metadata.setdefault(index_name, {})
+                indices_metadata[index_name]["is_legacy"] = is_legacy
 
-            # Determine if index is from the time before multiple timelines per
-            # index. This is used in the UI to support both modes.
-            is_legacy = bool("__ts_timeline_id" not in properties)
-            indices_metadata[index_name]["is_legacy"] = is_legacy
-
-            for field, value_dict in properties.items():
-                mapping_dict = {}
-                # Exclude internal fields
-                if field.startswith("__"):
-                    continue
-                if field == "timesketch_label":
-                    continue
-                mapping_dict["field"] = field
-                mapping_dict["type"] = value_dict.get("type", "n/a")
-                mappings.append(mapping_dict)
+                for field, value_dict in properties.items():
+                    # Determine if index is from the time before multiple timelines
+                    # per index. This is used in the UI to support both modes.
+                    mapping_dict = {}
+                    if field.startswith("__") or field == "timesketch_label":
+                        continue
+                    mapping_dict["field"] = field
+                    mapping_dict["type"] = value_dict.get("type", "n/a")
+                    mappings.append(mapping_dict)
+        else:
+            logger.warning(
+                "No existing indices found for sketch %d to get mapping.", sketch_id
+            )
 
         # Get number of events per timeline
-        if sketch_indices:
-            # Support legacy indices.
+        if existing_indices and sketch_indices:
             for timeline in sketch.active_timelines:
                 index_name = timeline.searchindex.index_name
-                if indices_metadata[index_name].get("is_legacy", False):
+                # Check if this index actually existed AND if it's marked legacy
+                if index_name in existing_indices and indices_metadata.get(
+                    index_name, {}
+                ).get("is_legacy", False):
                     doc_count, _ = self.datastore.count(indices=index_name)
                     stats_per_timeline[timeline.id] = {"count": doc_count}
+
+        count_agg = {}
+        if existing_indices:
             count_agg_spec = {
                 "aggs": {
                     "per_timeline": {
@@ -393,20 +429,32 @@ class SketchResource(resources.ResourceMixin, Resource):
                     }
                 }
             }
-            # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
-            count_agg = self.datastore.client.search(
-                index=sketch_indices, body=count_agg_spec, size=0
-            )
+            try:
+                # pylint: disable=unexpected-keyword-arg
+                count_agg = self.datastore.client.search(
+                    index=existing_indices, body=count_agg_spec, size=0
+                )
+            except opensearchpy.NotFoundError as e:
+                logger.error(
+                    "Index not found during count aggregation for sketch %d: %s",
+                    sketch_id,
+                    e,
+                )
+            except opensearchpy.TransportError as e:
+                logger.error(
+                    "TransportError during count aggregation for sketch %d "
+                    "indices [%s]: %s",
+                    sketch_id,
+                    ",".join(existing_indices),
+                    e,
+                )
 
-            count_per_timeline = (
-                count_agg.get("aggregations", {})
-                .get("per_timeline", {})
-                .get("buckets", [])
-            )
-            for count_stat in count_per_timeline:
-                stats_per_timeline[count_stat["key"]] = {
-                    "count": count_stat["doc_count"]
-                }
+        # Safely get results from count_agg which might be empty
+        count_per_timeline = (
+            count_agg.get("aggregations", {}).get("per_timeline", {}).get("buckets", [])
+        )
+        for count_stat in count_per_timeline:
+            stats_per_timeline[count_stat["key"]] = {"count": count_stat["doc_count"]}
 
         # Make the list of dicts unique
         mappings = {v["field"]: v for v in mappings}.values()
@@ -471,8 +519,8 @@ class SketchResource(resources.ResourceMixin, Resource):
             "last_activity": utils.get_sketch_last_activity(sketch),
             "sketch_labels": [label.label for label in sketch.labels],
             "filter_labels": (
-                self.datastore.get_filter_labels(sketch.id, sketch_indices)
-                if sketch_indices
+                self.datastore.get_filter_labels(sketch.id, existing_indices)
+                if existing_indices
                 else []
             ),
         }
