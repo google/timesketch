@@ -46,19 +46,6 @@ RestApiClient.interceptors.response.use(
         'errorSnackBar',
         'Server side error. Please contact your server administrator for troubleshooting.'
       )
-    } else if (
-      error.response.status === 404 &&
-      error.response.data &&
-      error.response.data.message === 'No indices to aggregate on found.'
-    ) {
-      // This is a specific "ignorable" transient error. Log it and continue.
-      console.log(
-        'runAggretation returned ' +
-        error.response.status +
-        ': "' +
-        error.response.data.message +
-        '". This is expected for new timelines on a blank sektch and will resolve automatically.'
-      )
     } else {
       EventBus.$emit('errorSnackBar', error.response.data.message)
     }
