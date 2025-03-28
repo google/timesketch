@@ -182,9 +182,7 @@ class OpenSearchDataStore:
                 index=index_name,
                 wait_for_status=self.min_health,
                 timeout=timeout_seconds,
-                # Added parameters for more resilience
-                level="indices",  # Check health at the index level
-                # wait_for_active_shards='1' # Wait for at least one primary shard
+                level="indices",
             )
             es_logger.debug("Index '%s' is ready.", index_name)
             return True
