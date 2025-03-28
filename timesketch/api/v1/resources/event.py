@@ -49,6 +49,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchHistory
+from timesketch.models.sketch import InvestigativeQuestionConclusion
 
 
 logger = logging.getLogger("timesketch.event_api")
@@ -937,13 +938,10 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                                     event.conclusions.append(conclusion)
                 elif "__ts_fact" in form.annotation.data and conclusion_id:
 
-                    print('conclusion_id', conclusion_id)
                     conclusion = InvestigativeQuestionConclusion.query.filter_by(id=conclusion_id).first()
-                    logger.info(conclusion)
 
                     if conclusion:
                         event.conclusions.append(conclusion)
-                        logger.info(event.conclusions)
 
 
             else:

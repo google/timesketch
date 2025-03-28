@@ -487,9 +487,11 @@ class QuestionOrphanListResource(resources.ResourceMixin, Resource):
                         query_dsl={},
                         indices=[event.searchindex.index_name],
                     )
-                    print(result)
-                    conclusion.conclusion_events.append(result['hits']['hits'][0]['_source'])
-        
+                    
+                    _id = result['hits']['hits'][0]['_id']
+                    conclusionSource = result['hits']['hits'][0]['_source'] 
+                    conclusion.conclusion_events.append({ **conclusionSource, '_id': _id,  }) 
+
                 return self.to_json(questions)
 
 
@@ -714,7 +716,9 @@ class QuestionResource(resources.ResourceMixin, Resource):
                     query_dsl={},
                     indices=[event.searchindex.index_name],
                 )
-                conclusion.conclusion_events.append(result['hits']['hits'][0]['_source'])
+                _id = result['hits']['hits'][0]['_id']
+                conclusionSource = result['hits']['hits'][0]['_source'] 
+                conclusion.conclusion_events.append({ **conclusionSource, '_id': _id,  }) 
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")

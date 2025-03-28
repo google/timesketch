@@ -271,6 +271,7 @@ class ResourceMixin:
     }
 
     question_conclusion_event_fields = {
+        "_id": fields.String,
         "event_id": fields.Integer,
         "datetime": fields.String,
         "message": fields.String,
