@@ -210,8 +210,17 @@ export default {
           templateId
         );
 
-        const questionData = question.data.objects[0];
+        const questionId = question.data.objects[0].id;
 
+        const conclusionText = `${this.store.currentUser}'s conclusion`;
+        const conclusionResponse = await RestApiClient.createQuestionConclusion(
+          this.store.sketch.id,
+          questionId,
+          conclusionText
+        );
+
+        const questionData = conclusionResponse.data.objects[0]
+        
         this.addNewQuestion(questionData);
         this.store.setActiveQuestion(questionData);
         this.$emit("close-modal");

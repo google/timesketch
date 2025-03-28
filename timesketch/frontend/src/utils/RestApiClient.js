@@ -287,6 +287,10 @@ export default {
   getAnalyzers(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
   },
+  createQuestionConclusion(sketchId, questionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/', formData)
+  },
   runAnalyzers(sketchId, timelineIds, analyzers) {
     let formData = {
       timeline_ids: timelineIds,
