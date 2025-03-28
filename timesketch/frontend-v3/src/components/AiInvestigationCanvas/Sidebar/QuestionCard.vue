@@ -33,17 +33,16 @@ limitations under the License.
       </div>
       <div class="d-flex ga-2 align-center">
         <v-chip
-          v-show="risk_level"
           v-if="riskLevel"
           size="x-small"
           :color="riskColor"
           class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
         >
-          {{ risk_level }}
+          {{ riskLevel }}
         </v-chip>
         <v-icon
           icon="mdi-check-circle"
-          v-if="completed"
+          v-if="isApproved"
           small
           color="#34A853"
         />
@@ -53,8 +52,14 @@ limitations under the License.
 </template>
 
 <script>
-import { riskColors } from "@/constants";
 import { useAppStore } from "@/stores/app";
+
+const riskColors = {
+  high: "#D93025",
+  medium: "#E37400",
+  low: "#FBBC04",
+  clean: "#3874CB",
+};
 
 export default {
   props: {

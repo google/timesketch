@@ -16,16 +16,20 @@ limitations under the License.
 <template>
   <div class="d-flex justify-space-between px-2">
     <h4 class="mb-2" v-if="questionsTotal">
+<<<<<<< HEAD
       {{ questionsTotal }}
       <span class="font-weight-regular"
         >question{{ questionsTotal > 1 && "s" }}</span
       >
+=======
+      {{ questionsTotal }} <span class="font-weight-regular">questions</span>
+>>>>>>> develop
     </h4>
     <v-btn
       variant="text"
       size="small"
       color="primary"
-      @click="setShowModal"
+      @click="toggleModal"
       :disabled="reportLocked"
     >
       <v-icon icon="mdi-plus" left small />
@@ -66,7 +70,7 @@ limitations under the License.
     v-model="showModal"
     width="auto"
   >
-    <AddQuestionModal @close-modal="setShowModal" />
+    <AddQuestionModal @close-modal="toggleModal" />
   </v-dialog>
 </template>
 
@@ -87,7 +91,7 @@ export default {
   },
   inject: ["regenerateQuestions"],
   methods: {
-    setShowModal() {
+    toggleModal() {
       this.showModal = !this.showModal;
     },
   },

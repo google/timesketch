@@ -53,102 +53,7 @@ limitations under the License.
         </div>
       </div>
       <div class="questions-group">
-        <div v-if="isLoading">
-          <v-skeleton-loader
-            type="list-item"
-            height="44"
-            width="220"
-            class="ma-0"
-          ></v-skeleton-loader>
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="500"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="490"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="460"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="590"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="580"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-
-          <div class="d-flex">
-            <v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="62"
-              class="ma-0"
-            ></v-skeleton-loader
-            ><v-skeleton-loader
-              type="list-item"
-              height="44"
-              width="530"
-              class="ma-0"
-            ></v-skeleton-loader>
-          </div>
-        </div>
+        <AddQuestionModalLoader v-if="isLoading" />
         <div v-else>
           <v-list v-if="dfiqMatches && dfiqMatches.length > 0">
             <v-list-subheader class="font-weight-bold">
@@ -158,28 +63,6 @@ limitations under the License.
             <div>
               <v-list-item
                 v-for="(question, index) in dfiqMatches"
-                :key="index"
-                @click="createQuestion(question)"
-                class="d-flex"
-              >
-                <template v-slot:prepend>
-                  <v-icon small class="mr-2">mdi-plus</v-icon>
-                </template>
-                <v-list-item-title> {{ question.name }}</v-list-item-title>
-              </v-list-item>
-            </div>
-          </v-list>
-          <v-list
-            class="questions-group mb-4"
-            v-if="aiMatches && aiMatches.length > 0"
-          >
-            <v-list-subheader class="font-weight-bold">
-              AI-Suggested Questions
-              <span>({{ aiMatches.length }})</span></v-list-subheader
-            >
-            <div class="questions-group__list overflow-y-auto">
-              <v-list-item
-                v-for="(question, index) in aiMatches"
                 :key="index"
                 @click="createQuestion(question)"
                 class="d-flex"
@@ -231,7 +114,6 @@ export default {
       isLoading: true,
       queryString: null,
       dfiqTemplates: [],
-      aiTemplates: [],
       isSubmitting: false,
       store: useAppStore(),
     };
@@ -244,23 +126,15 @@ export default {
       return this.questions && this.questions.length > 0
         ? [
             ...this.questions.sort(
-              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+              (questionA, questionB) =>
+                new Date(questionA.updated_at) - new Date(questionB.updated_at)
             ),
           ]
         : [];
     },
-    aiMatches() {
-      if (!this.queryString) {
-        return [];
-      }
-
-      return this.aiTemplates.filter((template) =>
-        template.name.toLowerCase().includes(this.queryString.toLowerCase())
-      );
-    },
     dfiqMatches() {
       if (!this.queryString) {
-        return [];
+        return this.dfiqTemplates;
       }
 
       return this.dfiqTemplates.filter((template) =>
@@ -271,20 +145,10 @@ export default {
   methods: {
     async fetchQuestionTemplates() {
       try {
-        const [dfiqTemplatesRes, aiTemplatesRes] = await Promise.allSettled([
-          RestApiClient.getQuestionTemplates(),
-          // RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"), // TODO : add AI suggestions
-        ]);
+        const dfiqTemplatesRes = await RestApiClient.getQuestionTemplates();
 
         if (
-          aiTemplatesRes.data.objects &&
-          aiTemplatesRes.data.objects.length > 0
-        ) {
-          this.aiTemplates = aiTemplatesRes.data.objects.splice(1, 4);
-        }
-
-        if (
-          dfiqTemplatesRes.data.objects &&
+          dfiqTemplatesRes.data?.objects &&
           dfiqTemplatesRes.data.objects.length > 0
         ) {
           this.dfiqTemplates = dfiqTemplatesRes.data.objects;
