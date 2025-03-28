@@ -695,7 +695,7 @@ class QuestionResource(resources.ResourceMixin, Resource):
                     query_dsl={},
                     indices=[event.searchindex.index_name],
                 )
-                conclusion.conclusion_events.append(conclusion.conclusion_events.append(result['hits']['hits'][0]['_source']))
+                conclusion.conclusion_events.append(result['hits']['hits'][0]['_source'])
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
