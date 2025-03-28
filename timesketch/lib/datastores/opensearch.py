@@ -211,8 +211,7 @@ class OpenSearchDataStore:
                 exc_info=True,
             )
             return False
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             # Catch unexpected errors
             es_logger.error(
                 "Unexpected error waiting for index '%s': %s",
