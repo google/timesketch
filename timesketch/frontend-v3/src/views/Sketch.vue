@@ -264,7 +264,6 @@ export default {
     TsUploadTimelineFormButton,
     TsSettingsDialog,
     TsSearch,
-    TsExampleLeftBar,
     TsShareCard,
     TsAiInvestigation
   },

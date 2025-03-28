@@ -16,14 +16,10 @@ limitations under the License.
 <template>
   <div class="d-flex justify-space-between px-2">
     <h4 class="mb-2" v-if="questionsTotal">
-<<<<<<< HEAD
       {{ questionsTotal }}
       <span class="font-weight-regular"
         >question{{ questionsTotal > 1 && "s" }}</span
       >
-=======
-      {{ questionsTotal }} <span class="font-weight-regular">questions</span>
->>>>>>> develop
     </h4>
     <v-btn
       variant="text"

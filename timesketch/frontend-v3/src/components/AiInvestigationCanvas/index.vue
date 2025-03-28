@@ -187,9 +187,6 @@ export default {
     completedQuestionsTotal() {
       return this.filteredQuestions?.length;
     },
-    completedQuestionsTotal() {
-      return this.appStore.report?.content?.approvedQuestions?.length;
-    },
     sketchId() {
       return this.store.sketch.id;
     },
