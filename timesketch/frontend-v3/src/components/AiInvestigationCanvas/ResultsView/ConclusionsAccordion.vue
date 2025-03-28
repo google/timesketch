@@ -31,7 +31,7 @@ limitations under the License.
     <v-expansion-panels class="mb-6" v-model="panels">
       <v-expansion-panel
         color="#F8F9FA"
-        v-if="question.conclusions"
+        v-if="hasConclusions"
         v-for="conclusion in question.conclusions"
         :value="conclusion.id"
       >
@@ -45,34 +45,13 @@ limitations under the License.
         <v-expansion-panel-text>
           <ObservableEvents
             :events="conclusion.conclusion_events"
+            :conclusionId="conclusion.id"
           />
           <v-btn
             size="small"
             variant="text"
             depressed
-            @click="openEventLog(conclusion.id)"
-            color="primary"
-          >
-            <v-icon left small icon="mdi-plus" />
-            Add more facts
-          </v-btn>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel color="#F8F9FA" value="fallback" v-else>
-        <v-expansion-panel-title color="#F8F9FA">
-          <div>
-            <h5 class="h4 font-weight-bold mb-2">Dave's observable</h5>
-            <p>
-              {{ conclusion }}
-            </p>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <v-btn
-            size="small"
-            variant="text"
-            depressed
-            @click="openEventLog('test')"
+            @click="openEventLog()"
             color="primary"
           >
             <v-icon left small icon="mdi-plus" />
@@ -86,17 +65,17 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
 
 export default {
   props: {
     question: Object,
   },
-  inject: ["updateQuestion", "confirmRemoveQuestion", "openEventLog"],
+  inject: ["updateQuestion", "confirmRemoveQuestion"],
   data() {
     return {
       store: useAppStore(),
       showModal: false,
+      showEventLog: false,
       showEventList: false,
       isConfirming: false,
       panels:
@@ -105,10 +84,27 @@ export default {
           : ["fallback"],
     };
   },
+  computed: {
+    hasConclusions() {
+      return this.question?.conclusions && this.question.conclusions.length > 0;
+    },
+  },
   methods: {
     async toggleEventList() {
       this.showEventList = !this.showEventList;
     },
+    openEventLog() {
+      this.showEventLog = true;
+    },
+    closeEventLog() {
+      this.showEventLog = false;
+    },
+  },
+  provide() {
+    return {
+      showEventLog: computed(() => this.showEventLog),
+      closeEventLog: this.closeEventLog,
+    };
   },
 };
 </script>

@@ -48,19 +48,6 @@ limitations under the License.
         </template>
       </v-col>
     </v-row>
-    <v-dialog
-      transition="dialog-bottom-transition"
-      v-model="showEventLog"
-      width="100%"
-      max-width="100%"
-      height="75vh"
-      content-class="ma-0 bg-white"
-      class="align-end"
-      opacity="0.25"
-      :scrollable="true"
-    >
-      <EventsLog :conclusionId="conclusionId" />
-    </v-dialog>
   </v-container>
   <v-dialog
     transition="dialog-bottom-transition"
@@ -192,10 +179,6 @@ export default {
     closeEventLog() {
       this.showEventLog = false;
     },
-    openEventLog(conclusionId) {
-      this.conclusionId = conclusionId;
-      this.showEventLog = true;
-    },
     async updateObservables(event) {
       const annotationResponse = await RestApiClient.saveEventAnnotation(
         this.store.sketch.id,
@@ -255,7 +238,6 @@ export default {
   provide() {
     return {
       updateObservables: this.updateObservables,
-      openEventLog: this.openEventLog,
       closeEventLog: this.closeEventLog,
       updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,

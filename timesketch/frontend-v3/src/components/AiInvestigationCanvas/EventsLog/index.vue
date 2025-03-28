@@ -49,8 +49,9 @@ limitations under the License.
       :disableColumns="true"
       :disableStarring="true"
       :disableSaveSearch="true"
-      :showAddToFindings="true"
       :disableTags="true"
+      :showAddToFindings="true"
+      :existingEvents="existingEvents"
       :queryRequest="queryRequest"
     />
   </div>
@@ -64,6 +65,11 @@ export default {
   inject: ["closeEventLog"],
   props: {
     conclusionId: String,
+    existingEvents: Array,
+    existingEvents: {
+      type: Array,
+      value: [],
+    },
   },
   data() {
     return {

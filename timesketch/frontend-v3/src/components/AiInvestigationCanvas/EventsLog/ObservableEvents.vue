@@ -27,22 +27,43 @@ limitations under the License.
       </tr>
     </tbody>
   </v-table>
+  <v-dialog
+    transition="dialog-bottom-transition"
+    v-model="showEventLog"
+    width="100%"
+    max-width="100%"
+    height="75vh"
+    content-class="ma-0 bg-white"
+    class="align-end"
+    opacity="0.25"
+    :scrollable="true"
+  >
+    <EventsLog :conclusionId="conclusionId" :existingEvents="existingEvents" />
+  </v-dialog>
 </template>
 
 <script>
 import { useAppStore } from "@/stores/app";
 
 export default {
+  inject: ["showEventLog"],
   props: {
     events: Array,
+    conclusionId: String,
   },
   data() {
     return {
       store: useAppStore(),
-      showLogDetail: false,
     };
   },
   computed: {
+    existingEvents() {
+      if (!this.events || this.events.length < 1) {
+        return [];
+      }
+
+      return this.events.map(({ _id }) => _id);
+    },
     headers() {
       return [
         {
@@ -62,11 +83,6 @@ export default {
           sortable: false,
         },
       ];
-    },
-  },
-  methods: {
-    setShowLogDetail() {
-      this.showLogDetail = !this.showLogDetail;
     },
   },
 };
