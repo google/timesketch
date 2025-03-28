@@ -399,10 +399,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                     mapping_dict["field"] = field
                     mapping_dict["type"] = value_dict.get("type", "n/a")
                     mappings.append(mapping_dict)
-        else:
-            logger.warning(
-                "No existing indices found for sketch %d to get mapping.", sketch_id
-            )
 
         # Get number of events per timeline
         if existing_indices and sketch_indices:
@@ -438,6 +434,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                     sketch_id,
                     e,
                 )
+                count_agg = {}
             except opensearchpy.TransportError as e:
                 logger.error(
                     "TransportError during count aggregation for sketch %d "
@@ -446,6 +443,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                     ",".join(existing_indices),
                     e,
                 )
+                count_agg = {}
 
         # Safely get results from count_agg which might be empty
         count_per_timeline = (
