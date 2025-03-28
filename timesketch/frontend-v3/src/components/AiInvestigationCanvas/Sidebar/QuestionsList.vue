@@ -18,6 +18,16 @@ limitations under the License.
     <h4 class="mb-2" v-if="questionsTotal">
       {{ questionsTotal }} <span class="font-weight-regular">questions</span>
     </h4>
+    <v-btn
+      variant="text"
+      size="small"
+      color="primary"
+      @click="toggleModal"
+      :disabled="reportLocked"
+    >
+      <v-icon icon="mdi-plus" left small />
+      Create Question</v-btn
+    >
   </div>
   <v-list
     v-if="sortedQuestions"
@@ -47,15 +57,35 @@ limitations under the License.
       Regenerate Questions</v-btn
     >
   </div>
+  <v-dialog
+    transition="dialog-bottom-transition"
+    v-model="showModal"
+    width="auto"
+  >
+    <AddQuestionModal @close-modal="toggleModal" />
+  </v-dialog>
 </template>
 
 <script>
+import AddQuestionModal from "../Modals/AddQuestionModal.vue";
+import QuestionCard from "./QuestionCard.vue";
+
 export default {
   props: {
     questions: Array,
     questionsTotal: Number,
   },
+  data() {
+    return {
+      showModal: false,
+    };
+  },
   inject: ["regenerateQuestions"],
+  methods: {
+    toggleModal() {
+      this.showModal = !this.showModal;
+    },
+  },
   computed: {
     sortedQuestions() {
       return this.questions && this.questions.length > 0

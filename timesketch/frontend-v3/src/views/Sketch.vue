@@ -228,7 +228,6 @@ limitations under the License.
       <!-- TODO: content of left panel -->
       <ts-ai-investigation :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-ai-investigation>
       <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
-      <ts-example-left-bar :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-example-left-bar>
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->
@@ -241,6 +240,7 @@ limitations under the License.
         ></router-view>
 
     </div>
+    <Notifications />
 </template>
 
 <script>
@@ -254,8 +254,8 @@ import TsRenameSketch from '../components/RenameSketch.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsShareCard from '../components/ShareCard.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
-import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
 import TsAiInvestigation from '../components/LeftPanel/AiInvestigation.vue'
+import Notifications from '../components/Notifications.vue'
 
 export default {
   props: ['sketchId'],
