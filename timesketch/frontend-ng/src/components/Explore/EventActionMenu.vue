@@ -59,13 +59,16 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    settings() {
+      return this.$store.state.settings
+    },
   },
   methods: {
     showContextWindow() {
       EventBus.$emit('showContextWindow', this.event)
     },
     copyEventAsJSON() {
-      ApiClient.getEvent(this.sketch.id, this.event._index, this.event._id)
+      ApiClient.getEvent(this.sketch.id, this.event._index, this.event._id, !!this.settings.showProcessingTimelineEvents)
         .then((response) => {
           let fullEvent = response.data.objects
           let eventJSON = JSON.stringify(fullEvent, null, 3)
