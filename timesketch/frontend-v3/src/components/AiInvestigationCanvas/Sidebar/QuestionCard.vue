@@ -24,12 +24,12 @@ limitations under the License.
         <v-icon
           icon="mdi-account-check-outline"
           color="#757575"
-          v-if="user"
+          v-if="user.name"
           small
           left
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
-        <p class="font-weight-medium">{{id}}: {{ name }}</p>
+        <p class="font-weight-medium">{{id}} : {{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
         <!-- <v-chip

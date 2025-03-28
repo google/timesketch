@@ -25,8 +25,6 @@ limitations under the License.
     </v-card>
   </v-dialog>
 
-  {{ questions }}
-
   <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
     <p>
       Your search
@@ -164,7 +162,7 @@ limitations under the License.
     <v-data-table
       v-model="selectedEvents"
       :headers="headers"
-      :items="eventList.objects"
+      :items="tableItems"
       :footer-props="{
         'items-per-page-options': [10, 40, 80, 100, 200, 500],
         'show-current-page': true,
@@ -183,6 +181,7 @@ limitations under the License.
       :dense="displayOptions.isCompact"
       fixed-header
       :expanded.sync="expandedRows"
+      item-selectable="selectable"
       show-select
     >
       <template v-slot:top="{ pagination, options, updateOptions }">
@@ -710,6 +709,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    existingEvents: {
+      type: Array,
+      default: [],
+    },
     disableToolbar: {
       type: Boolean,
       default: false,
@@ -810,7 +813,7 @@ export default {
       },
       currentQueryString: "",
       currentQueryFilter: defaultQueryFilter(),
-      selectedEvents: [],
+      selectedEvents: this.existingEvents,
       displayOptions: {
         isCompact: false,
         showTags: true,
@@ -825,6 +828,11 @@ export default {
     };
   },
   computed: {
+    tableItems() {
+      return this.eventList.objects.map((item) => ({
+        ...item
+      }));
+    },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count;
       const uniqueEvents = this.eventList.meta.summary_unique_event_count;
@@ -944,13 +952,13 @@ export default {
   },
   methods: {
     async addEventsToObservable(event) {
-      const events = event
-        ? [event]
-        : this.eventList.objects.filter(({ _id }) =>
-            this.selectedEvents.includes(_id)
-          );
-
       try {
+        const events = event
+          ? [event]
+          : this.eventList.objects.filter(({ _id }) =>
+              this.selectedEvents.includes(_id)
+            );
+
         await this.updateObservables({
           conclusionId: this.conclusionId,
           events,
@@ -1120,7 +1128,7 @@ export default {
       }
 
       this.searchInProgress = true;
-      this.selectedEvents = [];
+      // this.selectedEvents = [];
       this.eventList = emptyEventList();
 
       if (resetPagination) {
@@ -1182,13 +1190,13 @@ export default {
           this.addTimeBubbles();
 
           if (!incognito) {
-            // EventBus.$emit('createBranch', this.eventList.meta.search_node)
+            EventBus.$emit('createBranch', this.eventList.meta.search_node)
             this.store.updateSearchHistory(this.sketch.id);
             this.branchParent = this.eventList.meta.search_node.id;
           }
-          // if (this.userSettings.eventSummarization) {
-          //   this.fetchEventSummary()
-          // }
+          if (this.userSettings.eventSummarization) {
+            this.fetchEventSummary()
+          }
         })
         .catch((e) => {
           console.error(e);

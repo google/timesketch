@@ -89,9 +89,10 @@ export default {
     return {
       store: useAppStore(),
       riskLevel: this.question.riskLevel,
-      panels: this.question.conclusions && this.question.conclusions.length
-        ? [this.question.conclusions[0].id]
-        : ["fallback"],
+      panels:
+        this.question.conclusions && this.question.conclusions.length
+          ? [this.question.conclusions[0].id]
+          : ["fallback"],
     };
   },
   computed: {
