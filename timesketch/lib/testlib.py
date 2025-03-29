@@ -17,8 +17,8 @@
 import codecs
 import json
 
-from flask_testing import TestCase
 from typing import Optional, Dict
+from flask_testing import TestCase
 
 from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
@@ -339,7 +339,7 @@ class MockDataStore:
         sketch_id: int,
         indices: list,
         query_string: str = "",
-        query_filter: Dict = {},
+        uery_filter: Optional[Dict] = None,
         query_dsl: Optional[Dict] = None,
         return_fields: Optional[list] = None,
         enable_scroll: bool = True,
