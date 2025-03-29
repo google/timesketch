@@ -18,6 +18,7 @@ import time
 
 from opensearchpy.exceptions import NotFoundError
 
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import abort
@@ -463,10 +464,17 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 "Not able to run aggregation on an archived sketch.",
             )
 
+        include_processing_timelines = form.include_processing_timelines.data
+        allowed_statuses = ["ready"]
+        if include_processing_timelines and current_app.config.get(
+            "SEARCH_PROCESSING_TIMELINES", False
+        ):
+            allowed_statuses.append("processing")
+
         sketch_indices = {
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in allowed_statuses
         }
 
         aggregation_dsl = form.aggregation_dsl.data
@@ -490,7 +498,9 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 aggregator_parameters = {}
 
             indices = aggregator_parameters.pop("index", sketch_indices)
-            indices, timeline_ids = lib_utils.get_validated_indices(indices, sketch)
+            indices, timeline_ids = lib_utils.get_validated_indices(
+                indices, sketch, form.include_processing_timelines.data
+            )
 
             if not (indices or timeline_ids):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, "No indices to aggregate on")
