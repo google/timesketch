@@ -1120,6 +1120,7 @@ class BaseAnalyzer:
         for x in range(0, retries):
             try:
                 event_generator = self.datastore.search_stream(
+                    sketch_id=self.sketch.id,
                     query_string=query_string,
                     query_filter=query_filter,
                     query_dsl=query_dsl,

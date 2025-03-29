@@ -1194,6 +1194,7 @@ def find_data_task(
     data_finder.set_parameters(parameters)
     data_finder.set_rule(data_finder_dict.get(rule_name))
     data_finder.set_timeline_ids(timeline_ids)
+    data_finder.set_sketch_id(sketch_id)
 
     sketch = Sketch.get_by_id(sketch_id)
     indices = set()

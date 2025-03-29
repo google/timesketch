@@ -309,6 +309,7 @@ class BaseGraphPlugin:
             return_fields=return_fields,
             timeline_ids=timeline_ids,
             enable_scroll=scroll,
+            sketch_id=self.sketch.id,
         )
         return event_generator
 

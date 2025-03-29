@@ -35,6 +35,7 @@ class DataFinder:
         self._rule = {}
         self._start_date = ""
         self._timeline_ids = []
+        self._sketch_id = None
 
         self._datastore = OpenSearchDataStore(
             host=current_app.config["OPENSEARCH_HOST"],
@@ -119,6 +120,10 @@ class DataFinder:
         """Sets the timeline identifiers."""
         self._timeline_ids = timeline_ids
 
+    def set_sketch_id(self, sketch_id):
+        """Sets the sketch identifier."""
+        self._sketch_id = sketch_id
+
     def find_data(self):
         """Returns a tuple with a bool on whether data was found and a message.
 
@@ -172,6 +177,7 @@ class DataFinder:
         }
 
         event_generator = self._datastore.search_stream(
+            sketch_id=self._sketch_id,
             query_string=query_string,
             query_dsl=query_dsl,
             query_filter=query_filter,
