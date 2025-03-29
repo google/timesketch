@@ -56,7 +56,7 @@ class UnfurlResource(Resource):
         try:
             unfurl_result = unfurl.run(url)
         except Exception as e:  # pylint: disable=broad-except
-            logger.error("Error unfurling URL: {}".format(e))
+            logger.error("Error unfurling URL: %s", str(e))
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 e,

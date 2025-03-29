@@ -1,7 +1,5 @@
 """Sequenced activity sessionizing sketch analyzer plugin."""
 
-from __future__ import unicode_literals
-
 from timesketch.lib.analyzers import sessionizer
 
 
@@ -14,7 +12,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         event_storage: List of events.
         num_event_to_find: Number that shows which event from the sequence
             should be matched.
-        recording: Shows if currently are finded and stored events that match
+        recording: Shows if currently are found and stored events that match
             the specified sequence of events.
         session_num: Counter for the number of sessions.
     """
@@ -40,7 +38,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         """
         if self.session_type is None or self.session_type == "":
             raise ValueError("No session_type provided.")
-        if self.event_seq is None or self.event_seq == []:
+        if self.event_seq is None or not self.event_seq:
             raise ValueError("No event_seq provided.")
         # If return_fields in None, then all attributes are provided.
         if self.return_fields is not None:
@@ -65,12 +63,12 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         self.sketch.add_view(
             "Session view",
             self.NAME,
-            query_string="session_id.{0:s}:*".format(self.session_type),
+            query_string=f"session_id.{self.session_type:s}:*",
         )
 
         return (
-            "Sessionizing completed, number of {0:s} sessions created:"
-            " {1:d}".format(self.session_type, self.session_num)
+            "Sessionizing completed, number of {:s} sessions created:"
+            " {:d}".format(self.session_type, self.session_num)
         )
 
     def process_event(self, event):

@@ -265,6 +265,7 @@ export default new Vuex.Store({
           field: 'tag',
           limit: '1000',
         },
+        include_processing_timelines: !!context.state.settings.showProcessingTimelineEvents,
       }
       return ApiClient.runAggregator(payload.sketchId, formData)
         .then((response) => {
@@ -292,6 +293,7 @@ export default new Vuex.Store({
           field: 'data_type',
           limit: '1000',
         },
+        include_processing_timelines: !!context.state.settings.showProcessingTimelineEvents,
       }
       return ApiClient.runAggregator(sketchId, formData)
         .then((response) => {

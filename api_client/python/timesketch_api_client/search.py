@@ -260,7 +260,7 @@ class DateRangeChip(Chip):
 
         try:
             dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT_MICROSECONDS)
-        except ValueError as exc:
+        except ValueError:
             try:
                 dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT)
             except ValueError as exc:
@@ -288,7 +288,7 @@ class DateRangeChip(Chip):
 
         try:
             dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT_MICROSECONDS)
-        except ValueError as exc:
+        except ValueError:
             try:
                 dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT)
             except ValueError as exc:
@@ -716,11 +716,11 @@ class Search(resource.SketchResource):
 
         self.resource_data = {}
 
-    def from_saved(self, search_id):  # pylint: disable=arguments-differ
+    def from_saved(self, search_id):  # pylint: disable=arguments-renamed
         """Initialize the search object from a saved search.
 
         Args:
-            search_id: integer value for the saved
+            search_id (int): integer value for the saved
                 search (primary key).
         """
         resource_uri = f"sketches/{self._sketch.id}/views/{search_id}/"
@@ -1081,7 +1081,7 @@ class Search(resource.SketchResource):
         self._scrolling = True
 
     def to_dict(self):
-        """Returns a dict with the respone of the query."""
+        """Returns a dict with the response of the query."""
         if self._raw_response is None:
             self._execute_query()
             if self._raw_response is None:

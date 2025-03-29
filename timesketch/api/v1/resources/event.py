@@ -27,10 +27,11 @@ from opensearchpy.exceptions import RequestError
 import numpy as np
 import pandas as pd
 
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import abort
-from flask_restful import Resource
+from flask_restful import Resource, inputs
 from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
@@ -98,12 +99,12 @@ class EventCreateResource(resources.ResourceMixin, Resource):
     """Resource to create an annotation for an event."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
         Handler for /api/v1/sketches/:sketch_id/event/create/
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
@@ -123,7 +124,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             form = request.data
 
         timeline_name = "Manual events"
-        index_name_seed = "timesketch_{0:d}".format(sketch_id)
+        index_name_seed = f"timesketch_{sketch_id:d}"
 
         date_string = form.get("date_string")
         if not date_string:
@@ -137,8 +138,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to add event, not able to convert the date "
-                    "string. Was it properly formatted? Error: "
-                    "{0!s}".format(e),
+                    f"string. Was it properly formatted? Error: {e!s}",
                 )
 
         timestamp = int(time.mktime(date.utctimetuple())) * 1000000
@@ -224,7 +224,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         except Exception as e:  # pylint: disable=broad-except
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Failed to add event ({0!s})".format(e),
+                f"Failed to add event ({e!s})",
             )
 
         # Return Timeline if it was created.
@@ -247,19 +247,23 @@ class EventResource(resources.ResourceMixin, Resource):
         super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument(
-            "searchindex_id", type=six.text_type, required=True, location="args"
+            "searchindex_id", type=str, required=True, location="args"
         )
+        self.parser.add_argument("event_id", type=str, required=True, location="args")
         self.parser.add_argument(
-            "event_id", type=six.text_type, required=True, location="args"
+            "include_processing_timelines",
+            type=inputs.boolean,
+            required=False,
+            location="args",
         )
 
     @login_required
-    def get(self, sketch_id):
+    def get(self, sketch_id: int):
         """Handles GET request to the resource.
         Handler for /api/v1/sketches/:sketch_id/event/
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             JSON of the datastore event
@@ -289,18 +293,26 @@ class EventResource(resources.ResourceMixin, Resource):
             )
 
         event_id = args.get("event_id")
+        include_processing_timelines = bool(
+            args.get("include_processing_timelines", False)
+        )
+        allowed_statuses = ["ready"]
+        if include_processing_timelines and current_app.config.get(
+            "SEARCH_PROCESSING_TIMELINES", False
+        ):
+            allowed_statuses.append("processing")
         indices = [
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in allowed_statuses
         ]
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Search index ID ({0!s}) does not belong to the list "
-                "of indices".format(searchindex_id),
+                f"Search index ID ({searchindex_id!s}) does not belong to the list"
+                " of indices",
             )
 
         result = self.datastore.get_event(searchindex_id, event_id)
@@ -409,13 +421,13 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
         return events_by_index
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST requests to the resource.
 
         Allows new attributes to be added to multiple events in one request.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model.
+            sketch_id: (int) Integer primary key for a sketch database model.
 
         Returns:
             A JSON instance of flask.wrappers.Response. Response metadata
@@ -540,11 +552,11 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
     BUFFER_SIZE_FOR_ES_BULK_UPDATES = 10000
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
@@ -576,7 +588,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         except json.JSONDecodeError as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to read the tags, with error: {0!s}".format(e),
+                f"Unable to read the tags, with error: {e!s}",
             )
 
         if not isinstance(tags_to_add, list):
@@ -595,14 +607,13 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             if field not in event_df:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Events need to have a [{0:s}] field associated "
-                    "to it.".format(field),
+                    f"Events need to have a [{field:s}] field associated to it.",
                 )
             if any(event_df[field].isna()):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "All events need to have a [{0:s}] field "
-                    "set, it cannot have a non-value.".format(field),
+                    f"All events need to have a [{field:s}] field set, it cannot"
+                    "have a non-value.",
                 )
 
         # Remove any potential extra fields from the events.
@@ -617,8 +628,8 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         if event_size > self.MAX_EVENTS_TO_TAG:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Cannot tag more than {0:d} events in a single "
-                "request".format(self.MAX_EVENTS_TO_TAG),
+                f"Cannot tag more than {self.MAX_EVENTS_TO_TAG:d} events in a "
+                "single request",
             )
 
         tag_dict["number_of_events_passed_to_api"] = event_size
@@ -672,10 +683,10 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
                 except RequestError as e:
                     logger.error("Unable to query for events", exc_info=True)
-                    errors.append("Unable to query for events, {0!s}".format(e))
+                    errors.append(f"Unable to query for events, {e!s}")
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
-                        "Unable to query events, {0!s}".format(e),
+                        f"Unable to query events, {e!s}",
                     )
 
                 for result in search["hits"]["hits"]:
@@ -762,7 +773,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         )
 
     def _get_sketch(self, sketch_id):
-        """Helper function: Returns Sketch object givin a sketch id.
+        """Helper function: Returns Sketch object given a sketch id.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -780,13 +791,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             )
         return sketch
 
-    def _get_current_search_node(self, current_search_node_id, sketch):
-        """Helper function: Returns Current Search Node object givin a search
+    def _get_current_search_node(self, current_search_node_id: str, sketch: Sketch):
+        """Helper function: Returns Current Search Node object given a search
             node id
 
         Args:
-            current_search_node_id: search node id
-                        sketch: Sketch object
+            current_search_node_id: (str) search node id
+            sketch: (object) Sketch object
 
         Returns:
             Search history object representing the current search node
@@ -810,11 +821,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         return current_search_node
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
@@ -831,10 +842,14 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         if _search_node_id:
             current_search_node = self._get_current_search_node(_search_node_id, sketch)
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
         indices = [
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in allowed_statuses
         ]
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
@@ -847,8 +862,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if searchindex_id not in indices:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Search index ID ({0!s}) does not belong to the list "
-                    "of indices".format(searchindex_id),
+                    f"Search index ID ({searchindex_id!s}) does not belong to the"
+                    " list of indices",
                 )
 
             # Get or create an event in the SQL database to have something
@@ -910,7 +925,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Annotation type needs to be either label or comment, "
-                    "not {0!s}".format(annotation_type),
+                    f"not {annotation_type!s}",
                 )
 
             annotations.append(annotation)
@@ -921,12 +936,12 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         return self.to_json(annotations, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
-    def put(self, sketch_id):
+    def put(self, sketch_id: int):
         """Handles update request to annotations (currently only comments are
             supported).
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             The updated annotation object in JSON (instance of
@@ -961,8 +976,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if searchindex_id not in indices:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Search index ID ({0!s}) does not belong to the list "
-                    "of indices".format(searchindex_id),
+                    "Search index ID ({searchindex_id!s}) does not belong to the"
+                    " list of indices",
                 )
 
             # Retrieve the event from the SQL database based on the event_id
@@ -974,7 +989,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if not event:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
-                    "No event found with the id: " "{0!s}".format(event_id),
+                    f"No event found with the id: {event_id!s}",
                 )
 
             # Retrieve annotation type supplied in the request
@@ -986,11 +1001,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 # Retrieve the comment attached to the event bases on the comment
                 # id supplied in the request
                 comment = event.get_comment(annotation["id"])
+                annotation_id = annotation["id"]
                 if not comment:
                     abort(
                         HTTP_STATUS_CODE_NOT_FOUND,
-                        "No comment found with "
-                        "this id: {0!d}.".format(annotation["id"]),
+                        f"No comment found with this id: {annotation_id!s}.",
                     )
 
                 # Make sure the current user is the owner of the comment
@@ -1001,9 +1016,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     )
 
                 # Update the comment with the new value
-                annotation = event.update_comment(
-                    annotation["id"], annotation["comment"]
-                )
+                annotation = event.update_comment(annotation_id, annotation["comment"])
 
                 if not annotation:
                     abort(
@@ -1015,19 +1028,18 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Annotation type needs to be a comment, "
-                    "not {0!s}".format(annotation_type),
+                    f"Annotation type needs to be a comment, not {annotation_type!s}",
                 )
 
         return self.to_json(updated_annotations, status_code=HTTP_STATUS_CODE_OK)
 
     @login_required
-    def delete(self, sketch_id):
+    def delete(self, sketch_id: int):
         """Handles delete request of annotations (currently only comments are
             supported).
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             A HTTP 200 if the annotation was successfully deleted and HTTP 400
@@ -1058,7 +1070,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         if not event:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "No event found with the id: " "{0!s}".format(event_id),
+                f"No event found with the id: {event_id!s}",
             )
 
         if "comment" in annotation_type:
@@ -1068,7 +1080,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if not comment:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
-                    "No comment found with " "this id: {0!d}.".format(annotation_id),
+                    f"No comment found with this id: {annotation_id!s}.",
                 )
 
             # Make sure the current user is the owner of the comment
@@ -1097,14 +1109,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         else:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Annotation type needs to be a comment, "
-                "not {0!s}".format(annotation_type),
+                f"Annotation type needs to be a comment, not {annotation_type!s}",
             )
 
         return (
             HTTP_STATUS_CODE_BAD_REQUEST,
             "Could not delete the annotation"
-            " type {0!s} with the id {1!d}".format(annotation_type, annotation_id),
+            f" type {annotation_type!s} with the id {annotation_id!s}",
         )
 
 
@@ -1112,11 +1123,11 @@ class CountEventsResource(resources.ResourceMixin, Resource):
     """Resource to number of events for sketch timelines."""
 
     @login_required
-    def get(self, sketch_id):
+    def get(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             Number of events in JSON (instance of flask.wrappers.Response)
@@ -1135,8 +1146,8 @@ class CountEventsResource(resources.ResourceMixin, Resource):
             if t.get_status.status != "archived"
         ]
         count, bytes_on_disk = self.datastore.count(indices)
-        meta = dict(count=count, bytes=bytes_on_disk)
-        schema = dict(meta=meta, objects=[])
+        meta = {"count": count, "bytes": bytes_on_disk}
+        schema = {"meta": meta, "objects": []}
         return jsonify(schema)
 
 
@@ -1144,12 +1155,12 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
     """Resource to add a Timeline identifier to events within an index."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
         Handler for /api/v1/sketches/:sketch_id/event/create/
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: (int) Integer primary key for a sketch database model
 
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
@@ -1215,8 +1226,8 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the timeline "
-                "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
+                f"The sketch ID ({sketch.id:d}) does not match with the timeline "
+                f"sketch ID ({timeline.sketch.id:d})",
             )
 
         query_dsl = {
@@ -1275,13 +1286,13 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
     MAX_TAGS_PER_REQUEST = 500
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """
         Remove tags (max 500) from a list of events (max 500).
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            in request form:
+            sketch_id: (int) Integer primary key for a sketch database model
+                in request form:
                 events: list of events to remove tags from with the following values:
                     _id: the event id (e.g. k8P1MYcBkeTGnypeeKJL)
                     _index: the searchindex name
@@ -1324,8 +1335,8 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
         if len(events) > self.MAX_EVENTS_TO_TAG:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Cannot untag more than {0:d} events in a single "
-                "request".format(self.MAX_EVENTS_TO_TAG),
+                f"Cannot untag more than {self.MAX_EVENTS_TO_TAG:d} events in a "
+                "single request",
             )
 
         tags_to_remove = form.get("tags_to_remove", [])
@@ -1335,8 +1346,8 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
         if len(tags_to_remove) > self.MAX_TAGS_PER_REQUEST:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Cannot untag more than {0:d} tags in a single "
-                "request".format(self.MAX_TAGS_PER_REQUEST),
+                f"Cannot untag more than {self.MAX_TAGS_PER_REQUEST:d} tags in a "
+                "single request",
             )
 
         datastore = self.datastore

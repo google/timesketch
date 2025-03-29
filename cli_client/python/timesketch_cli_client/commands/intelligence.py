@@ -15,6 +15,7 @@
 
 import sys
 import json
+from typing import Optional, Literal
 import click
 
 
@@ -35,13 +36,16 @@ def intelligence_group():
     help="Comma separated list of columns to show. (default: ioc,type)",
 )
 @click.pass_context
-def list_intelligence(ctx, header, columns):
+def list_intelligence(
+    ctx: click.Context, header: Optional[bool], columns: Optional[str] = None
+):
     """List all intelligence.
 
     Args:
-        ctx: Click context object.
-        header: Include header in output. (default is to show header)
-        columns: Comma separated list of columns to show. (default: ioc,type)
+        ctx (click.Context) (required): Click context object.
+        header (bool) (optional): Include header in output. (default is to show header)
+        columns (str) (optional): Comma separated list of columns to show.
+            (default: ioc,type)
                 Other options: externalURI, tags
     """
 
@@ -109,7 +113,14 @@ def list_intelligence(ctx, header, columns):
     help="Comma separated list of tags.",
 )
 @click.pass_context
-def add_intelligence(ctx, ioc, tags, ioc_type="other"):
+def add_intelligence(
+    ctx: click.Context,
+    ioc: str,
+    tags: Optional[str] = None,
+    ioc_type: Optional[
+        Literal["ip", "domain", "url", "md5", "sha1", "sha256", "other"]
+    ] = "other",
+):
     """Add intelligence to a sketch.
 
     A sketch can have multiple intelligence entries. Each entry consists of
@@ -118,7 +129,7 @@ def add_intelligence(ctx, ioc, tags, ioc_type="other"):
     Reference: https://timesketch.org/guides/user/intelligence/
 
     Args:
-        ctx: Click context object.
+        ctx:  (click.Context) (required) Click context object.
         ioc: IOC value.
         ioc_type: Type of the intelligence. This is defined in the ontology file.
             If a string doesn't match any of the aforementioned IOC types,

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Form definitions and validators for the forms used in the application."""
 
-from __future__ import unicode_literals
 
 from flask_wtf import FlaskForm
 from wtforms import widgets
@@ -222,6 +221,9 @@ class AggregationExploreForm(BaseForm):
     aggregator_name = StringField("Aggregator Name", validators=[Optional()])
     aggregator_parameters = StringField(
         "Aggregator Parameters", validators=[Optional()]
+    )
+    include_processing_timelines = BooleanField(
+        "Include processing timelines", validators=[Optional()], default=False
     )
 
 

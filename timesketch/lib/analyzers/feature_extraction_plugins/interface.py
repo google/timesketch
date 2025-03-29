@@ -17,7 +17,7 @@ import abc
 from typing import Optional
 
 
-class BaseFeatureExtractionPlugin(object):
+class BaseFeatureExtractionPlugin:
     """A base plugin for feature extraction.
 
     This class serves as an interface for feature extraction plugins.

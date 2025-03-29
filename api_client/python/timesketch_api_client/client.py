@@ -210,17 +210,17 @@ class TimesketchApi:
         """Return an OAuth session.
 
         Args:
-            client_id: The client ID if OAUTH auth is used.
-            client_secret: The OAUTH client secret if OAUTH is used.
-            client_secrets_file: Path to the JSON file that contains the client
+            client_id (str): The client ID if OAUTH auth is used.
+            client_secret (str): The OAUTH client secret if OAUTH is used.
+            client_secrets_file (str): Path to the JSON file that contains the client
                 secrets, in the client_secrets format.
-            host: Host address the OAUTH web server will bind to.
-            port: Port the OAUTH web server will bind to.
-            open_browser: A boolean, if set to false (default) a browser window
+            host (str): Host address the OAUTH web server will bind to.
+            port (int): Port the OAUTH web server will bind to.
+            open_browser (bool): A boolean, if set to false (default) a browser window
                 will not be automatically opened.
-            run_server: A boolean, if set to true (default) a web server is
+            run_server (bool): A boolean, if set to true (default) a web server is
                 run to catch the OAUTH request and response.
-            skip_open: A booelan, if set to True (defaults to False) an
+            skip_open (bool): A booelan, if set to True (defaults to False) an
                 authorization URL is printed on the screen to visit. This is
                 only valid if run_server is set to False.
 
@@ -322,14 +322,14 @@ class TimesketchApi:
         """Create authenticated HTTP session for server communication.
 
         Args:
-            username: User to authenticate as.
-            password: User password.
-            verify: Verify server SSL certificate.
-            client_id: The client ID if OAUTH auth is used.
-            client_secret: The OAUTH client secret if OAUTH is used.
-            auth_mode: The authentication mode to use. Supported values are
+            username (str): User to authenticate as.
+            password (str): User password.
+            verify (bool): Verify server SSL certificate.
+            client_id (str): The client ID if OAUTH auth is used.
+            client_secret (str): The OAUTH client secret if OAUTH is used.
+            auth_mode (str): The authentication mode to use. Supported values are
                 'userpass' (username/password combo), 'http-basic'
-                (HTTP Basic authentication) and oauth.
+                (HTTP Basic authentication) and oauth
 
         Returns:
             Instance of requests.Session.
@@ -368,8 +368,8 @@ class TimesketchApi:
         """Make a HTTP GET request.
 
         Args:
-            resource_uri: The URI to the resource to be fetched.
-            params: Dict of URL parameters to send in the GET request.
+            resource_uri (str): The URI to the resource to be fetched.
+            params (dict): Dict of URL parameters to send in the GET request.
 
         Returns:
             Dictionary with the response data.
@@ -397,7 +397,7 @@ class TimesketchApi:
                     ) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the repsonse for request '{2:s}'"
+                    "[{0:d}/{1:d}] Parsing the response for request '{2:s}'"
                     "failed. Trying again...".format(
                         retry_count, self.DEFAULT_RETRY_COUNT, resource_url
                     )
@@ -411,7 +411,7 @@ class TimesketchApi:
                     ) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the JSON repsonse for request "
+                    "[{0:d}/{1:d}] Parsing the JSON response for request "
                     "'{2:s}' failed. Trying again...".format(
                         retry_count, self.DEFAULT_RETRY_COUNT, resource_url
                     )
@@ -427,8 +427,8 @@ class TimesketchApi:
         """Create a new sketch.
 
         Args:
-            name: Name of the sketch.
-            description: Description of the sketch.
+            name (str): Name of the sketch.
+            description (str): Description of the sketch.
 
         Returns:
             Instance of a Sketch object.
@@ -436,9 +436,13 @@ class TimesketchApi:
         Raises:
             RuntimeError: If response does not contain an 'objects' key after
                 DEFAULT_RETRY_COUNT attempts.
+            ValueError: If name is empty
         """
         if not description:
             description = name
+
+        if not name:
+            raise ValueError("Sketch name cannot be empty")
 
         retry_count = 0
         objects = None
@@ -462,8 +466,8 @@ class TimesketchApi:
         """Create a new user.
 
         Args:
-            username: Name of the user
-            password: Password of the user
+            username (str): Name of the user
+            password (str): Password of the user
 
         Returns:
             True if user created successfully.
@@ -538,9 +542,9 @@ class TimesketchApi:
         """Returns information about available aggregators.
 
         Args:
-            name: String with the name of an aggregator. If the name is not
+            name (str): String with the name of an aggregator. If the name is not
                 provided, a list with all aggregators is returned.
-            as_pandas: Boolean indicating that the results will be returned
+            as_pandas (bool): Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of dicts.
 
         Returns:
@@ -585,15 +589,15 @@ class TimesketchApi:
         """Get a list of all open sketches that the user has access to.
 
         Args:
-            per_page: Number of items per page when paginating. Default is 50.
-            scope: What scope to get sketches as. Default to user.
+            per_page (int): Number of items per page when paginating. Default is 50.
+            scope (str): What scope to get sketches as. Default to user.
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in
                 shared: Get sketches that can be accessed
                 admin: Get all sketches if the user is an admin
                 archived: get archived sketches
                 search: pass additional search query
-            include_archived: If archived sketches should be returned.
+            include_archived (bool): If archived sketches should be returned.
 
         Yields:
             Sketch objects instances.
@@ -633,6 +637,41 @@ class TimesketchApi:
         Returns:
             Instance of a SearchIndex object.
         """
+        return index.SearchIndex(searchindex_id, api=self)
+
+    def create_searchindex(self, searchindex_name: str, opensearch_index_name: str):
+        """Create a new SearchIndex.
+        Args:
+            searchindex_name: Name for the searchindex.
+            opensearch_index_name: The name of the index in opensearch.
+        Returns:
+            Instance of a SearchIndex object.
+        Raises:
+            ValueError: If the SearchIndex fails to create.
+        """
+        resource_url = f"{self.api_root}/searchindices/"
+        form_data = {
+            "searchindex_name": searchindex_name,
+            "es_index_name": opensearch_index_name,
+        }
+        response = self.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response,
+                message="Error creating searchindex",
+                error=ValueError,
+            )
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get("objects")
+        if not objects:
+            raise ValueError(
+                "Unable to create a SearchIndex, try again or file an "
+                "issue on GitHub."
+            )
+
+        searchindex_id = objects[0].get("id")
         return index.SearchIndex(searchindex_id, api=self)
 
     def check_celery_status(self, job_id=""):
@@ -687,7 +726,7 @@ class TimesketchApi:
         and returns a list of SigmaRule objects of the rules.
 
         Args:
-            as_pandas: Boolean indicating that the results will be returned
+            as_pandas (bool): Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of SigmaRuleObjects.
 
         Returns:
@@ -730,7 +769,7 @@ class TimesketchApi:
         is required to parse the rule.
 
         Args:
-            rule_yaml: YAML of the Sigma Rule.
+            rule_yaml (str): YAML of the Sigma Rule.
 
         Returns:
             Instance of a Sigma object.

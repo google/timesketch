@@ -13,7 +13,6 @@
 # limitations under the License.
 """This file contains the interface for a story exporter."""
 
-from __future__ import unicode_literals
 
 import json
 

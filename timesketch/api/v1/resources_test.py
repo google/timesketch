@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for v1 of the Timesketch API."""
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import json
-import mock
+from unittest import mock
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -78,7 +76,7 @@ class SketchListResourceTest(BaseTest):
     def test_sketch_post_resource(self):
         """Authenticated request to create a sketch."""
         self.login()
-        data = dict(name="test", description="test")
+        data = {"name": "test", "description": "test"}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -115,10 +113,7 @@ class SketchResourceTest(BaseTest):
     def test_create_a_sketch(self):
         """Authenticated request to create a sketch."""
         self.login()
-        data = dict(
-            name="test_create_a_sketch",
-            description="test_create_a_sketch",
-        )
+        data = {"name": "test_create_a_sketch", "description": "test_create_a_sketch"}
         response = self.client.post(
             "/api/v1/sketches/",
             data=json.dumps(data, ensure_ascii=False),
@@ -137,10 +132,7 @@ class SketchResourceTest(BaseTest):
         """Authenticated request to append a label to a sketch."""
         self.login()
 
-        data = dict(
-            labels=["test_append_label_to_sketch"],
-            label_action="add",
-        )
+        data = {"labels": ["test_append_label_to_sketch"], "label_action": "add"}
 
         response = self.client.post(
             "/api/v1/sketches/3/",
@@ -164,10 +156,7 @@ class SketchResourceTest(BaseTest):
         self.login()
 
         # Create sketch to test with
-        data = dict(
-            name="test_archive_sketch",
-            description="test_archive_sketch",
-        )
+        data = {"name": "test_archive_sketch", "description": "test_archive_sketch"}
         response = self.client.post(
             "/api/v1/sketches/",
             data=json.dumps(data, ensure_ascii=False),
@@ -219,20 +208,17 @@ class SketchResourceTest(BaseTest):
     def test_attempt_to_delete_protected_sketch(self):
         """Authenticated request to delete a protected sketch."""
         self.login()
-        data = dict(
-            name="test_attempt_to_delete_protected_sketch",
-            description="test_attempt_to_delete_protected_sketch",
-        )
+        data = {
+            "name": "test_attempt_to_delete_protected_sketch",
+            "description": "test_attempt_to_delete_protected_sketch",
+        }
         response = self.client.post(
             "/api/v1/sketches/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
         self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
-        data = dict(
-            labels=["protected"],
-            label_action="add",
-        )
+        data = {"labels": ["protected"], "label_action": "add"}
         response = self.client.post(
             "/api/v1/sketches/4/",
             data=json.dumps(data, ensure_ascii=False),
@@ -253,10 +239,10 @@ class SketchResourceTest(BaseTest):
         self.login()
 
         # Create sketch to test with
-        data = dict(
-            name="test_delete_archive_sketch",
-            description="test_delete_archive_sketch",
-        )
+        data = {
+            "name": "test_delete_archive_sketch",
+            "description": "test_delete_archive_sketch",
+        }
         response = self.client.post(
             "/api/v1/sketches/",
             data=json.dumps(data, ensure_ascii=False),
@@ -304,13 +290,13 @@ class ViewListResourceTest(BaseTest):
     def test_post_view_list_resource(self):
         """Authenticated request to create a view."""
         self.login()
-        data = dict(
-            name="test",
-            new_searchtemplate=False,
-            query="test",
-            filter={},
-            dsl={},
-        )
+        data = {
+            "name": "test",
+            "new_searchtemplate": False,
+            "query": "test",
+            "filter": {},
+            "dsl": {},
+        }
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -344,7 +330,7 @@ class ViewResourceTest(BaseTest):
     def test_post_view_resource(self):
         """Authenticated request to update a view."""
         self.login()
-        data = dict(name="test", query="test", filter="{}")
+        data = {"name": "test", "query": "test", "filter": "{}"}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -440,7 +426,7 @@ class ExploreResourceTest(BaseTest):
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
-        data = dict(query="test", filter={})
+        data = {"query": "test", "filter": {}}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -463,7 +449,7 @@ class AggregationExploreResourceTest(BaseTest):
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
         self.login()
-        data = dict(aggregation_dsl="test")
+        data = {"aggregation_dsl": "test"}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -771,7 +757,7 @@ class EventAddAttributeResourceTest(BaseTest):
             },
         )
         self.assertIn(
-            "Attribute '_invalid' for event_id '1' invalid, cannot start with " "'_'",
+            "Attribute '_invalid' for event_id '1' invalid, cannot start with '_'",
             response.json["meta"]["last_10_errors"],
         )
 
@@ -810,11 +796,11 @@ class EventAnnotationResourceTest(BaseTest):
         self.login()
         for annotation_type in ["comment", "label"]:
             event = {"_type": "test_event", "_index": "test", "_id": "test"}
-            data = dict(
-                annotation="test",
-                annotation_type=annotation_type,
-                events=[event],
-            )
+            data = {
+                "annotation": "test",
+                "annotation_type": annotation_type,
+                "events": [event],
+            }
             response = self.client.post(
                 self.resource_url,
                 data=json.dumps(data),
@@ -828,12 +814,12 @@ class EventAnnotationResourceTest(BaseTest):
         Authenticated request to create an annotation, but in the wrong index.
         """
         self.login()
-        data = dict(
-            annotation="test",
-            annotation_type="comment",
-            event_id="test",
-            searchindex_id="invalid_searchindex",
-        )
+        data = {
+            "annotation": "test",
+            "annotation_type": "comment",
+            "event_id": "test",
+            "searchindex_id": "invalid_searchindex",
+        }
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -851,7 +837,7 @@ class SearchIndexResourceTest(BaseTest):
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
-        data = dict(searchindex_name="test3", es_index_name="test3", public=False)
+        data = {"searchindex_name": "test3", "es_index_name": "test3", "public": False}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -869,7 +855,7 @@ class TimelineListResourceTest(BaseTest):
     def test_add_existing_timeline_resource(self):
         """Authenticated request to add a timeline to a sketch."""
         self.login()
-        data = dict(timeline=1)
+        data = {"timeline": 1}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -880,7 +866,7 @@ class TimelineListResourceTest(BaseTest):
     def test_add_new_timeline_resource(self):
         """Authenticated request to add a timeline to a sketch."""
         self.login()
-        data = dict(timeline=2)
+        data = {"timeline": 2}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -929,12 +915,12 @@ level: high
 
         self.login()
 
-        sigma = dict(
-            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-            title="Suspicious Installation of bbbbbb",
-            description="Detects suspicious installation of bbbbbb",
-            rule_yaml=MOCK_SIGMA_RULE,
-        )
+        sigma = {
+            "rule_uuid": "5266a592-b793-11ea-b3de-bbbbbb",
+            "title": "Suspicious Installation of bbbbbb",
+            "description": "Detects suspicious installation of bbbbbb",
+            "rule_yaml": MOCK_SIGMA_RULE,
+        }
 
         # Create a first rule
         response = self.client.post(
@@ -985,11 +971,11 @@ level: high
         """Authenticated request to update sigma rule."""
         self.login()
 
-        sigma = dict(
-            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-            title="Suspicious Installation of bbbbbb",
-            description="Detects suspicious installation of bbbbbb",
-            rule_yaml="""
+        sigma = {
+            "rule_uuid": "5266a592-b793-11ea-b3de-bbbbbb",
+            "title": "Suspicious Installation of bbbbbb",
+            "description": "Detects suspicious installation of bbbbbb",
+            "rule_yaml": """
 title: Suspicious Installation of bbbbbb
 id: 5266a592-b793-11ea-b3de-bbbbbb
 description: Detects suspicious installation of bbbbbb
@@ -1010,7 +996,7 @@ falsepositives:
     - Unknown
 level: high
 """,
-        )
+        }
 
         # Create a first rule
         response = self.client.post(
@@ -1031,11 +1017,11 @@ level: high
         response = self.client.put(
             "/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(
-                dict(
-                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-                    title="Suspicious Installation of cccccc",
-                    description="Detects suspicious installation of cccccc",
-                    rule_yaml="""
+                {
+                    "rule_uuid": "5266a592-b793-11ea-b3de-bbbbbb",
+                    "title": "Suspicious Installation of cccccc",
+                    "description": "Detects suspicious installation of cccccc",
+                    "rule_yaml": """
 title: Suspicious Installation of cccccc
 id: 5266a592-b793-11ea-b3de-bbbbbb
 description: Detects suspicious installation of cccccc
@@ -1056,7 +1042,7 @@ falsepositives:
     - Unknown
 level: high
 """,
-                )
+                }
             ),
             content_type="application/json",
         )
@@ -1149,7 +1135,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         """Authenticated request to get an sigma rule by text."""
         self.login()
 
-        data = dict(content=self.correct_rule)
+        data = {"content": self.correct_rule}
         response = self.client.post(
             "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
@@ -1164,7 +1150,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         """Authenticated request to get an sigma rule by text with non parseable
         yaml text."""
         self.login()
-        data = dict(content="foobar: asd")
+        data = {"content": "foobar: asd"}
         response = self.client.post(
             "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
@@ -1181,7 +1167,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         self.login()
         response = self.client.post(
             "/api/v1/sigmarules/text/",
-            data=json.dumps(dict(action="post")),
+            data=json.dumps({"action": "post"}),
             content_type="application/json",
         )
         data = json.loads(response.get_data(as_text=True))
@@ -1310,7 +1296,7 @@ class UserListTest(BaseTest):
         """Authenticated request (admin user) to create another user."""
         self.login_admin()
 
-        data = dict(username="testuser", password="testpassword")
+        data = {"username": "testuser", "password": "testpassword"}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1323,7 +1309,7 @@ class UserListTest(BaseTest):
         which should not work."""
         self.login()
 
-        data = dict(username="testuser", password="testpassword")
+        data = {"username": "testuser", "password": "testpassword"}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1337,7 +1323,7 @@ class UserListTest(BaseTest):
         but with missing username, which should not work."""
         self.login_admin()
 
-        data = dict(username="", password="testpassword")
+        data = {"username": "", "password": "testpassword"}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1351,7 +1337,7 @@ class UserListTest(BaseTest):
         but with missing password, which should not work."""
         self.login_admin()
 
-        data = dict(username="testuser", password="")
+        data = {"username": "testuser", "password": ""}
         response = self.client.post(
             "/api/v1/users/",
             data=json.dumps(data),
@@ -1385,7 +1371,11 @@ class SystemSettingsResourceTest(BaseTest):
 
         self.login()
         response = self.client.get(self.resource_url)
-        expected_response = {"DFIQ_ENABLED": False, "LLM_PROVIDER": "test"}
+        expected_response = {
+            "DFIQ_ENABLED": False,
+            "LLM_PROVIDER": "test",
+            "SEARCH_PROCESSING_TIMELINES": False,
+        }
         self.assertEqual(response.json, expected_response)
 
 

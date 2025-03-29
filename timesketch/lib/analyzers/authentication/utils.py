@@ -209,7 +209,7 @@ class BaseAuthenticationUtils:
 
         # Check data types for columns
         for column in column_list:
-            if not df[column].dtype.name in [
+            if df[column].dtype.name not in [
                 "str",
                 "int64",
                 "float64",
@@ -524,7 +524,7 @@ class BaseAuthenticationUtils:
         if not useraccount:
             return "", ""
 
-        if not "/" in useraccount:
+        if "/" not in useraccount:
             return useraccount, ""
 
         try:
@@ -863,6 +863,7 @@ class BruteForceUtils(BaseAuthenticationUtils):
 
         Args:
             authsummaries (List[AuthSummary]): A list of AuthSummary objects.
+            output (AnalyzerOutput): An AnalyzerOutput object.
 
         Returns:
             AnalyzerOutput: An AnalyzerOutput object containing brute for analyzer

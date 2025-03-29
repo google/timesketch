@@ -50,7 +50,7 @@ limitations under the License.
             <template v-slot:activator="{ on: onTooltip, attrs }">
               <span
                 class="timeline-name-ellipsis"
-                :class="{ disabled: !isSelected && slotProps.timelineStatus === 'ready' }"
+                :class="{ disabled: !isSelected && (slotProps.timelineStatus === 'processing' || slotProps.timelineStatus === 'ready') }"
                 v-bind="attrs"
                 v-on="onTooltip"
                 >{{ timeline.name }}</span
@@ -88,7 +88,7 @@ export default {
   },
   methods: {
     timelineStyle(timelineStatus) {
-      const greyOut = timelineStatus === 'ready' && !this.isSelected
+      const greyOut = (timelineStatus === 'processing' || timelineStatus === 'ready') && !this.isSelected
       return {
         opacity: greyOut ? '50%' : '100%',
         backgroundColor: this.$vuetify.theme.dark ? '#303030' : '#f5f5f5',

@@ -13,13 +13,12 @@
 # limitations under the License.
 """Tests for analysis manager."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.analyzers import manager
 
 
-class MockAnalyzer(object):
+class MockAnalyzer:
     """Mock analyzer class,"""
 
     NAME = "MockAnalyzer"
@@ -27,7 +26,7 @@ class MockAnalyzer(object):
     DEPENDENCIES = frozenset()
 
 
-class MockAnalyzer2(object):
+class MockAnalyzer2:
     """Mock analyzer class,"""
 
     NAME = "MockAnalyzer2"
@@ -35,7 +34,7 @@ class MockAnalyzer2(object):
     DEPENDENCIES = frozenset(["MockAnalyzer"])
 
 
-class MockAnalyzer3(object):
+class MockAnalyzer3:
     """Mock analyzer class,"""
 
     NAME = "MockAnalyzer3"
@@ -43,7 +42,7 @@ class MockAnalyzer3(object):
     DEPENDENCIES = frozenset()
 
 
-class MockAnalyzer4(object):
+class MockAnalyzer4:
     """Mock analyzer class,"""
 
     NAME = "MockAnalyzer4"
@@ -51,7 +50,7 @@ class MockAnalyzer4(object):
     DEPENDENCIES = frozenset(["MockAnalyzer2", "MockAnalyzer3"])
 
 
-class MockAnalyzerFail1(object):
+class MockAnalyzerFail1:
     """Mock analyzer class,"""
 
     NAME = "MockAnalyzerFail1"
@@ -59,7 +58,7 @@ class MockAnalyzerFail1(object):
     DEPENDENCIES = frozenset(["MockAnalyzerFail2"])
 
 
-class MockAnalyzerFail2(object):
+class MockAnalyzerFail2:
     """Mock analyzer class,"""
 
     NAME = "MockAnalyzerFail2"

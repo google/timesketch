@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Plugin for chaining Chrome downloads to filesystem and execution events."""
 
 from timesketch.lib.analyzers.chain_plugins import interface
@@ -17,7 +16,7 @@ class ChromeDownloadFilesystemChainPlugin(interface.BaseChainPlugin):
     SEARCH_QUERY = 'data_type:"chrome:history:file_downloaded"'
     EVENT_FIELDS = ["full_path"]
 
-    def get_chained_events(self, base_event):
+    def get_chained_events(self, base_event: object):
         """Yields an event that is chained or linked to the base event.
 
         Args:
@@ -49,17 +48,15 @@ class ChromeDownloadFilesystemChainPlugin(interface.BaseChainPlugin):
         events = self.analyzer_object.event_stream(
             search_query, return_fields=return_fields, scroll=False
         )
-        for event in events:
-            yield event
+        yield from events
 
-        exec_query = 'executable:"*{0:s}"'.format(target)
+        exec_query = f'executable:"*{target:s}"'
         return_fields = ["executable", "chains"]
 
         events = self.analyzer_object.event_stream(
             exec_query, return_fields=return_fields, scroll=False
         )
-        for event in events:
-            yield event
+        yield from events
 
 
 manager.ChainPluginsManager.register_plugin(ChromeDownloadFilesystemChainPlugin)

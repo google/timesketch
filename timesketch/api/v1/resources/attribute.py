@@ -55,10 +55,10 @@ class AttributeResource(resources.ResourceMixin, Resource):
         """
         value = form.get(key_to_check)
         if not value:
-            return "Unable to save an attribute without a {0:s}.".format(key_to_check)
+            return f"Unable to save an attribute without a {key_to_check:s}."
 
         if not isinstance(value, str):
-            return "Unable to save an attribute without a {0:s}.".format(key_to_check)
+            return f"Unable to save an attribute without a {key_to_check:s}."
 
         return ""
 
@@ -133,7 +133,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
             ontology_lib.OntologyManager.encode_value(x, cast_as_string) for x in values
         ]
 
-        if any([not isinstance(x, str) for x in value_strings]):
+        if any(not isinstance(x, str) for x in value_strings):
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "All values needs to be stored as strings.",

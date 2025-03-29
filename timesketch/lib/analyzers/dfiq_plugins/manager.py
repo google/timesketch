@@ -18,11 +18,12 @@ import inspect
 import json
 import logging
 import os
+from typing import List, Optional
 
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager as analyzer_manager
-from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import InvestigativeQuestionApproach, Timeline
 
 
 logger = logging.getLogger("timesketch.analyzers.dfiq_plugins.manager")
@@ -233,14 +234,19 @@ class DFIQAnalyzerManager:
             ]
         return datatype_per_timeline
 
-    def _run_dfiq_analyzers(self, dfiq_analyzers, approach, timelines=None):
+    def _run_dfiq_analyzers(
+        self,
+        dfiq_analyzers: set,
+        approach: InvestigativeQuestionApproach,
+        timelines: Optional[List[Timeline]] = None,
+    ):
         """Executes DFIQ analyzers on matching timelines.
 
         Args:
-            dfiq_analyzers (set): A set of DFIQ analyzer names.
-            approach (InvestigativeQuestionApproach): An approach object to link
+            dfiq_analyzers: (set) A set of DFIQ analyzer names.
+            approach: (InvestigativeQuestionApproach) An approach object to link
                      with the analyssis
-            timelines ([<Timeline>]): Optional list of timelines to limit the
+            timelines: ([<Timeline>]) Optional list of timelines to limit the
                       analysis on.
 
         Returns:

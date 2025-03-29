@@ -13,9 +13,8 @@
 # limitations under the License.
 
 """Tests for GeoIP analyzer."""
-from __future__ import unicode_literals
 
-import mock
+from unittest import mock
 
 from timesketch.lib.analyzers.geoip import MaxMindDbGeoIPAnalyzer
 from timesketch.lib.analyzers.geoip import MaxMindDbWebIPAnalyzer
@@ -29,7 +28,7 @@ from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.analyzers.base_sessionizer_test import _create_mock_event
 
 
-class MockReader(object):
+class MockReader:
     """A mock implementation of a GeoLite2 database reader"""
 
     def __init__(self, *args, **kwargs):
@@ -95,10 +94,10 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         event = analyzer.datastore.event_store["0"]
 
         for ip_field in IP_FIELDS:
-            self.assertTrue("{0}_latitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_longitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_iso_code".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_city".format(ip_field) in event["_source"])
+            self.assertTrue(f"{ip_field}_latitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_longitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_iso_code" in event["_source"])
+            self.assertTrue(f"{ip_field}_city" in event["_source"])
         self.assertEqual(message, "Found 1 IP address(es).")
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -136,10 +135,10 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         event = analyzer.datastore.event_store["0"]
 
         for ip_field in IP_FIELDS:
-            self.assertTrue("{0}_latitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_longitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_iso_code".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_city".format(ip_field) in event["_source"])
+            self.assertTrue(f"{ip_field}_latitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_longitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_iso_code" in event["_source"])
+            self.assertTrue(f"{ip_field}_city" in event["_source"])
         self.assertEqual(message, "Found 1 IP address(es).")
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -287,10 +286,10 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         event = analyzer.datastore.event_store["0"]
 
         for ip_field in IP_FIELDS:
-            self.assertTrue("{0}_latitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_longitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_iso_code".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_city".format(ip_field) in event["_source"])
+            self.assertTrue(f"{ip_field}_latitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_longitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_iso_code" in event["_source"])
+            self.assertTrue(f"{ip_field}_city" in event["_source"])
         self.assertEqual(message, "Found 1 IP address(es).")
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -328,10 +327,10 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         event = analyzer.datastore.event_store["0"]
 
         for ip_field in IP_FIELDS:
-            self.assertTrue("{0}_latitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_longitude".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_iso_code".format(ip_field) in event["_source"])
-            self.assertTrue("{0}_city".format(ip_field) in event["_source"])
+            self.assertTrue(f"{ip_field}_latitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_longitude" in event["_source"])
+            self.assertTrue(f"{ip_field}_iso_code" in event["_source"])
+            self.assertTrue(f"{ip_field}_city" in event["_source"])
         self.assertEqual(message, "Found 1 IP address(es).")
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)

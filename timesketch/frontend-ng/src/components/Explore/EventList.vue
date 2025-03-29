@@ -15,6 +15,15 @@ limitations under the License.
 -->
 <template>
   <div>
+    <v-alert
+      v-model="showBanner"
+      dense
+      dismissible
+      type="info"
+    >
+      Data may be incomplete. Some timelines are still loading.
+    </v-alert>
+
     <v-dialog v-model="exportDialog" width="700">
       <v-card flat class="pa-5">
         <v-progress-circular indeterminate size="20" width="1"></v-progress-circular>
@@ -630,6 +639,7 @@ export default {
       branchParent: null,
       sortOrderAsc: true,
       summaryCollapsed: false,
+      showBanner: false,
     }
   },
   computed: {
@@ -742,6 +752,9 @@ export default {
     },
     activeContext() {
       return this.$store.state.activeContext
+    },
+    settings() {
+      return this.$store.state.settings
     },
     filterChips: function () {
       return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
@@ -866,7 +879,7 @@ export default {
     },
     search: function (resetPagination = true, incognito = false, parent = false) {
       this.isSummaryLoading = true
-      
+
       // Exit early if there are no indices selected.
       if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
         this.eventList = emptyEventList()
@@ -933,10 +946,13 @@ export default {
       formData['facet'] = this.activeContext.facetId
       formData['question'] = this.activeContext.questionId
 
+      formData['include_processing_timelines'] = this.settings.showProcessingTimelineEvents
+
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {
           this.eventList.objects = response.data.objects
           this.eventList.meta = response.data.meta
+          this.updateShowBanner()
           this.searchInProgress = false
           EventBus.$emit('updateCountPerTimeline', response.data.meta.count_per_timeline)
           this.$emit('countPerTimeline', response.data.meta.count_per_timeline)
@@ -1152,6 +1168,15 @@ export default {
         })
         .catch((e) => {})
     },
+    updateShowBanner: function() {
+      // Show banner only when processing timelines are enabled and at
+      // least one enabled timeline is the "processing" state.
+      this.showBanner =
+        !!this.settings.showProcessingTimelineEvents &&
+        this.sketch.active_timelines
+          .filter(tl => this.$store.state.enabledTimelines.includes(tl.id))
+          .some(tl => tl.status && tl.status[0].status === 'processing')
+    },
   },
   watch: {
     tableOptions: {
@@ -1190,6 +1215,11 @@ export default {
         this.search(resetPagination, incognito, parent)
       },
       deep: true,
+    },
+    'settings.showProcessingTimelineEvents': {
+      handler() {
+        this.updateShowBanner()
+      },
     },
   },
   created() {
@@ -1299,17 +1329,17 @@ th:first-child {
   gap: 20px;  
 }
 .ts-ai-summary-card {
-  border: 1px solid transparent !important; 
+  border: 1px solid transparent !important;
   border-radius: 8px;
-  background-color: #fafafa; 
+  background-color: #fafafa;
   background-image:
       linear-gradient(white, white), 
       var(--llm-gradient);
   background-origin: border-box;
   background-clip: content-box, border-box;
   background-size: 300% 100%;
-  animation: borderBeamIridescent-subtle 6s linear infinite; 
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); 
+  animation: borderBeamIridescent-subtle 6s linear infinite;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   display: block;
   margin-bottom: 20px;
 }
@@ -1325,8 +1355,8 @@ th:first-child {
     }
 }
 .theme--dark.ts-ai-summary-card {
-  background-color: #1e1e1e; 
-  border-color: hsla(0,0%,100%,.12) !important; 
+  background-color: #1e1e1e;
+  border-color: hsla(0,0%,100%,.12) !important;
   background-image:
       linear-gradient(#1e1e1e, #1e1e1e), 
       var(--llm-gradient);;
@@ -1373,6 +1403,12 @@ th:first-child {
   100% {
     background-position: 468px 0;
   }
+}
+.ts-event-list-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 20px;
 }
 ::v-deep .no-transition {
   transition: none !important;

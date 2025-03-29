@@ -13,7 +13,6 @@
 # limitations under the License.
 """Test for the ACL model."""
 
-from __future__ import unicode_literals
 
 from timesketch.lib.testlib import BaseTest
 
