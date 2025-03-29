@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.8">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
@@ -1370,6 +1370,48 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#celery-task-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Celery Task Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Celery Task Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tsctl-celery-tasks-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      tsctl celery-tasks-redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tsctl-celery-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      tsctl celery-tasks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#celery-revoke-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      celery-revoke-task
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2613,6 +2655,48 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#celery-task-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Celery Task Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Celery Task Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tsctl-celery-tasks-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      tsctl celery-tasks-redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tsctl-celery-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      tsctl celery-tasks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#celery-revoke-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      celery-revoke-task
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3128,6 +3212,62 @@ tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
 45  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           60 2023-01-04 17:09:04.046003
 46  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           59 2023-01-04 17:09:04.014973
 48  2.750000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           63 2023-01-04 17:09:04.148185
+</code></pre>
+<h3 id="celery-task-management">Celery Task Management</h3>
+<p>These commands allow you to inspect and manage Celery tasks within the Timesketch application.</p>
+<h4 id="tsctl-celery-tasks-redis"><code>tsctl celery-tasks-redis</code></h4>
+<p><strong>Description:</strong></p>
+<p>Checks and displays the status of all Celery tasks stored in Redis. This command connects to the Redis instance used by Celery to store task metadata and retrieves information about all tasks. It then presents this information in a formatted table, including the task ID, name, status, and result.</p>
+<p>Notes:</p>
+<ul>
+<li>Celery tasks have a result_expire date, which by default is one day. After that, the results will no longer be available.</li>
+</ul>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">tsctl celery-tasks-redis
+</code></pre>
+<p><strong>Output:</strong></p>
+<p>A table with the following columns:</p>
+<ul>
+<li>Task ID: The unique identifier for the Celery task.</li>
+<li>Name: The name of the task.</li>
+<li>Status: The current status of the task (e.g., SUCCESS, FAILURE, PENDING).</li>
+<li>Result: The result of the task if it has completed successfully.</li>
+</ul>
+<pre><code>Task ID                          Name Status  Result
+13a995db28d2479b854db177d1301ecb None SUCCESS 3e062029b52f4e1a8a103488b99bc2b3
+1829df81cb534ab29fe44d1e8c605c95 None SUCCESS 3e062029b52f4e1a8a103488b99bc2b3
+ffd3d6157e0f458bbe5f4c97e6d70d03 None SUCCESS 9a0f22670bf74ba6884f3ba9b261bf13
+</code></pre>
+<h4 id="tsctl-celery-tasks">tsctl celery-tasks</h4>
+<p>Shows running or past Celery tasks. This command provides various ways to inspect and view the status of Celery tasks within the Timesketch application. It can display information about a specific task, list active tasks, or show all tasks (including pending, active, and failed).</p>
+<p><strong>Usage</strong></p>
+<pre><code class="language-bash">tsctl celery-tasks [OPTIONS]
+</code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--task_id TEXT</code>: Show information about a specific task ID.</li>
+<li><code>--active</code>: Show only active tasks.</li>
+<li><code>--show_all</code>: Show all tasks, including pending, active, and failed.</li>
+</ul>
+<p><strong>Notes</strong></p>
+<ul>
+<li>Celery tasks have a <code>result_expire date</code>, which defaults to one day. After this period, task results may no longer be available.</li>
+<li>When displaying all tasks, the status of each task is retrieved, which may take some time.</li>
+<li>If no arguments are provided, it will print a message to use <code>--active</code> or <code>--show_all</code>.</li>
+</ul>
+<p><strong>Examples</strong></p>
+<pre><code class="language-bash">tsctl celery-tasks --task_id &lt;task_id&gt;
+tsctl celery-tasks --active
+tsctl celery-tasks --show_all
+</code></pre>
+<h4 id="celery-revoke-task">celery-revoke-task</h4>
+<p>Revokes (cancels) a Celery task. This command attempts to revoke a running Celery task, effectively canceling its execution. It uses the task ID to identify the specific task to revoke.</p>
+<p>Note: For short tasks, they have to be cancelled quick.</p>
+<p><strong>Usage</strong></p>
+<pre><code class="language-bash">tsctl celery-revoke-task  TASK_ID
+</code></pre>
+<p>Example:</p>
+<pre><code>tsctl celery-revoke-task 8115648e-944c-4452-962e-644041603419
 </code></pre>
 
 
