@@ -209,7 +209,7 @@ class OpenSearchDataStore:
                 exc_info=True,
             )
             return False
-        except Exception as e: # pylint: disable=broad-exception-caught
+        except Exception as e:  # pylint: disable=broad-exception-caught
             # Catch unexpected errors
             es_logger.error(
                 "Unexpected error waiting for index '%s': %s",
@@ -632,7 +632,7 @@ class OpenSearchDataStore:
         sketch_id: int,
         indices: list,
         query_string: str = "",
-        query_filter: Dict = {},
+        query_filter: Optional[Dict] = None,
         count: bool = False,
         query_dsl: Optional[Dict] = None,
         aggregations: Optional[Dict] = None,
@@ -674,6 +674,9 @@ class OpenSearchDataStore:
 
         # Make sure that the list of index names is uniq.
         indices = list(set(ready_indices))
+
+        if query_filter is None:
+            query_filter = {}
 
         # Check if we have specific events to fetch and get indices.
         if query_filter.get("events", None):
@@ -769,7 +772,7 @@ class OpenSearchDataStore:
         sketch_id: int,
         indices: list,
         query_string: str = "",
-        query_filter: Dict = {},
+        query_filter: Optional[Dict] = None,
         query_dsl: Optional[Dict] = None,
         return_fields: Optional[list] = None,
         enable_scroll: bool = True,
@@ -800,6 +803,9 @@ class OpenSearchDataStore:
         indices = list(set(indices))
 
         METRICS["search_requests"].labels(type="stream").inc()
+
+        if query_filter is None:
+            query_filter = {}
 
         if not query_filter.get("size"):
             query_filter["size"] = self.DEFAULT_STREAM_LIMIT
