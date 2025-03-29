@@ -339,7 +339,7 @@ class MockDataStore:
         sketch_id: int,
         indices: list,
         query_string: str = "",
-        uery_filter: Optional[Dict] = None,
+        query_filter: Optional[Dict] = None,
         query_dsl: Optional[Dict] = None,
         return_fields: Optional[list] = None,
         enable_scroll: bool = True,
