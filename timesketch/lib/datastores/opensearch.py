@@ -108,7 +108,7 @@ class OpenSearchDataStore:
     DEFAULT_FLUSH_RETRY_LIMIT = 3  # Max retries for flushing the queue.
     DEFAULT_EVENT_IMPORT_TIMEOUT = 180  # Timeout value in seconds for importing events.
 
-    DEFAULT_INDEX_WAIT_TIMEOUT = 30  # Seconds to wait for an index to become ready
+    DEFAULT_INDEX_WAIT_TIMEOUT = 10  # Seconds to wait for an index to become ready
     DEFAULT_MINIMUM_HEALTH = (
         "yellow"  # Minimum health status required ('yellow' or 'green')
     )
