@@ -13,10 +13,10 @@
 # limitations under the License.
 """This module implements the models for the Timesketch core system."""
 
-from __future__ import unicode_literals
 
 import json
 import logging
+from typing import Optional, Union
 from uuid import uuid4
 
 from flask import current_app
@@ -135,16 +135,20 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
 
     @property
     def active_timelines(self):
-        """List timelines that are ready for analysis.
+        """List timelines that are being processed or ready for analysis.
 
         Returns:
             List of instances of timesketch.models.sketch.Timeline
         """
         _timelines = []
+        statuts_exclus = ["processing", "fail", "archived"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            statuts_exclus.remove("processing")
+
         for timeline in self.timelines:
             timeline_status = timeline.get_status.status
             index_status = timeline.searchindex.get_status.status
-            if (timeline_status or index_status) in ("processing", "fail", "archived"):
+            if (timeline_status or index_status) in statuts_exclus:
                 continue
             _timelines.append(timeline)
         return _timelines
@@ -228,7 +232,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
     aggregations = relationship("Aggregation", backref="view", lazy="select")
     aggregationgroups = relationship("AggregationGroup", backref="view", lazy="select")
 
-    def validate_filter(self, query_filter=None):
+    def validate_filter(self, query_filter: Optional[Union[str, dict]] = None):
         """Validate the Query Filter.
 
         Make sure that we have all expected attributes in the query filter

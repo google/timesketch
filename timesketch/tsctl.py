@@ -18,7 +18,9 @@ import pathlib
 import json
 import re
 import subprocess
+import time
 import yaml
+import redis
 
 
 import click
@@ -27,9 +29,12 @@ import pandas as pd
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
+from celery.result import AsyncResult
+
 
 from timesketch import version
 from timesketch.app import create_app
+from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
 from timesketch.models import db_session
 from timesketch.models import drop_all
@@ -292,7 +297,7 @@ def import_search_templates(path):
 
     for file_path in file_paths:
         search_templates = None
-        with open(file_path, "r") as fh:
+        with open(file_path, "r", encoding="utf-8") as fh:
             search_templates = yaml.safe_load(fh.read())
 
         if isinstance(search_templates, dict):
@@ -354,7 +359,7 @@ def import_sigma_rules(path):
         sigma_rule = None
         sigma_yaml = None
 
-        with open(file_path, "r") as fh:
+        with open(file_path, "r", encoding="utf-8") as fh:
             try:
                 sigma_yaml = fh.read()
                 sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
@@ -420,7 +425,7 @@ def list_sigma_rules(columns):
                 relevant_data.append(rule.get_status.status)
             else:
                 try:
-                    relevant_data.append(rule.__getattribute__(column))
+                    relevant_data.append(getattr(rule, column))
                 except AttributeError:
                     print(f"Column {column} not found in SigmaRule")
                     return
@@ -442,7 +447,7 @@ def remove_sigma_rule(rule_uuid):
     rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
     if not rule:
-        error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+        error_msg = f"No rule found with rule_uuid.{rule_uuid!s}"
         print(error_msg)  # only needed in debug cases
         return
 
@@ -472,7 +477,7 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{0:s} first".format(path)
+            f"The directory needs to exist, please create: {path:s} first"
         )
 
     all_sigma_rules = SigmaRule.query.all()
@@ -482,7 +487,7 @@ def export_sigma_rules(path):
     for rule in all_sigma_rules:
         file_path = os.path.join(path, f"{rule.title}.yml")
         if os.path.isfile(file_path):
-            print("File [{0:s}] already exists.".format(file_path))
+            print(f"File [{file_path:s}] already exists.")
             continue
 
         with open(file_path, "wb") as fw:
@@ -635,14 +640,16 @@ def sketch_info(sketch_id):
     type=click.Choice(["ready", "processing", "fail"]),
     help="get or set timeline status.",
 )
-def timeline_status(timeline_id, action, status):
-    """Get or set a timeline status
+def timeline_status(timeline_id: str, action: str, status: str):
+    """Get or set a timeline status.
 
     If "action" is "set", the given value of status will be written in the status.
 
     Args:
-        action: get or set timeline status.
-        status: timeline status. Only valid choices are ready, processing, fail.
+        timeline_id (str): The ID of the timeline.
+        action (str):  The action to perform ("get" or "set").
+        status (str): The timeline status to set.  Must be one of "ready",
+                      "processing", or "fail".
     """
     if action == "get":
         timeline = Timeline.query.filter_by(id=timeline_id).first()
@@ -764,7 +771,7 @@ def validate_context_links_conf(path):
         print(f"Cannot load the config file: {path} does not exist!")
         return
 
-    with open(path, "r") as fh:
+    with open(path, "r", encoding="utf-8") as fh:
         context_link_config = yaml.safe_load(fh)
 
     if not context_link_config:
@@ -800,12 +807,13 @@ def validate_context_links_conf(path):
     required=True,
     help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
-def searchindex_info(searchindex_id):
+def searchindex_info(searchindex_id: str):
     """Search for a searchindex and print information about it.
     Especially which sketch the searchindex belongs to.
 
     Args:
-        searchindex_id: to search for e.g. 4c5afdf60c6e49499801368b7f238353.
+        searchindex_id (str): The search index ID to search for (e.g.,
+                              "4c5afdf60c6e49499801368b7f238353").
     """
 
     index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
@@ -845,14 +853,16 @@ def searchindex_info(searchindex_id):
     required=True,
     help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
-def searchindex_status(searchindex_id, action, status):
-    """Get or set a searchindex status
+def searchindex_status(searchindex_id: str, action: str, status: str):
+    """Get or set a searchindex status.
 
     If "action" is "set", the given value of status will be written in the status.
 
     Args:
-        action: get or set searchindex status.
-        status: searchindex status. Only valid choices are ready, processing, fail.
+        searchindex_id (str): The ID of the search index.
+        action (str): The action to perform ("get" or "set").
+        status (str): The search index status to set ("ready", "processing", or
+                      "fail").
     """
     if action == "get":
         searchindex = SearchIndex.query.filter_by(id=searchindex_id).first()
@@ -1012,3 +1022,223 @@ def analyzer_stats(
     else:
         pd.options.display.max_colwidth = 500
         print(df)
+
+
+@cli.command(name="celery-tasks-redis")
+def celery_tasks_redis():
+    """Check and display the status of all Celery tasks stored in Redis.
+
+    This command connects to the Redis instance used by Celery to store
+    task metadata and retrieves information about all tasks. It then
+    presents this information in a formatted table, including the task ID,
+    name, status, and result.
+
+    The command handles potential connection errors to Redis and gracefully
+    exits if no tasks are found. It also handles exceptions that might occur
+    when retrieving task details, displaying "N/A" for any unavailable
+    information.
+
+    Note: Celery tasks have a `result_expire` date, which by default is
+        one day. After that, the results will no longer be available.
+
+    """
+    celery = create_celery_app()
+    redis_url = celery.conf.broker_url
+
+    try:
+        redis_client = redis.from_url(redis_url)
+    except redis.exceptions.ConnectionError:
+        print("Could not connect to Redis.")
+        return
+
+    # Get all keys matching the pattern for Celery task metadata
+    task_meta_keys = redis_client.keys("celery-task-meta-*")
+
+    if not task_meta_keys:
+        print("No Celery tasks found in Redis.")
+        return
+
+    table_data = [["Task ID", "Name", "Status", "Result"]]
+    for key in task_meta_keys:
+        task_id = key.decode("utf-8").split("celery-task-meta-")[1]
+        task_result = AsyncResult(task_id, app=celery)
+
+        try:
+            task_name = task_result.name
+        except Exception:  # pylint: disable=broad-except
+            task_name = "N/A"
+
+        try:
+            task_status = task_result.status
+        except Exception:  # pylint: disable=broad-except
+            task_status = "N/A"
+
+        try:
+            task_result_value = str(task_result.result)
+        except Exception:  # pylint: disable=broad-except
+            task_result_value = "N/A"
+
+        table_data.append([task_id, task_name, task_status, task_result_value])
+
+    max_lengths = [0] * len(table_data[0])
+    for row in table_data:
+        for i, cell in enumerate(row):
+            max_lengths[i] = max(max_lengths[i], len(str(cell)))
+
+    # create the table
+    for row in table_data:
+        for i, cell in enumerate(row):
+            print(str(cell).ljust(max_lengths[i]), end=" ")
+        print()
+
+
+@cli.command(name="celery-tasks")
+@click.option(
+    "--task_id",
+    required=False,
+    help="Show information about a specific task ID.",
+)
+@click.option(
+    "--active",
+    is_flag=True,
+    help="Show only active tasks.",
+)
+@click.option(
+    "--show_all",
+    is_flag=True,
+    help="Show all tasks, including pending, active, and failed.",
+)
+@click.option(
+    "--revoked",
+    is_flag=True,
+    help="Show revoked tasks.",
+)
+def celery_tasks(task_id, active, show_all):
+    """Show running or past Celery tasks.
+    This command provides various ways to inspect and view the status of
+    Celery tasks within the Timesketch application. It can display
+    information about a specific task, list active tasks, show all tasks
+    (including pending, active, and failed).
+
+    Args:
+        task_id (str): If provided, display detailed information about the
+            task with this ID.
+        active (bool): If True, display only currently active tasks.
+        show_all (bool): If True, display all tasks, including active, pending,
+            reserved, scheduled, and failed tasks.
+
+    Notes:
+        - Celery tasks have a `result_expire` date, which defaults to one day.
+          After this period, task results may no longer be available.
+        - When displaying all tasks, the status of each task is retrieved,
+          which may take some time.
+        - If no arguments are provided, it will print a message to use
+            --active or --show_all.
+
+    Examples:
+        # Show information about a specific task:
+        tsctl celery-tasks --task_id <task_id>
+
+        # Show all active tasks:
+        tsctl celery-tasks --active
+
+        # Show all tasks (including pending, active, and failed):
+        tsctl celery-tasks --show_all
+    """
+    celery = create_celery_app()
+
+    if task_id:
+        # Show information about a specific task
+        task_result = AsyncResult(task_id, app=celery)
+        print(f"Task ID: {task_id}")
+        print(f"Status: {task_result.status}")
+        if task_result.status == "FAILURE":
+            print(f"Traceback: {task_result.traceback}")
+        if task_result.status == "SUCCESS":
+            print(f"Result: {task_result.result}")
+        return
+
+    # Show a list of tasks
+    inspector = celery.control.inspect()
+
+    if active:
+        active_tasks = inspector.active()
+        if not active_tasks:
+            print("No active tasks found.")
+            return
+        table_data = [["Task ID", "Name", "Time Start"]]
+        for tasks in active_tasks.items():
+            for task in tasks:
+                table_data.append(
+                    [
+                        task["id"],
+                        task["name"],
+                        time.strftime(
+                            "%Y-%m-%d %H:%M:%S", time.localtime(task["time_start"])
+                        ),
+                    ]
+                )
+        print_table(table_data)
+        return
+
+    if show_all:
+        # Show all tasks (active, pending, reserved, scheduled, failed)
+        all_tasks = {}
+        all_tasks.update(inspector.active() or {})
+        all_tasks.update(inspector.reserved() or {})
+        all_tasks.update(inspector.scheduled() or {})
+
+        if not all_tasks:
+            print("No tasks found.")
+            return
+
+        table_data = [["Task ID", "Name", "Status", "Time Start"]]
+        for tasks in all_tasks.items():
+            for task in tasks:
+                task_id = task["id"]
+                task_result = AsyncResult(task_id, app=celery)
+                status = task_result.status
+                time_start = task.get("time_start", "N/A")
+                if time_start != "N/A":
+                    time_start = time.strftime(
+                        "%Y-%m-%d %H:%M:%S", time.localtime(time_start)
+                    )
+                table_data.append(
+                    [
+                        task_id,
+                        task["name"],
+                        status,
+                        time_start,
+                    ]
+                )
+        print_table(table_data)
+        return
+
+    print("Please use --active or --show_all to show tasks")
+
+
+@cli.command(name="celery-revoke-task")
+@click.argument("task_id")
+def celery_revoke_task(task_id):
+    """Revoke (cancel) a Celery task.
+
+     This command attempts to revoke a running Celery task, effectively
+    canceling its execution.  It uses the task ID to identify the specific
+    task to revoke. If the task is successfully revoked, a confirmation
+    message is printed. If an error occurs during the revocation process,
+    an error message is displayed.
+
+    Args:
+        task_id (str): The ID of the Celery task to revoke.
+
+    Raises:
+        Exception: If there is an error communicating with Celery or if the
+            task cannot be revoked.
+
+    """
+    celery = create_celery_app()
+    try:
+        celery.control.revoke(task_id, terminate=True)
+        print(f"Task {task_id} has been revoked.")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Error revoking task {task_id}: {e}")

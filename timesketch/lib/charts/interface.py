@@ -13,13 +13,12 @@
 # limitations under the License.
 """Interface for charts."""
 
-from __future__ import unicode_literals
 
 import altair as alt
 import pandas as pd
 
 
-class BaseChart(object):
+class BaseChart:
     """Base class for a chart."""
 
     # Name that the chart will be registered as.
@@ -85,10 +84,10 @@ class BaseChart(object):
 
         datum = getattr(alt.datum, self._field)
         if self._aggregation_id:
-            agg_string = "a={0:d}&".format(self._aggregation_id)
+            agg_string = f"a={self._aggregation_id:d}&"
         else:
             agg_string = ""
-        url = '{0:s}?{1:s}q={2:s}:"'.format(self._sketch_url, agg_string, self._field)
+        url = f'{self._sketch_url:s}?{agg_string:s}q={self._field:s}:"'
         return chart.transform_calculate(url=url + datum + '" ' + self._extra_query_url)
 
     def _add_url_href(self, encoding):

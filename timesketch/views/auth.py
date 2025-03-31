@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
-from __future__ import unicode_literals
 
 import requests
 
@@ -114,7 +113,7 @@ def login():
                 JwtKeyError,
                 Exception,
             ) as e:
-                current_app.logger.error("{}".format(e))
+                current_app.logger.error(f"{e}")
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
     if current_app.config.get("SSO_ENABLED", False):
@@ -228,13 +227,13 @@ def validate_api_token():
     # Sending a request to Google to verify that the access token
     # is valid, to be able to validate the session.
     data = {"access_token": token}
-    bearer_token_response = requests.post(TOKEN_URI, data=data)
+    bearer_token_response = requests.post(TOKEN_URI, data=data, timeout=60)
     if bearer_token_response.status_code != HTTP_STATUS_CODE_OK:
         return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate access token.")
     bearer_token_json = bearer_token_response.json()
 
     data = {"id_token": id_token}
-    token_response = requests.post(TOKEN_URI, data=data)
+    token_response = requests.post(TOKEN_URI, data=data, timeout=60)
     token_json = token_response.json()
 
     verified = token_json.get("email_verified", False)
@@ -261,7 +260,7 @@ def validate_api_token():
     except DiscoveryDocumentError as e:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
-            "Unable to discover document, with error: {0!s}".format(e),
+            f"Unable to discover document, with error: {e!s}",
         )
 
     expected_issuer = discovery_document["issuer"]
@@ -277,14 +276,14 @@ def validate_api_token():
     ) as e:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            "Unable to validate the JWT token, with error: {0!s}.".format(e),
+            f"Unable to validate the JWT token, with error: {e!s}.",
         )
 
     read_client_id = token_json.get("aud", "")
     if read_client_id not in ALLOWED_CLIENT_IDS:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            "Client ID {0:s} does not match server configuration for "
+            "Client ID {:s} does not match server configuration for "
             "client".format(read_client_id),
         )
 
@@ -314,7 +313,7 @@ def validate_api_token():
         if domain.lower() not in ALLOWED_DOMAINS:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                "Domain {0:s} is not allowed to authenticate against this "
+                "Domain {:s} is not allowed to authenticate against this "
                 "instance.".format(domain),
             )
 
@@ -361,16 +360,14 @@ def google_openid_connect():
     error = request.args.get("error", None)
 
     if error:
-        current_app.logger.error("OAuth2 flow error: {}".format(error))
-        return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST, "OAuth2 flow error: {0!s}".format(error)
-        )
+        current_app.logger.error(f"OAuth2 flow error: {error}")
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST, f"OAuth2 flow error: {error!s}")
 
     try:
         code = request.args["code"]
         client_csrf_token = request.args.get("state")
         server_csrf_token = session[CSRF_KEY]
-    except KeyError as e:
+    except KeyError:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST, "Client CSRF error, no CSRF key stored"
         )
@@ -381,14 +378,14 @@ def google_openid_connect():
     try:
         encoded_jwt = get_encoded_jwt_over_https(code)
     except JwtFetchError as e:
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Jwt Fetch error, {0!s}".format(e))
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Jwt Fetch error, {e!s}")
 
     try:
         discovery_document = get_oauth2_discovery_document()
     except DiscoveryDocumentError as e:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
-            "Unable to discover document, with error: {0!s}".format(e),
+            f"Unable to discover document, with error: {e!s}",
         )
 
     algorithm = discovery_document["id_token_signing_alg_values_supported"][0]
@@ -402,10 +399,10 @@ def google_openid_connect():
         decoded_jwt = decode_jwt(encoded_jwt, public_key, algorithm, expected_audience)
         validate_jwt(decoded_jwt, expected_issuer, expected_domain)
     except (JwtValidationError, JwtKeyError) as e:
-        current_app.logger.error("{}".format(e))
+        current_app.logger.error(f"{e}")
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            "Unable to validate request, with error: {0!s}".format(e),
+            f"Unable to validate request, with error: {e!s}",
         )
 
     validated_email = decoded_jwt.get("email")
