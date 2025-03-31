@@ -192,11 +192,6 @@ export default {
       this.store.updateReport({ [key]: value });
     }, 200),
   },
-  watch: {
-    riskLevel(riskLevel) {
-      this.riskLevel = riskLevel;
-    },
-  },
 };
 </script>
 

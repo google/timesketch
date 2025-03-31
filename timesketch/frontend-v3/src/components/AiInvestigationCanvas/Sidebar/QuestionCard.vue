@@ -32,14 +32,6 @@ limitations under the License.
         <p class="font-weight-medium">{{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
-        <v-chip
-          v-if="riskLevel"
-          size="x-small"
-          :color="riskColor"
-          class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
-        >
-          {{ riskLevel }}
-        </v-chip>
         <v-icon
           icon="mdi-check-circle"
           v-if="isApproved"
@@ -82,7 +74,6 @@ export default {
       this.store.setActiveQuestion({
         user: this.user,
         name: this.name,
-        riskLevel: this.riskLevel,
         observables: this.observables,
         conclusion: this.conclusion,
         type: this.type,
@@ -110,10 +101,6 @@ export default {
       } else {
         return false;
       }
-    },
-
-    riskColor() {
-      return riskColors[riskLevel];
     },
 
     listItemClasses() {

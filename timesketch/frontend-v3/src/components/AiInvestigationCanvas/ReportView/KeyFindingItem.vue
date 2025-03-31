@@ -16,11 +16,6 @@ limitations under the License.
 <template>
   <li class="question mb-10">
     <div class="d-inline-flex align-center justify-start">
-      <RiskLevelControl
-        :riskLevel="riskLevel"
-        :disabled="reportLocked"
-        @update:riskLevel="($event) => (riskLevel = $event)"
-      />
       <v-icon
         icon="mdi-check-circle"
         v-if="completed"
@@ -53,7 +48,6 @@ export default {
   data() {
     return {
       store: useAppStore(),
-      riskLevel: this.question.risk_level,
     };
   },
   computed: {
@@ -73,11 +67,6 @@ export default {
     },
     order() {
       return this.index + 1;
-    },
-  },
-  watch: {
-    riskLevel(riskLevel) {
-      this.updateQuestion({ ...this.question, risk_level: riskLevel });
     },
   },
 };

@@ -74,7 +74,6 @@ export default {
       store: useAppStore(),
       isSubmitting: false,
       isConfirming: false,
-      riskLevel: this.question.risk_level,
     };
   },
   computed: {
