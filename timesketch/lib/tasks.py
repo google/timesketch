@@ -795,7 +795,9 @@ def run_plaso(
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     try:
-        os_index_name = opensearch.create_index(index_name=index_name, mappings=mappings)
+        os_index_name = opensearch.create_index(
+            index_name=index_name, mappings=mappings
+        )
         if searchindex and os_index_name:
             searchindex.set_status("ready")
             db_session.add(searchindex)
@@ -1022,7 +1024,9 @@ def run_csv_jsonl(
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     try:
-        os_index_name = opensearch.create_index(index_name=index_name, mappings=mappings)
+        os_index_name = opensearch.create_index(
+            index_name=index_name, mappings=mappings
+        )
         if searchindex and os_index_name:
             searchindex.set_status("ready")
             db_session.add(searchindex)
