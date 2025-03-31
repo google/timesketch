@@ -219,7 +219,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 delimiter=delimiter,
             )
 
-
         if not timeline:
             timeline = Timeline.get_or_create(
                 name=timeline_name,
