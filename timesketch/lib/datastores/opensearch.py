@@ -219,56 +219,6 @@ class OpenSearchDataStore:
             )
             return False
 
-    def _ensure_indices_ready(self, indices: list) -> list:
-        """
-        Checks a list of indices for readiness, waiting if necessary.
-        Removes indices that are not found or do not become ready within the timeout.
-
-        Args:
-            indices: A list of index names to check.
-
-        Returns:
-            A list of index names that are confirmed to be ready.
-        """
-        ready_indices = []
-        if not indices:
-            return ready_indices
-        if not isinstance(indices, list):
-            indices = [indices]
-
-        for index_name in indices:
-            if not isinstance(index_name, str):
-                es_logger.warning("Invalid index name type skipped: %s", index_name)
-                continue
-
-            # Quick check for existence first to potentially fail faster
-            try:
-                if not self.client.indices.exists(index=index_name):
-                    es_logger.warning(
-                        "Index '%s' does not exist, removing from query list.",
-                        index_name,
-                    )
-                    continue
-            except TransportError as e:
-                es_logger.error(
-                    "Error checking existence for index '%s': %s",
-                    index_name,
-                    str(e),
-                    exc_info=True,
-                )
-                continue  # Skip this index if existence check fails
-
-            # If it exists, wait for it to become ready
-            if self._wait_for_index(index_name, self.index_timeout):
-                ready_indices.append(index_name)
-            else:
-                es_logger.warning(
-                    "Index '%s' did not become ready, removing from query list.",
-                    index_name,
-                )
-
-        return ready_indices
-
     @staticmethod
     def _build_labels_query(sketch_id: int, labels: list):
         """Build OpenSearch query for Timesketch labels.
@@ -664,16 +614,12 @@ class OpenSearchDataStore:
         if enable_scroll:
             scroll_timeout = "1m"  # Default to 1 minute scroll timeout
 
-        # Ensure the indices we are about to query are actually ready.
-        # This modifies the 'indices' list in place for this method execution.
-        ready_indices = self._ensure_indices_ready(indices)
-
         # Exit early if we have no ready indices to query
-        if not ready_indices:
+        if not indices:
             return {"hits": {"hits": [], "total": 0}, "took": 0}
 
         # Make sure that the list of index names is uniq.
-        indices = list(set(ready_indices))
+        indices = list(set(indices))
 
         if query_filter is None:
             query_filter = {}
@@ -723,6 +669,7 @@ class OpenSearchDataStore:
                 index=list(indices),
                 search_type=search_type,
                 scroll=scroll_timeout,
+                # ignore_unavailable=True,
             )
 
         # The argument " _source_include" changed to "_source_includes" in
@@ -796,9 +743,6 @@ class OpenSearchDataStore:
         Yields:
             Generator of event documents in JSON format
         """
-        # Check if the index exists and can be queried
-        indices = self._ensure_indices_ready(indices)
-
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
@@ -855,9 +799,6 @@ class OpenSearchDataStore:
         Returns:
             List with label names.
         """
-        # Check if the index exists and can be queried
-        indices = self._ensure_indices_ready(indices)
-
         # If no indices are provided, return an empty list. This indicates
         # there are no labels to aggregate within the specified sketch.
         # Returning early prevents querying OpenSearch with an empty
@@ -944,12 +885,6 @@ class OpenSearchDataStore:
             Event document in JSON format
         """
         METRICS["search_get_event"].inc()
-        if not self._ensure_indices_ready([searchindex_id]):
-            # Index doesn't exist or isn't ready
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                f"Index '{searchindex_id}' not found or not ready.",
-            )
 
         try:
             # Suppress the lint error because opensearchpy adds parameters
@@ -985,11 +920,6 @@ class OpenSearchDataStore:
         Returns:
             Tuple containing number of documents and size on disk.
         """
-        # Check if the index exists and can be queried
-        indices = self._ensure_indices_ready(indices)
-        if not indices:
-            return 0, 0
-
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
@@ -1123,7 +1053,7 @@ class OpenSearchDataStore:
             if not self._wait_for_index(index_name):
                 raise RuntimeError(
                     f"Index '{index_name}' was created but did not become ready "
-                    "within the timeout period."
+                    f"within the timeout period of {self.DEFAULT_INDEX_WAIT_TIMEOUT}s."
                 )
 
         return index_name

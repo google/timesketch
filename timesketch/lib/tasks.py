@@ -244,7 +244,6 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
                 status = "ready"
 
     timeline.set_status(status)
-    timeline.searchindex.set_status(status)
     # Commit changes to database
     db_session.add(timeline)
     db_session.commit()
@@ -792,12 +791,19 @@ def run_plaso(
         )
 
     opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     try:
         opensearch.create_index(index_name=index_name, mappings=mappings)
+        if searchindex:
+            searchindex.set_status("ready")
     except errors.DataIngestionError as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
+    except RuntimeError as e:
+        # This triggers if the index does not return a good state.
+        logger.error("Unable to create index [%s]: %s", index_name, str(e))
+        searchindex.set_status("fail")
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))

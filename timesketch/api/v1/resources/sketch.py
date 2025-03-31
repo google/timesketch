@@ -324,7 +324,11 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         # Get mappings for all indices in the sketch. This is used to set
         # columns shown in the event list.
-        sketch_indices = [t.searchindex.index_name for t in sketch.active_timelines]
+        sketch_indices = [
+            t.searchindex.index_name
+            for t in sketch.active_timelines
+            if t.searchindex.get_status.status == "ready"
+        ]
 
         # Make sure the list of index names is uniq
         sketch_indices = list(set(sketch_indices))
@@ -383,7 +387,9 @@ class SketchResource(resources.ResourceMixin, Resource):
                 if indices_metadata[index_name].get("is_legacy", False):
                     doc_count, _ = self.datastore.count(indices=index_name)
                     stats_per_timeline[timeline.id] = {"count": doc_count}
+
             count_agg_spec = {
+                "size": 0,
                 "aggs": {
                     "per_timeline": {
                         "terms": {
@@ -391,11 +397,12 @@ class SketchResource(resources.ResourceMixin, Resource):
                             "size": len(sketch.timelines),
                         }
                     }
-                }
+                },
             }
-            # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
-            count_agg = self.datastore.client.search(
-                index=sketch_indices, body=count_agg_spec, size=0
+            count_agg = self.datastore.search(
+                sketch_id=sketch.id,
+                indices=sketch_indices,
+                query_dsl=count_agg_spec,
             )
 
             count_per_timeline = (
