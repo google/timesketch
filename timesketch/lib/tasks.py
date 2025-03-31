@@ -1104,6 +1104,13 @@ def run_csv_jsonl(
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
 
+    except errors.IndexNotReadyError as e:
+        # This triggers if the index does not return a good state.
+        logger.error("Unable to create index [%s]: %s", index_name, str(e))
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
+        searchindex.set_status("fail")
+        raise
+
     except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
