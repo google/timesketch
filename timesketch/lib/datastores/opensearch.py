@@ -615,7 +615,7 @@ class OpenSearchDataStore:
         if enable_scroll:
             scroll_timeout = "1m"  # Default to 1 minute scroll timeout
 
-        # Exit early if we have no ready indices to query
+        # Exit early if we have no indices to query
         if not indices:
             return {"hits": {"hits": [], "total": 0}, "took": 0}
 
@@ -670,7 +670,6 @@ class OpenSearchDataStore:
                 index=list(indices),
                 search_type=search_type,
                 scroll=scroll_timeout,
-                # ignore_unavailable=True,
             )
 
         # The argument " _source_include" changed to "_source_includes" in
