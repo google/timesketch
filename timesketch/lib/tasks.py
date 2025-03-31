@@ -740,6 +740,7 @@ def run_plaso(
         NameError: If the searchidnex can't be created.
         UnboundLocalError: If the searchidnex can't be created.
         RequestError: If the searchidnex can't be created.
+        IndexNotReadyError: If the searchindex isn't ready.
 
     Returns:
         Name (str) of the index.
@@ -797,14 +798,17 @@ def run_plaso(
         opensearch.create_index(index_name=index_name, mappings=mappings)
         if searchindex:
             searchindex.set_status("ready")
+            db_session.add(searchindex)
+            db_session.commit()
     except errors.DataIngestionError as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
-    except RuntimeError as e:
+    except errors.IndexNotReadyError as e:
         # This triggers if the index does not return a good state.
         logger.error("Unable to create index [%s]: %s", index_name, str(e))
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         searchindex.set_status("fail")
-
+        raise
     except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
@@ -1015,8 +1019,12 @@ def run_csv_jsonl(
         current_app.config.get("OPENSEARCH_MAPPING_UPPER_LIMIT", 1000)
     )
 
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+
     try:
         opensearch.create_index(index_name=index_name, mappings=mappings)
+        if searchindex:
+            searchindex.set_status("ready")
 
         current_index_mapping_properties = (
             opensearch.client.indices.get_mapping(index=index_name)

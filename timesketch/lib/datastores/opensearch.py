@@ -38,6 +38,7 @@ import prometheus_client
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
+from timesketch.lib import errors
 
 
 # Setup logging
@@ -1042,7 +1043,10 @@ class OpenSearchDataStore:
                     index=index_name, body={"mappings": _document_mapping}
                 )
             except ConnectionError as e:
-                raise RuntimeError("Unable to connect to Timesketch backend.") from e
+                raise errors.DatastoreConnectionError(
+                    "Unable to connect to Timesketch backend when creating "
+                    f"index [{index_name}]."
+                ) from e
             except RequestError:
                 index_exists = self.client.indices.exists(index_name)
                 es_logger.warning(
@@ -1051,7 +1055,7 @@ class OpenSearchDataStore:
                 )
             # Wait for the index to become ready
             if not self._wait_for_index(index_name):
-                raise RuntimeError(
+                raise errors.IndexNotReadyError(
                     f"Index '{index_name}' was created but did not become ready "
                     f"within the timeout period of {self.DEFAULT_INDEX_WAIT_TIMEOUT}s."
                 )
