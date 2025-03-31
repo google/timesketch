@@ -962,6 +962,7 @@ export default {
         await this.updateObservables({
           conclusionId: this.conclusionId,
           events,
+          remove: false
         });
 
         this.closeEventLog();

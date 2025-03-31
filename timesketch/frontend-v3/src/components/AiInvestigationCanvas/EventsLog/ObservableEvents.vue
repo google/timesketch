@@ -23,7 +23,7 @@ limitations under the License.
     </thead>
     <tbody>
       <tr v-for="fact in events" :key="fact.event_id">
-        <ConclusionFact :fact="fact" :sketchId="store.sketch.id" />
+        <ConclusionFact :fact="fact" :sketchId="store.sketch.id" :conclusionId="conclusionId" />
       </tr>
     </tbody>
   </v-table>

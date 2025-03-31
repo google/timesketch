@@ -62,43 +62,43 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
 
 export default {
+  inject: ["updateObservables"],
   props: {
-    eventId: String,
-    sketchId: String,
+    fact: Object,
+    conclusionId: String
   },
   data() {
     return {
       store: useAppStore(),
-      eventId: null,
       isLoading: false,
       showRemoveLog: false,
     };
   },
   methods: {
     async removeEventFromObservable() {
-      this.isLoading = true;
       try {
-        const queryResponse = await RestApiClient.search(this.sketchId, {
-          query: `event_id: ${this.eventId}`,
+        this.isLoading = true;
+
+        await this.updateObservables({
+          conclusionId: this.conclusionId,
+          events: [this.fact],
+          remove: true,
         });
 
-        if (!queryResponse.data.objects?.[0]) {
-          throw error;
-        }
-
-        this.showRemoveLog = false;
+        this.setShowRemoveLog();
 
         this.store.setNotification({
-          text: "Event removed from observable",
-          icon: "mdi-check-circle-outline",
+          text: `Event ${this.eventId} removed from the observable.`,
+          icon: "mdi-plus-circle-outline",
           type: "success",
         });
       } catch (error) {
+        console.error(error);
+
         this.store.setNotification({
-          text: "Unable to remove event from observable. Please try again.",
+          text: "Unable to remove event from the observable.",
           icon: "mdi-alert-circle-outline",
           type: "error",
         });

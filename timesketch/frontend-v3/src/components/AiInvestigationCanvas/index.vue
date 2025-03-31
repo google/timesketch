@@ -179,22 +179,22 @@ export default {
     closeEventLog() {
       this.showEventLog = false;
     },
-    async updateObservables(event) {
+    async updateObservables(payload) {
       const annotationResponse = await RestApiClient.saveEventAnnotation(
         this.store.sketch.id,
         "label",
         "__ts_fact",
-        event.events,
+        payload.events,
         null,
-        false,
-        event.conclusionId
+        payload.remove,
+        payload.conclusionId
       );
 
       if (
         !annotationResponse.data.objects ||
         annotationResponse.data.objects.length < 1
       ) {
-        throw new Error("Unable to add event to conclusion");
+        throw new Error("Unable to update conclusion");
       }
 
       const currentQuestion = await RestApiClient.getQuestion(

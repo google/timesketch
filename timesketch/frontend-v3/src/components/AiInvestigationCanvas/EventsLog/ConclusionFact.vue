@@ -26,7 +26,7 @@ limitations under the License.
         <v-icon left small icon="mdi-file-code-outline" />
       </v-btn>
     </div>
-    <RemoveEventPopup :eventId="fact.event_id" :sketchId="sketchId" />
+    <RemoveEventPopup :fact="fact" :conclusionId="conclusionId" />
   </td>
   <td>{{ fact.message }}</td>
   <td>{{ fact.datetime }} ({{ fact.timestamp_desc }})</td>
@@ -37,7 +37,7 @@ limitations under the License.
 export default {
   props: {
     fact: Array,
-    sketchId: String,
+    conclusionId: String,
   },
   data() {
     return {
