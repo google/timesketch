@@ -30,9 +30,9 @@ limitations under the License.
       />
     </div>
     <p class="text-h6 font-weight-medium">{{ order }}. {{ question.name }}</p>
-    <ul class="my-4 ml-4" v-if="question.conclusion">
+    <ul class="my-4 ml-4" v-if="question.conclusions" v-for="conclusion in question.conclusions">
       <li>
-        <p>{{ question.conclusion }}</p>
+        <p>{{ conclusion.conclusion }}</p>
       </li>
     </ul>
     <QuestionActionsStrip

@@ -38,13 +38,18 @@ limitations under the License.
             Edit</v-btn
           >
 
-          <v-btn variant="text" size="small" color="primary" v-if="reportLocked">
+          <v-btn
+            variant="text"
+            size="small"
+            color="primary"
+            @click="downloadReport()"
+            v-if="reportLocked"
+          >
             <v-icon
               icon="mdi-download-circle-outline"
               class="mr-1"
               left
               small
-              @click="downloadReport()"
             />
             Download (TODO)</v-btn
           >
@@ -127,6 +132,7 @@ import { ReportStatus, useAppStore } from "@/stores/app";
 import { debounce } from "lodash";
 import SummarySection from "./SummarySection.vue";
 import dayjs from "dayjs";
+import generatePdf from "../_utils/pdf-generator";
 
 export default {
   props: {
@@ -163,6 +169,9 @@ export default {
         this.updateContent("name", value);
       },
     },
+    summary() {
+      return this.store.report.content.summary;
+    },
     finalizedTime() {
       return this.store.report?.content?.completedDateTime
         ? dayjs(this.store.report.content.completedDateTime).utc()
@@ -172,6 +181,20 @@ export default {
   methods: {
     setShowConfirmationModal() {
       this.showConfirmationModal = !this.showConfirmationModal;
+    },
+    downloadReport() {
+      const pdfGeneratpr = new generatePdf({
+        analysts: this.analysts,
+        name: this.name,
+        summary: this.summary,
+        finalizedTime: this.finalizedTime,
+        questions: this.questions,
+        id: this.store.report.id,
+        questionsTotal: this.questionsTotal,
+        completedQuestionsTotal: this.completedQuestionsTotal,
+      });
+
+      pdfGeneratpr.generatePdf()
     },
     async unlockReport() {
       try {
