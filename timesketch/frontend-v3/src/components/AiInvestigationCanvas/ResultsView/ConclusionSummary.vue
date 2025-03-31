@@ -112,7 +112,6 @@ export default {
     };
   },
   mounted() {
-    console.log(this.summaries);
     if (!this.summaries || this.summaries.length < 1) {
       this.summary = this.question.conclusionSummary;
     } else {
