@@ -41,7 +41,7 @@ limitations under the License.
                 ></v-switch>
               </div>
             </template>
-            <span>This feature requires backend configuration by your administrator.</span>
+            <span>This feature requires an LLM provider to be configured. Please contact your administrator.</span>
           </v-tooltip>
         </v-list-item-action>
         <v-list-item-content>
@@ -64,7 +64,7 @@ limitations under the License.
                 ></v-switch>
               </div>
             </template>
-            <span>Event summarization requires proper backend configuration. Please contact your administrator.</span>
+            <span>Event summarization requires an LLM provider to be configured. Please contact your administrator.</span>
           </v-tooltip>
         </v-list-item-action>
         <v-list-item-content class="ml-8">
@@ -89,7 +89,7 @@ limitations under the License.
                 ></v-switch>
               </div>
             </template>
-            <span>AI query generation requires proper backend configuration. Please contact your administrator.</span>
+            <span>AI query generation requires an LLM provider to be configured. Please contact your administrator.</span>
           </v-tooltip>
         </v-list-item-action>
         <v-list-item-content class="ml-8">
