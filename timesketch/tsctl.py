@@ -563,66 +563,101 @@ def print_table(table_data):
 
 @cli.command(name="sketch-info")
 @click.argument("sketch_id")
-def sketch_info(sketch_id):
-    """Give information about a sketch."""
+def sketch_info(sketch_id: int):
+    """Display detailed information about a specific sketch.
+
+    This command retrieves and displays comprehensive information about a
+    Timesketch sketch, including:
+
+    - **Sketch Details:** The sketch's ID and name.
+    - **Timelines:** A table listing the timelines within the
+      sketch, including their search index ID, index name, creation date,
+      user ID, description, status, timeline name, and timeline ID.
+    - **Sharing Information:** Details about users and groups with whom the
+      sketch is shared.
+    - **Sketch Status:** The current status of the sketch (e.g., "ready",
+      "archived").
+    - **Public Status:** Whether the sketch is publicly accessible.
+    - **Sketch Labels:** Any labels applied to the sketch.
+    - **Status History:** A table showing the status history of the sketch,
+      including the status ID, status value, creation date, and user ID.
+
+    Args:
+        sketch_id (str): The ID of the sketch to retrieve information about.
+
+    Raises:
+        SystemExit: If the specified sketch does not exist.
+    """
     sketch = Sketch.query.filter_by(id=sketch_id).first()
     if not sketch:
         print("Sketch does not exist.")
-    else:
-        print(f"Sketch {sketch_id} Name: ({sketch.name})")
+        return
 
-        # define the table data
-        table_data = [
+    print(f"Sketch {sketch_id} Name: ({sketch.name})")
+
+    # define the table data
+    table_data = [
+        [
+            "searchindex_id",
+            "index_name",
+            "created_at",
+            "user_id",
+            "description",
+            "status",
+            "timeline_name",
+            "timeline_id",
+        ],
+    ]
+    for t in sketch.timelines:
+        table_data.append(
             [
-                "searchindex_id",
-                "index_name",
-                "created_at",
-                "user_id",
-                "description",
-                "status",
-            ],
-        ]
+                t.searchindex_id,
+                t.searchindex.index_name,
+                t.created_at,
+                t.user_id,
+                t.description,
+                t.status[-1].status,
+                t.name,
+                t.id,
+            ]
+        )
+    print_table(table_data)
 
-        for t in sketch.active_timelines:
-            table_data.append(
-                [
-                    t.searchindex_id,
-                    t.searchindex.index_name,
-                    t.created_at,
-                    t.user_id,
-                    t.description,
-                    t.status[0].status,
-                ]
-            )
-        print_table(table_data)
-
-        print("Shared with:")
+    print(f"Created by: {sketch.user.username}")
+    print("Shared with:")
+    print("\tUsers: (user_id, username)")
+    if sketch.collaborators:
         print("\tUsers: (user_id, username)")
         for user in sketch.collaborators:
             print(f"\t\t{user.id}: {user.username}")
-        print("\tGroups:")
+    else:
+        print("\tNo users shared with.")
+    print(f"\tGroups ({len(sketch.groups)}):")
+    if sketch.groups:
         for group in sketch.groups:
             print(f"\t\t{group.display_name}")
-        sketch_labels = [label.label for label in sketch.labels]
-        print(f"Sketch Status: {sketch.get_status.status}")
-        print(f"Sketch is public: {bool(sketch.is_public)}")
-        sketch_labels = ([label.label for label in sketch.labels],)
-        print(f"Sketch Labels: {sketch_labels}")
+    else:
+        print("\tNo groups shared with.")
+    sketch_labels = [label.label for label in sketch.labels]
+    print(f"Sketch Status: {sketch.get_status.status}")
+    print(f"Sketch is public: {bool(sketch.is_public)}")
+    sketch_labels = ([label.label for label in sketch.labels],)
+    print(f"Sketch Labels: {sketch_labels}")
 
-        status_table = [
-            [
-                "id",
-                "status",
-                "created_at",
-                "user_id",
-            ],
-        ]
-        for _status in sketch.status:
-            status_table.append(
-                [_status.id, _status.status, _status.created_at, _status.user_id]
-            )
-        print("Status:")
-        print_table(status_table)
+    status_table = [
+        [
+            "id",
+            "status",
+            "created_at",
+            "user_id",
+        ],
+    ]
+    for _status in sketch.status:
+        status_table.append(
+            [_status.id, _status.status, _status.created_at, _status.user_id]
+        )
+    print("Status:")
+    print_table(status_table)
 
 
 @cli.command(name="timeline-status")
@@ -674,7 +709,7 @@ def timeline_status(timeline_id: str, action: str, status: str):
                 timeline.created_at,
                 timeline.user_id,
                 timeline.description,
-                timeline.status[0].status,
+                timeline.status[-1].status,
             ]
         )
         print_table(table_data)
@@ -886,7 +921,7 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
                 searchindex.created_at,
                 searchindex.user_id,
                 searchindex.description,
-                searchindex.status[0].status,
+                searchindex.status[-1].status,
             ]
         )
         print_table(table_data)
