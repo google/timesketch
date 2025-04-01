@@ -6,7 +6,7 @@ class generatePdf {
   }
 
   margin = 20;
-  currentYPosition = 10;
+  currentYPosition = 20;
   doc = new jsPDF({
     unit: "px",
     compressPdf: true,
@@ -32,25 +32,30 @@ class generatePdf {
 
   buildConclusions(conclusions) {
     conclusions.forEach(({ conclusion }, index) => {
+      this.currentYPosition = this.currentYPosition + 10;
+
       const { h: conclusionHeight } = this.doc.getTextDimensions(conclusion, {
         maxWidth: this.maxWidth,
       });
 
-      const leading = index === 0 ? 10 : conclusionHeight;
-
-      this.currentYPosition = this.currentYPosition + leading;
+      this.currentYPosition = this.currentYPosition + conclusionHeight;
 
       this.setText(`• ${conclusion}`);
     });
   }
 
   buildQuestionsSection() {
-    this.currentYPosition = 20;
-
+    
     this.report.questions.forEach(({ name, conclusions }, index) => {
-      const { h: questionHeight } = this.doc.getTextDimensions(name, {
-        maxWidth: this.maxWidth,
-      });
+      this.doc.setFontSize(12);
+      this.doc.setFont("helvetica", "normal", "bold");
+
+      const { h: questionHeight } = this.doc.getTextDimensions(
+        `${index + 1}. ${name}`,
+        {
+          maxWidth: this.maxWidth,
+        }
+      );
 
       const blockHeight = conclusions.reduce((totalHeight, conclusion) => {
         return (
@@ -62,25 +67,22 @@ class generatePdf {
         );
       }, questionHeight);
 
-      if (blockHeight + this.currentYPosition > this.maxHeight) {
+      if ((blockHeight + this.currentYPosition) > this.maxHeight) {
         this.doc.addPage();
         this.doc.setPage(this.returnPageCount + 1);
         this.currentYPosition = 20;
-      } else {
-        this.currentYPosition = this.currentYPosition + questionHeight + 10;
-      }
-
-      this.doc.setFont("helvetica", "normal", "bold");
-      this.doc.setFontSize(12);
-
-      this.setText(`${index + 1}. ${name}`);
+      } 
 
       this.currentYPosition = this.currentYPosition + questionHeight;
+
+      this.setText(`${index + 1}. ${name}`);
 
       this.doc.setFontSize(11);
       this.doc.setFont("helvetica", "normal", "regular");
 
       this.buildConclusions(conclusions);
+
+      this.currentYPosition = this.currentYPosition + 20
     });
   }
 
@@ -153,12 +155,12 @@ class generatePdf {
     this.doc.setFont("helvetica", "", "bold");
     this.doc.setFontSize(14);
 
-    this.setText("Investigation Report");
+    // this.setText("Investigation Report");
 
     this.doc.setFontSize(11);
     this.doc.setFont("helvetica", "regular", "normal");
 
-    this.buildMetaSection();
+    // this.buildMetaSection();
     this.buildQuestionsSection();
 
     this.doc.save(`dfiq-report-${this.report.id}.pdf`);
