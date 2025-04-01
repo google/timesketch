@@ -13,36 +13,38 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
-<!--
- Canvas is a routing component to keep views alive and to support communication between
- them via Eventbus.
--->
 <template>
-    <AiInvestigationCanvas v-show="currentRouteName === 'AiInvestigation'" />
-    <div v-show="currentRouteName === 'Explore'">
-      Placeholder for Explore View
-    </div>
-    <div v-show="currentRouteName === 'Example'">
-      Example view
-    </div>
+  <v-skeleton-loader
+    type="list-item"
+    height="48"
+    width="180"
+    class="ma-0"
+  ></v-skeleton-loader>
+  <div class="d-flex" v-for="(_, index) in 5">
+    <v-skeleton-loader
+      type="list-item"
+      height="48"
+      width="62"
+      class="ma-0"
+    ></v-skeleton-loader
+    ><v-skeleton-loader
+      type="list-item"
+      height="44"
+      :width="randomWidth(index)"
+      class="ma-0"
+    ></v-skeleton-loader>
+  </div>
 </template>
 
 <script>
-import { useRoute } from 'vue-router';
 export default {
-  data() {
-    return {
-      route: useRoute(),
-    }
-  },
-  props: [
-    'sketchId',
-  ],
-  computed: {
-    currentRouteName() {
-      return this.route.name
+  methods: {
+    randomWidth(index) {
+      const minuend = 450;
+      const subtrahend = Math.random() * (index * 20);
+
+      return minuend - subtrahend;
     },
   },
-}
+};
 </script>

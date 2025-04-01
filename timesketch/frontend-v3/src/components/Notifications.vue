@@ -13,36 +13,39 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
-<!--
- Canvas is a routing component to keep views alive and to support communication between
- them via Eventbus.
--->
 <template>
-    <AiInvestigationCanvas v-show="currentRouteName === 'AiInvestigation'" />
-    <div v-show="currentRouteName === 'Explore'">
-      Placeholder for Explore View
+  <v-snackbar
+    v-model="isVisible"
+    :timeout="4000"
+    :color="notification?.type"
+    class="rounded-m"
+  >
+    <div class="d-flex align-center">
+      <v-icon :icon="notification?.icon" class="mr-2" />
+      <p>{{ notification?.text }}</p>
     </div>
-    <div v-show="currentRouteName === 'Example'">
-      Example view
-    </div>
+  </v-snackbar>
 </template>
 
 <script>
-import { useRoute } from 'vue-router';
+import { useAppStore } from '@/stores/app';
+
 export default {
   data() {
     return {
-      route: useRoute(),
-    }
+      isVisible: false,
+      store: useAppStore(),
+    };
   },
-  props: [
-    'sketchId',
-  ],
   computed: {
-    currentRouteName() {
-      return this.route.name
+    notification() {
+      return this.store.notification;
     },
   },
-}
+  watch: {
+    notification() {
+      this.isVisible = true;
+    },
+  },
+};
 </script>

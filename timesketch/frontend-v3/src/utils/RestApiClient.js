@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from "axios";
-//import EventBus from '../event-bus.js'
+import EventBus from '../event-bus.js'
 
 const RestApiClient = axios.create({
   baseURL: "/api/v1",
@@ -675,7 +675,7 @@ export default {
   llmRequest(sketchId, featureName, formData) {
     formData = formData || {}
     formData.feature = featureName
-  
+
     return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
   }
 };
