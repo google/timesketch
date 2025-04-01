@@ -149,19 +149,15 @@ export default {
       return this.systemSettings.LLM_FEATURES_AVAILABLE || {}
     },
     isAnyFeatureAvailable() {
-      // Check if any of the features are available
       return Object.values(this.llmFeatures).some(available => available === true);
     },
     adjustedSettings() {
-      // Create a copy of settings with features automatically disabled if unavailable
       const adjusted = { ...this.settings };
       
-      // Automatically disable main switch if no features are available
       if (!this.isAnyFeatureAvailable) {
         adjusted.aiPoweredFeaturesMain = false;
       }
       
-      // Automatically disable individual features if they're not available
       if (!this.isFeatureAvailable('llm_summarize')) {
         adjusted.eventSummarization = false;
       }
@@ -194,7 +190,6 @@ export default {
       this.saveSettings();
     },
     isFeatureAvailable(featureName) {
-      // Check if the specific feature is available in configuration
       return this.llmFeatures[featureName] === true;
     },
     syncSettingsWithAvailability() {
