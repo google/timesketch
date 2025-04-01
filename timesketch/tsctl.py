@@ -570,7 +570,7 @@ def sketch_info(sketch_id: int):
     Timesketch sketch, including:
 
     - **Sketch Details:** The sketch's ID and name.
-    - **Active Timelines:** A table listing the active timelines within the
+    - **Timelines:** A table listing the timelines within the
       sketch, including their search index ID, index name, creation date,
       user ID, description, status, timeline name, and timeline ID.
     - **Sharing Information:** Details about users and groups with whom the
@@ -608,8 +608,7 @@ def sketch_info(sketch_id: int):
             "timeline_id",
         ],
     ]
-
-    for t in sketch.active_timelines:
+    for t in sketch.timelines:
         table_data.append(
             [
                 t.searchindex_id,
@@ -617,7 +616,7 @@ def sketch_info(sketch_id: int):
                 t.created_at,
                 t.user_id,
                 t.description,
-                t.status[0].status,
+                t.status[-1].status,
                 t.name,
                 t.id,
             ]
@@ -710,7 +709,7 @@ def timeline_status(timeline_id: str, action: str, status: str):
                 timeline.created_at,
                 timeline.user_id,
                 timeline.description,
-                timeline.status[0].status,
+                timeline.status[-1].status,
             ]
         )
         print_table(table_data)
@@ -922,7 +921,7 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
                 searchindex.created_at,
                 searchindex.user_id,
                 searchindex.description,
-                searchindex.status[0].status,
+                searchindex.status[-1].status,
             ]
         )
         print_table(table_data)
