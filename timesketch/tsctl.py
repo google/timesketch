@@ -563,11 +563,35 @@ def print_table(table_data):
 
 @cli.command(name="sketch-info")
 @click.argument("sketch_id")
-def sketch_info(sketch_id):
-    """Give information about a sketch."""
+def sketch_info(sketch_id: int):
+    """Display detailed information about a specific sketch.
+
+    This command retrieves and displays comprehensive information about a
+    Timesketch sketch, including:
+
+    - **Sketch Details:** The sketch's ID and name.
+    - **Active Timelines:** A table listing the active timelines within the
+      sketch, including their search index ID, index name, creation date,
+      user ID, description, status, timeline name, and timeline ID.
+    - **Sharing Information:** Details about users and groups with whom the
+      sketch is shared.
+    - **Sketch Status:** The current status of the sketch (e.g., "ready",
+      "archived").
+    - **Public Status:** Whether the sketch is publicly accessible.
+    - **Sketch Labels:** Any labels applied to the sketch.
+    - **Status History:** A table showing the status history of the sketch,
+      including the status ID, status value, creation date, and user ID.
+
+    Args:
+        sketch_id (str): The ID of the sketch to retrieve information about.
+
+    Raises:
+        SystemExit: If the specified sketch does not exist.
+    """
     sketch = Sketch.query.filter_by(id=sketch_id).first()
     if not sketch:
         print("Sketch does not exist.")
+        return
     else:
         print(f"Sketch {sketch_id} Name: ({sketch.name})")
 
@@ -580,6 +604,8 @@ def sketch_info(sketch_id):
                 "user_id",
                 "description",
                 "status",
+                "timeline_name",
+                "timeline_id",
             ],
         ]
 
@@ -592,17 +618,27 @@ def sketch_info(sketch_id):
                     t.user_id,
                     t.description,
                     t.status[0].status,
+                    t.name,
+                    t.id,
                 ]
             )
         print_table(table_data)
 
+        print(f"Created by: {sketch.user.username}")
         print("Shared with:")
         print("\tUsers: (user_id, username)")
-        for user in sketch.collaborators:
-            print(f"\t\t{user.id}: {user.username}")
-        print("\tGroups:")
-        for group in sketch.groups:
-            print(f"\t\t{group.display_name}")
+        if sketch.collaborators:
+            print("\tUsers: (user_id, username)")
+            for user in sketch.collaborators:
+                print(f"\t\t{user.id}: {user.username}")
+        else:
+            print("\tNo users shared with.")
+        print(f"\tGroups ({len(sketch.groups)}):")
+        if sketch.groups:
+            for group in sketch.groups:
+                print(f"\t\t{group.display_name}")
+        else:
+            print("\tNo groups shared with.")
         sketch_labels = [label.label for label in sketch.labels]
         print(f"Sketch Status: {sketch.get_status.status}")
         print(f"Sketch is public: {bool(sketch.is_public)}")

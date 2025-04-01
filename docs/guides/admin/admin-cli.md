@@ -462,7 +462,19 @@ tsctl similarity_score
 
 #### sketch-info Get information about a sketch
 
-Displays various information about a given sketch.
+Displays detailed information about a specific sketch.
+
+This command retrieves and displays comprehensive information about a
+Timesketch sketch, including:
+
+- **Sketch Details:** The sketch's ID and name.
+- **Active Timelines:** A table listing the active timelines within the
+  sketch, including their search index ID, index name, creation date,
+  user ID, description, status, timeline name, and timeline ID.
+- **Sharing Information:** Details about users and groups with whom the
+  sketch is shared.
+- **Sketch Status:** The current status of the sketch (e.g., "ready",
+  "archived").
 
 ```shell
 tsctl sketch-info
@@ -472,13 +484,12 @@ Example:
 
 ```shell
 Sketch 1 Name: (aaa)
-searchindex_id index_name                       created_at                 user_id description
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:06:52.849124 1       20200918_0417_DESKTOP-SDN1RPT
-3              88002da782f64061bf3703bc782b6006 2022-10-21 15:19:26.072964 1       all_packets
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:28:55.474166 1       E01-DC01_20200918_0347_CDrive
-4              11d761cd266640d798e30bb897c8dd4e 2022-10-21 15:32:15.060184 1       autoruns-desktop-sdn1rpt_fresh_import
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:12.316273 1       sigma_events
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:48.592320 1       sigma_events2
+searchindex_id index_name                       created_at                 user_id description             status timeline_name           timeline_id
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 14:49:52.402364 1       my_file_with_a_timeline ready  my_file_with_a_timeline 2
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 16:21:07.707528 1       evtx_part               ready  evtx_part               3
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-21 15:24:55.935364 1       sigma_events            ready  sigma_events            10
+10             9a0f22670bf74ba6884f3ba9b261bf13 2025-03-21 15:31:45.279662 1       evtx                    ready  evtx                    11
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-21 15:41:10.860161 1       sigma_eventsa           ready  sigma_eventsa           12
 Shared with:
     Users: (user_id, username)
         3: bar
