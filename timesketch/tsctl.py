@@ -1162,7 +1162,7 @@ def celery_tasks(task_id, active, show_all):
             print("No active tasks found.")
             return
         table_data = [["Task ID", "Name", "Time Start"]]
-        for tasks in active_tasks.items():
+        for worker_name, tasks in active_tasks.items():
             for task in tasks:
                 table_data.append(
                     [
@@ -1188,7 +1188,7 @@ def celery_tasks(task_id, active, show_all):
             return
 
         table_data = [["Task ID", "Name", "Status", "Time Start"]]
-        for tasks in all_tasks.items():
+        for worker_name, tasks in all_tasks.items():
             for task in tasks:
                 task_id = task["id"]
                 task_result = AsyncResult(task_id, app=celery)
