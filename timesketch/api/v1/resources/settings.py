@@ -1,16 +1,3 @@
-# Copyright 2024 Google Inc. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 """System settings."""
 
 import logging
@@ -54,7 +41,7 @@ class SystemSettingsResource(Resource):
                 provider_class = llm_manager.LLMManager.get_provider(default_provider)
                 provider_class(config=llm_configs["default"][default_provider])
                 default_provider_working = True
-            except Exception as e: # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 logger.debug(
                     "Default LLM provider '%s' failed to initialize: %s",
                     default_provider,
@@ -78,7 +65,7 @@ class SystemSettingsResource(Resource):
                     )
                     provider_class(config=feature_conf[feature_provider])
                     feature_provider_working = True
-                except Exception as e: # pylint: disable=broad-except
+                except Exception as e:  # pylint: disable=broad-except
                     logger.debug(
                         "LLM provider '%s' for feature '%s' failed: %s",
                         feature_provider,
