@@ -1108,11 +1108,6 @@ def celery_tasks_redis():
     is_flag=True,
     help="Show all tasks, including pending, active, and failed.",
 )
-@click.option(
-    "--revoked",
-    is_flag=True,
-    help="Show revoked tasks.",
-)
 def celery_tasks(task_id, active, show_all):
     """Show running or past Celery tasks.
     This command provides various ways to inspect and view the status of
