@@ -99,6 +99,12 @@ METRICS = {
         ["index_name", "timeline_id", "source_type"],
         namespace=METRICS_NAMESPACE,
     ),
+    "worker_index_not_ready_errors": prometheus_client.Counter(
+        "worker_index_not_ready_errors",
+        "Number of times the IndexNotReadyError was triggered",
+        ["index_name", "timeline_id", "source_type"],
+        namespace=METRICS_NAMESPACE,
+    ),
 }
 
 # To be able to determine plaso's version.
@@ -807,6 +813,9 @@ def run_plaso(
         raise
     except errors.IndexNotReadyError as e:
         # This triggers if the index does not return a good state.
+        METRICS["worker_index_not_ready_errors"].labels(
+            index_name=index_name, timeline_id=timeline_id, source_type=source_type
+        ).inc()
         logger.error("Unable to create index [%s]: %s", index_name, str(e))
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         searchindex.set_status("fail")
@@ -1111,6 +1120,9 @@ def run_csv_jsonl(
 
     except errors.IndexNotReadyError as e:
         # This triggers if the index does not return a good state.
+        METRICS["worker_index_not_ready_errors"].labels(
+            index_name=index_name, timeline_id=timeline_id, source_type=source_type
+        ).inc()
         logger.error("Unable to create index [%s]: %s", index_name, str(e))
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         searchindex.set_status("fail")
