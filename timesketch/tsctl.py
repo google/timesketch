@@ -1161,7 +1161,7 @@ def celery_tasks(task_id, active, show_all):
         if not active_tasks:
             print("No active tasks found.")
             return
-        table_data = [["Task ID", "Name", "Time Start"]]
+        table_data = [["Task ID", "Name", "Time Start", "Worker name"]]
         for worker_name, tasks in active_tasks.items():
             for task in tasks:
                 table_data.append(
@@ -1171,6 +1171,7 @@ def celery_tasks(task_id, active, show_all):
                         time.strftime(
                             "%Y-%m-%d %H:%M:%S", time.localtime(task["time_start"])
                         ),
+                        worker_name,
                     ]
                 )
         print_table(table_data)
@@ -1187,7 +1188,7 @@ def celery_tasks(task_id, active, show_all):
             print("No tasks found.")
             return
 
-        table_data = [["Task ID", "Name", "Status", "Time Start"]]
+        table_data = [["Task ID", "Name", "Status", "Time Start", "Worker name"]]
         for worker_name, tasks in all_tasks.items():
             for task in tasks:
                 task_id = task["id"]
@@ -1204,6 +1205,7 @@ def celery_tasks(task_id, active, show_all):
                         task["name"],
                         status,
                         time_start,
+                        worker_name,
                     ]
                 )
         print_table(table_data)
