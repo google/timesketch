@@ -115,7 +115,7 @@ class generatePdf {
     this.doc.setFont("helvetica", "normal", "regular");
 
     this.setText(
-      `${this.report.completedQuestionsTotal}/${this.report.questionsTotal}`
+      `${this.report.completedQuestionsTotal}/${this.report.completedQuestionsTotal} questions completed`
     );
 
     const { h: summaryHeight } = this.doc.getTextDimensions(
@@ -149,18 +149,21 @@ class generatePdf {
       this.doc.addPage();
       this.doc.setPage(2);
     }
+
+
+    this.currentYPosition = 20;
   }
 
   generatePdf() {
     this.doc.setFont("helvetica", "", "bold");
     this.doc.setFontSize(14);
 
-    // this.setText("Investigation Report");
+    this.setText("Investigation Report");
 
     this.doc.setFontSize(11);
     this.doc.setFont("helvetica", "regular", "normal");
 
-    // this.buildMetaSection();
+    this.buildMetaSection();
     this.buildQuestionsSection();
 
     this.doc.save(`dfiq-report-${this.report.id}.pdf`);
