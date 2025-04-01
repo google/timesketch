@@ -81,7 +81,7 @@ class SystemSettingsResource(Resource):
 
         result["LLM_FEATURES_AVAILABLE"] = llm_feature_availability
 
-        # Warning for outdated config
+        # TODO(mvd): Remove by 2025/06/01 once all users have updated their config.
         if current_app.config.get("LLM_PROVIDER") and "default" not in llm_configs:
             result["llm_config_warning"] = (
                 "Your LLM configuration in timesketch.conf is outdated. "
