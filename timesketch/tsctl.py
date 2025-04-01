@@ -1108,11 +1108,6 @@ def celery_tasks_redis():
     is_flag=True,
     help="Show all tasks, including pending, active, and failed.",
 )
-@click.option(
-    "--revoked",
-    is_flag=True,
-    help="Show revoked tasks.",
-)
 def celery_tasks(task_id, active, show_all):
     """Show running or past Celery tasks.
     This command provides various ways to inspect and view the status of
@@ -1166,8 +1161,8 @@ def celery_tasks(task_id, active, show_all):
         if not active_tasks:
             print("No active tasks found.")
             return
-        table_data = [["Task ID", "Name", "Time Start"]]
-        for tasks in active_tasks.items():
+        table_data = [["Task ID", "Name", "Time Start", "Worker name"]]
+        for worker_name, tasks in active_tasks.items():
             for task in tasks:
                 table_data.append(
                     [
@@ -1176,6 +1171,7 @@ def celery_tasks(task_id, active, show_all):
                         time.strftime(
                             "%Y-%m-%d %H:%M:%S", time.localtime(task["time_start"])
                         ),
+                        worker_name,
                     ]
                 )
         print_table(table_data)
@@ -1192,8 +1188,8 @@ def celery_tasks(task_id, active, show_all):
             print("No tasks found.")
             return
 
-        table_data = [["Task ID", "Name", "Status", "Time Start"]]
-        for tasks in all_tasks.items():
+        table_data = [["Task ID", "Name", "Status", "Time Start", "Worker name"]]
+        for worker_name, tasks in all_tasks.items():
             for task in tasks:
                 task_id = task["id"]
                 task_result = AsyncResult(task_id, app=celery)
@@ -1209,6 +1205,7 @@ def celery_tasks(task_id, active, show_all):
                         task["name"],
                         status,
                         time_start,
+                        worker_name,
                     ]
                 )
         print_table(table_data)
