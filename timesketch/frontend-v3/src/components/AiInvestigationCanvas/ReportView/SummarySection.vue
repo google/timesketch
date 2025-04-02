@@ -23,7 +23,7 @@ limitations under the License.
         variant="text"
         size="small"
         color="primary"
-        @click="setShowSummaryHistoryModal()"
+        @click="toggleShowSummaryHistoryModal()"
         class="text-uppercase"
         :disabled="!summaries || summaries.length < 1"
       >
@@ -83,7 +83,7 @@ limitations under the License.
     opacity="0"
   >
     <SummaryHistoryModal
-      @close-modal="setShowSummaryHistoryModal"
+      @close-modal="toggleShowSummaryHistoryModal"
       :summaries="summaries"
     />
   </v-dialog>
@@ -138,7 +138,7 @@ export default {
   },
   methods: {
     formatDate,
-    setShowSummaryHistoryModal() {
+    toggleShowSummaryHistoryModal() {
       this.showSummaryHistoryModal = !this.showSummaryHistoryModal;
     },
     async submitSummary() {

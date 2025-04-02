@@ -24,6 +24,6 @@ export const formatDate = (timestamp) => {
   if (date.isToday()) {
     return `Today ${dayjs(timestamp).format("HH:mm:ss A")}`;
   } else {
-    return dayjs(timestamp).format("DD/MM/YY, HH:mm:ss A");
+    return dayjs(timestamp).format("YYYY-MM-DD HH:mm:ss A");
   }
 };
