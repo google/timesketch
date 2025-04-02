@@ -15,7 +15,7 @@
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import pandas as pd
 import prometheus_client
@@ -25,7 +25,7 @@ from opensearchpy import OpenSearch
 from timesketch.lib import utils
 from timesketch.api.v1 import export
 from timesketch.models.sketch import Sketch
-from timesketch.lib.llms import actions
+from timesketch.lib.stories import utils as story_utils
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib.llms.features.interface import LLMFeatureInterface
 
@@ -69,7 +69,7 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         "required": ["summary"],
     }
 
-    def _get_prompt_text(self, events_dict: List[Dict[str, Any]]) -> str:
+    def _get_prompt_text(self, events_dict: list[dict[str, Any]]) -> str:
         """Reads the prompt template from file and injects events.
         Args:
             events_dict: List of event dictionaries to inject into prompt.
@@ -111,10 +111,10 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         self,
         sketch: Sketch,
         query_string: str = "*",
-        query_filter: Optional[Dict] = None,
-        id_list: Optional[List] = None,
+        query_filter: Optional[dict] = None,
+        id_list: Optional[list] = None,
         datastore: Optional[OpenSearch] = None,
-        timeline_ids: Optional[List] = None,
+        timeline_ids: Optional[list] = None,
     ) -> pd.DataFrame:
         """Runs a timesketch query and returns results as a DataFrame.
         Args:
@@ -223,7 +223,7 @@ class LLMForensicReportFeature(LLMFeatureInterface):
 
         return self._get_prompt_text(events_dict)
 
-    def process_response(self, llm_response: Any, **kwargs: Any) -> Dict[str, Any]:
+    def process_response(self, llm_response: Any, **kwargs: Any) -> dict[str, Any]:
         """Processes the LLM response and creates a Story in the sketch.
         Args:
             llm_response: The response from the LLM model, expected to be a dictionary.
@@ -283,7 +283,7 @@ class LLMForensicReportFeature(LLMFeatureInterface):
 
         try:
             story_title = f"Forensic Report - {time.strftime('%Y-%m-%d %H:%M')}"
-            story_id = actions.create_story(
+            story_id = story_utils.create_story(
                 sketch=sketch, content=summary_text, title=story_title
             )
             METRICS["llm_forensic_report_stories_created_total"].labels(

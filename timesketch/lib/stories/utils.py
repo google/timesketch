@@ -18,7 +18,7 @@ import time
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch, Story
 
-logger = logging.getLogger("timesketch.llm.actions")
+logger = logging.getLogger("timesketch.lib.stories.utils")
 
 
 def create_story(sketch: Sketch, content: str, title: str = None) -> int:
@@ -53,5 +53,4 @@ def create_story(sketch: Sketch, content: str, title: str = None) -> int:
         logger.debug("Created story with ID %s for sketch %s", story.id, sketch.id)
         return story.id
     except Exception as e:
-        logger.error("Error creating story: %s", e)
         raise ValueError(f"Error creating story: {e}") from e
