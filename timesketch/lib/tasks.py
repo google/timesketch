@@ -99,6 +99,12 @@ METRICS = {
         ["index_name", "timeline_id", "source_type"],
         namespace=METRICS_NAMESPACE,
     ),
+    "worker_index_not_ready_errors": prometheus_client.Counter(
+        "worker_index_not_ready_errors",
+        "Number of times the IndexNotReadyError was triggered",
+        ["index_name", "timeline_id", "source_type"],
+        namespace=METRICS_NAMESPACE,
+    ),
 }
 
 # To be able to determine plaso's version.
@@ -244,7 +250,6 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
                 status = "ready"
 
     timeline.set_status(status)
-    timeline.searchindex.set_status(status)
     # Commit changes to database
     db_session.add(timeline)
     db_session.commit()
@@ -741,6 +746,7 @@ def run_plaso(
         NameError: If the searchidnex can't be created.
         UnboundLocalError: If the searchidnex can't be created.
         RequestError: If the searchidnex can't be created.
+        IndexNotReadyError: If the searchindex isn't ready.
 
     Returns:
         Name (str) of the index.
@@ -792,13 +798,28 @@ def run_plaso(
         )
 
     opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     try:
-        opensearch.create_index(index_name=index_name, mappings=mappings)
+        os_index_name = opensearch.create_index(
+            index_name=index_name, mappings=mappings
+        )
+        if searchindex and os_index_name:
+            searchindex.set_status("ready")
+            db_session.add(searchindex)
+            db_session.commit()
     except errors.DataIngestionError as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
-
+    except errors.IndexNotReadyError as e:
+        # This triggers if the index does not return a good state.
+        METRICS["worker_index_not_ready_errors"].labels(
+            index_name=index_name, timeline_id=timeline_id, source_type=source_type
+        ).inc()
+        logger.error("Unable to create index [%s]: %s", index_name, str(e))
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
+        searchindex.set_status("fail")
+        raise
     except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
@@ -1009,9 +1030,16 @@ def run_csv_jsonl(
         current_app.config.get("OPENSEARCH_MAPPING_UPPER_LIMIT", 1000)
     )
 
-    try:
-        opensearch.create_index(index_name=index_name, mappings=mappings)
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
+    try:
+        os_index_name = opensearch.create_index(
+            index_name=index_name, mappings=mappings
+        )
+        if searchindex and os_index_name:
+            searchindex.set_status("ready")
+            db_session.add(searchindex)
+            db_session.commit()
         current_index_mapping_properties = (
             opensearch.client.indices.get_mapping(index=index_name)
             .get(index_name, {})
@@ -1088,6 +1116,16 @@ def run_csv_jsonl(
 
     except errors.DataIngestionError as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
+        raise
+
+    except errors.IndexNotReadyError as e:
+        # This triggers if the index does not return a good state.
+        METRICS["worker_index_not_ready_errors"].labels(
+            index_name=index_name, timeline_id=timeline_id, source_type=source_type
+        ).inc()
+        logger.error("Unable to create index [%s]: %s", index_name, str(e))
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
+        searchindex.set_status("fail")
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
@@ -1194,6 +1232,7 @@ def find_data_task(
     data_finder.set_parameters(parameters)
     data_finder.set_rule(data_finder_dict.get(rule_name))
     data_finder.set_timeline_ids(timeline_ids)
+    data_finder.set_sketch_id(sketch_id)
 
     sketch = Sketch.get_by_id(sketch_id)
     indices = set()
