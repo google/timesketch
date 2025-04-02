@@ -46,13 +46,6 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 
-const riskColors = {
-  high: "#D93025",
-  medium: "#E37400",
-  low: "#FBBC04",
-  clean: "#3874CB",
-};
-
 export default {
   props: {
     name: String,

@@ -121,12 +121,10 @@ export default {
         return null;
       }
 
-      return `${formatDate(this.latestSummary.timestamp)}${
-        this.latestSummary.user
-          ? ` by
-      ${this.latestSummary.user}`
-          : null
-      }`;
+      const timestamp = formatDate(this.latestSummary.timestamp)
+      const user =  this.latestSummary.user;
+
+      return `${timestamp}${user ? ` by${user}`: null}`;
     },
     cannotUpdateSummary() {
       const savedSummary = this.lastestSummary?.value;
