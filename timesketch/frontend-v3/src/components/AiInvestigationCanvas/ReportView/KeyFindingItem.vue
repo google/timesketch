@@ -18,7 +18,7 @@ limitations under the License.
     <div class="d-inline-flex align-center justify-start">
       <v-icon
         icon="mdi-check-circle"
-        v-if="completed"
+        v-if="isApproved"
         small
         color="#34A853"
         class="ml-2"
@@ -33,7 +33,7 @@ limitations under the License.
     <QuestionActionsStrip
       :question="question"
       :reportLocked="reportLocked"
-      :completed="completed"
+      :completed="isApproved"
       variant="a"
     />
   </li>
@@ -51,19 +51,17 @@ export default {
     };
   },
   computed: {
-    completed() {
-      let isApproved = false;
-
+    isApproved() {
       if (
         this.store.report?.content?.approvedQuestions &&
         this.store.report?.content?.approvedQuestions.length > 0
       ) {
-        isApproved = !!this.store.report.content.approvedQuestions.find(
+        return !!this.store.report.content.approvedQuestions.find(
           (approvedId) => approvedId === this.question.id
         );
+      } else {
+        return false;
       }
-
-      return isApproved;
     },
     order() {
       return this.index + 1;
