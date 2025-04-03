@@ -13,6 +13,8 @@
 # limitations under the License.
 """System settings."""
 import logging
+from typing import Any
+
 from flask import current_app, jsonify
 from flask_restful import Resource
 from flask_login import login_required
@@ -27,6 +29,7 @@ class SystemSettingsResource(Resource):
     @login_required
     def get(self):
         """GET system settings.
+
         Returns:
             JSON object with system settings.
         """
@@ -38,14 +41,30 @@ class SystemSettingsResource(Resource):
             ),
         }
 
+        llm_feature_availability = self._get_llm_features_availability(llm_configs)
+        result["LLM_FEATURES_AVAILABLE"] = llm_feature_availability
+
+        return jsonify(result)
+
+    def _get_llm_features_availability(
+        self, llm_configs: dict[str, Any]
+    ) -> dict[str, bool]:
+        """Get availability status for all LLM features.
+
+        Args:
+            llm_configs: LLM provider configuration dictionary
+
+        Returns:
+            dict mapping feature names to availability status (bool)
+        """
         default_provider_working = False
+
         if not isinstance(llm_configs, dict):
             logger.debug(
                 "LLM_PROVIDER_CONFIGS is not a dictionary: %s",
                 type(llm_configs).__name__,
             )
-            result["LLM_FEATURES_AVAILABLE"] = {"default": default_provider_working}
-            return jsonify(result)
+            return {"default": default_provider_working}
 
         if (
             "default" in llm_configs
@@ -59,6 +78,7 @@ class SystemSettingsResource(Resource):
             )
 
         llm_feature_availability = {"default": default_provider_working}
+
         for feature_name, feature_conf in llm_configs.items():
             if feature_name == "default":
                 continue
@@ -77,9 +97,7 @@ class SystemSettingsResource(Resource):
                 feature_provider_working or default_provider_working
             )
 
-        result["LLM_FEATURES_AVAILABLE"] = llm_feature_availability
-
-        return jsonify(result)
+        return llm_feature_availability
 
     def _check_provider_working(self, provider_name: str, config: dict) -> bool:
         """Check if a specific LLM provider works with given configuration.
