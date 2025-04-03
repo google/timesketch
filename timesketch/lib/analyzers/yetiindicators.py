@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
 import requests
 import yaml
@@ -689,13 +689,27 @@ class YetiKeywords(YetiBaseAnalyzer):
 
 
 class YetiBloomChecker(YetiBaseAnalyzer):
+    """Analyzer for Yeti bloom filter checker."""
+
     NAME = "yetibloomchecker"
     DISPLAY_NAME = "Yeti Bloom filter checker"
     DESCRIPTION = "Check if hashes in the timeline are present in Yeti's bloom filter."
 
     def run_composite_aggregation(
-        self, hashmap, after_key=None
+        self, hashmap: set[str], after_key: dict[str, Any] = None
     ) -> tuple[set[str], Union[Dict | None]]:
+        """Runs a composite aggregation of hashes on a sketch.
+
+        Accumulates hashes in the hashmap parameter:
+
+        Args:
+            hashmap: A set of hashes to be checked.
+            after_key: The key to continue the aggregation from, if needed.
+
+        Returns:
+            A tuple containing the updated hashmap and the after_key for
+            pagination.
+        """
         agg_name = f"my_composite_agg_{self.index_name}"
         agg_dsl = {
             "size": 0,
@@ -755,7 +769,10 @@ class YetiBloomChecker(YetiBaseAnalyzer):
                 event.add_tags(tags)
                 event.commit()
 
-        msg = f"Bloom filter check completed. {len(hashmap)} hashes checked, {len(hit_dict)} hits found, {tagged} events tagged."
+        msg = (
+            f"Bloom filter check completed. {len(hashmap)} hashes checked,"
+            " {len(hit_dict)} hits found, {tagged} events tagged."
+        )
         self.output.result_summary = msg
         self.output.result_status = "SUCCESS"
         return str(self.output)
