@@ -390,6 +390,8 @@ tags:
     def test_get_bloom_request(self):
         """Tests that the bloom request is correctly built."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
+
+        # pylint: disable=protected-access
         analyzer._yeti_session = mock.Mock()
         post_mock = mock.Mock()
         post_mock.return_value.status_code = 200
@@ -405,6 +407,7 @@ tags:
     def test_bloomanalyzer_run(self):
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
 
+        # pylint: disable=protected-access
         analyzer._yeti_session = mock.Mock()
         post_mock = mock.Mock()
         post_mock.return_value.status_code = 200
@@ -413,7 +416,7 @@ tags:
             {"value": "testhash", "hits": ["hitsource1"]}
         ]
 
-        def agg_mock(hashset, after_key=None):
+        def agg_mock(hashset, _after_key=None):
             hashset.add("testhash")
             return hashset, None
 
@@ -425,5 +428,8 @@ tags:
 
         self.assertEqual(
             message["result_summary"],
-            "Bloom filter check completed. 1 hashes checked, 1 hits found, 1 events tagged.",
+            (
+                "Bloom filter check completed. 1 hashes checked, 1 hits "
+                "found, 1 events tagged."
+            ),
         )
