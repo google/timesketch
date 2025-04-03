@@ -697,7 +697,7 @@ class YetiBloomChecker(YetiBaseAnalyzer):
 
     def run_composite_aggregation(
         self, hashmap: set[str], after_key: dict[str, Any] = None
-    ) -> tuple[set[str], Union[Dict | None]]:
+    ) -> tuple[set[str], Union[Dict, None]]:
         """Runs a composite aggregation of hashes on a sketch.
 
         Accumulates hashes in the hashmap parameter:
