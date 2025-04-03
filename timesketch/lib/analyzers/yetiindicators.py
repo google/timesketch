@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import requests
 import yaml
@@ -695,7 +695,7 @@ class YetiBloomChecker(YetiBaseAnalyzer):
 
     def run_composite_aggregation(
         self, hashmap, after_key=None
-    ) -> tuple[set[str], Dict | None]:
+    ) -> tuple[set[str], Union[Dict | None]]:
         agg_name = f"my_composite_agg_{self.index_name}"
         agg_dsl = {
             "size": 0,
