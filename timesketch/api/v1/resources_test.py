@@ -1371,18 +1371,25 @@ class SystemSettingsResourceTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
 
-        self.assertIn("DFIQ_ENABLED", response.json)
-        self.assertIn("LLM_PROVIDER", response.json)
-        self.assertIn("SEARCH_PROCESSING_TIMELINES", response.json)
-
         self.assertEqual(response.json["DFIQ_ENABLED"], False)
         self.assertEqual(response.json["SEARCH_PROCESSING_TIMELINES"], False)
 
-        self.assertTrue(response.json["LLM_PROVIDER"])
+        self.assertIn("LLM_FEATURES_AVAILABLE", response.json)
+        self.assertIn("default", response.json["LLM_FEATURES_AVAILABLE"])
 
-        if "LLM_FEATURES_AVAILABLE" in response.json:
-            self.assertIsInstance(response.json["LLM_FEATURES_AVAILABLE"], dict)
-            self.assertIn("default", response.json["LLM_FEATURES_AVAILABLE"])
+    def test_system_settings_invalid_llm_config(self):
+        """Test with invalid LLM configuration."""
+        self.app.config["LLM_PROVIDER_CONFIGS"] = "invalid_config"
+        self.login()
+        response = self.client.get(self.resource_url)
+
+        expected_response = {
+            "DFIQ_ENABLED": False,
+            "SEARCH_PROCESSING_TIMELINES": False,
+            "LLM_FEATURES_AVAILABLE": {"default": False},
+        }
+
+        self.assertDictEqual(response.json, expected_response)
 
 
 class ScenariosResourceTest(BaseTest):

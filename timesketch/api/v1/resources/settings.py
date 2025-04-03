@@ -1,5 +1,17 @@
+# Copyright 2024 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """System settings."""
-
 import logging
 from flask import current_app, jsonify
 from flask_restful import Resource
@@ -18,40 +30,35 @@ class SystemSettingsResource(Resource):
         Returns:
             JSON object with system settings.
         """
-        # Settings from timesketch.conf to expose to the frontend clients
+        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
         result = {
-            "DFIQ_ENABLED": current_app.config.get("DFIQ_ENABLED"),
+            "DFIQ_ENABLED": current_app.config.get("DFIQ_ENABLED", False),
             "SEARCH_PROCESSING_TIMELINES": current_app.config.get(
                 "SEARCH_PROCESSING_TIMELINES", False
             ),
         }
 
-        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
-        result["LLM_PROVIDER"] = bool(llm_configs)
-
-        # Check default LLM provider
         default_provider_working = False
+        if not isinstance(llm_configs, dict):
+            logger.debug(
+                "LLM_PROVIDER_CONFIGS is not a dictionary: %s",
+                type(llm_configs).__name__,
+            )
+            result["LLM_FEATURES_AVAILABLE"] = {"default": default_provider_working}
+            return jsonify(result)
+
         if (
             "default" in llm_configs
             and isinstance(llm_configs["default"], dict)
             and len(llm_configs["default"]) == 1
         ):
             default_provider = next(iter(llm_configs["default"]))
-            try:
-                provider_class = llm_manager.LLMManager.get_provider(default_provider)
-                provider_class(config=llm_configs["default"][default_provider])
-                default_provider_working = True
-            except Exception as e:  # pylint: disable=broad-except
-                logger.debug(
-                    "Default LLM provider '%s' failed to initialize: %s",
-                    default_provider,
-                    str(e),
-                )
+            default_provider_config = llm_configs["default"][default_provider]
+            default_provider_working = self._check_provider_working(
+                default_provider, default_provider_config
+            )
 
-        # Initialize feature availability with default status
         llm_feature_availability = {"default": default_provider_working}
-
-        # Check LLM feature-specific configurations
         for feature_name, feature_conf in llm_configs.items():
             if feature_name == "default":
                 continue
@@ -59,19 +66,10 @@ class SystemSettingsResource(Resource):
             feature_provider_working = False
             if isinstance(feature_conf, dict) and len(feature_conf) == 1:
                 feature_provider = next(iter(feature_conf))
-                try:
-                    provider_class = llm_manager.LLMManager.get_provider(
-                        feature_provider
-                    )
-                    provider_class(config=feature_conf[feature_provider])
-                    feature_provider_working = True
-                except Exception as e:  # pylint: disable=broad-except
-                    logger.debug(
-                        "LLM provider '%s' for feature '%s' failed: %s",
-                        feature_provider,
-                        feature_name,
-                        str(e),
-                    )
+                feature_provider_config = feature_conf[feature_provider]
+                feature_provider_working = self._check_provider_working(
+                    feature_provider, feature_provider_config
+                )
 
             # Feature is available if either specific provider works
             # or default provider works
@@ -81,12 +79,26 @@ class SystemSettingsResource(Resource):
 
         result["LLM_FEATURES_AVAILABLE"] = llm_feature_availability
 
-        # TODO(mvd): Remove by 2025/06/01 once all users have updated their config.
-        if current_app.config.get("LLM_PROVIDER") and "default" not in llm_configs:
-            result["llm_config_warning"] = (
-                "Your LLM configuration in timesketch.conf is outdated. "
-                "Please update your LLM_PROVIDER_CONFIGS section to the new format."
-            )
-            logger.warning(result["llm_config_warning"])
-
         return jsonify(result)
+
+    def _check_provider_working(self, provider_name: str, config: dict) -> bool:
+        """Check if a specific LLM provider works with given configuration.
+
+        Args:
+            provider_name: Name of the provider to check
+            config: Configuration dict for the provider
+
+        Returns:
+            bool: Whether the provider is working
+        """
+        try:
+            provider_class = llm_manager.LLMManager.get_provider(provider_name)
+            provider_class(config=config)
+            return True
+        except Exception as e:  # pylint: disable=broad-except
+            logger.debug(
+                "LLM provider '%s' failed to initialize: %s",
+                provider_name,
+                str(e),
+            )
+            return False
