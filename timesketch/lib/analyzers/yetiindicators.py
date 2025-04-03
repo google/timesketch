@@ -13,6 +13,7 @@ from flask import current_app
 from timesketch.lib import emojis, sigma_util
 from timesketch.lib.analyzers import interface, manager
 
+
 TYPE_TO_EMOJI = {
     "malware": "SPIDER",
     "threat-actor": "SKULL",
@@ -37,6 +38,7 @@ OBSERVABLE_INTEL_MAPPING = {
     "sha256": "hash_sha256",
     "sha1": "hash_sha1",
     "md5": "hash_md5",
+    "generic": "message",
 }
 
 HIGH_SEVERITY_TYPES = {
@@ -60,7 +62,7 @@ def slugify(text: str) -> str:
 class YetiBaseAnalyzer(interface.BaseAnalyzer):
     """Base class for Yeti indicator analyzers."""
 
-    DEPENDENCIES = frozenset(["domain"])
+    # DEPENDENCIES = frozenset(["domain"])
 
     # Entities of this type will be fetched from Yeti
     # Can optionally contain tags after a `:`
@@ -127,6 +129,19 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
         access_token = response.json()["access_token"]
         self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
+
+    def _get_bloom_request(self, hashes):
+        """Simple wrapper around requests call to make testing easier."""
+        body = "\n".join(hashes)
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/bloom/search/raw", data=body
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} doing bloom check from Yeti: "
+                + str(results.json())
+            )
+        return results.json()
 
     def _get_neighbors_request(self, params: Dict) -> Dict:
         """Simple wrapper around requests call to make testing easier."""
@@ -240,7 +255,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         event.commit()
 
         if neighbors:
-            msg += f'Related entities: {[neighbor["name"] for neighbor in neighbors]}'
+            msg += f"Related entities: {[neighbor['name'] for neighbor in neighbors]}"
 
         comments = {comment.comment for comment in event.get_comments()}
         if msg not in comments:
@@ -592,8 +607,8 @@ class YetiTriageIndicators(YetiBaseAnalyzer):
 
     DEPENDENCIES = frozenset(["domain"])
 
-    _TYPE_SELECTOR = ["attack-pattern:triage"]
-    _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
+    _TYPE_SELECTOR = ["attack-pattern:insider"]
+    _TARGET_NEIGHBOR_TYPE = ["observable"]
     _DIRECTION = "inbound"
     _SAVE_INTELLIGENCE = False
 
@@ -656,7 +671,99 @@ class YetiInvestigations(YetiBaseAnalyzer):
     _MAX_HOPS = 1
 
 
+class YetiKeywords(YetiBaseAnalyzer):
+    """Analyzer for Yeti investigation-related indicators."""
+
+    NAME = "yetikeywords"
+    DISPLAY_NAME = "Yeti Investigations intelligence"
+    DESCRIPTION = (
+        "Mark events that match Yeti investigation indicators and observables."
+        " {investigation} ← {indicators, observables}"
+    )
+
+    _TYPE_SELECTOR = ["attack-pattern:keywords"]
+    _TARGET_NEIGHBOR_TYPE = ["observable"]
+    _SAVE_INTELLIGENCE = True
+    _DIRECTION = "any"
+    _MAX_HOPS = 1
+
+
+class YetiBloomChecker(YetiBaseAnalyzer):
+    NAME = "yetibloomchecker"
+    DISPLAY_NAME = "Yeti Bloom filter checker"
+    DESCRIPTION = "Check if hashes in the timeline are present in Yeti's bloom filter."
+
+    def run_composite_aggregation(
+        self, hashmap, after_key=None
+    ) -> tuple[set[str], Dict | None]:
+        agg_name = f"my_composite_agg_{self.index_name}"
+        agg_dsl = {
+            "size": 0,
+            "query": {
+                "bool": {"filter": [{"term": {"__ts_timeline_id": self.timeline_id}}]}
+            },
+            "aggs": {
+                agg_name: {
+                    "composite": {
+                        "size": 10000,
+                        "sources": [
+                            {"sha256_hash": {"terms": {"field": "sha256_hash.keyword"}}}
+                        ],
+                    }
+                }
+            },
+        }
+
+        if after_key:
+            agg_dsl["aggs"][agg_name]["composite"]["after"] = after_key
+
+        result = self.datastore.search(
+            sketch_id=self.sketch.id,
+            indices=[self.index_name],
+            query_dsl=agg_dsl,
+        )
+        after_key = result["aggregations"][agg_name].get("after_key")
+        buckets = result["aggregations"][agg_name]["buckets"]
+        for r in buckets:
+            hashmap.add(r["key"]["sha256_hash"])
+
+        return hashmap, after_key
+
+    def run(self):
+        if not self.yeti_api_root or not self.yeti_api_key:
+            return "No Yeti configuration settings found, aborting."
+
+        hashmap = set()
+        after = None
+        while True:
+            _, after = self.run_composite_aggregation(hashmap, after_key=after)
+            if not after:
+                break
+
+        bloom_hits = self._get_bloom_request(hashmap)
+        print(bloom_hits)
+        hit_dict = {hit["value"]: hit["hits"] for hit in bloom_hits}
+
+        tagged = 0
+        for event in self.event_stream(
+            query_string="_exists_:sha256_hash", return_fields=["sha256_hash"]
+        ):
+            sha256_hash = event.source.get("sha256_hash")
+            if sha256_hash in hit_dict:
+                tagged += 1
+                tags = hit_dict[sha256_hash]
+                event.add_tags(tags)
+                event.commit()
+
+        msg = f"Bloom filter check completed. {len(hashmap)} hashes checked, {len(hit_dict)} hits found, {tagged} events tagged."
+        self.output.result_summary = msg
+        self.output.result_status = "SUCCESS"
+        return str(self.output)
+
+
 manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
 manager.AnalysisManager.register_analyzer(YetiBadnessIndicators)
 manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
 manager.AnalysisManager.register_analyzer(YetiInvestigations)
+
+manager.AnalysisManager.register_analyzer(YetiBloomChecker)
