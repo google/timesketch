@@ -755,7 +755,6 @@ class YetiBloomChecker(YetiBaseAnalyzer):
                 break
 
         bloom_hits = self._get_bloom_request(hashmap)
-        print(bloom_hits)
         hit_dict = {hit["value"]: hit["hits"] for hit in bloom_hits}
 
         tagged = 0
