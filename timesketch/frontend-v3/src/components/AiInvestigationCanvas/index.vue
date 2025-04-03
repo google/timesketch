@@ -78,9 +78,19 @@ export default {
       let questionsArray = [];
 
       try {
-        const [aiQuestions, existingQuestions, storyList] =
+
+        try {
+          await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
+        } catch (error) {
+          this.store.setNotification({
+          text: "LLM service was unable to generate relevant data",
+          icon: "mdi-alert-circle-outline",
+          type: "error",
+        });
+        }
+
+        const [existingQuestions, storyList] =
           await Promise.allSettled([
-            RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer"),
             RestApiClient.getOrphanQuestions(this.store.sketch.id),
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
@@ -136,15 +146,6 @@ export default {
           })),
         ];
 
-        if (
-          aiQuestions.status === "fulfilled" &&
-          aiQuestions?.value?.data?.questions
-        ) {
-          questionsArray = [
-            ...questionsArray,
-            ...aiQuestions.value.data.questions,
-          ];
-        }
         this.questions = questionsArray;
       } catch (err) {
         console.error(err);
