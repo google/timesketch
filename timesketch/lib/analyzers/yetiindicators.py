@@ -770,7 +770,7 @@ class YetiBloomChecker(YetiBaseAnalyzer):
 
         msg = (
             f"Bloom filter check completed. {len(hashmap)} hashes checked,"
-            " {len(hit_dict)} hits found, {tagged} events tagged."
+            f" {len(hit_dict)} hits found, {tagged} events tagged."
         )
         self.output.result_summary = msg
         self.output.result_status = "SUCCESS"
