@@ -48,10 +48,10 @@ limitations under the License.
         variant="flat"
         :color="textColor"
         @click="confirmAndSave()"
-        :disabled="reportLocked || completed"
+        :disabled="reportLocked || approved"
         size="small"
       >
-        {{ completed ? "Saved" : "Confirm &amp; Save" }}
+        {{ approved ? "Saved" : "Confirm &amp; Save" }}
       </v-btn>
     </v-card-actions>
   </v-card>
@@ -66,7 +66,7 @@ export default {
     question: Object,
     index: Number,
     reportLocked: Boolean,
-    completed: Boolean,
+    approved: Boolean,
     variant: String,
   },
   data() {
@@ -78,27 +78,24 @@ export default {
   },
   computed: {
     backgroundColor() {
-      let defaultColor = this.variant === "a" ? "#F8F9FA" : "#3874CB";
-
-      if (this.completed || this.reportLocked) {
-        defaultColor = "#F8F9FA";
+      if (this.approved || this.reportLocked || this.variant === "saved") {
+        return "#F8F9FA";
+      } else {
+        return "#3874CB"
       }
-
-      return defaultColor;
     },
     textColor() {
-      let defaultColor = "#fff";
-
       if (
-        this.variant === "a" ||
+        this.variant === "saved" ||
         this.isConfirming ||
-        this.completed ||
+        this.approved ||
         this.reportLocked
       ) {
         defaultColor = "primary";
-      }
+      } else {
 
-      return defaultColor;
+        return "#fff";
+      }
     },
   },
   methods: {
