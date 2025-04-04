@@ -1368,15 +1368,28 @@ class SystemSettingsResourceTest(BaseTest):
         """Authenticated request to get system settings."""
         self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"test": {}}}
         self.app.config["DFIQ_ENABLED"] = False
-
         self.login()
         response = self.client.get(self.resource_url)
+
+        self.assertEqual(response.json["DFIQ_ENABLED"], False)
+        self.assertEqual(response.json["SEARCH_PROCESSING_TIMELINES"], False)
+
+        self.assertIn("LLM_FEATURES_AVAILABLE", response.json)
+        self.assertIn("default", response.json["LLM_FEATURES_AVAILABLE"])
+
+    def test_system_settings_invalid_llm_config(self):
+        """Test with invalid LLM configuration."""
+        self.app.config["LLM_PROVIDER_CONFIGS"] = "invalid_config"
+        self.login()
+        response = self.client.get(self.resource_url)
+
         expected_response = {
             "DFIQ_ENABLED": False,
-            "LLM_PROVIDER": "test",
             "SEARCH_PROCESSING_TIMELINES": False,
+            "LLM_FEATURES_AVAILABLE": {"default": False},
         }
-        self.assertEqual(response.json, expected_response)
+
+        self.assertDictEqual(response.json, expected_response)
 
 
 class ScenariosResourceTest(BaseTest):
