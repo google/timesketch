@@ -33,16 +33,15 @@ class SystemSettingsResource(Resource):
         Returns:
             JSON object with system settings.
         """
-        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
         result = {
             "DFIQ_ENABLED": current_app.config.get("DFIQ_ENABLED", False),
             "SEARCH_PROCESSING_TIMELINES": current_app.config.get(
                 "SEARCH_PROCESSING_TIMELINES", False
             ),
+            "LLM_FEATURES_AVAILABLE": self._get_llm_features_availability(
+                current_app.config.get("LLM_PROVIDER_CONFIGS", {})
+            ),
         }
-
-        llm_feature_availability = self._get_llm_features_availability(llm_configs)
-        result["LLM_FEATURES_AVAILABLE"] = llm_feature_availability
 
         return jsonify(result)
 
