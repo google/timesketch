@@ -36,9 +36,8 @@ class Ollama(interface.LLMProvider):
             ValueError: If required configuration keys ('server_url', 'model')
                         are missing or empty.
         """
-        super().__init__(config, **kwargs)  # Pass kwargs to base class
+        super().__init__(config, **kwargs)
 
-        # Check for required configuration keys
         server_url = self.config.get("server_url")
         model_name = self.config.get("model")
 
