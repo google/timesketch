@@ -208,3 +208,15 @@ html {
   -o-transition: none !important;
   transition: none !important;
 }
+
+$llm-gradient: linear-gradient(90deg,
+  #8ab4f8 0%,   
+  #81c995 20%, 
+  #f8c665 40%, 
+  #ec7764 60%,  
+  #b39ddb 80%,  
+  #8ab4f8 100%);
+
+:root {
+  --llm-gradient: #{$llm-gradient};
+}
