@@ -32,15 +32,6 @@ limitations under the License.
         <p class="font-weight-medium">{{id}} : {{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
-        <!-- <v-chip
-          v-show="risk_level"
-          v-if="riskLevel"
-          size="x-small"
-          :color="riskColor"
-          class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
-        >
-          {{ risk_level }}
-        </v-chip> -->
         <v-icon
           icon="mdi-check-circle"
           v-if="isApproved"
@@ -53,7 +44,6 @@ limitations under the License.
 </template>
 
 <script>
-import { riskColors } from "@/constants";
 import { useAppStore } from "@/stores/app";
 
 export default {
@@ -63,8 +53,7 @@ export default {
     conclusion: String,
     conclusionSummary: String,
     conclusions: Array,
-    updated_at: String,
-    risk_level: String,
+    updatedAt: String,
     id: Number,
     user: Object,
   },
@@ -78,12 +67,11 @@ export default {
       this.store.setActiveQuestion({
         user: this.user,
         name: this.name,
-        riskLevel: this.riskLevel,
         conclusionSummary: this.conclusionSummary,
         conclusions: this.conclusions,
         type: this.type,
         id: this.id,
-        updated_at: this.updated_at,
+        updatedAt: this.updated_at,
         completed: this.completed,
       });
     },
@@ -106,10 +94,6 @@ export default {
       } else {
         return false;
       }
-    },
-
-    riskColor() {
-      return riskColors[riskLevel];
     },
 
     listItemClasses() {

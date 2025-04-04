@@ -16,14 +16,9 @@ limitations under the License.
 <template>
   <li class="question mb-10">
     <div class="d-inline-flex align-center justify-start">
-      <!-- <RiskLevelControl
-        :riskLevel="riskLevel"
-        :disabled="reportLocked"
-        @update:riskLevel="($event) => (riskLevel = $event)"
-      /> -->
       <v-icon
         icon="mdi-check-circle"
-        v-if="completed"
+        v-if="isApproved"
         small
         color="#34A853"
         class="ml-2"
@@ -38,8 +33,8 @@ limitations under the License.
     <QuestionActionsStrip
       :question="question"
       :reportLocked="reportLocked"
-      :completed="completed"
-      variant="a"
+      :approved="isApproved"
+      variant="approved"
     />
   </li>
 </template>
@@ -53,31 +48,23 @@ export default {
   data() {
     return {
       store: useAppStore(),
-      riskLevel: this.question.risk_level,
     };
   },
   computed: {
-    completed() {
-      let isApproved = false;
-
+    isApproved() {
       if (
         this.store.report?.content?.approvedQuestions &&
         this.store.report?.content?.approvedQuestions.length > 0
       ) {
-        isApproved = !!this.store.report.content.approvedQuestions.find(
+        return !!this.store.report.content.approvedQuestions.find(
           (approvedId) => approvedId === this.question.id
         );
+      } else {
+        return false;
       }
-
-      return isApproved;
     },
     order() {
       return this.index + 1;
-    },
-  },
-  watch: {
-    riskLevel(riskLevel) {
-      this.updateQuestion({ ...this.question, risk_level: riskLevel });
     },
   },
 };

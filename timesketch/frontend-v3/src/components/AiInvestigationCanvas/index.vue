@@ -26,8 +26,8 @@ limitations under the License.
         :reportLocked="store.reportLocked"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
-        <template v-if="selectedQuestion && selectedQuestion.id">
-          <ResultsViewLoader v-if="isLoading || !store.report.content" />
+        <template v-if="showResultsView">
+          <ResultsViewLoader v-if="showLoader" />
           <ResultsView
             :question="selectedQuestion"
             :key="selectedQuestion.id"
@@ -36,7 +36,7 @@ limitations under the License.
           />
         </template>
         <template v-else>
-          <ReportViewLoader v-if="isLoading || !store.report.content" />
+          <ReportViewLoader v-if="showLoader" />
           <ReportView
             v-else
             :reportLocked="store.reportLocked"
@@ -93,12 +93,22 @@ export default {
       let questionsArray = [];
 
       try {
-        // await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
 
-        const [existingQuestions, storyList] = await Promise.allSettled([
-          RestApiClient.getOrphanQuestions(this.store.sketch.id),
-          RestApiClient.getStoryList(this.store.sketch.id),
-        ]);
+        try {
+          await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
+        } catch (error) {
+          this.store.setNotification({
+          text: "LLM service was unable to generate relevant data",
+          icon: "mdi-alert-circle-outline",
+          type: "error",
+        });
+        }
+
+        const [existingQuestions, storyList] =
+          await Promise.allSettled([
+            RestApiClient.getOrphanQuestions(this.store.sketch.id),
+            RestApiClient.getStoryList(this.store.sketch.id),
+          ]);
 
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
@@ -206,6 +216,12 @@ export default {
     },
   },
   computed: {
+    showResultsView() {
+      return this.selectedQuestion?.id
+    },
+    showLoader() {
+      return this.isLoading || !store.report.content
+    },  
     selectedQuestion() {
       return this.store.activeContext.question;
     },
@@ -222,7 +238,7 @@ export default {
       return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
-      return this.store.report?.content?.approvedQuestions?.length || 0;
+      return this.filteredQuestions?.length;
     },
     sketchId() {
       return this.store.sketch.id;

@@ -46,34 +46,34 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import { useTheme } from "vuetify";
-import { useRoute } from "vue-router";
+import { useTheme } from 'vuetify'
+import { useRoute } from 'vue-router'
 
 export default {
   data() {
     return {
       appStore: useAppStore(),
       route: useRoute(),
-    };
+    }
   },
   props: {
     iconOnly: Boolean,
   },
   computed: {
     sketch() {
-      return this.appStore.sketch;
+      return this.appStore.sketch
     },
     isActive() {
       return this.route.name === 'AiInvestigation'
     },
     sketchId() {
-      return this.appStore.sketch.id;
+      return this.appStore.sketch.id
     },
   },
   setup() {
     return {
-      theme: useTheme(),
-    };
-  },
-};
+      theme: useTheme()
+    }
+  }
+}
 </script>

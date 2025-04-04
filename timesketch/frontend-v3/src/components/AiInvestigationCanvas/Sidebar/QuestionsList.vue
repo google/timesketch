@@ -25,7 +25,7 @@ limitations under the License.
       variant="text"
       size="small"
       color="primary"
-      @click="setShowModal"
+      @click="toggleModal"
       :disabled="reportLocked"
     >
       <v-icon icon="mdi-plus" left small />
@@ -67,7 +67,7 @@ limitations under the License.
     v-model="showModal"
     width="auto"
   >
-    <AddQuestionModal @close-modal="setShowModal" />
+    <AddQuestionModal @close-modal="toggleModal" />
   </v-dialog>
 </template>
 
@@ -85,7 +85,7 @@ export default {
   },
   inject: ["regenerateQuestions"],
   methods: {
-    setShowModal() {
+    toggleModal() {
       this.showModal = !this.showModal;
     },
   },

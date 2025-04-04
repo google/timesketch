@@ -57,7 +57,7 @@ limitations under the License.
             v-if="!reportLocked"
             rounded
             color="primary"
-            @click="setShowConfirmationModal()"
+            @click="toggleShowConfirmationModal()"
           >
             Complete investigation</v-btn
           >
@@ -121,7 +121,7 @@ limitations under the License.
     width="auto"
   >
     <CompleteInvestigationModal
-      @close-modal="setShowConfirmationModal"
+      @close-modal="toggleShowConfirmationModal"
       :questions="questions"
     />
   </v-dialog>
@@ -179,7 +179,7 @@ export default {
     },
   },
   methods: {
-    setShowConfirmationModal() {
+    toggleShowConfirmationModal() {
       this.showConfirmationModal = !this.showConfirmationModal;
     },
     downloadReport() {
@@ -215,17 +215,11 @@ export default {
           icon: "mdi-alert-circle-outline",
           type: "error",
         });
-      } finally {
-      }
+      } 
     },
     updateContent: debounce(function (key, value) {
       this.store.updateReport({ [key]: value });
     }, 200),
-  },
-  watch: {
-    riskLevel(riskLevel) {
-      this.riskLevel = riskLevel;
-    },
   },
 };
 </script>

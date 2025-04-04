@@ -74,28 +74,6 @@ limitations under the License.
               </v-list-item>
             </div>
           </v-list>
-          <v-list
-            class="questions-group mb-4"
-            v-if="aiMatches && aiMatches.length > 0"
-          >
-            <v-list-subheader class="font-weight-bold">
-              AI-Suggested Questions
-              <span>({{ aiMatches.length }})</span></v-list-subheader
-            >
-            <div class="questions-group__list overflow-y-auto">
-              <v-list-item
-                v-for="(question, index) in aiMatches"
-                :key="index"
-                @click="createQuestion(question.name)"
-                class="d-flex"
-              >
-                <template v-slot:prepend>
-                  <v-icon small class="mr-2">mdi-plus</v-icon>
-                </template>
-                <v-list-item-title> {{ question.name }}</v-list-item-title>
-              </v-list-item>
-            </div>
-          </v-list>
         </div>
       </div>
       <div class="dfiq-notice pt-4">
@@ -137,7 +115,6 @@ export default {
       isLoading: true,
       queryString: null,
       dfiqTemplates: [],
-      aiTemplates: [],
       isSubmitting: false,
       store: useAppStore(),
     };
@@ -150,23 +127,15 @@ export default {
       return this.questions && this.questions.length > 0
         ? [
             ...this.questions.sort(
-              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+              (questionA, questionB) =>
+                new Date(questionA.updated_at) - new Date(questionB.updated_at)
             ),
           ]
         : [];
     },
-    aiMatches() {
-      if (!this.queryString) {
-        return this.aiTemplates;
-      }
-
-      return this.aiTemplates.filter((template) =>
-        template.name.toLowerCase().includes(this.queryString.toLowerCase())
-      );
-    },
     dfiqMatches() {
       if (!this.queryString) {
-        return [];
+        return this.dfiqTemplates;
       }
 
       return this.dfiqTemplates.filter((template) =>
@@ -181,7 +150,7 @@ export default {
 
         if (
           dfiqTemplatesRes.data?.objects &&
-          dfiqTemplatesRes.data?.objects.length > 0
+          dfiqTemplatesRes.data.objects.length > 0
         ) {
           this.dfiqTemplates = dfiqTemplatesRes.data.objects;
         }
