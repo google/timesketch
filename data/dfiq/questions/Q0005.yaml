@@ -1,0 +1,19 @@
+display_name: Which system services has been installed and executed?
+description: |
+  A system service in Windows is a program that runs in the background and provides essential
+  functionality for the operating system. System services are typically started automatically
+  when Windows boots up, and they run continuously until Windows is shut down.
+
+  System services can be used for lateral movement between computers in a few ways. First, an
+  attacker who has gained access to a computer on a network can create a malicious system service
+  that runs on the computer. This can be done by using the `sc` command-line tool.
+
+  Once the malicious system service is running, it can be used to execute commands on the computer
+  or to connect to other computers on the network. This can allow the attacker to move laterally to
+  other computers on the network and gain further access.
+type: question
+id: Q0005
+tags:
+  - windows
+parent_ids:
+  - F0002
