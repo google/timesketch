@@ -16,7 +16,10 @@ limitations under the License.
 <template>
   <div class="d-flex justify-space-between px-2">
     <h4 class="mb-2" v-if="questionsTotal">
-      {{ questionsTotal }} <span class="font-weight-regular">questions</span>
+      {{ questionsTotal }}
+      <span class="font-weight-regular"
+        >question{{ questionsTotal > 1 && "s" }}</span
+      >
     </h4>
     <v-btn
       variant="text"
@@ -52,6 +55,7 @@ limitations under the License.
       color="primary"
       @click="regenerateQuestions()"
       class="text-uppercase"
+      :disabled="reportLocked"
     >
       <v-icon icon="mdi-reload" class="mr-2" left small />
       Regenerate Questions</v-btn
@@ -74,6 +78,7 @@ export default {
   props: {
     questions: Array,
     questionsTotal: Number,
+    reportLocked: Boolean,
   },
   data() {
     return {

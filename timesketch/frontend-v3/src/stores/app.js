@@ -39,6 +39,9 @@ export const useAppStore = defineStore("app", {
       scenario: {},
       facet: {},
       question: {},
+      story: {
+        filed: false,
+      },
     },
     snackbar: {
       active: false,
@@ -64,7 +67,26 @@ export const useAppStore = defineStore("app", {
         let currentUser = response.data.objects[0].username;
         this.$reset();
         this.currentUser = currentUser;
-      })
+      });
+    },
+
+    async updateReport(payload) {
+      const newContent = {
+        ...this.report.content,
+        ...payload,
+      };
+
+      this.report = {
+        ...this.report,
+        content: newContent,
+      };
+
+      await ApiClient.updateStory(
+        this.report.title,
+        JSON.stringify(newContent),
+        this.sketch.id,
+        this.report.id
+      );
     },
 
     setActiveQuestion(question) {
@@ -218,7 +240,18 @@ export const useAppStore = defineStore("app", {
         color: snackbar.color,
         message: snackbar.message,
         timeout: snackbar.timeout,
-      }
+      };
     },
+  },
+  getters: {
+    activeQuestion() {
+      return this.activeContext.question;
+    },
+    summary() {
+      return this.report?.content?.summary;
+    },
+    reportLocked() {
+      return this.report?.content?.approved
+    }
   },
 });
