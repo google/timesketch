@@ -216,16 +216,6 @@ export default {
       }
     }
   },
-  watch: {
-    systemSettings: {
-      handler: function() {
-        // When system settings change (e.g. LLM feature availability changes),
-        // update user settings accordingly
-        this.syncSettingsWithAvailability();
-      },
-      deep: true
-    }
-  },
   mounted() {
     this.settings = { ...this.userSettings }
     // Set default values when a user doesn't have any settings saved.
