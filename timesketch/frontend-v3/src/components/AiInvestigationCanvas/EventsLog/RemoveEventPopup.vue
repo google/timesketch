@@ -19,7 +19,7 @@ limitations under the License.
       class="position-absolute left-0 color-white pa-6 rounded-lg dialog"
       v-if="showRemoveLog"
       style="width: 420px"
-      v-click-outside="() => setShowRemoveLog()"
+      v-click-outside="() => toggleShowRemoveLog()"
     >
       <div
         v-if="isLoading"
@@ -40,7 +40,7 @@ limitations under the License.
         </p>
 
         <div class="d-flex justify-end">
-          <v-btn variant="text" size="small" @click="setShowRemoveLog()">
+          <v-btn variant="text" size="small" @click="toggleShowRemoveLog()">
             No, keep it
           </v-btn>
           <v-btn
@@ -54,7 +54,7 @@ limitations under the License.
         </div>
       </div>
     </div>
-    <v-btn variant="text" @click="setShowRemoveLog()">
+    <v-btn variant="text" @click="toggleShowRemoveLog()">
       <v-icon small icon="mdi-close-circle-outline" />
     </v-btn>
   </div>
@@ -87,7 +87,7 @@ export default {
           remove: true,
         });
 
-        this.setShowRemoveLog();
+        this.toggleShowRemoveLog();
 
         this.store.setNotification({
           text: `Event ${this.eventId} removed from the observable.`,
@@ -106,7 +106,7 @@ export default {
         this.isLoading = false;
       }
     },
-    setShowRemoveLog() {
+    toggleShowRemoveLog() {
       this.showRemoveLog = !this.showRemoveLog;
     },
   },

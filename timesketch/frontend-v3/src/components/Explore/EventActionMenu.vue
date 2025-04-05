@@ -46,6 +46,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../event-bus.js'
+import { useAppStore } from '@/stores/app'
 
 export default {
   props: ['event'],
@@ -53,6 +54,7 @@ export default {
     return {
       showMenu: false,
       originalContext: false,
+      store: useAppStore()
     }
   },
   computed: {

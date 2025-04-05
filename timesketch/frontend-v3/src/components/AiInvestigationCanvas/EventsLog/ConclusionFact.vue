@@ -20,9 +20,9 @@ limitations under the License.
         v-if="showLogDetail"
         :eventId="fact.event_id"
         :sketchId="sketchId"
-        @close-detail-popup="setShowLogDetail()"
+        @close-detail-popup="toggleShowLogDetail()"
       />
-      <v-btn variant="text" @click="setShowLogDetail()">
+      <v-btn variant="text" @click="toggleShowLogDetail()">
         <v-icon left small icon="mdi-file-code-outline" />
       </v-btn>
     </div>
@@ -45,7 +45,7 @@ export default {
     };
   },
   methods: {
-    setShowLogDetail() {
+    toggleShowLogDetail() {
       this.showLogDetail = !this.showLogDetail;
     },
   },

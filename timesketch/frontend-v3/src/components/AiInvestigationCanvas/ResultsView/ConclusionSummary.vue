@@ -23,7 +23,7 @@ limitations under the License.
         variant="text"
         size="small"
         color="primary"
-        @click="setShowSummaryHistoryModal()"
+        @click="toggleShowSummaryHistoryModal()"
         class="text-uppercase"
         :disabled="!summaries || summaries.length < 1"
       >
@@ -84,7 +84,7 @@ limitations under the License.
     opacity="0"
   >
     <SummaryHistoryModal
-      @close-modal="setShowSummaryHistoryModal"
+      @close-modal="toggleShowSummaryHistoryModal"
       :summaries="summaries"
     />
   </v-dialog>
@@ -102,10 +102,8 @@ export default {
     question: Object,
   },
   data() {
-    const store = useAppStore();
-
     return {
-      store,
+      store:  useAppStore(),
       showSummaryHistoryModal: false,
       isSavingSummary: false,
       summary: "",
@@ -120,31 +118,22 @@ export default {
   },
   computed: {
     summaries() {
-      if (
-        !this.store.report?.content?.conclusionSummaries ||
-        this.store.report.content.conclusionSummaries.length < 1
-      ) {
-        return [];
-      }
-
-      return this.store.report.content.conclusionSummaries.filter(
+      return this.store.report?.content?.conclusionSummaries?.filter(
         ({ questionId }) => questionId === this.question.id
-      );
+      ) ?? [];
     },
     latestSummary() {
       return this.summaries[0];
     },
     lastUpdated() {
-      const latestSummary = this.latestSummary;
-
-      if (!latestSummary) {
+      if (!this.latestSummary) {
         return null;
       }
 
-      return `${formatDate(latestSummary.timestamp)}${
-        latestSummary.user
+      return `${formatDate(this.latestSummary.timestamp)}${
+        this.latestSummary.user
           ? ` by
-      ${latestSummary.user}`
+      ${this.latestSummary.user}`
           : null
       }`;
     },
@@ -161,7 +150,7 @@ export default {
   },
   methods: {
     formatDate,
-    setShowSummaryHistoryModal() {
+    toggleShowSummaryHistoryModal() {
       this.showSummaryHistoryModal = !this.showSummaryHistoryModal;
     },
     async submitSummary() {

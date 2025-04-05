@@ -25,7 +25,11 @@ limitations under the License.
       />
     </div>
     <p class="text-h6 font-weight-medium">{{ order }}. {{ question.name }}</p>
-    <ul class="my-4 ml-4" v-if="question.conclusions" v-for="conclusion in question.conclusions">
+    <ul
+      class="my-4 ml-4"
+      v-if="question.conclusions"
+      v-for="conclusion in question.conclusions"
+    >
       <li>
         <p>{{ conclusion.conclusion }}</p>
       </li>
@@ -33,7 +37,7 @@ limitations under the License.
     <QuestionActionsStrip
       :question="question"
       :reportLocked="reportLocked"
-      :approved="isApproved"
+      :isApproved="isApproved"
       variant="approved"
     />
   </li>
@@ -52,16 +56,9 @@ export default {
   },
   computed: {
     isApproved() {
-      if (
-        this.store.report?.content?.approvedQuestions &&
-        this.store.report?.content?.approvedQuestions.length > 0
-      ) {
-        return !!this.store.report.content.approvedQuestions.find(
-          (approvedId) => approvedId === this.question.id
-        );
-      } else {
-        return false;
-      }
+      return !!this.store.report?.content?.approvedQuestions?.find(
+        (approvedId) => approvedId === this.question.id
+      );
     },
     order() {
       return this.index + 1;

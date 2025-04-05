@@ -58,11 +58,7 @@ export default {
   },
   computed: {
     existingEvents() {
-      if (!this.events || this.events.length < 1) {
-        return [];
-      }
-
-      return this.events.map(({ _id }) => _id);
+      return this.events?.map(({ _id }) => _id) ?? [];
     },
     headers() {
       return [

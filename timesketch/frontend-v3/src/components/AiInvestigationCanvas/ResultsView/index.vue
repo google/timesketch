@@ -14,25 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <ResultsViewLoader v-if="isLoading" />
-  <section v-else>
+  <section>
     <header class="report-header px-6 pa-4 mb-6">
       <h2 class="text-h5 font-weight-bold mb-6">Results</h2>
       <QuestionActionsStrip
         v-if="!reportLocked"
-        :completed="completed"
+        :isApproved="isApproved"
         :question="question"
-        variant="b"
+        variant="default"
       />
       <div class="d-inline-flex ga-2 align-center mb-4">
-        <!-- <RiskLevelControl
-          :riskLevel="riskLevel"
-          :disabled="reportLocked"
-          @update:riskLevel="($event) => (riskLevel = $event)"
-        /> -->
         <v-icon
           icon="mdi-check-circle"
-          v-if="completed"
+          v-if="isApproved"
           size="large"
           color="#34A853"
         />
@@ -45,30 +39,6 @@ limitations under the License.
 
     <div class="px-6 mb-8">
       <ConclusionSummary :question="question" />
-      <!-- <div>
-        <v-btn
-          :disabled="reportLocked"
-          variant="text"
-          size="small"
-          color="primary"
-          class="text-uppercase pa-0"
-          @click="regenerateConclusion()"
-        >
-          <v-icon icon="mdi-reload" left small class="mr-1" />
-          Regenerate Conclusion Summary</v-btn
-        >
-        <v-btn
-          variant="text"
-          size="small"
-          color="primary"
-          @click="regenerateConclusionSummary()"
-          :disabled="reportLocked"
-          class="text-uppercase ml-5"
-        >
-          <v-icon icon="mdi-invoice-list-outline" class="mr-2" left small />
-          View History (TODO)</v-btn
-        >
-      </div> -->
     </div>
     <ConclusionsAccordion :question="question" />
   </section>
@@ -88,7 +58,6 @@ export default {
   data() {
     return {
       store: useAppStore(),
-      riskLevel: this.question.riskLevel,
       panels:
         this.question.conclusions && this.question.conclusions.length
           ? [this.question.conclusions[0].id]
@@ -96,31 +65,12 @@ export default {
     };
   },
   computed: {
-    completed() {
-      let isApproved = false;
-
-      if (
-        this.store.report?.content?.approvedQuestions &&
-        this.store.report?.content?.approvedQuestions.length > 0
-      ) {
-        isApproved = !!this.store.report.content.approvedQuestions.find(
-          (approvedId) => approvedId === this.question.id
-        );
-      }
-
-      return isApproved;
+    isApproved() {
+      return !!this.store.report?.content?.approvedQuestions?.find(
+        (approvedId) => approvedId === this.question.id
+      );
     },
-  },
-  methods: {
-    async regenerateConclusionSummary() {
-      // TODO : Implement when API work is completed
-    },
-  },
-  watch: {
-    riskLevel(riskLevel) {
-      this.updateQuestion({ ...this.question, risk_level: riskLevel });
-    },
-  },
+  }
 };
 </script>
 

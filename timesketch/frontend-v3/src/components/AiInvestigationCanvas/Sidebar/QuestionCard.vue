@@ -84,18 +84,10 @@ export default {
     },
 
     isApproved() {
-      if (
-        this.store.report?.content?.approvedQuestions &&
-        this.store.report?.content?.approvedQuestions.length > 0
-      ) {
-        return !!this.store.report.content.approvedQuestions.find(
-          (approvedId) => approvedId === this.id
-        );
-      } else {
-        return false;
-      }
+      return !!this.store.report?.content?.approvedQuestions?.find(
+        (approvedId) => approvedId === this.id
+      );
     },
-
     listItemClasses() {
       return {
         "is--active": this.isActive,
