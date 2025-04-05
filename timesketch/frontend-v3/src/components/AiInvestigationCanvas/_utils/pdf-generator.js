@@ -31,7 +31,7 @@ class generatePdf {
   }
 
   buildConclusions(conclusions) {
-    conclusions.forEach(({ conclusion }, index) => {
+    conclusions.forEach(({ conclusion }) => {
       this.currentYPosition = this.currentYPosition + 10;
 
       const { h: conclusionHeight } = this.doc.getTextDimensions(conclusion, {
@@ -45,7 +45,6 @@ class generatePdf {
   }
 
   buildQuestionsSection() {
-    
     this.report.questions.forEach(({ name, conclusions }, index) => {
       this.doc.setFontSize(12);
       this.doc.setFont("helvetica", "normal", "bold");
@@ -67,11 +66,11 @@ class generatePdf {
         );
       }, questionHeight);
 
-      if ((blockHeight + this.currentYPosition) > this.maxHeight) {
+      if (blockHeight + this.currentYPosition > this.maxHeight) {
         this.doc.addPage();
         this.doc.setPage(this.returnPageCount + 1);
         this.currentYPosition = 20;
-      } 
+      }
 
       this.currentYPosition = this.currentYPosition + questionHeight;
 
@@ -82,41 +81,36 @@ class generatePdf {
 
       this.buildConclusions(conclusions);
 
-      this.currentYPosition = this.currentYPosition + 20
+      this.currentYPosition = this.currentYPosition + 20;
     });
   }
 
   buildMetaSection() {
-    this.currentYPosition = this.currentYPosition + 20;
-    this.doc.setFont("helvetica", "normal", "bold");
-    this.setText("Name: ");
-    this.currentYPosition = this.currentYPosition + 10;
-    this.doc.setFont("helvetica", "normal", "regular");
-    this.setText(this.report.name);
-
-    this.currentYPosition = this.currentYPosition + 20;
-    this.doc.setFont("helvetica", "normal", "bold");
-    this.setText("Analyst(s): ");
-    this.currentYPosition = this.currentYPosition + 10;
-    this.doc.setFont("helvetica", "normal", "regular");
-    this.setText(this.report.analysts);
-
-    this.currentYPosition = this.currentYPosition + 20;
-    this.doc.setFont("helvetica", "normal", "bold");
-    this.setText("Finalized Date & Time: ");
-    this.currentYPosition = this.currentYPosition + 10;
-    this.doc.setFont("helvetica", "normal", "regular");
-    this.setText(this.report.finalizedTime.toISOString());
-
-    this.currentYPosition = this.currentYPosition + 20;
-    this.doc.setFont("helvetica", "normal", "bold");
-    this.setText("Progress: ");
-    this.currentYPosition = this.currentYPosition + 10;
-    this.doc.setFont("helvetica", "normal", "regular");
-
-    this.setText(
-      `${this.report.completedQuestionsTotal}/${this.report.completedQuestionsTotal} questions completed`
-    );
+    [
+      {
+        label: "Name:",
+        value: this.report.name,
+      },
+      {
+        label: "Analyst(s):",
+        value: this.report.analysts,
+      },
+      {
+        label: "Finalized Date & Time:",
+        value: this.report.finalizedTime.format("YYYY-MM-DD HH:mm"),
+      },
+      {
+        label: "Progress:",
+        value: `${this.report.completedQuestionsTotal}/${this.report.completedQuestionsTotal} questions completed`,
+      },
+    ].forEach(({ value, label }) => {
+      this.currentYPosition = this.currentYPosition + 20;
+      this.doc.setFont("helvetica", "normal", "bold");
+      this.setText(label);
+      this.currentYPosition = this.currentYPosition + 10;
+      this.doc.setFont("helvetica", "normal", "regular");
+      this.setText(value);
+    });
 
     const { h: summaryHeight } = this.doc.getTextDimensions(
       this.report.summary[0].value,
@@ -149,7 +143,6 @@ class generatePdf {
       this.doc.addPage();
       this.doc.setPage(2);
     }
-
 
     this.currentYPosition = 20;
   }
