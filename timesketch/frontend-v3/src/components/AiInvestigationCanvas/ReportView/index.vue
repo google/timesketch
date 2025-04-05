@@ -51,7 +51,7 @@ limitations under the License.
               left
               small
             />
-            Download (TODO)</v-btn
+            Download</v-btn
           >
           <v-btn
             v-if="!reportLocked"
