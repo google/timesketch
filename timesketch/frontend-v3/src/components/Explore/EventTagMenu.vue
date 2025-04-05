@@ -99,6 +99,7 @@ limitations under the License.
 <script>
 import { useAppStore } from '@/stores/app'
 import ApiClient from '../../utils/RestApiClient'
+import {  nextTick } from 'vue'
 
 export default {
   props: ['event'],
@@ -143,15 +144,15 @@ export default {
     },
     removeTags(tag) {
       ApiClient.untagEvents(this.sketch.id, [this.event], [tag])
-        .then((response) => {
+        .then(() => {
           this.event._source.tag.splice(this.event._source.tag.indexOf(tag), 1)
-          this.store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
+          this.store.updateTimelineTags({ sketchId: this.sketch.id, tag: tag, num: -1 })
         })
         .catch((e) => {
           console.error(e)
         })
     },
-    addTags: function (tagToAdd) {
+    async addTags (tagToAdd) {
       if (!this.event._source.hasOwnProperty('tag')) {
         this.$set(this.event._source, 'tag', [])
       }
@@ -163,17 +164,18 @@ export default {
       }
 
       ApiClient.tagEvents(this.sketch.id, [this.event], [tagToAdd])
-        .then((response) => {
-          this.$set(this.event._source.tag, this.event._source.tag.length, tagToAdd)
-          this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tagToAdd, num: 1 })
+        .then(() => {
+          this.event._source.tag[this.event._source.tag.length] = tagToAdd // TODO : test refactor
+          this.store.updateTimelineTags({ sketchId: this.sketch.id, tag: tagToAdd, num: 1 })
         })
         .catch((e) => {
           console.error('Cannot tag event! Error:' + e)
         })
-      this.$nextTick(() => {
+
+        await nextTick()
+
         this.selectedTags = null
         this.search = null
-      })
     },
   },
 }
