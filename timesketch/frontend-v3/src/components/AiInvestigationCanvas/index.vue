@@ -220,7 +220,7 @@ export default {
       return this.selectedQuestion?.id
     },
     showLoader() {
-      return this.isLoading || !store.report.content
+      return this.isLoading || !this.store.report.content
     },  
     selectedQuestion() {
       return this.store.activeContext.question;

@@ -99,7 +99,7 @@ limitations under the License.
 <script>
 import { useAppStore } from '@/stores/app'
 import ApiClient from '../../utils/RestApiClient'
-import {  nextTick } from 'vue'
+import { nextTick } from 'vue'
 
 export default {
   props: ['event'],

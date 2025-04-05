@@ -91,12 +91,12 @@ export default {
         this.isApproved ||
         this.reportLocked
       ) {
-        defaultColor = "primary";
+        return "primary";
       } else {
-
         return "#fff";
       }
     },
+    
   },
   methods: {
     async confirmAndSave() {
