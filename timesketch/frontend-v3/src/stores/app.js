@@ -260,16 +260,11 @@ export const useAppStore = defineStore("app", {
       return this.report?.content?.status === ReportStatus.VERIFIED;
     },
     approvedReportQuestions() {
-      return this.report?.content?.approvedQuestions &&
-        this.report?.content?.approvedQuestions.length
-        ? this.report?.content?.approvedQuestions
-        : [];
+      return this.report?.content?.approvedQuestions ?? [];
+
     },
     removedReportQuestions() {
-      return this.report?.content?.removedQuestions &&
-        this.report?.content?.removedQuestions.length
-        ? this.report?.content?.removedQuestions
-        : [];
+      return this.report?.content?.removedQuestions ?? [];
     },
   },
 });
