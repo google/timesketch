@@ -34,9 +34,14 @@ limitations under the License.
 <script>
 export default {
   props: ['item', 'tagConfig', 'showDetails'],
+  data() {
+    return {
+      store: useAppStore()
+    }
+  },
   computed: {
     sketch() {
-      return this.$store.state.sketch
+      return this.store.sketch
     },
     sortedTags() {
       if (!this.item._source.tag) return []

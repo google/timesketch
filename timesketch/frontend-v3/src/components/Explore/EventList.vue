@@ -670,6 +670,7 @@ import TsEventTags from "./EventTags.vue";
 import { useAppStore } from "@/stores/app.js";
 import RestApiClient from "../../utils/RestApiClient.js";
 
+
 const defaultQueryFilter = () => {
   return {
     from: 0,

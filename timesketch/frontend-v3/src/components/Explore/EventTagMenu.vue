@@ -97,12 +97,14 @@ limitations under the License.
 </template>
 
 <script>
+import { useAppStore } from '@/stores/app'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
   props: ['event'],
   data() {
     return {
+      store: useAppStore(),
       showMenu: false,
       listItems: [],
       selectedTags: null,
@@ -117,10 +119,10 @@ export default {
   },
   computed: {
     sketch() {
-      return this.$store.state.sketch
+      return this.store.sketch
     },
     tags() {
-      return this.$store.state.tags.map((tag) => tag.tag)
+      return this.store.tags.map((tag) => tag.tag)
     },
     assignedTags() {
       if (!this.event._source.tag) return []
@@ -143,7 +145,7 @@ export default {
       ApiClient.untagEvents(this.sketch.id, [this.event], [tag])
         .then((response) => {
           this.event._source.tag.splice(this.event._source.tag.indexOf(tag), 1)
-          this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
+          this.store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
         })
         .catch((e) => {
           console.error(e)
