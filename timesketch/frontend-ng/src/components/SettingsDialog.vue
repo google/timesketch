@@ -186,15 +186,9 @@ export default {
     },
   },
   mounted() {
-    this.settings = { ...this.userSettings }
-    // Set default values when a user doesn't have any settings saved.
-    if (!this.settings || !Object.keys(this.settings).length) {
-      this.settings = { ...DEFAULT_SETTINGS }
-      this.saveSettings()
-    } else {
-      // Merge default settings with user settings, prioritizing user settings.
-      this.settings = { ...DEFAULT_SETTINGS, ...this.settings }
-    }
+    // Set default settings if no user settings are defined.
+    this.settings = { ...DEFAULT_SETTINGS, ...this.userSettings };
+    this.saveSettings();
   },
 }
 </script>
