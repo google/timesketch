@@ -503,7 +503,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             )
 
             if not (indices or timeline_ids):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST, "No indices to aggregate on")
+                abort(HTTP_STATUS_CODE_NOT_FOUND, "No indices to aggregate on found.")
 
             aggregator = agg_class(
                 sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids
