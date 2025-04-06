@@ -17,7 +17,11 @@ limitations under the License.
       <v-subheader>Layout</v-subheader>
       <v-list-item>
         <v-list-item-action>
-          <v-switch v-model="settings.showLeftPanel" color="primary" @change="saveSettings()"></v-switch>
+          <v-switch
+            v-model="settings.showLeftPanel"
+            color="primary"
+            @change="saveSettings()"
+          ></v-switch>
         </v-list-item-action>
         <v-list-item-content>
           <v-list-item-title>Show side panel</v-list-item-title>
@@ -26,16 +30,16 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
-      
+
       <!-- AI Powered Features Main Setting -->
       <v-list-item>
         <v-list-item-action>
           <v-tooltip bottom>
             <template v-slot:activator="{ on, attrs }">
               <div v-on="isAnyFeatureAvailable ? {} : on" v-bind="attrs">
-                <v-switch 
-                  v-model="adjustedSettings.aiPoweredFeaturesMain" 
-                  color="primary" 
+                <v-switch
+                  v-model="settings.aiPoweredFeaturesMain"
+                  color="primary"
                   @change="updateAiFeatures"
                   :disabled="!isAnyFeatureAvailable"
                 ></v-switch>
@@ -49,7 +53,7 @@ limitations under the License.
           <v-list-item-subtitle>Main switch to enable or disable all experimental AI features</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
-      
+
       <!-- Child Setting: Event Summarization -->
       <v-list-item>
         <v-list-item-action class="ml-8">
@@ -57,10 +61,10 @@ limitations under the License.
             <template v-slot:activator="{ on, attrs }">
               <div v-on="isFeatureAvailable('llm_summarize') ? {} : on" v-bind="attrs">
                 <v-switch
-                  v-model="adjustedSettings.eventSummarization"
+                  v-model="settings.eventSummarization"
                   color="primary"
                   @change="saveSettings()"
-                  :disabled="!adjustedSettings.aiPoweredFeaturesMain || !isFeatureAvailable('llm_summarize')"
+                  :disabled="!settings.aiPoweredFeaturesMain || !isFeatureAvailable('llm_summarize')"
                 ></v-switch>
               </div>
             </template>
@@ -74,7 +78,7 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
-      
+
       <!-- Child Setting: AI Generated Queries -->
       <v-list-item>
         <v-list-item-action class="ml-8">
@@ -82,10 +86,10 @@ limitations under the License.
             <template v-slot:activator="{ on, attrs }">
               <div v-on="isFeatureAvailable('nl2q') ? {} : on" v-bind="attrs">
                 <v-switch
-                  v-model="adjustedSettings.generateQuery"
+                  v-model="settings.generateQuery"
                   color="primary"
                   @change="saveSettings()"
-                  :disabled="!adjustedSettings.aiPoweredFeaturesMain || !isFeatureAvailable('nl2q')"
+                  :disabled="!settings.aiPoweredFeaturesMain || !isFeatureAvailable('nl2q')"
                 ></v-switch>
               </div>
             </template>
@@ -99,10 +103,15 @@ limitations under the License.
           >
         </v-list-item-content>
       </v-list-item>
-      
+
+      <!-- Setting: Searching processing timelines -->
       <v-list-item v-if="systemSettings.SEARCH_PROCESSING_TIMELINES">
         <v-list-item-action>
-          <v-switch v-model="settings.showProcessingTimelineEvents" color="primary" @change="saveSettings()"></v-switch>
+          <v-switch
+            v-model="settings.showProcessingTimelineEvents"
+            color="primary"
+            @change="saveSettings()"
+          ></v-switch>
         </v-list-item-action>
         <v-list-item-content>
           <v-list-item-title>Include Processing Events</v-list-item-title>
@@ -149,72 +158,32 @@ export default {
       return this.systemSettings.LLM_FEATURES_AVAILABLE || {}
     },
     isAnyFeatureAvailable() {
-      return Object.values(this.llmFeatures).some(available => available === true);
+      return Object.values(this.llmFeatures).some(available => available === true)
     },
-    adjustedSettings() {
-      const adjusted = { ...this.settings };
-      
-      if (!this.isAnyFeatureAvailable) {
-        adjusted.aiPoweredFeaturesMain = false;
-      }
-      
-      if (!this.isFeatureAvailable('llm_summarize')) {
-        adjusted.eventSummarization = false;
-      }
-      
-      if (!this.isFeatureAvailable('nl2q')) {
-        adjusted.generateQuery = false;
-      }
-      
-      return adjusted;
-    }
   },
   methods: {
     saveSettings() {
-      // Use the adjusted settings which already have the availability constraints applied
-      ApiClient.saveUserSettings(this.adjustedSettings)
+      ApiClient.saveUserSettings(this.settings)
         .then(() => {
-          // Update local settings after saving
-          this.settings = { ...this.adjustedSettings };
-          return this.$store.dispatch('updateUserSettings');
+          return this.$store.dispatch('updateUserSettings')
+        })
+        .then(() => {
+          this.settings = { ...this.userSettings }
         })
         .catch((error) => {
-          console.log(error);
-        });
+          console.log(error)
+        })
     },
     updateAiFeatures() {
-      if (!this.adjustedSettings.aiPoweredFeaturesMain) {
-        this.settings.eventSummarization = false;
-        this.settings.generateQuery = false;
+      if (!this.settings.aiPoweredFeaturesMain) {
+        this.settings.eventSummarization = false
+        this.settings.generateQuery = false
       }
-      this.saveSettings();
+      this.saveSettings()
     },
     isFeatureAvailable(featureName) {
-      return this.llmFeatures[featureName] === true;
+      return this.llmFeatures[featureName] === true
     },
-    syncSettingsWithAvailability() {
-      // Update settings based on feature availability
-      let needsUpdate = false;
-      
-      if (!this.isAnyFeatureAvailable && this.settings.aiPoweredFeaturesMain) {
-        this.settings.aiPoweredFeaturesMain = false;
-        needsUpdate = true;
-      }
-      
-      if (!this.isFeatureAvailable('llm_summarize') && this.settings.eventSummarization) {
-        this.settings.eventSummarization = false;
-        needsUpdate = true;
-      }
-      
-      if (!this.isFeatureAvailable('nl2q') && this.settings.generateQuery) {
-        this.settings.generateQuery = false;
-        needsUpdate = true;
-      }
-      
-      if (needsUpdate) {
-        this.saveSettings();
-      }
-    }
   },
   mounted() {
     this.settings = { ...this.userSettings }
@@ -223,15 +192,8 @@ export default {
       this.settings = { ...DEFAULT_SETTINGS }
       this.saveSettings()
     } else {
-      // Ensure default values for new settings are applied if user settings are older
-      this.settings.aiPoweredFeaturesMain = this.settings.aiPoweredFeaturesMain !== undefined ? this.settings.aiPoweredFeaturesMain : DEFAULT_SETTINGS.aiPoweredFeaturesMain;
-      this.settings.eventSummarization = this.settings.eventSummarization !== undefined ? this.settings.eventSummarization : DEFAULT_SETTINGS.eventSummarization;
-      this.settings.generateQuery = this.settings.generateQuery !== undefined ? this.settings.generateQuery : DEFAULT_SETTINGS.generateQuery;
-      this.settings.showProcessingTimelineEvents = this.settings.showProcessingTimelineEvents !== undefined ? this.settings.showProcessingTimelineEvents : DEFAULT_SETTINGS.showProcessingTimelineEvents;
-      
-      this.$nextTick(() => {
-        this.syncSettingsWithAvailability();
-      });
+      // Merge default settings with user settings, prioritizing user settings.
+      this.settings = { ...DEFAULT_SETTINGS, ...this.settings }
     }
   },
 }
