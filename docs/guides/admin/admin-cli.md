@@ -462,7 +462,19 @@ tsctl similarity_score
 
 #### sketch-info Get information about a sketch
 
-Displays various information about a given sketch.
+Displays detailed information about a specific sketch.
+
+This command retrieves and displays comprehensive information about a
+Timesketch sketch, including:
+
+- **Sketch Details:** The sketch's ID and name.
+- **Active Timelines:** A table listing the active timelines within the
+  sketch, including their search index ID, index name, creation date,
+  user ID, description, status, timeline name, and timeline ID.
+- **Sharing Information:** Details about users and groups with whom the
+  sketch is shared.
+- **Sketch Status:** The current status of the sketch (e.g., "ready",
+  "archived").
 
 ```shell
 tsctl sketch-info
@@ -472,13 +484,12 @@ Example:
 
 ```shell
 Sketch 1 Name: (aaa)
-searchindex_id index_name                       created_at                 user_id description
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:06:52.849124 1       20200918_0417_DESKTOP-SDN1RPT
-3              88002da782f64061bf3703bc782b6006 2022-10-21 15:19:26.072964 1       all_packets
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:28:55.474166 1       E01-DC01_20200918_0347_CDrive
-4              11d761cd266640d798e30bb897c8dd4e 2022-10-21 15:32:15.060184 1       autoruns-desktop-sdn1rpt_fresh_import
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:12.316273 1       sigma_events
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:48.592320 1       sigma_events2
+searchindex_id index_name                       created_at                 user_id description             status timeline_name           timeline_id
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 14:49:52.402364 1       my_file_with_a_timeline ready  my_file_with_a_timeline 2
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 16:21:07.707528 1       evtx_part               ready  evtx_part               3
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-21 15:24:55.935364 1       sigma_events            ready  sigma_events            10
+10             9a0f22670bf74ba6884f3ba9b261bf13 2025-03-21 15:31:45.279662 1       evtx                    ready  evtx                    11
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-21 15:41:10.860161 1       sigma_eventsa           ready  sigma_eventsa           12
 Shared with:
     Users: (user_id, username)
         3: bar
@@ -497,16 +508,25 @@ id status created_at                 user_id
 In some cases, logs present a OpenSearch Index id and it is not easy to find out
 which Sketch that index is related to.
 
-Therefore the following command can be used:
+Therefore the following command can be used `tsctl searchindex-info`:
+
+Displays detailed information about a specific search index. You can specify the index using either its database ID or its OpenSearch index name. 
+The command shows the search index ID and name, and lists all timelines associated with the index, including their IDs, names, and associated sketch IDs and names.
 
 ```bash
-# tsctl searchindex-info --searchindex_id asd
+# tsctl searchindex-info --searchindex_id 99
 Searchindex: asd not found in database.
-# tsctl searchindex-info --searchindex_id 4c5afdf60c6e49499801368b7f238353
+# tsctl searchindex-info --searchindex_id 1
+Searchindex: 1 Name: sigma_events found in database.
+Corresponding Timeline id: 3 in Sketch Id: 2
+Corresponding Sketch id: 2 Sketch name: asdasd
+# tsctl searchindex-info --index_name 4c5afdf60c6e49499801368b7f238353
 Searchindex: 4c5afdf60c6e49499801368b7f238353 Name: sigma_events found in database.
 Corresponding Timeline id: 3 in Sketch Id: 2
 Corresponding Sketch id: 2 Sketch name: asdasd
 ```
+
+If neither `searchindex_id` nor `index_name` is provided, an error message is printed. If no matching search index is found, an appropriate message is printed
 
 ### Timeline status
 
@@ -752,4 +772,87 @@ tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
 45  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           60 2023-01-04 17:09:04.046003
 46  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           59 2023-01-04 17:09:04.014973
 48  2.750000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           63 2023-01-04 17:09:04.148185
+```
+
+### Celery Task Management
+
+These commands allow you to inspect and manage Celery tasks within the Timesketch application.
+
+#### `tsctl celery-tasks-redis`
+
+**Description:**
+
+Checks and displays the status of all Celery tasks stored in Redis. This command connects to the Redis instance used by Celery to store task metadata and retrieves information about all tasks. It then presents this information in a formatted table, including the task ID, name, status, and result.
+
+Notes:
+
+* Celery tasks have a result_expire date, which by default is one day. After that, the results will no longer be available.
+
+**Usage:**
+
+```bash
+tsctl celery-tasks-redis
+```
+
+**Output:**
+
+A table with the following columns:
+
+* Task ID: The unique identifier for the Celery task.
+* Name: The name of the task.
+* Status: The current status of the task (e.g., SUCCESS, FAILURE, PENDING).
+* Result: The result of the task if it has completed successfully.
+
+```
+Task ID                          Name Status  Result
+13a995db28d2479b854db177d1301ecb None SUCCESS 3e062029b52f4e1a8a103488b99bc2b3
+1829df81cb534ab29fe44d1e8c605c95 None SUCCESS 3e062029b52f4e1a8a103488b99bc2b3
+ffd3d6157e0f458bbe5f4c97e6d70d03 None SUCCESS 9a0f22670bf74ba6884f3ba9b261bf13
+```
+
+#### tsctl celery-tasks
+
+Shows running or past Celery tasks. This command provides various ways to inspect and view the status of Celery tasks within the Timesketch application. It can display information about a specific task, list active tasks, or show all tasks (including pending, active, and failed).
+
+**Usage**
+
+```bash
+tsctl celery-tasks [OPTIONS]
+```
+
+Options:
+
+* `--task_id TEXT`: Show information about a specific task ID.
+* `--active`: Show only active tasks.
+* `--show_all`: Show all tasks, including pending, active, and failed.
+
+**Notes**
+
+* Celery tasks have a `result_expire date`, which defaults to one day. After this period, task results may no longer be available.
+* When displaying all tasks, the status of each task is retrieved, which may take some time.
+* If no arguments are provided, it will print a message to use `--active` or `--show_all`.
+
+**Examples**
+
+```bash
+tsctl celery-tasks --task_id <task_id>
+tsctl celery-tasks --active
+tsctl celery-tasks --show_all
+```
+
+#### celery-revoke-task
+
+Revokes (cancels) a Celery task. This command attempts to revoke a running Celery task, effectively canceling its execution. It uses the task ID to identify the specific task to revoke.
+
+Note: For short tasks, they have to be cancelled quick.
+
+**Usage**
+
+```bash
+tsctl celery-revoke-task  TASK_ID
+```
+
+Example:
+```
+tsctl celery-revoke-task 8115648e-944c-4452-962e-644041603419
 ```

@@ -665,7 +665,6 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         searchindex.grant_permission(permission="read", user=current_user)
         searchindex.grant_permission(permission="write", user=current_user)
         searchindex.grant_permission(permission="delete", user=current_user)
-        searchindex.set_status("processing")
         db_session.add(searchindex)
         db_session.commit()
 

@@ -112,7 +112,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         searchindex.grant_permission(permission="read", user=current_user)
         searchindex.grant_permission(permission="write", user=current_user)
         searchindex.grant_permission(permission="delete", user=current_user)
-        searchindex.set_status("processing")
 
         db_session.add(searchindex)
         db_session.commit()
@@ -219,8 +218,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 headers_mapping=headers_mapping,
                 delimiter=delimiter,
             )
-
-        searchindex.set_status("processing")
 
         if not timeline:
             timeline = Timeline.get_or_create(

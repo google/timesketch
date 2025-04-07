@@ -18,6 +18,7 @@ import codecs
 import json
 import uuid
 
+from typing import Optional, Dict
 from flask_testing import TestCase
 
 from timesketch.app import create_app
@@ -336,13 +337,14 @@ class MockDataStore:
     # pylint: disable=unused-argument
     def search_stream(
         self,
-        query_string,
-        query_filter,
-        query_dsl,
-        indices,
-        return_fields,
-        enable_scroll=True,
-        timeline_ids=None,
+        sketch_id: int,
+        indices: list,
+        query_string: str = "",
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        return_fields: Optional[list] = None,
+        enable_scroll: bool = True,
+        timeline_ids: Optional[list] = None,
     ):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
