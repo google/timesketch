@@ -36,6 +36,10 @@ class MockVertexAIProvider:
     NAME = "vertexai"
 
     def __init__(self, config, **kwargs):
+        if not config.get("project_id"):
+            raise ValueError(
+                "Vertex AI provider requires a 'project_id' in its configuration."
+            )
         self.config = config
         self.kwargs = kwargs
 
@@ -166,4 +170,52 @@ class TestLLMManager(BaseTest):
                 "api_key": "AIzaSyTestDefaultKey",
                 "model": "gemini-2.0-flash-exp",
             },
+        )
+
+    def test_create_provider_fallback_on_feature_init_error(self):
+        """Test fallback to default if a feature's provider init raises ValueError."""
+        expected_init_error_msg = (
+            "Vertex AI provider requires a 'project_id' in its configuration."
+        )
+        feature_provider_name = "vertexai"
+        default_provider_name = "aistudio"
+        feature_name = "test_llm_feature"
+        default_api_key = "DefaultKeyForFallbackTest"
+
+        self.app.config["LLM_PROVIDER_CONFIGS"] = {
+            feature_name: {
+                feature_provider_name: {
+                    "model": "gemini-2.0-flash-001",
+                    # 'project_id' is missing
+                }
+            },
+            "default": {
+                default_provider_name: {
+                    "api_key": default_api_key,
+                    "model": "default-model",
+                }
+            },
+        }
+
+        with self.assertLogs("timesketch.llm.manager", level="DEBUG") as log_cm:
+            provider_instance = manager.LLMManager.create_provider(
+                feature_name=feature_name
+            )
+
+        self.assertIsInstance(
+            provider_instance,
+            MockAistudioProvider,
+            "Manager should have fallen back to the default MockAistudioProvider.",
+        )
+        self.assertEqual(provider_instance.config["api_key"], default_api_key)
+
+        self.assertTrue(
+            any(
+                f"Failed to initialize provider '{feature_provider_name}'" in msg
+                and f"feature '{feature_name}'" in msg
+                and expected_init_error_msg in msg
+                and "Attempting fallback" in msg
+                for msg in log_cm.output
+            ),
+            "Log message for failed feature init and fallback not found or incorrect.",
         )
