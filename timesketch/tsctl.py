@@ -840,7 +840,7 @@ def validate_context_links_conf(path):
 @click.option(
     "--searchindex_id",
     required=False,
-    help="Searchindex ID to search for e.g. 3.",
+    help="Searchindex database ID to search for e.g. 3.",
 )
 @click.option(
     "--index_name",
@@ -854,18 +854,17 @@ def searchindex_info(searchindex_id: int, index_name: str):
 
 
     Args:
-        searchindex_id (int): The search index ID to search for (e.g.,
+        searchindex_id (int): The searchindex database ID to search for (e.g.,
                               "3").
         index_name (str): The search index ID to search for (e.g.,
                               "4c5afdf60c6e49499801368b7f238353").
     """
     if searchindex_id:
         if not searchindex_id.isdigit():
-            print("Searchindex ID needs to be an integer.")
+            print("Searchindex database ID needs to be an integer.")
             return
 
     index_to_search = None
-    index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
 
     if searchindex_id:
         index_to_search = SearchIndex.query.filter_by(id=searchindex_id).first()
