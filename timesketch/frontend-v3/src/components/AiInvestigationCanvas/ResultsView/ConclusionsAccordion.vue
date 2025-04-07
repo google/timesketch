@@ -76,7 +76,6 @@ export default {
       store: useAppStore(),
       showModal: false,
       showEventLog: false,
-      showEventList: false,
       isConfirming: false,
       panels:
         this.question?.conclusions && this.question.conclusions.length > 0
@@ -90,9 +89,6 @@ export default {
     },
   },
   methods: {
-    async toggleEventList() {
-      this.showEventList = !this.showEventList;
-    },
     openEventLog() {
       this.showEventLog = true;
     },
