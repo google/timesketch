@@ -34,7 +34,6 @@ limitations under the License.
       <div class="modal__content mb-5 px-16 py-6">
         <div class="summary" v-for="(summary, index) in summaries">
           <p class="summary__text mb-4">{{ summary.value }}</p>
-
           <div class="d-flex align-center ga-2">
             <div class="summary__time">
               <span>{{ index + 1 }} / {{ summaries.length }}</span>
@@ -87,11 +86,9 @@ export default {
 }
 
 .modal__content {
-  display: grid;
   overflow: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
-  overflow-y: auto;
   height: 350px;
 }
 
