@@ -3105,14 +3105,21 @@ id status created_at                 user_id
 <h3 id="timeline-info">Timeline info</h3>
 <p>In some cases, logs present a OpenSearch Index id and it is not easy to find out
 which Sketch that index is related to.</p>
-<p>Therefore the following command can be used:</p>
-<pre><code class="language-bash"># tsctl searchindex-info --searchindex_id asd
+<p>Therefore the following command can be used <code>tsctl searchindex-info</code>:</p>
+<p>Displays detailed information about a specific search index. You can specify the index using either its database ID or its OpenSearch index name. 
+The command shows the search index ID and name, and lists all timelines associated with the index, including their IDs, names, and associated sketch IDs and names.</p>
+<pre><code class="language-bash"># tsctl searchindex-info --searchindex_id 99
 Searchindex: asd not found in database.
-# tsctl searchindex-info --searchindex_id 4c5afdf60c6e49499801368b7f238353
+# tsctl searchindex-info --searchindex_id 1
+Searchindex: 1 Name: sigma_events found in database.
+Corresponding Timeline id: 3 in Sketch Id: 2
+Corresponding Sketch id: 2 Sketch name: asdasd
+# tsctl searchindex-info --index_name 4c5afdf60c6e49499801368b7f238353
 Searchindex: 4c5afdf60c6e49499801368b7f238353 Name: sigma_events found in database.
 Corresponding Timeline id: 3 in Sketch Id: 2
 Corresponding Sketch id: 2 Sketch name: asdasd
 </code></pre>
+<p>If neither <code>searchindex_id</code> nor <code>index_name</code> is provided, an error message is printed. If no matching search index is found, an appropriate message is printed</p>
 <h3 id="timeline-status">Timeline status</h3>
 <p>The <code>tsctl timeline-status</code> command allows to get or set a timeline status.
 This can be useful in the following scenarios:</p>
