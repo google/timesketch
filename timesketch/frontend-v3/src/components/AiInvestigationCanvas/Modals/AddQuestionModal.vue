@@ -23,7 +23,7 @@ limitations under the License.
         indeterminate
       ></v-progress-circular>
     </div>
-    <div :class="{ modal__content: true, 'no-pointer-events': isSubmitting }">
+    <div :class="modalClasses">
       <div>
         <h3 class="mb-4">Create Question</h3>
         <div class="d-flex align-center mb-4">
@@ -108,7 +108,6 @@ export default {
     questions: Array,
     questionsTotal: Number,
     completedQuestionsTotal: Number,
-    isLoading: Boolean,
   },
   data() {
     return {
@@ -123,6 +122,12 @@ export default {
     this.fetchQuestionTemplates();
   },
   computed: {
+    modalClasses() {
+      return {
+        modal__content: true, 
+        'no-pointer-events': this.isSubmitting 
+      }
+    },
     sortedQuestions() {
       return this.questions && this.questions.length > 0
         ? [

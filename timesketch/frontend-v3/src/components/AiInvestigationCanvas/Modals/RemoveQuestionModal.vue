@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-container fluid class="modal pa-5 rounded-lg">
     <ModalLoader :isSubmitting="isSubmitting" />
-    <div :class="{ modal__content: true, 'no-pointer-events': isSubmitting }">
+    <div :class="modalClasses">
       <div>
         <h3 class="mb-4">Are you sure?</h3>
       </div>
@@ -96,6 +96,14 @@ export default {
       }
     },
   },
+  computed: {
+    modalClasses() {
+      return {
+        modal__content: true, 
+        'no-pointer-events': this.isSubmitting 
+      }
+    },
+  }
 };
 </script>
 

@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-container fluid class="modal pa-8 rounded-lg">
     <ModalLoader :isSubmitting="isSubmitting" />
-    <div :class="{ modal__content: true, 'no-pointer-events': isSubmitting }">
+    <div :class="modalClasses">
       <div>
         <h3 class="mb-4">Want to complete the investigation?</h3>
         <p class="mb-4">
@@ -94,6 +94,12 @@ export default {
     },
   },
   computed: {
+    modalClasses() {
+      return {
+        modal__content: true, 
+        'no-pointer-events': this.isSubmitting 
+      }
+    },
     unsavedQuestions() {
       return this.questions.filter(
         ({ id }) => !this.store.report.content.approvedQuestions.includes(id)

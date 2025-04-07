@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-card class="modal overflow-hidden">
     <ModalLoader :isSubmitting="isSubmitting" />
-    <div :class="modal__content">
+    <div class="modal__content">
       <div class="modal__header pl-6 pr-1">
         <h3>
           <v-icon icon="mdi-creation" large class="mr-2" /> Summary History
