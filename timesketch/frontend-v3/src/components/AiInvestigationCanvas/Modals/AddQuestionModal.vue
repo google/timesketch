@@ -192,6 +192,7 @@ export default {
         
         this.addNewQuestion(questionData);
         this.store.setActiveQuestion(questionData);
+        
         this.$emit("close-modal");
 
         this.store.setNotification({

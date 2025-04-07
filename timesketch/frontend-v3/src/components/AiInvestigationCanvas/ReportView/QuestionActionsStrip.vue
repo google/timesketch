@@ -78,7 +78,7 @@ export default {
   },
   computed: {
     backgroundColor() {
-      if (this.approved || this.reportLocked || this.variant === "approved") {
+      if (this.isApproved || this.reportLocked || this.variant === "approved") {
         return "#F8F9FA";
       } else {
         return "#3874CB"
@@ -116,7 +116,7 @@ export default {
         });
 
         this.store.setNotification({
-          text: `Question approved`,
+          text: "Question approved",
           icon: "mdi-check-circle-outline",
           type: "success",
         });
@@ -124,7 +124,7 @@ export default {
         console.error(error);
 
         this.store.setNotification({
-          text: `Unable to approve question`,
+          text: "Unable to approve question",
           icon: "mdi-close-circle-outline",
           type: "error",
         });

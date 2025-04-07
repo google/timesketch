@@ -54,7 +54,7 @@ export default {
     reportLocked: Boolean,
     isLoading: Boolean,
   },
-  inject: ["updateQuestion", "confirmRemoveQuestion", "openEventLog"],
+  inject: ["updateQuestion", "confirmRemoveQuestion"],
   data() {
     return {
       store: useAppStore(),

@@ -204,7 +204,7 @@ export default {
         });
 
         this.store.setNotification({
-          text: `Report Unlocked`,
+          text: "Report Unlocked",
           icon: "mdi-lock-open-variant-outline",
           type: "info",
         });

@@ -76,7 +76,7 @@ export default {
         this.$emit("close-modal");
 
         this.store.setNotification({
-          text: `Report Filed`,
+          text: "Report Filed",
           icon: "mdi-file-check-outline",
           type: "success",
         });

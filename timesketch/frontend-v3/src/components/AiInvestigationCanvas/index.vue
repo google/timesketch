@@ -43,7 +43,6 @@ limitations under the License.
             :questions="filteredQuestions"
             :questionsTotal="questionsTotal"
             :completedQuestionsTotal="completedQuestionsTotal"
-            :summary="metadata ? metadata.summary : ''"
           />
         </template>
       </v-col>
@@ -154,13 +153,7 @@ export default {
         questionsArray = [
           ...existingQuestionsList.map(({ conclusions, ...question }) => ({
             ...question,
-            conclusions,
-            conclusionSummary:
-              conclusions && conclusions.length > 0
-                ? conclusions
-                    .map(({ conclusion }) => conclusion)
-                    .join("'\n \r'")
-                : "",
+            conclusions
           })),
         ];
 
@@ -212,6 +205,7 @@ export default {
         this.selectedQuestion.id
       );
 
+      this.updateQuestion(currentQuestion.data.objects[0])
       this.store.activeContext.question = currentQuestion.data.objects[0];
     },
   },

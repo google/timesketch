@@ -952,10 +952,10 @@ export default {
     },
   },
   methods: {
-    async addEventsToObservable(event) {
+    async addEventsToObservable(singleEvent) {
       try {
-        const events = event
-          ? [event]
+        const events = singleEvent
+          ? [singleEvent]
           : this.eventList.objects.filter(({ _id }) =>
               this.selectedEvents.includes(_id)
             );

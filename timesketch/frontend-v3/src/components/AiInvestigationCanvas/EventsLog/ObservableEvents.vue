@@ -49,7 +49,7 @@ export default {
   inject: ["showEventLog"],
   props: {
     events: Array,
-    conclusionId: String,
+    conclusionId: Number,
   },
   data() {
     return {

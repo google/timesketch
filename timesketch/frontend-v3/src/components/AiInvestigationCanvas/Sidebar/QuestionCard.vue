@@ -29,7 +29,7 @@ limitations under the License.
           left
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
-        <p class="font-weight-medium">{{id}} : {{ name }}</p>
+        <p class="font-weight-medium" >{{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
         <v-icon
@@ -88,6 +88,7 @@ export default {
         (approvedId) => approvedId === this.id
       );
     },
+
     listItemClasses() {
       return {
         "is--active": this.isActive,

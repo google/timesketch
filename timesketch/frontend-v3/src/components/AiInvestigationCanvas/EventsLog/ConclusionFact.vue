@@ -37,7 +37,7 @@ limitations under the License.
 export default {
   props: {
     fact: Array,
-    conclusionId: String,
+    conclusionId: Number,
   },
   data() {
     return {

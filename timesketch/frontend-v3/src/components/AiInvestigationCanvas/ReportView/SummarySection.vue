@@ -113,7 +113,7 @@ export default {
     summaries() {
       return this.store.report?.content?.summary
     },
-    lastestSummary() {
+    latestSummary() {
       return this.store.report?.content?.summary?.[0];
     },
     lastUpdated() {
@@ -127,7 +127,7 @@ export default {
       return `${timestamp}${user ? ` by${user}`: null}`;
     },
     cannotUpdateSummary() {
-      const savedSummary = this.lastestSummary?.value;
+      const savedSummary = this.latestSummary?.value;
 
       return (
         this.isSavingSummary ||
@@ -157,7 +157,7 @@ export default {
         });
 
         this.store.setNotification({
-          text: `Summary saved.`,
+          text: "Summary saved",
           icon: "mdi-content-save-edit-outline",
           type: "success",
         });
@@ -165,7 +165,7 @@ export default {
         console.error(error);
 
         this.store.setNotification({
-          text: `Unable to save summary`,
+          text: "Unable to save summary",
           icon: "mdi-lock-open-variant-outline",
           type: "error",
         });

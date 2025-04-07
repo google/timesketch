@@ -59,13 +59,12 @@ limitations under the License.
 </template>
 
 <script>
-import EventList from "@/components/Explore/EventList.vue";
 import { useAppStore } from "@/stores/app";
 
 export default {
   inject: ["closeEventLog"],
   props: {
-    conclusionId: String,
+    conclusionId: Number,
     existingEvents: Array,
     existingEvents: {
       type: Array,

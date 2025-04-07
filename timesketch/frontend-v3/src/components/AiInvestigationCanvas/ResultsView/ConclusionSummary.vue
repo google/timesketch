@@ -111,12 +111,15 @@ export default {
   },
   mounted() {
     if (!this.summaries || this.summaries.length < 1) {
-      this.summary = this.question.conclusionSummary;
+      this.summary = this.conclusionSummary;
     } else {
       this.summary = this.summaries?.[0]?.value;
     }
   },
   computed: {
+    conclusionSummary() {
+      return this.question.conclusions?.map(({ conclusion }) => conclusion).join("'\n \r'")
+    },
     summaries() {
       return this.store.report?.content?.conclusionSummaries?.filter(
         ({ questionId }) => questionId === this.question.id
@@ -174,7 +177,7 @@ export default {
         });
 
         this.store.setNotification({
-          text: `Conclusion Summary saved.`,
+          text: "Conclusion Summary saved",
           icon: "mdi-content-save-edit-outline",
           type: "success",
         });
@@ -182,7 +185,7 @@ export default {
         console.error(error);
 
         this.store.setNotification({
-          text: `Unable to save Conclusion Summary`,
+          text: "Unable to save Conclusion Summary",
           icon: "mdi-lock-open-variant-outline",
           type: "error",
         });
