@@ -14,7 +14,7 @@
 """Vertex AI LLM provider."""
 
 import json
-from typing import Optional
+from typing import Any, Optional
 
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
@@ -33,6 +33,29 @@ class VertexAI(interface.LLMProvider):
     """Vertex AI LLM provider."""
 
     NAME = "vertexai"
+
+    def __init__(self, config: dict, **kwargs: Any):
+        """Initialize the Vertex AI provider.
+
+        Args:
+            config: The configuration for the provider.
+            **kwargs: Additional arguments passed to the base class.
+
+        Raises:
+            ValueError: If required configuration keys are missing.
+        """
+        super().__init__(config, **kwargs)
+        project_id = self.config.get("project_id")
+        model_name = self.config.get("model")
+
+        if not project_id:
+            raise ValueError(
+                "Vertex AI provider requires a 'project_id' in its configuration."
+            )
+        if not model_name:
+            raise ValueError(
+                "Vertex AI provider requires a 'model' in its configuration."
+            )
 
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """
