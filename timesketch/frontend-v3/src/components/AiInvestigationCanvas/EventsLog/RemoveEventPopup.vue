@@ -67,7 +67,7 @@ export default {
   inject: ["updateObservables"],
   props: {
     fact: Object,
-    conclusionId: String
+    conclusionId: Number
   },
   data() {
     return {
