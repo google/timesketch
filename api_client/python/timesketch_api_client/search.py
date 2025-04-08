@@ -1139,6 +1139,8 @@ class Search(resource.SketchResource):
             )
         except pandas.errors.OutOfBoundsDatetime:
             pass
+        except AttributeError:
+            pass
 
         return data_frame
 
