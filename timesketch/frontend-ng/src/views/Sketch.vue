@@ -579,7 +579,7 @@ export default {
     },
     updateDocumentTitle: function() {
       if (this.sketch && this.sketch.name && this.sketch.id) {
-        document.title = `[${this.sketch.id}] ${this.sketch.name}`;
+        document.title = this.sketch.name;
       } else {
         document.title = 'Timesketch';
       }
