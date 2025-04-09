@@ -64,7 +64,7 @@ limitations under the License.
               <v-list-item
                 v-for="(question, index) in dfiqMatches"
                 :key="index"
-                @click="createQuestion(question, true)"
+                @click="createQuestion(question)"
                 class="d-flex"
               >
                 <template v-slot:prepend>
@@ -165,15 +165,9 @@ export default {
         this.isLoading = false;
       }
     },
-    async createQuestion(question, isDFIQ = false) {
+    async createQuestion(question) {
       this.isSubmitting = true;
-
-      let questionText = this.queryString;
-
-      if (isDFIQ) {
-        questionText = question.name;
-        templateId = questiiono.id;
-      }
+      let questionText =  question.name || this.queryString;
 
       try {
         const question = await RestApiClient.createQuestion(
@@ -181,7 +175,7 @@ export default {
           null,
           null,
           questionText,
-          templateId
+          question?.id
         );
 
         const questionId = question.data.objects[0].id;
