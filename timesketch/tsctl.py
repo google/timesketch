@@ -26,6 +26,7 @@ import redis
 import click
 import pandas as pd
 
+from flask import current_app
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
@@ -1274,3 +1275,50 @@ def celery_revoke_task(task_id):
         print(f"Task {task_id} has been revoked.")
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error revoking task {task_id}: {e}")
+
+
+@cli.command(name="list-config")
+def list_config():
+    """List all configuration variables loaded by the Flask application.
+
+    This command iterates through the application's configuration dictionary
+    (current_app.config). It identifies keys associated with potentially
+    sensitive information (e.g., passwords, API keys, secrets) based on a
+    predefined list of keywords.
+
+    The values corresponding to these sensitive keys are redacted and replaced
+    with '******** (redacted)' before printing. All other configuration
+    key-value pairs are printed as they are.
+
+    The output is formatted for readability, showing each configuration key
+    followed by its (potentially redacted) value.
+    """
+    print("Timesketch Configuration Variables:")
+    print("-" * 35)
+    # Keywords/patterns to identify sensitive keys (case-insensitive)
+    sensitive_keywords = [
+        "SECRET",
+        "PASSWORD",
+        "API_KEY",
+        "TOKEN",
+        "CREDENTIALS",
+        "AUTH",
+        "KEYFILE",
+        "SQLALCHEMY_DATABASE_URI",
+    ]
+
+    # Compile a regex pattern for efficiency
+    sensitive_pattern = re.compile("|".join(sensitive_keywords), re.IGNORECASE)
+
+    # Sort items for consistent output
+    config_items = sorted(current_app.config.items())
+    for key, value in config_items:
+        display_value = value
+
+        # Check if the key matches any sensitive patterns
+        if sensitive_pattern.search(key):
+            display_value = "******** (redacted)"
+
+        print(f"{key}: {display_value}")
+    print("-" * 35)
+    print("Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).")
