@@ -164,26 +164,14 @@ class TestLLMSummarizeFeature(BaseTest):
         with self.assertRaises(ValueError):
             self.llm_feature.generate_prompt(self.sketch1, datastore=self.datastore)
 
-    @mock.patch(
-        "timesketch.lib.llms.features.llm_summarize.LLMSummarizeFeature."
-        "_run_timesketch_query"
-    )
-    def test_process_response(self, mock_run_query):
+    def test_process_response(self):
         """Tests process_response method."""
-        mock_run_query.return_value = pd.DataFrame(
-            [
-                {"message": "Test event 1"},
-                {"message": "Test event 2"},
-                {"message": "Test event 1"},  # Add duplicate event on purpose
-            ]
-        )
+        self.llm_feature._total_events_count = 3
+        self.llm_feature._unique_events_count = 2
 
         result = self.llm_feature.process_response(
             {"summary": "This is a test summary"},
             sketch_id=1,
-            sketch=self.sketch1,
-            form={"query": "test", "filter": {}},
-            datastore=self.datastore,
         )
 
         self.assertEqual(result["response"], "This is a test summary")
@@ -193,20 +181,7 @@ class TestLLMSummarizeFeature(BaseTest):
     def test_process_response_missing_params(self):
         """Tests process_response method with missing parameters."""
         with self.assertRaises(ValueError):
-            self.llm_feature.process_response(
-                {"summary": "Test"},
-                sketch=self.sketch1,
-                form={"query": "test", "filter": {}},
-                datastore=self.datastore,
-            )
-
-        with self.assertRaises(ValueError):
-            self.llm_feature.process_response(
-                {"summary": "Test"},
-                sketch_id=1,
-                sketch=self.sketch1,
-                datastore=self.datastore,
-            )
+            self.llm_feature.process_response({"summary": "Test"})
 
     def test_process_response_invalid_response(self):
         """Tests process_response method with invalid response format."""
@@ -214,16 +189,9 @@ class TestLLMSummarizeFeature(BaseTest):
             self.llm_feature.process_response(
                 "Not a dict",
                 sketch_id=1,
-                sketch=self.sketch1,
-                form={"query": "test", "filter": {}},
-                datastore=self.datastore,
             )
-
         with self.assertRaises(ValueError):
             self.llm_feature.process_response(
                 {"not_summary": "Test"},
                 sketch_id=1,
-                sketch=self.sketch1,
-                form={"query": "test", "filter": {}},
-                datastore=self.datastore,
             )
