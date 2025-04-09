@@ -675,13 +675,13 @@ def sketch_info(sketch_id: int):
     type=click.Choice(["ready", "processing", "fail"]),
     help="get or set timeline status.",
 )
-def timeline_status(timeline_id: str, action: str, status: str):
+def timeline_status(timeline_id: int, action: str, status: str):
     """Get or set a timeline status.
 
     If "action" is "set", the given value of status will be written in the status.
 
     Args:
-        timeline_id (str): The ID of the timeline.
+        timeline_id (int): The ID of the timeline.
         action (str):  The action to perform ("get" or "set").
         status (str): The timeline status to set.  Must be one of "ready",
                       "processing", or "fail".
@@ -839,33 +839,61 @@ def validate_context_links_conf(path):
 @cli.command(name="searchindex-info")
 @click.option(
     "--searchindex_id",
-    required=True,
-    help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+    required=False,
+    help="Searchindex database ID to search for e.g. 3.",
 )
-def searchindex_info(searchindex_id: str):
+@click.option(
+    "--index_name",
+    required=False,
+    help="Searchindex name to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+)
+def searchindex_info(searchindex_id: int, index_name: str):
     """Search for a searchindex and print information about it.
-    Especially which sketch the searchindex belongs to.
+    Especially which sketch the searchindex belongs to. You can either use the
+    searchindex ID or the index name.
+
 
     Args:
-        searchindex_id (str): The search index ID to search for (e.g.,
+        searchindex_id (int): The searchindex database ID to search for (e.g.,
+                              "3").
+        index_name (str): The search index ID to search for (e.g.,
                               "4c5afdf60c6e49499801368b7f238353").
     """
+    if searchindex_id:
+        if not searchindex_id.isdigit():
+            print("Searchindex database ID needs to be an integer.")
+            return
 
-    index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+    index_to_search = None
 
-    if not index_to_search:
-        print(f"Searchindex: {searchindex_id} not found in database.")
+    if searchindex_id:
+        index_to_search = SearchIndex.query.filter_by(id=searchindex_id).first()
+    elif index_name:
+        index_to_search = SearchIndex.query.filter_by(index_name=index_name).first()
+    else:
+        print("Please provide either a searchindex ID or an index name")
         return
 
-    print(
-        f"Searchindex: {searchindex_id} Name: {index_to_search.name} found in database."
-    )
-    timeline = Timeline.query.filter_by(id=index_to_search.id).first()
-    print(
-        f"Corresponding Timeline id: {timeline.id} in Sketch Id: {timeline.sketch_id}"
-    )
-    sketch = Sketch.query.filter_by(id=timeline.sketch_id).first()
-    print(f"Corresponding Sketch id: {sketch.id} Sketch name: {sketch.name}")
+    if not index_to_search:
+        print("Searchindex not found in database.")
+        return
+
+    print(f"Searchindex: {index_to_search.id} Name: {index_to_search.name} found")
+
+    timelines = index_to_search.timelines
+    if timelines:
+        print("Associated Timelines:")
+        for timeline in timelines:
+            print(f"  ID: {timeline.id}, Name: {timeline.name}")
+            if timeline.sketch:
+                print(
+                    f"    Sketch ID: {timeline.sketch.id}, Name: {timeline.sketch.name}"
+                )
+            else:
+                print("    No associated sketch found.")
+    else:
+        print("No associated timelines found.")
+        return
 
 
 @cli.command(name="searchindex-status")
