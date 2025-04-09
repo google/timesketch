@@ -64,7 +64,7 @@ limitations under the License.
               <v-list-item
                 v-for="(question, index) in dfiqMatches"
                 :key="index"
-                @click="createQuestion(question, question.id)"
+                @click="createQuestion(question, true)"
                 class="d-flex"
               >
                 <template v-slot:prepend>
@@ -165,14 +165,14 @@ export default {
         this.isLoading = false;
       }
     },
-    async createQuestion(question, templateId) {
+    async createQuestion(question, isDFIQ = false) {
       this.isSubmitting = true;
 
-      let questionText = question || this.queryString;
+      let questionText = this.queryString;
 
-      if (templateId) {
-        questionText = question?.name;
-        templateId = templateId;
+      if (isDFIQ) {
+        questionText = question.name;
+        templateId = questiiono.id;
       }
 
       try {
