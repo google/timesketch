@@ -15,10 +15,9 @@
 """Tests for tsctl command-line tool."""
 
 from click.testing import CliRunner
+from timesketch.tsctl import cli
 from . import interface
 from . import manager
-
-from timesketch.tsctl import cli
 
 
 class TestTsctl(interface.BaseEndToEndTest):  # Or inherit from BaseTest if applicable
