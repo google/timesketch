@@ -130,105 +130,6 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         access_token = response.json()["access_token"]
         self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
 
-    def _get_bloom_request(self, hashes):
-        """Simple wrapper around requests call to make testing easier."""
-        body = "\n".join(hashes)
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/bloom/search/raw", data=body
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} doing bloom check from Yeti: "
-                + str(results.json())
-            )
-        return results.json()
-
-    def _get_neighbors_request(self, params: Dict) -> Dict:
-        """Simple wrapper around requests call to make testing easier."""
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/graph/search",
-            json=params,
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} retrieving neighbors for "
-                f"{params['source']} from Yeti:" + str(results.json())
-            )
-        return results.json()
-
-    def get_neighbors(
-        self, yeti_object: Dict, max_hops: int, neighbor_types: List[str]
-    ) -> List[Dict]:
-        """Retrieves a list of neighbors associated to a given entity.
-
-        Args:
-          yeti_object: The Yeti object to get neighbors from.
-          max_hops: The number of hops to traverse from the entity.
-          neighbor_types: A list of Yeti object types to filter by.
-
-        Returns:
-          A list of dictionaries describing a Yeti object.
-        """
-        extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
-        request = {
-            "count": 0,
-            "source": extended_id,
-            "graph": "links",
-            "min_hops": 1,
-            "max_hops": max_hops,
-            "direction": self._DIRECTION,
-            "include_original": False,
-            "target_types": neighbor_types,
-        }
-        results = self._get_neighbors_request(request)
-        neighbors = {}
-        for neighbor in results.get("vertices", {}).values():
-            if (
-                neighbor["type"] in neighbor_types
-                or neighbor["root_type"] in neighbor_types
-            ):
-                neighbors[neighbor["id"]] = neighbor
-        return neighbors
-
-    def _get_entities_request(self, params):
-        """Simple wrapper around requests call to make testing easier."""
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/entities/search",
-            json=params,
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} retrieving entities from Yeti:"
-                + str(results.json())
-            )
-        return results.json()
-
-    def get_entities(self, type_selector: List[str]) -> Dict[str, dict]:
-        """Fetches Entities with a certain tag on Yeti.
-
-        Args:
-            type_selector: Use these type selectors to search entities. Type
-              Selectors have a TYPE:TAG1,TAG2 format.
-
-        Returns:
-            A dictionary of entities obtained from Yeti, keyed by entity ID.
-        """
-        all_entities = {}
-        for _type in type_selector:
-            tags = []
-            if ":" in _type:
-                tag_suffix = _type.split(":")[1]
-                _type = _type.replace(":" + tag_suffix, "")
-                tags = tag_suffix.split(",")
-
-            query = {"name": "", "tags": tags}
-            if _type:
-                query["type"] = _type
-            data = self._get_entities_request({"query": query, "count": 0})
-            entities = {item["id"]: item for item in data["entities"]}
-            all_entities.update(entities)
-        return all_entities
-
     def mark_event(
         self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
     ):
@@ -371,6 +272,94 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             ontology="intelligence",
             overwrite=True,
         )
+
+
+class YetiGraphAnalyzer(YetiBaseAnalyzer):
+    def _get_neighbors_request(self, params: Dict) -> Dict:
+        """Simple wrapper around requests call to make testing easier."""
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/graph/search",
+            json=params,
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} retrieving neighbors for "
+                f"{params['source']} from Yeti:" + str(results.json())
+            )
+        return results.json()
+
+    def get_neighbors(
+        self, yeti_object: Dict, max_hops: int, neighbor_types: List[str]
+    ) -> List[Dict]:
+        """Retrieves a list of neighbors associated to a given entity.
+
+        Args:
+          yeti_object: The Yeti object to get neighbors from.
+          max_hops: The number of hops to traverse from the entity.
+          neighbor_types: A list of Yeti object types to filter by.
+
+        Returns:
+          A list of dictionaries describing a Yeti object.
+        """
+        extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
+        request = {
+            "count": 0,
+            "source": extended_id,
+            "graph": "links",
+            "min_hops": 1,
+            "max_hops": max_hops,
+            "direction": self._DIRECTION,
+            "include_original": False,
+            "target_types": neighbor_types,
+        }
+        results = self._get_neighbors_request(request)
+        neighbors = {}
+        for neighbor in results.get("vertices", {}).values():
+            if (
+                neighbor["type"] in neighbor_types
+                or neighbor["root_type"] in neighbor_types
+            ):
+                neighbors[neighbor["id"]] = neighbor
+        return neighbors
+
+    def _get_entities_request(self, params):
+        """Simple wrapper around requests call to make testing easier."""
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/entities/search",
+            json=params,
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} retrieving entities from Yeti:"
+                + str(results.json())
+            )
+        return results.json()
+
+    def get_entities(self, type_selector: List[str]) -> Dict[str, dict]:
+        """Fetches Entities with a certain tag on Yeti.
+
+        Args:
+            type_selector: Use these type selectors to search entities. Type
+              Selectors have a TYPE:TAG1,TAG2 format.
+
+        Returns:
+            A dictionary of entities obtained from Yeti, keyed by entity ID.
+        """
+        all_entities = {}
+        for _type in type_selector:
+            tags = []
+            if ":" in _type:
+                tag_suffix = _type.split(":")[1]
+                _type = _type.replace(":" + tag_suffix, "")
+                tags = tag_suffix.split(",")
+
+            query = {"name": "", "tags": tags}
+            if _type:
+                query["type"] = _type
+            data = self._get_entities_request({"query": query, "count": 0})
+            entities = {item["id"]: item for item in data["entities"]}
+            all_entities.update(entities)
+        return all_entities
 
     def build_query_from_observable(self, observable: Dict) -> Dict:
         """Builds a query DSL from a Yeti observable.
@@ -592,8 +581,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
         return str(self.output)
 
-
-class YetiTriageIndicators(YetiBaseAnalyzer):
+class YetiTriageIndicators(YetiGraphAnalyzer):
     """Analyzer for Yeti triage indicators."""
 
     NAME = "yetitriageindicators"
@@ -613,7 +601,7 @@ class YetiTriageIndicators(YetiBaseAnalyzer):
     _SAVE_INTELLIGENCE = False
 
 
-class YetiBadnessIndicators(YetiBaseAnalyzer):
+class YetiBadnessIndicators(YetiGraphAnalyzer):
     """Analyzer for Yeti indicators related to attacks."""
 
     NAME = "yetibadnessindicators"
@@ -634,7 +622,7 @@ class YetiBadnessIndicators(YetiBaseAnalyzer):
     _SAVE_INTELLIGENCE = True
 
 
-class YetiLOLBASIndicators(YetiBaseAnalyzer):
+class YetiLOLBASIndicators(YetiGraphAnalyzer):
     """Analyzer for Yeti LOLBAS indicators."""
 
     # YetiTriageIndicators gives extra context around execution, etc.
@@ -654,7 +642,7 @@ class YetiLOLBASIndicators(YetiBaseAnalyzer):
     _MAX_HOPS = 1
 
 
-class YetiInvestigations(YetiBaseAnalyzer):
+class YetiInvestigations(YetiGraphAnalyzer):
     """Analyzer for Yeti investigation-related indicators."""
 
     NAME = "yetiinvestigations"
@@ -671,7 +659,7 @@ class YetiInvestigations(YetiBaseAnalyzer):
     _MAX_HOPS = 1
 
 
-class YetiKeywords(YetiBaseAnalyzer):
+class YetiKeywords(YetiGraphAnalyzer):
     """Analyzer for Yeti investigation-related indicators."""
 
     NAME = "yetikeywords"
@@ -694,6 +682,19 @@ class YetiBloomChecker(YetiBaseAnalyzer):
     NAME = "yetibloomchecker"
     DISPLAY_NAME = "Yeti Bloom filter checker"
     DESCRIPTION = "Check if hashes in the timeline are present in Yeti's bloom filter."
+
+    def _get_bloom_request(self, hashes):
+        """Simple wrapper around requests call to make testing easier."""
+        body = "\n".join(hashes)
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/bloom/search/raw", data=body
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} doing bloom check from Yeti: "
+                + str(results.json())
+            )
+        return results.json()
 
     def run_composite_aggregation(
         self, hashmap: set[str], after_key: dict[str, Any] = None

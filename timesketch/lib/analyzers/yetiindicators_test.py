@@ -91,7 +91,7 @@ MATCHING_BLOOM_HASH = {
 }
 
 
-class YetiTestAnalyzer(yetiindicators.YetiBaseAnalyzer):
+class YetiTestAnalyzer(yetiindicators.YetiGraphAnalyzer):
     NAME = "yetitest"
     DISPLAY_NAME = "Test for yeti analyzer"
     DESCRIPTION = "Just an analyzer for teting"
@@ -116,10 +116,10 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_neighbors_request"
+        "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators.YetiBaseAnalyzer._get_entities_request"
+        "timesketch.lib.analyzers.yetiindicators.YetiGraphAnalyzer._get_entities_request"
     )
     def test_api_query(self, mock_get_entities, mock_get_neighbors):
         """Tests that queries to the API are well-formed."""
@@ -154,10 +154,10 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_neighbors_request"
+        "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators.YetiBaseAnalyzer._get_entities_request"
+        "timesketch.lib.analyzers.yetiindicators.YetiGraphAnalyzer._get_entities_request"
     )
     def test_indicator_match(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
@@ -187,10 +187,10 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_neighbors_request"
+        "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators.YetiBaseAnalyzer._get_entities_request"
+        "timesketch.lib.analyzers.yetiindicators.YetiGraphAnalyzer._get_entities_request"
     )
     def test_indicator_nomatch(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
@@ -416,7 +416,9 @@ tags:
             {"value": "testhash", "hits": ["hitsource1"]}
         ]
 
-        def agg_mock(hashset, _after_key=None):
+        # pylint: disable=unused-argument
+        def agg_mock(hashset, after_key=None):
+            """Mock for the composite aggregation."""
             hashset.add("testhash")
             return hashset, None
 
