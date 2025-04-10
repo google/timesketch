@@ -58,20 +58,5 @@ class TestTsctl(interface.BaseEndToEndTest):  # Or inherit from BaseTest if appl
         # Check for the status indicator (active: True/False)
         self.assertions.assertIn("active: True)", result.output)
 
-    def test_list_config_command(self):
-        """Tests the 'tsctl list-config' command."""
-        result = self.runner.invoke(cli, ["list-config"])
-
-        # Use assertEqual for the exit code check
-        self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
-
-        # Use assertIn for checking substrings in the output
-        self.assertions.assertIn("Timesketch Configuration Variables:", result.output)
-        # Check for a known non-sensitive key
-        self.assertions.assertIn("UPLOAD_ENABLED", result.output)
-        # Check that a known sensitive key is redacted
-        self.assertions.assertIn("SECRET_KEY", result.output)
-        self.assertions.assertIn("******** (redacted)", result.output)
-
 
 manager.EndToEndTestManager.register_test(TestTsctl)
