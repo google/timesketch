@@ -264,6 +264,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
 
 class YetiGraphAnalyzer(YetiBaseAnalyzer):
+    """Analyzer that leverages the Yeti graph.
+
+    Selects entities, traverses graphs to find indicators or observables
+    to look for.
+    """
 
     # Entities of this type will be fetched from Yeti
     # Can optionally contain tags after a `:`
