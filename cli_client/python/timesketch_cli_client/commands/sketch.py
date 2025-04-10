@@ -259,14 +259,8 @@ def unarchive_sketch(ctx: click.Context) -> None:
     is_flag=True,
     help="Only execute the deletion if this is set.",
 )
-@click.option(
-    "--delete_metadata",
-    required=False,
-    is_flag=True,
-    help="Delete metadata associated with the sketch.",
-)
 @click.pass_context
-def delete_sketch(ctx, force_delete, delete_metadata):
+def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
     """Delete a sketch.
 
     By default, a sketch will not be deleted. To execute the deletion provide the
@@ -275,8 +269,8 @@ def delete_sketch(ctx, force_delete, delete_metadata):
     To also delete the metadata to a sketch, provide the flag --delete_metadata.
 
     Args:
-        execute: Only execute the deletion if this is set.
-        delete_metadata: Delete metadata associated with the sketch.
+        ctx (click.Context): The Click context object, containing the sketch.
+        force_delete (bool): If true, delete immediately.
     """
     sketch = ctx.obj.sketch
     # if sketch is archived, exit
@@ -302,10 +296,9 @@ def delete_sketch(ctx, force_delete, delete_metadata):
 
     if force_delete:
         click.echo("Will delete for real")
-        # breakpoint()
-        # sketch.delete()
         sketch.z_delete(force_delete=force_delete)
         click.echo("Sketch deleted")
+
 
 @sketch_group.command("list_label", help="List labels of sketch")
 @click.pass_context
@@ -342,7 +335,8 @@ def remove_label(ctx: click.Context, label: str) -> None:
     sketch = ctx.obj.sketch
     sketch.remove_sketch_label(label)
     click.echo("Label removed.")
-   
+
+
 def add_label(ctx: click.Context, label: str) -> None:
     """Add a label to a sketch.
 
@@ -359,4 +353,3 @@ def add_label(ctx: click.Context, label: str) -> None:
     sketch = ctx.obj.sketch
     sketch.add_sketch_label(label)
     click.echo("Label added")
-
