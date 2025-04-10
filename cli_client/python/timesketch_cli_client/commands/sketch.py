@@ -250,56 +250,6 @@ def unarchive_sketch(ctx: click.Context) -> None:
         click.echo("Sketch unarchived")
 
 
-@sketch_group.command(
-    "delete", help="Delete a sketch, default will only mark the sketch as deleted"
-)
-@click.option(
-    "--force_delete",
-    required=False,
-    is_flag=True,
-    help="Only execute the deletion if this is set.",
-)
-@click.pass_context
-def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
-    """Delete a sketch.
-
-    By default, a sketch will not be deleted. To execute the deletion provide the
-    flag --execute.
-
-    To also delete the metadata to a sketch, provide the flag --delete_metadata.
-
-    Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        force_delete (bool): If true, delete immediately.
-    """
-    sketch = ctx.obj.sketch
-    # if sketch is archived, exit
-    if sketch.is_archived():
-        click.echo("Error Sketch is archived")
-        ctx.exit(1)
-
-    # Dryrun:
-    click.echo("Would delete the following things")
-    click.echo(
-        f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
-    )
-
-    for timeline in sketch.list_timelines():
-        click.echo(
-            f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
-        )
-
-    # for story in sketch.stories:
-    #    click.echo(
-    #        f"  Story: {story.id} {story.title} {story.description} {story.status} {story.created_at} {story.updated_at}" # pylint: disable=line-too-long
-    #    )
-
-    if force_delete:
-        click.echo("Will delete for real")
-        sketch.z_delete(force_delete=force_delete)
-        click.echo("Sketch deleted")
-
-
 @sketch_group.command("list_label", help="List labels of sketch")
 @click.pass_context
 def list_label(ctx: click.Context) -> None:
@@ -353,3 +303,53 @@ def add_label(ctx: click.Context, label: str) -> None:
     sketch = ctx.obj.sketch
     sketch.add_sketch_label(label)
     click.echo("Label added")
+
+
+@sketch_group.command(
+    "delete", help="Delete a sketch, default will only mark the sketch as deleted"
+)
+@click.option(
+    "--force_delete",
+    required=False,
+    is_flag=True,
+    help="Only execute the deletion if this is set.",
+)
+@click.pass_context
+def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
+    """Delete a sketch.
+
+    By default, a sketch will not be deleted. To execute the deletion provide the
+    flag --execute.
+
+    To also delete the metadata to a sketch, provide the flag --delete_metadata.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+        force_delete (bool): If true, delete immediately.
+    """
+    sketch = ctx.obj.sketch
+    # if sketch is archived, exit
+    if sketch.is_archived():
+        click.echo("Error Sketch is archived")
+        ctx.exit(1)
+
+    # Dryrun:
+    click.echo("Would delete the following things")
+    click.echo(
+        f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
+    )
+
+    for timeline in sketch.list_timelines():
+        click.echo(
+            f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
+        )
+
+    # for story in sketch.stories:
+    #    click.echo(
+    #        f"  Story: {story.id} {story.title} {story.description} {story.status} {story.created_at} {story.updated_at}" # pylint: disable=line-too-long
+    #    )
+
+    if force_delete:
+        click.echo("Will delete for real")
+        sketch.z_delete(force_delete=force_delete)
+        click.echo("Sketch deleted")
