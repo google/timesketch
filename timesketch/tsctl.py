@@ -569,21 +569,22 @@ def sketch_delete(sketch_id):
     if not sketch:
         print("Sketch does not exist.")
         return
-    elif sketch.get_status.status == "deleted":
+
+    if sketch.get_status.status == "deleted":
         print(f"Sketch {sketch_id} is already deleted.")
         return
-    else:
-        sketch_labels = [label.label for label in sketch.labels]
-        # do not delete if Sketch has a lithold label
-        if "lithold" in sketch_labels:
-            print("Sketch has lithold label, skipping")
-            return
 
-        print(f"Sketch {sketch_id} Name: ({sketch.name})")
-        sketch.delete()
-        db_session.delete(sketch)
-        db_session.commit()
-        print(f"Sketch {sketch_id} deleted.")
+    sketch_labels = [label.label for label in sketch.labels]
+    # do not delete if Sketch has a lithold label
+    if "lithold" in sketch_labels:
+        print("Sketch has lithold label, skipping")
+        return
+
+    print(f"Sketch {sketch_id} Name: ({sketch.name})")
+    sketch.delete()
+    db_session.delete(sketch)
+    db_session.commit()
+    print(f"Sketch {sketch_id} deleted.")
 
 
 @cli.command(name="sketch-info")
