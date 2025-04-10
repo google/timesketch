@@ -13,6 +13,7 @@
 # limitations under the License.
 """End to end tests of Timesketch client functionality."""
 
+import uuid
 import json
 import random
 import os
@@ -28,6 +29,8 @@ class ClientTest(interface.BaseEndToEndTest):
     """End to end tests for client functionality."""
 
     NAME = "client_test"
+    RULEID1 = str(uuid.uuid4())
+    RULEID2 = str(uuid.uuid4())
 
     def test_client(self):
         """Client tests."""
@@ -89,9 +92,10 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_sigmarule_create(self):
         """Create a Sigma rule in database"""
-        MOCK_SIGMA_RULE = """
+
+        MOCK_SIGMA_RULE = f"""
 title: Suspicious Installation of bbbbbb
-id: 5266a592-b793-11ea-b3de-bbbbbb
+id: {self.RULEID1}
 description: Detects suspicious installation of bbbbbb
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
@@ -126,9 +130,9 @@ level: high
         """Client Sigma object tests."""
 
         rule = self.api.create_sigmarule(
-            rule_yaml="""
+            rule_yaml=f"""
 title: Suspicious Installation of eeeee
-id: 5266a592-b793-11ea-b3de-eeeee
+id: {self.RULEID2}
 description: Detects suspicious installation of eeeee
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
@@ -150,17 +154,17 @@ level: high
         )
         self.assertions.assertIsNotNone(rule)
 
-        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
-        rule.from_rule_uuid("5266a592-b793-11ea-b3de-eeeee")
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
+        rule.from_rule_uuid(self.RULEID2)
         self.assertions.assertGreater(len(rule.attributes), 5)
         self.assertions.assertIsNotNone(rule)
         self.assertions.assertIn("Alexander", rule.author)
         self.assertions.assertIn("Alexander", rule.get_attribute("author"))
-        self.assertions.assertIn("b793-11ea-b3de-eeeee", rule.id)
+        self.assertions.assertIn(self.RULEID2, rule.id)
         self.assertions.assertIn("Installation of eeeee", rule.title)
         self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("sigmarules/5266a592", rule.resource_uri)
+        self.assertions.assertIn(self.RULEID2, rule.resource_uri)
         self.assertions.assertIn("installation of eeeee", rule.description)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertEqual(len(rule.falsepositives), 1)
@@ -184,14 +188,14 @@ level: high
         """Client Sigma delete tests.
         The test is called remove to avoid running it before the create test.
         """
-        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID1)
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
 
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
 
-        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-bbbbbb")
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
         rules = self.api.list_sigmarules()
@@ -404,9 +408,48 @@ level: high
             sketch.description, "test_modify_sketch_with_empty_name"
         )
 
+
+    def test_list_timelines(self):
+        """Test listing timelines in a sketch."""
+        # Create a new sketch
+        sketch = self.api.create_sketch(
+            name="test_list_timelines", description="test_list_timelines"
+        )
+
+        # Import a timeline into the sketch
+        self.import_timeline("evtx.plaso", sketch=sketch)
+
+        # List the timelines in the sketch
+        timelines = sketch.list_timelines()
+
+        # Check that there is at least one timeline
+        self.assertions.assertGreaterEqual(len(timelines), 1)
+
+        # Check that the timeline has a name
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.name)
+
+        # Check that the timeline has an index name
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.index_name)
+
+        # Check that the timeline has an ID
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.id)
+
+        # Import a second timeline into the sketch
+        self.import_timeline("evtx_part.csv", sketch=sketch)
+
+        _ = sketch.lazyload_data(refresh_cache=True)
+
+        # List the timelines in the sketch
+        timelines = sketch.list_timelines()
+
+        # Check that there are two timelines
+        self.assertions.assertEqual(len(timelines), 2)
+
     def test_delete_timeline(self):
         """Test deleting a timeline.
-
         This test verifies the following:
             - A new sketch can be created.
             - A timeline can be imported into the sketch.
@@ -426,7 +469,6 @@ level: high
             AssertionError: If any of the assertions fail.
             RuntimeError: If the event creation fails.
             RuntimeError: If the sketch is not found.
-
         """
 
         # create a new sketch
@@ -446,13 +488,15 @@ level: high
         self.assertions.assertEqual(timeline.name, file_path)
         self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
+        self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 
         events = sketch.explore("*", as_pandas=True)
         self.assertions.assertEqual(len(events), 4)
 
         # second import
 
-        file_path = "/tmp/large.csv"
+
+        file_path = "/tmp/second.csv"
 
         with open(file_path, "w", encoding="utf-8") as file_object:
             file_object.write(
@@ -467,12 +511,15 @@ level: high
                 )
                 file_object.write(string)
 
-        self.import_timeline("/tmp/large.csv", index_name="foobar", sketch=sketch)
+        self.import_timeline("/tmp/second.csv", index_name="second", sketch=sketch)
         os.remove(file_path)
+        # refresh data after import
+        _ = sketch.lazyload_data(refresh_cache=True)
 
         timeline = sketch.list_timelines()[0]
+        self.assertions.assertEqual(len(sketch.list_timelines()), 2)
 
-        # Check that there are 6 events in total
+        # Check that there are 9 (5+4) events in total
         search_client = search.Search(sketch)
         search_response = json.loads(search_client.json)
         self.assertions.assertEqual(len(search_response["objects"]), 9)
@@ -486,6 +533,8 @@ level: high
         self.assertions.assertEqual(len(events), 5)
 
         # check number of timelines
+
+        _ = sketch.lazyload_data(refresh_cache=True)
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 
 
