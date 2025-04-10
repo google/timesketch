@@ -141,11 +141,12 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
   },
-  getEvent(sketchId, searchindexId, eventId) {
+  getEvent(sketchId, searchindexId, eventId, includeProcessingTimelines) {
     let params = {
       params: {
         searchindex_id: searchindexId,
         event_id: eventId,
+        include_processing_timelines: includeProcessingTimelines
       },
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
@@ -524,7 +525,7 @@ export default {
   llmRequest(sketchId, featureName, formData) {
     formData = formData || {}
     formData.feature = featureName
-  
+
     return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
   }
 }

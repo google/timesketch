@@ -256,15 +256,40 @@ export default new Vuex.Store({
       context.commit('SET_EVENT_LABELS', allLabels)
   },
     updateTimelineTags(context, payload) {
-      if (!context.state.sketch.active_timelines.length) {
+      const activeTimelines = context.state.sketch.active_timelines
+      // Guard clause: If there are no active timelines (array is null, undefined,
+      // or empty), there's nothing to process, so exit the function immediately.
+      if (!activeTimelines || !activeTimelines.length) {
         return
       }
+
+      // Check if *every* timeline in the activeTimelines array is currently 'processing'.
+      // Note: This uses Array.prototype.every(), which only returns true if the callback
+      // function returns true for ALL elements in the array.
+      const allTimelinesProcessing = activeTimelines.every(timeline => {
+        if (!timeline || !timeline.status || timeline.status.length === 0) {
+            return false
+        }
+        return timeline.status[0].status === 'processing';
+      })
+
+      // Conditional Early Exit:
+      // Exit the function if *both* of the following conditions are met:
+      // 1. `allTimelinesProcessing` is true
+      // 2. The `showProcessingTimelineEvents` is falsy
+      // This prevents fetching tags when all timelines are still processing
+      // AND the user hasn't opted to see processing events.
+      if (allTimelinesProcessing && !context.state.settings.showProcessingTimelineEvents) {
+        return
+      }
+
       let formData = {
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'tag',
           limit: '1000',
         },
+        include_processing_timelines: !!context.state.settings.showProcessingTimelineEvents,
       }
       return ApiClient.runAggregator(payload.sketchId, formData)
         .then((response) => {
@@ -283,15 +308,40 @@ export default new Vuex.Store({
         .catch((e) => {})
     },
     updateDataTypes(context, sketchId) {
-      if (!context.state.sketch.active_timelines.length) {
+      const activeTimelines = context.state.sketch.active_timelines
+      // Guard clause: If there are no active timelines (array is null, undefined,
+      // or empty), there's nothing to process, so exit the function immediately.
+      if (!activeTimelines || !activeTimelines.length) {
         return
       }
+
+      // Check if *every* timeline in the activeTimelines array is currently 'processing'.
+      // Note: This uses Array.prototype.every(), which only returns true if the callback
+      // function returns true for ALL elements in the array.
+      const allTimelinesProcessing = activeTimelines.every(timeline => {
+        if (!timeline || !timeline.status || timeline.status.length === 0) {
+            return false
+        }
+        return timeline.status[0].status === 'processing';
+      })
+
+      // Conditional Early Exit:
+      // Exit the function if *both* of the following conditions are met:
+      // 1. `allTimelinesProcessing` is true
+      // 2. The `showProcessingTimelineEvents` is falsy
+      // This prevents fetching tags when all timelines are still processing
+      // AND the user hasn't opted to see processing events.
+      if (allTimelinesProcessing && !context.state.settings.showProcessingTimelineEvents) {
+        return
+      }
+
       let formData = {
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'data_type',
           limit: '1000',
         },
+        include_processing_timelines: !!context.state.settings.showProcessingTimelineEvents,
       }
       return ApiClient.runAggregator(sketchId, formData)
         .then((response) => {

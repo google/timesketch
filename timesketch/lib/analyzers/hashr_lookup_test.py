@@ -64,7 +64,7 @@ class TestHashRLookup(BaseTest):
         self.assertEqual(test_conn, True)
         mock_debug.assert_called_with(
             self.logger,
-            "Successful connected to hashR postgress database: %s",
+            "Successful connected to hashR postgresql database: %s",
             "postgresql://hashR:***@127.0.0.1:5432/hashRdb",
         )
         mock_error.assert_not_called()
@@ -410,7 +410,7 @@ class TestHashRLookup(BaseTest):
         test_bind = mock.MagicMock()
         self.analyzer.hashr_conn = test_bind
         with test_bind.connect() as connection:
-            connection.excute.return_value = test_db_return
+            connection.execute.return_value = test_db_return
         test_meta_data = mock.MagicMock()
         mock_meta_data.return_value = test_meta_data
 
@@ -562,8 +562,8 @@ class TestHashRLookup(BaseTest):
         )
         mock_warning.assert_any_call(
             self.logger,
-            "The extracted hash does not match the required lenght (64) of "
-            "a SHA256 hash. Skipping this event! Hash: %s - Lenght: %d",
+            "The extracted hash does not match the required length (64) of "
+            "a SHA256 hash. Skipping this event! Hash: %s - Length: %d",
             "8bbd7976b2b86e1746494c98425e7830",
             32,
         )
@@ -719,8 +719,8 @@ class TestHashRLookup(BaseTest):
         )
         mock_warning.assert_any_call(
             self.logger,
-            "The extracted hash does not match the required lenght (64) of "
-            "a SHA256 hash. Skipping this event! Hash: %s - Lenght: %d",
+            "The extracted hash does not match the required length (64) of "
+            "a SHA256 hash. Skipping this event! Hash: %s - Length: %d",
             "8bbd7976b2b86e1746494c98425e7830",
             32,
         )

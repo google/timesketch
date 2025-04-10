@@ -3,6 +3,10 @@ name: unit-tests
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
+      - 'README.md'
 
 jobs:
   # Backend tests (Python/Flask)
@@ -13,7 +17,7 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04]
         python-version: ['3.9', '3.10']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
@@ -40,7 +44,7 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04]
         node-version: ["20"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up Node ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:

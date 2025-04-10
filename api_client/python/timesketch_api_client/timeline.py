@@ -182,9 +182,9 @@ class Timeline(resource.BaseResource):
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_name: a name of an analyzer class to run against the
+            analyzer_name (str): a name of an analyzer class to run against the
                 timeline.
-            analyzer_kwargs: optional dict with parameters for the analyzer.
+            analyzer_kwargs (dict): optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters.
             ignore_previous (bool): an optional bool, if set to True then
@@ -228,9 +228,9 @@ class Timeline(resource.BaseResource):
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_names: a list of analyzer class names to run against the
+            analyzer_names (list): a list of analyzer class names to run against the
                 timeline.
-            analyzer_kwargs: optional dict with parameters for the analyzer.
+            analyzer_kwargs (dict): optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters. It is expected that this is a dict with
                 the key value being the analyzer name, and the value being

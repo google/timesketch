@@ -18,7 +18,9 @@ import pathlib
 import json
 import re
 import subprocess
+import time
 import yaml
+import redis
 
 
 import click
@@ -27,9 +29,12 @@ import pandas as pd
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
+from celery.result import AsyncResult
+
 
 from timesketch import version
 from timesketch.app import create_app
+from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
 from timesketch.models import db_session
 from timesketch.models import drop_all
@@ -583,66 +588,101 @@ def sketch_delete(sketch_id):
 
 @cli.command(name="sketch-info")
 @click.argument("sketch_id")
-def sketch_info(sketch_id):
-    """Give information about a sketch."""
+def sketch_info(sketch_id: int):
+    """Display detailed information about a specific sketch.
+
+    This command retrieves and displays comprehensive information about a
+    Timesketch sketch, including:
+
+    - **Sketch Details:** The sketch's ID and name.
+    - **Timelines:** A table listing the timelines within the
+      sketch, including their search index ID, index name, creation date,
+      user ID, description, status, timeline name, and timeline ID.
+    - **Sharing Information:** Details about users and groups with whom the
+      sketch is shared.
+    - **Sketch Status:** The current status of the sketch (e.g., "ready",
+      "archived").
+    - **Public Status:** Whether the sketch is publicly accessible.
+    - **Sketch Labels:** Any labels applied to the sketch.
+    - **Status History:** A table showing the status history of the sketch,
+      including the status ID, status value, creation date, and user ID.
+
+    Args:
+        sketch_id (str): The ID of the sketch to retrieve information about.
+
+    Raises:
+        SystemExit: If the specified sketch does not exist.
+    """
     sketch = Sketch.query.filter_by(id=sketch_id).first()
     if not sketch:
         print("Sketch does not exist.")
-    else:
-        print(f"Sketch {sketch_id} Name: ({sketch.name})")
+        return
 
-        # define the table data
-        table_data = [
+    print(f"Sketch {sketch_id} Name: ({sketch.name})")
+
+    # define the table data
+    table_data = [
+        [
+            "searchindex_id",
+            "index_name",
+            "created_at",
+            "user_id",
+            "description",
+            "status",
+            "timeline_name",
+            "timeline_id",
+        ],
+    ]
+    for t in sketch.timelines:
+        table_data.append(
             [
-                "searchindex_id",
-                "index_name",
-                "created_at",
-                "user_id",
-                "description",
-                "status",
-            ],
-        ]
+                t.searchindex_id,
+                t.searchindex.index_name,
+                t.created_at,
+                t.user_id,
+                t.description,
+                t.status[-1].status,
+                t.name,
+                t.id,
+            ]
+        )
+    print_table(table_data)
 
-        for t in sketch.active_timelines:
-            table_data.append(
-                [
-                    t.searchindex_id,
-                    t.searchindex.index_name,
-                    t.created_at,
-                    t.user_id,
-                    t.description,
-                    t.status[0].status,
-                ]
-            )
-        print_table(table_data)
-
-        print("Shared with:")
+    print(f"Created by: {sketch.user.username}")
+    print("Shared with:")
+    print("\tUsers: (user_id, username)")
+    if sketch.collaborators:
         print("\tUsers: (user_id, username)")
         for user in sketch.collaborators:
             print(f"\t\t{user.id}: {user.username}")
-        print("\tGroups:")
+    else:
+        print("\tNo users shared with.")
+    print(f"\tGroups ({len(sketch.groups)}):")
+    if sketch.groups:
         for group in sketch.groups:
             print(f"\t\t{group.display_name}")
-        sketch_labels = [label.label for label in sketch.labels]
-        print(f"Sketch Status: {sketch.get_status.status}")
-        print(f"Sketch is public: {bool(sketch.is_public)}")
-        sketch_labels = ([label.label for label in sketch.labels],)
-        print(f"Sketch Labels: {sketch_labels}")
+    else:
+        print("\tNo groups shared with.")
+    sketch_labels = [label.label for label in sketch.labels]
+    print(f"Sketch Status: {sketch.get_status.status}")
+    print(f"Sketch is public: {bool(sketch.is_public)}")
+    sketch_labels = ([label.label for label in sketch.labels],)
+    print(f"Sketch Labels: {sketch_labels}")
 
-        status_table = [
-            [
-                "id",
-                "status",
-                "created_at",
-                "user_id",
-            ],
-        ]
-        for _status in sketch.status:
-            status_table.append(
-                [_status.id, _status.status, _status.created_at, _status.user_id]
-            )
-        print("Status:")
-        print_table(status_table)
+    status_table = [
+        [
+            "id",
+            "status",
+            "created_at",
+            "user_id",
+        ],
+    ]
+    for _status in sketch.status:
+        status_table.append(
+            [_status.id, _status.status, _status.created_at, _status.user_id]
+        )
+    print("Status:")
+    print_table(status_table)
 
 
 @cli.command(name="timeline-status")
@@ -660,13 +700,13 @@ def sketch_info(sketch_id):
     type=click.Choice(["ready", "processing", "fail"]),
     help="get or set timeline status.",
 )
-def timeline_status(timeline_id: str, action: str, status: str):
+def timeline_status(timeline_id: int, action: str, status: str):
     """Get or set a timeline status.
 
     If "action" is "set", the given value of status will be written in the status.
 
     Args:
-        timeline_id (str): The ID of the timeline.
+        timeline_id (int): The ID of the timeline.
         action (str):  The action to perform ("get" or "set").
         status (str): The timeline status to set.  Must be one of "ready",
                       "processing", or "fail".
@@ -694,7 +734,7 @@ def timeline_status(timeline_id: str, action: str, status: str):
                 timeline.created_at,
                 timeline.user_id,
                 timeline.description,
-                timeline.status[0].status,
+                timeline.status[-1].status,
             ]
         )
         print_table(table_data)
@@ -824,33 +864,61 @@ def validate_context_links_conf(path):
 @cli.command(name="searchindex-info")
 @click.option(
     "--searchindex_id",
-    required=True,
-    help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+    required=False,
+    help="Searchindex database ID to search for e.g. 3.",
 )
-def searchindex_info(searchindex_id: str):
+@click.option(
+    "--index_name",
+    required=False,
+    help="Searchindex name to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+)
+def searchindex_info(searchindex_id: int, index_name: str):
     """Search for a searchindex and print information about it.
-    Especially which sketch the searchindex belongs to.
+    Especially which sketch the searchindex belongs to. You can either use the
+    searchindex ID or the index name.
+
 
     Args:
-        searchindex_id (str): The search index ID to search for (e.g.,
+        searchindex_id (int): The searchindex database ID to search for (e.g.,
+                              "3").
+        index_name (str): The search index ID to search for (e.g.,
                               "4c5afdf60c6e49499801368b7f238353").
     """
+    if searchindex_id:
+        if not searchindex_id.isdigit():
+            print("Searchindex database ID needs to be an integer.")
+            return
 
-    index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+    index_to_search = None
 
-    if not index_to_search:
-        print(f"Searchindex: {searchindex_id} not found in database.")
+    if searchindex_id:
+        index_to_search = SearchIndex.query.filter_by(id=searchindex_id).first()
+    elif index_name:
+        index_to_search = SearchIndex.query.filter_by(index_name=index_name).first()
+    else:
+        print("Please provide either a searchindex ID or an index name")
         return
 
-    print(
-        f"Searchindex: {searchindex_id} Name: {index_to_search.name} found in database."
-    )
-    timeline = Timeline.query.filter_by(id=index_to_search.id).first()
-    print(
-        f"Corresponding Timeline id: {timeline.id} in Sketch Id: {timeline.sketch_id}"
-    )
-    sketch = Sketch.query.filter_by(id=timeline.sketch_id).first()
-    print(f"Corresponding Sketch id: {sketch.id} Sketch name: {sketch.name}")
+    if not index_to_search:
+        print("Searchindex not found in database.")
+        return
+
+    print(f"Searchindex: {index_to_search.id} Name: {index_to_search.name} found")
+
+    timelines = index_to_search.timelines
+    if timelines:
+        print("Associated Timelines:")
+        for timeline in timelines:
+            print(f"  ID: {timeline.id}, Name: {timeline.name}")
+            if timeline.sketch:
+                print(
+                    f"    Sketch ID: {timeline.sketch.id}, Name: {timeline.sketch.name}"
+                )
+            else:
+                print("    No associated sketch found.")
+    else:
+        print("No associated timelines found.")
+        return
 
 
 @cli.command(name="searchindex-status")
@@ -906,7 +974,7 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
                 searchindex.created_at,
                 searchindex.user_id,
                 searchindex.description,
-                searchindex.status[0].status,
+                searchindex.status[-1].status,
             ]
         )
         print_table(table_data)
@@ -1042,3 +1110,220 @@ def analyzer_stats(
     else:
         pd.options.display.max_colwidth = 500
         print(df)
+
+
+@cli.command(name="celery-tasks-redis")
+def celery_tasks_redis():
+    """Check and display the status of all Celery tasks stored in Redis.
+
+    This command connects to the Redis instance used by Celery to store
+    task metadata and retrieves information about all tasks. It then
+    presents this information in a formatted table, including the task ID,
+    name, status, and result.
+
+    The command handles potential connection errors to Redis and gracefully
+    exits if no tasks are found. It also handles exceptions that might occur
+    when retrieving task details, displaying "N/A" for any unavailable
+    information.
+
+    Note: Celery tasks have a `result_expire` date, which by default is
+        one day. After that, the results will no longer be available.
+
+    """
+    celery = create_celery_app()
+    redis_url = celery.conf.broker_url
+
+    try:
+        redis_client = redis.from_url(redis_url)
+    except redis.exceptions.ConnectionError:
+        print("Could not connect to Redis.")
+        return
+
+    # Get all keys matching the pattern for Celery task metadata
+    task_meta_keys = redis_client.keys("celery-task-meta-*")
+
+    if not task_meta_keys:
+        print("No Celery tasks found in Redis.")
+        return
+
+    table_data = [["Task ID", "Name", "Status", "Result"]]
+    for key in task_meta_keys:
+        task_id = key.decode("utf-8").split("celery-task-meta-")[1]
+        task_result = AsyncResult(task_id, app=celery)
+
+        try:
+            task_name = task_result.name
+        except Exception:  # pylint: disable=broad-except
+            task_name = "N/A"
+
+        try:
+            task_status = task_result.status
+        except Exception:  # pylint: disable=broad-except
+            task_status = "N/A"
+
+        try:
+            task_result_value = str(task_result.result)
+        except Exception:  # pylint: disable=broad-except
+            task_result_value = "N/A"
+
+        table_data.append([task_id, task_name, task_status, task_result_value])
+
+    max_lengths = [0] * len(table_data[0])
+    for row in table_data:
+        for i, cell in enumerate(row):
+            max_lengths[i] = max(max_lengths[i], len(str(cell)))
+
+    # create the table
+    for row in table_data:
+        for i, cell in enumerate(row):
+            print(str(cell).ljust(max_lengths[i]), end=" ")
+        print()
+
+
+@cli.command(name="celery-tasks")
+@click.option(
+    "--task_id",
+    required=False,
+    help="Show information about a specific task ID.",
+)
+@click.option(
+    "--active",
+    is_flag=True,
+    help="Show only active tasks.",
+)
+@click.option(
+    "--show_all",
+    is_flag=True,
+    help="Show all tasks, including pending, active, and failed.",
+)
+def celery_tasks(task_id, active, show_all):
+    """Show running or past Celery tasks.
+    This command provides various ways to inspect and view the status of
+    Celery tasks within the Timesketch application. It can display
+    information about a specific task, list active tasks, show all tasks
+    (including pending, active, and failed).
+
+    Args:
+        task_id (str): If provided, display detailed information about the
+            task with this ID.
+        active (bool): If True, display only currently active tasks.
+        show_all (bool): If True, display all tasks, including active, pending,
+            reserved, scheduled, and failed tasks.
+
+    Notes:
+        - Celery tasks have a `result_expire` date, which defaults to one day.
+          After this period, task results may no longer be available.
+        - When displaying all tasks, the status of each task is retrieved,
+          which may take some time.
+        - If no arguments are provided, it will print a message to use
+            --active or --show_all.
+
+    Examples:
+        # Show information about a specific task:
+        tsctl celery-tasks --task_id <task_id>
+
+        # Show all active tasks:
+        tsctl celery-tasks --active
+
+        # Show all tasks (including pending, active, and failed):
+        tsctl celery-tasks --show_all
+    """
+    celery = create_celery_app()
+
+    if task_id:
+        # Show information about a specific task
+        task_result = AsyncResult(task_id, app=celery)
+        print(f"Task ID: {task_id}")
+        print(f"Status: {task_result.status}")
+        if task_result.status == "FAILURE":
+            print(f"Traceback: {task_result.traceback}")
+        if task_result.status == "SUCCESS":
+            print(f"Result: {task_result.result}")
+        return
+
+    # Show a list of tasks
+    inspector = celery.control.inspect()
+
+    if active:
+        active_tasks = inspector.active()
+        if not active_tasks:
+            print("No active tasks found.")
+            return
+        table_data = [["Task ID", "Name", "Time Start", "Worker name"]]
+        for worker_name, tasks in active_tasks.items():
+            for task in tasks:
+                table_data.append(
+                    [
+                        task["id"],
+                        task["name"],
+                        time.strftime(
+                            "%Y-%m-%d %H:%M:%S", time.localtime(task["time_start"])
+                        ),
+                        worker_name,
+                    ]
+                )
+        print_table(table_data)
+        return
+
+    if show_all:
+        # Show all tasks (active, pending, reserved, scheduled, failed)
+        all_tasks = {}
+        all_tasks.update(inspector.active() or {})
+        all_tasks.update(inspector.reserved() or {})
+        all_tasks.update(inspector.scheduled() or {})
+
+        if not all_tasks:
+            print("No tasks found.")
+            return
+
+        table_data = [["Task ID", "Name", "Status", "Time Start", "Worker name"]]
+        for worker_name, tasks in all_tasks.items():
+            for task in tasks:
+                task_id = task["id"]
+                task_result = AsyncResult(task_id, app=celery)
+                status = task_result.status
+                time_start = task.get("time_start", "N/A")
+                if time_start != "N/A":
+                    time_start = time.strftime(
+                        "%Y-%m-%d %H:%M:%S", time.localtime(time_start)
+                    )
+                table_data.append(
+                    [
+                        task_id,
+                        task["name"],
+                        status,
+                        time_start,
+                        worker_name,
+                    ]
+                )
+        print_table(table_data)
+        return
+
+    print("Please use --active or --show_all to show tasks")
+
+
+@cli.command(name="celery-revoke-task")
+@click.argument("task_id")
+def celery_revoke_task(task_id):
+    """Revoke (cancel) a Celery task.
+
+     This command attempts to revoke a running Celery task, effectively
+    canceling its execution.  It uses the task ID to identify the specific
+    task to revoke. If the task is successfully revoked, a confirmation
+    message is printed. If an error occurs during the revocation process,
+    an error message is displayed.
+
+    Args:
+        task_id (str): The ID of the Celery task to revoke.
+
+    Raises:
+        Exception: If there is an error communicating with Celery or if the
+            task cannot be revoked.
+
+    """
+    celery = create_celery_app()
+    try:
+        celery.control.revoke(task_id, terminate=True)
+        print(f"Task {task_id} has been revoked.")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Error revoking task {task_id}: {e}")

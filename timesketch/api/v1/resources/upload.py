@@ -112,7 +112,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         searchindex.grant_permission(permission="read", user=current_user)
         searchindex.grant_permission(permission="write", user=current_user)
         searchindex.grant_permission(permission="delete", user=current_user)
-        searchindex.set_status("processing")
 
         db_session.add(searchindex)
         db_session.commit()
@@ -219,8 +218,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 headers_mapping=headers_mapping,
                 delimiter=delimiter,
             )
-
-        searchindex.set_status("processing")
 
         if not timeline:
             timeline = Timeline.get_or_create(
@@ -332,24 +329,73 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         headers_mapping: Optional[List] = None,
         delimiter: str = ",",
     ):
-        """Upload a file.
+        """Uploads a file to Timesketch, handling both single files and file chunks.
+
+        This method manages the entire file upload process, including:
+        - Saving the file (or file chunks) to the designated upload directory.
+        - Validating file properties (e.g., name, size, chunk integrity).
+        - Creating or retrieving a SearchIndex for the uploaded data.
+        - Creating a Timeline associated with the SearchIndex and Sketch.
+        - Initiating the indexing pipeline via Celery.
+        - Handling chunked uploads and ensuring all chunks are received.
+        - Returning appropriate responses based on the upload status.
 
         Args:
-            file_storage: a FileStorage object.
-            form: a dict with the configuration for the upload.
-            sketch: Instance of timesketch.models.sketch.Sketch
-            index_name: the OpenSearch index name for the timeline.
-            chunk_index_name: A unique identifier for a file if
-                chunks are used.
-            headers_mapping: list of dicts containing:
-                             (i) target header we want to insert [key=target],
-                             (ii) sources header we want to rename/combine [key=source],
-                             (iii) def. value if we add a new column [key=default_value]
+            file_storage: A FileStorage object representing the uploaded file or chunk.
+            form: A dictionary containing form data from the request, including:
+                - name (str): The desired name for the timeline (default: filename).
+                - chunk_index (int, optional): The index of the current chunk
+                    (for chunked uploads).
+                - chunk_byte_offset (int, optional): The byte offset of the
+                    current chunk within the file.
+                - chunk_total_chunks (int, optional): The total number of
+                    chunks in the file.
+                - total_file_size (int): The total size of the file in bytes.
+                - enable_stream (bool, optional): Whether to only index the
+                    data without analysis. Defaults to False.
+                - data_label (str, optional): A label to categorize the data.
+                    Defaults to "".
+                - provider (str, optional): The data provider.
+                    Defaults to "N/A".
+                - context (str, optional): The data context. Defaults to "N/A".
+                - headersMapping (str, optional): JSON string of header mapping.
+                - delimiter (str, optional): delimiter to read the CSV file.
+                    Defaults to ",".
+            sketch: The Sketch object to which the timeline will be added.
+            index_name: The name of the OpenSearch index for the timeline.
+            chunk_index_name: A unique identifier for the file if chunks are
+                used.
+            headers_mapping: A list of dictionaries for mapping headers.
+                Each dictionary should have:
+                - target (str): The target header name.
+                - source (str): The source header name to rename/combine.
+                - default_value (str, optional): A default value if a new
+                    column is added.
             delimiter: delimiter to read the CSV file
 
         Returns:
-            A timeline if created otherwise a search index in JSON (instance
-            of flask.wrappers.Response)
+            A JSON response (flask.wrappers.Response) indicating the status
+                of the upload.
+            - For successful single file uploads or the final chunk of a
+                chunked upload:
+              Returns a JSON representation of the created Timeline with a 201
+                Created status code.
+            - For intermediate chunks of a chunked upload:
+              Returns a JSON response with metadata about the upload progress
+                and a 201 Created status code.
+
+        Raises:
+            HTTP_STATUS_CODE_BAD_REQUEST:
+                - If the timeline name is empty or exceeds 255 characters.
+                - If the file is empty.
+                - If the index name is invalid.
+                - If there's an error writing data to the file.
+                - If the file size is inconsistent after a chunked upload.
+                - If the upload is not enabled.
+                - If the file is not provided.
+            HTTP_STATUS_CODE_NOT_FOUND: If the sketch is not found.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have
+                write access to the sketch.
         """
         _filename, _extension = os.path.splitext(file_storage.filename)
         file_extension = _extension.lstrip(".")

@@ -1,0 +1,50 @@
+name: Build and Deploy frontend-v3
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'timesketch/frontend-v3/**'
+      - '!timesketch/frontend-v3/dist/**' # Exclude changes in the dist folder
+  workflow_dispatch:
+
+jobs:
+  build-frontend-v3:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend-v3 dependencies
+        working-directory: timesketch/frontend-v3
+        run: yarn install
+
+      - name: Build frontend-v3
+        working-directory: timesketch/frontend-v3
+        run: yarn build
+
+      - name: Configure git for deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Commit and push dist folder
+        working-directory: timesketch/frontend-v3
+        run: |
+          git remote set-url origin git@github.com:${{ github.repository }}.git
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add dist
+          git commit -m "chore: Update frontend-v3 build [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:${{ github.ref_name }}

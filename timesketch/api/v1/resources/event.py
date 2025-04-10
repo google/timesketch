@@ -27,10 +27,11 @@ from opensearchpy.exceptions import RequestError
 import numpy as np
 import pandas as pd
 
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import abort
-from flask_restful import Resource
+from flask_restful import Resource, inputs
 from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
@@ -249,6 +250,12 @@ class EventResource(resources.ResourceMixin, Resource):
             "searchindex_id", type=str, required=True, location="args"
         )
         self.parser.add_argument("event_id", type=str, required=True, location="args")
+        self.parser.add_argument(
+            "include_processing_timelines",
+            type=inputs.boolean,
+            required=False,
+            location="args",
+        )
 
     @login_required
     def get(self, sketch_id: int):
@@ -286,10 +293,18 @@ class EventResource(resources.ResourceMixin, Resource):
             )
 
         event_id = args.get("event_id")
+        include_processing_timelines = bool(
+            args.get("include_processing_timelines", False)
+        )
+        allowed_statuses = ["ready"]
+        if include_processing_timelines and current_app.config.get(
+            "SEARCH_PROCESSING_TIMELINES", False
+        ):
+            allowed_statuses.append("processing")
         indices = [
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in allowed_statuses
         ]
 
         # Check if the requested searchindex is part of the sketch
@@ -758,7 +773,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         )
 
     def _get_sketch(self, sketch_id):
-        """Helper function: Returns Sketch object givin a sketch id.
+        """Helper function: Returns Sketch object given a sketch id.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -777,7 +792,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         return sketch
 
     def _get_current_search_node(self, current_search_node_id: str, sketch: Sketch):
-        """Helper function: Returns Current Search Node object givin a search
+        """Helper function: Returns Current Search Node object given a search
             node id
 
         Args:
@@ -827,10 +842,14 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         if _search_node_id:
             current_search_node = self._get_current_search_node(_search_node_id, sketch)
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
         indices = [
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in allowed_statuses
         ]
         annotation_type = form.annotation_type.data
         events = form.events.raw_data

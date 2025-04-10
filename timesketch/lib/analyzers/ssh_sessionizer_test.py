@@ -62,7 +62,7 @@ class TestSSHSessionizerPlugin(BaseTest):
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_all_events_from_session_are_labeled(self):
-        """Test one SSH session of events is finded and allocated correctly."""
+        """Test one SSH session of events is found and allocated correctly."""
         index = "test_index"
         sketch_id = 1
         sessionizer = SSHSessionizerSketchPlugin(index, sketch_id)

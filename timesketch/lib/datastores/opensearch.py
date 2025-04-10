@@ -38,6 +38,7 @@ import prometheus_client
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
+from timesketch.lib import errors
 
 
 # Setup logging
@@ -108,6 +109,11 @@ class OpenSearchDataStore:
     DEFAULT_FLUSH_RETRY_LIMIT = 3  # Max retries for flushing the queue.
     DEFAULT_EVENT_IMPORT_TIMEOUT = 180  # Timeout value in seconds for importing events.
 
+    DEFAULT_INDEX_WAIT_TIMEOUT = 10  # Seconds to wait for an index to become ready
+    DEFAULT_MINIMUM_HEALTH = (
+        "yellow"  # Minimum health status required ('yellow' or 'green')
+    )
+
     def __init__(self, host="127.0.0.1", port=9200):
         """Create a OpenSearch client."""
         super().__init__()
@@ -141,6 +147,78 @@ class OpenSearchDataStore:
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
         )
+        self.index_timeout = current_app.config.get(
+            "OPENSEARCH_INDEX_TIMEOUT", self.DEFAULT_INDEX_WAIT_TIMEOUT
+        )
+        self.min_health = current_app.config.get(
+            "OPENSEARCH_MINIMUM_HEALTH", self.DEFAULT_MINIMUM_HEALTH
+        )
+
+    def _wait_for_index(
+        self, index_name: str, timeout_seconds: Optional[int] = None
+    ) -> bool:
+        """Waits for a specific index to reach at least yellow status.
+
+        Args:
+            index_name: The name of the index to wait for.
+            timeout_seconds: How long to wait in seconds. Defaults to config setting.
+
+        Returns:
+            True if the index became ready within the timeout, False otherwise.
+        """
+        if timeout_seconds is None:
+            timeout_seconds = self.index_timeout
+
+        es_logger.debug(
+            "Waiting up to %ds for index '%s' to reach status '%s'...",
+            timeout_seconds,
+            index_name,
+            self.min_health,
+        )
+
+        try:
+            # wait_for_status will block until the status is met or timeout occurs.
+            # pylint: disable=unexpected-keyword-arg
+            self.client.cluster.health(
+                index=index_name,
+                wait_for_status=self.min_health,
+                timeout=timeout_seconds,
+                level="indices",
+            )
+            es_logger.debug("Index '%s' is ready.", index_name)
+            return True
+        except ConnectionTimeout:
+            es_logger.error(
+                "Timeout (%ds) waiting for index '%s' to reach status '%s'.",
+                timeout_seconds,
+                index_name,
+                self.min_health,
+                exc_info=False,  # Keep log cleaner on expected timeouts
+            )
+            return False
+        except NotFoundError:
+            es_logger.error(
+                "Index '%s' not found while waiting for readiness.", index_name
+            )
+            return False
+        except TransportError as e:
+            # Handle other potential transport errors during the health check
+            es_logger.error(
+                "Error checking health for index '%s': %s",
+                index_name,
+                str(e),
+                exc_info=True,
+            )
+            return False
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch unexpected errors
+            es_logger.error(
+                "Unexpected error waiting for index '%s': %s",
+                index_name,
+                str(e),
+                exc_info=True,
+            )
+            return False
 
     @staticmethod
     def _build_labels_query(sketch_id: int, labels: list):
@@ -503,11 +581,11 @@ class OpenSearchDataStore:
     def search(
         self,
         sketch_id: int,
-        query_string: str,
-        query_filter: Dict,
-        query_dsl: Dict,
         indices: list,
+        query_string: str = "",
+        query_filter: Optional[Dict] = None,
         count: bool = False,
+        query_dsl: Optional[Dict] = None,
         aggregations: Optional[Dict] = None,
         return_fields: Optional[list] = None,
         enable_scroll: bool = False,
@@ -543,6 +621,9 @@ class OpenSearchDataStore:
 
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
+
+        if query_filter is None:
+            query_filter = {}
 
         # Check if we have specific events to fetch and get indices.
         if query_filter.get("events", None):
@@ -635,11 +716,11 @@ class OpenSearchDataStore:
 
     def search_stream(
         self,
-        sketch_id: Optional[int] = None,
-        query_string: Optional[str] = None,
+        sketch_id: int,
+        indices: list,
+        query_string: str = "",
         query_filter: Optional[Dict] = None,
         query_dsl: Optional[Dict] = None,
-        indices: Optional[list] = None,
         return_fields: Optional[list] = None,
         enable_scroll: bool = True,
         timeline_ids: Optional[list] = None,
@@ -666,6 +747,9 @@ class OpenSearchDataStore:
         indices = list(set(indices))
 
         METRICS["search_requests"].labels(type="stream").inc()
+
+        if query_filter is None:
+            query_filter = {}
 
         if not query_filter.get("size"):
             query_filter["size"] = self.DEFAULT_STREAM_LIMIT
@@ -801,6 +885,7 @@ class OpenSearchDataStore:
             Event document in JSON format
         """
         METRICS["search_get_event"].inc()
+
         try:
             # Suppress the lint error because opensearchpy adds parameters
             # to the function with a decorator and this makes pylint sad.
@@ -821,7 +906,10 @@ class OpenSearchDataStore:
             return event
 
         except NotFoundError:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"Event '{event_id}' not found in index '{searchindex_id}'.",
+            )
 
     def count(self, indices: list):
         """Count number of documents.
@@ -832,9 +920,6 @@ class OpenSearchDataStore:
         Returns:
             Tuple containing number of documents and size on disk.
         """
-        if not indices:
-            return 0, 0
-
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
@@ -957,12 +1042,21 @@ class OpenSearchDataStore:
                     index=index_name, body={"mappings": _document_mapping}
                 )
             except ConnectionError as e:
-                raise RuntimeError("Unable to connect to Timesketch backend.") from e
+                raise errors.DatastoreConnectionError(
+                    "Unable to connect to Timesketch backend when creating "
+                    f"index [{index_name}]."
+                ) from e
             except RequestError:
                 index_exists = self.client.indices.exists(index_name)
                 es_logger.warning(
                     "Attempting to create an index that already exists "
                     "({:s} - {:s})".format(index_name, str(index_exists))
+                )
+            # Wait for the index to become ready
+            if not self._wait_for_index(index_name):
+                raise errors.IndexNotReadyError(
+                    f"Index '{index_name}' was created but did not become ready "
+                    f"within the timeout period of {self.DEFAULT_INDEX_WAIT_TIMEOUT}s."
                 )
 
         return index_name

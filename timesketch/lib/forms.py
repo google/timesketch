@@ -222,6 +222,9 @@ class AggregationExploreForm(BaseForm):
     aggregator_parameters = StringField(
         "Aggregator Parameters", validators=[Optional()]
     )
+    include_processing_timelines = BooleanField(
+        "Include processing timelines", validators=[Optional()], default=False
+    )
 
 
 class AggregationLegacyForm(ExploreForm):
