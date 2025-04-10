@@ -119,7 +119,8 @@ class TestYetiIndicators(BaseTest):
         "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators.YetiGraphAnalyzer._get_entities_request"
+        "timesketch.lib.analyzers.yetiindicators."
+        "YetiGraphAnalyzer._get_entities_request"
     )
     def test_api_query(self, mock_get_entities, mock_get_neighbors):
         """Tests that queries to the API are well-formed."""
@@ -157,7 +158,8 @@ class TestYetiIndicators(BaseTest):
         "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators.YetiGraphAnalyzer._get_entities_request"
+        "timesketch.lib.analyzers.yetiindicators."
+        "YetiGraphAnalyzer._get_entities_request"
     )
     def test_indicator_match(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
@@ -190,7 +192,8 @@ class TestYetiIndicators(BaseTest):
         "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators.YetiGraphAnalyzer._get_entities_request"
+        "timesketch.lib.analyzers.yetiindicators."
+        "YetiGraphAnalyzer._get_entities_request"
     )
     def test_indicator_nomatch(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
@@ -405,6 +408,7 @@ tags:
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_bloomanalyzer_run(self):
+        """Tests the YetiBloomAnalyzer run function."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
 
         # pylint: disable=protected-access
