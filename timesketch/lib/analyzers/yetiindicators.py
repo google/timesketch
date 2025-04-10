@@ -62,22 +62,11 @@ def slugify(text: str) -> str:
 class YetiBaseAnalyzer(interface.BaseAnalyzer):
     """Base class for Yeti indicator analyzers."""
 
-    # DEPENDENCIES = frozenset(["domain"])
+    DEPENDENCIES = frozenset(["domain"])
 
-    # Entities of this type will be fetched from Yeti
-    # Can optionally contain tags after a `:`
-    # e.g. `malware:ransomware,tag2`
-    _TYPE_SELECTOR: List[str]
-    # Graph will be traversed from the entities looking for these types
-    # of neighbors
-    _TARGET_NEIGHBOR_TYPE: List[str] = []
-    # If True, will save intelligence to the sketch
-    _SAVE_INTELLIGENCE: bool = False
-
-    # Number of hops to traverse from the entity
-    _MAX_HOPS = 5
-    # Direction to traverse the graph. One of {inbound, outbound, any}
-    _DIRECTION = "inbound"
+    def run(self):
+        """Entry point for the analyzer."""
+        raise NotImplementedError
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the Analyzer.
@@ -275,6 +264,22 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
 
 class YetiGraphAnalyzer(YetiBaseAnalyzer):
+
+    # Entities of this type will be fetched from Yeti
+    # Can optionally contain tags after a `:`
+    # e.g. `malware:ransomware,tag2`
+    _TYPE_SELECTOR: List[str]
+    # Graph will be traversed from the entities looking for these types
+    # of neighbors
+    _TARGET_NEIGHBOR_TYPE: List[str] = []
+    # If True, will save intelligence to the sketch
+    _SAVE_INTELLIGENCE: bool = False
+
+    # Number of hops to traverse from the entity
+    _MAX_HOPS = 5
+    # Direction to traverse the graph. One of {inbound, outbound, any}
+    _DIRECTION = "inbound"
+
     def _get_neighbors_request(self, params: Dict) -> Dict:
         """Simple wrapper around requests call to make testing easier."""
         results = self.authenticated_session.post(
@@ -580,6 +585,7 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
         self.output.result_summary = success_note
 
         return str(self.output)
+
 
 class YetiTriageIndicators(YetiGraphAnalyzer):
     """Analyzer for Yeti triage indicators."""
