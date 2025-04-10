@@ -250,6 +250,24 @@ def unarchive_sketch(ctx: click.Context) -> None:
         click.echo("Sketch unarchived")
 
 
+def add_label(ctx: click.Context, label: str) -> None:
+    """Add a label to a sketch.
+
+    Adds a specified label to the active sketch. Labels can be used to
+    categorize and organize sketches.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+        label (str): The label to add.
+
+    Outputs:
+        Text: A message indicating that the label was added.
+    """
+    sketch = ctx.obj.sketch
+    sketch.add_sketch_label(label)
+    click.echo("Label added")
+
+
 @sketch_group.command("list_label", help="List labels of sketch")
 @click.pass_context
 def list_label(ctx: click.Context) -> None:
@@ -285,24 +303,6 @@ def remove_label(ctx: click.Context, label: str) -> None:
     sketch = ctx.obj.sketch
     sketch.remove_sketch_label(label)
     click.echo("Label removed.")
-
-
-def add_label(ctx: click.Context, label: str) -> None:
-    """Add a label to a sketch.
-
-    Adds a specified label to the active sketch. Labels can be used to
-    categorize and organize sketches.
-
-    Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        label (str): The label to add.
-
-    Outputs:
-        Text: A message indicating that the label was added.
-    """
-    sketch = ctx.obj.sketch
-    sketch.add_sketch_label(label)
-    click.echo("Label added")
 
 
 @sketch_group.command(
