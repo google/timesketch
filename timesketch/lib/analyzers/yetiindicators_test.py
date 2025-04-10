@@ -78,8 +78,20 @@ MATCHING_PATH_MESSAGE = {
     "message": "/usr/bin/dhpcd",
 }
 
+MATCHING_BLOOM_HASH = {
+    "__ts_timeline_id": 1,
+    "es_index": "",
+    "es_id": "",
+    "label": "",
+    "timestamp": 1410895419859714,
+    "timestamp_desc": "",
+    "datetime": "2014-09-16T19:23:40+00:00",
+    "sha256_hash": "testhash",
+    "message": "testhash",
+}
 
-class YetiTestAnalyzer(yetiindicators.YetiBaseAnalyzer):
+
+class YetiTestAnalyzer(yetiindicators.YetiGraphAnalyzer):
     NAME = "yetitest"
     DISPLAY_NAME = "Test for yeti analyzer"
     DESCRIPTION = "Just an analyzer for teting"
@@ -104,11 +116,11 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_neighbors_request"
+        "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_entities_request"
+        "YetiGraphAnalyzer._get_entities_request"
     )
     def test_api_query(self, mock_get_entities, mock_get_neighbors):
         """Tests that queries to the API are well-formed."""
@@ -143,11 +155,11 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_neighbors_request"
+        "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_entities_request"
+        "YetiGraphAnalyzer._get_entities_request"
     )
     def test_indicator_match(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
@@ -177,11 +189,11 @@ class TestYetiIndicators(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_neighbors_request"
+        "YetiGraphAnalyzer._get_neighbors_request"
     )
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
-        "YetiBaseAnalyzer._get_entities_request"
+        "YetiGraphAnalyzer._get_entities_request"
     )
     def test_indicator_nomatch(self, mock_get_entities, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
@@ -360,4 +372,70 @@ tags:
                     }
                 }
             },
+        )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore")
+    def test_run_composite_aggregation(self, mock_datastore):
+        """Tests that the composite aggregation is correctly built."""
+        analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
+        mock_datastore.return_value.search.return_value = {
+            "aggregations": {
+                "my_composite_agg_test_index": {
+                    "buckets": [{"key": {"sha256_hash": "testhash"}}],
+                }
+            }
+        }
+        hashset = set()
+        analyzer.run_composite_aggregation(hashset)
+        self.assertEqual(hashset, {"testhash"})
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_get_bloom_request(self):
+        """Tests that the bloom request is correctly built."""
+        analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
+
+        # pylint: disable=protected-access
+        analyzer._yeti_session = mock.Mock()
+        post_mock = mock.Mock()
+        post_mock.return_value.status_code = 200
+        analyzer._yeti_session.post = post_mock
+
+        analyzer._get_bloom_request({"testhash1"})
+        post_mock.assert_called_once_with(
+            "blah/bloom/search/raw",
+            data="testhash1",
+        )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_bloomanalyzer_run(self):
+        """Tests the YetiBloomAnalyzer run function."""
+        analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
+
+        # pylint: disable=protected-access
+        analyzer._yeti_session = mock.Mock()
+        post_mock = mock.Mock()
+        post_mock.return_value.status_code = 200
+        analyzer._yeti_session.post = post_mock
+        analyzer._yeti_session.post.return_value.json.return_value = [
+            {"value": "testhash", "hits": ["hitsource1"]}
+        ]
+
+        # pylint: disable=unused-argument
+        def agg_mock(hashset, after_key=None):
+            """Mock for the composite aggregation."""
+            hashset.add("testhash")
+            return hashset, None
+
+        analyzer.run_composite_aggregation = agg_mock
+
+        analyzer.datastore.import_event("test_index", MATCHING_BLOOM_HASH, "0")
+
+        message = json.loads(analyzer.run())
+
+        self.assertEqual(
+            message["result_summary"],
+            (
+                "Bloom filter check completed. 1 hashes checked, 1 hits "
+                "found, 1 events tagged."
+            ),
         )
