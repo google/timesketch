@@ -948,7 +948,7 @@ export default {
             this.$store.dispatch('updateSearchHistory')
             this.branchParent = this.eventList.meta.search_node.id
           }
-          if (this.userSettings.eventSummarization) {
+          if (this.userSettings.eventSummarization  && this.eventList.objects.length > 0) {
             this.fetchEventSummary()
           }
         })
