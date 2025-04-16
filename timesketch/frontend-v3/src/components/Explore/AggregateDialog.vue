@@ -249,6 +249,7 @@ limitations under the License.
 <script>
 import Apexchart from 'vue-apexcharts'
 import ApiClient from '../../utils/RestApiClient'
+import { useAppStore } from '@/stores/app'
 
 export default {
   components: {
@@ -263,6 +264,7 @@ export default {
   ],
   data() {
     return {
+      store: useAppStore(),
       distributionIntervals: [
         "Year",
         "Month",
@@ -314,7 +316,7 @@ export default {
   },
   computed: {
     sketch() {
-      return this.$store.state.sketch
+      return this.store.sketch
     },
     eventDateTime() {
       return new Date(this.eventTimestamp/1000).toISOString()
