@@ -20,7 +20,9 @@ import json
 import logging
 import math
 import time
+from typing import Any, Optional
 import six
+from opensearchpy import OpenSearch
 
 import dateutil
 from opensearchpy.exceptions import RequestError
@@ -45,6 +47,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
+from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
@@ -819,6 +822,62 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 "Wrong user for this search history",
             )
         return current_search_node
+    
+    def _current_search_node_conclusion(self, current_search_node) -> Any:
+        """ Ger conclusion associated with search node.
+        Args:
+        current_search_node: Current search node.
+        ReturnsL
+        Conclusion: conclusion assicated with the search node.
+        """
+        if (
+            hasattr(current_search_node, "investigativequestion")
+            and current_search_node.investigativequestion
+        ):
+            if (
+                hasattr(current_search_node.investigativequestion, "conclusions")
+                and current_search_node.investigativequestion.conclusions
+            ):
+                for conclusion in current_search_node.investigativequestion.conclusions:
+                    if conclusion.user_id == current_user.id:
+                        return conclusion
+        return None
+     
+    def _get_search_index(
+        self,
+        sketch: Sketch,
+        id: str,
+        datastore: Optional[OpenSearch] = None,
+    ) -> int:
+        """Get's the search index associated with the event.
+        Args:
+            sketch: The Sketch object to query.
+            id: The document_id to query.
+            datastore: OpenSearch instance for querying.
+        Returns:
+            int: The search index.
+         Raises:
+             ValueError: If datastore is not provided or no valid indices are found.
+         """
+        query_string = f"_id:{id}"
+ 
+        active_timelines = sketch.active_timelines
+ 
+        for timeline in active_timelines:
+            searchindex = timeline.searchindex
+            index_name = searchindex.index_name
+            result = self.datastore.search(
+                sketch_id=sketch.id,
+                query_string=query_string,
+                query_filter={},
+                query_dsl="",
+                indices=[index_name],
+            )
+            if result:
+                return index_name
+ 
+        raise ValueError("No valid indices found for the event.")
+
 
     @login_required
     def post(self, sketch_id: int):
@@ -855,6 +914,9 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         events = form.events.raw_data
 
         for _event in events:
+            if "_index" not in _event or not _event["_index"]:
+                event_index = self._get_search_index(sketch, _event["_id"])
+                _event["_index"] = event_index
             searchindex_id = _event["_index"]
             searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
             event_id = _event["_id"]
@@ -923,14 +985,22 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     if "__ts_star" in form.annotation.data:
                         search_node_label = "__ts_star"
                     current_search_node.add_label(search_node_label)
-            
-                # Adding facts to conclusions
-                if current_search_node and "__ts_fact" in form.annotation.data:
-                    if hasattr(current_search_node, 'investigativequestion') and current_search_node.investigativequestion:
-                        if hasattr(current_search_node.investigativequestion, 'conclusions') and current_search_node.investigativequestion.conclusions:
-                            for conclusion in current_search_node.investigativequestion.conclusions:
-                                if conclusion.user_id == current_user.id:
-                                    event.conclusions.append(conclusion)
+                    
+                conclusion_id = request.json.get("conclusion_id", None)
+                if "__ts_fact" in form.annotation.data:
+                    search_node_label = "__ts_fact"
+                    current_search_node.add_label(search_node_label)
+                    conclusion = self._current_search_node_conclusion(current_search_node)
+                elif conclusion_id:
+                    conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
+ 
+                if "__ts_fact" in form.annotation.data:
+                    # Adding facts to conclusions
+                    if not form.remove.data:
+                        event.conclusions.append(conclusion)
+                    # Remove facts from conclusions
+                    if form.remove.data:
+                        event.conclusions.remove(conclusion)
 
             else:
                 abort(
