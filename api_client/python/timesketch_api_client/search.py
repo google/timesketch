@@ -449,6 +449,7 @@ class Search(resource.SketchResource):
         self._searchtemplate = ""
         self._total_elastic_size = 0
         self._updated_at = ""
+        self.used_indices = [timeline.id for timeline in sketch.list_timelines()]
 
     def _extract_chips(self, query_filter):
         """Extract chips from a query_filter."""
@@ -697,6 +698,7 @@ class Search(resource.SketchResource):
         if query_filter:
             self.query_filter = query_filter
 
+        self.indices = self.used_indices
         self.query_string = query_string
         self.query_dsl = query_dsl
         self.return_fields = return_fields
