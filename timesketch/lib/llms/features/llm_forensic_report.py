@@ -140,11 +140,11 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             id_query = " OR ".join([f'_id:"{event_id}"' for event_id in id_list])
             query_string = id_query
 
-        all_indices = list({t.searchindex.index_name for t in sketch.timelines})
-        indices_from_filter = query_filter.get("indices", all_indices)
+        all_timeline_ids = [t.id for t in sketch.timelines]
+        indices = query_filter.get("indices", all_timeline_ids)
 
         if "_all" in indices_from_filter:
-            indices_from_filter = all_indices
+            indices_from_filter = all_timeline_ids
 
         indices, timeline_ids = utils.get_validated_indices(indices_from_filter, sketch)
 
