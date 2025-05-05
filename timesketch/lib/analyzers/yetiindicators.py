@@ -766,7 +766,10 @@ class YetiBloomChecker(YetiBaseAnalyzer):
             if not after:
                 break
 
-        bloom_hits = self._get_bloom_request(hashmap)
+        try:
+            bloom_hits = self._get_bloom_request(hashmap)
+        except RuntimeError as exception:
+            return str(exception)
         hit_dict = {hit["value"]: hit["hits"] for hit in bloom_hits}
 
         tagged = 0
