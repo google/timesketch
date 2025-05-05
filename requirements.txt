@@ -24,6 +24,7 @@ python_dateutil==2.8.1
 PyYAML==6.0.1
 redis==4.4.4
 requests==2.32.3
+setuptools>=67.0.0
 sigmatools==0.19.1 ; python_version > '3.4'
 six==1.12.0
 SQLAlchemy==1.4.48
