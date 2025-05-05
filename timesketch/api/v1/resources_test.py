@@ -487,7 +487,7 @@ class EventResourceTest(BaseTest):
         )
         response_json = response.json
         del response_json["meta"]
-        self.assertDictContainsSubset(self.expected_response, response_json)
+        self.assertEqual(response.json, response.json | self.expected_response)
         self.assert200(response)
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
@@ -1143,7 +1143,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         )
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertDictContainsSubset(self.expected_response, response.json)
+        self.assertEqual(response.json, response.json | self.expected_response)
         self.assert200(response)
 
     def test_get_non_existing_rule_by_text(self):
