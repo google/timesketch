@@ -26,7 +26,7 @@ redis==4.4.4
 requests==2.32.3
 setuptools>=67.0.0
 sigmatools==0.19.1 ; python_version > '3.4'
-six==1.12.0
+six==1.17.0
 SQLAlchemy==1.4.48
 Werkzeug==3.0.6
 WTForms==3.0.1
