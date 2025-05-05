@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.12">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.4af4bdda.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.2afb09e1.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
@@ -2014,7 +2014,7 @@
 <p>Timesketch is designed to scale.</p>
 <p>The minimum system requirements are:</p>
 <ul>
-<li>Machine with Ubuntu 20.04 installed.</li>
+<li>Machine with Ubuntu 22.04 installed.</li>
 <li>At least 8GB RAM, but more the better.</li>
 <li>Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.</li>
 </ul>
@@ -2024,7 +2024,7 @@
 </ul>
 <h2 id="opensearch-indices-limitation">OpenSearch indices limitation</h2>
 <p>In the past, every timeline in a sketch was a dedicated OpenSearch Index. In larger installations, Timesketch hit the number of maximum open shards OpenSearch could handle.
-Therefore a design <a href="change">https://github.com/google/timesketch/issues/1567</a> was made to tackle those limitations</p>
+Therefore a design <a href="change">https://github.com/google/timesketch/issues/1567</a> was made to tackle those limitations:</p>
 <ul>
 <li>There are maximum number (1500) of shards that can be opened.</li>
 <li>There are limitations with Lucene (which OpenSearch uses) and then OpenSearch itself, see https://www.elastic.co/guide/en/app-search/current/limits.html and maximum sizes of HTTP requests, hence when Timesketch uploads files they are split up, to avoid HTTP limitations.</li>
