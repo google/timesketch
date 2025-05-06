@@ -227,6 +227,14 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             datastore=datastore,
             timeline_ids=timeline_ids,
         )
+
+        if events_df is None or events_df.empty:
+            return {
+                "response": None,
+                "summary_event_count": 0,
+                "summary_unique_event_count": 0,
+            }
+
         total_events_count = len(events_df)
         unique_events_count = len(
             events_df[["message"]].drop_duplicates(subset="message", keep="first")
