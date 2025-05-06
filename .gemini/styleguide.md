@@ -19,13 +19,12 @@ This style guide outlines the coding and documentation standards for the Gemini 
     *   **Docstrings:** Use docstrings to explain the purpose, parameters, and return values of functions, classes, and modules.
     *   **Type Hints:** Employ type hints to improve code clarity and enable static analysis.
     *   **Error Handling:** Use exceptions for error handling and provide informative error messages.
-    *   **String Formatting:** Use f-strings (or `.format()`) for string formatting.
+    *   **String Formatting:** Use f-strings (or `.format()`) for string formatting. Exceptions being logging messages.
     *   **Imports:** Organize imports into standard library, third-party, and local modules, separated by blank lines.
     *   **Comments:** Use comments to explain non-obvious code or complex logic.
     *   **Pylint:** Use Pylint to enforce code quality and style.
     *   **Quotes:** Quote strings as ' or """ instead of "
     *   **Textual Strings:** Textual strings should be Unicode strings and hence defined as u'string'
-    *   **Formatting:** Use the format() function instead of the %-way of formatting strings.
     *   **Specifiers:** Use positional or parameter format specifiers with typing e.g. '{0:s}' or '{text:s}' instead of '{0}', '{}' or '{:s}'.
     *   **Exceptions:** When catching exceptions use "as exception:" not some alternative form like "as error:" or "as details:"
     *   **Pylint Overrides:** Use textual pylint overrides e.g. "# pylint: disable=no-self-argument" instead of "# pylint: disable=E0213".
@@ -37,6 +36,7 @@ This style guide outlines the coding and documentation standards for the Gemini 
     *   **Formatting:** Use consistent indentation and spacing.
     *   **Error Handling:** Use try-catch blocks for error handling.
     *   **Asynchronous Code:** Use async/await for asynchronous operations.
+    *   **Semicolons:** Do not use semicolons at the end of lines. 
 
 3.  **Other Languages:**
     *   Follow the established style guides and best practices for each language.
