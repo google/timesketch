@@ -526,7 +526,7 @@ export default {
   llmRequest(sketchId, featureName, formData) {
     formData = formData || {}
     formData.feature = featureName
-  
+
     return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
   }
 }

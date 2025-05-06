@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
 import requests
 import yaml
@@ -12,6 +12,7 @@ from flask import current_app
 
 from timesketch.lib import emojis, sigma_util
 from timesketch.lib.analyzers import interface, manager
+
 
 TYPE_TO_EMOJI = {
     "malware": "SPIDER",
@@ -37,6 +38,7 @@ OBSERVABLE_INTEL_MAPPING = {
     "sha256": "hash_sha256",
     "sha1": "hash_sha1",
     "md5": "hash_md5",
+    "generic": "message",
 }
 
 HIGH_SEVERITY_TYPES = {
@@ -62,20 +64,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
     DEPENDENCIES = frozenset(["domain"])
 
-    # Entities of this type will be fetched from Yeti
-    # Can optionally contain tags after a `:`
-    # e.g. `malware:ransomware,tag2`
-    _TYPE_SELECTOR: List[str]
-    # Graph will be traversed from the entities looking for these types
-    # of neighbors
-    _TARGET_NEIGHBOR_TYPE: List[str] = []
-    # If True, will save intelligence to the sketch
-    _SAVE_INTELLIGENCE: bool = False
-
-    # Number of hops to traverse from the entity
-    _MAX_HOPS = 5
-    # Direction to traverse the graph. One of {inbound, outbound, any}
-    _DIRECTION = "inbound"
+    def run(self):
+        """Entry point for the analyzer."""
+        raise NotImplementedError
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the Analyzer.
@@ -128,92 +119,6 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         access_token = response.json()["access_token"]
         self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
 
-    def _get_neighbors_request(self, params: Dict) -> Dict:
-        """Simple wrapper around requests call to make testing easier."""
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/graph/search",
-            json=params,
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} retrieving neighbors for "
-                f"{params['source']} from Yeti:" + str(results.json())
-            )
-        return results.json()
-
-    def get_neighbors(
-        self, yeti_object: Dict, max_hops: int, neighbor_types: List[str]
-    ) -> List[Dict]:
-        """Retrieves a list of neighbors associated to a given entity.
-
-        Args:
-          yeti_object: The Yeti object to get neighbors from.
-          max_hops: The number of hops to traverse from the entity.
-          neighbor_types: A list of Yeti object types to filter by.
-
-        Returns:
-          A list of dictionaries describing a Yeti object.
-        """
-        extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
-        request = {
-            "count": 0,
-            "source": extended_id,
-            "graph": "links",
-            "min_hops": 1,
-            "max_hops": max_hops,
-            "direction": self._DIRECTION,
-            "include_original": False,
-            "target_types": neighbor_types,
-        }
-        results = self._get_neighbors_request(request)
-        neighbors = {}
-        for neighbor in results.get("vertices", {}).values():
-            if (
-                neighbor["type"] in neighbor_types
-                or neighbor["root_type"] in neighbor_types
-            ):
-                neighbors[neighbor["id"]] = neighbor
-        return neighbors
-
-    def _get_entities_request(self, params):
-        """Simple wrapper around requests call to make testing easier."""
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/entities/search",
-            json=params,
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} retrieving entities from Yeti:"
-                + str(results.json())
-            )
-        return results.json()
-
-    def get_entities(self, type_selector: List[str]) -> Dict[str, dict]:
-        """Fetches Entities with a certain tag on Yeti.
-
-        Args:
-            type_selector: Use these type selectors to search entities. Type
-              Selectors have a TYPE:TAG1,TAG2 format.
-
-        Returns:
-            A dictionary of entities obtained from Yeti, keyed by entity ID.
-        """
-        all_entities = {}
-        for _type in type_selector:
-            tags = []
-            if ":" in _type:
-                tag_suffix = _type.split(":")[1]
-                _type = _type.replace(":" + tag_suffix, "")
-                tags = tag_suffix.split(",")
-
-            query = {"name": "", "tags": tags}
-            if _type:
-                query["type"] = _type
-            data = self._get_entities_request({"query": query, "count": 0})
-            entities = {item["id"]: item for item in data["entities"]}
-            all_entities.update(entities)
-        return all_entities
-
     def mark_event(
         self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
     ):
@@ -240,7 +145,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         event.commit()
 
         if neighbors:
-            msg += f'Related entities: {[neighbor["name"] for neighbor in neighbors]}'
+            msg += f"Related entities: {[neighbor['name'] for neighbor in neighbors]}"
 
         comments = {comment.comment for comment in event.get_comments()}
         if msg not in comments:
@@ -356,6 +261,115 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             ontology="intelligence",
             overwrite=True,
         )
+
+
+class YetiGraphAnalyzer(YetiBaseAnalyzer):
+    """Analyzer that leverages the Yeti graph.
+
+    Selects entities, traverses graphs to find indicators or observables
+    to look for.
+    """
+
+    # Entities of this type will be fetched from Yeti
+    # Can optionally contain tags after a `:`
+    # e.g. `malware:ransomware,tag2`
+    _TYPE_SELECTOR: List[str]
+    # Graph will be traversed from the entities looking for these types
+    # of neighbors
+    _TARGET_NEIGHBOR_TYPE: List[str] = []
+    # If True, will save intelligence to the sketch
+    _SAVE_INTELLIGENCE: bool = False
+
+    # Number of hops to traverse from the entity
+    _MAX_HOPS = 5
+    # Direction to traverse the graph. One of {inbound, outbound, any}
+    _DIRECTION = "inbound"
+
+    def _get_neighbors_request(self, params: Dict) -> Dict:
+        """Simple wrapper around requests call to make testing easier."""
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/graph/search",
+            json=params,
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} retrieving neighbors for "
+                f"{params['source']} from Yeti:" + str(results.json())
+            )
+        return results.json()
+
+    def get_neighbors(
+        self, yeti_object: Dict, max_hops: int, neighbor_types: List[str]
+    ) -> List[Dict]:
+        """Retrieves a list of neighbors associated to a given entity.
+
+        Args:
+          yeti_object: The Yeti object to get neighbors from.
+          max_hops: The number of hops to traverse from the entity.
+          neighbor_types: A list of Yeti object types to filter by.
+
+        Returns:
+          A list of dictionaries describing a Yeti object.
+        """
+        extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
+        request = {
+            "count": 0,
+            "source": extended_id,
+            "graph": "links",
+            "min_hops": 1,
+            "max_hops": max_hops,
+            "direction": self._DIRECTION,
+            "include_original": False,
+            "target_types": neighbor_types,
+        }
+        results = self._get_neighbors_request(request)
+        neighbors = {}
+        for neighbor in results.get("vertices", {}).values():
+            if (
+                neighbor["type"] in neighbor_types
+                or neighbor["root_type"] in neighbor_types
+            ):
+                neighbors[neighbor["id"]] = neighbor
+        return neighbors
+
+    def _get_entities_request(self, params):
+        """Simple wrapper around requests call to make testing easier."""
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/entities/search",
+            json=params,
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} retrieving entities from Yeti:"
+                + str(results.json())
+            )
+        return results.json()
+
+    def get_entities(self, type_selector: List[str]) -> Dict[str, dict]:
+        """Fetches Entities with a certain tag on Yeti.
+
+        Args:
+            type_selector: Use these type selectors to search entities. Type
+              Selectors have a TYPE:TAG1,TAG2 format.
+
+        Returns:
+            A dictionary of entities obtained from Yeti, keyed by entity ID.
+        """
+        all_entities = {}
+        for _type in type_selector:
+            tags = []
+            if ":" in _type:
+                tag_suffix = _type.split(":")[1]
+                _type = _type.replace(":" + tag_suffix, "")
+                tags = tag_suffix.split(",")
+
+            query = {"name": "", "tags": tags}
+            if _type:
+                query["type"] = _type
+            data = self._get_entities_request({"query": query, "count": 0})
+            entities = {item["id"]: item for item in data["entities"]}
+            all_entities.update(entities)
+        return all_entities
 
     def build_query_from_observable(self, observable: Dict) -> Dict:
         """Builds a query DSL from a Yeti observable.
@@ -578,7 +592,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         return str(self.output)
 
 
-class YetiTriageIndicators(YetiBaseAnalyzer):
+class YetiTriageIndicators(YetiGraphAnalyzer):
     """Analyzer for Yeti triage indicators."""
 
     NAME = "yetitriageindicators"
@@ -592,13 +606,13 @@ class YetiTriageIndicators(YetiBaseAnalyzer):
 
     DEPENDENCIES = frozenset(["domain"])
 
-    _TYPE_SELECTOR = ["attack-pattern:triage"]
-    _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
+    _TYPE_SELECTOR = ["attack-pattern:insider"]
+    _TARGET_NEIGHBOR_TYPE = ["observable"]
     _DIRECTION = "inbound"
     _SAVE_INTELLIGENCE = False
 
 
-class YetiBadnessIndicators(YetiBaseAnalyzer):
+class YetiBadnessIndicators(YetiGraphAnalyzer):
     """Analyzer for Yeti indicators related to attacks."""
 
     NAME = "yetibadnessindicators"
@@ -619,7 +633,7 @@ class YetiBadnessIndicators(YetiBaseAnalyzer):
     _SAVE_INTELLIGENCE = True
 
 
-class YetiLOLBASIndicators(YetiBaseAnalyzer):
+class YetiLOLBASIndicators(YetiGraphAnalyzer):
     """Analyzer for Yeti LOLBAS indicators."""
 
     # YetiTriageIndicators gives extra context around execution, etc.
@@ -639,7 +653,7 @@ class YetiLOLBASIndicators(YetiBaseAnalyzer):
     _MAX_HOPS = 1
 
 
-class YetiInvestigations(YetiBaseAnalyzer):
+class YetiInvestigations(YetiGraphAnalyzer):
     """Analyzer for Yeti investigation-related indicators."""
 
     NAME = "yetiinvestigations"
@@ -656,7 +670,131 @@ class YetiInvestigations(YetiBaseAnalyzer):
     _MAX_HOPS = 1
 
 
+class YetiKeywords(YetiGraphAnalyzer):
+    """Analyzer for Yeti investigation-related indicators."""
+
+    NAME = "yetikeywords"
+    DISPLAY_NAME = "Yeti Investigations intelligence"
+    DESCRIPTION = (
+        "Mark events that match Yeti investigation indicators and observables."
+        " {investigation} ← {indicators, observables}"
+    )
+
+    _TYPE_SELECTOR = ["attack-pattern:keywords"]
+    _TARGET_NEIGHBOR_TYPE = ["observable"]
+    _SAVE_INTELLIGENCE = True
+    _DIRECTION = "any"
+    _MAX_HOPS = 1
+
+
+class YetiBloomChecker(YetiBaseAnalyzer):
+    """Analyzer for Yeti bloom filter checker."""
+
+    NAME = "yetibloomchecker"
+    DISPLAY_NAME = "Yeti Bloom filter checker"
+    DESCRIPTION = "Check if hashes in the timeline are present in Yeti's bloom filter."
+
+    def _get_bloom_request(self, hashes):
+        """Simple wrapper around requests call to make testing easier."""
+        body = "\n".join(hashes)
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/bloom/search/raw", data=body
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} doing bloom check from Yeti: "
+                + str(results.json())
+            )
+        return results.json()
+
+    def run_composite_aggregation(
+        self, hashmap: set[str], after_key: dict[str, Any] = None
+    ) -> tuple[set[str], Union[Dict, None]]:
+        """Runs a composite aggregation of hashes on a sketch.
+
+        Accumulates hashes in the hashmap parameter:
+
+        Args:
+            hashmap: A set of hashes to be checked.
+            after_key: The key to continue the aggregation from, if needed.
+
+        Returns:
+            A tuple containing the updated hashmap and the after_key for
+            pagination.
+        """
+        agg_name = f"my_composite_agg_{self.index_name}"
+        agg_dsl = {
+            "size": 0,
+            "query": {
+                "bool": {"filter": [{"term": {"__ts_timeline_id": self.timeline_id}}]}
+            },
+            "aggs": {
+                agg_name: {
+                    "composite": {
+                        "size": 10000,
+                        "sources": [
+                            {"sha256_hash": {"terms": {"field": "sha256_hash.keyword"}}}
+                        ],
+                    }
+                }
+            },
+        }
+
+        if after_key:
+            agg_dsl["aggs"][agg_name]["composite"]["after"] = after_key
+
+        result = self.datastore.search(
+            sketch_id=self.sketch.id,
+            indices=[self.index_name],
+            query_dsl=agg_dsl,
+        )
+        after_key = result["aggregations"][agg_name].get("after_key")
+        buckets = result["aggregations"][agg_name]["buckets"]
+        for r in buckets:
+            hashmap.add(r["key"]["sha256_hash"])
+
+        return hashmap, after_key
+
+    def run(self):
+        if not self.yeti_api_root or not self.yeti_api_key:
+            return "No Yeti configuration settings found, aborting."
+
+        hashmap = set()
+        after = None
+        while True:
+            _, after = self.run_composite_aggregation(hashmap, after_key=after)
+            if not after:
+                break
+
+        try:
+            bloom_hits = self._get_bloom_request(hashmap)
+        except RuntimeError as exception:
+            return str(exception)
+        hit_dict = {hit["value"]: hit["hits"] for hit in bloom_hits}
+
+        tagged = 0
+        for event in self.event_stream(
+            query_string="_exists_:sha256_hash", return_fields=["sha256_hash"]
+        ):
+            sha256_hash = event.source.get("sha256_hash")
+            if sha256_hash in hit_dict:
+                tagged += 1
+                tags = hit_dict[sha256_hash]
+                event.add_tags(tags)
+                event.commit()
+
+        msg = (
+            f"Bloom filter check completed. {len(hashmap)} hashes checked,"
+            f" {len(hit_dict)} hits found, {tagged} events tagged."
+        )
+        self.output.result_summary = msg
+        self.output.result_status = "SUCCESS"
+        return str(self.output)
+
+
 manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
 manager.AnalysisManager.register_analyzer(YetiBadnessIndicators)
 manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
 manager.AnalysisManager.register_analyzer(YetiInvestigations)
+
+manager.AnalysisManager.register_analyzer(YetiBloomChecker)

@@ -462,7 +462,19 @@ tsctl similarity_score
 
 #### sketch-info Get information about a sketch
 
-Displays various information about a given sketch.
+Displays detailed information about a specific sketch.
+
+This command retrieves and displays comprehensive information about a
+Timesketch sketch, including:
+
+- **Sketch Details:** The sketch's ID and name.
+- **Active Timelines:** A table listing the active timelines within the
+  sketch, including their search index ID, index name, creation date,
+  user ID, description, status, timeline name, and timeline ID.
+- **Sharing Information:** Details about users and groups with whom the
+  sketch is shared.
+- **Sketch Status:** The current status of the sketch (e.g., "ready",
+  "archived").
 
 ```shell
 tsctl sketch-info
@@ -472,13 +484,12 @@ Example:
 
 ```shell
 Sketch 1 Name: (aaa)
-searchindex_id index_name                       created_at                 user_id description
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:06:52.849124 1       20200918_0417_DESKTOP-SDN1RPT
-3              88002da782f64061bf3703bc782b6006 2022-10-21 15:19:26.072964 1       all_packets
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:28:55.474166 1       E01-DC01_20200918_0347_CDrive
-4              11d761cd266640d798e30bb897c8dd4e 2022-10-21 15:32:15.060184 1       autoruns-desktop-sdn1rpt_fresh_import
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:12.316273 1       sigma_events
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:48.592320 1       sigma_events2
+searchindex_id index_name                       created_at                 user_id description             status timeline_name           timeline_id
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 14:49:52.402364 1       my_file_with_a_timeline ready  my_file_with_a_timeline 2
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 16:21:07.707528 1       evtx_part               ready  evtx_part               3
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-21 15:24:55.935364 1       sigma_events            ready  sigma_events            10
+10             9a0f22670bf74ba6884f3ba9b261bf13 2025-03-21 15:31:45.279662 1       evtx                    ready  evtx                    11
+1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-21 15:41:10.860161 1       sigma_eventsa           ready  sigma_eventsa           12
 Shared with:
     Users: (user_id, username)
         3: bar
@@ -497,16 +508,25 @@ id status created_at                 user_id
 In some cases, logs present a OpenSearch Index id and it is not easy to find out
 which Sketch that index is related to.
 
-Therefore the following command can be used:
+Therefore the following command can be used `tsctl searchindex-info`:
+
+Displays detailed information about a specific search index. You can specify the index using either its database ID or its OpenSearch index name. 
+The command shows the search index ID and name, and lists all timelines associated with the index, including their IDs, names, and associated sketch IDs and names.
 
 ```bash
-# tsctl searchindex-info --searchindex_id asd
+# tsctl searchindex-info --searchindex_id 99
 Searchindex: asd not found in database.
-# tsctl searchindex-info --searchindex_id 4c5afdf60c6e49499801368b7f238353
+# tsctl searchindex-info --searchindex_id 1
+Searchindex: 1 Name: sigma_events found in database.
+Corresponding Timeline id: 3 in Sketch Id: 2
+Corresponding Sketch id: 2 Sketch name: asdasd
+# tsctl searchindex-info --index_name 4c5afdf60c6e49499801368b7f238353
 Searchindex: 4c5afdf60c6e49499801368b7f238353 Name: sigma_events found in database.
 Corresponding Timeline id: 3 in Sketch Id: 2
 Corresponding Sketch id: 2 Sketch name: asdasd
 ```
+
+If neither `searchindex_id` nor `index_name` is provided, an error message is printed. If no matching search index is found, an appropriate message is printed
 
 ### Timeline status
 
@@ -836,3 +856,42 @@ Example:
 ```
 tsctl celery-revoke-task 8115648e-944c-4452-962e-644041603419
 ```
+
+#### list-config
+
+**Description:**
+
+Lists all configuration variables currently loaded by the Timesketch Flask application (`current_app.config`).
+
+This command iterates through the application's configuration settings. 
+
+It automatically identifies keys commonly associated with sensitive information (like `SECRET_KEY`, `PASSWORD`, `API_KEY`, `TOKEN`, etc.) based on a predefined list of keywords.
+To prevent accidental exposure, the values corresponding to these sensitive keys are redacted and replaced with `******** (redacted)` in the output. All other configuration key-value pairs are displayed as they are loaded.
+
+The output is sorted alphabetically by key for consistent and predictable results. A note is included at the end to remind the user that some values may have been redacted for security reasons.
+
+**Usage:**
+
+```bash
+tsctl list-config
+Timesketch Configuration Variables:
+-----------------------------------
+ANALYZERS_DEFAULT_KWARGS: {}
+APPLICATION_ROOT: /
+AUTO_SKETCH_ANALYZERS: []
+AUTO_SKETCH_ANALYZERS_KWARGS: {}
+CELERY_BROKER_URL: redis://redis:6379
+CELERY_RESULT_BACKEND: redis://redis:6379
+CONTEXT_LINKS_CONFIG_PATH: /etc/timesketch/context_links.yaml
+DATA_FINDER_PATH: /etc/timesketch/data_finder.yaml
+DEBUG: False
+OPENSEARCH_HOST: 127.0.0.1
+OPENSEARCH_PORT: 9200
+SECRET_KEY: ******** (redacted)
+SQLALCHEMY_DATABASE_URI: ******** (redacted)
+UPLOAD_ENABLED: True
+...
+-----------------------------------
+Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
+```
+
