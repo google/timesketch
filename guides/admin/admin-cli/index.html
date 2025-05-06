@@ -1451,6 +1451,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#list-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      list-config
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2771,6 +2780,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#list-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      list-config
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3365,6 +3383,35 @@ tsctl celery-tasks --show_all
 </code></pre>
 <p>Example:</p>
 <pre><code>tsctl celery-revoke-task 8115648e-944c-4452-962e-644041603419
+</code></pre>
+<h4 id="list-config">list-config</h4>
+<p><strong>Description:</strong></p>
+<p>Lists all configuration variables currently loaded by the Timesketch Flask application (<code>current_app.config</code>).</p>
+<p>This command iterates through the application's configuration settings. </p>
+<p>It automatically identifies keys commonly associated with sensitive information (like <code>SECRET_KEY</code>, <code>PASSWORD</code>, <code>API_KEY</code>, <code>TOKEN</code>, etc.) based on a predefined list of keywords.
+To prevent accidental exposure, the values corresponding to these sensitive keys are redacted and replaced with <code>******** (redacted)</code> in the output. All other configuration key-value pairs are displayed as they are loaded.</p>
+<p>The output is sorted alphabetically by key for consistent and predictable results. A note is included at the end to remind the user that some values may have been redacted for security reasons.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">tsctl list-config
+Timesketch Configuration Variables:
+-----------------------------------
+ANALYZERS_DEFAULT_KWARGS: {}
+APPLICATION_ROOT: /
+AUTO_SKETCH_ANALYZERS: []
+AUTO_SKETCH_ANALYZERS_KWARGS: {}
+CELERY_BROKER_URL: redis://redis:6379
+CELERY_RESULT_BACKEND: redis://redis:6379
+CONTEXT_LINKS_CONFIG_PATH: /etc/timesketch/context_links.yaml
+DATA_FINDER_PATH: /etc/timesketch/data_finder.yaml
+DEBUG: False
+OPENSEARCH_HOST: 127.0.0.1
+OPENSEARCH_PORT: 9200
+SECRET_KEY: ******** (redacted)
+SQLALCHEMY_DATABASE_URI: ******** (redacted)
+UPLOAD_ENABLED: True
+...
+-----------------------------------
+Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
 </code></pre>
 
 
