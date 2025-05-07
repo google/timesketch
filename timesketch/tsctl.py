@@ -23,9 +23,9 @@ import io
 import zipfile
 import csv
 import datetime
+import traceback
 import yaml
 import redis
-import traceback
 
 
 import click
