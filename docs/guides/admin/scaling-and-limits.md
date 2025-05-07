@@ -8,7 +8,7 @@ Timesketch is designed to scale.
 
 The minimum system requirements are:
 
-- Machine with Ubuntu 20.04 installed.
+- Machine with Ubuntu 22.04 installed.
 - At least 8GB RAM, but more the better.
 - Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
 
@@ -19,7 +19,7 @@ These are the limitations:
 ## OpenSearch indices limitation
 
 In the past, every timeline in a sketch was a dedicated OpenSearch Index. In larger installations, Timesketch hit the number of maximum open shards OpenSearch could handle.
-Therefore a design [https://github.com/google/timesketch/issues/1567](change) was made to tackle those limitations
+Therefore a design [https://github.com/google/timesketch/issues/1567](change) was made to tackle those limitations:
 
 - There are maximum number (1500) of shards that can be opened.
 - There are limitations with Lucene (which OpenSearch uses) and then OpenSearch itself, see https://www.elastic.co/guide/en/app-search/current/limits.html and maximum sizes of HTTP requests, hence when Timesketch uploads files they are split up, to avoid HTTP limitations.
