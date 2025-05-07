@@ -11,6 +11,7 @@ on:
 
 jobs:
   build-frontend-v3:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
 
     steps:
