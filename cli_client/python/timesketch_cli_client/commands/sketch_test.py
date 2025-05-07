@@ -19,9 +19,7 @@ import pandas as pd
 
 from click.testing import CliRunner
 
-from timesketch_api_client import search
 from timesketch_api_client import test_lib as api_test_lib
-from timesketch_cli_client.cli import TimesketchCli
 
 from .. import test_lib
 from .sketch import sketch_group
@@ -41,8 +39,6 @@ class SketchTest(unittest.TestCase):
         # Ensure output format is 'text' for this test.
         self.ctx.output_format_from_flag = "text"
         result = runner.invoke(sketch_group, ["list"], obj=self.ctx)
-        # Expected output from pd.DataFrame([{"id": 1, "name": "test"}]).to_string(index=False)
-        # Note the spacing due to pandas formatting.
         expected_output = " id name\n  1 test\n"
         self.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
         self.assertEqual(result.output, expected_output)
@@ -313,7 +309,6 @@ class SketchTest(unittest.TestCase):
 
         mock_search_inst_comments = mock.MagicMock()
         mock_search_inst_comments.to_pandas.return_value = df_no_id
-        # Other searches can return empty or valid, the first problematic one should cause exit
         mock_search_inst_others = mock.MagicMock()
         mock_search_inst_others.to_pandas.return_value = pd.DataFrame()
 
