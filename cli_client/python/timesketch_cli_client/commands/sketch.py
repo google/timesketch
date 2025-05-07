@@ -364,7 +364,10 @@ def export_only_with_annotations(
     if limit == 0:
         click.echo(
             click.style(
-                "WARNING: Fetching all results for each search type. This might consume significant memory.",
+                "WARNING: Fetching up to 10,000 results for each search type"
+                "(comments, stars, labels). "
+                "This might consume significant memory. The --limit 0 applies"
+                "to the combined, unique set from these searches.",
                 fg="yellow",
             )
         )
@@ -416,7 +419,7 @@ def export_only_with_annotations(
                     )
                 else:
                     click.echo("    Found 0 events.")
-            except Exception as search_err:
+            except Exception as search_err:  # pylint: disable=broad-except
                 click.echo(
                     f"    WARNING: Error during search for {search_name}: {search_err}",
                     err=True,
@@ -445,7 +448,7 @@ def export_only_with_annotations(
         click.echo(f"Found {deduplicated_count} unique annotated events.")
 
         # Apply limit if specified
-        if limit > 0 and deduplicated_count > limit:
+        if 0 < limit < deduplicated_count:
             click.echo(f"Applying limit of {limit} events.")
             final_df = final_df.head(limit)
             exported_count = limit
@@ -470,6 +473,6 @@ def export_only_with_annotations(
         )
         click.echo(f"Export took {end_time - start_time:.2f} seconds.")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         click.echo(f"\nError during export: {e}", err=True)
         ctx.exit(1)
