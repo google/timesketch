@@ -12,6 +12,7 @@ jobs:
   # OpenSearch version 1.x.x
   PyPi-plaso-stable-opensearch-v1:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-22.04]
@@ -29,6 +30,7 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
   PyPi-plaso-staging-opensearch-v1:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-22.04]
@@ -48,6 +50,7 @@ jobs:
   # OpenSearch version 2.x.x
   PyPi-plaso-stable-opensearch-v2:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-22.04]
@@ -65,6 +68,7 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
   PyPi-plaso-staging-opensearch-v2:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-22.04]
@@ -80,4 +84,3 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
-

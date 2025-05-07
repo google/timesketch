@@ -11,6 +11,7 @@ on:
 jobs:
   # Backend tests (Python/Flask)
   Python:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,6 +36,7 @@ jobs:
 
   # Frontend tests (VueJS)
   VueJS:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     defaults:
       run:
