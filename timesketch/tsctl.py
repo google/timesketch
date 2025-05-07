@@ -21,6 +21,9 @@ import subprocess
 import time
 import yaml
 import redis
+import io
+import zipfile
+import datetime
 
 
 import click
@@ -32,6 +35,13 @@ from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
 from celery.result import AsyncResult
 
+
+from timesketch.api.v1 import export as api_export  # To export events
+from timesketch.lib import utils as lib_utils
+from timesketch.api.v1 import utils as api_utils
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+
+from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 
 from timesketch import version
 from timesketch.app import create_app
@@ -1350,3 +1360,573 @@ def list_config():
         print(f"{key}: {display_value}")
     print("-" * 35)
     print("Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).")
+
+
+# Helper function to gather sketch metadata
+def _get_sketch_metadata(sketch: Sketch) -> dict:
+    """Gathers comprehensive metadata for a given Timesketch sketch.
+    This function collects various details about the sketch, its associated
+    objects (timelines, views, stories, aggregations, etc.), permissions,
+    and export context into a structured dictionary.
+    Args:
+        sketch: The timesketch.models.sketch.Sketch object to extract metadata from.
+    Returns:
+        A dictionary containing metadata about the sketch, including:
+            - Basic sketch info (ID, name, description, status, timestamps, owner).
+            - Permissions and sharing details.
+            - List of associated timelines with their details (including datasources).
+            - List of saved views (name, query, filter, DSL).
+            - List of stories (title, content).
+            - List of aggregations and aggregation groups.
+            - Sketch attributes.
+            - Export timestamp and Timesketch version.
+            - Placeholder for comments (future implementation).
+    """
+    print("Gathering metadata...")
+    metadata = {
+        "sketch_id": sketch.id,
+        "name": sketch.name,
+        "description": sketch.description,
+        "status": sketch.get_status.status,
+        "created_at": sketch.created_at.isoformat() if sketch.created_at else None,
+        "updated_at": sketch.updated_at.isoformat() if sketch.updated_at else None,
+        "created_by": sketch.user.username if sketch.user else None,
+        "is_public": bool(sketch.is_public),
+        "labels": [label.label for label in sketch.labels],
+        "all_permissions": sketch.get_all_permissions(),
+        "timelines": [],
+        "views": [],
+        "stories": [],
+        "aggregations": [],
+        "aggregation_groups": [],
+        "attributes": api_utils.get_sketch_attributes(sketch),
+        "comments": [],
+        "export_timestamp": datetime.datetime.utcnow().isoformat(),
+        "timesketch_version": version.get_version(),
+    }
+
+    # Timelines
+    for timeline in sketch.timelines:
+        metadata["timelines"].append(
+            {
+                "id": timeline.id,
+                "name": timeline.name,
+                "description": timeline.description,
+                "status": timeline.get_status.status,
+                "color": timeline.color,
+                "searchindex_id": timeline.searchindex.id,
+                "searchindex_name": timeline.searchindex.index_name,
+                "created_at": (
+                    timeline.created_at.isoformat() if timeline.created_at else None
+                ),
+                "updated_at": (
+                    timeline.updated_at.isoformat() if timeline.updated_at else None
+                ),
+                "datasources": [
+                    {
+                        "id": ds.id,
+                        "provider": ds.provider,
+                        "context": ds.context,
+                        "file_on_disk": ds.file_on_disk,
+                        "file_size": ds.file_size,
+                        "original_filename": ds.original_filename,
+                        "data_label": ds.data_label,
+                        "error_message": ds.error_message,
+                        "created_at": (
+                            ds.created_at.isoformat() if ds.created_at else None
+                        ),
+                    }
+                    for ds in timeline.datasources
+                ],
+            }
+        )
+
+    # Views
+    for view in sketch.get_named_views:
+        metadata["views"].append(
+            {
+                "id": view.id,
+                "name": view.name,
+                "description": view.description,
+                "query_string": view.query_string,
+                "query_filter": view.query_filter,
+                "query_dsl": view.query_dsl,
+                "user": view.user.username if view.user else None,
+                "created_at": view.created_at.isoformat() if view.created_at else None,
+                "updated_at": view.updated_at.isoformat() if view.updated_at else None,
+            }
+        )
+
+    # Stories
+    for story in sketch.stories:
+        metadata["stories"].append(
+            {
+                "id": story.id,
+                "title": story.title,
+                "content": story.content,  # Keep content as JSON string
+                "user": story.user.username if story.user else None,
+                "created_at": (
+                    story.created_at.isoformat() if story.created_at else None
+                ),
+                "updated_at": (
+                    story.updated_at.isoformat() if story.updated_at else None
+                ),
+            }
+        )
+
+    # Aggregations
+    for agg in sketch.aggregations:
+        metadata["aggregations"].append(
+            {
+                "id": agg.id,
+                "name": agg.name,
+                "description": agg.description,
+                "agg_type": agg.agg_type,
+                "parameters": agg.parameters,
+                "chart_type": agg.chart_type,
+                "user": agg.user.username if agg.user else None,
+                "view_id": agg.view_id,
+                "created_at": agg.created_at.isoformat() if agg.created_at else None,
+                "updated_at": agg.updated_at.isoformat() if agg.updated_at else None,
+            }
+        )
+
+    # Aggregation Groups
+    for group in sketch.aggregationgroups:
+        metadata["aggregation_groups"].append(
+            {
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "parameters": group.parameters,
+                "orientation": group.orientation,
+                "user": group.user.username if group.user else None,
+                "view_id": group.view_id,
+                "aggregation_ids": [agg.id for agg in group.aggregations],
+                "created_at": (
+                    group.created_at.isoformat() if group.created_at else None
+                ),
+                "updated_at": (
+                    group.updated_at.isoformat() if group.updated_at else None
+                ),
+            }
+        )
+
+    # Comments (Placeholder - needs refinement based on data model)
+    metadata["comments_info"] = "Comment export needs refinement based on data model"
+
+    return metadata
+
+
+# Helper function to fetch and prepare event data
+def _fetch_and_prepare_event_data(
+    sketch: Sketch, datastore: OpenSearchDataStore, return_fields: list
+) -> tuple[str, bool]:
+    """Fetches all event data for a sketch and determines its format.
+    This function queries the datastore for all events associated with the
+    active timelines of the given sketch. It requests the data ideally in
+    JSONL format using the `api_export.query_to_filehandle` utility.
+    After fetching, it reads the entire content, ensures it's a string (decoding
+    from UTF-8 if necessary), and attempts to detect if the content is
+    JSONL by checking if it starts with '{' and if the first line can be
+    successfully parsed as JSON. This detection helps downstream functions
+    handle potential format discrepancies (e.g., if the API returned CSV
+    instead of the requested JSONL).
+    Args:
+        sketch: The timesketch.models.sketch.Sketch object whose events
+                are to be fetched.
+        datastore: An initialized timesketch.lib.datastores.opensearch.OpenSearchDataStore
+                   instance used for querying.
+        return_fields: A list of field names to include in the fetched events.
+    Returns:
+        A tuple containing:
+            - input_content (str): The fetched event data as a single string,
+                                   stripped of leading/trailing whitespace.
+                                   Will be an empty string if fetching fails or
+                                   no data is returned.
+            - is_likely_jsonl (bool): True if the fetched content starts with '{'
+                                      and the first line parses as JSON,
+                                      False otherwise.
+    Raises:
+        ValueError: If no active timelines or valid indices are found for the
+                    sketch, preventing event fetching.
+        # Note: Other exceptions from the datastore interaction or file reading
+        # are caught and logged, resulting in an empty string return value.
+    """
+    print("Exporting events...")
+    query_string = "*"
+    query_filter = {
+        "indices": "_all",
+        "size": 10000,  # Use default size, export handles scrolling
+    }
+    query_dsl = None
+
+    indices, _ = lib_utils.get_validated_indices("_all", sketch)
+    if not indices:
+        print("WARNING: No valid indices found via primary method, trying fallback.")
+        indices = [t.searchindex.index_name for t in sketch.active_timelines]
+        if not indices:
+            raise ValueError(
+                "ERROR: No active timelines (and thus no indices) found for this sketch."
+            )
+
+    print("  Requesting event data (preferring JSONL)...")
+    event_file_handle = api_export.query_to_filehandle(
+        query_string=query_string,
+        query_filter=query_filter,
+        query_dsl=query_dsl,
+        indices=indices,
+        sketch=sketch,
+        datastore=datastore,
+        return_fields=return_fields,
+    )
+    event_file_handle.seek(0)
+
+    try:
+        content_str = event_file_handle.read()
+        if not isinstance(content_str, str):
+            content_str = content_str.decode("utf-8", errors="replace")
+    except Exception as read_err:
+        print(f"  ERROR reading event data stream: {read_err}")
+        content_str = ""
+
+    input_content = content_str.strip()
+    is_likely_jsonl = False
+    if input_content and input_content.startswith("{"):
+        try:
+            first_line = input_content.split("\n", 1)[0]
+            json.loads(first_line)
+            is_likely_jsonl = True
+            print("  Detected JSONL format in response.")
+        except (json.JSONDecodeError, IndexError, Exception):
+            is_likely_jsonl = False
+            print("  Detected non-JSONL format in response (assuming CSV).")
+    elif input_content:
+        print("  Detected non-JSONL format in response (assuming CSV).")
+    else:
+        print("  WARNING: Received empty content from export function.")
+
+    return input_content, is_likely_jsonl
+
+
+# Helper function to convert event data
+def _convert_event_data(
+    input_content: str,
+    is_likely_jsonl: bool,
+    output_format: str,
+    return_fields: list,
+) -> bytes:
+    """Converts fetched event data between JSONL and CSV formats.
+    This function takes the raw event data string, determines the necessary
+    conversion based on the detected input format (`is_likely_jsonl`) and the
+    desired `output_format`, and performs the conversion.
+    - If the input is JSONL and the output is CSV, it parses each JSON line,
+      extracts relevant fields, handles list values (joining with '|'), and
+      writes to a CSV structure.
+    - If the input is CSV and the output is JSONL, it reads the CSV, attempts
+      basic type inference (int, float, bool) for values, and writes each row
+      as a JSON line. It also attempts to sniff the CSV dialect.
+    - If the input and output formats match, it returns the input content
+      encoded directly.
+    Warnings are printed for skipped lines or conversion issues. Errors during
+    critical conversion steps (like parsing the first line for CSV headers or
+    major CSV/JSONL conversion failures) will raise exceptions.
+    Args:
+        input_content: The fetched event data as a single string, stripped of
+                       leading/trailing whitespace.
+        is_likely_jsonl: Boolean flag indicating if the `input_content` is
+                         detected as JSONL format.
+        output_format: The target format for the event data ('csv' or 'jsonl').
+        return_fields: A list of field names expected in the output. Primarily
+                       used to determine headers when converting JSONL to CSV
+                       if the `return_fields` option was specified for the export.
+    Returns:
+        A bytes object containing the event data in the specified `output_format`,
+        encoded in UTF-8. Returns empty bytes if `input_content` is empty.
+    Raises:
+        ValueError: If no valid JSON lines are found when converting JSONL to CSV.
+        json.JSONDecodeError: If parsing the first JSON line for CSV headers fails.
+        Exception: Propagates exceptions from underlying CSV/JSON processing or
+                   other unexpected errors during conversion.
+    """
+    event_data_bytes = b""
+
+    if not input_content:
+        print(f"  WARNING: No event data returned to format as {output_format}.")
+        return event_data_bytes
+
+    if output_format == "csv":
+        if is_likely_jsonl:
+            print("  Input is JSONL, converting to CSV...")
+            jsonl_data = input_content.split("\n")
+            output_csv = io.StringIO()
+            try:
+                first_valid_line_index = -1
+                for i, line in enumerate(jsonl_data):
+                    if line.strip():
+                        first_valid_line_index = i
+                        break
+
+                if first_valid_line_index == -1:
+                    raise ValueError("No valid JSON lines found for CSV conversion.")
+
+                first_event = json.loads(jsonl_data[first_valid_line_index])
+
+                if return_fields:
+                    fieldnames = [f for f in return_fields if f in first_event]
+                    if not fieldnames:
+                        print(
+                            "  WARNING: return_fields did not match event keys, using all keys."
+                        )
+                        fieldnames = sorted(first_event.keys())
+                else:
+                    fieldnames = sorted(first_event.keys())
+
+                writer = csv.DictWriter(
+                    output_csv, fieldnames=fieldnames, extrasaction="ignore"
+                )
+                writer.writeheader()
+
+                for line in jsonl_data:
+                    line = line.strip()
+                    if line:
+                        try:
+                            event_dict = json.loads(line)
+                            csv_row = {}
+                            for key in fieldnames:
+                                value = event_dict.get(key)
+                                if isinstance(value, list):
+                                    csv_row[key] = "|".join(map(str, value))
+                                elif value is None:
+                                    csv_row[key] = ""
+                                else:
+                                    csv_row[key] = str(value)
+                            writer.writerow(csv_row)
+                        except json.JSONDecodeError:
+                            print(
+                                f"  WARNING: Skipping invalid JSON line: {line[:100]}..."
+                            )
+                        except Exception as row_err:
+                            print(
+                                f"  WARNING: Error processing row: {row_err} - Line: {line[:100]}..."
+                            )
+
+                event_data_bytes = output_csv.getvalue().encode("utf-8")
+
+            except json.JSONDecodeError as first_line_error:
+                print(
+                    f"  ERROR parsing first JSON line for CSV headers: {first_line_error}"
+                )
+                print(
+                    f"  Content of first line: {jsonl_data[first_valid_line_index][:200]}..."
+                )
+                print(traceback.format_exc())
+                raise  # Re-raise to stop execution
+            except Exception as conversion_error:
+                print(f"  ERROR converting JSONL to CSV: {conversion_error}")
+                print(traceback.format_exc())
+                raise  # Re-raise to stop execution
+        else:
+            print("  Input is not JSONL, using as CSV...")
+            event_data_bytes = input_content.encode("utf-8")
+
+    elif output_format == "jsonl":
+        if is_likely_jsonl:
+            print("  Input is JSONL, using as is...")
+            event_data_bytes = input_content.encode("utf-8")
+        else:
+            print("  Input is not JSONL, converting CSV to JSONL...")
+            try:
+                csv_input = io.StringIO(input_content)
+                try:
+                    dialect = csv.Sniffer().sniff(csv_input.read(1024))
+                    csv_input.seek(0)
+                    reader = csv.DictReader(csv_input, dialect=dialect)
+                    print(f"    Detected CSV dialect: delimiter='{dialect.delimiter}'")
+                except csv.Error:
+                    print("    Could not detect CSV dialect, assuming comma delimiter.")
+                    csv_input.seek(0)
+                    reader = csv.DictReader(csv_input)
+
+                output_jsonl = io.StringIO()
+                count = 0
+                for row in reader:
+                    processed_row = {}
+                    for key, value in row.items():
+                        try:
+                            processed_row[key] = int(value)
+                            continue
+                        except (ValueError, TypeError):
+                            pass
+                        try:
+                            processed_row[key] = float(value)
+                            continue
+                        except (ValueError, TypeError):
+                            pass
+                        if isinstance(value, str):
+                            if value.lower() == "true":
+                                processed_row[key] = True
+                                continue
+                            if value.lower() == "false":
+                                processed_row[key] = False
+                                continue
+                        processed_row[key] = value
+
+                    output_jsonl.write(json.dumps(processed_row) + "\n")
+                    count += 1
+
+                event_data_bytes = output_jsonl.getvalue().encode("utf-8")
+                print(f"    Successfully converted {count} CSV rows to JSONL.")
+
+            except Exception as conversion_error:
+                print(f"  ERROR converting CSV to JSONL: {conversion_error}")
+                print(traceback.format_exc())
+                raise  # Re-raise to stop execution
+
+    return event_data_bytes
+
+
+# Helper function to create the zip archive
+def _create_export_archive(
+    filename: str, metadata: dict, event_data_bytes: bytes, event_filename: str
+):
+    """Creates the zip archive with metadata and event data."""
+    print("Creating zip archive...")
+    try:
+        with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+            metadata_bytes = json.dumps(metadata, indent=2, ensure_ascii=False).encode(
+                "utf-8"
+            )
+            zipf.writestr("metadata.json", metadata_bytes)
+
+            if event_data_bytes:
+                zipf.writestr(event_filename, event_data_bytes)
+            else:
+                print("  WARNING: No event data was generated to include in the zip.")
+
+        print(f"Sketch exported successfully to {filename}")
+
+    except Exception as zip_error:
+        print(f"ERROR creating zip file: {zip_error}")
+        print(traceback.format_exc())
+
+
+# --- Main CLI command using the helper functions ---
+@cli.command(name="export-sketch")
+@click.argument("sketch_id", type=int)
+@click.option(
+    "--output-format",
+    type=click.Choice(["csv", "jsonl"], case_sensitive=False),
+    default="csv",
+    help="Format for event data export (csv or jsonl).",
+)
+@click.option(
+    "--filename",
+    required=False,
+    help=(
+        "Filename for the output zip archive. "
+        "(Default: sketch_{sketch_id}_export.zip)"
+    ),
+)
+def export_sketch(sketch_id: int, output_format: str, filename: str):
+    """Exports a Timesketch sketch, including metadata and events, to a zip archive.
+    This command gathers comprehensive metadata about the specified sketch
+    (details, timelines, views, stories, aggregations, permissions, etc.)
+    and exports all associated events. The events are formatted according
+    to the specified output format (CSV or JSONL). Both the metadata (as
+    'metadata.json') and the events file are then packaged into a
+    compressed zip archive.
+    Progress messages are printed to the console during the export process.
+    **WARNING:** Currently, there is no straightforward method to automatically
+    re-import the data from this exported archive back into Timesketch. This
+    export function is primarily intended for data archival, external analysis,
+    or migration purposes where manual reprocessing might be involved.
+    Args:
+        sketch_id: The integer ID of the sketch to export.
+        output_format: The desired format for the event data ('csv' or 'jsonl').
+                       Defaults to 'csv'.
+        filename: Optional path and filename for the output zip archive.
+                  If not provided, defaults to 'sketch_<sketch_id>_export.zip'
+                  in the current directory. If the provided name doesn't end
+                  with '.zip', the extension will be appended.
+    Raises:
+        Prints error messages to stderr and returns if:
+            - The specified sketch_id does not exist.
+            - Required OpenSearch configuration is missing.
+            - An error occurs during metadata gathering, event fetching,
+              data conversion, or zip file creation.
+    """
+    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    if not sketch:
+        print(f"ERROR: Sketch with ID {sketch_id} not found.")
+        return
+
+    if not filename:
+        filename = f"sketch_{sketch_id}_export.zip"
+
+    if not filename.lower().endswith(".zip"):
+        filename += ".zip"
+
+    print(f"Exporting sketch {sketch_id} ('{sketch.name}') to {filename}...")
+
+    # --- Add prominent warning to console output ---
+    click.echo(
+        click.style(
+            "\nWARNING: There is currently no straightforward method to re-import "
+            "this exported archive back into Timesketch.\n",
+            fg="yellow",
+            bold=True,
+        ),
+        err=True,  # Print to stderr to make it more noticeable
+    )
+    # --- End warning ---
+
+    try:
+        # 1. Gather Metadata
+        metadata = _get_sketch_metadata(sketch)
+
+        # 2. Fetch and Prepare Event Data
+        # Get datastore instance
+        from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+        from flask import current_app
+
+        datastore = OpenSearchDataStore(
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
+        return_fields = DEFAULT_SOURCE_FIELDS
+        input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
+            sketch, datastore, return_fields
+        )
+        # --- Calculate event count ---
+        event_count = 0
+        if input_content:
+            lines = input_content.splitlines()
+            if is_likely_jsonl:
+                # Count non-empty lines for JSONL
+                event_count = sum(1 for line in lines if line.strip())
+            else:
+                # Count lines minus header for CSV
+                event_count = max(0, len(lines) - 1)  # Ensure count is not negative
+        # --- End event count calculation ---
+
+        # --- Print event count before archiving ---
+        print(f"  {event_count} events processed for export.")
+        # --- End print event count ---
+
+        # 3. Convert Event Data
+        event_data_bytes = _convert_event_data(
+            input_content, is_likely_jsonl, output_format, return_fields
+        )
+        event_filename = f"events.{output_format}"
+
+        # 4. Create Zip Archive
+        _create_export_archive(filename, metadata, event_data_bytes, event_filename)
+
+    except ValueError as ve:  # Catch specific errors raised by helpers
+        print(f"ERROR: {ve}")
+        return
+    except Exception as e:  # Catch unexpected errors
+        print(f"An unexpected error occurred during export: {e}")
+        print(traceback.format_exc())
+        return
