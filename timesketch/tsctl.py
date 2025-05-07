@@ -1536,8 +1536,9 @@ def _fetch_and_prepare_event_data(
     Args:
         sketch: The timesketch.models.sketch.Sketch object whose events
                 are to be fetched.
-        datastore: An initialized timesketch.lib.datastores.opensearch.OpenSearchDataStore
-                   instance used for querying.
+        datastore: An initialized
+                    timesketch.lib.datastores.opensearch.OpenSearchDataStore
+                    instance used for querying.
         return_fields: A list of field names to include in the fetched events.
     Returns:
         A tuple containing:
@@ -1568,7 +1569,8 @@ def _fetch_and_prepare_event_data(
         indices = [t.searchindex.index_name for t in sketch.active_timelines]
         if not indices:
             raise ValueError(
-                "ERROR: No active timelines (and thus no indices) found for this sketch."
+                "ERROR: No active timelines (and thus no indices) found"
+                "for this sketch."
             )
 
     print("  Requesting event data (preferring JSONL)...")
@@ -1677,7 +1679,8 @@ def _convert_event_data(
                     fieldnames = [f for f in return_fields if f in first_event]
                     if not fieldnames:
                         print(
-                            "  WARNING: return_fields did not match event keys, using all keys."
+                            "  WARNING: return_fields did not match event keys,"
+                            " using all keys."
                         )
                         fieldnames = sorted(first_event.keys())
                 else:
@@ -1707,23 +1710,25 @@ def _convert_event_data(
                             print(
                                 f"  WARNING: Skipping invalid JSON line: {line[:100]}..."
                             )
-                        except Exception as row_err:
+                        except Exception as row_err:  # pylint: disable=broad-except
                             print(
-                                f"  WARNING: Error processing row: {row_err} - Line: {line[:100]}..."
+                                f"  WARNING: Error processing row: {row_err}"
+                                f" - Line: {line[:100]}..."
                             )
 
                 event_data_bytes = output_csv.getvalue().encode("utf-8")
 
             except json.JSONDecodeError as first_line_error:
                 print(
-                    f"  ERROR parsing first JSON line for CSV headers: {first_line_error}"
+                    f"  ERROR parsing first JSON line for CSV headers: {first_line_error}"  # pylint: disable=line-too-long
                 )
                 print(
-                    f"  Content of first line: {jsonl_data[first_valid_line_index][:200]}..."
+                    f"  Content of first line:"
+                    f"{jsonl_data[first_valid_line_index][:200]}..."
                 )
                 print(traceback.format_exc())
                 raise  # Re-raise to stop execution
-            except Exception as conversion_error:
+            except Exception as conversion_error:  # pylint: disable=broad-except
                 print(f"  ERROR converting JSONL to CSV: {conversion_error}")
                 print(traceback.format_exc())
                 raise  # Re-raise to stop execution
@@ -1743,9 +1748,13 @@ def _convert_event_data(
                     dialect = csv.Sniffer().sniff(csv_input.read(1024))
                     csv_input.seek(0)
                     reader = csv.DictReader(csv_input, dialect=dialect)
-                    print(f"    Detected CSV dialect: delimiter='{dialect.delimiter}'")
+                    print(
+                        f"    Detected CSV dialect: delimiter='{dialect.delimiter}'"
+                    )  # pylint: disable=line-too-long
                 except csv.Error:
-                    print("    Could not detect CSV dialect, assuming comma delimiter.")
+                    print(
+                        "    Could not detect CSV dialect, assuming comma delimiter."
+                    )  # pylint: disable=line-too-long
                     csv_input.seek(0)
                     reader = csv.DictReader(csv_input)
 
@@ -1779,7 +1788,7 @@ def _convert_event_data(
                 event_data_bytes = output_jsonl.getvalue().encode("utf-8")
                 print(f"    Successfully converted {count} CSV rows to JSONL.")
 
-            except Exception as conversion_error:
+            except Exception as conversion_error:  # pylint: disable=broad-except
                 print(f"  ERROR converting CSV to JSONL: {conversion_error}")
                 print(traceback.format_exc())
                 raise  # Re-raise to stop execution
@@ -1807,7 +1816,7 @@ def _create_export_archive(
 
         print(f"Sketch exported successfully to {filename}")
 
-    except Exception as zip_error:
+    except Exception as zip_error:  # pylint: disable=broad-except
         print(f"ERROR creating zip file: {zip_error}")
         print(traceback.format_exc())
 
@@ -1927,7 +1936,7 @@ def export_sketch(sketch_id: int, output_format: str, filename: str):
     except ValueError as ve:  # Catch specific errors raised by helpers
         print(f"ERROR: {ve}")
         return
-    except Exception as e:  # Catch unexpected errors
+    except Exception as e:  # pylint: disable=broad-except
         print(f"An unexpected error occurred during export: {e}")
         print(traceback.format_exc())
         return
