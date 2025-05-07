@@ -19,11 +19,13 @@ import json
 import re
 import subprocess
 import time
-import yaml
-import redis
 import io
 import zipfile
+import csv
 import datetime
+import yaml
+import redis
+import traceback
 
 
 import click
@@ -1589,7 +1591,7 @@ def _fetch_and_prepare_event_data(
         content_str = event_file_handle.read()
         if not isinstance(content_str, str):
             content_str = content_str.decode("utf-8", errors="replace")
-    except Exception as read_err:
+    except Exception as read_err:  # pylint: disable=broad-except
         print(f"  ERROR reading event data stream: {read_err}")
         content_str = ""
 
@@ -1601,7 +1603,7 @@ def _fetch_and_prepare_event_data(
             json.loads(first_line)
             is_likely_jsonl = True
             print("  Detected JSONL format in response.")
-        except (json.JSONDecodeError, IndexError, Exception):
+        except Exception:  # pylint: disable=broad-except
             is_likely_jsonl = False
             print("  Detected non-JSONL format in response (assuming CSV).")
     elif input_content:
@@ -1708,7 +1710,7 @@ def _convert_event_data(
                             writer.writerow(csv_row)
                         except json.JSONDecodeError:
                             print(
-                                f"  WARNING: Skipping invalid JSON line: {line[:100]}..."
+                                f"  WARNING: Skipping invalid JSON line: {line[:100]}..."  # pylint: disable=line-too-long
                             )
                         except Exception as row_err:  # pylint: disable=broad-except
                             print(
@@ -1897,9 +1899,6 @@ def export_sketch(sketch_id: int, output_format: str, filename: str):
 
         # 2. Fetch and Prepare Event Data
         # Get datastore instance
-        from timesketch.lib.datastores.opensearch import OpenSearchDataStore
-        from flask import current_app
-
         datastore = OpenSearchDataStore(
             host=current_app.config["OPENSEARCH_HOST"],
             port=current_app.config["OPENSEARCH_PORT"],
