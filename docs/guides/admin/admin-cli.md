@@ -856,3 +856,42 @@ Example:
 ```
 tsctl celery-revoke-task 8115648e-944c-4452-962e-644041603419
 ```
+
+#### list-config
+
+**Description:**
+
+Lists all configuration variables currently loaded by the Timesketch Flask application (`current_app.config`).
+
+This command iterates through the application's configuration settings. 
+
+It automatically identifies keys commonly associated with sensitive information (like `SECRET_KEY`, `PASSWORD`, `API_KEY`, `TOKEN`, etc.) based on a predefined list of keywords.
+To prevent accidental exposure, the values corresponding to these sensitive keys are redacted and replaced with `******** (redacted)` in the output. All other configuration key-value pairs are displayed as they are loaded.
+
+The output is sorted alphabetically by key for consistent and predictable results. A note is included at the end to remind the user that some values may have been redacted for security reasons.
+
+**Usage:**
+
+```bash
+tsctl list-config
+Timesketch Configuration Variables:
+-----------------------------------
+ANALYZERS_DEFAULT_KWARGS: {}
+APPLICATION_ROOT: /
+AUTO_SKETCH_ANALYZERS: []
+AUTO_SKETCH_ANALYZERS_KWARGS: {}
+CELERY_BROKER_URL: redis://redis:6379
+CELERY_RESULT_BACKEND: redis://redis:6379
+CONTEXT_LINKS_CONFIG_PATH: /etc/timesketch/context_links.yaml
+DATA_FINDER_PATH: /etc/timesketch/data_finder.yaml
+DEBUG: False
+OPENSEARCH_HOST: 127.0.0.1
+OPENSEARCH_PORT: 9200
+SECRET_KEY: ******** (redacted)
+SQLALCHEMY_DATABASE_URI: ******** (redacted)
+UPLOAD_ENABLED: True
+...
+-----------------------------------
+Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
+```
+
