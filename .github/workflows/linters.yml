@@ -25,6 +25,7 @@ jobs:
           pip install -e .
           pip install api_client/python
           pip install importer_client/python
+          pip install cli_client/python
       - name: Run pylint
         run: |
           git config pull.rebase false && git fetch -p origin master
