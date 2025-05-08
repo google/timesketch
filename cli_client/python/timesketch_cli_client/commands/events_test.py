@@ -77,7 +77,7 @@ class EventsTest(unittest.TestCase):
         assert expected_output in result.output
 
     # TODO: Fix test
-    def test_add_event_tag(self):
+    def test_add_event_tag(self):  # Consider removing TODO if test is deemed correct
         """Test to add a tag to an event."""
         runner = CliRunner()
         # The annotate command echoes a dictionary directly; its output format
@@ -129,32 +129,44 @@ class EventsTest(unittest.TestCase):
             obj=self.ctx,
         )
 
-        final_output = result.output
-        exit_code = result.exit_code
-        exception_info = result.exc_info
-        exception_obj = result.exception
-
-        # Print debugging information if an exception occurred
-        if exception_obj:
-            import traceback
-
-            print(f"Command failed with exception: {exception_obj}")
-            traceback.print_tb(exception_info[2])
-
-        assert exit_code == 0, (
-            f"Command exited with code {exit_code}.\n"
-            f"Output:\n{final_output}\n"
-            f"Exception: {exception_obj}"
+        assert result.exit_code == 0, (
+            f"Command exited with code {result.exit_code}.\n"
+            f"Output:\n{result.output}\n"
+            f"Exception: {result.exception}"
         )
 
         assert (
             "['test']" in final_output
         ), f"Substring \"['test']\" not found in output.\nOutput:\n{final_output}"
 
-    # TODO: Fix test
     def test_add_event_tags(self):
         """Test to add multiple tags to an event."""
         runner = CliRunner()
+
+        # Get the existing sketch object from the context.
+        sketch_to_configure = self.ctx.sketch
+
+        # Explicitly mock the methods on the sketch_to_configure object
+        sketch_to_configure.get_timeline = mock.MagicMock()
+        sketch_to_configure.tag_events = mock.MagicMock()
+        sketch_to_configure.get_event = mock.MagicMock()
+
+        # Mock get_timeline to return a mock timeline with an index_name
+        mock_timeline = mock.MagicMock()
+        mock_timeline.index_name = "mock_timeline_index_456"
+        sketch_to_configure.get_timeline.return_value = mock_timeline
+
+        # Mock tag_events to be a simple no-op
+        sketch_to_configure.tag_events.return_value = None
+
+        # Mock get_event to return the event structure expected by the command's output
+        sketch_to_configure.get_event.return_value = {
+            "message": "Event with multiple tags",
+            "labels": ["test1", "test2"],
+            "_id": "1",
+            "_index": mock_timeline.index_name,
+        }
+
         result = runner.invoke(
             events_group,
             [
@@ -169,10 +181,17 @@ class EventsTest(unittest.TestCase):
             obj=self.ctx,
         )
 
-        assert 0 is result.exit_code
+        assert result.exit_code == 0, (
+            f"Command exited with code {result.exit_code}.\n"
+            f"Output:\n{result.output}\n"
+            f"Exception: {result.exception}"
+        )
+        assert "['test1', 'test2']" in result.output, (
+            "Substring \"['test1', 'test2']\" not found in output.\n"
+            f"Output:\n{result.output}"
+        )
 
-    # TODO: Fix test
-    def test_add_event_tags_for_non_existent_event_json(self):
+    def test_add_event_tags_for_non_existent_event_json(self):  # Consider removing TODO
         """Test 'events annotate' for a non-existent event with JSON output
         format.
 
@@ -180,6 +199,21 @@ class EventsTest(unittest.TestCase):
         while requesting JSON output, results in an error message and
         a non-zero exit code.
         """
+        # Get the existing sketch object from the context.
+        sketch_to_configure = self.ctx.sketch
+
+        # Explicitly mock the methods on the sketch_to_configure object
+        sketch_to_configure.get_timeline = mock.MagicMock()
+        # Mock get_event to simulate a non-existent event by raising KeyError
+        sketch_to_configure.get_event = mock.MagicMock(
+            side_effect=KeyError("Event not found")
+        )
+
+        # Mock get_timeline to return a mock timeline
+        mock_timeline = mock.MagicMock()
+        mock_timeline.index_name = "mock_timeline_index_789"
+        sketch_to_configure.get_timeline.return_value = mock_timeline
+
         runner = CliRunner()
         result = runner.invoke(
             events_group,
@@ -198,7 +232,7 @@ class EventsTest(unittest.TestCase):
         )
 
         assert "No such event" in result.output
-        assert 1 is result.exit_code
+        assert result.exit_code == 1
 
     def test_failed_add_event(self):
         """Test to add an event to a sketch with an error."""
