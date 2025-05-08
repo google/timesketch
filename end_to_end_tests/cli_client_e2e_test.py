@@ -3,12 +3,10 @@
 
 from click.testing import CliRunner
 
+from timesketch_cli_client.commands.sketch import sketch_group
+
 from . import interface
 from . import manager
-
-# Import the specific command group from the CLI client you want to test
-# Adjust the import path if your CLI client structure is different.
-from timesketch_cli_client.commands.sketch import sketch_group
 
 
 class E2ECliContextObject:
