@@ -27,6 +27,7 @@ jobs:
           pip install pipenv
           pipenv install -d
           pipenv run pip install -r test_requirements.txt
+          pip install pytest pytest-xdist
       - name: Check pytest installation
         run: pipenv run pip show pytest
       - name: Run unit tests
