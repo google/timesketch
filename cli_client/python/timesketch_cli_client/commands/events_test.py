@@ -136,8 +136,8 @@ class EventsTest(unittest.TestCase):
         )
 
         assert (
-            "['test']" in final_output
-        ), f"Substring \"['test']\" not found in output.\nOutput:\n{final_output}"
+            "['test']" in result.output
+        ), f"Substring \"['test']\" not found in output.\nOutput:\n{result.output}"
 
     def test_add_event_tags(self):
         """Test to add multiple tags to an event."""
