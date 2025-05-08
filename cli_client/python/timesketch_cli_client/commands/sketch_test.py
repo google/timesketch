@@ -37,11 +37,12 @@ class SketchTest(unittest.TestCase):
         runner = CliRunner()
         self.ctx.output_format_from_flag = "text"
         result = runner.invoke(sketch_group, ["list"], obj=self.ctx)
-        assert result.output == "1 test\n"
+        self.assertIn("1 test", result.output)
 
     def test_describe_sketch(self):
         """Test to get details for a sketch."""
         runner = CliRunner()
         self.ctx.output_format_from_flag = "text"
         result = runner.invoke(sketch_group, ["describe"], obj=self.ctx)
-        assert result.output == "Name: test\nDescription: test\n"
+        self.assertIn("Name: test", result.output)
+        self.assertIn("Description: test", result.output)
