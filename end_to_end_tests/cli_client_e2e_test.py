@@ -25,9 +25,9 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
         "cli_client_e2e_test"  # Sketch created by BaseEndToEndTest will have this name
     )
 
-    def setUp(self):
-        """Setup the test case."""
-        super().setUp()  # This initializes self.api and self.sketch
+    def __init__(self):
+        """Initialize the test case."""
+        super().__init__()  # This initializes self.api and self.sketch
         self.runner = CliRunner()
 
     def test_cli_sketch_list(self):
