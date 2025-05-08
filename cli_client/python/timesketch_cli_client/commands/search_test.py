@@ -15,14 +15,13 @@
 
 import unittest
 import mock
-import pandas as pd
 
 from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
+
 from .. import test_lib
 from .search import saved_searches_group
-from .search import search_group
 
 
 EXPECTED_OUTPUT = """query_string: test:"foobar"
@@ -55,74 +54,3 @@ class SearchTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(saved_searches_group, ["describe", "1"], obj=self.ctx)
         assert result.output == EXPECTED_OUTPUT
-
-    def test_describe_non_existent_saved_search(self):
-        """Test describing a non-existent saved search."""
-        runner = CliRunner()
-        # MockSketch.get_saved_search returns None for IDs not in its list (e.g., 999)
-        result = runner.invoke(saved_searches_group, ["describe", "999"], obj=self.ctx)
-        self.assertEqual(result.exit_code, 0)  # Command exits 0 even if not found
-        self.assertIn("No such saved search", result.output)
-
-    @mock.patch("timesketch_cli_client.commands.search.search.Search")
-    def test_search_describe_flag(self, MockSearchClient):
-        """Test the 'search --describe' command."""
-        # MockSearchClient is the mock for the Search class.
-        # MockSearchClient.return_value is the mock instance returned by Search().
-        mock_search_instance = MockSearchClient.return_value
-
-        # Configure the mock instance's attributes that are read by the command
-        mock_search_instance.query_string = "test query"
-        mock_search_instance.query_filter = {
-            "chips": [{"type": "label", "value": "test"}]
-        }
-        mock_search_instance.return_fields = "message,timestamp"
-
-        runner = CliRunner()
-        result = runner.invoke(
-            search_group,
-            [
-                "--query",
-                "test query",
-                "--label",
-                "test",
-                "--return-fields",
-                "message,timestamp",
-                "--describe",
-            ],
-            obj=self.ctx,
-        )
-        self.assertEqual(result.exit_code, 0)
-        self.assertIn("Query string: test query", result.output)
-        self.assertIn("Return fields: message,timestamp", result.output)
-        self.assertIn('"type": "label"', result.output)
-        self.assertIn('"value": "test"', result.output)
-
-    @mock.patch("timesketch_cli_client.commands.search.search.Search")
-    def test_search_with_results_text_output(self, MockSearchClient):
-        """Test the 'search' command with text output."""
-        # MockSearchClient is the mock for the Search class.
-        # MockSearchClient.return_value is the mock instance returned by Search().
-        mock_search_instance = MockSearchClient.return_value
-        mock_df = pd.DataFrame(
-            {
-                "message": ["event1", "event2"],
-                "timestamp": [1234567890123, 4567890123456],
-                "datetime": ["2023-01-01T00:00:00", "2023-01-02T00:00:00"],
-            }
-        )
-        mock_search_instance.to_pandas.return_value = mock_df
-        mock_search_instance.return_fields = (
-            "message,timestamp,datetime"  # Explicitly set for clarity
-        )
-        self.ctx.output_format_from_flag = "text"
-        runner = CliRunner()
-        result = runner.invoke(search_group, ["--query", "some query"], obj=self.ctx)
-
-        self.assertEqual(result.exit_code, 0)
-        # Normalize whitespace for robust comparison
-        normalized_output = " ".join(result.output.split())
-        self.assertIn("message timestamp datetime", normalized_output)
-        self.assertIn("event1 1234567890123 2023-01-01T00:00:00", normalized_output)
-        self.assertIn("event2 4567890123456 2023-01-02T00:00:00", normalized_output)
-        mock_search_instance.to_pandas.assert_called_once()

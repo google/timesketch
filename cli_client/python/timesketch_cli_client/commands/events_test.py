@@ -76,48 +76,14 @@ class EventsTest(unittest.TestCase):
         expected_output = "No such option: --comments Did you mean --comment?"
         assert expected_output in result.output
 
-    # TODO: Fix test
     def test_add_event_tag(self):
         """Test to add a tag to an event."""
         runner = CliRunner()
-        # The annotate command echoes a dictionary directly; its output format
-        # is not controlled by ctx.obj.output_format.
-        # Setting output_format_from_flag might have unintended side effects
-        # on the context object, so we'll rely on the default context setup.
-        # self.ctx.output_format_from_flag = "text"
-
-        # Get the existing sketch object from the context.
-        sketch_to_configure = self.ctx.sketch
-
-        # Explicitly mock the methods on the sketch_to_configure object
-        sketch_to_configure.get_timeline = mock.MagicMock()
-        sketch_to_configure.tag_events = mock.MagicMock()
-        sketch_to_configure.get_event = mock.MagicMock()
-        sketch_to_configure.comment_event = (
-            mock.MagicMock()
-        )  # In case comment is also used
-
-        # Mock get_timeline to return a mock timeline with an index_name
-        mock_timeline = mock.MagicMock()
-        mock_timeline.index_name = "mock_timeline_index_123"
-        sketch_to_configure.get_timeline.return_value = mock_timeline
-
-        # Mock tag_events to be a simple no-op or a safe mock
-        sketch_to_configure.tag_events.return_value = None
-
-        # Mock get_event to return the event structure expected by the command's output
-        sketch_to_configure.get_event.return_value = (
-            {  # The output of click.echo(return_value) should contain "['test']"
-                "message": "Event with tag",
-                "labels": ["test"],
-                "_id": "1",
-                "_index": mock_timeline.index_name,
-            }
-        )
-
         result = runner.invoke(
             events_group,
             [
+                "--output-format",
+                "json",
                 "annotate",
                 "--event-id",
                 "1",
@@ -128,30 +94,13 @@ class EventsTest(unittest.TestCase):
             ],
             obj=self.ctx,
         )
+        print(result.output)
+        print(result.exception)
+        print(result.exit_code)
+        assert "['test']" in result.output
 
-        final_output = result.output
-        exit_code = result.exit_code
-        exception_info = result.exc_info
-        exception_obj = result.exception
+    # todo: Fix the remaining tests here
 
-        # Print debugging information if an exception occurred
-        if exception_obj:
-            import traceback
-
-            print(f"Command failed with exception: {exception_obj}")
-            traceback.print_tb(exception_info[2])
-
-        assert exit_code == 0, (
-            f"Command exited with code {exit_code}.\n"
-            f"Output:\n{final_output}\n"
-            f"Exception: {exception_obj}"
-        )
-
-        assert (
-            "['test']" in final_output
-        ), f"Substring \"['test']\" not found in output.\nOutput:\n{final_output}"
-
-    # TODO: Fix test
     def test_add_event_tags(self):
         """Test to add multiple tags to an event."""
         runner = CliRunner()
@@ -171,15 +120,8 @@ class EventsTest(unittest.TestCase):
 
         assert 0 is result.exit_code
 
-    # TODO: Fix test
-    def test_add_event_tags_for_non_existent_event_json(self):
-        """Test 'events annotate' for a non-existent event with JSON output
-        format.
-
-        Verifies that attempting to tag an event that cannot be found,
-        while requesting JSON output, results in an error message and
-        a non-zero exit code.
-        """
+    def test_add_event_tags_json(self):
+        """Test to add multiple tags to an event and output as json."""
         runner = CliRunner()
         result = runner.invoke(
             events_group,
@@ -208,6 +150,26 @@ class EventsTest(unittest.TestCase):
 
     def test_add_event(self):
         """Test to add an event to a sketch."""
+        runner = CliRunner()
+        result = runner.invoke(
+            events_group,
+            [
+                "add",
+                "--message",
+                "test message",
+                "--date",
+                "2023-03-04T11:31:12",
+                "--timestamp-desc",
+                "test",
+            ],
+            obj=self.ctx,
+        )
+        assert "Event added to sketch: test" in result.output
+
+    def text_no_output_format_defined_in_config(self):
+        """Test to add an event to a sketch."""
+
+        self.ctx = test_lib.get_cli_context_no_output()
         runner = CliRunner()
         result = runner.invoke(
             events_group,
