@@ -33,14 +33,22 @@ class SketchTest(unittest.TestCase):
         self.ctx = test_lib.get_cli_context()
 
     def test_list_sketches(self):
-        """Test to list sketches."""
+        """Test the 'sketch list' command.
+
+        Verifies that the command executes successfully and that the output
+        contains the expected sketch information in text format.
+        """
         runner = CliRunner()
         self.ctx.output_format_from_flag = "text"
         result = runner.invoke(sketch_group, ["list"], obj=self.ctx)
         self.assertIn("1 test", result.output)
 
     def test_describe_sketch(self):
-        """Test to get details for a sketch."""
+        """Test the 'sketch describe' command.
+
+        Verifies that the command executes successfully and that the output
+        contains the expected sketch name and description in text format.
+        """
         runner = CliRunner()
         self.ctx.output_format_from_flag = "text"
         result = runner.invoke(sketch_group, ["describe"], obj=self.ctx)
