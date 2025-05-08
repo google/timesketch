@@ -36,11 +36,17 @@ class IntelligenceTest(unittest.TestCase):
         self.ctx = test_lib.get_cli_context()
 
     def test_list_intelligence(self):
-        """Test to list Sigma rules."""
+        """Test the 'intelligence list' command when no intelligence data exists.
+
+        Verifies that the command exits with a non-zero status code and
+        prints an appropriate message when the sketch has no intelligence
+        attributes.
+        """
         runner = CliRunner()
         result = runner.invoke(
             intelligence_group,
             ["list"],
             obj=self.ctx,
         )
-        assert 1 is result.exit_code
+        assert result.exit_code == 1
+        assert "No intelligence found." in result.output

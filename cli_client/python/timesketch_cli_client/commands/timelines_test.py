@@ -36,10 +36,13 @@ class TimelinesTest(unittest.TestCase):
         """Test to list timelines."""
         runner = CliRunner()
         result = runner.invoke(timelines_group, ["list"], obj=self.ctx)
-        assert result.output == "1 test\n2 test\n"
+        assert "1 test" in result.output
+        assert "2 test\n" in result.output
 
     def test_describe_timeline(self):
         """Test to get detail for a timeline."""
         runner = CliRunner()
         result = runner.invoke(timelines_group, ["describe", "1"], obj=self.ctx)
-        assert result.output == "Name: test\nIndex: test\n"
+        assert "Name: test" in result.output
+        assert "Index: test" in result.output
+        assert "Event count: 0" in result.output

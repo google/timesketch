@@ -28,6 +28,7 @@ jobs:
           pip install pipenv
           pipenv install -d
           pipenv run pip install -r test_requirements.txt
+          pipenv run pip install ./cli_client/python
       - name: Check pytest installation
         run: pipenv run pip show pytest
       - name: Run unit tests
