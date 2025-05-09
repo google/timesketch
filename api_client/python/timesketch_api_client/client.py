@@ -14,6 +14,7 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
+import time
 import os
 import logging
 import sys
@@ -106,6 +107,7 @@ class TimesketchApi:
         self._flow = None
 
         if not create_session:
+            # Session needs to be set manually later using set_session()
             self._session = None
             return
 
@@ -365,45 +367,68 @@ class TimesketchApi:
         return session
 
     def fetch_resource_data(self, resource_uri, params=None):
-        """Make a HTTP GET request.
+        """Makes an HTTP GET request to the specified resource URI with retries.
+
+        This method attempts to fetch data from the Timesketch API. It implements
+        a manual retry mechanism with a fixed 1-second backoff between attempts
+        if the initial request fails or returns an empty (but valid JSON) response.
+        Retries occur for network connection errors, API errors (non-20x status codes),
+        JSON decoding errors, or if the API returns a successful (20x) response
+        with a "falsy" JSON payload (e.g., null, empty list/dictionary).
+
 
         Args:
             resource_uri (str): The URI to the resource to be fetched.
-            params (dict): Dict of URL parameters to send in the GET request.
+            params (dict, optional): A dictionary of URL parameters to send
+                in the GET request. Defaults to None.
 
         Returns:
-            Dictionary with the response data.
+            dict: A dictionary containing the JSON response data from the API.
 
         Raises:
-            ValueError: If response could not be JSON-decoded after
-                DEFAULT_RETRY_COUNT attempts.
-            RuntimeError: If the API server returns an error or empty.
+            requests.exceptions.ConnectionError: If a connection error persists
+                after all retry attempts.
+            ValueError: If the API response cannot be JSON-decoded after all
+                retry attempts.
+            RuntimeError: If the API server returns an error (non-20x status code)
+                or a "falsy" JSON response (e.g., null, empty list/dict)
+                after all retry attempts.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
 
-        retry_count = 0
+        # Start attempt count from 0, first loop with set it to 1
+        attempt = 0
         result = None
         while True:
-            retry_count += 1
-            response = self.session.get(resource_url, params=params)
+            attempt += 1
+            # If this is not the first attempt, wait before trying again
+            if attempt > 1:
+                # Simple fixed backoff before retrying
+                time.sleep(1)  # Wait for 1 second before the next attempt
+
             try:
+                response = self.session.get(resource_url, params=params)
                 result = error.get_response_json(response, logger)
                 if result:
                     return result
             except RuntimeError as e:
-                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                if attempt >= self.DEFAULT_RETRY_COUNT:
+                    # Re-raise the original error after exhausting retries
                     raise RuntimeError(
                         "Error for request '{0:s}' - '{1!s}'".format(resource_url, e)
                     ) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the response for request '{2:s}'"
-                    "failed. Trying again...".format(
-                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
-                    )
+                    "[%d/%d] API error (RuntimeError) for request '%s' "
+                    "failed. Error: %s. Trying again...",
+                    attempt,
+                    self.DEFAULT_RETRY_COUNT,
+                    resource_url,
+                    e,
                 )
             except ValueError as e:
-                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                if attempt >= self.DEFAULT_RETRY_COUNT:
+                    # Re-raise the original error after exhausting retries
                     raise ValueError(
                         "Error parsing response for request '{0:s}' - {1!s}".format(
                             resource_url, e
@@ -411,16 +436,30 @@ class TimesketchApi:
                     ) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the JSON response for request "
-                    "'{2:s}' failed. Trying again...".format(
-                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
+                    "[{0:d}/{1:d}] Parsing the JSON response for request '{2:s}' failed. Error: {3!s}. Trying again...".format(
+                        attempt, self.DEFAULT_RETRY_COUNT, resource_url, e
+                    )
+                )
+            except ConnectionError as e:  # Explicitly catch connection errors
+                if attempt >= self.DEFAULT_RETRY_COUNT:
+                    # Re-raise the original error after exhausting retries
+                    raise ConnectionError(
+                        "Connection error for request '{0:s}' after {1:d} attempts: {2!s}".format(
+                            resource_url, self.DEFAULT_RETRY_COUNT, e
+                        )
+                    ) from e
+
+                logger.warning(
+                    "[{0:d}/{1:d}] Connection error for request '{2:s}': {3!s}. Trying again...".format(
+                        attempt, self.DEFAULT_RETRY_COUNT, resource_url, e
                     )
                 )
 
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
+            if attempt >= self.DEFAULT_RETRY_COUNT:
                 raise RuntimeError(
-                    "Unable to fetch JSON resource data for request: '{0:s}'"
-                    " - Response: '{1!s}'".format(resource_url, result)
+                    "Unable to fetch JSON resource data for request: '{0:s}' - Response: '{1!s}'".format(
+                        resource_url, result
+                    )
                 )
 
     def create_sketch(self, name, description=None):
@@ -578,9 +617,9 @@ class TimesketchApi:
                 line_dict["field_{0:d}_name".format(field_index + 1)] = field.get(
                     "name"
                 )
-                line_dict["field_{0:d}_description".format(field_index + 1)] = (
-                    field.get("description")
-                )
+                line_dict[
+                    "field_{0:d}_description".format(field_index + 1)
+                ] = field.get("description")
             lines.append(line_dict)
 
         return pandas.DataFrame(lines)
