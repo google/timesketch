@@ -773,38 +773,123 @@ class TimesketchApi:
 
     def create_searchindex(self, searchindex_name: str, opensearch_index_name: str):
         """Create a new SearchIndex.
+
+        This method attempts to create a new searchindex on the Timesketch server.
+        It implements a retry mechanism with exponential backoff if the initial
+        request fails due to network issues, API errors, or unexpected
+        response formats.
+
         Args:
             searchindex_name: Name for the searchindex.
             opensearch_index_name: The name of the index in opensearch.
+
         Returns:
             Instance of a SearchIndex object.
+
         Raises:
-            ValueError: If the SearchIndex fails to create.
+            RuntimeError: If the SearchIndex fails to create after all retries,
+                or if the API returns an unexpected response format.
+            requests.exceptions.RequestException: If a connection error persists
+                after all retries.
+            ValueError: If the API response cannot be JSON-decoded after all retries.
         """
         resource_url = f"{self.api_root}/searchindices/"
         form_data = {
             "searchindex_name": searchindex_name,
             "es_index_name": opensearch_index_name,
         }
-        response = self.session.post(resource_url, json=form_data)
+        last_exception = None
 
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response,
-                message="Error creating searchindex",
-                error=ValueError,
-            )
+        for attempt in range(self.DEFAULT_RETRY_COUNT):
+            try:
+                response = self.session.post(resource_url, json=form_data)
+                response_dict = error.get_response_json(
+                    response, logger
+                )  # Raises RuntimeError for non-20x, ValueError for JSON decode
+                objects = response_dict.get("objects")
 
-        response_dict = error.get_response_json(response, logger)
-        objects = response_dict.get("objects")
-        if not objects:
-            raise ValueError(
-                "Unable to create a SearchIndex, try again or file an "
-                "issue on GitHub."
-            )
+                if (
+                    objects
+                    and isinstance(objects, list)
+                    and len(objects) > 0
+                    and isinstance(objects[0], dict)
+                    and "id" in objects[0]
+                ):
+                    searchindex_id = objects[0]["id"]
+                    return index.SearchIndex(searchindex_id, api=self)
 
-        searchindex_id = objects[0].get("id")
-        return index.SearchIndex(searchindex_id, api=self)
+                log_message = (
+                    "API for searchindex creation returned an unexpected 'objects' "
+                    "format or it was empty."
+                )
+                logger.warning(
+                    "[%d/%d] %s Response: %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    log_message,
+                    response_dict,
+                )
+                last_exception = RuntimeError(
+                    "{0:s} Response: {1!s}".format(log_message, response_dict)
+                )
+
+            except RequestException as e:
+                logger.warning(
+                    "[%d/%d] Request error creating searchindex '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    searchindex_name,
+                    e,
+                )
+                last_exception = e
+            except ValueError as e:  # JSON decoding error
+                logger.warning(
+                    "[%d/%d] JSON error creating searchindex '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    searchindex_name,
+                    e,
+                )
+                last_exception = e
+            except RuntimeError as e:  # Non-20x status or other API error
+                logger.warning(
+                    "[%d/%d] API error creating searchindex '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    searchindex_name,
+                    e,
+                )
+                last_exception = e
+
+            if attempt < self.DEFAULT_RETRY_COUNT - 1:
+                backoff_time = 0.5 * (2**attempt)  # Exponential backoff
+                logger.info(
+                    "Waiting %.1fs before next attempt to create searchindex '%s'.",
+                    backoff_time,
+                    searchindex_name,
+                )
+                time.sleep(backoff_time)
+            else:
+                # All attempts failed
+                error_message_detail = (
+                    "All {0:d} attempts to create searchindex '{1:s}' failed.".format(
+                        self.DEFAULT_RETRY_COUNT, searchindex_name
+                    )
+                )
+                logger.error("%s Last error: %s", error_message_detail, last_exception)
+                if last_exception:
+                    raise RuntimeError(
+                        "{0:s} Last error: {1!s}".format(
+                            error_message_detail, last_exception
+                        )
+                    ) from last_exception
+                raise RuntimeError(error_message_detail)
+
+        # Fallback, should ideally be unreachable.
+        raise RuntimeError(
+            "Failed to create searchindex '{0:s}' after all retries "
+            "(unexpected loop exit).".format(searchindex_name)
+        )
 
     def check_celery_status(self, job_id=""):
         """Return information about outstanding celery tasks or a specific one.
