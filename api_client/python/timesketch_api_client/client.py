@@ -24,7 +24,7 @@ import bs4
 import requests
 
 # pylint: disable=redefined-builtin
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, RequestException
 from urllib3.exceptions import InsecureRequestWarning
 import webbrowser
 
@@ -429,77 +429,170 @@ class TimesketchApi:
             except ValueError as e:
                 if attempt >= self.DEFAULT_RETRY_COUNT:
                     # Re-raise the original error after exhausting retries
-                    raise ValueError(
-                        "Error parsing response for request '{0:s}' - {1!s}".format(
-                            resource_url, e
-                        )
-                    ) from e
+                    error_msg = (
+                        f"Error parsing response for request '{resource_url}'"
+                        f" - {e!s}"
+                    )
+                    raise ValueError(error_msg) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the JSON response for request '{2:s}' failed. Error: {3!s}. Trying again...".format(
-                        attempt, self.DEFAULT_RETRY_COUNT, resource_url, e
-                    )
+                    "[%d/%d] Parsing the JSON response for request '%s' "
+                    "failed. Error: %s. Trying again...",
+                    attempt,
+                    self.DEFAULT_RETRY_COUNT,
+                    resource_url,
+                    e,
                 )
             except ConnectionError as e:  # Explicitly catch connection errors
                 if attempt >= self.DEFAULT_RETRY_COUNT:
                     # Re-raise the original error after exhausting retries
-                    raise ConnectionError(
-                        "Connection error for request '{0:s}' after {1:d} attempts: {2!s}".format(
-                            resource_url, self.DEFAULT_RETRY_COUNT, e
-                        )
-                    ) from e
+                    error_msg = (
+                        f"Connection error for request '{resource_url}' "
+                        f"after {self.DEFAULT_RETRY_COUNT} attempts: {e!s}"
+                    )
+                    raise ConnectionError(error_msg) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Connection error for request '{2:s}': {3!s}. Trying again...".format(
-                        attempt, self.DEFAULT_RETRY_COUNT, resource_url, e
-                    )
+                    "[%d/%d] Connection error for request '%s': %s. Trying again...",
+                    attempt,
+                    self.DEFAULT_RETRY_COUNT,
+                    resource_url,
+                    e,
                 )
 
             if attempt >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError(
-                    "Unable to fetch JSON resource data for request: '{0:s}' - Response: '{1!s}'".format(
-                        resource_url, result
-                    )
+                error_msg = (
+                    "Unable to fetch JSON resource data for request: '{0:s}'"
+                    " - Response: '{1!s}'".format(resource_url, result)
                 )
+                raise RuntimeError(error_msg)
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
 
+        This method attempts to create a new sketch on the Timesketch server.
+        It implements a retry mechanism with exponential backoff if the initial
+        request fails due to network issues, API errors, or unexpected
+        response formats.
+
         Args:
-            name (str): Name of the sketch.
-            description (str): Description of the sketch.
+            name (str): Name of the sketch. Cannot be empty.
+            description (str): Optional description of the sketch. If not
+                provided, the sketch name will be used as the description.
 
         Returns:
-            Instance of a Sketch object.
+            Instance of a Sketch object representing the newly created sketch.
 
         Raises:
-            RuntimeError: If response does not contain an 'objects' key after
-                DEFAULT_RETRY_COUNT attempts.
-            ValueError: If name is empty
+            ValueError: If the provided sketch name is empty, or if the API
+                response cannot be JSON-decoded after all retry attempts.
+            requests.exceptions.ConnectionError: If a connection error persists
+                after all retry attempts.
+            RuntimeError: If the API server returns an error (non-20x status code),
+                or if the expected 'objects' structure with a sketch ID is not
+                found in the API response after all retry attempts.
         """
         if not description:
             description = name
 
         if not name:
             raise ValueError("Sketch name cannot be empty")
+        resource_url = "{0:s}/sketches/".format(self.api_root)
+        form_data = {"name": name, "description": description}
+        last_exception = None
 
-        retry_count = 0
-        objects = None
-        while True:
-            resource_url = "{0:s}/sketches/".format(self.api_root)
-            form_data = {"name": name, "description": description}
+        for attempt in range(self.DEFAULT_RETRY_COUNT):
             response = self.session.post(resource_url, json=form_data)
-            response_dict = error.get_response_json(response, logger)
-            objects = response_dict.get("objects")
-            if objects:
-                break
-            retry_count += 1
+            try:
+                response_dict = error.get_response_json(response, logger)
+                objects = response_dict.get("objects")
 
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError("Unable to create a new sketch.")
+                if (
+                    objects
+                    and isinstance(objects, list)
+                    and len(objects) > 0
+                    and isinstance(objects[0], dict)
+                    and "id" in objects[0]
+                ):
+                    sketch_id = objects[0]["id"]
+                    return self.get_sketch(sketch_id)
 
-        sketch_id = objects[0]["id"]
-        return self.get_sketch(sketch_id)
+                # Handle cases where 'objects' is missing, not a list, empty,
+                # or its first element is not a dict or lacks an 'id'.
+                # This assumes a 2xx response, as get_response_json would
+                # raise otherwise.
+                log_message = (
+                    "API for sketch creation returned an unexpected 'objects' "
+                    "format or it was empty."
+                )
+                logger.warning(
+                    "[%d/%d] %s Response: %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    log_message,
+                    response_dict,
+                )
+                last_exception = RuntimeError(
+                    "{0:s} Response: {1!s}".format(log_message, response_dict)
+                )
+
+            except RequestException as e:
+                logger.warning(
+                    "[%d/%d] Request error creating sketch '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    name,
+                    e,
+                )
+                last_exception = e
+            except ValueError as e:  # JSON decoding error
+                logger.warning(
+                    "[%d/%d] JSON error creating sketch '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    name,
+                    e,
+                )
+                last_exception = e
+            except RuntimeError as e:  # Non-20x status
+                logger.warning(
+                    "[%d/%d] API error creating sketch '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.DEFAULT_RETRY_COUNT,
+                    name,
+                    e,
+                )
+                last_exception = e
+
+            if attempt < self.DEFAULT_RETRY_COUNT - 1:
+                backoff_time = 0.5 * (2**attempt)  # Exponential backoff
+                logger.info(
+                    "Waiting %.1fs before next attempt to create sketch '%s'.",
+                    backoff_time,
+                    name,
+                )
+                time.sleep(backoff_time)
+            else:
+                # All attempts failed
+                error_message_detail = (
+                    "All {0:d} attempts to create sketch '{1:s}' failed.".format(
+                        self.DEFAULT_RETRY_COUNT, name
+                    )
+                )
+                logger.error("%s Last error: %s", error_message_detail, last_exception)
+                if last_exception:
+                    raise RuntimeError(
+                        "{0:s} Last error: {1!s}".format(
+                            error_message_detail, last_exception
+                        )
+                    ) from last_exception
+                raise RuntimeError(error_message_detail)
+
+        # Fallback, should ideally be unreachable.
+        raise RuntimeError(
+            "Failed to create sketch '{0:s}' after all retries "
+            "(unexpected loop exit).".format(name)
+        )
 
     def create_user(self, username, password):
         """Create a new user.
