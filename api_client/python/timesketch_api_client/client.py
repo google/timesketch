@@ -414,9 +414,8 @@ class TimesketchApi:
             except RuntimeError as e:
                 if attempt >= self.DEFAULT_RETRY_COUNT:
                     # Re-raise the original error after exhausting retries
-                    raise RuntimeError(
-                        "Error for request '{0:s}' - '{1!s}'".format(resource_url, e)
-                    ) from e
+                    error_msg = f"Error for request '{resource_url}' - '{e!s}'"
+                    raise RuntimeError(error_msg) from e
 
                 logger.warning(
                     "[%d/%d] API error (RuntimeError) for request '%s' "
@@ -533,7 +532,7 @@ class TimesketchApi:
                     response_dict,
                 )
                 last_exception = RuntimeError(
-                    "{0:s} Response: {1!s}".format(log_message, response_dict)
+                    f"{log_message} Response: {response_dict!s}"
                 )
 
             except RequestException as e:
@@ -582,9 +581,7 @@ class TimesketchApi:
                 logger.error("%s Last error: %s", error_message_detail, last_exception)
                 if last_exception:
                     raise RuntimeError(
-                        "{0:s} Last error: {1!s}".format(
-                            error_message_detail, last_exception
-                        )
+                        f"{error_message_detail} Last error: {last_exception!s}"
                     ) from last_exception
                 raise RuntimeError(error_message_detail)
 
@@ -711,8 +708,7 @@ class TimesketchApi:
                     "name"
                 )
                 line_dict["field_{0:d}_description".format(field_index + 1)] = (
-                    field.get("description")
-                )
+                    field.get("description"))  # fmt: skip
             lines.append(line_dict)
 
         return pandas.DataFrame(lines)
@@ -878,11 +874,9 @@ class TimesketchApi:
                 )
                 logger.error("%s Last error: %s", error_message_detail, last_exception)
                 if last_exception:
-                    raise RuntimeError(
-                        "{0:s} Last error: {1!s}".format(
-                            error_message_detail, last_exception
-                        )
-                    ) from last_exception
+                    last_exception = RuntimeError(
+                        f"{0:s} Response: {1!s}".format(log_message, response_dict)
+                    )
                 raise RuntimeError(error_message_detail)
 
         # Fallback, should ideally be unreachable.
