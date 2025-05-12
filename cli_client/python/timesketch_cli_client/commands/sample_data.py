@@ -53,7 +53,9 @@ _SOURCE_SHORTS = ["LOG", "WEBHIST", "REG", "FILE", "AUTH"]
 
 
 # Helper function to generate random data
-def _generate_random_event(start_time, end_time):
+def _generate_random_event(
+    start_time: datetime.datetime, end_time: datetime.datetime
+) -> dict:
     """Generates a dictionary representing a single random event."""
     dt_object = start_time + datetime.timedelta(
         seconds=random.randint(0, int((end_time - start_time).total_seconds()))
@@ -176,7 +178,7 @@ def generate_dummy_csv(
         click.echo(f"\nSuccessfully generated {count} events to {output}")
 
     except IOError as e:
-        raise click.ClickException(f"Could not write to file {output}: {e}")
+        raise click.ClickException(f"Could not write to file: {output}: {e}")
     except Exception as e:
         click.echo(traceback.format_exc(), err=True)
         raise click.ClickException(
