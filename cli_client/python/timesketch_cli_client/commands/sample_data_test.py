@@ -85,7 +85,7 @@ class SampleDataTest(unittest.TestCase):
 
                 for row in rows:
                     row_dict = dict(zip(header, row))
-                    self.assertEqual(row_dict["tsctl_generator"], GENERATOR_TAG_VALUE)
+                    self.assertEqual(row_dict["ts_cli_generator"], GENERATOR_TAG_VALUE)
         finally:
             if output_file_name and os.path.exists(output_file_name):
                 os.remove(output_file_name)

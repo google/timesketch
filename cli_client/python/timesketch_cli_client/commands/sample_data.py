@@ -28,18 +28,17 @@ DUMMY_CSV_HEADERS = [
     "message",
     "datetime",
     "timestamp_desc",
-    "timestamp",  # Often derived, but good to include
+    "timestamp",
     "hostname",
     "username",
     "source_short",
     "custom_field_1",
     "numeric_field",
-    "tsctl_generator",
+    "ts_cli_generator",
 ]
 
 GENERATOR_TAG_VALUE = "ts_cli_client_generate_dummy_csv"
 
-# Constants for random data generation
 _MESSAGE_VERBS = ["Accessed", "Modified", "Created", "Deleted", "Logged", "Failed"]
 _MESSAGE_NOUNS = ["file.txt", "registry key", "process", "user account", "config"]
 _TIMESTAMP_DESCRIPTIONS = [
@@ -56,7 +55,6 @@ _SOURCE_SHORTS = ["LOG", "WEBHIST", "REG", "FILE", "AUTH"]
 # Helper function to generate random data
 def _generate_random_event(start_time, end_time):
     """Generates a dictionary representing a single random event."""
-    # Generate random datetime and timestamp
     dt_object = start_time + datetime.timedelta(
         seconds=random.randint(0, int((end_time - start_time).total_seconds()))
     )
@@ -90,7 +88,7 @@ def _generate_random_event(start_time, end_time):
         "source_short": source_short,
         "custom_field_1": custom_field_1,
         "numeric_field": numeric_field,
-        "tsctl_generator": GENERATOR_TAG_VALUE,
+        "ts_cli_generator": GENERATOR_TAG_VALUE,
     }
 
 
@@ -126,13 +124,13 @@ def sample_data_group():
     "--start-date",
     required=True,
     type=click.DateTime(),  # Accepts formats like YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS
-    help="Start date/time for event generation (inclusive). E.g., '2023-10-26' or '2023-10-26T10:00:00'. Assumed UTC if no timezone specified.",
+    help="Start date/time for event generation (inclusive). E.g., '2023-10-26' or '2023-10-26T10:00:00'. Assumed UTC if no timezone specified.",  # pylint: disable=line-too-long
 )
 @click.option(
     "--end-date",
     required=True,
     type=click.DateTime(),
-    help="End date/time for event generation (inclusive). E.g., '2023-10-27' or '2023-10-27T18:30:00'. Assumed UTC if no timezone specified.",
+    help="End date/time for event generation (inclusive). E.g., '2023-10-27' or '2023-10-27T18:30:00'. Assumed UTC if no timezone specified.",  # pylint: disable=line-too-long
 )
 def generate_dummy_csv(
     output: str, count: int, start_date: datetime.datetime, end_date: datetime.datetime
