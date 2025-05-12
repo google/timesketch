@@ -562,6 +562,32 @@ def print_table(table_data):
         print()
 
 
+@cli.command(name="sketch-delete")
+@click.argument("sketch_id")
+def sketch_delete(sketch_id):
+    """Delete a sketch."""
+    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    if not sketch:
+        print("Sketch does not exist.")
+        return
+
+    if sketch.get_status.status == "deleted":
+        print(f"Sketch {sketch_id} is already deleted.")
+        return
+
+    sketch_labels = [label.label for label in sketch.labels]
+    # do not delete if Sketch has a lithold label
+    if "lithold" in sketch_labels:
+        print("Sketch has lithold label, skipping")
+        return
+
+    print(f"Sketch {sketch_id} Name: ({sketch.name})")
+    sketch.delete()
+    db_session.delete(sketch)
+    db_session.commit()
+    print(f"Sketch {sketch_id} deleted.")
+
+
 @cli.command(name="sketch-info")
 @click.argument("sketch_id", type=int)
 def sketch_info(sketch_id: int):
