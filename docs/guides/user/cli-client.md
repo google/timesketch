@@ -51,13 +51,15 @@ Options:
 Commands:
   analyze         Analyze timelines.
   config          Configuration for this CLI tool.
-  events          Manage events
+  events          Manage event.
   import          Import timeline.
+  intelligence    Manage intelligence within a sketch.
+  sample-data     Commands for generating sample or test data.
   saved-searches  Managed saved searches.
-  search          Search and explore.
+  search          Searches and explores events within a Timesketch sketch.
+  sigma           Manage sigma rules.
   sketch          Manage sketch.
   timelines       Manage timelines.
-
 ```
 
 ## Configure
@@ -646,3 +648,32 @@ Datasources:
 	Error:
 ```
 
+## sample-data
+
+The `sample-data` command group provides utilities for generating sample or test data.
+Currently, it includes a command to generate dummy CSV files, which can be useful for testing import functionality or for creating sample timelines.
+
+### Generate sample data
+
+The `generate-dummy-csv` subcommand allows you to create a CSV file with a specified number of events within a given time range.
+
+**Usage:**
+
+```bash
+timesketch sample-data generate-dummy-csv [OPTIONS]
+```
+
+**Options:**
+
+*   `--output FILE`: The path to the output CSV file. (Required)
+*   `--count INTEGER`: The number of dummy events to generate. (Default: 100)
+*   `--start-date TEXT`: The start date for the events in ISO 8601 format (e.g., `YYYY-MM-DDTHH:MM:SS`). (Required)
+*   `--end-date TEXT`: The end date for the events in ISO 8601 format (e.g., `YYYY-MM-DDTHH:MM:SS`). (Required)
+
+**Example:**
+
+To generate a CSV file named `dummy_events.csv` with 50 events between January 1st, 2023, 09:00:00 and January 1st, 2023, 17:00:00:
+
+```bash
+timesketch sample-data generate-dummy-csv --output dummy_events.csv --count 50 --start-date 2023-01-01T09:00:00 --end-date 2023-01-01T17:00:00
+```
