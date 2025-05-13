@@ -38,9 +38,9 @@ from jsonschema import validate, ValidationError, SchemaError
 from celery.result import AsyncResult
 
 
-from timesketch.api.v1 import export as api_export  # To export events
-from timesketch.lib import utils as lib_utils
+from timesketch.api.v1 import export as api_export
 from timesketch.api.v1 import utils as api_utils
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
