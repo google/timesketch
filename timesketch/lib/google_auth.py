@@ -310,8 +310,11 @@ def get_public_key_for_jwt(encoded_jwt: str, url: str):
     if "keys" in keys_json:
         _new_keys_dict = {}
         for key_dict in keys_json["keys"]:
-            public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key_dict))
-            _new_keys_dict[key_dict["kid"]] = public_key
+            try:
+                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key_dict))
+                _new_keys_dict[key_dict["kid"]] = public_key
+            except Exception as e:
+                print(f"[ERROR] Error processing key ID {key_dict['kid']}: {e}")
         key_cache = _new_keys_dict
     else:
         key_cache = keys_json
