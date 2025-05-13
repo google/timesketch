@@ -19,8 +19,11 @@ import codecs
 import json
 import logging
 import socket
+import time
+import queue
+import threading
 from uuid import uuid4
-from typing import Union, Optional, Dict
+from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
 from opensearchpy import OpenSearch
@@ -96,6 +99,10 @@ if (!removedLabel) {
 }
 """
 
+# Default sort order for PIT exports if not specified, ensuring stable pagination.
+# _doc is generally recommended for performance with slicing.
+_DEFAULT_PIT_SORT_CRITERIA = [{"_id": "asc"}]
+
 
 class OpenSearchDataStore:
     """Implements the datastore."""
@@ -114,7 +121,7 @@ class OpenSearchDataStore:
         "yellow"  # Minimum health status required ('yellow' or 'green')
     )
 
-    def __init__(self, host="127.0.0.1", port=9200):
+    def __init__(self, host="127.0.0.1", port=9200, **kwargs):
         """Create a OpenSearch client."""
         super().__init__()
         self._error_container = {}
@@ -134,6 +141,9 @@ class OpenSearchDataStore:
             parameters["http_auth"] = (self.user, self.password)
         if self.timeout:
             parameters["timeout"] = self.timeout
+
+        # Add and overwrite parameters provided by the initialization caller.
+        parameters.update(kwargs)
 
         self.client = OpenSearch([{"host": host, "port": port}], **parameters)
 
@@ -1237,3 +1247,290 @@ class OpenSearchDataStore:
 
         self.import_events = []
         return return_dict
+
+    def _export_slice_worker_pit(
+        self,
+        slice_id: int,
+        num_slices: int,
+        index_list: List[str],
+        query_body: Dict[str, Any],
+        current_sort_criteria: List[Dict[str, Any]],
+        current_page_size: int,
+        current_pit_keep_alive: str,
+        output_queue: queue.Queue,
+        stop_event: threading.Event,
+        worker_request_timeout: int
+    ):
+        """
+        Worker function for a single slice in a PIT export.
+        Fetches documents for its assigned slice and puts them onto the output_queue.
+        """
+        es_logger.info(f"[PIT Slice {slice_id+1}/{num_slices}] Starting export.")
+        pit_id = None
+        total_docs_in_slice = 0
+
+        try:
+            pit_response = self.client.create_pit(
+                index=index_list, keep_alive=current_pit_keep_alive
+            )
+            pit_id = pit_response["pit_id"]
+            es_logger.info(f"[PIT Slice {slice_id+1}/{num_slices}] Created PIT ID: {pit_id}")
+
+            search_after_params = None
+            while not stop_event.is_set():
+                query = {
+                    **query_body,
+                    "size": current_page_size,
+                    "sort": current_sort_criteria,
+                    "pit": {"id": pit_id, "keep_alive": current_pit_keep_alive},
+                    "slice": {"id": slice_id, "max": num_slices},
+                }
+
+                if search_after_params:
+                    query["search_after"] = search_after_params
+
+                try:
+                    response = self.client.search(body=query, request_timeout=worker_request_timeout)
+                except RequestError as re:
+                    es_logger.error(
+                        f"[PIT Slice {slice_id+1}/{num_slices}] RequestError: {str(re)}. "
+                        "PIT might have expired or query issue."
+                    )
+                    break
+                except ConnectionTimeout:
+                    es_logger.warning(
+                        f"[PIT Slice {slice_id+1}/{num_slices}] Connection timeout during search. Stopping slice."
+                    )
+                    break
+                except Exception as e:
+                    es_logger.error(f"[PIT Slice {slice_id+1}/{num_slices}] Error during search: {str(e)}", exc_info=True)
+                    stop_event.set() # Signal other threads and main to stop due to unexpected error
+                    break
+
+                hits = response.get("hits", {}).get("hits", [])
+                if not hits:
+                    es_logger.info(f"[PIT Slice {slice_id+1}/{num_slices}] No more documents.")
+                    break
+
+                for hit in hits:
+                    if stop_event.is_set():
+                        break
+                    if "_source" in hit:
+                        event_data_to_export = {
+                            **hit["_source"],
+                            "_id": hit.get("_id"),
+                            "_index": hit.get("_index")
+                        }
+                        # Try to put item onto the queue with timeout
+                        # This loop handles backpressure if the queue is full.
+                        while not stop_event.is_set():
+                            try:
+                                output_queue.put(event_data_to_export, timeout=1) # Short timeout for responsiveness
+                                break # Item put successfully
+                            except queue.Full:
+                                # Queue is full, wait a bit and retry.
+                                # stop_event is checked at the start of this inner loop.
+                                time.sleep(0.1) # Avoid busy-waiting
+                            except Exception as e_q:
+                                es_logger.error(f"[PIT Slice {slice_id+1}/{num_slices}] Error putting to queue: {str(e_q)}", exc_info=True)
+                                stop_event.set() # Critical error with queue, signal stop
+                                break # Break from inner for hit in hits loop
+                        if stop_event.is_set(): break # Break from outer for hit in hits loop
+
+                if stop_event.is_set():
+                    break # Break from while True if stop_event was set during item processing
+
+                total_docs_in_slice += len(hits)
+                es_logger.info(
+                    f"[PIT Slice {slice_id+1}/{num_slices}] Retrieved {len(hits)} docs. "
+                    f"Total for slice: {total_docs_in_slice}. Queue size: ~{output_queue.qsize()}"
+                )
+                search_after_params = hits[-1].get("sort")
+                if search_after_params is None and hits: # Check hits because if no hits, search_after_params is not needed
+                    es_logger.error(
+                        f"[PIT Slice {slice_id+1}/{num_slices}] 'sort' field missing in last hit. "
+                        "Cannot continue with search_after."
+                    )
+                    stop_event.set()
+                    break
+
+        except NotFoundError:
+            es_logger.warning(
+                f"[PIT Slice {slice_id+1}/{num_slices}] PIT ID {pit_id if pit_id else 'N/A'} not found or expired, "
+                "or an index in the list was not found."
+            )
+            stop_event.set() # Signal issue
+        except Exception as e:
+            es_logger.error(f"[PIT Slice {slice_id+1}/{num_slices}] An unexpected error occurred: {str(e)}", exc_info=True)
+            stop_event.set() # Signal failure
+        finally:
+            if pit_id:
+                try:
+                    self.client.delete_pit(body={"pit_id": [pit_id]})
+                    es_logger.info(f"[PIT Slice {slice_id+1}/{num_slices}] Deleted PIT ID: {pit_id}")
+                except Exception as e:
+                    es_logger.error(f"[PIT Slice {slice_id+1}/{num_slices}] Error deleting PIT ID {pit_id}: {str(e)}", exc_info=True)
+
+            es_logger.info(f"[PIT Slice {slice_id+1}/{num_slices}] Finished. Processed {total_docs_in_slice} documents.")
+            # Signal this worker is done by putting a sentinel, even if an error occurred (unless queue itself failed)
+            try:
+                output_queue.put(None, timeout=5) # Short timeout, main thread should be consuming
+            except queue.Full:
+                es_logger.error(f"[PIT Slice {slice_id+1}/{num_slices}] Failed to put sentinel: Queue full.")
+            except Exception as e_s:
+                es_logger.error(f"[PIT Slice {slice_id+1}/{num_slices}] Failed to put sentinel: {str(e_s)}")
+
+
+    def export_events_pit(
+        self,
+        indices_for_pit: List[str],
+        base_query_body: Dict[str, Any],
+        sort_criteria: Optional[List[Dict[str, Any]]] = None,
+        page_size: int = 10000,
+        pit_keep_alive: str = "5m",
+        num_slices: int = 4,
+        request_timeout_per_slice: Optional[int] = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Exports events from specified indices using PIT, search_after, and slicing.
+
+        This method is designed for efficient bulk export of large datasets.
+        It yields individual event dictionaries, including '_id' and '_index'.
+
+        Args:
+            indices_for_pit: List of index names to query.
+            base_query_body: The base OpenSearch query body (must not include
+                             size, sort, pit, or slice clauses). Can include
+                             "_source" to specify fields to return.
+            sort_criteria: The sort criteria for search_after.
+                           If None, defaults to `[{"_id": "asc"}]`.
+                           Must include a unique tie-breaker field (e.g. _id)
+                           for stable results across pages.
+            page_size: Number of documents per request per slice. Default: 10k
+            pit_keep_alive: Keep-alive duration for the Point-In-Time context.
+            num_slices: Number of parallel slices to use for the export.
+                        Default can be set via app config OPENSEARCH_PIT_NUM_SLICES.
+            request_timeout_per_slice: Optional timeout in seconds for individual
+                                       OpenSearch search requests within each slice.
+                                       Defaults to self.timeout + 20s buffer.
+
+        Yields:
+            Dict: Individual event documents (including _id and _index from the hit).
+
+        Raises:
+            ValueError: If indices_for_pit is empty or num_slices is invalid.
+            errors.DataStoreQueryError: For critical issues during the export.
+        """
+        if not indices_for_pit:
+            raise ValueError("indices_for_pit cannot be empty.")
+        if not 1 <= num_slices <= 1024:  # OpenSearch constraint for slices
+            raise ValueError("num_slices must be between 1 and 1024.")
+
+        effective_sort_criteria = sort_criteria or _DEFAULT_PIT_SORT_CRITERIA
+        worker_timeout = request_timeout_per_slice or (self.timeout + 20) # Use configured or default+buffer
+
+        # Adjust num_slices from app config if not provided or if a default is desired.
+        # Example: num_slices = num_slices or current_app.config.get('OPENSEARCH_PIT_NUM_SLICES', 5)
+        # For now, using the argument directly or its default.
+
+        # Max queue size: buffer for items from all slices for a couple of rounds.
+        queue_buffer_factor = 4 # How many "full rounds" of data to buffer
+        queue_max_items = page_size * num_slices * queue_buffer_factor
+        results_queue: queue.Queue = queue.Queue(maxsize=queue_max_items)
+
+        threads: List[threading.Thread] = []
+        stop_event = threading.Event()
+
+        es_logger.info(
+            f"Starting PIT export from indices: {', '.join(indices_for_pit)} "
+            f"with {num_slices} slices, page_size: {page_size}."
+        )
+
+        active_workers = num_slices
+
+        try:
+            for i in range(num_slices):
+                thread = threading.Thread(
+                    target=self._export_slice_worker_pit,
+                    args=(
+                        i,
+                        num_slices,
+                        indices_for_pit,
+                        copy.deepcopy(base_query_body), # Ensure deep copy for safety
+                        effective_sort_criteria,
+                        page_size,
+                        pit_keep_alive,
+                        results_queue,
+                        stop_event,
+                        worker_timeout
+                    ),
+                    daemon=True # Allows main thread to exit even if workers hang (though join is preferred)
+                )
+                threads.append(thread)
+                thread.start()
+
+            while active_workers > 0:
+                if stop_event.is_set() and results_queue.empty():
+                    es_logger.warning("PIT export stopping early: error signaled and queue is empty.")
+                    break
+                try:
+                    item = results_queue.get(timeout=0.5) # Timeout to check stop_event
+                    if item is None:  # Sentinel from a finished worker
+                        active_workers -= 1
+                        results_queue.task_done()
+                        es_logger.info(f"Worker finished, {active_workers} active workers remaining.")
+                        continue
+
+                    yield item
+                    results_queue.task_done()
+
+                except queue.Empty:
+                    # Queue is empty, check if all worker threads have actually exited
+                    # This is a secondary check; active_workers decrementing is primary
+                    if not any(t.is_alive() for t in threads) and active_workers > 0:
+                        es_logger.warning(
+                            "All PIT worker threads seem to have exited but "
+                            f"{active_workers} sentinel(s) not received. Draining queue."
+                        )
+                        active_workers = 0 # Force loop exit after this drain attempt
+                        break # Break to final drain loop
+                except Exception as e_yield:
+                    es_logger.error(f"Error yielding item from PIT export queue: {str(e_yield)}", exc_info=True)
+                    stop_event.set() # Signal workers to stop
+
+            # Final drain of the queue in case of early exit or stragglers
+            es_logger.info("Draining any remaining items from the queue.")
+            while True:
+                try:
+                    item = results_queue.get_nowait()
+                    if item is None:
+                        results_queue.task_done()
+                        # Could decrement a counter if tracking sentinels precisely here
+                        continue
+                    yield item
+                    results_queue.task_done()
+                except queue.Empty:
+                    break # Queue is confirmed empty
+
+        except Exception as e:
+            es_logger.error(f"Unhandled exception during PIT export setup or yield loop: {str(e)}", exc_info=True)
+            stop_event.set()
+            raise errors.DataStoreQueryError(f"PIT Export failed: {str(e)}") from e
+        finally:
+            es_logger.info("PIT export: Signaling any remaining worker threads to stop.")
+            stop_event.set()
+
+            for i, thread in enumerate(threads):
+                if thread.is_alive():
+                    es_logger.info(f"PIT export: Waiting for worker thread {i+1} to join.")
+                    thread.join(timeout=10) # Give threads a chance to clean up PIT
+                    if thread.is_alive():
+                        es_logger.warning(f"PIT export: Worker thread {i+1} did not exit cleanly after timeout.")
+
+            # Ensure the queue is fully processed by task_done calls if not using .join() on queue
+            # However, with daemon threads and explicit joining, this might be less critical
+            # but good for completeness if there's any doubt.
+            if results_queue.unfinished_tasks > 0:
+                es_logger.warning(f"PIT export: Queue has {results_queue.unfinished_tasks} unfinished tasks. This might indicate an issue.")
+
+            es_logger.info("PIT export process cleanup finished.")
