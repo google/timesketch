@@ -1830,7 +1830,7 @@ def _create_export_archive(
     "--output-format",
     type=click.Choice(["csv", "jsonl"], case_sensitive=False),
     default="csv",
-    help="Format for event data export (csv or jsonl).",
+    help="Format for event data export (csv or jsonl). Default: csv",
 )
 @click.option(
     "--filename",
