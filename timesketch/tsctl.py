@@ -1884,7 +1884,7 @@ def export_sketch(sketch_id: int, output_format: str, filename: str):
     # --- Add prominent warning to console output ---
     click.echo(
         click.style(
-            "\nWARNING: There is currently no straightforward method to re-import "
+            "\nWARNING: There is currently no native method to re-import "
             "this exported archive back into Timesketch.\n",
             fg="yellow",
             bold=True,
