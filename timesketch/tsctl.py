@@ -55,6 +55,7 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Event
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
@@ -1398,7 +1399,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
             - List of aggregations and aggregation groups.
             - Sketch attributes.
             - Export timestamp and Timesketch version.
-            - Placeholder for comments (future implementation).
+            - Comments.
     """
     print("Gathering metadata...")
     metadata = {
@@ -1417,6 +1418,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         "stories": [],
         "aggregations": [],
         "aggregation_groups": [],
+        "comments": [],
         "attributes": api_utils.get_sketch_attributes(sketch),
         "export_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "timesketch_version": version.get_version(),
@@ -1516,25 +1518,30 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         )
 
     # Comments
-    metadata["comments"] = []
-    for comment_obj in sketch.comments:
-        metadata["comments"].append(
-            {
-                "id": comment_obj.id,
-                "comment": comment_obj.comment,
-                "user": comment_obj.user.username if comment_obj.user else None,
-                "created_at": _isoformat_or_none(comment_obj.created_at),
-                "updated_at": _isoformat_or_none(comment_obj.updated_at),
-                "event_id": (
-                    comment_obj.event_id if hasattr(comment_obj, "event_id") else None
-                ),
-                "event_uuid": (
-                    comment_obj.event_uuid
-                    if hasattr(comment_obj, "event_uuid")
-                    else None
-                ),
-            }
-        )
+    # Fetch Event DB objects that are part of the sketch and have comments.
+    events_with_comments_list = Event.get_with_comments(sketch=sketch).all()
+
+    if events_with_comments_list:
+        print(f"  Processing comments for {len(events_with_comments_list)} event(s)...")
+        for db_event_with_comment in events_with_comments_list:
+            for comment_obj in db_event_with_comment.comments:
+                metadata["comments"].append(
+                    {
+                        "id": comment_obj.id,  # Comment's own SQL PK
+                        "comment": comment_obj.comment,
+                        "user": (
+                            comment_obj.user.username if comment_obj.user else None
+                        ),
+                        "created_at": _isoformat_or_none(comment_obj.created_at),
+                        "updated_at": _isoformat_or_none(comment_obj.updated_at),
+                        # SQL PK of the Event object
+                        "event_id": db_event_with_comment.id,
+                        # OpenSearch _id
+                        "event_uuid": db_event_with_comment.document_id,
+                    }
+                )
+    else:
+        print("  No events with comments found for this sketch.")
 
     return metadata
 
