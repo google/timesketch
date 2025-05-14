@@ -1568,6 +1568,20 @@ def _fetch_and_prepare_event_data(
                 "for this sketch."
             )
 
+    active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
+    if not active_indices:
+        raise ValueError(
+            "ERROR: No active timelines (and thus no indices) found" "for this sketch."
+        )
+
+    print("Get number of events for this sketch...")
+    try:
+        total_event_count, _ = datastore.count(active_indices)
+        print(f"  Total events in active timelines: {total_event_count:,}")
+    except Exception as count_error:  # pylint: disable=broad-except
+        total_event_count = 0
+        print(f"  WARNING: Could not get total event count: {count_error}")
+
     print("  Requesting event data (preferring JSONL)...")
     # TODO: Use PIT, search_after and slicing to improve performance
     event_file_handle = api_export.query_to_filehandle(
@@ -1910,21 +1924,6 @@ def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields:
         input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
             sketch, datastore, return_fields_to_fetch
         )
-        # --- Calculate event count ---
-        event_count = 0
-        if input_content:
-            lines = input_content.splitlines()
-            if is_likely_jsonl:
-                # Count non-empty lines for JSONL
-                event_count = sum(1 for line in lines if line.strip())
-            else:
-                # Count lines minus header for CSV
-                event_count = max(0, len(lines) - 1)  # Ensure count is not negative
-        # --- End event count calculation ---
-
-        # --- Print event count before archiving ---
-        print(f"  {event_count} events processed for export.")
-        # --- End print event count ---
 
         # 3. Convert Event Data
         event_data_bytes = _convert_event_data(
