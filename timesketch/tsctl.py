@@ -1582,6 +1582,9 @@ def _fetch_and_prepare_event_data(
     event_file_handle.seek(0)
 
     try:
+        # TODO(jaegeral): A streaming approach (reading, converting, and writing
+        #  to the zip archive line-by-line or in chunks) would be more
+        # memory-efficient but also significantly more complex to implement
         content_str = event_file_handle.read()
         if not isinstance(content_str, str):
             content_str = content_str.decode("utf-8", errors="replace")
