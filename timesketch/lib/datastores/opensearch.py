@@ -728,14 +728,25 @@ class OpenSearchDataStore:
                 cause = ", ".join(error_items)
             else:
                 cause = str(e)
-            log_message = (
-                f"Unable to run search query. Error: {cause}. "
-                f"Sketch ID: {sketch_id}. Indices: {indices}. "
-                f"Query String: '{query_string}'. Query Filter: {query_filter}. "
-                f"Query DSL: {query_dsl}"
+
+            os_logger.error(
+                "Unable to run search query. Error: %s. "
+                "Sketch ID: %s. Indices: %s. "
+                "Query String: '%s'. Query Filter: %s. "
+                "Query DSL: %s",
+                cause,
+                sketch_id,
+                indices,
+                query_string,
+                query_filter,
+                query_dsl,
+                exc_info=True,
             )
-            os_logger.error(log_message, exc_info=True)
-            raise ValueError(cause) from e
+            user_friendly_message = (
+                f"There was an issue with your search query: {cause}. "
+                "Please review your query syntax and try again."
+            )
+            raise ValueError(user_friendly_message) from e
 
         METRICS["search_requests"].labels(type="single").inc()
         return _search_result
