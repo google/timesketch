@@ -31,6 +31,7 @@ import redis
 
 import click
 import pandas as pd
+from flask_restful import marshal
 
 from flask import current_app
 from flask.cli import FlaskGroup
@@ -40,6 +41,7 @@ from celery.result import AsyncResult
 
 
 from timesketch.api.v1 import export as api_export
+from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1 import utils as api_utils
 from timesketch.lib import utils as lib_utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
@@ -56,6 +58,7 @@ from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Event
+from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
@@ -1397,10 +1400,15 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
             - List of saved views (name, query, filter, DSL).
             - List of stories (title, content).
             - List of aggregations and aggregation groups.
+            - List of saved graphs.
+            - List of analysis sessions.
+            - List of DFIQ scenarios (including nested facets, questions, etc.).
             - Sketch attributes.
             - Export timestamp and Timesketch version.
             - Comments.
     """
+    # Schemas for marshalling, from the API resource mixin
+    schemas = ResourceMixin.fields_registry
     print("Gathering metadata...")
     metadata = {
         "sketch_id": sketch.id,
@@ -1418,6 +1426,9 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         "stories": [],
         "aggregations": [],
         "aggregation_groups": [],
+        "graphs": [],
+        "analysis_sessions": [],
+        "scenarios": [],
         "comments": [],
         "attributes": api_utils.get_sketch_attributes(sketch),
         "export_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -1426,96 +1437,33 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
 
     # Timelines
     for timeline in sketch.timelines:
-        metadata["timelines"].append(
-            {
-                "id": timeline.id,
-                "name": timeline.name,
-                "description": timeline.description,
-                "status": timeline.get_status.status,
-                "color": timeline.color,
-                "searchindex_id": timeline.searchindex.id,
-                "searchindex_name": timeline.searchindex.index_name,
-                "created_at": _isoformat_or_none(timeline.created_at),
-                "updated_at": _isoformat_or_none(timeline.updated_at),
-                "datasources": [
-                    {
-                        "id": ds.id,
-                        "provider": ds.provider,
-                        "context": ds.context,
-                        "file_on_disk": ds.file_on_disk,
-                        "file_size": ds.file_size,
-                        "original_filename": ds.original_filename,
-                        "data_label": ds.data_label,
-                        "error_message": ds.error_message,
-                        "created_at": _isoformat_or_none(ds.created_at),
-                    }
-                    for ds in timeline.datasources
-                ],
-            }
-        )
+        marshalled_timeline = marshal(timeline, schemas["timeline"])
+        metadata["timelines"].append(marshalled_timeline)
 
     # Views
     for view in sketch.get_named_views:
-        metadata["views"].append(
-            {
-                "id": view.id,
-                "name": view.name,
-                "description": view.description,
-                "query_string": view.query_string,
-                "query_filter": view.query_filter,
-                "query_dsl": view.query_dsl,
-                "user": view.user.username if view.user else None,
-                "created_at": _isoformat_or_none(view.created_at),
-                "updated_at": _isoformat_or_none(view.updated_at),
-            }
-        )
+        marshalled_view = marshal(view, schemas["view"])
+        metadata["views"].append(marshalled_view)
 
     # Stories
     for story in sketch.stories:
-        metadata["stories"].append(
-            {
-                "id": story.id,
-                "title": story.title,
-                "content": story.content,  # Keep content as JSON string
-                "user": story.user.username if story.user else None,
-                "created_at": _isoformat_or_none(story.created_at),
-                "updated_at": _isoformat_or_none(story.updated_at),
-            }
-        )
+        marshalled_story = marshal(story, schemas["story"])
+        metadata["stories"].append(marshalled_story)
 
     # Aggregations
     for agg in sketch.aggregations:
-        metadata["aggregations"].append(
-            {
-                "id": agg.id,
-                "name": agg.name,
-                "description": agg.description,
-                "agg_type": agg.agg_type,
-                "parameters": agg.parameters,
-                "chart_type": agg.chart_type,
-                "user": agg.user.username if agg.user else None,
-                "view_id": agg.view_id,
-                "created_at": _isoformat_or_none(agg.created_at),
-                "updated_at": _isoformat_or_none(agg.updated_at),
-            }
-        )
+        marshalled_agg = marshal(agg, schemas["aggregation"])
+        metadata["aggregations"].append(marshalled_agg)
 
     # Aggregation Groups
     for group in sketch.aggregationgroups:
-        metadata["aggregation_groups"].append(
-            {
-                "id": group.id,
-                "name": group.name,
-                "description": group.description,
-                "parameters": group.parameters,
-                "orientation": group.orientation,
-                "user": group.user.username if group.user else None,
-                "view_id": group.view_id,
-                "aggregation_ids": [agg.id for agg in group.aggregations],
-                "created_at": _isoformat_or_none(group.created_at),
-                "updated_at": _isoformat_or_none(group.updated_at),
-            }
-        )
+        marshalled_group = marshal(group, schemas["aggregationgroup"])
+        metadata["aggregation_groups"].append(marshalled_group)
+
+    # Graphs
+    for graph in sketch.graphs:
+        marshalled_graph = marshal(graph, schemas["graph"])
+        metadata["graphs"].append(marshalled_graph)
 
     # Comments
     # Fetch Event DB objects that are part of the sketch and have comments.
@@ -1542,6 +1490,27 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
                 )
     else:
         print("  No events with comments found for this sketch.")
+
+    # Analysis Sessions (and their analyses)
+    # Assuming AnalysisSession has a 'sketch' backref or can be queried via sketch
+    # A more robust query might be needed if direct sketch_id isn't on AnalysisSession
+    # For example, joining through Analysis and Timeline if sessions are per timeline.
+    # This example assumes a direct or easily derivable link.
+    analysis_sessions = (
+        AnalysisSession.query.join(Analysis)
+        .join(Timeline)
+        .filter(Timeline.sketch_id == sketch.id)
+        .distinct()
+        .all()
+    )
+    for session in analysis_sessions:
+        metadata["analysis_sessions"].append(
+            marshal(session, schemas["analysissession"])
+        )
+
+    # DFIQ Scenarios (and their nested facets, questions, etc.)
+    for scenario in sketch.scenarios:
+        metadata["scenarios"].append(marshal(scenario, schemas["scenario"]))
 
     return metadata
 
