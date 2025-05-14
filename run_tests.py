@@ -4,7 +4,19 @@ import subprocess
 
 
 def run_python_tests():
-    subprocess.check_call(["python3", "-m", "pytest", "timesketch/", "api_client/"])
+    # To run pytest in parallel, add "-n" and "auto" (or a specific number
+    # of workers like "4") to the list of arguments.
+    subprocess.check_call(
+        [
+            "python3",
+            "-m",
+            "pytest",
+            "-n",
+            "auto",
+            "timesketch/",
+            "api_client/",
+        ]
+    )
 
 
 def main():
