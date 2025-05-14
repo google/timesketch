@@ -1418,7 +1418,6 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         "aggregations": [],
         "aggregation_groups": [],
         "attributes": api_utils.get_sketch_attributes(sketch),
-        "comments": [],
         "export_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "timesketch_version": version.get_version(),
     }
@@ -1516,8 +1515,26 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
             }
         )
 
-    # Comments (Placeholder - needs refinement based on data model)
-    metadata["comments_info"] = "Comment export needs refinement based on data model"
+    # Comments
+    metadata["comments"] = []
+    for comment_obj in sketch.comments:
+        metadata["comments"].append(
+            {
+                "id": comment_obj.id,
+                "comment": comment_obj.comment,
+                "user": comment_obj.user.username if comment_obj.user else None,
+                "created_at": _isoformat_or_none(comment_obj.created_at),
+                "updated_at": _isoformat_or_none(comment_obj.updated_at),
+                "event_id": (
+                    comment_obj.event_id if hasattr(comment_obj, "event_id") else None
+                ),
+                "event_uuid": (
+                    comment_obj.event_uuid
+                    if hasattr(comment_obj, "event_uuid")
+                    else None
+                ),
+            }
+        )
 
     return metadata
 
