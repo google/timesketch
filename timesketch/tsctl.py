@@ -1626,8 +1626,9 @@ def _convert_event_data(
     conversion based on the detected input format (`is_likely_jsonl`) and the
     desired `output_format`, and performs the conversion.
     - If the input is JSONL and the output is CSV, it parses each JSON line,
-      extracts relevant fields, handles list values (joining with '|'), and
-      writes to a CSV structure. List values will be represented as `[value1, value2]`.
+      extracts relevant fields, and writes to a CSV structure. List values are
+      represented as `[value1, value2]` (e.g., `["foo", "bar"]`) and empty lists
+      (e.g., an empty "tag" field) as `[]`.
     - If the input is CSV and the output is JSONL, it reads the CSV, attempts
       basic type inference (int, float, bool) for values, and writes each row
       as a JSON line. It also attempts to sniff the CSV dialect.
@@ -1840,12 +1841,20 @@ def _create_export_archive(
         "(Default: sketch_{sketch_id}_{output_format}_export.zip)"
     ),
 )
-def export_sketch(sketch_id: int, output_format: str, filename: str):
+@click.option(
+    "--all-fields",
+    is_flag=True,
+    default=False,
+    help="Export all event fields instead of the default set.",
+)
+def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields: bool):
     """Exports a Timesketch sketch to a zip archive.
 
     The archive includes sketch metadata (as 'metadata.json') and all associated
-    events, formatted as specified (CSV or JSONL).
-    Progress messages are printed to the console during the export process.
+    events, formatted as specified (CSV or JSONL). By default, only a predefined
+    set of common fields are exported. Use the --all-fields flag to export all
+    available fields for each event. Progress messages are printed to the console
+    during the export process.
 
     **WARNING:** Re-importing this archive into Timesketch is not natively
     supported. This export is primarily for data archival, external analysis,
@@ -1892,9 +1901,15 @@ def export_sketch(sketch_id: int, output_format: str, filename: str):
             port=current_app.config["OPENSEARCH_PORT"],
         )
 
-        return_fields = DEFAULT_SOURCE_FIELDS
+        if all_fields:
+            print("  Exporting all event fields.")
+            return_fields_to_fetch = None  # Pass None to get all fields
+        else:
+            print(f"  Exporting default fields: {', '.join(DEFAULT_SOURCE_FIELDS)}")
+            return_fields_to_fetch = DEFAULT_SOURCE_FIELDS  # Use default fields
+
         input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
-            sketch, datastore, return_fields
+            sketch, datastore, return_fields_to_fetch
         )
         # --- Calculate event count ---
         event_count = 0
@@ -1914,7 +1929,7 @@ def export_sketch(sketch_id: int, output_format: str, filename: str):
 
         # 3. Convert Event Data
         event_data_bytes = _convert_event_data(
-            input_content, is_likely_jsonl, output_format, return_fields
+            input_content, is_likely_jsonl, output_format, return_fields_to_fetch
         )
         event_filename = f"events.{output_format}"
 
