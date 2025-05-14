@@ -603,7 +603,7 @@ class OpenSearchDataStore:
                 for building label filters.
             indices: A list of OpenSearch index names to query.
             query_string: The query string to search for (e.g., "hostname:evil.com").
-                Defaults to an empty string, which matches all documents.
+                Defaults to an empty string.
             query_filter: An optional dictionary containing filters to apply to
                 the search results. Common keys include 'from' (pagination start),
                 'size' (number of results), 'events' (list of specific event IDs),
