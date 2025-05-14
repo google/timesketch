@@ -24,6 +24,7 @@ import zipfile
 import csv
 import datetime
 import traceback
+from typing import Optional
 import yaml
 import redis
 
@@ -1373,6 +1374,12 @@ def list_config():
     print("Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).")
 
 
+# Helper for ISO formatting datetimes, returning None if dt is None
+def _isoformat_or_none(dt: Optional[datetime.datetime]) -> Optional[str]:
+    """Return ISO format of a datetime object, or None if the object is None."""
+    return dt.isoformat() if dt else None
+
+
 # Helper function to gather sketch metadata
 def _get_sketch_metadata(sketch: Sketch) -> dict:
     """Gathers comprehensive metadata for a given Timesketch sketch.
@@ -1399,8 +1406,8 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         "name": sketch.name,
         "description": sketch.description,
         "status": sketch.get_status.status,
-        "created_at": sketch.created_at.isoformat() if sketch.created_at else None,
-        "updated_at": sketch.updated_at.isoformat() if sketch.updated_at else None,
+        "created_at": _isoformat_or_none(sketch.created_at),
+        "updated_at": _isoformat_or_none(sketch.updated_at),
         "created_by": sketch.user.username if sketch.user else None,
         "is_public": bool(sketch.is_public),
         "labels": [label.label for label in sketch.labels],
@@ -1427,12 +1434,8 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
                 "color": timeline.color,
                 "searchindex_id": timeline.searchindex.id,
                 "searchindex_name": timeline.searchindex.index_name,
-                "created_at": (
-                    timeline.created_at.isoformat() if timeline.created_at else None
-                ),
-                "updated_at": (
-                    timeline.updated_at.isoformat() if timeline.updated_at else None
-                ),
+                "created_at": _isoformat_or_none(timeline.created_at),
+                "updated_at": _isoformat_or_none(timeline.updated_at),
                 "datasources": [
                     {
                         "id": ds.id,
@@ -1443,9 +1446,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
                         "original_filename": ds.original_filename,
                         "data_label": ds.data_label,
                         "error_message": ds.error_message,
-                        "created_at": (
-                            ds.created_at.isoformat() if ds.created_at else None
-                        ),
+                        "created_at": _isoformat_or_none(ds.created_at),
                     }
                     for ds in timeline.datasources
                 ],
@@ -1463,8 +1464,8 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
                 "query_filter": view.query_filter,
                 "query_dsl": view.query_dsl,
                 "user": view.user.username if view.user else None,
-                "created_at": view.created_at.isoformat() if view.created_at else None,
-                "updated_at": view.updated_at.isoformat() if view.updated_at else None,
+                "created_at": _isoformat_or_none(view.created_at),
+                "updated_at": _isoformat_or_none(view.updated_at),
             }
         )
 
@@ -1476,12 +1477,8 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
                 "title": story.title,
                 "content": story.content,  # Keep content as JSON string
                 "user": story.user.username if story.user else None,
-                "created_at": (
-                    story.created_at.isoformat() if story.created_at else None
-                ),
-                "updated_at": (
-                    story.updated_at.isoformat() if story.updated_at else None
-                ),
+                "created_at": _isoformat_or_none(story.created_at),
+                "updated_at": _isoformat_or_none(story.updated_at),
             }
         )
 
@@ -1497,8 +1494,8 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
                 "chart_type": agg.chart_type,
                 "user": agg.user.username if agg.user else None,
                 "view_id": agg.view_id,
-                "created_at": agg.created_at.isoformat() if agg.created_at else None,
-                "updated_at": agg.updated_at.isoformat() if agg.updated_at else None,
+                "created_at": _isoformat_or_none(agg.created_at),
+                "updated_at": _isoformat_or_none(agg.updated_at),
             }
         )
 
@@ -1514,12 +1511,8 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
                 "user": group.user.username if group.user else None,
                 "view_id": group.view_id,
                 "aggregation_ids": [agg.id for agg in group.aggregations],
-                "created_at": (
-                    group.created_at.isoformat() if group.created_at else None
-                ),
-                "updated_at": (
-                    group.updated_at.isoformat() if group.updated_at else None
-                ),
+                "created_at": _isoformat_or_none(group.created_at),
+                "updated_at": _isoformat_or_none(group.updated_at),
             }
         )
 
@@ -1845,7 +1838,8 @@ def _create_export_archive(
     "--filename",
     required=False,
     help=(
-        f"Filename for the output zip archive. (Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
+        "Filename for the output zip archive. "
+        f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
     ),
 )
 @click.option(
