@@ -1592,7 +1592,7 @@ def _fetch_and_prepare_event_data(
     active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
     if not active_indices:
         raise ValueError(
-            "ERROR: No active timelines (and thus no indices) found" "for this sketch."
+            "ERROR: No active timelines (and thus no indices) found for this sketch."
         )
 
     print("Get number of events for this sketch...")
