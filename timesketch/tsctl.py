@@ -1397,8 +1397,11 @@ def list_config():
 
 
 # Helper for ISO formatting datetimes, returning None if dt is None
-def _isoformat_or_none(dt: Optional[datetime.datetime]) -> Optional[str]:
-    """Return ISO format of a datetime object, or None if the object is None."""
+    """Return ISO format of a datetime object, or None if the object is None.
+
+    Example:
+        _isoformat_or_none(datetime.datetime.now()) == '2024-01-01T12:00:00'
+    """
     return dt.isoformat() if dt else None
 
 
