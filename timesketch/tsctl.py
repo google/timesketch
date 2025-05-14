@@ -1836,7 +1836,7 @@ def _create_export_archive(
     required=False,
     help=(
         "Filename for the output zip archive. "
-        "(Default: sketch_{sketch_id}_export.zip)"
+        "(Default: sketch_{sketch_id}_{output_format}_export.zip)"
     ),
 )
 def export_sketch(sketch_id: int, output_format: str, filename: str):
@@ -1861,7 +1861,7 @@ def export_sketch(sketch_id: int, output_format: str, filename: str):
         return
 
     if not filename:
-        filename = f"sketch_{sketch_id}_export.zip"
+        filename = f"sketch_{sketch_id}_{output_format}_export.zip"
 
     if not filename.lower().endswith(".zip"):
         filename += ".zip"
