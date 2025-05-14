@@ -1832,6 +1832,7 @@ def _convert_event_data(
 
 
 # Helper function to create the zip archive
+# TODO(jaegeral): https://github.com/google/timesketch/issues/3415
 def _create_export_archive(
     filename: str, metadata: dict, event_data_bytes: bytes, event_filename: str
 ):
