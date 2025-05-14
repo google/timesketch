@@ -1412,7 +1412,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         "aggregation_groups": [],
         "attributes": api_utils.get_sketch_attributes(sketch),
         "comments": [],
-        "export_timestamp": datetime.datetime.utcnow().isoformat(),
+        "export_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "timesketch_version": version.get_version(),
     }
 
