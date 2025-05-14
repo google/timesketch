@@ -400,7 +400,11 @@ export default {
       return this.timelineStatus === 'fail'
     },
     timelineAvailable() {
-      return this.timelineStatus === 'ready' || (this.settings.showProcessingTimelineEvents && this.timelineStatus === 'processing')
+      return (
+        this.timelineStatus === 'ready' ||
+        this.timelineStatus === 'fail' ||
+        (this.settings.showProcessingTimelineEvents && this.timelineStatus === 'processing')
+      )
     },
     timelineChipColor() {
       if (!this.timeline.color.startsWith('#')) {
