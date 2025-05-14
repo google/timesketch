@@ -17,6 +17,7 @@ import os
 import pathlib
 import json
 import re
+import logging
 import subprocess
 import time
 import io
@@ -32,7 +33,6 @@ import redis
 import click
 import pandas as pd
 from flask_restful import marshal
-
 from flask import current_app
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
@@ -72,6 +72,24 @@ DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE = "events.{output_format}"
 DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE = (
     "sketch_{sketch_id}_{output_format}_export.zip"
 )
+
+
+def configure_opensearch_logger():
+    """Configure the opensearch-py logger for tsctl."""
+    opensearch_logger = logging.getLogger("opensearch")
+    # Set level to INFO or higher to see request/response logs
+    opensearch_logger.setLevel(logging.WARNING)
+    # Remove any default handlers to prevent duplicate or unwanted formatting
+    opensearch_logger.handlers = []
+    # Add a new handler with a desired formatter
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("[%(asctime)s] %(name)s/%(levelname)s %(message)s")
+    handler.setFormatter(formatter)
+    opensearch_logger.addHandler(handler)
+
+
+# Configure the opensearch logger immediately after imports
+configure_opensearch_logger()
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
