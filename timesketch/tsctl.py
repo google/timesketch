@@ -172,7 +172,7 @@ def revoke_admin(username):
 @click.option("--sketch_id", type=int, required=True)
 def grant_user(username, sketch_id):
     """Grant access to a sketch."""
-    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    sketch = Sketch.get_by_id(sketch_id)
     user = User.query.filter_by(username=username).first()
     if not sketch:
         print("Sketch does not exist.")
@@ -601,7 +601,7 @@ def sketch_info(sketch_id: int):
     Raises:
         SystemExit: If the specified sketch does not exist.
     """
-    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    sketch = Sketch.get_by_id(sketch_id)
     if not sketch:
         print("Sketch does not exist.")
         return
@@ -1557,7 +1557,6 @@ def _fetch_and_prepare_event_data(
         # Note: Other exceptions from the datastore interaction or file reading
         # are caught and logged, resulting in an empty string return value.
     """
-    print("Exporting events...")
     query_string = "*"
     query_filter = {
         "indices": "_all",
@@ -1841,34 +1840,22 @@ def _create_export_archive(
     ),
 )
 def export_sketch(sketch_id: int, output_format: str, filename: str):
-    """Exports a Timesketch sketch, including metadata and events, to a zip archive.
-    This command gathers comprehensive metadata about the specified sketch
-    (details, timelines, views, stories, aggregations, permissions, etc.)
-    and exports all associated events. The events are formatted according
-    to the specified output format (CSV or JSONL). Both the metadata (as
-    'metadata.json') and the events file are then packaged into a
-    compressed zip archive.
+    """Exports a Timesketch sketch to a zip archive.
+
+    The archive includes sketch metadata (as 'metadata.json') and all associated
+    events, formatted as specified (CSV or JSONL).
     Progress messages are printed to the console during the export process.
-    **WARNING:** Currently, there is no straightforward method to automatically
-    re-import the data from this exported archive back into Timesketch. This
-    export function is primarily intended for data archival, external analysis,
-    or migration purposes where manual reprocessing might be involved.
-    Args:
-        sketch_id: The integer ID of the sketch to export.
-        output_format: The desired format for the event data ('csv' or 'jsonl').
-                       Defaults to 'csv'.
-        filename: Optional path and filename for the output zip archive.
-                  If not provided, defaults to 'sketch_<sketch_id>_export.zip'
-                  in the current directory. If the provided name doesn't end
-                  with '.zip', the extension will be appended.
-    Raises:
-        Prints error messages to stderr and returns if:
-            - The specified sketch_id does not exist.
-            - Required OpenSearch configuration is missing.
-            - An error occurs during metadata gathering, event fetching,
-              data conversion, or zip file creation.
+
+    **WARNING:** Re-importing this archive into Timesketch is not natively
+    supported. This export is primarily for data archival, external analysis,
+    or manual migration.
+
+    Note: When running this command within a container (e.g., Docker),
+    the output zip file is written inside the container's filesystem.
+    Ensure you write to a mounted volume or copy the file out of the
+    container afterwards.
     """
-    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    sketch = sketch = Sketch.get_by_id(sketch_id)
     if not sketch:
         print(f"ERROR: Sketch with ID {sketch_id} not found.")
         return
@@ -1897,39 +1884,60 @@ def export_sketch(sketch_id: int, output_format: str, filename: str):
         # 1. Gather Metadata
         metadata = _get_sketch_metadata(sketch)
 
-        # 2. Fetch and Prepare Event Data
         # Get datastore instance
         datastore = OpenSearchDataStore(
             host=current_app.config["OPENSEARCH_HOST"],
             port=current_app.config["OPENSEARCH_PORT"],
         )
+
+        # 2. Count Events first for a quick estimate
+        print("Counting events for export...")
+        event_count = 0
+        try:
+            # Define query parameters for count (should match export query)
+            count_query_string = "*"
+            count_query_filter = {
+                "indices": "_all",
+                "size": 0,  # We only need the count
+            }
+            count_query_dsl = None
+            indices_for_count, _ = lib_utils.get_validated_indices("_all", sketch)
+            if not indices_for_count:
+                indices_for_count = [
+                    t.searchindex.index_name for t in sketch.active_timelines
+                ]
+
+            if indices_for_count:
+                event_count = datastore.count(
+                    indices=indices_for_count,
+                    query_string=count_query_string,
+                    query_filter=count_query_filter,
+                    query_dsl=count_query_dsl,
+                    sketch=sketch,
+                )
+                print(f"  Total events to be exported: {event_count}")
+            else:
+                print(
+                    "  WARNING: No active timelines or indices found to count events."
+                )
+        except Exception as count_err:  # pylint: disable=broad-except
+            print(f"  ERROR counting events: {count_err}. Export will proceed.")
+            event_count = -1  # Indicate count failed or was not possible
+
+        # 3. Fetch and Prepare Event Data
+        print("Exporting events...")  # Now print this before actual data fetch
         return_fields = DEFAULT_SOURCE_FIELDS
         input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
             sketch, datastore, return_fields
         )
-        # --- Calculate event count ---
-        event_count = 0
-        if input_content:
-            lines = input_content.splitlines()
-            if is_likely_jsonl:
-                # Count non-empty lines for JSONL
-                event_count = sum(1 for line in lines if line.strip())
-            else:
-                # Count lines minus header for CSV
-                event_count = max(0, len(lines) - 1)  # Ensure count is not negative
-        # --- End event count calculation ---
 
-        # --- Print event count before archiving ---
-        print(f"  {event_count} events processed for export.")
-        # --- End print event count ---
-
-        # 3. Convert Event Data
+        # 4. Convert Event Data
         event_data_bytes = _convert_event_data(
             input_content, is_likely_jsonl, output_format, return_fields
         )
         event_filename = f"events.{output_format}"
 
-        # 4. Create Zip Archive
+        # 5. Create Zip Archive
         _create_export_archive(filename, metadata, event_data_bytes, event_filename)
 
     except ValueError as ve:  # Catch specific errors raised by helpers
