@@ -1396,7 +1396,7 @@ def list_config():
     print("Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).")
 
 
-# Helper for ISO formatting datetimes, returning None if dt is None
+def _isoformat_or_none(dt: Optional[datetime.datetime]) -> Optional[str]:
     """Return ISO format of a datetime object, or None if the object is None.
 
     Example:
