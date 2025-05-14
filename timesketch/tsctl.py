@@ -1575,6 +1575,7 @@ def _fetch_and_prepare_event_data(
             )
 
     print("  Requesting event data (preferring JSONL)...")
+    # TODO: Use PIT, search_after and slicing to improve performance
     event_file_handle = api_export.query_to_filehandle(
         query_string=query_string,
         query_filter=query_filter,
@@ -1626,7 +1627,7 @@ def _convert_event_data(
     desired `output_format`, and performs the conversion.
     - If the input is JSONL and the output is CSV, it parses each JSON line,
       extracts relevant fields, handles list values (joining with '|'), and
-      writes to a CSV structure.
+      writes to a CSV structure. List values will be represented as `[value1, value2]`.
     - If the input is CSV and the output is JSONL, it reads the CSV, attempts
       basic type inference (int, float, bool) for values, and writes each row
       as a JSON line. It also attempts to sniff the CSV dialect.
@@ -1701,7 +1702,7 @@ def _convert_event_data(
                             for key in fieldnames:
                                 value = event_dict.get(key)
                                 if isinstance(value, list):
-                                    csv_row[key] = "|".join(map(str, value))
+                                    csv_row[key] = f"[{', '.join(map(str, value))}]"
                                 elif value is None:
                                     csv_row[key] = ""
                                 else:
