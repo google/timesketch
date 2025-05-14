@@ -61,6 +61,14 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
 
 
+# Default filenames for sketch export
+DEFAULT_EXPORT_METADATA_FILENAME = "metadata.json"
+DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE = "events.{output_format}"
+DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE = (
+    "sketch_{sketch_id}_{output_format}_export.zip"
+)
+
+
 @click.group(cls=FlaskGroup, create_app=create_app)
 def cli():
     """Management script for the Timesketch application."""
@@ -1377,7 +1385,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         A dictionary containing metadata about the sketch, including:
             - Basic sketch info (ID, name, description, status, timestamps, owner).
             - Permissions and sharing details.
-            - List of associated timelines with their details (including datasources).
+            - List of associated timelines with their details (including data sources).
             - List of saved views (name, query, filter, DSL).
             - List of stories (title, content).
             - List of aggregations and aggregation groups.
@@ -1810,7 +1818,7 @@ def _create_export_archive(
             metadata_bytes = json.dumps(metadata, indent=2, ensure_ascii=False).encode(
                 "utf-8"
             )
-            zipf.writestr("metadata.json", metadata_bytes)
+            zipf.writestr(DEFAULT_EXPORT_METADATA_FILENAME, metadata_bytes)
 
             if event_data_bytes:
                 zipf.writestr(event_filename, event_data_bytes)
@@ -1837,8 +1845,7 @@ def _create_export_archive(
     "--filename",
     required=False,
     help=(
-        "Filename for the output zip archive. "
-        "(Default: sketch_{sketch_id}_{output_format}_export.zip)"
+        f"Filename for the output zip archive. (Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
     ),
 )
 @click.option(
@@ -1871,7 +1878,9 @@ def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields:
         return
 
     if not filename:
-        filename = f"sketch_{sketch_id}_{output_format}_export.zip"
+        filename = DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE.format(
+            sketch_id=sketch_id, output_format=output_format
+        )
 
     if not filename.lower().endswith(".zip"):
         filename += ".zip"
@@ -1931,7 +1940,9 @@ def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields:
         event_data_bytes = _convert_event_data(
             input_content, is_likely_jsonl, output_format, return_fields_to_fetch
         )
-        event_filename = f"events.{output_format}"
+        event_filename = DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE.format(
+            output_format=output_format
+        )
 
         # 4. Create Zip Archive
         _create_export_archive(filename, metadata, event_data_bytes, event_filename)
