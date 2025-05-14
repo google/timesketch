@@ -1851,7 +1851,7 @@ def _create_export_archive(
 @click.option(
     "--all-fields",
     is_flag=True,
-    default=False,
+    default=True,
     help="Export all event fields instead of the default set.",
 )
 def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields: bool):
