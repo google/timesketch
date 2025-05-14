@@ -895,3 +895,65 @@ UPLOAD_ENABLED: True
 Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
 ```
 
+### export-sketch
+
+Exports a Timesketch sketch to a zip archive. The archive contains:
+
+1.  **`metadata.json`**: A comprehensive JSON file detailing the sketch, including:
+    *   Basic sketch information (ID, name, description, status, timestamps, owner).
+    *   Permissions and sharing details.
+    *   Associated timelines with their configurations and data sources.
+    *   Saved views (queries, filters, DSL).
+    *   Stories, including their content.
+    *   Aggregations and aggregation groups.
+    *   Saved graphs.
+    *   Analysis sessions and their results.
+    *   DFIQ scenarios, including nested facets and investigative questions.
+    *   Sketch attributes.
+    *   Comments linked to specific events within the sketch.
+    *   Export timestamp and Timesketch version.
+2.  **Event Data File**: (e.g., `events.csv` or `events.jsonl`)
+    *   All events from the sketch's active timelines, processed in batches to conserve memory.
+    *   The format can be specified as CSV (default) or JSONL using the `--output-format` option.
+    *   By default, a predefined set of common event fields are exported. Use the `--all-fields` flag to include all available fields for each event.
+
+**WARNING:** Re-importing this archive into Timesketch is not natively supported. This export is primarily for data archival, external analysis, or manual migration.
+
+Progress messages are printed to the console during the export process.
+
+**Usage:**
+
+Parameters:
+
+* **<SKETCH_ID>:** (Required) The ID of the sketch to export.
+* **--filename / -f:** (Optional) The name for the output zip file. Default: sketch_{sketch_id}_{output_format}_export.zip
+* **--output-format:** (Optional) The format for the event data ('csv' or 'jsonl'). Default: 'csv'.
+* **--all-fields:** (Optional default: True) Export all event fields instead of the default set.
+
+*Note on Container Usage:* When running this command within a container (e.g., Docker), the output zip file is written inside the container's filesystem. Ensure you write to a mounted volume or copy the file out of the container afterwards.
+
+Example:
+
+```bash
+tsctl export-sketch  1
+
+Exporting sketch [1] "aaaa" to sketch_1_csv_export.zip...
+
+WARNING: There is currently no native method to re-import this exported archive back into Timesketch.
+
+Gathering metadata...
+  Processing comments for 4 event(s)...
+  2025-05-14 10:02:00 INFO     GET http://opensearch:9200/ [status:200 request:0.008s]
+  Exporting all event fields.
+WARNING: No valid indices found via primary method, trying fallback.
+  Requesting event data (preferring JSONL)...
+2025-05-14 10:02:00 INFO     POST http://opensearch:9200/484a472fd004a72f2ee857c39a4fb17c,9c49430d1e5f42849bdb253647e1f836,5caa30a18efa4333971b42957d86d09e/_search?scroll=1m&search_type=query_then_fetch [status:200 request:0.214s]
+
+[...]
+
+  Detected non-JSONL format in response (assuming CSV).
+  303490 events processed for export.
+  Input is not JSONL, using as CSV...
+Creating zip archive...
+Sketch exported successfully to sketch_1_csv_export.zip
+```
