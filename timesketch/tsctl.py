@@ -1876,7 +1876,7 @@ def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields:
     if not filename.lower().endswith(".zip"):
         filename += ".zip"
 
-    print(f"Exporting sketch {sketch_id} ('{sketch.name}') to {filename}...")
+    print(f'Exporting sketch [{sketch_id}] "{sketch.name}" to {filename}...')
 
     # --- Add prominent warning to console output ---
     click.echo(
