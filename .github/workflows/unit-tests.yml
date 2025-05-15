@@ -23,7 +23,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install pipenv
+          pip install pipenv==2024.4.1
           pipenv install -d
           pipenv run pip install -r test_requirements.txt
       - name: Check pytest installation
