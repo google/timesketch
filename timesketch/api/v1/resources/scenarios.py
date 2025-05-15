@@ -683,8 +683,6 @@ class QuestionResource(resources.ResourceMixin, Resource):
             A list of JSON representations of the question.
         """
         sketch = Sketch.get_with_acl(sketch_id)
-        question = InvestigativeQuestion.get_by_id(question_id)
-
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
         if not sketch.has_permission(current_user, "write"):
@@ -692,11 +690,26 @@ class QuestionResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch",
             )
-
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
         if not question.sketch.id == sketch.id:
             abort(HTTP_STATUS_CODE_FORBIDDEN, "Question is not part of this sketch.")
+
+        for conclusion in question.conclusions:
+            conclusion.conclusion_events = []
+            event_ids_to_query = [event.document_id for event in conclusion.events]
+            combined_query_string = f"_id:({' OR '.join(event_ids_to_query)})"
+            combined_indices = [event.searchindex.index_name for event in conclusion.events]
+            results = self.datastore.search(
+                    sketch_id=sketch_id,
+                    query_string=combined_query_string,
+                    query_filter={},
+                    query_dsl={},
+                    indices=combined_indices,
+                )
+            for result in results:
+                conclusion.conclusion_events.append(result['hits']['hits'][0]['_source'])
 
         return self.to_json(question)
 
