@@ -12,9 +12,10 @@ jobs:
   # OpenSearch version 1.x.x
   PyPi-plaso-stable-opensearch-v1:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-22.04]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up infrastructure with docker compose
@@ -29,9 +30,10 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
   PyPi-plaso-staging-opensearch-v1:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-22.04]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up infrastructure with docker compose
@@ -48,9 +50,10 @@ jobs:
   # OpenSearch version 2.x.x
   PyPi-plaso-stable-opensearch-v2:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-22.04]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up infrastructure with docker compose
@@ -65,11 +68,12 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
   PyPi-plaso-staging-opensearch-v2:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-22.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
@@ -80,4 +84,3 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
-
