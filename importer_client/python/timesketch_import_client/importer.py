@@ -227,7 +227,10 @@ class ImportStreamer(object):
                 )
         else:
             try:
-                date = pandas.to_datetime(data_frame["datetime"], utc=True)
+                # Use format='mixed' for robust parsing of varied datetime strings
+                date = pandas.to_datetime(
+                    data_frame["datetime"], utc=True, format="mixed"
+                )
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
             except Exception:  # pylint: disable=broad-except
                 logger.error(
