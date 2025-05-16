@@ -19,8 +19,8 @@ import csv
 from datetime import datetime, timezone
 from unittest import mock
 
-from . import generate_sample_data
-from .generate_sample_data import DUMMY_CSV_HEADERS, GENERATOR_TAG_VALUE
+from utils import generate_sample_data
+from utils.generate_sample_data import DUMMY_CSV_HEADERS, GENERATOR_TAG_VALUE
 
 
 class TestGenerateSampleData(unittest.TestCase):
@@ -86,11 +86,22 @@ class TestGenerateSampleData(unittest.TestCase):
                 self.assertEqual(header, DUMMY_CSV_HEADERS)
                 rows = list(reader)
                 self.assertEqual(len(rows), 3)
+
+            successful_generation_message_found = False
+            for call_args in mock_print.call_args_list:
+                if (
+                    f"Successfully generated 3 events to {output_filename}"
+                    in call_args[0][0]
+                ):
+                    successful_generation_message_found = True
+                    break
+            self.assertTrue(
+                successful_generation_message_found,
+                "Success message not found in print calls",
+            )
         finally:
             if os.path.exists(output_filename):
                 os.remove(output_filename)
-
-    # Add more tests for argument parsing errors, file I/O errors, etc.
 
 
 if __name__ == "__main__":
