@@ -210,7 +210,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         if sketches:
             error_strings = ["WARNING: This timeline is in use by:"]
             for sketch in sketches:
-                error_strings.append(f" * {sketch.name:s}")
+                error_strings.append(f" * {sketch.id:d}")
             abort(HTTP_STATUS_CODE_FORBIDDEN, "\n".join(error_strings))
 
         searchindex.set_status(status="deleted")
