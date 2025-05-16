@@ -163,7 +163,7 @@ def main(cli_args=None):
         writer = csv.DictWriter(args.output, fieldnames=DUMMY_CSV_HEADERS)
         writer.writeheader()
 
-        for i in range(args.count):
+        for _ in range(args.count):
             event_data = generate_random_event(start_time_utc, end_time_utc)
             writer.writerow(event_data)
 
