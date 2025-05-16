@@ -54,7 +54,6 @@ Commands:
   events          Manage event.
   import          Import timeline.
   intelligence    Manage intelligence within a sketch.
-  sample-data     Commands for generating sample or test data.
   saved-searches  Managed saved searches.
   search          Searches and explores events within a Timesketch sketch.
   sigma           Manage sigma rules.

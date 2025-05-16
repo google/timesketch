@@ -183,7 +183,6 @@ def main(cli_args=None):
         )
         sys.exit(1)
     finally:
-        # argparse.FileType handles closing, but explicit close is safe
         if args.output and not args.output.closed:
             args.output.close()
 
