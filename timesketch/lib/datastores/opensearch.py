@@ -731,15 +731,10 @@ class OpenSearchDataStore:
 
             os_logger.error(
                 "Unable to run search query. Error: %s. "
-                "Sketch ID: %s. Indices: %s. "
-                "Query String: '%s'. Query Filter: %s. "
-                "Query DSL: %s",
+                "Sketch ID: %s. Indices: %s. ",
                 cause,
                 sketch_id,
                 indices,
-                query_string,
-                query_filter,
-                query_dsl,
                 exc_info=True,
             )
             user_friendly_message = (
