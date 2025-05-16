@@ -21,8 +21,6 @@ import string
 import sys
 from datetime import timezone
 
-from tqdm import tqdm
-
 # Define standard fields for the dummy CSV
 DUMMY_CSV_HEADERS = [
     "message",
@@ -165,7 +163,7 @@ def main(cli_args=None):
         writer = csv.DictWriter(args.output, fieldnames=DUMMY_CSV_HEADERS)
         writer.writeheader()
 
-        for _ in tqdm(range(args.count), desc="Generating Events", unit="event"):
+        for i in range(args.count):
             event_data = generate_random_event(start_time_utc, end_time_utc)
             writer.writerow(event_data)
 
