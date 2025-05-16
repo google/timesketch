@@ -71,9 +71,8 @@ def generate_random_event(
         raise ValueError("End time cannot be earlier than start time.")
 
     # Calculate total seconds in the range
-    total_seconds = int((end_time - start_time).total_seconds())
-    if total_seconds < 0:  # Should be caught by the ValueError above
-        total_seconds = 0
+    # Ensure total_seconds is not negative.
+    total_seconds = max(0, int((end_time - start_time).total_seconds()))
 
     # Add a random number of seconds to the start time
     dt_object_utc = start_time + datetime.timedelta(
@@ -178,7 +177,7 @@ def main(cli_args=None):
     except IOError as e:
         print(f"Error writing to file {args.output.name}: {e}", file=sys.stderr)
         sys.exit(1)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(
             f"An unexpected error occurred: {type(e).__name__} - {e}", file=sys.stderr
         )
