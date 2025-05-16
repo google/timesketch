@@ -32,7 +32,6 @@ from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
 from timesketch_cli_client.commands import events
 from timesketch_cli_client.commands import sigma
-from timesketch_cli_client.commands import sample_data
 
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
@@ -173,7 +172,6 @@ cli.add_command(importer.importer)
 cli.add_command(events.events_group)
 cli.add_command(sigma.sigma_group)
 cli.add_command(intelligence.intelligence_group)
-cli.add_command(sample_data.sample_data_group)
 
 
 # pylint: disable=no-value-for-parameter
