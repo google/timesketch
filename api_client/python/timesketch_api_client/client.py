@@ -424,7 +424,7 @@ class TimesketchApi:
                     attempt,
                     self.DEFAULT_RETRY_COUNT,
                     resource_url,
-                    e,
+                    str(e),
                 )
             except ValueError as e:
                 if attempt >= self.DEFAULT_RETRY_COUNT:
