@@ -235,9 +235,9 @@ class TimelineResource(resources.ResourceMixin, Resource):
         """
         if timeline.has_label(label):
             logger.warning(
-                "Unable to apply the label [%s] to timeline %s, already exists.",
+                "Unable to apply the label [%s] to timeline (ID: %d), already exists.",
                 label,
-                timeline.name,
+                timeline.id,
             )
             return False
         timeline.add_label(label, user=current_user)
@@ -256,10 +256,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
         """
         if not timeline.has_label(label):
             logger.warning(
-                "Unable to remove the label [%s] from timeline %s, label does "
+                "Unable to remove the label [%s] from timeline (ID: %d), label does "
                 "not exist.",
                 label,
-                timeline.name,
+                timeline.id,
             )
             return False
         timeline.remove_label(label)
