@@ -33,7 +33,6 @@ from timesketch_cli_client.commands import timelines
 from timesketch_cli_client.commands import events
 from timesketch_cli_client.commands import sigma
 
-
 from .definitions import DEFAULT_OUTPUT_FORMAT
 from .version import get_version
 
