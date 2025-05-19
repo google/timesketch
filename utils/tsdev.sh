@@ -130,7 +130,7 @@ case "$1" in
 		else
 			echo "Bash history file not found. Attempting to set up directory..."
 			# Use mkdir -p to ensure the directory exists and avoid error if it's already there.
-			$s docker exec --interactive --tty "$CONTAINER_ID" mkdir -p "$HISTORY_DIR"
+			$s docker exec "$CONTAINER_ID" mkdir -p "$HISTORY_DIR"
 			if $s docker exec "$CONTAINER_ID" test -d "$HISTORY_DIR"; then
 				echo "Directory $HISTORY_DIR created (or already existed)."
 			else
