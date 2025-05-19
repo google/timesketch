@@ -1301,16 +1301,18 @@ class OpenSearchDataStore:
         """
         # Slice ID is 0-indexed, so display as 1-indexed for logs
         log_slice_id = slice_id + 1
-        es_logger.info("[PIT Slice %s/%s] Starting export.", log_slice_id, num_slices)
+        os_logger.info("[PIT Slice %s/%s] Starting export.", log_slice_id, num_slices)
         pit_id = None
         total_docs_in_slice = 0
 
         try:
-            pit_response = self.client.create_pit( # pylint: disable=unexpected-keyword-arg
-                index=index_list, keep_alive=current_pit_keep_alive
+            pit_response = (
+                self.client.create_pit(  # pylint: disable=unexpected-keyword-arg
+                    index=index_list, keep_alive=current_pit_keep_alive
+                )
             )
             pit_id = pit_response["pit_id"]
-            es_logger.info(
+            os_logger.info(
                 "[PIT Slice %s/%s] Created PIT ID: %s",
                 log_slice_id,
                 num_slices,
@@ -1331,11 +1333,13 @@ class OpenSearchDataStore:
                     query["search_after"] = search_after_params
 
                 try:
-                    response = self.client.search( # pylint: disable=unexpected-keyword-arg
-                        body=query, request_timeout=worker_request_timeout
+                    response = (
+                        self.client.search(  # pylint: disable=unexpected-keyword-arg
+                            body=query, request_timeout=worker_request_timeout
+                        )
                     )
                 except RequestError as re:
-                    es_logger.error(
+                    os_logger.error(
                         "[PIT Slice %s/%s] RequestError: %s. "
                         "PIT might have expired or query issue.",
                         log_slice_id,
@@ -1344,7 +1348,7 @@ class OpenSearchDataStore:
                     )
                     break
                 except ConnectionTimeout:
-                    es_logger.warning(
+                    os_logger.warning(
                         "[PIT Slice %s/%s] Connection timeout during search. "
                         "Stopping slice.",
                         log_slice_id,
@@ -1352,7 +1356,7 @@ class OpenSearchDataStore:
                     )
                     break
                 except Exception as e:  # pylint: disable=broad-exception-caught
-                    es_logger.error(
+                    os_logger.error(
                         "[PIT Slice %s/%s] Error during search: %s",
                         log_slice_id,
                         num_slices,
@@ -1365,7 +1369,7 @@ class OpenSearchDataStore:
 
                 hits = response.get("hits", {}).get("hits", [])
                 if not hits:
-                    es_logger.info(
+                    os_logger.info(
                         "[PIT Slice %s/%s] No more documents.", log_slice_id, num_slices
                     )
                     break
@@ -1391,13 +1395,14 @@ class OpenSearchDataStore:
                                 # Queue is full, wait a bit and retry.
                                 # stop_event is checked at the start of this inner loop.
                                 time.sleep(0.1)  # Avoid busy-waiting
-                            except Exception as e_q: # pylint: disable=broad-exception-caught
-                                log_msg = (
-                                    "[PIT Slice %s/%s] Error putting to queue: %s"
-                                )
-                                es_logger.error(
+                            except (  # pylint: disable=broad-exception-caught
+                                Exception
+                            ) as e_q:
+                                log_msg = "[PIT Slice %s/%s] Error putting to queue: %s"
+                                os_logger.error(
                                     log_msg,
-                                    log_slice_id, num_slices,
+                                    log_slice_id,
+                                    num_slices,
                                     str(e_q),
                                     exc_info=True,
                                 )
@@ -1408,12 +1413,12 @@ class OpenSearchDataStore:
                             break  # Break from outer for hit in hits loop
 
                 if stop_event.is_set():
-                     # Break from while True if stop_event was set during item
-                     # processing
+                    # Break from while True if stop_event was set during item
+                    # processing
                     break
 
                 total_docs_in_slice += len(hits)
-                es_logger.info(
+                os_logger.info(
                     (
                         "[PIT Slice %s/%s] Retrieved %s docs. "
                         "Total for slice: %s. Queue size: ~%s"
@@ -1428,7 +1433,7 @@ class OpenSearchDataStore:
                 if (
                     search_after_params is None and hits
                 ):  # Check hits because if no hits, search_after_params is not needed
-                    es_logger.error(
+                    os_logger.error(
                         (
                             "[PIT Slice %s/%s] 'sort' field missing in last hit. "
                             "Cannot continue with search_after."
@@ -1440,7 +1445,7 @@ class OpenSearchDataStore:
                     break
 
         except NotFoundError:
-            es_logger.warning(
+            os_logger.warning(
                 "[PIT Slice %s/%s] PIT ID %s not found or expired, "
                 "or an index in the list was not found.",
                 log_slice_id,
@@ -1448,8 +1453,8 @@ class OpenSearchDataStore:
                 pit_id if pit_id else "N/A",
             )
             stop_event.set()  # Signal issue
-        except Exception as e: # pylint: disable=broad-exception-caught
-            es_logger.error(
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            os_logger.error(
                 "[PIT Slice %s/%s] An unexpected error occurred: %s",
                 log_slice_id,
                 num_slices,
@@ -1461,24 +1466,24 @@ class OpenSearchDataStore:
             if pit_id:
                 try:
                     self.client.delete_pit(body={"pit_id": [pit_id]})
-                    es_logger.info(
+                    os_logger.info(
                         "[PIT Slice %s/%s] Deleted PIT ID: %s",
                         log_slice_id,
                         num_slices,
                         pit_id,
                     )
-                except Exception as e: # pylint: disable=broad-exception-caught
-                    log_msg = (
-                        "[PIT Slice %s/%s] Error deleting PIT ID %s: %s"
-                    )
-                    es_logger.error(
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    log_msg = "[PIT Slice %s/%s] Error deleting PIT ID %s: %s"
+                    os_logger.error(
                         log_msg,
-                        log_slice_id, num_slices, pit_id,
+                        log_slice_id,
+                        num_slices,
+                        pit_id,
                         str(e),
                         exc_info=True,
                     )
 
-            es_logger.info(
+            os_logger.info(
                 "[PIT Slice %s/%s] Finished. Processed %s documents.",
                 log_slice_id,
                 num_slices,
@@ -1491,13 +1496,13 @@ class OpenSearchDataStore:
                     None, timeout=5
                 )  # Short timeout, main thread should be consuming
             except queue.Full:
-                es_logger.error(
+                os_logger.error(
                     "[PIT Slice %s/%s] Failed to put sentinel: Queue full.",
                     log_slice_id,
                     num_slices,
                 )
-            except Exception as e_s: # pylint: disable=broad-exception-caught
-                es_logger.error(
+            except Exception as e_s:  # pylint: disable=broad-exception-caught
+                os_logger.error(
                     "[PIT Slice %s/%s] Failed to put sentinel: %s",
                     log_slice_id,
                     num_slices,
@@ -1568,7 +1573,7 @@ class OpenSearchDataStore:
         threads: List[threading.Thread] = []
         stop_event = threading.Event()
 
-        es_logger.info(
+        os_logger.info(
             "Starting PIT export from indices: %s with %s slices, page_size: %s.",
             ", ".join(indices_for_pit),
             num_slices,
@@ -1581,7 +1586,7 @@ class OpenSearchDataStore:
             for i in range(num_slices):
                 thread = threading.Thread(
                     target=self._export_slice_worker_pit,
-                    args=( #  type: ignore
+                    args=(  #  type: ignore
                         i,
                         num_slices,
                         # Ensure deep copy for safety
@@ -1603,17 +1608,17 @@ class OpenSearchDataStore:
 
             while active_workers > 0:
                 if stop_event.is_set() and results_queue.empty():
-                    es_logger.warning(
+                    os_logger.warning(
                         "PIT export stopping early: error signaled "
                         "and queue is empty."
-                    ) # yapf: disable
+                    )  # yapf: disable
                     break
                 try:
                     item = results_queue.get(timeout=0.5)  # Timeout to check stop_event
                     if item is None:  # Sentinel from a finished worker
                         active_workers -= 1
                         results_queue.task_done()
-                        es_logger.info(
+                        os_logger.info(
                             "Worker finished, %s active workers remaining.",
                             active_workers,
                         )
@@ -1626,17 +1631,17 @@ class OpenSearchDataStore:
                     # Queue is empty, check if all worker threads have actually exited
                     # This is a secondary check; active_workers decrementing is primary
                     if not any(t.is_alive() for t in threads) and active_workers > 0:
-                        es_logger.warning(
+                        os_logger.warning(
                             (
                                 "All PIT worker threads seem to have exited but %s "
                                 "sentinel(s) not received. Draining queue."
                             ),
                             active_workers,
-                        ) # yapf: disable
+                        )  # yapf: disable
                         active_workers = 0  # Force loop exit after this drain attempt
                         break  # Break to final drain loop
-                except Exception as e_yield: # pylint: disable=broad-exception-caught
-                    es_logger.error(
+                except Exception as e_yield:  # pylint: disable=broad-exception-caught
+                    os_logger.error(
                         "Error yielding item from PIT export queue: %s",
                         str(e_yield),
                         exc_info=True,
@@ -1644,7 +1649,7 @@ class OpenSearchDataStore:
                     stop_event.set()  # Signal workers to stop
 
             # Final drain of the queue in case of early exit or stragglers
-            es_logger.info("Draining any remaining items from the queue.")
+            os_logger.info("Draining any remaining items from the queue.")
             while True:
                 try:
                     item = results_queue.get_nowait()
@@ -1658,7 +1663,7 @@ class OpenSearchDataStore:
                     break  # Queue is confirmed empty
 
         except Exception as e:
-            es_logger.error(
+            os_logger.error(
                 "Unhandled exception during PIT export setup or yield loop: %s",
                 str(e),
                 exc_info=True,
@@ -1666,20 +1671,19 @@ class OpenSearchDataStore:
             stop_event.set()
             raise errors.DataStoreQueryError(f"PIT Export failed: {str(e)}") from e
         finally:
-            es_logger.info(
+            os_logger.info(
                 "PIT export: Signaling any remaining worker threads to stop."
             )
             stop_event.set()
 
             for i, thread in enumerate(threads):
                 if thread.is_alive():
-                    es_logger.info(
-                        "PIT export: Waiting for worker thread %s to join.",
-                        i + 1
+                    os_logger.info(
+                        "PIT export: Waiting for worker thread %s to join.", i + 1
                     )
                     thread.join(timeout=10)  # Give threads a chance to clean up PIT
                     if thread.is_alive():
-                        es_logger.warning(
+                        os_logger.warning(
                             (
                                 "PIT export: Worker thread %s did not exit "
                                 "cleanly after timeout."
@@ -1692,7 +1696,7 @@ class OpenSearchDataStore:
             # joining, this might be less critical but good for completeness if
             # there's any doubt.
             if results_queue.unfinished_tasks > 0:
-                es_logger.warning(
+                os_logger.warning(
                     (
                         "PIT export: Queue has %s unfinished tasks. "
                         "This might indicate an issue."
@@ -1700,4 +1704,4 @@ class OpenSearchDataStore:
                     results_queue.unfinished_tasks,
                 )
 
-            es_logger.info("PIT export process cleanup finished.")
+            os_logger.info("PIT export process cleanup finished.")
