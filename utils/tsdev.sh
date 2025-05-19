@@ -15,6 +15,7 @@ help(){
 	echo "  build-api-cli     Build and install API and CLI clients"
 	echo "  celery            Start a celery worker"
 	echo "  logs              Follow docker container logs "
+	echo "  psql              Connect to the Timesketch PostgreSQL database in the dev container"
 	echo "  rebuild-dev       Stop, remove, and rebuild the dev environment (docker-compose down && docker-compose up --build -d)"
 	echo "  restart-dev       Restart key Timesketch services (timesketch, worker, postgres, opensearch)"
 	echo "  shell             Open a shell in the docker container"
@@ -182,6 +183,22 @@ case "$1" in
 		# Assuming 'timesketch' is the main service name in docker-compose.yml
 		# You might want to list all relevant services: timesketch worker postgres opensearch
 		(cd docker/dev && $s docker-compose restart timesketch worker postgres opensearch)
+		;;
+	psql)
+		if ! $s docker exec -i -t "$CONTAINER_ID" bash -c "command -v psql > /dev/null 2>&1"; then
+			echo "psql client not found in the container. Attempting to install postgresql-client..."
+			# Run apt-get update and install postgresql-client non-interactively (-y).
+			# This assumes the container is Debian/Ubuntu based and has apt-get.
+			if $s docker exec -i -t "$CONTAINER_ID" bash -c "apt-get update && apt-get install -y postgresql-client"; then
+				echo "postgresql-client installed successfully."
+			else
+				echo "Error: Failed to install postgresql-client in the container." >&2
+				echo "Please install it manually inside the container (e.g., 'tsdev.sh shell' then 'apt-get update && apt-get install postgresql-client') and try again." >&2
+				exit 1 # Exit if installation fails
+			fi
+		fi
+		echo "Opening psql prompt in the container..."
+		$s docker exec -i -t "$CONTAINER_ID" bash -c "PGPASSWORD=password psql -h postgres -U timesketch -d timesketch"
 		;;
 	*)
 		echo \""$1"\" is not a valid command.; help
