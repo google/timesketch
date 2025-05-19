@@ -26,6 +26,7 @@ import redis
 import click
 import pandas as pd
 
+from flask import current_app
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
@@ -156,10 +157,10 @@ def revoke_admin(username):
 
 @cli.command(name="grant-user")
 @click.argument("username")
-@click.option("--sketch_id", required=True)
+@click.option("--sketch_id", type=int, required=True)
 def grant_user(username, sketch_id):
     """Grant access to a sketch."""
-    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    sketch = Sketch.get_by_id(sketch_id)
     user = User.query.filter_by(username=username).first()
     if not sketch:
         print("Sketch does not exist.")
@@ -562,71 +563,106 @@ def print_table(table_data):
 
 
 @cli.command(name="sketch-info")
-@click.argument("sketch_id")
-def sketch_info(sketch_id):
-    """Give information about a sketch."""
-    sketch = Sketch.query.filter_by(id=sketch_id).first()
+@click.argument("sketch_id", type=int)
+def sketch_info(sketch_id: int):
+    """Display detailed information about a specific sketch.
+
+    This command retrieves and displays comprehensive information about a
+    Timesketch sketch, including:
+
+    - **Sketch Details:** The sketch's ID and name.
+    - **Timelines:** A table listing the timelines within the
+      sketch, including their search index ID, index name, creation date,
+      user ID, description, status, timeline name, and timeline ID.
+    - **Sharing Information:** Details about users and groups with whom the
+      sketch is shared.
+    - **Sketch Status:** The current status of the sketch (e.g., "ready",
+      "archived").
+    - **Public Status:** Whether the sketch is publicly accessible.
+    - **Sketch Labels:** Any labels applied to the sketch.
+    - **Status History:** A table showing the status history of the sketch,
+      including the status ID, status value, creation date, and user ID.
+
+    Args:
+        sketch_id (str): The ID of the sketch to retrieve information about.
+
+    Raises:
+        SystemExit: If the specified sketch does not exist.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
     if not sketch:
         print("Sketch does not exist.")
-    else:
-        print(f"Sketch {sketch_id} Name: ({sketch.name})")
+        return
 
-        # define the table data
-        table_data = [
+    print(f"Sketch {sketch_id} Name: ({sketch.name})")
+
+    # define the table data
+    table_data = [
+        [
+            "searchindex_id",
+            "index_name",
+            "created_at",
+            "user_id",
+            "description",
+            "status",
+            "timeline_name",
+            "timeline_id",
+        ],
+    ]
+    for t in sketch.timelines:
+        table_data.append(
             [
-                "searchindex_id",
-                "index_name",
-                "created_at",
-                "user_id",
-                "description",
-                "status",
-            ],
-        ]
+                t.searchindex_id,
+                t.searchindex.index_name,
+                t.created_at,
+                t.user_id,
+                t.description,
+                t.status[-1].status,
+                t.name,
+                t.id,
+            ]
+        )
+    print_table(table_data)
 
-        for t in sketch.active_timelines:
-            table_data.append(
-                [
-                    t.searchindex_id,
-                    t.searchindex.index_name,
-                    t.created_at,
-                    t.user_id,
-                    t.description,
-                    t.status[0].status,
-                ]
-            )
-        print_table(table_data)
-
-        print("Shared with:")
+    print(f"Created by: {sketch.user.username}")
+    print("Shared with:")
+    print("\tUsers: (user_id, username)")
+    if sketch.collaborators:
         print("\tUsers: (user_id, username)")
         for user in sketch.collaborators:
             print(f"\t\t{user.id}: {user.username}")
-        print("\tGroups:")
+    else:
+        print("\tNo users shared with.")
+    print(f"\tGroups ({len(sketch.groups)}):")
+    if sketch.groups:
         for group in sketch.groups:
             print(f"\t\t{group.display_name}")
-        sketch_labels = [label.label for label in sketch.labels]
-        print(f"Sketch Status: {sketch.get_status.status}")
-        print(f"Sketch is public: {bool(sketch.is_public)}")
-        sketch_labels = ([label.label for label in sketch.labels],)
-        print(f"Sketch Labels: {sketch_labels}")
+    else:
+        print("\tNo groups shared with.")
+    sketch_labels = [label.label for label in sketch.labels]
+    print(f"Sketch Status: {sketch.get_status.status}")
+    print(f"Sketch is public: {bool(sketch.is_public)}")
+    sketch_labels = ([label.label for label in sketch.labels],)
+    print(f"Sketch Labels: {sketch_labels}")
 
-        status_table = [
-            [
-                "id",
-                "status",
-                "created_at",
-                "user_id",
-            ],
-        ]
-        for _status in sketch.status:
-            status_table.append(
-                [_status.id, _status.status, _status.created_at, _status.user_id]
-            )
-        print("Status:")
-        print_table(status_table)
+    status_table = [
+        [
+            "id",
+            "status",
+            "created_at",
+            "user_id",
+        ],
+    ]
+    for _status in sketch.status:
+        status_table.append(
+            [_status.id, _status.status, _status.created_at, _status.user_id]
+        )
+    print("Status:")
+    print_table(status_table)
 
 
 @cli.command(name="timeline-status")
-@click.argument("timeline_id")
+@click.argument("timeline_id", type=int)
 @click.option(
     "--action",
     default="get",
@@ -640,13 +676,13 @@ def sketch_info(sketch_id):
     type=click.Choice(["ready", "processing", "fail"]),
     help="get or set timeline status.",
 )
-def timeline_status(timeline_id: str, action: str, status: str):
+def timeline_status(timeline_id: int, action: str, status: str):
     """Get or set a timeline status.
 
     If "action" is "set", the given value of status will be written in the status.
 
     Args:
-        timeline_id (str): The ID of the timeline.
+        timeline_id (int): The ID of the timeline.
         action (str):  The action to perform ("get" or "set").
         status (str): The timeline status to set.  Must be one of "ready",
                       "processing", or "fail".
@@ -674,7 +710,7 @@ def timeline_status(timeline_id: str, action: str, status: str):
                 timeline.created_at,
                 timeline.user_id,
                 timeline.description,
-                timeline.status[0].status,
+                timeline.status[-1].status,
             ]
         )
         print_table(table_data)
@@ -804,37 +840,65 @@ def validate_context_links_conf(path):
 @cli.command(name="searchindex-info")
 @click.option(
     "--searchindex_id",
-    required=True,
-    help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+    type=int,
+    required=False,
+    help="Searchindex database ID to search for e.g. 3.",
 )
-def searchindex_info(searchindex_id: str):
+@click.option(
+    "--index_name",
+    required=False,
+    help="Searchindex name to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+)
+def searchindex_info(searchindex_id: int, index_name: str):
     """Search for a searchindex and print information about it.
-    Especially which sketch the searchindex belongs to.
+    Especially which sketch the searchindex belongs to. You can either use the
+    searchindex ID or the index name.
+
 
     Args:
-        searchindex_id (str): The search index ID to search for (e.g.,
+        searchindex_id (int): The searchindex database ID to search for (e.g.,
+                              "3").
+        index_name (str): The search index ID to search for (e.g.,
                               "4c5afdf60c6e49499801368b7f238353").
     """
+    if searchindex_id:
+        if not searchindex_id.isdigit():
+            print("Searchindex database ID needs to be an integer.")
+            return
 
-    index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+    index_to_search = None
 
-    if not index_to_search:
-        print(f"Searchindex: {searchindex_id} not found in database.")
+    if searchindex_id:
+        index_to_search = SearchIndex.query.filter_by(id=searchindex_id).first()
+    elif index_name:
+        index_to_search = SearchIndex.query.filter_by(index_name=index_name).first()
+    else:
+        print("Please provide either a searchindex ID or an index name")
         return
 
-    print(
-        f"Searchindex: {searchindex_id} Name: {index_to_search.name} found in database."
-    )
-    timeline = Timeline.query.filter_by(id=index_to_search.id).first()
-    print(
-        f"Corresponding Timeline id: {timeline.id} in Sketch Id: {timeline.sketch_id}"
-    )
-    sketch = Sketch.query.filter_by(id=timeline.sketch_id).first()
-    print(f"Corresponding Sketch id: {sketch.id} Sketch name: {sketch.name}")
+    if not index_to_search:
+        print("Searchindex not found in database.")
+        return
+
+    print(f"Searchindex: {index_to_search.id} Name: {index_to_search.name} found")
+
+    timelines = index_to_search.timelines
+    if timelines:
+        print("Associated Timelines:")
+        for timeline in timelines:
+            print(f"  ID: {timeline.id}, Name: {timeline.name}")
+            if timeline.sketch:
+                print(
+                    f"    Sketch ID: {timeline.sketch.id}, Name: {timeline.sketch.name}"
+                )
+            else:
+                print("    No associated sketch found.")
+    else:
+        print("No associated timelines found.")
+        return
 
 
 @cli.command(name="searchindex-status")
-@click.argument("searchindex_id")
 @click.option(
     "--action",
     default="get",
@@ -851,7 +915,7 @@ def searchindex_info(searchindex_id: str):
 @click.option(
     "--searchindex_id",
     required=True,
-    help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+    help="Searchindex database ID to search for e.g. 1.",
 )
 def searchindex_status(searchindex_id: str, action: str, status: str):
     """Get or set a searchindex status.
@@ -886,10 +950,32 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
                 searchindex.created_at,
                 searchindex.user_id,
                 searchindex.description,
-                searchindex.status[0].status,
+                searchindex.status[-1].status,
             ]
         )
         print_table(table_data)
+
+        # Display all historical statuses
+        if searchindex.status:
+            print("\nFull Status Value (only one should be there):")
+            status_history_table_data = [
+                ["ID", "Status", "Created At", "User ID", "Is Latest"],
+            ]
+            latest_status_obj = searchindex.status[-1]
+            for _status_entry in searchindex.status:
+                is_latest_marker = (
+                    "(latest)" if _status_entry == latest_status_obj else ""
+                )
+                status_history_table_data.append(
+                    [
+                        _status_entry.id,
+                        _status_entry.status,
+                        _status_entry.created_at,
+                        _status_entry.user.username if _status_entry.user else "N/A",
+                        is_latest_marker,
+                    ]
+                )
+            print_table(status_history_table_data)
     elif action == "set":
         searchindex = SearchIndex.query.filter_by(id=searchindex_id).first()
         if not searchindex:
@@ -915,6 +1001,7 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
 )
 @click.option(
     "--timeline_id",
+    type=int,
     required=False,
     help="Timeline ID if the analyzer results should be filtered by timeline.",
 )
@@ -1108,11 +1195,6 @@ def celery_tasks_redis():
     is_flag=True,
     help="Show all tasks, including pending, active, and failed.",
 )
-@click.option(
-    "--revoked",
-    is_flag=True,
-    help="Show revoked tasks.",
-)
 def celery_tasks(task_id, active, show_all):
     """Show running or past Celery tasks.
     This command provides various ways to inspect and view the status of
@@ -1166,8 +1248,8 @@ def celery_tasks(task_id, active, show_all):
         if not active_tasks:
             print("No active tasks found.")
             return
-        table_data = [["Task ID", "Name", "Time Start"]]
-        for tasks in active_tasks.items():
+        table_data = [["Task ID", "Name", "Time Start", "Worker name"]]
+        for worker_name, tasks in active_tasks.items():
             for task in tasks:
                 table_data.append(
                     [
@@ -1176,6 +1258,7 @@ def celery_tasks(task_id, active, show_all):
                         time.strftime(
                             "%Y-%m-%d %H:%M:%S", time.localtime(task["time_start"])
                         ),
+                        worker_name,
                     ]
                 )
         print_table(table_data)
@@ -1192,8 +1275,8 @@ def celery_tasks(task_id, active, show_all):
             print("No tasks found.")
             return
 
-        table_data = [["Task ID", "Name", "Status", "Time Start"]]
-        for tasks in all_tasks.items():
+        table_data = [["Task ID", "Name", "Status", "Time Start", "Worker name"]]
+        for worker_name, tasks in all_tasks.items():
             for task in tasks:
                 task_id = task["id"]
                 task_result = AsyncResult(task_id, app=celery)
@@ -1209,6 +1292,7 @@ def celery_tasks(task_id, active, show_all):
                         task["name"],
                         status,
                         time_start,
+                        worker_name,
                     ]
                 )
         print_table(table_data)
@@ -1242,3 +1326,50 @@ def celery_revoke_task(task_id):
         print(f"Task {task_id} has been revoked.")
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error revoking task {task_id}: {e}")
+
+
+@cli.command(name="list-config")
+def list_config():
+    """List all configuration variables loaded by the Flask application.
+
+    This command iterates through the application's configuration dictionary
+    (current_app.config). It identifies keys associated with potentially
+    sensitive information (e.g., passwords, API keys, secrets) based on a
+    predefined list of keywords.
+
+    The values corresponding to these sensitive keys are redacted and replaced
+    with '******** (redacted)' before printing. All other configuration
+    key-value pairs are printed as they are.
+
+    The output is formatted for readability, showing each configuration key
+    followed by its (potentially redacted) value.
+    """
+    print("Timesketch Configuration Variables:")
+    print("-" * 35)
+    # Keywords/patterns to identify sensitive keys (case-insensitive)
+    sensitive_keywords = [
+        "SECRET",
+        "PASSWORD",
+        "API_KEY",
+        "TOKEN",
+        "CREDENTIALS",
+        "AUTH",
+        "KEYFILE",
+        "SQLALCHEMY_DATABASE_URI",
+    ]
+
+    # Compile a regex pattern for efficiency
+    sensitive_pattern = re.compile("|".join(sensitive_keywords), re.IGNORECASE)
+
+    # Sort items for consistent output
+    config_items = sorted(current_app.config.items())
+    for key, value in config_items:
+        display_value = value
+
+        # Check if the key matches any sensitive patterns
+        if sensitive_pattern.search(key):
+            display_value = "******** (redacted)"
+
+        print(f"{key}: {display_value}")
+    print("-" * 35)
+    print("Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).")
