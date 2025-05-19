@@ -915,7 +915,7 @@ Exports a Timesketch sketch to a zip archive. The archive contains:
 2.  **Event Data File**: (e.g., `events.csv` or `events.jsonl`)
     *   All events from the sketch's active (not failed or processing) timelines, processed in batches to conserve memory.
     *   The format can be specified as CSV (default) or JSONL using the `--output-format` option.
-    *   By default, a predefined set (DEFAULT_SOURCE_FIELDS in `timesketch/lib/definitions.py`) of common event fields are exported. Use the `--all-fields` flag to include all available fields for each event.
+    *   By default all fields are exported. Using `--default-fields` a predefined set (DEFAULT_SOURCE_FIELDS in `timesketch/lib/definitions.py`) of common event fields are exported.
 
 **WARNING:** Re-importing this archive into Timesketch is not natively supported. This export is primarily for data archival, external analysis, or manual migration.
 
@@ -945,7 +945,6 @@ Gathering metadata...
   Processing comments for 4 event(s)...
   2025-05-14 10:02:00 INFO     GET http://opensearch:9200/ [status:200 request:0.008s]
   Exporting all event fields.
-WARNING: No valid indices found via primary method, trying fallback.
   Requesting event data (preferring JSONL)...
 2025-05-14 10:02:00 INFO     POST http://opensearch:9200/484a472fd004a72f2ee857c39a4fb17c,9c49430d1e5f42849bdb253647e1f836,5caa30a18efa4333971b42957d86d09e/_search?scroll=1m&search_type=query_then_fetch [status:200 request:0.214s]
 

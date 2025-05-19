@@ -77,7 +77,7 @@ DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE = (
 def configure_opensearch_logger():
     """Configure the opensearch-py logger for tsctl."""
     opensearch_logger = logging.getLogger("opensearch")
-    # Set level to INFO or higher to see request/response logs
+    # Set level to INFO to see more request/response logs
     opensearch_logger.setLevel(logging.WARNING)
     # Remove any default handlers to prevent duplicate or unwanted formatting
     opensearch_logger.handlers = []
@@ -1603,7 +1603,6 @@ def _fetch_and_prepare_event_data(
 
     indices, _ = lib_utils.get_validated_indices("_all", sketch)
     if not indices:
-        print("WARNING: No valid indices found via primary method, trying fallback.")
         indices = [t.searchindex.index_name for t in sketch.active_timelines]
         if not indices:
             raise ValueError(
@@ -1897,18 +1896,24 @@ def _create_export_archive(
     ),
 )
 @click.option(
-    "--all-fields",
+    "--default-fields",
     is_flag=True,
-    default=True,
-    help="Export all event fields instead of the default set.",
+    default=False,  # Default is now False, meaning all fields are exported by default
+    help=(
+        "Export only the default set of event fields. "
+        "If not specified, all fields are exported."
+    ),
 )
-def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields: bool):
+def export_sketch(
+    sketch_id: int, output_format: str, filename: str, default_fields: bool
+):
     """Exports a Timesketch sketch to a zip archive.
 
     The archive includes sketch metadata (as 'metadata.json') and all associated
     events, formatted as specified (CSV or JSONL). By default, only a predefined
-    set of common fields are exported. Use the --all-fields flag to export all
-    available fields for each event. Progress messages are printed to the console
+    set of common fields are exported. Use the --default-fields flag to export
+    only the default set of fields.
+    Progress messages are printed to the console
     during the export process.
 
     **WARNING:** Re-importing this archive into Timesketch is not natively
@@ -1958,12 +1963,14 @@ def export_sketch(sketch_id: int, output_format: str, filename: str, all_fields:
             port=current_app.config["OPENSEARCH_PORT"],
         )
 
-        if all_fields:
+        if default_fields:
+            print(
+                f"  Exporting default fields only: {', '.join(DEFAULT_SOURCE_FIELDS)}"
+            )
+            return_fields_to_fetch = DEFAULT_SOURCE_FIELDS
+        else:
             print("  Exporting all event fields.")
             return_fields_to_fetch = None  # Pass None to get all fields
-        else:
-            print(f"  Exporting default fields: {', '.join(DEFAULT_SOURCE_FIELDS)}")
-            return_fields_to_fetch = DEFAULT_SOURCE_FIELDS  # Use default fields
 
         input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
             sketch, datastore, return_fields_to_fetch
