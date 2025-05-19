@@ -23,7 +23,7 @@ limitations under the License.
         indeterminate
       ></v-progress-circular>
     </div>
-    <div :class="{ modal__content: true, 'no-pointer-events': isSubmitting }">
+    <div :class="modalClasses">
       <div>
         <h3 class="mb-4">Create Question</h3>
         <div class="d-flex align-center mb-4">
@@ -100,6 +100,8 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
+import AddQuestionModalLoader from "../Loaders/AddQuestionModalLoader.vue";
+
 
 export default {
   inject: ["addNewQuestion"],
@@ -107,7 +109,7 @@ export default {
     questions: Array,
     questionsTotal: Number,
     completedQuestionsTotal: Number,
-    isLoading: Boolean,
+
   },
   data() {
     return {
@@ -122,6 +124,12 @@ export default {
     this.fetchQuestionTemplates();
   },
   computed: {
+    modalClasses() {
+      return {
+        modal__content: true, 
+        'no-pointer-events': this.isSubmitting 
+      }
+    },
     sortedQuestions() {
       return this.questions && this.questions.length > 0
         ? [
@@ -154,21 +162,14 @@ export default {
           this.dfiqTemplates = dfiqTemplatesRes.data.objects;
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       } finally {
         this.isLoading = false;
       }
     },
-    async createQuestion(template) {
+    async createQuestion(question) {
       this.isSubmitting = true;
-
-      let questionText = this.queryString;
-      let templateId = null;
-
-      if (template) {
-        questionText = template?.name;
-        templateId = template?.id;
-      }
+      let questionText =  question.name || this.queryString;
 
       try {
         const question = await RestApiClient.createQuestion(
@@ -176,20 +177,32 @@ export default {
           null,
           null,
           questionText,
-          templateId
+          question?.id
         );
 
-        this.addNewQuestion(question.data.objects[0]);
-        this.store.setActiveQuestion(question.data.objects[0]);
+        const questionId = question.data.objects[0].id;
+
+        const conclusionText = `${this.store.currentUser}'s conclusion`;
+        const conclusionResponse = await RestApiClient.createQuestionConclusion(
+          this.store.sketch.id,
+          questionId,
+          conclusionText
+        );
+
+        const questionData = conclusionResponse.data.objects[0]
+        
+        this.addNewQuestion(questionData);
+        this.store.setActiveQuestion(questionData);
+        
         this.$emit("close-modal");
 
         this.store.setNotification({
-          text: `You added the question "${question.data.objects[0].name}" to this Sketch`,
+          text: `You added the question "${questionData.name}" to this Sketch`,
           icon: "mdi-plus-circle-outline",
           type: "success",
         });
       } catch (error) {
-        console.log(error);
+        console.error(error);
         this.store.setNotification({
           text: "Unable to add question to this Sketch. Please try again.",
           icon: "mdi-alert-circle-outline",

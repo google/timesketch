@@ -16,7 +16,10 @@ limitations under the License.
 <template>
   <div class="d-flex justify-space-between px-2">
     <h4 class="mb-2" v-if="questionsTotal">
-      {{ questionsTotal }} <span class="font-weight-regular">questions</span>
+      {{ questionsTotal }}
+      <span class="font-weight-regular"
+        >question{{ questionsTotal > 1 && "s" }}</span
+      >
     </h4>
     <v-btn
       variant="text"
@@ -37,26 +40,10 @@ limitations under the License.
       v-for="question in sortedQuestions"
       :key="question"
       :value="question"
+      :reportLocked="reportLocked"
       v-bind="question"
     />
   </v-list>
-  <div class="p-2 text-center">
-    <p class="mb-2">
-      Before regenerating, review existing questions. Previous unsaved questions
-      will remain, and new ones will be added.
-    </p>
-
-    <v-btn
-      variant="text"
-      size="small"
-      color="primary"
-      @click="regenerateQuestions()"
-      class="text-uppercase"
-    >
-      <v-icon icon="mdi-reload" class="mr-2" left small />
-      Regenerate Questions</v-btn
-    >
-  </div>
   <v-dialog
     transition="dialog-bottom-transition"
     v-model="showModal"
@@ -67,13 +54,11 @@ limitations under the License.
 </template>
 
 <script>
-import AddQuestionModal from "../Modals/AddQuestionModal.vue";
-import QuestionCard from "./QuestionCard.vue";
-
 export default {
   props: {
     questions: Array,
     questionsTotal: Number,
+    reportLocked: Boolean,
   },
   data() {
     return {

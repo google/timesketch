@@ -47,7 +47,7 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 import { useTheme } from 'vuetify'
-import {useRoute} from 'vue-router'
+import { useRoute } from 'vue-router'
 
 export default {
   data() {
@@ -72,9 +72,8 @@ export default {
   },
   setup() {
     return {
-      theme: useTheme(),
+      theme: useTheme()
     }
   }
 }
 </script>
-

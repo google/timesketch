@@ -25,13 +25,13 @@ limitations under the License.
       <div>
         <h2 class="mb-5 h5">Questions</h2>
         <QuestionsProgress
-          :questionsTotal="questionsTotal"
+          :questionsTotal="verifiedTotal"
           :completedQuestionsTotal="completedQuestionsTotal"
         />
       </div>
 
       <QuestionsListLoader v-if="isLoading" />
-      <QuestionsList :questions="sortedQuestions" :questionsTotal="questionsTotal"
+      <QuestionsList :questions="sortedQuestions" :questionsTotal="questionsTotal" :reportLocked="reportLocked"
     /></template>
   </v-col>
 </template>
@@ -47,11 +47,16 @@ export default {
       type: Number,
       default: 0,
     },
+    verifiedTotal: {
+      type: Number,
+      default: 0,
+    },
     isLoading: {
       type: Boolean,
       default: true,
     },
-    questions: Array
+    questions: Array,
+    reportLocked: Boolean,
   },
   computed: {
     sortedQuestions() {
