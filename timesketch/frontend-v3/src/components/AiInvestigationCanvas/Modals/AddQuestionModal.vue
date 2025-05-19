@@ -102,12 +102,14 @@ import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
 import AddQuestionModalLoader from "../Loaders/AddQuestionModalLoader.vue";
 
+
 export default {
   inject: ["addNewQuestion"],
   props: {
     questions: Array,
     questionsTotal: Number,
     completedQuestionsTotal: Number,
+
   },
   data() {
     return {

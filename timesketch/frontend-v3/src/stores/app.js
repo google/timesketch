@@ -106,6 +106,17 @@ export const useAppStore = defineStore("app", {
       this.notification = notification
     },
 
+    setActiveQuestion(question) {
+      this.activeContext = {
+        ...this.activeContext,
+        question
+      }
+    },
+
+    setNotification(notification) {
+      this.notification = notification
+    },
+
     async updateSketch(sketchId) {
       try {
         const response = await ApiClient.getSketch(sketchId);

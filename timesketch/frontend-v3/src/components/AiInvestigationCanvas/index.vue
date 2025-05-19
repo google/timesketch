@@ -68,6 +68,7 @@ import Sidebar from "./Sidebar";
 import RestApiClient from "@/utils/RestApiClient";
 import ResultsViewLoader from "./Loaders/ResultsViewLoader.vue";
 
+
 export default {
   data() {
     return {
@@ -92,7 +93,6 @@ export default {
       let questionsArray = [];
 
       try {
-
         try {
           await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
         } catch (error) {
