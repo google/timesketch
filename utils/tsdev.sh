@@ -174,7 +174,7 @@ case "$1" in
 	rebuild-dev)
 		echo "Rebuilding the development environment..."
 		echo "This will stop and remove existing dev containers, then build and start new ones."
-		(cd docker/dev && $s docker-compose down && $s docker-compose up -d)
+		(cd docker/dev && $s docker-compose down && $s docker-compose up --pull always --build -d)
 		echo "Rebuild complete. You might need to re-fetch the CONTAINER_ID if it changed."
 		;;
 	restart-dev)
