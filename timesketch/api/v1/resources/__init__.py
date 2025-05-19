@@ -270,15 +270,6 @@ class ResourceMixin:
         "updated_at": fields.DateTime("iso8601"),
     }
 
-    question_conclusion_event_fields = {
-        "_id": fields.String,
-        "event_id": fields.Integer,
-        "datetime": fields.String,
-        "message": fields.String,
-        "data_type": fields.String,
-        "timestamp_desc": fields.String,
-    }
-
     question_conclusion_fields = {
         "id": fields.Integer,
         "user": fields.Nested(user_fields),
@@ -286,7 +277,6 @@ class ResourceMixin:
         "automated": fields.Boolean,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
-        "conclusion_events": fields.List(fields.Nested(question_conclusion_event_fields)),
     }
 
     question_fields = {

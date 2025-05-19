@@ -49,7 +49,6 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchHistory
-from timesketch.models.sketch import InvestigativeQuestionConclusion
 
 
 logger = logging.getLogger("timesketch.event_api")
@@ -772,9 +771,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         self.parser.add_argument(
             "currentSearchNode_id", type=int, required=False, location="args"
         )
-        self.parser.add_argument(
-            "conclusion_id", type=int, required=False, location="args"
-        )
 
     def _get_sketch(self, sketch_id):
         """Helper function: Returns Sketch object given a sketch id.
@@ -908,8 +904,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     toggle = True
                 if "__ts_hidden" in form.annotation.data:
                     toggle = True
-                if "__ts_fact" in form.annotation.data:
-                    toggle = True
                 if form.remove.data:
                     toggle = True
 
@@ -927,23 +921,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     if "__ts_star" in form.annotation.data:
                         search_node_label = "__ts_star"
                     current_search_node.add_label(search_node_label)
-                conclusion_id = request.json.get("conclusion_id", None)
-
-                # Adding facts to conclusions
-                if current_search_node and "__ts_fact" in form.annotation.data:
-                    if hasattr(current_search_node, 'investigativequestion') and current_search_node.investigativequestion:
-                        if hasattr(current_search_node.investigativequestion, 'conclusions') and current_search_node.investigativequestion.conclusions:
-                            for conclusion in current_search_node.investigativequestion.conclusions:
-                                if conclusion.user_id == current_user.id:
-                                    event.conclusions.append(conclusion)
-                elif "__ts_fact" in form.annotation.data and conclusion_id:
-
-                    conclusion = InvestigativeQuestionConclusion.query.filter_by(id=conclusion_id).first()
-
-                    if conclusion:
-                        event.conclusions.append(conclusion)
-
-
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,

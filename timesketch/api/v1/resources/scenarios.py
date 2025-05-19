@@ -471,28 +471,7 @@ class QuestionOrphanListResource(resources.ResourceMixin, Resource):
         questions = InvestigativeQuestion.query.filter_by(
             sketch=sketch, scenario=None, facet=None
         ).all()
-        
-        for question in questions:
-            print('question',question)
-            for conclusion in question.conclusions: 
-                print('conclusion',conclusion)
-                conclusion.conclusion_events = []
-                for event in conclusion.events:
-                    print('conclusion',conclusion)
-                    query_string = f"_id:{event.document_id}"
-                    result = self.datastore.search(
-                        sketch_id=event.sketch_id,
-                        query_string=query_string,
-                        query_filter={},
-                        query_dsl={},
-                        indices=[event.searchindex.index_name],
-                    )
-                    
-                    _id = result['hits']['hits'][0]['_id']
-                    conclusionSource = result['hits']['hits'][0]['_source'] 
-                    conclusion.conclusion_events.append({ **conclusionSource, '_id': _id,  }) 
-
-                return self.to_json(questions)
+        return self.to_json(questions)
 
 
 class QuestionWithScenarioListResource(resources.ResourceMixin, Resource):
@@ -705,20 +684,6 @@ class QuestionResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.get_with_acl(sketch_id)
         question = InvestigativeQuestion.get_by_id(question_id)
-        for conclusion in question.conclusions:
-            conclusion.conclusion_events = []
-            for event in conclusion.events:
-                query_string = f"_id:{event.document_id}"
-                result = self.datastore.search(
-                    sketch_id=event.sketch_id,
-                    query_string=query_string,
-                    query_filter={},
-                    query_dsl={},
-                    indices=[event.searchindex.index_name],
-                )
-                _id = result['hits']['hits'][0]['_id']
-                conclusionSource = result['hits']['hits'][0]['_source'] 
-                conclusion.conclusion_events.append({ **conclusionSource, '_id': _id,  }) 
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
