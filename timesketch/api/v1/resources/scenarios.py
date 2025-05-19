@@ -52,7 +52,7 @@ def load_dfiq_from_config():
     """
     dfiq_path = current_app.config.get("DFIQ_PATH")
     if not current_app.config.get("DFIQ_ENABLED"):
-        logger.info("DFIQ is disabled. Enable in the timesketch.conf!")
+        logger.debug("DFIQ is disabled. Enable in the timesketch.conf!")
         return None
     if not dfiq_path:
         logger.error("No DFIQ_PATH configured")

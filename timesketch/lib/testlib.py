@@ -13,12 +13,11 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
-from __future__ import unicode_literals
 
 import codecs
 import json
-import six
 
+from typing import Optional, Dict
 from flask_testing import TestCase
 
 from timesketch.app import create_app
@@ -60,7 +59,7 @@ level: high
 """
 
 
-class TestConfig(object):
+class TestConfig:
     """Config for the test environment."""
 
     DEBUG = True
@@ -88,7 +87,7 @@ class TestConfig(object):
     EXAMPLES_NL2Q = "./tests/test_data/nl2q/test_examples_nl2q"
 
 
-class MockOpenSearchClient(object):
+class MockOpenSearchClient:
     """A mock implementation of a OpenSearch client."""
 
     def __init__(self):
@@ -159,7 +158,7 @@ class MockOpenSearchClient(object):
         return aggregation_search_result
 
 
-class MockOpenSearchIndices(object):
+class MockOpenSearchIndices:
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
@@ -175,7 +174,7 @@ class MockOpenSearchIndices(object):
         return True
 
 
-class MockDataStore(object):
+class MockDataStore:
     """A mock implementation of a Datastore."""
 
     event_dict = {
@@ -337,13 +336,14 @@ class MockDataStore(object):
     # pylint: disable=unused-argument
     def search_stream(
         self,
-        query_string,
-        query_filter,
-        query_dsl,
-        indices,
-        return_fields,
-        enable_scroll=True,
-        timeline_ids=None,
+        sketch_id: int,
+        indices: list,
+        query_string: str = "",
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        return_fields: Optional[list] = None,
+        enable_scroll: bool = True,
+        timeline_ids: Optional[list] = None,
     ):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
@@ -352,7 +352,7 @@ class MockDataStore(object):
         """No-op mock to flush_queued_events for the datastore."""
 
 
-class MockGraphDatabase(object):
+class MockGraphDatabase:
     """A mock implementation of a Datastore."""
 
     def __init__(self, host, username, password):
@@ -366,7 +366,7 @@ class MockGraphDatabase(object):
         self.username = username
         self.password = password
 
-    class MockQuerySequence(object):
+    class MockQuerySequence:
         """A mock implementation of a QuerySequence."""
 
         MOCK_GRAPH = [
@@ -402,7 +402,7 @@ class MockGraphDatabase(object):
             self.rows = self.MOCK_ROWS
             self.stats = self.MOCK_ROWS
 
-    class MockEmptyQuerySequence(object):
+    class MockEmptyQuerySequence:
         def __init__(self):
             self.graph = None
             self.rows = {}
@@ -577,7 +577,7 @@ class BaseTest(TestCase):
         view = View(
             name=name,
             query_string=name,
-            query_filter=json.dumps(dict()),
+            query_filter=json.dumps({}),
             user=user,
             sketch=sketch,
         )
@@ -593,7 +593,7 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name, query_string=name, query_filter=json.dumps(dict()), user=user
+            name=name, query_string=name, query_filter=json.dumps({}), user=user
         )
         self._commit_to_database(searchtemplate)
         return searchtemplate
@@ -685,7 +685,7 @@ class BaseTest(TestCase):
         """Authenticate the test user."""
         self.client.post(
             "/login/",
-            data=dict(username="test1", password="test"),
+            data={"username": "test1", "password": "test"},
             follow_redirects=True,
         )
 
@@ -693,7 +693,7 @@ class BaseTest(TestCase):
         """Authenticate the test user with admin privileges."""
         self.client.post(
             "/login/",
-            data=dict(username="testadmin", password="test"),
+            data={"username": "testadmin", "password": "test"},
             follow_redirects=True,
         )
 
@@ -708,7 +708,7 @@ class BaseTest(TestCase):
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        if isinstance(response.data, six.binary_type):
+        if isinstance(response.data, bytes):
             response_data = codecs.decode(response.data, "utf-8")
         else:
             response_data = response.data
@@ -722,6 +722,5 @@ class ModelBaseTest(BaseTest):
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""
         db_obj = model_cls.get_by_id(1)
-        for x in expected_result:
-            k, v = x[0], x[1]
-            self.assertEqual(db_obj.__getattribute__(k), v)
+        for key, value in expected_result:
+            self.assertEqual(getattr(db_obj, key), value)

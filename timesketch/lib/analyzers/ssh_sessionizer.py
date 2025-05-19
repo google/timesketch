@@ -1,7 +1,5 @@
 """SSH sessionizing sketch analyzer plugin."""
 
-from __future__ import unicode_literals
-
 import re
 
 from timesketch.lib.analyzers import manager
@@ -75,26 +73,26 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
                 client_ip = connection_match.group("client_ip")
                 client_port = connection_match.group("client_port")
 
-                session_id = "{0:s}_{1:s}".format(client_ip, client_port)
+                session_id = f"{client_ip:s}_{client_port:s}"
                 started_sessions_ids[process_id] = session_id
                 self.session_num += 1
 
             ssh_match = SSH_PATTERN.match(event_message)
             if ssh_match:
                 process_id = ssh_match.group("process_id")
-                if process_id in started_sessions_ids.keys():
+                if process_id in started_sessions_ids:
                     self.annotateEvent(event, started_sessions_ids[process_id])
 
         if self.session_num:
             self.sketch.add_view(
                 "SSH sessions",
                 self.NAME,
-                query_string="session_id.{0:s}:*".format(self.session_type),
+                query_string=f"session_id.{self.session_type:s}:*",
             )
 
         return (
-            "Sessionizing completed, number of {0:s} sessions created:"
-            " {1:d}".format(self.session_type, self.session_num)
+            "Sessionizing completed, number of {:s} sessions created:"
+            " {:d}".format(self.session_type, self.session_num)
         )
 
 

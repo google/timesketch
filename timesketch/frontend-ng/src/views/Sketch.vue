@@ -278,7 +278,15 @@ limitations under the License.
       <v-main class="notransition">
         <!-- Scenario context -->
         <!--<ts-scenario-navigation v-if="sketch.status && hasTimelines && !isArchived"></ts-scenario-navigation>-->
-        <ts-question-card v-if="sketch.status && hasTimelines && !isArchived && systemSettings.DFIQ_ENABLED"></ts-question-card>
+        <ts-question-card
+          v-if="
+            sketch.status &&
+            hasTimelines &&
+            !isArchived &&
+            systemSettings.DFIQ_ENABLED &&
+            !questionCardExclusionRoutes.includes(currentRouteName)
+          "
+        ></ts-question-card>
 
         <router-view
           v-if="sketch.status && hasTimelines && !isArchived"
@@ -412,20 +420,26 @@ export default {
       showQuestionMenu: false,
       showRightSidePanel: false,
       showSettingsDialog: false,
+      questionCardExclusionRoutes: [
+        'VisualizationNew',
+        'SigmaNewRule',
+        'Analyze',
+        'Story'
+      ],
     }
   },
   mounted() {
     this.loadingSketch = true
     this.showLeftPanel = false
-    this.$store.dispatch('updateSketch', this.sketchId).then(() => {
+    this.$store.dispatch('updateUserSettings').then(() =>
+      this.$store.dispatch('updateSketch', this.sketchId)).then(() => {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
-      this.$store.dispatch('updateSystemSettings')
-      this.$store.dispatch('updateUserSettings').then(() => {
+      this.$store.dispatch('updateSystemSettings').then(() => {
         if (this.userSettings.showLeftPanel) {
           this.toggleDrawer()
         }

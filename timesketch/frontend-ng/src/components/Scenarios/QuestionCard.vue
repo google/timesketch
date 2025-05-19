@@ -321,6 +321,17 @@ export default {
     TsQuestionConclusion,
     TsSearchChip,
   },
+  props: {
+    questionId: {
+      type: [String, Number],
+      default: null,
+    },
+    initialTab: {
+      type: Number,
+      default: 0,
+      validator: (value) => value >= 0 && value <= 2,
+    },
+  },
   data: function () {
     return {
       isLoading: false,
@@ -508,15 +519,24 @@ export default {
       this.suggestedQuery = {}
 
       // Set active tab
-      if (this.activeQuestion.conclusions.length) {
-        this.activeTab = 2
-      } else if (this.allSuggestedQueries.length) {
-        this.activeTab = 0
-      } else if (question.approaches.length) {
-        this.activeTab = 1
-      } else {
-        this.activeTab = 2
-      }
+     if (this.userSettings.generateQuery && this.systemSettings.LLM_PROVIDER) {
+       if (this.activeQuestion.conclusions.length) {
+         this.activeTab = 2
+       } else {
+         this.activeTab = 0
+       }
+     } else {
+       if (this.activeQuestion.conclusions.length) {
+         this.activeTab = 2
+       } else if (this.allSuggestedQueries.length) {
+         this.activeTab = 0
+       } else if (this.activeQuestion.approaches.length) {
+         this.activeTab = 1
+       } else {
+         this.activeTab = 2
+       }
+     }
+
 
       let payload = {
         scenarioId: null,
@@ -547,45 +567,85 @@ export default {
       eventData.incognito = true
       EventBus.$emit('setQueryAndFilter', eventData)
     },
+    fetchQuestion(questionId) {
+      this.isLoading = true;
+      return new Promise((resolve, reject) => {
+        ApiClient.getQuestion(this.sketch.id, questionId)
+          .then((response) => {
+            let data = response.data.objects[0]
+            resolve(data)
+          })
+          .catch((e) => {
+            console.error("Error fetching question:", e)
+            this.isLoading = false
+            this.activeQuestion = null
+            this.$emit('error', 'Failed to load question.')
+            reject(e)
+          })
+          .finally(() => {
+            this.isLoading = false
+          });
+      });
+    },
   },
   beforeDestroy() {
     EventBus.$off('createBranch')
   },
   mounted() {
     EventBus.$on('createBranch', this.getSearchHistory)
-    let questionUUID = this.$route.query.question_uuid
-    this.getQuestionTemplates()
-    this.getSketchQuestions().then(() => {
-      if (questionUUID) {
-        const question = this.sketchQuestions.find((question) => question.uuid === questionUUID)
-        if (!question) {
-          this.errorSnackBar('No question found with that UUID')
-          this.showEmptySelect = true
-          return
+    if (this.questionId) {
+      this.fetchQuestion(this.questionId)
+        .then((question) => {
+          if (question) {
+            this.activeQuestion = question
+            this.expanded = true
+            if (this.initialTab) {
+              this.activeTab = this.initialTab
+            } else {
+              this.activeTab = 2
+            }
+          } else {
+            console.error("No question found with ID: ", this.questionId)
+          }
+        })
+        .catch((error) => {
+          console.error("Error in mounted:", error)
+        })
+    } else {
+      let questionUUID = this.$route.query.question_uuid
+      this.getQuestionTemplates()
+      this.getSketchQuestions().then(() => {
+        if (questionUUID) {
+          const question = this.sketchQuestions.find((question) => question.uuid === questionUUID)
+          if (!question) {
+            this.errorSnackBar('No question found with that UUID')
+            this.showEmptySelect = true
+            return
+          }
+          this.setActiveQuestion(question)
         }
-        this.setActiveQuestion(question)
-      }
-    })
-    if (!questionUUID) {
-      // Restore active question from local storage
-      let storageKey = 'sketchContext' + this.sketch.id.toString()
-      let storedContext = localStorage.getItem(storageKey)
-      let context = {}
-      if (storedContext) {
-        context = JSON.parse(storedContext)
-      }
-      if (Object.keys(context).length) {
-        this.isLoading = true
-        ApiClient.getQuestion(this.sketch.id, context.questionId)
-          .then((response) => {
-            this.setActiveQuestion(response.data.objects[0])
-            this.isLoading = false
-          })
-          .catch((e) => {
-            console.error(e)
-          })
-      } else {
-        this.showEmptySelect = true
+      })
+      if (!questionUUID) {
+        // Restore active question from local storage
+        let storageKey = 'sketchContext' + this.sketch.id.toString()
+        let storedContext = localStorage.getItem(storageKey)
+        let context = {}
+        if (storedContext) {
+          context = JSON.parse(storedContext)
+        }
+        if (Object.keys(context).length) {
+          this.isLoading = true
+          ApiClient.getQuestion(this.sketch.id, context.questionId)
+            .then((response) => {
+              this.setActiveQuestion(response.data.objects[0])
+              this.isLoading = false
+            })
+            .catch((e) => {
+              console.error(e)
+            })
+        } else {
+          this.showEmptySelect = true
+        }
       }
     }
   },

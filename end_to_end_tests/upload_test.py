@@ -137,7 +137,9 @@ class UploadTest(interface.BaseEndToEndTest):
         # check that timeline threw the correct error
         self.assertions.assertEqual(timeline.name, file_path)
         self.assertions.assertEqual(timeline.index.name, str(rand))
-        self.assertions.assertEqual(timeline.index.status, "fail")
+        self.assertions.assertEqual(
+            timeline.data_sources[0]["status"][0]["status"], "fail"
+        )
         self.assertions.assertIn(
             "OPENSEARCH_MAPPING_UPPER_LIMIT", timeline.data_sources[0]["error_message"]
         )

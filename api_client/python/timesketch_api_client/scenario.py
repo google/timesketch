@@ -159,7 +159,7 @@ def getScenarioTemplateList(api):
         api: An instance of TimesketchApi object.
 
     Returns:
-        list: A list of Scenario tempaltes.
+        list: A list of Scenario templates.
     """
     resource_url = f"{api.api_root}/scenarios/"
     response = api.session.get(resource_url)
@@ -175,7 +175,7 @@ def getQuestionTemplateList(api):
         api: An instance of TimesketchApi object.
 
     Returns:
-        list: A list of Question tempaltes.
+        list: A list of Question templates.
     """
     resource_url = f"{api.api_root}/questions/"
     response = api.session.get(resource_url)

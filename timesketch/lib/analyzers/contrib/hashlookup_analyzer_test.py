@@ -1,7 +1,7 @@
 """Test for Hashlookup"""
 
 import copy
-import mock
+from unittest import mock
 
 from flask import current_app
 
@@ -42,7 +42,7 @@ class TestHashlookup(BaseTest):
             ("Hashlookup Matches: 1"),
         )
         url = f"https://test.com/sha256/{SHA256_HASH}"
-        mock_requests_get.assert_called_with(url)
+        mock_requests_get.assert_called_with(url, timeout=30)
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch("requests.get")
@@ -64,4 +64,4 @@ class TestHashlookup(BaseTest):
             ("Hashlookup Matches: 0"),
         )
         url = f"https://test.com/sha256/{SHA256_N_HASH}"
-        mock_requests_get.assert_called_with(url)
+        mock_requests_get.assert_called_with(url, timeout=30)

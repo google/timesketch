@@ -89,6 +89,7 @@ limitations under the License.
               :key="item.id + item.name"
               :is-selected="isEnabled(item)"
               @toggle="toggleTimeline"
+              @save="save"
               @disableAllOtherTimelines="disableAllOtherTimelines"
               :timeline="item"
             >
@@ -135,6 +136,9 @@ limitations under the License.
                   </v-tooltip>
 
                   <span class="right">
+                    <span v-if="slotProps.timelineStatus === 'processing'" class="ml-3 mr-3">
+                        <v-progress-circular small indeterminate color="grey" :size="17" :width="2"></v-progress-circular>
+                    </span>
                     <span v-if="!slotProps.timelineFailed" class="events-count mr-1" x-small>
                       {{ getCount(item) | compactNumber }}
                     </span>
@@ -165,9 +169,11 @@ limitations under the License.
 
 <script>
 import EventBus from '../../event-bus.js'
+import ApiClient from '../../utils/RestApiClient.js'
 
 import TsUploadTimelineForm from '../UploadForm.vue'
 import TsTimelineComponent from '../Explore/TimelineComponent.vue'
+
 export default {
   props: {
     iconOnly: Boolean,
@@ -195,6 +201,14 @@ export default {
         return a.name.localeCompare(b.name)
       })
     },
+    settings() {
+      return this.$store.state.settings
+    },
+  },
+  watch: {
+    'settings.showProcessingTimelineEvents': function (newValue, oldValue) {
+      this.updateEnabledTimelines(oldValue === undefined)
+    },
   },
   methods: {
     isEnabled(timeline) {
@@ -206,8 +220,35 @@ export default {
     disableAllOtherTimelines(timeline) {
       this.$store.dispatch('updateEnabledTimelines', [timeline.id])
     },
+    updateEnabledTimelines(isNewSelection) {
+      let timelines = this.activeTimelines
+
+      if (isNewSelection) {
+        if (!this.settings.showProcessingTimelineEvents) {
+          timelines = timelines.filter((tl) => tl.status[0].status !== 'processing')
+        }
+      } else {
+        timelines = timelines.filter((tl) => this.$store.state.enabledTimelines.includes(tl.id))
+        if (this.settings.showProcessingTimelineEvents) {
+          this.activeTimelines.forEach((tl) => {
+            if (!timelines.includes(tl) && tl.status[0].status === 'processing') {
+              timelines.push(tl)
+            }
+          })
+          timelines.sort((a, b) => a.id - b.id)
+        }
+      }
+
+      let timelineIds = timelines.map((tl) => tl.id)
+
+      this.$store.dispatch('updateEnabledTimelines', timelineIds)
+    },
     timelineStyle(timelineStatus, isSelected) {
-      const greyOut = timelineStatus === 'ready' && !isSelected
+      let statusList = ['ready']
+      if (this.settings.showProcessingTimelineEvents) {
+        statusList.push('processing')
+      }
+      const greyOut = statusList.includes(timelineStatus) && !isSelected
       return {
         opacity: greyOut ? '50%' : '100%',
       }
@@ -225,6 +266,19 @@ export default {
       }
       return count
     },
+    save(timeline, newTimelineName = false) {
+      ApiClient.saveSketchTimeline(
+        this.sketch.id,
+        timeline.id,
+        newTimelineName || timeline.name,
+        timeline.description,
+        timeline.color
+      )
+        .then(() => this.$store.dispatch('updateSketch', this.sketch.id))
+        .catch((e) => {
+          console.error(e)
+        })
+    },
   },
   data: function () {
     return {
@@ -237,10 +291,7 @@ export default {
     }
   },
   created() {
-    this.$store.dispatch(
-      'updateEnabledTimelines',
-      this.activeTimelines.map((tl) => tl.id)
-    )
+    this.updateEnabledTimelines(true)
   },
   mounted() {
     EventBus.$on('updateCountPerTimeline', this.updateCountPerTimeline)
@@ -256,9 +307,10 @@ export default {
 .chip-content {
   flex: 1;
   margin: 0;
-  padding: 0 10px;
+  padding-left: 10px;
   display: flex;
   align-items: center;
+  width:340px;
 }
 
 .timeline-name.disabled {
@@ -268,5 +320,11 @@ export default {
   align-items: center;
   display: flex;
   margin-left: auto;
+  max-width: 50%;
 }
+
+.timeline-name-ellipsis {
+  width: 50%;
+}
+
 </style>

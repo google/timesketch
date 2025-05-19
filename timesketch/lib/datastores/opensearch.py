@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """OpenSearch datastore."""
-from __future__ import unicode_literals
 
 from collections import Counter
 import copy
@@ -21,7 +20,7 @@ import json
 import logging
 import socket
 from uuid import uuid4
-import six
+from typing import Union, Optional, Dict
 
 from dateutil import parser, relativedelta
 from opensearchpy import OpenSearch
@@ -39,11 +38,12 @@ import prometheus_client
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
+from timesketch.lib import errors
 
 
 # Setup logging
-es_logger = logging.getLogger("timesketch.opensearch")
-es_logger.setLevel(logging.WARNING)
+os_logger = logging.getLogger("timesketch.opensearch")
+os_logger.setLevel(logging.WARNING)
 
 # Metrics definitions
 METRICS = {
@@ -97,7 +97,7 @@ if (!removedLabel) {
 """
 
 
-class OpenSearchDataStore(object):
+class OpenSearchDataStore:
     """Implements the datastore."""
 
     DEFAULT_SIZE = 100
@@ -108,6 +108,11 @@ class OpenSearchDataStore(object):
 
     DEFAULT_FLUSH_RETRY_LIMIT = 3  # Max retries for flushing the queue.
     DEFAULT_EVENT_IMPORT_TIMEOUT = 180  # Timeout value in seconds for importing events.
+
+    DEFAULT_INDEX_WAIT_TIMEOUT = 10  # Seconds to wait for an index to become ready
+    DEFAULT_MINIMUM_HEALTH = (
+        "yellow"  # Minimum health status required ('yellow' or 'green')
+    )
 
     def __init__(self, host="127.0.0.1", port=9200):
         """Create a OpenSearch client."""
@@ -142,9 +147,81 @@ class OpenSearchDataStore(object):
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
         )
+        self.index_timeout = current_app.config.get(
+            "OPENSEARCH_INDEX_TIMEOUT", self.DEFAULT_INDEX_WAIT_TIMEOUT
+        )
+        self.min_health = current_app.config.get(
+            "OPENSEARCH_MINIMUM_HEALTH", self.DEFAULT_MINIMUM_HEALTH
+        )
+
+    def _wait_for_index(
+        self, index_name: str, timeout_seconds: Optional[int] = None
+    ) -> bool:
+        """Waits for a specific index to reach at least yellow status.
+
+        Args:
+            index_name: The name of the index to wait for.
+            timeout_seconds: How long to wait in seconds. Defaults to config setting.
+
+        Returns:
+            True if the index became ready within the timeout, False otherwise.
+        """
+        if timeout_seconds is None:
+            timeout_seconds = self.index_timeout
+
+        os_logger.debug(
+            "Waiting up to %ds for index '%s' to reach status '%s'...",
+            timeout_seconds,
+            index_name,
+            self.min_health,
+        )
+
+        try:
+            # wait_for_status will block until the status is met or timeout occurs.
+            # pylint: disable=unexpected-keyword-arg
+            self.client.cluster.health(
+                index=index_name,
+                wait_for_status=self.min_health,
+                timeout=timeout_seconds,
+                level="indices",
+            )
+            os_logger.debug("Index '%s' is ready.", index_name)
+            return True
+        except ConnectionTimeout:
+            os_logger.error(
+                "Timeout (%ds) waiting for index '%s' to reach status '%s'.",
+                timeout_seconds,
+                index_name,
+                self.min_health,
+                exc_info=False,  # Keep log cleaner on expected timeouts
+            )
+            return False
+        except NotFoundError:
+            os_logger.error(
+                "Index '%s' not found while waiting for readiness.", index_name
+            )
+            return False
+        except TransportError as e:
+            # Handle other potential transport errors during the health check
+            os_logger.error(
+                "Error checking health for index '%s': %s",
+                index_name,
+                str(e),
+                exc_info=True,
+            )
+            return False
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch unexpected errors
+            os_logger.error(
+                "Unexpected error waiting for index '%s': %s",
+                index_name,
+                str(e),
+                exc_info=True,
+            )
+            return False
 
     @staticmethod
-    def _build_labels_query(sketch_id, labels):
+    def _build_labels_query(sketch_id: int, labels: list):
         """Build OpenSearch query for Timesketch labels.
 
         Args:
@@ -190,7 +267,7 @@ class OpenSearchDataStore(object):
         return query_dict
 
     @staticmethod
-    def _build_query_dsl(query_dsl, timeline_ids):
+    def _build_query_dsl(query_dsl: dict, timeline_ids: Union[int, list, None]):
         """Build OpenSearch Search DSL query by adding in timeline filtering.
 
         Args:
@@ -204,14 +281,14 @@ class OpenSearchDataStore(object):
             return query_dsl
 
         if not isinstance(timeline_ids, (list, tuple)):
-            es_logger.error(
+            os_logger.error(
                 "Attempting to pass in timelines to a query DSL, but the "
                 "passed timelines are not a list."
             )
             return query_dsl
 
-        if not all([isinstance(x, int) for x in timeline_ids]):
-            es_logger.error("All timeline IDs need to be an integer.")
+        if not all(isinstance(x, int) for x in timeline_ids):
+            os_logger.error("All timeline IDs need to be an integer.")
             return query_dsl
 
         old_query = query_dsl.get("query")
@@ -250,7 +327,7 @@ class OpenSearchDataStore(object):
         return query_dsl
 
     @staticmethod
-    def _convert_to_time_range(interval):
+    def _convert_to_time_range(interval: str):
         """Convert an interval timestamp into start and end dates.
 
         Args:
@@ -262,8 +339,12 @@ class OpenSearchDataStore(object):
         """
         # return ('2018-12-05T00:00:00', '2018-12-05T23:59:59')
         TS_FORMAT = "%Y-%m-%dT%H:%M:%S"
-        get_digits = lambda s: int("".join(filter(str.isdigit, s)))
-        get_alpha = lambda s: "".join(filter(str.isalpha, s))
+        get_digits = lambda s: int(  # pylint: disable=unnecessary-lambda-assignment
+            "".join(filter(str.isdigit, s))
+        )
+        get_alpha = lambda s: "".join(  # pylint: disable=unnecessary-lambda-assignment
+            filter(str.isalpha, s)
+        )
 
         ts_parts = interval.split(" ")
         # The start date could be 1 or 2 first items
@@ -294,12 +375,12 @@ class OpenSearchDataStore(object):
 
     def build_query(
         self,
-        sketch_id,
-        query_string,
-        query_filter,
-        query_dsl=None,
-        aggregations=None,
-        timeline_ids=None,
+        sketch_id: int,
+        query_string: str,
+        query_filter: Dict,
+        query_dsl: Optional[Dict] = None,
+        aggregations: Optional[Dict] = None,
+        timeline_ids: Optional[list] = None,
     ):
         """Build OpenSearch DSL query.
 
@@ -416,7 +497,7 @@ class OpenSearchDataStore(object):
                         must_not_filters.append(term_filter)
 
                 elif chip["type"].startswith("datetime"):
-                    range_filter = lambda start, end: {
+                    range_filter = lambda start, end: {  # pylint: disable=unnecessary-lambda-assignment
                         "range": {"datetime": {"gte": start, "lte": end}}
                     }
                     if chip["type"] == "datetime_range":
@@ -499,36 +580,59 @@ class OpenSearchDataStore(object):
     # pylint: disable=too-many-arguments
     def search(
         self,
-        sketch_id,
-        query_string,
-        query_filter,
-        query_dsl,
-        indices,
-        count=False,
-        aggregations=None,
-        return_fields=None,
-        enable_scroll=False,
-        timeline_ids=None,
-    ):
-        """Search OpenSearch. This will take a query string from the UI
-        together with a filter definition. Based on this it will execute the
-        search request on OpenSearch and get result back.
+        sketch_id: int,
+        indices: list,
+        query_string: str = "",
+        query_filter: Optional[Dict] = None,
+        count: bool = False,
+        query_dsl: Optional[Dict] = None,
+        aggregations: Optional[Dict] = None,
+        return_fields: Optional[list] = None,
+        enable_scroll: bool = False,
+        timeline_ids: Optional[list] = None,
+    ) -> Union[Dict, int]:
+        """Executes a search query against OpenSearch indices.
+
+        This method constructs and sends a search request to OpenSearch based
+        on the provided query string, filters, and optional DSL. It handles
+        different search scenarios, including counting results, fetching specific
+        fields, and enabling scrolling for large result sets.
 
         Args:
-            sketch_id: Integer of sketch primary key
-            query_string: Query string
-            query_filter: Dictionary containing filters to apply
-            query_dsl: Dictionary containing OpenSearch DSL query
-            indices: List of indices to query
-            count: Boolean indicating if we should only return result count
-            aggregations: Dict of OpenSearch aggregations
-            return_fields: List of fields to return
-            enable_scroll: If OpenSearch scroll API should be used
+            sketch_id: The ID of the sketch the search is performed within. Used
+                for building label filters.
+            indices: A list of OpenSearch index names to query.
+            query_string: The query string to search for (e.g., "hostname:evil.com").
+                Defaults to an empty string.
+            query_filter: An optional dictionary containing filters to apply to
+                the search results. Common keys include 'from' (pagination start),
+                'size' (number of results), 'events' (list of specific event IDs),
+                and 'chips' (list of UI filter chips). Defaults to None.
+            count: If True, only return the total number of documents matching
+                the query instead of the documents themselves. Defaults to False.
+            query_dsl: An optional dictionary representing the full OpenSearch
+                Search DSL query body. If provided, this overrides the
+                `query_string` and `query_filter` for the main query part,
+                but `query_filter` is still used for pagination/size. Defaults to None.
+            aggregations: An optional dictionary containing OpenSearch aggregation
+                definitions to include in the search request. Defaults to None.
+            return_fields: An optional list of fields to include in the returned
+                documents. If None, all fields are returned. Defaults to None.
+            enable_scroll: If True, enables the OpenSearch scroll API for
+                retrieving large result sets. Defaults to False.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
         Returns:
-            Set of event documents in JSON format
+            A dictionary containing the raw response from the OpenSearch search
+            API. The structure typically includes 'hits' (containing 'hits' list
+            of documents and 'total' count) and 'took' (time taken). If `count`
+            is True, returns an integer representing the total count.
+
+        Raises:
+            ValueError: If there is a RequestError or TransportError from
+                OpenSearch during the search execution, indicating an issue
+                with the query or connection.
         """
         scroll_timeout = None
         if enable_scroll:
@@ -540,6 +644,9 @@ class OpenSearchDataStore(object):
 
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
+
+        if query_filter is None:
+            query_filter = {}
 
         # Check if we have specific events to fetch and get indices.
         if query_filter.get("events", None):
@@ -568,8 +675,8 @@ class OpenSearchDataStore(object):
             try:
                 count_result = self.client.count(body=query_dsl, index=list(indices))
             except NotFoundError:
-                es_logger.error(
-                    "Unable to count due to an index not found: {0:s}".format(
+                os_logger.error(
+                    "Unable to count due to an index not found: {:s}".format(
                         ",".join(indices)
                     )
                 )
@@ -614,7 +721,7 @@ class OpenSearchDataStore(object):
                 error_items = []
                 for cause in root_cause:
                     error_items.append(
-                        "[{0:s}] {1:s}".format(
+                        "[{:s}] {:s}".format(
                             cause.get("type", ""), cause.get("reason", "")
                         )
                     )
@@ -622,25 +729,35 @@ class OpenSearchDataStore(object):
             else:
                 cause = str(e)
 
-            es_logger.error(
-                "Unable to run search query: {0:s}".format(cause), exc_info=True
+            os_logger.error(
+                "Unable to run search query. Error: %s. "
+                "Sketch ID: %s. Indices: %s. ",
+                cause,
+                sketch_id,
+                indices,
+                exc_info=True,
             )
-            raise ValueError(cause) from e
+            user_friendly_message = (
+                f"There was an issue with your search query: {cause}. "
+                "Please review your query syntax and try again."
+            )
+            raise ValueError(user_friendly_message) from e
 
         METRICS["search_requests"].labels(type="single").inc()
         return _search_result
 
     # pylint: disable=too-many-arguments
+
     def search_stream(
         self,
-        sketch_id=None,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        indices=None,
-        return_fields=None,
-        enable_scroll=True,
-        timeline_ids=None,
+        sketch_id: int,
+        indices: list,
+        query_string: str = "",
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        return_fields: Optional[list] = None,
+        enable_scroll: bool = True,
+        timeline_ids: Optional[list] = None,
     ):
         """Search OpenSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
@@ -657,13 +774,16 @@ class OpenSearchDataStore(object):
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
-        Returns:
+        Yields:
             Generator of event documents in JSON format
         """
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
         METRICS["search_requests"].labels(type="stream").inc()
+
+        if query_filter is None:
+            query_filter = {}
 
         if not query_filter.get("size"):
             query_filter["size"] = self.DEFAULT_STREAM_LIMIT
@@ -694,18 +814,16 @@ class OpenSearchDataStore(object):
         if isinstance(scroll_size, dict):
             scroll_size = scroll_size.get("value", 0)
 
-        for event in result["hits"]["hits"]:
-            yield event
+        yield from result["hits"]["hits"]
 
         while scroll_size > 0:
             # pylint: disable=unexpected-keyword-arg
             result = self.client.scroll(scroll_id=scroll_id, scroll="5m")
             scroll_id = result["_scroll_id"]
             scroll_size = len(result["hits"]["hits"])
-            for event in result["hits"]["hits"]:
-                yield event
+            yield from result["hits"]["hits"]
 
-    def get_filter_labels(self, sketch_id, indices):
+    def get_filter_labels(self, sketch_id: int, indices: list):
         """Aggregate labels for a sketch.
 
         Args:
@@ -769,8 +887,8 @@ class OpenSearchDataStore(object):
         try:
             result = self.client.search(index=indices, body=aggregation, size=0)
         except NotFoundError:
-            es_logger.error(
-                "Unable to find the index/indices: {0:s}".format(",".join(indices))
+            os_logger.error(
+                "Unable to find the index/indices: {:s}".format(",".join(indices))
             )
             return labels
 
@@ -790,7 +908,7 @@ class OpenSearchDataStore(object):
         return labels
 
     # pylint: disable=inconsistent-return-statements
-    def get_event(self, searchindex_id, event_id):
+    def get_event(self, searchindex_id: str, event_id: str):
         """Get one event from the datastore.
 
         Args:
@@ -801,6 +919,7 @@ class OpenSearchDataStore(object):
             Event document in JSON format
         """
         METRICS["search_get_event"].inc()
+
         try:
             # Suppress the lint error because opensearchpy adds parameters
             # to the function with a decorator and this makes pylint sad.
@@ -821,9 +940,12 @@ class OpenSearchDataStore(object):
             return event
 
         except NotFoundError:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"Event '{event_id}' not found in index '{searchindex_id}'.",
+            )
 
-    def count(self, indices):
+    def count(self, indices: list):
         """Count number of documents.
 
         Args:
@@ -832,9 +954,6 @@ class OpenSearchDataStore(object):
         Returns:
             Tuple containing number of documents and size on disk.
         """
-        if not indices:
-            return 0, 0
-
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
@@ -842,11 +961,11 @@ class OpenSearchDataStore(object):
             es_stats = self.client.indices.stats(index=indices, metric="docs, store")
 
         except NotFoundError:
-            es_logger.error("Unable to count indices (index not found)")
+            os_logger.error("Unable to count indices (index not found)")
             return 0, 0
 
         except RequestError:
-            es_logger.error("Unable to count indices (request error)", exc_info=True)
+            os_logger.error("Unable to count indices (request error)", exc_info=True)
             return 0, 0
 
         doc_count_total = (
@@ -866,14 +985,14 @@ class OpenSearchDataStore(object):
 
     def set_label(
         self,
-        searchindex_id,
-        event_id,
-        sketch_id,
-        user_id,
-        label,
-        toggle=False,
-        remove=False,
-        single_update=True,
+        searchindex_id: str,
+        event_id: str,
+        sketch_id: int,
+        user_id: int,
+        label: str,
+        toggle: bool = False,
+        remove: bool = False,
+        single_update: bool = True,
     ):
         """Set label on event in the datastore.
 
@@ -911,9 +1030,11 @@ class OpenSearchDataStore(object):
 
         if not single_update:
             script = update_body["script"]
-            return dict(
-                source=script["source"], lang=script["lang"], params=script["params"]
-            )
+            return {
+                "source": script["source"],
+                "lang": script["lang"],
+                "params": script["params"],
+            }
 
         doc = self.client.get(index=searchindex_id, id=event_id)
         try:
@@ -926,7 +1047,9 @@ class OpenSearchDataStore(object):
 
         return None
 
-    def create_index(self, index_name=uuid4().hex, mappings=None):
+    def create_index(
+        self, index_name: str = uuid4().hex, mappings: Optional[Dict] = None
+    ):
         """Create index with Timesketch settings.
 
         Args:
@@ -953,12 +1076,21 @@ class OpenSearchDataStore(object):
                     index=index_name, body={"mappings": _document_mapping}
                 )
             except ConnectionError as e:
-                raise RuntimeError("Unable to connect to Timesketch backend.") from e
+                raise errors.DatastoreConnectionError(
+                    "Unable to connect to Timesketch backend when creating "
+                    f"index [{index_name}]."
+                ) from e
             except RequestError:
                 index_exists = self.client.indices.exists(index_name)
-                es_logger.warning(
+                os_logger.warning(
                     "Attempting to create an index that already exists "
-                    "({0:s} - {1:s})".format(index_name, str(index_exists))
+                    "({:s} - {:s})".format(index_name, str(index_exists))
+                )
+            # Wait for the index to become ready
+            if not self._wait_for_index(index_name):
+                raise errors.IndexNotReadyError(
+                    f"Index '{index_name}' was created but did not become ready "
+                    f"within the timeout period of {self.DEFAULT_INDEX_WAIT_TIMEOUT}s."
                 )
 
         return index_name
@@ -974,16 +1106,16 @@ class OpenSearchDataStore(object):
                 self.client.indices.delete(index=index_name)
             except ConnectionError as e:
                 raise RuntimeError(
-                    "Unable to connect to Timesketch backend: {}".format(e)
+                    f"Unable to connect to Timesketch backend: {e}"
                 ) from e
 
     def import_event(
         self,
-        index_name,
-        event=None,
-        event_id=None,
-        flush_interval=None,
-        timeline_id=None,
+        index_name: str,
+        event: Optional[Dict] = None,
+        event_id: Optional[str] = None,
+        flush_interval: Optional[int] = None,
+        timeline_id: Optional[int] = None,
     ):
         """Add event to OpenSearch.
 
@@ -998,11 +1130,11 @@ class OpenSearchDataStore(object):
         """
         if event:
             for k, v in event.items():
-                if not isinstance(k, six.text_type):
+                if not isinstance(k, str):
                     k = codecs.decode(k, "utf8")
 
                 # Make sure we have decoded strings in the event dict.
-                if isinstance(v, six.binary_type):
+                if isinstance(v, bytes):
                     v = codecs.decode(v, "utf8")
 
                 event[k] = v
@@ -1068,13 +1200,13 @@ class OpenSearchDataStore(object):
             )
         except (ConnectionTimeout, socket.timeout):
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
-                es_logger.error(
+                os_logger.error(
                     "Unable to add events, reached recount max.", exc_info=True
                 )
                 return {}
 
-            es_logger.error(
-                "Unable to add events (retry {0:d}/{1:d})".format(
+            os_logger.error(
+                "Unable to add events (retry {:d}/{:d})".format(
                     retry_count, self.DEFAULT_FLUSH_RETRY_LIMIT
                 )
             )
@@ -1087,7 +1219,7 @@ class OpenSearchDataStore(object):
             items = results.get("items", [])
             return_dict["errors"] = []
 
-            es_logger.error("Errors while attempting to upload events.")
+            os_logger.error("Errors while attempting to upload events.")
             for item in items:
                 index = item.get("index", {})
                 index_name = index.get("_index", "N/A")
@@ -1108,13 +1240,13 @@ class OpenSearchDataStore(object):
                 caused_reason = caused_by.get("reason", "Unknown Detailed Reason")
 
                 error_counter[error.get("type")] += 1
-                detail_msg = "{0:s}/{1:s}".format(
+                detail_msg = "{:s}/{:s}".format(
                     caused_by.get("type", "Unknown Detailed Type"),
                     " ".join(caused_reason.split()[:5]),
                 )
                 error_detail_counter[detail_msg] += 1
 
-                error_msg = "<{0:s}> {1:s} [{2:s}/{3:s}]".format(
+                error_msg = "<{:s}> {:s} [{:s}/{:s}]".format(
                     error.get("type", "Unknown Type"),
                     error.get("reason", "No reason given"),
                     caused_by.get("type", "Unknown Type"),
@@ -1122,16 +1254,14 @@ class OpenSearchDataStore(object):
                 )
                 error_list.append(error_msg)
                 try:
-                    es_logger.error(
-                        "Unable to upload document: {0:s} to index {1:s} - "
-                        "[{2:d}] {3:s}".format(
-                            doc_id, index_name, status_code, error_msg
-                        )
+                    os_logger.error(
+                        "Unable to upload document: {:s} to index {:s} - "
+                        "[{:d}] {:s}".format(doc_id, index_name, status_code, error_msg)
                     )
                 # We need to catch all exceptions here, since this is a crucial
                 # call that we do not want to break operation.
                 except Exception:  # pylint: disable=broad-except
-                    es_logger.error(
+                    os_logger.error(
                         "Unable to upload document, and unable to log the "
                         "error itself.",
                         exc_info=True,

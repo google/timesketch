@@ -13,7 +13,10 @@
 # limitations under the License.
 """End to end tests of Timesketch client functionality."""
 
+import uuid
 import json
+import random
+import os
 import time
 
 from timesketch_api_client import search
@@ -26,6 +29,8 @@ class ClientTest(interface.BaseEndToEndTest):
     """End to end tests for client functionality."""
 
     NAME = "client_test"
+    RULEID1 = str(uuid.uuid4())
+    RULEID2 = str(uuid.uuid4())
 
     def test_client(self):
         """Client tests."""
@@ -87,9 +92,10 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_sigmarule_create(self):
         """Create a Sigma rule in database"""
-        MOCK_SIGMA_RULE = """
+
+        MOCK_SIGMA_RULE = f"""
 title: Suspicious Installation of bbbbbb
-id: 5266a592-b793-11ea-b3de-bbbbbb
+id: {self.RULEID1}
 description: Detects suspicious installation of bbbbbb
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
@@ -124,9 +130,9 @@ level: high
         """Client Sigma object tests."""
 
         rule = self.api.create_sigmarule(
-            rule_yaml="""
+            rule_yaml=f"""
 title: Suspicious Installation of eeeee
-id: 5266a592-b793-11ea-b3de-eeeee
+id: {self.RULEID2}
 description: Detects suspicious installation of eeeee
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
@@ -148,17 +154,17 @@ level: high
         )
         self.assertions.assertIsNotNone(rule)
 
-        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
-        rule.from_rule_uuid("5266a592-b793-11ea-b3de-eeeee")
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
+        rule.from_rule_uuid(self.RULEID2)
         self.assertions.assertGreater(len(rule.attributes), 5)
         self.assertions.assertIsNotNone(rule)
         self.assertions.assertIn("Alexander", rule.author)
         self.assertions.assertIn("Alexander", rule.get_attribute("author"))
-        self.assertions.assertIn("b793-11ea-b3de-eeeee", rule.id)
+        self.assertions.assertIn(self.RULEID2, rule.id)
         self.assertions.assertIn("Installation of eeeee", rule.title)
         self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("sigmarules/5266a592", rule.resource_uri)
+        self.assertions.assertIn(self.RULEID2, rule.resource_uri)
         self.assertions.assertIn("installation of eeeee", rule.description)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertEqual(len(rule.falsepositives), 1)
@@ -182,14 +188,14 @@ level: high
         """Client Sigma delete tests.
         The test is called remove to avoid running it before the create test.
         """
-        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID1)
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
 
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
 
-        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-bbbbbb")
+        rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
         rules = self.api.list_sigmarules()
@@ -294,6 +300,239 @@ level: high
         self.assertions.assertEqual(
             new_event["objects"]["existing_attr"], "original_value"
         )
+
+    def test_create_sketch_empty_name(self):
+        """Test creating a sketch with an empty name."""
+        with self.assertions.assertRaises(ValueError) as context:
+            self.api.create_sketch(name="", description="test_create_sketch")
+        self.assertions.assertIn("Sketch name cannot be empty", str(context.exception))
+
+    def test_archive_sketch(self):
+        """Test archiving and unarchiving a sketch."""
+        sketch = self.api.create_sketch(
+            name="test_archive_sketch", description="test_archive_sketch"
+        )
+        # check status before archiving
+        self.assertions.assertEqual(sketch.status, "new")
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+
+    def test_delete_sketch(self):
+        """Test deleting a sketch."""
+        sketches = list(self.api.list_sketches())
+        number_of_sketches = len(sketches)
+
+        sketch = self.api.create_sketch(
+            name="test_delete_sketch", description="test_delete_sketch"
+        )
+
+        sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
+
+        # store sketch_id of the newly created sketch
+        sketch_id = sketch.id
+
+        # check that sketch is in the sketch list
+        sketches = self.api.list_sketches()
+        found = False
+        for s in sketches:
+            if s.name == "test_delete_sketch":
+                found = True
+
+        self.assertions.assertEqual(found, True)
+
+        # delete sketch
+        sketch.delete()
+
+        sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches)
+        # attempt to pull sketch
+        # breakpoint()
+        with self.assertions.assertRaises(RuntimeError):
+            self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+
+    # test to delete a sketch that is archived
+    def test_delete_archived_sketch(self):
+        """Test deleting an archived sketch."""
+        sketch = self.api.create_sketch(
+            name="test_delete_archived_sketch",
+            description="test_delete_archived_sketch",
+        )
+        sketch.archive()
+        with self.assertions.assertRaises(RuntimeError) as context:
+            sketch.delete()
+        self.assertions.assertIn(
+            "Unable to delete an archived sketch, first unarchive then delete.",
+            str(context.exception),
+        )
+
+    def test_modify_sketch_name_description(self):
+        """Test modifying a sketch's name and description."""
+        sketch = self.api.create_sketch(
+            name="test_modify_sletch_name_description",
+            description="test_modify_sletch_name_description",
+        )
+        sketch.name = "new_name"
+        sketch.description = "new_description"
+        self.assertions.assertEqual(sketch.name, "new_name")
+        self.assertions.assertEqual(sketch.description, "new_description")
+        # check in the sketch list
+        sketches = self.api.list_sketches()
+        # find the right one in the sketch list
+        for s in sketches:
+            if s.name == "new_name":
+                sketch2 = s
+                break
+        else:
+            raise RuntimeError("Sketch not found")
+
+        self.assertions.assertEqual(sketch2.name, "new_name")
+        self.assertions.assertEqual(sketch2.description, "new_description")
+
+    def test_modify_sketch_with_empty_name(self):
+        """Test modifying a sketch with an empty name.
+        They should not be used, thus keeping the old names.
+        """
+        sketch = self.api.create_sketch(
+            name="test_modify_sketch_with_empty_name",
+            description="test_modify_sketch_with_empty_name",
+        )
+        sketch.name = ""
+        sketch.description = ""
+
+        # values should not be changed
+        self.assertions.assertEqual(sketch.name, "test_modify_sketch_with_empty_name")
+        self.assertions.assertEqual(
+            sketch.description, "test_modify_sketch_with_empty_name"
+        )
+
+    def test_list_timelines(self):
+        """Test listing timelines in a sketch."""
+        # Create a new sketch
+        sketch = self.api.create_sketch(
+            name="test_list_timelines", description="test_list_timelines"
+        )
+
+        # Import a timeline into the sketch
+        self.import_timeline("evtx.plaso", sketch=sketch)
+
+        # List the timelines in the sketch
+        timelines = sketch.list_timelines()
+
+        # Check that there is at least one timeline
+        self.assertions.assertGreaterEqual(len(timelines), 1)
+
+        # Check that the timeline has a name
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.name)
+
+        # Check that the timeline has an index name
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.index_name)
+
+        # Check that the timeline has an ID
+        for timeline in timelines:
+            self.assertions.assertTrue(timeline.id)
+
+        # Import a second timeline into the sketch
+        self.import_timeline("evtx_part.csv", sketch=sketch)
+
+        _ = sketch.lazyload_data(refresh_cache=True)
+
+        # List the timelines in the sketch
+        timelines = sketch.list_timelines()
+
+        # Check that there are two timelines
+        self.assertions.assertEqual(len(timelines), 2)
+
+    def test_delete_timeline(self):
+        """Test deleting a timeline.
+        This test verifies the following:
+            - A new sketch can be created.
+            - A timeline can be imported into the sketch.
+            - The timeline's name, index name, and index status are correct.
+            - The number of events in the sketch is correct
+                after importing the timeline.
+            - A second timeline can be imported into the sketch.
+            - The total number of events in the sketch is correct after
+                importing the second timeline.
+            - A timeline can be deleted.
+            - The number of events in the sketch is correct after deleting
+                 a timeline.
+            - The number of timelines in the sketch is correct after
+                deleting a timeline.
+        Raises:
+            AssertionError: If any of the assertions fail.
+            RuntimeError: If the event creation fails.
+            RuntimeError: If the sketch is not found.
+        """
+
+        # create a new sketch
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(
+            name=f"test_delete_timeline {rand}", description="test_delete_timeline"
+        )
+        self.sketch = sketch
+
+        file_path = (
+            "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
+        )
+
+        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        timeline = sketch.list_timelines()[0]
+        # check that timeline was uploaded correctly
+        self.assertions.assertEqual(timeline.name, file_path)
+        self.assertions.assertEqual(timeline.index.name, str(rand))
+        self.assertions.assertEqual(timeline.index.status, "ready")
+        self.assertions.assertEqual(len(sketch.list_timelines()), 1)
+
+        events = sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), 4)
+
+        # second import
+
+        file_path = "/tmp/second.csv"
+
+        with open(file_path, "w", encoding="utf-8") as file_object:
+            file_object.write(
+                '"message","timestamp","datetime","timestamp_desc","data_type"\n'
+            )
+
+            for i in range(5):
+                # write a line with random values for message
+                string = (
+                    f'"CSV Count: {i} {rand}","123456789",'
+                    '"2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
+                )
+                file_object.write(string)
+
+        self.import_timeline("/tmp/second.csv", index_name="second", sketch=sketch)
+        os.remove(file_path)
+        # refresh data after import
+        _ = sketch.lazyload_data(refresh_cache=True)
+
+        timeline = sketch.list_timelines()[0]
+        self.assertions.assertEqual(len(sketch.list_timelines()), 2)
+
+        # Check that there are 9 (5+4) events in total
+        search_client = search.Search(sketch)
+        search_response = json.loads(search_client.json)
+        self.assertions.assertEqual(len(search_response["objects"]), 9)
+
+        events = sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), 9)
+
+        # delete timeline 1
+        # now it should be 5 events in one timeline
+        timeline.delete()
+        events = sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), 5)
+
+        # check number of timelines
+        _ = sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 
 
 manager.EndToEndTestManager.register_test(ClientTest)

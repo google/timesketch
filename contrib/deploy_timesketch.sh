@@ -132,7 +132,7 @@ echo "OK"
 echo "* Installation done."
 
 if [ -z $START_CONTAINER ]; then
-  read -p "Would you like to start the containers? [Y/n] (default:no)" START_CONTAINER
+  read -p "Would you like to start the containers? [y/N]" START_CONTAINER
 fi
 
 if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.

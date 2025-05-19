@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A LLM provider for the Ollama server."""
-from typing import Optional
+from typing import Any, Optional
 import json
 import requests
 
@@ -24,6 +24,29 @@ class Ollama(interface.LLMProvider):
     """A LLM provider for the Ollama server."""
 
     NAME = "ollama"
+
+    def __init__(self, config: dict, **kwargs: Any):
+        """Initialize the Ollama provider.
+
+        Args:
+            config: The configuration for the provider.
+            **kwargs: Additional arguments passed to the base class.
+
+        Raises:
+            ValueError: If required configuration keys ('server_url', 'model')
+                        are missing or empty.
+        """
+        super().__init__(config, **kwargs)
+
+        server_url = self.config.get("server_url")
+        model_name = self.config.get("model")
+
+        if not server_url:
+            raise ValueError(
+                "Ollama provider requires a 'server_url' in its configuration."
+            )
+        if not model_name:
+            raise ValueError("Ollama provider requires a 'model' in its configuration.")
 
     def _post(self, request_body: str) -> requests.Response:
         """
@@ -37,9 +60,17 @@ class Ollama(interface.LLMProvider):
         """
         api_resource = "/api/chat"
         url = self.config.get("server_url") + api_resource
-        return requests.post(
-            url, data=request_body, headers={"Content-Type": "application/json"}
-        )
+        try:
+            return requests.post(
+                url,
+                data=request_body,
+                headers={"Content-Type": "application/json"},
+                timeout=60,
+            )
+        except requests.exceptions.Timeout as error:
+            raise ValueError(f"Request timed out: {error}") from error
+        except requests.exceptions.RequestException as error:
+            raise ValueError(f"Error making request: {error}") from error
 
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """

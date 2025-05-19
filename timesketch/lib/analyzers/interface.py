@@ -13,7 +13,6 @@
 # limitations under the License.
 """Interface for analyzers."""
 
-from __future__ import unicode_literals
 
 import datetime
 import json
@@ -22,6 +21,7 @@ import os
 import random
 import time
 import traceback
+from typing import Dict, List, Optional
 
 
 import yaml
@@ -98,7 +98,7 @@ def get_config_path(file_name):
     return None
 
 
-def get_yaml_config(file_name):
+def get_yaml_config(file_name: str):
     """Return a dict parsed from a YAML file within the config directory.
 
     Args:
@@ -113,20 +113,20 @@ def get_yaml_config(file_name):
     if not path:
         return {}
 
-    with open(path, "r") as fh:
+    with open(path, "r", encoding="utf-8") as fh:
         try:
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
             # pylint: disable=logging-format-interpolation
             logger.warning(
-                ("Unable to read in YAML config file, " "with error: {0!s}").format(
+                ("Unable to read in YAML config file, " "with error: {!s}").format(
                     exception
                 )
             )
             return {}
 
 
-class Event(object):
+class Event:
     """Event object with helper methods.
 
     Attributes:
@@ -161,7 +161,7 @@ class Event(object):
             self.timeline_id = event.get("_source", {}).get("__ts_timeline_id")
             self.source = event.get("_source", None)
         except KeyError as e:
-            raise KeyError("Malformed event: {0!s}".format(e)) from e
+            raise KeyError(f"Malformed event: {e!s}") from e
 
     def _update(self, event):
         """Update event attributes to add.
@@ -229,7 +229,7 @@ class Event(object):
         )
         self.commit(updated_event)
 
-    def add_tags(self, tags):
+    def add_tags(self, tags: List):
         """Add tags to the Event.
 
         Args:
@@ -259,7 +259,7 @@ class Event(object):
         if self._analyzer:
             self._analyzer.output.add_created_tags(tags)
 
-    def add_emojis(self, emojis):
+    def add_emojis(self, emojis: List):
         """Add emojis to the Event.
 
         Args:
@@ -339,7 +339,9 @@ class Event(object):
         )
         return db_event.comments
 
-    def add_human_readable(self, human_readable, analyzer_name, append=True):
+    def add_human_readable(
+        self, human_readable: str, analyzer_name: str, append: bool = True
+    ):
         """Add a human readable string to event.
 
         Args:
@@ -353,7 +355,7 @@ class Event(object):
         """
         existing_human_readable = self.source.get("human_readable", [])
 
-        human_readable = "[{0:s}] {1:s}".format(analyzer_name, human_readable)
+        human_readable = f"[{analyzer_name:s}] {human_readable:s}"
 
         if human_readable in existing_human_readable:
             return
@@ -367,7 +369,7 @@ class Event(object):
         self._update(updated_human_readable)
 
 
-class Sketch(object):
+class Sketch:
     """Sketch object with helper methods.
 
     Attributes:
@@ -389,7 +391,13 @@ class Sketch(object):
             raise RuntimeError("No such sketch")
 
     def add_apex_aggregation(
-        self, name, params, chart_type, description="", label=None, view_id=None
+        self,
+        name: str,
+        params: Dict,
+        chart_type: str,
+        description: str = "",
+        label: Optional[str] = None,
+        view_id: Optional[int] = None,
     ):
         """Add aggregation to the sketch using apex charts and tables.
 
@@ -439,13 +447,13 @@ class Sketch(object):
 
     def add_aggregation(
         self,
-        name,
-        agg_name,
-        agg_params,
-        description="",
-        view_id=None,
-        chart_type=None,
-        label="",
+        name: str,
+        agg_name: str,
+        agg_params: Dict,
+        description: str = "",
+        view_id: Optional[int] = None,
+        chart_type: Optional[str] = None,
+        label: str = "",
     ):
         """Add aggregation to the sketch.
 
@@ -490,7 +498,9 @@ class Sketch(object):
         db_session.commit()
         return aggregation
 
-    def add_aggregation_group(self, name, description="", view_id=None):
+    def add_aggregation_group(
+        self, name: str, description: str = "", view_id: Optional[int] = None
+    ):
         """Add aggregation Group to the sketch.
 
         Args:
@@ -524,12 +534,12 @@ class Sketch(object):
 
     def add_view(
         self,
-        view_name,
-        analyzer_name,
-        query_string=None,
-        query_dsl=None,
-        query_filter=None,
-        additional_fields=None,
+        view_name: str,
+        analyzer_name: str,
+        query_string: Optional[str] = None,
+        query_dsl: Optional[Dict] = None,
+        query_filter: Optional[Dict] = None,
+        additional_fields: Optional[List] = None,
     ):
         """Add saved view to the Sketch.
 
@@ -556,7 +566,7 @@ class Sketch(object):
         if additional_fields:
             query_filter["fields"] = [{"field": x.strip()} for x in additional_fields]
 
-        description = "analyzer: {0:s}".format(analyzer_name)
+        description = f"analyzer: {analyzer_name:s}"
         view = View.get_or_create(
             name=view_name, description=description, sketch=self.sql_sketch, user=None
         )
@@ -626,7 +636,7 @@ class Sketch(object):
             raise ValueError(f"Attribute {name} does not exist in sketch.")
         return attributes[name]["value"]
 
-    def add_story(self, title):
+    def add_story(self, title: str):
         """Add a story to the Sketch.
 
         Args:
@@ -667,7 +677,7 @@ class Sketch(object):
         return indices
 
 
-class AggregationGroup(object):
+class AggregationGroup:
     """Aggregation Group object with helper methods.
 
     Attributes:
@@ -765,7 +775,7 @@ class AggregationGroup(object):
         self.commit()
 
 
-class Story(object):
+class Story:
     """Story object with helper methods.
 
     Attributes:
@@ -958,11 +968,11 @@ class BaseAnalyzer:
 
     def event_pandas(
         self,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        indices=None,
-        return_fields=None,
+        query_string: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        indices: Optional[List] = None,
+        return_fields: Optional[List] = None,
     ):
         """Search OpenSearch.
 
@@ -1000,7 +1010,7 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to refresh index: {0:s}, not found, "
+                    "Unable to refresh index: {:s}, not found, "
                     "removing from list.".format(index)
                 )
                 broken_index = indices.index(index)
@@ -1037,12 +1047,12 @@ class BaseAnalyzer:
 
     def event_stream(
         self,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        indices=None,
-        return_fields=None,
-        scroll=True,
+        query_string: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        indices: Optional[List] = None,
+        return_fields: Optional[List] = None,
+        scroll: bool = True,
     ):
         """Search OpenSearch.
 
@@ -1055,11 +1065,12 @@ class BaseAnalyzer:
             scroll: Boolean determining whether we support scrolling searches
                 or not. Defaults to True.
 
-        Returns:
+        Yields:
             Generator of Event objects.
 
         Raises:
             ValueError: if neither query_string or query_dsl is provided.
+            TransportError: If connection issues happen.
         """
         if not (query_string or query_dsl):
             raise ValueError("Both query_string and query_dsl are missing")
@@ -1085,7 +1096,7 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to find index: {0:s}, removing from "
+                    "Unable to find index: {:s}, removing from "
                     "result set.".format(index)
                 )
                 broken_index = indices.index(index)
@@ -1109,6 +1120,7 @@ class BaseAnalyzer:
         for x in range(0, retries):
             try:
                 event_generator = self.datastore.search_stream(
+                    sketch_id=self.sketch.id,
                     query_string=query_string,
                     query_filter=query_filter,
                     query_dsl=query_dsl,
@@ -1125,7 +1137,7 @@ class BaseAnalyzer:
             except opensearchpy.TransportError as e:
                 sleep_seconds = backoff_in_seconds * 2**x + random.uniform(3, 7)
                 logger.info(
-                    "Attempt: {0:d}/{1:d} sleeping {2:f} for query {3:s}".format(
+                    "Attempt: {:d}/{:d} sleeping {:f} for query {:s}".format(
                         x + 1, retries, sleep_seconds, query_string
                     )
                 )
@@ -1133,7 +1145,7 @@ class BaseAnalyzer:
 
                 if x == retries - 1:
                     logger.error(
-                        "Timeout executing search for {0:s}: {1!s}".format(
+                        "Timeout executing search for {:s}: {!s}".format(
                             query_string, e
                         ),
                         exc_info=True,
@@ -1166,7 +1178,7 @@ class BaseAnalyzer:
 
             if status == "fail":
                 logger.error(
-                    "Unable to run analyzer on a failed index ({0:s})".format(
+                    "Unable to run analyzer on a failed index ({:s})".format(
                         searchindex.index_name
                     )
                 )
@@ -1176,7 +1188,7 @@ class BaseAnalyzer:
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
                 logger.error(
-                    "Indexing has taken too long time, aborting run of " "analyzer"
+                    "Indexing has taken too long time, aborting run of analyzer"
                 )
                 return "Failed"
             # Refresh the searchindex object.
@@ -1192,7 +1204,7 @@ class BaseAnalyzer:
             result = traceback.format_exc()
 
         # Update database analysis object with result and status
-        analysis.result = "{0:s}".format(result)
+        analysis.result = f"{result:s}"
         db_session.add(analysis)
         db_session.commit()
 

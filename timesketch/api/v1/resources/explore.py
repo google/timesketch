@@ -22,6 +22,7 @@ import prometheus_client
 
 from flask import abort
 from flask import jsonify
+from flask import current_app
 from flask import request
 from flask import send_file
 from flask_restful import Resource
@@ -63,7 +64,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
         Handler for /api/v1/sketches/:sketch_id/explore/
 
@@ -143,6 +144,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
         parent = request.json.get("parent", None)
         incognito = request.json.get("incognito", False)
 
+        include_processing_timelines = False
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            include_processing_timelines = request.json.get(
+                "include_processing_timelines", False
+            )
+
         return_field_string = form.fields.data
         if return_field_string:
             return_fields = [x.strip() for x in return_field_string.split(",")]
@@ -154,16 +161,18 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if not query_filter:
             query_filter = {}
 
-        all_indices = list({t.searchindex.index_name for t in sketch.timelines})
-        indices = query_filter.get("indices", all_indices)
+        all_timeline_ids = [t.id for t in sketch.timelines]
+        indices = query_filter.get("indices", all_timeline_ids)
 
         # If _all in indices then execute the query on all indices
         if "_all" in indices:
-            indices = all_indices
+            indices = all_timeline_ids
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
-        indices, timeline_ids = get_validated_indices(indices, sketch)
+        indices, timeline_ids = get_validated_indices(
+            indices, sketch, include_processing_timelines
+        )
 
         # Remove indices that don't exist from search.
         indices = utils.validate_indices(indices, self.datastore)
@@ -449,7 +458,7 @@ class QueryResource(resources.ResourceMixin, Resource):
     """Resource to get a query."""
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Args:

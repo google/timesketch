@@ -23,11 +23,11 @@ def timelines_group():
 
 @timelines_group.command("list")
 @click.pass_context
-def list_timelines(ctx):
+def list_timelines(ctx: click.Context):
     """List all timelines in the sketch.
 
     Args:
-        ctx: Click CLI context object.
+        ctx (click.Context): Click CLI context object.
     """
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
@@ -37,12 +37,30 @@ def list_timelines(ctx):
 @timelines_group.command("describe")
 @click.argument("timeline-id", type=int, required=True)
 @click.pass_context
-def describe_timeline(ctx, timeline_id):
-    """Show details for a timeline.
+def describe_timeline(ctx: click.Context, timeline_id: int):
+    """Displays detailed information about a timeline.
+
+    Retrieves and displays details about a timeline within the current sketch,
+    including its name, index, status, event count, color, fields, and
+    associated datasources.
+    The output format is determined by the context's 'output_format' setting.
+    Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx: Click CLI context object.
-        timeline-id: Timeline ID from argument.
+        ctx (click.Context): The Click context object, containing the sketch
+            and output format.
+        timeline_id (int): The ID of the timeline to describe.
+
+    Outputs:
+        JSON: If the output format is 'json', the timeline's resource data
+            is printed as JSON.
+        Text: If the output format is 'text' (or an unsupported format),
+            detailed information about the timeline is printed in a
+            human-readable format.
+        Error message: if the timeline id is not found.
+
+    Example:
+        timeline describe 1  # Displays details for timeline 1.
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
@@ -85,13 +103,29 @@ def describe_timeline(ctx, timeline_id):
 @click.argument("timeline-id", type=int, required=True)
 @click.argument("new-name", type=str, required=True)
 @click.pass_context
-def rename_timeline(ctx, timeline_id, new_name):
-    """Rename a timeline.
+def rename_timeline(ctx: click.Context, timeline_id: int, new_name: str):
+    """Renames a timeline within the current sketch.
+
+    The timeline is identified by its integer ID, and its name is changed to
+    the provided new name.
+    The output format is determined by the context's 'output_format' setting.
+    Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx: Click CLI context object.
-        timeline-id: Timeline ID from argument.
-        new-name: New Timeline name
+        ctx (click.Context): The Click context object, containing the
+            sketch and output format.
+        timeline_id (int): The ID of the timeline to rename.
+        new_name (str): The new name for the timeline.
+
+    Outputs:
+        JSON: If the output format is 'json', the timeline's resource data is
+            printed as JSON.
+        Text: If the output format is 'text' (or an unsupported format),
+            the new timeline name is printed.
+        Error message: if the timeline id is not found.
+
+    Example:
+        timeline rename 1 "New Timeline Name"  # Renames timeline 1.
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
@@ -117,13 +151,13 @@ def rename_timeline(ctx, timeline_id, new_name):
 @timelines_group.command("delete")
 @click.argument("timeline-id", type=int, required=True)
 @click.pass_context
-def delete_timeline(ctx, timeline_id):
+def delete_timeline(ctx: click.Context, timeline_id: int):
     """Delete a timeline.
     (Will mark a timeline as deleted, but the Opensearch Index will remain)
 
     Args:
-        ctx: Click CLI context object.
-        timeline-id: Timeline ID from argument to be deleted.
+        ctx (click.Context) (required): Click CLI context object.
+        timeline_id (int) (required): Timeline ID from argument to be deleted.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)
@@ -144,13 +178,19 @@ def delete_timeline(ctx, timeline_id):
 @click.argument("timeline-id", type=int, required=True)
 @click.argument("color", type=str, required=True)
 @click.pass_context
-def timeline_change_color(ctx, timeline_id, color):
-    """Change the color of a timeline (in HEX color code)
+def timeline_change_color(ctx: click.Context, timeline_id: int, color: str):
+    """Changes the color of a timeline within the current sketch.
+
+    The color is specified as a hexadecimal string (without the leading '#').
+    The timeline is identified by its integer ID.
 
     Args:
-        ctx: Click CLI context object.
-        timeline-id: Timeline ID from argument to be modified.
-        color: Hex value of color to be used for the timeline
+        ctx (click.Context): The Click context object, containing the sketch.
+        timeline_id (int): The ID of the timeline to modify.
+        color (str): The hexadecimal color code (e.g., "AAAA" or "AABB11").
+
+    Example:
+        timeline color 1 AABBCC  # Changes the color of timeline 1 to AABBCC.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)

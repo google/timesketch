@@ -35,6 +35,7 @@ class DataFinder:
         self._rule = {}
         self._start_date = ""
         self._timeline_ids = []
+        self._sketch_id = None
 
         self._datastore = OpenSearchDataStore(
             host=current_app.config["OPENSEARCH_HOST"],
@@ -49,13 +50,13 @@ class DataFinder:
 
         if not self._start_date:
             logger.warning(
-                "Unable to run data finder since no start date has been " "defined."
+                "Unable to run data finder since no start date has been defined."
             )
             return False
 
         if not self._end_date:
             logger.warning(
-                "Unable to run data finder since no end date has been " "defined."
+                "Unable to run data finder since no end date has been defined."
             )
             return False
 
@@ -64,9 +65,9 @@ class DataFinder:
 
         re_parameters = self._rule.get("re_parameters", [])
         for parameter in re_parameters:
-            if not parameter in self._parameters:
+            if parameter not in self._parameters:
                 logger.warning(
-                    "Parameters are defined, but parameter: [{0:s}] does not "
+                    "Parameters are defined, but parameter: [{:s}] does not "
                     "exist in parameter definitions for the rule.".format(parameter)
                 )
                 return False
@@ -118,6 +119,10 @@ class DataFinder:
     def set_timeline_ids(self, timeline_ids):
         """Sets the timeline identifiers."""
         self._timeline_ids = timeline_ids
+
+    def set_sketch_id(self, sketch_id):
+        """Sets the sketch identifier."""
+        self._sketch_id = sketch_id
 
     def find_data(self):
         """Returns a tuple with a bool on whether data was found and a message.
@@ -172,6 +177,7 @@ class DataFinder:
         }
 
         event_generator = self._datastore.search_stream(
+            sketch_id=self._sketch_id,
             query_string=query_string,
             query_dsl=query_dsl,
             query_filter=query_filter,
@@ -190,7 +196,7 @@ class DataFinder:
             source = event.get("_source", {})
             value = source.get(attribute)
             if not value:
-                logger.warning("Attribute: [{0:s}] is empty".format(attribute))
+                logger.warning("Attribute: [%s] is empty", attribute)
 
             result = expression.findall(value)
             if not result:

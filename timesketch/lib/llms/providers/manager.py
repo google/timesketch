@@ -13,8 +13,12 @@
 # limitations under the License.
 """This file contains a class for managing Large Language Model (LLM) providers."""
 
+import logging
+
 from flask import current_app
 from timesketch.lib.llms.providers.interface import LLMProvider
+
+logger = logging.getLogger("timesketch.llm.manager")
 
 
 class LLMManager:
@@ -37,8 +41,7 @@ class LLMManager:
         Yields:
             A tuple of (provider_name, provider_class)
         """
-        for provider_name, provider_class in cls._class_registry.items():
-            yield provider_name, provider_class
+        yield from cls._class_registry.items()
 
     @classmethod
     def get_provider(cls, provider_name: str) -> type:
@@ -81,8 +84,16 @@ class LLMManager:
                 # Check that provider specifies required fields
                 try:
                     return provider_class(config=provider_config, **kwargs)
-                except ValueError:
-                    pass  # Fallback to default provider
+                except ValueError as e:
+                    logger.debug(
+                        "Failed to initialize provider '%s' for feature '%s' "
+                        "due to configuration error: %s. "
+                        "Attempting fallback to default provider.",
+                        provider_name,
+                        feature_name,
+                        e,
+                        exc_info=False,
+                    )
 
         # Fallback to default config
         config_mapping = llm_configs.get("default")
