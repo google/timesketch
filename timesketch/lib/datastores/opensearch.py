@@ -163,6 +163,21 @@ class OpenSearchDataStore:
         self.min_health = current_app.config.get(
             "OPENSEARCH_MINIMUM_HEALTH", self.DEFAULT_MINIMUM_HEALTH
         )
+        self.sliced_export_default_page_size = current_app.config.get(
+            "OPENSEARCH_SLICED_EXPORT_DEFAULT_PAGE_SIZE", 10000
+        )
+        self.sliced_export_pit_keep_alive = current_app.config.get(
+            "OPENSEARCH_SLICED_EXPORT_PIT_KEEP_ALIVE", "5m"
+        )
+        self.sliced_export_num_slices_default = current_app.config.get(
+            "OPENSEARCH_SLICED_EXPORT_NUM_SLICES", 4
+        )
+        self.sliced_export_request_timeout_default = current_app.config.get(
+            "OPENSEARCH_SLICED_EXPORT_REQUEST_TIMEOUT", self.timeout + 20
+        )
+        self.sliced_export_queue_buffer_factor = current_app.config.get(
+            "OPENSEARCH_SLICED_EXPORT_QUEUE_BUFFER_FACTOR", 4
+        )
 
     def _wait_for_index(
         self, index_name: str, timeout_seconds: Optional[int] = None
@@ -1282,7 +1297,7 @@ class OpenSearchDataStore:
         self.import_events = []
         return return_dict
 
-    def _export_slice_worker_pit(
+    def _export_slice_worker(
         self,
         slice_id: int,
         num_slices: int,
@@ -1295,13 +1310,60 @@ class OpenSearchDataStore:
         stop_event: threading.Event,
         worker_request_timeout: int,
     ):
-        """
-        Worker function for a single slice in a PIT export.
-        Fetches documents for its assigned slice and puts them onto the output_queue.
+        """Worker function for a single slice in a sliced export using PIT.
+
+        This private function is designed to run in a separate thread. It
+        performs the following steps for its assigned slice:
+        1. Creates a Point-In-Time (PIT) context for the specified indices.
+           This ensures a consistent view of the data throughout the export
+           process for this slice.
+        2. Enters a loop to fetch documents using the `search_after` and
+           `slice` OpenSearch features.
+        3. For each page of results received, it extracts the relevant event
+           data (including `_id` and `_index`) and puts each event dictionary
+           onto the shared `output_queue`.
+        4. It manages backpressure by waiting if the `output_queue` is full.
+        5. It updates the `search_after` parameter for the next request to
+           continue pagination within the slice.
+        6. The loop continues until no more documents are returned for the slice
+           or a stop signal is received.
+        7. Upon completion or error, it attempts to delete the created PIT.
+        8. Finally, it puts a `None` sentinel onto the `output_queue` to signal
+           to the main thread that this worker has finished.
+
+        Error Handling:
+        - `RequestError`, `ConnectionTimeout`, `NotFoundError`: These are caught
+          during search requests. They are logged as warnings or errors, and
+          the worker will typically break its search loop and signal the
+          `stop_event` to indicate an issue to other workers and the main thread.
+        - Generic `Exception`: Caught during search, queue operations, or PIT
+          creation/deletion. Logged with traceback, and the `stop_event` is
+          signaled.
+        - Queue Full: Handled by waiting with a timeout when putting items. If
+          the queue remains full and the `stop_event` is set, the worker will
+          eventually stop trying to put items.
+        - Errors putting Sentinel: Logged, but the worker thread will exit.
+
+        Parameters:
+            slice_id: The zero-based index of this slice (0 to num_slices-1).
+            num_slices: The total number of slices being used for the export.
+            index_list: A list of OpenSearch index names to query.
+            query_body: The base OpenSearch query body
+                        (excluding size, sort, pit, slice).
+            current_sort_criteria: The sort criteria used for search_after pagination.
+            current_page_size: The number of documents to request per page within
+                               the slice.
+            current_pit_keep_alive: The keep-alive duration for the PIT context.
+            output_queue: A queue.Queue object used to send fetched event
+                          dictionaries to the main thread.
+            stop_event: A threading.Event used to signal workers to stop early
+                        (e.g., due to an error in another worker).
+            worker_request_timeout: Timeout in seconds for individual OpenSearch
+                                    search requests made by this worker.
         """
         # Slice ID is 0-indexed, so display as 1-indexed for logs
         log_slice_id = slice_id + 1
-        os_logger.info("[PIT Slice %s/%s] Starting export.", log_slice_id, num_slices)
+        os_logger.info("[Slice %s/%s] Starting export.", log_slice_id, num_slices)
         pit_id = None
         total_docs_in_slice = 0
 
@@ -1313,7 +1375,7 @@ class OpenSearchDataStore:
             )
             pit_id = pit_response["pit_id"]
             os_logger.info(
-                "[PIT Slice %s/%s] Created PIT ID: %s",
+                "[Slice %s/%s] Created PIT ID: %s",
                 log_slice_id,
                 num_slices,
                 pit_id,
@@ -1340,7 +1402,7 @@ class OpenSearchDataStore:
                     )
                 except RequestError as re:
                     os_logger.error(
-                        "[PIT Slice %s/%s] RequestError: %s. "
+                        "[Slice %s/%s] RequestError: %s. "
                         "PIT might have expired or query issue.",
                         log_slice_id,
                         num_slices,
@@ -1349,7 +1411,7 @@ class OpenSearchDataStore:
                     break
                 except ConnectionTimeout:
                     os_logger.warning(
-                        "[PIT Slice %s/%s] Connection timeout during search. "
+                        "[Slice %s/%s] Connection timeout during search. "
                         "Stopping slice.",
                         log_slice_id,
                         num_slices,
@@ -1357,7 +1419,7 @@ class OpenSearchDataStore:
                     break
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     os_logger.error(
-                        "[PIT Slice %s/%s] Error during search: %s",
+                        "[Slice %s/%s] Error during search: %s",
                         log_slice_id,
                         num_slices,
                         str(e),
@@ -1370,7 +1432,7 @@ class OpenSearchDataStore:
                 hits = response.get("hits", {}).get("hits", [])
                 if not hits:
                     os_logger.info(
-                        "[PIT Slice %s/%s] No more documents.", log_slice_id, num_slices
+                        "[Slice %s/%s] No more documents.", log_slice_id, num_slices
                     )
                     break
 
@@ -1398,7 +1460,7 @@ class OpenSearchDataStore:
                             except (  # pylint: disable=broad-exception-caught
                                 Exception
                             ) as e_q:
-                                log_msg = "[PIT Slice %s/%s] Error putting to queue: %s"
+                                log_msg = "[Slice %s/%s] Error putting to queue: %s"
                                 os_logger.error(
                                     log_msg,
                                     log_slice_id,
@@ -1420,8 +1482,8 @@ class OpenSearchDataStore:
                 total_docs_in_slice += len(hits)
                 os_logger.info(
                     (
-                        "[PIT Slice %s/%s] Retrieved %s docs. "
-                        "Total for slice: %s. Queue size: ~%s"
+                        "[Slice %s/%s] Retrieved %s docs. "
+                        "Total for this slice: %s. Approx. queue size: %s"
                     ),
                     log_slice_id,
                     num_slices,
@@ -1435,8 +1497,8 @@ class OpenSearchDataStore:
                 ):  # Check hits because if no hits, search_after_params is not needed
                     os_logger.error(
                         (
-                            "[PIT Slice %s/%s] 'sort' field missing in last hit. "
-                            "Cannot continue with search_after."
+                            "[Slice %s/%s] 'sort' field missing in last hit. "
+                            "Cannot continue with search_after for this slice."
                         ),
                         log_slice_id,
                         num_slices,
@@ -1446,7 +1508,7 @@ class OpenSearchDataStore:
 
         except NotFoundError:
             os_logger.warning(
-                "[PIT Slice %s/%s] PIT ID %s not found or expired, "
+                "[Slice %s/%s] PIT ID %s not found or expired, "
                 "or an index in the list was not found.",
                 log_slice_id,
                 num_slices,
@@ -1455,7 +1517,7 @@ class OpenSearchDataStore:
             stop_event.set()  # Signal issue
         except Exception as e:  # pylint: disable=broad-exception-caught
             os_logger.error(
-                "[PIT Slice %s/%s] An unexpected error occurred: %s",
+                "[Slice %s/%s] An unexpected error occurred: %s",
                 log_slice_id,
                 num_slices,
                 str(e),
@@ -1467,13 +1529,13 @@ class OpenSearchDataStore:
                 try:
                     self.client.delete_pit(body={"pit_id": [pit_id]})
                     os_logger.info(
-                        "[PIT Slice %s/%s] Deleted PIT ID: %s",
+                        "[Slice %s/%s] Deleted PIT ID: %s",
                         log_slice_id,
                         num_slices,
                         pit_id,
                     )
                 except Exception as e:  # pylint: disable=broad-exception-caught
-                    log_msg = "[PIT Slice %s/%s] Error deleting PIT ID %s: %s"
+                    log_msg = "[Slice %s/%s] Error deleting PIT ID %s: %s"
                     os_logger.error(
                         log_msg,
                         log_slice_id,
@@ -1484,7 +1546,7 @@ class OpenSearchDataStore:
                     )
 
             os_logger.info(
-                "[PIT Slice %s/%s] Finished. Processed %s documents.",
+                "[Slice %s/%s] Finished. Processed %s documents.",
                 log_slice_id,
                 num_slices,
                 total_docs_in_slice,
@@ -1497,50 +1559,68 @@ class OpenSearchDataStore:
                 )  # Short timeout, main thread should be consuming
             except queue.Full:
                 os_logger.error(
-                    "[PIT Slice %s/%s] Failed to put sentinel: Queue full.",
+                    "[Slice %s/%s] Failed to put sentinel: Queue full.",
                     log_slice_id,
                     num_slices,
                 )
             except Exception as e_s:  # pylint: disable=broad-exception-caught
                 os_logger.error(
-                    "[PIT Slice %s/%s] Failed to put sentinel: %s",
+                    "[Slice %s/%s] Failed to put sentinel: %s",
                     log_slice_id,
                     num_slices,
                     str(e_s),
                 )
 
-    def export_events_pit(
+    def export_events_with_slicing(
         self,
         indices_for_pit: List[str],
         base_query_body: Dict[str, Any],
         sort_criteria: Optional[List[Dict[str, Any]]] = None,
-        page_size: int = 10000,
-        pit_keep_alive: str = "5m",
-        num_slices: int = 4,
+        page_size: Optional[int] = None,
+        pit_keep_alive: Optional[str] = None,
+        num_slices: Optional[int] = None,
         request_timeout_per_slice: Optional[int] = None,
     ) -> Generator[Dict[str, Any], None, None]:
         """
-        Exports events from specified indices using PIT, search_after, and slicing.
+        Exports events from specified indices using OpenSearch Point-In-Time (PIT),
+        search_after, and slicing. PIT is used internally to ensure a consistent
+        view of the data across multiple paginated and sliced requests.
 
         This method is designed for efficient bulk export of large datasets.
         It yields individual event dictionaries, including '_id' and '_index'.
+
+        The following parameters can be overridden by the caller. If not provided,
+        they will default to values from the Timesketch configuration or
+        sensible internal defaults:
+            - `page_size`: Defaults to `OPENSEARCH_SLICED_EXPORT_DEFAULT_PAGE_SIZE`
+            - `pit_keep_alive`: Defaults to `OPENSEARCH_SLICED_EXPORT_PIT_KEEP_ALIVE`
+            - `num_slices`: Defaults to `OPENSEARCH_SLICED_EXPORT_NUM_SLICES` or 4
+            - `request_timeout_per_slice`: Defaults to
+              `OPENSEARCH_SLICED_EXPORT_REQUEST_TIMEOUT` or a calculated value
+              based on the general OpenSearch timeout +20s.
+
+        The internal queue size is determined by `page_size`, `num_slices`, and
+        the `OPENSEARCH_SLICED_EXPORT_QUEUE_BUFFER_FACTOR` configuration.
 
         Args:
             indices_for_pit: List of index names to query.
             base_query_body: The base OpenSearch query body (must not include
                              size, sort, pit, or slice clauses). Can include
                              "_source" to specify fields to return.
-            sort_criteria: The sort criteria for search_after.
+            sort_criteria: Optional. The sort criteria for search_after.
                            If None, defaults to `[{"_id": "asc"}]`.
                            Must include a unique tie-breaker field (e.g. _id)
                            for stable results across pages.
-            page_size: Number of documents per request per slice. Default: 10k
-            pit_keep_alive: Keep-alive duration for the Point-In-Time context.
-            num_slices: Number of parallel slices to use for the export.
-                        Default can be set via app config OPENSEARCH_PIT_NUM_SLICES.
+            page_size: Optional. Number of documents per request per slice.
+                       Overrides the global default (10_000) if provided.
+            pit_keep_alive: Optional. Keep-alive duration for the Point-In-Time context
+                            (e.g., "5m"). Overrides the global default if provided.
+            num_slices: Optional. Number of parallel slices to use for the export.
+                        Overrides the global default if provided.
+                        Must be between 1 and 1024.
             request_timeout_per_slice: Optional timeout in seconds for individual
                                        OpenSearch search requests within each slice.
-                                       Defaults to self.timeout + 20s buffer.
+                                       Overrides the global default (30s) if provided.
 
         Yields:
             Dict: Individual event documents (including _id and _index from the hit).
@@ -1551,53 +1631,66 @@ class OpenSearchDataStore:
         """
         if not indices_for_pit:
             raise ValueError("indices_for_pit cannot be empty.")
-        if not 1 <= num_slices <= 1024:  # OpenSearch constraint for slices
+
+        # Getting default values if not provided otherwise by the caller.
+        effective_sort_criteria = sort_criteria or _DEFAULT_PIT_SORT_CRITERIA
+        effective_page_size = (
+            page_size if page_size is not None else self.sliced_export_default_page_size
+        )
+        effective_pit_keep_alive = (
+            pit_keep_alive
+            if pit_keep_alive is not None
+            else self.sliced_export_pit_keep_alive
+        )
+        effective_num_slices = (
+            num_slices
+            if num_slices is not None
+            else self.sliced_export_num_slices_default
+        )
+        effective_worker_timeout = (
+            request_timeout_per_slice
+            if request_timeout_per_slice is not None
+            else self.sliced_export_request_timeout_default
+        )
+
+        if not 1 <= effective_num_slices <= 1024:  # Validate after resolving default
             raise ValueError("num_slices must be between 1 and 1024.")
 
-        effective_sort_criteria = sort_criteria or _DEFAULT_PIT_SORT_CRITERIA
-        worker_timeout = request_timeout_per_slice or (
-            self.timeout + 20
-        )  # Use configured or default+buffer
-
-        # Adjust num_slices from app config if not provided or if a default is desired.
-        # Example:
-        # num_slices =
-        # num_slices orcurrent_app.config.get('OPENSEARCH_PIT_NUM_SLICES', 5)
-        # For now, using the argument directly or its default.
-
-        # Max queue size: buffer for items from all slices for a couple of rounds.
-        queue_buffer_factor = 4  # How many "full rounds" of data to buffer
-        queue_max_items = page_size * num_slices * queue_buffer_factor
+        # Use self.sliced_export_queue_buffer_factor for queue size calculation
+        queue_max_items = (
+            effective_page_size
+            * effective_num_slices
+            * self.sliced_export_queue_buffer_factor
+        )
         results_queue: queue.Queue = queue.Queue(maxsize=queue_max_items)
 
         threads: List[threading.Thread] = []
         stop_event = threading.Event()
 
         os_logger.info(
-            "Starting PIT export from indices: %s with %s slices, page_size: %s.",
+            "Starting sliced export from indices: [%s] with %d slices, page_size: %d.",
             ", ".join(indices_for_pit),
-            num_slices,
-            page_size,
+            effective_num_slices,
+            effective_page_size,
         )
 
-        active_workers = num_slices
+        active_workers = effective_num_slices
 
         try:
-            for i in range(num_slices):
+            for i in range(effective_num_slices):
                 thread = threading.Thread(
-                    target=self._export_slice_worker_pit,
-                    args=(  #  type: ignore
+                    target=self._export_slice_worker,
+                    args=(
                         i,
-                        num_slices,
-                        # Ensure deep copy for safety
+                        effective_num_slices,
                         indices_for_pit,
-                        copy.deepcopy(base_query_body),  # Ensure deep copy for safety
+                        copy.deepcopy(base_query_body),
                         effective_sort_criteria,
-                        page_size,
-                        pit_keep_alive,
+                        effective_page_size,
+                        effective_pit_keep_alive,
                         results_queue,
                         stop_event,
-                        worker_timeout,
+                        effective_worker_timeout,
                     ),
                     # Allows main thread to exit even if workers hang
                     # (though join is preferred)
@@ -1609,9 +1702,9 @@ class OpenSearchDataStore:
             while active_workers > 0:
                 if stop_event.is_set() and results_queue.empty():
                     os_logger.warning(
-                        "PIT export stopping early: error signaled "
+                        "Sliced export stopping early: error signaled "
                         "and queue is empty."
-                    )  # yapf: disable
+                    )
                     break
                 try:
                     item = results_queue.get(timeout=0.5)  # Timeout to check stop_event
@@ -1633,11 +1726,11 @@ class OpenSearchDataStore:
                     if not any(t.is_alive() for t in threads) and active_workers > 0:
                         os_logger.warning(
                             (
-                                "All PIT worker threads seem to have exited but %s "
+                                "All export worker threads seem to have exited but %s "
                                 "sentinel(s) not received. Draining queue."
                             ),
                             active_workers,
-                        )  # yapf: disable
+                        )
                         active_workers = 0  # Force loop exit after this drain attempt
                         break  # Break to final drain loop
                 except Exception as e_yield:  # pylint: disable=broad-exception-caught
@@ -1664,28 +1757,28 @@ class OpenSearchDataStore:
 
         except Exception as e:
             os_logger.error(
-                "Unhandled exception during PIT export setup or yield loop: %s",
+                "Unhandled exception during sliced export setup or yield loop: %s",
                 str(e),
                 exc_info=True,
             )
             stop_event.set()
-            raise errors.DataStoreQueryError(f"PIT Export failed: {str(e)}") from e
+            raise errors.DataStoreQueryError(f"Sliced Export failed: {str(e)}") from e
         finally:
             os_logger.info(
-                "PIT export: Signaling any remaining worker threads to stop."
+                "Sliced export: Signaling any remaining worker threads to stop."
             )
             stop_event.set()
 
             for i, thread in enumerate(threads):
                 if thread.is_alive():
                     os_logger.info(
-                        "PIT export: Waiting for worker thread %s to join.", i + 1
+                        "Sliced export: Waiting for worker thread %s to join.", i + 1
                     )
                     thread.join(timeout=10)  # Give threads a chance to clean up PIT
                     if thread.is_alive():
                         os_logger.warning(
                             (
-                                "PIT export: Worker thread %s did not exit "
+                                "Sliced export: Worker thread %s did not exit "
                                 "cleanly after timeout."
                             ),
                             i + 1,
@@ -1698,10 +1791,10 @@ class OpenSearchDataStore:
             if results_queue.unfinished_tasks > 0:
                 os_logger.warning(
                     (
-                        "PIT export: Queue has %s unfinished tasks. "
+                        "Sliced export: Queue has %s unfinished tasks. "
                         "This might indicate an issue."
                     ),
                     results_queue.unfinished_tasks,
                 )
 
-            os_logger.info("PIT export process cleanup finished.")
+            os_logger.info("Sliced export process cleanup finished.")
