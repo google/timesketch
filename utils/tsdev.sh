@@ -120,13 +120,22 @@ case "$1" in
 		;;
 	activate-history)
 		HISTORY_FILE_PATH="/usr/local/src/timesketch/private/.bash_history"
-		HISTORY_DIR="/usr/local/src/timesketch/private"
+		HISTORY_DIR_IN_CONTAINER="/usr/local/src/timesketch/private"
+		# Assuming the primary user in the dev container is root.
+		# Adjust if a different user's .bashrc should be targeted (e.g., /home/user/.bashrc).
+		BASHRC_PATH_IN_CONTAINER="/root/.bashrc"
+		BASH_HISTORY_MARKER_START="# TIMESKETCH_BASH_HISTORY_CONFIG_START"
+		BASH_HISTORY_MARKER_END="# TIMESKETCH_BASH_HISTORY_CONFIG_END"
 
-		echo "Checking bash history status in the container..."
-		# Check if the history file already exists as an indicator
-		if $s docker exec "$CONTAINER_ID" test -f "$HISTORY_FILE_PATH"; then
-			echo "Bash history file ($HISTORY_FILE_PATH) already exists in the container."
-			echo "History may already be active if HISTFILE is set correctly in new shells (e.g., via /root/.bashrc or ~/.bashrc)."
+		echo "Attempting to activate persistent bash history in the container..."
+
+		echo "Ensuring history directory ($HISTORY_DIR_IN_CONTAINER) exists in the container..."
+		# Create the directory if it doesn't exist.
+		# The `docker exec` for mkdir doesn't need -i or -t.
+		if ! $s docker exec "$CONTAINER_ID" mkdir -p "$HISTORY_DIR_IN_CONTAINER"; then
+			echo "Error: Failed to create or ensure history directory $HISTORY_DIR_IN_CONTAINER in the container." >&2
+			echo "Please check permissions or create it manually within the container and then re-run this command." >&2
+			exit 1 # Exit if we can't create the directory
 		else
 			echo "Bash history file not found. Attempting to set up directory..."
 			# Use mkdir -p to ensure the directory exists and avoid error if it's already there.
@@ -134,29 +143,45 @@ case "$1" in
 			if $s docker exec "$CONTAINER_ID" test -d "$HISTORY_DIR"; then
 				echo "Directory $HISTORY_DIR created (or already existed)."
 			else
-				echo "Failed to create directory $HISTORY_DIR in the container."
+				echo "History file $HISTORY_FILE_PATH ensured."
 			fi
-			echo "To fully activate persistent bash history for new shells in the container:"
-			echo "1. Add the following lines to /root/.bashrc (or ~/.bashrc for non-root users) inside the container:"
-			echo "   export HISTFILE=$HISTORY_FILE_PATH"
-			echo "   export HISTSIZE=10000"
-			echo "   export HISTFILESIZE=20000"
-			echo "   shopt -s histappend"
-			echo "   PROMPT_COMMAND='history -a; history -n; \$PROMPT_COMMAND'"
-			echo "2. Source the .bashrc file (e.g., 'source /root/.bashrc') or start a new shell session in the container."
+
+			echo "Updating bash history configuration in $BASHRC_PATH_IN_CONTAINER..."
+
+			# Prepare the new content block.
+			# The `\` before `${PROMPT_COMMAND...}` ensures that `printf` outputs a literal `$`
+			# which `echo` then processes, resulting in the desired `${...}` in the final file.
+			CONFIG_CONTENT=$(printf "%s\n" \
+				"" \
+				"$BASH_HISTORY_MARKER_START" \
+				"export HISTFILE=\"$HISTORY_FILE_PATH\"  # Path to the history file" \
+				"export HISTSIZE=10000                 # Number of commands to keep in memory" \
+				"export HISTFILESIZE=20000             # Max number of commands in the history file" \
+				"shopt -s histappend                  # Append to history file, don't overwrite" \
+				"$BASH_HISTORY_MARKER_END" \
+			)
+
+			# Append the new configuration block. tee -a will create .bashrc if it doesn't exist.
+			if echo "$CONFIG_CONTENT" | $s docker exec -i "$CONTAINER_ID" bash -c "tee -a \"$BASHRC_PATH_IN_CONTAINER\" > /dev/null"; then
+				echo "Bash history configuration successfully updated in $BASHRC_PATH_IN_CONTAINER."
+				echo "To activate, open a new shell in the container (e.g., 'tsdev.sh shell')"
+				echo "or source the file in an existing shell: 'source $BASHRC_PATH_IN_CONTAINER'"
+			else
+				echo "Error: Failed to update bash history configuration in $BASHRC_PATH_IN_CONTAINER." >&2
+			fi
 		fi
 		;;
 	rebuild-dev)
 		echo "Rebuilding the development environment..."
 		echo "This will stop and remove existing dev containers, then build and start new ones."
-		(cd "$COMPOSE_PROJECT_DIR" && $s docker-compose down && $s docker-compose up --build -d)
+		(cd docker/dev && $s docker-compose down && $s docker-compose up --build -d)
 		echo "Rebuild complete. You might need to re-fetch the CONTAINER_ID if it changed."
 		;;
 	restart-dev)
 		echo "Restarting the Timesketch development services (timesketch, worker, postgres, opensearch)..."
 		# Assuming 'timesketch' is the main service name in docker-compose.yml
 		# You might want to list all relevant services: timesketch worker postgres opensearch
-		(cd "$COMPOSE_PROJECT_DIR" && $s docker-compose restart timesketch worker postgres opensearch)
+		(cd docker/dev && $s docker-compose restart timesketch worker postgres opensearch)
 		;;
 	*)
 		echo \""$1"\" is not a valid command.; help
