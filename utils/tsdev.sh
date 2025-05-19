@@ -16,7 +16,7 @@ help(){
 	echo "  celery            Start a celery worker"
 	echo "  logs              Follow docker container logs "
 	echo "  rebuild-dev       Stop, remove, and rebuild the dev environment (docker-compose down && docker-compose up --build -d)"
-	echo "  restart-dev       Restart the dev environment (docker-compose restart timesketch)"
+	echo "  restart-dev       Restart key Timesketch services (timesketch, worker, postgres, opensearch)"
 	echo "  shell             Open a shell in the docker container"
 	echo "  test              Execute run_tests.py --coverage"
 	echo "  vue-build         Build the vue frontend. Default: 'frontend-ng'"
