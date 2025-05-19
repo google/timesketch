@@ -913,9 +913,9 @@ Exports a Timesketch sketch to a zip archive. The archive contains:
     *   Comments linked to specific events within the sketch.
     *   Export timestamp and Timesketch version.
 2.  **Event Data File**: (e.g., `events.csv` or `events.jsonl`)
-    *   All events from the sketch's active timelines, processed in batches to conserve memory.
+    *   All events from the sketch's active (not failed or processing) timelines, processed in batches to conserve memory.
     *   The format can be specified as CSV (default) or JSONL using the `--output-format` option.
-    *   By default, a predefined set of common event fields are exported. Use the `--all-fields` flag to include all available fields for each event.
+    *   By default, a predefined set (DEFAULT_SOURCE_FIELDS in `timesketch/lib/definitions.py`) of common event fields are exported. Use the `--all-fields` flag to include all available fields for each event.
 
 **WARNING:** Re-importing this archive into Timesketch is not natively supported. This export is primarily for data archival, external analysis, or manual migration.
 
