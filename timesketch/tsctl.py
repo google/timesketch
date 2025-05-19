@@ -17,21 +17,36 @@ import os
 import pathlib
 import json
 import re
+import logging
 import subprocess
 import time
+import io
+import zipfile
+import csv
+import datetime
+import traceback
+from typing import Optional
 import yaml
 import redis
 
 
 import click
 import pandas as pd
-
+from flask_restful import marshal
 from flask import current_app
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
 from celery.result import AsyncResult
 
+
+from timesketch.api.v1 import export as api_export
+from timesketch.api.v1.resources import ResourceMixin
+from timesketch.api.v1 import utils as api_utils
+from timesketch.lib import utils as lib_utils
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+
+from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 
 from timesketch import version
 from timesketch.app import create_app
@@ -42,11 +57,39 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Event
+from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
+
+
+# Default filenames for sketch export
+DEFAULT_EXPORT_METADATA_FILENAME = "metadata.json"
+DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE = "events.{output_format}"
+DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE = (
+    "sketch_{sketch_id}_{output_format}_export.zip"
+)
+
+
+def configure_opensearch_logger():
+    """Configure the opensearch-py logger for tsctl."""
+    opensearch_logger = logging.getLogger("opensearch")
+    # Set level to INFO to see more request/response logs
+    opensearch_logger.setLevel(logging.WARNING)
+    # Remove any default handlers to prevent duplicate or unwanted formatting
+    opensearch_logger.handlers = []
+    # Add a new handler with a desired formatter
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("[%(asctime)s] %(name)s/%(levelname)s %(message)s")
+    handler.setFormatter(formatter)
+    opensearch_logger.addHandler(handler)
+
+
+# Configure the opensearch logger immediately after imports
+configure_opensearch_logger()
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -1351,3 +1394,581 @@ def list_config():
         print(f"{key}: {display_value}")
     print("-" * 35)
     print("Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).")
+
+
+def _isoformat_or_none(dt: Optional[datetime.datetime]) -> Optional[str]:
+    """Return ISO format of a datetime object, or None if the object is None.
+
+    Example:
+        _isoformat_or_none(datetime.datetime.now()) == '2024-01-01T12:00:00'
+    """
+    return dt.isoformat() if dt else None
+
+
+# Helper function to gather sketch metadata
+def _get_sketch_metadata(sketch: Sketch) -> dict:
+    """Gathers comprehensive metadata for a given Timesketch sketch.
+    This function collects various details about the sketch, its associated
+    objects (timelines, views, stories, aggregations, etc.), permissions,
+    and export context into a structured dictionary.
+    Args:
+        sketch: The timesketch.models.sketch.Sketch object to extract metadata from.
+    Returns:
+        A dictionary containing metadata about the sketch, including:
+            - Basic sketch info (ID, name, description, status, timestamps, owner).
+            - Permissions and sharing details.
+            - List of associated timelines with their details (including data sources).
+            - List of saved views (name, query, filter, DSL).
+            - List of stories (title, content).
+            - List of aggregations and aggregation groups.
+            - List of saved graphs.
+            - List of analysis sessions.
+            - List of DFIQ scenarios (including nested facets, questions, etc.).
+            - Sketch attributes.
+            - Export timestamp and Timesketch version.
+            - Comments.
+    """
+    # Schemas for marshalling, from the API resource mixin
+    schemas = ResourceMixin.fields_registry
+    print("Gathering metadata...")
+    metadata = {
+        "sketch_id": sketch.id,
+        "name": sketch.name,
+        "description": sketch.description,
+        "status": sketch.get_status.status,
+        "created_at": _isoformat_or_none(sketch.created_at),
+        "updated_at": _isoformat_or_none(sketch.updated_at),
+        "created_by": sketch.user.username if sketch.user else None,
+        "is_public": bool(sketch.is_public),
+        "labels": [label.label for label in sketch.labels],
+        "all_permissions": sketch.get_all_permissions(),
+        "timelines": [],
+        "views": [],
+        "stories": [],
+        "aggregations": [],
+        "aggregation_groups": [],
+        "graphs": [],
+        "analysis_sessions": [],
+        "scenarios": [],
+        "comments": [],
+        "attributes": api_utils.get_sketch_attributes(sketch),
+        "export_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "timesketch_version": version.get_version(),
+    }
+
+    # Timelines
+    for timeline in sketch.timelines:
+        marshalled_timeline = marshal(timeline, schemas["timeline"])
+        metadata["timelines"].append(marshalled_timeline)
+
+    # Views
+    for view in sketch.get_named_views:
+        marshalled_view = marshal(view, schemas["view"])
+        metadata["views"].append(marshalled_view)
+
+    # Stories
+    for story in sketch.stories:
+        marshalled_story = marshal(story, schemas["story"])
+        metadata["stories"].append(marshalled_story)
+
+    # Aggregations
+    for agg in sketch.aggregations:
+        marshalled_agg = marshal(agg, schemas["aggregation"])
+        metadata["aggregations"].append(marshalled_agg)
+
+    # Aggregation Groups
+    for group in sketch.aggregationgroups:
+        marshalled_group = marshal(group, schemas["aggregationgroup"])
+        metadata["aggregation_groups"].append(marshalled_group)
+
+    # Graphs
+    for graph in sketch.graphs:
+        marshalled_graph = marshal(graph, schemas["graph"])
+        metadata["graphs"].append(marshalled_graph)
+
+    # Comments
+    # Fetch Event DB objects that are part of the sketch and have comments.
+    events_with_comments_list = Event.get_with_comments(sketch=sketch).all()
+
+    if events_with_comments_list:
+        print(f"  Processing comments for {len(events_with_comments_list)} event(s)...")
+        for db_event_with_comment in events_with_comments_list:
+            for comment_obj in db_event_with_comment.comments:
+                metadata["comments"].append(
+                    {
+                        "id": comment_obj.id,  # Comment's own SQL PK
+                        "comment": comment_obj.comment,
+                        "user": (
+                            comment_obj.user.username if comment_obj.user else None
+                        ),
+                        "created_at": _isoformat_or_none(comment_obj.created_at),
+                        "updated_at": _isoformat_or_none(comment_obj.updated_at),
+                        # SQL PK of the Event object
+                        "event_id": db_event_with_comment.id,
+                        # OpenSearch _id
+                        "event_uuid": db_event_with_comment.document_id,
+                    }
+                )
+    else:
+        print("  No events with comments found for this sketch.")
+
+    # Analysis Sessions (and their analyses)
+    # Assuming AnalysisSession has a 'sketch' backref or can be queried via sketch
+    # A more robust query might be needed if direct sketch_id isn't on AnalysisSession
+    # For example, joining through Analysis and Timeline if sessions are per timeline.
+    # This example assumes a direct or easily derivable link.
+    analysis_sessions = (
+        AnalysisSession.query.join(Analysis)
+        .join(Timeline)
+        .filter(Timeline.sketch_id == sketch.id)
+        .distinct()
+        .all()
+    )
+    for session in analysis_sessions:
+        metadata["analysis_sessions"].append(
+            marshal(session, schemas["analysissession"])
+        )
+
+    # DFIQ Scenarios (and their nested facets, questions, etc.)
+    for scenario in sketch.scenarios:
+        metadata["scenarios"].append(marshal(scenario, schemas["scenario"]))
+
+    return metadata
+
+
+# Helper function to fetch and prepare event data
+def _fetch_and_prepare_event_data(
+    sketch: Sketch, datastore: OpenSearchDataStore, return_fields: list
+) -> tuple[str, bool]:
+    """Fetches all event data for a sketch and determines its format.
+    This function queries the datastore for all events associated with the
+    active timelines of the given sketch. It requests the data ideally in
+    JSONL format using the `api_export.query_to_filehandle` utility.
+    After fetching, it reads the entire content, ensures it's a string (decoding
+    from UTF-8 if necessary), and attempts to detect if the content is
+    JSONL by checking if it starts with '{' and if the first line can be
+    successfully parsed as JSON. This detection helps downstream functions
+    handle potential format discrepancies (e.g., if the API returned CSV
+    instead of the requested JSONL).
+    Args:
+        sketch: The timesketch.models.sketch.Sketch object whose events
+                are to be fetched.
+        datastore: An initialized
+                    timesketch.lib.datastores.opensearch.OpenSearchDataStore
+                    instance used for querying.
+        return_fields: A list of field names to include in the fetched events.
+    Returns:
+        A tuple containing:
+            - input_content (str): The fetched event data as a single string,
+                                   stripped of leading/trailing whitespace.
+                                   Will be an empty string if fetching fails or
+                                   no data is returned.
+            - is_likely_jsonl (bool): True if the fetched content starts with '{'
+                                      and the first line parses as JSON,
+                                      False otherwise.
+    Raises:
+        ValueError: If no active timelines or valid indices are found for the
+                    sketch, preventing event fetching.
+        # Note: Other exceptions from the datastore interaction or file reading
+        # are caught and logged, resulting in an empty string return value.
+    """
+    query_string = "*"
+    query_filter = {
+        "indices": "_all",
+        "size": 10000,  # Use default size, export handles scrolling
+    }
+    query_dsl = None
+
+    indices, _ = lib_utils.get_validated_indices("_all", sketch)
+    if not indices:
+        indices = [t.searchindex.index_name for t in sketch.active_timelines]
+        if not indices:
+            raise ValueError(
+                "ERROR: No active timelines (and thus no indices) found"
+                "for this sketch."
+            )
+
+    active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
+    if not active_indices:
+        raise ValueError(
+            "ERROR: No active timelines (and thus no indices) found for this sketch."
+        )
+
+    print("Get number of events for this sketch...")
+    try:
+        total_event_count, _ = datastore.count(active_indices)
+        print(f"  Total events in active timelines: {total_event_count:,}")
+    except Exception as count_error:  # pylint: disable=broad-except
+        total_event_count = 0
+        print(f"  WARNING: Could not get total event count: {count_error}")
+
+    print("  Requesting event data (preferring JSONL)...")
+    # TODO: Use PIT, search_after and slicing to improve performance
+    event_file_handle = api_export.query_to_filehandle(
+        query_string=query_string,
+        query_filter=query_filter,
+        query_dsl=query_dsl,
+        indices=indices,
+        sketch=sketch,
+        datastore=datastore,
+        return_fields=return_fields,
+    )
+    event_file_handle.seek(0)
+
+    try:
+        # TODO(jaegeral): A streaming approach (reading, converting, and writing
+        #  to the zip archive line-by-line or in chunks) would be more
+        # memory-efficient but also significantly more complex to implement
+        content_str = event_file_handle.read()
+        if not isinstance(content_str, str):
+            content_str = content_str.decode("utf-8", errors="replace")
+    except Exception as read_err:  # pylint: disable=broad-except
+        print(f"  ERROR reading event data stream: {read_err}")
+        content_str = ""
+
+    input_content = content_str.strip()
+    is_likely_jsonl = False
+    if input_content and input_content.startswith("{"):
+        try:
+            first_line = input_content.split("\n", 1)[0]
+            json.loads(first_line)
+            is_likely_jsonl = True
+            print("  Detected JSONL format in response.")
+        except Exception:  # pylint: disable=broad-except
+            is_likely_jsonl = False
+            print("  Detected non-JSONL format in response (assuming CSV).")
+    elif input_content:
+        print("  Detected non-JSONL format in response (assuming CSV).")
+    else:
+        print("  WARNING: Received empty content from export function.")
+
+    return input_content, is_likely_jsonl
+
+
+# Helper function to convert event data
+def _convert_event_data(
+    input_content: str,
+    is_likely_jsonl: bool,
+    output_format: str,
+    return_fields: list,
+) -> bytes:
+    """Converts fetched event data between JSONL and CSV formats.
+    This function takes the raw event data string, determines the necessary
+    conversion based on the detected input format (`is_likely_jsonl`) and the
+    desired `output_format`, and performs the conversion.
+    - If the input is JSONL and the output is CSV, it parses each JSON line,
+      extracts relevant fields, and writes to a CSV structure. List values are
+      represented as `[value1, value2]` (e.g., `["foo", "bar"]`) and empty lists
+      (e.g., an empty "tag" field) as `[]`.
+    - If the input is CSV and the output is JSONL, it reads the CSV, attempts
+      basic type inference (int, float, bool) for values, and writes each row
+      as a JSON line. It also attempts to sniff the CSV dialect.
+    - If the input and output formats match, it returns the input content
+      encoded directly.
+    Warnings are printed for skipped lines or conversion issues. Errors during
+    critical conversion steps (like parsing the first line for CSV headers or
+    major CSV/JSONL conversion failures) will raise exceptions.
+    Args:
+        input_content: The fetched event data as a single string, stripped of
+                       leading/trailing whitespace.
+        is_likely_jsonl: Boolean flag indicating if the `input_content` is
+                         detected as JSONL format.
+        output_format: The target format for the event data ('csv' or 'jsonl').
+        return_fields: A list of field names expected in the output. Primarily
+                       used to determine headers when converting JSONL to CSV
+                       if the `return_fields` option was specified for the export.
+    Returns:
+        A bytes object containing the event data in the specified `output_format`,
+        encoded in UTF-8. Returns empty bytes if `input_content` is empty.
+    Raises:
+        ValueError: If no valid JSON lines are found when converting JSONL to CSV.
+        json.JSONDecodeError: If parsing the first JSON line for CSV headers fails.
+        Exception: Propagates exceptions from underlying CSV/JSON processing or
+                   other unexpected errors during conversion.
+    """
+    event_data_bytes = b""
+
+    if not input_content:
+        print(f"  WARNING: No event data returned to format as {output_format}.")
+        return event_data_bytes
+
+    if output_format == "csv":
+        if is_likely_jsonl:
+            print("  Input is JSONL, converting to CSV...")
+            jsonl_data = input_content.split("\n")
+            output_csv = io.StringIO()
+            try:
+                first_valid_line_index = -1
+                for i, line in enumerate(jsonl_data):
+                    if line.strip():
+                        first_valid_line_index = i
+                        break
+
+                if first_valid_line_index == -1:
+                    raise ValueError("No valid JSON lines found for CSV conversion.")
+
+                first_event = json.loads(jsonl_data[first_valid_line_index])
+
+                if return_fields:
+                    fieldnames = [f for f in return_fields if f in first_event]
+                    if not fieldnames:
+                        print(
+                            "  WARNING: return_fields did not match event keys,"
+                            " using all keys."
+                        )
+                        fieldnames = sorted(first_event.keys())
+                else:
+                    fieldnames = sorted(first_event.keys())
+
+                writer = csv.DictWriter(
+                    output_csv, fieldnames=fieldnames, extrasaction="ignore"
+                )
+                writer.writeheader()
+
+                for line in jsonl_data:
+                    line = line.strip()
+                    if line:
+                        try:
+                            event_dict = json.loads(line)
+                            csv_row = {}
+                            for key in fieldnames:
+                                value = event_dict.get(key)
+                                if isinstance(value, list):
+                                    csv_row[key] = f"[{', '.join(map(str, value))}]"
+                                elif value is None:
+                                    csv_row[key] = ""
+                                else:
+                                    csv_row[key] = str(value)
+                            writer.writerow(csv_row)
+                        except json.JSONDecodeError:
+                            print(
+                                f"  WARNING: Skipping invalid JSON line: {line[:100]}..."  # pylint: disable=line-too-long
+                            )
+                        except Exception as row_err:  # pylint: disable=broad-except
+                            print(
+                                f"  WARNING: Error processing row: {row_err}"
+                                f" - Line: {line[:100]}..."
+                            )
+
+                event_data_bytes = output_csv.getvalue().encode("utf-8")
+
+            except json.JSONDecodeError as first_line_error:
+                print(
+                    f"  ERROR parsing first JSON line for CSV headers: {first_line_error}"  # pylint: disable=line-too-long
+                )
+                print(
+                    f"  Content of first line:"
+                    f"{jsonl_data[first_valid_line_index][:200]}..."
+                )
+                print(traceback.format_exc())
+                raise  # Re-raise to stop execution
+            except Exception as conversion_error:  # pylint: disable=broad-except
+                print(f"  ERROR converting JSONL to CSV: {conversion_error}")
+                print(traceback.format_exc())
+                raise  # Re-raise to stop execution
+        else:
+            print("  Input is not JSONL, using as CSV...")
+            event_data_bytes = input_content.encode("utf-8")
+
+    elif output_format == "jsonl":
+        if is_likely_jsonl:
+            print("  Input is JSONL, using as is...")
+            event_data_bytes = input_content.encode("utf-8")
+        else:
+            print("  Input is not JSONL, converting CSV to JSONL...")
+            try:
+                csv_input = io.StringIO(input_content)
+                try:
+                    dialect = csv.Sniffer().sniff(csv_input.read(1024))
+                    csv_input.seek(0)
+                    reader = csv.DictReader(csv_input, dialect=dialect)
+                    print(
+                        f"    Detected CSV dialect: delimiter='{dialect.delimiter}'"
+                    )  # pylint: disable=line-too-long
+                except csv.Error:
+                    print(
+                        "    Could not detect CSV dialect, assuming comma delimiter."
+                    )  # pylint: disable=line-too-long
+                    csv_input.seek(0)
+                    reader = csv.DictReader(csv_input)
+
+                output_jsonl = io.StringIO()
+                count = 0
+                for row in reader:
+                    processed_row = {}
+                    for key, value in row.items():
+                        try:
+                            processed_row[key] = int(value)
+                            continue
+                        except (ValueError, TypeError):
+                            pass
+                        try:
+                            processed_row[key] = float(value)
+                            continue
+                        except (ValueError, TypeError):
+                            pass
+                        if isinstance(value, str):
+                            if value.lower() == "true":
+                                processed_row[key] = True
+                                continue
+                            if value.lower() == "false":
+                                processed_row[key] = False
+                                continue
+                        processed_row[key] = value
+
+                    output_jsonl.write(json.dumps(processed_row) + "\n")
+                    count += 1
+
+                event_data_bytes = output_jsonl.getvalue().encode("utf-8")
+                print(f"    Successfully converted {count} CSV rows to JSONL.")
+
+            except Exception as conversion_error:  # pylint: disable=broad-except
+                print(f"  ERROR converting CSV to JSONL: {conversion_error}")
+                print(traceback.format_exc())
+                raise  # Re-raise to stop execution
+
+    return event_data_bytes
+
+
+# Helper function to create the zip archive
+# TODO(jaegeral): https://github.com/google/timesketch/issues/3415
+def _create_export_archive(
+    filename: str, metadata: dict, event_data_bytes: bytes, event_filename: str
+):
+    """Creates the zip archive with metadata and event data."""
+    print("Creating zip archive...")
+    try:
+        with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+            metadata_bytes = json.dumps(metadata, indent=2, ensure_ascii=False).encode(
+                "utf-8"
+            )
+            zipf.writestr(DEFAULT_EXPORT_METADATA_FILENAME, metadata_bytes)
+
+            if event_data_bytes:
+                zipf.writestr(event_filename, event_data_bytes)
+            else:
+                print("  WARNING: No event data was generated to include in the zip.")
+
+        print(f"Sketch exported successfully to {filename}")
+
+    except Exception as zip_error:  # pylint: disable=broad-except
+        print(f"ERROR creating zip file: {zip_error}")
+        print(traceback.format_exc())
+
+
+# --- Main CLI command using the helper functions ---
+@cli.command(name="export-sketch")
+@click.argument("sketch_id", type=int)
+@click.option(
+    "--output-format",
+    type=click.Choice(["csv", "jsonl"], case_sensitive=False),
+    default="csv",
+    help="Format for event data export (csv or jsonl). Default: csv",
+)
+@click.option(
+    "--filename",
+    required=False,
+    help=(
+        "Filename for the output zip archive. "
+        f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
+    ),
+)
+@click.option(
+    "--default-fields",
+    is_flag=True,
+    default=False,  # Default is now False, meaning all fields are exported by default
+    help=(
+        "Export only the default set of event fields. "
+        "If not specified, all fields are exported."
+    ),
+)
+def export_sketch(
+    sketch_id: int, output_format: str, filename: str, default_fields: bool
+):
+    """Exports a Timesketch sketch to a zip archive.
+
+    The archive includes sketch metadata (as 'metadata.json') and all associated
+    events, formatted as specified (CSV or JSONL). By default, only a predefined
+    set of common fields are exported. Use the --default-fields flag to export
+    only the default set of fields.
+    Progress messages are printed to the console
+    during the export process.
+
+    **WARNING:** Re-importing this archive into Timesketch is not natively
+    supported. This export is primarily for data archival, external analysis,
+    or manual migration.
+
+    Note: When running this command within a container (e.g., Docker),
+    the output zip file is written inside the container's filesystem.
+    Ensure you write to a mounted volume or copy the file out of the
+    container afterwards.
+    """
+    sketch = sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        print(f"ERROR: Sketch with ID {sketch_id} not found.")
+        return
+
+    if not filename:
+        filename = DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE.format(
+            sketch_id=sketch_id, output_format=output_format
+        )
+
+    if not filename.lower().endswith(".zip"):
+        filename += ".zip"
+
+    print(f'Exporting sketch [{sketch_id}] "{sketch.name}" to {filename}...')
+
+    # --- Add prominent warning to console output ---
+    click.echo(
+        click.style(
+            "\nWARNING: There is currently no native method to re-import "
+            "this exported archive back into Timesketch.\n",
+            fg="yellow",
+            bold=True,
+        ),
+        err=True,  # Print to stderr to make it more noticeable
+    )
+    # --- End warning ---
+
+    try:
+        # 1. Gather Metadata
+        metadata = _get_sketch_metadata(sketch)
+
+        # 2. Fetch and Prepare Event Data
+        # Get datastore instance
+        datastore = OpenSearchDataStore(
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
+
+        if default_fields:
+            print(
+                f"  Exporting default fields only: {', '.join(DEFAULT_SOURCE_FIELDS)}"
+            )
+            return_fields_to_fetch = DEFAULT_SOURCE_FIELDS
+        else:
+            print("  Exporting all event fields.")
+            return_fields_to_fetch = None  # Pass None to get all fields
+
+        input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
+            sketch, datastore, return_fields_to_fetch
+        )
+
+        # 3. Convert Event Data
+        event_data_bytes = _convert_event_data(
+            input_content, is_likely_jsonl, output_format, return_fields_to_fetch
+        )
+        event_filename = DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE.format(
+            output_format=output_format
+        )
+
+        # 4. Create Zip Archive
+        _create_export_archive(filename, metadata, event_data_bytes, event_filename)
+
+    except ValueError as ve:  # Catch specific errors raised by helpers
+        print(f"ERROR: {ve}")
+        return
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"An unexpected error occurred during export: {e}")
+        print(traceback.format_exc())
+        return
