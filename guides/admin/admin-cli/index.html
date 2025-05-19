@@ -1465,6 +1465,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#export-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      export-sketch
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2794,6 +2803,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#export-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      export-sketch
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3412,6 +3430,64 @@ UPLOAD_ENABLED: True
 ...
 -----------------------------------
 Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
+</code></pre>
+<h3 id="export-sketch">export-sketch</h3>
+<p>Exports a Timesketch sketch to a zip archive. The archive contains:</p>
+<ol>
+<li><strong><code>metadata.json</code></strong>: A comprehensive JSON file detailing the sketch, including:<ul>
+<li>Basic sketch information (ID, name, description, status, timestamps, owner).</li>
+<li>Permissions and sharing details.</li>
+<li>Associated timelines with their configurations and data sources.</li>
+<li>Saved views (queries, filters, DSL).</li>
+<li>Stories, including their content.</li>
+<li>Aggregations and aggregation groups.</li>
+<li>Saved graphs.</li>
+<li>Analysis sessions and their results.</li>
+<li>DFIQ scenarios, including nested facets and investigative questions.</li>
+<li>Sketch attributes.</li>
+<li>Comments linked to specific events within the sketch.</li>
+<li>Export timestamp and Timesketch version.</li>
+</ul>
+</li>
+<li><strong>Event Data File</strong>: (e.g., <code>events.csv</code> or <code>events.jsonl</code>)<ul>
+<li>All events from the sketch's active (not failed or processing) timelines, processed in batches to conserve memory.</li>
+<li>The format can be specified as CSV (default) or JSONL using the <code>--output-format</code> option.</li>
+<li>By default all fields are exported. Using <code>--default-fields</code> a predefined set (DEFAULT_SOURCE_FIELDS in <code>timesketch/lib/definitions.py</code>) of common event fields are exported.</li>
+</ul>
+</li>
+</ol>
+<p><strong>WARNING:</strong> Re-importing this archive into Timesketch is not natively supported. This export is primarily for data archival, external analysis, or manual migration.</p>
+<p>Progress messages are printed to the console during the export process.</p>
+<p><strong>Usage:</strong></p>
+<p>Parameters:</p>
+<ul>
+<li><strong><SKETCH_ID>:</strong> (Required) The ID of the sketch to export.</li>
+<li><strong>--filename / -f:</strong> (Optional) The name for the output zip file. Default: sketch_{sketch_id}_{output_format}_export.zip</li>
+<li><strong>--output-format:</strong> (Optional) The format for the event data ('csv' or 'jsonl'). Default: 'csv'.</li>
+<li><strong>--all-fields:</strong> (Optional default: True) Export all event fields instead of the default set.</li>
+</ul>
+<p><em>Note on Container Usage:</em> When running this command within a container (e.g., Docker), the output zip file is written inside the container's filesystem. Ensure you write to a mounted volume or copy the file out of the container afterwards.</p>
+<p>Example:</p>
+<pre><code class="language-bash">tsctl export-sketch  1
+
+Exporting sketch [1] &quot;aaaa&quot; to sketch_1_csv_export.zip...
+
+WARNING: There is currently no native method to re-import this exported archive back into Timesketch.
+
+Gathering metadata...
+  Processing comments for 4 event(s)...
+  2025-05-14 10:02:00 INFO     GET http://opensearch:9200/ [status:200 request:0.008s]
+  Exporting all event fields.
+  Requesting event data (preferring JSONL)...
+2025-05-14 10:02:00 INFO     POST http://opensearch:9200/484a472fd004a72f2ee857c39a4fb17c,9c49430d1e5f42849bdb253647e1f836,5caa30a18efa4333971b42957d86d09e/_search?scroll=1m&amp;search_type=query_then_fetch [status:200 request:0.214s]
+
+[...]
+
+  Detected non-JSONL format in response (assuming CSV).
+  303490 events processed for export.
+  Input is not JSONL, using as CSV...
+Creating zip archive...
+Sketch exported successfully to sketch_1_csv_export.zip
 </code></pre>
 
 
