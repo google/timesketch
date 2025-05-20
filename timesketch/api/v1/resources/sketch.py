@@ -486,8 +486,44 @@ class SketchResource(resources.ResourceMixin, Resource):
         return self.to_json(sketch, meta=meta)
 
     @login_required
-    def delete(self, sketch_id):
-        """Handles DELETE request to the resource."""
+    def delete(self, sketch_id: int, force_delete: bool = False):
+        """Handles DELETE request to mark a sketch as deleted or permanently remove it.
+
+        By default (force_delete=False), this method marks the sketch as 'deleted'
+        in the database but does not remove the underlying OpenSearch indices or
+        associated data. This is a soft delete, primarily for historical reasons
+        and safety.
+
+        If force_delete is set to True (either via the parameter or the 'force'
+        URL query parameter), the sketch, its timelines, associated search indices,
+        and all related data in the database and OpenSearch will be permanently
+        removed. This is a hard delete and is irreversible.
+
+        Deletion (both soft and hard) is prevented if the sketch has a label
+        defined in the LABELS_TO_PREVENT_DELETION configuration setting.
+
+        Requires 'delete' permission on the sketch.
+
+        Args:
+            sketch_id (int): The ID of the sketch to delete.
+            force_delete (bool): If True, perform a hard delete, permanently
+                removing all associated data. Defaults to False (soft delete).
+                Can also be triggered by setting the 'force' URL query parameter.
+
+        Returns:
+            int: HTTP_STATUS_CODE_OK (200) if the operation is successful (even
+                 for a soft delete where data is only marked).
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND (404): If no sketch is found with the
+                given ID.
+            HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have 'delete'
+                permission on the sketch, or if the sketch has a label
+                preventing deletion.
+            HTTP_STATUS_CODE_BAD_REQUEST (400): If there's an issue during the
+                deletion process (though this specific implementation seems to
+                only return 200 or abort).
+        """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -503,7 +539,38 @@ class SketchResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_FORBIDDEN,
                     f"Sketch with the label [{label:s}] cannot be deleted.",
                 )
-        sketch.set_status(status="deleted")
+
+        if not force_delete:
+            # check if force_delete is maybe set in the url
+            force_delete = request.args.get("force")
+            if force_delete is None:
+                logger.debug("Force delete not present, will keep the OS data")
+                force_delete = False
+
+        abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            "Sketch [{0:d}] could be deleted".format(sketch_id),
+        )
+
+        # TODO(jaegeral: remove that before merging)
+        # sketch.set_status(status="deleted")
+
+        # Default behaviour for historical reasons: exit with 200 without
+        # deleting
+        if not force_delete:
+            return HTTP_STATUS_CODE_OK
+
+        # now the real deletion
+        for timeline in sketch.active_timelines:
+            timeline.set_status(status="deleted")
+            searchindex = timeline.searchindex
+            db_session.delete(searchindex)
+            db_session.delete(timeline)
+            # remove the opensearch index
+            self.datastore.client.indices.delete(index=searchindex.index_name)
+
+        db_session.delete(sketch)
+        db_session.commit()
         return HTTP_STATUS_CODE_OK
 
     @login_required
@@ -547,6 +614,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 f"not [{label_action:s}]",
             )
 
+        changed = False
         if labels and isinstance(labels, (tuple, list)):
             for label in labels:
                 if label_action == "add":
