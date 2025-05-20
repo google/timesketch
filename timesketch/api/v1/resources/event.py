@@ -1057,7 +1057,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if searchindex_id not in indices:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Search index ID ({searchindex_id!s}) does not belong to the"
+                    f"Search index ID ({searchindex_id!s}) does not belong to the"
                     " list of indices",
                 )
 

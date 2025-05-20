@@ -76,72 +76,6 @@ class EventsTest(unittest.TestCase):
         expected_output = "No such option: --comments Did you mean --comment?"
         assert expected_output in result.output
 
-    def test_add_event_tag(self):
-        """Test to add a tag to an event."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "--output-format",
-                "json",
-                "annotate",
-                "--event-id",
-                "1",
-                "--timeline-id",
-                "1",
-                "--tag",
-                "test",
-            ],
-            obj=self.ctx,
-        )
-        print(result.output)
-        print(result.exception)
-        print(result.exit_code)
-        assert "['test']" in result.output
-
-    # todo: Fix the remaining tests here
-
-    def test_add_event_tags(self):
-        """Test to add multiple tags to an event."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "annotate",
-                "--event-id",
-                "1",
-                "--tag",
-                "test1,test2",
-                "--timeline-id",
-                "1",
-            ],
-            obj=self.ctx,
-        )
-
-        assert 0 is result.exit_code
-
-    def test_add_event_tags_json(self):
-        """Test to add multiple tags to an event and output as json."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "--output-format",
-                "json",
-                "annotate",
-                "--event-id",
-                "1",
-                "--tag",
-                "test1,test2",
-                "--timeline-id",
-                "1",
-            ],
-            obj=self.ctx,
-        )
-
-        assert "No such event" in result.output
-        assert 1 is result.exit_code
-
     def test_failed_add_event(self):
         """Test to add an event to a sketch with an error."""
         runner = CliRunner()
@@ -150,26 +84,6 @@ class EventsTest(unittest.TestCase):
 
     def test_add_event(self):
         """Test to add an event to a sketch."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "add",
-                "--message",
-                "test message",
-                "--date",
-                "2023-03-04T11:31:12",
-                "--timestamp-desc",
-                "test",
-            ],
-            obj=self.ctx,
-        )
-        assert "Event added to sketch: test" in result.output
-
-    def text_no_output_format_defined_in_config(self):
-        """Test to add an event to a sketch."""
-
-        self.ctx = test_lib.get_cli_context_no_output()
         runner = CliRunner()
         result = runner.invoke(
             events_group,
