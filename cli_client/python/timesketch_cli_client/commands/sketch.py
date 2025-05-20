@@ -385,7 +385,7 @@ def export_only_with_annotations(
         # Search for tags, excluding the internal star tag
         "labels": {
             "chip": None,
-            'query': '_exists_:tag AND NOT tag.keyword:"__ts_star"',
+            "query": '_exists_:tag AND NOT tag.keyword:"__ts_star"',
         },
     }
 
