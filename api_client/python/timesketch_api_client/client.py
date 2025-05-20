@@ -403,8 +403,13 @@ class TimesketchApi:
             attempt += 1
             # If this is not the first attempt, wait before trying again
             if attempt > 1:
-                # Simple fixed backoff before retrying
-                time.sleep(1)  # Wait for 1 second before the next attempt
+                backoff_time = 0.5 * (2 ** (attempt - 2))
+                logger.info(
+                    "Waiting %.1fs before next attempt for request '%s'.",
+                    backoff_time,
+                    resource_url,
+                )
+                time.sleep(backoff_time)
 
             try:
                 response = self.session.get(resource_url, params=params)
