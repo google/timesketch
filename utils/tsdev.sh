@@ -16,7 +16,7 @@ help(){
 	echo "  celery            Start a celery worker"
 	echo "  logs              Follow docker container logs "
 	echo "  psql              Connect to the Timesketch PostgreSQL database in the dev container"
-	echo "  rebuild-dev       Stop, remove, and rebuild the dev environment (docker-compose down && docker-compose up --build -d)"
+	echo "  reset-dev       Stop, remove, and restart the dev environment"
 	echo "  restart-dev       Restart key Timesketch services (timesketch, worker, postgres, opensearch)"
 	echo "  shell             Open a shell in the docker container"
 	echo "  test              Execute run_tests.py --coverage"
@@ -61,12 +61,12 @@ CONTAINER_ID="$($s docker container list --filter name='timesketch-dev' --quiet)
 # is one that can operate without it (e.g., managing the docker-compose lifecycle or targeting another container).
 if [ -z "$CONTAINER_ID" ]; then
   case "$1" in
-    rebuild-dev|restart-dev|postgres)
+    reset-dev|restart-dev|postgres)
       # These commands can proceed as they either manage the lifecycle or target a different container.
       ;;
     *)
       echo "Error: Timesketch development container (timesketch-dev) not found or not running." >&2
-      echo "You might need to run 'tsdev.sh rebuild-dev', 'tsdev.sh restart-dev', or ensure Docker services are up." >&2
+      echo "You might need to run 'tsdev.sh reset-dev', 'tsdev.sh restart-dev', or ensure Docker services are up." >&2
       exit 1
       ;;
   esac
@@ -172,23 +172,20 @@ case "$1" in
 			fi
 		fi
 		;;
-	rebuild-dev)
-		echo "Rebuilding the development environment..."
-		echo "This will stop and remove existing dev containers, then build and start new ones."
+	reset-dev)
+		echo "Resetting the development environment..."
+		echo "This will stop and remove existing dev containers, then start new ones."
 		(cd docker/dev && $s docker-compose down && $s docker-compose up --pull always -d)
-		echo "Rebuild complete. You might need to re-fetch the CONTAINER_ID if it changed."
+		echo "Reset complete. You might need to re-fetch the CONTAINER_ID if it changed."
 		;;
 	restart-dev)
 		echo "Restarting the Timesketch development services (timesketch, worker, postgres, opensearch)..."
-		# Assuming 'timesketch' is the main service name in docker-compose.yml
-		# You might want to list all relevant services: timesketch worker postgres opensearch
 		(cd docker/dev && $s docker-compose restart timesketch worker postgres opensearch)
 		;;
 	psql)
 		if ! $s docker exec -i -t "$CONTAINER_ID" bash -c "command -v psql > /dev/null 2>&1"; then
 			echo "psql client not found in the container. Attempting to install postgresql-client..."
 			# Run apt-get update and install postgresql-client non-interactively (-y).
-			# This assumes the container is Debian/Ubuntu based and has apt-get.
 			if $s docker exec -i -t "$CONTAINER_ID" bash -c "apt-get update && apt-get install -y postgresql-client"; then
 				echo "postgresql-client installed successfully."
 			else
