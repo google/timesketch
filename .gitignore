@@ -45,4 +45,6 @@ vagrant/*.log
 
 # Exclude .venv folder
 .venv/
+
+# Exclude Visual Studio Code files
 .vscode/*
