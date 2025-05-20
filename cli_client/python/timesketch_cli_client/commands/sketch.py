@@ -310,7 +310,7 @@ def remove_label(ctx: click.Context, label: str) -> None:
 
 @sketch_group.command(
     "export-only-with-annotations",
-    help="Export events with comments, stars, OR labels.",  # Updated help
+    help='Export events with comments, stars, OR labels.',  # Updated help
 )
 @click.option(
     "--filename", required=True, help="Filename to export annotated events to."
