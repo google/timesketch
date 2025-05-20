@@ -15,6 +15,7 @@ def run_python_tests():
             "auto",
             "timesketch/",
             "api_client/",
+            "cli_client/",
         ]
     )
 
