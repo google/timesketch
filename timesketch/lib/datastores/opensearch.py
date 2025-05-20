@@ -1384,6 +1384,7 @@ class OpenSearchDataStore:
 
         Raises:
             NotFoundError: If an index in index_list is not found.
+            Exception: For other unexpected errors.
             opensearchpy.exceptions.OpenSearchException: For other OpenSearch errors.
         """
         os_logger.debug(
@@ -1479,7 +1480,8 @@ class OpenSearchDataStore:
             except NotFoundError as nfe_search:
                 os_logger.warning(
                     "[Slice %s/%s] NotFoundError during search with PIT ID %s. "
-                    "PIT may have expired or become invalid. Error: %s. Stopping slice.",
+                    "PIT may have expired or become invalid. Error: %s. "
+                    "Stopping slice.",
                     log_slice_id,
                     num_slices,
                     pit_id,
@@ -1489,25 +1491,23 @@ class OpenSearchDataStore:
                 break  # Stop searching for this slice
             except (RequestError, ConnectionTimeout) as e_search_comm:
                 os_logger.error(
-                    "[Slice %s/%s] Communication error during search with PIT ID %s: %s. Stopping slice.",
+                    "[Slice %s/%s] Communication error during search with PIT ID"
+                    " %s: %s. Stopping slice.",
                     log_slice_id,
                     num_slices,
                     pit_id,
                     str(e_search_comm),
                 )
-                # For RequestError, it could be a bad query or a more serious PIT issue.
-                # For ConnectionTimeout, this slice cannot continue.
-                # Setting stop_event might be too aggressive if it's a transient network blip
-                # affecting only one worker, but safer for now.
                 stop_event.set()
                 break  # Stop searching for this slice
-            except Exception as e_search_generic:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 os_logger.error(
-                    "[Slice %s/%s] Unexpected error during search with PIT ID %s: %s. Stopping slice.",
+                    "[Slice %s/%s] Unexpected error during search with PIT ID "
+                    "%s: %s. Stopping slice.",
                     log_slice_id,
                     num_slices,
                     pit_id,
-                    str(e_search_generic),
+                    str(e),
                     exc_info=True,
                 )
                 stop_event.set()  # Unexpected, signal broader issue
@@ -1546,7 +1546,8 @@ class OpenSearchDataStore:
             search_after_params = hits[-1].get("sort")
             if search_after_params is None and hits:
                 os_logger.error(
-                    "[Slice %s/%s] 'sort' field missing in last hit. Cannot continue pagination for this slice.",
+                    "[Slice %s/%s] 'sort' field missing in last hit. Cannot "
+                    "continue pagination for this slice.",
                     log_slice_id,
                     num_slices,
                 )
@@ -1614,7 +1615,7 @@ class OpenSearchDataStore:
         orchestrates the export for its assigned slice by:
         1. Creating a Point-In-Time (PIT) context using `_create_pit_for_slice`.
         2. Fetching documents in pages for the slice using `_search_in_slice`.
-        3. Putting fetched event data onto the `output_queue` using `_put_item_on_queue`.
+        3. Put fetched event data onto the `output_queue` with `_put_item_on_queue`.
         4. Handling `stop_event` signals for early termination.
         5. Ensuring the PIT is deleted upon completion or error.
         6. Placing a `None` sentinel on the `output_queue` to indicate completion.
@@ -1834,7 +1835,6 @@ class OpenSearchDataStore:
             effective_worker_timeout = request_timeout_per_slice
         else:
             effective_worker_timeout = self.sliced_export_request_timeout_default
-
 
         if not 1 <= effective_num_slices <= 1024:
             raise ValueError("num_slices must be between 1 and 1024.")
