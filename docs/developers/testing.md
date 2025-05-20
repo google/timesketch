@@ -132,3 +132,28 @@ To check linting on a single file, run the following in your docker container:
 ! pylint /usr/local/src/timesketch/timesketch/  --rcfile .pylintrc -v
 ```
 
+## Generate test events
+
+The `/utils/generate_sample_data.py` tool provides utilities for generating sample or test data.
+Currently, it includes a command to generate dummy CSV files, which can be useful for testing import functionality or for creating sample timelines.
+
+**Usage:**
+
+```bash
+python3 utils/generate_sample_data.py [OPTIONS]
+```
+
+**Options:**
+
+*   `--output FILE`: The path to the output CSV file. (Required)
+*   `--count INTEGER`: The number of dummy events to generate. (Default: 100)
+*   `--start-date TEXT`: The start date for the events in ISO 8601 format (e.g., `YYYY-MM-DDTHH:MM:SS`). (Required)
+*   `--end-date TEXT`: The end date for the events in ISO 8601 format (e.g., `YYYY-MM-DDTHH:MM:SS`). (Required)
+
+**Example:**
+
+To generate a CSV file named `dummy_events.csv` with 50 events between January 1st, 2023, 09:00:00 and January 1st, 2023, 17:00:00:
+
+```bash
+python3 utils/generate_sample_data.py --output dummy_events.csv --count 50 --start-date 2023-01-01T09:00:00 --end-date 2023-01-01T17:00:00
+```
