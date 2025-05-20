@@ -1364,6 +1364,237 @@ class OpenSearchDataStore:
         self.import_events = []
         return return_dict
 
+    def _create_pit_for_slice(
+        self,
+        index_list: List[str],
+        pit_keep_alive: str,
+        log_slice_id: int,
+        num_slices: int,
+    ) -> str:
+        """Creates a Point-In-Time ID for a slice.
+
+        Args:
+            index_list (List[str]): List of OpenSearch index names.
+            pit_keep_alive (str): Keep-alive duration for the PIT (e.g., "5m").
+            log_slice_id (int): 1-indexed slice ID, used for logging purposes.
+            num_slices (int): Total number of slices, used for logging purposes.
+
+        Returns:
+            The created PIT ID.
+
+        Raises:
+            NotFoundError: If an index in index_list is not found.
+            opensearchpy.exceptions.OpenSearchException: For other OpenSearch errors.
+        """
+        os_logger.debug(
+            "[Slice %s/%s] Attempting to create PIT with keep_alive: %s",
+            log_slice_id,
+            num_slices,
+            pit_keep_alive,
+        )
+        try:
+            pit_response = (
+                self.client.create_pit(  # pylint: disable=unexpected-keyword-arg
+                    index=index_list, keep_alive=pit_keep_alive
+                )
+            )
+            pit_id = pit_response["pit_id"]
+            os_logger.info(
+                "[Slice %s/%s] Created PIT ID: %s", log_slice_id, num_slices, pit_id
+            )
+            return pit_id
+        except NotFoundError as nfe:
+            os_logger.debug(
+                "[Slice %s/%s] NotFoundError during PIT creation: %s",
+                log_slice_id,
+                num_slices,
+                str(nfe),
+            )
+            raise
+        except Exception as e:
+            os_logger.error(
+                "[Slice %s/%s] Error creating PIT: %s",
+                log_slice_id,
+                num_slices,
+                str(e),
+                exc_info=True,
+            )
+            raise  # Propagate to be caught by _export_slice_worker
+
+    def _search_in_slice(
+        self,
+        pit_id: str,
+        slice_id: int,
+        num_slices: int,
+        query_body: Dict[str, Any],
+        sort_criteria: List[Dict[str, Any]],
+        page_size: int,
+        pit_keep_alive: str,
+        stop_event: threading.Event,
+        request_timeout: int,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """Performs paginated search for a single slice using PIT and yields events.
+
+        This function is responsible for iterating through documents within a
+        specific slice of a PIT. It uses `search_after` for pagination and
+        handles OpenSearch search requests.
+
+        Args:
+            pit_id (str): The Point-In-Time ID to use for searching.
+            slice_id (int): The ID of the current slice.
+            num_slices (int): The total number of slices.
+            query_body (Dict[str, Any]): The base OpenSearch query body.
+            sort_criteria (List[Dict[str, Any]]): Sort criteria for pagination.
+            page_size (int): Number of documents to fetch per search request.
+            pit_keep_alive (str): Keep-alive duration for the PIT.
+            stop_event (threading.Event): Event to signal early termination.
+            request_timeout (int): Timeout for OpenSearch search requests.
+
+        Yields:
+            Dict[str, Any]: Event documents, where each dictionary includes
+            the original `_source` fields, along with `_id` and `_index`.
+
+        Handles internal search errors (e.g., expired PITs, connection issues)
+        by logging them and setting the `stop_event` to halt further processing.
+        """
+        search_after_params = None
+        slice_doc_count = 0
+        log_slice_id = slice_id + 1
+
+        while not stop_event.is_set():
+            query = {
+                **query_body,
+                "size": page_size,
+                "sort": sort_criteria,
+                "pit": {"id": pit_id, "keep_alive": pit_keep_alive},
+                "slice": {"id": slice_id, "max": num_slices},
+            }
+            if search_after_params:
+                query["search_after"] = search_after_params
+
+            try:
+                response = self.client.search(  # pylint: disable=unexpected-keyword-arg
+                    body=query, request_timeout=request_timeout
+                )
+            except NotFoundError as nfe_search:
+                os_logger.warning(
+                    "[Slice %s/%s] NotFoundError during search with PIT ID %s. "
+                    "PIT may have expired or become invalid. Error: %s. Stopping slice.",
+                    log_slice_id,
+                    num_slices,
+                    pit_id,
+                    str(nfe_search),
+                )
+                stop_event.set()  # Signal issue, this PIT is likely dead for all
+                break  # Stop searching for this slice
+            except (RequestError, ConnectionTimeout) as e_search_comm:
+                os_logger.error(
+                    "[Slice %s/%s] Communication error during search with PIT ID %s: %s. Stopping slice.",
+                    log_slice_id,
+                    num_slices,
+                    pit_id,
+                    str(e_search_comm),
+                )
+                # For RequestError, it could be a bad query or a more serious PIT issue.
+                # For ConnectionTimeout, this slice cannot continue.
+                # Setting stop_event might be too aggressive if it's a transient network blip
+                # affecting only one worker, but safer for now.
+                stop_event.set()
+                break  # Stop searching for this slice
+            except Exception as e_search_generic:
+                os_logger.error(
+                    "[Slice %s/%s] Unexpected error during search with PIT ID %s: %s. Stopping slice.",
+                    log_slice_id,
+                    num_slices,
+                    pit_id,
+                    str(e_search_generic),
+                    exc_info=True,
+                )
+                stop_event.set()  # Unexpected, signal broader issue
+                break  # Stop searching for this slice
+
+            hits = response.get("hits", {}).get("hits", [])
+            if not hits:
+                os_logger.info(
+                    "[Slice %s/%s] No more documents.", log_slice_id, num_slices
+                )
+                break
+
+            for hit in hits:
+                if stop_event.is_set():  # Check before yielding
+                    break
+                if "_source" in hit:
+                    event_data_to_export = {
+                        **hit["_source"],
+                        "_id": hit.get("_id"),
+                        "_index": hit.get("_index"),
+                    }
+                    yield event_data_to_export
+
+            if stop_event.is_set():  # Check after processing hits for this page
+                break
+
+            slice_doc_count += len(hits)
+            os_logger.info(
+                "[Slice %s/%s] Retrieved %s docs. Total for this slice so far: %s.",
+                log_slice_id,
+                num_slices,
+                len(hits),
+                slice_doc_count,
+            )
+
+            search_after_params = hits[-1].get("sort")
+            if search_after_params is None and hits:
+                os_logger.error(
+                    "[Slice %s/%s] 'sort' field missing in last hit. Cannot continue pagination for this slice.",
+                    log_slice_id,
+                    num_slices,
+                )
+                stop_event.set()  # This is a critical data issue for pagination
+                break
+
+    def _put_item_on_queue(
+        self,
+        item: Dict[str, Any],
+        output_queue: queue.Queue,
+        stop_event: threading.Event,
+        log_slice_id: int,
+        num_slices: int,
+    ) -> bool:
+        """Helper to put an item onto the queue, handling backpressure and stop signal.
+
+        Args:
+            item (Dict[str, Any]): The event dictionary to put onto the queue.
+            output_queue (queue.Queue): The queue to which the item will be added.
+            stop_event (threading.Event): Event to check for early termination signals.
+            log_slice_id (int): The 1-indexed slice ID, used for logging.
+            num_slices (int): The total number of slices, used for logging.
+
+        Returns:
+            bool: True if the item was successfully put onto the queue,
+                  False if the `stop_event` was set before or during the operation.
+        """
+        while not stop_event.is_set():
+            try:
+                # Short timeout for responsiveness to stop signal
+                output_queue.put(item, timeout=1)
+                return True  # Item put successfully onto the queue
+            except queue.Full:
+                # Queue is full, wait a bit and retry.
+                time.sleep(0.1)
+            except Exception as e_q:  # pylint: disable=broad-exception-caught
+                os_logger.error(
+                    "[Slice %s/%s] Error putting to queue: %s",
+                    log_slice_id,
+                    num_slices,
+                    str(e_q),
+                    exc_info=True,
+                )
+                # Critical error with queue, signal stop to other workers
+                stop_event.set()
+                return False
+        return False  # stop_event was set before item could be put on queue
+
     def _export_slice_worker(
         self,
         slice_id: int,
@@ -1380,208 +1611,79 @@ class OpenSearchDataStore:
         """Worker function for a single slice in a sliced export using PIT.
 
         This private function is designed to run in a separate thread. It
-        performs the following steps for its assigned slice:
-        1. Creates a Point-In-Time (PIT) context for the specified indices.
-           This ensures a consistent view of the data throughout the export
-           process for this slice.
-        2. Enters a loop to fetch documents using the `search_after` and
-           `slice` OpenSearch features.
-        3. For each page of results received, it extracts the relevant event
-           data (including `_id` and `_index`) and puts each event dictionary
-           onto the shared `output_queue`.
-        4. It manages backpressure by waiting if the `output_queue` is full.
-        5. It updates the `search_after` parameter for the next request to
-           continue pagination within the slice.
-        6. The loop continues until no more documents are returned for the slice
-           or a stop signal is received.
-        7. Upon completion or error, it attempts to delete the created PIT.
-        8. Finally, it puts a `None` sentinel onto the `output_queue` to signal
-           to the main thread that this worker has finished.
+        orchestrates the export for its assigned slice by:
+        1. Creating a Point-In-Time (PIT) context using `_create_pit_for_slice`.
+        2. Fetching documents in pages for the slice using `_search_in_slice`.
+        3. Putting fetched event data onto the `output_queue` using `_put_item_on_queue`.
+        4. Handling `stop_event` signals for early termination.
+        5. Ensuring the PIT is deleted upon completion or error.
+        6. Placing a `None` sentinel on the `output_queue` to indicate completion.
 
         Error Handling:
-        - `RequestError`, `ConnectionTimeout`, `NotFoundError`: These are caught
-          during search requests. They are logged as warnings or errors, and
-          the worker will typically break its search loop and signal the
-          `stop_event` to indicate an issue to other workers and the main thread.
-        - Generic `Exception`: Caught during search, queue operations, or PIT
-          creation/deletion. Logged with traceback, and the `stop_event` is
-          signaled.
-        - Queue Full: Handled by waiting with a timeout when putting items. If
-          the queue remains full and the `stop_event` is set, the worker will
-          eventually stop trying to put items.
-        - Errors putting Sentinel: Logged, but the worker thread will exit.
+        - Errors during PIT creation, searching, or queueing are logged.
+        - Critical errors will set the `stop_event` to signal other workers
+          and the main thread.
+        - The PIT deletion for clean-up is attempted in a `finally` block.
 
-        Parameters:
-            slice_id: The zero-based index of this slice (0 to num_slices-1).
-            num_slices: The total number of slices being used for the export.
-            index_list: A list of OpenSearch index names to query.
-            query_body: The base OpenSearch query body
-                        (excluding size, sort, pit, slice).
-            current_sort_criteria: The sort criteria used for search_after pagination.
-            current_page_size: The number of documents to request per page within
-                               the slice.
-            current_pit_keep_alive: The keep-alive duration for the PIT context.
-            output_queue: A queue.Queue object used to send fetched event
-                          dictionaries to the main thread.
-            stop_event: A threading.Event used to signal workers to stop early
-                        (e.g., due to an error in another worker).
-            worker_request_timeout: Timeout in seconds for individual OpenSearch
-                                    search requests made by this worker.
+        Args:
+            slice_id (int): The ID of this slice.
+            num_slices (int): The total number of slices for the export.
+            index_list (List[str]): List of OpenSearch index names to query.
+            query_body (Dict[str, Any]): The base OpenSearch query body (excluding
+                size, sort, pit, slice clauses).
+            current_sort_criteria (List[Dict[str, Any]]): Sort criteria for
+                `search_after` pagination.
+            current_page_size (int): Number of documents per request per slice.
+            current_pit_keep_alive (str): Keep-alive duration for the PIT.
+            output_queue (queue.Queue): Queue for sending fetched event
+                dictionaries to the main thread.
+            stop_event (threading.Event): Event to signal workers to stop early.
+            worker_request_timeout (int): Timeout in seconds for OpenSearch
+                search requests made by this worker.
         """
-        # Slice ID is 0-indexed, so display as 1-indexed for logs
+        # Slice ID is 0-indexed, so display as 1-indexed number for logging
         log_slice_id = slice_id + 1
         os_logger.info("[Slice %s/%s] Starting export.", log_slice_id, num_slices)
         pit_id = None
         total_docs_in_slice = 0
 
         try:
-            pit_response = (
-                self.client.create_pit(  # pylint: disable=unexpected-keyword-arg
-                    index=index_list, keep_alive=current_pit_keep_alive
-                )
-            )
-            pit_id = pit_response["pit_id"]
-            os_logger.info(
-                "[Slice %s/%s] Created PIT ID: %s",
-                log_slice_id,
-                num_slices,
-                pit_id,
+            pit_id = self._create_pit_for_slice(
+                index_list, current_pit_keep_alive, log_slice_id, num_slices
             )
 
-            search_after_params = None
-            while not stop_event.is_set():
-                query = {
-                    **query_body,
-                    "size": current_page_size,
-                    "sort": current_sort_criteria,
-                    "pit": {"id": pit_id, "keep_alive": current_pit_keep_alive},
-                    "slice": {"id": slice_id, "max": num_slices},
-                }
-
-                if search_after_params:
-                    query["search_after"] = search_after_params
-
-                try:
-                    response = (
-                        self.client.search(  # pylint: disable=unexpected-keyword-arg
-                            body=query, request_timeout=worker_request_timeout
-                        )
-                    )
-                except RequestError as re:
-                    os_logger.error(
-                        "[Slice %s/%s] RequestError: %s. "
-                        "PIT might have expired or query issue.",
-                        log_slice_id,
-                        num_slices,
-                        str(re),
-                    )
-                    break
-                except ConnectionTimeout:
-                    os_logger.warning(
-                        "[Slice %s/%s] Connection timeout during search. "
-                        "Stopping slice.",
-                        log_slice_id,
-                        num_slices,
-                    )
-                    break
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    os_logger.error(
-                        "[Slice %s/%s] Error during search: %s",
-                        log_slice_id,
-                        num_slices,
-                        str(e),
-                        exc_info=True,
-                    )
-                    # Signal other threads and main to stop due to unexpected error
-                    stop_event.set()
-                    break
-
-                hits = response.get("hits", {}).get("hits", [])
-                if not hits:
-                    os_logger.info(
-                        "[Slice %s/%s] No more documents.", log_slice_id, num_slices
-                    )
-                    break
-
-                for hit in hits:
-                    if stop_event.is_set():
-                        break
-                    if "_source" in hit:
-                        event_data_to_export = {
-                            **hit["_source"],
-                            "_id": hit.get("_id"),
-                            "_index": hit.get("_index"),
-                        }
-                        # Try to put item onto the queue with timeout
-                        # This loop handles backpressure if the queue is full.
-                        while not stop_event.is_set():
-                            try:
-                                output_queue.put(
-                                    event_data_to_export, timeout=1
-                                )  # Short timeout for responsiveness
-                                break  # Item put successfully
-                            except queue.Full:
-                                # Queue is full, wait a bit and retry.
-                                # stop_event is checked at the start of this inner loop.
-                                time.sleep(0.1)  # Avoid busy-waiting
-                            except (  # pylint: disable=broad-exception-caught
-                                Exception
-                            ) as e_q:
-                                log_msg = "[Slice %s/%s] Error putting to queue: %s"
-                                os_logger.error(
-                                    log_msg,
-                                    log_slice_id,
-                                    num_slices,
-                                    str(e_q),
-                                    exc_info=True,
-                                )
-                                # Critical error with queue, signal stop
-                                stop_event.set()
-                                break  # Break from inner for hit in hits loop
-                        if stop_event.is_set():
-                            break  # Break from outer for hit in hits loop
-
+            for event_data in self._search_in_slice(
+                pit_id=pit_id,
+                slice_id=slice_id,
+                num_slices=num_slices,
+                query_body=query_body,
+                sort_criteria=current_sort_criteria,
+                page_size=current_page_size,
+                pit_keep_alive=current_pit_keep_alive,
+                stop_event=stop_event,
+                request_timeout=worker_request_timeout,
+            ):
                 if stop_event.is_set():
-                    # Break from while True if stop_event was set during item
-                    # processing
                     break
 
-                total_docs_in_slice += len(hits)
-                os_logger.info(
-                    (
-                        "[Slice %s/%s] Retrieved %s docs. "
-                        "Total for this slice: %s. Approx. queue size: %s"
-                    ),
-                    log_slice_id,
-                    num_slices,
-                    len(hits),
-                    total_docs_in_slice,
-                    output_queue.qsize(),
+                success = self._put_item_on_queue(
+                    event_data, output_queue, stop_event, log_slice_id, num_slices
                 )
-                search_after_params = hits[-1].get("sort")
-                if (
-                    search_after_params is None and hits
-                ):  # Check hits because if no hits, search_after_params is not needed
-                    os_logger.error(
-                        (
-                            "[Slice %s/%s] 'sort' field missing in last hit. "
-                            "Cannot continue with search_after for this slice."
-                        ),
-                        log_slice_id,
-                        num_slices,
-                    )
-                    stop_event.set()
+                # Stop if putting data to queue failed or a stop_event was set
+                if not success:
                     break
+                total_docs_in_slice += 1
 
         except NotFoundError:
-            os_logger.warning(
-                "[Slice %s/%s] PIT ID %s not found or expired, "
-                "or an index in the list was not found.",
+            os_logger.error(
+                "[Slice %s/%s] Raised an NotFoudnError for PIT ID [%s] with "
+                "index list [%s].",
                 log_slice_id,
                 num_slices,
                 pit_id if pit_id else "N/A",
+                ", ".join(index_list),
             )
-            stop_event.set()  # Signal issue
+            stop_event.set()  # Signal a problem to stop all workers
         except Exception as e:  # pylint: disable=broad-exception-caught
             os_logger.error(
                 "[Slice %s/%s] An unexpected error occurred: %s",
@@ -1590,8 +1692,9 @@ class OpenSearchDataStore:
                 str(e),
                 exc_info=True,
             )
-            stop_event.set()  # Signal failure
+            stop_event.set()  # Signal a problem to stop all workers
         finally:
+            # Clean-up the PIT context after an error or when finished.
             if pit_id:
                 try:
                     self.client.delete_pit(body={"pit_id": [pit_id]})
@@ -1602,9 +1705,8 @@ class OpenSearchDataStore:
                         pit_id,
                     )
                 except Exception as e:  # pylint: disable=broad-exception-caught
-                    log_msg = "[Slice %s/%s] Error deleting PIT ID %s: %s"
                     os_logger.error(
-                        log_msg,
+                        "[Slice %s/%s] Error deleting PIT ID %s: %s",
                         log_slice_id,
                         num_slices,
                         pit_id,
@@ -1661,10 +1763,9 @@ class OpenSearchDataStore:
         sensible internal defaults:
             - `page_size`: Defaults to `OPENSEARCH_SLICED_EXPORT_DEFAULT_PAGE_SIZE`
             - `pit_keep_alive`: Defaults to `OPENSEARCH_SLICED_EXPORT_PIT_KEEP_ALIVE`
-            - `num_slices`: Defaults to `OPENSEARCH_SLICED_EXPORT_NUM_SLICES` or 4
+            - `num_slices`: Defaults to `OPENSEARCH_SLICED_EXPORT_NUM_SLICES`
             - `request_timeout_per_slice`: Defaults to
-              `OPENSEARCH_SLICED_EXPORT_REQUEST_TIMEOUT` or a calculated value
-              based on the general OpenSearch timeout +20s.
+              `OPENSEARCH_SLICED_EXPORT_REQUEST_TIMEOUT` (default 30s)
 
         The internal queue size is determined by `page_size`, `num_slices`, and
         the `OPENSEARCH_SLICED_EXPORT_QUEUE_BUFFER_FACTOR` configuration.
@@ -1679,7 +1780,7 @@ class OpenSearchDataStore:
                            Must include a unique tie-breaker field (e.g. _id)
                            for stable results across pages.
             page_size: Optional. Number of documents per request per slice.
-                       Overrides the global default (10_000) if provided.
+                       Overrides the global default (10000) if provided.
             pit_keep_alive: Optional. Keep-alive duration for the Point-In-Time context
                             (e.g., "5m"). Overrides the global default if provided.
             num_slices: Optional. Number of parallel slices to use for the export.
@@ -1694,33 +1795,48 @@ class OpenSearchDataStore:
 
         Raises:
             ValueError: If indices_for_pit is empty or num_slices is invalid.
-            errors.DataStoreQueryError: For critical issues during the export.
+            errors.DatastoreQueryError: For critical issues during the export.
         """
         if not indices_for_pit:
             raise ValueError("indices_for_pit cannot be empty.")
 
-        # Getting default values if not provided otherwise by the caller.
-        effective_sort_criteria = sort_criteria or _DEFAULT_PIT_SORT_CRITERIA
-        effective_page_size = (
-            page_size if page_size is not None else self.sliced_export_default_page_size
-        )
-        effective_pit_keep_alive = (
-            pit_keep_alive
-            if pit_keep_alive is not None
-            else self.sliced_export_pit_keep_alive
-        )
-        effective_num_slices = (
-            num_slices
-            if num_slices is not None
-            else self.sliced_export_num_slices_default
-        )
-        effective_worker_timeout = (
-            request_timeout_per_slice
-            if request_timeout_per_slice is not None
-            else self.sliced_export_request_timeout_default
-        )
+        # Validate that base_query_body does not contain forbidden clauses
+        forbidden_clauses = ["size", "sort", "pit", "slice"]
+        for clause in forbidden_clauses:
+            if clause in base_query_body:
+                raise ValueError(
+                    f"base_query_body must not include the '{clause}' clause. "
+                    "These parameters are managed by the export function."
+                )
 
-        if not 1 <= effective_num_slices <= 1024:  # Validate after resolving default
+        # Getting default values if not provided otherwise by the caller.
+        if sort_criteria:
+            effective_sort_criteria = sort_criteria
+        else:
+            effective_sort_criteria = _DEFAULT_PIT_SORT_CRITERIA
+
+        if page_size is not None:
+            effective_page_size = page_size
+        else:
+            effective_page_size = self.sliced_export_default_page_size
+
+        if pit_keep_alive is not None:
+            effective_pit_keep_alive = pit_keep_alive
+        else:
+            effective_pit_keep_alive = self.sliced_export_pit_keep_alive
+
+        if num_slices is not None:
+            effective_num_slices = num_slices
+        else:
+            effective_num_slices = self.sliced_export_num_slices_default
+
+        if request_timeout_per_slice is not None:
+            effective_worker_timeout = request_timeout_per_slice
+        else:
+            effective_worker_timeout = self.sliced_export_request_timeout_default
+
+
+        if not 1 <= effective_num_slices <= 1024:
             raise ValueError("num_slices must be between 1 and 1024.")
 
         # Use self.sliced_export_queue_buffer_factor for queue size calculation
@@ -1829,7 +1945,7 @@ class OpenSearchDataStore:
                 exc_info=True,
             )
             stop_event.set()
-            raise errors.DataStoreQueryError(f"Sliced Export failed: {str(e)}") from e
+            raise errors.DatastoreQueryError(f"Sliced Export failed: {str(e)}") from e
         finally:
             os_logger.info(
                 "Sliced export: Signaling any remaining worker threads to stop."
