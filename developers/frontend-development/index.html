@@ -2025,7 +2025,7 @@
   <h1>Frontend development</h1>
 
 <h3 id="frontend-old-development-dependencies">Frontend (old) development dependencies</h3>
-<p>When developing the frontend you use the VueJS frontend server. Changes will be picked up automatically
+<p>When developing the frontend you use the Vue.js frontend server. Changes will be picked up automatically
 as soon as a <code>.vue</code> file is saved without having to rebuild the frontend or even refresh your browser.</p>
 <p>If you develop a new feature, consider changing to <code>frontent-ng</code>, the old frontend is likely to be deprecated in 2023.</p>
 <p>First we need to get an interactive shell to the container to install the frontend modules:</p>
@@ -2050,22 +2050,24 @@ $ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesk
 <p>Follow the steps in the previous section to get dependencies installed and the config file tweaked.</p>
 <p>You need two shells:</p>
 <ol>
-<li>Start the main webserver (for serving the API etc) in the first shell:</li>
+<li>
+<p>Start the main webserver (for serving the API etc.) in the first shell:</p>
+<p><code>bash
+$ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application</code></p>
+</li>
+<li>
+<p>Start the development webserver in the second shell:</p>
+<p><code>bash
+$ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+$ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve</code></p>
+</li>
 </ol>
-<pre><code class="language-bash">$ CONTAINER_ID=&quot;$(docker container list -f name=timesketch-dev -q)&quot;
-$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
-</code></pre>
-<ol>
-<li>Start the development webserver in the second shell:</li>
-</ol>
-<pre><code class="language-bash">$ CONTAINER_ID=&quot;$(docker container list -f name=timesketch-dev -q)&quot;
-$ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve
-</code></pre>
 <p>This will spawn a listener on port <code>5001</code>. Point your browser to <code>http://localhost:5001/login</code>, login with your
 dev credentials, and you should be redirected to the main Timesketch page. All code changes in <code>.vue</code> files will
 be instantly picked up.</p>
 <h2 id="frontend-ng-development">Frontend-ng development</h2>
-<p>When developing the <code>frontend-ng</code> you use the VueJS frontend server. Changes will be picked up automatically
+<p>When developing the <code>frontend-ng</code> you use the Vue.js frontend server. Changes will be picked up automatically
 as soon as a <code>.vue</code> file is saved without having to rebuild the frontend or even refresh your browser.</p>
 <h3 id="install-dependencies">Install dependencies</h3>
 <p>Inside the container shell go to the Timesketch frontend-ng directory.</p>
@@ -2085,17 +2087,19 @@ as soon as a <code>.vue</code> file is saved without having to rebuild the front
 <h3 id="start-the-vuejs-development-server_1">Start the VueJS development server</h3>
 <p>You need two shells:</p>
 <ol>
-<li>Start the main webserver (for serving the API etc) in the first shell:</li>
+<li>
+<p>Start the main webserver (for serving the API etc.) in the first shell:</p>
+<p><code>bash
+$ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application</code></p>
+</li>
+<li>
+<p>Start the development webserver in the second shell:</p>
+<p><code>bash
+$ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+$ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve</code></p>
+</li>
 </ol>
-<pre><code class="language-bash">$ CONTAINER_ID=&quot;$(docker container list -f name=timesketch-dev -q)&quot;
-$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
-</code></pre>
-<ol>
-<li>Start the development webserver in the second shell:</li>
-</ol>
-<pre><code class="language-bash">$ CONTAINER_ID=&quot;$(docker container list -f name=timesketch-dev -q)&quot;
-$ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve
-</code></pre>
 <p>This will spawn a listener on port <code>5001</code>. Point your browser to <code>http://localhost:5001/login</code>, login with your
 dev credentials, and you should be redirected to the main Timesketch page. All code changes in <code>.vue</code> files will
 be instantly picked up.</p>
