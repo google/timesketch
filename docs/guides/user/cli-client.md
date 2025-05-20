@@ -51,13 +51,14 @@ Options:
 Commands:
   analyze         Analyze timelines.
   config          Configuration for this CLI tool.
-  events          Manage events
+  events          Manage event.
   import          Import timeline.
+  intelligence    Manage intelligence within a sketch.
   saved-searches  Managed saved searches.
-  search          Search and explore.
+  search          Searches and explores events within a Timesketch sketch.
+  sigma           Manage sigma rules.
   sketch          Manage sketch.
   timelines       Manage timelines.
-
 ```
 
 ## Configure
@@ -645,4 +646,3 @@ Datasources:
 	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
 	Error:
 ```
-

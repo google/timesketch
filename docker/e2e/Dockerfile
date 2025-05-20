@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ADD . /tmp/timesketch
 RUN pip3 install -r /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
-  pip3 install /tmp/timesketch/importer_client/python
+  pip3 install /tmp/timesketch/importer_client/python && \
+  pip3 install /tmp/timesketch/cli_client/python
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
