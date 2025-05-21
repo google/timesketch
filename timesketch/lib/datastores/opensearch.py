@@ -245,6 +245,9 @@ class OpenSearchDataStore:
         self.sliced_export_queue_buffer_factor = current_app.config.get(
             "OPENSEARCH_SLICED_EXPORT_QUEUE_BUFFER_FACTOR", 4
         )
+        self.sliced_export_worker_join_timeout = current_app.config.get(
+            "OPENSEARCH_SLICED_EXPORT_WORKER_JOIN_TIMEOUT", 10
+        )
 
     def _wait_for_index(
         self, index_name: str, timeout_seconds: Optional[int] = None
@@ -1931,7 +1934,6 @@ class OpenSearchDataStore:
                     item = results_queue.get_nowait()
                     if item is None:
                         results_queue.task_done()
-                        # Could decrement a counter if tracking sentinels precisely here
                         continue
                     yield item
                     results_queue.task_done()
@@ -1957,7 +1959,9 @@ class OpenSearchDataStore:
                     os_logger.info(
                         "Sliced export: Waiting for worker thread %s to join.", i + 1
                     )
-                    thread.join(timeout=10)  # Give threads a chance to clean up PIT
+                    thread.join(
+                        timeout=self.sliced_export_worker_join_timeout
+                    )  # Give threads a chance to clean up PIT
                     if thread.is_alive():
                         os_logger.warning(
                             (
