@@ -306,3 +306,173 @@ def remove_label(ctx: click.Context, label: str) -> None:
     sketch = ctx.obj.sketch
     sketch.remove_sketch_label(label)
     click.echo("Label removed.")
+
+
+@sketch_group.command(
+    "export-only-with-annotations",
+    help="Export events with comments, stars, OR labels.",  # Updated help
+)
+@click.option(
+    "--filename", required=True, help="Filename to export annotated events to."
+)
+@click.option(
+    "--output-format",
+    type=click.Choice(["csv", "jsonl"], case_sensitive=False),
+    default="csv",
+    show_default=True,
+    help="Format for the exported event data.",
+)
+@click.option(
+    "--limit",
+    type=int,
+    default=0,  # Default 0 means no limit (fetch all)
+    help="Maximum number of unique annotated events to export (0 for all). "
+    "Applied *after* combining results.",
+)
+@click.pass_context
+def export_only_with_annotations(
+    ctx: click.Context, filename: str, output_format: str, limit: int
+) -> None:
+    """Export sketch events that have comments, stars, OR labels to a file.
+
+    This command performs separate API searches for events with comments,
+    events with stars, and events with other tags (user labels). It then
+    combines and deduplicates the results before exporting.
+
+    Note: This command relies on API searches. It also does not include sketch
+    metadata or merge database annotations like the server-side
+    'tsctl export-sketch' command. Fetching results for multiple searches
+    can take longer and consume more memory.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+        filename (str): The name of the file to export the annotated events to.
+        output_format (str): The desired output format ('csv' or 'jsonl').
+        limit (int): Maximum number of unique annotated events to export (0 for all).
+
+    Raises:
+        click.exceptions.Exit: If an error occurs during the export process.
+
+    Outputs:
+        Text: Messages indicating the start, progress, and completion of the
+            export process, including the time taken and number of events.
+        File: The specified output file containing the exported event data.
+    """
+    sketch = ctx.obj.sketch
+    click.echo(f"Exporting events with comments, stars, OR labels to {filename}...")
+    click.echo("Performing multiple searches, this may take a while.")
+    if limit == 0:
+        click.echo(
+            click.style(
+                "WARNING: Fetching up to 10,000 results for each search type"
+                "(comments, stars, labels). "
+                "This might consume significant memory. The --limit 0 applies"
+                "to the combined, unique set from these searches.",
+                fg="yellow",
+            )
+        )
+
+    start_time = time.time()
+    all_events_df = (
+        pd.DataFrame()
+    )  # Initialize an empty DataFrame to hold combined results
+
+    search_max_entries = 10000  # Use a large number for 'unlimited' search
+
+    search_types = {
+        "comments": {"chip": "comment", "query": None},
+        "stars": {"chip": "star", "query": None},
+        # Search for tags, excluding the internal star tag
+        "labels": {
+            "chip": None,
+            "query": '_exists_:tag AND NOT tag.keyword:"__ts_star"',
+        },
+    }
+
+    try:
+        for search_name, config in search_types.items():
+            click.echo(f"  Searching for events with {search_name}...")
+            search_obj = search.Search(sketch=sketch)
+            search_obj.query_string = None  # Clear default query
+            search_obj.max_entries = search_max_entries  # Fetch many results
+
+            # If adding all the chips to one search, it would do an AND search
+            if config["chip"] == "comment":
+                comment_chip = search.LabelChip()
+                comment_chip.use_comment_label()
+                search_obj.add_chip(comment_chip)
+            elif config["chip"] == "star":
+                star_chip = search.LabelChip()
+                star_chip.use_star_label()
+                search_obj.add_chip(star_chip)
+            elif config["query"]:
+                search_obj.query_string = config["query"]
+
+            # Fetch results into a DataFrame
+            try:
+                events_df = search_obj.to_pandas()
+                if not events_df.empty:
+                    click.echo(f"    Found {len(events_df)} events.")
+                    # Concatenate results, ignore index to avoid conflicts
+                    all_events_df = pd.concat(
+                        [all_events_df, events_df], ignore_index=True
+                    )
+                else:
+                    click.echo("    Found 0 events.")
+            except Exception as search_err:  # pylint: disable=broad-except
+                click.echo(
+                    f"    WARNING: Error during search for {search_name}: {search_err}",
+                    err=True,
+                )
+                # Continue to next search type
+
+        if all_events_df.empty:
+            click.echo("\nNo annotated events found across all search types.")
+            return
+
+        # Deduplicate based on event ID ('_id' column)
+        # Keep the first occurrence if duplicates exist
+        click.echo(
+            f"Combining and deduplicating results (found {len(all_events_df)} total)..."
+        )
+        # Ensure '_id' column exists before deduplicating
+        if "_id" not in all_events_df.columns:
+            click.echo(
+                "ERROR: '_id' column not found in results, cannot deduplicate.",
+                err=True,
+            )
+            ctx.exit(1)
+
+        final_df = all_events_df.drop_duplicates(subset=["_id"], keep="first")
+        deduplicated_count = len(final_df)
+        click.echo(f"Found {deduplicated_count} unique annotated events.")
+
+        # Apply limit if specified
+        if 0 < limit < deduplicated_count:
+            click.echo(f"Applying limit of {limit} events.")
+            final_df = final_df.head(limit)
+            exported_count = limit
+        else:
+            exported_count = deduplicated_count
+
+        click.echo(f"Writing {exported_count} events to file...")
+
+        # Write the final DataFrame to the file
+        with open(filename, "w", encoding="utf-8") as fh:
+            if output_format == "csv":
+                fh.write(final_df.to_csv(index=False, header=True, lineterminator="\n"))
+            elif output_format == "jsonl":
+                fh.write(
+                    final_df.to_json(orient="records", lines=True, date_format="iso")
+                    + "\n"
+                )
+
+        end_time = time.time()
+        click.echo(
+            f"\nExport finished: {exported_count} unique annotated events written."
+        )
+        click.echo(f"Export took {end_time - start_time:.2f} seconds.")
+
+    except Exception as e:  # pylint: disable=broad-except
+        click.echo(f"\nError during export: {e}", err=True)
+        ctx.exit(1)
