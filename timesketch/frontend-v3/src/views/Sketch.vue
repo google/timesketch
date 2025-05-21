@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
     <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
+
       <!-- Empty state -->
       <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" class="fill-height" fluid>
         <v-row align="center" justify="center" class="text-center">
@@ -53,6 +53,12 @@ limitations under the License.
         <ts-settings-dialog></ts-settings-dialog>
       </v-dialog>
 
+      <!-- Share dialog -->
+      <v-dialog v-model="shareDialog" width="500">
+          <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
+      </v-dialog>
+
+      <!-- Sketch AppBar -->
       <v-app-bar
         v-if="!loadingSketch"
         app
@@ -71,18 +77,18 @@ limitations under the License.
 
         <v-img
           src="/timesketch-color.png"
-          width="30"
-          height="30"
-          class="ml-n2 mt-1 flex-sm-0-0"
+          width="25"
+          height="25"
+          class="mt-1 flex-sm-0-0 mr-1 ml-1"
           style="cursor: pointer"
-          @click="navigate('/')"
+          @click="$router.push('/')"
         >
         </v-img>
 
         <v-hover v-slot="{ isHovering, props }">
           <div class="d-flex flex-wrap" v-bind="props">
             <div
-              class="flex-1-0"
+              class="flex-1-0 ml-3"
               @dblclick="renameSketchDialog = true"
               style="
                 font-size: 1.1em;
@@ -97,7 +103,7 @@ limitations under the License.
               {{ sketch.name }}
             </div>
             <div>
-              <v-icon title="Rename sketch" small class="ml-1" v-if="isHovering" @click="renameSketchDialog = true"
+              <v-icon title="Rename sketch" size="small" v-if="isHovering" @click="renameSketchDialog = true"
                 >mdi-pencil</v-icon
               >
             </div>
@@ -106,26 +112,20 @@ limitations under the License.
         <v-spacer></v-spacer>
 
         <!-- Sharing dialog -->
-        <v-dialog v-model="shareDialog" width="500">
-          <template v-slot:activator="{ props }">
-            <v-btn small rounded depressed color="primary" class="mr -2" v-bind="props">
-              <v-icon small left>mdi-account-multiple-plus</v-icon>
-              Share
-            </v-btn>
-          </template>
-          <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
-        </v-dialog>
+        <v-btn size="small" variant="flat" rounded color="primary" class="mr-2" @click="shareDialog = !shareDialog">
+          <v-icon small start>mdi-account-multiple-plus</v-icon>
+          Share
+        </v-btn>
 
         <v-avatar color="grey lighten-1" size="25" class="ml-3">
           <span class="white--text">{{ $filters.initialLetter(currentUser) }}</span>
         </v-avatar>
+
         <v-menu offset-y>
           <template v-slot:activator="{ props }">
-            <v-avatar>
-              <v-btn small icon v-bind="props">
+              <v-btn size="small" icon v-bind="props" class="ml-2 mr-2">
                 <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
               </v-btn>
-            </v-avatar>
           </template>
           <v-card>
             <v-list two-line>
@@ -212,38 +212,69 @@ limitations under the License.
       <!-- Left panel -->
       <v-navigation-drawer
         v-model="showLeftPanel"
-        app
-        clipped
-        disable-resize-watcher
-        stateless
-        hide-overlay
+        :disable-resize-watcher="true"
+        :scrim="false"
         :width="navigationDrawer.width"
       >
-        <div class="pa-4" style="cursor: pointer">
-          <div><v-icon left>mdi-magnify</v-icon>
-            <template v-if="!isMiniDrawer">
-              Search
-            </template>
-          </div>
-        </div>
       <!-- TODO: content of left panel -->
+      <!-- <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags> -->
       <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
-      <ts-example-left-bar :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-example-left-bar>
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->
-      <div class="pa-6">
-        <!-- TODO: Scenario context -->
+      <router-view
+        v-if="sketch.status && hasTimelines && !isArchived"
+        @setTitle="(title) => (this.title = title)"
+      ></router-view>
 
-        <router-view
-          v-if="sketch.status && hasTimelines && !isArchived"
-          @setTitle="(title) => (this.title = title)"
-          class="mt-4"
-        ></router-view>
-      </div>
+      <!-- Context search -->
+      <v-bottom-sheet
+        hide-overlay
+        persistent
+        no-click-animation
+        v-model="showTimelineView"
+        @click:outside="showTimelineView = false"
+        scrollable
+      >
+        <v-card>
+          <v-toolbar density="compact" color="transparent" class="px-3">
+            <strong>Context search</strong>
+            <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" density="compact" variant="outlined">
+              <v-btn
+                v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
+                :key="duration"
+                :value="duration"
+                size="small"
+                @click="updateContextQuery(duration)"
+              >
+              {{  $filters.formatSeconds(duration) }}
+              </v-btn>
+            </v-btn-toggle>
+            <v-btn size="small" variant="text" class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+
+            <v-spacer></v-spacer>
+
+            <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
+              <v-icon>mdi-chevron-up</v-icon>
+            </v-btn>
+            <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
+              <v-icon>mdi-chevron-down</v-icon>
+            </v-btn>
+            <v-btn icon @click="showTimelineView = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+          <v-divider></v-divider>
+          <v-expand-transition>
+            <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
+              <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
+            </v-card-text>
+          </v-expand-transition>
+        </v-card>
+      </v-bottom-sheet>
 
     </div>
-  </div>
+
 </template>
 
 <script>
@@ -258,6 +289,7 @@ import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsShareCard from '../components/ShareCard.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
+import TsEventList from '@/components/Explore/EventList.vue'
 
 export default {
   props: ['sketchId'],
@@ -268,6 +300,7 @@ export default {
     TsSearch,
     TsExampleLeftBar,
     TsShareCard,
+    TsEventList,
   },
   setup() {
     const theme = useTheme();
@@ -400,7 +433,7 @@ export default {
       }
     },
     generateContextQuery(event) {
-      let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+      let timestampMillis = this.$filters.formatTimestamp(event._source.timestamp)
       this.contextStartTime = dayjs.utc(timestampMillis).subtract(this.contextTimeWindowSeconds, 'second')
       this.contextEndTime = dayjs.utc(timestampMillis).add(this.contextTimeWindowSeconds, 'second')
       let startChip = {
