@@ -16,14 +16,19 @@ import json
 
 
 class BaseResource:
-    """Base resource object."""
+    """Base class for Timesketch API resources.
+
+    This class provides common functionality for interacting with API
+    resources, such as lazy loading of data.
+    """
 
     def __init__(self, api, resource_uri):
-        """Initialize object.
+        """Initializes the BaseResource.
 
         Args:
             api: An instance of TimesketchApi object.
-            resource_uri: The URI part of the API resource to call.
+            resource_uri: The specific URI path for this resource
+                (e.g., "sketches/1/").
         """
         self.api = api
         self.resource_uri = resource_uri
@@ -32,11 +37,15 @@ class BaseResource:
     def lazyload_data(self, refresh_cache=False):
         """Load resource data once and cache the result.
 
+        This method fetches data from the API for this resource if it hasn't
+        been fetched yet, or if a cache refresh is requested. The fetched
+        data is stored in `self.resource_data`.
+
         Args:
-            refresh_cache: Boolean indicating if to update cache.
+            refresh_cache (bool): If True, forces a refresh of the cached data.
 
         Returns:
-            Dictionary with resource data.
+            dict: A dictionary containing the resource data from the API.
         """
         if not self.resource_data or refresh_cache:
             self.resource_data = self.api.fetch_resource_data(self.resource_uri)
@@ -44,10 +53,10 @@ class BaseResource:
 
     @property
     def data(self):
-        """Property to fetch resource data.
+        """Property to access the resource's data.
 
         Returns:
-            Dictionary with resource data.
+            dict: A dictionary containing the resource data from the API.
         """
         return self.lazyload_data()
 
