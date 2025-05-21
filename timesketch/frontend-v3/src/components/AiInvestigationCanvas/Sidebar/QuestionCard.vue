@@ -24,22 +24,14 @@ limitations under the License.
         <v-icon
           icon="mdi-account-check-outline"
           color="#757575"
-          v-if="user"
+          v-if="user.name"
           small
           left
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
-        <p class="font-weight-medium">{{ name }}</p>
+        <p class="font-weight-medium" >{{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
-        <v-chip
-          v-if="riskLevel"
-          size="x-small"
-          :color="riskColor"
-          class="text-uppercase px-1 py-1 rounded-sm font-weight-bold"
-        >
-          {{ riskLevel }}
-        </v-chip>
         <v-icon
           icon="mdi-check-circle"
           v-if="isApproved"
@@ -54,21 +46,14 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app";
 
-const riskColors = {
-  high: "#D93025",
-  medium: "#E37400",
-  low: "#FBBC04",
-  clean: "#3874CB",
-};
-
 export default {
   props: {
     name: String,
     type: String,
     conclusion: String,
-    observables: Array,
-    updated_at: String,
-    risk_level: String,
+    conclusionSummary: String,
+    conclusions: Array,
+    updatedAt: String,
     id: Number,
     user: Object,
   },
@@ -82,12 +67,11 @@ export default {
       this.store.setActiveQuestion({
         user: this.user,
         name: this.name,
-        riskLevel: this.riskLevel,
-        observables: this.observables,
-        conclusion: this.conclusion,
+        conclusionSummary: this.conclusionSummary,
+        conclusions: this.conclusions,
         type: this.type,
         id: this.id,
-        updated_at: this.updated_at,
+        updatedAt: this.updated_at,
         completed: this.completed,
       });
     },
@@ -100,20 +84,9 @@ export default {
     },
 
     isApproved() {
-      if (
-        this.store.report?.content?.approvedQuestions &&
-        this.store.report?.content?.approvedQuestions.length > 0
-      ) {
-        return !!this.store.report.content.approvedQuestions.find(
-          (approvedId) => approvedId === this.id
-        );
-      } else {
-        return false;
-      }
-    },
-
-    riskColor() {
-      return riskColors[riskLevel];
+      return !!this.store.report?.content?.approvedQuestions?.find(
+        (approvedId) => approvedId === this.id
+      );
     },
 
     listItemClasses() {

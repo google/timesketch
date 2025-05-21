@@ -18,16 +18,46 @@ limitations under the License.
   <v-container class="ai-investigation-canvas grid pa-0" fluid>
     <v-row no-gutters class="fill-height overflow-hidden">
       <Sidebar
-        :isLoading="isLoading"
+        :questions="filteredQuestions"
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
-        :questions="filteredQuestions"
+        :verifiedTotal="verifiedTotal"
+        :isLoading="isLoading"
+        :reportLocked="store.reportLocked"
       />
-      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto"
-        ><!-- TODO: Main content to go here -->
+      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
+        <template v-if="showResultsView">
+          <ResultsViewLoader v-if="showLoader" />
+          <ResultsView
+            :question="selectedQuestion"
+            :key="selectedQuestion.id"
+            :reportLocked="store.reportLocked"
+            :isLoading="isLoading"
+          />
+        </template>
+        <template v-else>
+          <ReportViewLoader v-if="showLoader" />
+          <ReportView
+            v-else
+            :reportLocked="store.reportLocked"
+            :questions="filteredQuestions"
+            :questionsTotal="questionsTotal"
+            :completedQuestionsTotal="completedQuestionsTotal"
+          />
+        </template>
       </v-col>
     </v-row>
   </v-container>
+  <v-dialog
+    transition="dialog-bottom-transition"
+    v-model="targetQuestionId"
+    width="auto"
+  >
+    <RemoveQuestionModal
+      @close-modal="closeModal"
+      :questionId="targetQuestionId"
+    />
+  </v-dialog>
 </template>
 
 <script>
@@ -36,14 +66,19 @@ import { useTheme } from "vuetify";
 import { useRoute } from "vue-router";
 import Sidebar from "./Sidebar";
 import RestApiClient from "@/utils/RestApiClient";
+import ResultsViewLoader from "./Loaders/ResultsViewLoader.vue";
+
 
 export default {
   data() {
     return {
-      appStore: useAppStore(),
+      store: useAppStore(),
       route: useRoute(),
-      isLoading: true,
+      isLoading: false,
+      targetQuestionId: null,
+      conclusionId: null,
       questions: [],
+      showEventLog: false,
     };
   },
   created() {
@@ -58,21 +93,30 @@ export default {
       let questionsArray = [];
 
       try {
-        const [aiQuestions, existingQuestions, storyList] =
+        try {
+          await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
+        } catch (error) {
+          this.store.setNotification({
+          text: "LLM service was unable to generate relevant data",
+          icon: "mdi-alert-circle-outline",
+          type: "error",
+        });
+        }
+
+        const [existingQuestions, storyList] =
           await Promise.allSettled([
-            RestApiClient.llmRequest(this.appStore.sketch.id, "log_analyzer"),
-            RestApiClient.getOrphanQuestions(this.appStore.sketch.id),
-            RestApiClient.getStoryList(this.appStore.sketch.id),
+            RestApiClient.getOrphanQuestions(this.store.sketch.id),
+            RestApiClient.getStoryList(this.store.sketch.id),
           ]);
 
         if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",
             JSON.stringify([{ type: "ai-report" }]),
-            this.appStore.sketch.id
+            this.store.sketch.id
           );
 
-          this.appStore.report = {
+          this.store.report = {
             ...reportResponse.value.data.objects[0],
             content: JSON.parse(reportResponse.value.data.objects[0].content),
           };
@@ -82,7 +126,7 @@ export default {
           );
 
           if (existingAiReport) {
-            this.appStore.report = {
+            this.store.report = {
               ...existingAiReport,
               content: JSON.parse(existingAiReport.content),
             };
@@ -90,10 +134,10 @@ export default {
             const reportResponse = await RestApiClient.createStory(
               "ai-report",
               JSON.stringify([{ type: "ai-report" }]),
-              this.appStore.sketch.id
+              this.store.sketch.id
             );
 
-            this.appStore.report = {
+            this.store.report = {
               ...reportResponse.value.data.objects[0],
               content: JSON.parse(reportResponse.value.data.objects[0].content),
             };
@@ -109,22 +153,10 @@ export default {
         questionsArray = [
           ...existingQuestionsList.map(({ conclusions, ...question }) => ({
             ...question,
-            conclusion:
-              conclusions?.length > 0
-                ? conclusions.map(({ conclusion }) => conclusion).join()
-                : "",
+            conclusions
           })),
         ];
 
-        if (
-          aiQuestions.status === "fulfilled" &&
-          aiQuestions?.value?.data?.questions
-        ) {
-          questionsArray = [
-            ...questionsArray,
-            ...aiQuestions.value.data.questions,
-          ];
-        }
         this.questions = questionsArray;
       } catch (err) {
         console.error(err);
@@ -135,31 +167,92 @@ export default {
     addNewQuestion(question) {
       this.questions = [question, ...this.questions];
     },
+    updateQuestion(question) {
+      this.questions = [
+        question,
+        ...this.questions.filter(({ id }) => id !== question.id),
+      ];
+    },
+    confirmRemoveQuestion(questionId) {
+      this.targetQuestionId = questionId;
+    },
+    closeModal() {
+      this.targetQuestionId = null;
+    },
+    closeEventLog() {
+      this.showEventLog = false;
+    },
+    async updateObservables(payload) {
+      const annotationResponse = await RestApiClient.saveEventAnnotation(
+        this.store.sketch.id,
+        "label",
+        "__ts_fact",
+        payload.events,
+        null,
+        payload.remove,
+        payload.conclusionId
+      );
+
+      if (
+        !annotationResponse.data.objects ||
+        annotationResponse.data.objects.length < 1
+      ) {
+        throw new Error("Unable to update conclusion");
+      }
+
+      const currentQuestion = await RestApiClient.getQuestion(
+        this.store.sketch.id,
+        this.selectedQuestion.id
+      );
+
+      this.updateQuestion(currentQuestion.data.objects[0])
+      this.store.activeContext.question = currentQuestion.data.objects[0];
+    },
   },
   computed: {
+    showResultsView() {
+      return this.selectedQuestion?.id
+    },
+    showLoader() {
+      return this.isLoading || !this.store.report.content
+    },  
+    selectedQuestion() {
+      return this.store.activeContext.question;
+    },
     filteredQuestions() {
       return this.questions
         ? this.questions.filter(({ id }) => {
-            return this.appStore.report.content.removedQuestions
-              ? !this.appStore.report.content.removedQuestions.includes(id)
+            return this.store.report?.content?.removedQuestions
+              ? !this.store.report.content.removedQuestions.includes(id)
               : true;
           })
         : [];
     },
     questionsTotal() {
-      return this.filteredQuestions?.length;
+      return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
-      return this.appStore.report?.content?.approvedQuestions?.length;
+      return this.filteredQuestions?.length;
     },
     sketchId() {
-      return this.appStore.sketch.id;
+      return this.store.sketch.id;
+    },
+    verifiedTotal() {
+      return this.store.reportLocked
+        ? this.filteredQuestions.filter(({ id }) =>
+            this.store.approvedReportQuestions.includes(id)
+          ).length
+        : this.questionsTotal;
     },
   },
   provide() {
     return {
+      updateObservables: this.updateObservables,
+      closeEventLog: this.closeEventLog,
+      updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
-      regenerateQuestions: this.fetchData,
+      confirmRemoveQuestion: this.confirmRemoveQuestion,
+      regenerateQuestions: this.fetchData, // TODO: Revisit this once the API is in place for this async op
     };
   },
   setup() {
@@ -178,6 +271,6 @@ export default {
 
 .ai-investigation-canvas__sidebar {
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto 1fr;
 }
 </style>
