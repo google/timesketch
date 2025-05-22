@@ -26,5 +26,5 @@ import DefaultView from "./View.vue";
 import { useAppStore } from "@/stores/app";
 
 const appStore = useAppStore();
-appStore.setTestAppStore();
+appStore.setAppStore();
 </script>

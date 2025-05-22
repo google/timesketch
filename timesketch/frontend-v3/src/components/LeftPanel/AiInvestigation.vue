@@ -38,7 +38,7 @@ limitations under the License.
       "
       style="cursor: pointer"
     >
-      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon icon="mdi-creation" left />AI Investigation</div>
+      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon start>mdi-cube-outline</v-icon>Example</div>
     </router-link>
     <v-divider></v-divider>
   </div>
@@ -68,6 +68,9 @@ export default {
     },
     sketchId() {
       return this.appStore.sketch.id
+    },
+    meta() {
+      return this.appStore.meta
     },
   },
   setup() {

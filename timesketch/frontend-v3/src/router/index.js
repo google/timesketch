@@ -13,7 +13,7 @@ import Default from "@/layouts/Default";
 // Import App views
 import Home from "@/views/Home.vue";
 import Sketch from "@/views/Sketch.vue";
-import Canvas from "@/components/Canvas.vue";
+import Canvas from "@/views/Canvas.vue";
 
 // Routes
 const routes = [

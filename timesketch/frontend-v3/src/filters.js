@@ -32,7 +32,30 @@ export const timeSince = (date) => {
   return dayjs.utc(date).fromNow();
 };
 
+export const compactNumber = (input) => {
+  if (!input) {
+    input = 0;
+  }
+  let mark = "";
+  if (input > 999999999) {
+    input = Math.round((input / 1000000000) * 10) / 10;
+    mark = "B";
+  } else if (input > 999999) {
+    input = Math.round((input / 1000000) * 10) / 10;
+    mark = "M";
+  } else if (input > 999) {
+    input = Math.round((input / 1000) * 10) / 10;
+    mark = "K";
+  } else {
+    return input;
+  }
+  return input + mark;
+};
+
 export const formatTimestamp = (input) => {
+  if (!input) {
+    return null;
+  }
   let tsLength = parseInt(input).toString().length;
   if (tsLength === 13) {
     return input; // exit early if timestamp is already in milliseconds
@@ -42,4 +65,31 @@ export const formatTimestamp = (input) => {
     input = input * 1000000; // seconds -> milliseconds
   }
   return parseInt(input);
+};
+
+export const toISO8601 = (timestampMillis) => {
+  if (!timestampMillis) {
+    return null;
+  }
+  if (timestampMillis < 0) {
+    return "No timestamp";
+  }
+  return dayjs(timestampMillis).toISOString();
+};
+
+export const formatSeconds = (seconds) => {
+  if (seconds > 60) {
+    return seconds / 60 + "m";
+  }
+  return seconds + "s";
+};
+
+export const formatLabelText = (input) => {
+  if (input === "__ts_star" || input === "label : __ts_star") {
+    return "All starred events";
+  }
+  if (input === "__ts_comment" || input === "label : __ts_comment") {
+    return "All commented events";
+  }
+  return input.replace("__ts_", "");
 };
