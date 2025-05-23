@@ -233,26 +233,103 @@ def drop_db():
 
 
 @cli.command(name="list-sketches")
-@click.option("--archived", is_flag=True, help="Show only archived sketches.")
-def list_sketches(archived):
+@click.option(
+    "--archived",
+    is_flag=True,
+    help="Show only archived sketches. Ignored if --archived-with-open-indexes is used.",
+)
+@click.option(
+    "--archived-with-open-indexes",
+    is_flag=True,
+    help="Show archived sketches that have at least one searchindex with status 'new', 'ready', 'processing', 'fail','archived' or 'timeout'.",
+)
+def list_sketches(archived, archived_with_open_indexes):
     """List sketches.
 
     By default, this command lists all sketches that have not been deleted.
-    If the --archived flag is provided, it will only list sketches
-    that have an 'archived' status.
+
+    - If the --archived flag is provided, it will only list sketches
+      that have an 'archived' status.
+
+    - If the --archived-with-open-indexes flag is provided, it will list
+      archived sketches that have one or more associated searchindexes
+      with a status of 'new', 'ready', 'processing', 'fail', or 'timeout'.
+      This option takes precedence over --archived.
     """
-    sketches = Sketch.query.all()
-    for sketch in sketches:
-        assert isinstance(sketch, Sketch)
+    all_sketches = Sketch.query.all()
+    # SearchIndex statuses that indicate it's not properly closed/archived
+    open_index_statuses = ["new", "ready", "processing", "fail", "archived", "timeout"]
+
+    if archived_with_open_indexes:
+        print(
+            f"Searching for archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes..."
+        )
+        found_sketches_info = []
+
+        for sketch in all_sketches:
+            if sketch.get_status.status != "archived":
+                continue
+
+            sketch_open_indexes_details = []
+            for timeline in sketch.timelines:
+                if timeline.searchindex:
+                    si = timeline.searchindex
+                    si_status = si.get_status.status
+                    if si_status in open_index_statuses:
+                        sketch_open_indexes_details.append(
+                            f"  - Timeline: '{timeline.name}' (ID: {timeline.id}), "
+                            f"SearchIndex: '{si.index_name}' (ID: {si.id}), Status: {si_status}"
+                        )
+
+            if sketch_open_indexes_details:
+                found_sketches_info.append(
+                    {
+                        "sketch_id": sketch.id,
+                        "sketch_name": sketch.name,
+                        "details": sketch_open_indexes_details,
+                    }
+                )
+
+        if not found_sketches_info:
+            print(
+                f"No archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found."
+            )
+        else:
+            print(
+                f"Archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found:"
+            )
+            for info in found_sketches_info:
+                print(
+                    f"Sketch ID: {info['sketch_id']}, Name: '{info['sketch_name']}' (status: archived)"
+                )
+                for detail in info["details"]:
+                    print(detail)
+        return
+
+    # Handle default listing or --archived only
+    sketches_to_display = []
+    for sketch in all_sketches:
         current_status = sketch.get_status.status
         if current_status == "deleted":
             continue
 
         if archived:
             if current_status == "archived":
-                print(sketch.id, sketch.name, f"status:{current_status}")
+                sketches_to_display.append(sketch)
         else:
-            print(sketch.id, sketch.name, f"status:{current_status}")
+            sketches_to_display.append(sketch)
+
+    if not sketches_to_display:
+        if archived:
+            print("No archived sketches found.")
+        else:
+            print("No sketches found (excluding deleted).")
+        return
+
+    output_type = "Archived sketches" if archived else "Sketches (excluding deleted)"
+    print(f"{output_type}:")
+    for sketch in sketches_to_display:
+        print(f"{sketch.id} {sketch.name} (status: {sketch.get_status.status})")
 
 
 @cli.command(name="list-groups")
