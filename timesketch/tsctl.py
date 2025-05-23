@@ -233,15 +233,26 @@ def drop_db():
 
 
 @cli.command(name="list-sketches")
-def list_sketches():
-    """List all sketches."""
+@click.option("--archived", is_flag=True, help="Show only archived sketches.")
+def list_sketches(archived):
+    """List sketches.
+
+    By default, this command lists all sketches that have not been deleted.
+    If the --archived flag is provided, it will only list sketches
+    that have an 'archived' status.
+    """
     sketches = Sketch.query.all()
     for sketch in sketches:
         assert isinstance(sketch, Sketch)
-        status = sketch.get_status.status
-        if status == "deleted":
+        current_status = sketch.get_status.status
+        if current_status == "deleted":
             continue
-        print(sketch.id, sketch.name, f"status:{status}")
+
+        if archived:
+            if current_status == "archived":
+                print(sketch.id, sketch.name, f"status:{current_status}")
+        else:
+            print(sketch.id, sketch.name, f"status:{current_status}")
 
 
 @cli.command(name="list-groups")
