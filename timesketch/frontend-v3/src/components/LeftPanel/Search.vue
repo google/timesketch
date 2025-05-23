@@ -38,7 +38,7 @@ limitations under the License.
       "
       style="cursor: pointer"
     >
-      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon left>mdi-magnify</v-icon>Search</div>
+      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon start>mdi-magnify</v-icon>Search</div>
     </router-link>
     <v-divider></v-divider>
   </div>

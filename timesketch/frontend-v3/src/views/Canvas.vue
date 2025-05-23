@@ -21,17 +21,19 @@ limitations under the License.
 <template>
   <div>
     <div v-show="currentRouteName === 'Explore'">
-      Placeholder for Explore View
-    </div>
-    <div v-show="currentRouteName === 'Example'">
-      Example view
+      <explore :sketch-id="sketchId"></explore>
     </div>
   </div>
 </template>
 
 <script>
 import { useRoute } from 'vue-router';
+import Explore from './Explore.vue';
+
 export default {
+  components: {
+     Explore,
+  },
   data() {
     return {
       route: useRoute(),
