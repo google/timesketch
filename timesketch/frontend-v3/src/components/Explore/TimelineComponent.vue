@@ -37,12 +37,12 @@ limitations under the License.
             <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
             <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
               <strong>Number of events: </strong>
-              {{ allIndexedEvents | compactNumber }}
+              {{ $filters.compactNumber(allIndexedEvents) }}
             </li>
             <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
             <li>
-              <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-              <small>({{ timeline.created_at | timeSince }})</small>
+              <strong>Created at: </strong>{{ $filters.shortDateTime(timeline.created_at) }}
+              <small>({{ $filters.timeSince(timeline.created_at) }})</small>
             </li>
           </ul>
           <br />
@@ -116,7 +116,7 @@ limitations under the License.
       content-class="menu-with-gap"
       ref="timelineChipMenuRef"
     >
-      <template v-slot:activator="{ on }">
+      <template v-slot:activator="{ props }">
         <slot
           name="processed"
           :timelineFailed="timelineFailed"
@@ -125,19 +125,16 @@ limitations under the License.
           :events="{
             toggleTimeline,
             openDialog,
-            menuOn: on,
+            menuOn: props,
           }"
         ></slot>
       </template>
       <v-sheet flat>
         <v-list dense>
           <v-dialog v-model="dialogRename" width="600">
-            <template v-slot:activator="{ on, attrs }">
-              <v-list-item v-bind="attrs" v-on="on">
-                <v-list-item-action>
-                  <v-icon>mdi-square-edit-outline</v-icon>
-                </v-list-item-action>
-                <v-list-item-subtitle>Rename</v-list-item-subtitle>
+            <template v-slot:activator="{ props }">
+              <v-list-item v-bind="props" prepend-icon="mdi-square-edit-outline">
+                <v-list-item-title>Rename</v-list-item-title>
               </v-list-item>
             </template>
             <v-card class="pa-4">
@@ -155,29 +152,21 @@ limitations under the License.
             </v-card>
           </v-dialog>
 
-          <v-list-item v-if="timelineAvailable" @click="$emit('toggle', timeline)">
-            <v-list-item-action>
-              <v-icon v-if="isSelected">mdi-eye-off</v-icon>
-              <v-icon v-else>mdi-eye</v-icon>
-            </v-list-item-action>
-            <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
-            <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
+          <v-list-item v-if="timelineAvailable" @click="$emit('toggle', timeline)" :prepend-icon="isSelected ? 'mdi-eye-off' : 'mdi-eye'">
+            <v-list-item-title>{{isSelected ? 'Temporarily disabled' : 'Re-enable'}}</v-list-item-title>
           </v-list-item>
 
-          <v-list-item v-if="timelineAvailable" @click="$emit('disableAllOtherTimelines', timeline)">
-            <v-list-item-action>
-              <v-icon>mdi-checkbox-marked-circle-minus-outline</v-icon>
-            </v-list-item-action>
-            <v-list-item-subtitle>Unselect other timelines</v-list-item-subtitle>
+          <v-list-item v-if="timelineAvailable" @click="$emit('disableAllOtherTimelines', timeline)" prepend-icon="mdi-checkbox-marked-circle-minus-outline">
+            <v-list-item-title>Unselect other timelines</v-list-item-title>
           </v-list-item>
 
           <v-dialog v-model="dialogStatus" width="800">
-            <template v-slot:activator="{ on, attrs }">
-              <v-list-item v-bind="attrs" v-on="on">
-                <v-list-item-action>
+            <template v-slot:activator="{ props }">
+              <v-list-item v-bind="props">
+                <template v-slot:prepend>
                   <v-icon :color="iconStatus === 'mdi-alert-circle-outline' ? 'red' : ''">{{ iconStatus }}</v-icon>
-                </v-list-item-action>
-                <v-list-item-subtitle>Data sources ({{ datasources.length }})</v-list-item-subtitle>
+                </template>
+                <v-list-item-title>Data sources ({{ datasources.length }})</v-list-item-title>
               </v-list-item>
             </template>
             <v-card>
@@ -187,12 +176,12 @@ limitations under the License.
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                   <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                     <strong>Number of events: </strong>
-                    {{ allIndexedEvents | compactNumber }}
+                    {{ $filters.compactNumber(allIndexedEvents) }}
                   </li>
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
-                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-                    <small>({{ timeline.created_at | timeSince }})</small>
+                    <strong>Created at: </strong>{{ $filters.shortDateTime(timeline.created_at) }}
+                    <small>({{ $filters.timeSince(timeline.created_at) }})</small>
                   </li>
                   <li><strong>Number of datasources: </strong>{{ datasources.length }}</li>
                 </ul>
@@ -208,7 +197,7 @@ limitations under the License.
                   <ul style="list-style-type: none">
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
                     <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-                    <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                    <li><strong>File size:</strong> {{ $filters.compactBytes(datasource.file_size) }}</li>
                     <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
                     <li><strong>Provider:</strong> {{ datasource.provider }}</li>
                     <li><strong>Context:</strong> {{ datasource.context }}</li>
@@ -216,7 +205,7 @@ limitations under the License.
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
                       <strong>Total File Events: </strong
-                      >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+                      >{{ $filters.compactNumber(totalEventsDatasource(datasource.file_on_disk)) }}
                     </li>
                     <li v-if="dataSourceStatus(datasource) === 'fail'">
                       <strong>Error message:</strong>
@@ -238,18 +227,13 @@ limitations under the License.
             :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: timeline.id } }"
             style="cursor: pointer"
             @click="$refs.timelineChipMenuRef.isActive = false"
+            prepend-icon="mdi-auto-fix"
           >
-            <v-list-item-action>
-              <v-icon>mdi-auto-fix</v-icon>
-            </v-list-item-action>
-            <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
+            <v-list-item-title>Run Analyzers</v-list-item-title>
           </v-list-item>
 
-          <v-list-item v-if="timelineAvailable" style="cursor: pointer" @click="deleteConfirmation = true">
-            <v-list-item-action>
-              <v-icon>mdi-trash-can-outline</v-icon>
-            </v-list-item-action>
-            <v-list-item-subtitle>Delete</v-list-item-subtitle>
+          <v-list-item v-if="timelineAvailable" style="cursor: pointer" @click="deleteConfirmation = true" prepend-icon="mdi-trash-can-outline">
+            <v-list-item-title>Delete</v-list-item-title>
           </v-list-item>
           <v-dialog v-model="deleteConfirmation" max-width="500">
             <v-card>
@@ -271,8 +255,8 @@ limitations under the License.
                   }}
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
-                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-                    <small>({{ timeline.created_at | timeSince }})</small>
+                    <strong>Created at: </strong>{{ $filters.shortDateTime(timeline.created_at) }}
+                    <small>({{ $filters.timeSince(timeline.created_at) }})</small>
                   </li>
                 </ul>
               </v-card-text>
@@ -286,7 +270,7 @@ limitations under the License.
         </v-list>
         <div v-if="!timelineFailed" class="px-4">
           <v-color-picker
-            @update:color="updateColor"
+            @update:modelValue="updateColor"
             :value="timeline.color"
             :show-swatches="!showCustomColorPicker"
             :swatches="colorPickerSwatches"
@@ -310,8 +294,6 @@ limitations under the License.
 <script>
 import ApiClient from "@/utils/RestApiClient.js";
 import { useAppStore } from "@/stores/app";
-
-//import Vue from 'vue'
 
 import _ from 'lodash'
 import dayjs from '@/plugins/dayjs'
@@ -459,7 +441,7 @@ export default {
     },
     // Set debounce to 300ms to limit requests to the server.
     updateColor: _.debounce(function (color) {
-      //Vue.set(this.timeline, 'color', color.hex.substring(1))
+      this.timeline.color = color.substring(1);
       this.$emit('save', this.timeline)
     }, 300),
     fetchData() {
