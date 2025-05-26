@@ -57,7 +57,6 @@ limitations under the License.
       <h2>Your recent work</h2>
       <ts-sketch-list></ts-sketch-list>
     </div>
-    {{ testAppStore }}
   </v-container>
 </template>
 
@@ -88,11 +87,7 @@ export default {
       ],
     };
   },
-  computed: {
-    testAppStore() {
-      return this.appStore.testAppStore;
-    },
-  },
+  computed: {},
   methods: {
     clearFormData: function () {
       this.sketchForm.name = ''
