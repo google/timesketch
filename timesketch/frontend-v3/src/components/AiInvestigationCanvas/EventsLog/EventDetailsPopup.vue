@@ -100,7 +100,7 @@ export default {
       this.isLoading = true;
       try {
         const queryResponse = await RestApiClient.search(this.sketchId, {
-          query: `event_id: ${this.eventId}`,
+          query: `_id: ${this.eventId}`,
         });
 
         if (!queryResponse.data.objects?.[0]) {
