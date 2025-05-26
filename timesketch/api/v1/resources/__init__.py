@@ -284,7 +284,9 @@ class ResourceMixin:
         "automated": fields.Boolean,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
-        "conclusion_events": fields.List(fields.Nested(question_conclusion_event_fields)),
+        "conclusion_events": fields.List(
+            fields.Nested(question_conclusion_event_fields)
+        ),
     }
 
     question_fields = {
