@@ -477,7 +477,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         return HTTP_STATUS_CODE_OK
 
-    def _archive_sketch(self, sketch):
+    def _archive_sketch(self, sketch: Sketch):
         """Archives a sketch. This involves:
         1. Setting the sketch status to 'archived'.
         2. Setting the status of its 'ready' timelines to 'archived'.
