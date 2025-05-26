@@ -301,11 +301,11 @@ def list_sketches(archived, archived_with_open_indexes):
             print(
                 f"Archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found:"  # pylint: disable=line-too-long
             )
-            for sketch_info in found_sketches_info:
+            for sk_info in found_sketches_info:
                 print(
-                    f"Sketch ID: {sketch_info['sketch_id']}, Name: '{sketch_info['sketch_name']}' (status: archived)"  # pylint: disable=line-too-long
+                    f"Sketch ID: {sk_info['sketch_id']}, Name: '{sk_info['sketch_name']}' (status: archived)"  # pylint: disable=line-too-long
                 )
-                for detail in sketch_info["details"]:
+                for detail in sk_info["details"]:
                     print(detail)
         return
 
