@@ -823,12 +823,12 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             )
         return current_search_node
     
-    def _current_search_node_conclusion(self, current_search_node) -> Any:
-        """ Ger conclusion associated with search node.
+    def _current_search_node_conclusion(self, current_search_node: SearchHistory) -> Optional[InvestigativeQuestionConclusion]:
+        """ Get conclusion associated with search node.
         Args:
-        current_search_node: Current search node.
-        ReturnsL
-        Conclusion: conclusion assicated with the search node.
+            current_search_node: Current search node.
+        Returns:
+            Conclusion: conclusion associated with the search node.
         """
         if (
             hasattr(current_search_node, "investigativequestion")
