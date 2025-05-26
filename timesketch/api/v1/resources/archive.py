@@ -606,8 +606,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         search_index.index_name,
                         search_index.id,
                     )
-                except Exception as e:
-                    # For any other error during close, log it and DO NOT change SearchIndex status.
+                except Exception as e:  # pylint: disable=broad-except
+                    # For any other error during close, log it and
+                    # DO NOT change SearchIndex status.
                     logger.error(
                         "Failed to close OpenSearch index: %s (DB ID: %s). Error: %s. "
                         "SearchIndex DB status remains '%s'.",
