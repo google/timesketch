@@ -236,12 +236,14 @@ def drop_db():
 @click.option(
     "--archived",
     is_flag=True,
-    help="Show only archived sketches. Ignored if --archived-with-open-indexes is used.",
+    help="Show only archived sketches. "
+    "Ignored if --archived-with-open-indexes is used.",
 )
 @click.option(
     "--archived-with-open-indexes",
     is_flag=True,
-    help="Show archived sketches that have at least one searchindex with status 'new', 'ready', 'processing', 'fail','archived' or 'timeout'.",
+    help="Show archived sketches that have at least one searchindex with status "
+    "'new', 'ready', 'processing', 'fail','archived' or 'timeout'.",
 )
 def list_sketches(archived, archived_with_open_indexes):
     """List sketches.
@@ -261,8 +263,9 @@ def list_sketches(archived, archived_with_open_indexes):
     open_index_statuses = ["new", "ready", "processing", "fail", "archived", "timeout"]
 
     if archived_with_open_indexes:
+        open_statuses_str = ", ".join(open_index_statuses)
         print(
-            f"Searching for archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes..."
+            f"Searching for archived sketches with 'open' ({open_statuses_str}) searchindexes..."  # pylint: disable=line-too-long
         )
         found_sketches_info = []
 
@@ -271,14 +274,14 @@ def list_sketches(archived, archived_with_open_indexes):
                 continue
 
             sketch_open_indexes_details = []
-            for timeline in sketch.timelines:
-                if timeline.searchindex:
-                    si = timeline.searchindex
+            for tl in sketch.timelines:
+                if tl.searchindex:
+                    si = tl.searchindex
                     si_status = si.get_status.status
                     if si_status in open_index_statuses:
                         sketch_open_indexes_details.append(
-                            f"  - Timeline: '{timeline.name}' (ID: {timeline.id}), "
-                            f"SearchIndex: '{si.index_name}' (ID: {si.id}), Status: {si_status}"
+                            f"  - Timeline: '{tl.name}' (ID: {tl.id}), "
+                            f"SearchIndex: '{si.index_name}' (ID: {si.id}), Status: {si_status}"  # pylint: disable=line-too-long
                         )
 
             if sketch_open_indexes_details:
@@ -292,17 +295,17 @@ def list_sketches(archived, archived_with_open_indexes):
 
         if not found_sketches_info:
             print(
-                f"No archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found."
+                f"No archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found."  # pylint: disable=line-too-long
             )
         else:
             print(
-                f"Archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found:"
+                f"Archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found:"  # pylint: disable=line-too-long
             )
-            for info in found_sketches_info:
+            for sketch_info in found_sketches_info:
                 print(
-                    f"Sketch ID: {info['sketch_id']}, Name: '{info['sketch_name']}' (status: archived)"
+                    f"Sketch ID: {sketch_info['sketch_id']}, Name: '{sketch_info['sketch_name']}' (status: archived)"  # pylint: disable=line-too-long
                 )
-                for detail in info["details"]:
+                for detail in sketch_info["details"]:
                     print(detail)
         return
 
