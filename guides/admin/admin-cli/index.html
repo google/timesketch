@@ -1156,9 +1156,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#add-a-suer-to-a-group" class="md-nav__link">
+  <a href="#add-a-user-to-a-group" class="md-nav__link">
     <span class="md-ellipsis">
-      Add a suer to a group
+      Add a user to a group
     </span>
   </a>
   
@@ -2494,9 +2494,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#add-a-suer-to-a-group" class="md-nav__link">
+  <a href="#add-a-user-to-a-group" class="md-nav__link">
     <span class="md-ellipsis">
-      Add a suer to a group
+      Add a user to a group
     </span>
   </a>
   
@@ -2872,30 +2872,30 @@ pip version: pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
 <h3 id="user-management">User management</h3>
 <h4 id="adding-users">Adding users</h4>
 <p>tsctl provides a subcommand for creating users in a Timesketch instance. This subcommand is called <code>create-user</code>, and it allows you to specify the <code>username</code>, <code>password</code>, and other details for the user you want to create.</p>
-<p>To use the <code>create-user</code> subcommand, you would run <code>tsctl create-user</code> followed by the desired options and arguments. For example, to create a user with the username "john" and the password "123456", you could run the following command: <code>tsctl create-user --username john --password 123456</code>.</p>
-<p>Once the user is created, they will be able to log in to the Timesketch instance using their username and password. You can then use the list-users subcommand to verify that the user was created successfully.</p>
+<p>To use the <code>create-user</code> subcommand, you would run <code>tsctl create-user</code> followed by the desired options and arguments. For example, to create a user with the username "john" and the password "123456", you could run the following command: <code>tsctl create-user john --password 123456</code>.</p>
+<p>Once the user is created, they will be able to log in to the Timesketch instance using their username and password. You can then use the <code>list-users</code> subcommand to verify that the user was created successfully.</p>
 <p>Command:</p>
-<pre><code class="language-shell">tsctl create-user
+<pre><code class="language-shell">tsctl create-user [OPTIONS] USERNAME
 </code></pre>
 <p>Parameters:</p>
-<pre><code class="language-shell">--name / -n
---password / -p (optional)
+<pre><code class="language-shell">--password / -p (optional)
 </code></pre>
 <p>Example</p>
 <pre><code class="language-shell">tsctl create-user foo
+tsctl create-user foo --password bar
 </code></pre>
 <h4 id="change-user-password">Change user password</h4>
-<p>To change a user password, the create-user command can be used, as it is checking if the user exists if yes it will update the update.</p>
+<p>To change a user password, the <code>create-user</code> command can be used, as it is checking if the user exists if yes it will update the user.</p>
 <p>This command would change the password of the user with the specified username to the new password provided. The user will then be able to log in to the Timesketch instance using their new password.</p>
 <p>Command:</p>
-<pre><code class="language-shell">tsctl create-user
+<pre><code class="language-shell">tsctl create-user [OPTIONS] USERNAME
 </code></pre>
 <p>Parameters:</p>
-<pre><code class="language-shell">--username / -u
---password / -p (optional)
+<pre><code class="language-shell">--password / -p (optional)
 </code></pre>
 <p>Example</p>
 <pre><code class="language-shell">tsctl create-user foo
+tsctl create-user foo --password bar
 </code></pre>
 <h4 id="removing-users">Removing users</h4>
 <p>tsctl provides a subcommand for disabling users in a Timesketch instance. This subcommand is called <code>disable-user</code>, and it allows you to specify the username or user ID of the user you want to disable.</p>
@@ -2932,7 +2932,7 @@ foobar (active: False)
 </code></pre>
 <h4 id="make-admin">Make admin</h4>
 <p>tsctl provides a subcommand for granting administrator privileges to a user in a Timesketch instance. This subcommand is called <code>make-admin</code>, and it allows you to specify the username of the user you want to grant administrator privileges to.</p>
-<p>To use the <code>make-admin</code> subcommand, you would run <code>tsctl make-admin</code> followed by the desired options and arguments. For example, to grant administrator privileges to a user with the username "john", you could run the following command: <code>tsctl make-admin  john</code></p>
+<p>To use the <code>make-admin</code> subcommand, you would run <code>tsctl make-admin</code> followed by the desired options and arguments. For example, to grant administrator privileges to a user with the username "john", you could run the following command: <code>tsctl make-admin john</code></p>
 <p>This command would grant the user with the specified username administrator privileges.</p>
 <p>Once a user has administrator privileges, they will be able to perform a wider range of tasks in the Timesketch instance. You can use the <code>list-users</code> subcommand to verify that the user has been granted administrator privileges successfully.</p>
 <p>You can use <code>tsctl revoke-admin</code> to revoke admin privileges.</p>
@@ -2943,47 +2943,44 @@ foobar (active: False)
 <p>Once a user's administrator privileges are revoked, they will no longer be able to perform tasks that require administrator privileges in the Timesketch instance. You can use the <code>list-users</code> subcommand to verify that the user's administrator privileges have been revoked successfully.</p>
 <h3 id="group-management">Group management</h3>
 <h4 id="adding-groups">Adding groups</h4>
-<p>tsctl provides a subcommand for adding groups in a Timesketch instance. This subcommand is called <code>add-group</code>, and it allows you to specify the name and description of the group you want to add.</p>
-<p>To use the <code>add-group</code> subcommand, you would run tsctl add-group followed by the desired options and arguments. For example, to add a group called "analysts" with the description "Group for analysts", you could run the following command: <code>tsctl add-group --name analysts --description "Group for analysts"</code>
-This command would create a new group with the specified name and description. Once the group is created, you can use the <code>list-groups</code> subcommand to verify that the group was added successfully.</p>
+<p>tsctl provides a subcommand for adding groups in a Timesketch instance. This subcommand is called <code>create-group</code>, and it allows you to specify the name of the group you want to add.</p>
+<p>To use the <code>create-group</code> subcommand, you would run <code>tsctl create-group</code> followed by the desired options and arguments. For example, to add a group called "analysts", you could run the following command: <code>tsctl create-group analysts</code>
+This command would create a new group with the specified name. Once the group is created, you can use the <code>list-groups</code> subcommand to verify that the group was added successfully.</p>
 <p>You can also use the <code>add-user-to-group</code> subcommand to add users to the group you have created. This allows you to manage the members of the group, and control which users have access to the sketches and data sources associated with the group.</p>
 <p>Command:</p>
-<pre><code class="language-shell">tsctl add_group
-</code></pre>
-<p>Parameters:</p>
-<pre><code class="language-shell">--name / -n
+<pre><code class="language-shell">tsctl create-group [OPTIONS] GROUP_NAME
 </code></pre>
 <h4 id="removing-groups">Removing groups</h4>
 <p>Not yet implemented.</p>
 <h4 id="managing-group-membership">Managing group membership</h4>
 <h5 id="list-groups">List groups</h5>
-<p>To list groups, use <code>tsctl list-groups</code>. This can be extended  to show the members of a group using <code>tsctl list-groups --showmembershipt</code></p>
+<p>To list groups, use <code>tsctl list-groups</code>. This can be extended  to show the members of a group using <code>tsctl list-groups --showmembership</code></p>
 <p>Example:</p>
 <pre><code class="language-bash">tsctl list-groups --showmembership
 foobar:
 foobar-group:foobar2,foobar
 </code></pre>
-<h5 id="add-a-suer-to-a-group">Add a suer to a group</h5>
+<h5 id="add-a-user-to-a-group">Add a user to a group</h5>
 <p>tsctl provides a subcommand for adding users to a group in a Timesketch instance. This subcommand is called <code>add-group-member</code>, and it allows you to specify the username of the user you want to add to the group, as well as the name of the group you want to add the user to.</p>
-<p>To use the <code>add-group-member</code> subcommand, you would run <code>tsctl add-group-member</code> followed by the desired options and arguments. For example, to add a user with the username "john" to a group called "analysts", you could run the following command: <code>tsctl add-group-member --username john --group-name analysts</code>.
+<p>To use the <code>add-group-member</code> subcommand, you would run <code>tsctl add-group-member</code> followed by the desired options and arguments. For example, to add a user with the username "john" to a group called "analysts", you could run the following command: <code>tsctl add-group-member --username john analysts</code>.
 This command would add the user with the specified username to the group with the specified name.</p>
 <p>Once the user is added to the group, they will be able to access the sketches and data sources associated with the group, based on the permissions granted to the group. You can use the <code>list-groups</code> subcommand to verify that the user was added to the group successfully.</p>
 <p>Command:</p>
-<pre><code class="language-shell">tsctl add-group-member
+<pre><code class="language-shell">tsctl add-group-member [OPTIONS] GROUP_NAME
 </code></pre>
 <p>Example:</p>
-<pre><code class="language-shell">tsctl add-group-member --username john --group-name analysts
+<pre><code class="language-shell">tsctl add-group-member --username john analysts
 </code></pre>
 <h5 id="removing-a-group-member">Removing a group member</h5>
 <p>tsctl provides a subcommand for removing users from a group in a Timesketch instance. This subcommand is called <code>remove-group-member</code>, and it allows you to specify the username of the user you want to remove from the group, as well as the name of the group you want to remove the user from.</p>
-<p>To use the <code>remove-group-member</code> subcommand, you would run <code>tsctl remove-group-member</code> followed by the desired options and arguments. For example, to remove a user with the username "john" from a group called "analysts", you could run the following command: <code>tsctl remove-group-member --username john --group-name analysts</code></p>
+<p>To use the <code>remove-group-member</code> subcommand, you would run <code>tsctl remove-group-member</code> followed by the desired options and arguments. For example, to remove a user with the username "john" from a group called "analysts", you could run the following command: <code>tsctl remove-group-member --username john analysts</code></p>
 <p>This command would remove the user with the specified username from the group with the specified name.</p>
 <p>Once the user is removed from the group, they will no longer be able to access the sketches and data sources associated with the group. You can use the list-groups subcommand to verify that the user was removed from the group successfully.</p>
 <p>Command:</p>
-<pre><code class="language-shell">tsctl remove-group-member
+<pre><code class="language-shell">tsctl remove-group-member [OPTIONS] GROUP_NAME
 </code></pre>
 <p>Example:</p>
-<pre><code class="language-shell">tsctl remove-group-member --username john --group-name analysts
+<pre><code class="language-shell">tsctl remove-group-member --username john analysts
 </code></pre>
 <h3 id="add_index">add_index</h3>
 <p>Create a new Timesketch searchindex.</p>
