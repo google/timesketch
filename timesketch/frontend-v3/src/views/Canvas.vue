@@ -19,19 +19,26 @@ limitations under the License.
  them via Eventbus.
 -->
 <template>
-    <AiInvestigationCanvas v-show="currentRouteName === 'AiInvestigation'" />
+  <div>
+    <div v-show="currentRouteName === 'AiInvestigation'">
+      <!-- TODO: Make this conditional per server settings! -->
+      <AiInvestigationCanvas/>
+    </div>
     <div v-show="currentRouteName === 'Explore'">
       <explore :sketch-id="sketchId"></explore>
     </div>
+  </div>
 </template>
 
 <script>
 import { useRoute } from 'vue-router';
 import Explore from './Explore.vue';
+import AiInvestigationCanvas from '../components/AiInvestigationCanvas/index.vue';
 
 export default {
   components: {
      Explore,
+     AiInvestigationCanvas,
   },
   data() {
     return {

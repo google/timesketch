@@ -8,10 +8,6 @@
     "lint": "eslint . --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "cytoscape": "^3.24.0",
-    "cytoscape-dagre": "^2.5.0",
-    "apexcharts": "^3.27.1",
-    "cytoscape-spread": "^3.0.0",
     "@mdi/font": "7.4.47",
     "@popperjs/core": "^2.11.8",
     "apexcharts": "^4.7.0",
@@ -19,8 +15,10 @@
     "core-js": "^3.37.1",
     "cytoscape": "^3.32.0",
     "cytoscape-dagre": "^2.5.0",
+    "cytoscape-spread": "^3.0.0",
     "dayjs": "^1.11.13",
     "dompurify": "^3.2.5",
+    "jspdf": "^3.0.1",
     "marked": "^15.0.11",
     "roboto-fontface": "*",
     "tiny-emitter": "^2.1.0",

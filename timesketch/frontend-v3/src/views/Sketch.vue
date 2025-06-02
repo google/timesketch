@@ -217,8 +217,9 @@ limitations under the License.
         :width="navigationDrawer.width"
       >
       <!-- TODO: content of left panel -->
-      <!-- <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags> -->
+      <ts-ai-investigation :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-ai-investigation>
       <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
+      <!-- <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags> -->
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->
@@ -274,7 +275,7 @@ limitations under the License.
       </v-bottom-sheet>
 
     </div>
-
+    <Notifications />
 </template>
 
 <script>
@@ -290,6 +291,8 @@ import TsShareCard from '../components/ShareCard.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
 import TsEventList from '@/components/Explore/EventList.vue'
+import TsAiInvestigation from '../components/LeftPanel/AiInvestigation.vue'
+import Notifications from '../components/Notifications.vue'
 
 export default {
   props: ['sketchId'],
@@ -298,8 +301,11 @@ export default {
     TsUploadTimelineFormButton,
     TsSettingsDialog,
     TsSearch,
+    TsExampleLeftBar,
     TsShareCard,
     TsEventList,
+    TsAiInvestigation,
+    Notifications,
   },
   setup() {
     const theme = useTheme();
@@ -532,5 +538,4 @@ export default {
   },
 }
 </script>
-
 
