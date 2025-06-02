@@ -154,13 +154,14 @@ export default {
   countSketchEvents(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/count/')
   },
-  saveEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode, remove = false) {
+  saveEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode, remove = false, conclusionId = null) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
-      current_search_node_id: currentSearchNode.id,
+      current_search_node_id: currentSearchNode?.id,
       remove: remove,
+      conclusion_id: conclusionId
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
   },

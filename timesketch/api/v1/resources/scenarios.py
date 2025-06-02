@@ -683,8 +683,6 @@ class QuestionResource(resources.ResourceMixin, Resource):
             A list of JSON representations of the question.
         """
         sketch = Sketch.get_with_acl(sketch_id)
-        question = InvestigativeQuestion.get_by_id(question_id)
-
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
         if not sketch.has_permission(current_user, "write"):
@@ -693,6 +691,7 @@ class QuestionResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch",
             )
 
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
         if not question.sketch.id == sketch.id:
