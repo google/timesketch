@@ -38,47 +38,6 @@ limitations under the License.
         </span>
       </v-chip>
     </template>
-    <!-- <template v-slot:processed="slotProps">
-      <v-chip
-        @click="slotProps.events.toggleTimeline"
-        :style="timelineStyle(slotProps.timelineStatus)"
-        class="pr-1 timeline-chip"
-        :class="[{ failed: slotProps.timelineFailed }, $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
-        :ripple="!slotProps.timelineFailed"
-      >
-        <div class="chip-content">
-          <v-icon v-if="slotProps.timelineFailed" title="Import failed; click for details" @click="slotProps.events.openDialog" left color="red" size="x-large">
-            mdi-alert-circle-outline
-          </v-icon>
-          <v-icon v-if="!slotProps.timelineFailed" title="Toggle visibility" left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
-
-          <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="200">
-            <template v-slot:activator="{ props }">
-              <span
-                class="timeline-name-ellipsis"
-                :class="{ disabled: !isSelected && (slotProps.timelineStatus === 'processing' || slotProps.timelineStatus === 'ready') }"
-                v-bind="props"
-                >{{ timeline.name }}</span
-              >
-            </template>
-            <span>{{ timeline.name }}</span>
-          </v-tooltip>
-
-          <span class="right">
-            <span v-if="slotProps.timelineStatus === 'processing'" class="ml-3">
-              <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
-            </span>
-
-            <span v-if="!slotProps.timelineFailed" class="events-count" x-small>
-              {{ $filters.compactNumber(eventsCount) }}
-            </span>
-            <v-btn class="ma-1" x-small icon v-on="slotProps.events.menuOn">
-              <v-icon title="Manage Timeline"> mdi-dots-vertical </v-icon>
-            </v-btn>
-          </span>
-        </div>
-      </v-chip>
-    </template> -->
     <template
       v-slot:processed="{
         events,
@@ -93,7 +52,7 @@ limitations under the License.
         class="pr-1 timeline-chip"
         :class="[
           { failed: timelineFailed },
-          $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight',
+          theme.global.current.value.dark ? 'dark-highlight' : 'light-highlight',
         ]"
         :ripple="!timelineFailed"
       >
@@ -161,7 +120,6 @@ limitations under the License.
               color="transparent"
               variant="flat"
               v-bind="events.menuOn"
-              @click.stop="events.openDialog"
               title="Manage Timeline"
             ></v-btn>
           </span>
@@ -173,6 +131,7 @@ limitations under the License.
 
 <script>
 import TsTimelineComponent from "../Explore/TimelineComponent.vue";
+import { useTheme } from 'vuetify'
 
 export default {
   props: ["timeline", "eventsCount", "isSelected", "isEmptyState"],
@@ -190,6 +149,11 @@ export default {
       };
     },
   },
+  setup() {
+    const theme = useTheme();
+    return { theme };
+  },
+
 };
 </script>
 

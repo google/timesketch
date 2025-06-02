@@ -13,6 +13,7 @@ import {
   initialLetter,
   shortDateTime,
   timeSince,
+  compactBytes,
   compactNumber,
   formatTimestamp,
   toISO8601,
@@ -43,4 +44,5 @@ app.config.globalProperties.$filters = {
   toISO8601,
   formatSeconds,
   formatLabelText,
+  compactBytes,
 };

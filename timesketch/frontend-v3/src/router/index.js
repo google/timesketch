@@ -47,6 +47,13 @@ const routes = [
         props: true,
       },
       {
+        path: 'analyze',
+        name: 'Analyze',
+        // TODO: change the component as soon as we have migrated the Analyze component
+        component: Canvas,
+        props: true,
+      },
+      {
         path: 'ai-investigation',
         name: 'AiInvestigation',
         component: Canvas,
