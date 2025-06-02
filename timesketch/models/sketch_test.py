@@ -267,11 +267,11 @@ class StoryModelTest(ModelBaseTest):
         self.db_session.delete(sketch)
         self.db_session.commit()
 
-        # Verify sketch is deleted, but the label is NOT
+        # Verify sketch is deleted, and the label IS ALSO deleted due to cascade
         self.assertIsNone(self.db_session.get(Sketch, sketch.id))
-        self.assertIsNotNone(self.db_session.get(SketchLabel, label_obj.id))
+        self.assertIsNone(self.db_session.get(SketchLabel, label_obj.id))
 
-        # Clean up the created user and the orphaned label
+        # Clean up the created user
         self.db_session.delete(user)
-        self.db_session.delete(label_obj)
+        # label_obj is already deleted by cascade, no need to delete it manually
         self.db_session.commit()
