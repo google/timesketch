@@ -275,8 +275,12 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     user_id = Column(Integer, ForeignKey("user.id"))
     searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
-    analysis = relationship("Analysis", backref="timeline", lazy="select")
-    datasources = relationship("DataSource", backref="timeline", lazy="select")
+    analysis = relationship(
+        "Analysis", backref="timeline", lazy="select"
+    )  # No cascade needed here due to Sketch.analysis cascade
+    datasources = relationship(
+        "DataSource", backref="timeline", lazy="select", cascade="all, delete-orphan"
+    )
 
 
 class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
