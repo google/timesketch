@@ -270,11 +270,11 @@ class ResourceMixin:
         "updated_at": fields.DateTime("iso8601"),
     }
 
-    question_conclusion_event_fields = {
-        "datetime": fields.String,
-        "message": fields.String,
-        "data_type": fields.String,
-        "timestamp_desc": fields.String,
+    event_fields = {
+        "id": fields.Integer,
+        "sketch_id": fields.Integer,
+        "document_id": fields.String,
+        "searchindex_name": fields.String(attribute="searchindex.index_name"),
     }
 
     question_conclusion_fields = {
@@ -285,7 +285,7 @@ class ResourceMixin:
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
         "conclusion_events": fields.List(
-            fields.Nested(question_conclusion_event_fields)
+            fields.Nested(event_fields), attribute="events"
         ),
     }
 
@@ -366,6 +366,7 @@ class ResourceMixin:
         "group": group_fields,
         "sketch": sketch_fields,
         "story": story_fields,
+        "event": event_fields,
         "event_comment": comment_fields,
         "event_label": label_fields,
         "Investigativequestionapproach": approach_fields,
