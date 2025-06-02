@@ -83,7 +83,7 @@ tsctl create-user foo --password bar
 
 #### Change user password
 
-To change a user password, the `create-user` command can be used, as it is checking if the user exists if yes it will update the update.
+To change a user password, the `create-user` command can be used, as it is checking if the user exists if yes it will update the user.
 
 This command would change the password of the user with the specified username to the new password provided. The user will then be able to log in to the Timesketch instance using their new password.
 
