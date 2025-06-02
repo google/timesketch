@@ -778,6 +778,17 @@ questionconclusion_aggregation_association_table = Table(
     Column("aggregation_id", Integer, ForeignKey("aggregation.id")),
 )
 
+questionconclusion_event_association_table = Table(
+    "investigativequestionconclusion_event",
+    BaseModel.metadata,
+    Column(
+        "investigativequestionconclusion_id",
+        Integer,
+        ForeignKey("investigativequestionconclusion.id"),
+    ),
+    Column("event_id", Integer, ForeignKey("event.id")),
+)
+
 
 class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the InvestigativeQuestionConclusion model.
@@ -807,6 +818,12 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
     )
     analysis = relationship(
         "Analysis", backref="investigativequestionconclusion", lazy="select"
+    )
+    events = relationship(
+        "Event",
+        secondary=questionconclusion_event_association_table,
+        backref="conclusions",
+        lazy="select",
     )
 
 
