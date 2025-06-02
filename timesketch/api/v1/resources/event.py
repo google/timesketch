@@ -826,11 +826,22 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
     def _get_current_search_node_conclusion(
         self, current_search_node: SearchHistory
     ) -> Optional[InvestigativeQuestionConclusion]:
-        """Get conclusion associated with search node.
+        """Retrieves or creates a conclusion for the current user associated
+        with the investigative question of a given search history node.
+
+        If the search history node is linked to an investigative question and
+        the current user already has a conclusion for that question, that
+        conclusion is returned.
+
+        If no conclusion exists for the current user for that question, a new,
+        empty conclusion is created, associated with the user and question,
+        and then returned.
+
         Args:
-            current_search_node: Current search node.
+            current_search_node: The SearchHistory object.
         Returns:
-            Conclusion: conclusion associated with the search node.
+            An InvestigativeQuestionConclusion object or None if no question is
+            associated.
         """
         if (
             hasattr(current_search_node, "investigativequestion")
@@ -841,9 +852,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 hasattr(current_search_node.investigativequestion, "conclusions")
                 and current_search_node.investigativequestion.conclusions
             ):
-                for conclusion in current_search_node.investigativequestion.conclusions:
-                    if conclusion.user_id == current_user.id:
-                        return conclusion
+                for (
+                    existing_conclusion
+                ) in current_search_node.investigativequestion.conclusions:
+                    if existing_conclusion.user_id == current_user.id:
+                        return existing_conclusion
                 # The user has not created a conclusion yet, let's create one!
                 create_conclusion = True
             else:
@@ -854,14 +867,14 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 # The user has no conclusion yet for this question, let's create
                 # an empty one that we can use for connecting events.
                 node_id = current_search_node.investigativequestion.id
-                conclusion = InvestigativeQuestionConclusion(
+                new_conclusion = InvestigativeQuestionConclusion(
                     conclusion="",
                     user_id=current_user.id,
                     investigativequestion_id=node_id,
                 )
-                db_session.add(conclusion)
+                db_session.add(new_conclusion)
                 db_session.commit()
-                return conclusion
+                return new_conclusion
 
         return None
 
@@ -871,14 +884,25 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         event_id: str,
     ) -> str:
         """Get's the search index name associated with the event.
+
+        This function queries the datastore to find the specific search index
+        that an event belongs to within the context of a given sketch. It's
+        used when the event's index is not explicitly provided in an API request.
+
         Args:
             sketch: The Sketch object to query.
             event_id: The document_id to query.
+
         Returns:
             str: The search index name.
-         Raises:
-             HTTPException: If the event or its index cannot be found, or if a
-                            datastore error occurs.
+
+        Raises:
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If a datastore error occurs
+                during the search.
+            HTTP_STATUS_CODE_NOT_FOUND: If the event is not found in any of the
+                sketch's active timelines.
+            HTTP_STATUS_CODE_BAD_REQUEST: If multiple events are found with the
+                same ID across different indices (ambiguity).
         """
 
         indices_to_search = [t.searchindex.index_name for t in sketch.active_timelines]
@@ -1051,6 +1075,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     toggle=toggle,
                 )
 
+                conclusion = None
                 if current_search_node:
                     if "__ts_star" in form.annotation.data:
                         search_node_label = "__ts_star"
