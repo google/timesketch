@@ -62,8 +62,31 @@ from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
-from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import (
+    Timeline,
+    View,
+    Event,
+    Story,
+    Aggregation,
+    Attribute,
+    Graph,
+    GraphCache,
+    AggregationGroup,
+    AnalysisSession,
+    SearchHistory,
+    Scenario,
+    Facet,
+    InvestigativeQuestion,
+    DataSource,
+    AttributeValue,
+    FacetTimeFrame,
+    FacetConclusion,
+    InvestigativeQuestionApproach,
+    InvestigativeQuestionConclusion,
+    SearchIndex,
+)
+from timesketch.models.user import Group  # For mixin checks
+from timesketch.models.sketch import DataSource
 
 
 # Default filenames for sketch export
@@ -1994,3 +2017,263 @@ def export_sketch(
         print(f"An unexpected error occurred during export: {e}")
         print(traceback.format_exc())
         return
+
+
+@cli.command(name="check-orphaned-data")
+@click.option(
+    "--verbose-checks",
+    is_flag=True,
+    default=False,
+    help="Show output for all checks, even those that find no orphans.",
+)
+def check_orphaned_data(verbose_checks: bool):
+    """Checks for various types of orphaned data in the database.
+
+    This command looks for records that should have been deleted via
+    cascading rules if their parent objects were removed, particularly
+    in the context of a Sketch deletion or general database integrity.
+    """
+    print("Starting orphaned data check...")
+    found_orphans_overall = False
+
+    def _check_fk_orphans(
+        ModelClass, fk_attr_name, ParentModelClass, description, verbose_checks_enabled
+    ):
+        nonlocal found_orphans_overall
+        if verbose_checks_enabled:
+            print(
+                f"\nChecking for orphaned {description} ({ModelClass.__name__} records)..."
+            )
+        orphaned_count = 0
+        all_records = ModelClass.query.all()
+
+        if not all_records:
+            if verbose_checks_enabled:
+                print(f"  No {ModelClass.__name__} records found.")
+            return
+
+        for record in all_records:
+            parent_id = getattr(record, fk_attr_name)
+            if parent_id:
+                parent = ParentModelClass.get_by_id(parent_id)
+                if not parent:
+                    # This is the first orphan found for this check type, print header
+                    if orphaned_count == 0 and not verbose_checks_enabled:
+                        print(
+                            f"\nFound orphaned {description} ({ModelClass.__name__} records):"
+                        )
+
+                    record_info_parts = [f"ID={record.id}"]
+                    if hasattr(record, "name") and record.name:
+                        record_info_parts.append(f"Name='{str(record.name)[:50]}'")
+                    elif hasattr(record, "title") and record.title:
+                        record_info_parts.append(f"Title='{str(record.title)[:50]}'")
+                    elif (
+                        hasattr(record, "original_filename")
+                        and record.original_filename
+                    ):
+                        record_info_parts.append(
+                            f"File='{str(record.original_filename)[:50]}'"
+                        )
+                    elif (
+                        hasattr(record, "label")
+                        and record.label
+                        and isinstance(record.label, str)
+                    ):
+                        record_info_parts.append(f"LabelVal='{str(record.label)[:50]}'")
+                    elif (
+                        hasattr(record, "status")
+                        and record.status
+                        and isinstance(record.status, str)
+                    ):
+                        record_info_parts.append(
+                            f"StatusVal='{str(record.status)[:50]}'"
+                        )
+                    elif (
+                        hasattr(record, "comment")
+                        and record.comment
+                        and isinstance(record.comment, str)
+                    ):
+                        record_info_parts.append(
+                            f"Comment='{str(record.comment)[:30]}...'"
+                        )
+
+                    record_info = ", ".join(record_info_parts)
+                    print(
+                        f"  ORPHANED {ModelClass.__name__}: {record_info}, "
+                        f"linked to non-existent {ParentModelClass.__name__} ID={parent_id} "
+                        f"via {fk_attr_name}"
+                    )
+                    orphaned_count += 1
+                    found_orphans_overall = True
+
+        if orphaned_count == 0:
+            if verbose_checks_enabled:
+                print(f"  No orphaned {description} ({ModelClass.__name__}) found.")
+        elif verbose_checks_enabled:  # Only print count if verbose and orphans found
+            print(
+                f"  Found {orphaned_count} orphaned {description} ({ModelClass.__name__}) record(s)."
+            )
+
+    # Define checks: (ModelClass, fk_attr_name, ParentModelClass, description_plural)
+    fk_checks = [
+        # Direct children of Sketch
+        (Timeline, "sketch_id", Sketch, "Timelines (sketch link)"),
+        (View, "sketch_id", Sketch, "Views (sketch link)"),
+        (Event, "sketch_id", Sketch, "Events (DB metadata, sketch link)"),
+        (Story, "sketch_id", Sketch, "Stories (sketch link)"),
+        (Aggregation, "sketch_id", Sketch, "Aggregations (sketch link)"),
+        (Attribute, "sketch_id", Sketch, "Attributes (sketch link)"),
+        (Graph, "sketch_id", Sketch, "Graphs (sketch link)"),
+        (GraphCache, "sketch_id", Sketch, "GraphCaches (sketch link)"),
+        (AggregationGroup, "sketch_id", Sketch, "AggregationGroups (sketch link)"),
+        (Analysis, "sketch_id", Sketch, "Analyses (sketch link)"),
+        (AnalysisSession, "sketch_id", Sketch, "AnalysisSessions (sketch link)"),
+        (SearchHistory, "sketch_id", Sketch, "SearchHistories (sketch link)"),
+        (Scenario, "sketch_id", Sketch, "Scenarios (sketch link)"),
+        (Facet, "sketch_id", Sketch, "Facets (sketch link)"),
+        (
+            InvestigativeQuestion,
+            "sketch_id",
+            Sketch,
+            "InvestigativeQuestions (sketch link)",
+        ),
+        # Grandchildren and other relations
+        (DataSource, "timeline_id", Timeline, "DataSources (timeline link)"),
+        (Analysis, "timeline_id", Timeline, "Analyses (timeline link)"),
+        (Analysis, "analysissession_id", AnalysisSession, "Analyses (session link)"),
+        (
+            Analysis,
+            "approach_id",
+            InvestigativeQuestionApproach,
+            "Analyses (approach link)",
+        ),
+        (
+            Analysis,
+            "question_conclusion_id",
+            InvestigativeQuestionConclusion,
+            "Analyses (question conclusion link)",
+        ),
+        (AttributeValue, "attribute_id", Attribute, "AttributeValues (attribute link)"),
+        (Aggregation, "view_id", View, "Aggregations (view link)"),
+        (
+            Aggregation,
+            "aggregationgroup_id",
+            AggregationGroup,
+            "Aggregations (group link)",
+        ),
+        (AggregationGroup, "view_id", View, "AggregationGroups (view link)"),
+        (FacetTimeFrame, "facet_id", Facet, "FacetTimeFrames (facet link)"),
+        (FacetConclusion, "facet_id", Facet, "FacetConclusions (facet link)"),
+        (
+            InvestigativeQuestionApproach,
+            "investigativequestion_id",
+            InvestigativeQuestion,
+            "InvestigativeQuestionApproaches (question link)",
+        ),
+        (
+            InvestigativeQuestionConclusion,
+            "investigativequestion_id",
+            InvestigativeQuestion,
+            "InvestigativeQuestionConclusions (question link)",
+        ),
+        (
+            SearchHistory,
+            "parent_id",
+            SearchHistory,
+            "SearchHistories (parent/child link)",
+        ),
+        (SearchHistory, "scenario_id", Scenario, "SearchHistories (scenario link)"),
+        (SearchHistory, "facet_id", Facet, "SearchHistories (facet link)"),
+        (
+            SearchHistory,
+            "question_id",
+            InvestigativeQuestion,
+            "SearchHistories (question link)",
+        ),
+        (
+            SearchHistory,
+            "approach_id",
+            InvestigativeQuestionApproach,
+            "SearchHistories (approach link)",
+        ),
+        (Facet, "scenario_id", Scenario, "Facets (scenario link)"),
+        (
+            InvestigativeQuestion,
+            "scenario_id",
+            Scenario,
+            "InvestigativeQuestions (scenario link)",
+        ),
+        (
+            InvestigativeQuestion,
+            "facet_id",
+            Facet,
+            "InvestigativeQuestions (facet link)",
+        ),
+    ]
+
+    for Model, fk_attr, ParentModel, desc in fk_checks:
+        _check_fk_orphans(Model, fk_attr, ParentModel, desc, verbose_checks)
+
+    # Mixin checks
+    mixin_parent_models = [
+        (Sketch, "Sketch"),
+        (Timeline, "Timeline"),
+        (View, "View"),
+        (Event, "Event (DB metadata)"),
+        (Story, "Story"),
+        (Aggregation, "Aggregation"),
+        (AggregationGroup, "AggregationGroup"),
+        (Analysis, "Analysis"),
+        (Scenario, "Scenario"),
+        (Facet, "Facet"),
+        (InvestigativeQuestion, "InvestigativeQuestion"),
+        (InvestigativeQuestionApproach, "InvestigativeQuestionApproach"),
+        (InvestigativeQuestionConclusion, "InvestigativeQuestionConclusion"),
+        (FacetConclusion, "FacetConclusion"),
+        (SearchIndex, "SearchIndex"),
+        (SearchTemplate, "SearchTemplate"),
+        (SigmaRule, "SigmaRule"),
+        (Group, "Group"),
+    ]
+
+    mixin_types_info = [
+        ("Label", "Labels"),
+        ("Comment", "Comments"),
+        ("Status", "Statuses"),
+        ("GenericAttribute", "GenericAttributes"),
+        ("AccessControlEntry", "AccessControlEntries (ACLs)"),
+    ]
+
+    if verbose_checks:
+        print("\nChecking for orphaned Mixin-based Annotation records...")
+
+    for ParentModel, parent_model_name_desc in mixin_parent_models:
+        for mixin_class_name_suffix, mixin_desc_plural in mixin_types_info:
+            try:
+                AnnotationModel = getattr(ParentModel, mixin_class_name_suffix, None)
+                if AnnotationModel:  # If the mixin is used and class is available
+                    _check_fk_orphans(
+                        AnnotationModel,
+                        "parent_id",
+                        ParentModel,
+                        f"{mixin_desc_plural} for {parent_model_name_desc}",
+                        verbose_checks,
+                    )
+            except AttributeError:
+                pass  # ParentModel might not use this mixin or it's not initialized.
+            except Exception as e:  # pylint: disable=broad-except
+                print(
+                    f"  ERROR trying to check {mixin_desc_plural} for {parent_model_name_desc}: {e}"
+                )
+                found_orphans_overall = True
+
+    if not found_orphans_overall:
+        if verbose_checks:
+            print("\nNo orphaned data found based on current checks.")
+        else:
+            print(
+                "No orphaned data found."
+            )  # Minimal output if no orphans and not verbose
+    else:
+        print("\nOrphaned data check complete. Issues found as listed above.")
