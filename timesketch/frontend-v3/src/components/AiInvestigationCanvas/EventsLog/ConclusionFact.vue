@@ -14,41 +14,104 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <td class="d-flex">
-    <div class="position-relative">
-      <EventDetailsPopup
-        v-if="showLogDetail"
-        :eventId="fact._id.toString()"
-        :sketchId="sketchId.toString()"
+  <td class="top-aligned-cell">
+    <div class="d-flex align-items-start">
+      <div class="position-relative">
+        <EventDetailsPopup
+        v-if="showLogDetail && fact && fact.document_id"
+        :eventId="fact.document_id"
+        :searchindexName="fact.searchindex_name"
+        :eventData="eventData"
+        :sketchId="sketchId"
         @close-detail-popup="toggleShowLogDetail()"
       />
-      <v-btn variant="text" @click="toggleShowLogDetail()">
-        <v-icon left small icon="mdi-file-code-outline" />
-      </v-btn>
+        <v-btn variant="text" @click="toggleShowLogDetail()" :disabled="isLoading || !eventData || error">
+          <v-icon left small icon="mdi-file-code-outline" />
+        </v-btn>
+      </div>
+      <RemoveEventPopup :fact="fact" :conclusionId="conclusionId" />
     </div>
-    <RemoveEventPopup :fact="fact" :conclusionId="conclusionId" />
   </td>
-  <td>{{ fact.message }}</td>
-  <td>{{ fact.datetime }} ({{ fact.timestamp_desc }})</td>
-  <td class="font-weight-bold">{{ fact.data_type }}</td>
+  <template v-if="isLoading">
+    <td class="top-aligned-cell"><v-skeleton-loader type="text" height="20"></v-skeleton-loader></td>
+    <td class="top-aligned-cell"><v-skeleton-loader type="text" height="20"></v-skeleton-loader></td>
+    <td class="top-aligned-cell"><v-skeleton-loader type="text" height="20"></v-skeleton-loader></td>
+  </template>
+  <template v-else-if="error">
+    <td colspan="3" class="text-center font-italic red--text text--darken-2 top-aligned-cell">{{ error }}</td>
+  </template>
+  <template v-else-if="eventData">
+    <td class="top-aligned-cell">{{ eventData.message || 'N/A' }}</td>
+    <td class="top-aligned-cell">
+      {{ eventData.datetime || 'N/A' }}
+      <span v-if="eventData.timestamp_desc"> ({{ eventData.timestamp_desc }})</span>
+    </td>
+    <td class="font-weight-bold top-aligned-cell">{{ eventData.data_type || 'N/A' }}</td>
+  </template>
+  <template v-else>
+    <td colspan="3" class="text-center font-italic top-aligned-cell">Event details not available.</td>
+  </template>
 </template>
 
 <script>
+import ApiClient from '@/utils/RestApiClient'
+
 export default {
   props: {
-    fact: Array,
-    conclusionId: Number,
-    sketchId: String,
+    fact: {
+      type: Object,
+      required: true,
+    },
+    conclusionId: {
+      type: Number,
+      required: true,
+    },
+    sketchId: {
+      type: Number,
+      required: true,
+    },
   },
   data() {
     return {
       showLogDetail: false,
+      eventData: null,
+      isLoading: false,
+      error: null,
     };
   },
   methods: {
     toggleShowLogDetail() {
-      this.showLogDetail = !this.showLogDetail;
+      if (this.eventData && !this.error) {
+        this.showLogDetail = !this.showLogDetail;
+      }
     },
+    async fetchEventDetails() {
+      if (!this.fact || !this.fact.document_id || !this.fact.searchindex_name || !this.sketchId) {
+        this.error = 'Required identifiers for fetching event details are missing.'
+        this.eventData = null
+        this.isLoading = false
+        return;
+      }
+      this.isLoading = true;
+      this.error = null;
+      try {
+        // Alternative Approach if this results in too many API calls in parallel: Use a OR connected search for _id.
+        const response = await ApiClient.getEvent(this.sketchId, this.fact.searchindex_name, this.fact.document_id)
+        this.eventData = response.data.objects ? response.data.objects : null
+        if (!this.eventData) {
+          this.error = 'Event not found or no data returned.'
+        }
+      } catch (e) {
+        console.error('Error fetching event details:', e)
+        this.error = 'Failed to load event details.'
+        this.eventData = null
+      } finally {
+        this.isLoading = false;
+      }
+    },
+  },
+  mounted() {
+    this.fetchEventDetails()
   },
 };
 </script>
@@ -81,5 +144,9 @@ export default {
 .bg-none {
   background: transparent;
   color: #fff;
+}
+
+.top-aligned-cell {
+  vertical-align: top;
 }
 </style>

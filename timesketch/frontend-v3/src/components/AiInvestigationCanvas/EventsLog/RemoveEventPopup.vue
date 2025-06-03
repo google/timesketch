@@ -33,10 +33,9 @@ limitations under the License.
         ></v-progress-circular>
       </div>
       <div v-else>
-        <h4 class="mb-3">Removing Log</h4>
+        <h4 class="mb-3">Unlink Event from Conclusion</h4>
         <p class="mb-5">
-          Are you sure you want to remove this log? This action may not be
-          reversible.
+          Are you sure you want to unlink this event from this conclusion?
         </p>
 
         <div class="d-flex justify-end">
@@ -49,7 +48,7 @@ limitations under the License.
             rounded
             @click="removeEventFromObservable()"
           >
-            Yes, remove It
+            Yes, unlink It
           </v-btn>
         </div>
       </div>
@@ -78,6 +77,7 @@ export default {
   },
   methods: {
     async removeEventFromObservable() {
+      // TODO: Unlink event from conclusion via the annotation function!
       try {
         this.isLoading = true;
 

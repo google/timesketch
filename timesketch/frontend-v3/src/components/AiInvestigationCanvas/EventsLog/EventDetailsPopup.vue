@@ -25,20 +25,17 @@ limitations under the License.
     >
       <v-icon left small icon="mdi-close" color="#fff" />
     </v-btn>
-    <div
-      v-if="isLoading"
-      class="d-flex justify-center align-center pa-6 fill-height"
-    >
-      <v-progress-circular
-        :size="80"
-        :width="4"
-        color="#fff"
-        indeterminate
-      ></v-progress-circular>
-    </div>
-    <v-table v-else class="bg-none" density="compact" width="500px">
-      <tbody v-if="fullEventFiltered">
-        <tr v-for="([key, value], index) in fullEventFiltered">
+    <v-table class="bg-none" density="compact" width="500px">
+      <tbody>
+        <tr v-if="eventId">
+          <td>Event ID</td>
+          <td>{{ eventId }}</td>
+        </tr>
+        <tr v-if="searchindexName">
+          <td>Searchindex Name</td>
+          <td>{{ searchindexName }}</td>
+        </tr>
+        <tr v-for="(value, key) in eventData" :key="key">
           <td>{{ key }}</td>
           <td>{{ value }}</td>
         </tr>
@@ -49,12 +46,13 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
 
 export default {
   props: {
+    eventData: Object,
     eventId: String,
-    sketchId: String,
+    sketchId: Number,
+    searchindexName: String
   },
   data() {
     return {
@@ -62,64 +60,6 @@ export default {
       eventDetails: null,
       isLoading: true,
     };
-  },
-  computed: {
-    headers() {
-      return [
-        {
-          text: "Description",
-          width: "40",
-          sortable: false,
-        },
-        {
-          text: "Datetime (UTC) ",
-          align: "start",
-          width: "200",
-          sortable: false,
-        },
-        {
-          text: "File name",
-          width: "40",
-          sortable: false,
-        },
-      ];
-    },
-    fullEventFiltered() {
-      if (!this.eventDetails) {
-        return [];
-      }
-
-      return Object.entries(this.eventDetails);
-    },
-  },
-  async mounted() {
-    await this.fetchEventDetail();
-  },
-  methods: {
-    async fetchEventDetail() {
-      this.isLoading = true;
-      try {
-        const queryResponse = await RestApiClient.search(this.sketchId, {
-          query: `_id: ${this.eventId}`,
-        });
-
-        if (!queryResponse.data.objects?.[0]) {
-          throw error;
-        }
-
-        this.eventDetails = queryResponse.data.objects?.[0]?._source;
-      } catch (error) {
-        this.store.setNotification({
-          text: "Unable to retrieve detailed information",
-          icon: "mdi-alert-circle-outline",
-          type: "error",
-        });
-
-        this.$emit("close-detail-popup");
-      } finally {
-        this.isLoading = false;
-      }
-    },
   },
 };
 </script>
@@ -135,8 +75,8 @@ export default {
   bottom: 100%;
   z-index: 3;
   width: 500px;
-  height: 420px;
-  overflow: hidden;
+  max-height: 420px;
+  overflow-y: auto;
 }
 
 .dialog:after {

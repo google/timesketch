@@ -22,7 +22,7 @@ limitations under the License.
       </tr>
     </thead>
     <tbody>
-      <tr v-for="fact in events" :key="fact._id">
+      <tr v-for="fact in events" :key="fact.document_id">
         <ConclusionFact :fact="fact" :sketchId="store.sketch.id" :conclusionId="conclusionId" />
       </tr>
     </tbody>
@@ -63,7 +63,7 @@ export default {
     headers() {
       return [
         {
-          text: "Description",
+          text: "Message",
           width: "40",
           sortable: false,
         },
@@ -74,7 +74,7 @@ export default {
           sortable: false,
         },
         {
-          text: "File name",
+          text: "Data Type",
           width: "40",
           sortable: false,
         },
