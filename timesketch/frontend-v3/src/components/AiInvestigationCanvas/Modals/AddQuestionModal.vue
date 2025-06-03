@@ -23,7 +23,7 @@ limitations under the License.
         indeterminate
       ></v-progress-circular>
     </div>
-    <div :class="modalClasses">
+    <div :class="{ modal__content: true, 'no-pointer-events': isSubmitting }">
       <div>
         <h3 class="mb-4">Create Question</h3>
         <div class="d-flex align-center mb-4">
@@ -64,7 +64,7 @@ limitations under the License.
               <v-list-item
                 v-for="(question, index) in dfiqMatches"
                 :key="index"
-                @click="createQuestion(question)"
+                @click="createQuestion(question, question.id)"
                 class="d-flex"
               >
                 <template v-slot:prepend>
@@ -102,14 +102,12 @@ import { useAppStore } from "@/stores/app";
 import RestApiClient from "@/utils/RestApiClient";
 import AddQuestionModalLoader from "../Loaders/AddQuestionModalLoader.vue";
 
-
 export default {
   inject: ["addNewQuestion"],
   props: {
     questions: Array,
     questionsTotal: Number,
     completedQuestionsTotal: Number,
-
   },
   data() {
     return {
@@ -124,12 +122,6 @@ export default {
     this.fetchQuestionTemplates();
   },
   computed: {
-    modalClasses() {
-      return {
-        modal__content: true, 
-        'no-pointer-events': this.isSubmitting 
-      }
-    },
     sortedQuestions() {
       return this.questions && this.questions.length > 0
         ? [
@@ -167,9 +159,15 @@ export default {
         this.isLoading = false;
       }
     },
-    async createQuestion(question) {
+    async createQuestion(question, templateId) {
       this.isSubmitting = true;
-      let questionText =  question.name || this.queryString;
+
+      let questionText = question || this.queryString;
+
+      if (templateId) {
+        questionText = question?.name;
+        templateId = templateId;
+      }
 
       try {
         const question = await RestApiClient.createQuestion(
@@ -177,7 +175,7 @@ export default {
           null,
           null,
           questionText,
-          question?.id
+          templateId
         );
 
         const questionId = question.data.objects[0].id;
@@ -190,10 +188,9 @@ export default {
         );
 
         const questionData = conclusionResponse.data.objects[0]
-        
+
         this.addNewQuestion(questionData);
         this.store.setActiveQuestion(questionData);
-        
         this.$emit("close-modal");
 
         this.store.setNotification({
