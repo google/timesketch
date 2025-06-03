@@ -20,6 +20,7 @@ import json
 import logging
 import math
 import time
+from typing import Optional
 import six
 
 import dateutil
@@ -43,8 +44,10 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
+from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
@@ -820,6 +823,155 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             )
         return current_search_node
 
+    def _get_current_search_node_conclusion(
+        self, current_search_node: SearchHistory
+    ) -> Optional[InvestigativeQuestionConclusion]:
+        """Retrieves or creates a conclusion for the current user associated
+        with the investigative question of a given search history node.
+
+        If the search history node is linked to an investigative question and
+        the current user already has a conclusion for that question, that
+        conclusion is returned.
+
+        If no conclusion exists for the current user for that question, a new,
+        empty conclusion is created, associated with the user and question,
+        and then returned.
+
+        Args:
+            current_search_node: The SearchHistory object.
+        Returns:
+            An InvestigativeQuestionConclusion object or None if no question is
+            associated.
+        """
+        if (
+            hasattr(current_search_node, "investigativequestion")
+            and current_search_node.investigativequestion
+        ):
+            create_conclusion = False
+            if (
+                hasattr(current_search_node.investigativequestion, "conclusions")
+                and current_search_node.investigativequestion.conclusions
+            ):
+                for (
+                    existing_conclusion
+                ) in current_search_node.investigativequestion.conclusions:
+                    if existing_conclusion.user_id == current_user.id:
+                        return existing_conclusion
+                # The user has not created a conclusion yet, let's create one!
+                create_conclusion = True
+            else:
+                # The question for our current node has no conclusion yet!
+                create_conclusion = True
+
+            if create_conclusion:
+                # The user has no conclusion yet for this question, let's create
+                # an empty one that we can use for connecting events.
+                node_id = current_search_node.investigativequestion.id
+                new_conclusion = InvestigativeQuestionConclusion(
+                    conclusion="",
+                    user_id=current_user.id,
+                    investigativequestion_id=node_id,
+                )
+                db_session.add(new_conclusion)
+                db_session.commit()
+                return new_conclusion
+
+        return None
+
+    def _get_search_index_for_event(
+        self,
+        sketch: Sketch,
+        event_id: str,
+    ) -> str:
+        """Get's the search index name associated with the event.
+
+        This function queries the datastore to find the specific search index
+        that an event belongs to within the context of a given sketch. It's
+        used when the event's index is not explicitly provided in an API request.
+
+        Args:
+            sketch: The Sketch object to query.
+            event_id: The document_id to query.
+
+        Returns:
+            str: The search index name.
+
+        Raises:
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If a datastore error occurs
+                during the search.
+            HTTP_STATUS_CODE_NOT_FOUND: If the event is not found in any of the
+                sketch's active timelines.
+            HTTP_STATUS_CODE_BAD_REQUEST: If multiple events are found with the
+                same ID across different indices (ambiguity).
+        """
+
+        indices_to_search = [t.searchindex.index_name for t in sketch.active_timelines]
+        event_id_query = f"_id:{event_id}"
+        try:
+            result = self.datastore.search(
+                sketch_id=sketch.id,
+                indices=indices_to_search,
+                query_string=event_id_query,
+            )
+        except ValueError as e:
+            logger.error(
+                "Datastore search failed for event_id [%s] in sketch [%s]: %s",
+                event_id,
+                sketch.id,
+                e,
+                exc_info=True,
+            )
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                f"Error while searching for event [{event_id}] to determine its index.",
+            )
+        if isinstance(result, dict):
+            hits = result.get("hits", {}).get("hits", [])
+
+        if not hits:
+            logger.error(
+                "Event with ID [%s] not found in indices [%s] for sketch [%s].",
+                event_id,
+                ",".join(indices_to_search),
+                sketch.id,
+            )
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"Event with ID [{event_id}] not found in the specified sketch "
+                "context.",
+            )
+        if len(hits) > 1:
+            # _id is only unique per index, so there is a slight chance of the
+            # same _id in two indices. If this happens, log a warning and abort!
+            logger.warning(
+                "Found multiple events with the same _ID [%s] in different "
+                "indices [%s] for sketch [%s].",
+                event_id,
+                ",".join(indices_to_search),
+                sketch.id,
+            )
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                f"Multiple events found with ID [{event_id}]. This ID exists in "
+                "more than one search index. Please specify the '_index' "
+                "(search index name) for this event in your request to disambiguate.",
+            )
+
+        # We expect only one hit for a unique event ID.
+        event_index_name = hits[0].get("_index")
+
+        if not event_index_name:
+            logger.error(
+                "Event with ID [%s] found, but it is missing the _index field.",
+                event_id,
+            )
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                f"Found event [{event_id}] but it is missing index information.",
+            )
+
+        return event_index_name
+
     @login_required
     def post(self, sketch_id: int):
         """Handles POST request to the resource.
@@ -855,7 +1007,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         events = form.events.raw_data
 
         for _event in events:
-            searchindex_id = _event["_index"]
+            if not _event.get("_index"):
+                searchindex_id = self._get_search_index_for_event(sketch, _event["_id"])
+                _event["_index"] = searchindex_id
+            else:
+                searchindex_id = _event["_index"]
             searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
             event_id = _event["_id"]
 
@@ -893,6 +1049,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     current_search_node.add_label("__ts_comment")
 
             elif "label" in annotation_type:
+                # TODO(#3434): Fix the label logic.
                 annotation = Event.Label.get_or_create(
                     label=form.annotation.data, user=current_user
                 )
@@ -903,6 +1060,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 if "__ts_star" in form.annotation.data:
                     toggle = True
                 if "__ts_hidden" in form.annotation.data:
+                    toggle = True
+                if "__ts_fact" in form.annotation.data:
                     toggle = True
                 if form.remove.data:
                     toggle = True
@@ -916,11 +1075,38 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     toggle=toggle,
                 )
 
+                conclusion = None
                 if current_search_node:
-                    search_node_label = "__ts_label"
                     if "__ts_star" in form.annotation.data:
                         search_node_label = "__ts_star"
+                    elif "__ts_fact" in form.annotation.data:
+                        search_node_label = "__ts_fact"
+                        conclusion = self._get_current_search_node_conclusion(
+                            current_search_node
+                        )
+                    else:
+                        search_node_label = "__ts_label"
                     current_search_node.add_label(search_node_label)
+
+                if "__ts_fact" in form.annotation.data:
+                    if not conclusion:
+                        conclusion_id = request.json.get("conclusion_id", None)
+                        if conclusion_id:
+                            conclusion = InvestigativeQuestionConclusion.get_by_id(
+                                conclusion_id
+                            )
+                        else:
+                            abort(
+                                HTTP_STATUS_CODE_BAD_REQUEST,
+                                "Conclusion ID is required to add a fact.",
+                            )
+                    # Adding facts to conclusions
+                    if not form.remove.data:
+                        event.conclusions.append(conclusion)
+                    # Remove facts from conclusions
+                    if form.remove.data:
+                        event.conclusions.remove(conclusion)
+
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
