@@ -18,8 +18,8 @@ limitations under the License.
     <div class="position-relative">
       <EventDetailsPopup
         v-if="showLogDetail"
-        :eventId="fact.event_id"
-        :sketchId="sketchId"
+        :eventId="fact._id.toString()"
+        :sketchId="sketchId.toString()"
         @close-detail-popup="toggleShowLogDetail()"
       />
       <v-btn variant="text" @click="toggleShowLogDetail()">
@@ -38,6 +38,7 @@ export default {
   props: {
     fact: Array,
     conclusionId: Number,
+    sketchId: String,
   },
   data() {
     return {
