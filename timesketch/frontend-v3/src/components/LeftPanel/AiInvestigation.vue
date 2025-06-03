@@ -38,7 +38,7 @@ limitations under the License.
       "
       style="cursor: pointer"
     >
-      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon start>mdi-cube-outline</v-icon>Example</div>
+      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon icon="mdi-creation" start />AI Investigation</div>
     </router-link>
     <v-divider></v-divider>
   </div>
