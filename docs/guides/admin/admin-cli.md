@@ -6,7 +6,7 @@ hide:
 
 tsctl is a command-line tool for managing and interacting with a Timesketch instance. It allows users to create and delete sketches, add and remove data sources, manage users and groups, and perform various other tasks.
 
-Its commands can be accessed by running tsctl followed by the desired subcommand. For example, to list all the available sketches in a Timesketch instance, tsctl list-sketches can be run.
+Its commands can be accessed by running tsctl followed by the desired subcommand. For example, to list all the available sketches in a Timesketch instance, `tsctl list-sketches` can be run.
 
 ### Config
 
@@ -401,57 +401,9 @@ Will drop all databases.
 Command:
 
 ```shell
-tsctl drop_db
+tsctl drop-db
 ```
 
-### search_template
-
-Export/Import search templates to/from file.
-
-Command:
-
-```shell
-tsctl search_template
-```
-
-Parameters:
-
-```shell
---import / -i
---export / -e
-```
-
-import_location: Path to the yaml file to import templates.
-export_location: Path to the yaml file to export templates.
-
-### import
-
-Creates a new Timesketch timeline from a file. Supported file formats are: plaso, csv and jsonl.
-
-Command:
-
-```shell
-tsctl import
-```
-
-Parameters:
-
-```shell
---file / -f
---sketch_id / -s      (optional)
---username / -f       (optional)
---timeline_name / -n  (optional)
-```
-
-The sketch id is inferred from the filename if it starts with a number. The timeline name can also be generated from the filename if not specified.
-
-### similarity_score
-
-Command:
-
-```shell
-tsctl similarity_score
-```
 
 ### Sketch
 
