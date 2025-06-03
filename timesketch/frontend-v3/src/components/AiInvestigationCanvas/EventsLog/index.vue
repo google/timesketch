@@ -27,7 +27,7 @@ limitations under the License.
         variant="outlined"
         density="compact"
         placeholder="Enter a query"
-        :disabled="reportLocked"
+        :disabled="store.reportLocked"
         class="bg-white"
         v-model="queryString"
       ></v-text-field>

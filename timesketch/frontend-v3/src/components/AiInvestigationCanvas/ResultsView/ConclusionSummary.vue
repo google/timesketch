@@ -49,7 +49,7 @@ limitations under the License.
         id="summary"
         name="summary"
         variant="outlined"
-        :disabled="reportLocked"
+        :disabled="isTextareaDisabled"
         rows="3"
         noResize
         hide-details
@@ -148,6 +148,12 @@ export default {
         this.reportLocked ||
         !this.summary ||
         savedSummary === this.summary
+      );
+    },
+    isTextareaDisabled() {
+      return (
+        this.reportLocked ||
+        this.store.approvedReportQuestions.includes(this.question.id)
       );
     },
   },

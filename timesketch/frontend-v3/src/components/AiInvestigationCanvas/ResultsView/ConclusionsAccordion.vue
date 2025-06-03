@@ -52,6 +52,7 @@ limitations under the License.
             variant="text"
             depressed
             @click="openEventLog()"
+            :disabled="isQuestionVerified"
             color="primary"
           >
             <v-icon left small icon="mdi-plus" />
@@ -86,6 +87,12 @@ export default {
   computed: {
     hasConclusions() {
       return this.question?.conclusions && this.question.conclusions.length > 0;
+    },
+    isQuestionVerified() {
+      return (
+        this.store.reportLocked ||
+        this.store.approvedReportQuestions.includes(this.question.id)
+      )
     },
   },
   methods: {
