@@ -44,15 +44,14 @@ limitations under the License.
     <EventList
       v-if="conclusionId"
       :conclusionId="conclusionId"
-      :disableToolbar="true"
       :disableDownload="true"
+      :disableHistogram="true"
       :disableSettings="true"
       :disableColumns="true"
       :disableStarring="true"
       :disableSaveSearch="true"
-      :disableTags="true"
-      :showAddToFindings="true"
-      :existingEvents="existingEvents"
+      :disableTagging="true"
+      :disableIQFacts="false"
       :queryRequest="queryRequest"
     />
   </div>

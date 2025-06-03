@@ -359,7 +359,7 @@ limitations under the License.
               </v-dialog>
 
               <!-- Export search results -->
-              <v-btn icon @click="exportSearchResult()">
+              <v-btn v-if="!disableDownload" icon @click="exportSearchResult()">
                 <v-icon title="Download current view as CSV"
                   >mdi-download</v-icon
                 >
@@ -415,7 +415,7 @@ limitations under the License.
             </div>
             <div v-else>
               <small class="mr-2">Actions:</small>
-              <v-btn x-small outlined @click="toggleMultipleStars()">
+              <v-btn v-if="!disableStarring" x-small outlined @click="toggleMultipleStars()">
                 <v-icon left color="amber">mdi-star</v-icon>
                 Toggle star
               </v-btn>
@@ -490,20 +490,32 @@ limitations under the License.
 
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <v-icon
-            v-if="item._source.label.includes('__ts_star')"
-            title="Toggle star status"
-            @click.stop="toggleStar(item)"
-            color="amber"
-            >mdi-star</v-icon
-          >
-          <v-icon v-else title="Toggle star status" @click.stop="toggleStar(item)"
-            >mdi-star-outline</v-icon
-          >
+          <span v-if="!disableStarring">
+            <v-icon
+              v-if="item._source.label.includes('__ts_star')"
+              title="Toggle star status"
+              @click.stop="toggleStar(item)"
+              color="amber"
+              >mdi-star</v-icon
+            >
+            <v-icon v-else title="Toggle star status" @click.stop="toggleStar(item)"
+              >mdi-star-outline</v-icon
+            >
+          </span>
 
           <!-- Tag menu -->
-          <span class="ml-1">
+          <span v-if="!disableTagging" class="ml-1">
             <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+          </span>
+
+          <!-- IQ Facts Action Icon -->
+          <span v-if="!disableIQFacts" class="ml-1">
+            <v-icon
+              :title="item._source.label && item._source.label.includes('__ts_fact') ? 'Unlink Event from Conclusion' : 'Link Event to Conclusion'"
+              @click.stop="toggleFact(item)"
+            >
+              {{ item._source.label && item._source.label.includes('__ts_fact') ? 'mdi-minus' : 'mdi-plus' }}
+            </v-icon>
           </span>
 
           <!-- Action sub-menu -->
@@ -720,6 +732,26 @@ export default {
     disablePagination: {
       type: Boolean,
       default: false,
+    },
+    disableDownload: {
+      type: Boolean,
+      default: false,
+    },
+    disableStarring: {
+      type: Boolean,
+      default: false,
+    },
+    disableTagging: {
+      type: Boolean,
+      default: false,
+    },
+    disableIQFacts: {
+      type: Boolean,
+      default: true,
+    },
+    conclusionId: {
+      type: Number,
+      default: null,
     },
     highlightEvent: {
       type: Object,
@@ -1272,6 +1304,33 @@ export default {
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1);
+    },
+    toggleFact(event) {
+      if (this.conclusionId === null || this.conclusionId === undefined) {
+        this.errorSnackBar("Conclusion ID not available to link event.");
+        return;
+      }
+      const isCurrentlyFact = event._source.label.includes("__ts_fact");
+      ApiClient.saveEventAnnotation(
+        this.sketch.id,
+        "label",
+        "__ts_fact",
+        event,
+        null,
+        isCurrentlyFact ? true : false,
+        this.conclusionId
+      )
+        .then(() => {
+          if (isCurrentlyFact) {
+            event._source.label.splice(event._source.label.indexOf("__ts_fact"), 1);
+          } else {
+            event._source.label.push("__ts_fact");
+          }
+        })
+        .catch((e) => {
+          console.error("Error saving fact annotation:", e);
+          this.errorSnackBar("Failed to link event to conclusion. See console for details.");
+        });
     },
     toggleStar(event) {
       let count = 0;
