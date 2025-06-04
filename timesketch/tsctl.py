@@ -2040,7 +2040,7 @@ def check_orphaned_data(verbose_checks: bool):
         nonlocal found_orphans_overall
         if verbose_checks_enabled:
             print(
-                f"\nChecking for orphaned {description} ({ModelClass.__name__} records)..."
+                f"\nChecking for orphaned {description} ({ModelClass.__name__} records)..."  # pylint: disable=line-too-long
             )
         orphaned_count = 0
         all_records = ModelClass.query.all()
@@ -2058,7 +2058,7 @@ def check_orphaned_data(verbose_checks: bool):
                     # This is the first orphan found for this check type, print header
                     if orphaned_count == 0 and not verbose_checks_enabled:
                         print(
-                            f"\nFound orphaned {description} ({ModelClass.__name__} records):"
+                            f"\nFound orphaned {description} ({ModelClass.__name__} records):"  # pylint: disable=line-too-long
                         )
 
                     record_info_parts = [f"ID={record.id}"]
@@ -2099,7 +2099,7 @@ def check_orphaned_data(verbose_checks: bool):
                     record_info = ", ".join(record_info_parts)
                     print(
                         f"  ORPHANED {ModelClass.__name__}: {record_info}, "
-                        f"linked to non-existent {ParentModelClass.__name__} ID={parent_id} "
+                        f"linked to non-existent {ParentModelClass.__name__} ID={parent_id} "  # pylint: disable=line-too-long
                         f"via {fk_attr_name}"
                     )
                     orphaned_count += 1
@@ -2110,7 +2110,7 @@ def check_orphaned_data(verbose_checks: bool):
                 print(f"  No orphaned {description} ({ModelClass.__name__}) found.")
         elif verbose_checks_enabled:  # Only print count if verbose and orphans found
             print(
-                f"  Found {orphaned_count} orphaned {description} ({ModelClass.__name__}) record(s)."
+                f"  Found {orphaned_count} orphaned {description} ({ModelClass.__name__}) record(s)."  # pylint: disable=line-too-long
             )
 
     # Define checks: (ModelClass, fk_attr_name, ParentModelClass, description_plural)
@@ -2262,7 +2262,7 @@ def check_orphaned_data(verbose_checks: bool):
                 pass  # ParentModel might not use this mixin or it's not initialized.
             except Exception as e:  # pylint: disable=broad-except
                 print(
-                    f"  ERROR trying to check {mixin_desc_plural} for {parent_model_name_desc}: {e}"
+                    f"  ERROR trying to check {mixin_desc_plural} for {parent_model_name_desc}: {e}"  # pylint: disable=line-too-long
                 )
                 found_orphans_overall = True
 
