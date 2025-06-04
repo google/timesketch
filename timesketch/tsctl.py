@@ -1027,7 +1027,9 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
         db_session.commit()
         print(f"Searchindex {searchindex_id} status set to {status}")
         # to verify run:
-        print(f"To verify run: tsctl searchindex-status {searchindex_id} --action get")
+        print(
+            f"To verify run: tsctl searchindex-status --searchindex_id {searchindex_id} --action get"
+        )
 
 
 # Analyzer stats cli command
