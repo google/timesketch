@@ -482,31 +482,6 @@ class Sketch(resource.BaseResource):
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
-    def z_delete(self, force_delete=True):
-        """Deletes the sketch.
-
-        If a sketch is already archived, it can not be deleted.
-
-        Args:
-            force_delete:
-
-        """
-        if self.is_archived():
-            raise RuntimeError(
-                "Unable to delete an archived sketch, first unarchive then delete."
-            )
-
-        form_data = {"force_delete": force_delete}
-
-        resource_url = "{0:s}/sketches/{1:d}/".format(self.api.api_root, self.id)
-        if force_delete:
-            # breakpoint()
-            logger.debug("Force delete active")
-            resource_url += "?force=true"  # or "?force_delete=true"
-            logger.debug(resource_url)
-        response = self.api.session.delete(resource_url, data=form_data)
-        return error.check_return_status(response, logger)
-
     def add_to_acl(
         self,
         user_list=None,

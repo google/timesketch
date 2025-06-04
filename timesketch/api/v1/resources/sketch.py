@@ -506,8 +506,9 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         Args:
             sketch_id (int): The ID of the sketch to delete.
-            force_delete (bool): If True, perform a hard delete, permanently
-                removing all associated data. Defaults to False (soft delete).
+            force_delete (bool): If True, performs a hard delete, permanently
+                removing the sketch and all its associated data (timelines,
+                search indices, etc.). Defaults to False (soft delete).
                 Can also be triggered by setting the 'force' URL query parameter.
 
         Returns:
