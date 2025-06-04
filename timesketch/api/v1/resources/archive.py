@@ -499,7 +499,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             )
 
         # Check if any timeline is in a non-archivable state
-        non_archivable_timeline_statuses = ["processing", "new", "fail", "timeout"]
+        non_archivable_timeline_statuses = ["processing"]
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status
             if timeline_status in non_archivable_timeline_statuses:
@@ -507,24 +507,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     f"Cannot archive sketch {sketch.id}. Timeline '{timeline.name}' "
                     f"(ID: {timeline.id}) is in '{timeline_status}' state, which "
-                    f"prevents archival. Please ensure all timelines are 'ready' or "
-                    f"'archived'.",
+                    f"prevents archival.",
                 )
-
-        labels_to_prevent_deletion = current_app.config.get(
-            "LABELS_TO_PREVENT_DELETION",
-            [],  # Assuming same config key for archival prevention
-        )
-
-        for label in labels_to_prevent_deletion:
-            if sketch.has_label(label):
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    f"A sketch with the label {label} cannot be archived.",
-                )
-
-        sketch.set_status(status="archived")
-        logger.info("Sketch %s status set to 'archived'.", sketch.id)
 
         # Process timelines of the sketch
         for timeline_in_sketch in sketch.timelines:
@@ -532,7 +516,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 timeline_in_sketch.get_status.status == "ready"
             ):  # Only archive 'ready' timelines
                 timeline_in_sketch.set_status(status="archived")
-                logger.info(
+                logger.debug(
                     "Timeline %s (part of sketch %s) status set to 'archived'.",
                     timeline_in_sketch.id,
                     sketch.id,
@@ -617,5 +601,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         str(e),
                         original_si_status,
                     )
+
+        sketch.set_status(status="archived")
+        logger.info("Sketch %s status set to 'archived'.", sketch.id)
 
         return HTTP_STATUS_CODE_OK
