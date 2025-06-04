@@ -250,6 +250,9 @@ def unarchive_sketch(ctx: click.Context) -> None:
         click.echo("Sketch unarchived")
 
 
+@sketch_group.command("add_label", help="Add a label to a sketch")
+@click.option("--label", required=True, help="Name of label to add.")
+@click.pass_context
 def add_label(ctx: click.Context, label: str) -> None:
     """Add a label to a sketch.
 
