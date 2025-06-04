@@ -552,8 +552,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             "Sketch [{0:d}] could be deleted".format(sketch_id),
         )
 
-        # TODO(jaegeral: remove that before merging)
-        # sketch.set_status(status="deleted")
+        sketch.set_status(status="deleted")
 
         # Default behaviour for historical reasons: exit with 200 without
         # deleting
