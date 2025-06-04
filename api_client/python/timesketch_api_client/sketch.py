@@ -464,7 +464,8 @@ class Sketch(resource.BaseResource):
         If a sketch is already archived, it can not be deleted.
 
         Args:
-            force_delete:
+            force_delete (bool): If True, performs a hard delete, permanently
+                removing the sketch and all associated data. Defaults to False.
 
         """
         if self.is_archived():

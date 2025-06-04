@@ -610,7 +610,7 @@ def print_table(table_data):
 @click.option(
     "--force-delete",
     is_flag=True,
-    help="Perform the actual deletion of the sketch. Without this flag, a dry run is shown.",
+    help="Perform the actual deletion of the sketch. Without, a dry run is shown.",
 )
 def sketch_delete(sketch_id: int, force_delete: bool):
     """Delete a sketch. By default, this command performs a dry run.
