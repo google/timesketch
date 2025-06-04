@@ -290,7 +290,9 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, Bas
     description = Column(UnicodeText())
     index_name = Column(Unicode(255))
     user_id = Column(Integer, ForeignKey("user.id"))
-    timelines = relationship("Timeline", backref="searchindex", lazy="dynamic")
+    timelines = relationship(
+        "Timeline", backref="searchindex", lazy="dynamic", cascade="all, delete-orphan"
+    )
     events = relationship("Event", backref="searchindex", lazy="dynamic")
 
 

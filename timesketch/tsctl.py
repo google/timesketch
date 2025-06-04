@@ -927,11 +927,6 @@ def searchindex_info(searchindex_id: int, index_name: str):
         index_name (str): The search index ID to search for (e.g.,
                               "4c5afdf60c6e49499801368b7f238353").
     """
-    if searchindex_id:
-        if not searchindex_id.isdigit():
-            print("Searchindex database ID needs to be an integer.")
-            return
-
     index_to_search = None
 
     if searchindex_id:
@@ -1055,7 +1050,12 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
         db_session.commit()
         print(f"Searchindex {searchindex_id} status set to {status}")
         # to verify run:
-        print(f"To verify run: tsctl searchindex-status {searchindex_id} --action get")
+        print(
+            (
+                f"To verify run: tsctl searchindex-status "
+                f"--searchindex_id {searchindex_id} --action get"
+            )
+        )
 
 
 # Analyzer stats cli command
