@@ -581,11 +581,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     )
                 except opensearchpy.exceptions.NotFoundError:
                     # If index not found in OpenSearch, it's effectively gone/closed.
-                    search_index.set_status(status="archived")
+                    search_index.set_status(status="fail")
                     logger.warning(
                         "OpenSearch index: %s not found. "
                         " SearchIndex DB object (ID: %s) "
-                        "status updated to 'archived'.",
+                        "status updated to 'fail'.",
                         search_index.index_name,
                         search_index.id,
                     )
