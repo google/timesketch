@@ -33,7 +33,7 @@ limitations under the License.
         ></v-progress-circular>
       </div>
       <div v-else>
-        <h4 class="mb-3">Unlink Event from Conclusion</h4>
+        <h4 class="mb-3">Unlink Event</h4>
         <p class="mb-5">
           Are you sure you want to unlink this event from this conclusion?
         </p>
@@ -83,7 +83,7 @@ export default {
 
         await this.updateObservables({
           conclusionId: this.conclusionId,
-          events: [this.fact],
+          events: [{"_id": this.fact.document_id, "_index": this.fact.searchindex_name}],
           remove: true,
         });
 
