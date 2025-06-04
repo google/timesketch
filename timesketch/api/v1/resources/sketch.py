@@ -522,8 +522,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 permission on the sketch, or if the sketch has a label
                 preventing deletion.
             HTTP_STATUS_CODE_BAD_REQUEST (400): If there's an issue during the
-                deletion process (though this specific implementation seems to
-                only return 200 or abort).
+                deletion process e.g. the sketch being archived.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -540,6 +539,11 @@ class SketchResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_FORBIDDEN,
                     f"Sketch with the label [{label:s}] cannot be deleted.",
                 )
+        if sketch.get_status.status == "archived":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to delete a sketch that is already archived.",
+            )
 
         if not force_delete:
             # check if force_delete is maybe set in the url
