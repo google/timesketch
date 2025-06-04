@@ -529,6 +529,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             tl.searchindex for tl in sketch.timelines if tl.searchindex
         }
 
+        errors_occurred = False
+        error_details = []
+
         for search_index in search_indexes_to_evaluate:
             # Check if all timelines associated with this SearchIndex are now archived
             all_associated_timelines_archived = True
@@ -580,7 +583,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         search_index.id,
                     )
                 except opensearchpy.exceptions.NotFoundError:
-                    # If index not found in OpenSearch, it's effectively gone/closed.
+                    # If index not found in OpenSearch, it's effectively gone/closed,
+                    # but the intended 'close' operation failed because it wasn't there.
                     search_index.set_status(status="fail")
                     logger.warning(
                         "OpenSearch index: %s not found. "
@@ -588,6 +592,12 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         "status updated to 'fail'.",
                         search_index.index_name,
                         search_index.id,
+                    )
+                    errors_occurred = True
+                    error_details.append(
+                        f"OpenSearch index '{search_index.index_name}' not found. "
+                        f"SearchIndex DB object (ID: {search_index.id}) "
+                        "status updated to 'fail'."
                     )
                 except Exception as e:  # pylint: disable=broad-except
                     # For any other error during close, log it and
@@ -600,8 +610,29 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         str(e),
                         original_si_status,
                     )
+                    errors_occurred = True
+                    error_details.append(
+                        f"Failed to close OpenSearch index '{search_index.index_name}' "
+                        f"(DB ID: {search_index.id}). Error: {str(e)}. "
+                        f"SearchIndex DB status remains '{original_si_status}'."
+                    )
 
         sketch.set_status(status="archived")
         logger.info("Sketch %s status set to 'archived'.", sketch.id)
+
+        # Commit changes after processing all indices
+        db_session.commit()
+
+        if errors_occurred:
+            # Return a non-OK status if any errors occurred during index closure.
+            response_meta = {
+                "sketch_id": sketch.id,
+                "status": sketch.get_status.status,
+                "errors": error_details,
+            }
+            return (
+                jsonify({"meta": response_meta, "objects": []}),
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+            )  # Or HTTP_STATUS_CODE_BAD_REQUEST
 
         return HTTP_STATUS_CODE_OK
