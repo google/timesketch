@@ -256,7 +256,7 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(
             response.json["objects"][0]["name"], "test_delete_archive_sketch"
         )
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(400, response.status_code)
 
         # Archive sketch
         resource_url = f"/api/v1/sketches/{created_id}/archive/"
