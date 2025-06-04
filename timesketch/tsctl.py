@@ -607,8 +607,14 @@ def print_table(table_data):
 
 @cli.command(name="sketch-delete")
 @click.argument("sketch_id")
-def sketch_delete(sketch_id):
-    """Delete a sketch."""
+@click.option(
+    "--force-delete",
+    is_flag=True,
+    help="Perform the actual deletion of the sketch. Without this flag, a dry run is shown.",
+)
+def sketch_delete(sketch_id: int, force_delete: bool):
+    """Delete a sketch. By default, this command performs a dry run.
+    To execute the deletion, provide the --force-delete flag."""
     sketch = Sketch.query.filter_by(id=sketch_id).first()
     if not sketch:
         print("Sketch does not exist.")
@@ -618,17 +624,26 @@ def sketch_delete(sketch_id):
         print(f"Sketch {sketch_id} is already deleted.")
         return
 
+    if sketch.get_status.status == "archived":
+        print(f"Sketch {sketch_id} is archived and cannot be deleted directly.")
+        print("Please unarchive it first if you intend to delete it.")
+        return
+
     sketch_labels = [label.label for label in sketch.labels]
     # do not delete if Sketch has a lithold label
     if "lithold" in sketch_labels:
         print("Sketch has lithold label, skipping")
         return
 
-    print(f"Sketch {sketch_id} Name: ({sketch.name})")
-    sketch.delete()
-    db_session.delete(sketch)
-    db_session.commit()
-    print(f"Sketch {sketch_id} deleted.")
+    if force_delete:
+        print(f"Deleting Sketch {sketch_id} Name: ({sketch.name})")
+        sketch.delete()
+        db_session.delete(sketch)
+        db_session.commit()
+        print(f"Sketch {sketch_id} deleted.")
+    else:
+        print(f"Dry run: Sketch {sketch_id} Name: ({sketch.name}) would be deleted.")
+        print("Run with --force-delete to actually delete the sketch.")
 
 
 @cli.command(name="sketch-info")
