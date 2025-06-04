@@ -275,8 +275,12 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     user_id = Column(Integer, ForeignKey("user.id"))
     searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
-    analysis = relationship("Analysis", backref="timeline", lazy="select")
-    datasources = relationship("DataSource", backref="timeline", lazy="select")
+    analysis = relationship(
+        "Analysis", backref="timeline", lazy="select"
+    )  # No cascade needed here due to Sketch.analysis cascade
+    datasources = relationship(
+        "DataSource", backref="timeline", lazy="select", cascade="all, delete-orphan"
+    )
 
 
 class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -286,7 +290,9 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, Bas
     description = Column(UnicodeText())
     index_name = Column(Unicode(255))
     user_id = Column(Integer, ForeignKey("user.id"))
-    timelines = relationship("Timeline", backref="searchindex", lazy="dynamic")
+    timelines = relationship(
+        "Timeline", backref="searchindex", lazy="dynamic", cascade="all, delete-orphan"
+    )
     events = relationship("Event", backref="searchindex", lazy="dynamic")
 
 
@@ -778,6 +784,17 @@ questionconclusion_aggregation_association_table = Table(
     Column("aggregation_id", Integer, ForeignKey("aggregation.id")),
 )
 
+questionconclusion_event_association_table = Table(
+    "investigativequestionconclusion_event",
+    BaseModel.metadata,
+    Column(
+        "investigativequestionconclusion_id",
+        Integer,
+        ForeignKey("investigativequestionconclusion.id"),
+    ),
+    Column("event_id", Integer, ForeignKey("event.id")),
+)
+
 
 class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the InvestigativeQuestionConclusion model.
@@ -807,6 +824,12 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
     )
     analysis = relationship(
         "Analysis", backref="investigativequestionconclusion", lazy="select"
+    )
+    events = relationship(
+        "Event",
+        secondary=questionconclusion_event_association_table,
+        backref="conclusions",
+        lazy="select",
     )
 
 

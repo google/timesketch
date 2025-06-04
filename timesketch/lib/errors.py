@@ -54,5 +54,9 @@ class IndexNotReadyError(Error):
     """Index was created but did not become healthy in time."""
 
 
-class DataStoreConnectionError(Error):
+class DatastoreConnectionError(Error):
     """Cannot connect to the datastore."""
+
+
+class DatastoreQueryError(Error):
+    """Error with the datastore query."""

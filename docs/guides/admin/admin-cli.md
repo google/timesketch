@@ -58,20 +58,19 @@ pip version: pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
 
 tsctl provides a subcommand for creating users in a Timesketch instance. This subcommand is called `create-user`, and it allows you to specify the `username`, `password`, and other details for the user you want to create.
 
-To use the `create-user` subcommand, you would run `tsctl create-user` followed by the desired options and arguments. For example, to create a user with the username "john" and the password "123456", you could run the following command: `tsctl create-user --username john --password 123456`.
+To use the `create-user` subcommand, you would run `tsctl create-user` followed by the desired options and arguments. For example, to create a user with the username "john" and the password "123456", you could run the following command: `tsctl create-user john --password 123456`.
 
-Once the user is created, they will be able to log in to the Timesketch instance using their username and password. You can then use the list-users subcommand to verify that the user was created successfully.
+Once the user is created, they will be able to log in to the Timesketch instance using their username and password. You can then use the `list-users` subcommand to verify that the user was created successfully.
 
 Command:
 
 ```shell
-tsctl create-user
+tsctl create-user [OPTIONS] USERNAME
 ```
 
 Parameters:
 
 ```shell
---name / -n
 --password / -p (optional)
 ```
 
@@ -79,24 +78,24 @@ Example
 
 ```shell
 tsctl create-user foo
+tsctl create-user foo --password bar
 ```
 
 #### Change user password
 
-To change a user password, the create-user command can be used, as it is checking if the user exists if yes it will update the update.
+To change a user password, the `create-user` command can be used, as it is checking if the user exists if yes it will update the user.
 
 This command would change the password of the user with the specified username to the new password provided. The user will then be able to log in to the Timesketch instance using their new password.
 
 Command:
 
 ```shell
-tsctl create-user
+tsctl create-user [OPTIONS] USERNAME
 ```
 
 Parameters:
 
 ```shell
---username / -u
 --password / -p (optional)
 ```
 
@@ -104,6 +103,7 @@ Example
 
 ```shell
 tsctl create-user foo
+tsctl create-user foo --password bar
 ```
 
 #### Removing users
@@ -165,7 +165,7 @@ foobar (active: False)
 
 tsctl provides a subcommand for granting administrator privileges to a user in a Timesketch instance. This subcommand is called `make-admin`, and it allows you to specify the username of the user you want to grant administrator privileges to.
 
-To use the `make-admin` subcommand, you would run `tsctl make-admin` followed by the desired options and arguments. For example, to grant administrator privileges to a user with the username "john", you could run the following command: `tsctl make-admin  john`
+To use the `make-admin` subcommand, you would run `tsctl make-admin` followed by the desired options and arguments. For example, to grant administrator privileges to a user with the username "john", you could run the following command: `tsctl make-admin john`
 
 This command would grant the user with the specified username administrator privileges.
 
@@ -187,24 +187,19 @@ Once a user's administrator privileges are revoked, they will no longer be able 
 
 #### Adding groups
 
-tsctl provides a subcommand for adding groups in a Timesketch instance. This subcommand is called `add-group`, and it allows you to specify the name and description of the group you want to add.
+tsctl provides a subcommand for adding groups in a Timesketch instance. This subcommand is called `create-group`, and it allows you to specify the name of the group you want to add.
 
-To use the `add-group` subcommand, you would run tsctl add-group followed by the desired options and arguments. For example, to add a group called "analysts" with the description "Group for analysts", you could run the following command: `tsctl add-group --name analysts --description "Group for analysts"`
-This command would create a new group with the specified name and description. Once the group is created, you can use the `list-groups` subcommand to verify that the group was added successfully.
+To use the `create-group` subcommand, you would run `tsctl create-group` followed by the desired options and arguments. For example, to add a group called "analysts", you could run the following command: `tsctl create-group analysts`
+This command would create a new group with the specified name. Once the group is created, you can use the `list-groups` subcommand to verify that the group was added successfully.
 
 You can also use the `add-user-to-group` subcommand to add users to the group you have created. This allows you to manage the members of the group, and control which users have access to the sketches and data sources associated with the group.
 
 Command:
 
 ```shell
-tsctl add_group
+tsctl create-group [OPTIONS] GROUP_NAME
 ```
 
-Parameters:
-
-```shell
---name / -n
-```
 
 #### Removing groups
 
@@ -214,7 +209,7 @@ Not yet implemented.
 
 ##### List groups
 
-To list groups, use `tsctl list-groups`. This can be extended  to show the members of a group using `tsctl list-groups --showmembershipt`
+To list groups, use `tsctl list-groups`. This can be extended  to show the members of a group using `tsctl list-groups --showmembership`
 
 Example:
 
@@ -224,11 +219,11 @@ foobar:
 foobar-group:foobar2,foobar
 ```
 
-##### Add a suer to a group
+##### Add a user to a group
 
 tsctl provides a subcommand for adding users to a group in a Timesketch instance. This subcommand is called `add-group-member`, and it allows you to specify the username of the user you want to add to the group, as well as the name of the group you want to add the user to.
 
-To use the `add-group-member` subcommand, you would run `tsctl add-group-member` followed by the desired options and arguments. For example, to add a user with the username "john" to a group called "analysts", you could run the following command: `tsctl add-group-member --username john --group-name analysts`.
+To use the `add-group-member` subcommand, you would run `tsctl add-group-member` followed by the desired options and arguments. For example, to add a user with the username "john" to a group called "analysts", you could run the following command: `tsctl add-group-member --username john analysts`.
 This command would add the user with the specified username to the group with the specified name.
 
 Once the user is added to the group, they will be able to access the sketches and data sources associated with the group, based on the permissions granted to the group. You can use the `list-groups` subcommand to verify that the user was added to the group successfully.
@@ -236,20 +231,20 @@ Once the user is added to the group, they will be able to access the sketches an
 Command:
 
 ```shell
-tsctl add-group-member
+tsctl add-group-member [OPTIONS] GROUP_NAME
 ```
 
 Example:
 
 ```shell
-tsctl add-group-member --username john --group-name analysts
+tsctl add-group-member --username john analysts
 ```
 
 ##### Removing a group member
 
 tsctl provides a subcommand for removing users from a group in a Timesketch instance. This subcommand is called `remove-group-member`, and it allows you to specify the username of the user you want to remove from the group, as well as the name of the group you want to remove the user from.
 
-To use the `remove-group-member` subcommand, you would run `tsctl remove-group-member` followed by the desired options and arguments. For example, to remove a user with the username "john" from a group called "analysts", you could run the following command: `tsctl remove-group-member --username john --group-name analysts`
+To use the `remove-group-member` subcommand, you would run `tsctl remove-group-member` followed by the desired options and arguments. For example, to remove a user with the username "john" from a group called "analysts", you could run the following command: `tsctl remove-group-member --username john analysts`
 
 This command would remove the user with the specified username from the group with the specified name.
 
@@ -259,13 +254,13 @@ Once the user is removed from the group, they will no longer be able to access t
 Command:
 
 ```shell
-tsctl remove-group-member
+tsctl remove-group-member [OPTIONS] GROUP_NAME
 ```
 
 Example:
 
 ```shell
-tsctl remove-group-member --username john --group-name analysts
+tsctl remove-group-member --username john analysts
 ```
 
 ### add_index
@@ -855,4 +850,104 @@ tsctl celery-revoke-task  TASK_ID
 Example:
 ```
 tsctl celery-revoke-task 8115648e-944c-4452-962e-644041603419
+```
+
+#### list-config
+
+**Description:**
+
+Lists all configuration variables currently loaded by the Timesketch Flask application (`current_app.config`).
+
+This command iterates through the application's configuration settings. 
+
+It automatically identifies keys commonly associated with sensitive information (like `SECRET_KEY`, `PASSWORD`, `API_KEY`, `TOKEN`, etc.) based on a predefined list of keywords.
+To prevent accidental exposure, the values corresponding to these sensitive keys are redacted and replaced with `******** (redacted)` in the output. All other configuration key-value pairs are displayed as they are loaded.
+
+The output is sorted alphabetically by key for consistent and predictable results. A note is included at the end to remind the user that some values may have been redacted for security reasons.
+
+**Usage:**
+
+```bash
+tsctl list-config
+Timesketch Configuration Variables:
+-----------------------------------
+ANALYZERS_DEFAULT_KWARGS: {}
+APPLICATION_ROOT: /
+AUTO_SKETCH_ANALYZERS: []
+AUTO_SKETCH_ANALYZERS_KWARGS: {}
+CELERY_BROKER_URL: redis://redis:6379
+CELERY_RESULT_BACKEND: redis://redis:6379
+CONTEXT_LINKS_CONFIG_PATH: /etc/timesketch/context_links.yaml
+DATA_FINDER_PATH: /etc/timesketch/data_finder.yaml
+DEBUG: False
+OPENSEARCH_HOST: 127.0.0.1
+OPENSEARCH_PORT: 9200
+SECRET_KEY: ******** (redacted)
+SQLALCHEMY_DATABASE_URI: ******** (redacted)
+UPLOAD_ENABLED: True
+...
+-----------------------------------
+Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
+```
+
+### export-sketch
+
+Exports a Timesketch sketch to a zip archive. The archive contains:
+
+1.  **`metadata.json`**: A comprehensive JSON file detailing the sketch, including:
+    *   Basic sketch information (ID, name, description, status, timestamps, owner).
+    *   Permissions and sharing details.
+    *   Associated timelines with their configurations and data sources.
+    *   Saved views (queries, filters, DSL).
+    *   Stories, including their content.
+    *   Aggregations and aggregation groups.
+    *   Saved graphs.
+    *   Analysis sessions and their results.
+    *   DFIQ scenarios, including nested facets and investigative questions.
+    *   Sketch attributes.
+    *   Comments linked to specific events within the sketch.
+    *   Export timestamp and Timesketch version.
+2.  **Event Data File**: (e.g., `events.csv` or `events.jsonl`)
+    *   All events from the sketch's active (not failed or processing) timelines, processed in batches to conserve memory.
+    *   The format can be specified as CSV (default) or JSONL using the `--output-format` option.
+    *   By default all fields are exported. Using `--default-fields` a predefined set (DEFAULT_SOURCE_FIELDS in `timesketch/lib/definitions.py`) of common event fields are exported.
+
+**WARNING:** Re-importing this archive into Timesketch is not natively supported. This export is primarily for data archival, external analysis, or manual migration.
+
+Progress messages are printed to the console during the export process.
+
+**Usage:**
+
+Parameters:
+
+* **<SKETCH_ID>:** (Required) The ID of the sketch to export.
+* **--filename / -f:** (Optional) The name for the output zip file. Default: sketch_{sketch_id}_{output_format}_export.zip
+* **--output-format:** (Optional) The format for the event data ('csv' or 'jsonl'). Default: 'csv'.
+* **--all-fields:** (Optional default: True) Export all event fields instead of the default set.
+
+*Note on Container Usage:* When running this command within a container (e.g., Docker), the output zip file is written inside the container's filesystem. Ensure you write to a mounted volume or copy the file out of the container afterwards.
+
+Example:
+
+```bash
+tsctl export-sketch  1
+
+Exporting sketch [1] "aaaa" to sketch_1_csv_export.zip...
+
+WARNING: There is currently no native method to re-import this exported archive back into Timesketch.
+
+Gathering metadata...
+  Processing comments for 4 event(s)...
+  2025-05-14 10:02:00 INFO     GET http://opensearch:9200/ [status:200 request:0.008s]
+  Exporting all event fields.
+  Requesting event data (preferring JSONL)...
+2025-05-14 10:02:00 INFO     POST http://opensearch:9200/484a472fd004a72f2ee857c39a4fb17c,9c49430d1e5f42849bdb253647e1f836,5caa30a18efa4333971b42957d86d09e/_search?scroll=1m&search_type=query_then_fetch [status:200 request:0.214s]
+
+[...]
+
+  Detected non-JSONL format in response (assuming CSV).
+  303490 events processed for export.
+  Input is not JSONL, using as CSV...
+Creating zip archive...
+Sketch exported successfully to sketch_1_csv_export.zip
 ```

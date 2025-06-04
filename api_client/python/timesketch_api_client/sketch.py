@@ -17,9 +17,13 @@ from __future__ import unicode_literals
 import copy
 import os
 import json
+import time
 import logging
 
 import pandas
+
+from requests.exceptions import RequestException
+
 
 from . import analyzer
 from . import aggregation
@@ -1955,45 +1959,122 @@ class Sketch(resource.BaseResource):
     def create_timeline(self, searchindex_id: int, timeline_name: str):
         """Creates a Timeline in this Sketch
 
+        This method attempts to create a new timeline associated with this sketch
+        on the Timesketch server. It links the sketch to an existing SearchIndex
+        that contains the event data. It implements a retry mechanism with
+        exponential backoff if the initial request fails due to network issues,
+        API errors, or unexpected response formats.
+
         Args:
-            searchindex_id (int): id of the SearchIndex that (will) hold the data
-                for this timeline
+            searchindex_id (int): The ID of the SearchIndex that holds the data
+                for this timeline.
             timeline_name (str): The name of the timeline
 
-        Raises:
-            ValueError: If the Timeline object fails to create
-
         Returns:
-            Timeline object for the just created timeline
+            An instance of a Timeline object representing the newly created
+            timeline.
+
+        Raises:
+            RuntimeError: If the Timeline fails to create after all retries,
+                or if the API returns an unexpected response format.
+            requests.exceptions.RequestException: If a connection error persists
+                after all retries.
+            ValueError: If the API response cannot be JSON-decoded after all
+                retries
         """
+
         resource_url = f"{self.api.api_root}/sketches/{self.id}/timelines/"
         form_data = {"timeline": searchindex_id, "timeline_name": timeline_name}
-        response = self.api.session.post(resource_url, json=form_data)
+        last_exception = None
 
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response,
-                message="Error creating a timeline object",
-                error=ValueError,
-            )
+        for attempt in range(self.api.DEFAULT_RETRY_COUNT):
+            try:
+                response = self.api.session.post(resource_url, json=form_data)
+                # error.get_response_json raises RuntimeError for non-20x,
+                # ValueError for JSON decode issues.
+                response_dict = error.get_response_json(response, logger)
+                objects = response_dict.get("objects")
 
-        response_dict = error.get_response_json(response, logger)
-        objects = response_dict.get("objects")
-        if not objects:
-            raise ValueError(
-                "Unable to create a Timeline, try again or file an issue on GitHub."
-            )
+                if (
+                    objects
+                    and isinstance(objects, list)
+                    and len(objects) > 0
+                    and isinstance(objects[0], dict)
+                    and "id" in objects[0]
+                    and "name" in objects[0]
+                    and "searchindex" in objects[0]
+                    and isinstance(objects[0].get("searchindex"), dict)
+                    and "index_name" in objects[0].get("searchindex", {})
+                ):
+                    timeline_dict = objects[0]
+                    return timeline.Timeline(
+                        timeline_id=timeline_dict["id"],
+                        sketch_id=self.id,
+                        api=self.api,
+                        name=timeline_dict["name"],
+                        searchindex=timeline_dict["searchindex"]["index_name"],
+                    )
 
-        timeline_dict = objects[0]
+                log_message = (
+                    "API for timeline creation returned an unexpected 'objects' "
+                    "format or it was empty."
+                )
+                logger.warning(
+                    "[%d/%d] %s Response: %s. Retrying...",
+                    attempt + 1,
+                    self.api.DEFAULT_RETRY_COUNT,
+                    log_message,
+                    response_dict,
+                )
+                last_exception = RuntimeError(
+                    f"{log_message} Response: {response_dict!s}"
+                )
 
-        timeline_obj = timeline.Timeline(
-            timeline_id=timeline_dict["id"],
-            sketch_id=self.id,
-            api=self.api,
-            name=timeline_dict["name"],
-            searchindex=timeline_dict["searchindex"]["index_name"],
+            except RequestException as e:
+                logger.warning(
+                    "[%d/%d] Request error creating timeline '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.api.DEFAULT_RETRY_COUNT,
+                    timeline_name,
+                    e,
+                )
+                last_exception = e
+            except (ValueError, RuntimeError) as e:  # Covers JSON and non-20x errors
+                logger.warning(
+                    "[%d/%d] API/JSON error creating timeline '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.api.DEFAULT_RETRY_COUNT,
+                    timeline_name,
+                    e,
+                )
+                last_exception = e
+
+            if attempt < self.api.DEFAULT_RETRY_COUNT - 1:
+                backoff_time = 0.5 * (2**attempt)  # Exponential backoff
+                logger.info(
+                    "Waiting %.1fs before next attempt to create timeline '%s'.",
+                    backoff_time,
+                    timeline_name,
+                )
+                time.sleep(backoff_time)
+            else:
+                # All attempts failed
+                error_message_detail = (
+                    f"All {self.api.DEFAULT_RETRY_COUNT} attempts to create "
+                    f"timeline '{timeline_name}' failed."
+                )
+                logger.error("%s Last error: %s", error_message_detail, last_exception)
+                if last_exception:
+                    raise RuntimeError(
+                        f"{error_message_detail} Last error: {last_exception!s}"
+                    ) from last_exception
+                raise RuntimeError(error_message_detail)
+
+        # Fallback, should ideally be unreachable.
+        raise RuntimeError(
+            f"Failed to create timeline '{timeline_name}' after all retries "
+            "(unexpected loop exit)."
         )
-        return timeline_obj
 
     def create_datasource(
         self, timeline_id: int, provider: str, context: str, data_label: str

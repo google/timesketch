@@ -115,7 +115,7 @@ class AccessControlMixin:
                 "parent": relationship(self, viewonly=True),
             },
         )
-        return relationship(self.AccessControlEntry)
+        return relationship(self.AccessControlEntry, cascade="all, delete-orphan")
 
     @classmethod
     def all_with_acl(cls, user=None):

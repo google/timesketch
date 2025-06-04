@@ -275,9 +275,9 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
         )
         if sessions:
             logger.info(
-                "Executed %d analyzers on the new timeline: '%s'",
+                "Executed %d analyzers on the new timeline (ID: %d)",
                 len(sessions),
-                timeline.name,
+                timeline.id,
             )
 
 
@@ -831,8 +831,12 @@ def run_plaso(
         logger.error("Error: %s\n%s", str(e), error_msg)
         return None
 
-    message = "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})"
-    logger.info(message.format(timeline_name, index_name, source_type))
+    logger.info(
+        "Index timeline (ID: %d) to index [%s] (source: %s)",
+        timeline_id,
+        index_name,
+        source_type,
+    )
 
     # Run pinfo on storage file
     try:
@@ -1146,9 +1150,9 @@ def run_csv_jsonl(
     ).set(final_counter)
     if error_count:
         logger.info(
-            "Index timeline: [{:s}] to index [{:s}] - {:d} out of {:d} "
+            "Index timeline (ID: {:d}) to index [{:s}] - {:d} out of {:d} "
             "events imported (in total {:d} errors were discovered) ".format(
-                timeline_name,
+                timeline_id,
                 index_name,
                 (final_counter - error_count),
                 final_counter,
@@ -1157,8 +1161,9 @@ def run_csv_jsonl(
         )
     else:
         logger.info(
-            "Index timeline: [{:s}] to index [{:s}] - {:d} "
-            "events imported.".format(timeline_name, index_name, final_counter)
+            "Index timeline (ID: {:d}) to index [{:s}] - {:d} events imported.".format(
+                timeline_id, index_name, final_counter
+            )
         )
 
     # Set status to ready when done
