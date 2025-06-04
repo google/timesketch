@@ -362,7 +362,6 @@ class StatusMixin:
             log_details = f"ID: [{self_id}]"
             # If the object has a sketch_id attribute, it's likely a component
             # of a sketch (e.g., Timeline, View, Event).
-            # Sketch objects themselves don't have a 'sketch_id' attribute; their ID is the sketch ID.
             if hasattr(self, "sketch_id"):
                 sketch_id_val = getattr(self, "sketch_id", None)
                 if sketch_id_val is not None:
