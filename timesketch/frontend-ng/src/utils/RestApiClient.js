@@ -159,7 +159,7 @@ export default {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
-      current_search_node_id: currentSearchNode?.id,
+      current_search_node_id: currentSearchNode ? currentSearchNode.id : undefined,
       remove: remove,
       conclusion_id: conclusionId
     }
