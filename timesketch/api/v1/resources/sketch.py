@@ -559,6 +559,25 @@ class SketchResource(resources.ResourceMixin, Resource):
         if not force_delete:
             return HTTP_STATUS_CODE_OK
 
+        # Explicitly delete related objects if cascades are not fully configured
+        # in the SQLAlchemy models. This ensures a clean removal of all data
+        # associated with the sketch in the database.
+        for view in sketch.views:
+            db_session.delete(view)
+        for story in sketch.stories:
+            db_session.delete(story)
+        for aggregation in sketch.aggregations:
+            db_session.delete(aggregation)
+        for group in sketch.aggregationgroups:
+            db_session.delete(group)
+        for graph in sketch.graphs:
+            db_session.delete(graph)
+        for history_node in sketch.search_history:
+            db_session.delete(history_node)
+        for scenario in sketch.scenarios:
+            db_session.delete(scenario)
+        for question in sketch.investigative_questions:
+            db_session.delete(question)
         # now the real deletion
         for timeline in sketch.active_timelines:
             timeline.set_status(status="deleted")
