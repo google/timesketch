@@ -37,6 +37,7 @@ from opensearchpy.exceptions import ConnectionError
 
 from flask import abort
 from flask import current_app
+from flask_login import current_user
 import prometheus_client
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -825,8 +826,9 @@ class OpenSearchDataStore:
                 cause = str(e)
 
             os_logger.error(
-                "Unable to run search query. Error: %s. "
-                "Sketch ID: %s. Indices: %s. ",
+                "Unable to run search query for user %s. Error: %s. "
+                "Sketch ID: %s. Indices: %s.",
+                current_user.username,
                 cause,
                 sketch_id,
                 indices,
