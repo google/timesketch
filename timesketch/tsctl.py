@@ -1028,7 +1028,10 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
         print(f"Searchindex {searchindex_id} status set to {status}")
         # to verify run:
         print(
-            f"To verify run: tsctl searchindex-status --searchindex_id {searchindex_id} --action get"
+            (
+                f"To verify run: tsctl searchindex-status "
+                f"--searchindex_id {searchindex_id} --action get"
+            )
         )
 
 
