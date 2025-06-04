@@ -907,7 +907,6 @@ def validate_context_links_conf(path):
 @click.option(
     "--index_name",
     required=False,
-    help=("Searchindex name to search for e.g. 4c5afdf60c6e49499801368b7f238353."),
     help="Searchindex name to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
 def searchindex_info(searchindex_id: int, index_name: str):
@@ -1064,7 +1063,6 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
     "--timeline_id",
     type=int,
     required=False,
-    help=("Timeline ID if the analyzer results should be filtered by timeline."),
     help="Timeline ID if the analyzer results should be filtered by timeline.",
 )
 @click.option(
