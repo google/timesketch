@@ -771,9 +771,9 @@ class OpenSearchDataStore:
                 count_result = self.client.count(body=query_dsl, index=list(indices))
             except NotFoundError:
                 os_logger.error(
-                    "Unable to count due to an index not found: {:s}".format(
-                        ",".join(indices)
-                    )
+                    "Unable to count for sketch ID %s due to an index not found: %s",
+                    sketch_id,
+                    ",".join(indices),
                 )
                 return 0
             METRICS["search_requests"].labels(type="count").inc()
