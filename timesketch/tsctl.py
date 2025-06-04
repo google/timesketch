@@ -52,10 +52,7 @@ from timesketch import version
 from timesketch.app import create_app
 from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
-from timesketch.models import db_session
-from timesketch.models import drop_all
-from timesketch.models.user import Group
-from timesketch.models.user import User
+from timesketch.models import db_session, drop_all
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import AnalysisSession
@@ -85,8 +82,7 @@ from timesketch.models.sketch import (
     InvestigativeQuestionConclusion,
     SearchIndex,
 )
-from timesketch.models.user import Group  # For mixin checks
-from timesketch.models.sketch import DataSource
+from timesketch.models.user import Group, User  # For mixin checks
 
 
 # Default filenames for sketch export
@@ -809,7 +805,7 @@ def timeline_status(timeline_id: int, action: str, status: str):
         db_session.commit()
         print(f"Timeline {timeline_id} status set to {status}")
         # to verify run:
-        print(f"To verify run: tsctl timeline-status {timeline_id} --action get")
+        print((f"To verify run: tsctl timeline-status {timeline_id} --action get"))
 
 
 @cli.command(name="validate-context-links-conf")
@@ -913,6 +909,7 @@ def validate_context_links_conf(path):
 @click.option(
     "--index_name",
     required=False,
+    help=("Searchindex name to search for e.g. 4c5afdf60c6e49499801368b7f238353."),
     help="Searchindex name to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
 def searchindex_info(searchindex_id: int, index_name: str):
@@ -1069,6 +1066,7 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
     "--timeline_id",
     type=int,
     required=False,
+    help=("Timeline ID if the analyzer results should be filtered by timeline."),
     help="Timeline ID if the analyzer results should be filtered by timeline.",
 )
 @click.option(
@@ -1914,6 +1912,8 @@ def _create_export_archive(
     "--filename",
     required=False,
     help=(
+        "Filename for the output zip archive. "
+        "(Default: sketch_{sketch_id}_{output_format}_export.zip)"
         "Filename for the output zip archive. "
         f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
     ),
