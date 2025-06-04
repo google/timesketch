@@ -512,11 +512,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # Process timelines of the sketch
         for timeline_in_sketch in sketch.timelines:
-            if (
-                timeline_in_sketch.get_status.status == "ready"
-            ):  # Only archive 'ready' timelines
+            # Archive timelines that are not already archived, deleted, or actively processing.
+            # The "processing" state is already checked and aborted earlier.
+            if timeline_in_sketch.get_status.status not in ("archived", "deleted"):
                 timeline_in_sketch.set_status(status="archived")
-                logger.debug(
+                logger.info(
                     "Timeline %s (part of sketch %s) status set to 'archived'.",
                     timeline_in_sketch.id,
                     sketch.id,
@@ -539,9 +539,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     search_index.index_name,
                     search_index.id,
                 )
-                all_associated_timelines_archived = (
-                    False  # Cannot confirm, so don't archive OS index
-                )
+                # Cannot confirm, so don't archive OS index
+                all_associated_timelines_archived = False
 
             for associated_timeline in search_index.timelines:
                 if associated_timeline.get_status.status != "archived":
