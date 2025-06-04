@@ -830,8 +830,8 @@ class OpenSearchDataStore:
                 cause = str(e)
 
             os_logger.error(
-                "Unable to run search query for user %s. Error: %s. "
-                "Sketch ID: %s. Indices: %s.",
+                "Unable to run search query for user [%s]. Error: %s. "
+                "Sketch ID: [%s]. Indices: [%s].",
                 current_user.username,
                 cause,
                 sketch_id,
