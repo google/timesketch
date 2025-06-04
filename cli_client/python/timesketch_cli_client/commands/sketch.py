@@ -354,6 +354,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         sketch.z_delete(force_delete=force_delete)
         click.echo("Sketch deleted")
 
+
 @sketch_group.command(
     "export-only-with-annotations",
     help="Export events with comments, stars, OR labels.",  # Updated help
