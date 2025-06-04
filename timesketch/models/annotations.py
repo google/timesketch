@@ -113,7 +113,7 @@ class LabelMixin:
                 "parent": relationship(self, viewonly=True),
             },
         )
-        return relationship(self.Label)
+        return relationship(self.Label, cascade="all, delete-orphan")
 
     def add_label(self, label, user=None):
         """Add a label to an object.
@@ -224,7 +224,7 @@ class CommentMixin:
                 "parent": relationship(self, viewonly=True),
             },
         )
-        return relationship(self.Comment)
+        return relationship(self.Comment, cascade="all, delete-orphan")
 
     @classmethod
     def get_with_comments(cls, **kwargs):
@@ -326,7 +326,7 @@ class StatusMixin:
                 "parent": relationship(self, viewonly=True),
             },
         )
-        return relationship(self.Status)
+        return relationship(self.Status, cascade="all, delete-orphan")
 
     def set_status(self, status):
         """
