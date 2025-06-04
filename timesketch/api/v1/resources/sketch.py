@@ -548,11 +548,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 logger.debug("Force delete not present, will keep the OS data")
                 force_delete = False
 
-        abort(
-            HTTP_STATUS_CODE_BAD_REQUEST,
-            "Sketch [{0:d}] could be deleted".format(sketch_id),
-        )
-
         sketch.set_status(status="deleted")
 
         # Default behaviour for historical reasons: exit with 200 without
