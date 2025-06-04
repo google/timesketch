@@ -780,7 +780,7 @@ class YetiBloomChecker(YetiBaseAnalyzer):
             if sha256_hash in hit_dict:
                 tagged += 1
                 tags = hit_dict[sha256_hash]
-                event.add_tags(tags)
+                event.add_tags([f"bloom:{tag}" for tag in tags])
                 event.commit()
 
         msg = (
