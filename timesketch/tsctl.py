@@ -54,8 +54,6 @@ from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
 from timesketch.models import db_session, drop_all
 from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Event
-from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
