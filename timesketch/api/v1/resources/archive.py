@@ -481,15 +481,24 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
     def _archive_sketch(self, sketch: Sketch):
         """Archives a sketch. This involves:
+
         1. Setting the sketch status to 'archived'.
-        2. Setting the status of its 'ready' timelines to 'archived'.
+        2. Setting the status of its timelines (that are not already 'archived' or
+           'deleted') to 'archived' in the database. Timelines in 'processing'
+           state will prevent archival.
         3. For each SearchIndex associated with these timelines:
-           If all timelines using that SearchIndex are now 'archived',
-           attempt to close the index in OpenSearch.
-           If the OpenSearch index is successfully closed (or confirmed not found),
-           set the SearchIndex's status in the database to 'archived'.
-           Otherwise, the SearchIndex status is left unchanged (e.g., 'ready'),
-           allowing tools like tsctl to identify potential issues.
+           If all timelines (across the entire system) that use that SearchIndex
+           are now in an 'archived' state in the database, the system attempts
+           to close the corresponding OpenSearch index.
+           - If the OpenSearch index is successfully closed, the SearchIndex's
+             database status is set to 'archived'.
+           - If the OpenSearch index is not found, it's considered effectively
+             closed, and the SearchIndex's database status is set to 'fail'.
+           - If the OpenSearch index exists but an error occurs during the close
+             operation (other than not found), the SearchIndex's database status
+             remains unchanged (e.g., 'ready' or 'fail'). This discrepancy allows
+             tools like `tsctl list-sketches --archived-with-open-indexes`
+             to identify potential issues requiring administrative attention.
 
         Args:
             sketch (Sketch): Instance of timesketch.models.sketch.Sketch
@@ -535,7 +544,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         error_details = []
 
         for search_index in search_indexes_to_evaluate:
-            # Check if all timelines associated with this SearchIndex are now archived
+            # Determine if this SearchIndex can be safely archived (i.e., its
+            # OpenSearch index closed). This requires all associated timelines to be archived.
             all_associated_timelines_archived = True
             if not search_index.timelines:
                 logger.warning(
