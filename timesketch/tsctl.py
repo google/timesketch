@@ -1910,8 +1910,7 @@ def _create_export_archive(
     required=False,
     help=(
         "Filename for the output zip archive. "
-        "(Default: sketch_{sketch_id}_{output_format}_export.zip)"
-        "Filename for the output zip archive. "
+        f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
         f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
     ),
 )
