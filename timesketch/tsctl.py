@@ -224,7 +224,7 @@ def grant_user(username, sketch_id, read_only):
     if not sketch:
         print("Sketch does not exist.")
         return
-    elif not user:
+    if not user:
         print(f"User {username} does not exist.")
         return
 
@@ -260,7 +260,7 @@ def grant_group(group_name, sketch_id, read_only):
     if not sketch:
         print("Sketch does not exist.")
         return
-    elif not group:
+    if not group:
         print(f"Group {group_name} does not exist.")
         return
     sketch.grant_permission(permission="read", group=group)
