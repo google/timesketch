@@ -696,7 +696,6 @@ def sketch_delete(sketch_id: int, force_delete: bool):
 
     if force_delete:
         print(f"Deleting Sketch {sketch_id} Name: ({sketch.name})")
-        sketch.delete()
         db_session.delete(sketch)
         db_session.commit()
         print(f"Sketch {sketch_id} deleted.")
