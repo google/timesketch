@@ -201,18 +201,37 @@ def revoke_admin(username):
 @cli.command(name="grant-user")
 @click.argument("username")
 @click.option("--sketch_id", type=int, required=True)
-def grant_user(username, sketch_id):
-    """Grant access to a sketch."""
+@click.option("--read-only", is_flag=True, help="Grant only read access to the sketch.")
+def grant_user(username, sketch_id, read_only):
+    """Grant a user access to a specific sketch.
+
+    This command allows an administrator to grant permissions to a user
+    for a given sketch. By default, both 'read' and 'write' permissions
+    are granted. If the '--read-only' flag is provided, only 'read'
+    permission will be granted.
+
+    Args:
+        username (str): The username of the user to grant access to.
+        sketch_id (int): The ID of the sketch to grant access to.
+        read_only (bool): If True, grants only 'read' permission.
+                          Otherwise, grants 'read' and 'write' permissions.
+
+    Prints a confirmation message upon success or an error message
+    if the user or sketch does not exist.
+    """
     sketch = Sketch.get_by_id(sketch_id)
-    user = User.query.filter_by(username=username).first()
+    user = User.get_by_username(username)
     if not sketch:
         print("Sketch does not exist.")
+        return
     elif not user:
         print(f"User {username} does not exist.")
-    else:
-        sketch.grant_permission(permission="read", user=user)
+        return
+
+    sketch.grant_permission(permission="read", user=user)
+    if not read_only:
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+    print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
 
 
 @cli.command(name="version")
