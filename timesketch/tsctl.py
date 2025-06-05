@@ -2092,14 +2092,14 @@ def export_sketch(
         return
 
 
-@cli.command(name="check-orphaned-data")
+@cli.command(name="check-db-orphaned-data")
 @click.option(
     "--verbose-checks",
     is_flag=True,
     default=False,
     help="Show output for all checks, even those that find no orphans.",
 )
-def check_orphaned_data(verbose_checks: bool):
+def check_db_orphaned_data(verbose_checks: bool):
     """Checks for various types of orphaned data in the database.
 
     This command looks for records that should have been deleted via
