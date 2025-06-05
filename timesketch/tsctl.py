@@ -237,7 +237,7 @@ def drop_db():
     "--archived",
     is_flag=True,
     help="Show only archived sketches. "
-    "Ignored if --archived-with-open-indexes is used.",
+    "Ignored if --archived-with-open-db-indexes is used.",
 )
 @click.option(
     "--archived-with-open-indexes",
@@ -245,7 +245,14 @@ def drop_db():
     help="Show archived sketches that have at least one searchindex with status "
     "'new', 'ready', 'processing', 'fail','archived' or 'timeout'.",
 )
-def list_sketches(archived, archived_with_open_indexes):
+@click.option(
+    "--include-deleted",
+    is_flag=True,
+    help="Include deleted sketches in the list. By default, deleted sketches are hidden.",
+)
+def list_sketches(
+    archived: bool, archived_with_open_indexes: bool, include_deleted: bool
+):
     """List sketches.
 
     By default, this command lists all sketches that have not been deleted.
@@ -254,9 +261,12 @@ def list_sketches(archived, archived_with_open_indexes):
       that have an 'archived' status.
 
     - If the --archived-with-open-indexes flag is provided, it will list
-      archived sketches that have one or more associated searchindexes
-      with a status of 'new', 'ready', 'processing', 'fail', or 'timeout'.
+      archived sketches that have one or more associated SearchIndex database
+      objects with a status of 'new', 'ready', 'processing', 'fail', or 'timeout'.
       This option takes precedence over --archived.
+
+    - If the --include-deleted flag is provided, sketches marked as 'deleted'
+      will also be included in the list, respecting other filters like --archived.
     """
     all_sketches = Sketch.query.all()
     # SearchIndex statuses that indicate it's not properly closed/archived
@@ -265,7 +275,7 @@ def list_sketches(archived, archived_with_open_indexes):
     if archived_with_open_indexes:
         open_statuses_str = ", ".join(open_index_statuses)
         print(
-            f"Searching for archived sketches with 'open' ({open_statuses_str}) searchindexes..."  # pylint: disable=line-too-long
+            f"Searching for archived sketches with 'open' ({open_statuses_str}) SearchIndex DB statuses..."  # pylint: disable=line-too-long
         )
         found_sketches_info = []
 
@@ -281,7 +291,7 @@ def list_sketches(archived, archived_with_open_indexes):
                     if si_status in open_index_statuses:
                         sketch_open_indexes_details.append(
                             f"  - Timeline: '{tl.name}' (ID: {tl.id}), "
-                            f"SearchIndex: '{si.index_name}' (ID: {si.id}), Status: {si_status}"  # pylint: disable=line-too-long
+                            f"SearchIndex DB: '{si.index_name}' (ID: {si.id}), DB Status: {si_status}"  # pylint: disable=line-too-long
                         )
 
             if sketch_open_indexes_details:
@@ -295,11 +305,11 @@ def list_sketches(archived, archived_with_open_indexes):
 
         if not found_sketches_info:
             print(
-                f"No archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found."  # pylint: disable=line-too-long
+                f"No archived sketches with 'open' ({', '.join(open_index_statuses)}) SearchIndex DB statuses found."  # pylint: disable=line-too-long
             )
         else:
             print(
-                f"Archived sketches with 'open' ({', '.join(open_index_statuses)}) searchindexes found:"  # pylint: disable=line-too-long
+                f"Archived sketches with 'open' ({', '.join(open_index_statuses)}) SearchIndex DB statuses found:"  # pylint: disable=line-too-long
             )
             for sk_info in found_sketches_info:
                 print(
@@ -313,7 +323,8 @@ def list_sketches(archived, archived_with_open_indexes):
     sketches_to_display = []
     for sketch in all_sketches:
         current_status = sketch.get_status.status
-        if current_status == "deleted":
+
+        if current_status == "deleted" and not include_deleted:
             continue
 
         if archived:
@@ -322,14 +333,23 @@ def list_sketches(archived, archived_with_open_indexes):
         else:
             sketches_to_display.append(sketch)
 
+    output_type = ""
     if not sketches_to_display:
         if archived:
             print("No archived sketches found.")
+        elif include_deleted:
+            print("No sketches found (including deleted).")
         else:
             print("No sketches found (excluding deleted).")
         return
 
-    output_type = "Archived sketches" if archived else "Sketches (excluding deleted)"
+    if archived:
+        output_type = "Archived sketches"
+    elif include_deleted:
+        output_type = "Sketches (including deleted, ready, and archived)"
+    else:  # Default
+        output_type = "Sketches (excluding deleted; i.e., ready and archived)"
+
     print(f"{output_type}:")
     for sketch in sketches_to_display:
         print(f"{sketch.id} {sketch.name} (status: {sketch.get_status.status})")
