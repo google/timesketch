@@ -234,6 +234,41 @@ def grant_user(username, sketch_id, read_only):
     print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
 
 
+@cli.command(name="grant-group")
+@click.argument("group_name")
+@click.option("--sketch_id", type=int, required=True)
+@click.option("--read-only", is_flag=True, help="Grant only read access to the sketch.")
+def grant_group(group_name, sketch_id, read_only):
+    """Grant a group access to a specific sketch.
+
+    This command allows an administrator to grant permissions to a group
+    for a given sketch. By default, both 'read' and 'write' permissions
+    are granted. If the '--read-only' flag is provided, only 'read'
+    permission will be granted.
+
+    Args:
+        group_name (str): The name of the group to grant access to.
+        sketch_id (int): The ID of the sketch to grant access to.
+        read_only (bool): If True, grants only 'read' permission.
+                          Otherwise, grants 'read' and 'write' permissions.
+
+    Prints a confirmation message upon success or an error message
+    if the group or sketch does not exist.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    group = Group.query.filter_by(name=group_name).first()
+    if not sketch:
+        print("Sketch does not exist.")
+        return
+    elif not group:
+        print(f"Group {group_name} does not exist.")
+        return
+    sketch.grant_permission(permission="read", group=group)
+    if not read_only:
+        sketch.grant_permission(permission="write", group=group)
+    print(f"Group {group_name} added to the sketch {sketch.id} ({sketch.name})")
+
+
 @cli.command(name="version")
 def get_version():
     """Return the version information of Timesketch."""
