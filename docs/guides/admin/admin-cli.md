@@ -246,7 +246,7 @@ You can use the `--read-only` flag to grant only 'read' access.
 Command:
 
 ```shell
-tsctl grant-group [OPTIONS] USERNAME
+tsctl grant-group [OPTIONS] GROUPNAME
 ```
 
 Parameters:
