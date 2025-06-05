@@ -220,7 +220,7 @@ def grant_user(username, sketch_id, read_only):
     if the user or sketch does not exist.
     """
     sketch = Sketch.get_by_id(sketch_id)
-    user = User.get_by_username(username)
+    user = User.query.filter_by(username=username).first()
     if not sketch:
         print("Sketch does not exist.")
         return
@@ -277,7 +277,12 @@ def get_version():
 
 @cli.command(name="drop-db")
 def drop_db():
-    """Drop all database tables."""
+    """Permanently remove all database tables.
+
+    This action is irreversible and will result in the loss of all data
+    stored in the Timesketch database, including users, sketches, timelines,
+    and all associated metadata. Use with extreme caution.
+    """
     if click.confirm("Do you really want to drop all the database tables?"):
         if click.confirm(
             "Are you REALLLY sure you want to DROP ALL the database tables?"
