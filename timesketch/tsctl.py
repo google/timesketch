@@ -236,14 +236,14 @@ def drop_db():
 @click.option(
     "--archived",
     is_flag=True,
-    help="Show only archived sketches. "
-    "Ignored if --archived-with-open-db-indexes is used.",
+    help="Show only archived sketches. Mutually exclusive with --archived-with-open-indexes.",
 )
 @click.option(
     "--archived-with-open-indexes",
     is_flag=True,
     help="Show archived sketches that have at least one searchindex with status "
-    "'new', 'ready', 'processing', 'fail','archived' or 'timeout'.",
+    "'new', 'ready', 'processing', 'fail','archived' or 'timeout'. "
+    "Mutually exclusive with --archived.",
 )
 @click.option(
     "--include-deleted",
@@ -263,12 +263,18 @@ def list_sketches(
     - If the --archived-with-open-indexes flag is provided, it will list
       archived sketches that have one or more associated SearchIndex database
       objects with a status of 'new', 'ready', 'processing', 'fail', or 'timeout'.
-      This option takes precedence over --archived.
 
     - If the --include-deleted flag is provided, sketches marked as 'deleted'
       will also be included in the list, respecting other filters like --archived.
     """
     all_sketches = Sketch.query.all()
+
+    if archived and archived_with_open_indexes:
+        raise click.UsageError(
+            "The options --archived and --archived-with-open-indexes "
+            "are mutually exclusive. Please use only one."
+        )
+
     # SearchIndex statuses that indicate it's not properly closed/archived
     open_index_statuses = ["new", "ready", "processing", "fail", "archived", "timeout"]
 
