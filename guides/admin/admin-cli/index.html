@@ -1103,6 +1103,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#grant-user-access-to-a-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grant user access to a sketch
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1131,6 +1140,15 @@
   <a href="#removing-groups" class="md-nav__link">
     <span class="md-ellipsis">
       Removing groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grant-group-access-to-a-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grant group access to a sketch
     </span>
   </a>
   
@@ -2441,6 +2459,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#grant-user-access-to-a-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grant user access to a sketch
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2469,6 +2496,15 @@
   <a href="#removing-groups" class="md-nav__link">
     <span class="md-ellipsis">
       Removing groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grant-group-access-to-a-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grant group access to a sketch
     </span>
   </a>
   
@@ -2941,6 +2977,23 @@ foobar (active: False)
 <p>To use the <code>revoke-admin</code> subcommand, you would run <code>tsctl revoke-admin</code> followed by the desired options and arguments. For example, to revoke administrator privileges from a user with the username "john", you could run the following command: <code>tsctl revoke-admin john</code></p>
 <p>This command would revoke the administrator privileges of the user with the specified username.</p>
 <p>Once a user's administrator privileges are revoked, they will no longer be able to perform tasks that require administrator privileges in the Timesketch instance. You can use the <code>list-users</code> subcommand to verify that the user's administrator privileges have been revoked successfully.</p>
+<h4 id="grant-user-access-to-a-sketch">Grant user access to a sketch</h4>
+<p>tsctl provides a subcommand for granting a user access to a specific sketch. This subcommand is called <code>grant-user</code>, and it allows you to specify the username of the user and the ID of the sketch.</p>
+<p>By default, this command grants both 'read' and 'write' permissions to the user for the specified sketch.</p>
+<p>You can use the <code>--read-only</code> flag to grant only 'read' access.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl grant-user [OPTIONS] USERNAME
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--sketch_id INTEGER  [required]
+--read-only          (optional) Grant only read access.
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-shell"># Grant read and write access to user 'john' for sketch ID 123
+tsctl grant-user john --sketch_id 123
+# Grant read-only access to user 'jane' for sketch ID 456
+tsctl grant-user jane --sketch_id 456 --read-only
+</code></pre>
 <h3 id="group-management">Group management</h3>
 <h4 id="adding-groups">Adding groups</h4>
 <p>tsctl provides a subcommand for adding groups in a Timesketch instance. This subcommand is called <code>create-group</code>, and it allows you to specify the name of the group you want to add.</p>
@@ -2952,6 +3005,21 @@ This command would create a new group with the specified name. Once the group is
 </code></pre>
 <h4 id="removing-groups">Removing groups</h4>
 <p>Not yet implemented.</p>
+<h4 id="grant-group-access-to-a-sketch">Grant group access to a sketch</h4>
+<p>tsctl provides a subcommand for granting a group access to a specific sketch. This subcommand is called <code>grant-group</code>, and it allows you to specify the groupname of the group and the ID of the sketch.</p>
+<p>By default, this command grants both 'read' and 'write' permissions to the group for the specified sketch.</p>
+<p>You can use the <code>--read-only</code> flag to grant only 'read' access.</p>
+<p>Command:</p>
+<pre><code class="language-shell">tsctl grant-group [OPTIONS] GROUPNAME
+</code></pre>
+<p>Parameters:</p>
+<pre><code class="language-shell">--sketch_id INTEGER  [required]
+--read-only          (optional) Grant only read access.
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-shell">tsctl grant-group groupname --sketch_id 123
+tsctl grant-group groupname --sketch_id 456 --read-only
+</code></pre>
 <h4 id="managing-group-membership">Managing group membership</h4>
 <h5 id="list-groups">List groups</h5>
 <p>To list groups, use <code>tsctl list-groups</code>. This can be extended  to show the members of a group using <code>tsctl list-groups --showmembership</code></p>
