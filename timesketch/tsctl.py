@@ -236,7 +236,7 @@ def drop_db():
 @click.option(
     "--archived",
     is_flag=True,
-    help="Show only archived sketches. Mutually exclusive with --archived-with-open-indexes.",
+    help="Show only archived sketches. Mutually exclusive with --archived-with-open-indexes.",  # pylint: disable=line-too-long
 )
 @click.option(
     "--archived-with-open-indexes",
@@ -248,7 +248,7 @@ def drop_db():
 @click.option(
     "--include-deleted",
     is_flag=True,
-    help="Include deleted sketches in the list. By default, deleted sketches are hidden.",
+    help="Include deleted sketches. Default: deleted sketches are hidden.",
 )
 def list_sketches(
     archived: bool, archived_with_open_indexes: bool, include_deleted: bool
