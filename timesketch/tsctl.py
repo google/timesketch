@@ -2033,7 +2033,7 @@ def check_orphaned_data(verbose_checks: bool):
     found_orphans_overall = False
 
     def _check_fk_orphans(
-        ModelClass, fk_attr_name, ParentModelClass, description, verbose_checks_enabled
+        ModelClass: type, fk_attr_name: str, ParentModelClass: type, description: str, verbose_checks_enabled: bool
     ):
         nonlocal found_orphans_overall
         if verbose_checks_enabled:
