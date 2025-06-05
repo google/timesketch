@@ -727,18 +727,38 @@ def sketch_info(sketch_id: int):
     print_table(table_data)
 
     print(f"Created by: {sketch.user.username}")
+    all_permissions = sketch.get_all_permissions()
+
     print("Shared with:")
-    print("\tUsers: (user_id, username)")
+    print("\tUsers: (user_id, username, access_level)")
     if sketch.collaborators:
-        print("\tUsers: (user_id, username)")
         for user in sketch.collaborators:
-            print(f"\t\t{user.id}: {user.username}")
+            user_perm_key = f"user/{user.username}"
+            perms = all_permissions.get(user_perm_key, [])
+            access_level = "unknown"
+            if "write" in perms:  # 'write' permission implies 'read'
+                access_level = "read/write"
+            elif "read" in perms:
+                access_level = "read-only"
+            else:
+                access_level = "none"  # Should not happen if user is a collaborator
+            print(f"\t\t{user.id}: {user.username} ({access_level})")
     else:
         print("\tNo users shared with.")
-    print(f"\tGroups ({len(sketch.groups)}):")
+
+    print(f"\tGroups ({len(sketch.groups)}): (group_name, access_level)")
     if sketch.groups:
         for group in sketch.groups:
-            print(f"\t\t{group.display_name}")
+            group_perm_key = f"group/{group.name}"
+            perms = all_permissions.get(group_perm_key, [])
+            access_level = "unknown"
+            if "write" in perms:  # 'write' permission implies 'read'
+                access_level = "read/write"
+            elif "read" in perms:
+                access_level = "read-only"
+            else:
+                access_level = "none"  # Should not happen if group is listed
+            print(f"\t\t{group.display_name} ({access_level})")
     else:
         print("\tNo groups shared with.")
     sketch_labels = [label.label for label in sketch.labels]
