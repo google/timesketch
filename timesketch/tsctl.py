@@ -79,10 +79,8 @@ from timesketch.models.sketch import (
     InvestigativeQuestionApproach,
     InvestigativeQuestionConclusion,
     SearchIndex,
-)
-from timesketch.models.user import Group, User  # For mixin checks
-from typing import Type
-from timesketch.models import BaseModel
+)  # For mixin checks
+from timesketch.models.user import Group, User
 
 # Default filenames for sketch export
 DEFAULT_EXPORT_METADATA_FILENAME = "metadata.json"
