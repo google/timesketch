@@ -23,7 +23,6 @@ import zipfile
 import opensearchpy
 
 from flask import abort
-from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import send_file
@@ -44,6 +43,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 
 from timesketch.lib.stories import manager as story_export_manager
+from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 
@@ -523,7 +523,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # Process timelines of the sketch
         for timeline_in_sketch in sketch.timelines:
-            # Archive timelines that are not already archived, deleted, or actively processing.
+            # Archive timelines that are not already archived, deleted,
+            # or actively processing.
             # The "processing" state is already checked and aborted earlier.
             if timeline_in_sketch.get_status.status not in ("archived", "deleted"):
                 timeline_in_sketch.set_status(status="archived")
@@ -545,7 +546,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         for search_index in search_indexes_to_evaluate:
             # Determine if this SearchIndex can be safely archived (i.e., its
-            # OpenSearch index closed). This requires all associated timelines to be archived.
+            # OpenSearch index closed). This requires all associated timelines
+            # to be archived.
             all_associated_timelines_archived = True
             if not search_index.timelines:
                 logger.warning(
