@@ -636,7 +636,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     e_msg,
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-raised
                 # Catch any other unexpected errors during deletion
                 e_msg = (
                     f"An unexpected error occurred while deleting "
