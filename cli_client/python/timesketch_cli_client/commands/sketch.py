@@ -335,7 +335,8 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         ctx.exit(1)
 
     # Dryrun:
-    click.echo("Would delete the following things (use --force_delete to execute)")
+    if not force_delete:
+        click.echo("Would delete the following things (use --force_delete to execute)")
     click.echo(
         f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
     )
@@ -346,9 +347,13 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         )
 
     if force_delete:
-        click.echo("Will delete for real")
-        sketch.delete(force_delete=force_delete)
-        click.echo("Sketch deleted")
+        response = sketch.delete(force_delete=force_delete)
+        # --- Check the response for success or error ---
+        if not response:
+            click.echo(f"Failed to delete sketch {sketch.id} '{sketch.name}'. ")
+            return
+
+        click.echo(f"Sketch {sketch.id} '{sketch.name}' successfully deleted.")
 
 
 @sketch_group.command(

@@ -16,6 +16,8 @@
 import logging
 
 import opensearchpy
+from opensearchpy.exceptions import NotFoundError
+
 
 from flask import jsonify
 from flask import request
@@ -37,6 +39,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
@@ -502,7 +505,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         Deletion (both soft and hard) is prevented if the sketch has a label
         defined in the LABELS_TO_PREVENT_DELETION configuration setting.
 
-        Requires 'delete' permission on the sketch.
+        Requires 'delete' permission on the sketch and the
+            user must be an administrator.
 
         Args:
             sketch_id (int): The ID of the sketch to delete.
@@ -520,9 +524,12 @@ class SketchResource(resources.ResourceMixin, Resource):
                 given ID.
             HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have 'delete'
                 permission on the sketch, or if the sketch has a label
-                preventing deletion.
+                preventing deletion, or if the user is not an admin.
             HTTP_STATUS_CODE_BAD_REQUEST (400): If there's an issue during the
-                deletion process e.g. the sketch being archived.
+                deletion process e.g. the sketch being archived,
+                or if timelines are still processing.
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR (500): If there's an unrecoverable
+                error during OpenSearch index deletion.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -531,6 +538,16 @@ class SketchResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 ("User does not have sufficient access rights to delete a sketch."),
+            )
+
+        if current_user.admin:
+            logger.debug(
+                "User: %s is going to delete sketch %s", current_user, sketch_id
+            )
+        else:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "Sketch cannot be deleted. User is not an admin",
             )
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
@@ -546,11 +563,22 @@ class SketchResource(resources.ResourceMixin, Resource):
             )
 
         if not force_delete:
-            # check if force_delete is maybe set in the url
-            force_delete = request.args.get("force")
-            if force_delete is None:
-                logger.debug("Force delete not present, will keep the OS data")
-                force_delete = False
+            url_force_delete = request.args.get("force")
+            if url_force_delete is not None:
+                force_delete = True  # If the 'force' URL parameter exists, set to True
+                logger.debug("Force delete detected from URL parameter.")
+            else:
+                logger.debug("Force delete not present, will keep the OS data.")
+
+        # Check if any timeline is still processing
+        is_any_timeline_processing = any(
+            t.get_status.status == "processing" for t in sketch.timelines
+        )
+        if is_any_timeline_processing:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Cannot delete sketch: one or more timelines are still processing.",
+            )
 
         sketch.set_status(status="deleted")
 
@@ -559,39 +587,53 @@ class SketchResource(resources.ResourceMixin, Resource):
         if not force_delete:
             return HTTP_STATUS_CODE_OK
 
-        # Explicitly delete related objects if cascades are not fully configured
-        # in the SQLAlchemy models. This ensures a clean removal of all data
-        # associated with the sketch in the database.
-        if sketch.views:
-            for view in sketch.views:
-                db_session.delete(view)
-        if sketch.stories:
-            for story in sketch.stories:
-                db_session.delete(story)
-        if sketch.aggregations:
-            for aggregation in sketch.aggregations:
-                db_session.delete(aggregation)
-        if sketch.aggregations:
-            for group in sketch.aggregationgroups:
-                db_session.delete(group)
-        if sketch.graphs:
-            for graph in sketch.graphs:
-                db_session.delete(graph)
-        if sketch.search_history:
-            for history_node in sketch.search_history:
-                db_session.delete(history_node)
-        if sketch.scenarios:
-            for scenario in sketch.scenarios:
-                db_session.delete(scenario)
-        if sketch.investigative_questions:
-            for question in sketch.investigative_questions:
-                db_session.delete(question)
         # now the real deletion
-        for timeline in sketch.active_timelines:
+        for timeline in sketch.timelines:
             timeline.set_status(status="deleted")
             searchindex = timeline.searchindex
             # remove the opensearch index
-            self.datastore.client.indices.delete(index=searchindex.index_name)
+            index_name_to_delete = searchindex.index_name
+
+            try:
+                # Attempt to delete the OpenSearch index
+                self.datastore.client.indices.delete(index=index_name_to_delete)
+                logger.debug(
+                    "User: %s is going to delete OS index %s",
+                    current_user,
+                    index_name_to_delete,
+                )
+
+                # Check if the index is really deleted
+                if self.datastore.client.indices.exists(index=index_name_to_delete):
+                    e_msg = f"Failed to delete OpenSearch index {index_name_to_delete}. Please check logs."
+                    logger.error(e_msg)
+                    abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
+                else:
+                    logger.debug(
+                        "OpenSearch index %s successfully deleted.",
+                        index_name_to_delete,
+                    )
+
+            except NotFoundError:
+                # This can happen if the index was already deleted or never existed.
+                e_msg = f"OpenSearch index {index_name_to_delete} was not found during deletion attempt. It might have been deleted already."
+                logger.warning(e_msg)
+            except ConnectionError as e:
+                e_msg = f"Connection error while trying to delete OpenSearch index {index_name_to_delete}: {e}"
+                logger.error(e_msg)
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    e_msg,
+                )
+            except Exception as e:
+                # Catch any other unexpected errors during deletion
+                e_msg = f"An unexpected error occurred while deleting OpenSearch index {index_name_to_delete}: {e}"
+                logger.error(e_msg)
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    e_msg,
+                )
+
             db_session.delete(searchindex)
             db_session.delete(timeline)
 
