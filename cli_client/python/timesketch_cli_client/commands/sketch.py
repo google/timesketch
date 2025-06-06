@@ -354,7 +354,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
 
     if force_delete:
         click.echo("Will delete for real")
-        sketch.z_delete(force_delete=force_delete)
+        sketch.delete(force_delete=force_delete)
         click.echo("Sketch deleted")
 
 
