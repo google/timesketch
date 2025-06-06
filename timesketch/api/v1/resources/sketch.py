@@ -574,7 +574,7 @@ class SketchResource(resources.ResourceMixin, Resource):
         if sketch.aggregations:
             for group in sketch.aggregationgroups:
                 db_session.delete(group)
-        if sketch.grapgs:
+        if sketch.graphs:
             for graph in sketch.graphs:
                 db_session.delete(graph)
         if sketch.search_history:
