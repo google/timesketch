@@ -12,7 +12,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
 -->
 <template>
   <v-container class="ai-investigation-canvas grid pa-0" fluid>
@@ -43,6 +42,7 @@ limitations under the License.
             :questions="filteredQuestions"
             :questionsTotal="questionsTotal"
             :completedQuestionsTotal="completedQuestionsTotal"
+            :isLoading="isLoading"
           />
         </template>
       </v-col>
@@ -59,7 +59,6 @@ limitations under the License.
     />
   </v-dialog>
 </template>
-
 <script>
 import { useAppStore } from "@/stores/app";
 import { useTheme } from "vuetify";
@@ -67,8 +66,6 @@ import { useRoute } from "vue-router";
 import Sidebar from "./Sidebar";
 import RestApiClient from "@/utils/RestApiClient";
 import ResultsViewLoader from "./Loaders/ResultsViewLoader.vue";
-
-
 export default {
   data() {
     return {
@@ -79,6 +76,8 @@ export default {
       conclusionId: null,
       questions: [],
       showEventLog: false,
+      pollingInterval: null,
+      isGeneratingReport: false,
     };
   },
   created() {
@@ -87,44 +86,113 @@ export default {
     });
   },
   methods: {
-    async fetchData() {
-      // TODO revist once the API work has been completed
-      this.isLoading = true;
-      let questionsArray = [];
-
-      try {
-        try {
-          await RestApiClient.llmRequest(this.store.sketch.id, "log_analyzer");
-        } catch (error) {
-          this.store.setNotification({
-          text: "LLM service was unable to generate relevant data",
-          icon: "mdi-alert-circle-outline",
-          type: "error",
+    // NEW: Method specifically for running the log analyzer
+    runLogAnalysis() {
+      if (this.questions.length === 0) {
+        this.isLoading = true;
+      }
+      this.isGeneratingReport = true;
+      this.store.setNotification({
+        text: 'AI analysis has started. Findings will appear as they are discovered.',
+        icon: 'mdi-clock-start',
+        type: 'info',
+      });
+      // 1. "Fire" the request but DON'T await it here.
+      const analysisPromise = RestApiClient.llmRequest(this.store.sketch.id, 'log_analyzer');
+      // Set a brief timeout to allow the initial loader to show before polling starts
+      setTimeout(() => {
+        this.isLoading = false;
+        if (this.pollingInterval) clearInterval(this.pollingInterval);
+        this.pollingInterval = setInterval(() => {
+          this.fetchData(false);
+        }, 5000);
+      }, 1000)
+      // 3. Handle the final completion of the long request.
+      analysisPromise.then(() => {
+        this.store.setNotification({
+          text: 'AI analysis complete. All questions have been generated.',
+          icon: 'mdi-check-circle-outline',
+          type: 'success',
         });
-        }
-
+      }).catch(error => {
+        this.store.setNotification({
+          text: 'An error occurred during AI analysis. Please check the logs.',
+          icon: 'mdi-alert-circle-outline',
+          type: 'error',
+        });
+        console.error('Error running log analyzer:', error);
+      }).finally(() => {
+        if (this.pollingInterval) clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+        this.isGeneratingReport = false;
+        this.fetchData(true);
+      });
+    },
+    async deleteAllQuestions() {
+      if (!this.questions.length) {
+        this.store.setNotification({ text: 'There are no questions to remove.', type: 'info' });
+        return;
+      }
+      this.isLoading = true;
+      try {
+        const allQuestionIds = this.questions.map(q => q.id);
+        // Update the report to mark all questions as removed and clear approved list
+        await this.store.updateReport({
+          approvedQuestions: [],
+          removedQuestions: allQuestionIds,
+          conclusionSummaries: [], // Also clear any saved conclusion summaries
+        });
+        // Clear the local state to update the UI instantly
+        this.questions = [];
+        this.store.setActiveQuestion(null);
+        this.store.setNotification({
+          text: 'All AI-generated questions have been removed.',
+          icon: 'mdi-delete-sweep-outline',
+          type: 'success',
+        });
+      } catch (error) {
+        console.error('Error removing all questions:', error);
+        this.store.setNotification({
+          text: 'Failed to remove all questions.',
+          icon: 'mdi-alert-circle-outline',
+          type: 'error',
+        });
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    confirmDeleteAll() {
+      if (window.confirm('Are you sure you want to remove ALL questions from this investigation?')) {
+        this.deleteAllQuestions();
+      }
+    },
+    async fetchData(setLoading = true) {
+      if (setLoading) {
+        this.isLoading = true;
+      }
+      let questionsArray = [];
+      try {
         const [existingQuestions, storyList] =
           await Promise.allSettled([
             RestApiClient.getOrphanQuestions(this.store.sketch.id),
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
-
-        if (!storyList.value.data.objects || storyList.value.data.objects < 1) {
+        
+        // This check was slightly incorrect, it should be .length
+        if (!storyList.value.data.objects[0] || storyList.value.data.objects[0].length < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",
             JSON.stringify([{ type: "ai-report" }]),
             this.store.sketch.id
           );
-
           this.store.report = {
-            ...reportResponse.value.data.objects[0],
-            content: JSON.parse(reportResponse.value.data.objects[0].content),
+            ...reportResponse.data.objects[0],
+            content: JSON.parse(reportResponse.data.objects[0].content),
           };
         } else {
           const existingAiReport = storyList.value.data.objects[0].find(
             ({ title }) => title === "ai-report"
           );
-
           if (existingAiReport) {
             this.store.report = {
               ...existingAiReport,
@@ -136,32 +204,30 @@ export default {
               JSON.stringify([{ type: "ai-report" }]),
               this.store.sketch.id
             );
-
             this.store.report = {
-              ...reportResponse.value.data.objects[0],
-              content: JSON.parse(reportResponse.value.data.objects[0].content),
+              ...reportResponse.data.objects[0],
+              content: JSON.parse(reportResponse.data.objects[0].content),
             };
           }
         }
-
         const existingQuestionsList =
           existingQuestions.value.data?.objects &&
           existingQuestions.value.data?.objects.length > 0
             ? existingQuestions.value.data.objects[0]
             : [];
-
         questionsArray = [
           ...existingQuestionsList.map(({ conclusions, ...question }) => ({
             ...question,
             conclusions
           })),
         ];
-
         this.questions = questionsArray;
       } catch (err) {
         console.error(err);
       } finally {
-        this.isLoading = false;
+        if (setLoading) {
+          this.isLoading = false;
+        }
       }
     },
     addNewQuestion(question) {
@@ -192,19 +258,16 @@ export default {
         payload.remove,
         payload.conclusionId
       );
-
       if (
         !annotationResponse.data.objects ||
         annotationResponse.data.objects.length < 1
       ) {
         throw new Error("Unable to update conclusion");
       }
-
       const currentQuestion = await RestApiClient.getQuestion(
         this.store.sketch.id,
         this.selectedQuestion.id
       );
-
       this.updateQuestion(currentQuestion.data.objects[0])
       this.store.activeContext.question = currentQuestion.data.objects[0];
     },
@@ -215,7 +278,7 @@ export default {
     },
     showLoader() {
       return this.isLoading || !this.store.report.content
-    },  
+    },
     selectedQuestion() {
       return this.store.activeContext.question;
     },
@@ -232,7 +295,8 @@ export default {
       return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
-      return this.filteredQuestions?.length;
+      // Logic correction: Should check approvedQuestions
+      return this.filteredQuestions?.filter(({id}) => this.store.report?.content?.approvedQuestions?.includes(id)).length || 0
     },
     sketchId() {
       return this.store.sketch.id;
@@ -252,7 +316,12 @@ export default {
       updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
       confirmRemoveQuestion: this.confirmRemoveQuestion,
-      regenerateQuestions: this.fetchData, // TODO: Revisit this once the API is in place for this async op
+      // NEW: Provide the new method to child components
+      runLogAnalysis: this.runLogAnalysis,
+      // Renamed for clarity
+      regenerateQuestions: this.fetchData,
+      confirmDeleteAll: this.confirmDeleteAll,
+      isGeneratingReport: computed(() => this.isGeneratingReport),
     };
   },
   setup() {
@@ -262,13 +331,11 @@ export default {
   },
 };
 </script>
-
 <style scoped>
 .ai-investigation-canvas {
   height: calc(100vh - 65px);
   overflow: hidden;
 }
-
 .ai-investigation-canvas__sidebar {
   display: grid;
   grid-template-rows: auto auto 1fr;

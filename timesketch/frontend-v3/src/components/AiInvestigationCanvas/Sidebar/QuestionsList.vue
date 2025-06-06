@@ -14,23 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="d-flex justify-space-between px-2">
+  <div class="d-flex justify-space-between align-center px-2">
     <h4 class="mb-2" v-if="questionsTotal">
       {{ questionsTotal }}
       <span class="font-weight-regular"
         >question{{ questionsTotal > 1 && "s" }}</span
       >
     </h4>
-    <v-btn
-      variant="text"
-      size="small"
-      color="primary"
-      @click="toggleModal"
-      :disabled="reportLocked"
-    >
-      <v-icon icon="mdi-plus" left small />
-      Create Question</v-btn
-    >
+    <div class="d-flex ga-2">
+      <v-btn
+        variant="text"
+        size="small"
+        color="error"
+        @click="confirmDeleteAll"
+        :disabled="reportLocked || questionsTotal === 0"
+        title="Remove all questions (for testing)"
+      >
+        <v-icon icon="mdi-delete-sweep-outline" left small />
+        Remove All
+      </v-btn>
+      <v-btn
+        variant="text"
+        size="small"
+        color="primary"
+        @click="toggleModal"
+        :disabled="reportLocked"
+      >
+        <v-icon icon="mdi-plus" left small />
+        Create Question</v-btn
+      >
+    </div>
   </div>
   <v-list
     v-if="sortedQuestions"
@@ -65,7 +78,7 @@ export default {
       showModal: false,
     };
   },
-  inject: ["regenerateQuestions"],
+  inject: ["regenerateQuestions", "confirmDeleteAll"],
   methods: {
     toggleModal() {
       this.showModal = !this.showModal;
