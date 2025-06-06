@@ -308,9 +308,7 @@ def remove_label(ctx: click.Context, label: str) -> None:
     click.echo("Label removed.")
 
 
-@sketch_group.command(
-    "delete", help="Delete a sketch, default will only mark the sketch as deleted"
-)
+@sketch_group.command("delete", help="Delete a sketch, default will only do a dry-run")
 @click.option(
     "--force_delete",
     required=False,
@@ -337,7 +335,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         ctx.exit(1)
 
     # Dryrun:
-    click.echo("Would delete the following things")
+    click.echo("Would delete the following things (use --force_delete to execute)")
     click.echo(
         f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
     )
@@ -346,11 +344,6 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         click.echo(
             f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
         )
-
-    # for story in sketch.stories:
-    #    click.echo(
-    #        f"  Story: {story.id} {story.title} {story.description} {story.status} {story.created_at} {story.updated_at}" # pylint: disable=line-too-long
-    #    )
 
     if force_delete:
         click.echo("Will delete for real")
