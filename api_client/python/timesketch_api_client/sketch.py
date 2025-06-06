@@ -458,14 +458,24 @@ class Sketch(resource.BaseResource):
         story_dict = response_json.get("objects", [{}])[0]
         return story.Story(story_id=story_dict.get("id", 0), sketch=self, api=self.api)
 
-    def delete(self):
-        """Deletes the sketch."""
+    def delete(self, force_delete=False):
+        """Deletes the sketch.
+
+        If a sketch is already archived, it can not be deleted.
+
+        Args:
+            force_delete (bool): If True, performs a hard delete, permanently
+                removing the sketch and all associated data. Defaults to False.
+
+        """
         if self.is_archived():
             raise RuntimeError(
                 "Unable to delete an archived sketch, first unarchive then delete."
             )
 
         resource_url = "{0:s}/sketches/{1:d}/".format(self.api.api_root, self.id)
+        if force_delete:
+            resource_url += "?force=true"
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
