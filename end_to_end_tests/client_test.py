@@ -343,6 +343,9 @@ level: high
 
         self.assertions.assertEqual(found, True)
 
+        # switch to a different user
+        # TODO(jaegeral)
+
         # delete sketch
         sketch.delete()
 
