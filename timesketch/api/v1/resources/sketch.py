@@ -605,7 +605,10 @@ class SketchResource(resources.ResourceMixin, Resource):
 
                 # Check if the index is really deleted
                 if self.datastore.client.indices.exists(index=index_name_to_delete):
-                    e_msg = f"Failed to delete OpenSearch index {index_name_to_delete}. Please check logs."
+                    e_msg = (
+                        f"Failed to delete OpenSearch index "
+                        f"{index_name_to_delete}. Please check logs."
+                    )
                     logger.error(e_msg)
                     abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
                 else:
@@ -616,10 +619,18 @@ class SketchResource(resources.ResourceMixin, Resource):
 
             except NotFoundError:
                 # This can happen if the index was already deleted or never existed.
-                e_msg = f"OpenSearch index {index_name_to_delete} was not found during deletion attempt. It might have been deleted already."
+                e_msg = (
+                    f"OpenSearch index {index_name_to_delete} was not found "
+                    f"during deletion attempt. It might have been deleted "
+                    f"already."
+                )
                 logger.warning(e_msg)
             except ConnectionError as e:
-                e_msg = f"Connection error while trying to delete OpenSearch index {index_name_to_delete}: {e}"
+                e_msg = (
+                    f"Connection error while trying to delete OpenSearch index "
+                    f"{index_name_to_delete}:\n"
+                    f"{e}"
+                )
                 logger.error(e_msg)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
@@ -627,7 +638,10 @@ class SketchResource(resources.ResourceMixin, Resource):
                 )
             except Exception as e:
                 # Catch any other unexpected errors during deletion
-                e_msg = f"An unexpected error occurred while deleting OpenSearch index {index_name_to_delete}: {e}"
+                e_msg = (
+                    f"An unexpected error occurred while deleting "
+                    f"OpenSearch index {index_name_to_delete}: {e}"
+                )
                 logger.error(e_msg)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
