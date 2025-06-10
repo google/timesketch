@@ -86,20 +86,22 @@ export default {
     });
   },
   methods: {
-    // NEW: Method specifically for running the log analyzer
-    runLogAnalysis() {
+    async runLogAnalysis() {
       if (this.questions.length === 0) {
         this.isLoading = true;
       }
       this.isGeneratingReport = true;
+
+      if (this.store.report?.content?.removedQuestions?.length > 0) {
+        await this.store.updateReport({ removedQuestions: [] });
+      }
+
       this.store.setNotification({
         text: 'AI analysis has started. Findings will appear as they are discovered.',
         icon: 'mdi-clock-start',
         type: 'info',
       });
-      // 1. "Fire" the request but DON'T await it here.
       const analysisPromise = RestApiClient.llmRequest(this.store.sketch.id, 'log_analyzer');
-      // Set a brief timeout to allow the initial loader to show before polling starts
       setTimeout(() => {
         this.isLoading = false;
         if (this.pollingInterval) clearInterval(this.pollingInterval);
@@ -107,7 +109,6 @@ export default {
           this.fetchData(false);
         }, 5000);
       }, 1000)
-      // 3. Handle the final completion of the long request.
       analysisPromise.then(() => {
         this.store.setNotification({
           text: 'AI analysis complete. All questions have been generated.',
@@ -129,27 +130,30 @@ export default {
       });
     },
     async deleteAllQuestions() {
-      if (!this.questions.length) {
+      if (!this.filteredQuestions.length) {
         this.store.setNotification({ text: 'There are no questions to remove.', type: 'info' });
         return;
       }
       this.isLoading = true;
       try {
-        const allQuestionIds = this.questions.map(q => q.id);
-        // Update the report to mark all questions as removed and clear approved list
+        // 2. FIX: Get IDs from the list the user sees.
+        const allQuestionIds = this.filteredQuestions.map(q => q.id);
+        
         await this.store.updateReport({
           approvedQuestions: [],
           removedQuestions: allQuestionIds,
-          conclusionSummaries: [], // Also clear any saved conclusion summaries
+          conclusionSummaries: [],
         });
-        // Clear the local state to update the UI instantly
-        this.questions = [];
+        
         this.store.setActiveQuestion(null);
         this.store.setNotification({
           text: 'All AI-generated questions have been removed.',
           icon: 'mdi-delete-sweep-outline',
           type: 'success',
         });
+
+        await this.fetchData(false);
+
       } catch (error) {
         console.error('Error removing all questions:', error);
         this.store.setNotification({
@@ -316,9 +320,7 @@ export default {
       updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
       confirmRemoveQuestion: this.confirmRemoveQuestion,
-      // NEW: Provide the new method to child components
       runLogAnalysis: this.runLogAnalysis,
-      // Renamed for clarity
       regenerateQuestions: this.fetchData,
       confirmDeleteAll: this.confirmDeleteAll,
       isGeneratingReport: computed(() => this.isGeneratingReport),
