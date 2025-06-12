@@ -54,7 +54,7 @@ cd /opt
 #### Run deployment script
 
 ```shell
-sudo ~/deploy_timesketch.sh
+sudo ./deploy_timesketch.sh  
 ```
 
 ### 3. Start the system
