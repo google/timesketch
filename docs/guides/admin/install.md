@@ -79,25 +79,25 @@ pointers on how to use Let's Encrypt in a docker deployment.
 instructions.
 2. Update your `timesketch/docker-compose.yaml` file. Update the nginx service
 and add the certbot service with the following config:
-  ```
-    nginx:
-      container_name: nginx
-      image: nginx:${NGINX_VERSION}
-      restart: always
-      ports:
-        - ${NGINX_HTTP_PORT}:80
-        - ${NGINX_HTTPS_PORT}:443
-      volumes:
-        - ${NGINX_CONFIG_PATH}:/etc/nginx/nginx.conf
-        - ./etc/certbot/www/:/var/www/certbot/:ro
-        - ./etc/certbot/conf/:/etc/letsencrypt/:ro
+```
+  nginx:
+    container_name: nginx
+    image: nginx:${NGINX_VERSION}
+    restart: always
+    ports:
+      - ${NGINX_HTTP_PORT}:80
+      - ${NGINX_HTTPS_PORT}:443
+    volumes:
+      - ${NGINX_CONFIG_PATH}:/etc/nginx/nginx.conf
+      - ./etc/certbot/www/:/var/www/certbot/:ro
+      - ./etc/certbot/conf/:/etc/letsencrypt/:ro
 
-    certbot:
-      image: certbot/certbot:latest
-      volumes:
-        - ./etc/certbot/www/:/var/www/certbot/:rw
-        - ./etc/certbot/conf/:/etc/letsencrypt/:rw
-  ```
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./etc/certbot/www/:/var/www/certbot/:rw
+      - ./etc/certbot/conf/:/etc/letsencrypt/:rw
+```
 3. Add the following location to your `timesketch/etc/nginx.conf`:
 ```
 location /.well-known/acme-challenge/ {
