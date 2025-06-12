@@ -2113,29 +2113,29 @@ pointers on how to use Let's Encrypt in a docker deployment.</p>
 <ol>
 <li>You need to configure a DNS name for the server. Use your DNS providers
 instructions.</li>
-<li>
-<p>Update your <code>timesketch/docker-compose.yaml</code> file. Update the nginx service
-and add the certbot service with the following config:
-  ```
-    nginx:
-      container_name: nginx
-      image: nginx:${NGINX_VERSION}
-      restart: always
-      ports:
-        - ${NGINX_HTTP_PORT}:80
-        - ${NGINX_HTTPS_PORT}:443
-      volumes:
-        - ${NGINX_CONFIG_PATH}:/etc/nginx/nginx.conf
-        - ./etc/certbot/www/:/var/www/certbot/:ro
-        - ./etc/certbot/conf/:/etc/letsencrypt/:ro</p>
-<p>certbot:
-  image: certbot/certbot:latest
-  volumes:
-    - ./etc/certbot/www/:/var/www/certbot/:rw
-    - ./etc/certbot/conf/:/etc/letsencrypt/:rw
-  <code>``
-3. Add the following location to your</code>timesketch/etc/nginx.conf`:</p>
-</li>
+<li>Update your <code>timesketch/docker-compose.yaml</code> file. Update the nginx service
+and add the certbot service with the following config:</li>
+</ol>
+<pre><code>  nginx:
+    container_name: nginx
+    image: nginx:${NGINX_VERSION}
+    restart: always
+    ports:
+      - ${NGINX_HTTP_PORT}:80
+      - ${NGINX_HTTPS_PORT}:443
+    volumes:
+      - ${NGINX_CONFIG_PATH}:/etc/nginx/nginx.conf
+      - ./etc/certbot/www/:/var/www/certbot/:ro
+      - ./etc/certbot/conf/:/etc/letsencrypt/:ro
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./etc/certbot/www/:/var/www/certbot/:rw
+      - ./etc/certbot/conf/:/etc/letsencrypt/:rw
+</code></pre>
+<ol>
+<li>Add the following location to your <code>timesketch/etc/nginx.conf</code>:</li>
 </ol>
 <pre><code>location /.well-known/acme-challenge/ {
         root /var/www/certbot;
