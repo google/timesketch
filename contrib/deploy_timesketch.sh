@@ -103,6 +103,10 @@ curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigm
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
 curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
 curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
+# Fetch default LLM and NL2Q config files (examples, may require further setup)
+curl -s $GITHUB_BASE_URL/data/generative_ai.yaml > timesketch/etc/timesketch/generative_ai.yaml
+curl -s $GITHUB_BASE_URL/data/nl2q.yaml > timesketch/etc/timesketch/nl2q.yaml
+
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
 echo "OK"
 
@@ -129,6 +133,13 @@ sed -i 's#^OPENSEARCH_MEM_USE_GB=#OPENSEARCH_MEM_USE_GB='$OPENSEARCH_MEM_USE_GB'
 
 ln -s ./config.env ./timesketch/.env
 echo "OK"
+
+echo
+echo "* NOTE: LLM (Large Language Model) and NL2Q (Natural Language to Query) features"
+echo "  require manual configuration. Example configuration files (generative_ai.yaml, nl2q.yaml)"
+echo "  have been downloaded to timesketch/etc/timesketch/."
+echo "  You will need to edit these files or timesketch.conf with your LLM provider"
+echo "  details (e.g., API keys, model names) to enable these features."
 echo "* Installation done."
 
 if [ -z $START_CONTAINER ]; then
@@ -137,7 +148,38 @@ fi
 
 if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
   cd timesketch
+  echo "* Starting Timesketch containers..."
   docker compose up -d
+  echo -n "* Waiting for Timesketch web interface to become healthy.."
+  TIMEOUT=300 # 5 minutes timeout
+  SECONDS=0
+  while true; do
+    # Suppress errors in case container is not yet created or health check not configured
+    HEALTH_STATUS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web 2>/dev/null || echo "checking")
+    if [ "$HEALTH_STATUS" = "healthy" ]; then
+      echo ".OK"
+      break
+    fi
+    if [ $SECONDS -gt $TIMEOUT ]; then
+      echo ".FAIL"
+      echo "ERROR: Timesketch web container did not become healthy after $TIMEOUT seconds."
+      echo "Please check the container logs: docker logs timesketch-web"
+      exit 1
+    fi
+    echo -n "."
+    sleep 5
+  done
+
+  echo
+  echo "Timesketch is now running!"
+  echo "You can typically access it by navigating to:"
+  echo "  http://<YOUR_SERVER_IP_OR_HOSTNAME>"
+  echo
+  echo "IMPORTANT: By default, Timesketch is running WITHOUT SSL/TLS encryption."
+  echo "For production use, it is CRITICAL to configure SSL/TLS for HTTPS access (https://<YOUR_SERVER_IP_OR_HOSTNAME>)."
+  echo "Please follow the SSL/TLS setup instructions here:"
+  echo "  https://timesketch.org/guides/admin/https/"
+  echo
 else
   echo
   echo "You have chosen not to start the containers,"
@@ -164,8 +206,8 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   read -p "Please provide a new username: " NEWUSERNAME
 
   if [ ! -z "$NEWUSERNAME" ] ;then
-    until [ "`docker inspect -f {{.State.Health.Status}} timesketch-web`"=="healthy" ]; do
-      sleep 1;
+    until [ "$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web)" = "healthy" ]; do
+        sleep 1;
     done;
 
     docker compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
