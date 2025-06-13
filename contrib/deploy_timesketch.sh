@@ -133,6 +133,8 @@ sed -i 's#^OPENSEARCH_MEM_USE_GB=#OPENSEARCH_MEM_USE_GB='$OPENSEARCH_MEM_USE_GB'
 
 ln -s ./config.env ./timesketch/.env
 echo "OK"
+
+echo
 echo "* Installation done."
 
 if [ -z $START_CONTAINER ]; then
@@ -141,7 +143,38 @@ fi
 
 if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
   cd timesketch
+  echo "* Starting Timesketch containers..."
   docker compose up -d
+  echo -n "* Waiting for Timesketch web interface to become healthy.."
+  TIMEOUT=300 # 5 minutes timeout
+  SECONDS=0
+  while true; do
+    # Suppress errors in case container is not yet created or health check not configured
+    HEALTH_STATUS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web 2>/dev/null || echo "checking")
+    if [ "$HEALTH_STATUS" = "healthy" ]; then
+      echo ".OK"
+      break
+    fi
+    if [ $SECONDS -gt $TIMEOUT ]; then
+      echo ".FAIL"
+      echo "ERROR: Timesketch web container did not become healthy after $TIMEOUT seconds."
+      echo "Please check the container logs: docker logs timesketch-web"
+      exit 1
+    fi
+    echo -n "."
+    sleep 5
+  done
+
+  echo
+  echo "Timesketch is now running!"
+  echo "You can typically access it by navigating to:"
+  echo "  http://<YOUR_SERVER_IP_OR_HOSTNAME>"
+  echo
+  echo "IMPORTANT: By default, Timesketch is running WITHOUT SSL/TLS encryption."
+  echo "For production use, it is CRITICAL to configure SSL/TLS for HTTPS access (https://<YOUR_SERVER_IP_OR_HOSTNAME>)."
+  echo "Please follow the SSL/TLS setup instructions here:"
+  echo "  https://timesketch.org/guides/admin/https/"
+  echo
 else
   echo
   echo "You have chosen not to start the containers,"
@@ -168,8 +201,8 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   read -p "Please provide a new username: " NEWUSERNAME
 
   if [ ! -z "$NEWUSERNAME" ] ;then
-    until [ "`docker inspect -f {{.State.Health.Status}} timesketch-web`"=="healthy" ]; do
-      sleep 1;
+    until [ "$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web)" = "healthy" ]; do
+        sleep 1;
     done;
 
     docker compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
