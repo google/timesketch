@@ -339,12 +339,24 @@ limitations under the License.
                   </v-card>
                 </v-menu>
               </div>
-              <div v-else>
+              <div v-else class="actions">
                 <small class="mr-2">Actions:</small>
                 <v-btn x-small outlined @click="toggleMultipleStars()">
                   <v-icon left color="amber">mdi-star</v-icon>
                   Toggle star
                 </v-btn>
+
+                <v-menu v-model="showEventTagMenu" offset-x :close-on-content-click="false">
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn x-small outlined v-bind="attrs" v-on="on">
+                      <v-icon left>mdi-tag-plus-outline</v-icon>
+                      Modify Tags
+                    </v-btn>
+                  </template>
+
+                  <ts-event-tag-dialog :events="selectedEvents" @close="showEventTagMenu = false"></ts-event-tag-dialog>
+
+                </v-menu>
               </div>
 
               <v-spacer></v-spacer>
@@ -514,6 +526,7 @@ import EventBus from '../../event-bus.js'
 import TsBarChart from './BarChart.vue'
 import TsEventDetail from './EventDetail.vue'
 import TsEventTagMenu from './EventTagMenu.vue'
+import TsEventTagDialog from './EventTagDialog.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
 
@@ -543,6 +556,7 @@ export default {
     TsBarChart,
     TsEventDetail,
     TsEventTagMenu,
+    TsEventTagDialog,
     TsEventActionMenu,
     TsEventTags,
   },
@@ -582,6 +596,7 @@ export default {
   },
   data() {
     return {
+      showEventTagMenu: false,
       columnHeaders: [
         {
           text: '',
@@ -1405,5 +1420,9 @@ th:first-child {
   color: grey;
   vertical-align: middle;
   display: inline-block;
+}
+
+.actions button {
+  margin-right: 10px;
 }
 </style>
