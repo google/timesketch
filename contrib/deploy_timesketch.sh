@@ -103,10 +103,6 @@ curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigm
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
 curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
 curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
-# Fetch default LLM and NL2Q config files (examples, may require further setup)
-curl -s $GITHUB_BASE_URL/data/generative_ai.yaml > timesketch/etc/timesketch/generative_ai.yaml
-curl -s $GITHUB_BASE_URL/data/nl2q.yaml > timesketch/etc/timesketch/nl2q.yaml
-
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
 curl -s $GITHUB_BASE_URL/data/llm_summarize/prompt.txt > timesketch/etc/timesketch/llm_summarize/prompt.txt
 curl -s $GITHUB_BASE_URL/data/nl2q/data_types.csv > timesketch/etc/timesketch/nl2q/data_types.csv
@@ -139,11 +135,6 @@ ln -s ./config.env ./timesketch/.env
 echo "OK"
 
 echo
-echo "* NOTE: LLM (Large Language Model) and NL2Q (Natural Language to Query) features"
-echo "  require manual configuration. Example configuration files (generative_ai.yaml, nl2q.yaml)"
-echo "  have been downloaded to timesketch/etc/timesketch/."
-echo "  You will need to edit these files or timesketch.conf with your LLM provider"
-echo "  details (e.g., API keys, model names) to enable these features."
 echo "* Installation done."
 
 if [ -z $START_CONTAINER ]; then
