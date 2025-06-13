@@ -66,7 +66,7 @@ if [ -z "$(grep vm.max_map_count /etc/sysctl.conf)" ]; then
 fi
 
 # Create dirs
-mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload}
+mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload,etc/timesketch/llm_summarize,etc/timesketch/nl2q}
 # TODO: Switch to named volumes instead of host volumes.
 chown 1000 timesketch/data/opensearch
 
@@ -108,6 +108,10 @@ curl -s $GITHUB_BASE_URL/data/generative_ai.yaml > timesketch/etc/timesketch/gen
 curl -s $GITHUB_BASE_URL/data/nl2q.yaml > timesketch/etc/timesketch/nl2q.yaml
 
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
+curl -s $GITHUB_BASE_URL/data/llm_summarize/prompt.txt > timesketch/etc/timesketch/llm_summarize/prompt.txt
+curl -s $GITHUB_BASE_URL/data/nl2q/data_types.csv > timesketch/etc/timesketch/nl2q/data_types.csv
+curl -s $GITHUB_BASE_URL/data/nl2q/prompt_nl2q > timesketch/etc/timesketch/nl2q/prompt_nl2q
+curl -s $GITHUB_BASE_URL/data/nl2q/examples_nl2q > timesketch/etc/timesketch/nl2q/examples_nl2q
 echo "OK"
 
 # Create a minimal Timesketch config
