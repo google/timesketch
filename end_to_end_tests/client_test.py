@@ -13,6 +13,7 @@
 # limitations under the License.
 """End to end tests of Timesketch client functionality."""
 
+import logging
 import uuid
 import json
 import random
@@ -20,6 +21,8 @@ import os
 import time
 
 from timesketch_api_client import search
+from requests.exceptions import HTTPError
+
 
 from . import interface
 from . import manager
@@ -369,10 +372,23 @@ level: high
             number_of_sketches,
             "Sketch count should decrease after deletion",
         )
-        # attempt to pull sketch it is expected that this will cause
-        # some 404 in the stdout
-        with self.assertions.assertRaises(RuntimeError):
-            self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+
+        # disable logging for a bit to avoid flooding
+        api_client_logger = logging.getLogger("timesketch_api_client")
+        # Store the current level
+        original_level = api_client_logger.level
+        api_client_logger.setLevel(logging.CRITICAL)
+
+        try:
+            # attempt to pull sketch it is expected that this will cause
+            # some 404 in the stdout
+            with self.assertions.assertRaises(RuntimeError):
+                # The .name attribute access will trigger the API call
+                # that then fails with 404 and raises RuntimeError.
+                self.api.get_sketch(sketch_id).name
+        finally:
+            # Restore the original logging level regardless of test outcome
+            api_client_logger.setLevel(original_level)
 
     def test_delete_sketch_without_acls(self):
         """Test to attempt to delete a sketch where the admin user has no ACLs,
@@ -432,11 +448,7 @@ level: high
                 "or the sketch was not found."
             )
 
-        from requests.exceptions import HTTPError  # Example, could be different
-
-        with self.assertions.assertRaises(
-            HTTPError
-        ) as context_delete:  # Or whatever the actual exception is
+        with self.assertions.assertRaises(HTTPError) as context_delete:
             admin_sketch_instance.delete(force_delete=True)  # type: ignore
 
         # Now, assert on the HTTP status code within the exception
@@ -512,8 +524,6 @@ level: high
         sketch_id = sketch.id
 
         # Perform a soft delete (force_delete=False is the default)
-        # The API client's delete() method raises RuntimeError on non-200,
-        # but a soft delete should return 200 OK.
         try:
             sketch.delete()
         except RuntimeError as e:
