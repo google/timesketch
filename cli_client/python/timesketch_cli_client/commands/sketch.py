@@ -349,11 +349,14 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
     if force_delete:
         response = sketch.delete(force_delete=force_delete)
         # --- Check the response for success or error ---
-        if not response:
-            click.echo(f"Failed to delete sketch {sketch.id} '{sketch.name}'. ")
+        try:
+            sketch.delete(force_delete=force_delete)
+            click.echo(f"Sketch {sketch.id} '{sketch.name}' successfully deleted.")
+        except RuntimeError as e:
+            click.echo(
+                f"Failed to delete sketch {sketch.id} '{sketch.name}'. Error: {e}"
+            )
             return
-
-        click.echo(f"Sketch {sketch.id} '{sketch.name}' successfully deleted.")
 
 
 @sketch_group.command(

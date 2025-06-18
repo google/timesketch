@@ -633,7 +633,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 )
                 logger.error(e_msg)
                 abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                     e_msg,
                 )
             except Exception as e:  # pylint: disable=broad-except
@@ -644,7 +644,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 )
                 logger.error(e_msg)
                 abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                     e_msg,
                 )
 
