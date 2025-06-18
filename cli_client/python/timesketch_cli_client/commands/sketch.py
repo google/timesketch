@@ -345,7 +345,6 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         )
 
     if force_delete:
-        response = sketch.delete(force_delete=force_delete)
         # --- Check the response for success or error ---
         try:
             sketch.delete(force_delete=force_delete)
