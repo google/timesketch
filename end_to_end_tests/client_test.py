@@ -187,6 +187,31 @@ level: high
         count = len(data_frame)
         self.assertions.assertEqual(count, 1)
 
+    def test_do_users_exist(self):
+        """Tests if the essential 'test' and 'admin' users exist in Timesketch.
+
+        This end-to-end test verifies the presence of two fundamental user accounts,
+        'test' and 'admin', which are typically part of a default Timesketch e2e
+        setup.
+        """
+        users = self.api.list_users()
+        found_test_user = False
+        found_admin_user = False
+
+        # Convert the iterable of user objects into a set of usernames for efficient lookup
+        user_usernames = {user.username for user in users}
+
+        if "test" in user_usernames:
+            found_test_user = True
+        if "admin" in user_usernames:
+            found_admin_user = True
+        self.assertions.assertTrue(
+            found_test_user, "User 'test' was not found in Timesketch."
+        )
+        self.assertions.assertTrue(
+            found_admin_user, "User 'admin' was not found in Timesketch."
+        )
+
     def test_sigmarule_remove(self):
         """Client Sigma delete tests.
         The test is called remove to avoid running it before the create test.
