@@ -37,8 +37,6 @@ limitations under the License.
               flat
               solo
               class="pa-2"
-              append-icon="mdi-magnify"
-              @click:append="search()"
               id="tsSearchInput"
               @keyup.enter="search()"
               @click="showSearchDropdown = true"
@@ -47,7 +45,8 @@ limitations under the License.
               v-on="on"
             >
               <template v-slot:append>
-                <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
+                <v-icon title="Run search" @click="search()" class="mr-3">mdi-magnify</v-icon>
+                <v-icon title="Show search examples" @click="showSearchHelp = true">mdi-help-circle-outline</v-icon>
               </template>
             </v-text-field>
           </template>
@@ -108,6 +107,16 @@ limitations under the License.
           </div>
         </v-card>
       </div>
+
+      <!-- Search Help Dialog -->
+      <v-dialog v-model="showSearchHelp" max-width="1800" scrollable>
+        <ts-empty-state-card
+          displayMode="InfoCard"
+          :in-dialog="true"
+          @close-dialog="showSearchHelp = false"
+        ></ts-empty-state-card>
+      </v-dialog>
+
 
       <!-- Timeline picker -->
       <div>
@@ -300,6 +309,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu.vue'
 import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
 import TsEventList from '../components/Explore/EventList.vue'
+import TsEmptyStateCard from '../components/Explore/EmptyStateCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -325,6 +335,7 @@ export default {
     TsUploadTimelineFormButton,
     TsAddManualEvent,
     TsEventList,
+    TsEmptyStateCard,
   },
   props: ['sketchId'],
   data() {
@@ -346,6 +357,7 @@ export default {
       currentQueryFilter: defaultQueryFilter(),
       selectedLabels: [],
       showSearchHistory: false,
+      showSearchHelp: false,
       zoomLevel: 0.7,
       zoomOrigin: {
         x: 0,
