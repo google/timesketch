@@ -320,9 +320,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
     """Delete a sketch.
 
     By default, a sketch will not be deleted. To execute the deletion provide the
-    flag --execute.
-
-    To also delete the metadata to a sketch, provide the flag --delete_metadata.
+    flag --force_delete.
 
     Args:
         ctx (click.Context): The Click context object, containing the sketch.

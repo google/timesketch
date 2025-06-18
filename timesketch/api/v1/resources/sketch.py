@@ -540,15 +540,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 ("User does not have sufficient access rights to delete a sketch."),
             )
 
-        if current_user.admin:
-            logger.debug(
-                "User: %s is going to delete sketch %s", current_user, sketch_id
-            )
-        else:
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "Sketch cannot be deleted. User is not an admin",
-            )
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
             if sketch.has_label(label):
@@ -569,6 +560,18 @@ class SketchResource(resources.ResourceMixin, Resource):
                 logger.debug("Force delete detected from URL parameter.")
             else:
                 logger.debug("Force delete not present, will keep the OS data.")
+
+        # A non admin user can mark a sketch to be deleted
+        if force_delete:
+            if current_user.admin:
+                logger.debug(
+                    "User: %s is going to delete sketch %s", current_user, sketch_id
+                )
+            else:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    "Sketch cannot be deleted. User is not an admin",
+                )
 
         # Check if any timeline is still processing
         is_any_timeline_processing = any(

@@ -432,11 +432,19 @@ level: high
                 "or the sketch was not found."
             )
 
-        # Admin attempts to delete the sketch. This should fail.
-        with self.assertions.assertRaises(RuntimeError) as context_delete:
-            # The type ignore is because admin_sketch_instance could be None
-            # if the try block above fails, but the test logic implies it should exist.
+        from requests.exceptions import HTTPError  # Example, could be different
+
+        with self.assertions.assertRaises(
+            HTTPError
+        ) as context_delete:  # Or whatever the actual exception is
             admin_sketch_instance.delete(force_delete=True)  # type: ignore
+
+        # Now, assert on the HTTP status code within the exception
+        self.assertions.assertEqual(context_delete.exception.response.status_code, 403)
+        # Optionally, assert on a specific message
+        self.assertions.assertIn("permission", str(context_delete.exception).lower())
+
+        # Admin attempts to delete the sketch. This should fail.
 
         # Check for a specific error message, e.g., 403 Forbidden
         # The exact error message might vary based on API client/server implementation.
@@ -495,11 +503,36 @@ level: high
     def test_delete_sketch_without_force_delete(self):
         """This test will attempt to delete a sketch
         without passing the force_delete argument"""
+        sketch_n = f"test_delete_sketch_without_force_delete_{uuid.uuid4().hex}"
         sketch = self.api.create_sketch(
-            name="test_delete_sketch_without_force_delete",
+            name=sketch_n,
             description="test_delete_sketch_without_force_delete",
         )
         self.assertions.assertIsNotNone(sketch)
+        sketch_id = sketch.id
+
+        # Perform a soft delete (force_delete=False is the default)
+        # The API client's delete() method raises RuntimeError on non-200,
+        # but a soft delete should return 200 OK.
+        try:
+            sketch.delete()
+        except RuntimeError as e:
+            self.assertions.fail(f"Soft delete failed unexpectedly: {e}")
+
+        # Verify the sketch status is 'deleted'
+        # We need to fetch the sketch again to get its updated status from the server.
+        # Depending on the API, a soft-deleted sketch might still be fetchable
+        # or might require admin privileges / specific flags.
+        # For this test, we assume it's fetchable by the owner to check status.
+        try:
+            updated_sketch = self.api.get_sketch(sketch_id)
+            self.assertions.assertEqual(
+                updated_sketch.status,
+                "deleted",
+                "Sketch status should be 'deleted' after a soft delete.",
+            )
+        except RuntimeError as e:
+            self.assertions.fail(f"Failed to get sketch after soft delete: {e}")
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
