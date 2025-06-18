@@ -354,7 +354,7 @@ level: high
         expected_admin_user = "admin"
         user = self.admin_api.current_user
         self.assertions.assertEqual(user.username, expected_admin_user)
-        self.assertions.assertEqual(user.is_admin, False)
+        self.assertions.assertEqual(user.is_admin, True)
         self.assertions.assertEqual(user.is_active, True)
 
         admin_sketch_instance = self.admin_api.get_sketch(sketch.id)
