@@ -399,6 +399,11 @@ level: high
         acl = sketch_by_regular_user.acl
         admin_username = self.admin_api.current_user.username  # Should be "admin"
 
+        admin_user = self.admin_api.current_user
+        self.assertions.assertEqual(admin_user.username, "admin")
+        self.assertions.assertEqual(admin_user.is_admin, True)
+        self.assertions.assertEqual(admin_user.is_active, True)
+
         admin_has_direct_permission = any(
             user_perm.get("username") == admin_username
             for user_perm in acl.get("users", [])
@@ -447,7 +452,7 @@ level: high
         final_sketch_count_regular_user = len(list(self.api.list_sketches()))
         self.assertions.assertEqual(
             final_sketch_count_regular_user,
-            current_sketch_count_regular_user,  # This was initial_sketch_count_regular_user + 1
+            current_sketch_count_regular_user,
             "Sketch count should not change after failed admin deletion.",
         )
 

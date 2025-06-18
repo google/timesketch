@@ -477,7 +477,16 @@ class Sketch(resource.BaseResource):
         if force_delete:
             resource_url += "?force=true"
         response = self.api.session.delete(resource_url)
-        return error.check_return_status(response, logger)
+        # Check the return status. If it's not a success (20x),
+        # error_message will raise a RuntimeError.
+        if not error.check_return_status(response, logger):
+            error.error_message(
+                response,
+                message=f"Failed to delete sketch {self.id}",
+                error=RuntimeError,
+            )
+        else:
+            return error.check_return_status(response, logger)
 
     def add_to_acl(
         self,
