@@ -369,7 +369,8 @@ level: high
             number_of_sketches,
             "Sketch count should decrease after deletion",
         )
-        # attempt to pull sketch
+        # attempt to pull sketch it is expected that this will cause
+        # some 404 in the stdout
         with self.assertions.assertRaises(RuntimeError):
             self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
 
@@ -438,7 +439,7 @@ level: high
         self.assertions.assertIn(
             "[403]",
             str(context_delete.exception),
-            "Admin should not be able to delete sketch without explicit ACLs (expected 403 Forbidden error).",
+            "Admin should not be able to delete sketch without explicit ACLs.",
         )
 
         # Verify sketch count has NOT reverted from the regular user's perspective
@@ -447,7 +448,7 @@ level: high
         self.assertions.assertEqual(
             final_sketch_count_regular_user,
             current_sketch_count_regular_user,  # This was initial_sketch_count_regular_user + 1
-            "Sketch count (regular user view) should not change after failed admin deletion.",
+            "Sketch count should not change after failed admin deletion.",
         )
 
         # Verify the sketch is actually still there (checked by regular user)
@@ -487,11 +488,13 @@ level: high
         )
 
     def test_delete_sketch_without_force_delete(self):
-        """This test will attempt to delete a sketch without passing the force_delete argument"""
+        """This test will attempt to delete a sketch
+        without passing the force_delete argument"""
         sketch = self.api.create_sketch(
             name="test_delete_sketch_without_force_delete",
             description="test_delete_sketch_without_force_delete",
         )
+        self.assertions.assertIsNotNone(sketch)
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
