@@ -64,7 +64,7 @@ limitations under the License.
 
     <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
       <ts-empty-state-card
-        displayMode="EmtyState"
+        displayMode="EmptyState"
       ></ts-empty-state-card>
     </div>
 

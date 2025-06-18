@@ -28,7 +28,7 @@ limitations under the License.
       <v-card-subtitle class="mt-1"> Find below some examples on how to explore your data. </v-card-subtitle>
       <v-divider></v-divider>
     </div>
-    <div v-if="displayMode === 'EmtyState'" class="pa-4 pb-0">
+    <div v-if="displayMode === 'EmptyState'" class="pa-4 pb-0">
       <v-card-title>
         <v-icon large left>mdi-file-search-outline</v-icon>
         Start Exploring
@@ -223,7 +223,7 @@ import TsDataTypesList from '../LeftPanel/DataTypesList.vue'
 import TsSavedSearchesList from '../LeftPanel/SavedSearchesList.vue'
 
 export default {
-  name: 'GettingStartedCard',
+  name: 'EmptyStateCard',
   props: {
     inDialog: {
       type: Boolean,
@@ -233,9 +233,9 @@ export default {
       type: String,
       required: true,
       validator: function (value) {
-        return ['EmtyState', 'NotFound', 'InfoCard'].indexOf(value) !== -1
+        return ['EmptyState', 'NotFound', 'InfoCard'].indexOf(value) !== -1
       },
-      default: 'EmtyState'
+      default: 'EmptyState'
     },
     currentQueryString: {
       type: String,
