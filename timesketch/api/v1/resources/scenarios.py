@@ -462,11 +462,6 @@ class QuestionOrphanListResource(resources.ResourceMixin, Resource):
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
-        if not sketch.has_permission(current_user, "write"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "User does not have write access controls on sketch",
-            )
 
         questions = InvestigativeQuestion.query.filter_by(
             sketch=sketch, scenario=None, facet=None
@@ -489,7 +484,7 @@ class QuestionWithScenarioListResource(resources.ResourceMixin, Resource):
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
-        if not sketch.has_permission(current_user, "write"):
+        if not sketch.has_permission(current_user, "read"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch",
@@ -526,7 +521,7 @@ class QuestionWithFacetListResource(resources.ResourceMixin, Resource):
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
-        if not sketch.has_permission(current_user, "write"):
+        if not sketch.has_permission(current_user, "read"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch",
@@ -579,6 +574,11 @@ class QuestionListResource(resources.ResourceMixin, Resource):
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
 
         form = request.json
         if not form:
@@ -685,11 +685,6 @@ class QuestionResource(resources.ResourceMixin, Resource):
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
-        if not sketch.has_permission(current_user, "write"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "User does not have write access controls on sketch",
-            )
 
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
@@ -736,6 +731,11 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
 
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
@@ -773,6 +773,11 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
 
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
@@ -806,6 +811,11 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
 
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
