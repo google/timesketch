@@ -90,7 +90,7 @@ limitations under the License.
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Search for all events in the current view</td>
+                    <td>Search for all events</td>
                     <td>
                       <a href="#" @click.prevent="emitSetQueryAndFilter('*')">
                         <code>*</code>
@@ -98,7 +98,7 @@ limitations under the License.
                     </td>
                   </tr>
                   <tr>
-                    <td>Find a specific word in the message field</td>
+                    <td>Search a word in the message field</td>
                     <td>
                       <a href="#" @click.prevent="emitSetQueryAndFilter('message:error')">
                         <code>message:"error"</code>
@@ -106,7 +106,7 @@ limitations under the License.
                     </td>
                   </tr>
                   <tr>
-                    <td>Find a partial filename using a wildcard</td>
+                    <td>Search filenames ending with <code>.exe</code></td>
                     <td>
                       <a href="#" @click.prevent="emitSetQueryAndFilter('filename:*.exe')">
                         <code>filename:*.exe</code>
@@ -130,21 +130,31 @@ limitations under the License.
                     </td>
                   </tr>
                   <tr>
-                    <td>Combine terms with boolean operators<br />(operators need to be CAPS)</td>
+                    <td>Search using regex (between <code>//</code>)</td>
+                    <td>
+                      <a
+                        href="#"
+                        @click.prevent="emitSetQueryAndFilter('url.keyword:/.*\\/sketch\\/[1-100]\\/.*/')"
+                      >
+                        <code>url.keyword:/.*\/sketch\/[1-100]\/.*/</code>
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Combine searches with AND, OR, NOT</td>
                     <td>
                       <a
                         href="#"
                         @click.prevent="emitSetQueryAndFilter('event_identifier:(4624 OR 4625) AND LogonType:3')"
                       >
-                        <code>event_identifier:(4624 OR 4625) AND LogonType:3</code>
+                        <code>event_identifier:(4624 OR 4625) AND NOT LogonType:3</code>
                       </a>
                     </td>
                   </tr>
                   <tr>
-                    <td>Find events where a specific field exists</td>
+                    <td>Search events that have an url field</td>
                     <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('_exists_:url')">
-                        <code>_exists_:url</code> </a
+                      <a href="#" @click.prevent="emitSetQueryAndFilter('_exists_:url')"> <code>_exists_:url</code> </a
                       ><br />
                       <a href="#" @click.prevent="emitSetQueryAndFilter('url:*')">
                         <code>url:*</code>
@@ -152,27 +162,37 @@ limitations under the License.
                     </td>
                   </tr>
                   <tr>
-                    <td>Search within a specific date/time range (UTC)</td>
+                    <td>Search for a range of numbers</td>
                     <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('datetime:[2023-10-26 TO 2023-10-27]')">
-                        <code>datetime:[2023-10-26 TO 2023-10-27]</code> </a
-                      ><br />
                       <a
                         href="#"
-                        @click.prevent="emitSetQueryAndFilter('datetime:[2023-10-26T00:01:30 TO 2023-10-27]')"
+                        @click.prevent="
+                          emitSetQueryAndFilter('http_status_code:[200 TO 204] AND bytes_transferred:>10000')
+                        "
                       >
-                        <code>datetime:[2023-10-26T00:01:30 TO 2023-10-27]</code>
+                        <code>status_code:[200 TO 204] AND transferred:>10000</code>
                       </a>
                     </td>
                   </tr>
                   <tr>
-                    <td>Search for all events before/after a certain date/time (UTC)</td>
+                    <td>Filter by a specific date/time range (UTC)</td>
                     <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('datetime:[2023-10-26 TO *]')">
-                        <code>datetime:[2023-10-26 TO *]</code> </a
+                      <a
+                        href="#"
+                        @click.prevent="emitSetQueryAndFilter(`datetime:[${firstOfCurrentMonth} TO ${nowDateTimeUTC}]`)"
+                      >
+                        <code>datetime:[{{ firstOfCurrentMonth }} TO {{ nowDateTimeUTC }}]</code>
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Filter for events before or after a date (UTC)</td>
+                      <td>
+                      <a href="#" @click.prevent="emitSetQueryAndFilter(`datetime:[${firstOfCurrentMonth} TO *]`)">
+                        <code>datetime:[{{ firstOfCurrentMonth }} TO *]</code> </a
                       ><br />
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('datetime:[* TO 2023-10-26]')">
-                        <code>datetime:[* TO 2023-10-26]</code>
+                      <a href="#" @click.prevent="emitSetQueryAndFilter(`datetime:[* TO ${firstOfCurrentMonth}]`)">
+                        <code>datetime:[* TO {{ firstOfCurrentMonth }}]</code>
                       </a>
                     </td>
                   </tr>
@@ -185,19 +205,19 @@ limitations under the License.
         <!-- Dynamically load Tags, DataTypes and SavedSearches Lists -->
         <v-col v-if="showTagsList" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
           <div class="pa-4">
-            <h5> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </h5>
+            <h5><v-icon left>mdi-tag-multiple-outline</v-icon> Tags</h5>
             <ts-tags-list></ts-tags-list>
           </div>
         </v-col>
         <v-col v-if="showDataTypesList" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
           <div class="pa-4">
-            <h5> <v-icon left>mdi-database-outline</v-icon> Data Types </h5>
+            <h5><v-icon left>mdi-database-outline</v-icon> Data Types</h5>
             <ts-data-types-list></ts-data-types-list>
           </div>
         </v-col>
         <v-col v-if="showSavedSearchesList" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
           <div class="pa-4">
-            <h5> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </h5>
+            <h5><v-icon left>mdi-content-save-outline</v-icon> Saved Searches</h5>
             <ts-saved-searches-list></ts-saved-searches-list>
           </div>
         </v-col>
@@ -235,25 +255,25 @@ export default {
       validator: function (value) {
         return ['EmptyState', 'NotFound', 'InfoCard'].indexOf(value) !== -1
       },
-      default: 'EmptyState'
+      default: 'EmptyState',
     },
     currentQueryString: {
       type: String,
-      default: ''
+      default: '',
     },
     filterChips: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     disableSaveSearch: {
       type: Boolean,
-      default: false
+      default: false,
     },
   },
   components: {
     TsTagsList,
     TsDataTypesList,
-    TsSavedSearchesList
+    TsSavedSearchesList,
   },
   computed: {
     isInfoCard() {
@@ -277,6 +297,16 @@ export default {
       }
       return false
     },
+    firstOfCurrentMonth() {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      return `${year}-${month}-01`
+    },
+    nowDateTimeUTC() {
+      const now = new Date()
+      return now.toISOString().slice(0, 19)
+    },
   },
   methods: {
     emitSetQueryAndFilter(queryString) {
@@ -286,7 +316,7 @@ export default {
       EventBus.$emit('setQueryAndFilter', eventData)
     },
   },
-};
+}
 </script>
 
 <style scoped></style>
