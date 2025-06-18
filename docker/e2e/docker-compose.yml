@@ -12,6 +12,8 @@ services:
       - REDIS_PORT=6379
       - TIMESKETCH_USER=test
       - TIMESKETCH_PASSWORD=test
+      - TIMESKETCH_ADMIN_USER=admin
+      - TIMESKETCH_ADMIN_USER_PASSWORD=admin
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile

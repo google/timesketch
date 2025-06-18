@@ -357,10 +357,11 @@ level: high
         self.assertions.assertEqual(user.is_admin, True)
         self.assertions.assertEqual(user.is_active, True)
 
+        # allow the admin user to read, write and delete the sketch
+        sketch.add_to_acl(user_list=["admin"], permissions=["read", "write", "delete"])
         admin_sketch_instance = self.admin_api.get_sketch(sketch.id)
-        admin_sketch_instance.delete()
-        # delete sketch
-        # sketch.delete()
+
+        admin_sketch_instance.delete(force_delete=True)
 
         sketches = list(self.api.list_sketches())
         self.assertions.assertEqual(
