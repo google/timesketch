@@ -343,16 +343,32 @@ level: high
 
         self.assertions.assertEqual(found, True)
 
-        # switch to a different user
-        # TODO(jaegeral)
+        # Check the current user
+        expected_user = "test"
+        user = self.api.current_user
+        self.assertions.assertEqual(user.username, expected_user)
+        self.assertions.assertEqual(user.is_admin, False)
+        self.assertions.assertEqual(user.is_active, True)
 
+        # switch to a different user
+        expected_admin_user = "admin"
+        user = self.admin_api.current_user
+        self.assertions.assertEqual(user.username, expected_admin_user)
+        self.assertions.assertEqual(user.is_admin, False)
+        self.assertions.assertEqual(user.is_active, True)
+
+        admin_sketch_instance = self.admin_api.get_sketch(sketch.id)
+        admin_sketch_instance.delete()
         # delete sketch
-        sketch.delete()
+        # sketch.delete()
 
         sketches = list(self.api.list_sketches())
-        self.assertions.assertEqual(len(sketches), number_of_sketches)
+        self.assertions.assertEqual(
+            len(sketches),
+            number_of_sketches,
+            "Sketch count should decrease after deletion",
+        )
         # attempt to pull sketch
-        # breakpoint()
         with self.assertions.assertRaises(RuntimeError):
             self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
 
