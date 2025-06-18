@@ -178,7 +178,7 @@ class BaseEndToEndTest(object):
 
         if os.path.isfile(OPENSEARCH_MAPPINGS_FILE):
             mappings = {}
-            with open(OPENSEARCH_MAPPINGS_FILE, "r") as file_object:
+            with open(OPENSEARCH_MAPPINGS_FILE, "r", encoding="utf-8") as file_object:
                 mappings = json.load(file_object)
 
             if not es.indices.exists(index_name):
