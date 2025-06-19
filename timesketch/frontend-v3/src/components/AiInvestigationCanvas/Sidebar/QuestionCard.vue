@@ -29,7 +29,7 @@ limitations under the License.
           left
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
-        <p class="font-weight-medium" >{{ name }}</p>
+        <p class="font-weight-medium" >{{index}} : {{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
         <v-icon
@@ -56,6 +56,7 @@ export default {
     updatedAt: String,
     id: Number,
     user: Object,
+    index: Number,
   },
   data() {
     return {

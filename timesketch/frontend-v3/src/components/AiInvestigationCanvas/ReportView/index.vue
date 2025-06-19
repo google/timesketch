@@ -126,7 +126,7 @@ limitations under the License.
         <h3 class="text-h6 font-weight-bold mb-5">Key Findings</h3>
         <ol class="questions-list">
           <KeyFindingItem
-            v-for="(question, index) in questions"
+            v-for="(question, index) in sortedQuestions"
             :question="question"
             :index="index"
             :key="question.id"
@@ -195,6 +195,12 @@ export default {
       return this.store.report?.content?.completedDateTime
         ? dayjs(this.store.report.content.completedDateTime).utc()
         : "It will be automatically recorded upon completion.";
+    },
+    sortedQuestions() {
+      if (!this.questions || this.questions.length === 0) {
+        return [];
+      }
+      return [...this.questions].sort((a, b) => a.id - b.id);
     },
   },
   methods: {

@@ -50,11 +50,12 @@ limitations under the License.
     class="report-canvas__questions-list border-thin pa-0 border-b-0 mb-6 rounded-lg"
   >
     <QuestionCard
-      v-for="question in sortedQuestions"
-      :key="question"
+      v-for="(question,index) in sortedQuestions"
+      :key="question.id"
       :value="question"
       :reportLocked="reportLocked"
       v-bind="question"
+      :index="index + 1"
     />
   </v-list>
   <v-dialog
@@ -86,13 +87,10 @@ export default {
   },
   computed: {
     sortedQuestions() {
-      return this.questions && this.questions.length > 0
-        ? [
-            ...this.questions.sort(
-              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-            ),
-          ]
-        : [];
+      if (!this.questions || this.questions.length === 0) {
+        return [];
+      }
+      return [...this.questions].sort((a, b) => a.id - b.id);
     },
   },
 };
