@@ -50,29 +50,26 @@ limitations under the License.
         variant="outlined"
         :disabled="reportLocked"
         rows="5"
-        noResize
         hide-details
         class="summary-field mb-2"
       ></v-textarea>
-      <div
-        class="summary-field__actions position-absolute left-0 w-100 d-flex justify-space-between pr-5"
+    </div>
+    <div class="d-flex justify-space-between align-center">
+      <v-btn
+        variant="text"
+        size="small"
+        color="primary"
+        @click="submitSummary()"
+        :disabled="cannotUpdateSummary"
+        class="text-uppercase"
       >
-        <v-btn
-          variant="text"
-          size="small"
-          color="primary"
-          @click="submitSummary()"
-          :disabled="cannotUpdateSummary"
-          class="text-uppercase"
-        >
-          <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
-          Save</v-btn
-        >
+        <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
+        Save</v-btn
+      >
 
-        <time class="font-italic text-body-2" v-if="lastUpdated">
-          Last updated {{ lastUpdated }}
-        </time>
-      </div>
+      <time class="font-italic text-body-2" v-if="lastUpdated">
+        Last updated {{ lastUpdated }}
+      </time>
     </div>
   </div>
   <v-dialog
@@ -185,9 +182,5 @@ export default {
 
 .summary-field__actions {
   bottom: 10px;
-}
-
-.summary-field .v-field {
-  padding-bottom: 60px;
 }
 </style>

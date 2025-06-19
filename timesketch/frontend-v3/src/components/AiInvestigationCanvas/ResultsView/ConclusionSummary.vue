@@ -32,32 +32,31 @@ limitations under the License.
       >
     </div>
 
-    <form class="position-relative" @submit.prevent="submitSummary()">
-      <div
-        v-if="isSavingSummary"
-        class="summary-loader position-absolute top-0 left-0 d-flex align-center justify-center w-100 fill-height"
-      >
-        <v-progress-circular
-          indeterminate
-          size="60"
-          width="3"
-          color="primary"
-        ></v-progress-circular>
+    <form @submit.prevent="submitSummary()">
+      <div class="position-relative">
+        <div
+          v-if="isSavingSummary"
+          class="summary-loader position-absolute top-0 left-0 d-flex align-center justify-center w-100 fill-height"
+        >
+          <v-progress-circular
+            indeterminate
+            size="60"
+            width="3"
+            color="primary"
+          ></v-progress-circular>
+        </div>
+        <v-textarea
+          v-model="summary"
+          id="summary"
+          name="summary"
+          variant="outlined"
+          :disabled="isTextareaDisabled"
+          rows="3"
+          hide-details
+          class="mb-2"
+        ></v-textarea>
       </div>
-      <v-textarea
-        v-model="summary"
-        id="summary"
-        name="summary"
-        variant="outlined"
-        :disabled="isTextareaDisabled"
-        rows="3"
-        noResize
-        hide-details
-        class="summary-field mb-2"
-      ></v-textarea>
-      <div
-        class="summary-field__actions position-absolute left-0 w-100 d-flex justify-space-between pr-5"
-      >
+      <div class="d-flex justify-space-between align-center">
         <v-btn
           variant="text"
           size="small"
@@ -211,9 +210,5 @@ export default {
 
 .conclusion-summary-field__actions {
   bottom: 10px;
-}
-
-.conclusion-summary-field .v-field {
-  padding-bottom: 60px;
 }
 </style>
