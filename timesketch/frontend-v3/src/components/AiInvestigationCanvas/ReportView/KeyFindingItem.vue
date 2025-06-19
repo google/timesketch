@@ -25,12 +25,17 @@ limitations under the License.
       />
     </div>
     <p class="text-h6 font-weight-medium">{{ order }}. {{ question.name }}</p>
+
+    <!-- If a custom summary exists, show it -->
+    <div v-if="latestConclusionSummary" class="my-4 ml-4">
+      <p class="conclusion-summary">{{ latestConclusionSummary }}</p>
+    </div>
+    <!-- Otherwise, fall back to the list of individual conclusions -->
     <ul
       class="my-4 ml-4"
-      v-if="question.conclusions"
-      v-for="conclusion in question.conclusions"
+      v-else-if="question.conclusions && question.conclusions.length > 0"
     >
-      <li>
+      <li v-for="conclusion in question.conclusions" :key="conclusion.id">
         <p>{{ conclusion.conclusion }}</p>
       </li>
     </ul>
@@ -63,6 +68,13 @@ export default {
     order() {
       return this.index + 1;
     },
+    latestConclusionSummary() {
+      const summaries = this.store.report?.content?.conclusionSummaries?.filter(
+        (summary) => summary.questionId === this.question.id
+      );
+      // New summaries are prepended, so the latest is at index 0.
+      return summaries?.[0]?.value || null;
+    },
   },
 };
 </script>
@@ -92,5 +104,9 @@ export default {
 
 .report-auto-timestamp {
   color: #5f6368;
+}
+
+.conclusion-summary {
+  white-space: pre-line;
 }
 </style>

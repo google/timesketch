@@ -17,15 +17,6 @@ limitations under the License.
   <div class="px-6">
     <div class="d-flex justify-space-between">
       <h3 class="text-h6 font-weight-bold mb-3">Key Observables</h3>
-      <v-chip
-        size="x-small"
-        variant="outlined"
-        class="px-2 py-2 rounded-l"
-        color="#5F6368"
-        v-if="!question?.user"
-      >
-        Pre-Detected by AI
-      </v-chip>
     </div>
 
     <v-expansion-panels class="mb-6" v-model="panels">
@@ -40,6 +31,15 @@ limitations under the License.
             <p>
               {{ conclusion.conclusion }}
             </p>
+            <v-spacer />
+            <v-chip v-if="conclusion.automated"
+              size="x-small"
+              ariant="outlined"
+              class="px-2 py-2 rounded-l"
+              color="#5F6368"
+            >
+              Pre-Detected by AI
+            </v-chip>
           </div>
         </v-expansion-panel-title>
         <v-expansion-panel-text>
