@@ -37,6 +37,7 @@ from opensearchpy.exceptions import ConnectionError
 
 from flask import abort
 from flask import current_app
+from flask_login import current_user
 import prometheus_client
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -770,10 +771,14 @@ class OpenSearchDataStore:
             try:
                 count_result = self.client.count(body=query_dsl, index=list(indices))
             except NotFoundError:
+                # Add sketch_id and indices to the error message for better context
                 os_logger.error(
-                    "Unable to count due to an index not found: {:s}".format(
-                        ",".join(indices)
-                    )
+                    (
+                        "Unable to count for sketch [%s] due to an index "
+                        "not found: [%s]"
+                    ),
+                    sketch_id,
+                    ",".join(indices),
                 )
                 return 0
             METRICS["search_requests"].labels(type="count").inc()
@@ -825,8 +830,9 @@ class OpenSearchDataStore:
                 cause = str(e)
 
             os_logger.error(
-                "Unable to run search query. Error: %s. "
-                "Sketch ID: %s. Indices: %s. ",
+                "Unable to run search query for user [%s]. Error: %s. "
+                "Sketch ID: [%s]. Indices: [%s].",
+                current_user.username,
                 cause,
                 sketch_id,
                 indices,
