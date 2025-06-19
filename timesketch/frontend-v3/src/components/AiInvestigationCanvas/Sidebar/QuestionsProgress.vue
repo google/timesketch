@@ -28,7 +28,7 @@ limitations under the License.
       <v-progress-linear
         height="12"
         bg-color="#4F378A"
-        color="#4F378A"
+        color="#34a853"
         :model-value="percentageCompleted"
         rounded="xl"
       ></v-progress-linear>
