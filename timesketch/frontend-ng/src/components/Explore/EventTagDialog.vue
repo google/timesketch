@@ -150,7 +150,10 @@ export default {
       ApiClient.untagEvents(this.sketch.id, this.events, [tag])
         .then((response) => {
           for (let event of this.events) {
-            event._source.tag.splice(event._source.tag.indexOf(tag), 1)
+            const index = event._source.tag.indexOf(tag);
+            if (index !== -1) {
+              event._source.tag.splice(index, 1)
+            }
           }
           this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
         })
