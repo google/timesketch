@@ -138,13 +138,13 @@ export default {
       try {
         // 2. FIX: Get IDs from the list the user sees.
         const allQuestionIds = this.filteredQuestions.map(q => q.id);
-        
+
         await this.store.updateReport({
           approvedQuestions: [],
           removedQuestions: allQuestionIds,
           conclusionSummaries: [],
         });
-        
+
         this.store.setActiveQuestion(null);
         this.store.setNotification({
           text: 'All AI-generated questions have been removed.',
@@ -181,7 +181,7 @@ export default {
             RestApiClient.getOrphanQuestions(this.store.sketch.id),
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
-        
+
         // This check was slightly incorrect, it should be .length
         if (!storyList.value.data.objects[0] || storyList.value.data.objects[0].length < 1) {
           const reportResponse = await RestApiClient.createStory(
@@ -275,6 +275,22 @@ export default {
       this.updateQuestion(currentQuestion.data.objects[0])
       this.store.activeContext.question = currentQuestion.data.objects[0];
     },
+    async refreshQuestionById(questionId) {
+      // This method fetches a specific question and updates the parent's state.
+      try {
+        const updatedQuestion = await RestApiClient.getQuestion(
+          this.store.sketch.id,
+          questionId
+        );
+        this.updateQuestion(updatedQuestion.data.objects[0]);
+        // If the refreshed question is the currently selected one, update activeContext as well
+        if (this.selectedQuestion && this.selectedQuestion.id === questionId) {
+          this.store.activeContext.question = updatedQuestion.data.objects[0];
+        }
+      } catch (error) {
+        console.error('Error refreshing question by ID:', error);
+      }
+    },
   },
   computed: {
     showResultsView() {
@@ -320,6 +336,7 @@ export default {
       updateQuestion: this.updateQuestion,
       addNewQuestion: this.addNewQuestion,
       confirmRemoveQuestion: this.confirmRemoveQuestion,
+      refreshQuestionById: this.refreshQuestionById,
       runLogAnalysis: this.runLogAnalysis,
       regenerateQuestions: this.fetchData,
       confirmDeleteAll: this.confirmDeleteAll,

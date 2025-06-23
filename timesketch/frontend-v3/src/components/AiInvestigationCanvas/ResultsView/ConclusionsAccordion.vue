@@ -17,6 +17,16 @@ limitations under the License.
   <div class="px-6">
     <div class="d-flex justify-space-between">
       <h3 class="text-h6 font-weight-bold mb-3">Key Observables</h3>
+       <!-- Add New Conclusion Modal -->
+      <v-btn
+        variant="text"
+        size="small"
+        color="primary"
+        @click="openEditModal(false)"
+        :disabled="store.reportLocked || hasCurrentUserConclusion"
+      >
+        Add Observable
+      </v-btn>
     </div>
 
     <v-expansion-panels class="mb-6" v-model="panels">
@@ -25,21 +35,32 @@ limitations under the License.
         v-if="hasConclusions"
         v-for="conclusion in question.conclusions"
         :value="conclusion.id"
+        :key="conclusion.id"
       >
         <v-expansion-panel-title color="#F8F9FA">
-          <div>
-            <p>
-              {{ conclusion.conclusion }}
-            </p>
-            <v-spacer />
-            <v-chip v-if="conclusion.automated"
-              size="x-small"
-              ariant="outlined"
-              class="px-2 py-2 rounded-l"
-              color="#5F6368"
-            >
-              Pre-Detected by AI
-            </v-chip>
+          <div class="d-flex align-center justify-space-between w-100">
+            <div>
+              <p>
+                {{ conclusion.conclusion }}
+              </p>
+              <v-spacer />
+              <v-chip v-if="conclusion.automated"
+                size="x-small"
+                variant="outlined"
+                class="px-2 py-2 rounded-l mt-2"
+                color="#5F6368"
+              >
+                Pre-Detected by AI
+              </v-chip>
+            </div>
+            <v-btn
+                v-if="isEditable(conclusion)"
+                icon="mdi-pencil"
+                variant="text"
+                size="small"
+                class="ml-4 flex-shrink-0"
+                @click.stop="openEditModal(conclusion)"
+            />
           </div>
         </v-expansion-panel-title>
         <v-expansion-panel-text>
@@ -62,6 +83,27 @@ limitations under the License.
       </v-expansion-panel>
     </v-expansion-panels>
   </div>
+  <!-- Edit Conclusion Modal -->
+  <v-dialog
+    transition="dialog-bottom-transition"
+    v-model="showEditModal"
+    width="auto"
+  >
+    <EditConclusionModal
+      v-if="editingConclusion"
+      headline="Edit Your Conclusion"
+      :conclusion="editingConclusion"
+      :question="question"
+      @close-modal="handleModalClose"
+    />
+    <EditConclusionModal
+      v-else
+      headline="Add Your Conclusion"
+      :conclusion="{}"
+      :question="question"
+      @close-modal="handleModalClose"
+    />
+  </v-dialog>
 </template>
 
 <script>
@@ -71,13 +113,15 @@ export default {
   props: {
     question: Object,
   },
-  inject: ["updateQuestion", "confirmRemoveQuestion"],
+  inject: ["updateQuestion", "confirmRemoveQuestion", "refreshQuestionById"],
   data() {
     return {
       store: useAppStore(),
       showModal: false,
       showEventLog: false,
       isConfirming: false,
+      showEditModal: false,
+      editingConclusion: null,
       panels:
         this.question?.conclusions && this.question.conclusions.length > 0
           ? [this.question.conclusions[0].id]
@@ -94,6 +138,11 @@ export default {
         this.store.approvedReportQuestions.includes(this.question.id)
       )
     },
+    hasCurrentUserConclusion() {
+      return this.question?.conclusions?.some(
+        (conclusion) => conclusion.user.name === this.store.currentUser
+      );
+    },
   },
   methods: {
     openEventLog() {
@@ -101,6 +150,23 @@ export default {
     },
     closeEventLog() {
       this.showEventLog = false;
+    },
+    isEditable(conclusion) {
+      // Not automated, not locked, and owned by the current user
+      return !conclusion.automated &&
+             !this.store.reportLocked &&
+             conclusion.user.username === this.store.currentUser;
+    },
+    openEditModal(conclusion) {
+      this.editingConclusion = conclusion;
+      this.showEditModal = true;
+    },
+    handleModalClose() {
+      this.showEditModal = false
+      this.editingConclusion = null
+      if (this.question?.id) {
+        this.refreshQuestionById(this.question.id)
+      }
     },
   },
   provide() {
