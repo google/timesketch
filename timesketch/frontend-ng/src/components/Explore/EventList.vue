@@ -63,19 +63,16 @@ limitations under the License.
     </v-dialog>
 
     <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
-      <ts-empty-state-card
-        displayMode="EmptyState"
-      ></ts-empty-state-card>
+      <ts-explore-welcome-card></ts-explore-welcome-card>
     </div>
 
     <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString" class="ml-3">
-      <ts-empty-state-card
-        displayMode="NotFound"
-        :currentQueryString=currentQueryString
-        :filterChips=filterChips
-        :disableSaveSearch=disableSaveSearch
+      <ts-search-not-found-card
+        :currentQueryString="currentQueryString"
+        :filterChips="filterChips"
+        :disableSaveSearch="disableSaveSearch"
         @save-search-clicked="saveSearchMenu = true"
-      ></ts-empty-state-card>
+      ></ts-search-not-found-card>
     </div>
 
     <div v-if="highlightEvent" class="mt-4">
@@ -480,7 +477,8 @@ import TsEventDetail from './EventDetail.vue'
 import TsEventTagMenu from './EventTagMenu.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
-import TsEmptyStateCard from './EmptyStateCard.vue'
+import TsExploreWelcomeCard from './ExploreWelcomeCard.vue'
+import TsSearchNotFoundCard from './SearchNotFoundCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -510,7 +508,8 @@ export default {
     TsEventTagMenu,
     TsEventActionMenu,
     TsEventTags,
-    TsEmptyStateCard,
+    TsExploreWelcomeCard,
+    TsSearchNotFoundCard,
   },
   props: {
     queryRequest: {

@@ -110,11 +110,7 @@ limitations under the License.
 
       <!-- Search Help Dialog -->
       <v-dialog v-model="showSearchHelp" max-width="1800" scrollable>
-        <ts-empty-state-card
-          displayMode="InfoCard"
-          :in-dialog="true"
-          @close-dialog="showSearchHelp = false"
-        ></ts-empty-state-card>
+        <ts-search-help-card :flat="true" @close-dialog="showSearchHelp = false"></ts-search-help-card>
       </v-dialog>
 
 
@@ -309,7 +305,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu.vue'
 import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
 import TsEventList from '../components/Explore/EventList.vue'
-import TsEmptyStateCard from '../components/Explore/EmptyStateCard.vue'
+import TsSearchHelpCard from '../components/Explore/SearchHelpCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -335,7 +331,7 @@ export default {
     TsUploadTimelineFormButton,
     TsAddManualEvent,
     TsEventList,
-    TsEmptyStateCard,
+    TsSearchHelpCard,
   },
   props: ['sketchId'],
   data() {

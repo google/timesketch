@@ -14,66 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card :outlined="!inDialog" :class="{ 'ma-4': !inDialog }">
+  <v-card :outlined="!flat" :class="{ 'ma-4': !flat }">
     <!-- Header Section -->
-    <div v-if="displayMode === 'InfoCard'" class="pa-4 pb-0">
-      <v-card-title>
-        <v-icon large left>mdi-file-search-outline</v-icon>
-        Search Examples and Query Guide
-        <v-spacer></v-spacer>
-        <v-btn v-if="inDialog" icon @click="$emit('close-dialog')" title="Close dialog">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-      <v-card-subtitle class="mt-1"> Find below some examples on how to explore your data. </v-card-subtitle>
-      <v-divider></v-divider>
-    </div>
-    <div v-if="displayMode === 'EmptyState'" class="pa-4 pb-0">
-      <v-card-title>
-        <v-icon large left>mdi-file-search-outline</v-icon>
-        Start Exploring
-        <v-spacer></v-spacer>
-        <v-btn v-if="inDialog" icon @click="$emit('close-dialog')" title="Close dialog">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-      <v-card-subtitle class="mt-1"> Find below some examples on how to explore your data. </v-card-subtitle>
-      <v-divider></v-divider>
-    </div>
-    <div v-if="displayMode === 'NotFound'" class="pa-4 pb-0">
-      <v-card-title>
-        <v-icon large left>mdi-alert-circle-outline</v-icon>
-        No Results Found
-        <v-spacer></v-spacer>
-        <v-btn v-if="inDialog" icon @click="$emit('close-dialog')" title="Close dialog">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-      <v-card-subtitle class="mt-1">
-        <p>
-          Your search <code v-if="currentQueryString">'{{ currentQueryString }}'</code>
-          <span v-if="filterChips.length"
-            >in combination with the selected filter chips
-            <code>'{{ filterChips.map((chip) => chip.value).join(', ') }}'</code></span
-          >
-          did not match any events.
-        </p>
-        <p v-if="!disableSaveSearch">
-          <v-btn small depressed title="Save Search" @click="$emit('save-search-clicked')">
-            <v-icon left small>mdi-content-save-outline</v-icon>
-            Save search
-          </v-btn>
-        </p>
-        <p>Suggestions:</p>
-        <ul>
-          <li>Try different keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
-          <li>Try more general keywords.</li>
-          <li>Try fewer keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
-          <li>Try some of the search examples below.</li>
-        </ul>
-      </v-card-subtitle>
-      <v-divider></v-divider>
-    </div>
+    <slot name="header"></slot>
 
     <!-- Scrollable Content Section -->
     <v-card-text>
@@ -203,19 +146,19 @@ limitations under the License.
         </v-col>
 
         <!-- Dynamically load Tags, DataTypes and SavedSearches Lists -->
-        <v-col v-if="showTagsList" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
+        <v-col v-if="showTags" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
           <div class="pa-4">
             <h5><v-icon left>mdi-tag-multiple-outline</v-icon> Tags</h5>
             <ts-tags-list></ts-tags-list>
           </div>
         </v-col>
-        <v-col v-if="showDataTypesList" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
+        <v-col v-if="showDataTypes" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
           <div class="pa-4">
             <h5><v-icon left>mdi-database-outline</v-icon> Data Types</h5>
             <ts-data-types-list></ts-data-types-list>
           </div>
         </v-col>
-        <v-col v-if="showSavedSearchesList" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
+        <v-col v-if="showSavedSearches" style="border-left: 1px solid rgba(0, 0, 0, 0.12)">
           <div class="pa-4">
             <h5><v-icon left>mdi-content-save-outline</v-icon> Saved Searches</h5>
             <ts-saved-searches-list></ts-saved-searches-list>
@@ -243,29 +186,21 @@ import TsDataTypesList from '../LeftPanel/DataTypesList.vue'
 import TsSavedSearchesList from '../LeftPanel/SavedSearchesList.vue'
 
 export default {
-  name: 'EmptyStateCard',
+  name: 'TsSearchGuideCard',
   props: {
-    inDialog: {
+    flat: {
       type: Boolean,
       default: false,
     },
-    displayMode: {
-      type: String,
-      required: true,
-      validator: function (value) {
-        return ['EmptyState', 'NotFound', 'InfoCard'].indexOf(value) !== -1
-      },
-      default: 'EmptyState',
+    showTags: {
+      type: Boolean,
+      default: false,
     },
-    currentQueryString: {
-      type: String,
-      default: '',
+    showDataTypes: {
+      type: Boolean,
+      default: false,
     },
-    filterChips: {
-      type: Array,
-      default: () => [],
-    },
-    disableSaveSearch: {
+    showSavedSearches: {
       type: Boolean,
       default: false,
     },
@@ -276,27 +211,6 @@ export default {
     TsSavedSearchesList,
   },
   computed: {
-    isInfoCard() {
-      return this.displayMode === 'InfoCard'
-    },
-    showTagsList() {
-      if ([...this.$store.state.tags, ...this.$store.state.meta.filter_labels].length > 0 && !this.isInfoCard) {
-        return true
-      }
-      return false
-    },
-    showDataTypesList() {
-      if (this.$store.state.dataTypes.length > 0 && !this.isInfoCard) {
-        return true
-      }
-      return false
-    },
-    showSavedSearchesList() {
-      if (this.$store.state.meta.views.length > 0 && !this.isInfoCard) {
-        return true
-      }
-      return false
-    },
     firstOfCurrentMonth() {
       const now = new Date()
       const year = now.getFullYear()
@@ -314,6 +228,7 @@ export default {
       eventData.doSearch = true
       eventData.queryString = queryString
       EventBus.$emit('setQueryAndFilter', eventData)
+      this.$emit('search-triggered')
     },
   },
 }
