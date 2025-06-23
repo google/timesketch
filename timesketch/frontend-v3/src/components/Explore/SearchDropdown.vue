@@ -35,21 +35,9 @@ limitations under the License.
           <v-divider vertical></v-divider>
           <div class="pl-4 flex-grow-1">
             <h5 class="mt-3">Data types</h5>
-            <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
-              <v-list-item
-                v-for="dataType in matches.dataTypes"
-                :key="dataType.data_type"
-                v-on:click="searchForDataType(dataType.data_type)"
-                style="font-size: 0.9em"
-              >
-                <span>
-                  {{ dataType.data_type }}
-                  <span class="font-weight-bold" style="font-size: 0.8em"
-                    >({{ $filters.compactNumber(dataType.count) }})</span
-                  >
-                </span>
-              </v-list-item>
-            </v-list>
+            <DataTypesList
+              mode="scroll"
+            ></DataTypesList>
           </div>
         </div>
       </v-col>
@@ -59,7 +47,9 @@ limitations under the License.
           <v-divider vertical></v-divider>
           <div class="pl-5 flex-grow-1">
             <h5 class="mt-3">Tags</h5>
-            <TagsList></TagsList>
+            <TagsList
+              mode="scroll"
+            ></TagsList>
           </div>
         </div>
       </v-col>
