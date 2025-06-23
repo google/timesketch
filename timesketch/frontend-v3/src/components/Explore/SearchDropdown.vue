@@ -1,5 +1,5 @@
 <!--
-Copyright 2021 Google Inc. All rights reserved.
+Copyright 2025 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,33 +29,39 @@ limitations under the License.
           </v-list-item>
         </v-list>
       </v-col>
-      <v-divider vertical></v-divider>
 
       <v-col cols="4">
-        <h5 class="mt-3 ml-4">Data types</h5>
-        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
-          <v-list-item
-            v-for="dataType in matches.dataTypes"
-            :key="dataType.data_type"
-            v-on:click="searchForDataType(dataType.data_type)"
-            style="font-size: 0.9em"
-          >
-
-              <span
-                >{{ dataType.data_type }}
-                <span class="font-weight-bold" style="font-size: 0.8em"
-                >({{ $filters.compactNumber(dataType.count) }})</span
-                ></span
+        <div class="d-flex" style="height: 100%">
+          <v-divider vertical></v-divider>
+          <div class="pl-4 flex-grow-1">
+            <h5 class="mt-3">Data types</h5>
+            <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
+              <v-list-item
+                v-for="dataType in matches.dataTypes"
+                :key="dataType.data_type"
+                v-on:click="searchForDataType(dataType.data_type)"
+                style="font-size: 0.9em"
               >
-
-          </v-list-item>
-        </v-list>
+                <span>
+                  {{ dataType.data_type }}
+                  <span class="font-weight-bold" style="font-size: 0.8em"
+                    >({{ $filters.compactNumber(dataType.count) }})</span
+                  >
+                </span>
+              </v-list-item>
+            </v-list>
+          </div>
+        </div>
       </v-col>
-      <v-divider vertical></v-divider>
 
-      <v-col v-if="matches.labels.length || matches.tags.length" cols="4">
-        <h5 class="mt-3 ml-5">Tags</h5>
-        <ts-tags-list></ts-tags-list>
+       <v-col v-if="matches.labels.length || matches.tags.length" cols="4">
+        <div class="d-flex" style="height: 100%">
+          <v-divider vertical></v-divider>
+          <div class="pl-5 flex-grow-1">
+            <h5 class="mt-3">Tags</h5>
+            <TagsList></TagsList>
+          </div>
+        </div>
       </v-col>
     </v-row>
   </v-card>
@@ -63,13 +69,9 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app"
-import TsTagsList from '@/components/LeftPanel/TagsList.vue'
 
 export default {
   props: ['selectedLabels', 'queryString'],
-  components: {
-    TsTagsList,
-  },
   data() {
     return {
       appStore: useAppStore(),
