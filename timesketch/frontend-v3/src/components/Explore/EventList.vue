@@ -30,111 +30,55 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress">
-      Your search
-      <span v-if="currentQueryString">'{{ currentQueryString }}'</span
-      ><span v-if="filterChips.length">
-        in combination with the selected filter terms</span
-      >
-      did not match any events.
-      <br />
-      <br />
-
-      <!-- <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn small depressed v-bind="attrs" v-on="on" title="Save Search">
-              <v-icon left small>mdi-content-save-outline</v-icon>
-              Save search
-            </v-btn>
-          </template>
-
-          <v-card class="pa-4">
-            <h3>Save Search</h3>
-            <br />
-            <v-text-field
-              clearable
-              v-model="saveSearchFormName"
-              required
-              placeholder="Name your saved search"
-              outlined
-              dense
-              autofocus
-              @focus="$event.target.select()"
-              :rules="saveSearchNameRules"
-            >
-            </v-text-field>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="saveSearch"
-                :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
-              >
-                Save
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog> -->
-
-      <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
-        <template v-slot:activator="{ props }">
-          <v-btn
-            size="small"
-            variant="tonal"
-            title="Save Search"
-            v-bind="props"
-            prepend-icon="mdi-content-save-outline"
-          >
-            Save this search
-          </v-btn>
-        </template>
-
-        <v-card class="pa-4">
-          <h3>Save Search</h3>
-          <br />
-          <v-text-field
-            clearable
-            v-model="saveSearchFormName"
-            required
-            placeholder="Name your saved search"
-            variant="outlined"
-            density="compact"
-            autofocus
-            @focus="$event.target.select()"
-            :rules="saveSearchNameRules"
-          >
-          </v-text-field>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-            <v-btn
-              color="primary"
-              @click="saveSearch"
-              :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
-            >
-              Save
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <div class="mt-4">
-        <strong>Suggestions</strong>
-        <li>
-          Try different keywords<span v-if="filterChips.length">
-            or filter terms</span
-          >.
-        </li>
-        <li>Try more general keywords.</li>
-        <li>
-          Try fewer keywords<span v-if="filterChips.length">
-            or filter terms</span
-          >.
-        </li>
-      </div>
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+      <ExploreWelcomeCard></ExploreWelcomeCard>
     </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString">
+      <SearchNotFoundCard
+        :current-query-string="currentQueryString"
+        :filter-chips="filterChips"
+        :disable-save-search="disableSaveSearch"
+        @save-search-clicked="saveSearchMenu = true"
+      ></SearchNotFoundCard>
+    </div>
+
+    <v-dialog
+      v-model="saveSearchMenu"
+      v-if="!disableSaveSearch"
+      width="500"
+    >
+      <v-card class="pa-4">
+        <h3>Save Search</h3>
+        <br />
+        <v-text-field
+          clearable
+          v-model="saveSearchFormName"
+          required
+          placeholder="Name your saved search"
+          outlined
+          dense
+          autofocus
+          @focus="$event.target.select()"
+          :rules="saveSearchNameRules"
+        >
+        </v-text-field>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+          <v-btn
+            text
+            color="primary"
+            @click="saveSearch"
+            :disabled="
+              !saveSearchFormName || saveSearchFormName.length > 255
+            "
+          >
+            Save
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- <div v-if="highlightEvent" class="mt-4">
       <strong>Showing context for event:</strong>
@@ -244,50 +188,12 @@ limitations under the License.
               </span>
 
               <!-- Save search -->
-              <v-dialog
-                v-model="saveSearchMenu"
+              <v-btn
+                icon="mdi-content-save-outline"
+                title="Save current search"
+                @click="saveSearchMenu = true"
                 v-if="!disableSaveSearch"
-                width="500"
-              >
-                <template v-slot:activator="{ props }">
-                  <v-btn icon v-bind="props">
-                    <v-icon title="Save current search"
-                      >mdi-content-save-outline</v-icon
-                    >
-                  </v-btn>
-                </template>
-
-                <v-card class="pa-4">
-                  <h3>Save Search</h3>
-                  <br />
-                  <v-text-field
-                    clearable
-                    v-model="saveSearchFormName"
-                    required
-                    placeholder="Name your saved search"
-                    outlined
-                    dense
-                    autofocus
-                    @focus="$event.target.select()"
-                    :rules="saveSearchNameRules"
-                  >
-                  </v-text-field>
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn
-                      text
-                      color="primary"
-                      @click="saveSearch"
-                      :disabled="
-                        !saveSearchFormName || saveSearchFormName.length > 255
-                      "
-                    >
-                      Save
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
+              ></v-btn>
 
               <!-- Histogram -->
               <v-btn
@@ -671,8 +577,6 @@ import TsEventDetail from "./EventDetail.vue";
 import TsEventTagMenu from "./EventTagMenu.vue";
 import TsEventTags from "./EventTags.vue";
 import TsEventActionMenu from "./EventActionMenu.vue";
-
-
 
 const defaultQueryFilter = () => {
   return {
