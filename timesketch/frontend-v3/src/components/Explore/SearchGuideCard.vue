@@ -149,7 +149,7 @@ limitations under the License.
           <v-divider vertical></v-divider>
             <div class="pa-4 flex-grow-1">
               <h5><v-icon start>mdi-tag-multiple-outline</v-icon> Tags</h5>
-              <TagsList :pageSize="13"></TagsList>
+              <TagsList mode="scroll"></TagsList>
             </div>
           </div>
         </v-col>
@@ -158,7 +158,7 @@ limitations under the License.
           <v-divider vertical></v-divider>
             <div class="pa-4 flex-grow-1">
               <h5><v-icon start>mdi-database-outline</v-icon> Data Types</h5>
-              <DataTypesList :pageSize="13" @search-triggered="$emit('search-triggered')"></DataTypesList>
+              <DataTypesList mode="scroll" @search-triggered="$emit('search-triggered')"></DataTypesList>
             </div>
           </div>
         </v-col>
