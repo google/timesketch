@@ -23,6 +23,7 @@ limitations under the License.
         :verifiedTotal="verifiedTotal"
         :isLoading="isLoading"
         :reportLocked="store.reportLocked"
+        :isGenerating="isGeneratingReport"
       />
       <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
         <template v-if="showResultsView">

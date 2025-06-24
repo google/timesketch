@@ -14,10 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card class="pa-4 d-flex ga-2 mb-10">
+  <v-card v-if="isGenerating" class="pa-4 d-flex ga-2 mb-10">
     <div class="flex-grow-1">
       <div class="d-flex justify-space-between">
-        <h4 class="mb-2">Progress</h4>
+        <h4 v-if="questionsTotal" class="mb-2">AI Analysis in progress: Processing results ...</h4>
+        <h4 v-else class="mb-2">AI Analysis in progress: Sending events ...</h4>
+        <p v-if="questionsTotal">
+          <span class="font-weight-bold"
+            >{{ questionsTotal }}</span
+          >
+          questions created
+        </p>
+      </div>
+      <v-progress-linear height="12" color="primary" indeterminate rounded="xl"></v-progress-linear>
+    </div>
+    <v-card-actions class="flex-grow-0">
+      <v-spacer></v-spacer>
+      <v-btn
+        variant="flat"
+        size="small"
+        color="primary"
+        :disabled="disableCta"
+        @click="store.setActiveQuestion(null)"
+        >View Report</v-btn
+      >
+    </v-card-actions>
+  </v-card>
+  <v-card v-else class="pa-4 d-flex ga-2 mb-10">
+    <div class="flex-grow-1">
+      <div class="d-flex justify-space-between">
+        <h4 class="mb-2">Report Progress</h4>
         <p v-if="questionsTotal">
           <span class="font-weight-bold"
             >{{ completedQuestionsTotal }}/{{ questionsTotal }}</span
@@ -59,6 +85,7 @@ export default {
   props: {
     questionsTotal: Number,
     completedQuestionsTotal: Number,
+    isGenerating: Boolean,
   },
   computed: {
     disableCta() {

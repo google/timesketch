@@ -27,6 +27,7 @@ limitations under the License.
         <QuestionsProgress
           :questionsTotal="verifiedTotal"
           :completedQuestionsTotal="completedQuestionsTotal"
+          :isGenerating="isGenerating"
         />
       </div>
 
@@ -55,6 +56,7 @@ export default {
       type: Boolean,
       default: true,
     },
+    isGenerating: Boolean,
     questions: Array,
     reportLocked: Boolean,
   },
