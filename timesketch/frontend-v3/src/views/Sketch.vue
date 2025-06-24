@@ -218,7 +218,8 @@ limitations under the License.
       >
       <!-- TODO: content of left panel -->
       <ts-ai-investigation :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-ai-investigation>
-      <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
+      <!-- <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search> -->
+      <ts-v2-explore :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-v2-explore>
       <!-- <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags> -->
       </v-navigation-drawer>
 
@@ -293,6 +294,7 @@ import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
 import TsEventList from '@/components/Explore/EventList.vue'
 import TsAiInvestigation from '../components/LeftPanel/AiInvestigation.vue'
 import Notifications from '../components/Notifications.vue'
+import TsV2Explore from '../components/LeftPanel/v2Explore.vue';
 
 export default {
   props: ['sketchId'],
@@ -306,6 +308,7 @@ export default {
     TsEventList,
     TsAiInvestigation,
     Notifications,
+    TsV2Explore,
   },
   setup() {
     const theme = useTheme();
