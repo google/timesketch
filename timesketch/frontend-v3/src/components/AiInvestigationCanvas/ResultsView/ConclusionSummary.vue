@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <div class="d-flex justify-space-between">
       <label for="summary" class="text-h6 font-weight-bold mb-2 d-block"
-        >Conclusion Summary</label
+        >Answer</label
       >
       <v-btn
         variant="text"
@@ -182,7 +182,7 @@ export default {
         });
 
         this.store.setNotification({
-          text: "Conclusion Summary saved",
+          text: "Answer saved",
           icon: "mdi-content-save-edit-outline",
           type: "success",
         });
@@ -190,7 +190,7 @@ export default {
         console.error(error);
 
         this.store.setNotification({
-          text: "Unable to save Conclusion Summary",
+          text: "Unable to save Answer",
           icon: "mdi-lock-open-variant-outline",
           type: "error",
         });

@@ -22,7 +22,7 @@ limitations under the License.
       >
     </h4>
     <div class="d-flex ga-2">
-      <v-btn
+      <!-- <v-btn
         variant="text"
         size="small"
         color="error"
@@ -32,7 +32,7 @@ limitations under the License.
       >
         <v-icon icon="mdi-delete-sweep-outline" left small />
         Remove All
-      </v-btn>
+      </v-btn> -->
       <v-btn
         variant="text"
         size="small"

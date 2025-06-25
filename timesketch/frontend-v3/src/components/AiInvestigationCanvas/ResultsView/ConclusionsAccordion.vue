@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div class="px-6">
     <div class="d-flex justify-space-between">
-      <h3 class="text-h6 font-weight-bold mb-3">Key Observables</h3>
+      <h3 class="text-h6 font-weight-bold mb-3">Conclusions</h3>
        <!-- Add New Conclusion Modal -->
       <v-btn
         variant="text"
@@ -25,7 +25,7 @@ limitations under the License.
         @click="openEditModal(false)"
         :disabled="store.reportLocked || hasCurrentUserConclusion"
       >
-        Add Observable
+        Add Your Conclusion
       </v-btn>
     </div>
 
@@ -77,7 +77,7 @@ limitations under the License.
             color="primary"
           >
             <v-icon left small icon="mdi-plus" />
-            Add more facts
+            Add more events
           </v-btn>
         </v-expansion-panel-text>
       </v-expansion-panel>

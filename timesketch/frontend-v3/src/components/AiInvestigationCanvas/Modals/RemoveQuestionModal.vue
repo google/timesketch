@@ -35,7 +35,7 @@ limitations under the License.
           No, keep question</v-btn
         >
         <v-btn rounded color="primary" @click="deleteQuestion()">
-          Yes, remove question</v-btn
+          Yes, question is not relevant</v-btn
         >
       </div>
     </div>
@@ -99,8 +99,8 @@ export default {
   computed: {
     modalClasses() {
       return {
-        modal__content: true, 
-        'no-pointer-events': this.isSubmitting 
+        modal__content: true,
+        'no-pointer-events': this.isSubmitting
       }
     },
   }

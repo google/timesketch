@@ -77,11 +77,9 @@ limitations under the License.
             >
             <v-btn
               v-if="!reportLocked"
-              rounded
-              color="primary"
               @click="toggleShowConfirmationModal()"
             >
-              Complete investigation</v-btn
+              Close investigation</v-btn
             >
           </div>
         </div>
@@ -117,7 +115,7 @@ limitations under the License.
           <p class="font-weight-bold">Progress</p>
           <p>
             {{ completedQuestionsTotal }} / {{ questionsTotal }} questions
-            finalized
+            verified
           </p>
         </div>
         <SummarySection :reportLocked="reportLocked" />
@@ -194,7 +192,7 @@ export default {
     finalizedTime() {
       return this.store.report?.content?.completedDateTime
         ? dayjs(this.store.report.content.completedDateTime).utc()
-        : "It will be automatically recorded upon completion.";
+        : "It will be automatically recorded upon closure.";
     },
     sortedQuestions() {
       if (!this.questions || this.questions.length === 0) {

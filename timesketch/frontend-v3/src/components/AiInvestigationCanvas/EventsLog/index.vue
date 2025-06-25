@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-toolbar>
-    <v-toolbar-title class="font-weight-bold">Add More Facts</v-toolbar-title>
+    <v-toolbar-title class="font-weight-bold">Add More Events</v-toolbar-title>
     <form
       @submit.prevent="handleSubmission"
       class="search-form w-50 position-relative"

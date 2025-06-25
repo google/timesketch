@@ -31,9 +31,8 @@ limitations under the License.
     <v-card-actions class="flex-grow-0">
       <v-spacer></v-spacer>
       <v-btn
-        variant="flat"
+        variant="outlined"
         size="small"
-        color="primary"
         :disabled="disableCta"
         @click="store.setActiveQuestion(null)"
         >View Report</v-btn
@@ -43,12 +42,12 @@ limitations under the License.
   <v-card v-else class="pa-4 d-flex ga-2 mb-10">
     <div class="flex-grow-1">
       <div class="d-flex justify-space-between">
-        <h4 class="mb-2">Report Progress</h4>
+        <h4 class="mb-2">Investigation Progress</h4>
         <p v-if="questionsTotal">
           <span class="font-weight-bold"
             >{{ completedQuestionsTotal }}/{{ questionsTotal }}</span
           >
-          questions finalized
+          questions verified
         </p>
       </div>
       <v-progress-linear
@@ -62,9 +61,8 @@ limitations under the License.
     <v-card-actions class="flex-grow-0">
       <v-spacer></v-spacer>
       <v-btn
-        variant="flat"
+        variant="outlined"
         size="small"
-        color="primary"
         :disabled="disableCta"
         @click="store.setActiveQuestion(null)"
         >View Report</v-btn

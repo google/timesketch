@@ -41,10 +41,9 @@ limitations under the License.
         @click="confirmRemoveQuestion(question.id)"
         :color="textColor"
         size="small"
-        >Remove Question</v-btn
+        >Question not relevant</v-btn
       >
       <v-btn
-        rounded
         variant="flat"
         :color="textColor"
         @click="confirmAndSave()"
@@ -96,7 +95,6 @@ export default {
         return "#fff";
       }
     },
-    
   },
   methods: {
     async confirmAndSave() {
