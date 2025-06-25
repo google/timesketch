@@ -391,9 +391,7 @@ class LogAnalyzer(LLMFeatureInterface):
                             current_priority_level = label_str.split("_")[-1]
                             break
                     new_priority_score = PRIORITY_MAP.get(priority_value, 0)
-                    current_priority_score = PRIORITY_MAP.get(
-                        current_priority_level, 0
-                    )
+                    current_priority_score = PRIORITY_MAP.get(current_priority_level, 0)
                     if new_priority_score > current_priority_score:
                         if current_priority_level:
                             old_priority_label = (

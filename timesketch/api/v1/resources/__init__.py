@@ -253,7 +253,7 @@ class ResourceMixin:
     }
 
     label_fields = {
-        "name": fields.String,
+        "name": fields.String(attribute="label"),
         "user": fields.Nested(user_fields),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
@@ -302,6 +302,7 @@ class ResourceMixin:
         "conclusions": fields.List(fields.Nested(question_conclusion_fields)),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "labels": fields.List(fields.Nested(label_fields)),
     }
 
     facet_fields = {
