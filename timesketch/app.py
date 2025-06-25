@@ -61,7 +61,7 @@ def create_app(
         static_folder = "frontend/dist"
     elif v3_ui:
         template_folder = "frontend-v3/dist"
-        static_folder = "frontend-v3/dist"
+        static_folder = "frontend-v3/dist/assets"
     else:
         template_folder = "frontend-ng/dist"
         static_folder = "frontend-ng/dist"
