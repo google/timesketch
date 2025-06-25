@@ -32,6 +32,16 @@ limitations under the License.
         <p class="font-weight-medium" >{{index}} : {{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center">
+        <v-chip
+          v-if="priority"
+          :color="priorityColor"
+          size="small"
+          label
+          class="text-capitalize"
+          :title="`Priority: ${priority}`"
+        >
+          {{ priority }}
+        </v-chip>
         <v-icon
           icon="mdi-check-circle"
           v-if="isApproved"
@@ -57,6 +67,7 @@ export default {
     id: Number,
     user: Object,
     index: Number,
+    labels: Array,
   },
   data() {
     return {
@@ -97,6 +108,32 @@ export default {
         "px-4 py-8": true,
         "border-right-md": true,
       };
+    },
+    priority() {
+      if (!this.labels || !Array.isArray(this.labels)) {
+        return null;
+      }
+      const priorityPrefix = "__ts_priority_";
+      const priorityLabel = this.labels.find((label) =>
+        label.name.startsWith(priorityPrefix)
+      );
+
+      return priorityLabel
+        ? priorityLabel.name.replace(priorityPrefix, "")
+        : null;
+    },
+    priorityColor() {
+      if (!this.priority) return "grey";
+      switch (this.priority.toLowerCase()) {
+        case "high":
+          return "error";
+        case "medium":
+          return "warning";
+        case "low":
+          return "info";
+        default:
+          return "grey-lighten-1";
+      }
     },
   },
 };

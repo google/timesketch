@@ -69,6 +69,7 @@ limitations under the License.
             :conclusionId="conclusion.id"
           />
           <v-btn
+            v-if="!conclusion.automated"
             size="small"
             variant="text"
             depressed

@@ -56,6 +56,7 @@ limitations under the License.
       :reportLocked="reportLocked"
       v-bind="question"
       :index="index + 1"
+      :label="question.labels"
     />
   </v-list>
   <v-dialog

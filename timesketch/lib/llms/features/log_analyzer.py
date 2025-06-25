@@ -40,7 +40,6 @@ class LogAnalyzer(LLMFeatureInterface):
     LogAnalyzer feature for automated log analysis using LLMs via an
     external service. It prepares a stream of logs, processes a stream
     of findings, and creates/commits DFIQ objects in Timesketch.
-
     This feature always processes ALL events within the active timelines of a sketch.
     """
 
@@ -252,6 +251,7 @@ class LogAnalyzer(LLMFeatureInterface):
                             "message": "...", "linked_event_id": "..."}
         """
         sketch = kwargs.get("sketch")
+        PRIORITY_MAP = {"low": 1, "medium": 2, "high": 3}
 
         if not isinstance(llm_response, dict):
             logger.error(
@@ -374,6 +374,34 @@ class LogAnalyzer(LLMFeatureInterface):
             )
             if not question.display_name:
                 question.display_name = cleaned_question_text
+
+            priority_value = ann_data.get("priority")
+            if priority_value and isinstance(priority_value, str):
+                priority_value = priority_value.lower()
+                if priority_value not in PRIORITY_MAP:
+                    self._errors_encountered.append(
+                        f"Unknown priority value for event {original_ts_event_id}:"
+                        f" question={question_text},"
+                        f" priority={priority_value}"
+                    )
+                else:
+                    current_priority_level = None
+                    for label_str in question.get_labels:
+                        if label_str.startswith("__ts_priority_"):
+                            current_priority_level = label_str.split("_")[-1]
+                            break
+                    new_priority_score = PRIORITY_MAP.get(priority_value, 0)
+                    current_priority_score = PRIORITY_MAP.get(
+                        current_priority_level, 0
+                    )
+                    if new_priority_score > current_priority_score:
+                        if current_priority_level:
+                            old_priority_label = (
+                                f"__ts_priority_{current_priority_level}"
+                            )
+                            question.remove_label(old_priority_label)
+                        new_priority_label = f"__ts_priority_{priority_value}"
+                        question.add_label(new_priority_label)
 
             questions_created_this_finding += 1
             question.add_attribute("source", "AI_GENERATED")
