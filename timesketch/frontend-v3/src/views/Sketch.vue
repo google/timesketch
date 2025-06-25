@@ -23,7 +23,7 @@ limitations under the License.
       <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" class="fill-height" fluid>
         <v-row align="center" justify="center" class="text-center">
           <v-sheet class="pa-4" style="background: transparent">
-              <v-img src="/empty-state.png" max-height="100" max-width="300"></v-img>
+              <v-img src="/assets/empty-state.png" max-height="100" max-width="300"></v-img>
               <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
               <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
           </v-sheet>
@@ -34,7 +34,7 @@ limitations under the License.
       <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4 text-center">
-              <v-img src="/empty-state.png" max-height="100" max-width="300"></v-img>
+              <v-img src="/assets/empty-state.png" max-height="100" max-width="300"></v-img>
               <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
               <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
           </v-sheet>
@@ -76,7 +76,7 @@ limitations under the License.
         </v-btn>
 
         <v-img
-          src="/timesketch-color.png"
+          src="/assets/timesketch-color.png"
           width="25"
           height="25"
           class="mt-1 flex-sm-0-0 mr-1 ml-1"
