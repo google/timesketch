@@ -303,6 +303,7 @@ class ResourceMixin:
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
         "labels": fields.List(fields.Nested(label_fields)),
+        "status": fields.Nested(status_fields, attribute="get_status"),
     }
 
     facet_fields = {

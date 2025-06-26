@@ -436,6 +436,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
                     db_session.add(new_conclusion)
                     conclusions_created_this_finding += 1
+                    question.set_status("pending-review")
 
         try:
             db_session.commit()
