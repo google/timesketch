@@ -121,7 +121,21 @@ limitations under the License.
         <SummarySection :reportLocked="reportLocked" />
       </form>
       <div class="px-6" v-if="questionsTotal">
-        <h3 class="text-h6 font-weight-bold mb-5">Key Findings</h3>
+        <div class="d-flex justify-space-between align-center mb-5">
+          <h3 class="text-h6 font-weight-bold">Key Findings</h3>
+          <v-btn
+            v-if="isSynthesizeAvailable"
+            variant="text"
+            size="small"
+            color="primary"
+            @click="synthesizeAllMissingAnswers"
+            :loading="isSynthesizingAll"
+            :disabled="!canSynthesizeAll"
+          >
+            <v-icon left>mdi-creation</v-icon>
+            Fill-in missing answers
+          </v-btn>
+        </div>
         <ol class="questions-list">
           <KeyFindingItem
             v-for="(question, index) in sortedQuestions"
@@ -151,6 +165,8 @@ import { debounce } from "lodash";
 import SummarySection from "./SummarySection.vue";
 import dayjs from "dayjs";
 import generatePdf from "../_utils/pdf-generator";
+import RestApiClient from "@/utils/RestApiClient";
+
 export default {
   inject: ["runLogAnalysis", "isGeneratingReport"],
   props: {
@@ -165,6 +181,7 @@ export default {
     return {
       store,
       showConfirmationModal: false,
+      isSynthesizingAll: false,
     };
   },
   computed: {
@@ -179,6 +196,9 @@ export default {
     },
     name: {
       get: function () {
+        if (!this.store.report?.content?.name) {
+          return this.store.sketch.name;
+        }
         return this.store.report?.content?.name;
       },
       set: function (value) {
@@ -200,8 +220,74 @@ export default {
       }
       return [...this.questions].sort((a, b) => a.id - b.id);
     },
+    isSynthesizeAvailable() {
+      if (
+        this.store.systemSettings.LLM_FEATURES_AVAILABLE?.llm_synthesize === true ||
+        this.store.systemSettings.LLM_FEATURES_AVAILABLE?.default === true
+      ){
+        return true
+      }
+      return false
+    },
+    questionsWithoutAnswers() {
+      const answeredQuestionIds = new Set(
+        (this.store.report?.content?.conclusionSummaries || []).map(s => s.questionId)
+      );
+      return this.sortedQuestions.filter(q => !answeredQuestionIds.has(q.id));
+    },
+    canSynthesizeAll() {
+      return this.isSynthesizeAvailable && this.questionsWithoutAnswers.length > 0 && !this.isSynthesizingAll && !this.isGeneratingReport;
+    },
   },
   methods: {
+    async synthesizeAllMissingAnswers() {
+      const questionsToProcess = this.questionsWithoutAnswers;
+      if (questionsToProcess.length === 0) {
+        console.error("All questions already have an answer.")
+        return;
+      }
+      this.isSynthesizingAll = true;
+      const sketchId = this.store.sketch.id;
+      let successfulCount = 0;
+      let failedCount = 0;
+
+      for (const question of questionsToProcess) {
+        try {
+          const response = await RestApiClient.llmRequest(
+            sketchId,
+            "llm_synthesize",
+            { question_id: question.id }
+          );
+          const answer = response.data.response;
+
+          const newSummary = {
+            questionId: question.id,
+            timestamp: dayjs(),
+            value: answer,
+            user: "<AI>",
+          };
+
+          const existingSummaries = this.store.report?.content?.conclusionSummaries || [];
+
+          await this.store.updateReport({
+            conclusionSummaries: [newSummary, ...existingSummaries],
+          });
+          successfulCount++;
+
+        } catch (error) {
+          failedCount++;
+          console.error(`Failed to synthesize answer for question ${question.id}:`, error);
+        }
+      }
+
+      if (failedCount > 0) {
+        console.error(`Synthesized ${successfulCount} answers, but ${failedCount} failed.`)
+      } else {
+        console.log(`Successfully synthesized answers for ${successfulCount} questions.`)
+      }
+
+      this.isSynthesizingAll = false;
+    },
     toggleShowConfirmationModal() {
       this.showConfirmationModal = !this.showConfirmationModal;
     },

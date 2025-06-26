@@ -35,7 +35,7 @@ limitations under the License.
     <form @submit.prevent="submitSummary()">
       <div class="position-relative">
         <div
-          v-if="isSavingSummary"
+          v-if="isSavingSummary || isSynthesizing"
           class="summary-loader position-absolute top-0 left-0 d-flex align-center justify-center w-100 fill-height"
         >
           <v-progress-circular
@@ -57,17 +57,34 @@ limitations under the License.
         ></v-textarea>
       </div>
       <div class="d-flex justify-space-between align-center">
-        <v-btn
-          variant="text"
-          size="small"
-          color="primary"
-          type="submit"
-          :disabled="cannotUpdateSummary"
-          class="text-uppercase"
-        >
-          <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
-          Save</v-btn
-        >
+        <div>
+          <v-btn
+            variant="text"
+            size="small"
+            color="primary"
+            type="submit"
+            :disabled="cannotUpdateSummary"
+            class="text-uppercase"
+            title="Save your answer for this question."
+          >
+            <v-icon icon="mdi-tray-arrow-up" class="mr-2" left small />
+            Save</v-btn
+          >
+          <v-btn
+            v-if="isSynthesizeAvailable"
+            variant="text"
+            size="small"
+            color="primary"
+            @click="handleSynthesizeClick"
+            :loading="isSynthesizing"
+            :disabled="isTextareaDisabled"
+            class="text-uppercase ml-2"
+            title="Generate a new answer using AI based on the latest conclusions."
+          >
+            <v-icon icon="mdi-creation" class="mr-2" left small />
+            Summarize Conclusions
+          </v-btn>
+        </div>
 
         <time class="font-italic text-body-2" v-if="lastUpdated">
           Last updated {{ lastUpdated }}
@@ -94,6 +111,7 @@ import { useAppStore } from "@/stores/app";
 import dayjs from "dayjs";
 import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
 import { formatDate } from "@/utils/TimeDate";
+import RestApiClient from "@/utils/RestApiClient";
 
 export default {
   props: {
@@ -102,27 +120,40 @@ export default {
   },
   data() {
     return {
-      store:  useAppStore(),
+      store: useAppStore(),
       showSummaryHistoryModal: false,
       isSavingSummary: false,
+      isSynthesizing: false,
       summary: "",
     };
   },
   mounted() {
     if (!this.summaries || this.summaries.length < 1) {
-      this.summary = this.conclusionSummary;
+      if (this.isSynthesizeAvailable) {
+        this.fetchSynthesizedAnswer();
+      } else {
+        this.summary = "<Please add or review the conclusions and provide your answer to the question here>";
+      }
     } else {
       this.summary = this.summaries?.[0]?.value;
     }
   },
   computed: {
-    conclusionSummary() {
-      return this.question.conclusions?.map(({ conclusion }) => conclusion).join("'\n \r'")
+    isSynthesizeAvailable() {
+      if (
+        this.store.systemSettings.LLM_FEATURES_AVAILABLE?.llm_synthesize === true ||
+        this.store.systemSettings.LLM_FEATURES_AVAILABLE?.default === true
+      ){
+        return true
+      }
+      return false
     },
     summaries() {
-      return this.store.report?.content?.conclusionSummaries?.filter(
-        ({ questionId }) => questionId === this.question.id
-      ) ?? [];
+      return (
+        this.store.report?.content?.conclusionSummaries?.filter(
+          ({ questionId }) => questionId === this.question.id
+        ) ?? []
+      );
     },
     latestSummary() {
       return this.summaries[0];
@@ -133,10 +164,8 @@ export default {
       }
 
       return `${formatDate(this.latestSummary.timestamp)}${
-        this.latestSummary.user
-          ? ` by
-      ${this.latestSummary.user}`
-          : null
+        this.latestSummary.user ? ` by
+      ${this.latestSummary.user}` : null
       }`;
     },
     cannotUpdateSummary() {
@@ -144,6 +173,7 @@ export default {
 
       return (
         this.isSavingSummary ||
+        this.isSynthesizing ||
         this.reportLocked ||
         !this.summary ||
         savedSummary === this.summary
@@ -152,7 +182,8 @@ export default {
     isTextareaDisabled() {
       return (
         this.reportLocked ||
-        this.store.approvedReportQuestions.includes(this.question.id)
+        this.store.approvedReportQuestions.includes(this.question.id) ||
+        this.isSynthesizing
       );
     },
   },
@@ -161,7 +192,28 @@ export default {
     toggleShowSummaryHistoryModal() {
       this.showSummaryHistoryModal = !this.showSummaryHistoryModal;
     },
-    async submitSummary() {
+    async handleSynthesizeClick() {
+      await this.fetchSynthesizedAnswer();
+    },
+    async fetchSynthesizedAnswer() {
+      this.isSynthesizing = true;
+      try {
+        const response = await RestApiClient.llmRequest(
+          this.store.sketch.id,
+          "llm_synthesize",
+          { question_id: this.question.id }
+        );
+        this.summary = response.data.response;
+        await this.submitSummary('<AI>');
+      } catch (e) {
+        console.error("Error synthesizing answer:", e);
+        this.summary =
+          "Failed to generate an answer. Please check the conclusions and logs and try again.";
+      } finally {
+        this.isSynthesizing = false;
+      }
+    },
+    async submitSummary(user) {
       try {
         this.isSavingSummary = true;
 
@@ -175,7 +227,7 @@ export default {
               questionId: this.question.id,
               timestamp: dayjs(),
               value: this.summary,
-              user: this.store.currentUser,
+              user: user ? user : this.store.currentUser,
             },
             ...(this.store.report.content.conclusionSummaries || []),
           ],

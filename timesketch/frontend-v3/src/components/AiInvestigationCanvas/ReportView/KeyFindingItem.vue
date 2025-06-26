@@ -28,17 +28,23 @@ limitations under the License.
 
     <!-- If a custom summary exists, show it -->
     <div v-if="latestConclusionSummary" class="my-4 ml-4">
-      <p class="conclusion-summary">{{ latestConclusionSummary }}</p>
+      <div class="conclusion-summary" v-html="renderedSummary"></div>
     </div>
-    <!-- Otherwise, fall back to the list of individual conclusions -->
-    <ul
-      class="my-4 ml-4"
-      v-else-if="question.conclusions && question.conclusions.length > 0"
-    >
-      <li v-for="conclusion in question.conclusions" :key="conclusion.id">
-        <p>{{ conclusion.conclusion }}</p>
-      </li>
-    </ul>
+    <!-- Otherwise, fall back to a call to action to review the question -->
+    <div v-else class="my-4 ml-4 font-italic text-body-2">
+      <p v-if="question.conclusions && question.conclusions.length > 0">
+        TODO: No answer has been provided for this question yet.
+        <a href="#" @click.prevent="setActiveQuestion">
+          Review the conclusions and add your answer.
+        </a>
+      </p>
+      <p v-else>
+        TODO: No answer has been provided for this question yet.
+        <a href="#" @click.prevent="setActiveQuestion">
+          Add your conclusion and answer to this question.
+        </a>
+      </p>
+    </div>
     <QuestionActionsStrip
       :question="question"
       :reportLocked="reportLocked"
@@ -50,6 +56,8 @@ limitations under the License.
 
 <script>
 import { useAppStore } from "@/stores/app";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 export default {
   props: { question: Object, index: Number, reportLocked: Boolean },
@@ -74,6 +82,18 @@ export default {
       );
       // New summaries are prepended, so the latest is at index 0.
       return summaries?.[0]?.value || null;
+    },
+    renderedSummary() {
+      if (this.latestConclusionSummary) {
+        const unsafeHtml = marked(this.latestConclusionSummary);
+        return DOMPurify.sanitize(unsafeHtml);
+      }
+      return "";
+    },
+  },
+  methods: {
+    setActiveQuestion() {
+      this.store.setActiveQuestion(this.question);
     },
   },
 };
@@ -107,6 +127,25 @@ export default {
 }
 
 .conclusion-summary {
-  white-space: pre-line;
+  line-height: 1.5;
+}
+
+/* Deep selectors to style the content rendered by v-html */
+.conclusion-summary :deep(p) {
+  margin-bottom: 1em;
+}
+.conclusion-summary :deep(ul),
+.conclusion-summary :deep(ol) {
+  padding-left: 2em;
+  margin-bottom: 1em;
+}
+.conclusion-summary :deep(li) {
+  margin-bottom: 0.5em;
+}
+.conclusion-summary :deep(code) {
+  background-color: #f0f0f0;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
 }
 </style>
