@@ -115,7 +115,7 @@ limitations under the License.
           <p class="font-weight-bold">Progress</p>
           <p>
             {{ completedQuestionsTotal }} / {{ questionsTotal }} questions
-            verified
+            answered
           </p>
         </div>
         <SummarySection :reportLocked="reportLocked" />
@@ -132,8 +132,8 @@ limitations under the License.
             :loading="isSynthesizingAll"
             :disabled="!canSynthesizeAll"
           >
-            <v-icon left>mdi-creation</v-icon>
-            Fill-in missing answers
+            <v-icon left class="mr-2">mdi-creation</v-icon>
+            Create draft answers
           </v-btn>
         </div>
         <ol class="questions-list">

@@ -30,19 +30,11 @@ limitations under the License.
         >View Result Details <v-icon icon="mdi-arrow-right" class="ml-2" small
       /></v-btn>
 
-      <p v-else class="font-weight-medium mb-1">
+      <!-- <p v-else class="font-weight-medium mb-1">
         Would you like to save the results to the report?
-      </p>
+      </p> -->
     </v-card-item>
-
     <v-card-actions>
-      <v-btn
-        :disabled="reportLocked"
-        @click="confirmRemoveQuestion(question.id)"
-        :color="textColor"
-        size="small"
-        >Question not relevant</v-btn
-      >
       <v-btn
         variant="flat"
         :color="textColor"
@@ -50,8 +42,17 @@ limitations under the License.
         :disabled="reportLocked || isApproved"
         size="small"
       >
-        {{ isApproved ? "Verified" : "Verify &amp; Save" }}
+        Verify Question
       </v-btn>
+      <v-btn
+        :disabled="reportLocked"
+        @click="confirmRemoveQuestion(question.id)"
+        :color="textColor"
+        size="small"
+        title="Mark this question as not relevant"
+        >mark as not relevant</v-btn
+      >
+
     </v-card-actions>
   </v-card>
 </template>

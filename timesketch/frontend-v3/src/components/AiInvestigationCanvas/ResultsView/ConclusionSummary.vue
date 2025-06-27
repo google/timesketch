@@ -82,7 +82,7 @@ limitations under the License.
             title="Generate a new answer using AI based on the latest conclusions."
           >
             <v-icon icon="mdi-creation" class="mr-2" left small />
-            Summarize Conclusions
+            Regenerate Draft Answer
           </v-btn>
         </div>
 

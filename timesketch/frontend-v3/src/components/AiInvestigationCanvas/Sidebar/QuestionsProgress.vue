@@ -47,7 +47,7 @@ limitations under the License.
           <span class="font-weight-bold"
             >{{ completedQuestionsTotal }}/{{ questionsTotal }}</span
           >
-          questions verified
+          questions answered
         </p>
       </div>
       <v-progress-linear
