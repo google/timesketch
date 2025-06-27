@@ -133,7 +133,7 @@ limitations under the License.
             :disabled="!canSynthesizeAll"
           >
             <v-icon left class="mr-2">mdi-creation</v-icon>
-            Create draft answers
+            Generate draft answers
           </v-btn>
         </div>
         <ol class="questions-list">
