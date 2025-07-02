@@ -67,6 +67,8 @@ import { useRoute } from "vue-router";
 import Sidebar from "./Sidebar";
 import RestApiClient from "@/utils/RestApiClient";
 import ResultsViewLoader from "./Loaders/ResultsViewLoader.vue";
+import LLMAnalyzerService from "./_utils/LLMAnalyzerService";
+
 export default {
   data() {
     return {
@@ -77,59 +79,52 @@ export default {
       conclusionId: null,
       questions: [],
       showEventLog: false,
-      pollingInterval: null,
       isGeneratingReport: false,
+      analyzerService: null,
     };
   },
   created() {
-    this.$watch(() => this.route.params.id, this.fetchData, {
+    this.$watch(() => this.route.params.id, this.initializeComponent, {
       immediate: true,
     });
   },
+  beforeUnmount() {
+    // Clean up the polling when the component is destroyed
+    if (this.analyzerService) {
+        this.analyzerService.stopPolling();
+    }
+  },
   methods: {
-    async runLogAnalysis() {
-      if (this.questions.length === 0) {
-        this.isLoading = true;
-      }
-      this.isGeneratingReport = true;
+    async initializeComponent() {
+      this.analyzerService = new LLMAnalyzerService(this.store.sketch.id, this.store);
+      await this.fetchData();
+      this.checkAndResumePolling();
+    },
 
+    async checkAndResumePolling() {
+      const isRunning = await this.analyzerService.isActive();
+      if (isRunning) {
+        this.isGeneratingReport = true;
+        this.analyzerService._startPolling(
+            () => { this.isGeneratingReport = false; this.fetchData(false); },
+            () => { this.fetchData(false); }
+        );
+      }
+    },
+
+    async runLogAnalysis() {
+      this.isGeneratingReport = true;
       if (this.store.report?.content?.removedQuestions?.length > 0) {
         await this.store.updateReport({ removedQuestions: [] });
       }
-
-      this.store.setNotification({
-        text: 'AI analysis has started. Findings will appear as they are discovered.',
-        icon: 'mdi-clock-start',
-        type: 'info',
-      });
-      const analysisPromise = RestApiClient.llmRequest(this.store.sketch.id, 'log_analyzer');
-      setTimeout(() => {
-        this.isLoading = false;
-        if (this.pollingInterval) clearInterval(this.pollingInterval);
-        this.pollingInterval = setInterval(() => {
-          this.fetchData(false);
-        }, 5000);
-      }, 1000)
-      analysisPromise.then(() => {
-        this.store.setNotification({
-          text: 'AI analysis complete. All questions have been generated.',
-          icon: 'mdi-check-circle-outline',
-          type: 'success',
-        });
-      }).catch(error => {
-        this.store.setNotification({
-          text: 'An error occurred during AI analysis. Please check the logs.',
-          icon: 'mdi-alert-circle-outline',
-          type: 'error',
-        });
-        console.error('Error running log analyzer:', error);
-      }).finally(() => {
-        if (this.pollingInterval) clearInterval(this.pollingInterval);
-        this.pollingInterval = null;
-        this.isGeneratingReport = false;
-        this.fetchData(true);
-      });
+      this.analyzerService.startAnalysis(
+          // onComplete callback
+          () => { this.isGeneratingReport = false; this.fetchData(false); },
+          // onUpdate callback
+          () => { this.fetchData(false); }
+      );
     },
+
     async deleteAllQuestions() {
       if (!this.filteredQuestions.length) {
         this.store.setNotification({ text: 'There are no questions to remove.', type: 'info' });
@@ -137,7 +132,6 @@ export default {
       }
       this.isLoading = true;
       try {
-        // 2. FIX: Get IDs from the list the user sees.
         const allQuestionIds = this.filteredQuestions.map(q => q.id);
 
         await this.store.updateReport({
@@ -183,7 +177,6 @@ export default {
             RestApiClient.getStoryList(this.store.sketch.id),
           ]);
 
-        // This check was slightly incorrect, it should be .length
         if (!storyList.value.data.objects[0] || storyList.value.data.objects[0].length < 1) {
           const reportResponse = await RestApiClient.createStory(
             "ai-report",
@@ -316,7 +309,6 @@ export default {
       return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
-      // Logic correction: Should check approvedQuestions
       return this.filteredQuestions?.filter(({id}) => this.store.report?.content?.approvedQuestions?.includes(id)).length || 0
     },
     sketchId() {
