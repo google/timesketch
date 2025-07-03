@@ -25,10 +25,18 @@ limitations under the License.
         :sketchId="sketchId"
         @close-detail-popup="toggleShowLogDetail()"
       />
-        <v-btn variant="text" @click="toggleShowLogDetail()" :disabled="isLoading || !eventData || error">
+        <v-btn variant="text" @click="toggleShowLogDetail()" :disabled="isLoading || !eventData || error" title="Show event details">
           <v-icon left small icon="mdi-file-code-outline" />
         </v-btn>
       </div>
+      <v-btn
+        variant="text"
+        @click="triggerContextSearch"
+        :disabled="isLoading || !eventData || error"
+        title="Context search for this event"
+      >
+        <v-icon small icon="mdi-magnify-plus-outline" />
+      </v-btn>
       <RemoveEventPopup :fact="fact" :conclusionId="conclusionId" />
     </div>
   </td>
@@ -55,6 +63,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '@/utils/RestApiClient'
+import EventBus from '@/event-bus'
 
 export default {
   props: {
@@ -80,6 +89,15 @@ export default {
     };
   },
   methods: {
+    triggerContextSearch() {
+      if (!this.eventData) return
+      const fullEventObject = {
+        _id: this.fact.document_id,
+        _index: this.fact.searchindex_name,
+        _source: this.eventData,
+      }
+      EventBus.$emit('showContextWindow', fullEventObject)
+    },
     toggleShowLogDetail() {
       if (this.eventData && !this.error) {
         this.showLogDetail = !this.showLogDetail;
