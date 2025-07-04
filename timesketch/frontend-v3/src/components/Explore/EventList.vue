@@ -152,6 +152,7 @@ limitations under the License.
         fixed-header
       > -->
       <v-data-table-server
+        v-model="selectedEventIds"
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
         :items="eventList.objects"
@@ -180,7 +181,7 @@ limitations under the License.
       >
         <template v-slot:top="{ pagination, options, updateOptions }">
           <v-toolbar dense flat color="transparent">
-            <div v-if="!selectedEvents.length">
+            <div v-if="!selectedEventIds.length">
               <span style="display: inline-block; min-width: 200px">
                 {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{
                   totalTime
@@ -325,6 +326,18 @@ limitations under the License.
                 <v-icon left color="amber">mdi-star</v-icon>
                 Toggle star
               </v-btn>
+
+                <v-menu v-model="showEventTagMenu" offset-x :close-on-content-click="false">
+                  <template v-slot:activator="{ props }">
+                    <v-btn x-small outlined v-bind="props">
+                      <v-icon left>mdi-tag-plus-outline</v-icon>
+                      Modify Tags
+                    </v-btn>
+                  </template>
+
+                  <ts-event-tag-dialog :events="selectedEvents" @close="showEventTagMenu = false"></ts-event-tag-dialog>
+
+                </v-menu>
             </div>
 
             <v-spacer></v-spacer>
@@ -565,6 +578,7 @@ import TsEventDetail from "./EventDetail.vue";
 import TsEventTagMenu from "./EventTagMenu.vue";
 import TsEventTags from "./EventTags.vue";
 import TsEventActionMenu from "./EventActionMenu.vue";
+import TsEventTagDialog from "./EventTagDialog.vue";
 
 const defaultQueryFilter = () => {
   return {
@@ -595,6 +609,7 @@ export default {
     TsEventTags,
     TsEventActionMenu,
     TsBarChart,
+    TsEventTagDialog,
   },
   props: {
     queryRequest: {
@@ -632,6 +647,7 @@ export default {
   },
   data() {
     return {
+      showEventTagMenu: false,
       appStore: useAppStore(),
       columnHeaders: [
         {
@@ -666,7 +682,7 @@ export default {
       },
       currentQueryString: "",
       currentQueryFilter: defaultQueryFilter(),
-      selectedEvents: [],
+      selectedEventIds: [],
       displayOptions: {
         isCompact: false,
         showTags: true,
@@ -685,6 +701,11 @@ export default {
       const totalEvents = this.eventList.meta.summary_event_count;
       const uniqueEvents = this.eventList.meta.summary_unique_event_count;
       return `[experimental] This summary is based on the message field on your current page (${totalEvents} rows, ${uniqueEvents} unique message fields).`;
+    },
+    selectedEvents() {
+      return this.selectedEventIds.map(id => {
+        return this.eventList.objects.find(o => o._id === id);
+      });
     },
     sketch() {
       return this.appStore.sketch;
@@ -965,7 +986,7 @@ export default {
       }
 
       this.searchInProgress = true;
-      this.selectedEvents = [];
+      this.selectedEventIds = [];
       this.eventList = emptyEventList();
 
       if (resetPagination) {
@@ -1227,7 +1248,7 @@ export default {
             label: "__ts_star",
             num: netStarCountChange,
           });
-          this.selectedEvents = [];
+          this.selectedEventIds = [];
         })
         .catch((e) => {});
     },
