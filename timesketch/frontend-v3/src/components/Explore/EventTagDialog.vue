@@ -30,7 +30,10 @@ limitations under the License.
           @click="addTags(tag.tag)"
           @click.stop="$emit('close')"
           title="Add quick tag"
-          :style="'color: ' + tag.textColor + ';' + 'background-color: ' + tag.color"
+          :style="{
+            color: tag.textColor,
+            backgroundColor: tag.color
+          }"
         >
           <v-icon small left> {{ tag.label }} </v-icon>
           {{ tag.tag }}
@@ -41,15 +44,16 @@ limitations under the License.
         <v-chip
           v-for="tag in assignedTags"
           :key="tag"
-          :color="getQuickTag(tag) ? getQuickTag(tag).color : ''"
-          :text-color="getQuickTag(tag) ? getQuickTag(tag).textColor : ''"
           class="text-center"
           :closable="true"
           small
           close
           @click:close="removeTags(tag)"
           title="Remove "
-          :style="'color: ' + (getQuickTag(tag) ? getQuickTag(tag).textColor : '') + ';' + 'background-color: ' + (getQuickTag(tag) ? getQuickTag(tag).color : '')"
+          :style="{
+            color: getQuickTag(tag) ? getQuickTag(tag).textColor : '',
+            backgroundColor: getQuickTag(tag) ? getQuickTag(tag).color : '',
+          }"
         >
           <v-icon v-if="getQuickTag(tag)" small left>{{ getQuickTag(tag).label }}</v-icon>
           {{ tag }}
