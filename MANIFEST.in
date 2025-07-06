@@ -7,6 +7,7 @@ recursive-include config *
 recursive-include data *
 recursive-include timesketch/frontend/dist *
 recursive-include timesketch/frontend-ng/dist *
+recursive-include timesketch/frontend-v3/dist *
 recursive-include timesketch/lib/experimental *.cql
 recursive-include timesketch/static *
 recursive-include timesketch/templates *
