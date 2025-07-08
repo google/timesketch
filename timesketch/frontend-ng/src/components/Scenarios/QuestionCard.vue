@@ -195,8 +195,7 @@ limitations under the License.
                       ></ts-search-chip>
                     </div>
                   </div>
-
-                  <div class="mt-1" v-if="userSettings.generateQuery && systemSettings.LLM_PROVIDER">
+                  <div class="mt-1" v-if="userSettings.generateQuery && systemSettings.LLM_FEATURES_AVAILABLE && systemSettings.LLM_FEATURES_AVAILABLE.nl2q">
                     <div v-if="suggestedQueryLoading" class="pa-2 pl-4">
                       <v-skeleton-loader type="sentences" width="200"></v-skeleton-loader>
                     </div>
@@ -519,7 +518,7 @@ export default {
       this.suggestedQuery = {}
 
       // Set active tab
-     if (this.userSettings.generateQuery && this.systemSettings.LLM_PROVIDER) {
+     if (this.userSettings.generateQuery && this.systemSettings.LLM_FEATURES_AVAILABLE && this.systemSettings.LLM_FEATURES_AVAILABLE.nl2q) {
        if (this.activeQuestion.conclusions.length) {
          this.activeTab = 2
        } else {
