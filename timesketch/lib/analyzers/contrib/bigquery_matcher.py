@@ -48,7 +48,7 @@ class BigQueryMatcherPlugin(interface.BaseAnalyzer):
         """
         bq_config = interface.get_yaml_config("bigquery_matcher.yaml")
         if not bq_config:
-            logger.error("BigQuery Matcher could not load configuration file.")
+            logger.debug("BigQuery Matcher configuration file not found or empty.")
             return []
 
         matcher_kwargs = [
