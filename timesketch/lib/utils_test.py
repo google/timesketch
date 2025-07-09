@@ -323,6 +323,44 @@ class TestUtils(BaseTest):
         self.assertIn("2024-07-24T10:57:02.877297+00:00", str(results_list))
         self.assertIn("timestamptest2", str(results_list))
 
+    def test_csv_with_timestamp_in_datetime_field(self):
+        """Test parsing a CSV where the datetime column contains a timestamp."""
+        data_generator = read_and_validate_csv(
+            "tests/test_events/csv_timestamp_as_datetime.csv"
+        )
+        results = list(data_generator)
+
+        expected_output_1 = {
+            "datetime": "2024-08-12T15:03:14.349345+00:00",
+            "uid": "mustermann",
+            "tool": "exampletool",
+            "message": "PageView",
+            "event_type": "foobar",
+            "organization_name": "example.my.org.com",
+            "timestamp_desc": "<URL placeholder>",
+            "unique_id": "DETAILED DATA",
+            "timestamp": 1723474994349345,
+        }
+
+        expected_output_2 = {
+            "datetime": "2025-06-30T19:50:29.117113+00:00",
+            "uid": "jondoe",
+            "tool": "exampletool",
+            "message": "PageView",
+            "event_type": "foobar",
+            "organization_name": "example.my.org.com",
+            "timestamp_desc": "<URL placeholder>",
+            "unique_id": "DETAILED DATA",
+            "timestamp": 1751313029117113,
+        }
+
+        self.assertEqual(len(results), 4)
+        self.assertDictEqual(results[0], expected_output_1)
+        self.assertDictEqual(results[1], expected_output_2)
+
+    def test_csv_time_validation(self):
+        """Test for a specific parsing error"""
+
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
