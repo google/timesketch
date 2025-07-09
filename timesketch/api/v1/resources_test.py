@@ -278,7 +278,7 @@ class SketchResourceTest(BaseTest):
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
         response = self.client.delete(f"/api/v1/sketches/{created_id}/")
-        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
 
 
 class ViewListResourceTest(BaseTest):
