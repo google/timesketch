@@ -4,7 +4,9 @@ hide:
 ---
 # Upgrade an existing installation
 
-When upgrading Timesketch you might need to migrate the database to use the latest database schema. This is how you do that.
+When upgrading Timesketch you might need to migrate the database to use the latest database schema. This will be made clear within any release notifications.
+
+If a databse migration is required, then the following guide is how you do so:
 
 ## Backup you database (!)
 First you should backup your current database in case something goes wrong in the upgrade process. For PostgreSQL you do the following (Ref: https://www.postgresql.org/docs/9.1/static/backup.html):
@@ -66,7 +68,11 @@ root@<CONTAINER_ID>$ tsctl db upgrade
 ```
 
 ## Upgrade timesketch
-Exit from the container (CTRL-D), then pull new versions of the docker images and upgrade Timesketch:
+If upgrading the database then exit from the container (CTRL-D).
+The current version of timesketch is defined within the config.env file located within the parent directory of the timesketch installation.
+Simply amend the TIMESKETCH_VERSION= to the one required and upgrading to.
+
+In order to pull new versions of the docker images and upgrade Timesketch:
 
 ```shell
 $ docker compose pull
