@@ -358,9 +358,6 @@ class TestUtils(BaseTest):
         self.assertDictEqual(results[0], expected_output_1)
         self.assertDictEqual(results[1], expected_output_2)
 
-    def test_csv_time_validation(self):
-        """Test for a specific parsing error"""
-
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
