@@ -198,7 +198,8 @@ level: high
         found_test_user = False
         found_admin_user = False
 
-        # Convert the iterable of user objects into a set of usernames for efficient lookup
+        # Convert the iterable of user objects into a set of usernames
+        # for efficient lookup
         user_usernames = {user.username for user in users}
 
         if "test" in user_usernames:
@@ -410,7 +411,7 @@ level: high
             with self.assertions.assertRaises(RuntimeError):
                 # The .name attribute access will trigger the API call
                 # that then fails with 404 and raises RuntimeError.
-                self.api.get_sketch(sketch_id).name
+                self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
         finally:
             # Restore the original logging level regardless of test outcome
             api_client_logger.setLevel(original_level)
