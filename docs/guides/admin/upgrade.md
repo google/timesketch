@@ -75,7 +75,7 @@ Simply amend the TIMESKETCH_VERSION= to the one required and upgrading to.
 In order to pull new versions of the docker images and upgrade Timesketch:
 
 ```shell
-$ docker compose --env-file /opt/timesketch/shared/config.env -f /opt/timesketch/docker/docker-compose.yml pull
-$ docker compose --env-file /opt/timesketch/shared/config.env -f /opt/timesketch/docker/docker-compose.yml down
-$ docker compose --env-file /opt/timesketch/shared/config.env -f /opt/timesketch/docker/docker-compose.yml up -d
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml pull
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml down
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml up -d
 ```
