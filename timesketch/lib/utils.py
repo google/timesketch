@@ -279,8 +279,8 @@ def rename_csv_headers(chunk: pandas.DataFrame, headers_mapping: List):
 def read_and_validate_csv(
     file_handle: object,
     delimiter: str = ",",
-    mandatory_fields: Optional[List[str]] = None,
-    headers_mapping: Optional[List[dict]] = None,
+    mandatory_fields: List[str] = None,
+    headers_mapping: List[dict] = None,
 ):
     """Generator for reading and validating a CSV file, yielding event dictionaries.
 
