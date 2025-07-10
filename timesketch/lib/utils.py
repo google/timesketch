@@ -304,13 +304,25 @@ def read_and_validate_csv(
                 )
 
             try:
-                # Normalize datetime to ISO 8601 format if it's not the case.
-                # Lines with unrecognized datetime format will result in "NaT"
-                # (not available) as its value and the event row will be
-                # dropped in the next line
-                chunk["datetime"] = pandas.to_datetime(
-                    chunk["datetime"], format="mixed", errors="coerce", utc=True
-                )
+                # Handle case where 'datetime' column contains epoch timestamps.
+                if (
+                    "datetime" in chunk.columns
+                    and pandas.api.types.is_numeric_dtype(chunk["datetime"])
+                    and (chunk["datetime"].dropna() > 1e15).any()
+                ):
+                    # Attempt to convert from microseconds if values are large integers.
+                    # This is a heuristic based on the magnitude of the number.
+                    chunk["datetime"] = pandas.to_datetime(
+                        chunk["datetime"], unit="us", errors="coerce", utc=True
+                    )
+                else:
+                    # Normalize datetime to ISO 8601 format if it's not the case.
+                    # Lines with unrecognized datetime format will result in "NaT"
+                    # (not available) as its value and the event row will be
+                    # dropped in the next line.
+                    chunk["datetime"] = pandas.to_datetime(
+                        chunk["datetime"], format="mixed", errors="coerce", utc=True
+                    )
                 num_chunk_rows = chunk.shape[0]
 
                 chunk.dropna(subset=["datetime"], inplace=True)
