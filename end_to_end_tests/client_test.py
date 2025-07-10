@@ -21,7 +21,6 @@ import os
 import time
 
 from timesketch_api_client import search
-from requests.exceptions import HTTPError
 
 
 from . import interface
