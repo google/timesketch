@@ -417,7 +417,7 @@ class TimesketchApi:
                 if result:
                     return result
             except error.NotFoundError as e:
-                # Re-raise as RuntimeError to prevent retries for 404.
+                # This is immediately raised and not retried by the loop.
                 raise RuntimeError(f"Resource not found: {resource_url}") from e
             except RuntimeError as e:
                 if attempt >= self.DEFAULT_RETRY_COUNT:
