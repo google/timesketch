@@ -70,7 +70,7 @@ root@<CONTAINER_ID>$ tsctl db upgrade
 ## Upgrade timesketch
 If upgrading the database then exit from the container (CTRL-D).
 The current version of timesketch is defined within the `config.env` file located within the parent directory of the timesketch installation.
-Simply amend the TIMESKETCH_VERSION= to the one required and upgrading to.
+Simply amend the `TIMESKETCH_VERSION=` to the one required and upgrading to.
 
 In order to pull new versions of the docker images and upgrade Timesketch:
 
