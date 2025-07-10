@@ -69,13 +69,13 @@ root@<CONTAINER_ID>$ tsctl db upgrade
 
 ## Upgrade timesketch
 If upgrading the database then exit from the container (CTRL-D).
-The current version of timesketch is defined within the config.env file located within the parent directory of the timesketch installation.
+The current version of timesketch is defined within the `config.env` file located within the parent directory of the timesketch installation.
 Simply amend the TIMESKETCH_VERSION= to the one required and upgrading to.
 
 In order to pull new versions of the docker images and upgrade Timesketch:
 
 ```shell
-$ docker compose pull
-$ docker compose down
-$ docker compose up -d
+$ docker compose --env-file /opt/timesketch/shared/config.env -f /opt/timesketch/docker/docker-compose.yml pull
+$ docker compose --env-file /opt/timesketch/shared/config.env -f /opt/timesketch/docker/docker-compose.yml down
+$ docker compose --env-file /opt/timesketch/shared/config.env -f /opt/timesketch/docker/docker-compose.yml up -d
 ```
