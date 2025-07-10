@@ -85,9 +85,13 @@ def get_response_json(response, logger):
     Raises:
         RuntimeError: if the API returns an HTTP error.
         ValueError: if the API response cannot be JSON decoded.
+        NotFoundError: if the API returns a 404 HTTP error.
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
+        if response.status_code == definitions.HTTP_STATUS_CODE_NOT_FOUND:
+            error_message(response, "Not Found", error=NotFoundError)
+
         error_message(
             response,
             message=("Failed to get a valid response json from Timesketch API"),
@@ -140,6 +144,10 @@ def check_return_status(response, logger):
 
 class Error(Exception):
     """Base error class."""
+
+
+class NotFoundError(Error):
+    """Raised when a resource is not found."""
 
 
 class UnableToRunAnalyzer(Error):
