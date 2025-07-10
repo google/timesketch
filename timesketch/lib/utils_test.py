@@ -391,6 +391,38 @@ class TestUtils(BaseTest):
         self.assertDictEqual(results[1], expected_output_2)
         self.assertDictEqual(results[2], expected_output_3)
 
+    def test_csv_datetime_as_last_column(self):
+        """Test parsing a CSV where datetime is the last column."""
+        data_generator = read_and_validate_csv(
+            "tests/test_events/csv_datetime_last_column.csv"
+        )
+        results = list(data_generator)
+
+        self.assertEqual(len(results), 4)
+
+        expected_output_1 = {
+            "timestamp": 1532689087000000,
+            "message": "193408 foobar true",
+            "timestamp_desc": "Access Time",
+            "datetime": "2018-07-27T10:58:07+00:00",
+        }
+        expected_output_2 = {
+            "timestamp": 1532691305000000,
+            "message": "193408 foobar true",
+            "timestamp_desc": "Access Time",
+            "datetime": "2018-07-27T11:35:05+00:00",
+        }
+        expected_output_3 = {
+            "timestamp": 1532692593000000,
+            "message": "193408 foobar true",
+            "timestamp_desc": "Access Time",
+            "datetime": "2018-07-27T11:56:33+00:00",
+        }
+
+        self.assertDictEqual(results[0], expected_output_1)
+        self.assertDictEqual(results[1], expected_output_2)
+        self.assertDictEqual(results[2], expected_output_3)
+
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}

@@ -383,7 +383,7 @@ export default {
        * Method to map the missing headers.
        * First, it checks some conditions, in particular, the user needs to:
        * 1. map the missing header with any existing one in the CSV,
-       * 2. avoid to map 2 or more missing headers with the same exsiting one,
+       * 2. avoid to map 2 or more missing headers with the same existing one,
        * 3. specify a default value in case he chooses to create a new column
        */
       let lastElementSelected = columnsSelected[columnsSelected.length - 1]
@@ -500,7 +500,7 @@ export default {
       return this.error.length === 0
     },
     setFile: function (fileList) {
-      /* 1. Initilize the variables */
+      /* 1. Initialize the variables */
 
       if (!fileList[0]) {
         return
@@ -539,7 +539,7 @@ export default {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
           let data = e.target.result
-          vueJS.headersString = data.split('\n')[0].replaceAll('"', '')
+          vueJS.headersString = data.split('\n')[0].replaceAll('"', '').trim()
           vueJS.valuesString = data.split('\n').slice(1, vueJS.staticNumberRows + 1)
           vueJS.validateFile()
         }
