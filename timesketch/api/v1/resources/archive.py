@@ -459,6 +459,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         indexes_to_open = []
         for timeline in sketch.timelines:
+            # While we now do not set the status of a timeline to archived,
+            # it could have happened in the past, so it is attempted
+            # to mark it ready
             if timeline.get_status.status != "archived":
                 continue
             timeline.set_status(status="ready")
@@ -466,7 +469,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             search_index.set_status(status="ready")
             indexes_to_open.append(search_index.index_name)
 
-        # TODO (kiddi): Move this to lib/datastores/opensearch.py.
         if indexes_to_open:
             try:
                 self.datastore.client.indices.open(",".join(indexes_to_open))
@@ -483,13 +485,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         """Archives a sketch. This involves:
 
         1. Setting the sketch status to 'archived'.
-        2. Setting the status of its timelines (that are not already 'archived' or
-           'deleted') to 'archived' in the database. Timelines in 'processing'
-           state will prevent archival.
-        3. For each SearchIndex associated with these timelines:
-           If all timelines (across the entire system) that use that SearchIndex
-           are now in an 'archived' state in the database, the system attempts
-           to close the corresponding OpenSearch index.
+        2. For each SearchIndex associated with the sketch:
+          the system attempts to close the corresponding OpenSearch index.
            - If the OpenSearch index is successfully closed, the SearchIndex's
              database status is set to 'archived'.
            - If the OpenSearch index is not found, it's considered effectively
@@ -521,19 +518,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     f"prevents archival.",
                 )
 
-        # Process timelines of the sketch
-        for timeline_in_sketch in sketch.timelines:
-            # Archive timelines that are not already archived, deleted,
-            # or actively processing.
-            # The "processing" state is already checked and aborted earlier.
-            if timeline_in_sketch.get_status.status not in ("archived", "deleted"):
-                timeline_in_sketch.set_status(status="archived")
-                logger.info(
-                    "Timeline %s (part of sketch %s) status set to 'archived'.",
-                    timeline_in_sketch.id,
-                    sketch.id,
-                )
-
         # Process associated SearchIndexes
         # Use a set to avoid processing the same SearchIndex multiple times
         # if it's linked to multiple timelines within this sketch.
@@ -546,8 +530,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         for search_index in search_indexes_to_evaluate:
             # Determine if this SearchIndex can be safely archived (i.e., its
-            # OpenSearch index closed). This requires all associated timelines
-            # to be archived.
+            # OpenSearch index closed).
             all_associated_timelines_archived = True
             if not search_index.timelines:
                 logger.warning(
@@ -558,19 +541,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 )
                 # Cannot confirm, so don't archive OS index
                 all_associated_timelines_archived = False
-
-            for associated_timeline in search_index.timelines:
-                if associated_timeline.get_status.status != "archived":
-                    all_associated_timelines_archived = False
-                    logger.info(
-                        "SearchIndex %s (ID: %s) will not be closed/archived in DB "
-                        "because associated timeline %s status is '%s'.",
-                        search_index.index_name,
-                        search_index.id,
-                        associated_timeline.id,
-                        associated_timeline.get_status.status,
-                    )
-                    break
 
             if all_associated_timelines_archived:
                 # If all associated timelines are archived,
@@ -613,6 +583,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         f"SearchIndex DB object (ID: {search_index.id}) "
                         "status updated to 'fail'."
                     )
+
                 except Exception as e:  # pylint: disable=broad-except
                     # For any other error during close, log it and
                     # DO NOT change SearchIndex status.
