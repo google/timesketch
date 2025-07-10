@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -2011,7 +2011,8 @@
 
 
 <h1 id="upgrade-an-existing-installation">Upgrade an existing installation</h1>
-<p>When upgrading Timesketch you might need to migrate the database to use the latest database schema. This is how you do that.</p>
+<p>When upgrading Timesketch you might need to migrate the database to use the latest database schema. This will be made clear within any release notifications.</p>
+<p>If a databse migration is required, then the following guide is how you do so:</p>
 <h2 id="backup-you-database">Backup you database (!)</h2>
 <p>First you should backup your current database in case something goes wrong in the upgrade process. For PostgreSQL you do the following (Ref: https://www.postgresql.org/docs/9.1/static/backup.html):</p>
 <h3 id="general-postgres">general postgres</h3>
@@ -2046,10 +2047,13 @@ root@&lt;CONTAINER_ID&gt;$ tsctl db current
 <pre><code class="language-shell">root@&lt;CONTAINER_ID&gt;$ tsctl db upgrade
 </code></pre>
 <h2 id="upgrade-timesketch">Upgrade timesketch</h2>
-<p>Exit from the container (CTRL-D), then pull new versions of the docker images and upgrade Timesketch:</p>
-<pre><code class="language-shell">$ docker compose pull
-$ docker compose down
-$ docker compose up -d
+<p>If upgrading the database then exit from the container (CTRL-D).
+The current version of timesketch is defined within the <code>config.env</code> file located within the parent directory of the timesketch installation.
+Simply amend the <code>TIMESKETCH_VERSION=</code> to the one required and upgrading to.</p>
+<p>In order to pull new versions of the docker images and upgrade Timesketch:</p>
+<pre><code class="language-shell">$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml pull
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml down
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml up -d
 </code></pre>
 
 
@@ -2107,7 +2111,7 @@ $ docker compose up -d
       <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>
