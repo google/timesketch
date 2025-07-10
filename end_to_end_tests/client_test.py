@@ -490,13 +490,6 @@ level: high
         )
         self.assertions.assertEqual(still_exists_sketch.id, sketch_id_to_delete)
 
-        # Cleanup: Grant admin delete permission and then delete the sketch.
-        sketch_by_regular_user.add_to_acl(user_list=["admin"], permissions=["delete"])
-        admin_sketch_instance_for_cleanup = self.admin_api.get_sketch(
-            sketch_id_to_delete
-        )
-        admin_sketch_instance_for_cleanup.delete(force_delete=True)
-
     def test_delete_sketch_without_force_delete(self):
         """This test will attempt to delete a sketch
         without passing the force_delete argument"""
