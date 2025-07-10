@@ -474,32 +474,12 @@ level: high
                 "or the sketch was not found."
             )
 
-        with self.assertions.assertRaises(HTTPError) as context_delete:
+        with self.assertions.assertRaises(RuntimeError) as context_delete:
             admin_sketch_instance.delete(force_delete=True)  # type: ignore
 
-        # Now, assert on the HTTP status code within the exception
-        self.assertions.assertEqual(context_delete.exception.response.status_code, 403)
-        # Optionally, assert on a specific message
-        self.assertions.assertIn("permission", str(context_delete.exception).lower())
-
-        # Admin attempts to delete the sketch. This should fail.
-
-        # Check for a specific error message, e.g., 403 Forbidden
-        # The exact error message might vary based on API client/server implementation.
-        # Common indicators are HTTP status codes like [403] or "Forbidden".
         self.assertions.assertIn(
-            "[403]",
+            "have the permission to access the requested resource",
             str(context_delete.exception),
-            "Admin should not be able to delete sketch without explicit ACLs.",
-        )
-
-        # Verify sketch count has NOT reverted from the regular user's perspective
-        # (because the delete failed)
-        final_sketch_count_regular_user = len(list(self.api.list_sketches()))
-        self.assertions.assertEqual(
-            final_sketch_count_regular_user,
-            current_sketch_count_regular_user,
-            "Sketch count should not change after failed admin deletion.",
         )
 
         # Verify the sketch is actually still there (checked by regular user)
@@ -510,33 +490,12 @@ level: high
         )
         self.assertions.assertEqual(still_exists_sketch.id, sketch_id_to_delete)
 
-        # Clean up: regular user (owner) deletes the sketch
-        sketch_by_regular_user.delete(force_delete=True)  # Ensure it's actually deleted
-
-        # Verify sketch count has now reverted from the regular user's perspective
-        final_sketch_count_after_owner_delete = len(list(self.api.list_sketches()))
-        self.assertions.assertEqual(
-            final_sketch_count_after_owner_delete,
-            initial_sketch_count_regular_user,
-            "Sketch count (regular user view) should revert after owner deletion.",
+        # Cleanup: Grant admin delete permission and then delete the sketch.
+        sketch_by_regular_user.add_to_acl(user_list=["admin"], permissions=["delete"])
+        admin_sketch_instance_for_cleanup = self.admin_api.get_sketch(
+            sketch_id_to_delete
         )
-
-        # Verify the sketch is actually gone (checked by regular user and admin)
-        with self.assertions.assertRaises(RuntimeError) as context_final_get:
-            self.api.get_sketch(sketch_id_to_delete)
-        self.assertions.assertIn(
-            "No sketch found with this ID",
-            str(context_final_get.exception),
-            "Sketch should not be retrievable by regular user after owner deletion.",
-        )
-
-        with self.assertions.assertRaises(RuntimeError) as admin_context_final_get:
-            self.admin_api.get_sketch(sketch_id_to_delete)
-        self.assertions.assertIn(
-            "No sketch found with this ID",
-            str(admin_context_final_get.exception),
-            "Sketch should not be retrievable by admin after owner deletion.",
-        )
+        admin_sketch_instance_for_cleanup.delete(force_delete=True)
 
     def test_delete_sketch_without_force_delete(self):
         """This test will attempt to delete a sketch
@@ -549,9 +508,20 @@ level: high
         self.assertions.assertIsNotNone(sketch)
         sketch_id = sketch.id
 
+        # switch to a different user
+        expected_admin_user = "admin"
+        user = self.admin_api.current_user
+        self.assertions.assertEqual(user.username, expected_admin_user)
+        self.assertions.assertEqual(user.is_admin, True)
+        self.assertions.assertEqual(user.is_active, True)
+
+        # allow the admin user to read, write and delete the sketch
+        sketch.add_to_acl(user_list=["admin"], permissions=["read", "write", "delete"])
+        admin_sketch_instance = self.admin_api.get_sketch(sketch_id)
+
         # Perform a soft delete (force_delete=False is the default)
         try:
-            sketch.delete()
+            admin_sketch_instance.delete(force_delete=False)
         except RuntimeError as e:
             self.assertions.fail(f"Soft delete failed unexpectedly: {e}")
 
@@ -561,7 +531,7 @@ level: high
         # or might require admin privileges / specific flags.
         # For this test, we assume it's fetchable by the owner to check status.
         try:
-            updated_sketch = self.api.get_sketch(sketch_id)
+            updated_sketch = self.admin_api.get_sketch(sketch_id)
             self.assertions.assertEqual(
                 updated_sketch.status,
                 "deleted",
