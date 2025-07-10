@@ -1,0 +1,5 @@
+datetime,uid,tool,message,query,event_type,organization_name,timestamp_desc,unique_id
+1723474994349345,mustermann,exampletool,PageView,,foobar,example.my.org.com,<URL placeholder>,"DETAILED DATA"
+1751313029117113,jondoe,exampletool,PageView,,foobar,example.my.org.com,<URL placeholder>,"DETAILED DATA"
+1723213989468712,mustermann,exampletool,PageView,,foobar,example.my.org.com,<URL placeholder>,"DETAILED DATA"
+1751349507214025,jondoe,exampletool,PageView,,foobar,example.my.org.com,<URL placeholder>,"DETAILED DATA"
