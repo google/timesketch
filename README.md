@@ -20,30 +20,32 @@
 ## About Timesketch
 Timesketch is an open-source tool for collaborative forensic timeline analysis. Using sketches you and your collaborators can easily organize your timelines and analyze them all at the same time.  Add meaning to your raw data with rich annotations, comments, tags and stars.
 
-<img width="1819" alt="Screenshot 2021-03-05 at 14 28 40" src="https://user-images.githubusercontent.com/316362/110122005-5e584200-7dbf-11eb-8e3c-d73408ef2850.png">
+<kbd>![Timesketch Start Exploring Screen](https://github.com/user-attachments/assets/79c98c71-df41-4388-b288-40eb9c7f3b5a)</kbd>
 
-<img width="1801" alt="Screenshot 2021-03-05 at 14 29 46" src="https://user-images.githubusercontent.com/316362/110122085-75972f80-7dbf-11eb-87aa-5dc64628392b.png">
+<kbd>![Timesketch Timeline View](https://github.com/user-attachments/assets/d2d6f354-884c-42f5-be8f-bf97f6f88c5d)</kbd>
+
+<kbd><![Timesketch Context Search View](https://github.com/user-attachments/assets/cf82ff27-a85b-4840-b9b6-56a62a522dc4)</kbd>
 
 ## Getting started
 
 #### Installation
-* [Install Timesketch](docs/guides/admin/install.md)
+* [Install Timesketch](https://timesketch.org/guides/admin/install/)
 
 #### Adding timelines
-* [Upload data](docs/guides/user/import-from-json-csv.md)
+* [Upload data](https://timesketch.org/guides/user/upload-data/)
 
 #### Using Timesketch
-* [Users guide](docs/guides/user/basic-concepts.md)
+* [Users guide](https://timesketch.org/guides/user/basic-concepts/)
 
 #### Adding a Notebook Container
-* [Installation](docs/guides/user/notebook.md)
+* [Installation](https://timesketch.org/guides/user/notebook/)
 
 ## Community
-* [Community guide](docs/community/resources.md)
+* [Community guide](https://timesketch.org/community/resources/)
 
 ## Contributing
 * [Prerequisites](CONTRIBUTING.md)
-* [Developers guide](docs/developers/getting-started.md)
+* [Developers guide](https://timesketch.org/developers/getting-started/)
 
 ---
 

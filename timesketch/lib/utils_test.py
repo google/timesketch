@@ -22,6 +22,7 @@ from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.utils import random_color
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
+from timesketch.lib.utils import _convert_timestamp_to_datetime
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
 
@@ -323,6 +324,73 @@ class TestUtils(BaseTest):
         self.assertIn("2024-07-24T10:57:02.877297+00:00", str(results_list))
         self.assertIn("timestamptest2", str(results_list))
 
+    def test_csv_with_timestamp_in_datetime_field(self):
+        """Test parsing a CSV where the datetime column contains a timestamp."""
+        data_generator = read_and_validate_csv(
+            "tests/test_events/csv_timestamp_as_datetime.csv"
+        )
+        results = list(data_generator)
+
+        expected_output_1 = {
+            "datetime": "2024-08-12T15:03:14.349345+00:00",
+            "uid": "mustermann",
+            "tool": "exampletool",
+            "message": "PageView",
+            "event_type": "foobar",
+            "organization_name": "example.my.org.com",
+            "timestamp_desc": "<URL placeholder>",
+            "unique_id": "DETAILED DATA",
+            "timestamp": 1723474994349345,
+        }
+
+        expected_output_2 = {
+            "datetime": "2025-06-30T19:50:29.117113+00:00",
+            "uid": "jondoe",
+            "tool": "exampletool",
+            "message": "PageView",
+            "event_type": "foobar",
+            "organization_name": "example.my.org.com",
+            "timestamp_desc": "<URL placeholder>",
+            "unique_id": "DETAILED DATA",
+            "timestamp": 1751313029117113,
+        }
+
+        self.assertEqual(len(results), 4)
+        self.assertDictEqual(results[0], expected_output_1)
+        self.assertDictEqual(results[1], expected_output_2)
+
+    def test_csv_with_timestamp_and_no_datetime(self):
+        """Test parsing a CSV with a timestamp column but no datetime."""
+        data_generator = read_and_validate_csv(
+            "tests/test_events/csv_timestamp_no_datetime.csv"
+        )
+        results = list(data_generator)
+
+        self.assertEqual(len(results), 3)
+
+        expected_output_1 = {
+            "datetime": "2022-07-24T19:01:01+00:00",
+            "message": "seconds_timestamp",
+            "timestamp_desc": "test",
+            "timestamp": 1658689261000000,
+        }
+        expected_output_2 = {
+            "datetime": "2022-07-24T19:01:01.123000+00:00",
+            "message": "milliseconds_timestamp",
+            "timestamp_desc": "test",
+            "timestamp": 1658689261123000,
+        }
+        expected_output_3 = {
+            "datetime": "2022-07-24T19:01:01.123456+00:00",
+            "message": "microseconds_timestamp",
+            "timestamp_desc": "test",
+            "timestamp": 1658689261123456,
+        }
+
+        self.assertDictEqual(results[0], expected_output_1)
+        self.assertDictEqual(results[1], expected_output_2)
+        self.assertDictEqual(results[2], expected_output_3)
+
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
@@ -387,3 +455,33 @@ class TestUtils(BaseTest):
         self.assertTrue(
             isinstance(rename_jsonl_headers(linedict, headers_mapping, lineno), dict)
         )
+
+    def test_convert_timestamp_to_datetime(self):
+        """Test the timestamp to datetime conversion helper."""
+        # Test seconds
+        ts_seconds = 1658689261
+        dt_seconds = _convert_timestamp_to_datetime(ts_seconds)
+        self.assertEqual(dt_seconds, pd.Timestamp("2022-07-24 19:01:01+00:00"))
+
+        # Test milliseconds
+        ts_milliseconds = 1658689261123
+        dt_milliseconds = _convert_timestamp_to_datetime(ts_milliseconds)
+        self.assertEqual(dt_milliseconds, pd.Timestamp("2022-07-24 19:01:01.123+00:00"))
+
+        # Test microseconds
+        ts_microseconds = 1658689261123456
+        dt_microseconds = _convert_timestamp_to_datetime(ts_microseconds)
+        self.assertEqual(
+            dt_microseconds, pd.Timestamp("2022-07-24 19:01:01.123456+00:00")
+        )
+
+        # Test nanoseconds
+        ts_nanoseconds = 1658689261123456789
+        dt_nanoseconds = _convert_timestamp_to_datetime(ts_nanoseconds)
+        self.assertEqual(
+            dt_nanoseconds, pd.Timestamp("2022-07-24 19:01:01.123456789+00:00")
+        )
+
+        # Test NaN
+        dt_nan = _convert_timestamp_to_datetime(float("nan"))
+        self.assertTrue(pd.isna(dt_nan))

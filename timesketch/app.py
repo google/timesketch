@@ -38,7 +38,11 @@ from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
 
 
-def create_app(config: Optional[Union[str, object]] = None, legacy_ui: bool = False):
+def create_app(
+    config: Optional[Union[str, object]] = None,
+    legacy_ui: bool = False,
+    v3_ui: bool = False,
+):
     """Create the Flask app instance that is used throughout the application.
 
     Args:
@@ -46,17 +50,21 @@ def create_app(config: Optional[Union[str, object]] = None, legacy_ui: bool = Fa
                 or an object with config directives.
         legacy_ui: (bool, optional) Temporary flag to indicate to serve the old UI.
                   TODO: Remove this when the old UI has been removed.
+        v3_ui: (bool, optional) Flag to indicate to serve the v3 UI.
 
     Returns:
         Application object (instance of flask.Flask).
     """
-    template_folder = "frontend-ng/dist"
-    static_folder = "frontend-ng/dist"
-
-    # Serve the old UI.
+    # Determine which frontend assets to serve
     if legacy_ui:
         template_folder = "frontend/dist"
         static_folder = "frontend/dist"
+    elif v3_ui:
+        template_folder = "frontend-v3/dist"
+        static_folder = "frontend-v3/dist/assets"
+    else:
+        template_folder = "frontend-ng/dist"
+        static_folder = "frontend-ng/dist"
 
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 

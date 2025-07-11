@@ -53,7 +53,7 @@ limitations under the License.
     >
       <template v-slot:item.name="{ item }">
         <!-- <router-link style="text-decoration: none" :to="{ name: 'sketch', params: { sketchId: item.id } }">{{ -->
-        <router-link style="text-decoration: none" :to="'sketch/' + item.id">{{
+        <router-link style="text-decoration: none" :to="'sketch/' + item.id + '/explore'">{{
           item.name
         }}</router-link>
       </template>

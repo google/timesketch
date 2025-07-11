@@ -439,3 +439,6 @@ tags:
                 "found, 1 events tagged."
             ),
         )
+        self.assertEqual(
+            message["platform_meta_data"]["created_tags"], ["bloom:hitsource1"]
+        )

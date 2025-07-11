@@ -13,6 +13,7 @@ import { fileURLToPath, URL } from "node:url";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: process.env.NODE_ENV === "development" ? "/" : "/v3/",
   plugins: [
     VueRouter(),
     Layouts(),
@@ -58,6 +59,11 @@ export default defineConfig({
     proxy: {
       "^/api": {
         target: "http://127.0.0.1:5000/",
+        changeOrigin: true,
+        secure: false,
+      },
+      '^/login|logout': {
+        target: 'http://127.0.0.1:5000/',
         changeOrigin: true,
         secure: false,
       },

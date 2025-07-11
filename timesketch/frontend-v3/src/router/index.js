@@ -13,7 +13,7 @@ import Default from "@/layouts/Default";
 // Import App views
 import Home from "@/views/Home.vue";
 import Sketch from "@/views/Sketch.vue";
-import Canvas from "@/components/Canvas.vue";
+import Canvas from "@/views/Canvas.vue";
 
 // Routes
 const routes = [
@@ -43,6 +43,13 @@ const routes = [
       {
         path: 'example',
         name: 'Example',
+        component: Canvas,
+        props: true,
+      },
+      {
+        path: 'analyze',
+        name: 'Analyze',
+        // TODO: change the component as soon as we have migrated the Analyze component
         component: Canvas,
         props: true,
       },

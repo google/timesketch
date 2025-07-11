@@ -427,7 +427,8 @@ export default {
        const addedQuestionIds = this.blocks
          .filter(block => block.componentName === 'TsInvestigativeQuestion')
          .map(block => block.componentProps.questionId);
-       return this.sketchQuestions.filter(question => !addedQuestionIds.includes(question.id));
+       const questions = Array.isArray(this.sketchQuestions) ? this.sketchQuestions : [];
+       return questions.filter(question => !addedQuestionIds.includes(question.id));
     },
   },
   methods: {
@@ -688,4 +689,3 @@ export default {
   background-color: transparent !important;
 }
 </style>
-

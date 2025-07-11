@@ -195,8 +195,7 @@ limitations under the License.
                       ></ts-search-chip>
                     </div>
                   </div>
-
-                  <div class="mt-1" v-if="userSettings.generateQuery && systemSettings.LLM_PROVIDER">
+                  <div class="mt-1" v-if="isNl2qAvailable">
                     <div v-if="suggestedQueryLoading" class="pa-2 pl-4">
                       <v-skeleton-loader type="sentences" width="200"></v-skeleton-loader>
                     </div>
@@ -366,6 +365,13 @@ export default {
     userSettings() {
       return this.$store.state.settings
     },
+    isNl2qAvailable() {
+      return (
+        this.userSettings.generateQuery &&
+        this.systemSettings.LLM_FEATURES_AVAILABLE &&
+        this.systemSettings.LLM_FEATURES_AVAILABLE.nl2q
+      )
+    },
     matches() {
       if (!this.queryString) {
         return {
@@ -519,7 +525,7 @@ export default {
       this.suggestedQuery = {}
 
       // Set active tab
-     if (this.userSettings.generateQuery && this.systemSettings.LLM_PROVIDER) {
+     if (this.isNl2qAvailable) {
        if (this.activeQuestion.conclusions.length) {
          this.activeTab = 2
        } else {

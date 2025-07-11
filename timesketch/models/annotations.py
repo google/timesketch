@@ -113,7 +113,7 @@ class LabelMixin:
                 "parent": relationship(self, viewonly=True),
             },
         )
-        return relationship(self.Label)
+        return relationship(self.Label, cascade="all, delete-orphan")
 
     def add_label(self, label, user=None):
         """Add a label to an object.
@@ -224,7 +224,7 @@ class CommentMixin:
                 "parent": relationship(self, viewonly=True),
             },
         )
-        return relationship(self.Comment)
+        return relationship(self.Comment, cascade="all, delete-orphan")
 
     @classmethod
     def get_with_comments(cls, **kwargs):
@@ -326,7 +326,7 @@ class StatusMixin:
                 "parent": relationship(self, viewonly=True),
             },
         )
-        return relationship(self.Status)
+        return relationship(self.Status, cascade="all, delete-orphan")
 
     def set_status(self, status):
         """
@@ -356,18 +356,24 @@ class StatusMixin:
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
         if len(self.status) > 1:
-            self_id = self.id if hasattr(self, "id") else None
+            self_id = getattr(self, "id", "N/A")
+            object_type_name = str(type(self).__name__)
+
+            log_details = f"ID: [{self_id}]"
+            # If the object has a sketch_id attribute, it's likely a component
+            # of a sketch (e.g., Timeline, View, Event).
+            if hasattr(self, "sketch_id"):
+                sketch_id_val = getattr(self, "sketch_id", None)
+                if sketch_id_val is not None:
+                    log_details = f"ID: [{self_id}], Sketch ID: [{sketch_id_val}]"
+
             # TODO: Change from warning to raising an exception once we ensured
             # it won't affect the deployment.
             # raise RuntimeError(
-            # "More than one status available for object [%s] with ID: [%s]",
-            #     str(type(self).__name__),
-            #     str(self_id),
-            # )
             logging.warning(
-                "More than one status available for object [%s] with ID: [%s]",
-                str(type(self).__name__),
-                str(self_id),
+                "More than one status available for object [%s] (%s)",
+                object_type_name,
+                log_details,
             )
         return self.status[0]
 

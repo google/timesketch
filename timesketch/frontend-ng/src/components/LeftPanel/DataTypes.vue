@@ -1,5 +1,5 @@
 <!--
-Copyright 2022 Google Inc. All rights reserved.
+Copyright 2025 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ limitations under the License.
     >
       <span> <v-icon left>mdi-database-outline</v-icon> Data Types </span>
       <span class="float-right" style="margin-right: 10px">
-        <small
+        <small v-if="dataTypes"
           ><strong>{{ dataTypes.length }}</strong></small
         >
       </span>
@@ -43,43 +43,7 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded && dataTypes.length">
-        <v-data-iterator
-          :items="dataTypes"
-          :items-per-page.sync="itemsPerPage"
-          :search="search"
-          :hide-default-footer="dataTypes.length <= itemsPerPage"
-        >
-          <template v-slot:header v-if="dataTypes.length > itemsPerPage">
-            <v-toolbar flat>
-              <v-text-field
-                v-model="search"
-                clearable
-                hide-details
-                outlined
-                dense
-                prepend-inner-icon="mdi-magnify"
-                label="Search for a data type.."
-              ></v-text-field>
-            </v-toolbar>
-          </template>
-
-          <template v-slot:default="props">
-            <div
-              v-for="dataType in props.items"
-              :key="dataType.data_type"
-              @click="setQueryAndFilter(dataType.data_type)"
-              style="cursor: pointer; font-size: 0.9em"
-            >
-              <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-                <span
-                  >{{ dataType.data_type }} (<small
-                    ><strong>{{ dataType.count | compactNumber }}</strong></small
-                  >)</span
-                >
-              </v-row>
-            </div>
-          </template>
-        </v-data-iterator>
+        <ts-data-types-list></ts-data-types-list>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -87,17 +51,18 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../event-bus.js'
+import TsDataTypesList from './DataTypesList.vue'
 
 export default {
   props: {
     iconOnly: Boolean,
   },
+  components: {
+    TsDataTypesList,
+  },
   data: function () {
     return {
       expanded: false,
-      itemsPerPage: 10,
-      search: '',
     }
   },
   computed: {
@@ -108,24 +73,8 @@ export default {
       return this.$store.state.dataTypes
     },
   },
-  methods: {
-    setQueryAndFilter(dataType) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'data_type:' + '"' + dataType + '"'
-      EventBus.$emit('setQueryAndFilter', eventData)
-    },
-  },
-  created() {},
+  methods: {},
 }
 </script>
 
-<style scoped lang="scss">
-.v-text-field ::v-deep input {
-  font-size: 0.9em;
-}
-
-.v-text-field ::v-deep label {
-  font-size: 0.9em;
-}
-</style>
+<style scoped lang="scss"></style>
