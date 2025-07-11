@@ -89,6 +89,32 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
+def _convert_timestamp_to_datetime(timestamp: int) -> pandas.Timestamp:
+    """Convert numeric timestamp to datetime based on magnitude.
+
+    This function infers the unit of a given integer timestamp by checking its
+    number of digits. It is designed to handle mixed-precision timestamps
+    (e.g. seconds, ms, us) within the same dataset.
+
+    Args:
+        timestamp: The timestamp to convert.
+
+    Returns:
+        A pandas Timestamp object with UTC timezone or NaT if conversion fails.
+    """
+    if pandas.isna(timestamp):
+        return pandas.NaT
+
+    # Heuristic to guess the unit of the timestamp based on its magnitude.
+    if timestamp > 1e17:  # nanoseconds
+        return pandas.to_datetime(timestamp, unit="ns", utc=True, errors="coerce")
+    if timestamp > 1e14:  # microseconds
+        return pandas.to_datetime(timestamp, unit="us", utc=True, errors="coerce")
+    if timestamp > 1e11:  # milliseconds
+        return pandas.to_datetime(timestamp, unit="ms", utc=True, errors="coerce")
+    return pandas.to_datetime(timestamp, unit="s", utc=True, errors="coerce")
+
+
 def _validate_csv_fields(
     mandatory_fields: List,
     data: pandas.DataFrame,
@@ -253,25 +279,49 @@ def rename_csv_headers(chunk: pandas.DataFrame, headers_mapping: List):
 def read_and_validate_csv(
     file_handle: object,
     delimiter: str = ",",
-    mandatory_fields: Optional[List] = None,
-    headers_mapping: Optional[List] = None,
+    mandatory_fields: List[str] = None,
+    headers_mapping: List[dict] = None,
 ):
-    """Generator for reading a CSV file.
+    """Generator for reading and validating a CSV file, yielding event dictionaries.
+
+    This function reads a CSV file in chunks using pandas, which is memory
+    efficient for large files. It performs several validation and normalization
+    steps:
+
+    - Validates that mandatory headers are present.
+    - Supports custom header mapping to rename, combine, or create new columns.
+    - Normalizes the 'datetime' column from various formats, including epoch
+      timestamps (seconds, milliseconds, microseconds, or nanoseconds). If
+      'datetime' is missing, it attempts to generate it from a 'timestamp' column.
+    - Ensures a 'timestamp' column (in microsecond epoch format) exists and is
+      consistent with the parsed 'datetime' field, overwriting any existing
+      'timestamp' to maintain data integrity.
+    - Parses a 'tag' column into a list of tags.
+    - Scrubs internal OpenSearch fields before yielding.
 
     Args:
-        file_handle: a file-like object containing the CSV content.
-        delimiter: character used as a field separator, default: ','
-        mandatory_fields: list of fields that must be present in the CSV header
-        headers_mapping: list of dicts containing:
-                         (i) target header we want to insert [key=target],
-                         (ii) sources header we want to rename/combine [key=source],
-                         (iii) def. value if we add a new column [key=default_value]
+        file_handle (object): A file-like object containing the CSV content.
+        delimiter (str): The character used as a field separator. Defaults to ','.
+        mandatory_fields (list[str], optional): A list of fields that must be
+            present in the CSV header. Defaults to TIMESKETCH_FIELDS.
+        headers_mapping (list[dict], optional): A list of dictionaries for
+            header mapping. Each dictionary can define:
+            - 'target': The name of the new or renamed column.
+            - 'source': A list of source column names to use. If one, it's a
+              rename. If multiple, they are combined.
+            - 'default_value': A value to use if creating a new column without
+              a source.
+
+    Yields:
+        dict: A dictionary representing a single event, ready for ingestion.
+
     Raises:
-        RuntimeError: when there are missing fields.
-        DataIngestionError: when there are issues with the data ingestion.
+        RuntimeError: If there are missing mandatory fields or errors in the
+            header mapping.
+        DataIngestionError: If the file is empty or cannot be parsed by pandas.
     """
     if not mandatory_fields:
-        mandatory_fields = TIMESKETCH_FIELDS
+        mandatory_fields = list(TIMESKETCH_FIELDS)
 
     # Ensures delimiter is a string.
     if not isinstance(delimiter, str):
@@ -279,6 +329,12 @@ def read_and_validate_csv(
 
     # Ensure that required headers are present
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
+
+    # If datetime is not present, timestamp can be used instead.
+    headers = set(header_reader.columns)
+    if "datetime" not in headers and "timestamp" in headers:
+        if "datetime" in mandatory_fields:
+            mandatory_fields.remove("datetime")
     _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
@@ -293,16 +349,20 @@ def read_and_validate_csv(
                 # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
-            # Check if the datetime field is present and not empty.
-            # TODO(jaegeral): Do we really want to skip rows with empty datetime
-            # we could also calculate the datetime from timestamp if present.
-            skipped_rows = chunk[chunk["datetime"].isnull()]
-            if not skipped_rows.empty:
-                logger.warning(
-                    "{} rows skipped since they were missing datetime field "
-                    "or it was empty ".format(len(skipped_rows))
-                )
+            # If datetime is missing but timestamp is present, calculate it.
+            if "datetime" not in chunk.columns or chunk["datetime"].isnull().all():
+                if "timestamp" in chunk.columns and pandas.api.types.is_numeric_dtype(
+                    chunk["timestamp"]
+                ):
+                    chunk["datetime"] = chunk["timestamp"].apply(
+                        _convert_timestamp_to_datetime
+                    )
 
+            if "datetime" not in chunk.columns:
+                logger.warning(
+                    "Chunk %d skipped because it is missing a datetime field.", idx
+                )
+                continue
             try:
                 # Handle case where 'datetime' column contains epoch timestamps.
                 if (
@@ -339,13 +399,11 @@ def read_and_validate_csv(
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
-
             except ValueError:
                 logger.warning(
                     "Rows {} to {} skipped due to malformed "
                     "datetime values ".format(
-                        idx * reader.chunksize,
-                        idx * reader.chunksize + chunk.shape[0],
+                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
                     )
                 )
                 continue
@@ -359,12 +417,10 @@ def read_and_validate_csv(
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
 
-                # Make sure we always have a timestamp
-                if "timestamp" not in row:
-                    row["timestamp"] = int(
-                        pandas.Timestamp(row["datetime"]).value / 1000
-                    )
-
+                # Ensure the timestamp is consistent with the datetime object,
+                # in microsecond epoch format. This overwrites any existing
+                # timestamp to prevent inconsistencies.
+                row["timestamp"] = int(pandas.Timestamp(row["datetime"]).value / 1000)
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = f"Unable to read file, with error: {e!s}"
