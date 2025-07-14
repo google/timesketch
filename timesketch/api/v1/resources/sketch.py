@@ -247,9 +247,13 @@ class SketchListResource(resources.ResourceMixin, Resource):
         """
         form = forms.NameDescriptionForm.build(request)
         if not form.validate_on_submit():
-            error_message = "Unable to validate form data: "
-            error_message += ", ".join(form.errors.values())
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message)
+            error_messages = []
+            for field_errors in form.errors.values():
+                error_messages.extend(field_errors)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                f"Unable to validate form data: {', '.join(error_messages)}",
+            )
 
         sketch = Sketch(name=form.name.data, description=form.description.data)
         db_session.add(sketch)
@@ -540,10 +544,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
             if sketch.has_label(label):
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    "Sketch with the label [{0:s}] cannot be deleted.".format(label),
-                )
+                msg = f"Sketch with the label [{label}] cannot be deleted."
+                abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
         sketch.set_status(status="deleted")
         return HTTP_STATUS_CODE_OK
 
@@ -582,12 +584,11 @@ class SketchResource(resources.ResourceMixin, Resource):
         labels = form.get("labels", [])
         label_action = form.get("label_action", "add")
         if label_action not in ("add", "remove"):
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Label actions needs to be either 'add' or 'remove', not [{0:s}]".format(
-                    label_action
-                ),
+            msg = (
+                "Label actions needs to be either 'add' or 'remove', "
+                f"not [{label_action}]"
             )
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, msg)
 
         if labels and isinstance(labels, (tuple, list)):
             for label in labels:
