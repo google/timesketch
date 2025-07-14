@@ -63,7 +63,7 @@ if [ "$1" = 'timesketch' ]; then
   unset TIMESKETCH_PASSWORD
   # create second user
   tsctl create-user "$TIMESKETCH_USER2" --password "$TIMESKETCH_PASSWORD2"
-  
+  unset TIMESKETCH_PASSWORD2
 
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
