@@ -2428,9 +2428,11 @@ def import_db(filepath, yes):
                 json_filename = f"{table_name}.json"
 
                 if json_filename not in zipf.namelist():
-                    click.echo(
-                        f"  File not found in archive for table: {table_name}, skipping."
+                    msg = (
+                        f"  File not found in archive for table: {table_name}, "
+                        "skipping."
                     )
+                    click.echo(msg)
                     continue
                 with zipf.open(json_filename) as json_file:
                     data = json_file.read()
@@ -2473,10 +2475,12 @@ def import_db(filepath, yes):
             for table in sorted_tables:
                 for column in table.primary_key.columns:
                     if column.autoincrement:
+                        query_string = (
+                            "SELECT pg_get_serial_sequence("
+                            f"'\"{table.name}\"', '{column.name}')"
+                        )
                         seq_name = db_session.execute(
-                            sqlalchemy.text(
-                                f"SELECT pg_get_serial_sequence('\"{table.name}\"', '{column.name}')"
-                            )
+                            sqlalchemy.text(query_string)
                         ).scalar()
                         if seq_name:
                             max_id_val = db_session.execute(
