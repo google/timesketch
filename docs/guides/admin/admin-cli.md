@@ -462,6 +462,56 @@ Command:
 tsctl drop_db
 ```
 
+### Export database
+
+Exports the entire Timesketch database to a zip archive. This can be used for backups or migrations.
+
+```shell
+tsctl export_db
+```
+
+Example
+
+```shell
+tsctl export-db output.zip
+Exporting database to output.zip...
+  Exporting table: user (3 rows)
+  Exporting table: group (1 rows)
+  Exporting table: searchindex (17 rows)
+  ...
+  Database export complete.
+```
+
+### Import database
+
+Imports a Timesketch database from a zip archive created with `export-db`.
+
+Command:
+
+```shell
+tsctl import_db
+```
+
+Example
+
+```shell
+tsctl import-db output.zip
+This will drop the current database and import data from the file. This is a destructive action. Are you sure? [y/N]: y
+Dropping all tables...
+Creating new tables...
+  Importing table: user (3 rows)
+  Importing table: group (1 rows)
+  Importing table: searchindex (17 rows)
+  Importing table: searchtemplate (0 rows)
+  Importing table: sigmarule (0 rows)
+  Importing table: sketch (12 rows)
+  ...
+Updating PostgreSQL sequences...
+Sequences updated.
+Database import finished.
+```
+
+
 ### search_template
 
 Export/Import search templates to/from file.

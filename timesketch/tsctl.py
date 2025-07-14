@@ -30,6 +30,7 @@ import yaml
 import redis
 
 
+import sqlalchemy
 import click
 import pandas as pd
 from flask_restful import marshal
@@ -52,7 +53,7 @@ from timesketch import version
 from timesketch.app import create_app
 from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
-from timesketch.models import db_session, drop_all
+from timesketch.models import db_session, drop_all, init_db, BaseModel
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
@@ -2354,3 +2355,154 @@ def check_db_orphaned_data(verbose_checks: bool):
             )  # Minimal output if no orphans and not verbose
     else:
         print("\nOrphaned data check complete. Issues found as listed above.")
+
+
+@cli.command(name="export-db")
+@click.argument(
+    "filepath", type=click.Path(dir_okay=False, writable=True), required=True
+)
+def export_db(filepath):
+    """Export the database to a zip file."""
+    click.echo(f"Exporting database to {filepath}...")
+    engine = db_session.get_bind()
+    with engine.connect() as connection:
+        with zipfile.ZipFile(filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for table in BaseModel.metadata.sorted_tables:
+                table_name = table.name
+                try:
+                    result = connection.execute(table.select())
+                    df = pd.DataFrame(result.fetchall(), columns=result.keys())
+                    row_count = df.shape[0]
+                    click.echo(f"  Exporting table: {table_name} ({row_count} rows)")
+                    json_data = df.to_json(orient="records", date_format="iso")
+                    zipf.writestr(f"{table_name}.json", json_data)
+                except Exception as e:
+                    click.echo(f"Error exporting table {table_name}: {e!s}", err=True)
+                    click.echo("Database export failed.", err=True)
+                    raise click.Abort()
+    click.echo("Database export complete.")
+
+
+@cli.command(name="import-db")
+@click.argument("filepath", type=click.Path(exists=True, dir_okay=False))
+@click.option("--yes", is_flag=True, help="Skip confirmation.")
+def import_db(filepath, yes):
+    """Import the database from a zip file. This will delete existing data."""
+    if not yes:
+        click.confirm(
+            "This will drop the current database and import data from the "
+            "file. This is a destructive action. Are you sure?",
+            abort=True,
+        )
+
+    click.echo("Dropping all tables...")
+    drop_all()
+
+    click.echo("Creating new tables...")
+    init_db()
+
+    # Create a mapping from table names to model classes for bulk insertion.
+    model_class_registry = {
+        cls.__tablename__: cls
+        for cls in BaseModel.__subclasses__()
+        if hasattr(cls, "__tablename__")
+    }
+
+    engine = db_session.get_bind()
+    dialect = engine.dialect.name
+
+    try:
+        # For certain database backends, we need to disable foreign key checks
+        # to allow for out-of-order table imports.
+        if dialect == "sqlite":
+            db_session.execute(sqlalchemy.text("PRAGMA foreign_keys=OFF"))
+        elif dialect == "postgresql":
+            db_session.execute(
+                sqlalchemy.text("SET session_replication_role = 'replica'")
+            )
+
+        with zipfile.ZipFile(filepath, "r") as zipf:
+            sorted_tables = BaseModel.metadata.sorted_tables
+            for table in sorted_tables:
+                table_name = table.name
+                json_filename = f"{table_name}.json"
+
+                if json_filename not in zipf.namelist():
+                    click.echo(
+                        f"  File not found in archive for table: {table_name}, skipping."
+                    )
+                    continue
+                with zipf.open(json_filename) as json_file:
+                    data = json_file.read()
+                    if not data:
+                        click.echo(f"    Skipping empty file: {json_filename}")
+                        continue
+
+                    records = json.loads(data)
+                    row_count = len(records)
+                    click.echo(f"  Importing table: {table_name} ({row_count} rows)")
+
+                    row_count = len(records)
+
+                    if not records:
+                        continue
+
+                    # Coerce types for bulk insert
+                    for record in records:
+                        for column in table.columns:
+                            value = record.get(column.name)
+                            if value is None:
+                                continue
+                            # Handle datetimes
+                            if isinstance(column.type, sqlalchemy.DateTime):
+                                if isinstance(value, str):
+                                    try:
+                                        record[column.name] = pd.to_datetime(value)
+                                    except (ValueError, TypeError):
+                                        record[column.name] = None
+
+                    mapped_class = model_class_registry.get(table_name)
+                    if mapped_class:
+                        db_session.bulk_insert_mappings(mapped_class, records)
+                    elif records:
+                        db_session.execute(table.insert(), records)
+                    db_session.commit()
+
+        if dialect == "postgresql":
+            click.echo("Updating PostgreSQL sequences...")
+            for table in sorted_tables:
+                for column in table.primary_key.columns:
+                    if column.autoincrement:
+                        seq_name = db_session.execute(
+                            sqlalchemy.text(
+                                f"SELECT pg_get_serial_sequence('\"{table.name}\"', '{column.name}')"
+                            )
+                        ).scalar()
+                        if seq_name:
+                            max_id_val = db_session.execute(
+                                sqlalchemy.text(
+                                    f'SELECT MAX("{column.name}") FROM "{table.name}"'
+                                )
+                            ).scalar()
+                            max_id = max_id_val or 1
+                            db_session.execute(
+                                sqlalchemy.text(
+                                    f"SELECT setval('{seq_name}', {max_id}, true);"
+                                )
+                            )
+            click.echo("Sequences updated.")
+            db_session.commit()
+
+    except Exception as e:
+        db_session.rollback()
+        click.echo(f"An error occurred during import: {e}", err=True)
+        raise click.Abort()
+    finally:
+        if dialect == "sqlite":
+            db_session.execute(sqlalchemy.text("PRAGMA foreign_keys=ON"))
+        elif dialect == "postgresql":
+            db_session.execute(
+                sqlalchemy.text("SET session_replication_role = 'origin'")
+            )
+        db_session.commit()
+        click.echo("Database import finished.")
