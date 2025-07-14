@@ -183,6 +183,36 @@ This command would revoke the administrator privileges of the user with the spec
 
 Once a user's administrator privileges are revoked, they will no longer be able to perform tasks that require administrator privileges in the Timesketch instance. You can use the `list-users` subcommand to verify that the user's administrator privileges have been revoked successfully.
 
+#### Grant user access to a sketch
+
+tsctl provides a subcommand for granting a user access to a specific sketch. This subcommand is called `grant-user`, and it allows you to specify the username of the user and the ID of the sketch.
+
+By default, this command grants both 'read' and 'write' permissions to the user for the specified sketch.
+
+You can use the `--read-only` flag to grant only 'read' access.
+
+Command:
+
+```shell
+tsctl grant-user [OPTIONS] USERNAME
+```
+
+Parameters:
+
+```shell
+--sketch_id INTEGER  [required]
+--read-only          (optional) Grant only read access.
+```
+
+Example:
+
+```shell
+# Grant read and write access to user 'john' for sketch ID 123
+tsctl grant-user john --sketch_id 123
+# Grant read-only access to user 'jane' for sketch ID 456
+tsctl grant-user jane --sketch_id 456 --read-only
+```
+
 ### Group management
 
 #### Adding groups
@@ -204,6 +234,34 @@ tsctl create-group [OPTIONS] GROUP_NAME
 #### Removing groups
 
 Not yet implemented.
+
+#### Grant group access to a sketch
+
+tsctl provides a subcommand for granting a group access to a specific sketch. This subcommand is called `grant-group`, and it allows you to specify the groupname of the group and the ID of the sketch.
+
+By default, this command grants both 'read' and 'write' permissions to the group for the specified sketch.
+
+You can use the `--read-only` flag to grant only 'read' access.
+
+Command:
+
+```shell
+tsctl grant-group [OPTIONS] GROUPNAME
+```
+
+Parameters:
+
+```shell
+--sketch_id INTEGER  [required]
+--read-only          (optional) Grant only read access.
+```
+
+Example:
+
+```shell
+tsctl grant-group groupname --sketch_id 123
+tsctl grant-group groupname --sketch_id 456 --read-only
+```
 
 #### Managing group membership
 
