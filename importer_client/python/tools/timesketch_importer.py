@@ -135,8 +135,6 @@ def upload_file(
         context = config_dict.get("context")
         if context:
             streamer.set_upload_context(context)
-        else:
-            streamer.set_upload_context(" ".join(sys.argv))
 
         streamer.add_file(file_path)
 
@@ -622,6 +620,24 @@ def main(args=None):
             "What is the timeline name", input_type=str, default=default_timeline_name
         )
 
+    context = options.context
+    if not context:
+        # Create a copy to modify
+        argv_sanitized = []
+        password_args = ["-p", "--password", "--pwd"]
+        skip_next = False
+        for arg in sys.argv:
+            if skip_next:
+                skip_next = False
+                continue
+            if arg in password_args:
+                skip_next = True
+                continue
+            if arg.startswith(tuple(f"{a}=" for a in password_args)):
+                continue
+            argv_sanitized.append(arg)
+        context = " ".join(argv_sanitized)
+
     config_dict = {
         "message_format_string": options.format_string,
         "timeline_name": conf_timeline_name,
@@ -631,7 +647,7 @@ def main(args=None):
         "size_threshold": options.size_threshold,
         "log_config_file": options.log_config_file,
         "data_label": options.data_label,
-        "context": options.context,
+        "context": context,
         "analyzer_names": options.analyzer_names,
     }
 
