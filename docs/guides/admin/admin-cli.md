@@ -466,9 +466,7 @@ tsctl drop_db
 
 Exports the entire Timesketch database to a zip archive. This can be used for backups or migrations.
 
-```shell
-tsctl export_db
-```
+tsctl export-db <filepath>
 
 Example
 
