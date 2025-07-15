@@ -486,9 +486,7 @@ Imports a Timesketch database from a zip archive created with `export-db`.
 
 Command:
 
-```shell
-tsctl import_db
-```
+tsctl import-db <filepath>
 
 Example
 
