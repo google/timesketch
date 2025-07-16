@@ -18,7 +18,6 @@ import pathlib
 import json
 import re
 import logging
-import subprocess
 import time
 import io
 import zipfile
@@ -313,6 +312,7 @@ def get_version():
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=project_root,
+                    check=False,
                 )
                 if p_dirty.returncode == 0 and p_dirty.stdout:
                     version_string += "-dirty"
@@ -689,6 +689,7 @@ def info():
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=project_root,
+                    check=False,
                 )
                 if p_dirty.returncode == 0 and p_dirty.stdout:
                     commit_hash += "-dirty"
