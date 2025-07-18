@@ -19,7 +19,7 @@ limitations under the License.
     :active="isActive"
     @click="setActiveQuestion()"
   >
-    <div class="d-flex ga-6 align-center justify-md-space-between">
+    <div class="d-flex ga-6 align-center justify-md-space-between flex-wrap">
       <div class="d-flex ga-6 align-center">
         <v-icon
           icon="mdi-account-check-outline"
@@ -29,25 +29,28 @@ limitations under the License.
           left
         />
         <v-icon icon="mdi-creation" v-else small color="#757575" />
-        <p class="font-weight-medium" >{{index}} : {{ name }}</p>
+        <p class="font-weight-medium">{{ index }} : {{ name }}</p>
       </div>
-      <div class="d-flex ga-2 align-center">
+      <div class="d-flex ga-2 align-center flex-1-1-100">
         <v-chip
           v-if="priority"
-          :color="priorityColor"
-          size="small"
+          :class="['chip', priorityColor]"
+          small
           label
-          class="text-capitalize"
           :title="`Priority: ${priority}`"
         >
-          {{ priority }}
+          {{ priority }} Priority
         </v-chip>
-        <v-icon
-          icon="mdi-check-circle"
+        <v-chip
           v-if="isApproved"
           small
-          color="#34A853"
-        />
+          label
+          title="Verified"
+          :class="['chip', 'chip--verified']"
+        >
+          <v-icon icon="mdi-check-circle-outline" start></v-icon>
+          Verified
+        </v-chip>
       </div>
     </div>
   </v-list-item>
@@ -123,16 +126,16 @@ export default {
         : null;
     },
     priorityColor() {
-      if (!this.priority) return "grey";
+      if (!this.priority) return "chip--none";
       switch (this.priority.toLowerCase()) {
         case "high":
-          return "error";
+          return "chip--high";
         case "medium":
-          return "warning";
+          return "chip--medium";
         case "low":
-          return "info";
+          return "chip--low";
         default:
-          return "grey-lighten-1";
+          return "chip--none";
       }
     },
   },
@@ -157,6 +160,53 @@ export default {
     top: 0;
     border-radius: 0;
     border: none;
+  }
+}
+
+.chip {
+  --v-chip-height: 20px;
+  padding: 0 4px;
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+
+  &:deep(.v-chip__underlay) {
+    display: none !important;
+  }
+
+  &:has(.v-icon--start) {
+    padding-left: 11px;
+
+    &:deep(.v-icon--start) {
+      margin-inline-end: 4px;
+    }
+  }
+
+  &.chip--high {
+    background-color: var(--theme-ai-color-red-100);
+    color: var(--theme-ai-color-red-900);
+  }
+
+  &.chip--medium {
+    background-color: #f9e3cc;
+    color: #703a00;
+  }
+
+  &.chip--low {
+    background-color: var(--theme-ai-color-yellow-100);
+    color: #574100;
+  }
+
+  &.chip--none {
+    background-color: var(--theme-ai-color-gray-100);
+    color: var(--theme-ai-color-gray-900);
+  }
+
+  &.chip--verified {
+    background-color: var(--theme-ai-color-green-100);
+    color: var(--theme-ai-color-green-900);
   }
 }
 </style>
