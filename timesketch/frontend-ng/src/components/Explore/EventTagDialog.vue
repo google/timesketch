@@ -129,7 +129,7 @@ export default {
     tagsAssignedToAll() {
       return this.quickTags.filter((el) =>
         this.events.every(ev => {
-          const tag = (ev._source && ev._source.tag) || []
+          const tag = ev._source.tag || []
           return tag.includes(el.tag)
         })
       ).map(t => t.tag);
