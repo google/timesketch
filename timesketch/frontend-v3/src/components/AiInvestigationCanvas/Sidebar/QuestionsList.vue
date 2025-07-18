@@ -33,16 +33,6 @@ limitations under the License.
         <v-icon icon="mdi-delete-sweep-outline" left small />
         Remove All
       </v-btn> -->
-      <v-btn
-        variant="text"
-        size="small"
-        color="primary"
-        @click="toggleModal"
-        :disabled="reportLocked"
-      >
-        <v-icon icon="mdi-plus" left small />
-        Create Question</v-btn
-      >
     </div>
   </div>
   <v-list
@@ -50,7 +40,7 @@ limitations under the License.
     class="report-canvas__questions-list border-thin pa-0 border-b-0 mb-6 rounded-lg"
   >
     <QuestionCard
-      v-for="(question,index) in sortedQuestions"
+      v-for="(question, index) in sortedQuestions"
       :key="question.id"
       :value="question"
       :reportLocked="reportLocked"
@@ -59,13 +49,6 @@ limitations under the License.
       :label="question.labels"
     />
   </v-list>
-  <v-dialog
-    transition="dialog-bottom-transition"
-    v-model="showModal"
-    width="auto"
-  >
-    <AddQuestionModal @close-modal="toggleModal" />
-  </v-dialog>
 </template>
 
 <script>
@@ -75,17 +58,7 @@ export default {
     questionsTotal: Number,
     reportLocked: Boolean,
   },
-  data() {
-    return {
-      showModal: false,
-    };
-  },
   inject: ["regenerateQuestions", "confirmDeleteAll"],
-  methods: {
-    toggleModal() {
-      this.showModal = !this.showModal;
-    },
-  },
   computed: {
     sortedQuestions() {
       if (!this.questions || this.questions.length === 0) {

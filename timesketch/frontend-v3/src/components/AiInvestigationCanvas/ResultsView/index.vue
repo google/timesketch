@@ -16,7 +16,15 @@ limitations under the License.
 <template>
   <section>
     <header class="report-header px-6 pa-4 mb-6">
-      <h2 class="text-h5 font-weight-bold mb-6">Results</h2>
+      <v-btn
+        variant="text"
+        class="ai-inline-cta ml-n3"
+        :disabled="disableCta"
+        @click="store.setActiveQuestion(null)"
+      >
+        <v-icon size="large" icon="mdi-arrow-left" />
+        Report
+      </v-btn>
       <QuestionActionsStrip
         v-if="!reportLocked"
         :isApproved="isApproved"
@@ -65,12 +73,15 @@ export default {
     };
   },
   computed: {
+    disableCta() {
+      return !this.store.activeContext.question?.id;
+    },
     isApproved() {
       return !!this.store.report?.content?.approvedQuestions?.find(
         (approvedId) => approvedId === this.question.id
       );
     },
-  }
+  },
 };
 </script>
 

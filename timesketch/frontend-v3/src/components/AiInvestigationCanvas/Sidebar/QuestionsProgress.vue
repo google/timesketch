@@ -17,37 +17,43 @@ limitations under the License.
   <v-card v-if="isGenerating" class="pa-4 d-flex ga-2 mb-10">
     <div class="flex-grow-1">
       <div class="d-flex justify-space-between">
-        <h4 v-if="questionsTotal" class="mb-2">AI Analysis in progress: Processing results ...</h4>
+        <h4 v-if="questionsTotal" class="mb-2">
+          AI Analysis in progress: Processing results ...
+        </h4>
         <h4 v-else class="mb-2">AI Analysis in progress: Sending events ...</h4>
         <p v-if="questionsTotal">
-          <span class="font-weight-bold"
-            >{{ questionsTotal }}</span
-          >
+          <span class="font-weight-bold">{{ questionsTotal }}</span>
           questions created
         </p>
       </div>
-      <v-progress-linear height="12" color="primary" indeterminate rounded="xl"></v-progress-linear>
+      <v-progress-linear
+        height="12"
+        color="primary"
+        indeterminate
+        rounded="xl"
+      ></v-progress-linear>
     </div>
     <v-card-actions class="flex-grow-0">
       <v-spacer></v-spacer>
       <v-btn
         variant="outlined"
-        size="small"
-        :disabled="disableCta"
-        @click="store.setActiveQuestion(null)"
-        >View Report</v-btn
+        class="ai-inline-cta"
+        @click="toggleModal"
+        :disabled="reportLocked || questionsTotal === 0"
       >
+        Create Question
+      </v-btn>
     </v-card-actions>
   </v-card>
   <v-card v-else class="pa-4 d-flex ga-2 mb-10">
     <div class="flex-grow-1">
       <div class="d-flex justify-space-between">
-        <h4 class="mb-2">Investigation Progress</h4>
+        <h4 class="mb-2">Progress</h4>
         <p v-if="questionsTotal">
           <span class="font-weight-bold"
             >{{ completedQuestionsTotal }}/{{ questionsTotal }}</span
           >
-          questions answered
+          questions finalized
         </p>
       </div>
       <v-progress-linear
@@ -62,13 +68,21 @@ limitations under the License.
       <v-spacer></v-spacer>
       <v-btn
         variant="outlined"
-        size="small"
-        :disabled="disableCta"
-        @click="store.setActiveQuestion(null)"
-        >View Report</v-btn
+        class="ai-inline-cta"
+        @click="toggleModal"
+        :disabled="reportLocked || questionsTotal === 0"
       >
+        Create Question
+      </v-btn>
     </v-card-actions>
   </v-card>
+  <v-dialog
+    transition="dialog-bottom-transition"
+    v-model="showModal"
+    width="auto"
+  >
+    <AddQuestionModal @close-modal="toggleModal" />
+  </v-dialog>
 </template>
 
 <script>
@@ -78,17 +92,21 @@ export default {
   data() {
     return {
       store: useAppStore(),
+      showModal: false,
     };
   },
   props: {
     questionsTotal: Number,
     completedQuestionsTotal: Number,
     isGenerating: Boolean,
+    reportLocked: Boolean,
+  },
+  methods: {
+    toggleModal() {
+      this.showModal = !this.showModal;
+    },
   },
   computed: {
-    disableCta() {
-      return !this.store.activeContext.question?.id;
-    },
     percentageCompleted() {
       return this.questionsTotal
         ? (this.completedQuestionsTotal / this.questionsTotal) * 100
