@@ -62,8 +62,11 @@ nav:
       - Resources: community/resources.md
       - Roadmap: community/roadmap.md
       - Events:
+          - Blackhat 2025: community/2025-blackhat.md
           - 2021 Summit: community/2021-timesketch-summit.md
   - Blog: https://osdfir.blogspot.com/search/label/timesketch
+  - Blackhat 2025:
+      - community/2025-blackhat.md
 plugins:
   - redirects:
       redirect_maps:
