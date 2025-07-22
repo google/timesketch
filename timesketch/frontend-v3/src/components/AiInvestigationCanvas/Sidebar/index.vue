@@ -14,30 +14,56 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-col
-    cols="12"
-    md="6"
-    lg="4"
-    class="ai-investigation-canvas__sidebar bg-grey-lighten-4 pa-4 fill-height overflow-hidden"
+  <v-navigation-drawer
+    v-if="isAiRouteActive"
+    :rail="rail"
+    :rail-width="52"
+    :width="473"
+    permanent
+    class="ai-investigation-canvas__sidebar"
   >
     <QuestionsListLoader v-if="isLoading" />
     <template v-else>
-      <div>
-        <h2 class="mb-5 h5">Questions</h2>
-        <QuestionsProgress
-          :questionsTotal="verifiedTotal"
-          :completedQuestionsTotal="completedQuestionsTotal"
-          :isGenerating="isGenerating"
-        />
-      </div>
+      <div class="ai-investigation-canvas__sidebar-content">
+        <v-btn
+          icon
+          @click.stop="toggleRail"
+          class="mb-2 position-absolute top-0 right-0"
+          width="52"
+          height="52"
+          elevation="0"
+          rounded
+        >
+          <v-icon
+            :icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'"
+            :color="'var(--theme-ai-ts-blue)'"
+          />
+        </v-btn>
+        <div v-if="!rail">
+          <div>
+            <h2 class="mb-5 h5">Questions</h2>
+            <QuestionsProgress
+              :questionsTotal="verifiedTotal"
+              :completedQuestionsTotal="completedQuestionsTotal"
+              :isGenerating="isGenerating"
+            />
+          </div>
 
-      <QuestionsListLoader v-if="isLoading" />
-      <QuestionsList :questions="sortedQuestions" :questionsTotal="questionsTotal" :reportLocked="reportLocked"
-    /></template>
-  </v-col>
+          <QuestionsListLoader v-if="isLoading" />
+          <QuestionsList
+            :questions="sortedQuestions"
+            :questionsTotal="questionsTotal"
+            :reportLocked="reportLocked"
+          />
+        </div>
+      </div>
+    </template>
+  </v-navigation-drawer>
 </template>
 
 <script>
+import { useRoute } from "vue-router";
+
 export default {
   props: {
     questionsTotal: {
@@ -60,7 +86,16 @@ export default {
     questions: Array,
     reportLocked: Boolean,
   },
+  data() {
+    return {
+      rail: false,
+      route: useRoute(),
+    };
+  },
   computed: {
+    isAiRouteActive() {
+      return this.route.name === "AiInvestigation";
+    },
     sortedQuestions() {
       return this.questions && this.questions.length > 0
         ? [
@@ -71,12 +106,21 @@ export default {
         : [];
     },
   },
+  methods: {
+    toggleRail() {
+      this.rail = !this.rail;
+    },
+  },
 };
 </script>
 
 <style scoped>
 .ai-investigation-canvas__sidebar {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  background-color: var(--theme-ai-ui-gray-50);
+}
+
+.ai-investigation-canvas__sidebar-content {
+  width: 473px;
+  padding: 33px 12px 12px;
 }
 </style>

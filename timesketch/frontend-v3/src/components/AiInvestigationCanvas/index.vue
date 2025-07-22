@@ -14,40 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container class="ai-investigation-canvas grid pa-0" fluid>
-    <v-row no-gutters class="fill-height overflow-hidden">
-      <Sidebar
+  <v-container class="ai-investigation-canvas pa-0" fluid>
+    <Sidebar
+      :questions="filteredQuestions"
+      :questionsTotal="questionsTotal"
+      :completedQuestionsTotal="completedQuestionsTotal"
+      :verifiedTotal="verifiedTotal"
+      :isLoading="isLoading"
+      :reportLocked="store.reportLocked"
+      :isGenerating="isGeneratingReport"
+    />
+    <template v-if="showResultsView">
+      <ResultsViewLoader v-if="showLoader" />
+      <ResultsView
+        :question="selectedQuestion"
+        :key="selectedQuestion.id"
+        :reportLocked="store.reportLocked"
+        :isLoading="isLoading"
+      />
+    </template>
+    <template v-else>
+      <ReportViewLoader v-if="showLoader" />
+      <ReportView
+        v-else
+        :reportLocked="store.reportLocked"
         :questions="filteredQuestions"
         :questionsTotal="questionsTotal"
         :completedQuestionsTotal="completedQuestionsTotal"
-        :verifiedTotal="verifiedTotal"
         :isLoading="isLoading"
-        :reportLocked="store.reportLocked"
-        :isGenerating="isGeneratingReport"
       />
-      <v-col cols="12" md="6" lg="8" class="fill-height overflow-auto">
-        <template v-if="showResultsView">
-          <ResultsViewLoader v-if="showLoader" />
-          <ResultsView
-            :question="selectedQuestion"
-            :key="selectedQuestion.id"
-            :reportLocked="store.reportLocked"
-            :isLoading="isLoading"
-          />
-        </template>
-        <template v-else>
-          <ReportViewLoader v-if="showLoader" />
-          <ReportView
-            v-else
-            :reportLocked="store.reportLocked"
-            :questions="filteredQuestions"
-            :questionsTotal="questionsTotal"
-            :completedQuestionsTotal="completedQuestionsTotal"
-            :isLoading="isLoading"
-          />
-        </template>
-      </v-col>
-    </v-row>
+    </template>
   </v-container>
   <v-dialog
     transition="dialog-bottom-transition"
@@ -343,13 +339,3 @@ export default {
   },
 };
 </script>
-<style scoped>
-.ai-investigation-canvas {
-  height: calc(100vh - 65px);
-  overflow: hidden;
-}
-.ai-investigation-canvas__sidebar {
-  display: grid;
-  grid-template-rows: auto auto 1fr;
-}
-</style>
