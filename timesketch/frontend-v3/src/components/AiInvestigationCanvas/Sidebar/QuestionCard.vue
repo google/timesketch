@@ -15,23 +15,28 @@ limitations under the License.
 -->
 <template>
   <v-list-item
-    :class="listItemClasses"
+    base-color="var(--theme-ai-color-blue-200)"
+    :class="['question-card', isActive && 'question-card--active']"
     :active="isActive"
     @click="setActiveQuestion()"
   >
-    <div class="d-flex ga-6 align-center justify-md-space-between flex-wrap">
+    <div class="question-card__content">
       <div class="d-flex ga-6 align-center">
-        <v-icon
-          icon="mdi-account-check-outline"
-          color="#757575"
-          v-if="user.name"
-          small
-          left
+        <v-avatar v-if="user.name" size="24" class="question-card__avatar">
+          <span>{{ $filters.initialLetter(user.name) }}</span>
+        </v-avatar>
+        <CreationIcon
+          v-else
+          class="question-card__icon"
+          :width="24"
+          :height="24"
         />
-        <v-icon icon="mdi-creation" v-else small color="#757575" />
-        <p class="font-weight-medium">{{ index }} : {{ name }}</p>
+        <p class="font-weight-medium black--text">{{ name }}</p>
       </div>
-      <div class="d-flex ga-2 align-center flex-1-1-100">
+      <div
+        class="d-flex ga-2 align-center flex-1-1-100"
+        v-if="priority || isApproved"
+      >
         <v-chip
           v-if="priority"
           :class="['chip', priorityColor]"
@@ -57,9 +62,13 @@ limitations under the License.
 </template>
 
 <script>
+import CreationIcon from "@/components/Icons/CreationIcon";
 import { useAppStore } from "@/stores/app";
 
 export default {
+  components: {
+    CreationIcon,
+  },
   props: {
     name: String,
     type: String,
@@ -103,15 +112,6 @@ export default {
         (approvedId) => approvedId === this.id
       );
     },
-
-    listItemClasses() {
-      return {
-        "is--active": this.isActive,
-        "border-b-sm": true,
-        "px-4 py-8": true,
-        "border-right-md": true,
-      };
-    },
     priority() {
       if (!this.labels || !Array.isArray(this.labels)) {
         return null;
@@ -143,24 +143,59 @@ export default {
 </script>
 
 <style scoped>
-.is--active {
+.question-card {
+  background-color: var(--theme-ai-color-white);
+  padding: 0 !important;
+  border-bottom: 1px solid var(--theme-ai-color-gray-300);
   position: relative;
+  --v-activated-opacity: 0;
+
+  p {
+    line-height: 1.4;
+    color: var(--theme-ai-color-black);
+  }
 
   &::after {
     content: "";
     display: block;
-    height: 100%;
     width: 6px;
-    background-color: #3874cb;
     position: absolute;
-    opacity: 1;
-    outline: none;
-    right: 0;
-    left: auto;
-    top: 0;
-    border-radius: 0;
+    inset: 0 0 0 auto;
+    pointer-events: none;
     border: none;
+    border-radius: 0;
+    opacity: 1;
   }
+
+  &.question-card--active {
+    &::after {
+      background-color: var(--theme-ai-color-blue-500);
+    }
+  }
+}
+
+.question-card__content {
+  padding: 24px 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: space-between;
+  gap: 16px;
+}
+
+.question-card__avatar {
+  background-color: #eaddff;
+
+  span {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--theme-ai-color-blue-800);
+  }
+}
+
+.question-card__icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
 }
 
 .chip {

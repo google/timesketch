@@ -217,24 +217,25 @@ html {
 }
 
 :root {
+  --theme-ai-color-black: #000000;
   --theme-ai-color-white: #ffffff;
 
   --theme-ai-color-gray-50: #f6f6f6;
-  --theme-ai-color-gray-100: #dadce0;
+  --theme-ai-color-gray-100: #e7e7e7;
+  --theme-ai-color-gray-300: #dadce0;
+  --theme-ai-color-gray-600: #5d5d5d;
+  --theme-ai-color-gray-900: #3d3d3d;
 
   --theme-ai-color-ts-blue: #3874cb;
   --theme-ai-color-blue-100: #e3ecfb;
-
-  --theme-ai-ui-gray-50: #f6f6f6;
-  --theme-ai-ts-blue: #3874cb;
+  --theme-ai-color-blue-200: #c1daf6;
+  --theme-ai-color-blue-500: #257bd2;
+  --theme-ai-color-blue-800: #144278;
 
   --theme-ai-color-red-100: #ffdce2;
   --theme-ai-color-red-900: #940821;
 
   --theme-ai-color-yellow-100: #fff6d3;
-
-  --theme-ai-color-gray-100: #e7e7e7;
-  --theme-ai-color-gray-900: #3d3d3d;
 
   --theme-ai-color-green-100: #e3f5e3;
   --theme-ai-color-green-900: #224525;

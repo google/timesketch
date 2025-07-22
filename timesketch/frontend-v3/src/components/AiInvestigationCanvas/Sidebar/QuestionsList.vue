@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="d-flex justify-space-between align-center px-2">
-    <h4 class="mb-2" v-if="questionsTotal">
+  <div class="questions-list__bar">
+    <h4 class="questions-list__label" v-if="questionsTotal">
       {{ questionsTotal }}
       <span class="font-weight-regular"
         >question{{ questionsTotal > 1 && "s" }}</span
@@ -70,7 +70,22 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
+.questions-list__label {
+  font-size: 14px;
+  color: var(--theme-ai-color-black);
+  font-weight: 700;
+
+  span {
+    color: var(--theme-ai-color-gray-600);
+    font-weight: 400;
+  }
+}
+
+.questions-list__bar {
+  padding: 0 0 14px;
+}
+
 .report-canvas__questions-list {
   -ms-overflow-style: none;
   scrollbar-width: none;
