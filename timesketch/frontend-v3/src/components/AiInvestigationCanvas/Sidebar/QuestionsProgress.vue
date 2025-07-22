@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card v-if="isGenerating" class="pa-4 d-flex ga-2 mb-10">
-    <div class="flex-grow-1">
+  <v-card v-if="isGenerating" class="progress-card" :elevation="0">
+    <div class="flex-1-0">
       <div class="d-flex justify-space-between">
         <h4 v-if="questionsTotal" class="mb-2">
           AI Analysis in progress: Processing results ...
@@ -33,7 +33,7 @@ limitations under the License.
         rounded="xl"
       ></v-progress-linear>
     </div>
-    <v-card-actions class="flex-grow-0">
+    <v-card-actions class="flex-0-0 pa-0">
       <v-spacer></v-spacer>
       <v-btn
         variant="outlined"
@@ -45,27 +45,31 @@ limitations under the License.
       </v-btn>
     </v-card-actions>
   </v-card>
-  <v-card v-else class="pa-4 d-flex ga-2 mb-10">
+  <v-card v-else class="progress-card" :elevation="0">
     <div class="flex-grow-1">
-      <div class="d-flex justify-space-between">
-        <h4 class="mb-2">Progress</h4>
-        <p v-if="questionsTotal">
+      <div
+        class="d-flex justify-space-between ga-1 align-baseline mb-2 flex-wrap"
+      >
+        <h4>Progress</h4>
+        <p v-if="questionsTotal" class="text-body-2 text-no-wrap">
           <span class="font-weight-bold"
-            >{{ completedQuestionsTotal }}/{{ questionsTotal }}</span
+            >{{ completedQuestionsTotal }} / {{ questionsTotal }}</span
           >
           questions finalized
         </p>
       </div>
       <v-progress-linear
+        class="progress-card__bar"
         height="12"
-        bg-color="#4F378A"
-        color="#34a853"
+        width="100%"
+        color="var(--theme-ai-color-ts-blue)"
+        bg-color="var(--theme-ai-color-blue-100)"
+        bg-opacity="1"
         :model-value="percentageCompleted"
         rounded="xl"
       ></v-progress-linear>
     </div>
-    <v-card-actions class="flex-grow-0">
-      <v-spacer></v-spacer>
+    <v-card-actions class="flex-0-0 pa-0 h-auto progress-card__cta">
       <v-btn
         variant="outlined"
         class="ai-inline-cta"
@@ -115,3 +119,26 @@ export default {
   },
 };
 </script>
+<style scoped>
+.progress-card {
+  padding: 17px 20px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-ai-color-gray-100);
+  background-color: var(--theme-ai-color-white);
+  margin-bottom: 16px;
+  gap: 30px;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.progress-card__cta {
+  min-height: auto;
+}
+
+.progress-card__bar {
+  &:deep(.v-progress-linear__determinate) {
+    border-radius: 24px;
+  }
+}
+</style>

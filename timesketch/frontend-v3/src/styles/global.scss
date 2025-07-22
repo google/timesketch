@@ -217,6 +217,14 @@ html {
 }
 
 :root {
+  --theme-ai-color-white: #ffffff;
+
+  --theme-ai-color-gray-50: #f6f6f6;
+  --theme-ai-color-gray-100: #dadce0;
+
+  --theme-ai-color-ts-blue: #3874cb;
+  --theme-ai-color-blue-100: #e3ecfb;
+
   --theme-ai-ui-gray-50: #f6f6f6;
   --theme-ai-ts-blue: #3874cb;
 
@@ -233,7 +241,7 @@ html {
 }
 
 .ai-inline-cta {
-  color: var(--theme-ai-ts-blue);
+  color: var(--theme-ai-color-ts-blue);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;

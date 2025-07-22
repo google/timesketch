@@ -36,12 +36,12 @@ limitations under the License.
         >
           <v-icon
             :icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'"
-            :color="'var(--theme-ai-ts-blue)'"
+            :color="'var(--theme-ai-color-ts-blue)'"
           />
         </v-btn>
         <div v-if="!rail">
           <div>
-            <h2 class="mb-5 h5">Questions</h2>
+            <h2 class="mb-3 h5">Questions</h2>
             <QuestionsProgress
               :questionsTotal="verifiedTotal"
               :completedQuestionsTotal="completedQuestionsTotal"
@@ -116,7 +116,7 @@ export default {
 
 <style scoped>
 .ai-investigation-canvas__sidebar {
-  background-color: var(--theme-ai-ui-gray-50);
+  background-color: var(--theme-ai-color-gray-50);
 }
 
 .ai-investigation-canvas__sidebar-content {
