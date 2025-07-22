@@ -222,14 +222,19 @@ html {
 
   --theme-ai-color-gray-50: #f6f6f6;
   --theme-ai-color-gray-100: #e7e7e7;
+  --theme-ai-color-gray-200: #d1d1d1;
   --theme-ai-color-gray-300: #dadce0;
   --theme-ai-color-gray-600: #5d5d5d;
+  --theme-ai-color-gray-700: #4f4f4f;
   --theme-ai-color-gray-900: #3d3d3d;
+  --theme-ai-color-gray-950: #262626;
 
   --theme-ai-color-ts-blue: #3874cb;
+  --theme-ai-color-blue-50: #f2f7fd;
   --theme-ai-color-blue-100: #e3ecfb;
   --theme-ai-color-blue-200: #c1daf6;
   --theme-ai-color-blue-500: #257bd2;
+  --theme-ai-color-blue-700: #134c91;
   --theme-ai-color-blue-800: #144278;
 
   --theme-ai-color-red-100: #ffdce2;
@@ -258,5 +263,15 @@ html {
     &:has(.v-icon) {
       padding-left: 10px;
     }
+  }
+}
+
+.ai-investigation-view {
+  .v-list-item-title {
+    color: var(--theme-ai-color-gray-950);
+  }
+
+  .v-list-item--variant-text .v-list-item__overlay {
+    background-color: transparent;
   }
 }

@@ -87,4 +87,14 @@ router.isReady().then(() => {
   localStorage.removeItem("vuetify:dynamic-reload");
 });
 
+// Wrap ai investigation view in a class for isolated styling purposes
+router.beforeEach((to, from, next) => {
+  if (to.name === "AiInvestigation") {
+    document.body.classList.add("ai-investigation-view");
+  } else {
+    document.body.classList.remove("ai-investigation-view");
+  }
+  next();
+});
+
 export default router;

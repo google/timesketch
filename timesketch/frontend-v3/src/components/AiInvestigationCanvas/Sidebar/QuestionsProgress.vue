@@ -121,7 +121,7 @@ export default {
 </script>
 <style scoped>
 .progress-card {
-  padding: 17px 20px 20px;
+  padding: 17px 20px 16px;
   border-radius: 8px;
   border: 1px solid var(--theme-ai-color-gray-100);
   background-color: var(--theme-ai-color-white);
