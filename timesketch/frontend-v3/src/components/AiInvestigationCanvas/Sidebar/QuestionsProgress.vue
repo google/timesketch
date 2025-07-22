@@ -142,3 +142,26 @@ export default {
   }
 }
 </style>
+<style scoped>
+.progress-card {
+  padding: 17px 20px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-ai-color-gray-100);
+  background-color: var(--theme-ai-color-white);
+  margin-bottom: 16px;
+  gap: 30px;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.progress-card__cta {
+  min-height: auto;
+}
+
+.progress-card__bar {
+  &:deep(.v-progress-linear__determinate) {
+    border-radius: 24px;
+  }
+}
+</style>

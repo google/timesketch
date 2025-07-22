@@ -14,26 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="iconOnly" class="pa-4" style="cursor: pointer">
-    <a :href="destinationUrl" style="color: inherit; text-decoration: none;">
-      <v-icon left title="Search">mdi-magnify</v-icon>
-      <div style="height: 1px"></div>
+  <div v-if="iconOnly" style="cursor: pointer">
+    <a class="ai-navitem ai-navitem--closed" :href="destinationUrl" style="color: inherit; text-decoration: none">
+      <div class="ai-navitem__icon">
+        <v-icon left title="Search">mdi-magnify</v-icon>
+      </div>
     </a>
   </div>
 
   <div v-else>
-    <a :href="destinationUrl" style="text-decoration: none; color: inherit; display: block;">
-        <div class="pa-4" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'" style="cursor: pointer">
-            <v-icon left>mdi-magnify</v-icon>Search
-        </div>
+    <a :href="destinationUrl" style="text-decoration: none; color: inherit; display: block">
+      <div :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover', 'ai-navitem']" style="cursor: pointer">
+        <div class="ai-navitem__icon"><v-icon left>mdi-magnify</v-icon></div>
+        Search
+      </div>
     </a>
-    <v-divider></v-divider>
   </div>
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
-import { useTheme } from 'vuetify';
+import { useAppStore } from '@/stores/app'
+import { useTheme } from 'vuetify'
 
 export default {
   data() {
@@ -59,7 +60,6 @@ export default {
     return {
       theme: useTheme(),
     }
-  }
+  },
 }
 </script>
-

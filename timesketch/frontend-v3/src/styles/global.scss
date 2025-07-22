@@ -275,3 +275,24 @@ html {
     background-color: transparent;
   }
 }
+
+.ai-navitem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+
+  &.router-link-active {
+    background-color: var(--theme-ai-color-gray-50);
+  }
+}
+
+.ai-navitem__icon {
+  width: 55px;
+  height: 55px;
+  flex: 0 0 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-ai-color-gray-700);
+}

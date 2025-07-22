@@ -14,10 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
-    <router-link :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }">
-      <v-icon icon="mdi-creation" left />
-      <div style="height: 1px"></div>
+  <div v-if="iconOnly" style="cursor: pointer" @click="$emit('toggleDrawer')">
+    <router-link
+      class="ai-navitem ai-navitem--closed"
+      :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
+    >
+      <div class="ai-navitem__icon">
+        <CreationIcon class="question-card__icon" :width="28" :height="28" />
+      </div>
     </router-link>
   </div>
 
@@ -26,7 +30,6 @@ limitations under the License.
       :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
       custom
       v-slot="{ navigate }"
-      class="pa-4"
       :class="
         theme.global.current.value.dark
           ? isActive
@@ -38,16 +41,21 @@ limitations under the License.
       "
       style="cursor: pointer"
     >
-      <div @click="navigate" @keypress.enter="navigate" role="link"><v-icon icon="mdi-creation" start />AI Investigation</div>
+      <div @click="navigate" @keypress.enter="navigate" role="link" class="ai-navitem">
+        <div class="ai-navitem__icon">
+          <CreationIcon class="question-card__icon" :width="28" :height="28" />
+        </div>
+        AI Investigation
+      </div>
     </router-link>
-    <v-divider></v-divider>
   </div>
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
-import { useTheme } from 'vuetify'
+import CreationIcon from '@/components/Icons/CreationIcon'
+import { useAppStore } from '@/stores/app'
 import { useRoute } from 'vue-router'
+import { useTheme } from 'vuetify'
 
 export default {
   data() {
@@ -75,8 +83,8 @@ export default {
   },
   setup() {
     return {
-      theme: useTheme()
+      theme: useTheme(),
     }
-  }
+  },
 }
 </script>
