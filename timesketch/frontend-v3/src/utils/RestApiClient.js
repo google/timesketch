@@ -602,6 +602,12 @@ export default {
       "/sketches/" + sketchId + "/questions/" + questionId + "/"
     );
   },
+  updateQuestion(sketchId, questionId, formData) {
+    return RestApiClient.post(
+      "/sketches/" + sketchId + "/questions/" + questionId + "/",
+      formData
+    );
+  },
   createQuestion(sketchId, scenarioId, facetId, questionText, templateId) {
     let formData = {
       scenario_id: scenarioId,

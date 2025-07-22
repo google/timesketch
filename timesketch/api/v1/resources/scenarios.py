@@ -694,6 +694,69 @@ class QuestionResource(resources.ResourceMixin, Resource):
 
         return self.to_json(question)
 
+    @login_required
+    def post(self, sketch_id, question_id):
+        """Handles POST request to the resource to update a question.
+
+        Returns:
+            A JSON representation of the updated question.
+        """
+        VALID_STATUSES = {"new", "pending-review", "verified", "rejected"}
+
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        question = InvestigativeQuestion.get_by_id(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+        if not question.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Question is not part of this sketch.")
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        # Flag to check if the object was updated, to avoid unnecessary DB writes.
+        updated = False
+
+        status = form.get("status")
+        if status:
+            if status not in VALID_STATUSES:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Invalid question status: '{status}'. Valid statuses are: "
+                    f"{', '.join(sorted(list(VALID_STATUSES)))}",
+                )
+            question.set_status(status)
+            updated = True
+
+        name = form.get("name")
+        if name:
+            question.name = name
+            updated = True
+
+        display_name = form.get("display_name")
+        if display_name:
+            question.display_name = display_name
+            updated = True
+
+        description = form.get("description")
+        if description:
+            question.description = description
+            updated = True
+
+        if updated:
+            db_session.add(question)
+            db_session.commit()
+
+        return self.to_json(question)
+
 
 class QuestionConclusionListResource(resources.ResourceMixin, Resource):
     """Resource for investigative question conclusion."""
