@@ -20,7 +20,8 @@ limitations under the License.
       :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
     >
       <div class="ai-navitem__icon">
-        <CreationIcon class="question-card__icon" :width="28" :height="28" />
+        <v-icon v-if="menuTitle === 'Investigation'" icon="mdi-text-box-search-outline" />
+        <CreationIcon v-else class="question-card__icon" :width="28" :height="28" />
       </div>
     </router-link>
   </div>
@@ -43,9 +44,10 @@ limitations under the License.
     >
       <div @click="navigate" @keypress.enter="navigate" role="link" class="ai-navitem">
         <div class="ai-navitem__icon">
-          <CreationIcon class="question-card__icon" :width="28" :height="28" />
+           <v-icon v-if="menuTitle === 'Investigation'" icon="mdi-text-box-search-outline" />
+          <CreationIcon v-else class="question-card__icon" :width="28" :height="28" />
         </div>
-        AI Investigation
+        {{ menuTitle }}
       </div>
     </router-link>
   </div>
@@ -79,6 +81,18 @@ export default {
     },
     meta() {
       return this.appStore.meta
+    },
+    systemSettings() {
+      return this.appStore.systemSettings
+    },
+    menuTitle() {
+      if (this.systemSettings.LLM_FEATURES_AVAILABLE?.log_analyzer) {
+        return 'AI Investigation'
+      } else if (this.systemSettings.DFIQ_ENABLED) {
+        return 'Investigation'
+      } else {
+        return false
+      }
     },
   },
   setup() {

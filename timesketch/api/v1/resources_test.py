@@ -1387,6 +1387,7 @@ class SystemSettingsResourceTest(BaseTest):
         expected_response = {
             "DFIQ_ENABLED": False,
             "SEARCH_PROCESSING_TIMELINES": False,
+            "ENABLE_V3_INVESTIGATION_VIEW": False,
             "LLM_FEATURES_AVAILABLE": {"default": False},
         }
 

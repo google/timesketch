@@ -242,7 +242,15 @@ limitations under the License.
         hide-overlay
         :width="navigationDrawer.width"
       >
-        <ts-ai-investigation :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-ai-investigation>
+        <ts-ai-investigation
+          v-if="systemSettings.ENABLE_V3_INVESTIGATION_VIEW
+            && (systemSettings.DFIQ_ENABLED
+              || (systemSettings.LLM_FEATURES_AVAILABLE
+                && systemSettings.LLM_FEATURES_AVAILABLE.log_analyzer))"
+          :icon-only="isMiniDrawer"
+          @toggleDrawer="toggleDrawer()"
+        >
+        </ts-ai-investigation>
         <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
         <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
         <ts-saved-searches

@@ -24,7 +24,7 @@ limitations under the License.
   <div v-else>
     <a :href="destinationUrl" style="text-decoration: none; color: inherit; display: block;">
         <div class="pa-4" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'" style="cursor: pointer">
-            <v-icon left>mdi-creation</v-icon>AI Investigation
+            <v-icon left>{{ menuTitle.icon }}</v-icon>{{ menuTitle.title }}
         </div>
     </a>
     <v-divider></v-divider>
@@ -39,6 +39,18 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
+    },
+    menuTitle() {
+      if (this.systemSettings.LLM_FEATURES_AVAILABLE && this.systemSettings.LLM_FEATURES_AVAILABLE.log_analyzer) {
+        return { title: 'AI Investigation', icon: 'mdi-creation' }
+      } else if (this.systemSettings.DFIQ_ENABLED) {
+        return {title: 'Investigation', icon: 'mdi-text-box-search-outline'}
+      } else {
+        return false
+      }
     },
     destinationUrl() {
       if (!this.sketch.id) {

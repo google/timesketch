@@ -217,10 +217,17 @@ limitations under the License.
         :width="navigationDrawer.width"
       >
       <!-- TODO: content of left panel -->
-      <ts-ai-investigation :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-ai-investigation>
-      <!-- <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search> -->
-      <ts-v2-explore :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-v2-explore>
-      <!-- <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags> -->
+        <ts-ai-investigation
+          v-if="systemSettings.DFIQ_ENABLED || (systemSettings.LLM_FEATURES_AVAILABLE &&
+            systemSettings.LLM_FEATURES_AVAILABLE.log_analyzer)"
+          :icon-only="isMiniDrawer"
+          @toggleDrawer="toggleDrawer()"
+        >
+        </ts-ai-investigation>
+        <!-- TODO: Replace with ts-search again once the explore/search view is feature complete in v3 -->
+        <!-- <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search> -->
+        <ts-v2-explore :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-v2-explore>
+        <!-- <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags> -->
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->

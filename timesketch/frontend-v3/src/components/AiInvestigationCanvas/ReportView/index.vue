@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <section>
     <!-- NEW: Empty state when no questions exist -->
-    <div v-if="!isLoading && questionsTotal === 0" class="px-6 py-16 text-center">
+    <div v-if="!isLoading && questionsTotal === 0 && isLogAnalyzerAvailable" class="px-6 py-16 text-center">
       <v-icon size="80" color="disabled" class="mb-4">mdi-text-box-search-outline</v-icon>
       <h2 class="text-h4 font-weight-bold mb-4">Start Your AI-Powered Investigation</h2>
       <p class="mb-8 mx-auto" style="max-width: 600px;">
@@ -26,15 +26,38 @@ limitations under the License.
       </p>
       <v-btn
         size="large"
-        rounded
         color="primary"
         @click="runLogAnalysis()"
         :loading="isGeneratingReport"
         :disabled="isGeneratingReport"
       >
-        <v-icon left>mdi-creation</v-icon>
+        <v-icon left class="mr-2">mdi-creation</v-icon>
         {{ isGeneratingReport ? 'Generating Report...' : 'Generate Initial Report' }}
       </v-btn>
+    </div>
+    <!-- Empty state for the manual investigation mode without AI features enabled. -->
+    <div v-else-if="!isLoading && questionsTotal === 0 && !isLogAnalyzerAvailable" class="px-6 py-16 text-center">
+      <v-icon size="80" color="disabled" class="mb-4">mdi-text-box-search-outline</v-icon>
+      <h2 class="text-h4 font-weight-bold mb-4">Start Your Investigation</h2>
+      <p class="mb-8 mx-auto" style="max-width: 600px;">
+        There are currently no investigative questions in this report.
+        Click the button below to select or add a question to get started.
+      </p>
+      <v-btn
+        size="large"
+        color="primary"
+        @click="toggleModal"
+      >
+        <v-icon left class="mr-2">mdi-plus</v-icon>
+        Add Question
+      </v-btn>
+      <v-dialog
+        transition="dialog-bottom-transition"
+        v-model="showModal"
+        width="auto"
+      >
+        <AddQuestionModal @close-modal="toggleModal" />
+      </v-dialog>
     </div>
     <!-- Existing view for when questions are present -->
     <div v-else>
@@ -182,6 +205,7 @@ export default {
       store,
       showConfirmationModal: false,
       isSynthesizingAll: false,
+      showModal: false,
     };
   },
   computed: {
@@ -193,6 +217,9 @@ export default {
         this.store.report.content.analysts = value;
         this.updateContent("analysts", value);
       },
+    },
+    systemSettings() {
+      return this.store.systemSettings;
     },
     name: {
       get: function () {
@@ -220,10 +247,13 @@ export default {
       }
       return [...this.questions].sort((a, b) => a.id - b.id);
     },
+    isLogAnalyzerAvailable() {
+      return this.systemSettings.LLM_FEATURES_AVAILABLE?.log_analyzer
+    },
     isSynthesizeAvailable() {
       if (
-        this.store.systemSettings.LLM_FEATURES_AVAILABLE?.llm_synthesize === true ||
-        this.store.systemSettings.LLM_FEATURES_AVAILABLE?.default === true
+        this.systemSettings.LLM_FEATURES_AVAILABLE?.llm_synthesize === true ||
+        this.systemSettings.LLM_FEATURES_AVAILABLE?.default === true
       ){
         return true
       }
@@ -240,6 +270,9 @@ export default {
     },
   },
   methods: {
+    toggleModal() {
+      this.showModal = !this.showModal
+    },
     async synthesizeAllMissingAnswers() {
       const questionsToProcess = this.questionsWithoutAnswers;
       if (questionsToProcess.length === 0) {
