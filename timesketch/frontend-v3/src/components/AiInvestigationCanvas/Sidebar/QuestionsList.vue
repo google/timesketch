@@ -17,34 +17,78 @@ limitations under the License.
   <div class="questions-list__bar">
     <h4 class="questions-list__label" v-if="questionsTotal">
       {{ questionsTotal }}
-      <span class="font-weight-regular"
-        >question{{ questionsTotal > 1 && "s" }}</span
-      >
+      <span class="font-weight-regular">question{{ questionsTotal > 1 && 's' }}</span>
     </h4>
 
     <div class="filterbar">
-      <v-select
-        :class="[
-          'filterbar__select',
-          selectedStatuses.length && 'filterbar__select--active',
-        ]"
-        color="var(--theme-ai-color-blue-500)"
-        :items="['New', 'Pending Review', 'Verified', 'Rejected']"
-        v-model="selectedStatuses"
-        multiple
-        density="compact"
-        variant="outlined"
-        hide-details
-        placeholder="Status"
-      >
-        <template #selection="{ index }">
-          <span v-if="index === 0">
-            Status<span v-if="selectedStatuses.length">
-              ({{ selectedStatuses.length }})</span
-            >
-          </span>
-        </template>
-      </v-select>
+      <div class="filterbar__item">
+        <v-select
+          :class="['filterbar__select', selectedStatuses.length && 'filterbar__select--active']"
+          color="var(--theme-ai-color-blue-500)"
+          :items="['New', 'Pending Review', 'Verified', 'Rejected']"
+          v-model="selectedStatuses"
+          multiple
+          density="compact"
+          variant="outlined"
+          hide-details
+          placeholder="Status"
+        >
+          <template #selection="{ index }">
+            <span v-if="index === 0">
+              Status<span v-if="selectedStatuses.length"> ({{ selectedStatuses.length }})</span>
+            </span>
+          </template>
+        </v-select>
+        <p class="filterbar__item-label">
+          Status<span v-if="selectedStatuses.length"> ({{ selectedStatuses.length }})</span>
+        </p>
+      </div>
+
+      <div class="filterbar__item">
+        <v-select
+          :class="['filterbar__select', selectedPriorities.length && 'filterbar__select--active']"
+          color="var(--theme-ai-color-blue-500)"
+          :items="['High Priority', 'Medium Priority', 'Low Priority']"
+          v-model="selectedPriorities"
+          multiple
+          density="compact"
+          variant="outlined"
+          hide-details
+          placeholder="Priority"
+        >
+          <template #selection="{ index }">
+            <span v-if="index === 0">
+              Priority<span v-if="selectedPriorities.length"> ({{ selectedPriorities.length }})</span>
+            </span>
+          </template>
+        </v-select>
+        <p class="filterbar__item-label">
+          Priority<span v-if="selectedPriorities.length"> ({{ selectedPriorities.length }})</span>
+        </p>
+      </div>
+
+      <div class="filterbar__item">
+        <v-select
+          :class="['filterbar__select', selectedCreatedBy.length && 'filterbar__select--active']"
+          color="var(--theme-ai-color-blue-500)"
+          :items="createdByOptions"
+          v-model="selectedCreatedBy"
+          multiple
+          density="compact"
+          variant="outlined"
+          hide-details
+          placeholder="Created By"
+        >
+          <template #selection="{ index }">
+            <span v-if="index === 0">
+              Created By<span v-if="selectedCreatedBy.length"> ({{ selectedCreatedBy.length }})</span>
+            </span>
+          </template>
+        </v-select>
+        <p class="filterbar__item-label">
+          Created By<span v-if="selectedCreatedBy.length"> ({{ selectedCreatedBy.length }})</span>
+        </p>
+      </div>
     </div>
 
     <!--
@@ -63,10 +107,7 @@ limitations under the License.
     </div>
     -->
   </div>
-  <v-list
-    v-if="sortedQuestions"
-    class="report-canvas__questions-list border-thin pa-0 border-b-0 mb-6 rounded-lg"
-  >
+  <v-list v-if="sortedQuestions" class="report-canvas__questions-list border-thin pa-0 border-b-0 mb-6 rounded-lg">
     <QuestionCard
       v-for="(question, index) in sortedQuestions"
       :key="question.id"
@@ -86,21 +127,38 @@ export default {
     questionsTotal: Number,
     reportLocked: Boolean,
   },
-  inject: ["regenerateQuestions", "confirmDeleteAll"],
+  inject: ['regenerateQuestions', 'confirmDeleteAll'],
   data() {
     return {
       selectedStatuses: [],
-    };
+      selectedPriorities: [],
+      selectedCreatedBy: [],
+    }
   },
   computed: {
     sortedQuestions() {
-      if (!this.questions || this.questions.length === 0) {
-        return [];
+      if (!this.questions?.length) return []
+
+      let filtered = this.questions
+
+      // Filter by Created By
+      if (this.selectedCreatedBy.length) {
+        filtered = filtered.filter((q) => {
+          const creator = q.user && q.user.name ? q.user.name : 'AI Generated'
+          return this.selectedCreatedBy.includes(creator)
+        })
       }
-      return [...this.questions].sort((a, b) => a.id - b.id);
+
+      return [...filtered].sort((a, b) => a.id - b.id)
+    },
+    createdByOptions() {
+      if (!this.questions) return []
+      const names = this.questions.map((q) => q.user?.name)
+      const usernames = Array.from(new Set(names.filter(Boolean)))
+      return ['AI Generated', ...usernames]
     },
   },
-};
+}
 </script>
 
 <style scoped>
@@ -126,6 +184,11 @@ export default {
 
 .filterbar {
   padding: 14px 0 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .filterbar__label {
@@ -134,11 +197,27 @@ export default {
   color: var(--theme-ai-color-gray-700);
 }
 
-.filterbar__select {
-  min-width: 73px;
-  width: fit-content !important;
+.filterbar__item {
+  position: relative;
+}
+
+.filterbar__item-label {
+  opacity: 0;
+  pointer-events: none;
   font-size: 14px;
   font-weight: 500;
+  padding: 0 17px;
+  height: 34px;
+  display: block;
+}
+
+.filterbar__select {
+  min-width: 73px;
+  width: 100% !important;
+  font-size: 14px;
+  font-weight: 500;
+  position: absolute;
+  inset: 0 0 auto 0;
 
   &:deep(.v-field__append-inner),
   &:deep(.v-select__menu-icon) {
@@ -167,6 +246,7 @@ export default {
     --v-field-padding-end: 16px;
     --v-field-input-padding-top: 0px;
     --v-field-input-padding-bottom: 0px;
+    justify-content: center;
 
     input {
       align-self: center;

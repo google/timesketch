@@ -66,6 +66,9 @@ export default {
       route: useRoute(),
     }
   },
+  components: {
+    CreationIcon,
+  },
   props: {
     iconOnly: Boolean,
   },
