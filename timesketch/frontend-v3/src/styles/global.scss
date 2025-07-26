@@ -251,6 +251,7 @@ html {
   --theme-ai-color-yellow-900: #82430c;
 
   --theme-ai-color-green-100: #e3f5e3;
+  --theme-ai-color-green-300: #9dd89f;
   --theme-ai-color-green-500: #4caf50;
   --theme-ai-color-green-900: #224525;
 }
@@ -280,4 +281,69 @@ html {
   align-items: center;
   justify-content: center;
   color: var(--theme-ai-color-gray-700);
+}
+
+.question-status-chip {
+  --v-chip-height: 26px !important;
+  color: inherit;
+  text-transform: capitalize;
+  font-size: 12px !important;
+  --v-activated-opacity: 0 !important;
+
+  .v-icon--size-default {
+    font-size: 16px !important;
+  }
+
+  &--verified {
+    background-color: var(--theme-ai-color-green-100);
+    color: var(--theme-ai-color-green-900);
+    border: 1px solid var(--theme-ai-color-green-300);
+  }
+
+  &--rejected {
+    background-color: var(--theme-ai-color-red-50);
+    color: var(--theme-ai-color-red-900);
+    border: 1px solid var(--theme-ai-color-red-300);
+  }
+
+  &--pending-review {
+    background-color: var(--theme-ai-color-yellow-100);
+    color: var(--theme-ai-color-yellow-900);
+    border: 1px solid var(--theme-ai-color-yellow-300);
+  }
+
+  &--new {
+    background-color: var(--theme-ai-color-blue-100);
+    color: var(--theme-ai-color-blue-900);
+    border: 1px solid var(--theme-ai-color-blue-300);
+  }
+
+  &--ai {
+    color: var(--theme-ai-color-gray-600);
+    border: 1px solid var(--theme-ai-color-gray-100);
+  }
+}
+
+.question-status-chip__group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+
+  &:not(:first-child) {
+    padding-left: 24px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 8px;
+      bottom: 0;
+      margin: auto;
+      width: 1px;
+      height: 26px;
+      background-color: var(--theme-ai-color-gray-100);
+    }
+  }
 }

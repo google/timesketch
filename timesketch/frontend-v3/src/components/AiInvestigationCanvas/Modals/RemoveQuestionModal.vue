@@ -34,7 +34,7 @@ limitations under the License.
           <v-icon class="mr-1" left small />
           No, keep question</v-btn
         >
-        <v-btn rounded color="primary" @click="deleteQuestion()">
+        <v-btn color="primary" @click="deleteQuestion()">
           Yes, question is not relevant</v-btn
         >
       </div>

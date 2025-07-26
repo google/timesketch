@@ -17,7 +17,6 @@ limitations under the License.
   <section>
     <header class="question__header pa-6">
       <v-btn
-        rounded
         variant="text"
         size="small"
         color="primary"

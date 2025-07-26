@@ -45,7 +45,6 @@ limitations under the License.
           <v-btn
             color="#fff"
             size="small"
-            rounded
             @click="removeEventFromObservable()"
           >
             Yes, unlink It

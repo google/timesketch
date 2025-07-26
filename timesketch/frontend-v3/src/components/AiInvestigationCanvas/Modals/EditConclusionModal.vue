@@ -35,7 +35,6 @@ limitations under the License.
           Cancel
         </v-btn>
         <v-btn
-          rounded
           color="primary"
           @click="editConclusion()"
           :disabled="!isChanged"

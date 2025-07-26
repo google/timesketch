@@ -41,7 +41,7 @@ limitations under the License.
           <v-icon class="mr-1" left small />
           Cancel</v-btn
         >
-        <v-btn rounded color="primary" @click="fileReport()">
+        <v-btn color="primary" @click="fileReport()">
           Complete investigation</v-btn
         >
       </div>
@@ -96,8 +96,8 @@ export default {
   computed: {
     modalClasses() {
       return {
-        modal__content: true, 
-        'no-pointer-events': this.isSubmitting 
+        modal__content: true,
+        'no-pointer-events': this.isSubmitting
       }
     },
     unsavedQuestions() {
