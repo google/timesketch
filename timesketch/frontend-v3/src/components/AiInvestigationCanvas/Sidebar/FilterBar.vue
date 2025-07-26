@@ -1,11 +1,11 @@
 <!--
-Copyright 2025 Google Inc. All rights reserved.
+Copyright 2025 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -153,7 +153,7 @@ export default {
       if (!this.questions) return []
       const names = this.questions.map((q) => q.user?.name)
       const usernames = Array.from(new Set(names.filter(Boolean)))
-      return ['AI Generated', ...usernames]
+      return ['AI Generated', 'User Generated', ...usernames]
     },
     sortOptions() {
       return ['Date Created Earliest', 'Date Created Latest', 'Status', 'Priority']
@@ -193,9 +193,17 @@ export default {
       // Filter by Created By
       if (this.selectedCreatedBy.length) {
         filtered = filtered.filter((q) => {
-          const creator = q.user && q.user.name ? q.user.name : 'AI Generated'
-          return this.selectedCreatedBy.includes(creator)
-        })
+          const creator = q.user && q.user.name ? q.user.name : 'AI Generated';
+          const isUserCreated = !!(q.user && q.user.name);
+
+          // Return true if any of the selected criteria match the question
+          return this.selectedCreatedBy.some(selection => {
+            if (selection === 'User Generated') {
+              return isUserCreated;
+            }
+            return creator === selection;
+          });
+        });
       }
 
       // Sorting logic
