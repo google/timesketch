@@ -23,10 +23,6 @@ limitations under the License.
       <v-btn size="small" variant="text" color="primary" @click="store.setActiveQuestion(question)"
         >View Result Details <v-icon icon="mdi-arrow-right" class="ml-2" small
       /></v-btn>
-
-      <!-- <p v-else class="font-weight-medium mb-1">
-        Would you like to save the results to the report?
-      </p> -->
     </v-card-item>
 
     <div v-if="!isCompact" class="actions__item-group">
@@ -54,9 +50,9 @@ limitations under the License.
       </div>
     </div>
 
-    <v-card-actions class="pa-0">
+    <v-card-actions v-if="!isApproved && !isRejected" class="pa-0">
       <v-btn
-        :disabled="reportLocked || isRejected"
+        :disabled="reportLocked"
         @click="rejectQuestion(question.id)"
         color="primary"
         size="small"
@@ -68,13 +64,44 @@ limitations under the License.
         variant="flat"
         color="primary"
         @click="confirmAndSave()"
-        :disabled="reportLocked || isApproved"
+        :disabled="reportLocked"
         size="small"
         :class="!isCompact ? 'action-btn--large' : 'px-4'"
       >
         Verify Question
       </v-btn>
     </v-card-actions>
+    <v-card-actions v-else class="pa-0">
+       <v-btn
+        variant="text"
+        color="primary"
+        @click="reopenConfirmationDialog = true"
+        :disabled="reportLocked"
+        size="small"
+        :class="!isCompact ? 'action-btn--large' : 'px-4'"
+        prepend-icon="mdi-pencil-outline"
+      >
+        Re-open for Review
+      </v-btn>
+    </v-card-actions>
+
+    <!-- Re-open confirmation dialog -->
+    <v-dialog v-model="reopenConfirmationDialog" max-width="500">
+      <v-card>
+        <v-card-title>
+          <v-icon color="warning" class="mr-2">mdi-alert-circle-outline</v-icon>
+          {{ reopenDialogTitle }}
+        </v-card-title>
+        <v-card-text>
+          {{ reopenDialogText }}
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="reopenConfirmationDialog = false">Cancel</v-btn>
+          <v-btn color="primary" text @click="confirmReopen">Yes, Re-open</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -100,10 +127,22 @@ export default {
     return {
       store: useAppStore(),
       isSubmitting: false,
-      isConfirming: false,
+      reopenConfirmationDialog: false,
     }
   },
   computed: {
+    reopenDialogTitle() {
+      if (this.isRejected) {
+        return 'Restore Rejected Question?'
+      }
+      return 'Re-open Question?'
+    },
+    reopenDialogText() {
+      if (this.isRejected) {
+        return "This action will remove the 'rejected' status and set the question back to 'pending-review'. It will reappear in the main list and can be worked on again. Are you sure you want to proceed?"
+      }
+      return "This question was already marked as answered by an analyst. This action will re-open the question as 'pending-review', allowing its answer and conclusions to be edited again. Are you sure you want to proceed?"
+    },
     isCompact() {
       return this.variant === 'compact'
     },
@@ -133,14 +172,45 @@ export default {
   },
   methods: {
     async updateQuestionStatus(questionId, status) {
-      const isSubmitting = status === 'rejected' ? 'isSubmitting' : 'isConfirming'
-      const statusText = status === 'verified' ? 'verified' : 'rejected'
-      const errorText = status === 'verified' ? 'verify' : 'reject'
-      const icon = status === 'verified' ? 'mdi-check-circle-outline' : 'mdi-minus-circle-outline'
+      if (this.isSubmitting) return
+      this.isSubmitting = true
+
+      let notificationDetails = {}
+      switch (status) {
+        case 'verified':
+          notificationDetails = {
+            statusText: 'verified',
+            errorText: 'verify',
+            icon: 'mdi-check-circle-outline',
+            type: 'success',
+          }
+          break
+        case 'rejected':
+          notificationDetails = {
+            statusText: 'rejected',
+            errorText: 'reject',
+            icon: 'mdi-minus-circle-outline',
+            type: 'success',
+          }
+          break
+        case 'pending-review':
+          notificationDetails = {
+            statusText: 're-opened for review',
+            errorText: 're-open',
+            icon: 'mdi-pencil-outline',
+            type: 'info',
+          }
+          break
+        default:
+          notificationDetails = {
+            statusText: `set to ${status}`,
+            errorText: 'update',
+            icon: 'mdi-information-outline',
+            type: 'info',
+          }
+      }
 
       try {
-        this[isSubmitting] = true
-
         // Update the question status
         await RestApiClient.updateQuestion(this.store.sketch.id, questionId, {
           status: status,
@@ -148,28 +218,36 @@ export default {
 
         // Rerender with updated status
         const updatedQuestion = await RestApiClient.getQuestion(this.store.sketch.id, questionId)
+        const newQuestionData = updatedQuestion.data.objects[0]
 
-        // Update the question in the store
-        this.updateQuestion(updatedQuestion.data.objects[0])
+        // Update the question in the main list
+        this.updateQuestion(newQuestionData)
 
-        this.store.setActiveQuestion(null)
+        // Handle the active view based on the new status
+        if (status === 'pending-review') {
+          // If re-opened, update the active question view with the new data
+          this.store.setActiveQuestion(newQuestionData)
+        } else {
+          // For other statuses, close the detailed view
+          this.store.setActiveQuestion(null)
+        }
 
         this.store.setNotification({
           text: this.index
-            ? `Question ${this.index + 1} has been ${statusText}`
-            : `This question has been ${statusText}`,
-          icon: icon,
-          type: 'success',
+            ? `Question ${this.index + 1} has been ${notificationDetails.statusText}`
+            : `This question has been ${notificationDetails.statusText}`,
+          icon: notificationDetails.icon,
+          type: notificationDetails.type,
         })
       } catch (error) {
         console.error(error)
         this.store.setNotification({
-          text: `Unable to ${errorText} question. Please try again.`,
+          text: `Unable to ${notificationDetails.errorText} question. Please try again.`,
           icon: 'mdi-alert-circle-outline',
           type: 'error',
         })
       } finally {
-        this[isSubmitting] = false
+        this.isSubmitting = false
       }
     },
     async confirmAndSave() {
@@ -177,6 +255,10 @@ export default {
     },
     async rejectQuestion() {
       await this.updateQuestionStatus(this.question.id, 'rejected')
+    },
+    async confirmReopen() {
+      this.reopenConfirmationDialog = false;
+      await this.updateQuestionStatus(this.question.id, 'pending-review');
     },
   },
 }

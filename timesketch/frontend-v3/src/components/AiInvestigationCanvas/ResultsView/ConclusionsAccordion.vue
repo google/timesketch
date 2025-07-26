@@ -23,7 +23,7 @@ limitations under the License.
         size="small"
         color="primary"
         @click="openEditModal(false)"
-        :disabled="store.reportLocked || hasCurrentUserConclusion"
+        :disabled="store.reportLocked || hasCurrentUserConclusion || question?.status?.status === 'rejected'"
       >
         Add Your Conclusion
       </v-btn>

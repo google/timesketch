@@ -45,16 +45,23 @@ limitations under the License.
             color="primary"
           ></v-progress-circular>
         </div>
+
+        <!-- Editable Text Area -->
         <v-textarea
+          v-if="!isTextareaDisabled"
           v-model="summary"
           id="summary"
           name="summary"
           variant="outlined"
-          :disabled="isTextareaDisabled"
           rows="3"
           hide-details
           class="mb-2"
         ></v-textarea>
+
+        <!-- Read-only Markdown View -->
+        <div v-else class="my-4 ml-4">
+          <div class="conclusion-summary" v-html="renderedSummary"></div>
+        </div>
       </div>
       <div class="d-flex justify-space-between align-center">
         <div>
@@ -112,6 +119,8 @@ import dayjs from "dayjs";
 import SummaryHistoryModal from "../Modals/SummaryHistoryModal.vue";
 import { formatDate } from "@/utils/TimeDate";
 import RestApiClient from "@/utils/RestApiClient";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 export default {
   props: {
@@ -139,6 +148,13 @@ export default {
     }
   },
   computed: {
+    renderedSummary() {
+      if (this.summary) {
+        const unsafeHtml = marked(this.summary);
+        return DOMPurify.sanitize(unsafeHtml);
+      }
+      return "";
+    },
     isSynthesizeAvailable() {
       if (
         this.store.systemSettings.LLM_FEATURES_AVAILABLE?.llm_synthesize === true ||
@@ -183,6 +199,7 @@ export default {
       return (
         this.reportLocked ||
         this.question?.status?.status === 'verified' ||
+        this.question?.status?.status === 'rejected' ||
         this.isSynthesizing
       );
     },
@@ -262,5 +279,32 @@ export default {
 
 .conclusion-summary-field__actions {
   bottom: 10px;
+}
+
+.conclusion-summary {
+  line-height: 1.5;
+}
+
+/* Deep selectors to style the content rendered by v-html */
+.conclusion-summary :deep(p) {
+  margin-bottom: 1em;
+}
+.conclusion-summary :deep(ul),
+.conclusion-summary :deep(ol) {
+  padding-left: 2em;
+  margin-bottom: 1em;
+}
+.conclusion-summary :deep(li) {
+  margin-bottom: 0.5em;
+}
+.conclusion-summary :deep(code) {
+  background-color: #f0f0f0;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.theme--dark .conclusion-summary :deep(code) {
+    background-color: #424242;
 }
 </style>
