@@ -14,11 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card :color="backgroundColor" elevation="0" class="mb-6 d-flex align-center justify-space-between">
+  <v-card color="transparent" elevation="0" class="mb-6 d-flex align-center justify-space-between z-index-1000">
     <v-card-item>
       <v-btn
-        v-if="variant === 'a'"
-        rounded
+        v-if="isCompact"
         size="small"
         variant="text"
         color="primary"
@@ -30,24 +29,26 @@ limitations under the License.
         Would you like to save the results to the report?
       </p> -->
     </v-card-item>
-    <v-card-actions>
-      <v-btn
-        variant="flat"
-        :color="textColor"
-        @click="confirmAndSave()"
-        :disabled="reportLocked || isApproved"
-        size="small"
-      >
-        Verify Question
-      </v-btn>
+    <v-card-actions class="pa-0">
       <v-btn
         :disabled="reportLocked || isRejected"
         @click="rejectQuestion(question.id)"
-        :color="textColor"
+        color="primary"
         size="small"
         title="Mark this question as not relevant"
+        :class="!isCompact ? 'action-btn--large' : 'px-4'"
         >mark as not relevant</v-btn
       >
+      <v-btn
+        variant="flat"
+        color="primary"
+        @click="confirmAndSave()"
+        :disabled="reportLocked || isApproved"
+        size="small"
+        :class="!isCompact ? 'action-btn--large' : 'px-4'"
+      >
+        Verify Question
+      </v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -73,6 +74,9 @@ export default {
     }
   },
   computed: {
+    isCompact() {
+      return this.variant === 'compact'
+    },
     isRejected() {
       return this.question?.status?.status === 'rejected'
     },
@@ -157,3 +161,11 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.action-btn--large {
+  height: 40px;
+  border-radius: 8px !important;
+  padding: 0 20px;
+}
+</style>

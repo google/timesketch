@@ -31,13 +31,11 @@ limitations under the License.
           class="mb-2 position-absolute top-0 right-0"
           width="52"
           height="55"
+          style="z-index: 10"
           elevation="0"
           rounded
         >
-          <v-icon
-            :icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'"
-            :color="'var(--theme-ai-color-ts-blue)'"
-          />
+          <v-icon :icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'" :color="'var(--theme-ai-color-ts-blue)'" />
         </v-btn>
         <div v-if="!rail">
           <div>
@@ -50,11 +48,7 @@ limitations under the License.
           </div>
 
           <QuestionsListLoader v-if="isLoading" />
-          <QuestionsList
-            :questions="sortedQuestions"
-            :questionsTotal="questionsTotal"
-            :reportLocked="reportLocked"
-          />
+          <QuestionsList :questions="sortedQuestions" :questionsTotal="questionsTotal" :reportLocked="reportLocked" />
         </div>
       </div>
     </template>
@@ -62,7 +56,7 @@ limitations under the License.
 </template>
 
 <script>
-import { useRoute } from "vue-router";
+import { useRoute } from 'vue-router'
 
 export default {
   props: {
@@ -90,28 +84,24 @@ export default {
     return {
       rail: false,
       route: useRoute(),
-    };
+    }
   },
   computed: {
     isAiRouteActive() {
-      return this.route.name === "AiInvestigation";
+      return this.route.name === 'AiInvestigation'
     },
     sortedQuestions() {
       return this.questions && this.questions.length > 0
-        ? [
-            ...this.questions.sort(
-              (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-            ),
-          ]
-        : [];
+        ? [...this.questions.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))]
+        : []
     },
   },
   methods: {
     toggleRail() {
-      this.rail = !this.rail;
+      this.rail = !this.rail
     },
   },
-};
+}
 </script>
 
 <style scoped>

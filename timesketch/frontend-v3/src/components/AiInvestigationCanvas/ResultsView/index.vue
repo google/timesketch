@@ -15,37 +15,27 @@ limitations under the License.
 -->
 <template>
   <section>
-    <header class="report-header px-6 pa-4 mb-6">
+    <header class="question__header pa-6">
       <v-btn
         variant="text"
-        class="ai-inline-cta ml-n3"
+        size="small"
+        color="primary"
+        class="ml-n3"
         :disabled="disableCta"
         @click="store.setActiveQuestion(null)"
       >
-        <v-icon size="large" icon="mdi-arrow-left" />
+        <v-icon size="large" icon="mdi-arrow-left mr-2" />
         Report
       </v-btn>
-      <QuestionActionsStrip
-        v-if="!reportLocked"
-        :isApproved="isApproved"
-        :question="question"
-        variant="default"
-      />
-      <div class="d-inline-flex ga-2 align-center mb-4">
-        <v-icon
-          icon="mdi-check-circle"
-          v-if="isApproved"
-          size="large"
-          color="#34A853"
-        />
-      </div>
 
-      <h1 class="mb-4 text-h4 font-weight-bold">
+      <h1 class="question__heading">
         {{ question.name }}
       </h1>
+
+      <QuestionActionsStrip v-if="!reportLocked" :isApproved="isApproved" :question="question" variant="detailed" />
     </header>
 
-    <div class="px-6 mb-8">
+    <div class="pa-6 mb-6">
       <ConclusionSummary :question="question" />
     </div>
     <ConclusionsAccordion :question="question" />
@@ -53,8 +43,8 @@ limitations under the License.
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
-import ConclusionSummary from "./ConclusionSummary.vue";
+import { useAppStore } from '@/stores/app'
+import ConclusionSummary from './ConclusionSummary.vue'
 
 export default {
   props: {
@@ -62,30 +52,28 @@ export default {
     reportLocked: Boolean,
     isLoading: Boolean,
   },
-  inject: ["updateQuestion", "confirmRemoveQuestion"],
+  inject: ['updateQuestion', 'confirmRemoveQuestion'],
   data() {
     return {
       store: useAppStore(),
       panels:
         this.question.conclusions && this.question.conclusions.length
           ? [this.question.conclusions[0].id]
-          : ["fallback"],
-    };
+          : ['fallback'],
+    }
   },
   computed: {
     disableCta() {
-      return !this.store.activeContext.question?.id;
+      return !this.store.activeContext.question?.id
     },
     isApproved() {
-      return !!this.store.report?.content?.approvedQuestions?.find(
-        (approvedId) => approvedId === this.question.id
-      );
+      return !!this.store.report?.content?.approvedQuestions?.find((approvedId) => approvedId === this.question.id)
     },
   },
-};
+}
 </script>
 
-<style>
+<style scoped>
 .questions-list {
   list-style: none;
 }
@@ -93,5 +81,19 @@ export default {
 .question::marker {
   font-size: inherit;
   font-weight: inherit;
+}
+
+.question__header {
+  background-color: var(--theme-ai-color-gray-50);
+  border-bottom: 1px solid var(--theme-ai-color-gray-100);
+}
+
+.question__heading {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.2;
+  max-width: 594px;
+  margin-top: 32px;
+  text-wrap: pretty;
 }
 </style>

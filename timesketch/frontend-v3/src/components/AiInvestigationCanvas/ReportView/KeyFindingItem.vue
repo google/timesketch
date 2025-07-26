@@ -49,7 +49,7 @@ limitations under the License.
       :question="question"
       :reportLocked="reportLocked"
       :isApproved="isApproved"
-      variant="approved"
+      variant="compact"
       :index="index"
     />
   </li>

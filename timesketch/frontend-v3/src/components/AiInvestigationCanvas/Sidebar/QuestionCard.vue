@@ -26,7 +26,7 @@ limitations under the License.
           <span>{{ $filters.initialLetter(user.name) }}</span>
         </v-avatar>
         <CreationIcon v-else class="question-card__icon" :width="24" :height="24" />
-        <p class="font-weight-medium black--text">{{ name }}</p>
+        <p class="font-weight-medium black--text" style="text-wrap: pretty">{{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center flex-1-1-100" v-if="hasChips">
         <v-chip v-if="priority" :class="['chip', priorityColor]" small label :title="`Priority: ${priority}`">
