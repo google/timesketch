@@ -26,7 +26,7 @@ limitations under the License.
           <span>{{ $filters.initialLetter(user.name) }}</span>
         </v-avatar>
         <CreationIcon v-else class="question-card__icon" :width="24" :height="24" />
-        <p class="font-weight-medium black--text" style="text-wrap: pretty">{{ name }}</p>
+        <p :class="isRejected ? 'is-rejected-text' : 'font-weight-medium black--text'" style="text-wrap: pretty">{{ name }}</p>
       </div>
       <div class="d-flex ga-2 align-center flex-1-1-100" v-if="hasChips">
         <v-chip v-if="priority" :class="['chip', priorityColor]" small label :title="`Priority: ${priority}`">
@@ -136,6 +136,11 @@ export default {
   p {
     line-height: 1.4;
     color: var(--theme-ai-color-black);
+  }
+
+  .is-rejected-text {
+    font-weight: light;
+    color: var(--theme-ai-color-gray-600);
   }
 
   &::after {

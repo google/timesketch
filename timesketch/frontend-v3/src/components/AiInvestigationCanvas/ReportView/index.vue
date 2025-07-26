@@ -148,8 +148,10 @@ limitations under the License.
           :expanded="true"
           :completed-questions-total="completedQuestionsTotal"
           @filters-changed="handleFiltersChanged"
+          view="report"
         />
-        <ol class="questions-list">
+        <v-divider></v-divider>
+        <ol class="questions-list mt-6">
           <KeyFindingItem
             v-for="(question, index) in filteredQuestions"
             :question="question"
@@ -349,7 +351,8 @@ export default {
       this.store.updateReport({ [key]: value })
     }, 200),
     handleFiltersChanged(filteredQuestions) {
-      this.filteredQuestions = filteredQuestions
+      // Exclude rejected questions from the main report view's list
+      this.filteredQuestions = filteredQuestions.filter(q => q.status?.status !== 'rejected');
     },
   },
 };
@@ -375,7 +378,7 @@ export default {
   min-height: 212px;
 
   h2 {
-    max-width: 400px;
+    max-width: 800px;
   }
 }
 .report-auto-timestamp {

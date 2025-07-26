@@ -1,5 +1,5 @@
 <!--
-Copyright 2025 Google LLC
+Copyright 2025 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@ limitations under the License.
 <template>
   <div :class="['filterbar__wrapper', {'filterbar__wrapper--expanded': expanded}]">
     <div class="filterbar__header">
-      <h4 class="filterbar__heading" v-if="questionsTotal">
-        <span v-if="questionsTotal !== filteredAndSortedQuestions.length" class="font-weight-bold">{{ filteredAndSortedQuestions.length }} / </span>
-        <span :class="questionsTotal === filteredAndSortedQuestions.length ? 'font-weight-bold' : ''">{{ questionsTotal }}</span>
-        <span class="font-weight-regular"> question{{ questionsTotal > 1 && 's' }}</span>
+      <h4 class="filterbar__heading" v-if="questions.length">
+        <span v-if="displayTotal !== filteredAndSortedQuestions.length" class="font-weight-bold">{{ filteredAndSortedQuestions.length }} / </span>
+        <span :class="displayTotal === filteredAndSortedQuestions.length ? 'font-weight-bold' : ''">{{ displayTotal }}</span>
+        <span class="font-weight-regular"> question{{ displayTotal > 1 && 's' }}</span>
         <span class="filterbar__progress font-weight-regular" v-if="expanded && questionsTotal">
           {{ completedQuestionsTotal }} / {{ questionsTotal }} questions answered
         </span>
@@ -42,7 +42,7 @@ limitations under the License.
         <v-select
           :class="['filterbar__select', selectedStatuses.length && 'filterbar__select--active']"
           color="var(--theme-ai-color-blue-500)"
-          :items="['New', 'Pending Review', 'Verified', 'Rejected']"
+          :items="statusFilterItems"
           v-model="selectedStatuses"
           multiple
           density="compact"
@@ -139,6 +139,10 @@ export default {
       type: Boolean,
       default: false
     },
+    view: {
+      type: String,
+      default: 'sidebar',
+    },
   },
   data() {
     return {
@@ -149,6 +153,19 @@ export default {
     }
   },
   computed: {
+    statusFilterItems() {
+      const allStatuses = ['New', 'Pending Review', 'Verified', 'Rejected'];
+      if (this.view === 'report') {
+        return allStatuses.filter(status => status !== 'Rejected');
+      }
+      return allStatuses;
+    },
+    displayTotal() {
+      if (this.view === 'report') {
+        return this.questions.filter(q => q.status?.status !== 'rejected').length;
+      }
+      return this.questions.length;
+    },
     createdByOptions() {
       if (!this.questions) return []
       const names = this.questions.map((q) => q.user?.name)
@@ -171,6 +188,11 @@ export default {
       }
 
       let filtered = this.questions
+
+      // If in report view, always exclude rejected questions from the filterable list first.
+      if (this.view === 'report') {
+        filtered = filtered.filter(q => q.status?.status !== 'rejected');
+      }
 
       // Filter by Status
       if (this.selectedStatuses.length) {

@@ -23,7 +23,7 @@ limitations under the License.
         size="small"
         color="primary"
         @click="openEditModal(false)"
-        :disabled="store.reportLocked || hasCurrentUserConclusion || question?.status?.status === 'rejected'"
+        :disabled="hasCurrentUserConclusion || isQuestionVerified || isQuestionRejected"
       >
         Add Your Conclusion
       </v-btn>
@@ -74,7 +74,7 @@ limitations under the License.
             variant="text"
             depressed
             @click="openEventLog()"
-            :disabled="isQuestionVerified"
+            :disabled="!isQuestionVerified && isQuestionRejected"
             color="primary"
           >
             <v-icon left small icon="mdi-plus" />
@@ -139,6 +139,9 @@ export default {
         this.question?.status?.status === 'verified'
       )
     },
+    isQuestionRejected() {
+      return this.question?.status?.status === 'rejected'
+    },
     hasCurrentUserConclusion() {
       return this.question?.conclusions?.some(
         (conclusion) => conclusion.user.name === this.store.currentUser
@@ -153,7 +156,7 @@ export default {
       this.showEventLog = false;
     },
     isEditable(conclusion) {
-      // Not automated, not locked, and owned by the current user
+      // Not automated, not locked and owned by the current user
       return !conclusion.automated &&
              !this.store.reportLocked &&
              conclusion.user.username === this.store.currentUser;

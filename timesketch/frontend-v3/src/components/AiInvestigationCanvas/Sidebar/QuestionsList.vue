@@ -54,7 +54,12 @@ export default {
   },
   methods: {
     handleFiltersChanged(filteredQuestions) {
-      this.sortedQuestions = filteredQuestions
+      // Secondary sort to move rejected questions to the bottom,
+      // while preserving the primary sort order from the FilterBar within each group.
+      const rejected = filteredQuestions.filter(q => q.status?.status === 'rejected');
+      const others = filteredQuestions.filter(q => q.status?.status !== 'rejected');
+
+      this.sortedQuestions = [...others, ...rejected];
     },
   },
 }

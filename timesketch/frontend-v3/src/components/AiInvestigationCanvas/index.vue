@@ -299,10 +299,11 @@ export default {
               ? !this.store.report.content.removedQuestions.includes(id)
               : true;
           })
-        : [];
+        : []
     },
     questionsTotal() {
-      return this.filteredQuestions?.length || 0;
+      // The total number of questions for progress tracking, excluding rejected ones.
+      return this.filteredQuestions?.filter(q => q.status?.status !== 'rejected').length || 0;
     },
     completedQuestionsTotal() {
       return this.filteredQuestions?.filter(({ status }) => status?.status === 'verified').length || 0;
