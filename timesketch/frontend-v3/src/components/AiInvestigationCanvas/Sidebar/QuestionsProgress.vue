@@ -15,26 +15,30 @@ limitations under the License.
 -->
 <template>
   <v-card v-if="isGenerating" class="progress-card" :elevation="0">
-    <div class="flex-1-0">
-      <div class="d-flex justify-space-between">
-        <h4 v-if="questionsTotal" class="mb-2">
-          AI Analysis in progress: Processing results ...
+    <div class="flex-grow-1 flex-shrink-1">
+      <div class="d-flex justify-space-between ga-1 align-baseline mb-2 flex-wrap">
+        <h4>
+          AI Analysis in progress
+          <p class="text-body-2 mb-1" v-if="questionsTotal">Processing results...</p>
+          <p class="text-body-2 mb-1" v-else>Sending events...</p>
         </h4>
-        <h4 v-else class="mb-2">AI Analysis in progress: Sending events ...</h4>
-        <p v-if="questionsTotal">
+        <p v-if="questionsTotal" class="text-body-2">
           <span class="font-weight-bold">{{ questionsTotal }}</span>
           questions created
         </p>
       </div>
       <v-progress-linear
+        class="progress-card__bar"
+        width="100%"
         height="12"
-        color="primary"
+        color="var(--theme-ai-color-ts-blue)"
+        bg-color="var(--theme-ai-color-blue-100)"
+        bg-opacity="1"
         indeterminate
         rounded="xl"
       ></v-progress-linear>
     </div>
-    <v-card-actions class="flex-0-0 pa-0">
-      <v-spacer></v-spacer>
+    <v-card-actions class="flex-0-0 pa-0 h-auto progress-card__cta">
       <v-btn
         variant="outlined"
         class="ai-inline-cta"
@@ -47,14 +51,10 @@ limitations under the License.
   </v-card>
   <v-card v-else class="progress-card" :elevation="0">
     <div class="flex-grow-1">
-      <div
-        class="d-flex justify-space-between ga-1 align-baseline mb-2 flex-wrap"
-      >
+      <div class="d-flex justify-space-between ga-1 align-baseline mb-2 flex-wrap">
         <h4>Progress</h4>
         <p v-if="questionsTotal" class="text-body-2 text-no-wrap">
-          <span class="font-weight-bold"
-            >{{ completedQuestionsTotal }} / {{ questionsTotal }}</span
-          >
+          <span class="font-weight-bold">{{ completedQuestionsTotal }} / {{ questionsTotal }}</span>
           questions finalized
         </p>
       </div>
@@ -62,7 +62,7 @@ limitations under the License.
         class="progress-card__bar"
         height="12"
         width="100%"
-        color="var(--theme-ai-color-ts-blue)"
+        :color="percentageCompleted === 100 ? 'var(--theme-ai-color-green-500)' : 'var(--theme-ai-color-ts-blue)'"
         bg-color="var(--theme-ai-color-blue-100)"
         bg-opacity="1"
         :model-value="percentageCompleted"
@@ -80,24 +80,20 @@ limitations under the License.
       </v-btn>
     </v-card-actions>
   </v-card>
-  <v-dialog
-    transition="dialog-bottom-transition"
-    v-model="showModal"
-    width="auto"
-  >
+  <v-dialog transition="dialog-bottom-transition" v-model="showModal" width="auto">
     <AddQuestionModal @close-modal="toggleModal" />
   </v-dialog>
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
+import { useAppStore } from '@/stores/app'
 
 export default {
   data() {
     return {
       store: useAppStore(),
       showModal: false,
-    };
+    }
   },
   props: {
     questionsTotal: Number,
@@ -107,17 +103,15 @@ export default {
   },
   methods: {
     toggleModal() {
-      this.showModal = !this.showModal;
+      this.showModal = !this.showModal
     },
   },
   computed: {
     percentageCompleted() {
-      return this.questionsTotal
-        ? (this.completedQuestionsTotal / this.questionsTotal) * 100
-        : 0;
+      return this.questionsTotal ? (this.completedQuestionsTotal / this.questionsTotal) * 100 : 0
     },
   },
-};
+}
 </script>
 <style scoped>
 .progress-card {
