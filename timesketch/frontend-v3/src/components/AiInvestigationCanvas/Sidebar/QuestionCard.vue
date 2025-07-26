@@ -25,36 +25,20 @@ limitations under the License.
         <v-avatar v-if="user.name" size="24" class="question-card__avatar">
           <span>{{ $filters.initialLetter(user.name) }}</span>
         </v-avatar>
-        <CreationIcon
-          v-else
-          class="question-card__icon"
-          :width="24"
-          :height="24"
-        />
+        <CreationIcon v-else class="question-card__icon" :width="24" :height="24" />
         <p class="font-weight-medium black--text">{{ name }}</p>
       </div>
-      <div
-        class="d-flex ga-2 align-center flex-1-1-100"
-        v-if="priority || isApproved"
-      >
-        <v-chip
-          v-if="priority"
-          :class="['chip', priorityColor]"
-          small
-          label
-          :title="`Priority: ${priority}`"
-        >
+      <div class="d-flex ga-2 align-center flex-1-1-100" v-if="priority || isApproved || isRejected">
+        <v-chip v-if="priority" :class="['chip', priorityColor]" small label :title="`Priority: ${priority}`">
           {{ priority }} Priority
         </v-chip>
-        <v-chip
-          v-if="isApproved"
-          small
-          label
-          title="Verified"
-          :class="['chip', 'chip--verified']"
-        >
+        <v-chip v-if="isApproved" small label title="Verified" :class="['chip', 'chip--verified']">
           <v-icon icon="mdi-check-circle-outline" start></v-icon>
           Verified
+        </v-chip>
+        <v-chip v-if="isRejected" small label title="Rejected" :class="['chip', 'chip--rejected']">
+          <v-icon icon="mdi-close" start></v-icon>
+          Rejected
         </v-chip>
       </div>
     </div>
@@ -62,8 +46,8 @@ limitations under the License.
 </template>
 
 <script>
-import CreationIcon from "@/components/Icons/CreationIcon";
-import { useAppStore } from "@/stores/app";
+import CreationIcon from '@/components/Icons/CreationIcon'
+import { useAppStore } from '@/stores/app'
 
 export default {
   components: {
@@ -80,11 +64,12 @@ export default {
     user: Object,
     index: Number,
     labels: Array,
+    status: Object,
   },
   data() {
     return {
       store: useAppStore(),
-    };
+    }
   },
   methods: {
     setActiveQuestion() {
@@ -97,49 +82,44 @@ export default {
         id: this.id,
         updatedAt: this.updated_at,
         completed: this.completed,
-      });
+        status: { status: this.status?.status },
+      })
     },
   },
   computed: {
     isActive() {
-      return this.store.activeContext.question?.id
-        ? this.id === this.store.activeContext.question?.id
-        : false;
+      return this.store.activeContext.question?.id ? this.id === this.store.activeContext.question?.id : false
     },
-
+    isRejected() {
+      return this.status?.status === 'rejected'
+    },
     isApproved() {
-      return !!this.store.report?.content?.approvedQuestions?.find(
-        (approvedId) => approvedId === this.id
-      );
+      return !!this.store.report?.content?.approvedQuestions?.find((approvedId) => approvedId === this.id)
     },
     priority() {
       if (!this.labels || !Array.isArray(this.labels)) {
-        return null;
+        return null
       }
-      const priorityPrefix = "__ts_priority_";
-      const priorityLabel = this.labels.find((label) =>
-        label.name.startsWith(priorityPrefix)
-      );
+      const priorityPrefix = '__ts_priority_'
+      const priorityLabel = this.labels.find((label) => label.name.startsWith(priorityPrefix))
 
-      return priorityLabel
-        ? priorityLabel.name.replace(priorityPrefix, "")
-        : null;
+      return priorityLabel ? priorityLabel.name.replace(priorityPrefix, '') : null
     },
     priorityColor() {
-      if (!this.priority) return "chip--none";
+      if (!this.priority) return 'chip--none'
       switch (this.priority.toLowerCase()) {
-        case "high":
-          return "chip--high";
-        case "medium":
-          return "chip--medium";
-        case "low":
-          return "chip--low";
+        case 'high':
+          return 'chip--high'
+        case 'medium':
+          return 'chip--medium'
+        case 'low':
+          return 'chip--low'
         default:
-          return "chip--none";
+          return 'chip--none'
       }
     },
   },
-};
+}
 </script>
 
 <style scoped>
@@ -156,7 +136,7 @@ export default {
   }
 
   &::after {
-    content: "";
+    content: '';
     display: block;
     width: 6px;
     position: absolute;
@@ -242,6 +222,11 @@ export default {
   &.chip--verified {
     background-color: var(--theme-ai-color-green-100);
     color: var(--theme-ai-color-green-900);
+  }
+
+  &.chip--rejected {
+    background-color: var(--theme-ai-color-red-100);
+    color: var(--theme-ai-color-red-900);
   }
 }
 </style>

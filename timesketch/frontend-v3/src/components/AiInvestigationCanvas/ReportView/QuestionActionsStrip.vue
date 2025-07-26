@@ -14,11 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card
-    :color="backgroundColor"
-    elevation="0"
-    class="mb-6 d-flex align-center justify-space-between"
-  >
+  <v-card :color="backgroundColor" elevation="0" class="mb-6 d-flex align-center justify-space-between">
     <v-card-item>
       <v-btn
         v-if="variant === 'a'"
@@ -45,23 +41,23 @@ limitations under the License.
         Verify Question
       </v-btn>
       <v-btn
-        :disabled="reportLocked"
-        @click="confirmRemoveQuestion(question.id)"
+        :disabled="reportLocked || isRejected"
+        @click="rejectQuestion(question.id)"
         :color="textColor"
         size="small"
         title="Mark this question as not relevant"
         >mark as not relevant</v-btn
       >
-
     </v-card-actions>
   </v-card>
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
+import { useAppStore } from '@/stores/app'
+import RestApiClient from '@/utils/RestApiClient'
 
 export default {
-  inject: ["confirmRemoveQuestion", "updateQuestion"],
+  inject: ['updateQuestion'],
   props: {
     question: Object,
     index: Number,
@@ -74,63 +70,90 @@ export default {
       store: useAppStore(),
       isSubmitting: false,
       isConfirming: false,
-    };
+    }
   },
   computed: {
+    isRejected() {
+      return this.question?.status?.status === 'rejected'
+    },
     backgroundColor() {
-      if (this.isApproved || this.reportLocked || this.variant === "approved") {
-        return "#F8F9FA";
+      if (this.isApproved || this.reportLocked || this.variant === 'approved') {
+        return '#F8F9FA'
       } else {
-        return "#3874CB"
+        return '#3874CB'
       }
     },
     textColor() {
-      if (
-        this.variant === "approved" ||
-        this.isConfirming ||
-        this.isApproved ||
-        this.reportLocked
-      ) {
-        return "primary";
+      if (this.variant === 'approved' || this.isConfirming || this.isApproved || this.reportLocked) {
+        return 'primary'
       } else {
-        return "#fff";
+        return '#fff'
       }
     },
   },
   methods: {
     async confirmAndSave() {
-      this.isConfirming = true;
+      this.isConfirming = true
 
       try {
-        const existingQuestions = Array.isArray(
-          this.store.report?.content?.approvedQuestions
-        )
+        const existingQuestions = Array.isArray(this.store.report?.content?.approvedQuestions)
           ? this.store.report?.content?.approvedQuestions
-          : [];
+          : []
 
         await this.store.updateReport({
-          approvedQuestions: Array.from(
-            new Set([...existingQuestions, this.question.id])
-          ),
-        });
+          approvedQuestions: Array.from(new Set([...existingQuestions, this.question.id])),
+        })
 
         this.store.setNotification({
-          text: "Question approved",
-          icon: "mdi-check-circle-outline",
-          type: "success",
-        });
+          text: 'Question approved',
+          icon: 'mdi-check-circle-outline',
+          type: 'success',
+        })
       } catch (error) {
-        console.error(error);
+        console.error(error)
 
         this.store.setNotification({
-          text: "Unable to approve question",
-          icon: "mdi-close-circle-outline",
-          type: "error",
-        });
+          text: 'Unable to approve question',
+          icon: 'mdi-close-circle-outline',
+          type: 'error',
+        })
       } finally {
-        this.isConfirming = false;
+        this.isConfirming = false
+      }
+    },
+    async rejectQuestion(questionId) {
+      try {
+        this.isSubmitting = true
+
+        // Update the question status to "rejected"
+        await RestApiClient.updateQuestion(this.store.sketch.id, questionId, {
+          status: 'rejected',
+        })
+
+        // Rerender with updated status
+        const updatedQuestion = await RestApiClient.getQuestion(this.store.sketch.id, questionId)
+
+        // Update the question in the store
+        this.updateQuestion(updatedQuestion.data.objects[0])
+
+        this.store.setActiveQuestion(null)
+
+        this.store.setNotification({
+          text: this.index ? `Question ${this.index + 1} has been rejected` : `This question has been rejected`,
+          icon: 'mdi-minus-circle-outline',
+          type: 'success',
+        })
+      } catch (error) {
+        console.error(error)
+        this.store.setNotification({
+          text: 'Unable to reject question. Please try again.',
+          icon: 'mdi-alert-circle-outline',
+          type: 'error',
+        })
+      } finally {
+        this.isSubmitting = false
       }
     },
   },
-};
+}
 </script>

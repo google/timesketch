@@ -30,7 +30,7 @@ limitations under the License.
           @click.stop="toggleRail"
           class="mb-2 position-absolute top-0 right-0"
           width="52"
-          height="52"
+          height="55"
           elevation="0"
           rounded
         >

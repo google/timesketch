@@ -50,6 +50,7 @@ limitations under the License.
       :reportLocked="reportLocked"
       :isApproved="isApproved"
       variant="approved"
+      :index="index"
     />
   </li>
 </template>
