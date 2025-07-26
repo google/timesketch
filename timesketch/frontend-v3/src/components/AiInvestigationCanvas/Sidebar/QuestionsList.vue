@@ -20,6 +20,16 @@ limitations under the License.
       <span class="font-weight-regular">question{{ questionsTotal > 1 && 's' }}</span>
     </h4>
 
+    <v-btn
+      class="filterbar__clear-btn"
+      color="var(--theme-ai-color-blue-600)"
+      variant="text"
+      @click="clearAllFilters"
+      density="compact"
+    >
+      Clear All
+    </v-btn>
+
     <div class="filterbar">
       <div class="filterbar__item">
         <v-select
@@ -89,6 +99,25 @@ limitations under the License.
           Created By<span v-if="selectedCreatedBy.length"> ({{ selectedCreatedBy.length }})</span>
         </p>
       </div>
+
+      <div class="filterbar__item filterbar__item--sort">
+        <v-select
+          :class="['filterbar__select', selectedSort && 'filterbar__select--active']"
+          color="var(--theme-ai-color-blue-500)"
+          :items="sortOptions"
+          v-model="selectedSort"
+          density="compact"
+          variant="outlined"
+          hide-details
+          placeholder="Sort"
+        >
+          <template #selection="{ index }">
+            <v-icon icon="mdi-swap-vertical" class="filterbar__select-icon" start></v-icon>
+            <span v-if="index === 0">Sort</span>
+          </template>
+        </v-select>
+        <p class="filterbar__item-label">Sort</p>
+      </div>
     </div>
 
     <!--
@@ -133,11 +162,21 @@ export default {
       selectedStatuses: [],
       selectedPriorities: [],
       selectedCreatedBy: [],
+      selectedSort: '',
     }
   },
   computed: {
     sortedQuestions() {
       if (!this.questions?.length) return []
+
+      function getPriority(q) {
+        const label = q.labels?.find((l) => l.name && l.name.startsWith('__ts_priority_'))
+        return label ? label.name.replace('__ts_priority_', '').toLowerCase() : 'none'
+      }
+
+      function getStatus(q) {
+        return q.status?.status?.toLowerCase() || ''
+      }
 
       let filtered = this.questions
 
@@ -153,8 +192,7 @@ export default {
       // Filter by Priority
       if (this.selectedPriorities.length) {
         filtered = filtered.filter((q) => {
-          const label = q.labels.find((l) => l.name && l.name.startsWith('__ts_priority_'))
-          const priorityValue = label?.name ? label.name.replace('__ts_priority_', '').toLowerCase() : 'none'
+          const priorityValue = getPriority(q)
           return this.selectedPriorities.map((p) => p.toLowerCase()).some((sel) => sel.includes(priorityValue))
         })
       }
@@ -167,13 +205,56 @@ export default {
         })
       }
 
-      return [...filtered].sort((a, b) => a.id - b.id)
+      // Sorting logic
+      let sorted = [...filtered]
+      switch (this.selectedSort) {
+        case 'Date Created Earliest':
+          sorted.sort((a, b) => new Date(a.created_at || a.createdAt) - new Date(b.created_at || b.createdAt))
+          break
+        case 'Date Created Latest':
+          sorted.sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt))
+          break
+        case 'Status':
+          const statusOrder = ['verified', 'pending-review', 'new', 'rejected']
+          sorted.sort((a, b) => {
+            const aStatus = getStatus(a)
+            const bStatus = getStatus(b)
+            return statusOrder.indexOf(aStatus) - statusOrder.indexOf(bStatus)
+          })
+          break
+        case 'Priority':
+          const priorityOrder = ['high', 'medium', 'low', 'none']
+          sorted.sort((a, b) => {
+            const aPriority = getPriority(a)
+            const bPriority = getPriority(b)
+            const aIdx =
+              priorityOrder.indexOf(aPriority) === -1 ? priorityOrder.length : priorityOrder.indexOf(aPriority)
+            const bIdx =
+              priorityOrder.indexOf(bPriority) === -1 ? priorityOrder.length : priorityOrder.indexOf(bPriority)
+            return aIdx - bIdx
+          })
+          break
+        default:
+          sorted.sort((a, b) => a.id - b.id)
+      }
+      return sorted
     },
     createdByOptions() {
       if (!this.questions) return []
       const names = this.questions.map((q) => q.user?.name)
       const usernames = Array.from(new Set(names.filter(Boolean)))
       return ['AI Generated', ...usernames]
+    },
+    sortOptions() {
+      return ['Date Created Earliest', 'Date Created Latest', 'Status', 'Priority']
+    },
+  },
+  methods: {
+    clearAllFilters() {
+      this.selectedSort = ''
+      this.selectedStatuses = []
+      this.selectedPriorities = []
+      this.selectedCreatedBy = []
     },
   },
 }
@@ -184,6 +265,8 @@ export default {
   font-size: 14px;
   color: var(--theme-ai-color-black);
   font-weight: 700;
+  flex: 1 1 auto;
+  padding: 1px 0 0 3px;
 
   span {
     color: var(--theme-ai-color-gray-600);
@@ -193,6 +276,10 @@ export default {
 
 .questions-list__bar {
   padding: 0 0 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 4px;
+  align-items: space-between;
 }
 
 .report-canvas__questions-list {
@@ -201,12 +288,14 @@ export default {
 }
 
 .filterbar {
-  padding: 14px 0 0;
+  padding: 0;
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
   align-items: center;
   justify-content: flex-start;
+  align-items: baseline;
+  flex: 1 1 100%;
 }
 
 .filterbar__label {
@@ -217,6 +306,19 @@ export default {
 
 .filterbar__item {
   position: relative;
+  flex: 0 0 auto;
+}
+
+.filterbar__item--sort {
+  margin-left: auto;
+  min-width: 95px;
+}
+
+.filterbar__item:not(.filterbar__item--sort) {
+  &:deep(.v-field__append-inner),
+  &:deep(.v-select__menu-icon) {
+    display: none !important;
+  }
 }
 
 .filterbar__item-label {
@@ -227,6 +329,7 @@ export default {
   padding: 0 17px;
   height: 34px;
   display: block;
+  letter-spacing: 0.1px;
 }
 
 .filterbar__select {
@@ -237,11 +340,6 @@ export default {
   position: absolute;
   inset: 0 0 auto 0;
 
-  &:deep(.v-field__append-inner),
-  &:deep(.v-select__menu-icon) {
-    display: none !important;
-  }
-
   &:deep(input::placeholder) {
     opacity: 1 !important;
     color: var(--theme-ai-color-gray-700) !important;
@@ -250,6 +348,10 @@ export default {
   &:deep(.v-field) {
     padding: 0 !important;
     font-size: 14px;
+  }
+
+  &:deep(.v-field__append-inner) {
+    margin-right: 4px;
   }
 
   &:deep(.v-field__outline) {
@@ -265,6 +367,7 @@ export default {
     --v-field-input-padding-top: 0px;
     --v-field-input-padding-bottom: 0px;
     justify-content: center;
+    white-space: nowrap;
 
     input {
       align-self: center;
@@ -275,11 +378,31 @@ export default {
 
   &:deep(.v-select__selection) {
     margin-inline-end: 0 !important;
+    color: var(--theme-ai-color-gray-700) !important;
   }
+}
+
+.filterbar__select-icon {
+  width: 18px;
+  height: 18px;
+  margin: 0 6px 0 -8px;
 }
 
 .filterbar__select--active {
   background-color: var(--theme-ai-color-blue-50);
   color: var(--theme-ai-color-blue-700);
+}
+
+.filterbar__clear-btn {
+  font-size: 12px;
+  font-weight: 400;
+  text-decoration: underline;
+  flex: 0 0 auto;
+  padding: 0 3px !important;
+  text-transform: none;
+  letter-spacing: 0;
+  min-width: 0;
+  color: var(--theme-ai-color-blue-600) !important;
+  height: auto;
 }
 </style>

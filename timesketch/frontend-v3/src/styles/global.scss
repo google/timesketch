@@ -234,6 +234,7 @@ html {
   --theme-ai-color-blue-100: #e3ecfb;
   --theme-ai-color-blue-200: #c1daf6;
   --theme-ai-color-blue-500: #257bd2;
+  --theme-ai-color-blue-600: #1867c0;
   --theme-ai-color-blue-700: #134c91;
   --theme-ai-color-blue-800: #144278;
   --theme-ai-color-blue-900: #163864;
@@ -272,10 +273,6 @@ html {
 .ai-investigation-view {
   .v-list-item-title {
     color: var(--theme-ai-color-gray-950);
-  }
-
-  .v-list-item--variant-text .v-list-item__overlay {
-    background-color: transparent;
   }
 }
 
