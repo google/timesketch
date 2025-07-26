@@ -14,14 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card color="transparent" elevation="0" class="mb-6 d-flex align-center justify-space-between z-index-1000">
-    <v-card-item>
-      <v-btn
-        v-if="isCompact"
-        size="small"
-        variant="text"
-        color="primary"
-        @click="store.setActiveQuestion(question)"
+  <v-card color="transparent" elevation="0" class="mt-1 mb-6 d-flex align-center justify-space-between z-index-1000">
+    <v-card-item v-if="isCompact">
+      <v-btn size="small" variant="text" color="primary" @click="store.setActiveQuestion(question)"
         >View Result Details <v-icon icon="mdi-arrow-right" class="ml-2" small
       /></v-btn>
 
@@ -29,6 +24,24 @@ limitations under the License.
         Would you like to save the results to the report?
       </p> -->
     </v-card-item>
+    <div v-if="!isCompact">
+      <div class="actions__item">
+        <v-select
+          v-model="selectedPriority"
+          :class="[`actions__priority-select actions__priority-select--${selectedPriority}`]"
+          color="var(--theme-ai-color-blue-500)"
+          :items="priorityItems"
+          item-title="label"
+          item-value="key"
+          density="compact"
+          variant="outlined"
+          hide-details
+          placeholder="Priority"
+          :disabled="isUpdatingPriority"
+        />
+      </div>
+    </div>
+
     <v-card-actions class="pa-0">
       <v-btn
         :disabled="reportLocked || isRejected"
@@ -36,7 +49,7 @@ limitations under the License.
         color="primary"
         size="small"
         title="Mark this question as not relevant"
-        :class="!isCompact ? 'action-btn--large' : 'px-4'"
+        :class="!isCompact ? 'actions__btn--large' : 'px-4'"
         >mark as not relevant</v-btn
       >
       <v-btn
@@ -56,6 +69,7 @@ limitations under the License.
 <script>
 import { useAppStore } from '@/stores/app'
 import RestApiClient from '@/utils/RestApiClient'
+import { getPriorityFromLabels } from '@/components/AiInvestigationCanvas/_utils/QuestionPriority'
 
 export default {
   inject: ['updateQuestion'],
@@ -71,7 +85,57 @@ export default {
       store: useAppStore(),
       isSubmitting: false,
       isConfirming: false,
+      selectedPriority: this.priority,
+      isUpdatingPriority: false,
+      priorityItems: [
+        { key: 'high', label: 'High Priority' },
+        { key: 'medium', label: 'Medium Priority' },
+        { key: 'low', label: 'Low Priority' },
+      ],
     }
+  },
+  watch: {
+    question: {
+      handler() {
+        this.selectedPriority = this.priority
+      },
+      immediate: true,
+      deep: true,
+    },
+    async selectedPriority(newPriority, oldPriority) {
+      if (newPriority === oldPriority) {
+        return
+      }
+
+      this.isUpdatingPriority = true
+      try {
+        const labelName = `__ts_priority_${newPriority}`
+
+        const response = await RestApiClient.updateQuestion(this.store.sketch.id, this.question.id, {
+          priority: labelName,
+        })
+
+        // Update the question in the parent component's state
+        this.updateQuestion(response.data.objects[0])
+
+        this.store.setNotification({
+          text: 'Question priority updated',
+          icon: 'mdi-check-circle-outline',
+          type: 'success',
+        })
+      } catch (error) {
+        console.error(error)
+        this.store.setNotification({
+          text: 'Unable to update priority. Please try again.',
+          icon: 'mdi-alert-circle-outline',
+          type: 'error',
+        })
+        // Revert on failure
+        this.selectedPriority = oldPriority
+      } finally {
+        this.isUpdatingPriority = false
+      }
+    },
   },
   computed: {
     isCompact() {
@@ -80,19 +144,8 @@ export default {
     isRejected() {
       return this.question?.status?.status === 'rejected'
     },
-    backgroundColor() {
-      if (this.isApproved || this.reportLocked || this.variant === 'approved') {
-        return '#F8F9FA'
-      } else {
-        return '#3874CB'
-      }
-    },
-    textColor() {
-      if (this.variant === 'approved' || this.isConfirming || this.isApproved || this.reportLocked) {
-        return 'primary'
-      } else {
-        return '#fff'
-      }
+    priority() {
+      return getPriorityFromLabels(this.question.labels)
     },
   },
   methods: {
@@ -115,7 +168,6 @@ export default {
         })
       } catch (error) {
         console.error(error)
-
         this.store.setNotification({
           text: 'Unable to approve question',
           icon: 'mdi-close-circle-outline',
@@ -163,9 +215,108 @@ export default {
 </script>
 
 <style scoped>
-.action-btn--large {
+.actions__btn--large {
   height: 40px;
   border-radius: 8px !important;
   padding: 0 20px;
+}
+
+.actions__priority-select {
+  min-width: 80px;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:deep(input::placeholder) {
+    opacity: 1 !important;
+    color: var(--theme-ai-color-gray-700) !important;
+    font-weight: 400;
+    font-size: 12px;
+  }
+
+  &:deep(.v-field) {
+    padding: 0 !important;
+    font-size: 14px;
+  }
+
+  &:deep(.v-field__append-inner) {
+    margin-right: 4px;
+  }
+
+  &:deep(.v-field__outline) {
+    border-radius: 30px;
+    z-index: -1;
+    --v-field-border-opacity: 1;
+  }
+
+  &:deep(.v-field__input) {
+    --v-input-control-height: 34px;
+    --v-field-padding-start: 12px;
+    --v-field-padding-end: 0px;
+    --v-field-input-padding-top: 0px;
+    --v-field-input-padding-bottom: 0px;
+    --v-input-control-height: 26px;
+    justify-content: center;
+    white-space: nowrap;
+
+    input {
+      align-self: center;
+      text-align: left;
+      padding-left: 12px;
+      left: 0;
+    }
+  }
+
+  &:deep(.v-select__selection) {
+    margin-inline-end: 0 !important;
+    color: var(--theme-ai-color-gray-700) !important;
+  }
+
+  &:deep(.v-select__selection-text) {
+    font-weight: 400 !important;
+    font-size: 12px;
+  }
+
+  &:deep(.v-icon) {
+    opacity: 1;
+  }
+}
+
+.actions__priority-select--high {
+  color: var(--theme-ai-color-red-300);
+
+  &:deep(.v-field__outline) {
+    background-color: var(--theme-ai-color-red-50);
+  }
+
+  &:deep(.v-select__selection-text),
+  &:deep(.v-icon) {
+    color: var(--theme-ai-color-red-900);
+  }
+}
+
+.actions__priority-select--medium {
+  color: var(--theme-ai-color-yellow-600);
+
+  &:deep(.v-field__outline) {
+    background-color: rgba(227, 116, 0, 0.15);
+  }
+
+  &:deep(.v-select__selection-text),
+  &:deep(.v-icon) {
+    color: #703a00;
+  }
+}
+
+.actions__priority-select--low {
+  color: var(--theme-ai-color-yellow-300);
+
+  &:deep(.v-field__outline) {
+    background-color: var(--theme-ai-color-yellow-50);
+  }
+
+  &:deep(.v-select__selection-text),
+  &:deep(.v-icon) {
+    color: #574100;
+  }
 }
 </style>

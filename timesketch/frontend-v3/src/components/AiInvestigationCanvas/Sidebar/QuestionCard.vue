@@ -56,12 +56,14 @@ limitations under the License.
 <script>
 import CreationIcon from '@/components/Icons/CreationIcon'
 import { useAppStore } from '@/stores/app'
+import { getPriorityFromLabels } from '@/components/AiInvestigationCanvas/_utils/QuestionPriority'
 
 export default {
   components: {
     CreationIcon,
   },
   props: {
+    value: Object,
     name: String,
     type: String,
     conclusion: String,
@@ -81,17 +83,7 @@ export default {
   },
   methods: {
     setActiveQuestion() {
-      this.store.setActiveQuestion({
-        user: this.user,
-        name: this.name,
-        conclusionSummary: this.conclusionSummary,
-        conclusions: this.conclusions,
-        type: this.type,
-        id: this.id,
-        updatedAt: this.updated_at,
-        completed: this.completed,
-        status: { status: this.status?.status },
-      })
+      this.store.setActiveQuestion(this.value)
     },
   },
   computed: {
@@ -114,13 +106,7 @@ export default {
       return !!this.store.report?.content?.approvedQuestions?.find((approvedId) => approvedId === this.id)
     },
     priority() {
-      if (!this.labels || !Array.isArray(this.labels)) {
-        return null
-      }
-      const priorityPrefix = '__ts_priority_'
-      const priorityLabel = this.labels.find((label) => label.name.startsWith(priorityPrefix))
-
-      return priorityLabel ? priorityLabel.name.replace(priorityPrefix, '') : null
+      return getPriorityFromLabels(this.labels)
     },
     priorityColor() {
       if (!this.priority) return 'chip--none'

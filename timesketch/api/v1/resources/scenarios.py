@@ -702,6 +702,11 @@ class QuestionResource(resources.ResourceMixin, Resource):
             A JSON representation of the updated question.
         """
         VALID_STATUSES = {"new", "pending-review", "verified", "rejected"}
+        VALID_PRIORITIES = {
+            "__ts_priority_low",
+            "__ts_priority_medium",
+            "__ts_priority_high",
+        }
 
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -749,6 +754,29 @@ class QuestionResource(resources.ResourceMixin, Resource):
         description = form.get("description")
         if description:
             question.description = description
+            updated = True
+
+        priority = form.get("priority")
+        if priority:
+            if priority not in VALID_PRIORITIES:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Invalid question priority value: '{priority}'. Valid "
+                    "priorities are: "
+                    f"{', '.join(sorted(list(VALID_PRIORITIES - {''})))}",
+                )
+
+            # Remove existing priority label
+            existing_priority_label = None
+            for label in question.get_labels:
+                if label.startswith("__ts_priority_"):
+                    existing_priority_label = label
+                    break
+
+            if existing_priority_label:
+                question.remove_label(existing_priority_label)
+
+            question.add_label(priority)
             updated = True
 
         if updated:
