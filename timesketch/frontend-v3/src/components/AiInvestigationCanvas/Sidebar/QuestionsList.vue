@@ -141,6 +141,24 @@ export default {
 
       let filtered = this.questions
 
+      // Filter by Status
+      if (this.selectedStatuses.length) {
+        filtered = filtered.filter((q) => {
+          const statusValue = q.status?.status?.toLowerCase().replace(/-/g, ' ') || 'none'
+          const normalizedSelected = this.selectedStatuses.map((s) => s.toLowerCase())
+          return normalizedSelected.includes(statusValue)
+        })
+      }
+
+      // Filter by Priority
+      if (this.selectedPriorities.length) {
+        filtered = filtered.filter((q) => {
+          const label = q.labels.find((l) => l.name && l.name.startsWith('__ts_priority_'))
+          const priorityValue = label?.name ? label.name.replace('__ts_priority_', '').toLowerCase() : 'none'
+          return this.selectedPriorities.map((p) => p.toLowerCase()).some((sel) => sel.includes(priorityValue))
+        })
+      }
+
       // Filter by Created By
       if (this.selectedCreatedBy.length) {
         filtered = filtered.filter((q) => {

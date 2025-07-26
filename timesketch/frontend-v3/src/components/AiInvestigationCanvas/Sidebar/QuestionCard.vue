@@ -28,7 +28,7 @@ limitations under the License.
         <CreationIcon v-else class="question-card__icon" :width="24" :height="24" />
         <p class="font-weight-medium black--text">{{ name }}</p>
       </div>
-      <div class="d-flex ga-2 align-center flex-1-1-100" v-if="priority || isApproved || isRejected">
+      <div class="d-flex ga-2 align-center flex-1-1-100" v-if="hasChips">
         <v-chip v-if="priority" :class="['chip', priorityColor]" small label :title="`Priority: ${priority}`">
           {{ priority }} Priority
         </v-chip>
@@ -39,6 +39,14 @@ limitations under the License.
         <v-chip v-if="isRejected" small label title="Rejected" :class="['chip', 'chip--rejected']">
           <v-icon icon="mdi-close" start></v-icon>
           Rejected
+        </v-chip>
+        <v-chip v-if="isPending" small label title="Pending Review" :class="['chip', 'chip--pending']">
+          <v-icon icon="mdi-magnify" start></v-icon>
+          Pending Review
+        </v-chip>
+        <v-chip v-if="isNew" small label title="New" :class="['chip', 'chip--new']">
+          <v-icon icon="mdi-star-outline" start></v-icon>
+          New
         </v-chip>
       </div>
     </div>
@@ -87,11 +95,20 @@ export default {
     },
   },
   computed: {
+    hasChips() {
+      return this.priority || this.isApproved || this.isRejected || this.isNew
+    },
     isActive() {
       return this.store.activeContext.question?.id ? this.id === this.store.activeContext.question?.id : false
     },
     isRejected() {
       return this.status?.status === 'rejected'
+    },
+    isPending() {
+      return this.status?.status === 'pending-review'
+    },
+    isNew() {
+      return this.status?.status === 'new'
     },
     isApproved() {
       return !!this.store.report?.content?.approvedQuestions?.find((approvedId) => approvedId === this.id)
@@ -227,6 +244,16 @@ export default {
   &.chip--rejected {
     background-color: var(--theme-ai-color-red-100);
     color: var(--theme-ai-color-red-900);
+  }
+
+  &.chip--pending {
+    background-color: var(--theme-ai-color-yellow-100);
+    color: var(--theme-ai-color-yellow-900);
+  }
+
+  &.chip--new {
+    background-color: var(--theme-ai-color-blue-100);
+    color: var(--theme-ai-color-blue-900);
   }
 }
 </style>
