@@ -70,9 +70,7 @@ export default {
   },
   computed: {
     isApproved() {
-      return !!this.store.report?.content?.approvedQuestions?.find(
-        (approvedId) => approvedId === this.question.id
-      );
+      return this.question?.status?.status === 'verified';
     },
     order() {
       return this.index + 1;

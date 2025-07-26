@@ -182,7 +182,7 @@ export default {
     isTextareaDisabled() {
       return (
         this.reportLocked ||
-        this.store.approvedReportQuestions.includes(this.question.id) ||
+        this.question?.status?.status === 'verified' ||
         this.isSynthesizing
       );
     },

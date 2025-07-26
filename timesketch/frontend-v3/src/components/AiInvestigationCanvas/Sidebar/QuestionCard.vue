@@ -103,7 +103,7 @@ export default {
       return this.status?.status === 'new'
     },
     isApproved() {
-      return !!this.store.report?.content?.approvedQuestions?.find((approvedId) => approvedId === this.id)
+      return this.status?.status === 'verified'
     },
     priority() {
       return getPriorityFromLabels(this.labels)

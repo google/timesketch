@@ -24,6 +24,7 @@ limitations under the License.
         Would you like to save the results to the report?
       </p> -->
     </v-card-item>
+
     <div v-if="!isCompact">
       <div class="actions__item">
         <v-select
@@ -149,41 +150,18 @@ export default {
     },
   },
   methods: {
-    async confirmAndSave() {
-      this.isConfirming = true
+    async updateQuestionStatus(questionId, status) {
+      const isSubmitting = status === 'rejected' ? 'isSubmitting' : 'isConfirming'
+      const statusText = status === 'verified' ? 'verified' : 'rejected'
+      const errorText = status === 'verified' ? 'verify' : 'reject'
+      const icon = status === 'verified' ? 'mdi-check-circle-outline' : 'mdi-minus-circle-outline'
 
       try {
-        const existingQuestions = Array.isArray(this.store.report?.content?.approvedQuestions)
-          ? this.store.report?.content?.approvedQuestions
-          : []
+        this[isSubmitting] = true
 
-        await this.store.updateReport({
-          approvedQuestions: Array.from(new Set([...existingQuestions, this.question.id])),
-        })
-
-        this.store.setNotification({
-          text: 'Question approved',
-          icon: 'mdi-check-circle-outline',
-          type: 'success',
-        })
-      } catch (error) {
-        console.error(error)
-        this.store.setNotification({
-          text: 'Unable to approve question',
-          icon: 'mdi-close-circle-outline',
-          type: 'error',
-        })
-      } finally {
-        this.isConfirming = false
-      }
-    },
-    async rejectQuestion(questionId) {
-      try {
-        this.isSubmitting = true
-
-        // Update the question status to "rejected"
+        // Update the question status
         await RestApiClient.updateQuestion(this.store.sketch.id, questionId, {
-          status: 'rejected',
+          status: status,
         })
 
         // Rerender with updated status
@@ -195,20 +173,26 @@ export default {
         this.store.setActiveQuestion(null)
 
         this.store.setNotification({
-          text: this.index ? `Question ${this.index + 1} has been rejected` : `This question has been rejected`,
-          icon: 'mdi-minus-circle-outline',
+          text: this.index ? `Question ${this.index + 1} has been ${statusText}` : `This question has been ${statusText}`,
+          icon: icon,
           type: 'success',
         })
       } catch (error) {
         console.error(error)
         this.store.setNotification({
-          text: 'Unable to reject question. Please try again.',
+          text: `Unable to ${errorText} question. Please try again.`,
           icon: 'mdi-alert-circle-outline',
           type: 'error',
         })
       } finally {
-        this.isSubmitting = false
+        this[isSubmitting] = false
       }
+    },
+    async confirmAndSave() {
+      await this.updateQuestionStatus(this.question.id, 'verified')
+    },
+    async rejectQuestion() {
+      await this.updateQuestionStatus(this.question.id, 'rejected')
     },
   },
 }

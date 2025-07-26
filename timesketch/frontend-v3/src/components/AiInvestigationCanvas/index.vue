@@ -305,7 +305,7 @@ export default {
       return this.filteredQuestions?.length || 0;
     },
     completedQuestionsTotal() {
-      return this.filteredQuestions?.filter(({id}) => this.store.report?.content?.approvedQuestions?.includes(id)).length || 0
+      return this.filteredQuestions?.filter(({ status }) => status?.status === 'verified').length || 0;
     },
     sketchId() {
       return this.store.sketch.id;

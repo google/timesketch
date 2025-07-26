@@ -17,6 +17,7 @@ limitations under the License.
   <section>
     <header class="question__header pa-6">
       <v-btn
+        rounded
         variant="text"
         size="small"
         color="primary"
@@ -67,7 +68,7 @@ export default {
       return !this.store.activeContext.question?.id
     },
     isApproved() {
-      return !!this.store.report?.content?.approvedQuestions?.find((approvedId) => approvedId === this.question.id)
+      return this.question?.status?.status === 'verified'
     },
   },
 }

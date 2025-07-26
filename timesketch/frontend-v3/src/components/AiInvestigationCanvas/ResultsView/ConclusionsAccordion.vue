@@ -136,7 +136,7 @@ export default {
     isQuestionVerified() {
       return (
         this.store.reportLocked ||
-        this.store.approvedReportQuestions.includes(this.question.id)
+        this.question?.status?.status === 'verified'
       )
     },
     hasCurrentUserConclusion() {
