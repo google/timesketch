@@ -55,7 +55,7 @@ limitations under the License.
         <h4>Progress</h4>
         <p v-if="questionsTotal" class="text-body-2 text-no-wrap">
           <span class="font-weight-bold">{{ completedQuestionsTotal }} / {{ questionsTotal }}</span>
-          questions finalized
+          questions answered
         </p>
       </div>
       <v-progress-linear

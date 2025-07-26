@@ -14,22 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="questions-list__bar">
-    <h4 class="questions-list__label" v-if="questionsTotal">
-      {{ questionsTotal }}
-      <span class="font-weight-regular">question{{ questionsTotal > 1 && 's' }}</span>
-    </h4>
+  <div :class="['filterbar__wrapper', {'filterbar__wrapper--expanded': expanded}]">
+    <div class="filterbar__header">
+      <h4 class="filterbar__heading" v-if="questionsTotal">
+        <span v-if="questionsTotal !== filteredAndSortedQuestions.length" class="font-weight-bold">{{ filteredAndSortedQuestions.length }} / </span>
+        <span :class="questionsTotal === filteredAndSortedQuestions.length ? 'font-weight-bold' : ''">{{ questionsTotal }}</span>
+        <span class="font-weight-regular"> question{{ questionsTotal > 1 && 's' }}</span>
+        <span class="filterbar__progress font-weight-regular" v-if="expanded && questionsTotal">
+          {{ completedQuestionsTotal }} / {{ questionsTotal }} questions answered
+        </span>
+      </h4>
 
-    <v-btn
-      class="filterbar__clear-btn"
-      color="var(--theme-ai-color-blue-600)"
-      variant="text"
-      @click="clearAllFilters"
-      density="compact"
-      :disabled="!hasActiveFilters"
-    >
-      Clear All
-    </v-btn>
+      <v-btn
+        class="filterbar__clear-btn"
+        color="var(--theme-ai-color-blue-600)"
+        variant="text"
+        @click="clearAllFilters"
+        density="compact"
+        :disabled="!hasActiveFilters"
+      >
+        Clear All
+      </v-btn>
+    </div>
 
     <div class="filterbar">
       <div class="filterbar__item">
@@ -127,7 +133,12 @@ limitations under the License.
 export default {
   props: {
     questionsTotal: Number,
+    completedQuestionsTotal: Number,
     questions: Array,
+    expanded: {
+      type: Boolean,
+      default: false
+    },
   },
   data() {
     return {
@@ -250,7 +261,7 @@ export default {
 </script>
 
 <style scoped>
-.questions-list__label {
+.filterbar__heading {
   font-size: 14px;
   color: var(--theme-ai-color-black);
   font-weight: 700;
@@ -263,12 +274,25 @@ export default {
   }
 }
 
-.questions-list__bar {
+.filterbar__wrapper {
   padding: 0 0 14px;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 4px;
-  align-items: space-between;
+  gap: 14px 16px;
+}
+
+.filterbar__wrapper--expanded {
+  flex-wrap: nowrap;
+}
+
+.filterbar__header {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1 1 100%;
 }
 
 .filterbar {
@@ -280,6 +304,10 @@ export default {
   justify-content: flex-start;
   align-items: baseline;
   flex: 1 1 100%;
+}
+
+.filterbar__wrapper--expanded .filterbar {
+  flex: 0 0 auto;
 }
 
 .filterbar__label {
@@ -388,5 +416,21 @@ export default {
   min-width: 0;
   color: var(--theme-ai-color-blue-600) !important;
   height: auto;
+}
+
+.filterbar__progress {
+  position: relative;
+  margin-left: 17px;
+  padding-left: 17px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 0;
+    width: 1px;
+    height: 26px;
+    background-color: var(--theme-ai-color-gray-100);
+  }
 }
 </style>

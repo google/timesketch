@@ -159,9 +159,17 @@ limitations under the License.
             Generate draft answers
           </v-btn>
         </div>
+        <FilterBar
+          ref="filterBar"
+          :questions-total="questionsTotal"
+          :questions="questions"
+          :expanded="true"
+          :completed-questions-total="completedQuestionsTotal"
+          @filters-changed="handleFiltersChanged"
+        />
         <ol class="questions-list">
           <KeyFindingItem
-            v-for="(question, index) in sortedQuestions"
+            v-for="(question, index) in filteredQuestions"
             :question="question"
             :index="index"
             :key="question.id"
@@ -184,14 +192,19 @@ limitations under the License.
 </template>
 <script>
 import { ReportStatus, useAppStore } from "@/stores/app";
-import { debounce } from "lodash";
-import SummarySection from "./SummarySection.vue";
-import dayjs from "dayjs";
-import generatePdf from "../_utils/pdf-generator";
 import RestApiClient from "@/utils/RestApiClient";
+import dayjs from "dayjs";
+import { debounce } from "lodash";
+import generatePdf from "../_utils/pdf-generator";
+import FilterBar from "../Sidebar/FilterBar.vue";
+import SummarySection from "./SummarySection.vue";
 
 export default {
   inject: ["runLogAnalysis", "isGeneratingReport"],
+  components: {
+    SummarySection,
+    FilterBar,
+  },
   props: {
     questions: Array,
     questionsTotal: Number,
@@ -205,7 +218,7 @@ export default {
       store,
       showConfirmationModal: false,
       isSynthesizingAll: false,
-      showModal: false,
+      filteredQuestions: [],
     };
   },
   computed: {
@@ -360,6 +373,9 @@ export default {
     updateContent: debounce(function (key, value) {
       this.store.updateReport({ [key]: value });
     }, 200),
+    handleFiltersChanged(filteredQuestions) {
+      this.filteredQuestions = filteredQuestions;
+    },
   },
 };
 </script>
