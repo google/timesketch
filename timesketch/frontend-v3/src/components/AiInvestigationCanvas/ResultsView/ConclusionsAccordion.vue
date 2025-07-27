@@ -53,14 +53,24 @@ limitations under the License.
                 Pre-Detected by AI
               </v-chip>
             </div>
-            <v-btn
-                v-if="isEditable(conclusion)"
-                icon="mdi-pencil"
-                variant="text"
-                size="small"
-                class="ml-4 flex-shrink-0"
-                @click.stop="openEditModal(conclusion)"
-            />
+            <div class="ml-4 mr-2 flex-shrink-0 d-flex align-center">
+              <v-btn
+                  v-if="isEditable(conclusion)"
+                  icon="mdi-pencil"
+                  variant="text"
+                  size="small"
+                  @click.stop="openEditModal(conclusion)"
+                  title="Edit conclusion"
+              />
+              <v-btn
+                  v-if="isDeletable(conclusion)"
+                  icon="mdi-delete-outline"
+                  variant="text"
+                  size="small"
+                  @click.stop="openDeleteConfirmation(conclusion)"
+                  title="Delete conclusion"
+              />
+            </div>
           </div>
         </v-expansion-panel-title>
         <v-expansion-panel-text>
@@ -105,10 +115,39 @@ limitations under the License.
       @close-modal="handleModalClose"
     />
   </v-dialog>
+
+  <!-- Delete Confirmation Modal -->
+  <v-dialog v-model="showDeleteConfirmation" max-width="500px" width="auto">
+    <v-card>
+      <v-card-title class="text-h5"><v-icon icon="mdi-delete-outline" class="mr-2" />Are you sure?</v-card-title>
+      <v-card-text>
+        You are about to permanently delete this conclusion. This action cannot
+        be undone.
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          variant="text"
+          @click="closeDeleteConfirmation"
+          :disabled="isDeleting"
+        >
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
+          @click="confirmDelete"
+          :loading="isDeleting"
+        >
+          Delete
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
+import { useAppStore } from "@/stores/app"
+import RestApiClient from "@/utils/RestApiClient"
 
 export default {
   props: {
@@ -123,15 +162,18 @@ export default {
       isConfirming: false,
       showEditModal: false,
       editingConclusion: null,
+      showDeleteConfirmation: false,
+      conclusionToDelete: null,
+      isDeleting: false,
       panels:
         this.question?.conclusions && this.question.conclusions.length > 0
           ? [this.question.conclusions[0].id]
           : ["fallback"],
-    };
+    }
   },
   computed: {
     hasConclusions() {
-      return this.question?.conclusions && this.question.conclusions.length > 0;
+      return this.question?.conclusions && this.question.conclusions.length > 0
     },
     isQuestionVerified() {
       return (
@@ -145,25 +187,33 @@ export default {
     hasCurrentUserConclusion() {
       return this.question?.conclusions?.some(
         (conclusion) => conclusion.user.name === this.store.currentUser
-      );
+      )
     },
   },
   methods: {
     openEventLog() {
-      this.showEventLog = true;
+      this.showEventLog = true
     },
     closeEventLog() {
-      this.showEventLog = false;
+      this.showEventLog = false
     },
     isEditable(conclusion) {
       // Not automated, not locked and owned by the current user
       return !conclusion.automated &&
              !this.store.reportLocked &&
-             conclusion.user.username === this.store.currentUser;
+             !this.isQuestionRejected &&
+             conclusion.user && conclusion.user.username === this.store.currentUser
+    },
+    isDeletable(conclusion) {
+      if (this.isQuestionVerified || this.isQuestionRejected || this.store.reportLocked) {
+        return false
+      }
+      const isOwner = conclusion.user && conclusion.user.username === this.store.currentUser
+      return conclusion.automated || isOwner
     },
     openEditModal(conclusion) {
-      this.editingConclusion = conclusion;
-      this.showEditModal = true;
+      this.editingConclusion = conclusion
+      this.showEditModal = true
     },
     handleModalClose() {
       this.showEditModal = false
@@ -172,14 +222,51 @@ export default {
         this.refreshQuestionById(this.question.id)
       }
     },
+    openDeleteConfirmation(conclusion) {
+      this.conclusionToDelete = conclusion
+      this.showDeleteConfirmation = true
+    },
+    closeDeleteConfirmation() {
+      this.showDeleteConfirmation = false
+      this.conclusionToDelete = null
+    },
+    async confirmDelete() {
+      this.isDeleting = true
+      try {
+        await RestApiClient.deleteQuestionConclusion(
+          this.store.sketch.id,
+          this.question.id,
+          this.conclusionToDelete.id
+        )
+
+        this.store.setNotification({
+          text: 'Conclusion successfully deleted.',
+          type: 'success',
+          icon: 'mdi-check-circle-outline',
+        })
+        this.closeDeleteConfirmation()
+        // Refresh the question data to update the UI
+        this.refreshQuestionById(this.question.id)
+
+      } catch (error) {
+        console.error('Error deleting conclusion:', error)
+        this.store.setNotification({
+          text: 'Unable to delete conclusion. Please try again.',
+          type: 'error',
+          icon: 'mdi-alert-circle-outline',
+        })
+      } finally {
+        this.isDeleting = false
+      }
+    },
   },
   provide() {
     return {
       showEventLog: computed(() => this.showEventLog),
       closeEventLog: this.closeEventLog,
-    };
+    }
   },
-};
+}
 </script>
 
 <style>
