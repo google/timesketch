@@ -98,9 +98,9 @@ limitations under the License.
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
-import RestApiClient from "@/utils/RestApiClient";
-import AddQuestionModalLoader from "../Loaders/AddQuestionModalLoader.vue";
+import { useAppStore } from "@/stores/app"
+import RestApiClient from "@/utils/RestApiClient"
+import AddQuestionModalLoader from "../Loaders/AddQuestionModalLoader.vue"
 
 export default {
   inject: ["addNewQuestion"],
@@ -116,10 +116,10 @@ export default {
       dfiqTemplates: [],
       isSubmitting: false,
       store: useAppStore(),
-    };
+    }
   },
   created() {
-    this.fetchQuestionTemplates();
+    this.fetchQuestionTemplates()
   },
   computed: {
     sortedQuestions() {
@@ -130,87 +130,78 @@ export default {
                 new Date(questionA.updated_at) - new Date(questionB.updated_at)
             ),
           ]
-        : [];
+        : []
     },
     dfiqMatches() {
       if (!this.queryString) {
-        return this.dfiqTemplates;
+        return this.dfiqTemplates
       }
 
       return this.dfiqTemplates.filter((template) =>
         template.name.toLowerCase().includes(this.queryString.toLowerCase())
-      );
+      )
     },
   },
   methods: {
     async fetchQuestionTemplates() {
       try {
-        const dfiqTemplatesRes = await RestApiClient.getQuestionTemplates();
+        const dfiqTemplatesRes = await RestApiClient.getQuestionTemplates()
 
         if (
           dfiqTemplatesRes.data?.objects &&
           dfiqTemplatesRes.data.objects.length > 0
         ) {
-          this.dfiqTemplates = dfiqTemplatesRes.data.objects;
+          this.dfiqTemplates = dfiqTemplatesRes.data.objects
         }
       } catch (error) {
-        console.error(error);
+        console.error(error)
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
     },
     async createQuestion(question, templateId) {
-      this.isSubmitting = true;
+      this.isSubmitting = true
 
-      let questionText = question || this.queryString;
+      let questionText = question || this.queryString
 
       if (templateId) {
-        questionText = question?.name;
-        templateId = templateId;
+        questionText = question?.name
+        templateId = templateId
       }
 
       try {
-        const question = await RestApiClient.createQuestion(
+        const questionResponse = await RestApiClient.createQuestion(
           this.store.sketch.id,
           null,
           null,
           questionText,
           templateId
-        );
+        )
 
-        const questionId = question.data.objects[0].id;
+        const questionData = questionResponse.data.objects[0]
 
-        const conclusionText = `${this.store.currentUser}'s conclusion`;
-        const conclusionResponse = await RestApiClient.createQuestionConclusion(
-          this.store.sketch.id,
-          questionId,
-          conclusionText
-        );
-
-        const questionData = conclusionResponse.data.objects[0]
-
-        this.addNewQuestion(questionData);
-        this.store.setActiveQuestion(questionData);
-        this.$emit("close-modal");
+        this.addNewQuestion(questionData)
+        this.store.setActiveQuestion(questionData)
+        this.$emit("close-modal")
 
         this.store.setNotification({
           text: `You added the question "${questionData.name}" to this Sketch`,
           icon: "mdi-plus-circle-outline",
           type: "success",
-        });
+        })
       } catch (error) {
-        console.error(error);
+        console.error(error)
         this.store.setNotification({
           text: "Unable to add question to this Sketch. Please try again.",
           icon: "mdi-alert-circle-outline",
           type: "error",
-        });
+        })
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     },
   },
-};
+}
 </script>
 
 <style scoped>

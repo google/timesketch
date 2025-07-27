@@ -19,6 +19,7 @@ limitations under the License.
       <h3 class="text-h6 font-weight-bold mb-3">Conclusions</h3>
        <!-- Add New Conclusion Modal -->
       <v-btn
+        v-if="hasConclusions"
         variant="text"
         size="small"
         color="primary"
@@ -29,10 +30,9 @@ limitations under the License.
       </v-btn>
     </div>
 
-    <v-expansion-panels class="mb-6" v-model="panels">
+    <v-expansion-panels v-if="hasConclusions" class="mb-6" v-model="panels">
       <v-expansion-panel
         color="#F8F9FA"
-        v-if="hasConclusions"
         v-for="conclusion in question.conclusions"
         :value="conclusion.id"
         :key="conclusion.id"
@@ -50,7 +50,7 @@ limitations under the License.
                 class="px-2 py-2 rounded-l mt-2"
                 color="#5F6368"
               >
-                Pre-Detected by AI
+                <v-icon icon="mdi-creation" class="mr-2" />Detected by AI
               </v-chip>
             </div>
             <div class="ml-4 mr-2 flex-shrink-0 d-flex align-center">
@@ -93,6 +93,18 @@ limitations under the License.
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
+    <!-- Empty State shown when there are no conclusions -->
+    <v-card v-else variant="tonal" class="mb-6 pa-4 text-center">
+      <p class="mb-4">No conclusions have been added to this question yet.</p>
+      <v-btn
+        color="primary"
+        @click="openEditModal(false)"
+        :disabled="isQuestionVerified || isQuestionRejected || store.reportLocked"
+      >
+        <v-icon left class="mr-2">mdi-plus</v-icon>
+        Add Your Conclusion
+      </v-btn>
+    </v-card>
   </div>
   <!-- Edit Conclusion Modal -->
   <v-dialog

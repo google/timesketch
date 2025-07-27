@@ -84,7 +84,7 @@ limitations under the License.
             color="primary"
             @click="handleSynthesizeClick"
             :loading="isSynthesizing"
-            :disabled="isTextareaDisabled"
+            :disabled="isTextareaDisabled || !hasConclusions"
             class="text-uppercase ml-2"
             title="Generate a new answer using AI based on the latest conclusions."
           >
@@ -138,7 +138,7 @@ export default {
   },
   mounted() {
     if (!this.summaries || this.summaries.length < 1) {
-      if (this.isSynthesizeAvailable) {
+      if (this.isSynthesizeAvailable && this.hasConclusions) {
         this.fetchSynthesizedAnswer();
       } else {
         this.summary = "<Please add or review the conclusions and provide your answer to the question here>";
@@ -154,6 +154,9 @@ export default {
         return DOMPurify.sanitize(unsafeHtml);
       }
       return "";
+    },
+    hasConclusions() {
+      return this.question?.conclusions && this.question.conclusions.length > 0;
     },
     isSynthesizeAvailable() {
       if (
