@@ -18,8 +18,8 @@ from typing import Any, Optional
 import pandas as pd
 import prometheus_client
 from flask import current_app
-from opensearchpy import OpenSearch
 from timesketch.lib import utils
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.api.v1 import export
 from timesketch.models.sketch import Sketch
 from timesketch.lib.definitions import METRICS_NAMESPACE
@@ -102,7 +102,7 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         query_string: str = "*",
         query_filter: Optional[dict] = None,
         id_list: Optional[list] = None,
-        datastore: Optional[OpenSearch] = None,
+        datastore: Optional[OpenSearchDataStore] = None,
         timeline_ids: Optional[list] = None,
     ) -> pd.DataFrame:
         """Runs a timesketch query and returns results as a DataFrame.
@@ -111,7 +111,7 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             query_string: Search query string.
             query_filter: Dictionary with filter parameters.
             id_list: List of event IDs to retrieve.
-            datastore: OpenSearch instance for querying.
+            datastore: OpenSearchDataStore instance for querying.
             timeline_ids: List of timeline IDs to query.
         Returns:
             pd.DataFrame: DataFrame containing query results.
@@ -150,7 +150,7 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             sketch: The Sketch object containing events to summarize.
             **kwargs: Additional arguments including:
                 - form: Form data containing query and filter information.
-                - datastore: OpenSearch instance for querying.
+                - datastore: OpenSearchDataStore instance for querying.
                 - timeline_ids: List of timeline IDs to query.
         Returns:
             str: Generated prompt text with events to summarize.

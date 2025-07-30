@@ -178,10 +178,7 @@ class BaseAggregator:
         if not sketch_id and not indices:
             raise RuntimeError("Need at least sketch_id or index")
 
-        self.opensearch = OpenSearchDataStore(
-            host=current_app.config.get("OPENSEARCH_HOST"),
-            port=current_app.config.get("OPENSEARCH_PORT"),
-        )
+        self.opensearch = OpenSearchDataStore()
 
         self._sketch_url = f"/sketch/{sketch_id:d}/explore"
         self.field = ""

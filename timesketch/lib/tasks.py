@@ -24,6 +24,7 @@ import subprocess
 import time
 import traceback
 from typing import Optional
+from urllib.parse import urlparse
 import yaml
 import prometheus_client
 
@@ -255,10 +256,7 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     db_session.commit()
 
     # Refresh the index so it is searchable for the analyzers right away.
-    datastore = OpenSearchDataStore(
-        host=current_app.config["OPENSEARCH_HOST"],
-        port=current_app.config["OPENSEARCH_PORT"],
-    )
+    datastore = OpenSearchDataStore()
     try:
         datastore.client.indices.refresh(index=timeline.searchindex.index_name)
     except NotFoundError:
@@ -747,6 +745,7 @@ def run_plaso(
         UnboundLocalError: If the searchidnex can't be created.
         RequestError: If the searchidnex can't be created.
         IndexNotReadyError: If the searchindex isn't ready.
+        DatastoreConnectionError: If the opensearch connection isn't available.
 
     Returns:
         Name (str) of the index.
@@ -783,21 +782,19 @@ def run_plaso(
                     )
         except (json.JSONDecodeError, OSError):
             logger.error("Unable to read in mapping", exc_info=True)
+    try:
+        opensearch = OpenSearchDataStore()
+        connection = opensearch.client.transport.get_connection()
+        parsed_url = urlparse(connection.host)
+        opensearch_server = parsed_url.hostname
+        opensearch_port = connection.port
 
-    opensearch_server = current_app.config.get("OPENSEARCH_HOST")
-    if not opensearch_server:
-        raise RuntimeError(
-            "Unable to connect to OpenSearch, no server set, unable to "
-            "process plaso file."
-        )
-    opensearch_port = current_app.config.get("OPENSEARCH_PORT")
-    if not opensearch_port:
-        raise RuntimeError(
-            "Unable to connect to OpenSearch, no port set, unable to "
-            "process plaso file."
-        )
+    except errors.DatastoreConnectionError as e:
+        error_msg = f"Failed to connect to OpenSearch for Plaso import: {e}"
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        logger.critical(error_msg, exc_info=True)
+        raise
 
-    opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     try:
@@ -1016,10 +1013,7 @@ def run_csv_jsonl(
         except (json.JSONDecodeError, OSError):
             logger.error("Unable to read in mapping", exc_info=True)
 
-    opensearch = OpenSearchDataStore(
-        host=current_app.config["OPENSEARCH_HOST"],
-        port=current_app.config["OPENSEARCH_PORT"],
-    )
+    opensearch = OpenSearchDataStore()
 
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.

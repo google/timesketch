@@ -37,10 +37,7 @@ class DataFinder:
         self._timeline_ids = []
         self._sketch_id = None
 
-        self._datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        self._datastore = OpenSearchDataStore()
 
     def can_run(self):
         """Returns a boolean whether the data finder can be run."""
