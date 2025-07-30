@@ -34,13 +34,13 @@ session_maker = sessionmaker(future=True)
 db_session = scoped_session(session_maker)
 
 
-def configure_engine(url):
+def configure_engine(url, engine_options):
     """Configure and setup the database session."""
     # These needs to be global because of the way Flask works.
     # pylint: disable=global-statement,global-variable-not-assigned
     # TODO: Can we wrap this in a class?
     global engine, session_maker, db_session
-    engine = create_engine(url, future=True)
+    engine = create_engine(url, future=True, **engine_options)
     # Configure the session
     session_maker.configure(
         autocommit=False, autoflush=False, bind=engine, query_cls=Query
