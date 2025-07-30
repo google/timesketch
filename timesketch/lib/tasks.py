@@ -195,7 +195,8 @@ class SqlAlchemyTask(celery.Task):
 def init_worker(**kwargs):
     """Create new database engine per worker process."""
     url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
-    engine = create_engine(url)
+    engine_options = current_app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {})
+    engine = create_engine(url, **engine_options)
     db_session.configure(bind=engine)
 
 
