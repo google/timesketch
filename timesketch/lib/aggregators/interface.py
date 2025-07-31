@@ -15,8 +15,6 @@
 import datetime
 import logging
 
-from flask import current_app
-
 import opensearchpy
 import pandas
 
