@@ -44,7 +44,7 @@ limitations under the License.
               </p>
               <v-spacer />
               <v-chip v-if="conclusion.automated"
-                size="small"
+                size="x-small"
                 variant="outlined"
                 class="rounded-l mt-2"
                 color="#5F6368"
@@ -53,7 +53,7 @@ limitations under the License.
                 Detected by AI
               </v-chip>
               <v-chip v-else-if="conclusion.user && conclusion.user.name"
-                size="small"
+                size="x-small"
                 variant="outlined"
                 class="rounded-l mt-2"
                 color="#5F6368"
@@ -88,7 +88,7 @@ limitations under the License.
             :conclusionId="conclusion.id"
           />
           <v-btn
-            v-if="!conclusion.automated"
+            v-if="!conclusion.automated && store.currentUser === conclusion.user?.username"
             size="small"
             variant="text"
             depressed

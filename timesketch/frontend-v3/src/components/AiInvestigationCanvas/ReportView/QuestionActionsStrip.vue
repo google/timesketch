@@ -95,17 +95,24 @@ limitations under the License.
         :class="!isCompact ? 'actions__btn--large' : 'px-4'"
         >Not Relevant</v-btn
       >
-      <v-btn
-        v-if="!isCompact"
-        color="primary"
-        variant="outlined"
-        @click="confirmAndSave()"
-        :disabled="reportLocked"
-        size="small"
-        :class="!isCompact ? 'action-btn--large' : 'px-4'"
-      >
-        Verify Question
-      </v-btn>
+      <v-tooltip location="bottom" :disabled="hasAnswer">
+        <template v-slot:activator="{ props }">
+          <div v-bind="props">
+            <v-btn
+              v-if="!isCompact"
+              color="primary"
+              variant="outlined"
+              @click="confirmAndSave()"
+              :disabled="reportLocked || !hasAnswer"
+              size="small"
+              :class="!isCompact ? 'action-btn--large' : 'px-4'"
+            >
+              Verify Question
+            </v-btn>
+          </div>
+        </template>
+        <span>An answer must be saved before verifying the question.</span>
+      </v-tooltip>
     </v-card-actions>
     <v-card-actions v-else class="pa-0">
        <v-btn
@@ -185,6 +192,12 @@ export default {
     isRejected() {
       return this.question?.status?.status === 'rejected'
     },
+    hasAnswer() {
+      return (
+        this.store.report?.content?.conclusionSummaries?.some(
+          (summary) => summary.questionId === this.question.id
+        ) ?? false)
+    },
     priority() {
       return getPriorityFromLabels(this.question.labels)
     },
@@ -248,16 +261,31 @@ export default {
 
       try {
         // Update the question status
-        await RestApiClient.updateQuestion(this.store.sketch.id, questionId, {
+        const updatedQuestion = await RestApiClient.updateQuestion(this.store.sketch.id, questionId, {
           status: status,
         })
 
         // Rerender with updated status
-        const updatedQuestion = await RestApiClient.getQuestion(this.store.sketch.id, questionId)
         const newQuestionData = updatedQuestion.data.objects[0]
 
         // Update the question in the main list
         this.updateQuestion(newQuestionData)
+
+        // If verifying, add the current user to the analyst list if not already present.
+        if (status === 'verified') {
+          const currentUserName = this.store.currentUser
+
+          if (currentUserName) {
+            const currentAnalysts = this.store.report?.content?.analysts || ''
+            const analystList = currentAnalysts.split(',').map(name => name.trim()).filter(Boolean);
+
+            if (!analystList.includes(currentUserName)) {
+              analystList.push(currentUserName)
+              const newAnalystsString = analystList.join(', ')
+              this.store.updateReport({ analysts: newAnalystsString })
+            }
+          }
+        }
 
         // Handle the active view based on the new status
         if (status === 'pending-review') {
