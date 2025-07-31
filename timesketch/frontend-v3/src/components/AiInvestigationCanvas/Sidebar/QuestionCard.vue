@@ -88,7 +88,7 @@ export default {
   },
   computed: {
     hasChips() {
-      return this.priority || this.isApproved || this.isRejected || this.isNew
+      return this.priority || this.isApproved || this.isRejected || this.isNew || this.isPending
     },
     isActive() {
       return this.store.activeContext.question?.id ? this.id === this.store.activeContext.question?.id : false

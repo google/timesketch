@@ -52,8 +52,8 @@ limitations under the License.
         </div>
       </div>
     </div>
-    <v-btn variant="text" @click="toggleShowRemoveLog()">
-      <v-icon small icon="mdi-close-circle-outline" />
+    <v-btn variant="text" @click="toggleShowRemoveLog()" title="Unlink Event from Conclusion">
+      <v-icon small icon="mdi-link-variant-off" />
     </v-btn>
   </div>
 </template>

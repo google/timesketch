@@ -17,13 +17,12 @@ limitations under the License.
   <div class="px-6">
     <div class="d-flex justify-space-between">
       <h3 class="text-h6 font-weight-bold mb-3">Conclusions</h3>
-       <!-- Add New Conclusion Modal -->
       <v-btn
         v-if="hasConclusions"
         variant="text"
         size="small"
         color="primary"
-        @click="openEditModal(false)"
+        @click="enterDraftMode"
         :disabled="hasCurrentUserConclusion || isQuestionVerified || isQuestionRejected"
       >
         Add Your Conclusion
@@ -45,12 +44,22 @@ limitations under the License.
               </p>
               <v-spacer />
               <v-chip v-if="conclusion.automated"
-                size="x-small"
+                size="small"
                 variant="outlined"
-                class="px-2 py-2 rounded-l mt-2"
+                class="rounded-l mt-2"
                 color="#5F6368"
+                prepend-icon="mdi-creation"
               >
-                <v-icon icon="mdi-creation" class="mr-2" />Detected by AI
+                Detected by AI
+              </v-chip>
+              <v-chip v-else-if="conclusion.user && conclusion.user.name"
+                size="small"
+                variant="outlined"
+                class="rounded-l mt-2"
+                color="#5F6368"
+                prepend-icon="mdi-account-outline"
+              >
+                {{ conclusion.user.name }}
               </v-chip>
             </div>
             <div class="ml-4 mr-2 flex-shrink-0 d-flex align-center">
@@ -83,7 +92,7 @@ limitations under the License.
             size="small"
             variant="text"
             depressed
-            @click="openEventLog()"
+            @click="openEventLog(conclusion.id)"
             :disabled="!isQuestionVerified && isQuestionRejected"
             color="primary"
           >
@@ -98,7 +107,7 @@ limitations under the License.
       <p class="mb-4">No conclusions have been added to this question yet.</p>
       <v-btn
         color="primary"
-        @click="openEditModal(false)"
+        @click="enterDraftMode"
         :disabled="isQuestionVerified || isQuestionRejected || store.reportLocked"
       >
         <v-icon left class="mr-2">mdi-plus</v-icon>
@@ -116,13 +125,6 @@ limitations under the License.
       v-if="editingConclusion"
       headline="Edit Your Conclusion"
       :conclusion="editingConclusion"
-      :question="question"
-      @close-modal="handleModalClose"
-    />
-    <EditConclusionModal
-      v-else
-      headline="Add Your Conclusion"
-      :conclusion="{}"
       :question="question"
       @close-modal="handleModalClose"
     />
@@ -155,13 +157,67 @@ limitations under the License.
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- Event Log Drawer for Drafting and Viewing -->
+  <v-dialog
+    v-model="showEventLog"
+    transition="dialog-bottom-transition"
+    width="100%"
+    max-width="100%"
+    height="80vh"
+    content-class="ma-0 bg-white"
+    class="align-end"
+    opacity="0.25"
+    :scrollable="true"
+  >
+    <v-card>
+      <!-- Conclusion Draft Bar -->
+      <div v-if="isDrafting" class="pa-4" style="border-bottom: 1px solid #e0e0e0;">
+        <h4 class="mb-2">Drafting New Conclusion for the Question: "{{ question.name }}"</h4>
+        <v-textarea
+          v-model="draftConclusionText"
+          variant="outlined"
+          rows="2"
+          autofocus
+          hide-details
+          placeholder="Use the event list below to find and link supporting events to write your conclusion here."
+        ></v-textarea>
+        <div class="d-flex align-center mt-2">
+          <v-chip v-if="draftEventsToLink.length" size="small" class="mr-4">
+            {{ draftEventsToLink.length }} event(s) selected
+          </v-chip>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="cancelDraft" :disabled="isSavingDraft">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            @click="saveDraft"
+            :disabled="!draftConclusionText.trim()"
+            :loading="isSavingDraft"
+          >
+            Save Conclusion
+          </v-btn>
+        </div>
+      </div>
+      <EventsLog
+        :conclusionId="activeConclusionId"
+        :existingEvents="[]"
+        :isDraftMode="isDrafting"
+        @event-selected-for-draft="addEventToDraft"
+        @close-drawer="closeEventLog"
+      />
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
 import { useAppStore } from "@/stores/app"
 import RestApiClient from "@/utils/RestApiClient"
+import EventsLog from '@/components/AiInvestigationCanvas/EventsLog/index.vue'
 
 export default {
+  components: {
+    EventsLog,
+  },
   props: {
     question: Object,
   },
@@ -169,9 +225,14 @@ export default {
   data() {
     return {
       store: useAppStore(),
-      showModal: false,
+      // Conclusion Draft State
+      isDrafting: false,
+      isSavingDraft: false,
+      draftConclusionText: '',
+      draftEventsToLink: [],
+      // Modals and Drawers State
       showEventLog: false,
-      isConfirming: false,
+      activeConclusionId: null, // For viewing events of existing conclusions
       showEditModal: false,
       editingConclusion: null,
       showDeleteConfirmation: false,
@@ -203,11 +264,95 @@ export default {
     },
   },
   methods: {
-    openEventLog() {
+    // Event Log and Drawer Management
+    openEventLog(conclusionId = null) {
+      this.activeConclusionId = conclusionId
       this.showEventLog = true
     },
     closeEventLog() {
       this.showEventLog = false
+      if (this.isDrafting) {
+        this.cancelDraft()
+      } else {
+        // Refresh data when closing the "add more events" drawer
+        this.refreshQuestionById(this.question.id)
+      }
+    },
+    // New Draft Mode Methods
+    enterDraftMode() {
+      this.isDrafting = true
+      this.openEventLog()
+    },
+    cancelDraft() {
+      this.isDrafting = false
+      this.isSavingDraft = false
+      this.draftConclusionText = ''
+      this.draftEventsToLink = []
+      this.showEventLog = false
+    },
+    addEventToDraft(event) {
+      // Prevent duplicates
+      if (!this.draftEventsToLink.find(e => e._id === event._id)) {
+        this.draftEventsToLink.push(event)
+      }
+    },
+    async saveDraft() {
+      this.isSavingDraft = true
+      try {
+        // Step 1: Create the conclusion
+        const conclusionResponse = await RestApiClient.createQuestionConclusion(
+          this.store.sketch.id,
+          this.question.id,
+          this.draftConclusionText
+        )
+        const newConclusionId = conclusionResponse.data.meta?.new_conclusion_id
+
+
+        if (!newConclusionId) {
+          throw new Error("API response did not include the new conclusion ID.")
+        }
+
+        // If the question is new, update its status to pending review
+        if (this.question.status?.status === 'new') {
+          await RestApiClient.updateQuestion(this.store.sketch.id, this.question.id, {
+            status: 'pending-review',
+          })
+        }
+
+        // Step 2: Link events if any are selected
+        if (this.draftEventsToLink.length > 0) {
+          await RestApiClient.saveEventAnnotation(
+            this.store.sketch.id,
+            "label",
+            "__ts_fact",
+            this.draftEventsToLink,
+            null,
+            false,
+            newConclusionId
+          )
+        }
+
+        this.store.setNotification({
+          text: 'Conclusion successfully saved.',
+          type: 'success',
+          icon: 'mdi-check-circle-outline',
+        })
+
+        // Step 3: Refresh data, expand the new panel, then clean up.
+        await this.refreshQuestionById(this.question.id)
+        this.panels = [newConclusionId]
+        this.cancelDraft()
+
+      } catch (error) {
+        console.error("Error saving draft conclusion:", error)
+        this.store.setNotification({
+          text: 'Unable to save conclusion. Please try again.',
+          type: 'error',
+          icon: 'mdi-alert-circle-outline',
+        })
+      } finally {
+        this.isSavingDraft = false
+      }
     },
     isEditable(conclusion) {
       // Not automated, not locked and owned by the current user
@@ -224,6 +369,10 @@ export default {
       return conclusion.automated || isOwner
     },
     openEditModal(conclusion) {
+      if (!conclusion) {
+        this.enterDraftMode()
+        return
+      }
       this.editingConclusion = conclusion
       this.showEditModal = true
     },
@@ -271,12 +420,6 @@ export default {
         this.isDeleting = false
       }
     },
-  },
-  provide() {
-    return {
-      showEventLog: computed(() => this.showEventLog),
-      closeEventLog: this.closeEventLog,
-    }
   },
 }
 </script>

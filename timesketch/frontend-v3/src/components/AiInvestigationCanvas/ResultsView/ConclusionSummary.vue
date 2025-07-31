@@ -56,6 +56,7 @@ limitations under the License.
           rows="3"
           hide-details
           class="mb-2"
+          placeholder="Please add or review the conclusions and provide your answer to the question here"
         ></v-textarea>
 
         <!-- Read-only Markdown View -->
@@ -140,8 +141,6 @@ export default {
     if (!this.summaries || this.summaries.length < 1) {
       if (this.isSynthesizeAvailable && this.hasConclusions) {
         this.fetchSynthesizedAnswer();
-      } else {
-        this.summary = "<Please add or review the conclusions and provide your answer to the question here>";
       }
     } else {
       this.summary = this.summaries?.[0]?.value;

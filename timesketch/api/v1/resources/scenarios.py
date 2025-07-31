@@ -847,7 +847,8 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             db_session.add(conclusion)
             db_session.commit()
 
-        return self.to_json(question)
+        meta = {"new_conclusion_id": conclusion.id}
+        return self.to_json(question, meta=meta)
 
 
 class QuestionConclusionResource(resources.ResourceMixin, Resource):

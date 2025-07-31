@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-toolbar>
-    <v-toolbar-title class="font-weight-bold">Add More Events</v-toolbar-title>
+    <v-toolbar-title class="font-weight-bold">{{ toolbarTitle }}</v-toolbar-title>
     <form
       @submit.prevent="handleSubmission"
       class="search-form w-50 position-relative"
@@ -36,13 +36,13 @@ limitations under the License.
       /></v-btn>
     </form>
     <div class="v-spacer"></div>
-    <v-btn text @click="closeEventLog()">
+    <v-btn text @click="$emit('close-drawer')">
       <v-icon icon="mdi-close" small />
     </v-btn>
   </v-toolbar>
   <div class="px-8 py-4 overflow-auto">
     <EventList
-      v-if="conclusionId"
+      v-if="conclusionId || isDraftMode"
       :conclusionId="conclusionId"
       :disableDownload="true"
       :disableHistogram="true"
@@ -53,21 +53,26 @@ limitations under the License.
       :disableTagging="true"
       :disableIQFacts="false"
       :queryRequest="queryRequest"
+      :isDraftMode="isDraftMode"
+      @event-selected-for-draft="$emit('event-selected-for-draft', $event)"
     />
   </div>
 </template>
 
 <script>
-import { useAppStore } from "@/stores/app";
+import { useAppStore } from "@/stores/app"
 
 export default {
-  inject: ["closeEventLog"],
+  emits: ['event-selected-for-draft', 'close-drawer'],
   props: {
     conclusionId: Number,
-    existingEvents: Array,
     existingEvents: {
       type: Array,
-      value: [],
+      default: () => [],
+    },
+    isDraftMode: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -85,17 +90,22 @@ export default {
           chips: [],
         },
       },
-    };
+    }
+  },
+  computed: {
+    toolbarTitle() {
+      return this.isDraftMode ? 'Link Supporting Events' : 'Add Additional Supporting Events'
+    }
   },
   methods: {
     handleSubmission() {
       this.queryRequest = {
         ...this.queryRequest,
         queryString: this.queryString,
-      };
+      }
     },
   },
-};
+}
 </script>
 
 <style scoped>
