@@ -20,9 +20,9 @@ limitations under the License.
       <v-icon size="80" color="disabled" class="mb-4">mdi-text-box-search-outline</v-icon>
       <h2 class="text-h4 font-weight-bold mb-4">Start Your AI-Powered Investigation</h2>
       <p class="mb-8 mx-auto" style="max-width: 600px">
-        There are currently no investigative questions in this report. Click the button below to have Timesketch AI
-        analyze all timeline data in this sketch. It will automatically generate key findings and investigative
-        questions to kickstart your analysis.
+        There are currently no investigative questions in this report. Click the button below to have the
+        connected Log Reasoning Agent analyze all timeline data in this sketch.
+        It will automatically generate key findings and investigative questions to kickstart your analysis.
       </p>
       <v-btn
         size="large"
@@ -79,16 +79,24 @@ limitations under the License.
               <v-icon icon="mdi-download-circle-outline" class="mr-1" left small />
               Download</v-btn
             >
-            <v-btn
-              class="rounded-lg text-caption text-uppercase"
-              height=""
-              variant="flat"
-              color="primary"
-              v-if="!reportLocked"
-              @click="toggleShowConfirmationModal()"
-            >
-              Close investigation</v-btn
-            >
+            <v-tooltip location="bottom" :disabled="canCompleteInvestigation">
+              <template v-slot:activator="{ props }">
+                <div v-bind="props">
+                  <v-btn
+                    v-if="!reportLocked"
+                    class="rounded-lg text-caption text-uppercase"
+                    height=""
+                    :variant="unsavedQuestions?.length > 0 ? 'outlined' : 'flat'"
+                    color="primary"
+                    :disabled="!canCompleteInvestigation"
+                    @click="toggleShowConfirmationModal()"
+                  >
+                    Close investigation
+                  </v-btn>
+                </div>
+              </template>
+              <span>At least one question must be answered (verified) to close the investigation.</span>
+            </v-tooltip>
           </div>
         </div>
       </header>
@@ -164,7 +172,12 @@ limitations under the License.
     </div>
   </section>
   <v-dialog transition="dialog-bottom-transition" v-model="showConfirmationModal" width="auto">
-    <CompleteInvestigationModal @close-modal="toggleShowConfirmationModal" :questions="questions" />
+    <CompleteInvestigationModal
+      @close-modal="showConfirmationModal = false"
+      @completed="handleInvestigationCompleted"
+      :questions="questions"
+      :unsavedQuestions="unsavedQuestions"
+    />
   </v-dialog>
 </template>
 <script>
@@ -177,7 +190,7 @@ import FilterBar from '../Sidebar/FilterBar.vue'
 import SummarySection from './SummarySection.vue'
 
 export default {
-  inject: ['runLogAnalysis', 'isGeneratingReport'],
+  inject: ['runLogAnalysis', 'isGeneratingReport', 'regenerateQuestions'],
   components: {
     SummarySection,
     FilterBar,
@@ -196,6 +209,7 @@ export default {
       showConfirmationModal: false,
       isSynthesizingAll: false,
       filteredQuestions: [],
+      isCompleting: false,
     }
   },
   computed: {
@@ -263,10 +277,52 @@ export default {
         !this.isGeneratingReport
       )
     },
+    canCompleteInvestigation() {
+      return this.questions.some((q) => q.status?.status === 'verified')
+    },
+    unsavedQuestions() {
+      return this.questions.filter(
+        (question) => question.status?.status !== 'verified' && question.status?.status !== 'rejected'
+      )
+    },
   },
   methods: {
     toggleModal() {
       this.showModal = !this.showModal
+    },
+    handleInvestigationCompleted() {
+      this.showConfirmationModal = false
+      this.regenerateQuestions()
+    },
+    async completeInvestigation() {
+      this.isCompleting = true
+      try {
+        await this.store.updateReport({
+          status: ReportStatus.VERIFIED,
+          completedDateTime: dayjs(),
+        })
+        this.store.setNotification({
+          text: 'Report Created',
+          icon: 'mdi-file-check-outline',
+          type: 'success',
+        })
+      } catch (error) {
+        console.error(error)
+        this.store.setNotification({
+          text: 'Unable to create this report. Please try again.',
+          icon: 'mdi-alert-circle-outline',
+          type: 'error',
+        })
+      } finally {
+        this.isCompleting = false
+      }
+    },
+    toggleShowConfirmationModal() {
+      if (this.unsavedQuestions.length === 0) {
+        this.completeInvestigation()
+      } else {
+        this.showConfirmationModal = !this.showConfirmationModal
+      }
     },
     async synthesizeAllMissingAnswers() {
       const questionsToProcess = this.questionsWithoutAnswers
@@ -310,9 +366,6 @@ export default {
       }
 
       this.isSynthesizingAll = false
-    },
-    toggleShowConfirmationModal() {
-      this.showConfirmationModal = !this.showConfirmationModal
     },
     downloadReport() {
       const pdfGeneratpr = new generatePdf({

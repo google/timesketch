@@ -18,17 +18,24 @@ limitations under the License.
     <ModalLoader :isSubmitting="isSubmitting" />
     <div :class="modalClasses">
       <div>
-        <h3 class="mb-4">Want to complete the investigation?</h3>
+        <h3 class="mb-4">
+          <v-icon class="mr-2" icon="mdi-alert-circle-outline" color="warning"/>
+          Finalize Investigation
+        </h3>
         <p class="mb-4">
-          These unsaved questions and results will remain, but progress will
-          still be marked as 100% complete. Are you sure you want to continue?
+          You have questions that are not yet answered (verified) or marked as not relevant (rejected).
+          <br />
+          To complete the investigation, the following unanswered questions will be marked as 'not relevant' (rejected).
+          <br />
+          <br />
+          Are you sure you want to continue?
         </p>
-        <p class="mb4 font-weight-medium">Unsaved questions:</p>
+        <p class="mb-2 font-weight-medium">Questions to be rejected:</p>
       </div>
 
       <div class="questions-list overflow-hidden overflow-y-auto">
         <ul>
-          <li v-for="question in unsavedQuestions">{{ question.name }}</li>
+          <li v-for="question in unsavedQuestions" :key="question.id">* {{ question.name }}</li>
         </ul>
       </div>
       <div class="d-flex align-center justify-end ga-4 pa-4">
@@ -41,9 +48,9 @@ limitations under the License.
           <v-icon class="mr-1" left small />
           Cancel</v-btn
         >
-        <v-btn color="primary" @click="fileReport()">
-          Complete investigation</v-btn
-        >
+        <v-btn color="primary" @click="rejectAndComplete()">
+          Reject and Complete
+        </v-btn>
       </div>
     </div>
   </v-container>
@@ -52,10 +59,12 @@ limitations under the License.
 <script>
 import { ReportStatus, useAppStore } from "@/stores/app";
 import dayjs from "dayjs";
+import RestApiClient from "@/utils/RestApiClient";
 
 export default {
   props: {
     questions: Array,
+    unsavedQuestions: Array,
   },
   data() {
     return {
@@ -64,32 +73,42 @@ export default {
     };
   },
   methods: {
-    async fileReport() {
-      this.isSubmitting = true;
+    async rejectAndComplete() {
+      this.isSubmitting = true
 
       try {
+        const unsavedIds = this.unsavedQuestions.map((q) => q.id)
+
+        // Update status for all unsaved questions to 'rejected'
+        const updatePromises = unsavedIds.map((id) =>
+          RestApiClient.updateQuestion(this.store.sketch.id, id, { status: 'rejected' })
+        )
+        await Promise.all(updatePromises)
+
+        // Now, complete the report
         await this.store.updateReport({
           status: ReportStatus.VERIFIED,
           completedDateTime: dayjs(),
         });
 
-        this.$emit("close-modal");
+        this.$emit('completed')
+        this.$emit("close-modal")
 
         this.store.setNotification({
-          text: "Report Filed",
+          text: 'Unsaved questions rejected and report locked.',
           icon: "mdi-file-check-outline",
           type: "success",
         });
       } catch (error) {
-        console.error(error);
+        console.error(error)
 
         this.store.setNotification({
-          text: "Unable to file this report. Please try again.",
+          text: "Unable to lock this report. Please try again.",
           icon: "mdi-alert-circle-outline",
           type: "error",
         });
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     },
   },
@@ -97,13 +116,8 @@ export default {
     modalClasses() {
       return {
         modal__content: true,
-        'no-pointer-events': this.isSubmitting
+        'no-pointer-events': this.isSubmitting,
       }
-    },
-    unsavedQuestions() {
-      return this.questions.filter(
-        ({ id }) => !this.store.report.content.approvedQuestions.includes(id)
-      );
     },
   },
 };
@@ -112,7 +126,6 @@ export default {
 <style scoped>
 .modal {
   width: 600px;
-  height: 450px;
   background-color: #fff;
 }
 
