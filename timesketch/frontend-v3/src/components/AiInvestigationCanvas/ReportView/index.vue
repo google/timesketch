@@ -368,17 +368,19 @@ export default {
       this.isSynthesizingAll = false
     },
     downloadReport() {
-      const pdfGeneratpr = new generatePdf({
+      const verifiedQuestions = this.questions.filter((q) => q.status?.status === 'verified')
+      const pdfGenerator = new generatePdf({
         analysts: this.analysts,
         name: this.name,
         summary: this.summary,
         finalizedTime: this.finalizedTime,
-        questions: this.questions,
+        questions: verifiedQuestions,
+        conclusionSummaries: this.store.report?.content?.conclusionSummaries || [],
         id: this.store.report.id,
         questionsTotal: this.questionsTotal,
         completedQuestionsTotal: this.completedQuestionsTotal,
       })
-      pdfGeneratpr.generatePdf()
+      pdfGenerator.generatePdf()
     },
     async unlockReport() {
       try {
