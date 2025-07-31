@@ -16,7 +16,6 @@
 import hashlib
 
 from typing import Dict, List, Optional
-from flask import current_app
 import networkx as nx
 
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore

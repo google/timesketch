@@ -15,8 +15,6 @@
 
 import logging
 
-from flask import current_app
-
 from timesketch.lib.analyzers import utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 

@@ -16,7 +16,6 @@
 
 import json
 
-from flask import current_app
 import altair as alt
 import pandas as pd
 
