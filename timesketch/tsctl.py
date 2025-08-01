@@ -2136,10 +2136,7 @@ def export_sketch(
 
         # 2. Fetch and Prepare Event Data
         # Get datastore instance
-        datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        datastore = OpenSearchDataStore()
 
         if default_fields:
             print(
