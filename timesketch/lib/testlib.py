@@ -227,7 +227,8 @@ class MockDataStore:
         "timed_out": False,
     }
 
-    def __init__(self, host, port):
+    # pylint: disable=unused-argument
+    def __init__(self, host=None, port=None, **kwargs):
         """Initialize the datastore.
         Args:
             host: Hostname or IP address to the datastore

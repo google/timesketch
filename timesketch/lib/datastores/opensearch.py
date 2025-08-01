@@ -122,7 +122,9 @@ class OpenSearchDataStore:
         "yellow"  # Minimum health status required ('yellow' or 'green')
     )
 
-    def __init__(self, host="127.0.0.1", port=9200, **kwargs):
+    def __init__(
+        self, host: Optional[str] = None, port: Optional[int] = None, **kwargs
+    ):
         """Initialize the OpenSearchDataStore client.
 
         This constructor sets up the connection to an OpenSearch instance.
@@ -131,9 +133,9 @@ class OpenSearchDataStore:
 
         Args:
             host (str, optional): The hostname or IP address of the OpenSearch
-                server. Defaults to "127.0.0.1".
+                server. Defaults to OPENSEARCH_HOST from the timesketch.conf.
             port (int, optional): The port number for the OpenSearch server.
-                Defaults to 9200.
+                Defaults to OPENSEARCH_PORT from the config.
             **kwargs: Additional keyword arguments that are passed directly to
                 the opensearchpy.OpenSearch client constructor. These can
                 override or supplement the default and application-configured
@@ -190,9 +192,74 @@ class OpenSearchDataStore:
                 `current_app.config.OPENSEARCH_SLICED_EXPORT_QUEUE_BUFFER_FACTOR`.
             _error_container (dict): A dictionary to store error information
                 during bulk imports.
+
+          Raises:
+            ValueError: If the configuration is present but malformed.
+            errors.DatastoreConnectionError: If the client fails to connect
+                to the configured OpenSearch cluster.
         """
         super().__init__()
         self._error_container = {}
+
+        # Use explicit host/port arguments (for testing/overrides).
+        if host and port:
+            opensearch_connection_config = [{"host": host, "port": port}]
+            os_logger.info(
+                "Connecting to OpenSearch using explicit host/port arguments: %s:%s",
+                host,
+                port,
+            )
+        else:
+            # Use the new cluster-aware configuration.
+            opensearch_hosts = current_app.config.get("OPENSEARCH_HOSTS")
+
+            # If the config is a string (from env var), parse it as JSON.
+            if opensearch_hosts and isinstance(opensearch_hosts, str):
+                try:
+                    opensearch_hosts = json.loads(opensearch_hosts)
+                except json.JSONDecodeError as e:
+                    raise ValueError(
+                        "Config error: OPENSEARCH_HOSTS is defined as a string but is "
+                        f"not valid JSON. Error: {e}"
+                    ) from e
+
+            if opensearch_hosts:
+                # Configuration Validation
+                if not isinstance(opensearch_hosts, list) or not opensearch_hosts:
+                    raise ValueError(
+                        "Config error: OPENSEARCH_HOSTS is defined but is not a "
+                        "non-empty list."
+                    )
+                for node_config in opensearch_hosts:
+                    if (
+                        not isinstance(node_config, dict)
+                        or "host" not in node_config
+                        or "port" not in node_config
+                    ):
+                        raise ValueError(
+                            "Config error: An item in OPENSEARCH_HOSTS is not a "
+                            "valid dictionary with 'host' and 'port' keys. "
+                            f"Problematic item: {node_config}"
+                        )
+                opensearch_connection_config = opensearch_hosts
+            else:
+                # Fallback to the legacy single-node configuration.
+                single_host = current_app.config.get("OPENSEARCH_HOST", "opensearch")
+                single_port = current_app.config.get("OPENSEARCH_PORT", 9200)
+
+                # Defend against misconfiguration where the new list format is
+                # incorrectly loaded into the old OPENSEARCH_HOST variable.
+                if isinstance(single_host, list):
+                    os_logger.warning(
+                        "OPENSEARCH_HOST was unexpectedly a list. Using it as a "
+                        "cluster configuration and ignoring OPENSEARCH_PORT."
+                    )
+                    opensearch_connection_config = single_host
+                else:
+                    # This is the expected legacy behavior.
+                    opensearch_connection_config = [
+                        {"host": single_host, "port": single_port}
+                    ]
 
         self.user = current_app.config.get("OPENSEARCH_USER", "user")
         self.password = current_app.config.get("OPENSEARCH_PASSWORD", "pass")
@@ -213,7 +280,10 @@ class OpenSearchDataStore:
         # Add and overwrite parameters provided by the initialization caller.
         parameters.update(kwargs)
 
-        self.client = OpenSearch([{"host": host, "port": port}], **parameters)
+        self.client = OpenSearch(opensearch_connection_config, **parameters)
+        os_logger.info(
+            "Connected to OpenSearch node: %s", self.client.transport.get_connection()
+        )
 
         # Number of events to queue up when bulk inserting events.
         self.flush_interval = current_app.config.get(
