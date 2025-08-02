@@ -1,4 +1,3 @@
-version: "3.7"
 services:
   timesketch-web:
     container_name: timesketch-web
@@ -12,8 +11,7 @@ services:
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
 
-  # Temporary service while the V2 UI is in the testing phase.
-  # TODO: Remove when V2 is the default.
+  # [DEPRECATED] Add "--profile legacy-ui" to your docker compose command to use the legacy UI
   timesketch-web-legacy:
     container_name: timesketch-web-legacy
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
@@ -21,10 +19,28 @@ services:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
     restart: always
     command: timesketch-web-legacy
+    profiles:
+      - "legacy-ui"
     volumes:
       - ./etc/timesketch:/etc/timesketch/
       - ./upload:/usr/share/timesketch/upload/
       - ./logs:/var/log/timesketch/
+
+  # [WIP] Add "--profile v3-ui" to your docker compose command to use the vue3 UI
+  timesketch-web-v3:
+    container_name: timesketch-web-v3
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
+    environment:
+      - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
+    restart: always
+    command: timesketch-web-v3
+    profiles:
+      - "v3-ui"
+    volumes:
+      - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
+      - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
+      - ./docker/app:/usr/local/src/timesketch
 
   timesketch-worker:
     container_name: timesketch-worker
