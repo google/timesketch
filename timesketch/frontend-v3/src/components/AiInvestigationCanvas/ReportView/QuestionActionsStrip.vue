@@ -152,6 +152,7 @@ limitations under the License.
 import { useAppStore } from '@/stores/app'
 import RestApiClient from '@/utils/RestApiClient'
 import QuestionPrioritySelect from './QuestionPrioritySelect.vue'
+import dayjs from 'dayjs'
 import { getPriorityFromLabels } from '@/components/AiInvestigationCanvas/_utils/QuestionPriority.js'
 
 export default {
@@ -264,28 +265,51 @@ export default {
         const updatedQuestion = await RestApiClient.updateQuestion(this.store.sketch.id, questionId, {
           status: status,
         })
-
-        // Rerender with updated status
         const newQuestionData = updatedQuestion.data.objects[0]
 
-        // Update the question in the main list
-        this.updateQuestion(newQuestionData)
-
-        // If verifying, add the current user to the analyst list if not already present.
+        // If verifying, handle analyst and summary author updates.
         if (status === 'verified') {
           const currentUserName = this.store.currentUser
-
           if (currentUserName) {
+            const updatePayload = {}
+            let needsUpdate = false
+
+            // Prepend a user-verified summary if the current one is from AI
+            const allSummaries = this.store.report?.content?.conclusionSummaries || []
+            const summariesForQuestion = allSummaries.filter(s => s.questionId === questionId)
+            const latestSummary = summariesForQuestion.length > 0 ? summariesForQuestion[0] : null
+
+            if (latestSummary && latestSummary.user === '<AI>') {
+              const userVerifiedSummary = {
+                questionId: latestSummary.questionId,
+                value: latestSummary.value,
+                user: currentUserName,
+                timestamp: dayjs(),
+              }
+              const updatedSummaries = [userVerifiedSummary, ...allSummaries]
+              updatePayload.conclusionSummaries = updatedSummaries
+              needsUpdate = true
+            }
+
+            // Update analysts list
             const currentAnalysts = this.store.report?.content?.analysts || ''
-            const analystList = currentAnalysts.split(',').map(name => name.trim()).filter(Boolean);
+            const analystList = currentAnalysts.split(',').map((name) => name.trim()).filter(Boolean)
 
             if (!analystList.includes(currentUserName)) {
               analystList.push(currentUserName)
-              const newAnalystsString = analystList.join(', ')
-              this.store.updateReport({ analysts: newAnalystsString })
+              updatePayload.analysts = analystList.join(', ')
+              needsUpdate = true
+            }
+
+            // If anything needs updating, do it in one atomic call to the store
+            if (needsUpdate) {
+              await this.store.updateReport(updatePayload)
             }
           }
         }
+
+        // Update the question in the main list
+        this.updateQuestion(newQuestionData)
 
         // Handle the active view based on the new status
         if (status === 'pending-review') {
