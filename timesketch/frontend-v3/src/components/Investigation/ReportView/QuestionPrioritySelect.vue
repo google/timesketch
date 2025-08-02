@@ -32,7 +32,7 @@ limitations under the License.
 </template>
 
 <script>
-import { getPriorityFromLabels } from '@/components/AiInvestigationCanvas/_utils/QuestionPriority.js'
+import { getPriorityFromLabels } from '@/components/Investigation/_utils/QuestionPriority.js'
 import { useAppStore } from '@/stores/app'
 import RestApiClient from '@/utils/RestApiClient'
 

@@ -54,8 +54,8 @@ const routes = [
         props: true,
       },
       {
-        path: 'ai-investigation',
-        name: 'AiInvestigation',
+        path: 'investigation',
+        name: 'Investigation',
         component: Canvas,
         props: true,
       },
@@ -87,12 +87,12 @@ router.isReady().then(() => {
   localStorage.removeItem("vuetify:dynamic-reload");
 });
 
-// Wrap ai investigation view in a class for isolated styling purposes
+// Wrap investigation view in a class for isolated styling purposes
 router.beforeEach((to, from, next) => {
-  if (to.name === "AiInvestigation") {
-    document.body.classList.add("ai-investigation-view");
+  if (to.name === "Investigation") {
+    document.body.classList.add("investigation-view");
   } else {
-    document.body.classList.remove("ai-investigation-view");
+    document.body.classList.remove("investigation-view");
   }
   next();
 });

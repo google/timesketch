@@ -56,7 +56,7 @@ limitations under the License.
 <script>
 import CreationIcon from '@/components/Icons/CreationIcon'
 import { useAppStore } from '@/stores/app'
-import { getPriorityFromLabels } from '@/components/AiInvestigationCanvas/_utils/QuestionPriority.js'
+import { getPriorityFromLabels } from '@/components/Investigation/_utils/QuestionPriority.js'
 
 export default {
   components: {

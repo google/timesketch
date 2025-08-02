@@ -212,7 +212,7 @@ limitations under the License.
 <script>
 import { useAppStore } from "@/stores/app"
 import RestApiClient from "@/utils/RestApiClient"
-import EventsLog from '@/components/AiInvestigationCanvas/EventsLog/index.vue'
+import EventsLog from '@/components/Investigation/EventsLog/index.vue'
 
 export default {
   components: {

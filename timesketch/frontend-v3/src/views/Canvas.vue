@@ -20,9 +20,8 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div v-show="currentRouteName === 'AiInvestigation'">
-      <!-- TODO: Make this conditional per server settings! -->
-      <AiInvestigationCanvas/>
+    <div v-show="currentRouteName === 'Investigation'">
+      <InvestigationCanvas/>
     </div>
     <div v-show="currentRouteName === 'Explore'">
       <explore :sketch-id="sketchId"></explore>
@@ -33,12 +32,12 @@ limitations under the License.
 <script>
 import { useRoute } from 'vue-router';
 import Explore from './Explore.vue';
-import AiInvestigationCanvas from '../components/AiInvestigationCanvas/index.vue';
+import InvestigationCanvas from '../components/Investigation/index.vue';
 
 export default {
   components: {
      Explore,
-     AiInvestigationCanvas,
+     InvestigationCanvas,
   },
   data() {
     return {

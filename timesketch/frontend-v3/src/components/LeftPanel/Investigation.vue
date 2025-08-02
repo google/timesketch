@@ -17,7 +17,7 @@ limitations under the License.
   <div v-if="iconOnly" style="cursor: pointer" @click="$emit('toggleDrawer')">
     <router-link
       class="ai-navitem ai-navitem--closed"
-      :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
+      :to="{ name: 'Investigation', params: { sketchId: sketch.id } }"
     >
       <div class="ai-navitem__icon">
         <v-icon v-if="menuTitle === 'Investigation'" icon="mdi-text-box-search-outline" />
@@ -28,7 +28,7 @@ limitations under the License.
 
   <div v-else>
     <router-link
-      :to="{ name: 'AiInvestigation', params: { sketchId: sketch.id } }"
+      :to="{ name: 'Investigation', params: { sketchId: sketch.id } }"
       custom
       v-slot="{ navigate }"
       :class="
@@ -77,7 +77,7 @@ export default {
       return this.appStore.sketch
     },
     isActive() {
-      return this.route.name === 'AiInvestigation'
+      return this.route.name === 'Investigation'
     },
     sketchId() {
       return this.appStore.sketch.id

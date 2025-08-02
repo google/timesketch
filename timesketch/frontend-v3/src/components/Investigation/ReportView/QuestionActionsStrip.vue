@@ -153,7 +153,7 @@ import { useAppStore } from '@/stores/app'
 import RestApiClient from '@/utils/RestApiClient'
 import QuestionPrioritySelect from './QuestionPrioritySelect.vue'
 import dayjs from 'dayjs'
-import { getPriorityFromLabels } from '@/components/AiInvestigationCanvas/_utils/QuestionPriority.js'
+import { getPriorityFromLabels } from '@/components/Investigation/_utils/QuestionPriority.js'
 
 export default {
   components: {

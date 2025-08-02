@@ -88,7 +88,7 @@ export default {
   },
   computed: {
     isAiRouteActive() {
-      return this.route.name === 'AiInvestigation'
+      return this.route.name === 'Investigation'
     },
     sortedQuestions() {
       return this.questions && this.questions.length > 0
