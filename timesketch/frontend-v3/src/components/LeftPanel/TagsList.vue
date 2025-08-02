@@ -121,6 +121,7 @@ export default {
       const labelOrder = ['__ts_star', '__ts_comment', 'bad', 'suspicious', 'good']
       return [...this.labels, ...this.assignedQuickTags, ...this.customTags]
         .filter(item => item.tag || item.label)
+        .filter(item => !(item.label && item.label.startsWith('__ts_fact')))
         .sort((a, b) => {
           const aLabel = a.tag || a.label
           const bLabel = b.tag || b.label
