@@ -260,10 +260,11 @@ export default {
       "/sketches/" + sketchId + "/stories/" + storyId + "/"
     );
   },
-  createStory(title, content, sketchId) {
+  createStory(title, content, sketchId, labels = []) {
     let formData = {
       title: title,
       content: content,
+      labels: labels,
     };
     return RestApiClient.post("/sketches/" + sketchId + "/stories/", formData);
   },

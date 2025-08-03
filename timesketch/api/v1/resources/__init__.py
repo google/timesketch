@@ -201,6 +201,7 @@ class ResourceMixin:
         "user": fields.Nested(user_fields),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "labels": fields.List(fields.String(attribute='label')),
     }
 
     story_compact_fields = {

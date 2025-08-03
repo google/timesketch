@@ -175,9 +175,10 @@ export default {
 
         if (!storyList.value.data.objects[0] || storyList.value.data.objects[0].length < 1) {
           const reportResponse = await RestApiClient.createStory(
-            "ai-report",
-            JSON.stringify([{ type: "ai-report" }]),
-            this.store.sketch.id
+            "__ts_investigation_report",
+            JSON.stringify([{ type: "__ts_investigation_report" }]),
+            this.store.sketch.id,
+            ['__ts_investigation_report']
           );
           this.store.report = {
             ...reportResponse.data.objects[0],
@@ -185,7 +186,7 @@ export default {
           };
         } else {
           const existingAiReport = storyList.value.data.objects[0].find(
-            ({ title }) => title === "ai-report"
+            ({ title }) => title === "__ts_investigation_report"
           );
           if (existingAiReport) {
             this.store.report = {
@@ -194,9 +195,10 @@ export default {
             };
           } else {
             const reportResponse = await RestApiClient.createStory(
-              "ai-report",
-              JSON.stringify([{ type: "ai-report" }]),
-              this.store.sketch.id
+              "__ts_investigation_report",
+              JSON.stringify([{ type: "__ts_investigation_report" }]),
+              this.store.sketch.id,
+              ['__ts_investigation_report']
             );
             this.store.report = {
               ...reportResponse.data.objects[0],
