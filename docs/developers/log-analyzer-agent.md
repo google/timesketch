@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ### Developer Deep Dive: The Hybrid AI Log Analyzer Architecture
 
 The AI-powered Investigation View introduces a powerful capability for automated,

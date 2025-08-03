@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Investigation View: Deployment and Configuration
 
 The Investigation View is a new feature in the v3 user interface designed to
