@@ -20,7 +20,7 @@ the `v3-ui` profile in your Docker Compose setup.
 
 **Prerequisites:**
 *   A standard Timesketch installation using Docker Compose, as outlined in the
-    [installation guide](./install.md).
+    [installation guide](/guides/admin/install/).
 *   If you have an existing Timesketch deployment, please ensure to collect the
     latest version of the files in the [data](https://github.com/google/timesketch/tree/master/data)
     folder and [nginx.conf](https://github.com/google/timesketch/blob/master/contrib/nginx.conf).
@@ -110,7 +110,7 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
 The Investigation View includes LLM text drafting features (e.g. drafting an
 answer based on conclusions) that can be enabled with default LLM services.
 
-1. Follow the steps described for [configuring LLM Features](./llm-features.md)
+1. Follow the steps described for [configuring LLM Features](/guides/admin/llm-features/)
 2. Add your prefered LLM provider for the new `llm_synthesize` feature in your `timesketch.conf`.
 3. Ensure the prompt file configured in `PROMPT_LLM_SYNTHESIZE` exists and the
    prompt works for your needs.
