@@ -270,7 +270,7 @@ class StoryForm(BaseForm):
 
     title = StringField("Title", validators=[DataRequired()])
     content = StringField("Content", validators=[], widget=widgets.TextArea())
-    labels = FieldList(StringField('Label'), validators=[Optional()])
+    labels = FieldList(StringField("Label"), validators=[Optional()])
 
 
 class SearchIndexForm(BaseForm):
