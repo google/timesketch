@@ -2461,6 +2461,7 @@ def import_db(filepath, yes):
                                     try:
                                         record[column.name] = pd.to_datetime(value)
                                     except (ValueError, TypeError):
+                                        click.echo(f"Warning: Could not parse datetime '{value}' for column '{column.name}' in table '{table_name}'. Setting to NULL.", err=True)
                                         record[column.name] = None
 
                     mapped_class = model_class_registry.get(table_name)
