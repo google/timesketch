@@ -528,7 +528,7 @@ These commands help you audit the health and consistency of your Timesketch data
 
 Verifies that every timeline recorded in the database has a corresponding, existing index in OpenSearch. This is particularly useful after performing a manual migration or a database restore (`import-db`) to identify "broken" timelines that point to non-existent event data.
 
-**Usage:**
+Example
 
 ```bash
 tsctl check-opensearch-links
