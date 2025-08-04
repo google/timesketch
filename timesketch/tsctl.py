@@ -2172,6 +2172,69 @@ def export_sketch(
         return
 
 
+@cli.command(name="check-opensearch-links")
+def check_opensearch_links():
+    """Checks for broken links between the database and OpenSearch.
+
+    This command iterates through all SearchIndex records in the database
+    and verifies that the corresponding index exists in OpenSearch. It helps
+    identify timelines that might be broken after an incomplete migration or
+    accidental index deletion.
+    """
+    print("Checking for broken links to OpenSearch...")
+    datastore = OpenSearchDataStore()
+    search_indices = SearchIndex.query.all()
+
+    if not search_indices:
+        print("No search indices found in the database.")
+        return
+
+    # Collect all index names from the database for a single bulk check.
+    db_index_names = {s.index_name for s in search_indices}
+
+    try:
+        # Get all existing indices from OpenSearch in a single API call.
+        existing_indices_info = datastore.client.indices.get(
+            index=list(db_index_names), ignore_unavailable=True
+        )
+        existing_os_index_names = set(existing_indices_info.keys())
+
+        # Determine which indices are in the DB but not in OpenSearch.
+        missing_index_names = db_index_names - existing_os_index_names
+
+        if not missing_index_names:
+            print(
+                "No broken links found. All database search indices exist in OpenSearch."
+            )
+            return
+
+        # Create a map for quick lookup of original DB objects.
+        search_indices_map = {s.index_name: s for s in search_indices}
+
+        for index_name in sorted(list(missing_index_names)):
+            search_index = search_indices_map.get(index_name)
+            print(
+                f"BROKEN LINK: DB record for index '{index_name}' (ID: {search_index.id}) "
+                f"exists, but the index is MISSING in OpenSearch."
+            )
+            for timeline in search_index.timelines:
+                if timeline.sketch:
+                    print(
+                        f"  - Associated with Timeline '{timeline.name}' (ID: {timeline.id}) "
+                        f"in Sketch '{timeline.sketch.name}' (ID: {timeline.sketch.id})"
+                    )
+                else:
+                    print(
+                        f"  - Associated with Timeline '{timeline.name}' (ID: {timeline.id}) "
+                        f"which has no associated sketch (orphaned)."
+                    )
+        print("\nCheck complete. Broken links found as listed above.")
+
+    except Exception as e:
+        print(f"ERROR communicating with OpenSearch while checking indices: {e}")
+        return
+
+
 @cli.command(name="check-db-orphaned-data")
 @click.option(
     "--verbose-checks",
@@ -2540,7 +2603,10 @@ def import_db(filepath, yes):
                                     try:
                                         record[column.name] = pd.to_datetime(value)
                                     except (ValueError, TypeError):
-                                        click.echo(f"Warning: Could not parse datetime '{value}' for column '{column.name}' in table '{table_name}'. Setting to NULL.", err=True)
+                                        click.echo(
+                                            f"Warning: Could not parse datetime '{value}' for column '{column.name}' in table '{table_name}'. Setting to NULL.",
+                                            err=True,
+                                        )
                                         record[column.name] = None
 
                     mapped_class = model_class_registry.get(table_name)
@@ -2548,7 +2614,6 @@ def import_db(filepath, yes):
                         db_session.bulk_insert_mappings(mapped_class, records)
                     elif records:
                         db_session.execute(table.insert(), records)
-                    db_session.commit()
 
         if dialect == "postgresql":
             click.echo("Updating PostgreSQL sequences...")
@@ -2575,18 +2640,23 @@ def import_db(filepath, yes):
                                 )
                             )
             click.echo("Sequences updated.")
-            db_session.commit()
 
+        try:
+            db_session.commit()
+        except Exception as e:
+            db_session.rollback()
+            click.echo(f"Error committing to database: {e!s}", err=True)
+            raise click.Abort()
     except Exception as e:
         db_session.rollback()
         click.echo(f"An error occurred during import: {e}", err=True)
         raise click.Abort()
     finally:
+        # reset the database settings
         if dialect == "sqlite":
             db_session.execute(sqlalchemy.text("PRAGMA foreign_keys=ON"))
         elif dialect == "postgresql":
             db_session.execute(
                 sqlalchemy.text("SET session_replication_role = 'origin'")
             )
-        db_session.commit()
         click.echo("Database import finished.")

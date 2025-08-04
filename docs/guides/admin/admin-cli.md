@@ -467,6 +467,12 @@ tsctl drop_db
 
 Exports the entire Timesketch database to a zip archive. This can be used for backups or migrations.
 
+!!! warning "Metadata Only"
+    The `export-db` command only exports the relational database (e.g., PostgreSQL) which contains sketch metadata, user information, views, stories, etc. **It does NOT export the event data stored in OpenSearch.**
+
+    This command is intended for metadata backup or for migrations where the OpenSearch data is handled separately (e.g., using OpenSearch snapshots). Using `import-db` without restoring the corresponding OpenSearch indices will result in broken timelines.
+
+
 tsctl export-db <filepath>
 
 Example
@@ -484,6 +490,12 @@ Exporting database to output.zip...
 ### Import database
 
 Imports a Timesketch database from a zip archive created with `export-db`.
+
+!!! warning "Metadata Only - Destructive Action"
+    The `import-db` command is a destructive operation that first drops all existing tables in the relational database. It only imports metadata and **does NOT import any event data into OpenSearch.**
+
+    For a full system migration, you must also migrate your OpenSearch indices separately using a tool like OpenSearch Snapshots and ensure they are available to the new Timesketch instance before running this command. Failure to do so will result in sketches with broken timelines, as the imported metadata will point to non-existent OpenSearch indices.
+
 
 Command:
 
@@ -508,6 +520,29 @@ Sequences updated.
 Database import finished.
 ```
 
+### Data Integrity Checks
+
+These commands help you audit the health and consistency of your Timesketch data across the relational database and OpenSearch.
+
+#### check-opensearch-links
+
+Verifies that every timeline recorded in the database has a corresponding, existing index in OpenSearch. This is particularly useful after performing a manual migration or a database restore (`import-db`) to identify "broken" timelines that point to non-existent event data.
+
+**Usage:**
+
+```bash
+tsctl check-opensearch-links
+Checking for broken links to OpenSearch...
+No broken links found. All database search indices exist in OpenSearch.
+```
+
+```bash
+Checking for broken links to OpenSearch...
+BROKEN LINK: DB record for index 'c870277a104a4160bf594338d973558c' (ID: 42) exists, but the index is MISSING in OpenSearch.
+  - Associated with Timeline 'my-important-timeline' (ID: 55) in Sketch 'Project-X' (ID: 12)
+
+Check complete. Broken links found as listed above.
+```
 
 ### search_template
 
