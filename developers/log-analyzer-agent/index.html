@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../notebook/">
+        <link rel="prev" href="../analyzer-development/">
       
       
-        <link rel="next" href="../api-upload-data/">
+        <link rel="next" href="../../changelog/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Introduction - timesketch</title>
+        <title>AI Log Analyzer Architecture - timesketch</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-client" class="md-skip">
+        <a href="#developer-deep-dive-the-hybrid-ai-log-analyzer-architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -105,7 +105,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Introduction
+              AI Log Analyzer Architecture
             
           </span>
         </div>
@@ -1229,8 +1229,6 @@
                 
   
   
-    
-  
   
   
     
@@ -1241,11 +1239,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
         
           
           <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
@@ -1261,7 +1259,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5_5">
             <span class="md-nav__icon md-icon"></span>
             API client
@@ -1272,32 +1270,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Introduction
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../api-client/" class="md-nav__link">
         
   
   
@@ -1308,293 +1284,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#basic-connections" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Connections
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Basic Connections">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#directly-passing-username-password" class="md-nav__link">
-    <span class="md-ellipsis">
-      Directly passing username / password
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#client-config" class="md-nav__link">
-    <span class="md-ellipsis">
-      Client Config
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-the-timesketch-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using the Timesketch Client
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#list-sketches" class="md-nav__link">
-    <span class="md-ellipsis">
-      List sketches
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#connecting-to-a-sketch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Connecting to a Sketch
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#overview-of-a-sketch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview of a Sketch
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Explore Data
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Explore Data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#saved-searches" class="md-nav__link">
-    <span class="md-ellipsis">
-      Saved Searches
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#search-query" class="md-nav__link">
-    <span class="md-ellipsis">
-      Search Query
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Search Query">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#retrieve-a-stored-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      Retrieve a Stored Search
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configure-using-the-explore-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configure using the Explore Function
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configure-manually" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configure Manually
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#chips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Chips
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-the-results" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get The Results
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#store-a-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      Store a Search
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#aggregations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Aggregations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sigma-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Sigma rules
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-a-single-rule" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get a single rule
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-a-list-of-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get a list of rules
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#add-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add data
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Add data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#manually-add-events-to-the-sketch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manually add events to the sketch
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add-tags-to-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add Tags to events
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove-tags-from-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      Remove tags from Events
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add-attributes-to-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add Attributes to Events
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      Other Options
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Examples
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1730,10 +1419,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../log-analyzer-agent/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    AI Log Analyzer Architecture
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1744,6 +1453,108 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#developer-deep-dive-the-hybrid-ai-log-analyzer-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Developer Deep Dive: The Hybrid AI Log Analyzer Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Developer Deep Dive: The Hybrid AI Log Analyzer Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architectural-overview-a-hybrid-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architectural Overview: A Hybrid Approach
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      Component Breakdown
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#experiment-with-your-own-log-reasoning-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      Experiment With Your Own Log Reasoning Agent
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Experiment With Your Own Log Reasoning Agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      Endpoint
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Request Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Response Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-in-timesketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration in Timesketch
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2312,8 +2123,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -2322,19 +2131,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#basic-connections" class="md-nav__link">
+  <a href="#developer-deep-dive-the-hybrid-ai-log-analyzer-architecture" class="md-nav__link">
     <span class="md-ellipsis">
-      Basic Connections
+      Developer Deep Dive: The Hybrid AI Log Analyzer Architecture
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Basic Connections">
+    <nav class="md-nav" aria-label="Developer Deep Dive: The Hybrid AI Log Analyzer Architecture">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#directly-passing-username-password" class="md-nav__link">
+  <a href="#architectural-overview-a-hybrid-approach" class="md-nav__link">
     <span class="md-ellipsis">
-      Directly passing username / password
+      Architectural Overview: A Hybrid Approach
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      Component Breakdown
     </span>
   </a>
   
@@ -2346,128 +2164,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#client-config" class="md-nav__link">
+  <a href="#experiment-with-your-own-log-reasoning-agent" class="md-nav__link">
     <span class="md-ellipsis">
-      Client Config
+      Experiment With Your Own Log Reasoning Agent
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-the-timesketch-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using the Timesketch Client
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#list-sketches" class="md-nav__link">
-    <span class="md-ellipsis">
-      List sketches
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#connecting-to-a-sketch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Connecting to a Sketch
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#overview-of-a-sketch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview of a Sketch
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Explore Data
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Explore Data">
+    <nav class="md-nav" aria-label="Experiment With Your Own Log Reasoning Agent">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#saved-searches" class="md-nav__link">
+  <a href="#endpoint" class="md-nav__link">
     <span class="md-ellipsis">
-      Saved Searches
+      Endpoint
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#search-query" class="md-nav__link">
+  <a href="#request-format" class="md-nav__link">
     <span class="md-ellipsis">
-      Search Query
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Search Query">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#retrieve-a-stored-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      Retrieve a Stored Search
+      Request Format
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#configure-using-the-explore-function" class="md-nav__link">
+  <a href="#response-format" class="md-nav__link">
     <span class="md-ellipsis">
-      Configure using the Explore Function
+      Response Format
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#configure-manually" class="md-nav__link">
+  <a href="#configuration-in-timesketch" class="md-nav__link">
     <span class="md-ellipsis">
-      Configure Manually
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#chips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Chips
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-the-results" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get The Results
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#store-a-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      Store a Search
+      Configuration in Timesketch
     </span>
   </a>
   
@@ -2475,116 +2211,6 @@
         
       </ul>
     </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#aggregations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Aggregations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sigma-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Sigma rules
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-a-single-rule" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get a single rule
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-a-list-of-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get a list of rules
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#add-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add data
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Add data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#manually-add-events-to-the-sketch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manually add events to the sketch
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add-tags-to-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add Tags to events
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove-tags-from-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      Remove tags from Events
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add-attributes-to-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add Attributes to Events
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      Other Options
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Examples
-    </span>
-  </a>
   
 </li>
       
@@ -2609,453 +2235,260 @@
   
 
 
-<h1 id="api-client">API Client</h1>
-<p>The API client is a set of Python libraries that can be used to interact with the REST API of Timesketch from notebooks or scripts. It takes
-care of setting up authentication, sending the API calls to the server, error handling, and presentation.</p>
-<p>This documentation will give an overview for the most common use cases of the API client. Some available methods will not be covered in this documentation
-whereas others will be documented further in a notebook (e.g. <a href="/notebooks/colab-timesketch-demo.ipynb">colab-timesketch-demo notebook</a>).</p>
-<h2 id="basic-connections">Basic Connections</h2>
-<p>The API client defines a config library specifically intended to help with setting up all configuration for connecting to Timesketch, including
-authentication and server information. The config client will read stored connection information from <code>~/.timesketchrc</code>, asking the user questions
-if information is missing (and subsequently storing the results of those questions in the RC file for future lookups).</p>
-<p>An example use of the config client:</p>
-<pre><code class="language-python">from timesketch_api_client import config
+  <h1>AI Log Analyzer Architecture</h1>
 
-ts_client = config.get_client()
-</code></pre>
-<p>If the configuration file has more than a single section you can define which
-section to use:</p>
-<pre><code class="language-python">from timesketch_api_client import config
-
-ts_client = config.get_client(config_section='my_section')
-</code></pre>
-<p>To be able to take advantage of the config client, the user needs to be running this from the command line or in a way where questions can be asked
-and answered (or the config file to be fully populated). This works both in CLI scripts as well as in a notebook.</p>
-<p>By default the client credentials will be stored on disk in a Token file, in an encrypted format, protected by a randomly generated
-password that is stored in the RC file. It is highly recommended to protect your credential file using a strong password. The password
-for the file can be passed on to the config class using:</p>
-<pre><code>ts_client = config.get_client(token_password='MY_SUPER_L337_PWD')
-</code></pre>
-<p>If the token file does not exist, it will be generated and encrypted using the supplied password.</p>
-<h3 id="directly-passing-username-password">Directly passing username / password</h3>
-<p>Another option to create a connection to the Timesketch server is by creating an <code>TimesketchApi</code> object and passing `</p>
-<pre><code class="language-python">from timesketch_api_client import client as timesketch_client
-client = timesketch_client.TimesketchApi(host_uri='https://demo.timesketch.org', username='demo', password='demo')
-</code></pre>
-<blockquote>
-<p>Careful with storing credentials in code that you intend to publish or make available to others. </p>
-</blockquote>
-<h2 id="client-config">Client Config</h2>
-<p>In order to make it simpler to connect to the API client a config file
-can be generated or created to store information needed to connect.</p>
-<p>The file is stored in the user's home directory, in a file called
-<code>$HOME/.timesketchrc</code>.</p>
-<p>The content of the file is:</p>
-<pre><code>[timesketch]
-...
-</code></pre>
-<p>An example config file for an API client that uses OAUTH to connect:</p>
-<pre><code>[timesketch]
-client_secret = &lt;redacted secret&gt;
-host_uri = https://mytimesketchhost.com
-username = myusername@mydomain.com
-auth_mode = oauth
-client_id = &lt;redacted client ID&gt;
-verify = True
-</code></pre>
-<p>A config file can have multiple sections to define which host to connect to.
-This is useful if you want to be able to connect to more than a single
-Timesketch instance, for instance your development instance and a production
-one.</p>
-<p>An example of that would be:</p>
-<pre><code>[timesketch]
-host_uri = https://myprodtimesketch.corp.com
-username = myselfandirene
-verify = True
-client_id =
-client_secret =
-auth_mode = userpass
-cred_key = &lt;redacted&gt;
-
-[timesketch-dev]
-host_uri = http://localhost:5000
-username = dev
-verify = True
-client_id =
-client_secret =
-auth_mode = userpass
-cred_key = &lt;redacted&gt;
-token_file_path = /home/myselfandirene/.timesketch.dev.token
-</code></pre>
-<p>Each of the additional sections needs to define a separate token file using the
-<code>token_file_path</code>, otherwise the config will attempt to read the default token
-file.</p>
-<h2 id="using-the-timesketch-client">Using the Timesketch Client</h2>
-<p>The TS client only has limited functionality, such as to list open indices, what sketches the user has access to as well as to fetch sketches, indices, etc.
-The client object also contains functions to check for OAUTH token status and refresh it, if needed.</p>
-<p>Most of the functionality of the API client lies in sketch operations. To list all available sketches the function <code>list_sketches</code> can be used:</p>
-<pre><code>for sketch in ts_client.list_sketches():
-  # Do something with the sketches...
-</code></pre>
-<p>To print the name and description of all available sketches, something like:</p>
-<pre><code>for sketch in ts_client.list_sketches():
-  print('[{0:d}] {1:s} &lt;{2:s}&gt;'.format(sketch.id, sketch.name, sketch.description))
-</code></pre>
-<h2 id="list-sketches">List sketches</h2>
-<p>There are some ways to list sketches by adjusting the <code>scope</code>.</p>
-<p>Following scopes are available:</p>
+<h3 id="developer-deep-dive-the-hybrid-ai-log-analyzer-architecture">Developer Deep Dive: The Hybrid AI Log Analyzer Architecture</h3>
+<p>The AI-powered Investigation View introduces a powerful capability for automated,
+large-scale log analysis. Unlike other LLM features that operate on-demand on a
+small selection of events, the Log Analyzer is designed to process
+<strong>all active timelines</strong> in a sketch, which can involve millions of events.
+This requirement necessitates a robust, asynchronous, and streaming-native architecture.</p>
+<p>This guide provides a technical deep dive into the components that power this
+feature and outlines the API contract required to connect your own compatible log
+reasoning agent.</p>
+<h4 id="architectural-overview-a-hybrid-approach">Architectural Overview: A Hybrid Approach</h4>
+<p>To handle potentially long-running analysis tasks without timing out web requests,
+we've implemented a hybrid architecture that combines Timesketch's existing
+<strong>Analyzer Framework</strong> with the new <strong>LLM Feature and Provider</strong> system.</p>
+<p>This approach gives us the best of both worlds:
+*   <strong>Asynchronous Execution:</strong> The analysis is triggered as a Celery background
+    task, preventing API timeouts and allowing the user to continue working while
+    the analysis runs.
+*   <strong>Decoupling and Reusability:</strong> The core logic is encapsulated in the LLM
+    Feature and Provider, separating it from the task queue system.
+*   <strong>Scalability:</strong> The architecture is built on streaming data (NDJSON),
+    ensuring that memory usage remains low on both the Timesketch server and the
+    AI agent, regardless of the number of events.</p>
+<p>The three key components are:</p>
+<ol>
+<li><strong>The Analyzer (<code>llm_log_analyzer</code>):</strong> The trigger and Celery task wrapper.</li>
+<li><strong>The Feature (<code>LogAnalyzer</code>):</strong> The orchestrator of the entire workflow.</li>
+<li><strong>The Provider (<code>SecGeminiLogAnalyzer</code>):</strong> The communicator that handles the
+    streaming connection to the external AI agent.</li>
+</ol>
+<h4 id="component-breakdown">Component Breakdown</h4>
+<p><strong>1. The Analyzer: Triggering the Workflow</strong></p>
+<p>The <code>LLMLogAnalyzer</code> is a lightweight <code>BaseAnalyzer</code> plugin. Its sole
+responsibility is to initiate the analysis process on a Celery worker.</p>
 <ul>
-<li>recent: Get list of sketches that the user has actively searched in.</li>
-<li>shared: Get sketches that can be accessed</li>
-<li>admin: Get all sketches if the user is an admin</li>
-<li>archived: get archived sketches</li>
-<li>search: pass additional search query</li>
+<li><strong>File:</strong> <code>timesketch/lib/analyzers/llm_log_analyzer.py</code></li>
 </ul>
-<pre><code>ts_client.list_sketches(per_page=1000, scope='user', include_archived=True)
-</code></pre>
-<p>Will return all sketches that are owned by the specified user.</p>
-<pre><code>ts_client.list_sketches(per_page=1000, scope='shared', include_archived=True)
-</code></pre>
-<p>Will return all sketches that the account used to connect to the API has access to.</p>
-<h2 id="connecting-to-a-sketch">Connecting to a Sketch</h2>
-<p>There are two ways of getting a sketch object, either by listing all available sketches or by fetching a specific one.
-To fetch a specific one use the <code>get_sketch</code> function:</p>
-<pre><code>sketch = ts_client.get_sketch(SKETCH_ID)
-</code></pre>
-<p>All that the function needs is the sketch ID, eg:</p>
-<pre><code>sketch = ts_client.get_sketch(25)
-</code></pre>
-<h2 id="overview-of-a-sketch">Overview of a Sketch</h2>
-<p>A sketch object has few properties that can be used to get a better overview of what it contains:</p>
-<ul>
-<li><strong>acl</strong>: A python dict with the current sketch ACL.</li>
-<li><strong>labels</strong>: A list of strings, with all the labels that are attached to the sketch.</li>
-<li><strong>name</strong>: The name of the sketch.</li>
-<li><strong>description</strong>: The description of the sketch.</li>
-<li><strong>status</strong>: The status of the sketch.</li>
-</ul>
-<p>Each of these properties can be accessed using <code>sketch.&lt;PROPERTY&gt;</code>, eg. <code>sketch.name</code>, or <code>sketch.labels</code></p>
-<h2 id="explore-data">Explore Data</h2>
-<p>The sketch object has several ways to explore data, via aggregations or searches.</p>
-<h3 id="saved-searches">Saved Searches</h3>
-<p>To list all saved searches, use the <code>list_saved_searches</code> function of the sketch
-object. This functions returns a <code>search.Search</code> object for all saved searches.
-An example overview would be:</p>
-<pre><code>for saved_search in sketch.list_saved_searches():
-  print('{0:03d} - {1:s} [{2:s}]'.format(saved_search.id, saved_search.name, saved_search.user))
-</code></pre>
-<p>To get a particular saved search:</p>
-<pre><code>saved_search = sketch.get_saved_search(search_id=&lt;SEARCH_ID&gt;)
-</code></pre>
-<p>or</p>
-<pre><code>saved_search = sketch.get_saved_search(search_name=&lt;SEARCH_NAME&gt;)
-</code></pre>
-<p>A search object can be used like this:</p>
-<pre><code>data = saved_search.table
-</code></pre>
-<p>The results will be a pandas DataFrame that contains all the records from the
-saved search.</p>
-<h3 id="search-query">Search Query</h3>
-<p>To search in the API client a search object is used. It will accept several
-parameters or configurations, for instances a free flowing query string
-(same as in the UI) or a raw OpenSearch query DSL. It can also support search
-chips.</p>
-<p>The output can be:
-+ A pandas DataFrame.
-+ A python dict.
-+ Stored in a ZIP file.</p>
-<p>A search object is created from a sketch object.</p>
-<pre><code>from timesketch_api_client import search
-...
+<pre><code class="language-python"># A simplified view of the analyzer's run method
+class LLMLogAnalyzer(interface.BaseAnalyzer):
+    NAME = &quot;llm_log_analyzer&quot;
+    # ...
 
-search_obj = search.Search(sketch=sketch)
-</code></pre>
-<p>From there several options are possible:</p>
-<ul>
-<li>Restore a saved search using <code>from_saved(&lt;SEARCH_ID&gt;)</code></li>
-<li>Use the <code>from_manual</code> function that provides several parameters</li>
-<li>Individually set the needed parameters.</li>
-</ul>
-<p>The first thing you need to do after creating the object is to configure the
-search parameters:</p>
-<h4 id="retrieve-a-stored-search">Retrieve a Stored Search</h4>
-<p>To retrieve a stored search used the <code>from_saved</code>:</p>
-<pre><code>search_obj.from_saved(&lt;SEARCH_ID&gt;)
-</code></pre>
-<h4 id="configure-using-the-explore-function">Configure using the Explore Function</h4>
-<p>It is also possible to configure the search object using the <code>from_manual</code>
-function.</p>
-<pre><code>search_obj.from_manual(
-    query_string, query_dsl, query_filter,
-    return_fields, max_entries)
-</code></pre>
-<p>All of these parameters are optional, but in order for the search object to
-be able to query for results you need to provide either <code>query_string</code> or
-the <code>query_dsl</code>.</p>
-<ul>
-<li><strong>query_string</strong>: This is the OpenSearch query string, the same one as you would
-provide in the UI.</li>
-<li><strong>query_dsl</strong>: This is an OpenSearch Query DSL string. Please see the official
-documentation about how it is structured.</li>
-<li><strong>return_fields</strong>: This is a comma separated string with all the fields you
-want to be included in the returned value. If you want all fields returned you
-can use the wildcard '*'.</li>
-<li><strong>max_entries</strong>: By default the search object returns 10k records maximum. You
-may want to either reduce that or increase it. If the search has the potential
-to return more than 10k records a log record will be added indicating how many
-records there could be, so that the search can be repeated by increasing the max
-entries.</li>
-</ul>
-<h4 id="configure-manually">Configure Manually</h4>
-<p>All of the configurations that are present in the <code>from_manual</code> function are
-also directly available in the object itself, and can be set directly.</p>
-<pre><code>search_obj.query_string = 'my search'
-search_obj.max_entries = 10000000
-search_obj.return_fields = 'datetime,timestamp_desc,data_type,message,domain,url'
-</code></pre>
-<p>There are also other configurations possible. In Jupyter/Colab notebook you can
-always do</p>
-<pre><code>search_obj.*?
-</code></pre>
-<p>To find a list of all the possible configuration options.</p>
-<h4 id="chips">Chips</h4>
-<p>Chips are the "+ Time filter" or "+ Add label filter", etc elements you can
-see in the UI. There are several chips available:</p>
-<ul>
-<li>DateIntervalChip</li>
-<li>DateRangeChip</li>
-<li>TermChip</li>
-<li>LabelChip</li>
-</ul>
-<p>To add a chip to a search object simply use the <code>add_chip</code> function:</p>
-<pre><code>search_obj.add_chip(label_chip)
-</code></pre>
-<p>To view the existing chips:</p>
-<pre><code>[c.chip for c in search_obj.chips]
-</code></pre>
-<p>Or</p>
-<pre><code>search_obj.query_filter
-</code></pre>
-<p>Chips can also be removed using the <code>search_obj.remove_chip(chip_index)</code>
-function.</p>
-<p>Each chip will have their own way of configuring it, let's take an example of a
-date range chip.</p>
-<pre><code>range_chip = search.DateRangeChip()
-range_chip.start_time = '2013-09-20T22:20:47'
-range_chip.end_time = '2013-09-20T22:59:47'
-search_obj.add_chip(range_chip)
-</code></pre>
-<p>For an interval chip:</p>
-<pre><code>interval_chip = search.DateIntervalChip()
-interval_chip.date = '2013-09-20T22:39:47'
-interval_chip.before = 10
-interval_chip.after = 10
-interval_chip.unit = 'm'
+    def run(self):
+        # 1. Get the feature instance
+        feature_instance = feature_manager.FeatureManager.get_feature_instance(
+            &quot;log_analyzer&quot;
+        )
 
-search_obj.add_chip(interval_chip)
-</code></pre>
-<p>Or a label chip:</p>
-<pre><code>label_chip = search.LabelChip()
-label_chip.label = 'foobar'
-search_obj.add_chip(label_chip)
-</code></pre>
-<p>Label chips can also be used to filter out all starred events, or events with
-comments. For that use:</p>
-<pre><code>label_chip.use_comment_label()
-</code></pre>
-<p>or</p>
-<pre><code>label_chip.use_star_label()
-</code></pre>
-<h4 id="get-the-results">Get The Results</h4>
-<p>Once you have constructed your search object, you may want to explore the
-results.</p>
-<p>To get the results as:
-+ a pandas DataFrame use: <code>search_obj.table</code>
-+ a dict, use <code>search_obj.dict</code>
-+ a JSON string, use <code>search_obj.json</code></p>
-<p>Or if you want to store the results as a file:</p>
-<pre><code>search_obj.to_file('/tmp/myresults.zip')
-</code></pre>
-<p>(use the ZIP ending, since the resulting file will be a ZIP file with both the
-results as a CSV file and a METADATA file.</p>
-<h4 id="store-a-search">Store a Search</h4>
-<p>If you want to store the search query in the datastore, to make it accessible
-later on, or visible in the UI you can use the <code>save</code> function. First create a
-name and a description and then save the object.</p>
-<pre><code>search_obj.name = 'My First Saved Search'
-search_obj.description = 'This saves all my work'
-search_obj.save()
-</code></pre>
-<p>After you save it, each time you make a change to the search the change gets
-updated in the datastore. You can also call <code>save()</code> or <code>commit()</code> on the object
-to make sure it was saved.</p>
-<h3 id="aggregations">Aggregations</h3>
-<p>Another option to explore the data is via aggregations. To get a list of available aggregators use:</p>
-<pre><code>sketch.list_available_aggregators()
-</code></pre>
-<p>What gets returned back is a pandas DataFrame with all the aggregators and what parameters they need in order to work.</p>
-<p>An example aggregation is:</p>
-<pre><code>params = {
-    'field': 'domain',
-    'limit': 10,
-    'supported_charts': 'hbarchart',
-    'chart_title': 'Top 10 Domains Visited',
-}
+        # 2. Get the LLM provider instance
+        llm_provider = llm_provider_manager.LLMManager.create_provider(
+            feature_name=feature_instance.NAME
+        )
 
-aggregation = sketch.run_aggregator(aggregator_name='field_bucket', aggregator_parameters=params)
+        # 3. Call the feature's execute method to start the real work
+        result = feature_instance.execute(
+            sketch=self.sketch.sql_sketch,
+            form={},
+            llm_provider=llm_provider,
+        )
+
+        # 4. Summarize the result and update the analyzer status in the UI
+        self.output.result_summary = f&quot;Log Analyzer finished. Processed {result.get('total_findings_processed', 0)} findings.&quot;
+        return str(self.output)
 </code></pre>
-<p>This will return back an aggregation object that can be used to display the data, eg in a pandas DataFrame</p>
-<pre><code>df = aggregation.table
+<p>When a user clicks "Generate Initial Report", this analyzer is queued. It runs
+in the background, instantiates the necessary LLM feature and provider, and then
+calls the <code>execute</code> method to kick off the main logic.</p>
+<p><strong>2. The Feature: Orchestrating the Data Flow</strong></p>
+<p>The <code>LogAnalyzer</code> feature is the heart of the operation. It manages the entire
+process from data extraction to result processing.</p>
+<ul>
+<li><strong>File:</strong> <code>timesketch/lib/llms/features/log_analyzer.py</code></li>
+</ul>
+<p>Its <code>execute</code> method orchestrates the following steps:</p>
+<ol>
+<li><strong>Prepare Log Stream:</strong> It calls <code>prepare_log_stream_for_analysis</code>, which
+    creates a Python generator that yields events one by one from all active
+    timelines in the sketch using the OpenSearch <code>sliced_scroll</code> API. This ensures
+    data is streamed efficiently from the datastore.</li>
+<li><strong>Invoke Provider:</strong> It passes this log generator to the LLM provider's
+    <code>generate_stream_from_logs</code> method.</li>
+<li><strong>Process Findings Stream:</strong> It receives a generator of "findings" back from
+    the provider. It iterates through each finding as it arrives.</li>
+<li><strong>Commit to Database:</strong> For each finding, it calls its own <code>process_response</code>
+    method, which creates and commits the necessary <code>InvestigativeQuestion</code> and
+    <code>InvestigativeQuestionConclusion</code> objects to the PostgreSQL database.</li>
+</ol>
+<p><strong>3. The Provider: Communicating with the AI Agent</strong></p>
+<p>The <code>SecGeminiLogAnalyzer</code> provider acts as the client for the external AI agent.
+It is responsible for the network communication.</p>
+<ul>
+<li><strong>File:</strong> <code>timesketch/lib/llms/providers/secgemini_log_analyzer_agent.py</code></li>
+</ul>
+<p>Key methods:</p>
+<ul>
+<li><code>_stream_log_data_as_ndjson_gen</code>: This helper method takes the Python
+    generator of log events from the feature and converts each event into a
+    line of a <strong>Newline Delimited JSON (NDJSON)</strong> stream.</li>
+<li><code>generate_stream_from_logs</code>: This is the main communication method.<ul>
+<li>It initiates a streaming <code>requests.post</code> call to the AI agent's API endpoint.</li>
+<li>The <code>data</code> parameter of the request is the NDJSON generator, which streams
+    the log data to the agent.</li>
+<li>It then listens to the response stream from the agent, using
+    <code>response.iter_lines()</code> to read the incoming NDJSON findings one by one.</li>
+<li>It <code>yields</code> each finding back to the feature layer for processing.</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="experiment-with-your-own-log-reasoning-agent">Experiment With Your Own Log Reasoning Agent</h3>
+<p>To integrate your own custom log analysis service, you need to build an HTTP
+service that adheres to the API contract expected by the <code>SecGeminiLogAnalyzer</code>
+provider or create your own custom provider file similar to the <code>SecGeminiLogAnalyzer</code>
+that works with the <code>log_analyzer</code> feature.</p>
+<p><strong>API Contract:</strong></p>
+<h4 id="endpoint"><strong>Endpoint</strong></h4>
+<p>Your service must expose an endpoint to receive the log data. The default is <code>/analyze_logs</code>.</p>
+<h4 id="request-format"><strong>Request Format</strong></h4>
+<p>The provider will send a streaming <code>POST</code> request with the following characteristics:
+*   <strong>Method:</strong> <code>POST</code>
+*   <strong>Headers:</strong>
+    *   <code>Content-Type: application/x-ndjson</code>
+    *   <code>Accept: application/x-ndjson</code>
+*   <strong>Body:</strong> A stream of newline-delimited JSON objects. Each object is a complete Timesketch event.</p>
+<p><strong>Example Request Body (NDJSON stream):</strong></p>
+<pre><code class="language-json">{&quot;_index&quot;: &quot;a1b2c3d4...&quot;, &quot;_id&quot;: &quot;event_id_1&quot;, &quot;_source&quot;: {&quot;message&quot;: &quot;User 'admin' logged in from 192.168.1.100&quot;, &quot;timestamp&quot;: 1672531200000000, ...}}
+{&quot;_index&quot;: &quot;a1b2c3d4...&quot;, &quot;_id&quot;: &quot;event_id_2&quot;, &quot;_source&quot;: {&quot;message&quot;: &quot;Process 'evil.exe' created by pid 1234&quot;, &quot;timestamp&quot;: 1672531201000000, ...}}
 </code></pre>
-<p>Or as a chart</p>
-<pre><code>aggregation.chart
-</code></pre>
-<p>And if you want to save that aggregation for future use.</p>
-<pre><code>aggregation.name = 'TopDomains'
-aggregation.save()
-</code></pre>
-<h3 id="sigma-rules">Sigma rules</h3>
-<h3 id="get-a-single-rule">Get a single rule</h3>
-<p>To get a Sigma rule that is stored on the server via uuid of the rule:</p>
-<pre><code class="language-python">rule = ts.get_sigmarule(&quot;5266a592-b793-11ea-b3de-0242ac130004&quot;)
-</code></pre>
-<p>Returns an object, where you can do something like that:</p>
-<pre><code class="language-python">rule.data()
-</code></pre>
-<p>To get this:</p>
-<pre><code class="language-JSON">{
-  'title': 'Suspicious Installation of ZMap',
-  'id': '5266a592-b793-11ea-b3de-0242ac130004',
-  'description': 'Detects suspicious installation of ZMap',
-  'references': ['https://rmusser.net/docs/ATT&amp;CK-Stuff/ATT&amp;CK/Discovery.html'],
-  'author': 'Alexander Jaeger',
-  'date': '2020/06/26',
-  'modified': '2020/06/26',
-  'logsource': {
-    'product': 'linux',
-    'service': 'shell'
-  },
-  'detection': {
-    'keywords': ['*apt-get install zmap*'],
-    'condition': 'keywords'
-  },
-  'falsepositives': ['Unknown'],
-  'level': 'high',
-  'search_query': '(data_type:(&quot;shell\\:zsh\\:history&quot; OR &quot;bash\\:history\\:command&quot; OR &quot;apt\\:history\\:line&quot; OR &quot;selinux\\:line&quot;) AND &quot;*apt\\-get\\ install\\ zmap*&quot;)', 'file_name': 'lnx_susp_zmap'
+<h4 id="response-format"><strong>Response Format</strong></h4>
+<p>Your agent must stream back a response with the following characteristics:
+*   <strong>Headers:</strong> <code>Content-Type: application/x-ndjson</code>
+*   <strong>Body:</strong> A stream of newline-delimited JSON objects. Each line should be a
+    complete, self-contained JSON object representing a question and "finding"
+    that links back to an original Timesketch event.</p>
+<p><strong>Finding Object Schema:</strong></p>
+<p>The Timesketch backend will parse each incoming JSON object from the stream.
+The following table details the schema for a single finding object.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>record_id</code></td>
+<td>String</td>
+<td><strong>Yes</strong></td>
+<td>The <code>_id</code> of the original Timesketch event this finding relates to.</td>
+</tr>
+<tr>
+<td><code>annotations</code></td>
+<td>List of Objects</td>
+<td><strong>Yes</strong></td>
+<td>A list of annotation objects. Each annotation will generate DFIQ objects in Timesketch.</td>
+</tr>
+<tr>
+<td><code>_index</code> or <code>__ts_index_name</code></td>
+<td>String</td>
+<td>No</td>
+<td>The OpenSearch index of the original event. Including this is recommended for performance.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>String</td>
+<td>No</td>
+<td>If an error occurred while processing, send an object with this key instead of a finding.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Annotation Object Schema:</strong></p>
+<p>Each object inside the <code>annotations</code> list must have the following structure:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>investigative_question</code></td>
+<td>String</td>
+<td><strong>Yes</strong></td>
+<td>The DFIQ question that was generated. This will become an <code>InvestigativeQuestion</code>.</td>
+</tr>
+<tr>
+<td><code>conclusions</code></td>
+<td>List of Strings</td>
+<td><strong>Yes</strong></td>
+<td>A list of answers or findings for the question. Each will become an <code>InvestigativeQuestionConclusion</code>.</td>
+</tr>
+<tr>
+<td><code>priority</code></td>
+<td>String</td>
+<td>No</td>
+<td>The priority for the question. Can be <code>low</code>, <code>medium</code>, or <code>high</code>.</td>
+</tr>
+<tr>
+<td><code>attack_stage</code></td>
+<td>String</td>
+<td>No</td>
+<td>A suggested attack stage (e.g., MITRE ATT&amp;CK Tactic). This is stored as a question attribute.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example of a Single Finding Object (one line in the NDJSON stream):</strong></p>
+<pre><code class="language-json">{
+  &quot;annotations&quot;: [
+    {
+      &quot;attack_stage&quot;: &quot;Initial access&quot;,
+      &quot;priority&quot;: &quot;high&quot;,
+      &quot;investigative_question&quot;: &quot;What is the initial access vector?&quot;,
+      &quot;conclusions&quot;: [
+        &quot;Successful password-based root login from a known Tor exit node IP address, indicating potential anonymity seeking by the attacker.&quot;
+      ]
+    },
+    {
+      &quot;attack_stage&quot;: &quot;Persistence&quot;,
+      &quot;investigative_question&quot;: &quot;What is the persistence mechanism?&quot;,
+      &quot;conclusions&quot;: [
+        &quot;Creation of a malicious cron job file for cryptocurrency mining.&quot;
+      ]
+    }
+  ],
+  &quot;record_id&quot;: &quot;8XdJUJgB092O9Z5p3KNH&quot;,
 }
 </code></pre>
-<h3 id="get-a-list-of-rules">Get a list of rules</h3>
-<p>Another option to explore Sigma rules is via the <code>list_sigma_rules</code> function.
-To get a list of available Sigma rules use:</p>
-<pre><code class="language-python">ts.list_sigma_rules()
+<p><strong>A Note on API Flexibility:</strong></p>
+<p>The Timesketch <code>log_analyzer</code> feature will only parse the fields specified as
+"Required" in the schemas above. Any other fields in your finding or annotation
+objects will be safely ignored. This allows you to include additional metadata
+in your agent's output for your own logging or debugging purposes without
+breaking the integration. If you want to utilize any additional fields, you need
+to create your own LLM feature file.</p>
+<h4 id="configuration-in-timesketch"><strong>Configuration in Timesketch</strong></h4>
+<p>Once your agent is deployed, update your <code>timesketch.conf</code> to point to it:</p>
+<pre><code class="language-python">LLM_PROVIDER_CONFIGS = {
+    'log_analyzer': {
+        '&lt;PROVIDER&gt;_log_analyzer_agent': {
+            'server_url': 'http://YOUR_AGENT_HOST:PORT',
+            'api_key': '&lt;YOUR_API_KEY_IF_ANY&gt;',
+        }
+    }
+}
 </code></pre>
-<p>The output can be:
-+ A pandas DataFrame if the <code>as_pandas=True</code> is set
-+ A python dict (default behavior)</p>
-<h2 id="add-data">Add data</h2>
-<h4 id="manually-add-events-to-the-sketch">Manually add events to the sketch</h4>
-<p>Fill in your event data, you need at least these fields: message, date and timestamp description</p>
-<pre><code class="language-python">
-message = &quot;foobar&quot;
-date = &quot;2020-08-06T12:48:06.994188Z&quot;
-timestamp_desc = &quot;Test_description&quot;
-
-# Attributes: A dict of extra attributes to add to the event.
-attributes = {&quot;a&quot;: &quot;alpha&quot;, &quot;o&quot;: &quot;omega&quot;, &quot;g&quot;: &quot;gamma&quot;}
-
-# Tags: A list of strings to include as tags.
-tags = [&quot;not&quot;, &quot;important&quot;]
-
-sketch.add_event(message, date, timestamp_desc, attributes, tags)
-
-</code></pre>
-<h3 id="add-tags-to-events">Add Tags to events</h3>
-<p>To add tags to multiple events:</p>
-<pre><code class="language-python"># first search for the events that you want to search for
-events = sketch.explore('foobarsearchterm')
-events['objects']
-for event in events['objects']:
- print(event.get('_id'))
- events2 = [{
-               '_id': event.get('_id'),
-               '_index': event.get('_index'),
-               '_type': 'generic_event'
-               }]
- tags = ['foobartag']
- sketch.tag_events(events2, tags)
-</code></pre>
-<p>Of if you want to tag a single event:</p>
-<pre><code class="language-python"># Or if you want to do single ones:
-events2 = [{
-               '_id': 'g-abcdErfededed',
-               '_index': 'asd23r23dk19b398abe405cbf33f',
-               '_type': 'generic_event'
-               }]
-tags = ['foobartag']
-sketch.tag_events(events2, tags)
-</code></pre>
-<p>Both will give you something like:</p>
-<pre><code class="language-python">
-{'events_processed_by_api': 1,
- 'number_of_events_passed_to_api': 1,
- 'number_of_events_with_added_tags': 1,
- 'tags_applied': 1,
- 'total_number_of_events_sent_by_client': 1}
-</code></pre>
-<h3 id="remove-tags-from-events">Remove tags from Events</h3>
-<p><code>untag_event</code>and <code>untag_events</code> in the context of a sketch.</p>
-<p><code>untag_event(self, event_id: str, index, tag: str):</code> - Untags the specified tag from the event with the specified ID.
-<code>untag_events(self, events, tags_to_remove: list):</code> - Untags the specified tag from all of the events with the specified IDs.</p>
-<p>Example code:</p>
-<pre><code class="language-python">
-import timesketch_api_client
-
-Create a client
-client = timesketch_api_client.TimesketchAPIClient()
-sketch = client.get_sketch(1)
-
-# Get the event ID
-event_id = &quot;k8P1MYcBkeTGnypeeKJL&quot;
-
-# Untag the event
-sketch.untag_event(event_id, &quot;foobar&quot;)
-</code></pre>
-<blockquote>
-<p>Note the maximum of events passed via API is 500. The maximum number of tags to be removed in one API call is also 500.</p>
-</blockquote>
-<h3 id="add-attributes-to-events">Add Attributes to Events</h3>
-<p>To add new attributes to event an event:</p>
-<pre><code class="language-python"># event_id and searchindex_id can be found by searching for the target event.
-
-event = [
-  {
-    '_id': event_id,
-    '_index': searchindex_id,
-    '_type': '_doc',
-    'attributes': [
-      {
-        'attr_name': 'an_attribute_name',
-        'attr_value': 'A new attribute value'
-      }
-    ]
-  }
-]
-sketch.add_event_attributes(events)
-</code></pre>
-<h2 id="other-options">Other Options</h2>
-<p>The sketch object can be used to do several other actions that are not documented in this first document, such as:</p>
-<ul>
-<li>Create/list/retrieve stories</li>
-<li>Add timelines to the sketch</li>
-<li>Modify the ACL of the sketch</li>
-<li>Archive the sketch (via the <code>sketch.archive</code> function)</li>
-<li>Comment on an event</li>
-<li>Delete a sketch</li>
-<li>Export the sketch data</li>
-<li>Run analyzers on the sketch.</li>
-</ul>
-<h2 id="examples">Examples</h2>
-<p>There are several examples using the API client in the <a href="https://github.com/google/timesketch/notebooks">notebooks folder</a> in the Github repository.</p>
+<p>By following this architecture and API contract, you can seamlessly integrate
+custom, large-scale log analysis capabilities into the Timesketch Investigation View.</p>
 
 
 

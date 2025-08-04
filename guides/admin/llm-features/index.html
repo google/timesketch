@@ -12,7 +12,7 @@
         <link rel="prev" href="../context-links/">
       
       
-        <link rel="next" href="../load-dfiq/">
+        <link rel="next" href="../investigation-view-setup/">
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
@@ -315,7 +315,7 @@
           
   
   
-  Blackhat 2025
+  Black Hat & defcon 2025
 
         </a>
       </li>
@@ -1073,6 +1073,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#llm-provider-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       LLM Provider Configuration
@@ -1094,6 +1103,29 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../investigation-view-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Investigation View
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -1452,6 +1484,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developers/log-analyzer-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Log Analyzer Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1513,6 +1568,29 @@
   
   <span class="md-ellipsis">
     Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../changelog/202305-202403/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    202305 202403
     
   </span>
   
@@ -1831,7 +1909,7 @@
   
   
   <span class="md-ellipsis">
-    Blackhat 2025
+    Black Hat & defcon 2025
     
   </span>
   
@@ -1928,7 +2006,7 @@
   
   
   <span class="md-ellipsis">
-    Blackhat 2025
+    Black Hat & defcon 2025
     
   </span>
   
@@ -1939,7 +2017,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
-            Blackhat 2025
+            Black Hat & defcon 2025
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1955,7 +2033,7 @@
   
   
   <span class="md-ellipsis">
-    Blackhat 2025
+    Black Hat & defcon 2025
     
   </span>
   
@@ -2002,6 +2080,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#llm-provider-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       LLM Provider Configuration
@@ -2041,10 +2128,23 @@
 
 
 <h1 id="llm-features-configuration">LLM Features Configuration</h1>
-<p>Timesketch includes experimental features leveraging Large Language Models (LLMs) to enhance analysis capabilities. These features include event summarization and AI-generated queries (NL2Q - Natural Language to Query). This document outlines the steps required to configure these features for Timesketch administrators.</p>
+<p>Timesketch includes experimental features leveraging Large Language Models (LLMs)
+to enhance analysis capabilities. These features include event summarization and
+AI-generated queries (NL2Q - Natural Language to Query). This document outlines
+the steps required to configure these features for Timesketch administrators.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>For usage of Vertex AI as provider, install <code>sudo docker exec timesketch-web pip install google-cloud-aiplatform==1.70.0</code></li>
+<li>For usage of AI Studio as provider, install <code>sudo docker exec timesketch-web pip install google-generativeai</code></li>
+</ul>
 <h2 id="llm-provider-configuration">LLM Provider Configuration</h2>
-<p>To utilize the LLM features, the Timesketch <strong>administrator</strong> must configure an LLM provider in the <code>timesketch.conf</code> file. It's possible to configure a specific LLM provider and model per LLM powered feature, or to use a default provider. For most features we recommend using a fast model (such as <code>gemini-2.0-flash-001</code> ) for optimal performance, especially for the event summarization feature.</p>
-<p>Edit your <code>timesketch.conf</code> file to include the <code>LLM_PROVIDER_CONFIGS</code> dictionary.  Below is a sample configuration with explanations for each parameter.</p>
+<p>To utilize the LLM features, the Timesketch <strong>administrator</strong> must configure an
+LLM provider in the <code>timesketch.conf</code> file. It's possible to configure a specific
+LLM provider and model per LLM powered feature, or to use a default provider.
+For most features we recommend using a fast model (such as <code>gemini-2.0-flash</code>)
+for optimal performance, especially for the event summarization feature.</p>
+<p>Edit your <code>timesketch.conf</code> file to include the <code>LLM_PROVIDER_CONFIGS</code> dictionary.
+Below is a sample configuration with explanations for each parameter.</p>
 <pre><code class="language-python"># LLM provider configs
 LLM_PROVIDER_CONFIGS = {
     # Configure a LLM provider for a specific LLM enabled feature, or the
@@ -2093,9 +2193,14 @@ LLM_PROVIDER_CONFIGS = {
     }
 }
 </code></pre>
-<p><strong>Note:</strong>  While <a href="../../user/llm-features-user/">users can enable/disable these features</a>, the underlying LLM provider and its configuration are managed by the Timesketch administrator. Enabling these features may incur costs depending on the chosen LLM provider. Please review the pricing details of your selected provider before enabling these features.</p>
+<p><strong>Note:</strong>  While <a href="../../user/llm-features-user/">users can enable/disable these features</a>,
+the underlying LLM provider and its configuration are managed by the Timesketch
+administrator. Enabling these features may incur costs depending on the chosen
+LLM provider. Please review the pricing details of your selected provider before
+enabling these features.</p>
 <h2 id="prompt-and-data-configuration">Prompt and Data Configuration</h2>
-<p>Administrators can further customize the behavior of the LLM features by configuring the paths to various prompt and data files within the <code>timesketch.conf</code> file.</p>
+<p>Administrators can further customize the behavior of the LLM features by
+configuring the paths to various prompt and data files within the <code>timesketch.conf</code> file.</p>
 <pre><code class="language-python"># LLM nl2q configuration
 DATA_TYPES_PATH = '/etc/timesketch/nl2q/data_types.csv'
 PROMPT_NL2Q = '/etc/timesketch/nl2q/prompt_nl2q'
@@ -2105,14 +2210,27 @@ EXAMPLES_NL2Q = '/etc/timesketch/nl2q/examples_nl2q'
 PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_summarize/prompt.txt'
 </code></pre>
 <ul>
-<li><code>DATA_TYPES_PATH</code>: Specifies the path to a CSV file defining common Timesketch data types for the NL2Q feature.</li>
-<li><code>PROMPT_NL2Q</code>: Specifies the path to the prompt file used by the NL2Q feature to translate a natural language into a Timesketch search query.</li>
-<li><code>EXAMPLES_NL2Q</code>: Specifies the path to the examples file used by the NL2Q feature. This file provides the LLM with examples of natural language queries and their corresponding Timesketch search queries, which help improve the accuracy of the NL2Q feature.</li>
-<li><code>PROMPT_LLM_SUMMARIZATION</code>: Specifies the path to the prompt file used by the event summarization feature.  Administrators can modify this file to customize the summarization output to their specific needs. This template allows for injecting the event data into the prompt using Python-style string formatting using curly braces <code>{}</code>.
+<li><code>DATA_TYPES_PATH</code>: Specifies the path to a CSV file defining common Timesketch
+    data types for the NL2Q feature.</li>
+<li><code>PROMPT_NL2Q</code>: Specifies the path to the prompt file used by the NL2Q feature
+    to translate a natural language into a Timesketch search query.</li>
+<li><code>EXAMPLES_NL2Q</code>: Specifies the path to the examples file used by the NL2Q feature.
+    This file provides the LLM with examples of natural language queries and their
+    corresponding Timesketch search queries, which help improve the accuracy of the NL2Q feature.</li>
+<li><code>PROMPT_LLM_SUMMARIZATION</code>: Specifies the path to the prompt file used by the
+    event summarization feature.  Administrators can modify this file to customize
+    the summarization output to their specific needs. This template allows for
+    injecting the event data into the prompt using Python-style string formatting
+    using curly braces <code>{}</code>.
 Timesketch provides some default configuration files for both features:</li>
 <li><a href="https://github.com/google/timesketch/tree/master/data/nl2q">NL2Q default configuration</a>.</li>
 <li><a href="https://github.com/google/timesketch/tree/master/data/llm_summarize">LLM Summarization default configuration</a>.</li>
 </ul>
+<h1 id="ai-investigation-agent">AI Investigation Agent</h1>
+<p>Timesketch can also leverage a dedicated AI agent for in-depth log analysis
+within the Investigation View. If configured, this provides automated generation
+of investigative questions and findings.</p>
+<p>For configuration details, see the <a href="../investigation-view-setup/">Investigation View Setup Guide</a>.</p>
 
 
 
