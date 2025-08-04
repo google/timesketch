@@ -461,7 +461,6 @@ confidence=HIGH,
 # --disable=W".
 disable=assignment-from-none,
         bad-inline-option,
-        broad-except,
         cyclic-import,
         deprecated-pragma,
         duplicate-code,
