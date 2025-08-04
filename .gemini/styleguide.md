@@ -17,17 +17,15 @@ This style guide outlines the coding and documentation standards for the Gemini 
 1.  **Python:**
     *   **Adherence to PEP 8:** Follow the official Python style guide (PEP 8) for formatting, naming conventions, and code layout.
     *   **Docstrings:** Use docstrings to explain the purpose, parameters, and return values of functions, classes, and modules.
+    *   **Docstring Format:** Use [Google-style docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
     *   **Type Hints:** Employ type hints to improve code clarity and enable static analysis.
-    *   **Error Handling:** Use exceptions for error handling and provide informative error messages.
-    *   **String Formatting:** Use f-strings (or `.format()`) for string formatting. Exceptions being logging messages.
+    *   **Error Handling:** Use exceptions for error handling and provide informative error messages. When catching exceptions, use `as e:` (e.g., `except ValueError as e:`).
+    *   **String Formatting:** Prefer f-strings for all string formatting (e.g., `f"User: {username}"`). The only exception is for logging messages, which should use the older `%` style to allow for deferred formatting, as enforced by the linter configuration.
     *   **Imports:** Organize imports into standard library, third-party, and local modules, separated by blank lines.
     *   **Comments:** Use comments to explain non-obvious code or complex logic.
-    *   **Pylint:** Use Pylint to enforce code quality and style.
-    *   **Quotes:** Quote strings as ' or """ instead of "
-    *   **Textual Strings:** Textual strings should be Unicode strings and hence defined as u'string'
-    *   **Specifiers:** Use positional or parameter format specifiers with typing e.g. '{0:s}' or '{text:s}' instead of '{0}', '{}' or '{:s}'.
-    *   **Exceptions:** When catching exceptions use "as exception:" not some alternative form like "as error:" or "as details:"
-    *   **Pylint Overrides:** Use textual pylint overrides e.g. "# pylint: disable=no-self-argument" instead of "# pylint: disable=E0213".
+    *   **Tooling:** Use **Pylint** for linting and **Black** for code formatting. Configurations are in `.pylintrc` and `pyproject.toml` respectively.
+    *   **Quotes:** Use double quotes (`"`) for strings. `black` will enforce this automatically. Use triple double quotes (`"""`) for docstrings and multi-line strings.
+    *   **Pylint Overrides:** Use textual pylint overrides (e.g., `# pylint: disable=no-self-argument`) instead of numeric codes (`# pylint: disable=E0213`).
 
 2.  **JavaScript/TypeScript:**
     *   **ESLint:** Use ESLint to enforce code quality and style.
@@ -36,7 +34,7 @@ This style guide outlines the coding and documentation standards for the Gemini 
     *   **Formatting:** Use consistent indentation and spacing.
     *   **Error Handling:** Use try-catch blocks for error handling.
     *   **Asynchronous Code:** Use async/await for asynchronous operations.
-    *   **Semicolons:** Do not use semicolons at the end of lines. 
+    *   **Semicolons:** Use semicolons at the end of statements, as enforced by the project's linter.
 
 3.  **Other Languages:**
     *   Follow the established style guides and best practices for each language.
@@ -51,7 +49,24 @@ This style guide outlines the coding and documentation standards for the Gemini 
 
 ## II. Documentation Style
 
-### A. General Principles
+This section covers documentation within the code, for users, and for contributors.
+
+### A. Commit Message Style
+
+Commit messages should follow the Conventional Commits specification. This creates an explicit commit history, which makes it easier to track features, fixes, and breaking changes.
+
+The basic format is:
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+*   **Types:** `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, `test`.
+*   **Scope:** A noun describing a section of the codebase (e.g., `api`, `tsctl`, `frontend`).
+
+### B. General Principles
 
 1.  **Clarity:** Documentation should be clear, concise, and easy to understand.
 2.  **Accuracy:** Documentation should be accurate and up-to-date.
@@ -59,7 +74,7 @@ This style guide outlines the coding and documentation standards for the Gemini 
 4.  **Consistency:** Maintain a consistent style throughout the documentation.
 5.  **Audience:** Consider the intended audience when writing documentation.
 
-### B. Documentation Types
+### C. Documentation Types
 
 1.  **Code Comments:**
     *   Explain non-obvious code or complex logic.
@@ -86,7 +101,7 @@ This style guide outlines the coding and documentation standards for the Gemini 
     *   Provide step-by-step instructions.
     *   Include examples and code snippets.
 
-### C. Markdown Formatting
+### D. Markdown Formatting
 
 1.  **Headings:** Use headings to organize the documentation.
 2.  **Lists:** Use lists to present items in a clear and concise way.
@@ -117,6 +132,7 @@ This style guide outlines the coding and documentation standards for the Gemini 
 3.  **Make your changes and commit them.**
 4.  **Push your changes to your fork.**
 5.  **Create a pull request.**
+ 6.  **Run linters locally (`black`, `pylint`, `eslint`) before submitting to catch style issues early.**
 6.  **Address any feedback from the reviewers.**
 
 ### D. Testing
