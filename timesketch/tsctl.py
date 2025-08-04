@@ -1942,28 +1942,32 @@ def _convert_event_data(
                             writer.writerow(csv_row)
                         except json.JSONDecodeError:
                             print(
-                                f"  WARNING: Skipping invalid JSON line: {line[:100]}..."  # pylint: disable=line-too-long
+                                "  WARNING: Skipping invalid JSON line: "
+                                f"{line[:100]}..."
                             )
                         except Exception as row_err:  # pylint: disable=broad-except
                             print(
-                                f"  WARNING: Error processing row: {row_err}"
-                                f" - Line: {line[:100]}..."
+                                f"  WARNING: Error processing row: {row_err} "
+                                f"- Line: {line[:100]}..."
                             )
 
                 event_data_bytes = output_csv.getvalue().encode("utf-8")
 
             except json.JSONDecodeError as first_line_error:
                 print(
-                    f"  ERROR parsing first JSON line for CSV headers: {first_line_error}"  # pylint: disable=line-too-long
+                    "  ERROR parsing first JSON line for CSV headers: "
+                    f"{first_line_error}"
                 )
-                print(
+                message = (
                     f"  Content of first line:"
                     f"{jsonl_data[first_valid_line_index][:200]}..."
                 )
+                print(message)
                 print(traceback.format_exc())
                 raise  # Re-raise to stop execution
             except Exception as conversion_error:  # pylint: disable=broad-except
-                print(f"  ERROR converting JSONL to CSV: {conversion_error}")
+                message = f"  ERROR converting JSONL to CSV: {conversion_error}"
+                print(message)
                 print(traceback.format_exc())
                 raise  # Re-raise to stop execution
         else:
@@ -1982,13 +1986,12 @@ def _convert_event_data(
                     dialect = csv.Sniffer().sniff(csv_input.read(1024))
                     csv_input.seek(0)
                     reader = csv.DictReader(csv_input, dialect=dialect)
-                    print(
+                    message = (
                         f"    Detected CSV dialect: delimiter='{dialect.delimiter}'"
-                    )  # pylint: disable=line-too-long
+                    )
+                    print(message)
                 except csv.Error:
-                    print(
-                        "    Could not detect CSV dialect, assuming comma delimiter."
-                    )  # pylint: disable=line-too-long
+                    print("    Could not detect CSV dialect, assuming comma delimiter.")
                     csv_input.seek(0)
                     reader = csv.DictReader(csv_input)
 
@@ -2070,7 +2073,6 @@ def _create_export_archive(
     required=False,
     help=(
         "Filename for the output zip archive. "
-        f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
         f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
     ),
 )
@@ -2194,8 +2196,11 @@ def check_opensearch_links():
 
     try:
         # Get all existing indices from OpenSearch in a single API call.
+        # ignore_unavailable=True is a valid argument
+        # pylint: disable-next=unexpected-keyword-arg
         existing_indices_info = datastore.client.indices.get(
-            index=list(db_index_names), ignore_unavailable=True
+            index=list(db_index_names),
+            ignore_unavailable=True,
         )
         existing_os_index_names = set(existing_indices_info.keys())
 
@@ -2204,7 +2209,8 @@ def check_opensearch_links():
 
         if not missing_index_names:
             print(
-                "No broken links found. All database search indices exist in OpenSearch."
+                "No broken links found. All database search"
+                " indices exist in OpenSearch."
             )
             return
 
@@ -2214,23 +2220,27 @@ def check_opensearch_links():
         for index_name in sorted(list(missing_index_names)):
             search_index = search_indices_map.get(index_name)
             print(
-                f"BROKEN LINK: DB record for index '{index_name}' (ID: {search_index.id}) "
+                f"BROKEN LINK: DB record for index '{index_name}' "
+                f"(ID: {search_index.id}) "
                 f"exists, but the index is MISSING in OpenSearch."
             )
             for timeline in search_index.timelines:
                 if timeline.sketch:
                     print(
-                        f"  - Associated with Timeline '{timeline.name}' (ID: {timeline.id}) "
-                        f"in Sketch '{timeline.sketch.name}' (ID: {timeline.sketch.id})"
+                        f"  - Associated with Timeline '{timeline.name}'"
+                        f" (ID: {timeline.id})"
+                        f" in Sketch '{timeline.sketch.name}'"
+                        f" (ID: {timeline.sketch.id})"
                     )
                 else:
                     print(
-                        f"  - Associated with Timeline '{timeline.name}' (ID: {timeline.id}) "
+                        f"  - Associated with Timeline '{timeline.name}' "
+                        f"(ID: {timeline.id}) "
                         f"which has no associated sketch (orphaned)."
                     )
         print("\nCheck complete. Broken links found as listed above.")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"ERROR communicating with OpenSearch while checking indices: {e}")
         return
 
@@ -2262,7 +2272,8 @@ def check_db_orphaned_data(verbose_checks: bool):
         nonlocal found_orphans_overall
         if verbose_checks_enabled:
             print(
-                f"\nChecking for orphaned {description} ({ModelClass.__name__} records)..."  # pylint: disable=line-too-long
+                f"\nChecking for orphaned {description} "
+                f"({ModelClass.__name__} records)..."
             )
         orphaned_count = 0
         all_records = ModelClass.query.all()
@@ -2280,7 +2291,8 @@ def check_db_orphaned_data(verbose_checks: bool):
                     # This is the first orphan found for this check type, print header
                     if orphaned_count == 0 and not verbose_checks_enabled:
                         print(
-                            f"\nFound orphaned {description} ({ModelClass.__name__} records):"  # pylint: disable=line-too-long
+                            f"\nFound orphaned {description} "
+                            f"({ModelClass.__name__} records):"
                         )
 
                     record_info_parts = [f"ID={record.id}"]
@@ -2321,9 +2333,11 @@ def check_db_orphaned_data(verbose_checks: bool):
                     record_info = ", ".join(record_info_parts)
                     print(
                         f"  ORPHANED {ModelClass.__name__}: {record_info}, "
-                        f"linked to non-existent {ParentModelClass.__name__} ID={parent_id} "  # pylint: disable=line-too-long
+                        "linked to "
+                        f"non-existent {ParentModelClass.__name__} ID={parent_id} "
                         f"via {fk_attr_name}"
                     )
+
                     orphaned_count += 1
                     found_orphans_overall = True
 
@@ -2332,7 +2346,8 @@ def check_db_orphaned_data(verbose_checks: bool):
                 print(f"  No orphaned {description} ({ModelClass.__name__}) found.")
         elif verbose_checks_enabled:  # Only print count if verbose and orphans found
             print(
-                f"  Found {orphaned_count} orphaned {description} ({ModelClass.__name__}) record(s)."  # pylint: disable=line-too-long
+                f"  Found {orphaned_count} orphaned {description} "
+                f"({ModelClass.__name__}) record(s)."
             )
 
     # Define checks: (ModelClass, fk_attr_name, ParentModelClass, description_plural)
@@ -2480,11 +2495,12 @@ def check_db_orphaned_data(verbose_checks: bool):
                         f"{mixin_desc_plural} for {parent_model_name_desc}",
                         verbose_checks,
                     )
-            except AttributeError:
+            except AttributeError:  # ParentModel might not use this mixin.
                 pass  # ParentModel might not use this mixin or it's not initialized.
             except Exception as e:  # pylint: disable=broad-except
                 print(
-                    f"  ERROR trying to check {mixin_desc_plural} for {parent_model_name_desc}: {e}"  # pylint: disable=line-too-long
+                    f"  ERROR trying to check {mixin_desc_plural} for "
+                    f"{parent_model_name_desc}: {e}"
                 )
                 found_orphans_overall = True
 
@@ -2586,8 +2602,6 @@ def import_db(filepath, yes):
                     row_count = len(records)
                     click.echo(f"  Importing table: {table_name} ({row_count} rows)")
 
-                    row_count = len(records)
-
                     if not records:
                         continue
 
@@ -2604,7 +2618,7 @@ def import_db(filepath, yes):
                                         record[column.name] = pd.to_datetime(value)
                                     except (ValueError, TypeError):
                                         click.echo(
-                                            f"Warning: Could not parse datetime '{value}' for column '{column.name}' in table '{table_name}'. Setting to NULL.",
+                                            f"Warning: Could not parse datetime '{value}' for column '{column.name}' in table '{table_name}'. Setting to NULL.",  # pylint: disable=line-too-long
                                             err=True,
                                         )
                                         record[column.name] = None
