@@ -5,13 +5,26 @@ hide:
 
 # LLM Features Configuration
 
-Timesketch includes experimental features leveraging Large Language Models (LLMs) to enhance analysis capabilities. These features include event summarization and AI-generated queries (NL2Q - Natural Language to Query). This document outlines the steps required to configure these features for Timesketch administrators.
+Timesketch includes experimental features leveraging Large Language Models (LLMs)
+to enhance analysis capabilities. These features include event summarization and
+AI-generated queries (NL2Q - Natural Language to Query). This document outlines
+the steps required to configure these features for Timesketch administrators.
+
+## Prerequisites
+
+*  For usage of Vertex AI as provider, install `sudo docker exec timesketch-web pip install google-cloud-aiplatform==1.70.0`
+*  For usage of AI Studio as provider, install `sudo docker exec timesketch-web pip install google-generativeai`
 
 ## LLM Provider Configuration
 
-To utilize the LLM features, the Timesketch **administrator** must configure an LLM provider in the `timesketch.conf` file. It's possible to configure a specific LLM provider and model per LLM powered feature, or to use a default provider. For most features we recommend using a fast model (such as `gemini-2.0-flash-001` ) for optimal performance, especially for the event summarization feature.
+To utilize the LLM features, the Timesketch **administrator** must configure an
+LLM provider in the `timesketch.conf` file. It's possible to configure a specific
+LLM provider and model per LLM powered feature, or to use a default provider.
+For most features we recommend using a fast model (such as `gemini-2.0-flash`)
+for optimal performance, especially for the event summarization feature.
 
-Edit your `timesketch.conf` file to include the `LLM_PROVIDER_CONFIGS` dictionary.  Below is a sample configuration with explanations for each parameter.
+Edit your `timesketch.conf` file to include the `LLM_PROVIDER_CONFIGS` dictionary.
+Below is a sample configuration with explanations for each parameter.
 
 ```python
 # LLM provider configs
@@ -63,11 +76,16 @@ LLM_PROVIDER_CONFIGS = {
 }
 ```
 
-**Note:**  While [users can enable/disable these features](../user/llm-features-user.md), the underlying LLM provider and its configuration are managed by the Timesketch administrator. Enabling these features may incur costs depending on the chosen LLM provider. Please review the pricing details of your selected provider before enabling these features.
+**Note:**  While [users can enable/disable these features](../user/llm-features-user.md),
+the underlying LLM provider and its configuration are managed by the Timesketch
+administrator. Enabling these features may incur costs depending on the chosen
+LLM provider. Please review the pricing details of your selected provider before
+enabling these features.
 
 ## Prompt and Data Configuration
 
-Administrators can further customize the behavior of the LLM features by configuring the paths to various prompt and data files within the `timesketch.conf` file.
+Administrators can further customize the behavior of the LLM features by
+configuring the paths to various prompt and data files within the `timesketch.conf` file.
 
 ```python
 # LLM nl2q configuration
@@ -79,10 +97,27 @@ EXAMPLES_NL2Q = '/etc/timesketch/nl2q/examples_nl2q'
 PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_summarize/prompt.txt'
 ```
 
-*   `DATA_TYPES_PATH`: Specifies the path to a CSV file defining common Timesketch data types for the NL2Q feature.
-*   `PROMPT_NL2Q`: Specifies the path to the prompt file used by the NL2Q feature to translate a natural language into a Timesketch search query.
-*   `EXAMPLES_NL2Q`: Specifies the path to the examples file used by the NL2Q feature. This file provides the LLM with examples of natural language queries and their corresponding Timesketch search queries, which help improve the accuracy of the NL2Q feature.
-*   `PROMPT_LLM_SUMMARIZATION`: Specifies the path to the prompt file used by the event summarization feature.  Administrators can modify this file to customize the summarization output to their specific needs. This template allows for injecting the event data into the prompt using Python-style string formatting using curly braces `{}`.
+*   `DATA_TYPES_PATH`: Specifies the path to a CSV file defining common Timesketch
+    data types for the NL2Q feature.
+*   `PROMPT_NL2Q`: Specifies the path to the prompt file used by the NL2Q feature
+    to translate a natural language into a Timesketch search query.
+*   `EXAMPLES_NL2Q`: Specifies the path to the examples file used by the NL2Q feature.
+    This file provides the LLM with examples of natural language queries and their
+    corresponding Timesketch search queries, which help improve the accuracy of the NL2Q feature.
+*   `PROMPT_LLM_SUMMARIZATION`: Specifies the path to the prompt file used by the
+    event summarization feature.  Administrators can modify this file to customize
+    the summarization output to their specific needs. This template allows for
+    injecting the event data into the prompt using Python-style string formatting
+    using curly braces `{}`.
 Timesketch provides some default configuration files for both features:
 * [NL2Q default configuration](https://github.com/google/timesketch/tree/master/data/nl2q).
 * [LLM Summarization default configuration](https://github.com/google/timesketch/tree/master/data/llm_summarize).
+
+
+# AI Investigation Agent
+
+Timesketch can also leverage a dedicated AI agent for in-depth log analysis
+within the Investigation View. If configured, this provides automated generation
+of investigative questions and findings.
+
+For configuration details, see the [Investigation View Setup Guide](./investigation-view-setup.md).
