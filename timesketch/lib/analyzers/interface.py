@@ -946,10 +946,7 @@ class BaseAnalyzer:
         self.tagged_events = {}
         self.emoji_events = {}
 
-        self.datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        self.datastore = OpenSearchDataStore()
 
         # Add AnalyzerOutput instance and set all attributes that can be set
         # automatically

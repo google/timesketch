@@ -43,12 +43,13 @@ Example
 
 ```shell
 tsctl info
-Timesketch version: 20210602
-plaso - psort version 20220930
-Node version: v14.20.1
-npm version: 6.14.17
-yarn version: 1.22.19
-Python version: Python 3.10.6
+Timesketch version: 20250708
+Timesketch commit: 2cb3356b (dirty)
+plaso - psort version 20240308
+Node version: v20.19.1
+npm version: 10.8.2
+yarn version: 1.22.22
+Python version: Python 3.10.12
 pip version: pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
 ```
 
