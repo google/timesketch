@@ -135,9 +135,10 @@ export default {
     },
     tagsAssignedToAll() {
       return this.quickTags.filter((el) =>
-        this.events.every(ev =>
-          ev._source.tag.includes(el.tag)
-        )
+        this.events.every(ev => {
+          const tag = ev._source.tag || []
+          return tag.includes(el.tag)
+        })
       ).map(t => t.tag);
     },
     customTags() {
