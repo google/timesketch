@@ -152,9 +152,8 @@ def login():
             db_session.commit()
 
     # Login form POST
-    # pylint: disable=using-constant-test
     form = UsernamePasswordForm()
-    if form.validate_on_submit:
+    if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if user.check_password(plaintext=form.password.data):

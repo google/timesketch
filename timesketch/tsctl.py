@@ -18,10 +18,10 @@ import pathlib
 import json
 import re
 import logging
-import subprocess
 import time
 import io
 import zipfile
+import subprocess
 import csv
 import datetime
 import traceback
@@ -288,7 +288,39 @@ def grant_group(group_name, sketch_id, read_only):
 @cli.command(name="version")
 def get_version():
     """Return the version information of Timesketch."""
-    print(f"Timesketch version: {version.get_version()}")
+    timesketch_path = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(timesketch_path, ".."))
+    git_dir = os.path.join(project_root, ".git")
+    version_string = version.__version__
+
+    if os.path.isdir(git_dir):
+        try:
+            # Get the short commit hash
+            p_hash = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+                check=False,
+            )
+            if p_hash.returncode == 0 and p_hash.stdout:
+                version_string = p_hash.stdout.strip()
+
+                # Check if the repository is dirty (has uncommitted changes)
+                p_dirty = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=project_root,
+                    check=False,
+                )
+                if p_dirty.returncode == 0 and p_dirty.stdout:
+                    version_string += "-dirty"
+        except OSError:
+            # Not a git repo or git is not installed.
+            pass
+
+    print(f"Timesketch version: {version_string}")
 
 
 @cli.command(name="drop-db")
@@ -617,10 +649,60 @@ def export_sigma_rules(path):
 
 @cli.command(name="info")
 def info():
-    """Get various information about the environment that runs Timesketch."""
+    """Display detailed information about the Timesketch environment.
 
-    # Get Timesketch version
-    print(f"Timesketch version: {version.get_version()}")
+    This command provides a comprehensive overview of the Timesketch installation
+    and its environment, including version information, commit details (if
+    applicable), and the versions of key dependencies.
+
+    The output includes:
+        - Timesketch version and, if available, the Git commit hash (with a
+          "-dirty" suffix if there are uncommitted changes).
+        - Versions of essential tools like psort (from Plaso), Node.js, npm, yarn,
+          Python, and pip.
+    """
+    print(f"Timesketch version: {version.get_version()}")  # Displays Timesketch version
+
+    timesketch_path = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(
+        os.path.join(timesketch_path, "..")
+    )  # Project root directory
+    git_dir = os.path.join(project_root, ".git")  # Path to the .git directory
+    if os.path.isdir(git_dir):
+        try:
+            # Get the short commit hash
+            p_hash = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+                check=False,
+            )
+            if (
+                p_hash.returncode == 0 and p_hash.stdout
+            ):  # Check for successful git execution and output
+                commit_hash = p_hash.stdout.strip()
+
+                # Check if the repository is dirty (has uncommitted changes)
+                p_dirty = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=project_root,
+                    check=False,
+                )
+                if p_dirty.returncode == 0 and p_dirty.stdout:
+                    commit_hash += "-dirty"
+                timesketch_commit = commit_hash
+        except OSError:
+            # Not a git repo or git is not installed.
+            pass
+
+        if timesketch_commit.endswith("-dirty"):
+            timesketch_commit = timesketch_commit.replace("-dirty", "")
+            print(f"Timesketch commit: {timesketch_commit} (dirty)")
+        else:
+            print(f"Timesketch commit: {timesketch_commit}")
 
     # Get plaso version
     try:
@@ -2054,10 +2136,7 @@ def export_sketch(
 
         # 2. Fetch and Prepare Event Data
         # Get datastore instance
-        datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        datastore = OpenSearchDataStore()
 
         if default_fields:
             print(
