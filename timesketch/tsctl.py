@@ -962,10 +962,6 @@ def timeline_status(timeline_id: int, action: str, status: str):
             ]
             for ds in timeline.datasources:
                 error_message = ds.error_message or "N/A"
-                # Truncate long error messages for display
-                if len(error_message) > 100:
-                    error_message = error_message[:97] + "..."
-
                 ds_table_data.append(
                     [
                         ds.id,
