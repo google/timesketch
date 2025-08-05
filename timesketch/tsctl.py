@@ -950,6 +950,34 @@ def timeline_status(timeline_id: int, action: str, status: str):
         print("Status:")
         print_table(status_table)
 
+        print("\nData Sources:")
+        if timeline.datasources:
+            ds_table_data = [
+                [
+                    "ID",
+                    "File Path",
+                    "Status",
+                    "Error Message",
+                ],
+            ]
+            for ds in timeline.datasources:
+                error_message = ds.error_message or "N/A"
+                # Truncate long error messages for display
+                if len(error_message) > 100:
+                    error_message = error_message[:97] + "..."
+
+                ds_table_data.append(
+                    [
+                        ds.id,
+                        ds.file_on_disk,
+                        ds.get_status.status,
+                        error_message,
+                    ]
+                )
+            print_table(ds_table_data)
+        else:
+            print("No data sources found for this timeline.")
+
     elif action == "set":
         timeline = Timeline.query.filter_by(id=timeline_id).first()
         if not timeline:
