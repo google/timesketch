@@ -13,7 +13,8 @@
 # limitations under the License.
 """Generates a synthesized summary from investigative conclusions using a Large Language Model (LLM).
 
-This feature takes an investigative question and all associated conclusions, formats them into a single prompt, and sends it to an LLM. The LLM then synthesizes these conclusions into a coherent summary, which is returned as a final response. This helps analysts quickly understand the overall findings without reading each conclusion individually."""
+This feature takes an investigative question and all associated conclusions, formats them into a single prompt, and sends it to an LLM. The LLM then synthesizes these conclusions into a coherent summary, which is returned as a final response. This helps analysts quickly understand the overall findings without reading each conclusion individually.
+"""
 
 import logging
 from typing import Any
