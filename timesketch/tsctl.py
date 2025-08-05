@@ -970,7 +970,7 @@ def timeline_status(timeline_id: int, action: str, status: str):
                     [
                         ds.id,
                         ds.file_on_disk,
-                        ds.get_status.status,
+                        (ds.status[-1].status if ds.status else "N/A"),
                         error_message,
                     ]
                 )
