@@ -15,11 +15,11 @@ Find links for all the topics we talked about below.
 
 *  [General Timesketch Setup Guide](/guides/admin/install/)
 *  [Enable the Investigation View](/guides/admin/investigation-view-setup/)
-*  [How to experiment and connect with AI Agents for Log Analysis](/developers/log-analyzer-agent/)
+*  [How to experiment and connect with AI Capability for Log Analysis](/developers/log-analyzer-agent/)
 
-### Sec-Gemini Log Reasoning Agent
+### Sec-Gemini Log Analysis Capability
 
-Sec-Gemini and its Log Reasoning Agent are experimental research. The team is
+Sec-Gemini and its Log Analysis Capability are experimental research. The team is
 looking for trusted testers for access to the Log Reasoning Capabilities:
 
 * [Trusted Tester Application Form](https://forms.gle/KLjyct4gpwrbifvKA)
