@@ -53,7 +53,7 @@ export const compactNumber = (input) => {
 };
 
 export const formatTimestamp = (input) => {
-  if (!input) {
+  if (input === null || input === undefined) {
     return null;
   }
   let tsLength = parseInt(input).toString().length;
@@ -62,13 +62,13 @@ export const formatTimestamp = (input) => {
   } else if (tsLength === 15 || tsLength === 16) {
     input = input / 1000; // microseconds -> milliseconds
   } else if (tsLength === 10) {
-    input = input * 1000000; // seconds -> milliseconds
+    input = input * 1000; // seconds -> milliseconds
   }
   return parseInt(input);
 };
 
 export const toISO8601 = (timestampMillis) => {
-  if (!timestampMillis) {
+  if (timestampMillis === null || timestampMillis === undefined) {
     return null;
   }
   if (timestampMillis < 0) {
