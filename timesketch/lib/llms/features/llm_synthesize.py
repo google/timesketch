@@ -11,9 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Generates a synthesized summary from investigative conclusions using a Large Language Model (LLM).
+"""Generates a synthesized summary from investigative conclusions using a
+Large Language Model (LLM).
 
-This feature takes an investigative question and all associated conclusions, formats them into a single prompt, and sends it to an LLM. The LLM then synthesizes these conclusions into a coherent summary, which is returned as a final response. This helps analysts quickly understand the overall findings without reading each conclusion individually.
+This feature takes an investigative question and all associated conclusions,
+formats them into a single prompt, and sends it to an LLM. The LLM then
+synthesizes these conclusions into a coherent summary, which is returned as a
+final response. This helps analysts quickly understand the overall findings
+without reading each conclusion individually.
 """
 
 import logging
