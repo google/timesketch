@@ -1113,6 +1113,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#3-connecting-the-llm-answer-drafting-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Connecting the LLM Answer Drafting feature
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-connecting-the-ai-investigation-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Connecting the AI Investigation Agent
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2088,6 +2106,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#3-connecting-the-llm-answer-drafting-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Connecting the LLM Answer Drafting feature
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-connecting-the-ai-investigation-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Connecting the AI Investigation Agent
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2174,12 +2210,10 @@ settings in your <code>timesketch.conf</code> file. We also recommend to ensure 
 <li>Open your <code>timesketch.conf</code> file for editing. This file is typically
     located in <code>etc/timesketch/</code> within your main Timesketch data directory.</li>
 <li>
-<p>Find and set the following variables to <code>True</code>:</p>
-<p>```python</p>
-<h1 id="in-etctimesketchtimesketchconf">In /etc/timesketch/timesketch.conf</h1>
-<p>DFIQ_ENABLED = True
-ENABLE_V3_INVESTIGATION_VIEW = True
-```</p>
+<p>Find and set the following variables to <code>True</code> in your <code>/etc/timesketch/timesketch.conf</code>:</p>
+<p><code>bash
+DFIQ_ENABLED = True
+ENABLE_V3_INVESTIGATION_VIEW = True</code></p>
 </li>
 </ul>
 </li>
@@ -2194,11 +2228,9 @@ from the official DFIQ repository.</p>
 <p><strong>Restart Timesketch:</strong></p>
 <p>For the configuration changes to take effect, you must restart your Docker
 containers.</p>
-<p>```python</p>
-<h1 id="in-your-timesketch-directory-eg-opttimesketch">In your Timesketch directory (e.g., /opt/timesketch)</h1>
-<p>sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
-sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
-```</p>
+<p><code>bash
+sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d</code></p>
 </li>
 <li>
 <p><strong>Verification:</strong></p>
@@ -2229,11 +2261,11 @@ Timesketch sends all timeline data to an external AI service defined in the
 <code>timesketch.conf</code> file for the <code>log_analyzer</code> feature. This service processes
 the data and sends back structured findings and questions.</p>
 <blockquote>
-<p><strong>IMPORTANT 1</strong>: We have developed and tested the AI feature with the experimental
-Sec-Gemini Log Reasoning Agent. Sec-Gemini and the Agent are not open-source,
-and not yet openly available.
+<p><strong>IMPORTANT 1</strong>: We have developed and tested the AI Log Reasoning feature with
+the experimental Sec-Gemini Log Reasoning Agent. The Log Reasoning capability is
+still an research project, not meant for commercial use cases.
 However, if you want to apply for trusted tester access, you can do this via this
-form: https://bit.ly/46x9GLr</p>
+form: https://forms.gle/KLjyct4gpwrbifvKA</p>
 <p><strong>IMPORTANT 2</strong>: We encurage everyone to experiment with their own AI Agent
 frameworks. Head to the <a href="/developers/log-analyzer-agent/">developer section</a>
 to learn more about how to design and deploy your own provider file and what
@@ -2251,7 +2283,7 @@ Log Reasoning Agent, you need to tell Timesketch how to communicate with it.
     custom provider endpoint or the Sec-Gemini service.</p>
 <p><strong>Example Configuration:</strong></p>
 <p>```python</p>
-<h1 id="in-etctimesketchtimesketchconf_1">In /etc/timesketch/timesketch.conf</h1>
+<h1 id="in-etctimesketchtimesketchconf">In /etc/timesketch/timesketch.conf</h1>
 <p>LLM_PROVIDER_CONFIGS = {
     # ... other feature configs ...</p>
 <pre><code>'log_analyzer':
