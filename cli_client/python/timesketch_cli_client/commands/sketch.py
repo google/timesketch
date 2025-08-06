@@ -308,6 +308,54 @@ def remove_label(ctx: click.Context, label: str) -> None:
     click.echo("Label removed.")
 
 
+@sketch_group.command("delete", help="Delete a sketch, default will only do a dry-run")
+@click.option(
+    "--force_delete",
+    required=False,
+    is_flag=True,
+    help="Only execute the deletion if this is set.",
+)
+@click.pass_context
+def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
+    """Delete a sketch.
+
+    By default, a sketch will not be deleted. To execute the deletion provide the
+    flag --force_delete.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+        force_delete (bool): If true, delete immediately.
+    """
+    sketch = ctx.obj.sketch
+    # if sketch is archived, exit
+    if sketch.is_archived():
+        click.echo("Error Sketch is archived")
+        ctx.exit(1)
+
+    # Dryrun:
+    if not force_delete:
+        click.echo("Would delete the following things (use --force_delete to execute)")
+    click.echo(
+        f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
+    )
+
+    for timeline in sketch.list_timelines():
+        click.echo(
+            f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
+        )
+
+    if force_delete:
+        # --- Check the response for success or error ---
+        try:
+            sketch.delete(force_delete=force_delete)
+            click.echo(f"Sketch {sketch.id} '{sketch.name}' successfully deleted.")
+        except RuntimeError as e:
+            click.echo(
+                f"Failed to delete sketch {sketch.id} '{sketch.name}'. Error: {e}"
+            )
+            return
+
+
 @sketch_group.command(
     "export-only-with-annotations",
     help="Export events with comments, stars, OR labels.",  # Updated help
