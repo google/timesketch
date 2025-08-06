@@ -73,10 +73,9 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
 
     *   Open your `timesketch.conf` file for editing. This file is typically
         located in `etc/timesketch/` within your main Timesketch data directory.
-    *   Find and set the following variables to `True`:
-
-        ```python
-        # In /etc/timesketch/timesketch.conf
+    *   Find and set the following variables to `True` in your `/etc/timesketch/timesketch.conf`:
+  
+        ```bash
         DFIQ_ENABLED = True
         ENABLE_V3_INVESTIGATION_VIEW = True
         ```
@@ -93,8 +92,7 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
     For the configuration changes to take effect, you must restart your Docker
     containers.
 
-    ```python
-    # In your Timesketch directory (e.g., /opt/timesketch)
+    ```bash
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
     ```
@@ -130,11 +128,11 @@ Timesketch sends all timeline data to an external AI service defined in the
 `timesketch.conf` file for the `log_analyzer` feature. This service processes
 the data and sends back structured findings and questions.
 
-> **IMPORTANT 1**: We have developed and tested the AI feature with the experimental
-> Sec-Gemini Log Reasoning Agent. Sec-Gemini and the Agent are not open-source,
-> and not yet openly available.
+> **IMPORTANT 1**: We have developed and tested the AI Log Reasoning feature with
+> the experimental Sec-Gemini Log Reasoning Agent. The Log Reasoning capability is
+> still an research project, not meant for commercial use cases.
 > However, if you want to apply for trusted tester access, you can do this via this
-> form: https://bit.ly/46x9GLr
+> form: https://forms.gle/KLjyct4gpwrbifvKA
 
 > **IMPORTANT 2**: We encurage everyone to experiment with their own AI Agent
 > frameworks. Head to the [developer section](/developers/log-analyzer-agent/)
