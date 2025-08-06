@@ -26,8 +26,9 @@ looking for trusted testers for access to the Log Reasoning Capabilities:
 
 #### Exploration Graph & Killchain
 
-<TBD>
+![AI Exploration Graph Example](/assets/images/AI-Exploration-Graph.jpg)
 
+![Coin Mining Kill Chain Example](/assets/images/CoinMinerKillChain.jpg)
 
 ## Talks & Demos
 
