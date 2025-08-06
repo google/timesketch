@@ -13,7 +13,7 @@ This requirement necessitates a robust, asynchronous, and streaming-native archi
 
 This guide provides a technical deep dive into the components that power this
 feature and outlines the API contract required to connect your own compatible log
-reasoning agent.
+analysis capability.
 
 #### Architectural Overview: A Hybrid Approach
 
