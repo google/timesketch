@@ -187,26 +187,10 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Returns:
             Any: A mock response indicating this method shouldn't be used.
         """
-        logger.warning(
-            "SecGemini Log Analyzer.generate() was called. This method is not "
-            "intended for streaming log analysis with SecGemini. Use "
-            "generate_stream_from_logs."
-        )
-        return json.dumps(
-            [
-                {
-                    "log_name": "fs:stat",
-                    "record_id": "placeholder_static_id_1",
-                    "annotations": [
-                        {
-                            "attack_stage": "execution",
-                            "investigative_question": "Mock question for fs:stat?",
-                            "conclusions": ["Static mock conclusion for fs:stat."],
-                        }
-                    ],
-                    "entities": [{"type": "file", "value": "/tmp/static_mock_file"}],
-                }
-            ]
+        raise NotImplementedError(
+            "The 'generate' method is not supported by the "
+            "SecGeminiLogAnalyzer provider. Use 'generate_stream_from_logs' "
+            "for streaming analysis."
         )
 
     def get_statistics(self) -> Dict[str, int]:
