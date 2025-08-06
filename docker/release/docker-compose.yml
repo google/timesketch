@@ -22,9 +22,9 @@ services:
     profiles:
       - "legacy-ui"
     volumes:
-      - ./etc/timesketch:/etc/timesketch/
-      - ./upload:/usr/share/timesketch/upload/
-      - ./logs:/var/log/timesketch/
+      - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
+      - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
 
   # [WIP] Add "--profile v3-ui" to your docker compose command to use the vue3 UI
   timesketch-web-v3:
@@ -40,7 +40,6 @@ services:
       - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
-      - ./docker/app:/usr/local/src/timesketch
 
   timesketch-worker:
     container_name: timesketch-worker
