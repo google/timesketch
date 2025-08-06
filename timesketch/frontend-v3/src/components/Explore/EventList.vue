@@ -743,6 +743,11 @@ export default {
         return this.eventList.objects.find(o => o._id === id)
       })
     },
+    selectedEvents() {
+      return this.selectedEventIds.map(id => {
+        return this.eventList.objects.find(o => o._id === id);
+      });
+    },
     sketch() {
       return this.appStore.sketch
     },
