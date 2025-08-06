@@ -641,19 +641,6 @@ export default {
       formData
     );
   },
-  addConclusionEvents(sketchId, questionId, conclusionId, conclusionEvents) {
-    let formData = { conclusionEvents: 1 };
-    return RestApiClient.put(
-      "/sketches/" +
-        sketchId +
-        "/questions/" +
-        questionId +
-        "/conclusions/" +
-        conclusionId +
-        "/",
-      formData
-    );
-  },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
     return RestApiClient.delete(
       "/sketches/" +
