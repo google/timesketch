@@ -37,6 +37,7 @@ from timesketch.lib.analyzers import yetiindicators
 from timesketch.lib.analyzers import win_crash
 from timesketch.lib.analyzers import win_evtxgap
 from timesketch.lib.analyzers import tagger
+from timesketch.lib.analyzers import llm_log_analyzer
 
 import timesketch.lib.analyzers.authentication
 import timesketch.lib.analyzers.contrib
