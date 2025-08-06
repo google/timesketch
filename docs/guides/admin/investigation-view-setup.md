@@ -114,12 +114,12 @@ answer based on conclusions) that can be enabled with default LLM services.
 3. Ensure the prompt file configured in `PROMPT_LLM_SYNTHESIZE` exists and the
    prompt works for your needs.
 
-### 4. Connecting the AI Investigation Agent
+### 4. Connecting the AI Investigation Capabilities 
 
 The Investigation View includes an experimental AI mode designed to support workflows
-utilizing AI Log Reasoning Agents wich automate the generation of key findings
+utilizing AI Log Analysis Capabilities wich automate the generation of key findings
 and investigative questions by analyzing timeline data. This feature is powered
-by a dedicated AI agent service that must be configured by an administrator.
+by a dedicated AI service that must be configured by an administrator.
 
 **How it Works**
 
@@ -129,22 +129,22 @@ Timesketch sends all timeline data to an external AI service defined in the
 the data and sends back structured findings and questions.
 
 > **IMPORTANT 1**: We have developed and tested the AI Log Reasoning feature with
-> the experimental Sec-Gemini Log Reasoning Agent. The Log Reasoning capability is
+> the experimental Sec-Gemini Log Analysis Capabilities. The Log Analysis capability is
 > still an research project, not meant for commercial use cases.
 > However, if you want to apply for trusted tester access, you can do this via this
 > form: https://forms.gle/KLjyct4gpwrbifvKA
 
-> **IMPORTANT 2**: We encurage everyone to experiment with their own AI Agent
+> **IMPORTANT 2**: We encurage everyone to experiment with their own AI
 > frameworks. Head to the [developer section](/developers/log-analyzer-agent/)
 > to learn more about how to design and deploy your own provider file and what
 > Timesketch expects as response format to work with the AI Investigation View Mode.
 
 **Configuration Steps:**
 
-1.  **Configure the Agent Endpoint in `timesketch.conf`:**
+1.  **Configure the AI Endpoint in `timesketch.conf`:**
 
-    Once your agent is running, or you have gotten access to Sec-Gemini's
-    Log Reasoning Agent, you need to tell Timesketch how to communicate with it.
+    Once your AI service is running, or you have gotten access to Sec-Gemini's
+    Log Analysis , you need to tell Timesketch how to communicate with it.
     *   Open your `timesketch.conf` file for editing.
     *   Locate the `LLM_PROVIDER_CONFIGS` dictionary.
     *   Within this dictionary, configure the `log_analyzer` section to use your
