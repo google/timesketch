@@ -19,12 +19,14 @@ import json
 
 from typing import Optional, Dict
 from flask_testing import TestCase
+from sqlalchemy import create_engine
+
 
 from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
-from timesketch.models import db_session
+from timesketch.models import db_session, BaseModel
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
@@ -225,7 +227,8 @@ class MockDataStore:
         "timed_out": False,
     }
 
-    def __init__(self, host, port):
+    # pylint: disable=unused-argument
+    def __init__(self, host=None, port=None, **kwargs):
         """Initialize the datastore.
         Args:
             host: Hostname or IP address to the datastore
@@ -718,6 +721,16 @@ class BaseTest(TestCase):
 
 class ModelBaseTest(BaseTest):
     """Base class for database model tests."""
+
+    def setUp(self):
+        super().setUp()  # Call parent setUp if it exists
+        # Configure an in-memory SQLite database for testing
+        self.engine = create_engine("sqlite:///:memory:")
+        # Bind the engine to the session
+        db_session.configure(bind=self.engine)
+        # Create all tables defined in BaseModel.metadata
+        BaseModel.metadata.create_all(self.engine)
+        self.db_session = db_session
 
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""

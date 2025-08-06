@@ -41,6 +41,8 @@ limitations under the License.
         class="mx-3 mt-1"
         append-inner-icon="mdi-magnify"
         @click:append-inner="search()"
+        append-icon="mdi-help-circle-outline"
+        @click:append="showSearchHelp = true"
         @keyup.enter="search()"
       >
         <v-menu
@@ -65,6 +67,11 @@ limitations under the License.
         </v-menu>
       </v-text-field>
     </v-card>
+
+    <!-- Search Help Dialog -->
+    <v-dialog v-model="showSearchHelp" max-width="1800" scrollable>
+      <SearchHelpCard :flat="true" @close-dialog="showSearchHelp = false"></SearchHelpCard>
+    </v-dialog>
 
     <!-- Search History -->
     <v-card
@@ -317,6 +324,7 @@ export default {
       currentQueryFilter: defaultQueryFilter(),
       selectedLabels: [],
       showSearchHistory: false,
+      showSearchHelp: false,
       zoomLevel: 0.7,
       zoomOrigin: {
         x: 0,

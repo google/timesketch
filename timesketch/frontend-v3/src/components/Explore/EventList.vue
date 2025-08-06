@@ -30,111 +30,55 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress">
-      Your search
-      <span v-if="currentQueryString">'{{ currentQueryString }}'</span
-      ><span v-if="filterChips.length">
-        in combination with the selected filter terms</span
-      >
-      did not match any events.
-      <br />
-      <br />
-
-      <!-- <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn small depressed v-bind="attrs" v-on="on" title="Save Search">
-              <v-icon left small>mdi-content-save-outline</v-icon>
-              Save search
-            </v-btn>
-          </template>
-
-          <v-card class="pa-4">
-            <h3>Save Search</h3>
-            <br />
-            <v-text-field
-              clearable
-              v-model="saveSearchFormName"
-              required
-              placeholder="Name your saved search"
-              outlined
-              dense
-              autofocus
-              @focus="$event.target.select()"
-              :rules="saveSearchNameRules"
-            >
-            </v-text-field>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="saveSearch"
-                :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
-              >
-                Save
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog> -->
-
-      <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
-        <template v-slot:activator="{ props }">
-          <v-btn
-            size="small"
-            variant="tonal"
-            title="Save Search"
-            v-bind="props"
-            prepend-icon="mdi-content-save-outline"
-          >
-            Save this search
-          </v-btn>
-        </template>
-
-        <v-card class="pa-4">
-          <h3>Save Search</h3>
-          <br />
-          <v-text-field
-            clearable
-            v-model="saveSearchFormName"
-            required
-            placeholder="Name your saved search"
-            variant="outlined"
-            density="compact"
-            autofocus
-            @focus="$event.target.select()"
-            :rules="saveSearchNameRules"
-          >
-          </v-text-field>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-            <v-btn
-              color="primary"
-              @click="saveSearch"
-              :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
-            >
-              Save
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <div class="mt-4">
-        <strong>Suggestions</strong>
-        <li>
-          Try different keywords<span v-if="filterChips.length">
-            or filter terms</span
-          >.
-        </li>
-        <li>Try more general keywords.</li>
-        <li>
-          Try fewer keywords<span v-if="filterChips.length">
-            or filter terms</span
-          >.
-        </li>
-      </div>
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+      <ExploreWelcomeCard></ExploreWelcomeCard>
     </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString">
+      <SearchNotFoundCard
+        :current-query-string="currentQueryString"
+        :filter-chips="filterChips"
+        :disable-save-search="disableSaveSearch"
+        @save-search-clicked="saveSearchMenu = true"
+      ></SearchNotFoundCard>
+    </div>
+
+    <v-dialog
+      v-model="saveSearchMenu"
+      v-if="!disableSaveSearch"
+      width="500"
+    >
+      <v-card class="pa-4">
+        <h3>Save Search</h3>
+        <br />
+        <v-text-field
+          clearable
+          v-model="saveSearchFormName"
+          required
+          placeholder="Name your saved search"
+          outlined
+          dense
+          autofocus
+          @focus="$event.target.select()"
+          :rules="saveSearchNameRules"
+        >
+        </v-text-field>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+          <v-btn
+            text
+            color="primary"
+            @click="saveSearch"
+            :disabled="
+              !saveSearchFormName || saveSearchFormName.length > 255
+            "
+          >
+            Save
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- <div v-if="highlightEvent" class="mt-4">
       <strong>Showing context for event:</strong>
@@ -208,6 +152,7 @@ limitations under the License.
         fixed-header
       > -->
       <v-data-table-server
+        v-model="selectedEventIds"
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
         :items="eventList.objects"
@@ -236,7 +181,7 @@ limitations under the License.
       >
         <template v-slot:top="{ pagination, options, updateOptions }">
           <v-toolbar dense flat color="transparent">
-            <div v-if="!selectedEvents.length">
+            <div v-if="!selectedEventIds.length">
               <span style="display: inline-block; min-width: 200px">
                 {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{
                   totalTime
@@ -244,50 +189,12 @@ limitations under the License.
               </span>
 
               <!-- Save search -->
-              <v-dialog
-                v-model="saveSearchMenu"
+              <v-btn
+                icon="mdi-content-save-outline"
+                title="Save current search"
+                @click="saveSearchMenu = true"
                 v-if="!disableSaveSearch"
-                width="500"
-              >
-                <template v-slot:activator="{ props }">
-                  <v-btn icon v-bind="props">
-                    <v-icon title="Save current search"
-                      >mdi-content-save-outline</v-icon
-                    >
-                  </v-btn>
-                </template>
-
-                <v-card class="pa-4">
-                  <h3>Save Search</h3>
-                  <br />
-                  <v-text-field
-                    clearable
-                    v-model="saveSearchFormName"
-                    required
-                    placeholder="Name your saved search"
-                    outlined
-                    dense
-                    autofocus
-                    @focus="$event.target.select()"
-                    :rules="saveSearchNameRules"
-                  >
-                  </v-text-field>
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn
-                      text
-                      color="primary"
-                      @click="saveSearch"
-                      :disabled="
-                        !saveSearchFormName || saveSearchFormName.length > 255
-                      "
-                    >
-                      Save
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
+              ></v-btn>
 
               <!-- Histogram -->
               <v-btn
@@ -419,6 +326,18 @@ limitations under the License.
                 <v-icon left color="amber">mdi-star</v-icon>
                 Toggle star
               </v-btn>
+
+                <v-menu v-model="showEventTagMenu" offset-x :close-on-content-click="false">
+                  <template v-slot:activator="{ props }">
+                    <v-btn x-small outlined v-bind="props">
+                      <v-icon left>mdi-tag-plus-outline</v-icon>
+                      Modify Tags
+                    </v-btn>
+                  </template>
+
+                  <ts-event-tag-dialog :events="selectedEvents" @close="showEventTagMenu = false"></ts-event-tag-dialog>
+
+                </v-menu>
             </div>
 
             <v-spacer></v-spacer>
@@ -659,8 +578,7 @@ import TsEventDetail from "./EventDetail.vue";
 import TsEventTagMenu from "./EventTagMenu.vue";
 import TsEventTags from "./EventTags.vue";
 import TsEventActionMenu from "./EventActionMenu.vue";
-
-
+import TsEventTagDialog from "./EventTagDialog.vue";
 
 const defaultQueryFilter = () => {
   return {
@@ -691,6 +609,7 @@ export default {
     TsEventTags,
     TsEventActionMenu,
     TsBarChart,
+    TsEventTagDialog,
   },
   props: {
     queryRequest: {
@@ -728,6 +647,7 @@ export default {
   },
   data() {
     return {
+      showEventTagMenu: false,
       appStore: useAppStore(),
       columnHeaders: [
         {
@@ -762,7 +682,7 @@ export default {
       },
       currentQueryString: "",
       currentQueryFilter: defaultQueryFilter(),
-      selectedEvents: [],
+      selectedEventIds: [],
       displayOptions: {
         isCompact: false,
         showTags: true,
@@ -781,6 +701,11 @@ export default {
       const totalEvents = this.eventList.meta.summary_event_count;
       const uniqueEvents = this.eventList.meta.summary_unique_event_count;
       return `[experimental] This summary is based on the message field on your current page (${totalEvents} rows, ${uniqueEvents} unique message fields).`;
+    },
+    selectedEvents() {
+      return this.selectedEventIds.map(id => {
+        return this.eventList.objects.find(o => o._id === id);
+      });
     },
     sketch() {
       return this.appStore.sketch;
@@ -1061,7 +986,7 @@ export default {
       }
 
       this.searchInProgress = true;
-      this.selectedEvents = [];
+      this.selectedEventIds = [];
       this.eventList = emptyEventList();
 
       if (resetPagination) {
@@ -1323,7 +1248,7 @@ export default {
             label: "__ts_star",
             num: netStarCountChange,
           });
-          this.selectedEvents = [];
+          this.selectedEventIds = [];
         })
         .catch((e) => {});
     },

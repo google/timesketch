@@ -18,10 +18,10 @@ import pathlib
 import json
 import re
 import logging
-import subprocess
 import time
 import io
 import zipfile
+import subprocess
 import csv
 import datetime
 import traceback
@@ -52,19 +52,35 @@ from timesketch import version
 from timesketch.app import create_app
 from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
-from timesketch.models import db_session
-from timesketch.models import drop_all
-from timesketch.models.user import Group
-from timesketch.models.user import User
+from timesketch.models import db_session, drop_all
 from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Event
-from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
-from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import SearchIndex
-
+from timesketch.models.sketch import (
+    Timeline,
+    View,
+    Event,
+    Story,
+    Aggregation,
+    Attribute,
+    Graph,
+    GraphCache,
+    AggregationGroup,
+    AnalysisSession,
+    SearchHistory,
+    Scenario,
+    Facet,
+    InvestigativeQuestion,
+    DataSource,
+    AttributeValue,
+    FacetTimeFrame,
+    FacetConclusion,
+    InvestigativeQuestionApproach,
+    InvestigativeQuestionConclusion,
+    SearchIndex,
+)  # For mixin checks
+from timesketch.models.user import Group, User
 
 # Default filenames for sketch export
 DEFAULT_EXPORT_METADATA_FILENAME = "metadata.json"
@@ -201,29 +217,120 @@ def revoke_admin(username):
 @cli.command(name="grant-user")
 @click.argument("username")
 @click.option("--sketch_id", type=int, required=True)
-def grant_user(username, sketch_id):
-    """Grant access to a sketch."""
+@click.option("--read-only", is_flag=True, help="Grant only read access to the sketch.")
+def grant_user(username, sketch_id, read_only):
+    """Grant a user access to a specific sketch.
+
+    This command allows an administrator to grant permissions to a user
+    for a given sketch. By default, both 'read' and 'write' permissions
+    are granted. If the '--read-only' flag is provided, only 'read'
+    permission will be granted.
+
+    Args:
+        username (str): The username of the user to grant access to.
+        sketch_id (int): The ID of the sketch to grant access to.
+        read_only (bool): If True, grants only 'read' permission.
+                          Otherwise, grants 'read' and 'write' permissions.
+
+    Prints a confirmation message upon success or an error message
+    if the user or sketch does not exist.
+    """
     sketch = Sketch.get_by_id(sketch_id)
     user = User.query.filter_by(username=username).first()
     if not sketch:
         print("Sketch does not exist.")
-    elif not user:
+        return
+    if not user:
         print(f"User {username} does not exist.")
-    else:
-        sketch.grant_permission(permission="read", user=user)
+        return
+
+    sketch.grant_permission(permission="read", user=user)
+    if not read_only:
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+    print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+
+
+@cli.command(name="grant-group")
+@click.argument("group_name")
+@click.option("--sketch_id", type=int, required=True)
+@click.option("--read-only", is_flag=True, help="Grant only read access to the sketch.")
+def grant_group(group_name, sketch_id, read_only):
+    """Grant a group access to a specific sketch.
+
+    This command allows an administrator to grant permissions to a group
+    for a given sketch. By default, both 'read' and 'write' permissions
+    are granted. If the '--read-only' flag is provided, only 'read'
+    permission will be granted.
+
+    Args:
+        group_name (str): The name of the group to grant access to.
+        sketch_id (int): The ID of the sketch to grant access to.
+        read_only (bool): If True, grants only 'read' permission.
+                          Otherwise, grants 'read' and 'write' permissions.
+
+    Prints a confirmation message upon success or an error message
+    if the group or sketch does not exist.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    group = Group.query.filter_by(name=group_name).first()
+    if not sketch:
+        print("Sketch does not exist.")
+        return
+    if not group:
+        print(f"Group {group_name} does not exist.")
+        return
+    sketch.grant_permission(permission="read", group=group)
+    if not read_only:
+        sketch.grant_permission(permission="write", group=group)
+    print(f"Group {group_name} added to the sketch {sketch.id} ({sketch.name})")
 
 
 @cli.command(name="version")
 def get_version():
     """Return the version information of Timesketch."""
-    print(f"Timesketch version: {version.get_version()}")
+    timesketch_path = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(timesketch_path, ".."))
+    git_dir = os.path.join(project_root, ".git")
+    version_string = version.__version__
+
+    if os.path.isdir(git_dir):
+        try:
+            # Get the short commit hash
+            p_hash = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+                check=False,
+            )
+            if p_hash.returncode == 0 and p_hash.stdout:
+                version_string = p_hash.stdout.strip()
+
+                # Check if the repository is dirty (has uncommitted changes)
+                p_dirty = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=project_root,
+                    check=False,
+                )
+                if p_dirty.returncode == 0 and p_dirty.stdout:
+                    version_string += "-dirty"
+        except OSError:
+            # Not a git repo or git is not installed.
+            pass
+
+    print(f"Timesketch version: {version_string}")
 
 
 @cli.command(name="drop-db")
 def drop_db():
-    """Drop all database tables."""
+    """Permanently remove all database tables.
+
+    This action is irreversible and will result in the loss of all data
+    stored in the Timesketch database, including users, sketches, timelines,
+    and all associated metadata. Use with extreme caution.
+    """
     if click.confirm("Do you really want to drop all the database tables?"):
         if click.confirm(
             "Are you REALLLY sure you want to DROP ALL the database tables?"
@@ -542,10 +649,60 @@ def export_sigma_rules(path):
 
 @cli.command(name="info")
 def info():
-    """Get various information about the environment that runs Timesketch."""
+    """Display detailed information about the Timesketch environment.
 
-    # Get Timesketch version
-    print(f"Timesketch version: {version.get_version()}")
+    This command provides a comprehensive overview of the Timesketch installation
+    and its environment, including version information, commit details (if
+    applicable), and the versions of key dependencies.
+
+    The output includes:
+        - Timesketch version and, if available, the Git commit hash (with a
+          "-dirty" suffix if there are uncommitted changes).
+        - Versions of essential tools like psort (from Plaso), Node.js, npm, yarn,
+          Python, and pip.
+    """
+    print(f"Timesketch version: {version.get_version()}")  # Displays Timesketch version
+
+    timesketch_path = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(
+        os.path.join(timesketch_path, "..")
+    )  # Project root directory
+    git_dir = os.path.join(project_root, ".git")  # Path to the .git directory
+    if os.path.isdir(git_dir):
+        try:
+            # Get the short commit hash
+            p_hash = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+                check=False,
+            )
+            if (
+                p_hash.returncode == 0 and p_hash.stdout
+            ):  # Check for successful git execution and output
+                commit_hash = p_hash.stdout.strip()
+
+                # Check if the repository is dirty (has uncommitted changes)
+                p_dirty = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=project_root,
+                    check=False,
+                )
+                if p_dirty.returncode == 0 and p_dirty.stdout:
+                    commit_hash += "-dirty"
+                timesketch_commit = commit_hash
+        except OSError:
+            # Not a git repo or git is not installed.
+            pass
+
+        if timesketch_commit.endswith("-dirty"):
+            timesketch_commit = timesketch_commit.replace("-dirty", "")
+            print(f"Timesketch commit: {timesketch_commit} (dirty)")
+        else:
+            print(f"Timesketch commit: {timesketch_commit}")
 
     # Get plaso version
     try:
@@ -668,18 +825,38 @@ def sketch_info(sketch_id: int):
     print_table(table_data)
 
     print(f"Created by: {sketch.user.username}")
+    all_permissions = sketch.get_all_permissions()
+
     print("Shared with:")
-    print("\tUsers: (user_id, username)")
+    print("\tUsers: (user_id, username, access_level)")
     if sketch.collaborators:
-        print("\tUsers: (user_id, username)")
         for user in sketch.collaborators:
-            print(f"\t\t{user.id}: {user.username}")
+            user_perm_key = f"user/{user.username}"
+            perms = all_permissions.get(user_perm_key, [])
+            access_level = "unknown"
+            if "write" in perms:  # 'write' permission implies 'read'
+                access_level = "read/write"
+            elif "read" in perms:
+                access_level = "read-only"
+            else:
+                access_level = "none"  # Should not happen if user is a collaborator
+            print(f"\t\t{user.id}: {user.username} ({access_level})")
     else:
         print("\tNo users shared with.")
-    print(f"\tGroups ({len(sketch.groups)}):")
+
+    print(f"\tGroups ({len(sketch.groups)}): (group_name, access_level)")
     if sketch.groups:
         for group in sketch.groups:
-            print(f"\t\t{group.display_name}")
+            group_perm_key = f"group/{group.name}"
+            perms = all_permissions.get(group_perm_key, [])
+            access_level = "unknown"
+            if "write" in perms:  # 'write' permission implies 'read'
+                access_level = "read/write"
+            elif "read" in perms:
+                access_level = "read-only"
+            else:
+                access_level = "none"  # Should not happen if group is listed
+            print(f"\t\t{group.display_name} ({access_level})")
     else:
         print("\tNo groups shared with.")
     sketch_labels = [label.label for label in sketch.labels]
@@ -773,6 +950,30 @@ def timeline_status(timeline_id: int, action: str, status: str):
         print("Status:")
         print_table(status_table)
 
+        print("\nData Sources:")
+        if timeline.datasources:
+            ds_table_data = [
+                [
+                    "ID",
+                    "File Path",
+                    "Status",
+                    "Error Message",
+                ],
+            ]
+            for ds in timeline.datasources:
+                error_message = ds.error_message or "N/A"
+                ds_table_data.append(
+                    [
+                        ds.id,
+                        ds.file_on_disk,
+                        (ds.status[-1].status if ds.status else "N/A"),
+                        error_message,
+                    ]
+                )
+            print_table(ds_table_data)
+        else:
+            print("No data sources found for this timeline.")
+
     elif action == "set":
         timeline = Timeline.query.filter_by(id=timeline_id).first()
         if not timeline:
@@ -786,7 +987,7 @@ def timeline_status(timeline_id: int, action: str, status: str):
         db_session.commit()
         print(f"Timeline {timeline_id} status set to {status}")
         # to verify run:
-        print(f"To verify run: tsctl timeline-status {timeline_id} --action get")
+        print((f"To verify run: tsctl timeline-status {timeline_id} --action get"))
 
 
 @cli.command(name="validate-context-links-conf")
@@ -904,11 +1105,6 @@ def searchindex_info(searchindex_id: int, index_name: str):
         index_name (str): The search index ID to search for (e.g.,
                               "4c5afdf60c6e49499801368b7f238353").
     """
-    if searchindex_id:
-        if not searchindex_id.isdigit():
-            print("Searchindex database ID needs to be an integer.")
-            return
-
     index_to_search = None
 
     if searchindex_id:
@@ -1032,7 +1228,12 @@ def searchindex_status(searchindex_id: str, action: str, status: str):
         db_session.commit()
         print(f"Searchindex {searchindex_id} status set to {status}")
         # to verify run:
-        print(f"To verify run: tsctl searchindex-status {searchindex_id} --action get")
+        print(
+            (
+                f"To verify run: tsctl searchindex-status "
+                f"--searchindex_id {searchindex_id} --action get"
+            )
+        )
 
 
 # Analyzer stats cli command
@@ -1893,6 +2094,7 @@ def _create_export_archive(
     help=(
         "Filename for the output zip archive. "
         f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
+        f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
     ),
 )
 @click.option(
@@ -1958,10 +2160,7 @@ def export_sketch(
 
         # 2. Fetch and Prepare Event Data
         # Get datastore instance
-        datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        datastore = OpenSearchDataStore()
 
         if default_fields:
             print(
@@ -1994,3 +2193,267 @@ def export_sketch(
         print(f"An unexpected error occurred during export: {e}")
         print(traceback.format_exc())
         return
+
+
+@cli.command(name="check-db-orphaned-data")
+@click.option(
+    "--verbose-checks",
+    is_flag=True,
+    default=False,
+    help="Show output for all checks, even those that find no orphans.",
+)
+def check_db_orphaned_data(verbose_checks: bool):
+    """Checks for various types of orphaned data in the database.
+
+    This command looks for records that should have been deleted via
+    cascading rules if their parent objects were removed, particularly
+    in the context of a Sketch deletion or general database integrity.
+    """
+    print("Starting orphaned data check...")
+    found_orphans_overall = False
+
+    def _check_fk_orphans(
+        ModelClass: type,
+        fk_attr_name: str,
+        ParentModelClass: type,
+        description: str,
+        verbose_checks_enabled: bool,
+    ):
+        nonlocal found_orphans_overall
+        if verbose_checks_enabled:
+            print(
+                f"\nChecking for orphaned {description} ({ModelClass.__name__} records)..."  # pylint: disable=line-too-long
+            )
+        orphaned_count = 0
+        all_records = ModelClass.query.all()
+
+        if not all_records:
+            if verbose_checks_enabled:
+                print(f"  No {ModelClass.__name__} records found.")
+            return
+
+        for record in all_records:
+            parent_id = getattr(record, fk_attr_name)
+            if parent_id:
+                parent = ParentModelClass.get_by_id(parent_id)
+                if not parent:
+                    # This is the first orphan found for this check type, print header
+                    if orphaned_count == 0 and not verbose_checks_enabled:
+                        print(
+                            f"\nFound orphaned {description} ({ModelClass.__name__} records):"  # pylint: disable=line-too-long
+                        )
+
+                    record_info_parts = [f"ID={record.id}"]
+                    if hasattr(record, "name") and record.name:
+                        record_info_parts.append(f"Name='{str(record.name)[:50]}'")
+                    elif hasattr(record, "title") and record.title:
+                        record_info_parts.append(f"Title='{str(record.title)[:50]}'")
+                    elif (
+                        hasattr(record, "original_filename")
+                        and record.original_filename
+                    ):
+                        record_info_parts.append(
+                            f"File='{str(record.original_filename)[:50]}'"
+                        )
+                    elif (
+                        hasattr(record, "label")
+                        and record.label
+                        and isinstance(record.label, str)
+                    ):
+                        record_info_parts.append(f"LabelVal='{str(record.label)[:50]}'")
+                    elif (
+                        hasattr(record, "status")
+                        and record.status
+                        and isinstance(record.status, str)
+                    ):
+                        record_info_parts.append(
+                            f"StatusVal='{str(record.status)[:50]}'"
+                        )
+                    elif (
+                        hasattr(record, "comment")
+                        and record.comment
+                        and isinstance(record.comment, str)
+                    ):
+                        record_info_parts.append(
+                            f"Comment='{str(record.comment)[:30]}...'"
+                        )
+
+                    record_info = ", ".join(record_info_parts)
+                    print(
+                        f"  ORPHANED {ModelClass.__name__}: {record_info}, "
+                        f"linked to non-existent {ParentModelClass.__name__} ID={parent_id} "  # pylint: disable=line-too-long
+                        f"via {fk_attr_name}"
+                    )
+                    orphaned_count += 1
+                    found_orphans_overall = True
+
+        if orphaned_count == 0:
+            if verbose_checks_enabled:
+                print(f"  No orphaned {description} ({ModelClass.__name__}) found.")
+        elif verbose_checks_enabled:  # Only print count if verbose and orphans found
+            print(
+                f"  Found {orphaned_count} orphaned {description} ({ModelClass.__name__}) record(s)."  # pylint: disable=line-too-long
+            )
+
+    # Define checks: (ModelClass, fk_attr_name, ParentModelClass, description_plural)
+    fk_checks = [
+        # Direct children of Sketch
+        (Timeline, "sketch_id", Sketch, "Timelines (sketch link)"),
+        (View, "sketch_id", Sketch, "Views (sketch link)"),
+        (Event, "sketch_id", Sketch, "Events (DB metadata, sketch link)"),
+        (Story, "sketch_id", Sketch, "Stories (sketch link)"),
+        (Aggregation, "sketch_id", Sketch, "Aggregations (sketch link)"),
+        (Attribute, "sketch_id", Sketch, "Attributes (sketch link)"),
+        (Graph, "sketch_id", Sketch, "Graphs (sketch link)"),
+        (GraphCache, "sketch_id", Sketch, "GraphCaches (sketch link)"),
+        (AggregationGroup, "sketch_id", Sketch, "AggregationGroups (sketch link)"),
+        (Analysis, "sketch_id", Sketch, "Analyses (sketch link)"),
+        (AnalysisSession, "sketch_id", Sketch, "AnalysisSessions (sketch link)"),
+        (SearchHistory, "sketch_id", Sketch, "SearchHistories (sketch link)"),
+        (Scenario, "sketch_id", Sketch, "Scenarios (sketch link)"),
+        (Facet, "sketch_id", Sketch, "Facets (sketch link)"),
+        (
+            InvestigativeQuestion,
+            "sketch_id",
+            Sketch,
+            "InvestigativeQuestions (sketch link)",
+        ),
+        # Grandchildren and other relations
+        (DataSource, "timeline_id", Timeline, "DataSources (timeline link)"),
+        (Analysis, "timeline_id", Timeline, "Analyses (timeline link)"),
+        (Analysis, "analysissession_id", AnalysisSession, "Analyses (session link)"),
+        (
+            Analysis,
+            "approach_id",
+            InvestigativeQuestionApproach,
+            "Analyses (approach link)",
+        ),
+        (
+            Analysis,
+            "question_conclusion_id",
+            InvestigativeQuestionConclusion,
+            "Analyses (question conclusion link)",
+        ),
+        (AttributeValue, "attribute_id", Attribute, "AttributeValues (attribute link)"),
+        (Aggregation, "view_id", View, "Aggregations (view link)"),
+        (
+            Aggregation,
+            "aggregationgroup_id",
+            AggregationGroup,
+            "Aggregations (group link)",
+        ),
+        (AggregationGroup, "view_id", View, "AggregationGroups (view link)"),
+        (FacetTimeFrame, "facet_id", Facet, "FacetTimeFrames (facet link)"),
+        (FacetConclusion, "facet_id", Facet, "FacetConclusions (facet link)"),
+        (
+            InvestigativeQuestionApproach,
+            "investigativequestion_id",
+            InvestigativeQuestion,
+            "InvestigativeQuestionApproaches (question link)",
+        ),
+        (
+            InvestigativeQuestionConclusion,
+            "investigativequestion_id",
+            InvestigativeQuestion,
+            "InvestigativeQuestionConclusions (question link)",
+        ),
+        (
+            SearchHistory,
+            "parent_id",
+            SearchHistory,
+            "SearchHistories (parent/child link)",
+        ),
+        (SearchHistory, "scenario_id", Scenario, "SearchHistories (scenario link)"),
+        (SearchHistory, "facet_id", Facet, "SearchHistories (facet link)"),
+        (
+            SearchHistory,
+            "question_id",
+            InvestigativeQuestion,
+            "SearchHistories (question link)",
+        ),
+        (
+            SearchHistory,
+            "approach_id",
+            InvestigativeQuestionApproach,
+            "SearchHistories (approach link)",
+        ),
+        (Facet, "scenario_id", Scenario, "Facets (scenario link)"),
+        (
+            InvestigativeQuestion,
+            "scenario_id",
+            Scenario,
+            "InvestigativeQuestions (scenario link)",
+        ),
+        (
+            InvestigativeQuestion,
+            "facet_id",
+            Facet,
+            "InvestigativeQuestions (facet link)",
+        ),
+    ]
+
+    for Model, fk_attr, ParentModel, desc in fk_checks:
+        _check_fk_orphans(Model, fk_attr, ParentModel, desc, verbose_checks)
+
+    # Mixin checks
+    mixin_parent_models = [
+        (Sketch, "Sketch"),
+        (Timeline, "Timeline"),
+        (View, "View"),
+        (Event, "Event (DB metadata)"),
+        (Story, "Story"),
+        (Aggregation, "Aggregation"),
+        (AggregationGroup, "AggregationGroup"),
+        (Analysis, "Analysis"),
+        (Scenario, "Scenario"),
+        (Facet, "Facet"),
+        (InvestigativeQuestion, "InvestigativeQuestion"),
+        (InvestigativeQuestionApproach, "InvestigativeQuestionApproach"),
+        (InvestigativeQuestionConclusion, "InvestigativeQuestionConclusion"),
+        (FacetConclusion, "FacetConclusion"),
+        (SearchIndex, "SearchIndex"),
+        (SearchTemplate, "SearchTemplate"),
+        (SigmaRule, "SigmaRule"),
+        (Group, "Group"),
+    ]
+
+    mixin_types_info = [
+        ("Label", "Labels"),
+        ("Comment", "Comments"),
+        ("Status", "Statuses"),
+        ("GenericAttribute", "GenericAttributes"),
+        ("AccessControlEntry", "AccessControlEntries (ACLs)"),
+    ]
+
+    if verbose_checks:
+        print("\nChecking for orphaned Mixin-based Annotation records...")
+
+    for ParentModel, parent_model_name_desc in mixin_parent_models:
+        for mixin_class_name_suffix, mixin_desc_plural in mixin_types_info:
+            try:
+                AnnotationModel = getattr(ParentModel, mixin_class_name_suffix, None)
+                if AnnotationModel:  # If the mixin is used and class is available
+                    _check_fk_orphans(
+                        AnnotationModel,
+                        "parent_id",
+                        ParentModel,
+                        f"{mixin_desc_plural} for {parent_model_name_desc}",
+                        verbose_checks,
+                    )
+            except AttributeError:
+                pass  # ParentModel might not use this mixin or it's not initialized.
+            except Exception as e:  # pylint: disable=broad-except
+                print(
+                    f"  ERROR trying to check {mixin_desc_plural} for {parent_model_name_desc}: {e}"  # pylint: disable=line-too-long
+                )
+                found_orphans_overall = True
+
+    if not found_orphans_overall:
+        if verbose_checks:
+            print("\nNo orphaned data found based on current checks.")
+        else:
+            print(
+                "No orphaned data found."
+            )  # Minimal output if no orphans and not verbose
+    else:
+        print("\nOrphaned data check complete. Issues found as listed above.")

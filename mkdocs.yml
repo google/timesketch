@@ -37,6 +37,7 @@ nav:
       - Admin CLI: guides/admin/admin-cli.md
       - Context Links: guides/admin/context-links.md
       - LLM Features: guides/admin/llm-features.md
+      - Investigation View: guides/admin/investigation-view-setup.md
       - DFIQ Templates: guides/admin/load-dfiq.md
   - Developers:
       - Getting started: developers/getting-started.md
@@ -49,8 +50,10 @@ nav:
       - CLI client: developers/cli-client.md
       - Analyzers:
           - Create an analyzer: developers/analyzer-development.md
+      - AI Log Analyzer Architecture: developers/log-analyzer-agent.md
   - Changelog:
     - changelog/index.md
+    - changelog/202305-202403.md
     - changelog/2023-05.md
     - changelog/2023-03.md
     - changelog/2023-02.md
@@ -62,8 +65,11 @@ nav:
       - Resources: community/resources.md
       - Roadmap: community/roadmap.md
       - Events:
+          - Black Hat & defcon 2025: community/2025-blackhat.md
           - 2021 Summit: community/2021-timesketch-summit.md
   - Blog: https://osdfir.blogspot.com/search/label/timesketch
+  - Black Hat & defcon 2025:
+      - community/2025-blackhat.md
 plugins:
   - redirects:
       redirect_maps:
