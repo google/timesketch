@@ -153,7 +153,6 @@ the data and sends back structured findings and questions.
     **Example Configuration:**
 
     ```python
-    # In /etc/timesketch/timesketch.conf
     LLM_PROVIDER_CONFIGS = {
         # ... other feature configs ...
 
