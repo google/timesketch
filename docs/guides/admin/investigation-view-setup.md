@@ -19,6 +19,7 @@ alongside the existing Timesketch services. To enable it, you need to activate
 the `v3-ui` profile in your Docker Compose setup.
 
 **Prerequisites:**
+
 *   A standard Timesketch installation using Docker Compose, as outlined in the
     [installation guide](/guides/admin/install/).
 *   If you have an existing Timesketch deployment, please ensure to collect the
@@ -74,7 +75,7 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
         located in `etc/timesketch/` within your main Timesketch data directory.
     *   Find and set the following variables to `True`:
 
-        ```bash
+        ```python
         # In /etc/timesketch/timesketch.conf
         DFIQ_ENABLED = True
         ENABLE_V3_INVESTIGATION_VIEW = True
@@ -92,7 +93,7 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
     For the configuration changes to take effect, you must restart your Docker
     containers.
 
-    ```bash
+    ```python
     # In your Timesketch directory (e.g., /opt/timesketch)
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
@@ -136,9 +137,9 @@ the data and sends back structured findings and questions.
 > form: https://bit.ly/46x9GLr
 
 > **IMPORTANT 2**: We encurage everyone to experiment with their own AI Agent
-> frameworks. Head to the [developer section](#TODO) to learn more about how to
-> design and deploy your own provider file and what Timesketch expects as response
-> format to work with the AI Investigation View Mode.
+> frameworks. Head to the [developer section](/developers/log-analyzer-agent/)
+> to learn more about how to design and deploy your own provider file and what
+> Timesketch expects as response format to work with the AI Investigation View Mode.
 
 **Configuration Steps:**
 
@@ -152,7 +153,8 @@ the data and sends back structured findings and questions.
         custom provider endpoint or the Sec-Gemini service.
 
     **Example Configuration:**
-    ```bash
+
+    ```python
     # In /etc/timesketch/timesketch.conf
     LLM_PROVIDER_CONFIGS = {
         # ... other feature configs ...
@@ -167,6 +169,7 @@ the data and sends back structured findings and questions.
         },
     }
     ```
+
     *   **`server_url`**: This is the API endpoint URL of your deployed AI agent.
     *   **`api_key`**: If your agent requires an API key for authentication, provide it here.
     *   Those values can vary depending on the provider you are using.
@@ -187,4 +190,4 @@ within the Investigation View to accelerate their forensic analysis workflows.
 
 The setup of the AI log reasoning agent provider itself is a developer-focused task.
 Documentation on creating a compatible agent service can be found in the
-[Developer Guides](/developers/#TODO)
+[Developer Guides](/developers/log-analyzer-agent/)

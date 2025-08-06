@@ -1,6 +1,7 @@
 ---
 hide:
   - footer
+  - title
 ---
 ### Developer Deep Dive: The Hybrid AI Log Analyzer Architecture
 
