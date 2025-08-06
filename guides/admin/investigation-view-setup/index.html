@@ -1123,13 +1123,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-connecting-the-ai-investigation-agent" class="md-nav__link">
+  <a href="#4-connecting-the-ai-investigation-capabilities" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Connecting the AI Investigation Agent
+      4. Connecting the AI Investigation Capabilities
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="4. Connecting the AI Investigation Agent">
+    <nav class="md-nav" aria-label="4. Connecting the AI Investigation Capabilities">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2131,13 +2131,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-connecting-the-ai-investigation-agent" class="md-nav__link">
+  <a href="#4-connecting-the-ai-investigation-capabilities" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Connecting the AI Investigation Agent
+      4. Connecting the AI Investigation Capabilities
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="4. Connecting the AI Investigation Agent">
+    <nav class="md-nav" aria-label="4. Connecting the AI Investigation Capabilities">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2280,11 +2280,11 @@ answer based on conclusions) that can be enabled with default LLM services.</p>
 <li>Ensure the prompt file configured in <code>PROMPT_LLM_SYNTHESIZE</code> exists and the
    prompt works for your needs.</li>
 </ol>
-<h3 id="4-connecting-the-ai-investigation-agent">4. Connecting the AI Investigation Agent</h3>
+<h3 id="4-connecting-the-ai-investigation-capabilities">4. Connecting the AI Investigation Capabilities</h3>
 <p>The Investigation View includes an experimental AI mode designed to support workflows
-utilizing AI Log Reasoning Agents wich automate the generation of key findings
+utilizing AI Log Analysis Capabilities wich automate the generation of key findings
 and investigative questions by analyzing timeline data. This feature is powered
-by a dedicated AI agent service that must be configured by an administrator.</p>
+by a dedicated AI service that must be configured by an administrator.</p>
 <p><strong>How it Works</strong></p>
 <p>When a user triggers the "Generate Initial Report" in the Investigation View,
 Timesketch sends all timeline data to an external AI service defined in the
@@ -2292,11 +2292,11 @@ Timesketch sends all timeline data to an external AI service defined in the
 the data and sends back structured findings and questions.</p>
 <blockquote>
 <p><strong>IMPORTANT 1</strong>: We have developed and tested the AI Log Reasoning feature with
-the experimental Sec-Gemini Log Reasoning Agent. The Log Reasoning capability is
+the experimental Sec-Gemini Log Analysis Capabilities. The Log Analysis capability is
 still an research project, not meant for commercial use cases.
 However, if you want to apply for trusted tester access, you can do this via this
 form: https://forms.gle/KLjyct4gpwrbifvKA</p>
-<p><strong>IMPORTANT 2</strong>: We encurage everyone to experiment with their own AI Agent
+<p><strong>IMPORTANT 2</strong>: We encurage everyone to experiment with their own AI
 frameworks. Head to the <a href="/developers/log-analyzer-agent/">developer section</a>
 to learn more about how to design and deploy your own provider file and what
 Timesketch expects as response format to work with the AI Investigation View Mode.</p>
@@ -2304,9 +2304,9 @@ Timesketch expects as response format to work with the AI Investigation View Mod
 <p><strong>Configuration Steps:</strong></p>
 <ol>
 <li>
-<p><strong>Configure the Agent Endpoint in <code>timesketch.conf</code>:</strong></p>
-<p>Once your agent is running, or you have gotten access to Sec-Gemini's
-Log Reasoning Agent, you need to tell Timesketch how to communicate with it.
+<p><strong>Configure the AI Endpoint in <code>timesketch.conf</code>:</strong></p>
+<p>Once your AI service is running, or you have gotten access to Sec-Gemini's
+Log Analysis , you need to tell Timesketch how to communicate with it.
 *   Open your <code>timesketch.conf</code> file for editing.
 *   Locate the <code>LLM_PROVIDER_CONFIGS</code> dictionary.
 *   Within this dictionary, configure the <code>log_analyzer</code> section to use your
