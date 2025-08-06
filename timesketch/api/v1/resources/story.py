@@ -88,10 +88,15 @@ class StoryListResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch.",
             )
 
-        title = ""
-        if form.title.data:
-            title = form.title.data
-        story = Story(title=title, content="[]", sketch=sketch, user=current_user)
+        title = form.title.data
+        content = form.content.data or "[]"
+        labels_to_add = form.labels.data or []
+
+        story = Story(title=title, content=content, sketch=sketch, user=current_user)
+
+        for label_text in labels_to_add:
+            story.add_label(label=str(label_text), user=current_user)
+
         db_session.add(story)
         db_session.commit()
 

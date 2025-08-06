@@ -426,7 +426,7 @@ def _create_question_conclusion(
     """
     approach = InvestigativeQuestionApproach.get_by_id(approach_id)
     if not approach:
-        logging.error("No approach with ID '%d' found.", approach_id)
+        logging.error("No approach with ID '%s' found.", str(approach_id))
         return None
 
     if not analysis_results:
