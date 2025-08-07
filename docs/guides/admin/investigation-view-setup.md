@@ -35,7 +35,7 @@ the `v3-ui` profile in your Docker Compose setup.
 
 1.  **Stop your current Timesketch instance (if running):**
 
-    ```bash
+    ```
     sudo docker compose down
     ```
 
@@ -50,7 +50,7 @@ the `v3-ui` profile in your Docker Compose setup.
     your `docker compose up` command. This tells Docker to also start the
     `timesketch-web-v3` service defined in the compose file.
 
-    ```bash
+    ```
     sudo docker compose --profile v3-ui up -d
     ```
 
@@ -74,8 +74,8 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
     *   Open your `timesketch.conf` file for editing. This file is typically
         located in `etc/timesketch/` within your main Timesketch data directory.
     *   Find and set the following variables to `True` in your `/etc/timesketch/timesketch.conf`:
-  
-        ```bash
+
+        ```
         DFIQ_ENABLED = True
         ENABLE_V3_INVESTIGATION_VIEW = True
         ```
@@ -92,7 +92,7 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
     For the configuration changes to take effect, you must restart your Docker
     containers.
 
-    ```bash
+    ```
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
     ```
@@ -114,7 +114,7 @@ answer based on conclusions) that can be enabled with default LLM services.
 3. Ensure the prompt file configured in `PROMPT_LLM_SYNTHESIZE` exists and the
    prompt works for your needs.
 
-### 4. Connecting the AI Investigation Capabilities 
+### 4. Connecting the AI Investigation Capabilities
 
 The Investigation View includes an experimental AI mode designed to support workflows
 utilizing AI Log Analysis Capabilities wich automate the generation of key findings
@@ -152,7 +152,7 @@ the data and sends back structured findings and questions.
 
     **Example Configuration:**
 
-    ```python
+    ```
     LLM_PROVIDER_CONFIGS = {
         # ... other feature configs ...
 
@@ -175,7 +175,7 @@ the data and sends back structured findings and questions.
     After saving your changes to `timesketch.conf`, restart the Docker containers
     to apply the new configuration.
 
-    ```bash
+    ```
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
     ```
