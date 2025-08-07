@@ -77,6 +77,7 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
 
         ```
         DFIQ_ENABLED = True
+
         ENABLE_V3_INVESTIGATION_VIEW = True
         ```
 
@@ -94,6 +95,7 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
 
     ```
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
     ```
 
@@ -154,7 +156,7 @@ the data and sends back structured findings and questions.
 
     ```
     LLM_PROVIDER_CONFIGS = {
-        # ... other feature configs ...
+        ... other feature configs ...
 
         'log_analyzer':
         {
@@ -177,6 +179,7 @@ the data and sends back structured findings and questions.
 
     ```
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
     ```
 

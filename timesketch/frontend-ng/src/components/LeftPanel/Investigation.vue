@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div v-if="iconOnly" class="pa-4" style="cursor: pointer">
     <a :href="destinationUrl" style="color: inherit; text-decoration: none;">
-      <v-icon left title="AI Investigation">mdi-creation</v-icon>
+      <v-icon left>{{ menuTitle.icon }}</v-icon>
       <div style="height: 1px"></div>
     </a>
   </div>
@@ -56,7 +56,7 @@ export default {
       if (!this.sketch.id) {
         return '#'
       }
-      return `/v3/sketch/${this.sketch.id}/ai-investigation`
+      return `/v3/sketch/${this.sketch.id}/investigation`
     },
   },
 }
