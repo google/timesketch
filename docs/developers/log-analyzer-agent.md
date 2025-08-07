@@ -22,6 +22,7 @@ we've implemented a hybrid architecture that combines Timesketch's existing
 **Analyzer Framework** with the new **LLM Feature and Provider** system.
 
 This approach gives us the best of both worlds:
+
 *   **Asynchronous Execution:** The analysis is triggered as a Celery background
     task, preventing API timeouts and allowing the user to continue working while
     the analysis runs.
@@ -133,10 +134,13 @@ that works with the `log_analyzer` feature.
 **API Contract:**
 
 #### **Endpoint**
+
 Your service must expose an endpoint to receive the log data. The default is `/analyze_logs`.
 
 #### **Request Format**
+
 The provider will send a streaming `POST` request with the following characteristics:
+
 *   **Method:** `POST`
 *   **Headers:**
     *   `Content-Type: application/x-ndjson`
@@ -144,13 +148,16 @@ The provider will send a streaming `POST` request with the following characteris
 *   **Body:** A stream of newline-delimited JSON objects. Each object is a complete Timesketch event.
 
 **Example Request Body (NDJSON stream):**
+
 ```json
 {"_index": "a1b2c3d4...", "_id": "event_id_1", "_source": {"message": "User 'admin' logged in from 192.168.1.100", "timestamp": 1672531200000000, ...}}
 {"_index": "a1b2c3d4...", "_id": "event_id_2", "_source": {"message": "Process 'evil.exe' created by pid 1234", "timestamp": 1672531201000000, ...}}
 ```
 
 #### **Response Format**
+
 Your agent must stream back a response with the following characteristics:
+
 *   **Headers:** `Content-Type: application/x-ndjson`
 *   **Body:** A stream of newline-delimited JSON objects. Each line should be a
     complete, self-contained JSON object representing a question and "finding"
@@ -180,6 +187,7 @@ Each object inside the `annotations` list must have the following structure:
 | `attack_stage` | String | No | A suggested attack stage (e.g., MITRE ATT&CK Tactic). This is stored as a question attribute. |
 
 **Example of a Single Finding Object (one line in the NDJSON stream):**
+
 ```json
 {
   "annotations": [
