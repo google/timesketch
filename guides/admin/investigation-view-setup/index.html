@@ -2203,8 +2203,7 @@ file is located (e.g., <code>/opt/timesketch</code>).</p>
 </li>
 <li>
 <p><strong>Stop your current Timesketch instance (if running):</strong></p>
-<p><code>bash
-sudo docker compose down</code></p>
+<p><code>sudo docker compose down</code></p>
 </li>
 <li>
 <p><strong>Update your nginx.conf</strong></p>
@@ -2218,8 +2217,7 @@ sudo docker compose down</code></p>
 <p>When starting your Timesketch instance, add the <code>--profile v3-ui</code> flag to
 your <code>docker compose up</code> command. This tells Docker to also start the
 <code>timesketch-web-v3</code> service defined in the compose file.</p>
-<p><code>bash
-sudo docker compose --profile v3-ui up -d</code></p>
+<p><code>sudo docker compose --profile v3-ui up -d</code></p>
 <p>Your Timesketch instance will now be running with both the standard UI and
 the new v3 UI container. Your Nginx service will automatically route traffic
 to the appropriate container, so you can access your Timesketch instance
@@ -2241,8 +2239,7 @@ settings in your <code>timesketch.conf</code> file. We also recommend to ensure 
     located in <code>etc/timesketch/</code> within your main Timesketch data directory.</li>
 <li>
 <p>Find and set the following variables to <code>True</code> in your <code>/etc/timesketch/timesketch.conf</code>:</p>
-<p><code>bash
-DFIQ_ENABLED = True
+<p><code>DFIQ_ENABLED = True
 ENABLE_V3_INVESTIGATION_VIEW = True</code></p>
 </li>
 </ul>
@@ -2258,8 +2255,7 @@ from the official DFIQ repository.</p>
 <p><strong>Restart Timesketch:</strong></p>
 <p>For the configuration changes to take effect, you must restart your Docker
 containers.</p>
-<p><code>bash
-sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+<p><code>sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
 sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d</code></p>
 </li>
 <li>
@@ -2312,7 +2308,7 @@ Log Analysis , you need to tell Timesketch how to communicate with it.
 *   Within this dictionary, configure the <code>log_analyzer</code> section to use your
     custom provider endpoint or the Sec-Gemini service.</p>
 <p><strong>Example Configuration:</strong></p>
-<p>```python
+<p>```
 LLM_PROVIDER_CONFIGS = {
     # ... other feature configs ...</p>
 <pre><code>'log_analyzer':
@@ -2336,8 +2332,7 @@ LLM_PROVIDER_CONFIGS = {
 <p><strong>Restart Timesketch:</strong>
     After saving your changes to <code>timesketch.conf</code>, restart the Docker containers
     to apply the new configuration.</p>
-<p><code>bash
-sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+<p><code>sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
 sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d</code></p>
 </li>
 </ol>
