@@ -119,7 +119,10 @@ def create_app(
             pass
 
     # Setup the database.
-    configure_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    configure_engine(
+        app.config["SQLALCHEMY_DATABASE_URI"],
+        app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {}),
+    )
     db = init_db()
 
     # Alembic migration support:
