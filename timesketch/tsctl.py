@@ -30,6 +30,7 @@ import yaml
 import redis
 
 
+import sqlalchemy
 import click
 import pandas as pd
 from flask_restful import marshal
@@ -52,7 +53,7 @@ from timesketch import version
 from timesketch.app import create_app
 from timesketch.app import create_celery_app
 from timesketch.lib import sigma_util
-from timesketch.models import db_session, drop_all
+from timesketch.models import db_session, drop_all, init_db, BaseModel
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
@@ -1965,28 +1966,32 @@ def _convert_event_data(
                             writer.writerow(csv_row)
                         except json.JSONDecodeError:
                             print(
-                                f"  WARNING: Skipping invalid JSON line: {line[:100]}..."  # pylint: disable=line-too-long
+                                "  WARNING: Skipping invalid JSON line: "
+                                f"{line[:100]}..."
                             )
                         except Exception as row_err:  # pylint: disable=broad-except
                             print(
-                                f"  WARNING: Error processing row: {row_err}"
-                                f" - Line: {line[:100]}..."
+                                f"  WARNING: Error processing row: {row_err} "
+                                f"- Line: {line[:100]}..."
                             )
 
                 event_data_bytes = output_csv.getvalue().encode("utf-8")
 
             except json.JSONDecodeError as first_line_error:
                 print(
-                    f"  ERROR parsing first JSON line for CSV headers: {first_line_error}"  # pylint: disable=line-too-long
+                    "  ERROR parsing first JSON line for CSV headers: "
+                    f"{first_line_error}"
                 )
-                print(
+                message = (
                     f"  Content of first line:"
                     f"{jsonl_data[first_valid_line_index][:200]}..."
                 )
+                print(message)
                 print(traceback.format_exc())
                 raise  # Re-raise to stop execution
             except Exception as conversion_error:  # pylint: disable=broad-except
-                print(f"  ERROR converting JSONL to CSV: {conversion_error}")
+                message = f"  ERROR converting JSONL to CSV: {conversion_error}"
+                print(message)
                 print(traceback.format_exc())
                 raise  # Re-raise to stop execution
         else:
@@ -2005,13 +2010,12 @@ def _convert_event_data(
                     dialect = csv.Sniffer().sniff(csv_input.read(1024))
                     csv_input.seek(0)
                     reader = csv.DictReader(csv_input, dialect=dialect)
-                    print(
+                    message = (
                         f"    Detected CSV dialect: delimiter='{dialect.delimiter}'"
-                    )  # pylint: disable=line-too-long
+                    )
+                    print(message)
                 except csv.Error:
-                    print(
-                        "    Could not detect CSV dialect, assuming comma delimiter."
-                    )  # pylint: disable=line-too-long
+                    print("    Could not detect CSV dialect, assuming comma delimiter.")
                     csv_input.seek(0)
                     reader = csv.DictReader(csv_input)
 
@@ -2093,7 +2097,6 @@ def _create_export_archive(
     required=False,
     help=(
         "Filename for the output zip archive. "
-        f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
         f"(Default: {DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE})"
     ),
 )
@@ -2195,6 +2198,77 @@ def export_sketch(
         return
 
 
+@cli.command(name="check-opensearch-links")
+def check_opensearch_links():
+    """Checks for broken links between the database and OpenSearch.
+
+    This command iterates through all SearchIndex records in the database
+    and verifies that the corresponding index exists in OpenSearch. It helps
+    identify timelines that might be broken after an incomplete migration or
+    accidental index deletion.
+    """
+    print("Checking for broken links to OpenSearch...")
+    datastore = OpenSearchDataStore()
+    search_indices = SearchIndex.query.all()
+
+    if not search_indices:
+        print("No search indices found in the database.")
+        return
+
+    # Collect all index names from the database for a single bulk check.
+    db_index_names = {s.index_name for s in search_indices}
+
+    try:
+        # Get all existing indices from OpenSearch in a single API call.
+        # ignore_unavailable=True is a valid argument
+        # pylint: disable-next=unexpected-keyword-arg
+        existing_indices_info = datastore.client.indices.get(
+            index=list(db_index_names),
+            ignore_unavailable=True,
+        )
+        existing_os_index_names = set(existing_indices_info.keys())
+
+        # Determine which indices are in the DB but not in OpenSearch.
+        missing_index_names = db_index_names - existing_os_index_names
+
+        if not missing_index_names:
+            print(
+                "No broken links found. All database search"
+                " indices exist in OpenSearch."
+            )
+            return
+
+        # Create a map for quick lookup of original DB objects.
+        search_indices_map = {s.index_name: s for s in search_indices}
+
+        for index_name in sorted(list(missing_index_names)):
+            search_index = search_indices_map.get(index_name)
+            print(
+                f"BROKEN LINK: DB record for index '{index_name}' "
+                f"(ID: {search_index.id}) "
+                f"exists, but the index is MISSING in OpenSearch."
+            )
+            for timeline in search_index.timelines:
+                if timeline.sketch:
+                    print(
+                        f"  - Associated with Timeline '{timeline.name}'"
+                        f" (ID: {timeline.id})"
+                        f" in Sketch '{timeline.sketch.name}'"
+                        f" (ID: {timeline.sketch.id})"
+                    )
+                else:
+                    print(
+                        f"  - Associated with Timeline '{timeline.name}' "
+                        f"(ID: {timeline.id}) "
+                        f"which has no associated sketch (orphaned)."
+                    )
+        print("\nCheck complete. Broken links found as listed above.")
+
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"ERROR communicating with OpenSearch while checking indices: {e}")
+        return
+
+
 @cli.command(name="check-db-orphaned-data")
 @click.option(
     "--verbose-checks",
@@ -2222,7 +2296,8 @@ def check_db_orphaned_data(verbose_checks: bool):
         nonlocal found_orphans_overall
         if verbose_checks_enabled:
             print(
-                f"\nChecking for orphaned {description} ({ModelClass.__name__} records)..."  # pylint: disable=line-too-long
+                f"\nChecking for orphaned {description} "
+                f"({ModelClass.__name__} records)..."
             )
         orphaned_count = 0
         all_records = ModelClass.query.all()
@@ -2240,7 +2315,8 @@ def check_db_orphaned_data(verbose_checks: bool):
                     # This is the first orphan found for this check type, print header
                     if orphaned_count == 0 and not verbose_checks_enabled:
                         print(
-                            f"\nFound orphaned {description} ({ModelClass.__name__} records):"  # pylint: disable=line-too-long
+                            f"\nFound orphaned {description} "
+                            f"({ModelClass.__name__} records):"
                         )
 
                     record_info_parts = [f"ID={record.id}"]
@@ -2281,9 +2357,11 @@ def check_db_orphaned_data(verbose_checks: bool):
                     record_info = ", ".join(record_info_parts)
                     print(
                         f"  ORPHANED {ModelClass.__name__}: {record_info}, "
-                        f"linked to non-existent {ParentModelClass.__name__} ID={parent_id} "  # pylint: disable=line-too-long
+                        "linked to "
+                        f"non-existent {ParentModelClass.__name__} ID={parent_id} "
                         f"via {fk_attr_name}"
                     )
+
                     orphaned_count += 1
                     found_orphans_overall = True
 
@@ -2292,7 +2370,8 @@ def check_db_orphaned_data(verbose_checks: bool):
                 print(f"  No orphaned {description} ({ModelClass.__name__}) found.")
         elif verbose_checks_enabled:  # Only print count if verbose and orphans found
             print(
-                f"  Found {orphaned_count} orphaned {description} ({ModelClass.__name__}) record(s)."  # pylint: disable=line-too-long
+                f"  Found {orphaned_count} orphaned {description} "
+                f"({ModelClass.__name__}) record(s)."
             )
 
     # Define checks: (ModelClass, fk_attr_name, ParentModelClass, description_plural)
@@ -2440,11 +2519,12 @@ def check_db_orphaned_data(verbose_checks: bool):
                         f"{mixin_desc_plural} for {parent_model_name_desc}",
                         verbose_checks,
                     )
-            except AttributeError:
+            except AttributeError:  # ParentModel might not use this mixin.
                 pass  # ParentModel might not use this mixin or it's not initialized.
             except Exception as e:  # pylint: disable=broad-except
                 print(
-                    f"  ERROR trying to check {mixin_desc_plural} for {parent_model_name_desc}: {e}"  # pylint: disable=line-too-long
+                    f"  ERROR trying to check {mixin_desc_plural} for "
+                    f"{parent_model_name_desc}: {e}"
                 )
                 found_orphans_overall = True
 
@@ -2457,3 +2537,164 @@ def check_db_orphaned_data(verbose_checks: bool):
             )  # Minimal output if no orphans and not verbose
     else:
         print("\nOrphaned data check complete. Issues found as listed above.")
+
+
+@cli.command(name="export-db")
+@click.argument(
+    "filepath", type=click.Path(dir_okay=False, writable=True), required=True
+)
+def export_db(filepath):
+    """Export the database to a zip file."""
+    click.echo(f"Exporting database to {filepath}...")
+    engine = db_session.get_bind()
+    with engine.connect() as connection:
+        with zipfile.ZipFile(filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for table in BaseModel.metadata.sorted_tables:
+                table_name = table.name
+                try:
+                    result = connection.execute(table.select())
+                    df = pd.DataFrame(result.fetchall(), columns=result.keys())
+                    row_count = df.shape[0]
+                    click.echo(f"  Exporting table: {table_name} ({row_count} rows)")
+                    json_data = df.to_json(orient="records", date_format="iso")
+                    zipf.writestr(f"{table_name}.json", json_data)
+                except Exception as e:
+                    click.echo(f"Error exporting table {table_name}: {e!s}", err=True)
+                    click.echo("Database export failed.", err=True)
+                    raise click.Abort()
+    click.echo("Database export complete.")
+
+
+@cli.command(name="import-db")
+@click.argument("filepath", type=click.Path(exists=True, dir_okay=False))
+@click.option("--yes", is_flag=True, help="Skip confirmation.")
+def import_db(filepath, yes):
+    """Import the database from a zip file. This will delete existing data."""
+    if not yes:
+        click.confirm(
+            "This will drop the current database and import data from the "
+            "file. This is a destructive action. Are you sure?",
+            abort=True,
+        )
+
+    click.echo("Dropping all tables...")
+    drop_all()
+
+    click.echo("Creating new tables...")
+    init_db()
+
+    # Create a mapping from table names to model classes for bulk insertion.
+    model_class_registry = {
+        cls.__tablename__: cls
+        for cls in BaseModel.__subclasses__()
+        if hasattr(cls, "__tablename__")
+    }
+
+    engine = db_session.get_bind()
+    dialect = engine.dialect.name
+
+    try:
+        # For certain database backends, we need to disable foreign key checks
+        # to allow for out-of-order table imports.
+        if dialect == "sqlite":
+            db_session.execute(sqlalchemy.text("PRAGMA foreign_keys=OFF"))
+        elif dialect == "postgresql":
+            db_session.execute(
+                sqlalchemy.text("SET session_replication_role = 'replica'")
+            )
+
+        with zipfile.ZipFile(filepath, "r") as zipf:
+            sorted_tables = BaseModel.metadata.sorted_tables
+            for table in sorted_tables:
+                table_name = table.name
+                json_filename = f"{table_name}.json"
+
+                if json_filename not in zipf.namelist():
+                    msg = (
+                        f"  File not found in archive for table: {table_name}, "
+                        "skipping."
+                    )
+                    click.echo(msg)
+                    continue
+                with zipf.open(json_filename) as json_file:
+                    data = json_file.read()
+                    if not data:
+                        click.echo(f"    Skipping empty file: {json_filename}")
+                        continue
+
+                    records = json.loads(data)
+                    row_count = len(records)
+                    click.echo(f"  Importing table: {table_name} ({row_count} rows)")
+
+                    if not records:
+                        continue
+
+                    # Coerce types for bulk insert
+                    for record in records:
+                        for column in table.columns:
+                            value = record.get(column.name)
+                            if value is None:
+                                continue
+                            # Handle datetimes
+                            if isinstance(column.type, sqlalchemy.DateTime):
+                                if isinstance(value, str):
+                                    try:
+                                        record[column.name] = pd.to_datetime(value)
+                                    except (ValueError, TypeError):
+                                        click.echo(
+                                            f"Warning: Could not parse datetime '{value}' for column '{column.name}' in table '{table_name}'. Setting to NULL.",  # pylint: disable=line-too-long
+                                            err=True,
+                                        )
+                                        record[column.name] = None
+
+                    mapped_class = model_class_registry.get(table_name)
+                    if mapped_class:
+                        db_session.bulk_insert_mappings(mapped_class, records)
+                    elif records:
+                        db_session.execute(table.insert(), records)
+
+        if dialect == "postgresql":
+            click.echo("Updating PostgreSQL sequences...")
+            for table in sorted_tables:
+                for column in table.primary_key.columns:
+                    if column.autoincrement:
+                        query_string = (
+                            "SELECT pg_get_serial_sequence("
+                            f"'\"{table.name}\"', '{column.name}')"
+                        )
+                        seq_name = db_session.execute(
+                            sqlalchemy.text(query_string)
+                        ).scalar()
+                        if seq_name:
+                            max_id_val = db_session.execute(
+                                sqlalchemy.text(
+                                    f'SELECT MAX("{column.name}") FROM "{table.name}"'
+                                )
+                            ).scalar()
+                            max_id = max_id_val or 1
+                            db_session.execute(
+                                sqlalchemy.text(
+                                    f"SELECT setval('{seq_name}', {max_id}, true);"
+                                )
+                            )
+            click.echo("Sequences updated.")
+
+        try:
+            db_session.commit()
+        except Exception as e:
+            db_session.rollback()
+            click.echo(f"Error committing to database: {e!s}", err=True)
+            raise click.Abort()
+    except Exception as e:
+        db_session.rollback()
+        click.echo(f"An error occurred during import: {e}", err=True)
+        raise click.Abort()
+    finally:
+        # reset the database settings
+        if dialect == "sqlite":
+            db_session.execute(sqlalchemy.text("PRAGMA foreign_keys=ON"))
+        elif dialect == "postgresql":
+            db_session.execute(
+                sqlalchemy.text("SET session_replication_role = 'origin'")
+            )
+        click.echo("Database import finished.")
