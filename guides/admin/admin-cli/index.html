@@ -1288,6 +1288,48 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#export-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export database
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Import database
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-integrity-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Integrity Checks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Integrity Checks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-opensearch-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      check-opensearch-links
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#search_template" class="md-nav__link">
     <span class="md-ellipsis">
       search_template
@@ -2807,6 +2849,48 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#export-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export database
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Import database
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-integrity-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Integrity Checks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Integrity Checks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-opensearch-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      check-opensearch-links
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#search_template" class="md-nav__link">
     <span class="md-ellipsis">
       search_template
@@ -3322,6 +3406,61 @@ is not detected by the automation one can create an empty revision file:</p>
 <p>Will drop all databases.</p>
 <p>Command:</p>
 <pre><code class="language-shell">tsctl drop_db
+</code></pre>
+<h3 id="export-database">Export database</h3>
+<p>Exports the entire Timesketch database to a zip archive. This can be used for backups or migrations.</p>
+<p>!!! warning "Metadata Only"
+    The <code>export-db</code> command only exports the relational database (e.g., PostgreSQL) which contains sketch metadata, user information, views, stories, etc. <strong>It does NOT export the event data stored in OpenSearch.</strong></p>
+<pre><code>This command is intended for metadata backup or for migrations where the OpenSearch data is handled separately (e.g., using OpenSearch snapshots). Using `import-db` without restoring the corresponding OpenSearch indices will result in broken timelines.
+</code></pre>
+<p>tsctl export-db <filepath></p>
+<p>Example</p>
+<pre><code class="language-shell">tsctl export-db output.zip
+Exporting database to output.zip...
+  Exporting table: user (3 rows)
+  Exporting table: group (1 rows)
+  Exporting table: searchindex (17 rows)
+  ...
+  Database export complete.
+</code></pre>
+<h3 id="import-database">Import database</h3>
+<p>Imports a Timesketch database from a zip archive created with <code>export-db</code>.</p>
+<p>!!! warning "Metadata Only - Destructive Action"
+    The <code>import-db</code> command is a destructive operation that first drops all existing tables in the relational database. It only imports metadata and <strong>does NOT import any event data into OpenSearch.</strong></p>
+<pre><code>For a full system migration, you must also migrate your OpenSearch indices separately using a tool like OpenSearch Snapshots and ensure they are available to the new Timesketch instance before running this command. Failure to do so will result in sketches with broken timelines, as the imported metadata will point to non-existent OpenSearch indices.
+</code></pre>
+<p>Command:</p>
+<p>tsctl import-db <filepath></p>
+<p>Example</p>
+<pre><code class="language-shell">tsctl import-db output.zip
+This will drop the current database and import data from the file. This is a destructive action. Are you sure? [y/N]: y
+Dropping all tables...
+Creating new tables...
+  Importing table: user (3 rows)
+  Importing table: group (1 rows)
+  Importing table: searchindex (17 rows)
+  Importing table: searchtemplate (0 rows)
+  Importing table: sigmarule (0 rows)
+  Importing table: sketch (12 rows)
+  ...
+Updating PostgreSQL sequences...
+Sequences updated.
+Database import finished.
+</code></pre>
+<h3 id="data-integrity-checks">Data Integrity Checks</h3>
+<p>These commands help you audit the health and consistency of your Timesketch data across the relational database and OpenSearch.</p>
+<h4 id="check-opensearch-links">check-opensearch-links</h4>
+<p>Verifies that every timeline recorded in the database has a corresponding, existing index in OpenSearch. This is particularly useful after performing a manual migration or a database restore (<code>import-db</code>) to identify "broken" timelines that point to non-existent event data.</p>
+<p>Example</p>
+<pre><code class="language-bash">tsctl check-opensearch-links
+Checking for broken links to OpenSearch...
+No broken links found. All database search indices exist in OpenSearch.
+</code></pre>
+<pre><code class="language-bash">Checking for broken links to OpenSearch...
+BROKEN LINK: DB record for index 'c870277a104a4160bf594338d973558c' (ID: 42) exists, but the index is MISSING in OpenSearch.
+  - Associated with Timeline 'my-important-timeline' (ID: 55) in Sketch 'Project-X' (ID: 12)
+
+Check complete. Broken links found as listed above.
 </code></pre>
 <h3 id="search_template">search_template</h3>
 <p>Export/Import search templates to/from file.</p>
