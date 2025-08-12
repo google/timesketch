@@ -53,7 +53,11 @@ export default {
   },
   computed: {
     showTags() {
-      return [...this.$store.state.tags, ...this.$store.state.meta.filter_labels].length > 0
+      if (!this.$store.state.tags || !this.$store.state.meta.filter_labels) return false
+      const filteredLabels = this.$store.state.meta.filter_labels.filter(
+        (labelObj) => !labelObj.label.startsWith('__ts_fact')
+      )
+      return [...this.$store.state.tags, ...filteredLabels].length > 0
     },
     showDataTypes() {
       return this.$store.state.dataTypes.length > 0

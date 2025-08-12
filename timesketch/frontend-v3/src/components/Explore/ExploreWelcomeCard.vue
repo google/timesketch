@@ -54,7 +54,10 @@ export default {
   computed: {
     showTags() {
       if (!this.appStore.tags || !this.appStore.meta.filter_labels) return false
-      return [...this.appStore.tags, ...this.appStore.meta.filter_labels].length > 0
+      const filteredLabels = this.appStore.meta.filter_labels.filter(
+        (labelObj) => !labelObj.label.startsWith('__ts_fact')
+      )
+      return [...this.appStore.tags, ...filteredLabels].length > 0
     },
     showDataTypes() {
       if (!this.appStore.dataTypes) return false
