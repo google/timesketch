@@ -458,16 +458,55 @@ class Sketch(resource.BaseResource):
         story_dict = response_json.get("objects", [{}])[0]
         return story.Story(story_id=story_dict.get("id", 0), sketch=self, api=self.api)
 
-    def delete(self):
-        """Deletes the sketch."""
+    def delete(self, force_delete=False):
+        """Deletes the sketch from Timesketch.
+
+        This method allows for either a soft deletion or a hard deletion
+        of a sketch.
+
+        If the sketch is currently archived, it cannot be deleted directly. It must
+        first be unarchived before a delete operation can be performed.
+
+        Args:
+            force_delete (bool): If True, a hard delete is performed, which
+                permanently removes the sketch and all its associated data
+                (timelines, events, views, etc.) from the Timesketch database.
+                If False (default), the sketch is soft-deleted, typically by
+                marking it as deleted for admins to pick it up e.g. in a
+                cron job.
+
+        Returns:
+            bool: True if the sketch was successfully deleted (either soft or hard).
+
+        Raises:
+            RuntimeError:
+                - If the sketch is currently archived and `delete()` is called
+                without first unarchiving it.
+                - If the API call to delete the sketch fails for any other reason
+                (e.g., permission denied, network issues, invalid sketch ID,
+                or server-side errors). The error message will provide more
+                details on the specific failure.
+        """
         if self.is_archived():
             raise RuntimeError(
                 "Unable to delete an archived sketch, first unarchive then delete."
             )
 
         resource_url = "{0:s}/sketches/{1:d}/".format(self.api.api_root, self.id)
+        if force_delete:
+            resource_url += "?force=true"
         response = self.api.session.delete(resource_url)
-        return error.check_return_status(response, logger)
+        # Check the return status. If it's not a success (20x),
+        # error_message will raise a RuntimeError.
+        if not error.check_return_status(response, logger):
+            error.error_message(
+                response,
+                message=f"Failed to delete sketch {self.id}",
+                error=RuntimeError,
+            )
+        else:
+            return error.check_return_status(response, logger)
+        return True
 
     def add_to_acl(
         self,
