@@ -123,6 +123,7 @@ class TestYetiIndicators(BaseTest):
     def test_api_query(self, mock_yeti_api_class):
         """Tests that queries to the API are well-formed."""
         mock_api = mock_yeti_api_class.return_value
+        mock_api._url_root = "blah"
         mock_api.do_request.return_value = json.dumps(
             MOCK_YETI_ENTITY_REQUEST
         ).encode("utf-8")
