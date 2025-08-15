@@ -66,7 +66,7 @@ class Component:
         )
 
 
-class Approach:
+class ApproachTemplate:
     """Class that represents an approach.
 
     Attributes:
@@ -118,7 +118,7 @@ class Approach:
         ]
 
 
-class Question(Component):
+class QuestionTemplate(Component):
     """Class that represents a question."""
 
     def __init__(self, uuid, name, dfiq_id=None, description=None, tags=None,
@@ -126,7 +126,7 @@ class Question(Component):
         """Initializes the question."""
         self.approaches = []
         if approaches:
-            self.approaches = [Approach(approach) for approach in approaches]
+            self.approaches = [ApproachTemplate(approach) for approach in approaches]
         super().__init__(
             uuid=uuid,
             name=name,
@@ -137,7 +137,7 @@ class Question(Component):
         )
 
 
-class Facet(Component):
+class FacetTemplate(Component):
     """Class that represents a facet."""
 
     def __init__(self, uuid, name, dfiq_id=None, description=None, tags=None,
@@ -154,7 +154,7 @@ class Facet(Component):
         self.questions = []
 
 
-class Scenario(Component):
+class ScenarioTemplate(Component):
     """Class that represents a scenario."""
 
     def __init__(self, uuid, name, dfiq_id=None, description=None, tags=None):
@@ -210,7 +210,7 @@ class DFIQ:
             A list of Scenario objects.
         """
         return sorted(
-            [c for c in self.components.values() if isinstance(c, Scenario)],
+            [c for c in self.components.values() if isinstance(c, ScenarioTemplate)],
             key=lambda x: x.uuid,
         )
 
@@ -222,7 +222,7 @@ class DFIQ:
             A list of Facet objects.
         """
         return sorted(
-            [c for c in self.components.values() if isinstance(c, Facet)],
+            [c for c in self.components.values() if isinstance(c, FacetTemplate)],
             key=lambda x: x.uuid,
         )
 
@@ -234,7 +234,7 @@ class DFIQ:
             A list of Question objects.
         """
         return sorted(
-            [c for c in self.components.values() if isinstance(c, Question)],
+            [c for c in self.components.values() if isinstance(c, QuestionTemplate)],
             key=lambda x: x.uuid,
         )
 
@@ -269,7 +269,7 @@ class DFIQ:
             logger.warning(
                 "DFIQ object '%s' ('%s') is missing a UUID. "
                 "A temporary one has been generated: %s. "
-                "Please add a permanent UUID to the source file.",
+                "Please add a permanent UUID to the source file. ",
                 yaml_object.get("id", "N/A"),
                 yaml_object.get("name", "N/A"),
                 component_uuid,
@@ -277,7 +277,7 @@ class DFIQ:
 
         try:
             if yaml_object["type"] == "scenario":
-                return Scenario(
+                return ScenarioTemplate(
                     dfiq_id=yaml_object.get("id"),
                     uuid=component_uuid,
                     name=yaml_object["name"],
@@ -285,7 +285,7 @@ class DFIQ:
                     tags=yaml_object.get("tags"),
                 )
             if yaml_object["type"] == "facet":
-                return Facet(
+                return FacetTemplate(
                     dfiq_id=yaml_object.get("id"),
                     uuid=component_uuid,
                     name=yaml_object["name"],
@@ -294,7 +294,7 @@ class DFIQ:
                     parent_ids=yaml_object.get("parent_ids"),
                 )
             if yaml_object["type"] == "question":
-                return Question(
+                return QuestionTemplate(
                     dfiq_id=yaml_object.get("id"),
                     uuid=component_uuid,
                     name=yaml_object["name"],
@@ -393,18 +393,18 @@ class DFIQ:
             content.set_children(children_uuids) # Keep the raw list of child UUIDs
 
             # Now, populate the specific typed lists (facets, questions)
-            if isinstance(content, Scenario):
+            if isinstance(content, ScenarioTemplate):
                 for child_uuid in children_uuids:
                     child_obj = self.get_by_uuid(child_uuid)
-                    if isinstance(child_obj, Facet):
+                    if isinstance(child_obj, FacetTemplate):
                         content.facets.append(child_uuid)
-                    elif isinstance(child_obj, Question):
+                    elif isinstance(child_obj, QuestionTemplate):
                         content.questions.append(child_uuid)
 
-            elif isinstance(content, Facet):
+            elif isinstance(content, FacetTemplate):
                 for child_uuid in children_uuids:
                     child_obj = self.get_by_uuid(child_uuid)
-                    if isinstance(child_obj, Question):
+                    if isinstance(child_obj, QuestionTemplate):
                         content.questions.append(child_uuid)
 
         return graph

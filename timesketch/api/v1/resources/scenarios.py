@@ -679,22 +679,19 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         scenario = Scenario.get_by_id(scenario_id) if scenario_id else None
         facet = Facet.get_by_id(facet_id) if facet_id else None
 
+        dfiq_question = None
         if template_id or uuid:
             dfiq = load_dfiq_from_config()
             if not dfiq:
-                abort(
-                    HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server"
-                )
+                abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server")
+
             if uuid:
-                dfiq_question = [
-                    question for question in dfiq.questions if question.uuid == uuid
-                ][0]
-            else:
-                dfiq_question = [
-                    question
-                    for question in dfiq.questions
-                    if question.id == template_id
-                ][0]
+                dfiq_question = dfiq.get_by_uuid(uuid)
+            elif template_id:
+                dfiq_question = dfiq.get_by_id(template_id)
+
+            if not dfiq_question:
+                abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ Question template not found.")
 
         if dfiq_question:
             new_question = InvestigativeQuestion(

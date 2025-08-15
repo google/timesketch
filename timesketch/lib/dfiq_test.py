@@ -31,9 +31,9 @@ class TestDFIQ(BaseTest):
         """Test that the DFIQ components are loaded correctly."""
         self.assertIsInstance(self.dfiq.components, dict)
         self.assertEqual(len(self.dfiq.components), 3)
-        self.assertIsInstance(self.dfiq.components.get("S1001"), dfiq.Scenario)
-        self.assertIsInstance(self.dfiq.components.get("F1001"), dfiq.Facet)
-        self.assertIsInstance(self.dfiq.components.get("Q1001"), dfiq.Question)
+        self.assertIsInstance(self.dfiq.components.get("S1001"), dfiq.ScenarioTemplate)
+        self.assertIsInstance(self.dfiq.components.get("F1001"), dfiq.FacetTemplate)
+        self.assertIsInstance(self.dfiq.components.get("Q1001"), dfiq.QuestionTemplate)
         self.assertEqual(len(self.dfiq.components.get("S1001").facets), 1)
         self.assertEqual(len(self.dfiq.components.get("F1001").questions), 1)
 
