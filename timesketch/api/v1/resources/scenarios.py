@@ -15,9 +15,9 @@
 
 import logging
 import json
+from os.path import isdir
 from typing import Optional
 from requests.exceptions import RequestException
-from os.path import isdir
 
 from flask import jsonify
 from flask import request
@@ -27,9 +27,11 @@ from flask_restful import Resource
 from flask_restful import reqparse
 from flask_login import current_user
 from flask_login import login_required
+
 try:
     from yeti.api import YetiApi
     from yeti import errors as yeti_errors
+
     YETI_AVAILABLE = True
 except ImportError:
     YETI_AVAILABLE = False
@@ -88,10 +90,10 @@ def _load_dfiq_from_yeti() -> Optional[DFIQ]:
             return None
 
     except yeti_errors.YetiApiError as e:
-        logger.error(f"Failed to fetch DFIQ objects from Yeti: {e}")
+        logger.error("Failed to fetch DFIQ objects from Yeti: %s", str(e))
         return None
     except RequestException as e:
-        logger.error(f"A network error occurred while connecting to Yeti: {e}")
+        logger.error("A network error occurred while connecting to Yeti: %s", str(e))
         return None
 
     # Extract YAML strings and load them directly into a DFIQ object in memory.
@@ -103,6 +105,7 @@ def _load_dfiq_from_yeti() -> Optional[DFIQ]:
         return None
 
     return DFIQ.from_yaml_list(yaml_strings)
+
 
 def load_dfiq_from_config():
     """Create DFIQ object from config, potentially merging filesystem and Yeti sources.
@@ -119,10 +122,12 @@ def load_dfiq_from_config():
     if dfiq_path and isdir(dfiq_path):
         try:
             dfiq_from_files = DFIQ(dfiq_path)
-        except Exception as e:
-            logger.error(f"Error loading DFIQ from path {dfiq_path}: {e}")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error("Error loading DFIQ from path %s: %s", dfiq_path, str(e))
     else:
-        logger.info("No DFIQ_PATH configured or path is invalid, skipping file-based loading.")
+        logger.info(
+            "No DFIQ_PATH configured or path is invalid, skipping file-based loading."
+        )
 
     if not current_app.config.get("YETI_DFIQ_ENABLED"):
         return dfiq_from_files
@@ -149,9 +154,10 @@ def load_dfiq_from_config():
 
     # Rebuild the graph from the final, merged set of components.
     if final_dfiq.components:
-        final_dfiq.graph = final_dfiq._build_graph()
+        final_dfiq.graph = final_dfiq._build_graph()  # pylint: disable=protected-access
 
     return final_dfiq
+
 
 def check_and_run_dfiq_analysis_steps(
     dfiq_obj: object,
@@ -327,7 +333,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         for facet_uuid in scenario_template.facets:
             facet_template = dfiq.get_by_uuid(facet_uuid)
             if not facet_template:
-                logger.warning(f"Facet with UUID {facet_uuid} not found, skipping.")
+                logger.warning("Facet with UUID [%s] not found, skipping.", facet_uuid)
                 continue
 
             facet_sql = Facet(
@@ -345,7 +351,8 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
             for question_uuid in facet_template.questions:
                 question_template = dfiq.get_by_uuid(question_uuid)
-                if not question_template: continue
+                if not question_template:
+                    continue
 
                 question_sql = self._create_question_sql(
                     sketch, question_template, facet_sql=facet_sql
@@ -354,7 +361,8 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
         for question_uuid in scenario_template.questions:
             question_template = dfiq.get_by_uuid(question_uuid)
-            if not question_template: continue
+            if not question_template:
+                continue
 
             # Create the question, linking it to the scenario but not a facet.
             question_sql = self._create_question_sql(
@@ -372,8 +380,9 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
         return self.to_json(scenario_sql)
 
-    def _create_question_sql(self, sketch, question_template,
-                             scenario_sql=None, facet_sql=None):
+    def _create_question_sql(
+        self, sketch, question_template, scenario_sql=None, facet_sql=None
+    ):
         """Helper to create an InvestigativeQuestion object and its approaches."""
         question_sql = InvestigativeQuestion(
             dfiq_identifier=question_template.id,
@@ -683,7 +692,9 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         if template_id or uuid:
             dfiq = load_dfiq_from_config()
             if not dfiq:
-                abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server")
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server"
+                )
 
             if uuid:
                 dfiq_question = dfiq.get_by_uuid(uuid)

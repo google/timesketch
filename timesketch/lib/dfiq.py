@@ -16,9 +16,9 @@
 import os
 import json
 import logging
-import yaml
 import uuid
 
+import yaml
 import networkx as nx
 from packaging.version import Version
 
@@ -38,10 +38,16 @@ class Component:
     """
 
     def __init__(
-        self, uuid, name, dfiq_id=None, description=None, tags=None, parent_ids=None
+        self,
+        component_uuid,
+        name,
+        dfiq_id=None,
+        description=None,
+        tags=None,
+        parent_ids=None,
     ):
         self.id = dfiq_id
-        self.uuid = uuid
+        self.uuid = component_uuid
         self.name = name
         self.description = description
         self.tags = tags
@@ -121,35 +127,50 @@ class ApproachTemplate:
 class QuestionTemplate(Component):
     """Class that represents a question."""
 
-    def __init__(self, uuid, name, dfiq_id=None, description=None, tags=None,
-                 parent_ids=None, approaches=None):
+    def __init__(
+        self,
+        component_uuid,
+        name,
+        dfiq_id=None,
+        description=None,
+        tags=None,
+        parent_ids=None,
+        approaches=None,
+    ):
         """Initializes the question."""
         self.approaches = []
         if approaches:
             self.approaches = [ApproachTemplate(approach) for approach in approaches]
         super().__init__(
-            uuid=uuid,
+            component_uuid=component_uuid,
             name=name,
             dfiq_id=dfiq_id,
             description=description,
             tags=tags,
-            parent_ids=parent_ids
+            parent_ids=parent_ids,
         )
 
 
 class FacetTemplate(Component):
     """Class that represents a facet."""
 
-    def __init__(self, uuid, name, dfiq_id=None, description=None, tags=None,
-                 parent_ids=None):
+    def __init__(
+        self,
+        component_uuid,
+        name,
+        dfiq_id=None,
+        description=None,
+        tags=None,
+        parent_ids=None,
+    ):
         """Initializes the facet."""
         super().__init__(
-            uuid=uuid,
+            component_uuid=component_uuid,
             name=name,
             dfiq_id=dfiq_id,
             description=description,
             tags=tags,
-            parent_ids=parent_ids
+            parent_ids=parent_ids,
         )
         self.questions = []
 
@@ -157,17 +178,17 @@ class FacetTemplate(Component):
 class ScenarioTemplate(Component):
     """Class that represents a scenario."""
 
-    def __init__(self, uuid, name, dfiq_id=None, description=None, tags=None):
+    def __init__(self, component_uuid, name, dfiq_id=None, description=None, tags=None):
         """Initializes the scenario."""
         # A scenario is a root node, so it never has parents.
         # We explicitly pass parent_ids=None.
         super().__init__(
-            uuid=uuid,
+            component_uuid=component_uuid,
             name=name,
             dfiq_id=dfiq_id,
             description=description,
             tags=tags,
-            parent_ids=None
+            parent_ids=None,
         )
         self.facets = []
         self.questions = []
@@ -240,9 +261,9 @@ class DFIQ:
 
     def get_by_id(self, dfiq_id: str):
         """Returns a DFIQ component by its human-readable ID."""
-        uuid = self.id_to_uuid_map.get(dfiq_id)
-        if uuid:
-            return self.components.get(uuid)
+        component_uuid = self.id_to_uuid_map.get(dfiq_id)
+        if component_uuid:
+            return self.components.get(component_uuid)
         return None
 
     def get_by_uuid(self, uuid_str: str):
@@ -279,7 +300,7 @@ class DFIQ:
             if yaml_object["type"] == "scenario":
                 return ScenarioTemplate(
                     dfiq_id=yaml_object.get("id"),
-                    uuid=component_uuid,
+                    component_uuid=component_uuid,
                     name=yaml_object["name"],
                     description=yaml_object.get("description"),
                     tags=yaml_object.get("tags"),
@@ -287,7 +308,7 @@ class DFIQ:
             if yaml_object["type"] == "facet":
                 return FacetTemplate(
                     dfiq_id=yaml_object.get("id"),
-                    uuid=component_uuid,
+                    component_uuid=component_uuid,
                     name=yaml_object["name"],
                     description=yaml_object.get("description"),
                     tags=yaml_object.get("tags"),
@@ -296,7 +317,7 @@ class DFIQ:
             if yaml_object["type"] == "question":
                 return QuestionTemplate(
                     dfiq_id=yaml_object.get("id"),
-                    uuid=component_uuid,
+                    component_uuid=component_uuid,
                     name=yaml_object["name"],
                     description=yaml_object.get("description"),
                     tags=yaml_object.get("tags"),
@@ -305,8 +326,7 @@ class DFIQ:
                 )
         except KeyError as e:
             logger.error(
-              "DFIQ: Loaded YAML object has a schema error! KeyError: %s",
-              str(e)
+                "DFIQ: Loaded YAML object has a schema error! KeyError: %s", str(e)
             )
             return None
         return None
@@ -321,7 +341,7 @@ class DFIQ:
                 if not isinstance(component_from_yaml, dict):
                     continue
             except yaml.YAMLError as e:
-                logger.error(f"Failed to parse DFIQ YAML content: {e}")
+                logger.error("Failed to parse DFIQ YAML content: %s", str(e))
                 continue
 
             try:
@@ -390,7 +410,7 @@ class DFIQ:
 
         for component_uuid, content in self.components.items():
             children_uuids = sorted(list(nx.DiGraph.successors(graph, component_uuid)))
-            content.set_children(children_uuids) # Keep the raw list of child UUIDs
+            content.set_children(children_uuids)  # Keep the raw list of child UUIDs
 
             # Now, populate the specific typed lists (facets, questions)
             if isinstance(content, ScenarioTemplate):
