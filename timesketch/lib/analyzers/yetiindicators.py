@@ -12,6 +12,7 @@ from flask import current_app
 try:
     from yeti.api import YetiApi
     from yeti import errors as yeti_errors
+
     YETI_AVAILABLE = True
 except ImportError:
     YETI_AVAILABLE = False
@@ -116,7 +117,6 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
 
         self._intelligence_refs = set()
         self._intelligence_attribute = {"data": []}
-
 
     def mark_event(
         self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
@@ -352,12 +352,12 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
             try:
                 response_bytes = self.api.do_request(
                     "POST",
-                    f"{self.api._url_root}/api/v2/entities/search",
-                    json_data={"query": query, "count": 0}
+                    "/api/v2/entities/search",
+                    json_data={"query": query, "count": 0},
                 )
                 data = json.loads(response_bytes)
             except yeti_errors.YetiApiError as e:
-                 raise RuntimeError(
+                raise RuntimeError(
                     f"Error {e.status_code} retrieving entities from Yeti: {e}"
                 ) from e
 
