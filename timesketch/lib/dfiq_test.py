@@ -55,7 +55,10 @@ class TestDFIQ(BaseTest):
         for edge in self.dfiq.graph.edges:
             self.assertIsInstance(edge, tuple)
         graph_edge_ids = sorted(
-            [(uuid_to_id_map.get(u), uuid_to_id_map.get(v)) for u, v in self.dfiq.graph.edges]
+            [
+                (uuid_to_id_map.get(u), uuid_to_id_map.get(v))
+                for u, v in self.dfiq.graph.edges
+            ]
         )
         expected_edges = sorted([("S1001", "F1001"), ("F1001", "Q1001")])
         self.assertEqual(graph_edge_ids, expected_edges)
