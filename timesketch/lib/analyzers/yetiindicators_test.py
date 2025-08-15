@@ -381,10 +381,10 @@ tags:
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore")
     @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
-    def test_run_composite_aggregation(self, mock_datastore, _):
+    def test_run_composite_aggregation(self, mock_yeti_api, mock_opensearch_datastore):
         """Tests that the composite aggregation is correctly built."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
-        mock_datastore.return_value.search.return_value = {
+        mock_opensearch_datastore.return_value.search.return_value = {
             "aggregations": {
                 "my_composite_agg_test_index": {
                     "buckets": [{"key": {"sha256_hash": "testhash"}}],
