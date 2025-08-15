@@ -6,9 +6,16 @@ import logging
 import re
 from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
-import requests
 import yaml
 from flask import current_app
+
+try:
+    from yeti.api import YetiApi
+    from yeti import errors as yeti_errors
+    YETI_AVAILABLE = True
+except ImportError:
+    YETI_AVAILABLE = False
+
 
 from timesketch.lib import emojis, sigma_util
 from timesketch.lib.analyzers import interface, manager
@@ -78,46 +85,38 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         """
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
         self.intel = {}
+        self.api = None
+        self.yeti_web_root = ""
+
+        if not YETI_AVAILABLE:
+            return
+
         root = current_app.config.get("YETI_API_ROOT")
+        if not root:
+            return
+
         if root.endswith("/"):
             root = root[:-1]
-        self.yeti_api_root = root
+        yeti_api_root = root
         self.yeti_web_root = root.replace("/api/v2", "")
-        self.yeti_api_key = current_app.config.get("YETI_API_KEY")
-
-        self._yeti_session = requests.Session()
+        yeti_api_key = current_app.config.get("YETI_API_KEY")
         tls_cert = current_app.config.get("YETI_TLS_CERTIFICATE")
-        if tls_cert and self.yeti_web_root.startswith("https://"):
-            self._yeti_session.verify = tls_cert
+
+        if not all([yeti_api_root, yeti_api_key]):
+            return
+
+        self.api = YetiApi(yeti_api_root)
+        if tls_cert and yeti_api_root.startswith("https://"):
+            self.api.client.verify = tls_cert
+
+        try:
+            self.api.auth_api_key(yeti_api_key)
+        except yeti_errors.YetiAuthError as e:
+            raise RuntimeError(f"Yeti authentication failed: {e}") from e
 
         self._intelligence_refs = set()
         self._intelligence_attribute = {"data": []}
 
-    @property
-    def authenticated_session(self) -> requests.Session:
-        """Returns a requests.Session object with an authenticated Yeti session.
-
-        Returns:
-          A requests.Session object with an authenticated Yeti session.
-        """
-        if not self._yeti_session.headers.get("authorization"):
-            self.authenticate_session()
-        return self._yeti_session
-
-    def authenticate_session(self) -> None:
-        """Fetches an access token for Yeti."""
-
-        response = self._yeti_session.post(
-            f"{self.yeti_api_root}/auth/api-token",
-            headers={"x-yeti-apikey": self.yeti_api_key},
-        )
-        if response.status_code != 200:
-            raise RuntimeError(
-                f"Error {response.status_code} authenticating with Yeti API"
-            )
-
-        access_token = response.json()["access_token"]
-        self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
 
     def mark_event(
         self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
@@ -138,8 +137,9 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             msg = f'Observable match: "{indicator["value"]}" (ID: {indicator["id"]})\n'
         for neighbor in neighbors:
             tags.add(slugify(neighbor["name"]))
-            emoji_name = TYPE_TO_EMOJI[neighbor["type"]]
-            event.add_emojis([emojis.get_emoji(emoji_name)])
+            emoji_name = TYPE_TO_EMOJI.get(neighbor["type"])
+            if emoji_name:
+                event.add_emojis([emojis.get_emoji(emoji_name)])
 
         event.add_tags(list(tags))
         event.commit()
@@ -285,19 +285,6 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
     # Direction to traverse the graph. One of {inbound, outbound, any}
     _DIRECTION = "inbound"
 
-    def _get_neighbors_request(self, params: Dict) -> Dict:
-        """Simple wrapper around requests call to make testing easier."""
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/graph/search",
-            json=params,
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} retrieving neighbors for "
-                f"{params['source']} from Yeti:" + str(results.json())
-            )
-        return results.json()
-
     def get_neighbors(
         self, yeti_object: Dict, max_hops: int, neighbor_types: List[str]
     ) -> List[Dict]:
@@ -312,17 +299,23 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
           A list of dictionaries describing a Yeti object.
         """
         extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
-        request = {
-            "count": 0,
-            "source": extended_id,
-            "graph": "links",
-            "min_hops": 1,
-            "max_hops": max_hops,
-            "direction": self._DIRECTION,
-            "include_original": False,
-            "target_types": neighbor_types,
-        }
-        results = self._get_neighbors_request(request)
+        try:
+            results = self.api.search_graph(
+                source=extended_id,
+                graph="links",
+                min_hops=1,
+                max_hops=max_hops,
+                direction=self._DIRECTION,
+                include_original=False,
+                target_types=neighbor_types,
+                count=0,
+            )
+        except yeti_errors.YetiApiError as e:
+            raise RuntimeError(
+                f"Error {e.status_code} retrieving neighbors for "
+                f"{extended_id} from Yeti: {e}"
+            ) from e
+
         neighbors = {}
         for neighbor in results.get("vertices", {}).values():
             if (
@@ -331,19 +324,6 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
             ):
                 neighbors[neighbor["id"]] = neighbor
         return neighbors
-
-    def _get_entities_request(self, params):
-        """Simple wrapper around requests call to make testing easier."""
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/entities/search",
-            json=params,
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} retrieving entities from Yeti:"
-                + str(results.json())
-            )
-        return results.json()
 
     def get_entities(self, type_selector: List[str]) -> Dict[str, dict]:
         """Fetches Entities with a certain tag on Yeti.
@@ -366,7 +346,21 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
             query = {"name": "", "tags": tags}
             if _type:
                 query["type"] = _type
-            data = self._get_entities_request({"query": query, "count": 0})
+
+            # The YetiApi.search_entities method is not flexible enough to
+            # search by tags, so we use the generic do_request method.
+            try:
+                response_bytes = self.api.do_request(
+                    "POST",
+                    f"{self.api._url_root}/api/v2/entities/search",
+                    json_data={"query": query, "count": 0}
+                )
+                data = json.loads(response_bytes)
+            except yeti_errors.YetiApiError as e:
+                 raise RuntimeError(
+                    f"Error {e.status_code} retrieving entities from Yeti: {e}"
+                ) from e
+
             entities = {item["id"]: item for item in data["entities"]}
             all_entities.update(entities)
         return all_entities
@@ -473,9 +467,6 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        if not self.yeti_api_root or not self.yeti_api_key:
-            return "No Yeti configuration settings found, aborting."
-
         total_matches = 0
         total_processed = 0
         total_failed = 0
@@ -575,7 +566,7 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
             self.sketch.add_view(
                 f"Indicator matches for {name} ({_type})",
                 self.NAME,
-                query_string=f'tag:"{name}"',
+                query_string=f'tag:"{slugify(name)}"',
             )
 
         if self._SAVE_INTELLIGENCE:
@@ -694,19 +685,6 @@ class YetiBloomChecker(YetiBaseAnalyzer):
     DISPLAY_NAME = "Yeti Bloom filter checker"
     DESCRIPTION = "Check if hashes in the timeline are present in Yeti's bloom filter."
 
-    def _get_bloom_request(self, hashes):
-        """Simple wrapper around requests call to make testing easier."""
-        body = "\n".join(hashes)
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/bloom/search/raw", data=body
-        )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} doing bloom check from Yeti: "
-                + str(results.json())
-            )
-        return results.json()
-
     def run_composite_aggregation(
         self, hashmap: set[str], after_key: dict[str, Any] = None
     ) -> tuple[set[str], Union[Dict, None]]:
@@ -756,9 +734,6 @@ class YetiBloomChecker(YetiBaseAnalyzer):
         return hashmap, after_key
 
     def run(self):
-        if not self.yeti_api_root or not self.yeti_api_key:
-            return "No Yeti configuration settings found, aborting."
-
         hashmap = set()
         after = None
         while True:
@@ -767,7 +742,9 @@ class YetiBloomChecker(YetiBaseAnalyzer):
                 break
 
         try:
-            bloom_hits = self._get_bloom_request(hashmap)
+            bloom_hits = self.api.search_bloom(list(hashmap))
+        except yeti_errors.YetiApiError as e:
+            return f"Error getting bloom hits from Yeti: {e}"
         except RuntimeError as exception:
             return str(exception)
         hit_dict = {hit["value"]: hit["hits"] for hit in bloom_hits}
@@ -796,5 +773,4 @@ manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
 manager.AnalysisManager.register_analyzer(YetiBadnessIndicators)
 manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
 manager.AnalysisManager.register_analyzer(YetiInvestigations)
-
 manager.AnalysisManager.register_analyzer(YetiBloomChecker)
