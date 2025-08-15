@@ -116,6 +116,7 @@ class TestYetiIndicators(BaseTest):
     def test_api_query(self, mock_yeti_api_class):
         """Tests that queries to the API are well-formed."""
         mock_api = mock_yeti_api_class.return_value
+        mock_api._url_root = "blah"  # pylint: disable=protected-access
         mock_api.do_request.return_value = json.dumps(MOCK_YETI_ENTITY_REQUEST).encode(
             "utf-8"
         )
@@ -128,7 +129,7 @@ class TestYetiIndicators(BaseTest):
         # Test call for 'investigation:tag1,tag2'
         mock_api.do_request.assert_any_call(
             "POST",
-            "/api/v2/entities/search",
+            "blah/api/v2/entities/search",
             json_data={
                 "query": {
                     "name": "",
@@ -141,7 +142,7 @@ class TestYetiIndicators(BaseTest):
         # Test call for 'malware'
         mock_api.do_request.assert_any_call(
             "POST",
-            "/api/v2/entities/search",
+            "blah/api/v2/entities/search",
             json_data={
                 "query": {
                     "name": "",
@@ -374,7 +375,9 @@ tags:
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore")
     @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
-    def test_run_composite_aggregation(self, _, mock_opensearch_datastore):
+    def test_run_composite_aggregation(
+        self, _, mock_opensearch_datastore
+    ):  # pylint: disable=invalid-name
         """Tests that the composite aggregation is correctly built."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
         mock_opensearch_datastore.return_value.search.return_value = {

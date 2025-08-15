@@ -350,10 +350,10 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
             # The YetiApi.search_entities method is not flexible enough to
             # search by tags, so we use the generic do_request method.
             try:
+                # pylint: disable=protected-access
+                url = f"{self.api._url_root}/api/v2/entities/search"
                 response_bytes = self.api.do_request(
-                    "POST",
-                    "/api/v2/entities/search",
-                    json_data={"query": query, "count": 0},
+                    "POST", url, json_data={"query": query, "count": 0}
                 )
                 data = json.loads(response_bytes)
             except yeti_errors.YetiApiError as e:
