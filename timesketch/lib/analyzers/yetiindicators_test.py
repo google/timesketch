@@ -9,24 +9,21 @@ from timesketch.lib.analyzers import yetiindicators
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
-MOCK_YETI_ENTITY_REQUEST = {
-    "entities": [
-        {
-            "type": "malware",
-            "name": "xmrig",
-            "description": "coin miner",
-            "created": "2024-02-16T12:10:48.670039Z",
-            "modified": "2024-02-16T12:10:48.670040Z",
-            "kill_chain_phases": [],
-            "aliases": [],
-            "family": "miner",
-            "id": "2152646",
-            "tags": {},
-            "root_type": "entity",
-        }
-    ],
-    "total": 1,
-}
+MOCK_YETI_ENTITIES = [
+    {
+        "type": "malware",
+        "name": "xmrig",
+        "description": "coin miner",
+        "created": "2024-02-16T12:10:48.670039Z",
+        "modified": "2024-02-16T12:10:48.670040Z",
+        "kill_chain_phases": [],
+        "aliases": [],
+        "family": "miner",
+        "id": "2152646",
+        "tags": {},
+        "root_type": "entity",
+    }
+]
 
 MOCK_YETI_NEIGHBORS_RESPONSE = {
     "vertices": {
@@ -116,41 +113,18 @@ class TestYetiIndicators(BaseTest):
     def test_api_query(self, mock_yeti_api_class):
         """Tests that queries to the API are well-formed."""
         mock_api = mock_yeti_api_class.return_value
-        mock_api._url_root = "blah"  # pylint: disable=protected-access
-        mock_api.do_request.return_value = json.dumps(MOCK_YETI_ENTITY_REQUEST).encode(
-            "utf-8"
-        )
+        mock_api.search_entities.return_value = MOCK_YETI_ENTITIES
         mock_api.search_graph.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
 
         analyzer = YetiTestAnalyzer("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         analyzer.run()
 
-        # Test call for 'investigation:tag1,tag2'
-        mock_api.do_request.assert_any_call(
-            "POST",
-            "blah/api/v2/entities/search",
-            json_data={
-                "query": {
-                    "name": "",
-                    "tags": ["tag1", "tag2"],
-                    "type": "investigation",
-                },
-                "count": 0,
-            },
+        mock_api.search_entities.assert_any_call(
+            entity_type="investigation", tags=["tag1", "tag2"], count=0
         )
-        # Test call for 'malware'
-        mock_api.do_request.assert_any_call(
-            "POST",
-            "blah/api/v2/entities/search",
-            json_data={
-                "query": {
-                    "name": "",
-                    "tags": [],
-                    "type": "malware",
-                },
-                "count": 0,
-            },
+        mock_api.search_entities.assert_any_call(
+            entity_type="malware", tags=[], count=0
         )
 
     # Mock the OpenSearch datastore and the YetiApi
@@ -159,9 +133,7 @@ class TestYetiIndicators(BaseTest):
     def test_indicator_match(self, mock_yeti_api_class):
         """Test that ES queries for indicators are correctly built."""
         mock_api = mock_yeti_api_class.return_value
-        mock_api.do_request.return_value = json.dumps(MOCK_YETI_ENTITY_REQUEST).encode(
-            "utf-8"
-        )
+        mock_api.search_entities.return_value = MOCK_YETI_ENTITIES
         mock_api.search_graph.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
 
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
@@ -176,11 +148,10 @@ class TestYetiIndicators(BaseTest):
                 "Entities found: xmrig:malware"
             ),
         )
-        mock_api.do_request.assert_called()
+        mock_api.search_entities.assert_called()
         mock_api.search_graph.assert_called()
         self.assertEqual(
-            sorted(analyzer.tagged_events["0"]["tags"]),
-            sorted(["malware", "xmrig"]),
+            sorted(analyzer.tagged_events["0"]["tags"]), sorted(["malware", "xmrig"])
         )
 
     # Mock the OpenSearch datastore and the YetiApi
@@ -189,9 +160,7 @@ class TestYetiIndicators(BaseTest):
     def test_indicator_nomatch(self, mock_yeti_api_class):
         """Test that ES queries for indicators are correctly built."""
         mock_api = mock_yeti_api_class.return_value
-        mock_api.do_request.return_value = json.dumps(MOCK_YETI_ENTITY_REQUEST).encode(
-            "utf-8"
-        )
+        mock_api.search_entities.return_value = MOCK_YETI_ENTITIES
         mock_api.search_graph.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
 
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
@@ -202,7 +171,7 @@ class TestYetiIndicators(BaseTest):
             message["result_summary"],
             "0/1 indicators were found in the timeline (0 failed)",
         )
-        mock_api.do_request.assert_called()
+        mock_api.search_entities.assert_called()
         mock_api.search_graph.assert_called()
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -215,7 +184,7 @@ class TestYetiIndicators(BaseTest):
         analyzer.mark_event(
             MOCK_YETI_NEIGHBORS_RESPONSE["vertices"]["indicators/2152802"],
             mock_event,
-            MOCK_YETI_ENTITY_REQUEST["entities"],
+            MOCK_YETI_ENTITIES,
         )
         mock_event.add_tags.assert_called_once()
         self.assertIn(
