@@ -336,33 +336,28 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
             A dictionary of entities obtained from Yeti, keyed by entity ID.
         """
         all_entities = {}
-        for _type in type_selector:
+        for selector in type_selector:
             tags = []
-            if ":" in _type:
-                tag_suffix = _type.split(":")[1]
-                _type = _type.replace(":" + tag_suffix, "")
-                tags = tag_suffix.split(",")
+            entity_type = selector
+            if ":" in selector:
+                parts = selector.split(":", 1)
+                entity_type = parts[0]
+                tags = parts[1].split(",")
 
-            query = {"name": "", "tags": tags}
-            if _type:
-                query["type"] = _type
+            if not entity_type:
+                entity_type = None
 
-            # The YetiApi.search_entities method is not flexible enough to
-            # search by tags, so we use the generic do_request method.
             try:
-                # pylint: disable=protected-access
-                url = f"{self.api._url_root}/api/v2/entities/search"
-                response_bytes = self.api.do_request(
-                    "POST", url, json_data={"query": query, "count": 0}
+                results = self.api.search_entities(
+                    entity_type=entity_type, tags=tags, count=0
                 )
-                data = json.loads(response_bytes)
+                entities = {item["id"]: item for item in results}
+                all_entities.update(entities)
             except yeti_errors.YetiApiError as e:
                 raise RuntimeError(
                     f"Error {e.status_code} retrieving entities from Yeti: {e}"
                 ) from e
 
-            entities = {item["id"]: item for item in data["entities"]}
-            all_entities.update(entities)
         return all_entities
 
     def build_query_from_observable(self, observable: Dict) -> Dict:
