@@ -68,9 +68,9 @@ limitations under the License.
               <li>
                 <strong>Total File Events:</strong>{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
               </li>
-              <li v-if="dataSourceStatus(datasource) === 'fail'">
+              <li v-if="datasource.error_message">
                 <strong>Error message:</strong>
-                <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
+                <code> {{ datasource.error_message }}</code>
               </li>
             </ul>
             <br />
@@ -218,9 +218,9 @@ limitations under the License.
                       <strong>Total File Events: </strong
                       >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
                     </li>
-                    <li v-if="dataSourceStatus(datasource) === 'fail'">
+                    <li v-if="datasource.error_message">
                       <strong>Error message:</strong>
-                      <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
+                      <code> {{ datasource.error_message }}</code>
                     </li>
                   </ul>
                 </v-alert>

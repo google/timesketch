@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -266,7 +266,7 @@ limitations under the License.
               </v-dialog>
 
               <!-- Export search results -->
-              <v-btn icon @click="exportSearchResult()">
+              <v-btn v-if="!disableDownload" icon @click="exportSearchResult()">
                 <v-icon title="Download current view as CSV"
                   >mdi-download</v-icon
                 >
@@ -322,7 +322,7 @@ limitations under the License.
             </div>
             <div v-else>
               <small class="mr-2">Actions:</small>
-              <v-btn x-small outlined @click="toggleMultipleStars()">
+              <v-btn v-if="!disableStarring" x-small outlined @click="toggleMultipleStars()">
                 <v-icon left color="amber">mdi-star</v-icon>
                 Toggle star
               </v-btn>
@@ -409,20 +409,32 @@ limitations under the License.
 
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <v-icon
-            v-if="item._source.label.includes('__ts_star')"
-            title="Toggle star status"
-            @click.stop="toggleStar(item)"
-            color="amber"
-            >mdi-star</v-icon
-          >
-          <v-icon v-else title="Toggle star status" @click.stop="toggleStar(item)"
-            >mdi-star-outline</v-icon
-          >
+          <span v-if="!disableStarring">
+            <v-icon
+              v-if="item._source.label.includes('__ts_star')"
+              title="Toggle star status"
+              @click.stop="toggleStar(item)"
+              color="amber"
+              >mdi-star</v-icon
+            >
+            <v-icon v-else title="Toggle star status" @click.stop="toggleStar(item)"
+              >mdi-star-outline</v-icon
+            >
+          </span>
 
           <!-- Tag menu -->
-          <span class="ml-1">
+          <span v-if="!disableTagging" class="ml-1">
             <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+          </span>
+
+          <!-- IQ Facts Action Icon -->
+          <span v-if="!disableIQFacts" class="ml-1">
+            <v-icon
+              :title="isFact(item) ? 'Unlink Event from Conclusion' : 'Link Event to Conclusion'"
+              @click.stop="toggleFact(item)"
+            >
+              {{ isFact(item) ? 'mdi-minus' : 'mdi-plus' }}
+            </v-icon>
           </span>
 
           <!-- Action sub-menu -->
@@ -588,8 +600,8 @@ const defaultQueryFilter = () => {
     indices: ["_all"],
     order: "asc",
     chips: [],
-  };
-};
+  }
+}
 
 const emptyEventList = () => {
   return {
@@ -598,8 +610,8 @@ const emptyEventList = () => {
       count_per_timeline: {},
     },
     objects: [],
-  };
-};
+  }
+}
 
 export default {
   components: {
@@ -640,9 +652,33 @@ export default {
       type: Boolean,
       default: false,
     },
+    disableDownload: {
+      type: Boolean,
+      default: false,
+    },
+    disableStarring: {
+      type: Boolean,
+      default: false,
+    },
+    disableTagging: {
+      type: Boolean,
+      default: false,
+    },
+    disableIQFacts: {
+      type: Boolean,
+      default: true,
+    },
+    conclusionId: {
+      type: Number,
+      default: null,
+    },
     highlightEvent: {
       type: Object,
       default: () => {},
+    },
+    isDraftMode: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -694,13 +730,18 @@ export default {
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
-    };
+    }
   },
   computed: {
     summaryInfoMessage() {
-      const totalEvents = this.eventList.meta.summary_event_count;
-      const uniqueEvents = this.eventList.meta.summary_unique_event_count;
-      return `[experimental] This summary is based on the message field on your current page (${totalEvents} rows, ${uniqueEvents} unique message fields).`;
+      const totalEvents = this.eventList.meta.summary_event_count
+      const uniqueEvents = this.eventList.meta.summary_unique_event_count
+      return `[experimental] This summary is based on the message field on your current page (${totalEvents} rows, ${uniqueEvents} unique message fields).`
+    },
+    selectedEvents() {
+      return this.selectedEventIds.map(id => {
+        return this.eventList.objects.find(o => o._id === id)
+      })
     },
     selectedEvents() {
       return this.selectedEventIds.map(id => {
@@ -708,57 +749,57 @@ export default {
       });
     },
     sketch() {
-      return this.appStore.sketch;
+      return this.appStore.sketch
     },
     meta() {
-      return this.appStore.meta;
+      return this.appStore.meta
     },
     highlightEventId() {
       if (this.highlightEvent) {
-        return this.highlightEvent._id;
+        return this.highlightEvent._id
       }
-      return null;
+      return null
     },
     totalHits() {
       if (
         this.eventList.meta.es_total_count > 0 &&
         this.eventList.meta.es_total_count_complete === 0
       ) {
-        return this.eventList.meta.es_total_count;
+        return this.eventList.meta.es_total_count
       }
-      return this.eventList.meta.es_total_count_complete || 0;
+      return this.eventList.meta.es_total_count_complete || 0
     },
     totalHitsForPagination() {
       // Opensearch has a limit of 10k events when paginating
       // TODO jbn: Figure this out
-      return 10000;
+      return 10000
       //return this.eventList.meta.es_total_count || 0
     },
     totalTime() {
-      return this.eventList.meta.es_time / 1000 || 0;
+      return this.eventList.meta.es_time / 1000 || 0
     },
     fromEvent() {
-      return this.currentQueryFilter.from || 1;
+      return this.currentQueryFilter.from || 1
     },
     toEvent() {
       if (this.totalHits < this.currentQueryFilter.size) {
-        return;
+        return
       }
       return (
         parseInt(this.currentQueryFilter.from) +
         parseInt(this.currentQueryFilter.size)
-      );
+      )
     },
     timeFilterChips: function () {
       return this.currentQueryFilter.chips.filter((chip) =>
         chip.type.startsWith("datetime")
-      );
+      )
     },
     currentSearchNode() {
-      return this.appStore.currentSearchNode;
+      return this.appStore.currentSearchNode
     },
     userSettings() {
-      return this.appStore.settings;
+      return this.appStore.settings
     },
     headers() {
       let baseHeaders = [
@@ -783,25 +824,23 @@ export default {
           width: "40px",
           sortable: false,
         },
-      ];
-      let extraHeaders = [];
+      ]
+      let extraHeaders = []
       this.selectedFields.forEach((field) => {
         let header = {
           key: "_source." + field.field,
           title: field.field,
           align: "start",
           sortable: false,
-        };
-        if (field.field === "message") {
-          //header.width = '100vh'
-          extraHeaders.unshift(header);
-        } else {
-          extraHeaders.push(header);
         }
-      });
+        if (field.field === "message") {
+          extraHeaders.unshift(header)
+        } else {
+          extraHeaders.push(header)
+        }
+      })
 
-      // Extend the column headers from position 3 (after the actions column)
-      baseHeaders.splice(3, 0, ...extraHeaders);
+      baseHeaders.splice(3, 0, ...extraHeaders)
 
       // Add timeline name based on configuration
       if (this.displayOptions.showTimelineName) {
@@ -810,165 +849,174 @@ export default {
           align: "end",
           sortable: false,
           width: "1px", // trick to make the message column expand
-        });
+        })
       }
-      return baseHeaders;
+      return baseHeaders
     },
     activeContext() {
-      return this.appStore.activeContext;
+      return this.appStore.activeContext
     },
     settings() {
-      return this.appStore.settings;
+      return this.appStore.settings
     },
     filterChips: function () {
       return this.currentQueryFilter.chips.filter(
         (chip) => chip.type === "label" || chip.type === "term"
-      );
+      )
     },
   },
   methods: {
+    isFact(event) {
+      if (!event || !event._source || !event._source.label) {
+        return false
+      }
+      if (this.isDraftMode) {
+        // In draft mode, we just need a generic fact label to toggle the icon.
+        return event._source.label.includes('__ts_fact')
+      }
+      return event._source.label.includes(`__ts_fact_${this.conclusionId}`)
+    },
     toggleSummary() {
-      this.summaryCollapsed = !this.summaryCollapsed;
-      localStorage.setItem("aiSummaryCollapsed", String(this.summaryCollapsed));
+      this.summaryCollapsed = !this.summaryCollapsed
+      localStorage.setItem("aiSummaryCollapsed", String(this.summaryCollapsed))
     },
     sortEvents(sortAsc) {
       if (sortAsc) {
-        this.currentQueryFilter.order = "asc";
+        this.currentQueryFilter.order = "asc"
       } else {
-        this.currentQueryFilter.order = "desc";
+        this.currentQueryFilter.order = "desc"
       }
-      this.search(true, true, false);
+      this.search(true, true, false)
     },
     getFieldName: function (field) {
-      return "item._source." + field;
+      return "item._source." + field
     },
     toggleDetailedEvent: function (row) {
-      return;
-      let index = this.expandedRows.findIndex((x) => x._id === row._id);
-      if (this.expandedRows.some((event) => event._id === row._id)) {
-        if (row.showDetails) {
-          row["showDetails"] = false;
-          this.expandedRows.splice(index, 1);
-          //this.$set(row, 'showComments', false)
-          row.showComments = false;
-        } else {
-          row["showDetails"] = true;
-          this.expandedRows.splice(index, 1);
-          this.expandedRows.push(row);
-          return;
-        }
-
-        if (row.deltaDays) {
-          this.expandedRows.splice(index, 1);
-          this.expandedRows.push(row);
-        }
-      } else {
-        row["showDetails"] = true;
-        this.expandedRows.push(row);
-      }
+      return
+      // let index = this.expandedRows.findIndex((x) => x._id === row._id);
+      // if (this.expandedRows.some((event) => event._id === row._id)) {
+      //   if (row.showDetails) {
+      //     row["showDetails"] = false;
+      //     this.expandedRows.splice(index, 1);
+      //     //this.$set(row, 'showComments', false)
+      //     row.showComments = false;
+      //   } else {
+      //     row["showDetails"] = true;
+      //     this.expandedRows.splice(index, 1);
+      //     this.expandedRows.push(row);
+      //     return;
+      //   }
+      //   if (row.deltaDays) {
+      //     this.expandedRows.splice(index, 1);
+      //     this.expandedRows.push(row);
+      //   }
+      // } else {
+      //   row["showDetails"] = true;
+      //   this.expandedRows.push(row);
+      // }
     },
     newComment: function (row) {
       if (row.showDetails) {
-        this.$set(row, "showComments", true);
+        row.showComments = true
       } else {
-        this.$set(row, "showComments", true);
-        this.toggleDetailedEvent(row);
+        row.showComments = true
+        this.toggleDetailedEvent(row)
       }
     },
     addTimeBubbles: function () {
-      this.expandedRows = [];
+      this.expandedRows = []
       this.eventList.objects.forEach((event, index) => {
         if (index < 1) {
-          return;
+          return
         }
-        let prevEvent = this.eventList.objects[index - 1];
+        let prevEvent = this.eventList.objects[index - 1]
         let timestampMillis = this.$filters.formatTimestamp(
           event._source.timestamp
-        );
+        )
         let prevTimestampMillis = this.$filters.formatTimestamp(
           prevEvent._source.timestamp
-        );
-        let timestamp = Math.floor(timestampMillis / 1000);
-        let prevTimestamp = Math.floor(prevTimestampMillis / 1000);
-        let delta = Math.floor(timestamp - prevTimestamp);
+        )
+        let timestamp = Math.floor(timestampMillis / 1000)
+        let prevTimestamp = Math.floor(prevTimestampMillis / 1000)
+        let delta = Math.floor(timestamp - prevTimestamp)
         if (this.order === "desc") {
-          delta = Math.floor(prevTimestamp - timestamp);
+          delta = Math.floor(prevTimestamp - timestamp)
         }
-        let deltaDays = Math.floor(delta / 60 / 60 / 24);
+        let deltaDays = Math.floor(delta / 60 / 60 / 24)
         if (deltaDays > 0) {
-          prevEvent["deltaDays"] = deltaDays;
-          this.expandedRows.push(prevEvent);
+          prevEvent["deltaDays"] = deltaDays
+          this.expandedRows.push(prevEvent)
         }
-      });
+      })
     },
     getTimeline: function (event) {
-      let isLegacy = this.meta.indices_metadata[event._index].is_legacy;
-      let timeline;
+      let isLegacy = this.meta.indices_metadata[event._index].is_legacy
+      let timeline
       if (isLegacy) {
         timeline = this.sketch.active_timelines.find(
           (timeline) => timeline.searchindex.index_name === event._index
-        );
+        )
       } else {
         timeline = this.sketch.active_timelines.find(
           (timeline) => timeline.id === event._source.__ts_timeline_id
-        );
+        )
       }
-      return timeline;
+      return timeline
     },
     getTimelineColor(event) {
-      let timeline = this.getTimeline(event);
-      let backgroundColor = timeline.color;
+      let timeline = this.getTimeline(event)
+      let backgroundColor = timeline.color
       if (!backgroundColor.startsWith("#")) {
-        backgroundColor = "#" + backgroundColor;
+        backgroundColor = "#" + backgroundColor
       }
       if (this.$vuetify.theme.dark) {
         return {
           "background-color": backgroundColor,
           filter: "grayscale(25%)",
           color: "#333",
-        };
+        }
       }
       return {
         "background-color": backgroundColor,
-      };
+      }
     },
     getTimeBubbleColor() {
-      let backgroundColor = "#f5f5f5";
+      let backgroundColor = "#f5f5f5"
       if (this.$vuetify.theme.dark) {
-        backgroundColor = "#333";
+        backgroundColor = "#333"
       }
       return {
         "background-color": backgroundColor,
-      };
+      }
     },
     getAllIndices: function () {
-      let allIndices = [];
+      let allIndices = []
       this.sketch.active_timelines.forEach((timeline) => {
         let isLegacy =
-          this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy;
+          this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
         if (isLegacy) {
-          allIndices.push(timeline.searchindex.index_name);
+          allIndices.push(timeline.searchindex.index_name)
         } else {
-          allIndices.push(timeline.id);
+          allIndices.push(timeline.id)
         }
-      });
-      return allIndices;
+      })
+      return allIndices
     },
     search: function (
       resetPagination = true,
       incognito = false,
       parent = false
     ) {
-      this.isSummaryLoading = true;
+      this.isSummaryLoading = true
 
       // Exit early if there are no indices selected.
       if (
         this.currentQueryFilter.indices &&
         !this.currentQueryFilter.indices.length
       ) {
-        this.eventList = emptyEventList();
-        this.isSummaryLoading = false;
-        return;
+        this.eventList = emptyEventList()
+        this.isSummaryLoading = false
+        return
       }
 
       // If all timelines are selected, make sure that the timeline filter is updated so that
@@ -977,265 +1025,292 @@ export default {
         this.currentQueryFilter.indices[0] === "_all" ||
         this.currentQueryFilter.indices === "_all"
       ) {
-        this.currentQueryFilter.indices = this.getAllIndices();
+        this.currentQueryFilter.indices = this.getAllIndices()
       }
 
       // Exit early if there is no query string or DSL provided.
       if (!this.currentQueryString && !this.currentQueryDsl) {
-        return;
+        return
       }
 
-      this.searchInProgress = true;
-      this.selectedEventIds = [];
-      this.eventList = emptyEventList();
+      this.searchInProgress = true
+      this.selectedEventIds = []
+      this.eventList = emptyEventList()
 
       if (resetPagination) {
-        this.currentPage = 1;
-        this.currentQueryFilter.size = this.itemsPerPage;
-        this.currentQueryFilter.from = 0;
+        this.currentPage = 1
+        this.currentQueryFilter.size = this.itemsPerPage
+        this.currentQueryFilter.from = 0
       }
 
-      // Update with selected fields
-      this.currentQueryFilter.fields = this.selectedFields;
+      this.currentQueryFilter.fields = this.selectedFields
 
-      let formData = {};
+      let formData = {}
       if (this.currentQueryDsl) {
-        formData.dsl = this.currentQueryDsl;
-        formData.filter = this.currentQueryFilter;
+        formData.dsl = this.currentQueryDsl
+        formData.filter = this.currentQueryFilter
       }
 
       if (this.currentQueryString) {
-        formData.query = this.currentQueryString;
-        formData.filter = this.currentQueryFilter;
+        formData.query = this.currentQueryString
+        formData.filter = this.currentQueryFilter
       }
 
       // Search history
       if (incognito) {
-        formData["incognito"] = true;
+        formData["incognito"] = true
       }
 
       if (parent) {
-        formData["parent"] = parent;
+        formData["parent"] = parent
       }
 
       if (parent && incognito) {
-        this.branchParent = parent;
+        this.branchParent = parent
       }
 
       if (this.branchParent) {
-        formData["parent"] = this.branchParent;
+        formData["parent"] = this.branchParent
       }
 
-      // Get DFIQ context
-      formData["scenario"] = this.activeContext.scenarioId;
-      formData["facet"] = this.activeContext.facetId;
-      formData["question"] = this.activeContext.questionId;
+      formData["scenario"] = this.activeContext.scenarioId
+      formData["facet"] = this.activeContext.facetId
+      formData["question"] = this.activeContext.questionId
 
       formData["include_processing_timelines"] =
-        this.settings.showProcessingTimelineEvents;
+        this.settings.showProcessingTimelineEvents
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {
-          this.eventList.objects = response.data.objects;
-          this.eventList.meta = response.data.meta;
-          this.updateShowBanner();
-          this.searchInProgress = false;
+          this.eventList.objects = response.data.objects
+          this.eventList.meta = response.data.meta
+          this.updateShowBanner()
+          this.searchInProgress = false
           EventBus.$emit(
             "updateCountPerTimeline",
             response.data.meta.count_per_timeline
-          );
-          this.$emit("countPerTimeline", response.data.meta.count_per_timeline);
-          this.$emit("countPerIndex", response.data.meta.count_per_index);
+          )
+          this.$emit("countPerTimeline", response.data.meta.count_per_timeline)
+          this.$emit("countPerIndex", response.data.meta.count_per_index)
 
-          this.addTimeBubbles();
+          this.addTimeBubbles()
 
           if (!incognito) {
-            EventBus.$emit("createBranch", this.eventList.meta.search_node);
-            this.appStore.updateSearchHistory();
-            this.branchParent = this.eventList.meta.search_node.id;
+            EventBus.$emit("createBranch", this.eventList.meta.search_node)
+            this.appStore.updateSearchHistory()
+            this.branchParent = this.eventList.meta.search_node.id
           }
           if (
             this.userSettings.eventSummarization &&
             this.eventList.objects.length > 0
           ) {
-            this.fetchEventSummary();
+            this.fetchEventSummary()
           }
         })
         .catch((e) => {
-          console.log("Error fetching search results:", e);
+          console.log("Error fetching search results:", e)
           let msg =
             'Sorry, there was a problem fetching your search results. Error: "' +
             e.response.data.message +
-            '"';
+            '"'
           if (
             e.response.data.message.includes("too_many_nested_clauses") ||
             e.response.data.message.includes("query_shard_exception")
           ) {
             msg =
-              'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.';
-            this.warningSnackBar(msg);
+              'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
+            this.warningSnackBar(msg)
           } else {
-            this.errorSnackBar(msg);
+            this.errorSnackBar(msg)
           }
-          console.error("Error message: " + msg);
-          console.error(e);
-        });
+          console.error("Error message: " + msg)
+          console.error(e)
+        })
     },
     fetchEventSummary: function () {
       const formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
-      };
+      }
       ApiClient.llmRequest(this.sketch.id, "llm_summarize", formData)
         .then((response) => {
-          this.$set(this.eventList.meta, "summary", response.data.response);
-          this.$set(
-            this.eventList.meta,
-            "summary_event_count",
-            response.data.summary_event_count
-          );
-          this.$set(
-            this.eventList.meta,
-            "summary_unique_event_count",
-            response.data.summary_unique_event_count
-          );
-          this.isSummaryLoading = false;
+          this.eventList.meta.summary = response.data.response
+          this.eventList.meta.summary_event_count = response.data.summary_event_count
+          this.eventList.meta.summary_unique_event_count = response.data.summary_unique_event_count
         })
         .catch((error) => {
-          console.error("Error fetching event summary:", error);
-          this.$set(this.eventList.meta, "summaryError", true);
-          this.isSummaryLoading = false;
-        });
+          console.error("Error fetching event summary:", error)
+          this.eventList.meta.summaryError = true
+          this.isSummaryLoading = false
+        })
     },
     exportSearchResult: function () {
-      this.exportDialog = true;
-      const now = new Date();
-      const exportFileName = "timesketch_export_" + now.toISOString() + ".zip";
+      this.exportDialog = true
+      const now = new Date()
+      const exportFileName = "timesketch_export_" + now.toISOString() + ".zip"
       let formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
         file_name: exportFileName,
-      };
+      }
       ApiClient.exportSearchResult(this.sketch.id, formData)
         .then((response) => {
-          let fileURL = window.URL.createObjectURL(new Blob([response.data]));
-          let fileLink = document.createElement("a");
-          fileLink.href = fileURL;
-          fileLink.setAttribute("download", exportFileName);
-          document.body.appendChild(fileLink);
-          fileLink.click();
-          this.exportDialog = false;
+          let fileURL = window.URL.createObjectURL(new Blob([response.data]))
+          let fileLink = document.createElement("a")
+          fileLink.href = fileURL
+          fileLink.setAttribute("download", exportFileName)
+          document.body.appendChild(fileLink)
+          fileLink.click()
+          this.exportDialog = false
         })
         .catch((e) => {
-          console.error(e);
-          this.exportDialog = false;
-        });
+          console.error(e)
+          this.exportDialog = false
+        })
     },
     addChip: function (chip) {
       if (!this.currentQueryFilter.chips) {
-        this.currentQueryFilter.chips = [];
+        this.currentQueryFilter.chips = []
       }
-      this.currentQueryFilter.chips.push(chip);
-      this.search();
+      this.currentQueryFilter.chips.push(chip)
+      this.search()
     },
     removeChip: function (chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex(
         (c) => c.value === chip.value
-      );
-      this.currentQueryFilter.chips.splice(chipIndex, 1);
+      )
+      this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (search) {
-        this.search();
+        this.search()
       }
     },
     removeChips: function (chips, search = true) {
       if (!Array.isArray(chips)) {
-        this.errorSnackBar("Not an array of chips");
-        return;
+        this.errorSnackBar("Not an array of chips")
+        return
       }
       chips.forEach((chip) => {
-        this.removeChip(chip, false);
-      });
+        this.removeChip(chip, false)
+      })
       if (search) {
-        this.search();
+        this.search()
       }
     },
     addChipFromHistogram: function (chip) {
       if (!this.currentQueryFilter.chips) {
-        this.currentQueryFilter.chips = [];
+        this.currentQueryFilter.chips = []
       }
       this.currentQueryFilter.chips.forEach((chip) => {
         if (chip.type === "datetime_range") {
-          this.removeChip(chip, false);
+          this.removeChip(chip, false)
         }
-      });
-      this.addChip(chip);
+      })
+      this.addChip(chip)
     },
     itemsPerPageChanged: function (itemsPerPage) {
       // Search with reset pagination set.
-      this.search(true, true);
+      this.search(true, true)
     },
     paginate: function (options) {
       // To avoid double search request exit early if this is the first search for this
       // search session.
       if (this.currentPage === options.page) {
-        return;
+        return
       }
 
       this.currentQueryFilter.from =
         options.page * this.currentQueryFilter.size -
-        this.currentQueryFilter.size;
-      this.currentPage = options.page;
-      this.search(false, true);
+        this.currentQueryFilter.size
+      this.currentPage = options.page
+      this.search(false, true)
     },
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
       value.forEach((field) => {
         if (!this.headers.filter((e) => e.field === field.field).length > 0) {
-          this.search(true, true);
+          this.search(true, true)
         }
-      });
+      })
     },
     removeField: function (index) {
-      this.selectedFields.splice(index, 1);
+      this.selectedFields.splice(index, 1)
+    },
+    toggleFact(event) {
+      const factLabel = `__ts_fact_${this.conclusionId}`
+      const isCurrentlyFact = event._source.label.includes(factLabel)
+
+      if (this.isDraftMode) {
+        this.$emit('event-selected-for-draft', { _id: event._id, _index: event._index })
+        // Optimistically add a generic label for UI feedback in draft mode
+        if (!event._source.label.includes('__ts_fact')) {
+          event._source.label.push('__ts_fact')
+        }
+        return
+      }
+
+      if (this.conclusionId === null || this.conclusionId === undefined) {
+        this.errorSnackBar("Conclusion ID not available to link event.")
+        return
+      }
+
+      ApiClient.saveEventAnnotation(
+        this.sketch.id,
+        "label",
+        "__ts_fact",
+        [event],
+        null,
+        isCurrentlyFact,
+        this.conclusionId
+      )
+        .then(() => {
+          if (isCurrentlyFact) {
+            event._source.label.splice(event._source.label.indexOf(factLabel), 1)
+          } else {
+            event._source.label.push(factLabel)
+          }
+        })
+        .catch((e) => {
+          console.error("Error saving fact annotation:", e)
+          this.errorSnackBar("Failed to link event to conclusion. See console for details.")
+        })
     },
     toggleStar(event) {
-      let count = 0;
+      let count = 0
       if (event._source.label.includes("__ts_star")) {
-        event._source.label.splice(event._source.label.indexOf("__ts_star"), 1);
-        count = -1;
+        event._source.label.splice(event._source.label.indexOf("__ts_star"), 1)
+        count = -1
       } else {
-        event._source.label.push("__ts_star");
-        count = 1;
+        event._source.label.push("__ts_star")
+        count = 1
       }
-      console.log("Star count: ", count, this.sketch.id, this.currentSearchNode);
       ApiClient.saveEventAnnotation(
         this.sketch.id,
         "label",
         "__ts_star",
-        event,
+        [event],
         this.currentSearchNode
       )
         .then((response) => {
-          this.appStore.updateEventLabels({ label: "__ts_star", num: count });
+          this.appStore.updateEventLabels({ label: "__ts_star", num: count })
         })
         .catch((e) => {
-          console.error(e);
-        });
+          console.error(e)
+        })
     },
     toggleMultipleStars: function () {
-      let netStarCountChange = 0;
+      let netStarCountChange = 0
       this.selectedEvents.forEach((event) => {
         if (event._source.label.includes("__ts_star")) {
           event._source.label.splice(
             event._source.label.indexOf("__ts_star"),
             1
-          );
-          netStarCountChange--;
+          )
+          netStarCountChange--
         } else {
-          event._source.label.push("__ts_star");
-          netStarCountChange++;
+          event._source.label.push("__ts_star")
+          netStarCountChange++
         }
-      });
+      })
       ApiClient.saveEventAnnotation(
         this.sketch.id,
         "label",
@@ -1247,10 +1322,10 @@ export default {
           this.appStore.updateEventLabels({
             label: "__ts_star",
             num: netStarCountChange,
-          });
-          this.selectedEventIds = [];
+          })
+          this.selectedEventIds = []
         })
-        .catch((e) => {});
+        .catch((e) => {})
     },
     saveSearch: function () {
       ApiClient.createView(
@@ -1260,12 +1335,12 @@ export default {
         this.currentQueryFilter
       )
         .then((response) => {
-          this.saveSearchFormName = "";
-          this.saveSearchMenu = false;
-          let newView = response.data.objects[0];
-          this.appStore.meta.views.push(newView);
+          this.saveSearchFormName = ""
+          this.saveSearchMenu = false
+          let newView = response.data.objects[0]
+          this.appStore.meta.views.push(newView)
         })
-        .catch((e) => {});
+        .catch((e) => {})
     },
     updateShowBanner: function () {
       // Show banner only when processing timelines are enabled and at
@@ -1274,7 +1349,7 @@ export default {
         !!this.settings.showProcessingTimelineEvents &&
         this.sketch.active_timelines
           .filter((tl) => this.appStore.enabledTimelines.includes(tl.id))
-          .some((tl) => tl.status && tl.status[0].status === "processing");
+          .some((tl) => tl.status && tl.status[0].status === "processing")
     },
   },
   watch: {
@@ -1282,53 +1357,53 @@ export default {
       handler(newQueryRequest, oldqueryRequest) {
         // Return early if this isn't a new request.
         if (newQueryRequest === oldqueryRequest || !newQueryRequest) {
-          return;
+          return
         }
-        this.currentQueryString = newQueryRequest.queryString || "";
-        this.currentQueryFilter =
-          newQueryRequest.queryFilter || defaultQueryFilter();
-        this.currentQueryDsl = newQueryRequest.queryDsl || null;
-        let resetPagination = newQueryRequest["resetPagination"] || false;
-        let incognito = newQueryRequest["incognito"] || false;
-        let parent = newQueryRequest["parent"] || false;
+        this.currentQueryString = newQueryRequest.queryString || ""
+        this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
+        this.currentQueryDsl = newQueryRequest.queryDsl || null
+        this.currentQueryDsl = newQueryRequest.queryDsl || null
+        let resetPagination = newQueryRequest["resetPagination"] || false
+        let incognito = newQueryRequest["incognito"] || false
+        let parent = newQueryRequest["parent"] || false
         // Set additional fields. This is used when loading filter from a saved search.
         if (this.currentQueryFilter.fields) {
-          this.selectedFields = this.currentQueryFilter.fields;
+          this.selectedFields = this.currentQueryFilter.fields
         }
         // Preserve user defined sort order.
         if (this.sortOrderAsc) {
-          this.currentQueryFilter.order = "asc";
+          this.currentQueryFilter.order = "asc"
         } else {
-          this.currentQueryFilter.order = "desc";
+          this.currentQueryFilter.order = "desc"
         }
-        this.search(resetPagination, incognito, parent);
+        this.search(resetPagination, incognito, parent)
       },
       deep: true,
     },
     "settings.showProcessingTimelineEvents": {
       handler() {
-        this.updateShowBanner();
+        this.updateShowBanner()
       },
     },
   },
   created() {
     if (Object.keys(this.queryRequest).length) {
-      this.currentQueryString = this.queryRequest.queryString;
+      this.currentQueryString = this.queryRequest.queryString
       this.currentQueryFilter =
-        { ...this.queryRequest.queryFilter } || defaultQueryFilter();
-      this.currentQueryDsl = { ...this.queryRequest.queryDsl };
+        { ...this.queryRequest.queryFilter } || defaultQueryFilter()
+      this.currentQueryDsl = { ...this.queryRequest.queryDsl }
       // Set additional fields when loading filter from a saved search.
       if (this.currentQueryFilter.fields) {
-        this.selectedFields = this.currentQueryFilter.fields;
+        this.selectedFields = this.currentQueryFilter.fields
       }
-      const storedState = localStorage.getItem("aiSummaryCollapsed");
+      const storedState = localStorage.getItem("aiSummaryCollapsed")
       if (storedState === "true") {
-        this.summaryCollapsed = true;
+        this.summaryCollapsed = true
       }
-      this.search();
+      this.search()
     }
   },
-};
+}
 </script>
 
 <style lang="scss">

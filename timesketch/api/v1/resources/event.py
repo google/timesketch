@@ -1050,18 +1050,27 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
             elif "label" in annotation_type:
                 # TODO(#3434): Fix the label logic.
+                conclusion = None
+                conclusion_id = request.json.get("conclusion_id", None)
+
+                # Construct the specific fact label if a conclusion_id is present
+                label_name = form.annotation.data
+                if "__ts_fact" in label_name and conclusion_id:
+                    label_name = f"__ts_fact_{conclusion_id}"
+
                 annotation = Event.Label.get_or_create(
-                    label=form.annotation.data, user=current_user
+                    label=label_name, user=current_user
                 )
+
                 if annotation not in event.labels:
                     event.labels.append(annotation)
 
                 toggle = False
-                if "__ts_star" in form.annotation.data:
+                if "__ts_star" in label_name:
                     toggle = True
-                if "__ts_hidden" in form.annotation.data:
+                if "__ts_hidden" in label_name:
                     toggle = True
-                if "__ts_fact" in form.annotation.data:
+                if "__ts_fact" in label_name:
                     toggle = True
                 if form.remove.data:
                     toggle = True
@@ -1071,15 +1080,14 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     event_id,
                     sketch.id,
                     current_user.id,
-                    form.annotation.data,
+                    label_name,
                     toggle=toggle,
                 )
 
-                conclusion = None
                 if current_search_node:
-                    if "__ts_star" in form.annotation.data:
+                    if "__ts_star" in label_name:
                         search_node_label = "__ts_star"
-                    elif "__ts_fact" in form.annotation.data:
+                    elif "__ts_fact" in label_name:
                         search_node_label = "__ts_fact"
                         conclusion = self._get_current_search_node_conclusion(
                             current_search_node
@@ -1088,18 +1096,17 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                         search_node_label = "__ts_label"
                     current_search_node.add_label(search_node_label)
 
-                if "__ts_fact" in form.annotation.data:
+                if "__ts_fact" in label_name:
+                    if not conclusion and conclusion_id:
+                        conclusion = InvestigativeQuestionConclusion.get_by_id(
+                            conclusion_id
+                        )
+
                     if not conclusion:
-                        conclusion_id = request.json.get("conclusion_id", None)
-                        if conclusion_id:
-                            conclusion = InvestigativeQuestionConclusion.get_by_id(
-                                conclusion_id
-                            )
-                        else:
-                            abort(
-                                HTTP_STATUS_CODE_BAD_REQUEST,
-                                "Conclusion ID is required to add a fact.",
-                            )
+                        abort(
+                            HTTP_STATUS_CODE_BAD_REQUEST,
+                            "Conclusion ID is required to add a fact.",
+                        )
                     # Adding facts to conclusions
                     if not form.remove.data:
                         event.conclusions.append(conclusion)

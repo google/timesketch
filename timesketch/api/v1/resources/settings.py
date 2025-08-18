@@ -38,6 +38,9 @@ class SystemSettingsResource(Resource):
             "SEARCH_PROCESSING_TIMELINES": current_app.config.get(
                 "SEARCH_PROCESSING_TIMELINES", False
             ),
+            "ENABLE_V3_INVESTIGATION_VIEW": current_app.config.get(
+                "ENABLE_V3_INVESTIGATION_VIEW", False
+            ),
             "LLM_FEATURES_AVAILABLE": self._get_llm_features_availability(
                 current_app.config.get("LLM_PROVIDER_CONFIGS", {})
             ),
@@ -90,11 +93,15 @@ class SystemSettingsResource(Resource):
                     feature_provider, feature_provider_config
                 )
 
-            # Feature is available if either specific provider works
-            # or default provider works
-            llm_feature_availability[feature_name] = (
-                feature_provider_working or default_provider_working
-            )
+            # Special handling for log_analyzer which cannot use a default provider.
+            if feature_name == "log_analyzer":
+                llm_feature_availability[feature_name] = feature_provider_working
+            else:
+                # Feature is available if either specific provider works
+                # or default provider works
+                llm_feature_availability[feature_name] = (
+                    feature_provider_working or default_provider_working
+                )
 
         return llm_feature_availability
 

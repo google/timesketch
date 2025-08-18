@@ -80,11 +80,16 @@ export default {
     dataTypes() {
       return this.appStore.dataTypes
     },
+    filteredMetaLabels() {
+      return this.meta.filter_labels.filter(
+        (label) => !label.label.startsWith('__ts_fact')
+      );
+    },
     all() {
       return {
         fields: this.meta.mappings,
         tags: this.tags,
-        labels: this.meta.filter_labels,
+        labels: this.filteredMetaLabels,
         dataTypes: this.dataTypes,
         savedSearches: this.meta.views,
       }
@@ -103,7 +108,7 @@ export default {
         field.field.toLowerCase().includes(this.queryString.toLowerCase())
       )
       matches['tags'] = this.tags.filter((tag) => tag.tag.toLowerCase().includes(this.queryString.toLowerCase()))
-      matches['labels'] = this.meta.filter_labels.filter((label) =>
+      matches['labels'] = this.filteredMetaLabels.filter((label) =>
         label.label.toLowerCase().includes(this.queryString.toLowerCase())
       )
       matches['dataTypes'] = this.dataTypes.filter((dataType) =>

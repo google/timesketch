@@ -1,29 +1,41 @@
 ---
 hide:
   - navigation
-  - toc
   - title
   - footer
 ---
 
-
 # Timesketch at Black Hat USA 2025 & defcon 33
 
-## Presenting a New Workflow for AI-Driven Forensic Analysis
+## Links & Material
 
-The Timesketch team is excited to introduce a new feature for collaborative
-forensics: **(AI)Investigation Views** supercharged with external AI agents for
-timeline analysis. Instead of building a monolithic "AI feature" inside Timesketch,
-we have developed a robust workflow that leverages specialized, external AI
-reasoning agents to process timeline data at scale.
+Find links for all the topics we talked about below.
 
-Join our sessions to learn how this hybrid architecture enables a new class of
-automated investigation.
+### Timesketch
+
+*  [General Timesketch Setup Guide](/guides/admin/install/)
+*  [Enable the Investigation View](/guides/admin/investigation-view-setup/)
+*  [How to experiment and connect with AI Capability for Log Analysis](/developers/log-analyzer-agent/)
+
+### Sec-Gemini Log Analysis Capability
+
+Sec-Gemini and its Log Analysis Capability are experimental research. The team is
+looking for trusted testers for access to the Log Reasoning Capabilities:
+
+* [Trusted Tester Application Form](https://forms.gle/KLjyct4gpwrbifvKA)
+
+#### Exploration Graph & Killchain
+
+![AI Exploration Graph Example](/assets/images/AI-Exploration-Graph.jpg)
+
+![Coin Mining Kill Chain Example](/assets/images/CoinMinerKillChain.jpg)
+
+## Talks & Demos
 
 ## Black Hat Briefing: Autonomous Timeline Analysis and Threat Hunting - An AI Agent for Timesketch
 
 The Timesketch team has partnerd with the Sec-Gemini research team to develop an
-Log Reasoning Agent. This session will dive deeper into the architecture,
+experimental Log Reasoning Agent. This session will dive deeper into the architecture,
 capabilities, and development of the Sec-Gemini Log Reasoning Agent. We will
 discuss the challenges and breakthroughs in creating an AI for log analysis.
 
@@ -41,12 +53,8 @@ triage findings, synthesize conclusions, and accelerate the reporting process.
 
 ## defcon 33
 
-We will be doing some presentations and demos at the [AI Village at defcon 33](https://aivillage.org/events/defcon33/).
+We will be running some presentations and demos at the [AI Village at defcon 33](https://aivillage.org/events/defcon33/).
 Come and discuss with us the challenges of working with AI in DFIR investigations
 and explore a demonstration of the AI Investigation View in Timesketch.
 
 **Link:** Scheduling TBD
-
-<center>
-<i>Check back here for slides, demo materials, and more information during and after the conference!</i>
-</center>
