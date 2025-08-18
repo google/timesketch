@@ -197,7 +197,7 @@ def init_worker(**kwargs):
     """Create new database engine per worker process."""
     url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
     engine_options = celery.conf.get("SQLALCHEMY_ENGINE_OPTIONS", {})
-    engine = create_engine(url, **engine_options)
+    engine = create_engine(url, future=True, **engine_options)
     db_session.configure(bind=engine)
 
 
