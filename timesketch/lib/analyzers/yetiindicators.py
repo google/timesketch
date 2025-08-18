@@ -90,11 +90,11 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         self.yeti_web_root = ""
 
         if not YETI_AVAILABLE:
-            return
+            raise RuntimeError("The 'yeti-python' library is not installed.")
 
         root = current_app.config.get("YETI_API_ROOT")
         if not root:
-            return
+            raise RuntimeError("YETI_API_ROOT is not configured.")
 
         if root.endswith("/"):
             root = root[:-1]
@@ -104,7 +104,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         tls_cert = current_app.config.get("YETI_TLS_CERTIFICATE")
 
         if not all([yeti_api_root, yeti_api_key]):
-            return
+            raise RuntimeError("YETI_API_ROOT or YETI_API_KEY is not configured.")
 
         self.api = YetiApi(yeti_api_root)
         if tls_cert and yeti_api_root.startswith("https://"):
