@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.17">
     
     
       
@@ -1119,9 +1119,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#steps" class="md-nav__link">
+  <a href="#enabling-dfiq" class="md-nav__link">
     <span class="md-ellipsis">
-      Steps
+      Enabling DFIQ
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-1-loading-from-the-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 1: Loading from the Filesystem
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-2-loading-from-yeti" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 2: Loading from YETI
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combining-filesystem-and-yeti-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combining Filesystem and YETI Sources
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#applying-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Applying Changes
     </span>
   </a>
   
@@ -2071,9 +2107,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#steps" class="md-nav__link">
+  <a href="#enabling-dfiq" class="md-nav__link">
     <span class="md-ellipsis">
-      Steps
+      Enabling DFIQ
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-1-loading-from-the-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 1: Loading from the Filesystem
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-2-loading-from-yeti" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 2: Loading from YETI
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combining-filesystem-and-yeti-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combining Filesystem and YETI Sources
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#applying-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Applying Changes
     </span>
   </a>
   
@@ -2113,35 +2185,82 @@
 <p>This guide explains how to load DFIQ (Digital Forensics Investigative Questions)
 template data into Timesketch. DFIQ data provides a structured way to ask
 questions and provides approaches for digital forensic investigations.</p>
-<h2 id="steps">Steps</h2>
-<p>Follow these steps to load the DFIQ template data:</p>
+<p>Timesketch can load this data from two sources: the local filesystem or a
+connected <a href="https://yeti-platform.io/">YETI threat intelligence platform</a>.
+These sources can be used independently or together.</p>
+<h2 id="enabling-dfiq">Enabling DFIQ</h2>
+<p>Before loading any data, you must first enable the DFIQ feature in your
+Timesketch configuration.</p>
 <ol>
-<li><strong>Enable DFIQ:</strong><ul>
 <li>Open your <code>timesketch.conf</code> file.</li>
 <li>Locate the <code>DFIQ_ENABLED</code> setting.</li>
 <li>Set the value to <code>True</code>.</li>
+</ol>
+<p>With DFIQ enabled, you can now choose one or both of the following methods to
+load template data.</p>
+<hr />
+<h2 id="option-1-loading-from-the-filesystem">Option 1: Loading from the Filesystem</h2>
+<p>This method involves loading DFIQ YAML files directly from a directory on your
+Timesketch server.</p>
+<ol>
+<li><strong>Configure the Path:</strong><ul>
+<li>In your <code>timesketch.conf</code>, ensure the <code>DFIQ_PATH</code> setting points to your
+    desired directory. The default is <code>/etc/timesketch/dfiq</code>.</li>
 </ul>
 </li>
-<li><strong>Replace DFIQ folders:</strong><ul>
-<li>Navigate to the default Timesketch
-    <a href="https://github.com/google/timesketch/tree/master/data/dfiq">data/dfiq</a>
-    directory.</li>
-<li>Delete the existing content of the directory.</li>
-<li>Replace the content with the folders from the official
-    <a href="https://github.com/google/dfiq/tree/main/dfiq/data">DFIQ repository</a>.</li>
+<li><strong>Populate the Directory:</strong><ul>
+<li>Navigate to the directory specified by <code>DFIQ_PATH</code>.</li>
+<li>It is recommended to import the full set of DFIQ data from the official
+    <a href="https://github.com/google/dfiq/tree/main/dfiq">DFIQ repository</a>.</li>
+<li>Ensure your <code>DFIQ_PATH</code> folder is actually mapped into the <code>timesketch</code>
+    containers!</li>
 </ul>
 </li>
+</ol>
+<hr />
+<h2 id="option-2-loading-from-yeti">Option 2: Loading from YETI</h2>
+<p>Timesketch can dynamically fetch DFIQ templates directly from a connected
+<a href="https://yeti-platform.io/">YETI threat intelligence platform</a>. This is useful
+for centralizing your investigative questions alongside your threat intelligence.
+YETI also provides a UI to create and organize DFIQ components like Scenarios and
+Questions.</p>
+<ol>
+<li><strong>Enable YETI DFIQ Integration:</strong><ul>
+<li>In <code>timesketch.conf</code>, set <code>YETI_DFIQ_ENABLED</code> to <code>True</code>.</li>
+</ul>
+</li>
+<li><strong>Configure YETI API Credentials:</strong><ul>
+<li>Set <code>YETI_API_ROOT</code> to the host of your YETI API endpoint (e.g., <code>http://yeti-api:8000</code>).</li>
+<li>Set <code>YETI_API_KEY</code> to a valid API key for your YETI instance.</li>
+</ul>
+</li>
+<li><strong>(Optional) Configure TLS Certificate:</strong><ul>
+<li>If your YETI instance uses a self-signed TLS certificate, set
+    <code>YETI_TLS_CERTIFICATE</code> to the path of the certificate file so Timesketch
+    can verify the connection.</li>
+</ul>
+</li>
+</ol>
+<h2 id="combining-filesystem-and-yeti-sources">Combining Filesystem and YETI Sources</h2>
+<p>You can enable both filesystem and YETI sources simultaneously. When both are
+active, Timesketch will load all templates from both locations.</p>
+<p><strong>Important:</strong> If a DFIQ template with the same UUID exists in both the local
+filesystem and YETI, the version from <strong>YETI will be used</strong>, overwriting the
+local one in memory.</p>
+<hr />
+<h2 id="applying-changes">Applying Changes</h2>
+<ol>
 <li><strong>Restart Timesketch:</strong><ul>
-<li>Restart your timesketch docker container.</li>
-<li>This ensures that the new DFIQ data is loaded and recognized by the system.</li>
+<li>After making any changes to <code>timesketch.conf</code> or the DFIQ filesystem
+  directory, restart your Timesketch docker containers.</li>
+<li>This ensures that the new configuration and DFIQ data are loaded and
+  recognized by the system.</li>
 </ul>
 </li>
 </ol>
 <h2 id="verification">Verification</h2>
-<p>After completing these steps, you should see the DFIQ element loaded on your
-sketches in the top.</p>
-<p>If the data is loaded correctly, you will find new questions and approaches
-available to be used.</p>
+<p>After completing these steps, you should see the DFIQ Question elements available
+in the "Investigative Questions" bar within your sketches.</p>
 
 
 
@@ -2195,10 +2314,10 @@ available to be used.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>
