@@ -40,6 +40,25 @@ class TestDFIQ(BaseTest):
         self.assertEqual(len(scenario.facets), 1)
         self.assertEqual(len(facet.questions), 1)
 
+    def test_dfiq_component_no_uuid(self):
+        """Test that a DFIQ component without a UUID is not loaded."""
+        yaml_string_no_uuid = """
+name: Test Scenario No UUID
+description: Test Scenario
+type: scenario
+id: S1002
+tags:
+  - test
+dfiq_version: 1.1.0
+"""
+        with self.assertLogs("timesketch.lib.dfiq", level="ERROR") as cm:
+            dfiq_instance = dfiq.DFIQ.from_yaml_list([yaml_string_no_uuid])
+            self.assertEqual(len(dfiq_instance.components), 0)
+            self.assertIn(
+                "DFIQ object 'S1002' ('Test Scenario No UUID') is missing a UUID.",
+                cm.output[0],
+            )
+
     def test_dfiq_graph(self):
         """Test that the DFIQ graph is loaded correctly."""
         self.assertEqual(len(self.dfiq.graph.nodes), 3)

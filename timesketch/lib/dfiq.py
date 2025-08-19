@@ -365,8 +365,8 @@ class DFIQ:
     def _convert_yaml_object_to_dfiq_component(yaml_object):
         """Converts a YAML object to a DFIQ component.
 
-        If the YAML object is missing a UUID, a temporary one is generated and
-        a warning is logged.
+        If the YAML object is missing a UUID, an error is logged and the object
+        is skipped.
 
         Args:
             yaml_object (dict): A dictionary parsed from a DFIQ YAML file.
@@ -378,15 +378,13 @@ class DFIQ:
         """
         component_uuid = yaml_object.get("uuid")
         if not component_uuid:
-            component_uuid = str(uuid.uuid4())
-            logger.warning(
+            logger.error(
                 "DFIQ object '%s' ('%s') is missing a UUID. "
-                "A temporary one has been generated: %s. "
-                "Please add a permanent UUID to the source file. ",
+                "Skipping import. Please add a permanent UUID to the source file.",
                 yaml_object.get("id", "N/A"),
                 yaml_object.get("name", "N/A"),
-                component_uuid,
             )
+            return None
 
         try:
             if yaml_object["type"] == "scenario":
