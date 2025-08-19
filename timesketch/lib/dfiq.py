@@ -250,7 +250,7 @@ class ScenarioTemplate(Component):
         self.questions = []
 
 
-class DFIQ:
+class DFIQCatalog:
     """Class that represents DFIQ.
 
     Attributes:

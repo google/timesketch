@@ -25,7 +25,7 @@ class TestDFIQ(BaseTest):
     def __init__(self, *args, **kwargs):
         """Initializes the test class."""
         super().__init__(*args, **kwargs)
-        self.dfiq = dfiq.DFIQ(TEST_DATA_DIR)
+        self.dfiq = dfiq.DFIQCatalog(TEST_DATA_DIR)
 
     def test_dfiq_components(self):
         """Test that the DFIQ components are loaded correctly."""
@@ -52,7 +52,7 @@ tags:
 dfiq_version: 1.1.0
 """
         with self.assertLogs("timesketch.lib.dfiq", level="ERROR") as cm:
-            dfiq_instance = dfiq.DFIQ.from_yaml_list([yaml_string_no_uuid])
+            dfiq_instance = dfiq.DFIQCatalog.from_yaml_list([yaml_string_no_uuid])
             self.assertEqual(len(dfiq_instance.components), 0)
             self.assertIn(
                 "DFIQ object 'S1002' ('Test Scenario No UUID') is missing a UUID.",

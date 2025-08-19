@@ -40,7 +40,7 @@ from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.dfiq import DFIQ
+from timesketch.lib.dfiq import DFIQCatalog
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
@@ -54,7 +54,7 @@ from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 logger = logging.getLogger("timesketch.scenario_api")
 
 
-def _load_dfiq_from_yeti() -> Optional[DFIQ]:
+def _load_dfiq_from_yeti() -> Optional[DFIQCatalog]:
     """Fetches DFIQ templates from a configured Yeti instance.
 
     Returns:
@@ -104,7 +104,7 @@ def _load_dfiq_from_yeti() -> Optional[DFIQ]:
     if not yaml_strings:
         return None
 
-    return DFIQ.from_yaml_list(yaml_strings)
+    return DFIQCatalog.from_yaml_list(yaml_strings)
 
 
 def load_dfiq_from_config():
@@ -121,7 +121,7 @@ def load_dfiq_from_config():
     dfiq_from_files = None
     if dfiq_path and isdir(dfiq_path):
         try:
-            dfiq_from_files = DFIQ(dfiq_path)
+            dfiq_from_files = DFIQCatalog(dfiq_path)
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Error loading DFIQ from path %s: %s", dfiq_path, str(e))
     else:
@@ -140,7 +140,7 @@ def load_dfiq_from_config():
         return dfiq_from_files
 
     # Create a new, empty DFIQ object to hold the merged results.
-    final_dfiq = DFIQ()
+    final_dfiq = DFIQCatalog()
 
     # Merge components from both sources.
     merged_components = dfiq_from_files.components.copy()
