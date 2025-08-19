@@ -24,7 +24,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
-from timesketch.lib.dfiq import DFIQ
+from timesketch.lib.dfiq import DFIQCatalog
 from timesketch.api.v1.resources import scenarios
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
@@ -1406,7 +1406,7 @@ class ScenariosResourceTest(BaseTest):
         self._commit_to_database(test_sketch)
 
         # Load DFIQ objects
-        dfiq_obj = DFIQ("./tests/test_data/dfiq/")
+        dfiq_obj = DFIQCatalog("./tests/test_data/dfiq/")
 
         scenario = dfiq_obj.scenarios[0]
         scenario_sql = Scenario(
