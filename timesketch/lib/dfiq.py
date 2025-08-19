@@ -541,11 +541,29 @@ class DFIQCatalog:
                         content.facets.append(child_uuid)
                     elif isinstance(child_obj, QuestionTemplate):
                         content.questions.append(child_uuid)
+                    else:
+                        logger.warning(
+                            "DFIQ validation error: Scenario '%s' has an invalid "
+                            "child of type '%s' ('%s'). Scenarios can only have "
+                            "Facets or Questions as children.",
+                            content.name,
+                            type(child_obj).__name__,
+                            child_obj.name,
+                        )
 
             elif isinstance(content, FacetTemplate):
                 for child_uuid in children_uuids:
                     child_obj = self.get_by_uuid(child_uuid)
                     if isinstance(child_obj, QuestionTemplate):
                         content.questions.append(child_uuid)
+                    else:
+                        logger.warning(
+                            "DFIQ validation error: Facet '%s' has an invalid "
+                            "child of type '%s' ('%s'). Facets can only have "
+                            "Questions as children.",
+                            content.name,
+                            type(child_obj).__name__,
+                            child_obj.name,
+                        )
 
         return graph
