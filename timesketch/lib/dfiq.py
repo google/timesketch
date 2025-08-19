@@ -16,7 +16,6 @@
 import os
 import json
 import logging
-import uuid
 
 import yaml
 import networkx as nx
@@ -279,9 +278,16 @@ class DFIQCatalog:
         self.graph = None
 
         if self.yaml_data_path:
-            self.components, self.id_to_uuid_map = self._load_dfiq_items_from_yaml()
-            if self.components:
-                self.graph = self._build_graph()
+            yaml_strings = self._read_dfiq_from_yaml_files()
+            components, id_to_uuid_map = self._parse_yaml_content(yaml_strings)
+            self._populate(components, id_to_uuid_map)
+
+    def _populate(self, components, id_to_uuid_map):
+        """Populates the instance from parsed YAML components."""
+        self.components = components
+        self.id_to_uuid_map = id_to_uuid_map
+        if self.components:
+            self.graph = self._build_graph()
 
     @property
     def scenarios(self):
@@ -354,11 +360,8 @@ class DFIQCatalog:
                 components.
         """
         dfiq_instance = cls()
-        components, id_map = dfiq_instance._parse_yaml_content(yaml_strings)
-        dfiq_instance.components = components
-        dfiq_instance.id_to_uuid_map = id_map
-        if dfiq_instance.components:
-            dfiq_instance.graph = dfiq_instance._build_graph()
+        components, id_to_uuid_map = dfiq_instance._parse_yaml_content(yaml_strings)
+        dfiq_instance._populate(components, id_to_uuid_map)
         return dfiq_instance
 
     @staticmethod
@@ -465,19 +468,17 @@ class DFIQCatalog:
 
         return component_dict, id_to_uuid_map
 
-    def _load_dfiq_items_from_yaml(self):
-        """Loads DFIQ items from YAML files located in the configured path.
+    def _read_dfiq_from_yaml_files(self):
+        """Reads DFIQ items from YAML files located in the configured path.
 
         It reads all .yaml files from subdirectories corresponding to DFIQ
         types (scenarios, facets, questions).
 
         Returns:
-            tuple[dict, dict]: A tuple containing:
-                - A dictionary of DFIQ components keyed by their UUID.
-                - A dictionary mapping DFIQ IDs to UUIDs.
+            A list of strings, where each string is the content of a DFIQ YAML file.
         """
         if not self.yaml_data_path:
-            return {}, {}
+            return []
 
         yaml_content_list = []
         for dfiq_type in self.plural_map.values():
@@ -495,7 +496,7 @@ class DFIQCatalog:
             except FileNotFoundError:
                 continue
 
-        return self._parse_yaml_content(yaml_content_list)
+        return yaml_content_list
 
     def _build_graph(self):
         """Builds a directed graph of DFIQ components and populates children.
