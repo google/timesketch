@@ -46,6 +46,16 @@ class Component:
         tags=None,
         parent_ids=None,
     ):
+        """Initializes the component.
+
+        Args:
+            component_uuid (str): The UUID of the component.
+            name (str): The name of the component.
+            dfiq_id (str): The DFIQ ID of the component.
+            description (str): The description of the component.
+            tags (list): The tags of the component.
+            parent_ids (list): The parent IDs of the component.
+        """
         self.id = dfiq_id
         self.uuid = component_uuid
         self.name = name
@@ -64,9 +74,19 @@ class Component:
                 self.description = description.rstrip()
 
     def set_children(self, child_ids):
+        """Sets the children of the component.
+
+        Args:
+            child_ids (list): The child IDs of the component.
+        """
         self.child_ids = child_ids
 
     def to_json(self):
+        """Returns the component as a JSON string.
+
+        Returns:
+            str: The component as a JSON string.
+        """
         return json.dumps(
             self, default=lambda o: o.__dict__, sort_keys=False, allow_nan=False
         )
@@ -80,7 +100,11 @@ class ApproachTemplate:
     """
 
     def __init__(self, approach):
-        """Initializes the approach."""
+        """Initializes the approach.
+
+        Args:
+            approach (dict): A dictionary representing the approach.
+        """
         self.name = approach["name"]
         self.description = approach.get("description")
         self.notes = approach.get("notes")
@@ -106,6 +130,11 @@ class ApproachTemplate:
         ]
 
     def to_json(self):
+        """Returns the approach as a JSON string.
+
+        Returns:
+            str: The approach as a JSON string.
+        """
         return json.dumps(
             self, default=lambda o: o.__dict__, sort_keys=False, allow_nan=False
         )
@@ -137,7 +166,17 @@ class QuestionTemplate(Component):
         parent_ids=None,
         approaches=None,
     ):
-        """Initializes the question."""
+        """Initializes the question.
+
+        Args:
+            component_uuid (str): The UUID of the component.
+            name (str): The name of the question.
+            dfiq_id (str): The DFIQ ID of the question.
+            description (str): The description of the question.
+            tags (list): The tags of the question.
+            parent_ids (list): The parent IDs of the question.
+            approaches (list): A list of approaches for the question.
+        """
         self.approaches = []
         if approaches:
             self.approaches = [ApproachTemplate(approach) for approach in approaches]
@@ -163,7 +202,16 @@ class FacetTemplate(Component):
         tags=None,
         parent_ids=None,
     ):
-        """Initializes the facet."""
+        """Initializes the facet.
+
+        Args:
+            component_uuid (str): The UUID of the component.
+            name (str): The name of the facet.
+            dfiq_id (str): The DFIQ ID of the facet.
+            description (str): The description of the facet.
+            tags (list): The tags of the facet.
+            parent_ids (list): The parent IDs of the facet.
+        """
         super().__init__(
             component_uuid=component_uuid,
             name=name,
@@ -179,7 +227,15 @@ class ScenarioTemplate(Component):
     """Class that represents a scenario."""
 
     def __init__(self, component_uuid, name, dfiq_id=None, description=None, tags=None):
-        """Initializes the scenario."""
+        """Initializes the scenario.
+
+        Args:
+            component_uuid (str): The UUID of the component.
+            name (str): The name of the scenario.
+            dfiq_id (str): The DFIQ ID of the scenario.
+            description (str): The description of the scenario.
+            tags (list): The tags of the scenario.
+        """
         # A scenario is a root node, so it never has parents.
         # We explicitly pass parent_ids=None.
         super().__init__(
@@ -206,7 +262,11 @@ class DFIQ:
     """
 
     def __init__(self, yaml_data_path=None):
-        """Initializes DFIQ."""
+        """Initializes DFIQ.
+
+        Args:
+            yaml_data_path (str): The path to the DFIQ YAML files.
+        """
         self.min_supported_DFIQ_version = "1.1.0"
         self.yaml_data_path = yaml_data_path
         self.plural_map = {
@@ -260,19 +320,39 @@ class DFIQ:
         )
 
     def get_by_id(self, dfiq_id: str):
-        """Returns a DFIQ component by its human-readable ID."""
+        """Returns a DFIQ component by its human-readable ID.
+
+        Returns:
+            The DFIQCatalog component or None if not found.
+        """
         component_uuid = self.id_to_uuid_map.get(dfiq_id)
         if component_uuid:
             return self.components.get(component_uuid)
         return None
 
     def get_by_uuid(self, uuid_str: str):
-        """Returns a DFIQ component by its UUID."""
+        """Returns a DFIQ component by its UUID.
+
+        Returns:
+            The DFIQCatalog component or None if not found.
+        """
         return self.components.get(uuid_str)
 
     @classmethod
     def from_yaml_list(cls, yaml_strings: list):
-        """Creates a DFIQ instance from a list of in-memory YAML strings."""
+        """Creates a DFIQ instance from a list of in-memory YAML strings.
+
+        This is used for loading DFIQ data from sources other than the
+        filesystem, such as a remote API.
+
+        Args:
+            yaml_strings (list[str]): A list of strings, where each string is
+                the content of a DFIQ YAML file.
+
+        Returns:
+            DFIQ: An instance of the DFIQ class populated with the parsed
+                components.
+        """
         dfiq_instance = cls()
         components, id_map = dfiq_instance._parse_yaml_content(yaml_strings)
         dfiq_instance.components = components
@@ -283,7 +363,19 @@ class DFIQ:
 
     @staticmethod
     def _convert_yaml_object_to_dfiq_component(yaml_object):
-        """Converts a YAML object to a DFIQ component."""
+        """Converts a YAML object to a DFIQ component.
+
+        If the YAML object is missing a UUID, a temporary one is generated and
+        a warning is logged.
+
+        Args:
+            yaml_object (dict): A dictionary parsed from a DFIQ YAML file.
+
+        Returns:
+            An instance of a Component subclass (ScenarioTemplate,
+            FacetTemplate, or QuestionTemplate), or None if the object type is
+            unknown or a schema error occurs.
+        """
         component_uuid = yaml_object.get("uuid")
         if not component_uuid:
             component_uuid = str(uuid.uuid4())
@@ -332,7 +424,19 @@ class DFIQ:
         return None
 
     def _parse_yaml_content(self, yaml_content_list):
-        """Parses a list of YAML file contents into DFIQ components."""
+        """Parses a list of YAML file contents into DFIQ components.
+
+        It validates the DFIQ version and handles YAML parsing errors.
+
+        Args:
+            yaml_content_list (list[str]): A list of strings, where each string
+                is the content of a DFIQ YAML file.
+
+        Returns:
+            tuple[dict, dict]: A tuple containing:
+                - A dictionary of DFIQ components keyed by their UUID.
+                - A dictionary mapping DFIQ IDs to UUIDs.
+        """
         component_dict = {}
         id_to_uuid_map = {}
         for yaml_content in yaml_content_list:
@@ -364,7 +468,16 @@ class DFIQ:
         return component_dict, id_to_uuid_map
 
     def _load_dfiq_items_from_yaml(self):
-        """Loads DFIQ items from YAML files."""
+        """Loads DFIQ items from YAML files located in the configured path.
+
+        It reads all .yaml files from subdirectories corresponding to DFIQ
+        types (scenarios, facets, questions).
+
+        Returns:
+            tuple[dict, dict]: A tuple containing:
+                - A dictionary of DFIQ components keyed by their UUID.
+                - A dictionary mapping DFIQ IDs to UUIDs.
+        """
         if not self.yaml_data_path:
             return {}, {}
 
@@ -387,7 +500,16 @@ class DFIQ:
         return self._parse_yaml_content(yaml_content_list)
 
     def _build_graph(self):
-        """Builds a graph of DFIQ components and populates typed children lists."""
+        """Builds a directed graph of DFIQ components and populates children.
+
+        This method uses the parent_ids of each component to construct the
+        relationship graph. It then traverses the graph to populate the
+        `child_ids`, `facets`, and `questions` attributes for each relevant
+        component.
+
+        Returns:
+            networkx.DiGraph: A directed graph representing the DFIQ structure.
+        """
         graph = nx.DiGraph()
 
         for component_uuid in self.components:
