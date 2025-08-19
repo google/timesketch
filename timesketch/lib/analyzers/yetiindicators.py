@@ -92,19 +92,19 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         if not YETI_AVAILABLE:
             raise RuntimeError("The 'yeti-python' library is not installed.")
 
-        root = current_app.config.get("YETI_API_ROOT")
-        if not root:
+        yeti_api_root = current_app.config.get("YETI_API_ROOT")
+
+        if not yeti_api_root:
             raise RuntimeError("YETI_API_ROOT is not configured.")
 
-        if root.endswith("/"):
-            root = root[:-1]
-        yeti_api_root = root
-        self.yeti_web_root = root.replace("/api/v2", "")
+        if yeti_api_root.endswith("/"):
+            yeti_api_root = yeti_api_root[:-1]
+        self.yeti_web_root = yeti_api_root.replace("/api/v2", "")
         yeti_api_key = current_app.config.get("YETI_API_KEY")
         tls_cert = current_app.config.get("YETI_TLS_CERTIFICATE")
 
-        if not all([yeti_api_root, yeti_api_key]):
-            raise RuntimeError("YETI_API_ROOT or YETI_API_KEY is not configured.")
+        if not yeti_api_key:
+            raise RuntimeError("ETI_API_KEY is not configured.")
 
         self.api = YetiApi(yeti_api_root)
         if tls_cert and yeti_api_root.startswith("https://"):
@@ -138,8 +138,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         for neighbor in neighbors:
             tags.add(slugify(neighbor["name"]))
             emoji_name = TYPE_TO_EMOJI.get(neighbor["type"])
-            if emoji_name:
-                event.add_emojis([emojis.get_emoji(emoji_name)])
+            event.add_emojis([emojis.get_emoji(emoji_name)])
 
         event.add_tags(list(tags))
         event.commit()
