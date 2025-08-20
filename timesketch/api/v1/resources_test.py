@@ -21,9 +21,10 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
-from timesketch.lib.dfiq import DFIQ
+from timesketch.lib.dfiq import DFIQCatalog
 from timesketch.api.v1.resources import scenarios
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
@@ -1386,6 +1387,7 @@ class SystemSettingsResourceTest(BaseTest):
         expected_response = {
             "DFIQ_ENABLED": False,
             "SEARCH_PROCESSING_TIMELINES": False,
+            "ENABLE_V3_INVESTIGATION_VIEW": False,
             "LLM_FEATURES_AVAILABLE": {"default": False},
         }
 
@@ -1404,7 +1406,7 @@ class ScenariosResourceTest(BaseTest):
         self._commit_to_database(test_sketch)
 
         # Load DFIQ objects
-        dfiq_obj = DFIQ("./tests/test_data/dfiq/")
+        dfiq_obj = DFIQCatalog("./tests/test_data/dfiq/")
 
         scenario = dfiq_obj.scenarios[0]
         scenario_sql = Scenario(
@@ -1527,8 +1529,10 @@ class LLMResourceTest(BaseTest):
     )
     @mock.patch("timesketch.lib.utils.get_validated_indices")
     @mock.patch("timesketch.api.v1.resources.llm.LLMResource._execute_llm_call")
+    @mock.patch("timesketch.lib.llms.providers.manager.LLMManager.create_provider")
     def test_post_success(
         self,
+        mock_create_provider,
         mock_execute_llm,
         mock_get_validated_indices,
         mock_get_feature,
@@ -1542,12 +1546,15 @@ class LLMResourceTest(BaseTest):
 
         mock_feature = mock.MagicMock()
         mock_feature.NAME = "test_feature"
+        # Force legacy workflow path which this test is written for
+        del mock_feature.execute
         mock_feature.generate_prompt.return_value = "test prompt"
         mock_feature.process_response.return_value = {"result": "test result"}
         mock_get_feature.return_value = mock_feature
 
         mock_get_validated_indices.return_value = (["index1"], [1])
         mock_execute_llm.return_value = {"response": "mock response"}
+        mock_create_provider.return_value = mock.MagicMock()
 
         self.login()
         response = self.client.post(
@@ -1559,8 +1566,13 @@ class LLMResourceTest(BaseTest):
         response_data = json.loads(response.get_data(as_text=True))
         self.assertEqual(response_data, {"result": "test result"})
 
-    def test_post_missing_data(self):
+    @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
+    def test_post_missing_data(self, mock_get_with_acl):
         """Test POST request with missing data."""
+        mock_sketch = mock.MagicMock()
+        mock_sketch.has_permission.return_value = True
+        mock_get_with_acl.return_value = mock_sketch
+
         self.login()
         response = self.client.post(
             self.resource_url,
@@ -1581,7 +1593,7 @@ class LLMResourceTest(BaseTest):
         self.login()
         response = self.client.post(
             self.resource_url,
-            data=json.dumps({"filter": {}}),  # No 'feature' key
+            data=json.dumps({"filter": {}}),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
@@ -1605,7 +1617,7 @@ class LLMResourceTest(BaseTest):
 
     @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
     def test_post_no_permission(self, mock_get_with_acl):
-        """Test POST request when user lacks read permission."""
+        """Test POST request when user lacks write permission."""
         mock_sketch = mock.MagicMock()
         mock_sketch.has_permission.return_value = False
         mock_get_with_acl.return_value = mock_sketch
@@ -1619,7 +1631,8 @@ class LLMResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertIn(
-            "User does not have read access to the sketch", response_data["message"]
+            "User does not have sufficient access to modify the sketch.",
+            response_data["message"],
         )
 
     @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
@@ -1649,8 +1662,10 @@ class LLMResourceTest(BaseTest):
         "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
     )
     @mock.patch("timesketch.lib.utils.get_validated_indices")
+    @mock.patch("timesketch.lib.llms.providers.manager.LLMManager.create_provider")
     def test_post_prompt_generation_error(
         self,
+        mock_create_provider,
         mock_get_validated_indices,
         mock_get_feature,
         mock_get_with_acl,
@@ -1663,12 +1678,15 @@ class LLMResourceTest(BaseTest):
 
         mock_feature = mock.MagicMock()
         mock_feature.NAME = "test_feature"
+        # Force legacy workflow path
+        del mock_feature.execute
         mock_feature.generate_prompt.side_effect = ValueError(
             "Prompt generation failed"
         )
         mock_get_feature.return_value = mock_feature
 
         mock_get_validated_indices.return_value = (["index1"], [1])
+        mock_create_provider.return_value = mock.MagicMock()
 
         self.login()
         response = self.client.post(
@@ -1677,7 +1695,7 @@ class LLMResourceTest(BaseTest):
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertIn("Prompt generation failed", response_data["message"])
 
@@ -1689,8 +1707,10 @@ class LLMResourceTest(BaseTest):
     )
     @mock.patch("timesketch.lib.utils.get_validated_indices")
     @mock.patch("multiprocessing.Process")
+    @mock.patch("timesketch.lib.llms.providers.manager.LLMManager.create_provider")
     def test_post_llm_execution_timeout(
         self,
+        mock_create_provider,
         mock_process,
         mock_get_validated_indices,
         mock_get_feature,
@@ -1705,10 +1725,13 @@ class LLMResourceTest(BaseTest):
 
         mock_feature = mock.MagicMock()
         mock_feature.NAME = "test_feature"
+        # Force legacy workflow path
+        del mock_feature.execute
         mock_feature.generate_prompt.return_value = "test prompt"
         mock_get_feature.return_value = mock_feature
 
         mock_get_validated_indices.return_value = (["index1"], [1])
+        mock_create_provider.return_value = mock.MagicMock()
 
         process_instance = mock.MagicMock()
         process_instance.is_alive.return_value = True
@@ -1721,7 +1744,7 @@ class LLMResourceTest(BaseTest):
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertIn("LLM call timed out", response_data["message"])
 

@@ -17,11 +17,18 @@ limitations under the License.
 import ApiClient from "../utils/RestApiClient.js";
 import { defineStore } from "pinia";
 
+
+export const ReportStatus = Object.freeze({
+  VERIFIED: 'VERIFIED',
+  UNVERIFIED: 'UNVERIFIED'
+})
+
 export const useAppStore = defineStore("app", {
   state: () => ({
     sketch: {},
     meta: {},
     searchHistory: {},
+    report: {},
     scenarios: [],
     hiddenScenarios: [],
     scenarioTemplates: [],
@@ -38,6 +45,9 @@ export const useAppStore = defineStore("app", {
       scenario: {},
       facet: {},
       question: {},
+      story: {
+        filed: false,
+      },
     },
     snackbar: {
       active: false,
@@ -51,6 +61,7 @@ export const useAppStore = defineStore("app", {
     activeAnalyses: [],
     analyzerResults: [],
     enabledTimelines: [],
+    notification: null
   }),
   actions: {
     async setAppStore() {},
@@ -61,6 +72,36 @@ export const useAppStore = defineStore("app", {
         this.$reset();
         this.currentUser = currentUser;
       });
+    },
+
+    async updateReport(payload) {
+      const newContent = {
+        ...this.report.content,
+        ...payload,
+      };
+
+      this.report = {
+        ...this.report,
+        content: newContent,
+      };
+
+      await ApiClient.updateStory(
+        this.report.title,
+        JSON.stringify(newContent),
+        this.sketch.id,
+        this.report.id
+      );
+    },
+
+    setActiveQuestion(question) {
+      this.activeContext = {
+        ...this.activeContext,
+        question
+      }
+    },
+
+    setNotification(notification) {
+      this.notification = notification
     },
 
     async updateSketch(sketchId) {
@@ -226,6 +267,24 @@ export const useAppStore = defineStore("app", {
         const freshEnabledTimelines = [...this.enabledTimelines, payload];
         this.enabledTimelines = freshEnabledTimelines;
       }
+    },
+  },
+  getters: {
+    activeQuestion() {
+      return this.activeContext.question;
+    },
+    summary() {
+      return this.report?.content?.summary;
+    },
+    reportLocked() {
+      return this.report?.content?.status === ReportStatus.VERIFIED;
+    },
+    approvedReportQuestions() {
+      return this.report?.content?.approvedQuestions ?? [];
+
+    },
+    removedReportQuestions() {
+      return this.report?.content?.removedQuestions ?? [];
     },
   },
 });

@@ -50,7 +50,7 @@ nav:
       - CLI client: developers/cli-client.md
       - Analyzers:
           - Create an analyzer: developers/analyzer-development.md
-      - AI Log Analyzer Architecture: developers/log-analyzer-agent.md
+      - AI Log Analyzer Deep Dive: developers/log-analyzer-agent.md
   - Changelog:
     - changelog/index.md
     - changelog/202305-202403.md

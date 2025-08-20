@@ -19,6 +19,7 @@ alongside the existing Timesketch services. To enable it, you need to activate
 the `v3-ui` profile in your Docker Compose setup.
 
 **Prerequisites:**
+
 *   A standard Timesketch installation using Docker Compose, as outlined in the
     [installation guide](/guides/admin/install/).
 *   If you have an existing Timesketch deployment, please ensure to collect the
@@ -34,7 +35,7 @@ the `v3-ui` profile in your Docker Compose setup.
 
 1.  **Stop your current Timesketch instance (if running):**
 
-    ```bash
+    ```
     sudo docker compose down
     ```
 
@@ -49,7 +50,7 @@ the `v3-ui` profile in your Docker Compose setup.
     your `docker compose up` command. This tells Docker to also start the
     `timesketch-web-v3` service defined in the compose file.
 
-    ```bash
+    ```
     sudo docker compose --profile v3-ui up -d
     ```
 
@@ -72,11 +73,11 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
 
     *   Open your `timesketch.conf` file for editing. This file is typically
         located in `etc/timesketch/` within your main Timesketch data directory.
-    *   Find and set the following variables to `True`:
+    *   Find and set the following variables to `True` in your `/etc/timesketch/timesketch.conf`:
 
-        ```bash
-        # In /etc/timesketch/timesketch.conf
+        ```
         DFIQ_ENABLED = True
+
         ENABLE_V3_INVESTIGATION_VIEW = True
         ```
 
@@ -92,9 +93,9 @@ settings in your `timesketch.conf` file. We also recommend to ensure the DFIQ
     For the configuration changes to take effect, you must restart your Docker
     containers.
 
-    ```bash
-    # In your Timesketch directory (e.g., /opt/timesketch)
+    ```
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
     ```
 
@@ -115,12 +116,12 @@ answer based on conclusions) that can be enabled with default LLM services.
 3. Ensure the prompt file configured in `PROMPT_LLM_SYNTHESIZE` exists and the
    prompt works for your needs.
 
-### 4. Connecting the AI Investigation Agent
+### 4. Connecting the AI Investigation Capabilities
 
 The Investigation View includes an experimental AI mode designed to support workflows
-utilizing AI Log Reasoning Agents wich automate the generation of key findings
+utilizing AI Log Analysis Capabilities wich automate the generation of key findings
 and investigative questions by analyzing timeline data. This feature is powered
-by a dedicated AI agent service that must be configured by an administrator.
+by a dedicated AI service that must be configured by an administrator.
 
 **How it Works**
 
@@ -129,33 +130,33 @@ Timesketch sends all timeline data to an external AI service defined in the
 `timesketch.conf` file for the `log_analyzer` feature. This service processes
 the data and sends back structured findings and questions.
 
-> **IMPORTANT 1**: We have developed and tested the AI feature with the experimental
-> Sec-Gemini Log Reasoning Agent. Sec-Gemini and the Agent are not open-source,
-> and not yet openly available.
+> **IMPORTANT 1**: We have developed and tested the AI Log Reasoning feature with
+> the experimental Sec-Gemini Log Analysis Capabilities. The Log Analysis capability is
+> still an research project, not meant for commercial use cases.
 > However, if you want to apply for trusted tester access, you can do this via this
-> form: https://bit.ly/46x9GLr
+> form: https://forms.gle/KLjyct4gpwrbifvKA
 
-> **IMPORTANT 2**: We encurage everyone to experiment with their own AI Agent
-> frameworks. Head to the [developer section](#TODO) to learn more about how to
-> design and deploy your own provider file and what Timesketch expects as response
-> format to work with the AI Investigation View Mode.
+> **IMPORTANT 2**: We encurage everyone to experiment with their own AI
+> frameworks. Head to the [developer section](/developers/log-analyzer-agent/)
+> to learn more about how to design and deploy your own provider file and what
+> Timesketch expects as response format to work with the AI Investigation View Mode.
 
 **Configuration Steps:**
 
-1.  **Configure the Agent Endpoint in `timesketch.conf`:**
+1.  **Configure the AI Endpoint in `timesketch.conf`:**
 
-    Once your agent is running, or you have gotten access to Sec-Gemini's
-    Log Reasoning Agent, you need to tell Timesketch how to communicate with it.
+    Once your AI service is running, or you have gotten access to Sec-Gemini's
+    Log Analysis , you need to tell Timesketch how to communicate with it.
     *   Open your `timesketch.conf` file for editing.
     *   Locate the `LLM_PROVIDER_CONFIGS` dictionary.
     *   Within this dictionary, configure the `log_analyzer` section to use your
         custom provider endpoint or the Sec-Gemini service.
 
     **Example Configuration:**
-    ```bash
-    # In /etc/timesketch/timesketch.conf
+
+    ```
     LLM_PROVIDER_CONFIGS = {
-        # ... other feature configs ...
+        ... other feature configs ...
 
         'log_analyzer':
         {
@@ -167,6 +168,7 @@ the data and sends back structured findings and questions.
         },
     }
     ```
+
     *   **`server_url`**: This is the API endpoint URL of your deployed AI agent.
     *   **`api_key`**: If your agent requires an API key for authentication, provide it here.
     *   Those values can vary depending on the provider you are using.
@@ -175,8 +177,9 @@ the data and sends back structured findings and questions.
     After saving your changes to `timesketch.conf`, restart the Docker containers
     to apply the new configuration.
 
-    ```bash
+    ```
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+
     sudo docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env --profile v3-ui up -d
     ```
 
@@ -187,4 +190,4 @@ within the Investigation View to accelerate their forensic analysis workflows.
 
 The setup of the AI log reasoning agent provider itself is a developer-focused task.
 Documentation on creating a compatible agent service can be found in the
-[Developer Guides](/developers/#TODO)
+[Developer Guides](/developers/log-analyzer-agent/)

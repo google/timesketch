@@ -34,7 +34,7 @@ def _get_message(response):
     """
     soup = bs4.BeautifulSoup(response.text, features="html.parser")
     if soup.p:
-        return soup.p.string
+        return soup.p.string  # pytype: disable=attribute-error
 
     if isinstance(response.text, bytes):
         response_text = response.text.decode("utf-8")

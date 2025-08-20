@@ -15,7 +15,9 @@
 
 import logging
 import json
+from os.path import isdir
 from typing import Optional
+from requests.exceptions import RequestException
 
 from flask import jsonify
 from flask import request
@@ -26,11 +28,19 @@ from flask_restful import reqparse
 from flask_login import current_user
 from flask_login import login_required
 
+try:
+    from yeti.api import YetiApi
+    from yeti import errors as yeti_errors
+
+    YETI_AVAILABLE = True
+except ImportError:
+    YETI_AVAILABLE = False
+
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.dfiq import DFIQ
+from timesketch.lib.dfiq import DFIQCatalog
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
@@ -44,20 +54,109 @@ from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 logger = logging.getLogger("timesketch.scenario_api")
 
 
-def load_dfiq_from_config():
-    """Create DFIQ object from config.
+def _load_dfiq_from_yeti() -> Optional[DFIQCatalog]:
+    """Fetches DFIQ templates from a configured Yeti instance.
 
     Returns:
-        DFIQ object or None if no DFIQ_PATH is configured.
+        A DFIQ object populated with templates from Yeti, or None if not
+        configured or if an error occurs.
     """
-    dfiq_path = current_app.config.get("DFIQ_PATH")
+    if not YETI_AVAILABLE:
+        logger.error(
+            "Yeti DFIQ is enabled, but the 'yeti-python' library is not installed."
+        )
+        return None
+
+    yeti_api_root = current_app.config.get("YETI_API_ROOT")
+    yeti_api_key = current_app.config.get("YETI_API_KEY")
+    yeti_cert_path = current_app.config.get("YETI_TLS_CERTIFICATE")
+
+    if not all([yeti_api_root, yeti_api_key]):
+        logger.warning("Yeti DFIQ is enabled, but API root or key is not configured.")
+        return None
+
+    try:
+        api = YetiApi(yeti_api_root)
+        if yeti_cert_path:
+            api.client.verify = yeti_cert_path
+        api.auth_api_key(yeti_api_key)
+        scenarios = api.search_dfiq(name="", dfiq_type="scenario")
+        facets = api.search_dfiq(name="", dfiq_type="facet")
+        questions = api.search_dfiq(name="", dfiq_type="question")
+        all_dfiq_objects = scenarios + facets + questions
+
+        if not all_dfiq_objects:
+            logger.info("No DFIQ objects found in Yeti.")
+            return None
+
+    except yeti_errors.YetiApiError as e:
+        logger.error("Failed to fetch DFIQ objects from Yeti: %s", str(e))
+        return None
+    except RequestException as e:
+        logger.error("A network error occurred while connecting to Yeti: %s", str(e))
+        return None
+
+    # Extract YAML strings and load them directly into a DFIQ object in memory.
+    yaml_strings = [
+        obj["dfiq_yaml"] for obj in all_dfiq_objects if obj.get("dfiq_yaml")
+    ]
+
+    if not yaml_strings:
+        return None
+
+    return DFIQCatalog.from_yaml_list(yaml_strings)
+
+
+def load_dfiq_from_config():
+    """Create DFIQ object from config, potentially merging filesystem and Yeti sources.
+
+    Returns:
+        DFIQ object or None if DFIQ is not enabled or no templates are found.
+    """
     if not current_app.config.get("DFIQ_ENABLED"):
         logger.debug("DFIQ is disabled. Enable in the timesketch.conf!")
         return None
-    if not dfiq_path:
-        logger.error("No DFIQ_PATH configured")
-        return None
-    return DFIQ(dfiq_path)
+
+    dfiq_path = current_app.config.get("DFIQ_PATH")
+    dfiq_from_files = None
+    if dfiq_path and isdir(dfiq_path):
+        try:
+            dfiq_from_files = DFIQCatalog(dfiq_path)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error("Error loading DFIQ from path %s: %s", dfiq_path, str(e))
+    else:
+        logger.info(
+            "No DFIQ_PATH configured or path is invalid, skipping file-based loading."
+        )
+
+    if not current_app.config.get("YETI_DFIQ_ENABLED"):
+        return dfiq_from_files
+
+    dfiq_from_yeti = _load_dfiq_from_yeti()
+
+    if not dfiq_from_files:
+        return dfiq_from_yeti
+    if not dfiq_from_yeti:
+        return dfiq_from_files
+
+    # Create a new, empty DFIQ object to hold the merged results.
+    final_dfiq = DFIQCatalog()
+
+    # Merge components from both sources.
+    merged_components = dfiq_from_files.components.copy()
+    merged_components.update(dfiq_from_yeti.components)
+
+    final_dfiq.components = merged_components
+
+    final_dfiq.id_to_uuid_map = {
+        c.id: c.uuid for c in final_dfiq.components.values() if c.id
+    }
+
+    # Rebuild the graph from the final, merged set of components.
+    if final_dfiq.components:
+        final_dfiq.graph = final_dfiq._build_graph()  # pylint: disable=protected-access
+
+    return final_dfiq
 
 
 def check_and_run_dfiq_analysis_steps(
@@ -175,6 +274,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """Handles POST request to the resource.
 
         This resource creates a new scenario for a sketch based on a DFIQ template.
+        It uses UUIDs as the primary identifier for looking up templates.
 
         Returns:
             A JSON representation of the scenario.
@@ -192,132 +292,128 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         if not dfiq:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server")
 
-        form = request.json
-        if not form:
-            form = request.data
-
+        form = request.json or request.data
         dfiq_id = form.get("dfiq_id")
         display_name = form.get("display_name")
-        uuid = form.get("uuid")
+        template_uuid = form.get("uuid")
 
-        scenario = None
-
-        if uuid:
-            scenario = next(
-                (s for s in dfiq.scenarios if s.uuid == uuid),
-                None,
-            )
+        scenario_template = None
+        # Prioritize UUID for lookup, falling back to ID.
+        if template_uuid:
+            scenario_template = dfiq.get_by_uuid(template_uuid)
         elif dfiq_id:
-            scenario = next(
-                (s for s in dfiq.scenarios if s.id == dfiq_id),
-                None,
-            )
+            scenario_template = dfiq.get_by_id(dfiq_id)
         elif display_name:
-            scenario = next(
+            # Name lookup is less precise and remains a final fallback.
+            scenario_template = next(
                 (s for s in dfiq.scenarios if s.name == display_name),
                 None,
             )
 
-        if not scenario:
+        if not scenario_template:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                f"No scenario found matching the provided data: {form}",
+                f"No scenario template found matching the provided data: {form}",
             )
 
-        if not display_name:
-            display_name = scenario.name
+        objects_to_add = []
 
         scenario_sql = Scenario(
-            dfiq_identifier=scenario.id,
-            uuid=scenario.uuid,
-            name=scenario.name,
-            display_name=display_name,
-            description=scenario.description,
-            spec_json=scenario.to_json(),
+            dfiq_identifier=scenario_template.id,
+            uuid=scenario_template.uuid,
+            name=scenario_template.name,
+            display_name=display_name or scenario_template.name,
+            description=scenario_template.description,
+            spec_json=scenario_template.to_json(),
             sketch=sketch,
             user=current_user,
         )
+        objects_to_add.append(scenario_sql)
 
-        for facet_id in scenario.facets:
-            facet = next(
-                (facet for facet in dfiq.facets if facet.id == facet_id),
-                None,
-            )
+        for facet_uuid in scenario_template.facets:
+            facet_template = dfiq.get_by_uuid(facet_uuid)
+            if not facet_template:
+                logger.warning("Facet with UUID [%s] not found, skipping.", facet_uuid)
+                continue
+
             facet_sql = Facet(
-                dfiq_identifier=facet.id,
-                uuid=facet.uuid,
-                name=facet.name,
-                display_name=facet.name,
-                description=facet.description,
-                spec_json=facet.to_json(),
+                dfiq_identifier=facet_template.id,
+                uuid=facet_template.uuid,
+                name=facet_template.name,
+                display_name=facet_template.name,
+                description=facet_template.description,
+                spec_json=facet_template.to_json(),
                 sketch=sketch,
                 user=current_user,
+                scenario=scenario_sql,
             )
-            scenario_sql.facets.append(facet_sql)
+            objects_to_add.append(facet_sql)
 
-            for question_id in facet.questions:
-                question = next(
-                    (
-                        question
-                        for question in dfiq.questions
-                        if question.id == question_id
-                    ),
-                    None,
+            for question_uuid in facet_template.questions:
+                question_template = dfiq.get_by_uuid(question_uuid)
+                if not question_template:
+                    continue
+
+                question_sql = self._create_question_sql(
+                    sketch, question_template, facet_sql=facet_sql
                 )
-                question_sql = InvestigativeQuestion(
-                    dfiq_identifier=question.id,
-                    uuid=question.uuid,
-                    name=question.name,
-                    display_name=question.name,
-                    description=question.description,
-                    spec_json=question.to_json(),
-                    sketch=sketch,
-                    # scenario=scenario_sql,
-                    user=current_user,
-                )
-                # facet_sql.questions.append(question_sql)
+                objects_to_add.append(question_sql)
 
-                # TODO: This is a tmp hack to make all questions oprhaned!
-                # We need to fix this by loading connected questions as well in
-                # the frontend!
-                db_session.add(question_sql)
+        for question_uuid in scenario_template.questions:
+            question_template = dfiq.get_by_uuid(question_uuid)
+            if not question_template:
+                continue
 
-                for approach in question.approaches:
-                    approach_sql = InvestigativeQuestionApproach(
-                        name=approach.name,
-                        display_name=approach.name,
-                        description=approach.description,
-                        spec_json=approach.to_json(),
-                        user=current_user,
-                    )
+            # Create the question, linking it to the scenario but not a facet.
+            question_sql = self._create_question_sql(
+                sketch, question_template, scenario_sql=scenario_sql
+            )
+            objects_to_add.append(question_sql)
 
-                    for search_template in approach.search_templates:
-                        search_template_sql = SearchTemplate.query.filter_by(
-                            template_uuid=search_template["value"]
-                        ).first()
-                        if search_template_sql:
-                            approach_sql.search_templates.append(search_template_sql)
-
-                    question_sql.approaches.append(approach_sql)
-
-                    db_session.add(question_sql)
-
-                # TODO: Remove commit and check function here when questions are
-                # linked to Scenarios again!
-                # Needs a tmp commit here so we can run the analyzer on the question.
-                db_session.commit()
-                # Check if any of the questions contains analyzer approaches
-                check_and_run_dfiq_analysis_steps(question_sql, sketch)
-
-        db_session.add(scenario_sql)
+        db_session.add_all(objects_to_add)
         db_session.commit()
 
-        # This does not work, since we don't have Scenarios linked down to
-        # Approaches anymore! We intentionally broke the link to facets to show
-        # Questions in the frontend.
-        # check_and_run_dfiq_analysis_steps(scenario_sql, sketch)
+        # Trigger analyzers after the transaction is complete.
+        for obj in objects_to_add:
+            if isinstance(obj, InvestigativeQuestion):
+                check_and_run_dfiq_analysis_steps(obj, sketch)
 
         return self.to_json(scenario_sql)
+
+    def _create_question_sql(
+        self, sketch, question_template, scenario_sql=None, facet_sql=None
+    ):
+        """Helper to create an InvestigativeQuestion object and its approaches."""
+        question_sql = InvestigativeQuestion(
+            dfiq_identifier=question_template.id,
+            uuid=question_template.uuid,
+            name=question_template.name,
+            display_name=question_template.name,
+            description=question_template.description,
+            spec_json=question_template.to_json(),
+            sketch=sketch,
+            user=current_user,
+            scenario=scenario_sql,
+            facet=facet_sql,
+        )
+
+        for approach_template in question_template.approaches:
+            approach_sql = InvestigativeQuestionApproach(
+                name=approach_template.name,
+                display_name=approach_template.name,
+                description=approach_template.description,
+                spec_json=approach_template.to_json(),
+                user=current_user,
+            )
+            for search_template in approach_template.search_templates:
+                search_template_sql = SearchTemplate.query.filter_by(
+                    template_uuid=search_template["value"]
+                ).first()
+                if search_template_sql:
+                    approach_sql.search_templates.append(search_template_sql)
+            question_sql.approaches.append(approach_sql)
+
+        return question_sql
 
 
 class ScenarioResource(resources.ResourceMixin, Resource):
@@ -592,22 +688,21 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         scenario = Scenario.get_by_id(scenario_id) if scenario_id else None
         facet = Facet.get_by_id(facet_id) if facet_id else None
 
+        dfiq_question = None
         if template_id or uuid:
             dfiq = load_dfiq_from_config()
             if not dfiq:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server"
                 )
+
             if uuid:
-                dfiq_question = [
-                    question for question in dfiq.questions if question.uuid == uuid
-                ][0]
-            else:
-                dfiq_question = [
-                    question
-                    for question in dfiq.questions
-                    if question.id == template_id
-                ][0]
+                dfiq_question = dfiq.get_by_uuid(uuid)
+            elif template_id:
+                dfiq_question = dfiq.get_by_id(template_id)
+
+            if not dfiq_question:
+                abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ Question template not found.")
 
         if dfiq_question:
             new_question = InvestigativeQuestion(
@@ -694,6 +789,97 @@ class QuestionResource(resources.ResourceMixin, Resource):
 
         return self.to_json(question)
 
+    @login_required
+    def post(self, sketch_id, question_id):
+        """Handles POST request to the resource to update a question.
+
+        Returns:
+            A JSON representation of the updated question.
+        """
+        VALID_STATUSES = {"new", "pending-review", "verified", "rejected"}
+        VALID_PRIORITIES = {
+            "__ts_priority_low",
+            "__ts_priority_medium",
+            "__ts_priority_high",
+        }
+
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        question = InvestigativeQuestion.get_by_id(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+        if not question.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Question is not part of this sketch.")
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        # Flag to check if the object was updated, to avoid unnecessary DB writes.
+        updated = False
+
+        status = form.get("status")
+        if status:
+            if status not in VALID_STATUSES:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Invalid question status: '{status}'. Valid statuses are: "
+                    f"{', '.join(sorted(list(VALID_STATUSES)))}",
+                )
+            question.set_status(status)
+            updated = True
+
+        name = form.get("name")
+        if name:
+            question.name = name
+            updated = True
+
+        display_name = form.get("display_name")
+        if display_name:
+            question.display_name = display_name
+            updated = True
+
+        description = form.get("description")
+        if description:
+            question.description = description
+            updated = True
+
+        priority = form.get("priority")
+        if priority:
+            if priority not in VALID_PRIORITIES:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Invalid question priority value: '{priority}'. Valid "
+                    "priorities are: "
+                    f"{', '.join(sorted(list(VALID_PRIORITIES - {''})))}",
+                )
+
+            # Remove existing priority label
+            existing_priority_label = None
+            for label in question.get_labels:
+                if label.startswith("__ts_priority_"):
+                    existing_priority_label = label
+                    break
+
+            if existing_priority_label:
+                question.remove_label(existing_priority_label)
+
+            question.add_label(priority)
+            updated = True
+
+        if updated:
+            db_session.add(question)
+            db_session.commit()
+
+        return self.to_json(question)
+
 
 class QuestionConclusionListResource(resources.ResourceMixin, Resource):
     """Resource for investigative question conclusion."""
@@ -756,7 +942,8 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             db_session.add(conclusion)
             db_session.commit()
 
-        return self.to_json(question)
+        meta = {"new_conclusion_id": conclusion.id}
+        return self.to_json(question, meta=meta)
 
 
 class QuestionConclusionResource(resources.ResourceMixin, Resource):
@@ -806,7 +993,7 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
     def delete(self, sketch_id, question_id, conclusion_id):
         """Handles DELETE request to the resource.
 
-        Deletes a conclusion.
+        Deletes a conclusion and removes associated fact labels from events.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -830,10 +1017,30 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "Conclusion is not part of this question."
             )
 
-        if conclusion.user != current_user:
+        is_owner = conclusion.user == current_user
+        is_automated = conclusion.automated
+        if not (is_owner or is_automated):
             abort(
-                HTTP_STATUS_CODE_FORBIDDEN, "You can only delete your own concluions."
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "You can only delete your own conclusions or those generated by AI.",
             )
+
+        label_to_remove = f"__ts_fact_{conclusion_id}"
+        events_to_update = list(conclusion.events)
+        for event in events_to_update:
+            existing_labels = event.get_labels
+
+            if label_to_remove in existing_labels:
+                self.datastore.set_label(
+                    searchindex_id=event.searchindex.index_name,
+                    event_id=event.document_id,
+                    sketch_id=sketch.id,
+                    user_id=current_user.id,
+                    label=label_to_remove,
+                    toggle=True,
+                )
+
+        self.datastore.flush_queued_events()
 
         db_session.delete(conclusion)
         db_session.commit()

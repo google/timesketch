@@ -20,6 +20,9 @@ limitations under the License.
 -->
 <template>
   <div>
+    <div v-show="currentRouteName === 'Investigation'">
+      <InvestigationCanvas/>
+    </div>
     <div v-show="currentRouteName === 'Explore'">
       <explore :sketch-id="sketchId"></explore>
     </div>
@@ -29,10 +32,12 @@ limitations under the License.
 <script>
 import { useRoute } from 'vue-router';
 import Explore from './Explore.vue';
+import InvestigationCanvas from '../components/Investigation/index.vue';
 
 export default {
   components: {
      Explore,
+     InvestigationCanvas,
   },
   data() {
     return {

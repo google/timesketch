@@ -25,29 +25,59 @@ class TestDFIQ(BaseTest):
     def __init__(self, *args, **kwargs):
         """Initializes the test class."""
         super().__init__(*args, **kwargs)
-        self.dfiq = dfiq.DFIQ(TEST_DATA_DIR)
+        self.dfiq = dfiq.DFIQCatalog(TEST_DATA_DIR)
 
     def test_dfiq_components(self):
         """Test that the DFIQ components are loaded correctly."""
         self.assertIsInstance(self.dfiq.components, dict)
         self.assertEqual(len(self.dfiq.components), 3)
-        self.assertIsInstance(self.dfiq.components.get("S1001"), dfiq.Scenario)
-        self.assertIsInstance(self.dfiq.components.get("F1001"), dfiq.Facet)
-        self.assertIsInstance(self.dfiq.components.get("Q1001"), dfiq.Question)
-        self.assertEqual(len(self.dfiq.components.get("S1001").facets), 1)
-        self.assertEqual(len(self.dfiq.components.get("F1001").questions), 1)
+        scenario = self.dfiq.get_by_id("S1001")
+        facet = self.dfiq.get_by_id("F1001")
+        question = self.dfiq.get_by_id("Q1001")
+        self.assertIsInstance(scenario, dfiq.ScenarioTemplate)
+        self.assertIsInstance(facet, dfiq.FacetTemplate)
+        self.assertIsInstance(question, dfiq.QuestionTemplate)
+        self.assertEqual(len(scenario.facets), 1)
+        self.assertEqual(len(facet.questions), 1)
+
+    def test_dfiq_component_no_uuid(self):
+        """Test that a DFIQ component without a UUID is not loaded."""
+        yaml_string_no_uuid = """
+name: Test Scenario No UUID
+description: Test Scenario
+type: scenario
+id: S1002
+tags:
+  - test
+dfiq_version: 1.1.0
+"""
+        with self.assertLogs("timesketch.lib.dfiq", level="ERROR") as cm:
+            dfiq_instance = dfiq.DFIQCatalog.from_yaml_list([yaml_string_no_uuid])
+            self.assertEqual(len(dfiq_instance.components), 0)
+            self.assertIn(
+                "DFIQ object 'S1002' ('Test Scenario No UUID') is missing a UUID.",
+                cm.output[0],
+            )
 
     def test_dfiq_graph(self):
         """Test that the DFIQ graph is loaded correctly."""
         self.assertEqual(len(self.dfiq.graph.nodes), 3)
         self.assertEqual(len(self.dfiq.graph.edges), 2)
+        uuid_to_id_map = {v: k for k, v in self.dfiq.id_to_uuid_map.items()}
         for node in self.dfiq.graph.nodes:
             self.assertIsInstance(node, str)
-        expected_nodes = ["S1001", "F1001", "Q1001"]
-        for idx, component_name in enumerate(expected_nodes):
-            self.assertEqual(list(self.dfiq.graph.nodes)[idx], component_name)
+        graph_node_ids = sorted(
+            [uuid_to_id_map.get(node_uuid) for node_uuid in self.dfiq.graph.nodes]
+        )
+        expected_nodes = sorted(["S1001", "F1001", "Q1001"])
+        self.assertEqual(graph_node_ids, expected_nodes)
         for edge in self.dfiq.graph.edges:
             self.assertIsInstance(edge, tuple)
-        expected_edges = [("S1001", "F1001"), ("F1001", "Q1001")]
-        for idx, edge in enumerate(expected_edges):
-            self.assertEqual(list(self.dfiq.graph.edges)[idx], edge)
+        graph_edge_ids = sorted(
+            [
+                (uuid_to_id_map.get(u), uuid_to_id_map.get(v))
+                for u, v in self.dfiq.graph.edges
+            ]
+        )
+        expected_edges = sorted([("S1001", "F1001"), ("F1001", "Q1001")])
+        self.assertEqual(graph_edge_ids, expected_edges)
