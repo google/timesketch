@@ -687,14 +687,6 @@ class BaseTest(TestCase):
         db_session.remove()
         drop_all()
 
-    def login(self):
-        """Authenticate the test user."""
-        self.client.post(
-            "/login/",
-            data={"username": "test1", "password": "test"},
-            follow_redirects=True,
-        )
-
     def login(self, username="test1", password="test"):
         """Authenticate a user.
 
