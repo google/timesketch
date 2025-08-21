@@ -708,6 +708,14 @@ class BaseTest(TestCase):
             follow_redirects=True,
         )
 
+    def login_admin(self):
+        """Authenticate the test user with admin privileges."""
+        self.client.post(
+            "/login/",
+            data={"username": "testadmin", "password": "test"},
+            follow_redirects=True,
+        )
+
     def test_unauthenticated(self):
         """
         Generic test for all resources. It tests that no
