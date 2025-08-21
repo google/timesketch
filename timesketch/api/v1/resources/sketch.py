@@ -133,7 +133,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
             not_(Sketch.Status.status == "deleted"), Sketch.Status.parent
         ).order_by(Sketch.updated_at.desc())
 
-        filtered_sketches = base_filter_with_archived
+        filtered_sketches = None
         sketches = []
         return_sketches = []
 
@@ -144,6 +144,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
         current_page = 1
         total_pages = 0
         total_items = 0
+
+        if include_archived:
+            base_filter = base_filter_with_archived
+        else:
+            base_filter = base_filter.filter(not_(Sketch.status.any(status="archived")))
 
         if scope == "recent":
             # Get list of sketches that the user has actively searched in.
@@ -160,39 +165,22 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 if view.sketch.get_status.status != "deleted"
             ]
             total_items = len(sketches)
-        elif scope == "admin":
-            if not current_user.admin:
-                abort(HTTP_STATUS_CODE_FORBIDDEN, "User is not an admin.")
-            if include_archived:
-                filtered_sketches = base_filter_with_archived
-            else:
-                filtered_sketches = base_filter
-        elif scope == "user":
-            if include_archived:
-                filtered_sketches = base_filter_with_archived.filter_by(
-                    user=current_user
-                )
-            else:
-                filtered_sketches = base_filter.filter_by(user=current_user)
         elif scope == "archived":
             filtered_sketches = base_filter_with_archived.filter(
                 Sketch.status.any(status="archived"),
             )
+        elif scope == "admin":
+            if not current_user.admin:
+                abort(HTTP_STATUS_CODE_FORBIDDEN, "User is not an admin.")
+            filtered_sketches = base_filter
+        elif scope == "user":
+            filtered_sketches = base_filter.filter_by(user=current_user)
         elif scope == "shared":
-            if include_archived:
-                filtered_sketches = base_filter_with_archived.filter(
-                    Sketch.user != current_user
-                )
-            else:
-                filtered_sketches = base_filter.filter(Sketch.user != current_user)
+            filtered_sketches = base_filter.filter(Sketch.user != current_user)
         elif scope == "all":
-            if not include_archived:
-                filtered_sketches = base_filter
+            filtered_sketches = base_filter
         elif scope == "search":
-            if include_archived:
-                search_base = base_filter_with_archived
-            else:
-                search_base = base_filter
+            search_base = base_filter
             filtered_sketches = search_base.filter(
                 or_(
                     Sketch.name.ilike(f"%{search_query}%"),
