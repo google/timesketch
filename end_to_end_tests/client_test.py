@@ -20,8 +20,6 @@ import os
 import time
 from timesketch_api_client import client, search
 
-from timesketch_api_client import search
-
 from . import interface
 from . import manager
 
