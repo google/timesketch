@@ -1237,13 +1237,17 @@ def searchindex_info(searchindex_id: int, index_name: str):
         print("Searchindex not found in database.")
         return
 
-    print(f"Searchindex: {index_to_search.id} Name: {index_to_search.name} found")
+    print(
+        f"Searchindex: {index_to_search.id} Name: {index_to_search.name} [Status: {index_to_search.status[-1].status}] found"
+    )
 
     timelines = index_to_search.timelines
     if timelines:
         print("Associated Timelines:")
         for timeline in timelines:
-            print(f"  ID: {timeline.id}, Name: {timeline.name}")
+            print(
+                f"  ID: {timeline.id}, Name: {timeline.name} [Status: {timeline.status[-1].status}]"
+            )
             if timeline.sketch:
                 print(
                     f"    Sketch ID: {timeline.sketch.id}, Name: {timeline.sketch.name}"

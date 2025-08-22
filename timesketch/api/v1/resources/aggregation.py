@@ -14,9 +14,10 @@
 """Aggregation resources for version 1 of the Timesketch API."""
 
 import json
+import logging
 import time
 
-from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError, RequestError
 
 from flask import current_app
 from flask import jsonify
@@ -42,6 +43,9 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Sketch
+
+
+logger = logging.getLogger("timesketch.api.aggregation")
 
 
 class AggregationResource(resources.ResourceMixin, Resource):
@@ -528,6 +532,26 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     f"Unable to run the aggregation, with error: {exc!s}",
                 )
+            except RequestError as exc:
+                indices_msg = ", ".join(indices)
+                if exc.error == "index_closed_exception":
+                    logger.error(
+                        "Unable to run aggregation on a closed index."
+                        f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
+                        exc_info=True,
+                        stack_info=True,
+                        extra={"request": request},
+                    )
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to run aggregation on a closed index."
+                        f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
+                    )
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Unable to run the aggregation, with error: {exc!s}"
+                    f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
+                )
             time_after = time.time()
 
             buckets = result_obj.to_dict()
@@ -562,10 +586,21 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     meta["vega_chart_title"] = chart_title
 
         elif aggregation_dsl:
-            # pylint: disable=unexpected-keyword-arg
-            result = self.datastore.client.search(
-                index=",".join(sketch_indices), body=aggregation_dsl, size=0
-            )
+            try:
+                # pylint: disable=unexpected-keyword-arg
+                result = self.datastore.client.search(
+                    index=",".join(sketch_indices), body=aggregation_dsl, size=0
+                )
+            except RequestError as e:
+                if e.error == "index_closed_exception":
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to run aggregation on a closed index.",
+                    )
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Unable to run the aggregation, with error: {e!s}",
+                )
 
             meta = {
                 "es_time": result.get("took", 0),
