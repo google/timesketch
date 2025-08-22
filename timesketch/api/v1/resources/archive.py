@@ -505,7 +505,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         for search_index in search_indexes_to_open:
             try:
                 logger.info(
-                    "Attempting to open OpenSearch index: %s (DB ID: %s) for sketch %s.",
+                    "Attempting to open OpenSearch index: %s (DB ID: %s)"
+                    " for sketch %s.",
                     search_index.index_name,
                     search_index.id,
                     sketch.id,
