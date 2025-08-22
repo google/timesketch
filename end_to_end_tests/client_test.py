@@ -18,6 +18,7 @@ import json
 import random
 import os
 import time
+from timesketch_api_client import client, search
 
 from timesketch_api_client import search
 
@@ -352,6 +353,66 @@ level: high
         # breakpoint()
         with self.assertions.assertRaises(RuntimeError):
             self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+
+    def test_list_sketches_scopes(self):
+        """Test listing sketches with different scopes."""
+        # This test assumes a second user 'test2' with password 'test2' exists
+        # in the test environment. This is necessary to test shared sketches.
+        try:
+            api2 = client.TimesketchApi(
+                self.api._host_uri, "test2", "test2", auth_mode="userpass"
+            )
+            other_user_exists = True
+        except RuntimeError:
+            other_user_exists = False
+
+        # Get initial counts for user 'test'
+        user_sketches_before = list(self.api.list_sketches(scope="user"))
+        shared_sketches_before = list(self.api.list_sketches(scope="shared"))
+        all_sketches_before = list(self.api.list_sketches(scope="all"))
+
+        # User 'test' creates a new sketch
+        my_sketch = self.api.create_sketch(
+            name="My own test sketch", description="This is mine."
+        )
+
+        other_sketch = None
+        if other_user_exists:
+            # User 'test2' creates a sketch and shares it with 'test'
+            other_sketch = api2.create_sketch(
+                name="Sketch from other user",
+                description="This is shared with user test",
+            )
+            other_sketch.add_to_acl(user_list=["test"])
+
+        # Verify counts for user 'test'
+        user_sketches_after = list(self.api.list_sketches(scope="user"))
+        shared_sketches_after = list(self.api.list_sketches(scope="shared"))
+        all_sketches_after = list(self.api.list_sketches(scope="all"))
+
+        self.assertions.assertEqual(
+            len(user_sketches_after), len(user_sketches_before) + 1
+        )
+
+        if other_user_exists:
+            self.assertions.assertEqual(
+                len(shared_sketches_after), len(shared_sketches_before) + 1
+            )
+            self.assertions.assertEqual(
+                len(all_sketches_after), len(all_sketches_before) + 2
+            )
+        else:
+            self.assertions.assertEqual(
+                len(shared_sketches_after), len(shared_sketches_before)
+            )
+            self.assertions.assertEqual(
+                len(all_sketches_after), len(all_sketches_before) + 1
+            )
+
+        # Clean up
+        my_sketch.delete()
+        if other_sketch:
+            other_sketch.delete()
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
