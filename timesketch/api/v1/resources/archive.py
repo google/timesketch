@@ -443,10 +443,31 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         zip_file.writestr(f"views/{name:s}.meta", data=json.dumps(meta))
 
     def _unarchive_sketch(self, sketch: Sketch):
-        """Unarchives a sketch by opening up all indices and removing labels.
+        """Unarchives a sketch, making it and its data active again.
+
+        This method follows a transactional approach to ensure data consistency.
+        It first attempts to open all necessary OpenSearch indices associated
+        with the sketch's archived timelines. If any index fails to open for a
+        critical reason (e.g., not found), the entire operation is aborted,
+        leaving the sketch in its archived state.
+
+        If all indices are successfully opened (or confirmed to be already open),
+        the method proceeds to update the database, setting the status of the
+        sketch, its timelines, and the corresponding SearchIndex objects to 'ready'.
 
         Args:
-            sketch: Instance of timesketch.models.sketch.Sketch
+            sketch: An instance of timesketch.models.sketch.Sketch to unarchive.
+
+        Returns:
+            An integer representing the HTTP status of the operation.
+            - HTTP_STATUS_CODE_OK if successful.
+
+        Raises:
+            HTTPException:
+                - If the sketch is not currently archived.
+                - If any timeline within the sketch is in a state that prevents
+                  unarchiving (e.g., 'processing').
+                - If a critical error occurs while opening an OpenSearch index.
         """
         logger.info("Unarchiving sketch %s ('%s').", sketch.id, sketch.name)
         if sketch.get_status.status != "archived":
@@ -586,6 +607,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
              remains unchanged (e.g., 'ready' or 'fail'). This discrepancy allows
              tools like `tsctl list-sketches --archived-with-open-indexes`
              to identify potential issues requiring administrative attention.
+
+        This is a non-destructive operation; it does not delete any event data.
 
         Args:
             sketch (Sketch): Instance of timesketch.models.sketch.Sketch
