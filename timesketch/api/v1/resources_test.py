@@ -292,6 +292,43 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
+    def test_unarchive_sketch(self):
+        """Authenticated request to unarchive a sketch."""
+        self.login()
+
+        # Create sketch to test with
+        data = {
+            "name": "test_unarchive_sketch",
+            "description": "test_unarchive_sketch",
+        }
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+
+        # Archive sketch
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "archive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        # Unarchive sketch
+        data = {"action": "unarchive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
     def test_sketch_delete_not_existant_sketch(self):
         """Authenticated request to delete a sketch that does not exist."""
         self.login()
