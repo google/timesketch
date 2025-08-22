@@ -384,7 +384,7 @@ def list_sketches(
         )
 
     # SearchIndex statuses that indicate it's not properly closed/archived
-    open_index_statuses = ["new", "ready", "processing", "fail", "archived", "timeout"]
+    open_index_statuses = ["new", "ready", "processing", "fail", "timeout"]
 
     if archived_with_open_indexes:
         open_statuses_str = ", ".join(open_index_statuses)
@@ -1238,7 +1238,8 @@ def searchindex_info(searchindex_id: int, index_name: str):
         return
 
     print(
-        f"Searchindex: {index_to_search.id} Name: {index_to_search.name} [Status: {index_to_search.status[-1].status}] found"
+        f"Searchindex: {index_to_search.id} Name: {index_to_search.name}"
+        f" [Status: {index_to_search.status[-1].status}] found"
     )
 
     timelines = index_to_search.timelines
@@ -1246,7 +1247,8 @@ def searchindex_info(searchindex_id: int, index_name: str):
         print("Associated Timelines:")
         for timeline in timelines:
             print(
-                f"  ID: {timeline.id}, Name: {timeline.name} [Status: {timeline.status[-1].status}]"
+                f"  ID: {timeline.id}, Name: {timeline.name}"
+                f"[Status: {timeline.status[-1].status}]"
             )
             if timeline.sketch:
                 print(

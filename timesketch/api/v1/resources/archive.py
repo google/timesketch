@@ -620,8 +620,20 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 f"Sketch {sketch.id} is already archived.",
             )
 
+        labels_to_prevent_deletion = current_app.config.get(
+            "LABELS_TO_PREVENT_DELETION", []
+        )
+
+        for label in labels_to_prevent_deletion:
+            if sketch.has_label(label):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Sketch {sketch.id} has label '{label}'"
+                    " and cannot be archived.",
+                )
+
         # Check if any timeline is in a non-archivable state
-        non_archivable_timeline_statuses = ["processing"]
+        non_archivable_timeline_statuses = ["processing", "fail", "timeout"]
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status
             if timeline_status in non_archivable_timeline_statuses:
