@@ -670,6 +670,20 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 # Cannot confirm, so don't archive OS index
                 all_associated_timelines_archived = False
 
+            for timeline in search_index.timelines:
+                if timeline.get_status.status != "archived":
+                    all_associated_timelines_archived = False
+                    logger.info(
+                        "SearchIndex %s (ID: %s) will not be closed because "
+                        "associated timeline %s (sketch %s) has status '%s'.",
+                        search_index.index_name,
+                        search_index.id,
+                        timeline.id,
+                        timeline.sketch.id if timeline.sketch else "N/A",
+                        timeline.get_status.status,
+                    )
+                    break
+
             if all_associated_timelines_archived:
                 # If all associated timelines are archived,
                 # attempt to close the OS index and then update
