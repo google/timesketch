@@ -630,6 +630,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     f"(ID: {timeline.id}) is in '{timeline_status}' state, which "
                     f"prevents archival.",
                 )
+            else:
+                timeline.set_status(status="archived")
 
         # Process associated SearchIndexes
         # Use a set to avoid processing the same SearchIndex multiple times
