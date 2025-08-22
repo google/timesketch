@@ -85,6 +85,106 @@ class SketchListResourceTest(BaseTest):
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
+    def test_sketch_list_all_scope(self):
+        """Authenticated request to get a list of all sketches for a user."""
+        # 1. Login as user1 and create a new sketch.
+        self.login()
+        sketch_name_by_user1 = "Sketch by User1 to be shared"
+        data = {"name": sketch_name_by_user1, "description": "sharing is caring"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        new_sketch_id = response.json["objects"][0]["id"]
+
+        # 2. Share it with user2.
+        collaborator_url = f"/api/v1/sketches/{new_sketch_id}/collaborators/"
+        collaborator_data = {"users": ["test2"]}
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps(collaborator_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
+        # 3. Login as user2 and create a new sketch.
+        # user2 also has access to sketch1 from user1 via setUp.
+        self.login(username="test2", password="test")
+        sketch_name_by_user2 = "My Sketch by User2"
+        data = {"name": sketch_name_by_user2, "description": "My own sketch"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # 4. Get all sketches for user2.
+        response = self.client.get(self.resource_url, query_string={"scope": "all"})
+        self.assert200(response)
+
+        # 5. Should be 2 sketches: one owned, one shared from user1 via the
+        # collaborator API. The sketch shared via a View in setUp is not
+        # included in this scope.
+        self.assertEqual(len(response.json["objects"]), 2)
+        names = {s["name"] for s in response.json["objects"]}
+        expected_names = {sketch_name_by_user1, sketch_name_by_user2}
+        self.assertSetEqual(names, expected_names)
+
+    def test_sketch_list_user_scope(self):
+        """Authenticated request to get a list of the user's own sketches."""
+        # user2 has access to sketch1 from user1 via setUp.
+        # We want to ensure that scope=user only returns sketches owned by user2.
+        self.login(username="test2", password="test")
+
+        sketch_name = "My Sketch Owned By User2"
+        data = {"name": sketch_name, "description": "This is a test sketch for user2"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # Get sketches with scope=user
+        response = self.client.get(self.resource_url, query_string={"scope": "user"})
+        self.assert200(response)
+
+        # The list should only contain the sketch created by user2.
+        # The shared sketch ("Test 1") should not be included.
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(response.json["objects"][0]["name"], sketch_name)
+
+    def test_sketch_list_pagination(self):
+        """Authenticated request to test pagination of sketches."""
+        self.login()
+        # User1 has two sketches with ACLs: Test 1, Test 3.
+        response = self.client.get(self.resource_url, query_string={"per_page": 1})
+        self.assert200(response)
+        meta = response.json["meta"]
+        objects = response.json["objects"]
+
+        self.assertEqual(len(objects), 1)
+        self.assertEqual(objects[0]["name"], "Test 1")
+        self.assertEqual(meta["total_pages"], 2)
+        self.assertTrue(meta["has_next"])
+        self.assertFalse(meta["has_prev"])
+
+        # Get page 2
+        response = self.client.get(
+            self.resource_url, query_string={"per_page": 1, "page": 2}
+        )
+        self.assert200(response)
+        meta = response.json["meta"]
+        objects = response.json["objects"]
+
+        self.assertEqual(len(objects), 1)
+        self.assertEqual(objects[0]["name"], "Test 3")
+        self.assertFalse(meta["has_next"])
+        self.assertTrue(meta["has_prev"])
+
 
 class SketchResourceTest(BaseTest):
     """Test SketchResource."""
