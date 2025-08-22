@@ -2706,17 +2706,19 @@ The client object also contains functions to check for OAUTH token status and re
 <p>Following scopes are available:</p>
 <ul>
 <li>recent: Get list of sketches that the user has actively searched in.</li>
-<li>shared: Get sketches that can be accessed</li>
+<li>user: Get sketches owned by the user.</li>
+<li>shared: Get sketches shared with the user (but not owned by them).</li>
 <li>admin: Get all sketches if the user is an admin</li>
 <li>archived: get archived sketches</li>
 <li>search: pass additional search query</li>
+<li>all: Get all sketches the user has access to (owned and shared).</li>
 </ul>
 <pre><code>ts_client.list_sketches(per_page=1000, scope='user', include_archived=True)
 </code></pre>
-<p>Will return all sketches that are owned by the specified user.</p>
+<p>Will return all sketches that are owned by the user.</p>
 <pre><code>ts_client.list_sketches(per_page=1000, scope='shared', include_archived=True)
 </code></pre>
-<p>Will return all sketches that the account used to connect to the API has access to.</p>
+<p>Will return all sketches that are shared with the user (but not owned by them).</p>
 <h2 id="connecting-to-a-sketch">Connecting to a Sketch</h2>
 <p>There are two ways of getting a sketch object, either by listing all available sketches or by fetching a specific one.
 To fetch a specific one use the <code>get_sketch</code> function:</p>
