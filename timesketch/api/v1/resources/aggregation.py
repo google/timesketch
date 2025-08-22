@@ -537,7 +537,8 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 if exc.error == "index_closed_exception":
                     logger.error(
                         "Unable to run aggregation on a closed index."
-                        f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
+                        f"index: {indices_msg:s} and parameters:"
+                        f" {aggregator_parameters!s}",
                         exc_info=True,
                         stack_info=True,
                         extra={"request": request},
@@ -545,7 +546,8 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         "Unable to run aggregation on a closed index."
-                        f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
+                        f"index: {indices_msg:s} and parameters:"
+                        f" {aggregator_parameters!s}",
                     )
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
