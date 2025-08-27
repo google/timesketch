@@ -767,6 +767,32 @@ def mock_response(*args, **kwargs):
         ]
     }
 
+    mock_facet_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "name": "Test Facet",
+                    "display_name": "Test Facet",
+                    "description": "A facet for testing.",
+                }
+            ]
+        ],
+    }
+
+    mock_conclusion_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "conclusion": "This is a conclusion.",
+                }
+            ]
+        ],
+    }
+
     # Register API endpoints to the correct mock response data for GET requests.
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
@@ -855,6 +881,12 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1/questions/1/": MockResponse(
             json_data=mock_question_response
         ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/facets/": MockResponse(
+            json_data=mock_facet_list_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/1/conclusions/": MockResponse(
+            json_data=mock_conclusion_list_response
+        ),
     }
 
     # Register API endpoints to the correct mock response data for POST requests.
@@ -873,6 +905,43 @@ def mock_response(*args, **kwargs):
         ),
         "http://127.0.0.1/api/v1/sketches/1/explore/": MockResponse(
             json_data=timeline_data
+        ),
+        # Mocks for updating resources
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/": MockResponse(
+            json_data={
+                "meta": {},
+                "objects": [
+                    {
+                        "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                        "description": "Scenario description!",
+                        "dfiq_identifier": "S0001",
+                        "display_name": "New Scenario Name",
+                        "id": 1,
+                        "name": "Test Scenario",
+                    }
+                ],
+            }
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/status/": MockResponse(
+            json_data=mock_scenario_response, status_code=200
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/1/": MockResponse(
+            json_data={
+                "meta": {},
+                "objects": [
+                    {
+                        "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                        "description": "Updated description.",
+                        "dfiq_identifier": "Q0001",
+                        "display_name": "Test Question?",
+                        "id": 1,
+                        "name": "Updated Question Name?",
+                    }
+                ],
+            }
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/1/conclusions/": MockResponse(
+            json_data={"meta": {"new_conclusion_id": 2}}
         ),
     }
 

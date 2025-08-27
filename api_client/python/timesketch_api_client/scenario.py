@@ -59,6 +59,57 @@ class Scenario(resource.BaseResource):
         return scenario["objects"][0]["name"]
 
     @property
+    def display_name(self):
+        """Property that returns the scenario display name."""
+        scenario = self.lazyload_data(refresh_cache=True)
+        return scenario["objects"][0]["display_name"]
+
+    @display_name.setter
+    def display_name(self, value):
+        """Sets the display name of the scenario."""
+        resource_url = f"{self.api.api_root}/{self.resource_uri}"
+        data = {"scenario_name": value}
+        response = self.api.session.post(resource_url, json=data)
+        _ = error.check_return_status(response, logger)
+        self.lazyload_data(refresh_cache=True)
+
+    def set_status(self, status):
+        """Sets the status of the scenario.
+
+        Args:
+            status (str): The new status for the scenario.
+
+        Returns:
+            bool: True if the status was set successfully.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"scenarios/{self.id}/status/"
+        )
+        data = {"status": status}
+        response = self.api.session.post(resource_url, json=data)
+        status = error.check_return_status(response, logger)
+        self.lazyload_data(refresh_cache=True)
+        return status
+
+    def list_facets(self):
+        """Lists all facets for the scenario.
+
+        Returns:
+            A list of dictionaries, each representing a facet.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"scenarios/{self.id}/facets/"
+        )
+        response = self.api.session.get(resource_url)
+        response_json = error.get_response_json(response, logger)
+        objects = response_json.get("objects", [])
+        if objects and isinstance(objects[0], list):
+            return objects[0]
+        return objects
+
+    @property
     def dfiq_identifier(self):
         """Property that returns the dfiq identifier.
 
@@ -107,6 +158,13 @@ class Question(resource.BaseResource):
             api=api, resource_uri=f"sketches/{self.sketch_id}/questions/{self.id}/"
         )
 
+    def _update(self, data):
+        """Internal helper to update the question."""
+        resource_url = f"{self.api.api_root}/{self.resource_uri}"
+        response = self.api.session.post(resource_url, json=data)
+        _ = error.check_return_status(response, logger)
+        self.lazyload_data(refresh_cache=True)
+
     @property
     def name(self):
         """Property that returns the question name.
@@ -116,6 +174,64 @@ class Question(resource.BaseResource):
         """
         question = self.lazyload_data()
         return question["objects"][0]["name"]
+
+    @name.setter
+    def name(self, value):
+        """Sets the name of the question."""
+        self._update({"name": value})
+
+    @property
+    def display_name(self):
+        """Property that returns the question display name."""
+        question = self.lazyload_data()
+        return question["objects"][0]["display_name"]
+
+    @display_name.setter
+    def display_name(self, value):
+        """Sets the display name of the question."""
+        self._update({"display_name": value})
+
+    def set_status(self, status):
+        """Sets the status of the question."""
+        self._update({"status": status})
+
+    def set_priority(self, priority):
+        """Sets the priority of the question."""
+        self._update({"priority": priority})
+
+    def list_conclusions(self):
+        """Lists all conclusions for the question.
+
+        Returns:
+            A list of dictionaries, each representing a conclusion.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"questions/{self.id}/conclusions/"
+        )
+        response = self.api.session.get(resource_url)
+        response_json = error.get_response_json(response, logger)
+        objects = response_json.get("objects", [])
+        if objects and isinstance(objects[0], list):
+            return objects[0]
+        return objects
+
+    def add_conclusion(self, conclusion_text):
+        """Adds a conclusion to the question for the current user.
+
+        Args:
+            conclusion_text (str): The text of the conclusion.
+
+        Returns:
+            A dictionary with the API response.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"questions/{self.id}/conclusions/"
+        )
+        data = {"conclusionText": conclusion_text}
+        response = self.api.session.post(resource_url, json=data)
+        return error.get_response_json(response, logger)
 
     @property
     def dfiq_identifier(self):
@@ -136,6 +252,11 @@ class Question(resource.BaseResource):
         """
         question = self.lazyload_data()
         return question["objects"][0]["description"]
+
+    @description.setter
+    def description(self, value):
+        """Sets the description of the question."""
+        self._update({"description": value})
 
     @property
     def approaches(self):

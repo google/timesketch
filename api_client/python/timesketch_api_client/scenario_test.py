@@ -35,6 +35,25 @@ class ScenarioTest(unittest.TestCase):
         scenario = self.sketch.list_scenarios()[0]
         self.assertIsInstance(scenario.to_dict(), dict)
 
+    def test_set_display_name(self):
+        """Test setting the scenario display name."""
+        scenario = self.sketch.list_scenarios()[0]
+        scenario.display_name = "New Scenario Name"
+        self.assertEqual(scenario.display_name, "New Scenario Name")
+
+    def test_set_status(self):
+        """Test setting the scenario status."""
+        scenario = self.sketch.list_scenarios()[0]
+        self.assertTrue(scenario.set_status("new"))
+
+    def test_list_facets(self):
+        """Test listing facets for a scenario."""
+        scenario = self.sketch.list_scenarios()[0]
+        facets = scenario.list_facets()
+        self.assertIsInstance(facets, list)
+        self.assertEqual(len(facets), 1)
+        self.assertEqual(facets[0]["name"], "Test Facet")
+
 
 class ScenarioListTest(unittest.TestCase):
     """Test ScenarioList object."""
@@ -66,6 +85,25 @@ class QuestionTest(unittest.TestCase):
         """Test Question object to dict."""
         scenario = self.sketch.list_questions()[0]
         self.assertIsInstance(scenario.to_dict(), dict)
+
+    def test_question_update(self):
+        """Test updating question attributes."""
+        question = self.sketch.list_questions()[0]
+        question.name = "Updated Question Name?"
+        self.assertEqual(question.name, "Updated Question Name?")
+        question.description = "Updated description."
+        self.assertEqual(question.description, "Updated description.")
+        question.set_status("verified")
+        question.set_priority("__ts_priority_high")
+
+    def test_question_conclusions(self):
+        """Test adding and listing question conclusions."""
+        question = self.sketch.list_questions()[0]
+        question.add_conclusion("This is a conclusion.")
+        conclusions = question.list_conclusions()
+        self.assertIsInstance(conclusions, list)
+        self.assertEqual(len(conclusions), 1)
+        self.assertEqual(conclusions[0]["conclusion"], "This is a conclusion.")
 
 
 class QuestionListTest(unittest.TestCase):
