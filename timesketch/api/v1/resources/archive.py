@@ -23,6 +23,7 @@ import zipfile
 import opensearchpy
 
 from flask import abort
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import send_file
