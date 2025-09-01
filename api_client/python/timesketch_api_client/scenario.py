@@ -46,6 +46,7 @@ class Scenario(resource.BaseResource):
         self.sketch_id = sketch_id
         self._name = None
         self._display_name = None
+        self._data = None
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/scenarios/{self.id}/"
         )
@@ -167,6 +168,7 @@ class Question(resource.BaseResource):
         self._name = None
         self._display_name = None
         self._description = None
+        self._data = None
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/questions/{self.id}/"
         )
