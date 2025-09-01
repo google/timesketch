@@ -828,6 +828,23 @@ class QuestionResource(resources.ResourceMixin, Resource):
         # Flag to check if the object was updated, to avoid unnecessary DB writes.
         updated = False
 
+        attributes = form.get("attributes")
+        if attributes and isinstance(attributes, list):
+            for attr in attributes:
+                name = attr.get("name")
+                value = attr.get("value")
+                ontology = attr.get("ontology")
+                description = attr.get("description")
+                if name and value:
+                    question.add_attribute(
+                        name=name,
+                        value=value,
+                        ontology=ontology,
+                        user=current_user,
+                        description=description,
+                    )
+            updated = True
+
         status = form.get("status")
         if status:
             if status not in VALID_STATUSES:
@@ -930,20 +947,32 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        # Create conclusion for the calling user if it doesn't exist.
-        conclusion = InvestigativeQuestionConclusion.get_or_create(
-            user=current_user, investigativequestion=question
-        )
-
         form = request.json
         if not form:
             form = request.data
 
         conclusion_text = form.get("conclusionText")
-        if conclusion_text:
-            conclusion.conclusion = conclusion_text
+        automated = form.get("automated", False)
+
+        if automated:
+            conclusion = InvestigativeQuestionConclusion(
+                conclusion=conclusion_text,
+                user=None,
+                investigativequestion=question,
+                automated=True,
+            )
             db_session.add(conclusion)
             db_session.commit()
+        else:
+            # Create conclusion for the calling user if it doesn't exist.
+            conclusion = InvestigativeQuestionConclusion.get_or_create(
+                user=current_user, investigativequestion=question
+            )
+
+            if conclusion_text:
+                conclusion.conclusion = conclusion_text
+                db_session.add(conclusion)
+                db_session.commit()
 
         meta = {"new_conclusion_id": conclusion.id}
         return self.to_json(question, meta=meta)

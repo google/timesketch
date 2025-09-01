@@ -181,6 +181,23 @@ class Question(resource.BaseResource):
         self._display_name = updated_object["display_name"]
         self._description = updated_object["description"]
 
+    def add_attribute(self, name, value, ontology=None, description=None):
+        """Adds an attribute to the question.
+
+        Args:
+            name (str): The name of the attribute.
+            value (str): The value of the attribute.
+            ontology (str): Optional ontology for the attribute.
+            description (str): Optional description for the attribute.
+        """
+        attribute = {
+            "name": name,
+            "value": value,
+            "ontology": ontology,
+            "description": description,
+        }
+        self._update({"attributes": [attribute]})
+
     @property
     def name(self):
         """Property that returns the question name.
@@ -238,11 +255,16 @@ class Question(resource.BaseResource):
             return objects[0]
         return objects
 
-    def add_conclusion(self, conclusion_text):
-        """Adds a conclusion to the question for the current user.
+    def add_conclusion(self, conclusion_text, automated=False):
+        """Adds a conclusion to the question.
+
+        If automated is False (default), it adds or updates the conclusion
+        for the current user. If automated is True, it adds a new conclusion
+        not associated with a user.
 
         Args:
             conclusion_text (str): The text of the conclusion.
+            automated (bool): Whether the conclusion is automated.
 
         Returns:
             A dictionary with the API response.
@@ -251,7 +273,7 @@ class Question(resource.BaseResource):
             f"{self.api.api_root}/sketches/{self.sketch_id}/"
             f"questions/{self.id}/conclusions/"
         )
-        data = {"conclusionText": conclusion_text}
+        data = {"conclusionText": conclusion_text, "automated": automated}
         response = self.api.session.post(resource_url, json=data)
         return error.get_response_json(response, logger)
 
