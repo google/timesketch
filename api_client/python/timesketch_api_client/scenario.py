@@ -44,6 +44,8 @@ class Scenario(resource.BaseResource):
         self.uuid = uuid
         self.api = api
         self.sketch_id = sketch_id
+        self._name = None
+        self._display_name = None
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/scenarios/{self.id}/"
         )
@@ -55,14 +57,20 @@ class Scenario(resource.BaseResource):
         Returns:
             Scenario name as string.
         """
+        if self._name:
+            return self._name
         scenario = self.lazyload_data()
-        return scenario["objects"][0]["name"]
+        self._name = scenario["objects"][0]["name"]
+        return self._name
 
     @property
     def display_name(self):
         """Property that returns the scenario display name."""
-        scenario = self.lazyload_data(refresh_cache=True)
-        return scenario["objects"][0]["display_name"]
+        if self._display_name:
+            return self._display_name
+        scenario = self.lazyload_data()
+        self._display_name = scenario["objects"][0]["display_name"]
+        return self._display_name
 
     @display_name.setter
     def display_name(self, value):
@@ -70,8 +78,10 @@ class Scenario(resource.BaseResource):
         resource_url = f"{self.api.api_root}/{self.resource_uri}"
         data = {"scenario_name": value}
         response = self.api.session.post(resource_url, json=data)
-        _ = error.check_return_status(response, logger)
-        self.lazyload_data(refresh_cache=True)
+        self._data = error.get_response_json(response, logger)
+        updated_object = self._data["objects"][0]
+        self._display_name = updated_object["display_name"]
+        self._name = updated_object["name"]
 
     def set_status(self, status):
         """Sets the status of the scenario.
@@ -154,6 +164,9 @@ class Question(resource.BaseResource):
         self.uuid = uuid
         self.api = api
         self.sketch_id = sketch_id
+        self._name = None
+        self._display_name = None
+        self._description = None
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/questions/{self.id}/"
         )
@@ -162,8 +175,11 @@ class Question(resource.BaseResource):
         """Internal helper to update the question."""
         resource_url = f"{self.api.api_root}/{self.resource_uri}"
         response = self.api.session.post(resource_url, json=data)
-        _ = error.check_return_status(response, logger)
-        self.lazyload_data(refresh_cache=True)
+        self._data = error.get_response_json(response, logger)
+        updated_object = self._data["objects"][0]
+        self._name = updated_object["name"]
+        self._display_name = updated_object["display_name"]
+        self._description = updated_object["description"]
 
     @property
     def name(self):
@@ -172,8 +188,11 @@ class Question(resource.BaseResource):
         Returns:
             Question name as string.
         """
+        if self._name:
+            return self._name
         question = self.lazyload_data()
-        return question["objects"][0]["name"]
+        self._name = question["objects"][0]["name"]
+        return self._name
 
     @name.setter
     def name(self, value):
@@ -183,8 +202,11 @@ class Question(resource.BaseResource):
     @property
     def display_name(self):
         """Property that returns the question display name."""
+        if self._display_name:
+            return self._display_name
         question = self.lazyload_data()
-        return question["objects"][0]["display_name"]
+        self._display_name = question["objects"][0]["display_name"]
+        return self._display_name
 
     @display_name.setter
     def display_name(self, value):
@@ -250,8 +272,11 @@ class Question(resource.BaseResource):
         Returns:
             Question description as string.
         """
+        if self._description:
+            return self._description
         question = self.lazyload_data()
-        return question["objects"][0]["description"]
+        self._description = question["objects"][0]["description"]
+        return self._description
 
     @description.setter
     def description(self, value):

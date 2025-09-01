@@ -125,6 +125,26 @@ def mock_response(*args, **kwargs):
         ],
     }
 
+    annotate_event_data = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "comment": "test comment",
+                    "created_at": "2023-03-10T10:00:00.000000",
+                    "id": 2,
+                    "updated_at": "2023-03-10T10:00:00.000000",
+                    "user": {
+                        "active": True,
+                        "admin": True,
+                        "groups": [],
+                        "username": "testuser",
+                    },
+                }
+            ]
+        ],
+    }
+
     add_event_comment_data = {
         "meta": {},
         "objects": [
@@ -641,6 +661,32 @@ def mock_response(*args, **kwargs):
 
     aggregation_group = {"meta": {"command": "list_groups"}, "objects": []}
 
+    mock_facet_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "name": "Test Facet",
+                    "display_name": "Test Facet",
+                    "description": "A facet for testing.",
+                }
+            ]
+        ],
+    }
+
+    mock_conclusion_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "conclusion": "This is a conclusion.",
+                }
+            ]
+        ],
+    }
+
     mock_sketch_scenario_response = {
         "meta": {},
         "objects": [
@@ -715,6 +761,24 @@ def mock_response(*args, **kwargs):
                     "display_name": "Test Question?",
                     "id": 1,
                     "name": "Test Question?",
+                }
+            ]
+        ],
+    }
+
+    mock_scenario_questions_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "approaches": [],
+                    "uuid": "abcdefg-b89c-123d-e45f-g6h7ijk8l910",
+                    "conclusions": [],
+                    "description": "Question for a scenario",
+                    "dfiq_identifier": "Q0002",
+                    "display_name": "Scenario Question?",
+                    "id": 2,
+                    "name": "Scenario Question?",
                 }
             ]
         ],
@@ -887,12 +951,18 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1/questions/1/conclusions/": MockResponse(
             json_data=mock_conclusion_list_response
         ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/questions/": MockResponse(
+            json_data=mock_scenario_questions_response
+        ),
     }
 
     # Register API endpoints to the correct mock response data for POST requests.
     post_url_router = {
         "http://127.0.0.1/api/v1/sketches/1/event/attributes/": MockResponse(
             json_data=add_event_attribute_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/event/annotate/": MockResponse(
+            json_data=annotate_event_data
         ),
         "http://127.0.0.1/api/v1/sketches/1/aggregation/explore/": MockResponse(
             json_data=aggregation_chart_data

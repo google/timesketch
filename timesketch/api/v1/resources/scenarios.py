@@ -14,6 +14,7 @@
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
 import logging
+import uuid as uuid_lib
 import json
 from os.path import isdir
 from typing import Optional
@@ -758,6 +759,8 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                 facet=facet,
                 user=current_user,
             )
+            if not new_question.uuid:
+                new_question.uuid = str(uuid_lib.uuid4())
 
         db_session.add(new_question)
         db_session.commit()
@@ -899,7 +902,7 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        conclusions = InvestigativeQuestionConclusion.filter_by(
+        conclusions = InvestigativeQuestionConclusion.query.filter_by(
             investigativequestion=question
         ).all()
 
