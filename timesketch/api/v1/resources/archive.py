@@ -638,11 +638,20 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         for timeline_to_check in sketch.timelines:
             timeline_status = timeline_to_check.get_status.status
             if timeline_status in non_archivable_timeline_statuses:
-                error_msg = (
+                base_error_msg = (
                     f"Cannot archive sketch {sketch.id}. Timeline "
                     f"'{timeline_to_check.name}' (ID: {timeline_to_check.id}) is in "
-                    f"'{timeline_status}' state, which prevents archival."
+                    f"a non-archivable state: '{timeline_status}'."
                 )
+                suggestion = ""
+                if timeline_status in ["fail", "timeout"]:
+                    suggestion = " Please delete this timeline and try again."
+                elif timeline_status == "processing":
+                    suggestion = (
+                        " Please wait for the timeline to finish processing or "
+                        "delete it."
+                    )
+                error_msg = f"{base_error_msg}{suggestion}"
                 logger.error(error_msg)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
