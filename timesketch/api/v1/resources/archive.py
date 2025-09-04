@@ -635,17 +635,22 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # Check if any timeline is in a non-archivable state
         non_archivable_timeline_statuses = ["processing", "fail", "timeout"]
-        for timeline in sketch.timelines:
-            timeline_status = timeline.get_status.status
+        for timeline_to_check in sketch.timelines:
+            timeline_status = timeline_to_check.get_status.status
             if timeline_status in non_archivable_timeline_statuses:
+                error_msg = (
+                    f"Cannot archive sketch {sketch.id}. Timeline "
+                    f"'{timeline_to_check.name}' (ID: {timeline_to_check.id}) is in "
+                    f"'{timeline_status}' state, which prevents archival."
+                )
+                logger.error(error_msg)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    f"Cannot archive sketch {sketch.id}. Timeline '{timeline.name}' "
-                    f"(ID: {timeline.id}) is in '{timeline_status}' state, which "
-                    f"prevents archival.",
+                    error_msg,
                 )
-            else:
-                timeline.set_status(status="archived")
+
+        for timeline in sketch.timelines:
+            timeline.set_status(status="archived")
 
         # Process associated SearchIndexes
         # Use a set to avoid processing the same SearchIndex multiple times
