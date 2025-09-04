@@ -14,6 +14,7 @@
 """Tests for utils."""
 
 
+import io
 import re
 import pandas as pd
 
@@ -323,6 +324,20 @@ class TestUtils(BaseTest):
         self.assertIn("timestamptest1", str(results_list))
         self.assertIn("2024-07-24T10:57:02.877297+00:00", str(results_list))
         self.assertIn("timestamptest2", str(results_list))
+
+    def test_datetime_parsing_six_digit_microseconds(self):
+        """Test parsing a datetime string with 6-digit microseconds."""
+        datetime_string = "2021-07-30T18:32:26.975000+00:00"
+        csv_data = (
+            "message,datetime,timestamp_desc\n" f'test_event,"{datetime_string}",test'
+        )
+        file_handle = io.StringIO(csv_data)
+        data_generator = read_and_validate_csv(file_handle)
+        result = next(data_generator)
+
+        self.assertEqual(result["datetime"], datetime_string)
+        # This timestamp is in microseconds.
+        self.assertEqual(result["timestamp"], 1627669946975000)
 
     def test_csv_with_timestamp_in_datetime_field(self):
         """Test parsing a CSV where the datetime column contains a timestamp."""
