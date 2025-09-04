@@ -1412,8 +1412,8 @@ class Sketch(resource.BaseResource):
         """Labels one or more events with label_name.
 
         Args:
-            events: Array of JSON objects representing events.
-            label_name: String to label the event with.
+            events (json): Array of JSON objects representing events.
+            label_name (string): String to label the event with.
             remove (bool): If true, the label will be removed instead of added.
             conclusion_id (int): Optional. ID of a conclusion to link the
                 event to.
