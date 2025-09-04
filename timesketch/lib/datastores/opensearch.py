@@ -995,14 +995,21 @@ class OpenSearchDataStore:
             yield from result["hits"]["hits"]
 
     def get_filter_labels(self, sketch_id: int, indices: list):
-        """Aggregate labels for a sketch.
+        """Aggregate all labels applied to events within a sketch.
+
+        This method queries the datastore to find all unique labels associated
+        with events for a given sketch and within a specific set of indices.
+        It uses a nested aggregation on the 'timesketch_label' field.
 
         Args:
-            sketch_id: The Sketch ID
-            indices: List of indices to aggregate on
+            sketch_id: The integer primary key for the sketch.
+            indices: A list of OpenSearch index names to query.
 
         Returns:
-            List with label names.
+            A list of dictionaries, where each dictionary contains a 'label'
+            (the name of the label) and a 'count' (the number of events with
+            that label). Returns an empty list if no indices are provided or
+            if no labels are found.
         """
         # If no indices are provided, return an empty list. This indicates
         # there are no labels to aggregate within the specified sketch.
@@ -1061,7 +1068,7 @@ class OpenSearchDataStore:
             os_logger.error(
                 "Unable to find the index/indices: {:s}".format(",".join(indices))
             )
-            return labels
+            return {"labels": [], "tags": []}
 
         buckets = (
             result.get("aggregations", {})
