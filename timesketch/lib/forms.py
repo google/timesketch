@@ -24,6 +24,7 @@ from wtforms.fields import RadioField
 from wtforms.fields import SelectField
 from wtforms.fields import SelectMultipleField
 from wtforms.fields import StringField
+from wtforms.fields import FieldList
 from wtforms.validators import DataRequired
 from wtforms.validators import Length
 from wtforms.validators import Optional
@@ -267,8 +268,9 @@ class EventAnnotationForm(BaseForm):
 class StoryForm(BaseForm):
     """Form to handle stories."""
 
-    title = StringField("Title", validators=[])
+    title = StringField("Title", validators=[DataRequired()])
     content = StringField("Content", validators=[], widget=widgets.TextArea())
+    labels = FieldList(StringField("Label"), validators=[Optional()])
 
 
 class SearchIndexForm(BaseForm):

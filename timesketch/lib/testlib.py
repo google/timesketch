@@ -444,18 +444,21 @@ class BaseTest(TestCase):
         db_session.add(model)
         db_session.commit()
 
-    def _create_user(self, username, set_password=False, set_admin=False):
+    def _create_user(
+        self, username, set_password=False, set_admin=False, password="test"
+    ):
         """Create a user in the database.
         Args:
             username: Username (string)
             set_password: Boolean value to decide if a password should be set
             set_admin: Boolean value to decide if the user should be an admin
+            password: Password (string) Defaults to 'test'
         Returns:
             A user (instance of timesketch.models.user.User)
         """
         user = User.get_or_create(username=username, name=username)
         if set_password:
-            user.set_password(plaintext="test", rounds=4)
+            user.set_password(plaintext=password, rounds=4)
         if set_admin:
             user.admin = True
         self._commit_to_database(user)
@@ -627,7 +630,7 @@ class BaseTest(TestCase):
         init_db()
 
         self.user1 = self._create_user(username="test1", set_password=True)
-        self.user2 = self._create_user(username="test2", set_password=False)
+        self.user2 = self._create_user(username="test2", set_password=True)
         self.useradmin = self._create_user(
             username="testadmin", set_password=True, set_admin=True
         )
@@ -684,11 +687,16 @@ class BaseTest(TestCase):
         db_session.remove()
         drop_all()
 
-    def login(self):
-        """Authenticate the test user."""
+    def login(self, username="test1", password="test"):
+        """Authenticate a user.
+
+        Args:
+            username: The username to login with.
+            password: The password for the user.
+        """
         self.client.post(
             "/login/",
-            data={"username": "test1", "password": "test"},
+            data={"username": username, "password": password},
             follow_redirects=True,
         )
 

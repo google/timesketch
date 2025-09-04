@@ -14,6 +14,8 @@ services:
       - TIMESKETCH_PASSWORD=test
       - TIMESKETCH_ADMIN_USER=admin
       - TIMESKETCH_ADMIN_USER_PASSWORD=admin
+      - TIMESKETCH_USER2=test2
+      - TIMESKETCH_PASSWORD2=test2
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile

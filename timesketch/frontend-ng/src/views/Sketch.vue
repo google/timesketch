@@ -242,6 +242,15 @@ limitations under the License.
         hide-overlay
         :width="navigationDrawer.width"
       >
+        <ts-investigation
+          v-if="systemSettings.ENABLE_V3_INVESTIGATION_VIEW
+            && (systemSettings.DFIQ_ENABLED
+              || (systemSettings.LLM_FEATURES_AVAILABLE
+                && systemSettings.LLM_FEATURES_AVAILABLE.log_analyzer))"
+          :icon-only="isMiniDrawer"
+          @toggleDrawer="toggleDrawer()"
+        >
+        </ts-investigation>
         <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
         <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
         <ts-saved-searches
@@ -368,6 +377,7 @@ import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 import TsQuestionCard from '../components/Scenarios/QuestionCard.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
+import TsInvestigation from '../components/LeftPanel/Investigation.vue'
 
 export default {
   props: ['sketchId'],
@@ -390,6 +400,7 @@ export default {
     TsVisualizations,
     TsQuestionCard,
     TsSettingsDialog,
+    TsInvestigation,
   },
   data() {
     return {

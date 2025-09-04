@@ -61,6 +61,9 @@ if [ "$1" = 'timesketch' ]; then
   sleep 5
   tsctl create-user "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
   unset TIMESKETCH_PASSWORD
+  # create second user
+  tsctl create-user "$TIMESKETCH_USER2" --password "$TIMESKETCH_PASSWORD2"
+  unset TIMESKETCH_PASSWORD2
 
   # Make admin user for e2e tests
   sleep 2

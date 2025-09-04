@@ -29,7 +29,7 @@ limitations under the License.
   <div v-else>
     <div
       no-gutters
-      :style="!(meta.stories && meta.stories.length) ? '' : 'cursor: pointer'"
+      :style="!(filteredStories && filteredStories.length) ? '' : 'cursor: pointer'"
       class="pa-4"
       flat
       @click="expanded = !expanded"
@@ -38,7 +38,7 @@ limitations under the License.
       <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
       <v-btn
         icon
-        v-if="expanded || !(meta.stories && meta.stories.length)"
+        v-if="expanded || !(filteredStories && filteredStories.length)"
         text
         class="float-right mt-n1 mr-n1"
         @click="createStory()"
@@ -47,17 +47,17 @@ limitations under the License.
         <v-icon title="Create New Story">mdi-plus</v-icon>
       </v-btn>
 
-      <span v-if="!expanded && meta.stories && meta.stories.length" class="float-right" style="margin-right: 10px">
-        <small v-if="meta.stories"
-          ><strong>{{ meta.stories.length }}</strong></small
+      <span v-if="!expanded && filteredStories && filteredStories.length" class="float-right" style="margin-right: 10px">
+        <small v-if="filteredStories"
+          ><strong>{{ filteredStories.length }}</strong></small
         >
       </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded && meta.stories.length">
+      <div v-show="expanded && filteredStories.length">
         <router-link
-          v-for="story in meta.stories"
+          v-for="story in filteredStories"
           :key="story.id"
           :to="{ name: 'Story', params: { storyId: story.id } }"
           style="cursor: pointer; font-size: 0.9em; text-decoration: none"
@@ -90,6 +90,12 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+  filteredStories() {
+      if (!this.meta.stories) {
+        return []
+      }
+      return this.meta.stories.filter(story => !story.title.startsWith('__ts_'))
     },
   },
   methods: {

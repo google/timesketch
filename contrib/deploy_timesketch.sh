@@ -59,7 +59,7 @@ if [ ! -z "$(docker ps | grep timesketch)" ]; then
 fi
 
 # Tweak for OpenSearch
-echo "* Setting vm.max_map_count for Elasticsearch"
+echo "* Setting vm.max_map_count for OpenSearch"
 sysctl -q -w vm.max_map_count=262144
 if [ -z "$(grep vm.max_map_count /etc/sysctl.conf)" ]; then
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
@@ -114,7 +114,7 @@ echo "OK"
 echo -n "* Edit configuration files.."
 sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$SECRET_KEY'\x27#' timesketch/etc/timesketch/timesketch.conf
 
-# Set up the Elastic connection
+# Set up the OpenSearch connection
 sed -i 's#^OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_ADDRESS'\x27#' timesketch/etc/timesketch/timesketch.conf
 sed -i 's#^OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' timesketch/etc/timesketch/timesketch.conf
 
