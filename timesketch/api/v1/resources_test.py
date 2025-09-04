@@ -563,6 +563,7 @@ class EventResourceTest(BaseTest):
     """Test EventResource."""
 
     resource_url = "/api/v1/sketches/1/event/"
+    maxDiff = None
     expected_response = {
         "objects": {
             "timestamp_desc": "",
@@ -585,7 +586,6 @@ class EventResourceTest(BaseTest):
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
-        self.maxDiff = None
         response = self.client.get(
             self.resource_url + "?searchindex_id=test&event_id=test"
         )
