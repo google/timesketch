@@ -75,7 +75,26 @@ Delete the whole sketch. *Note:* this will not delete the Timelines.
 
 ### Archive
 
-Archive the whole sketch.
+Archiving a sketch is a way to preserve it in a read-only state while freeing up system resources. When a sketch is archived:
+- It is hidden from the default list of sketches.
+- All its timelines are marked as archived.
+- The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster.
+- You cannot explore data, run analyzers, or make other modifications to an archived sketch.
+- The sketch can be unarchived at any time to restore full functionality.
+
+
+A sketch cannot be archived if:
+- It is already archived.
+- One of its timelines is in a non-archivable state (e.g., `processing`, `failed`, or `timeout`). You may need to wait for processing to finish or delete the problematic timeline.
+- It has a special label that prevents archival. This is an administrative setting to protect critical sketches.
+
+### Unarchive
+
+Unarchiving a sketch restores it to a fully active and writable state. This action is the reverse of archiving. When a sketch is unarchived:
+- The sketch status is set back to "ready".
+- All its timelines are marked as "ready".
+- The underlying OpenSearch indices are reopened, making the event data available for querying and analysis.
+- The sketch will reappear in the default list of sketches and all its functionality will be restored.
 
 ### Export
 
