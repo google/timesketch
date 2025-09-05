@@ -41,7 +41,10 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+
 from timesketch.lib.stories import manager as story_export_manager
+from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 
@@ -77,8 +80,24 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
     def get(self, sketch_id):
         """Handles GET request to the resource.
 
+        Retrieves archiving status and basic information for a given sketch.
+        This includes whether the sketch is archived, its ID, its name,
+        and the archival status of its associated timelines.
+
         Returns:
-            A sketch in JSON (instance of flask.wrappers.Response)
+            A flask.wrappers.Response object with a JSON payload.
+            The JSON payload has a "meta" object containing:
+                - is_archived (bool): True if the sketch is archived, False otherwise.
+                - sketch_id (int): The ID of the sketch.
+                - sketch_name (str): The name of the sketch.
+                - timelines (dict): A dictionary where keys are timeline index names
+                                    and values are booleans (True if archived).
+            And an empty "objects" list.
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND: If no sketch is found with the given ID.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have read permission
+                                        for the sketch (and is not an admin).
         """
         if current_user.admin:
             sketch = Sketch.get_by_id(sketch_id)
@@ -425,53 +444,180 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         zip_file.writestr(f"views/{name:s}.meta", data=json.dumps(meta))
 
     def _unarchive_sketch(self, sketch: Sketch):
-        """Unarchives a sketch by opening up all indices and removing labels.
+        """Unarchives a sketch, making it and its data active again.
+
+        This method follows a transactional approach to ensure data consistency.
+        It first attempts to open all necessary OpenSearch indices associated
+        with the sketch's archived timelines. If any index fails to open for a
+        critical reason (e.g., not found), the entire operation is aborted,
+        leaving the sketch in its archived state.
+
+        If all indices are successfully opened (or confirmed to be already open),
+        the method proceeds to update the database, setting the status of the
+        sketch, its timelines, and the corresponding SearchIndex objects to 'ready'.
 
         Args:
-            sketch: Instance of timesketch.models.sketch.Sketch
+            sketch: An instance of timesketch.models.sketch.Sketch to unarchive.
+
+        Returns:
+            An integer representing the HTTP status of the operation.
+            - HTTP_STATUS_CODE_OK if successful.
+
+        Raises:
+            HTTPException:
+                - If the sketch is not currently archived.
+                - If any timeline within the sketch is in a state that prevents
+                  unarchiving (e.g., 'processing').
+                - If a critical error occurs while opening an OpenSearch index.
         """
+        logger.info("Unarchiving sketch %s ('%s').", sketch.id, sketch.name)
         if sketch.get_status.status != "archived":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to unarchive a sketch that wasn't already archived "
-                "(sketch: {:d})".format(sketch.id),
+                f"(sketch: {sketch.id})",
             )
 
-        sketch.set_status(status="ready")
+        # Check if any timeline is in a state that prevents unarchiving.
+        statuses_preventing_unarchival = ["processing", "fail"]
+        for timeline in sketch.timelines:
+            timeline_status = timeline.get_status.status
+            if timeline_status in statuses_preventing_unarchival:
+                error_msg = (
+                    f"Cannot unarchive sketch {sketch.id}. Timeline "
+                    f"'{timeline.name}' "
+                    f"(ID: {timeline.id}) is in a '{timeline_status}' state, which "
+                    f"prevents unarchival."
+                )
+                logger.error(error_msg)
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Cannot unarchive sketch {sketch.id}. Timeline "
+                    f"'{timeline.name}' "
+                    f"(ID: {timeline.id}) is in a '{timeline_status}' state, "
+                    "which prevents unarchival.",
+                )
 
-        indexes_to_open = []
+        # Identify all SearchIndex objects that need to be opened.
+        search_indexes_to_open = {
+            tl.searchindex
+            for tl in sketch.timelines
+            if tl.searchindex and tl.searchindex.get_status.status == "archived"
+        }
+
+        # Attempt to open all necessary OpenSearch indices first.
+        errors_occurred = False
+        error_details = []
+        successfully_opened_indexes = set()
+
+        for search_index in search_indexes_to_open:
+            try:
+                logger.info(
+                    "Attempting to open OpenSearch index: %s (DB ID: %s)"
+                    " for sketch %s.",
+                    search_index.index_name,
+                    search_index.id,
+                    sketch.id,
+                )
+                self.datastore.client.indices.open(index=search_index.index_name)
+                logger.info(
+                    "Successfully opened OpenSearch index: %s.",
+                    search_index.index_name,
+                )
+                successfully_opened_indexes.add(search_index)
+            except opensearchpy.exceptions.RequestError as e:
+                if e.error == "index_not_closed_exception":
+                    logger.warning(
+                        "OpenSearch index %s was already open.",
+                        search_index.index_name,
+                    )
+                    successfully_opened_indexes.add(search_index)
+                else:
+                    errors_occurred = True
+                    error_details.append(
+                        f"Failed to open OpenSearch index '{search_index.index_name}' "
+                        f"(DB ID: {search_index.id}). Error: {str(e)}."
+                    )
+            except opensearchpy.exceptions.NotFoundError:
+                errors_occurred = True
+                error_details.append(
+                    f"OpenSearch index '{search_index.index_name}' not found. "
+                    "Cannot unarchive."
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                errors_occurred = True
+                error_details.append(
+                    "An unexpected error occurred while opening index "
+                    f"'{search_index.index_name}' (DB ID: {search_index.id}): {str(e)}."
+                )
+
+        # If any critical error occurred, abort before changing DB state.
+        if errors_occurred:
+            logger.error(
+                "Unarchiving sketch %s failed because one or more indices could not "
+                "be opened. Errors: %s",
+                sketch.id,
+                "; ".join(error_details),
+            )
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "Failed to unarchive sketch. One or more OpenSearch indices could not "
+                f"be opened. Details: {'; '.join(error_details)}",
+            )
+
+        # If all indices are open, update the database statuses.
+        sketch.set_status(status="ready")
+        logger.info("Sketch %s status set to 'ready'.", sketch.id)
+
+        # Set all timelines in the sketch to ready.
         for timeline in sketch.timelines:
             if timeline.get_status.status != "archived":
                 continue
             timeline.set_status(status="ready")
-            search_index = timeline.searchindex
-            search_index.set_status(status="ready")
-            indexes_to_open.append(search_index.index_name)
+            logger.info(
+                "Timeline %d ('%s') status set to 'ready'.",
+                timeline.id,
+                timeline.name,
+            )
 
-        # TODO (kiddi): Move this to lib/datastores/opensearch.py.
-        if indexes_to_open:
-            try:
-                self.datastore.client.indices.open(",".join(indexes_to_open))
-            except opensearchpy.NotFoundError:
-                logger.error(
-                    "Unable to open index, not found: {:s}".format(
-                        ",".join(indexes_to_open)
-                    )
-                )
+        for search_index in successfully_opened_indexes:
+            search_index.set_status(status="ready")
+            logger.info(
+                "SearchIndex DB object %s (ID: %s) status updated to 'ready'.",
+                search_index.index_name,
+                search_index.id,
+            )
+
+        db_session.commit()
+        logger.info("Unarchiving of sketch %s complete.", sketch.id)
 
         return HTTP_STATUS_CODE_OK
 
     def _archive_sketch(self, sketch: Sketch):
-        """Unarchives a sketch by opening up all indices and removing labels.
+        """Archives a sketch. This involves:
+
+        1. Setting the sketch status to 'archived'.
+        2. For each SearchIndex associated with the sketch:
+          the system attempts to close the corresponding OpenSearch index.
+           - If the OpenSearch index is successfully closed, the SearchIndex's
+             database status is set to 'archived'.
+           - If the OpenSearch index is not found, it's considered effectively
+             closed, and the SearchIndex's database status is set to 'fail'.
+           - If the OpenSearch index exists but an error occurs during the close
+             operation (other than not found), the SearchIndex's database status
+             remains unchanged (e.g., 'ready' or 'fail'). This discrepancy allows
+             tools like `tsctl list-sketches --archived-with-open-indexes`
+             to identify potential issues requiring administrative attention.
+
+        This is a non-destructive operation; it does not delete any event data.
 
         Args:
-            sketch: Instance of timesketch.models.sketch.Sketch
+            sketch (Sketch): Instance of timesketch.models.sketch.Sketch
         """
         if sketch.get_status.status == "archived":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to archive a sketch that was already archived "
-                "(sketch: {:d})".format(sketch.id),
+                f"Sketch {sketch.id} is already archived.",
             )
 
         labels_to_prevent_deletion = current_app.config.get(
@@ -482,38 +628,152 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             if sketch.has_label(label):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "A sketch with the label {:s} cannot be " "archived.".format(label),
+                    f"Sketch {sketch.id} has label '{label}'"
+                    " and cannot be archived.",
                 )
+
+        # Check if any timeline is in a state that prevents archiving.
+        statuses_preventing_archival = ["processing", "fail", "timeout"]
+        for timeline_to_check in sketch.timelines:
+            timeline_status = timeline_to_check.get_status.status
+            if timeline_status in statuses_preventing_archival:
+                base_error_msg = (
+                    f"Cannot archive sketch {sketch.id}. Timeline "
+                    f"'{timeline_to_check.name}' (ID: {timeline_to_check.id}) is in "
+                    f"a non-archivable state: '{timeline_status}'."
+                )
+                suggestion = ""
+                if timeline_status in ["fail", "timeout"]:
+                    suggestion = " Please delete this timeline and try again."
+                elif timeline_status == "processing":
+                    suggestion = (
+                        " Please wait for the timeline to finish processing or "
+                        "delete it."
+                    )
+                error_msg = f"{base_error_msg}{suggestion}"
+                logger.error(error_msg)
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    error_msg,
+                )
+
+        for timeline in sketch.timelines:
+            timeline.set_status(status="archived")
+
+        # Process associated SearchIndexes
+        # Use a set to avoid processing the same SearchIndex multiple times
+        # if it's linked to multiple timelines within this sketch.
+        search_indexes_to_evaluate = {
+            tl.searchindex for tl in sketch.timelines if tl.searchindex
+        }
+
+        errors_occurred = False
+        error_details = []
+
+        for search_index in search_indexes_to_evaluate:
+            # Determine if this SearchIndex can be safely archived (i.e., its
+            # OpenSearch index closed).
+            all_associated_timelines_archived = True
+            if not search_index.timelines:
+                logger.warning(
+                    "SearchIndex %s (ID: %s) has no associated timelines in DB. "
+                    "Skipping OpenSearch closure check.",
+                    search_index.index_name,
+                    search_index.id,
+                )
+                # Cannot confirm, so don't archive OS index
+                all_associated_timelines_archived = False
+
+            for timeline in search_index.timelines:
+                if timeline.get_status.status != "archived":
+                    all_associated_timelines_archived = False
+                    logger.info(
+                        "SearchIndex %s (ID: %s) will not be closed because "
+                        "associated timeline %s (sketch %s) has status '%s'.",
+                        search_index.index_name,
+                        search_index.id,
+                        timeline.id,
+                        timeline.sketch.id if timeline.sketch else "N/A",
+                        timeline.get_status.status,
+                    )
+                    break
+
+            if all_associated_timelines_archived:
+                # If all associated timelines are archived,
+                # attempt to close the OS index and then update
+                # the SearchIndex DB status.
+                original_si_status = search_index.get_status.status
+                try:
+                    logger.info(
+                        "Attempting to close OpenSearch index:"
+                        " %s (DB ID: %s) for sketch %s.",
+                        search_index.index_name,
+                        search_index.id,
+                        sketch.id,
+                    )
+                    self.datastore.client.indices.close(index=search_index.index_name)
+                    search_index.set_status(
+                        status="archived"
+                    )  # Set DB status only after successful close
+                    logger.info(
+                        "Successfully closed OpenSearch index: %s."
+                        " SearchIndex DB object "
+                        "(ID: %s) status updated to 'archived'.",
+                        search_index.index_name,
+                        search_index.id,
+                    )
+                except opensearchpy.exceptions.NotFoundError:
+                    # If index not found in OpenSearch, it's effectively gone/closed,
+                    # but the intended 'close' operation failed because it wasn't there.
+                    search_index.set_status(status="fail")
+                    logger.warning(
+                        "OpenSearch index: %s not found. "
+                        " SearchIndex DB object (ID: %s) "
+                        "status updated to 'fail'.",
+                        search_index.index_name,
+                        search_index.id,
+                    )
+                    errors_occurred = True
+                    error_details.append(
+                        f"OpenSearch index '{search_index.index_name}' not found. "
+                        f"SearchIndex DB object (ID: {search_index.id}) "
+                        "status updated to 'fail'."
+                    )
+
+                except Exception as e:  # pylint: disable=broad-except
+                    # For any other error during close, log it and
+                    # DO NOT change SearchIndex status.
+                    logger.error(
+                        "Failed to close OpenSearch index: %s (DB ID: %s). Error: %s. "
+                        "SearchIndex DB status remains '%s'.",
+                        search_index.index_name,
+                        search_index.id,
+                        str(e),
+                        original_si_status,
+                    )
+                    errors_occurred = True
+                    error_details.append(
+                        f"Failed to close OpenSearch index '{search_index.index_name}' "
+                        f"(DB ID: {search_index.id}). Error: {str(e)}. "
+                        f"SearchIndex DB status remains '{original_si_status}'."
+                    )
 
         sketch.set_status(status="archived")
+        logger.info("Sketch %s status set to 'archived'.", sketch.id)
 
-        # Go through all timelines in a sketch.
-        #    Each timeline has only a single search index, however
-        #    each search index can be part of multiple timelines.
-        #    Only archive a search index if all of it's timelines
-        #    are archived.
-        indexes_to_close = []
-        for timeline in sketch.timelines:
-            if timeline.get_status.status != "ready":
-                continue
-            timeline.set_status(status="archived")
-            search_index = timeline.searchindex
+        # Commit changes after processing all indices
+        db_session.commit()
 
-            if not all(
-                x.get_status.status == "archived" for x in search_index.timelines
-            ):
-                continue
-            search_index.set_status(status="archived")
-            indexes_to_close.append(search_index.index_name)
+        if errors_occurred:
+            # Return a non-OK status if any errors occurred during index closure.
+            response_meta = {
+                "sketch_id": sketch.id,
+                "status": sketch.get_status.status,
+                "errors": error_details,
+            }
+            return (
+                jsonify({"meta": response_meta, "objects": []}),
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+            )  # Or HTTP_STATUS_CODE_BAD_REQUEST
 
-        # TODO (kiddi): Move this to lib/datastores/opensearch.py.
-        if indexes_to_close:
-            try:
-                self.datastore.client.indices.close(",".join(indexes_to_close))
-            except opensearchpy.NotFoundError:
-                logger.error(
-                    "Unable to close indices, not found: {:s}".format(
-                        ",".join(indexes_to_close)
-                    )
-                )
         return HTTP_STATUS_CODE_OK

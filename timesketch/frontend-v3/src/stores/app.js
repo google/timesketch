@@ -118,6 +118,12 @@ export const useAppStore = defineStore("app", {
     },
 
     async updateTimelineTags(sketchId) {
+      // Don't fetch Tag data on archived sketches.
+      if (this.sketch.status?.[0]?.status === 'archived') {
+        this.tags = []
+        return
+      }
+
       if (!this.sketch.active_timelines.length) {
         return;
       }
@@ -135,6 +141,11 @@ export const useAppStore = defineStore("app", {
     },
 
     async updateDataTypes(sketchId) {
+      if (this.sketch.status?.[0]?.status === 'archived') {
+        this.dataTypes = []
+        return
+      }
+
       if (!this.sketch.active_timelines.length) {
         return;
       }
