@@ -466,7 +466,7 @@ def list_sketches(
 
     print(f"{output_type}:")
     for sketch in sketches_to_display:
-        print(f"{sketch.id} {sketch.name} (status: {sketch.get_status.status})")
+        print(f"{sketch.id} '{sketch.name}' (status: {sketch.get_status.status})")
 
 
 @cli.command(name="list-groups")
