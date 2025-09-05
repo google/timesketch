@@ -550,6 +550,16 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                         f"index: {indices_msg:s} and parameters:"
                         f" {aggregator_parameters!s}",
                     )
+                logger.error(
+                    "Unable to run aggregation, with error: %s, "
+                    "index: %s and parameters: %s",
+                    str(exc),
+                    indices_msg,
+                    aggregator_parameters,
+                    exc_info=True,
+                    stack_info=True,
+                    extra={"request": request},
+                )
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     f"Unable to run the aggregation, with error: {exc!s}"
@@ -596,10 +606,28 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 )
             except RequestError as e:
                 if e.error == "index_closed_exception":
+                    logger.error(
+                        "Unable to run aggregation on a closed index."
+                        "index: %s and parameters: %s",
+                        indices_msg,
+                        aggregator_parameters,
+                        exc_info=True,
+                        stack_info=True,
+                        extra={"request": request},
+                    )
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         "Unable to run aggregation on a closed index.",
                     )
+                logger.error(
+                    "Unable to run aggregation on a index."
+                    "index: %s and parameters: %s",
+                    indices_msg,
+                    aggregator_parameters,
+                    exc_info=True,
+                    stack_info=True,
+                    extra={"request": request},
+                )
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     f"Unable to run the aggregation, with error: {e!s}",
