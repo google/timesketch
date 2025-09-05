@@ -478,17 +478,24 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 f"(sketch: {sketch.id})",
             )
 
-        # Check if any timeline is in a non-unarchivable state
-        non_unarchivable_timeline_statuses = ["processing"]
+        # Check if any timeline is in a state that prevents unarchiving.
+        statuses_preventing_unarchival = ["processing", "fail"]
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status
-            if timeline_status in non_unarchivable_timeline_statuses:
+            if timeline_status in statuses_preventing_unarchival:
+                error_msg = (
+                    f"Cannot unarchive sketch {sketch.id}. Timeline "
+                    f"'{timeline.name}' "
+                    f"(ID: {timeline.id}) is in a '{timeline_status}' state, which "
+                    f"prevents unarchival."
+                )
+                logger.error(error_msg)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     f"Cannot unarchive sketch {sketch.id}. Timeline "
                     f"'{timeline.name}' "
-                    f"(ID: {timeline.id}) is in '{timeline_status}' state, which "
-                    f"prevents unarchival.",
+                    f"(ID: {timeline.id}) is in a '{timeline_status}' state, "
+                    "which prevents unarchival.",
                 )
 
         # Identify all SearchIndex objects that need to be opened.
@@ -628,16 +635,16 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         for label in labels_to_prevent_deletion:
             if sketch.has_label(label):
                 abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    HTTP_STATUS_CODE_FORBIDDEN,
                     f"Sketch {sketch.id} has label '{label}'"
                     " and cannot be archived.",
                 )
 
-        # Check if any timeline is in a non-archivable state
-        non_archivable_timeline_statuses = ["processing", "fail", "timeout"]
+        # Check if any timeline is in a state that prevents archiving.
+        statuses_preventing_archival = ["processing", "fail", "timeout"]
         for timeline_to_check in sketch.timelines:
             timeline_status = timeline_to_check.get_status.status
-            if timeline_status in non_archivable_timeline_statuses:
+            if timeline_status in statuses_preventing_archival:
                 base_error_msg = (
                     f"Cannot archive sketch {sketch.id}. Timeline "
                     f"'{timeline_to_check.name}' (ID: {timeline_to_check.id}) is in "
