@@ -416,6 +416,9 @@ class TimesketchApi:
                 result = error.get_response_json(response, logger)
                 if result:
                     return result
+            except error.NotFoundError as e:
+                # This is immediately raised and not retried by the loop.
+                raise RuntimeError(f"Resource not found: {resource_url}") from e
             except RuntimeError as e:
                 if attempt >= self.DEFAULT_RETRY_COUNT:
                     # Re-raise the original error after exhausting retries
