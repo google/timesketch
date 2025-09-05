@@ -588,14 +588,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 search_index.id,
             )
 
-        # Also set any non-archived search indexes to ready, just in case.
-        all_sketch_search_indexes = {
-            tl.searchindex for tl in sketch.timelines if tl.searchindex
-        }
-        for search_index in all_sketch_search_indexes:
-            if search_index.get_status.status != "ready":
-                search_index.set_status(status="ready")
-
         db_session.commit()
         logger.info("Unarchiving of sketch %s complete.", sketch.id)
 
