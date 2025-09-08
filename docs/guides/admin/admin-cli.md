@@ -1030,6 +1030,32 @@ UPLOAD_ENABLED: True
 Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
 ```
 
+#### sketch-label-stats
+
+The `sketch-label-stats` command provides detailed statistics on label and tag usage within a specific sketch. It queries both the relational database and the OpenSearch datastore to give a comprehensive overview.
+
+**Usage:**
+
+```bash
+tsctl sketch-label-stats --sketch_id <SKETCH_ID> [OPTIONS]
+Options:
+--sketch_id <SKETCH_ID> (required): The ID of the sketch to analyze.
+--verbose (optional flag): If set, the command will show full event data instead of just counts for each category.
+```
+
+**Output Details:**
+
+The command provides the following statistics:
+ * Relational Database (PostgreSQL/SQLite):
+    * Total count of events with at least one label.
+    * Counts per individual label.
+ * OpenSearch Datastore:
+    * Total count of events with at least one label (using aggregation API).
+    * Counts per label (using aggregation API).
+    * Counts per label (using iterative search API).
+    * Total events with at least one legacy tag (using search API).
+    * Counts per legacy tag (using aggregation API).
+
 ### export-sketch
 
 Exports a Timesketch sketch to a zip archive. The archive contains:
