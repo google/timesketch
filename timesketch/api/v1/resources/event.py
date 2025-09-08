@@ -519,9 +519,9 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                                 f"exists for event_id '{request_event_id}'."
                             )
                         else:
-                            new_attributes[request_attribute_name] = (
-                                request_attribute_value
-                            )
+                            new_attributes[
+                                request_attribute_name
+                            ] = request_attribute_value
 
                     if new_attributes:
                         datastore.import_event(
@@ -883,7 +883,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         sketch: Sketch,
         event_id: str,
     ) -> str:
-        """Get's the search index name associated with the event.
+        """Gets the search index name associated with the event.
 
         This function queries the datastore to find the specific search index
         that an event belongs to within the context of a given sketch. It's
@@ -972,15 +972,166 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         return event_index_name
 
+    def _annotate_event(
+        self,
+        sketch: Sketch,
+        _event: dict,
+        annotation_type: str,
+        form: object,
+        indices: list,
+        current_search_node: Optional[SearchHistory],
+        conclusion_id: Optional[int] = None,
+    ):
+        """Annotates a single event.
+
+        This function handles the logic for adding a comment or a label to a
+        single event. It ensures the event exists, creates a database entry for
+        it if necessary, and then applies the annotation.
+
+        Args:
+            sketch: The sketch object.
+            _event: A dictionary with event details from the request, requiring
+                at least an '_id'. If '_index' is not provided, it will be
+                looked up.
+            annotation_type: The type of annotation ('comment' or 'label').
+            form: The form data from the request.
+            indices: A list of valid indices for the sketch.
+            current_search_node: The current search history node to associate
+                with the annotation.
+            conclusion_id: Optional ID of the conclusion to associate with a
+                fact label.
+
+        Returns:
+            The created annotation object (Event.Comment or Event.Label).
+
+        Raises:
+            HTTPException: If the search index is not found or does not belong
+                to the sketch, or if the label name is empty.
+        """
+        # TODO: create a unit test for this method
+        if not _event.get("_index"):
+            searchindex_id = self._get_search_index_for_event(sketch, _event["_id"])
+            _event["_index"] = searchindex_id
+        else:
+            searchindex_id = _event["_index"]
+        searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+        event_id = _event["_id"]
+
+        if searchindex_id not in indices:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                f"Search index ID ({searchindex_id!s}) does not belong to the"
+                " list of indices",
+            )
+
+        # Get or create an event in the SQL database to have something
+        # to attach the annotation to.
+        event = Event.get_or_create(
+            sketch=sketch, searchindex=searchindex, document_id=event_id
+        )
+
+        if current_search_node:
+            current_search_node.events.append(event)
+
+        annotation = None
+        # Add the annotation to the event object.
+        if annotation_type == "comment":
+            annotation = Event.Comment(comment=form.annotation.data, user=current_user)
+            event.comments.append(annotation)
+            self.datastore.set_label(
+                searchindex_id,
+                event_id,
+                sketch.id,
+                current_user.id,
+                "__ts_comment",
+                toggle=False,
+            )
+            if current_search_node:
+                current_search_node.add_label("__ts_comment")
+
+        elif annotation_type == "label":
+            # TODO(#3434): Fix the label logic.
+            conclusion = None
+
+            # Construct the specific fact label if a conclusion_id is present
+            label_name = form.annotation.data
+            if not label_name:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, "Label name cannot be empty.")
+            if "__ts_fact" in label_name and conclusion_id:
+                label_name = f"__ts_fact_{conclusion_id}"
+
+            annotation = Event.Label.get_or_create(label=label_name, user=current_user)
+
+            # Determine the intended state and update the database first.
+            # This makes the database the source of truth.
+            should_add = not form.remove.data
+            is_label_in_db = annotation in event.labels
+
+            if should_add:
+                if not is_label_in_db:
+                    event.labels.append(annotation)
+            else:  # This means we should remove the label.
+                if is_label_in_db:
+                    event.labels.remove(annotation)
+
+            self.datastore.set_label(
+                searchindex_id,
+                event_id,
+                sketch.id,
+                current_user.id,
+                label_name,
+                toggle=False,  # We are setting state, not toggling.
+                remove=form.remove.data,
+            )
+
+            if "__ts_fact" in label_name:
+                if not conclusion and conclusion_id:
+                    conclusion = self._validate_conclusion_for_sketch(
+                        conclusion_id, sketch
+                    )
+                # Adding facts to conclusions
+                if not form.remove.data:
+                    if conclusion not in event.conclusions:
+                        event.conclusions.append(conclusion)
+                # Remove facts from conclusions
+                elif conclusion in event.conclusions:
+                    event.conclusions.remove(conclusion)
+
+        # Save the event to the database
+        db_session.add(event)
+        db_session.commit()
+        return annotation
+
     @login_required
     def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
+        This resource is used to add annotations to one or more events.
+        The annotation can be a comment or a label.
+
+        The request body should be a JSON object with the following fields:
+        - events: A list of event objects to annotate. Each event object must
+          contain '_id' and can optionally contain '_index'. If '_index' is
+          not provided, it will be looked up, which may impact performance.
+        - annotation: The content of the annotation (e.g., the comment text or
+          the label name).
+        - annotation_type: The type of annotation, either 'comment' or 'label'.
+        - remove: (optional, for labels) A boolean indicating whether to remove
+          the label instead of adding it. Defaults to False.
+        - conclusion_id: (optional, for '__ts_fact' labels) The ID of the
+          InvestigativeQuestionConclusion to associate the fact with.
+        - current_search_node_id: (optional) The ID of the current search
+          history node to associate this action with.
+
+        Special labels like '__ts_star' and '__ts_hidden' are handled as
+        toggles. If the label exists, it's removed; otherwise, it's added.
+
         Args:
-            sketch_id: (int) Integer primary key for a sketch database model
+            sketch_id: Integer primary key for a sketch database model.
 
         Returns:
-            An annotation in JSON (instance of flask.wrappers.Response)
+            A list of the created annotation objects in JSON format with a 201
+            CREATED status code.
         """
         form = forms.EventAnnotationForm.build(request)
         if not form.validate_on_submit():
@@ -995,6 +1146,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             current_search_node = self._get_current_search_node(_search_node_id, sketch)
 
         allowed_statuses = ["ready"]
+        # If an Timesketch admin decided to allow processing Timelines to be
+        # worked on, "processing" will be added.
         if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
             allowed_statuses.append("processing")
 
@@ -1006,127 +1159,76 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
 
-        for _event in events:
-            if not _event.get("_index"):
-                searchindex_id = self._get_search_index_for_event(sketch, _event["_id"])
-                _event["_index"] = searchindex_id
-            else:
-                searchindex_id = _event["_index"]
-            searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
-            event_id = _event["_id"]
-
-            if searchindex_id not in indices:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    f"Search index ID ({searchindex_id!s}) does not belong to the"
-                    " list of indices",
-                )
-
-            # Get or create an event in the SQL database to have something
-            # to attach the annotation to.
-            event = Event.get_or_create(
-                sketch=sketch, searchindex=searchindex, document_id=event_id
+        if annotation_type not in ("comment", "label"):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Annotation type needs to be either label or comment, "
+                f"not {annotation_type!s}",
             )
 
-            if current_search_node:
-                current_search_node.events.append(event)
+        conclusion_id = request.json.get("conclusion_id", None)
 
-            # Add the annotation to the event object.
-            if "comment" in annotation_type:
-                annotation = Event.Comment(
-                    comment=form.annotation.data, user=current_user
-                )
-                event.comments.append(annotation)
-                self.datastore.set_label(
-                    searchindex_id,
-                    event_id,
-                    sketch.id,
-                    current_user.id,
-                    "__ts_comment",
-                    toggle=False,
-                )
-                if current_search_node:
-                    current_search_node.add_label("__ts_comment")
-
-            elif "label" in annotation_type:
-                # TODO(#3434): Fix the label logic.
-                conclusion = None
-                conclusion_id = request.json.get("conclusion_id", None)
-
-                # Construct the specific fact label if a conclusion_id is present
-                label_name = form.annotation.data
-                if "__ts_fact" in label_name and conclusion_id:
-                    label_name = f"__ts_fact_{conclusion_id}"
-
-                annotation = Event.Label.get_or_create(
-                    label=label_name, user=current_user
-                )
-
-                if annotation not in event.labels:
-                    event.labels.append(annotation)
-
-                toggle = False
-                if "__ts_star" in label_name:
-                    toggle = True
-                if "__ts_hidden" in label_name:
-                    toggle = True
-                if "__ts_fact" in label_name:
-                    toggle = True
-                if form.remove.data:
-                    toggle = True
-
-                self.datastore.set_label(
-                    searchindex_id,
-                    event_id,
-                    sketch.id,
-                    current_user.id,
-                    label_name,
-                    toggle=toggle,
-                )
-
-                if current_search_node:
-                    if "__ts_star" in label_name:
-                        search_node_label = "__ts_star"
-                    elif "__ts_fact" in label_name:
-                        search_node_label = "__ts_fact"
-                        conclusion = self._get_current_search_node_conclusion(
-                            current_search_node
-                        )
-                    else:
-                        search_node_label = "__ts_label"
-                    current_search_node.add_label(search_node_label)
-
-                if "__ts_fact" in label_name:
-                    if not conclusion and conclusion_id:
-                        conclusion = InvestigativeQuestionConclusion.get_by_id(
-                            conclusion_id
-                        )
-
-                    if not conclusion:
-                        abort(
-                            HTTP_STATUS_CODE_BAD_REQUEST,
-                            "Conclusion ID is required to add a fact.",
-                        )
-                    # Adding facts to conclusions
-                    if not form.remove.data:
-                        event.conclusions.append(conclusion)
-                    # Remove facts from conclusions
-                    if form.remove.data:
-                        event.conclusions.remove(conclusion)
-
-            else:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Annotation type needs to be either label or comment, "
-                    f"not {annotation_type!s}",
-                )
-
+        for _event in events:
+            annotation = self._annotate_event(
+                sketch,
+                _event,
+                annotation_type,
+                form,
+                indices,
+                current_search_node,
+                conclusion_id,
+            )
             annotations.append(annotation)
-            # Save the event to the database
-            db_session.add(event)
-            db_session.commit()
 
         return self.to_json(annotations, status_code=HTTP_STATUS_CODE_CREATED)
+
+    def _validate_conclusion_for_sketch(
+        self, conclusion_id: int, sketch: Sketch
+    ) -> InvestigativeQuestionConclusion:
+        """Validates that a conclusion exists and belongs to the given sketch.
+
+        Args:
+            conclusion_id: The ID of the InvestigativeQuestionConclusion.
+            sketch: The Sketch object.
+
+        Returns:
+            InvestigativeQuestionConclusion: The validated conclusion object.
+
+        Raises:
+            HTTPException: If the conclusion is not found or does not belong to the sketch.
+        """
+        conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
+        if not conclusion:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"Conclusion with ID {conclusion_id} not found.",
+            )
+        if (
+            not conclusion.investigativequestion
+            or conclusion.investigativequestion.sketch_id != sketch.id
+        ):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "Conclusion does not belong to this sketch.",
+            )
+        return conclusion
+
+    def _update_search_node_label(
+        self, search_node: SearchHistory, label_name: str, was_added: bool
+    ):
+        """Adds or removes a label from the search history node."""
+        if "__ts_star" in label_name:
+            search_node_label = "__ts_star"
+        elif "__ts_fact" in label_name:
+            search_node_label = "__ts_fact"
+        else:
+            search_node_label = "__ts_label"
+
+        if was_added:
+            search_node.add_label(search_node_label)
+        else:
+            # TODO: Implement remove_label if it becomes necessary.
+            pass
 
     @login_required
     def put(self, sketch_id: int):
