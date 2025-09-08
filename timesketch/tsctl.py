@@ -36,12 +36,15 @@ import pandas as pd
 from flask_restful import marshal
 from flask import current_app
 from flask.cli import FlaskGroup
+from sqlalchemy import distinct
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
 from celery.result import AsyncResult
 
 
 from timesketch.api.v1 import export as api_export
+from timesketch.api.v1 import utils
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1 import utils as api_utils
 from timesketch.lib import utils as lib_utils
@@ -880,6 +883,232 @@ def sketch_info(sketch_id: int):
         )
     print("Status:")
     print_table(status_table)
+
+
+@cli.command(name="sketch-label-stats")
+@click.option("--sketch_id", type=int, required=True)
+def sketch_label_stats(sketch_id: int):
+    """Display label and tag statistics for a specific sketch.
+
+    This command provides statistics on labeled and tagged events for a given
+    sketch. It queries both the relational database and the OpenSearch
+    datastore to provide a comprehensive view.
+
+    The output includes:
+    - Total count of events with at least one label/tag.
+    - A breakdown of event counts for each individual label/tag.
+    - An example of a complex query using raw DSL.
+
+    Args:
+        sketch_id (int): The ID of the sketch to analyze.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        print(f"Sketch with ID {sketch_id} not found.")
+        return
+
+    print(f"--- Label and Tag Stats for Sketch: '{sketch.name}' (ID: {sketch.id}) ---")
+
+    # --- 1. Get stats from the relational database for 'timesketch_label' ---
+    print("\n[+] Querying Relational Database for 'timesketch_label'...")
+    label_counts_db = []
+    try:
+        # Total events with any label in the DB for this sketch
+        total_labeled_in_db = (
+            db_session.query(distinct(Event.id))
+            .filter(Event.sketch_id == sketch_id, Event.labels.any())
+            .count()
+        )
+        print(f"  - Total events with at least one label: {total_labeled_in_db}")
+
+        # Per-label count from the DB
+        label_counts_db = (
+            db_session.query(Event.Label.label, func.count(Event.id))
+            .join(Event.labels)
+            .filter(Event.sketch_id == sketch_id)
+            .group_by(Event.Label.label)
+            .order_by(func.count(Event.id).desc())
+            .all()
+        )
+
+        if label_counts_db:
+            print("  - Counts per label:")
+            for label, count in label_counts_db:
+                print(f"    - {label}: {count}")
+        else:
+            print("  - No individual label records found in the database.")
+
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"  - ERROR querying database: {e}")
+
+    # --- 2. Get stats from OpenSearch ---
+    print("\n[+] Querying OpenSearch Datastore...")
+    datastore = OpenSearchDataStore()
+    indices = [t.searchindex.index_name for t in sketch.active_timelines]
+
+    if not indices:
+        print("  - No active timelines in this sketch to query in OpenSearch.")
+        return
+
+    # --- 2a. 'timesketch_label' - Using Aggregation API ---
+    print("\n  -> Method 1: 'timesketch_label' counts using the Aggregation API")
+    label_counts_agg = []
+    try:
+        # Total events with any label in OpenSearch
+        query_dsl_total = {
+            "query": {
+                "nested": {
+                    "path": "timesketch_label",
+                    "query": {"term": {"timesketch_label.sketch_id": sketch_id}},
+                }
+            }
+        }
+        total_labeled_os = datastore.search(
+            sketch_id=sketch.id, indices=indices, query_dsl=query_dsl_total, count=True
+        )
+        print(f"    - Total events with at least one label: {total_labeled_os}")
+
+        # Per-label count from OpenSearch using aggregations
+        label_counts_agg = datastore.get_filter_labels(sketch.id, indices)
+        if label_counts_agg:
+            print("    - Counts per label:")
+            # Sort by count descending
+            sorted_labels = sorted(
+                label_counts_agg, key=lambda x: x["count"], reverse=True
+            )
+            for item in sorted_labels:
+                print(f"      - {item['label']}: {item['count']}")
+        else:
+            print("    - No labels found via aggregation.")
+
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"    - ERROR during aggregation query: {e}")
+
+    # --- 2b. 'timesketch_label' - Using Search API ---
+    print("\n  -> Method 2: 'timesketch_label' counts using the Search API")
+    try:
+        # Fallback to DB labels if aggregation returns none.
+        if label_counts_agg:
+            labels_to_search = [item["label"] for item in label_counts_agg]
+        else:
+            labels_to_search = [label for label, _ in label_counts_db]
+
+        if labels_to_search:
+            print("    - Counts per label (iterative search):")
+            for label in sorted(labels_to_search):
+                query_filter = {"chips": [{"type": "label", "value": label}]}
+                count = datastore.search(
+                    sketch_id=sketch.id,
+                    indices=indices,
+                    query_filter=query_filter,
+                    count=True,
+                )
+                print(f"      - {label}: {count}")
+        else:
+            print("    - No labels found to search for.")
+
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"    - ERROR during search query: {e}")
+
+    # --- 3. Legacy 'tag' field stats ---
+    print("\n[+] Querying OpenSearch for legacy 'tag' field...")
+
+    # --- 3a. 'tag' - Using Search API ---
+    print("\n  -> Method 3: 'tag' count using Search API (query_string)")
+    try:
+        total_tagged_events = datastore.search(
+            sketch_id=sketch.id,
+            indices=indices,
+            query_string="_exists_:tag",
+            count=True,
+        )
+        print(f"    - Total events with at least one tag: {total_tagged_events}")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"    - ERROR during search query: {e}")
+
+    # --- 3b. 'tag' - Using Aggregation API ---
+    print("\n  -> Method 4: 'tag' counts using Aggregation API")
+    try:
+        agg_params = {"field": "tag.keyword", "limit": 100}
+        result_obj, _ = utils.run_aggregator(
+            sketch.id, "field_bucket", agg_params, indices=indices
+        )
+        tag_buckets = result_obj.to_dict().get("values", [])
+
+        if tag_buckets:
+            field_name = agg_params.get("field")
+            print("    - Counts per tag:")
+            for bucket in tag_buckets:
+                print(f"      - {bucket[field_name]}: {bucket['count']}")
+        else:
+            print("    - No tags found via aggregation.")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"    - ERROR during aggregation query: {e}")
+
+    # --- 4. Complex Query Example ---
+    print("\n[+] Complex Query Example (Raw DSL)...")
+    print("  -> Method 5: Count events with '__ts_star' but NOT '__ts_comment'")
+    try:
+        complex_dsl = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "nested": {
+                                "path": "timesketch_label",
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "term": {
+                                                    "timesketch_label.name.keyword": "__ts_star"
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "timesketch_label.sketch_id": sketch.id
+                                                }
+                                            },
+                                        ]
+                                    }
+                                },
+                            }
+                        }
+                    ],
+                    "must_not": [
+                        {
+                            "nested": {
+                                "path": "timesketch_label",
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "term": {
+                                                    "timesketch_label.name.keyword": "__ts_comment"
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "timesketch_label.sketch_id": sketch.id
+                                                }
+                                            },
+                                        ]
+                                    }
+                                },
+                            }
+                        }
+                    ],
+                }
+            }
+        }
+        complex_count = datastore.search(
+            sketch_id=sketch.id, indices=indices, query_dsl=complex_dsl, count=True
+        )
+        print(f"    - Result: {complex_count} events")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"    - ERROR during complex DSL query: {e}")
+
+    print("\n--- End of Stats ---")
 
 
 @cli.command(name="timeline-status")
