@@ -16,6 +16,7 @@
 import datetime
 import io
 import json
+import logging
 import zipfile
 
 import prometheus_client
@@ -49,6 +50,9 @@ from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
 
+logger = logging.getLogger("timesketch.explore_api")
+
+
 # Metrics definitions
 METRICS = {
     "searchhistory": prometheus_client.Counter(
@@ -61,18 +65,25 @@ METRICS = {
 
 
 class ExploreResource(resources.ResourceMixin, Resource):
-    """Resource to search the datastore based on a query and a filter."""
+    """Resource for searching and exploring events in a sketch.
 
-    @login_required
-    def post(self, sketch_id: int):
-        """Handles POST request to the resource.
-        Handler for /api/v1/sketches/:sketch_id/explore/
+    This resource is the main entry point for querying the datastore.
+    It handles POST requests to execute a search and retrieve events,
+    counts, or export data.
+    """
+
+    def _validate_request_and_sketch(self, sketch_id: int) -> Sketch:
+        """Validate sketch and user permissions.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: Integer primary key for a sketch database model.
 
         Returns:
-            JSON with list of matched events
+            A sketch object (instance of models.Sketch).
+
+        Raises:
+            HTTPException: If sketch is not found, user has no read access or
+                           sketch is archived.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -85,9 +96,94 @@ class ExploreResource(resources.ResourceMixin, Resource):
             )
 
         if sketch.get_status.status == "archived":
+            logger.error(
+                "User %s trying to query on an archived sketch %s",
+                current_user.username,
+                sketch_id,
+            )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, "Unable to query on an archived sketch."
             )
+        return sketch
+
+    def _handle_export_request(
+        self,
+        sketch: Sketch,
+        file_name: str,
+        query_string: str,
+        query_dsl: str,
+        query_filter: dict,
+        return_fields: list,
+        indices: list,
+        timeline_ids: list,
+    ):
+        """Handles the logic for exporting search results to a file.
+
+        Args:
+            sketch: The sketch object.
+            file_name: The name for the exported file.
+            query_string: The search query string.
+            query_dsl: The search query DSL.
+            query_filter: The search query filter.
+            return_fields: A list of fields to include in the export.
+            indices: A list of indices to search.
+            timeline_ids: A list of timeline IDs to search.
+
+        Returns:
+            A Flask response object containing the zip file.
+        """
+        file_object = io.BytesIO()
+
+        form_data = {
+            "created_at": datetime.datetime.utcnow().isoformat(),
+            "created_by": current_user.username,
+            "sketch": sketch.id,
+            "query": query_string,
+            "query_dsl": query_dsl,
+            "query_filter": query_filter,
+            "return_fields": return_fields,
+        }
+        with zipfile.ZipFile(file_object, mode="w") as zip_file:
+            zip_file.writestr("METADATA", data=json.dumps(form_data))
+            try:
+                fh = export.query_to_filehandle(
+                    query_string=query_string,
+                    query_dsl=query_dsl,
+                    query_filter=query_filter,
+                    indices=indices,
+                    sketch=sketch,
+                    datastore=self.datastore,
+                    return_fields=return_fields,
+                    timeline_ids=timeline_ids,
+                )
+                fh.seek(0)
+                zip_file.writestr("query_results.csv", fh.read())
+            except ValueError as e:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+        file_object.seek(0)
+        return send_file(file_object, mimetype="zip", download_name=file_name)
+
+    @login_required
+    def post(self, sketch_id: int):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/explore/
+
+        This is the main endpoint for searching and exploring data in a sketch.
+        It can return events, a count of events, or export data to a file.
+
+        The request body should be a JSON object with a query and filter,
+        and can include other parameters to control the output.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+
+        Returns:
+            A JSON object with search results and metadata. The structure
+            depends on the request. It can be a list of events, a count, or
+            a file download. For event lists, it includes metadata about the
+            search execution, aggregations, and search history.
+        """
+        sketch = self._validate_request_and_sketch(sketch_id)
 
         form = forms.ExploreForm.build(request)
 
@@ -164,6 +260,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         all_timeline_ids = [t.id for t in sketch.timelines]
         indices = query_filter.get("indices", all_timeline_ids)
 
+        # TODO: does that contradict the SEARCH_PROCESSING_TIMELINES above?
         # If _all in indices then execute the query on all indices
         if "_all" in indices:
             indices = all_timeline_ids
@@ -243,33 +340,16 @@ class ExploreResource(resources.ResourceMixin, Resource):
             return jsonify(schema)
 
         if file_name:
-            file_object = io.BytesIO()
-
-            form_data = {
-                "created_at": datetime.datetime.utcnow().isoformat(),
-                "created_by": current_user.username,
-                "sketch": sketch_id,
-                "query": form.query.data,
-                "query_dsl": query_dsl,
-                "query_filter": query_filter,
-                "return_fields": return_fields,
-            }
-            with zipfile.ZipFile(file_object, mode="w") as zip_file:
-                zip_file.writestr("METADATA", data=json.dumps(form_data))
-                fh = export.query_to_filehandle(
-                    query_string=form.query.data,
-                    query_dsl=query_dsl,
-                    query_filter=query_filter,
-                    indices=indices,
-                    sketch=sketch,
-                    datastore=self.datastore,
-                    return_fields=return_fields,
-                    timeline_ids=timeline_ids,
-                )
-                fh.seek(0)
-                zip_file.writestr("query_results.csv", fh.read())
-            file_object.seek(0)
-            return send_file(file_object, mimetype="zip", download_name=file_name)
+            return self._handle_export_request(
+                sketch=sketch,
+                file_name=file_name,
+                query_string=form.query.data,
+                query_dsl=query_dsl,
+                query_filter=query_filter,
+                return_fields=return_fields,
+                indices=indices,
+                timeline_ids=timeline_ids,
+            )
 
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
