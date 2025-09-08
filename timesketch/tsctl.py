@@ -45,7 +45,6 @@ from celery.result import AsyncResult
 
 
 from timesketch.api.v1 import export as api_export
-from timesketch.api.v1 import utils
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1 import utils as api_utils
 from timesketch.lib import utils as lib_utils
@@ -1039,7 +1038,7 @@ def _query_os_tag_stats(
     print("\n  -> Method 4: 'tag' counts using Aggregation API")
     try:
         agg_params = {"field": "tag.keyword", "limit": 100}
-        result_obj, _ = utils.run_aggregator(
+        result_obj, _ = api_utils.run_aggregator(
             sketch.id, "field_bucket", agg_params, indices=indices
         )
         tag_buckets = result_obj.to_dict().get("values", [])
@@ -1074,6 +1073,7 @@ def _query_os_complex_example(
     """Run and display a complex query example."""
     print("\n[+] Complex Query Example (Raw DSL)...")
     print("  -> Method 5: Count events with '__ts_star' but NOT '__ts_comment'")
+    # pylint: disable=line-too-long
     try:
         complex_dsl = {
             "query": {
@@ -1127,6 +1127,7 @@ def _query_os_complex_example(
                 }
             }
         }
+        # pylint: enable=line-too-long
         if verbose:
             print("    - Fetching events with '__ts_star' but NOT '__ts_comment':")
             result = datastore.search(
