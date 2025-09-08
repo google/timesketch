@@ -1068,8 +1068,7 @@ class OpenSearchDataStore:
             os_logger.error(
                 "Unable to find the index/indices: {:s}".format(",".join(indices))
             )
-            return {"labels": [], "tags": []}
-
+            return labels
         buckets = (
             result.get("aggregations", {})
             .get("nested", {})
