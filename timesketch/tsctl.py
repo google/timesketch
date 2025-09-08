@@ -886,42 +886,11 @@ def sketch_info(sketch_id: int):
     print_table(status_table)
 
 
-@cli.command(name="sketch-label-stats")
-@click.option("--sketch_id", type=int, required=True)
-@click.option(
-    "--verbose",
-    is_flag=True,
-    default=False,
-    help="Show full event data instead of just counts.",
-)
-def sketch_label_stats(sketch_id: int, verbose: bool):
-    """Display label and tag statistics for a specific sketch.
-
-    This command provides statistics on labeled and tagged events for a given
-    sketch. It queries both the relational database and the OpenSearch
-    datastore to provide a comprehensive view.
-
-    The output includes:
-    - Total count of events with at least one label/tag.
-    - A breakdown of event counts for each individual label/tag.
-    - An example of a complex query using raw DSL.
-
-    Args:
-        sketch_id (int): The ID of the sketch to analyze.
-        verbose (bool): If true, show full event data instead of counts.
-    """
-    sketch = Sketch.get_by_id(sketch_id)
-    if not sketch:
-        print(f"Sketch with ID {sketch_id} not found.")
-        return
-
-    print(f"--- Label and Tag Stats for Sketch: '{sketch.name}' (ID: {sketch.id}) ---")
-
-    # --- 1. Get stats from the relational database for 'timesketch_label' ---
+def _query_db_label_stats(sketch_id: int) -> list:
+    """Query the relational database for label statistics."""
     print("\n[+] Querying Relational Database for 'timesketch_label'...")
     label_counts_db = []
     try:
-        # Total events with any label in the DB for this sketch
         total_labeled_in_db = (
             db_session.query(distinct(Event.id))
             .filter(Event.sketch_id == sketch_id, Event.labels.any())
@@ -929,7 +898,6 @@ def sketch_label_stats(sketch_id: int, verbose: bool):
         )
         print(f"  - Total events with at least one label: {total_labeled_in_db}")
 
-        # Per-label count from the DB
         label_counts_db = (
             db_session.query(Event.Label.label, func.count(Event.id))
             .join(Event.labels)
@@ -945,29 +913,23 @@ def sketch_label_stats(sketch_id: int, verbose: bool):
                 print(f"    - {label}: {count}")
         else:
             print("  - No individual label records found in the database.")
-
     except Exception as e:  # pylint: disable=broad-except
         print(f"  - ERROR querying database: {e}")
+    return label_counts_db
 
-    # --- 2. Get stats from OpenSearch ---
-    print("\n[+] Querying OpenSearch Datastore...")
-    datastore = OpenSearchDataStore()
-    indices = [t.searchindex.index_name for t in sketch.active_timelines]
 
-    if not indices:
-        print("  - No active timelines in this sketch to query in OpenSearch.")
-        return
-
-    # --- 2a. 'timesketch_label' - Using Aggregation API ---
+def _query_os_label_stats_agg(
+    sketch: Sketch, datastore: OpenSearchDataStore, indices: list, verbose: bool
+) -> list:
+    """Query OpenSearch for label stats using the aggregation API."""
     print("\n  -> Method 1: 'timesketch_label' counts using the Aggregation API")
     label_counts_agg = []
     try:
-        # Total events with any label in OpenSearch
         query_dsl_total = {
             "query": {
                 "nested": {
                     "path": "timesketch_label",
-                    "query": {"term": {"timesketch_label.sketch_id": sketch_id}},
+                    "query": {"term": {"timesketch_label.sketch_id": sketch.id}},
                 }
             }
         }
@@ -987,11 +949,9 @@ def sketch_label_stats(sketch_id: int, verbose: bool):
             )
             print(f"    - Total events with at least one label: {total_labeled_os}")
 
-        # Per-label count from OpenSearch using aggregations
         label_counts_agg = datastore.get_filter_labels(sketch.id, indices)
         if label_counts_agg:
             print("    - Counts per label:")
-            # Sort by count descending
             sorted_labels = sorted(
                 label_counts_agg, key=lambda x: x["count"], reverse=True
             )
@@ -999,14 +959,22 @@ def sketch_label_stats(sketch_id: int, verbose: bool):
                 print(f"      - {item['label']}: {item['count']}")
         else:
             print("    - No labels found via aggregation.")
-
     except Exception as e:  # pylint: disable=broad-except
         print(f"    - ERROR during aggregation query: {e}")
+    return label_counts_agg
 
-    # --- 2b. 'timesketch_label' - Using Search API ---
+
+def _query_os_label_stats_search(
+    sketch: Sketch,
+    datastore: OpenSearchDataStore,
+    indices: list,
+    verbose: bool,
+    label_counts_agg: list,
+    label_counts_db: list,
+):
+    """Query OpenSearch for label stats using the search API."""
     print("\n  -> Method 2: 'timesketch_label' counts using the Search API")
     try:
-        # Fallback to DB labels if aggregation returns none.
         if label_counts_agg:
             labels_to_search = [item["label"] for item in label_counts_agg]
         else:
@@ -1038,27 +1006,36 @@ def sketch_label_stats(sketch_id: int, verbose: bool):
                     print(f"      - {label}: {count}")
         else:
             print("    - No labels found to search for.")
-
     except Exception as e:  # pylint: disable=broad-except
         print(f"    - ERROR during search query: {e}")
 
-    # --- 3. Legacy 'tag' field stats ---
+
+def _query_os_tag_stats(
+    sketch: Sketch, datastore: OpenSearchDataStore, indices: list, verbose: bool
+):
+    """Query OpenSearch for legacy 'tag' field statistics."""
     print("\n[+] Querying OpenSearch for legacy 'tag' field...")
 
-    # --- 3a. 'tag' - Using Search API ---
     print("\n  -> Method 3: 'tag' count using Search API (query_string)")
     try:
-        total_tagged_events = datastore.search(
-            sketch_id=sketch.id,
-            indices=indices,
-            query_string="_exists_:tag",
-            count=True,
-        )
-        print(f"    - Total events with at least one tag: {total_tagged_events}")
+        if verbose:
+            print("    - Fetching all events with at least one tag:")
+            result = datastore.search(
+                sketch_id=sketch.id, indices=indices, query_string="_exists_:tag"
+            )
+            for event in result.get("hits", {}).get("hits", []):
+                print(json.dumps(event, indent=2))
+        else:
+            total_tagged_events = datastore.search(
+                sketch_id=sketch.id,
+                indices=indices,
+                query_string="_exists_:tag",
+                count=True,
+            )
+            print(f"    - Total events with at least one tag: {total_tagged_events}")
     except Exception as e:  # pylint: disable=broad-except
         print(f"    - ERROR during search query: {e}")
 
-    # --- 3b. 'tag' - Using Aggregation API ---
     print("\n  -> Method 4: 'tag' counts using Aggregation API")
     try:
         agg_params = {"field": "tag.keyword", "limit": 100}
@@ -1090,7 +1067,11 @@ def sketch_label_stats(sketch_id: int, verbose: bool):
     except Exception as e:  # pylint: disable=broad-except
         print(f"    - ERROR during aggregation query: {e}")
 
-    # --- 4. Complex Query Example ---
+
+def _query_os_complex_example(
+    sketch: Sketch, datastore: OpenSearchDataStore, indices: list, verbose: bool
+):
+    """Run and display a complex query example."""
     print("\n[+] Complex Query Example (Raw DSL)...")
     print("  -> Method 5: Count events with '__ts_star' but NOT '__ts_comment'")
     try:
@@ -1161,6 +1142,58 @@ def sketch_label_stats(sketch_id: int, verbose: bool):
     except Exception as e:  # pylint: disable=broad-except
         print(f"    - ERROR during complex DSL query: {e}")
 
+
+@cli.command(name="sketch-label-stats")
+@click.option("--sketch_id", type=int, required=True)
+@click.option(
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Show full event data instead of just counts.",
+)
+def sketch_label_stats(sketch_id: int, verbose: bool):
+    """Display label and tag statistics for a specific sketch.
+
+    This command provides statistics on labeled and tagged events for a given
+    sketch. It queries both the relational database and the OpenSearch
+    datastore to provide a comprehensive view.
+
+    The output includes:
+    - Total count of events with at least one label/tag.
+    - A breakdown of event counts for each individual label/tag.
+    - An example of a complex query using raw DSL.
+
+    Args:
+        sketch_id (int): The ID of the sketch to analyze.
+        verbose (bool): If true, show full event data instead of counts.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        print(f"Sketch with ID {sketch_id} not found.")
+        return
+
+    print(f"--- Label and Tag Stats for Sketch: '{sketch.name}' (ID: {sketch.id}) ---")
+
+    label_counts_db = _query_db_label_stats(sketch_id)
+
+    print("\n[+] Querying OpenSearch Datastore...")
+    datastore = OpenSearchDataStore()
+    indices = [t.searchindex.index_name for t in sketch.active_timelines]
+
+    if not indices:
+        print("  - No active timelines in this sketch to query in OpenSearch.")
+        return
+
+    label_counts_agg = _query_os_label_stats_agg(sketch, datastore, indices, verbose)
+
+    _query_os_label_stats_search(
+        sketch, datastore, indices, verbose, label_counts_agg, label_counts_db
+    )
+
+    _query_os_tag_stats(sketch, datastore, indices, verbose)
+
+    _query_os_complex_example(sketch, datastore, indices, verbose)
+
     print("\n--- End of Stats ---")
 
 
@@ -1202,7 +1235,7 @@ def event_details(sketch_id: int, event_id: str, searchindex_id: Optional[str] =
         except HTTPException as e:
             print(f"Error getting event from OpenSearch: {e.description}")
             return
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             print(f"An unexpected error occurred while fetching from OpenSearch: {e}")
             return
     else:
@@ -1217,7 +1250,7 @@ def event_details(sketch_id: int, event_id: str, searchindex_id: Optional[str] =
                     break
             except HTTPException:
                 continue  # Event not found in this index, try the next one.
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 print(f"An error occurred while searching index {current_index}: {e}")
 
     if not os_event_data:
