@@ -33,6 +33,26 @@ limitations under the License.
       </v-col>
       <v-divider vertical></v-divider>
 
+      <v-col v-if="matches.timeFilters.length" cols="4">
+      <h5 class="mt-3 ml-4">Last time filters</h5>
+        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
+          <template
+            v-for="timeFilter in matches.timeFilters.slice(0, MAX_TIMELINE_ELEMENTS)"
+            >
+          <v-list-item
+            style="font-size: 0.9em"
+            v-on:click="setTimeFilter(timeFilter)"
+          >
+            <v-list-item-content>
+                  {{timeFilter.value.split(',')[0]}} - {{  timeFilter.value.split(',')[1]}}
+            </v-list-item-content>
+          </v-list-item>
+
+          </template>
+        </v-list>
+      </v-col>
+      <v-divider vertical></v-divider>
+
       <v-col cols="4">
         <h5 class="mt-3 ml-4">Data types</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
@@ -72,6 +92,9 @@ export default {
   },
   props: ['selectedLabels', 'queryString'],
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     meta() {
       return this.$store.state.meta
     },
@@ -96,7 +119,11 @@ export default {
         labels: this.filteredMetaLabels,
         dataTypes: this.dataTypes,
         savedSearches: this.meta.views,
+        timeFilters: this.timeFilters
       }
+    },
+    timeFilters() {
+      return this.$store.state.timeFilters;
     },
     scrollbarTheme() {
       return this.$vuetify.theme.dark ? 'dark' : 'light'
@@ -108,19 +135,22 @@ export default {
         return this.all
       }
 
-      matches['fields'] = this.meta.mappings.filter((field) =>
+      matches.fields = this.meta.mappings.filter((field) =>
         field.field.toLowerCase().includes(this.queryString.toLowerCase())
       )
-      matches['tags'] = this.tags.filter((tag) => tag.tag.toLowerCase().includes(this.queryString.toLowerCase()))
-      matches['labels'] = this.filteredMetaLabels.filter((label) =>
+      matches.tags = this.tags.filter((tag) => tag.tag.toLowerCase().includes(this.queryString.toLowerCase()))
+      matches.labels = this.filteredMetaLabels.filter((label) =>
         label.label.toLowerCase().includes(this.queryString.toLowerCase())
       )
-      matches['dataTypes'] = this.dataTypes.filter((dataType) =>
+      matches.dataTypes = this.dataTypes.filter((dataType) =>
         dataType.data_type.toLowerCase().includes(this.queryString.toLowerCase())
       )
-      matches['savedSearches'] = this.meta.views.filter((savedSearch) =>
+      matches.savedSearches = this.meta.views.filter((savedSearch) =>
         savedSearch.name.toLowerCase().includes(this.queryString.toLowerCase())
       )
+
+      // Don't filter timeFilters. Always show the last timeFilters.
+      matches.timeFilters = this.timeFilters
 
       if (!Object.values(matches).filter((arr) => arr.length).length) {
         return this.all
@@ -149,7 +179,21 @@ export default {
       eventData.queryString = separator + field + ':'
       this.$emit('setQueryAndFilter', eventData)
     },
+    setTimeFilter(timeFilter) {
+      this.$emit('addChip', timeFilter)
+    },
+    fetchTimeFilters() {
+      this.$store.dispatch('updateTimeFilters')
+    },
   },
+  created: function () {
+    this.fetchTimeFilters()
+  },
+  setup: function() {
+    return {
+      MAX_TIMELINE_ELEMENTS: 10
+    }
+  }
 }
 </script>
 
