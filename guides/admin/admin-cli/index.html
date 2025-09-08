@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.17">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
     
     
       
@@ -1535,6 +1535,15 @@
   <a href="#list-config" class="md-nav__link">
     <span class="md-ellipsis">
       list-config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sketch-label-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      sketch-label-stats
     </span>
   </a>
   
@@ -3101,6 +3110,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sketch-label-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      sketch-label-stats
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3819,6 +3837,25 @@ UPLOAD_ENABLED: True
 -----------------------------------
 Note: Some values might be sensitive (e.g., SECRET_KEY, passwords).
 </code></pre>
+<h4 id="sketch-label-stats">sketch-label-stats</h4>
+<p>The <code>sketch-label-stats</code> command provides detailed statistics on label and tag usage within a specific sketch. It queries both the relational database and the OpenSearch datastore to give a comprehensive overview.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">tsctl sketch-label-stats --sketch_id &lt;SKETCH_ID&gt; [OPTIONS]
+Options:
+--sketch_id &lt;SKETCH_ID&gt; (required): The ID of the sketch to analyze.
+--verbose (optional flag): If set, the command will show full event data instead of just counts for each category.
+</code></pre>
+<p><strong>Output Details:</strong></p>
+<p>The command provides the following statistics:
+ * Relational Database (PostgreSQL/SQLite):
+    * Total count of events with at least one label.
+    * Counts per individual label.
+ * OpenSearch Datastore:
+    * Total count of events with at least one label (using aggregation API).
+    * Counts per label (using aggregation API).
+    * Counts per label (using iterative search API).
+    * Total events with at least one legacy tag (using search API).
+    * Counts per legacy tag (using aggregation API).</p>
 <h3 id="export-sketch">export-sketch</h3>
 <p>Exports a Timesketch sketch to a zip archive. The archive contains:</p>
 <ol>
