@@ -1259,7 +1259,7 @@ def event_details(sketch_id: int, event_id: str, searchindex_id: Optional[str] =
         return
 
     print(
-        f"--- Details for Event ID: {event_id} in Sketch: {sketch.name} ({sketch.id}) ---"
+        f"--- Details for Event ID: {event_id} in Sketch: {sketch.name} ({sketch.id}) ---"  # pylint: disable=line-too-long
     )
     print(f"--- Index: {searchindex_id} ---")
 
@@ -1280,7 +1280,7 @@ def event_details(sketch_id: int, event_id: str, searchindex_id: Optional[str] =
         )
         if not is_in_sketch:
             print(
-                f"  - WARNING: SearchIndex '{searchindex_id}' is not part of sketch '{sketch.name}' ({sketch.id})."
+                f"  - WARNING: SearchIndex '{searchindex_id}' is not part of sketch '{sketch.name}' ({sketch.id})."  # pylint: disable=line-too-long
             )
 
         db_event = Event.query.filter_by(
@@ -1289,7 +1289,7 @@ def event_details(sketch_id: int, event_id: str, searchindex_id: Optional[str] =
 
     if not db_event:
         print(
-            "  - No corresponding event record found in the Timesketch database (no comments or labels)."
+            "  - No corresponding event record found in the Timesketch database (no comments or labels)."  # pylint: disable=line-too-long
         )
     else:
         # Get comments
