@@ -39,6 +39,7 @@ from flask.cli import FlaskGroup
 from sqlalchemy import distinct
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
+from werkzeug.exceptions import HTTPException
 from jsonschema import validate, ValidationError, SchemaError
 from celery.result import AsyncResult
 
@@ -887,7 +888,13 @@ def sketch_info(sketch_id: int):
 
 @cli.command(name="sketch-label-stats")
 @click.option("--sketch_id", type=int, required=True)
-def sketch_label_stats(sketch_id: int):
+@click.option(
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Show full event data instead of just counts.",
+)
+def sketch_label_stats(sketch_id: int, verbose: bool):
     """Display label and tag statistics for a specific sketch.
 
     This command provides statistics on labeled and tagged events for a given
@@ -901,6 +908,7 @@ def sketch_label_stats(sketch_id: int):
 
     Args:
         sketch_id (int): The ID of the sketch to analyze.
+        verbose (bool): If true, show full event data instead of counts.
     """
     sketch = Sketch.get_by_id(sketch_id)
     if not sketch:
@@ -963,10 +971,21 @@ def sketch_label_stats(sketch_id: int):
                 }
             }
         }
-        total_labeled_os = datastore.search(
-            sketch_id=sketch.id, indices=indices, query_dsl=query_dsl_total, count=True
-        )
-        print(f"    - Total events with at least one label: {total_labeled_os}")
+        if verbose:
+            print("    - Fetching all events with at least one label:")
+            result = datastore.search(
+                sketch_id=sketch.id, indices=indices, query_dsl=query_dsl_total
+            )
+            for event in result.get("hits", {}).get("hits", []):
+                print(json.dumps(event, indent=2))
+        else:
+            total_labeled_os = datastore.search(
+                sketch_id=sketch.id,
+                indices=indices,
+                query_dsl=query_dsl_total,
+                count=True,
+            )
+            print(f"    - Total events with at least one label: {total_labeled_os}")
 
         # Per-label count from OpenSearch using aggregations
         label_counts_agg = datastore.get_filter_labels(sketch.id, indices)
@@ -994,16 +1013,29 @@ def sketch_label_stats(sketch_id: int):
             labels_to_search = [label for label, _ in label_counts_db]
 
         if labels_to_search:
-            print("    - Counts per label (iterative search):")
-            for label in sorted(labels_to_search):
-                query_filter = {"chips": [{"type": "label", "value": label}]}
-                count = datastore.search(
-                    sketch_id=sketch.id,
-                    indices=indices,
-                    query_filter=query_filter,
-                    count=True,
-                )
-                print(f"      - {label}: {count}")
+            if verbose:
+                print("    - Events per label (iterative search):")
+                for label in sorted(labels_to_search):
+                    print(f"      --- Events for label: {label} ---")
+                    query_filter = {"chips": [{"type": "label", "value": label}]}
+                    result = datastore.search(
+                        sketch_id=sketch.id,
+                        indices=indices,
+                        query_filter=query_filter,
+                    )
+                    for event in result.get("hits", {}).get("hits", []):
+                        print(json.dumps(event, indent=2))
+            else:
+                print("    - Counts per label (iterative search):")
+                for label in sorted(labels_to_search):
+                    query_filter = {"chips": [{"type": "label", "value": label}]}
+                    count = datastore.search(
+                        sketch_id=sketch.id,
+                        indices=indices,
+                        query_filter=query_filter,
+                        count=True,
+                    )
+                    print(f"      - {label}: {count}")
         else:
             print("    - No labels found to search for.")
 
@@ -1037,9 +1069,22 @@ def sketch_label_stats(sketch_id: int):
 
         if tag_buckets:
             field_name = agg_params.get("field")
-            print("    - Counts per tag:")
-            for bucket in tag_buckets:
-                print(f"      - {bucket[field_name]}: {bucket['count']}")
+            if verbose:
+                print("    - Events per tag (from aggregation results):")
+                for bucket in tag_buckets:
+                    tag = bucket[field_name]
+                    print(f"      --- Events for tag: {tag} ---")
+                    result = datastore.search(
+                        sketch_id=sketch.id,
+                        indices=indices,
+                        query_string=f'tag:"{tag}"',
+                    )
+                    for event in result.get("hits", {}).get("hits", []):
+                        print(json.dumps(event, indent=2))
+            else:
+                print("    - Counts per tag:")
+                for bucket in tag_buckets:
+                    print(f"      - {bucket[field_name]}: {bucket['count']}")
         else:
             print("    - No tags found via aggregation.")
     except Exception as e:  # pylint: disable=broad-except
@@ -1101,14 +1146,146 @@ def sketch_label_stats(sketch_id: int):
                 }
             }
         }
-        complex_count = datastore.search(
-            sketch_id=sketch.id, indices=indices, query_dsl=complex_dsl, count=True
-        )
-        print(f"    - Result: {complex_count} events")
+        if verbose:
+            print("    - Fetching events with '__ts_star' but NOT '__ts_comment':")
+            result = datastore.search(
+                sketch_id=sketch.id, indices=indices, query_dsl=complex_dsl
+            )
+            for event in result.get("hits", {}).get("hits", []):
+                print(json.dumps(event, indent=2))
+        else:
+            complex_count = datastore.search(
+                sketch_id=sketch.id, indices=indices, query_dsl=complex_dsl, count=True
+            )
+            print(f"    - Result: {complex_count} events")
     except Exception as e:  # pylint: disable=broad-except
         print(f"    - ERROR during complex DSL query: {e}")
 
     print("\n--- End of Stats ---")
+
+
+@cli.command(name="event-details")
+@click.option("--sketch-id", "--sketch_id", type=int, required=True)
+@click.option("--event-id", "--event_id", type=str, required=True)
+@click.option(
+    "--searchindex-id",
+    type=str,
+    required=False,
+    help="Optional: The OpenSearch index name for the event.",
+)
+def event_details(sketch_id: int, event_id: str, searchindex_id: Optional[str] = None):
+    """Display all data for a specific event.
+
+    This command retrieves and displays all available information for a single
+    event, combining data from both the OpenSearch datastore and the relational
+    database.
+
+    The output includes:
+    - The full JSON source of the event from OpenSearch.
+    - Comments and labels from the Timesketch database.
+    - Tags stored within the OpenSearch document.
+
+    If the --searchindex-id is not provided, the command will automatically
+    search for the event across all active timelines within the sketch.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        print(f"Sketch with ID {sketch_id} not found.")
+        return
+
+    datastore = OpenSearchDataStore()
+
+    os_event_data = None
+    if searchindex_id:
+        try:
+            os_event_data = datastore.get_event(searchindex_id, event_id)
+        except HTTPException as e:
+            print(f"Error getting event from OpenSearch: {e.description}")
+            return
+        except Exception as e:
+            print(f"An unexpected error occurred while fetching from OpenSearch: {e}")
+            return
+    else:
+        print("No searchindex_id provided, searching across all sketch timelines...")
+        for timeline in sketch.active_timelines:
+            current_index = timeline.searchindex.index_name
+            try:
+                os_event_data = datastore.get_event(current_index, event_id)
+                if os_event_data:
+                    searchindex_id = current_index
+                    print(f"Event found in index: {searchindex_id}")
+                    break
+            except HTTPException:
+                continue  # Event not found in this index, try the next one.
+            except Exception as e:
+                print(f"An error occurred while searching index {current_index}: {e}")
+
+    if not os_event_data:
+        print(f"Event with ID '{event_id}' not found in any of the sketch's timelines.")
+        return
+
+    print(
+        f"--- Details for Event ID: {event_id} in Sketch: {sketch.name} ({sketch.id}) ---"
+    )
+    print(f"--- Index: {searchindex_id} ---")
+
+    print("\n[+] OpenSearch Document:")
+    print(json.dumps(os_event_data.get("_source", {}), indent=2))
+
+    # 2. Get data from Database
+    print("\n[+] Timesketch Database Information:")
+    searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+    if not searchindex:
+        print(f"  - SearchIndex '{searchindex_id}' not found in the database.")
+        db_event = None
+    else:
+        # Check if searchindex is part of sketch
+        is_in_sketch = any(
+            tl.searchindex and tl.searchindex.index_name == searchindex_id
+            for tl in sketch.timelines
+        )
+        if not is_in_sketch:
+            print(
+                f"  - WARNING: SearchIndex '{searchindex_id}' is not part of sketch '{sketch.name}' ({sketch.id})."
+            )
+
+        db_event = Event.query.filter_by(
+            sketch=sketch, searchindex=searchindex, document_id=event_id
+        ).first()
+
+    if not db_event:
+        print(
+            "  - No corresponding event record found in the Timesketch database (no comments or labels)."
+        )
+    else:
+        # Get comments
+        if db_event.comments:
+            print("  - Comments:")
+            for comment in db_event.comments:
+                username = comment.user.username if comment.user else "System"
+                print(f"    - [{comment.created_at}] by {username}: {comment.comment}")
+        else:
+            print("  - No comments.")
+
+        # Get labels
+        if db_event.labels:
+            print("  - Labels:")
+            for label in db_event.labels:
+                username = label.user.username if label.user else "System"
+                print(f"    - [{label.created_at}] by {username}: {label.label}")
+        else:
+            print("  - No labels.")
+
+    # 3. Get tags from OpenSearch document
+    print("\n[+] Tags (from OpenSearch document):")
+    tags = os_event_data.get("_source", {}).get("tag", [])
+    if tags:
+        for tag in tags:
+            print(f"  - {tag}")
+    else:
+        print("  - No tags.")
+
+    print("\n--- End of Details ---")
 
 
 @cli.command(name="timeline-status")
