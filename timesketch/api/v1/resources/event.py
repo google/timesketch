@@ -975,7 +975,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
     def _annotate_event(
         self,
         sketch: Sketch,
-        _event: dict,
+        event_data: dict,
         annotation_type: str,
         form: object,
         indices: list,
@@ -990,7 +990,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         Args:
             sketch: The sketch object.
-            _event: A dictionary with event details from the request, requiring
+            event_data: A dictionary with event details from the request, requiring
                 at least an '_id'. If '_index' is not provided, it will be
                 looked up.
             annotation_type: The type of annotation ('comment' or 'label').
@@ -1009,13 +1009,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 to the sketch, or if the label name is empty.
         """
         # TODO: create a unit test for this method
-        if not _event.get("_index"):
-            searchindex_id = self._get_search_index_for_event(sketch, _event["_id"])
-            _event["_index"] = searchindex_id
+        if not event_data.get("_index"):
+            searchindex_id = self._get_search_index_for_event(sketch, event_data["_id"])
+            event_data["_index"] = searchindex_id
         else:
-            searchindex_id = _event["_index"]
+            searchindex_id = event_data["_index"]
         searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
-        event_id = _event["_id"]
+        event_id = event_data["_id"]
 
         if searchindex_id not in indices:
             abort(
@@ -1195,7 +1195,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             InvestigativeQuestionConclusion: The validated conclusion object.
 
         Raises:
-            HTTPException: If the conclusion is not found or does not belong to the sketch.
+            HTTPException: If the conclusion is not found or does not belong to
+              the sketch.
         """
         conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
