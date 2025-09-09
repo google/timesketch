@@ -2984,9 +2984,6 @@ def find_inconsistent_archives():
     """Finds sketches that are in an inconsistent archival state.
 
     An inconsistent state is defined as a sketch that has been marked as
-    'archived', but still contains one or more timelines that are not
-    archived (e.g., they are 'failed' or 'processing'). This can happen
-    if the archival process was interrupted or failed.
     'archived', but still contains one or more timelines that are not also
     archived (e.g., they are 'ready', 'failed' or 'processing'). This can
     happen if the archival process was interrupted or failed.
@@ -3044,8 +3041,7 @@ def find_inconsistent_archives():
             "    - To get more details for a timeline, run: "
             "tsctl timeline-status <TIMELINE_ID>"
         )
-        print("    - To remove a timeline from a sketch, unarchive the sketch.")
-        print(".     and remove it and re-archive")
+
     print("-" * 40)
 
 
