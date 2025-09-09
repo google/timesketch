@@ -570,7 +570,8 @@ class ExploreResourceTest(BaseTest):
 
         self.assertEqual(context.exception.code, HTTP_STATUS_CODE_FORBIDDEN)
         self.assertIn(
-            "User does not have read access", str(context.exception.description)
+            "You don't have the permission to access the requested resource",
+            str(context.exception.description),
         )
 
     @mock.patch("timesketch.api.v1.export.query_to_filehandle")
