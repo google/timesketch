@@ -255,8 +255,18 @@ export default new Vuex.Store({
           if (treeData) {
             parseNode(treeData)
           }
-          timeFilters.reverse()
-          context.commit('SET_TIME_FILTERS', timeFilters)
+
+          const deduped = [];
+          const timeFiltersSet = new Set();
+          for (let tf of timeFilters) {
+            if (!timeFiltersSet.has(tf.value)) {
+              timeFiltersSet.add(tf.value)
+              deduped.push(tf)
+            }
+          }
+          deduped.reverse();
+
+          context.commit('SET_TIME_FILTERS', deduped)
         })
         .catch(console.error)
     },
