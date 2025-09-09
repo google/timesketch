@@ -644,8 +644,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     suggestion = " Please delete this timeline and try again."
                 elif timeline_status == "processing":
                     suggestion = (
-                        " Please wait for the timeline to finish processing or "
-                        "delete it."
+                        " Please wait for it to finish processing. If it seems to be "
+                        "stuck, contact your system administrator to resolve the "
+                        "issue."
                     )
                 error_msg = f"{base_error_msg}{suggestion}"
                 logger.error(error_msg)
