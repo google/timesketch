@@ -279,13 +279,27 @@ class MockDataStore:
         return 1, 1
 
     @staticmethod
-    def get_filter_labels(sketch_id, indices):
-        """Mock returning a single event from the datastore.
+    def get_filter_labels(self, sketch_id, indices):
+        """Mock for getting filter labels.
 
         Returns:
-            A list with label.
+            A list of labels.
         """
-        return []
+        labels = set()
+        for event in self.event_store.values():
+            if event.get("_index") not in indices:
+                continue
+
+            source = event.get("_source", {})
+            ts_labels = source.get("timesketch_label", [])
+
+            if not isinstance(ts_labels, list):
+                continue
+
+            for label_info in ts_labels:
+                if label_info.get("sketch_id") == sketch_id:
+                    labels.add(label_info.get("name"))
+        return list(labels)
 
     def set_label(
         self,
@@ -294,11 +308,49 @@ class MockDataStore:
         sketch_id,
         user_id,
         label,
+        remove=False,
         toggle=False,
-        single_update=True,
     ):
-        """Mock adding a label to an event."""
-        return
+        """Mock setting a label on an event.
+
+        Args:
+            searchindex_id: The search index ID.
+            event_id: The event ID.
+            sketch_id: The sketch ID.
+            user_id: The user ID.
+            label: The label name.
+            remove: If set to true the label will be removed.
+            toggle: If set to true the label will be toggled.
+        """
+        if not self.client.indices.exists(index=searchindex_id):
+            return
+
+        try:
+            event = self.get_event(searchindex_id, event_id)
+        except KeyError:
+            return
+
+        if "_source" not in event:
+            event["_source"] = {}
+
+        if "timesketch_label" not in event["_source"]:
+            event["_source"]["timesketch_label"] = []
+
+        should_add = not remove
+        if toggle:
+            for _label in event["_source"]["timesketch_label"]:
+                if label == _label["name"]:
+                    should_add = False
+                    break
+
+        if not should_add:
+            for _label in event["_source"]["timesketch_label"]:
+                if label == _label["name"]:
+                    event["_source"]["timesketch_label"].remove(_label)
+            return
+
+        new_label = {"name": label, "user_id": user_id, "sketch_id": sketch_id}
+        event["_source"]["timesketch_label"].append(new_label)
 
     # pylint: disable=unused-argument
     def create_index(self, *args, **kwargs):

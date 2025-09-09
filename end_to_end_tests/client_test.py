@@ -572,6 +572,7 @@ level: high
 
         # 1. Import a timeline with a known event.
         self.import_timeline("sigma_events.csv", sketch=sketch)
+        _ = sketch.lazyload_data(refresh_cache=True)
 
         # 2. Get an event to annotate.
         search_client = search.Search(sketch)
@@ -615,6 +616,7 @@ level: high
 
         # 1. Import a timeline with a known event.
         self.import_timeline("sigma_events.csv", sketch=sketch)
+        _ = sketch.lazyload_data(refresh_cache=True)
 
         # 2. Get an event to annotate.
         search_client = search.Search(sketch)
@@ -667,6 +669,7 @@ level: high
 
         # 1. Import a timeline.
         self.import_timeline("sigma_events.csv", sketch=sketch)
+        _ = sketch.lazyload_data(refresh_cache=True)
 
         # 2. Get an event to star.
         search_client = search.Search(sketch)
