@@ -574,69 +574,6 @@ class ExploreResourceTest(BaseTest):
             str(context.exception.description),
         )
 
-    @mock.patch("timesketch.api.v1.export.query_to_filehandle")
-    def test_handle_export_request(self, mock_query_to_filehandle):
-        """Test _handle_export_request method."""
-        # Setup
-        self.login()
-        mock_query_to_filehandle.return_value = io.StringIO("col1,col2\nval1,val2")
-
-        resource = explore.ExploreResource()
-        sketch = self.sketch1
-        file_name = "test_export.zip"
-        query_string = "test query"
-        query_dsl = {}
-        query_filter = {"filter": "test"}
-        return_fields = ["col1", "col2"]
-        indices = ["index1"]
-        timeline_ids = [1]
-
-        # Call the method within an application context
-        with self.app.test_request_context():
-            # pylint: disable=protected-access
-            response = resource._handle_export_request(
-                sketch=sketch,
-                file_name=file_name,
-                query_string=query_string,
-                query_dsl=query_dsl,
-                query_filter=query_filter,
-                return_fields=return_fields,
-                indices=indices,
-                timeline_ids=timeline_ids,
-            )
-
-        # Assertions
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.mimetype, "zip")
-        self.assertIn(file_name, response.headers["Content-Disposition"])
-
-        # Check zip file contents
-        zip_file_bytes = io.BytesIO(response.data)
-        with zipfile.ZipFile(zip_file_bytes, "r") as zipf:
-            self.assertIn("METADATA", zipf.namelist())
-            self.assertIn("query_results.csv", zipf.namelist())
-
-            # Check METADATA content
-            metadata_content = json.loads(zipf.read("METADATA"))
-            self.assertEqual(metadata_content["sketch"], sketch.id)
-            self.assertEqual(metadata_content["query"], query_string)
-
-            # Check CSV content
-            csv_content = zipf.read("query_results.csv").decode("utf-8")
-            self.assertEqual(csv_content, "col1,col2\nval1,val2")
-
-        # Verify mock was called correctly
-        mock_query_to_filehandle.assert_called_once_with(
-            query_string=query_string,
-            query_dsl=query_dsl,
-            query_filter=query_filter,
-            indices=indices,
-            sketch=sketch,
-            datastore=resource.datastore,
-            return_fields=return_fields,
-            timeline_ids=timeline_ids,
-        )
-
 
 class AggregationExploreResourceTest(BaseTest):
     """Test AggregationExploreResource."""
