@@ -478,6 +478,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 f"(sketch: {sketch.id})",
             )
 
+        errors_occurred = False
+        error_details = []
+
         # Check if any timeline is in a state that would prevents unarchiving.
         # TODO enforce after 2026-01-01
         # https://github.com/google/timesketch/issues/3518
@@ -485,14 +488,26 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status
             if timeline_status in statuses_preventing_unarchival:
-                warning_msg = (
+                base_warning_msg = (
                     f"Unarchiving sketch {sketch.id}, but it contains timeline "
                     f"'{timeline.name}' (ID: {timeline.id}) in a '{timeline_status}' "
-                    "state. It is recommended to fix this timeline (e.g., by "
-                    "deleting it) because the sketch cannot be archived again in "
-                    "this state. You can use 'tsctl find-inconsistent-archives' "
-                    "to find such sketches."
+                    "state. "
                 )
+                specific_advice = ""
+                if timeline_status == "fail":
+                    specific_advice = (
+                        "It is recommended to fix this timeline (e.g., by deleting it) "
+                        "because the sketch cannot be archived again in this state."
+                    )
+                elif timeline_status == "processing":
+                    specific_advice = (
+                        "Please wait for it to finish processing. If it seems to be "
+                        "stuck, contact your system administrator to resolve the issue."
+                    )
+                general_advice = " You can use 'tsctl find-inconsistent-archives' to find such sketches."
+                warning_msg = f"{base_warning_msg}{specific_advice}{general_advice}"
+                errors_occurred = True
+                error_details.append(warning_msg)
                 logger.warning(warning_msg)
 
         # Identify all SearchIndex objects that need to be opened.
@@ -503,8 +518,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         }
 
         # Attempt to open all necessary OpenSearch indices first.
-        errors_occurred = False
-        error_details = []
+
         successfully_opened_indexes = set()
 
         for search_index in search_indexes_to_open:
