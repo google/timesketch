@@ -24,7 +24,7 @@ services:
       - TIMESKETCH_USER=dev
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
-      - prometheus_multiproc_dir=/tmp/
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/
 
     restart: always
     volumes:
