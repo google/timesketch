@@ -2979,6 +2979,76 @@ def check_db_orphaned_data(verbose_checks: bool):
         print("\nOrphaned data check complete. Issues found as listed above.")
 
 
+@cli.command(name="find-inconsistent-archives")
+def find_inconsistent_archives():
+    """Finds sketches that are in an inconsistent archival state.
+
+    An inconsistent state is defined as a sketch that has been marked as
+    'archived', but still contains one or more timelines that are not
+    archived (e.g., they are 'failed' or 'processing'). This can happen
+    if the archival process was interrupted or failed.
+    'archived', but still contains one or more timelines that are not also
+    archived (e.g., they are 'ready', 'failed' or 'processing'). This can
+    happen if the archival process was interrupted or failed.
+
+    This command helps administrators identify these inconsistencies so they
+    can be manually resolved, ensuring data integrity and proper data
+    lifecycle management.
+
+    To resolve an inconsistent archive, you typically need to:
+    1. Unarchive the sketch.
+    2. Remove the inconsistent timeline(s) from the sketch.
+    3. Re-archive the sketch.
+    These actions can be performed via the API or the UI.
+    """
+    print("Searching for inconsistently archived sketches...")
+    inconsistent_sketches = []
+
+    sketches = Sketch.query.all()
+    for sketch in sketches:
+        if sketch.get_status.status == "archived":
+            unarchived_timelines = []
+            for timeline in sketch.timelines:
+                if timeline.get_status.status != "archived":
+                    unarchived_timelines.append(timeline)
+
+            if unarchived_timelines:
+                inconsistent_sketches.append((sketch, unarchived_timelines))
+
+    if not inconsistent_sketches:
+        print("No inconsistent sketches found.")
+        return
+
+    print(f"\nFound {len(inconsistent_sketches)} inconsistently archived sketch(es):")
+    for sketch, timelines in inconsistent_sketches:
+        print("-" * 40)
+        print(f"Sketch: '{sketch.name}' (ID: {sketch.id})")
+        print("  Unarchived Timelines:")
+        for timeline in timelines:
+            print(
+                f"    - Timeline: '{timeline.name}' (ID: {timeline.id}), "
+                f"Status: {timeline.get_status.status}"
+            )
+            if timeline.get_status.status == "fail":
+                for datasource in timeline.datasources:
+                    error_msg = datasource.error_message or "No error message recorded."
+                    print(f"      - Reason: {error_msg}")
+
+        print("\n  Recommendation:")
+        print("    To resolve this, you need to:")
+        print("    1. Unarchive the sketch.")
+        print("    2. Remove the inconsistent timeline(s) from the sketch.")
+        print("    3. Re-archive the sketch.")
+        print("    These actions can be performed via the API or the UI.")
+        print(
+            "    - To get more details for a timeline, run: "
+            "tsctl timeline-status <TIMELINE_ID>"
+        )
+        print("    - To remove a timeline from a sketch, unarchive the sketch.")
+        print(".     and remove it and re-archive")
+    print("-" * 40)
+
+
 @cli.command(name="export-db")
 @click.argument(
     "filepath", type=click.Path(dir_okay=False, writable=True), required=True
