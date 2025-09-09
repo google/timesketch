@@ -480,6 +480,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # Check if any timeline is in a state that would prevents unarchiving.
         # TODO enforce after 2026-01-01
+        # https://github.com/google/timesketch/issues/3518
         statuses_preventing_unarchival = ["processing", "fail"]
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status

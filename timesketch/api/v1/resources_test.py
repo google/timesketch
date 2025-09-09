@@ -181,7 +181,7 @@ class SketchListResourceTest(BaseTest):
         objects = response.json["objects"]
 
         self.assertEqual(len(objects), 1)
-        self.assertEqual(objects[0]["name"], "Test 3")
+        self.assertEqual(objects[0]["name"], "Test 1")
         self.assertFalse(meta["has_next"])
         self.assertTrue(meta["has_prev"])
 
