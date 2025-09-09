@@ -478,25 +478,21 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 f"(sketch: {sketch.id})",
             )
 
-        # Check if any timeline is in a state that prevents unarchiving.
+        # Check if any timeline is in a state that would prevents unarchiving.
+        # TODO enforce after 2026-01-01
         statuses_preventing_unarchival = ["processing", "fail"]
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status
             if timeline_status in statuses_preventing_unarchival:
-                error_msg = (
-                    f"Cannot unarchive sketch {sketch.id}. Timeline "
-                    f"'{timeline.name}' "
-                    f"(ID: {timeline.id}) is in a '{timeline_status}' state, which "
-                    f"prevents unarchival."
+                warning_msg = (
+                    f"Unarchiving sketch {sketch.id}, but it contains timeline "
+                    f"'{timeline.name}' (ID: {timeline.id}) in a '{timeline_status}' "
+                    "state. It is recommended to fix this timeline (e.g., by "
+                    "deleting it) because the sketch cannot be archived again in "
+                    "this state. You can use 'tsctl find-inconsistent-archives' "
+                    "to find such sketches."
                 )
-                logger.error(error_msg)
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    f"Cannot unarchive sketch {sketch.id}. Timeline "
-                    f"'{timeline.name}' "
-                    f"(ID: {timeline.id}) is in a '{timeline_status}' state, "
-                    "which prevents unarchival.",
-                )
+                logger.warning(warning_msg)
 
         # Identify all SearchIndex objects that need to be opened.
         search_indexes_to_open = {
