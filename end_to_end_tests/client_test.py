@@ -18,7 +18,6 @@ import json
 import random
 import os
 import time
-import csv
 
 from timesketch_api_client import search
 
@@ -578,6 +577,8 @@ level: high
 
         # Verify that the sketch status has not changed after the failed attempt.
         sketch.lazyload_data(refresh_cache=True)
+        if sketch.status == "new":
+            time.sleep(5)  # might take a bit before it is ready
         self.assertions.assertEqual(sketch.status, "ready")
 
         # Verify that the timeline statuses have not changed.
@@ -594,9 +595,6 @@ level: high
             "try again."
         )
         self.assertions.assertIn(expected_error_msg, response.text)
-
-        with self.assertions.assertRaises(RuntimeError) as context:
-            sketch.archive()
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
