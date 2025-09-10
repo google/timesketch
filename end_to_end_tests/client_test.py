@@ -18,6 +18,7 @@ import json
 import random
 import os
 import time
+import csv
 
 from timesketch_api_client import search
 
@@ -533,6 +534,73 @@ level: high
         # check number of timelines
         _ = sketch.lazyload_data(refresh_cache=True)
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
+
+    def test_archive_sketch_with_failed_timeline(self):
+        """Test archiving a sketch with a failed timeline."""
+        # 1. Create a new sketch and add a valid timeline
+        sketch = self.api.create_sketch(
+            name="test_archive_with_failed_timeline",
+            description="A sketch for testing failed archival",
+        )
+        self.import_timeline("sigma_events.csv", sketch=sketch)
+
+        # 2. Generate a CSV file designed to cause an import failure
+        # by exceeding the OpenSearch mapping limit.
+        failing_csv_path = "/tmp/mapping_limit_exceed.csv"
+        num_unique_columns = 500  # > 455 will exceed the default limit
+        mandatory_headers = ["datetime", "message", "timestamp_desc"]
+        unique_headers = [
+            f"unique_field_{uuid.uuid4().hex}" for _ in range(num_unique_columns)
+        ]
+        all_headers = mandatory_headers + unique_headers
+
+        data_row = {
+            "datetime": "2023-10-27T10:00:00Z",
+            "message": "This event is designed to exceed the mapping limit.",
+            "timestamp_desc": "Mapping Limit Test",
+        }
+        for header in unique_headers:
+            data_row[header] = "some_value"
+
+        with open(failing_csv_path, "w", newline="", encoding="utf-8") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=all_headers)
+            writer.writeheader()
+            writer.writerow(data_row)
+
+        # 3. Import the failing CSV. This should create a timeline in a 'fail' state.
+        try:
+            self.import_timeline(failing_csv_path, sketch=sketch)
+        except RuntimeError:
+            # The import is expected to fail, so we catch the error and continue.
+            pass
+        finally:
+            # Clean up the temporary file
+            if os.path.exists(failing_csv_path):
+                os.remove(failing_csv_path)
+
+        # 4. Verify that one timeline is ready and one has failed.
+        sketch.lazyload_data(refresh_cache=True)
+        timelines = sketch.list_timelines()
+        self.assertions.assertEqual(len(timelines), 2)
+
+        failed_timeline = None
+        for t in timelines:
+            if t.status == "fail":
+                failed_timeline = t
+                break
+
+        self.assertions.assertIsNotNone(failed_timeline, "No failed timeline found.")
+
+        # 5. Attempt to archive the sketch and assert that it fails.
+        with self.assertions.assertRaises(RuntimeError) as context:
+            sketch.archive()
+
+        expected_error_msg = (
+            f"Cannot archive sketch {sketch.id}. Timeline "
+            f"'{failed_timeline.name}' (ID: {failed_timeline.id}) is in "
+            "a non-archivable state: 'fail'."
+        )
+        self.assertions.assertIn(expected_error_msg, str(context.exception))
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
