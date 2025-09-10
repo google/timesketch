@@ -512,12 +512,12 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 )
 
         # 2. Determine which OpenSearch indices can be closed.
-        search_indexes_to_evaluate = {
-            tl.searchindex for tl in sketch.timelines if tl.searchindex
-        }
+        search_indexes_to_evaluate = {t.searchindex for t in sketch.timelines}
         search_indexes_to_close = set()
         for search_index in search_indexes_to_evaluate:
             can_be_closed = True
+            if not search_index:
+                continue
             for timeline in search_index.timelines:
                 # If the timeline is in the sketch we are currently archiving,
                 # we can ignore its current status, as it's about to be archived.

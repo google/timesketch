@@ -560,6 +560,7 @@ level: high
             description="A sketch for testing failed archival",
         )
 
+        ready_timeline_name = os.path.join(interface.TEST_DATA_DIR, "sigma_events.csv")
         # Add a valid timeline first so we have a mixed state.
         self.import_timeline("sigma_events.csv", sketch=sketch)
 
@@ -592,6 +593,8 @@ level: high
         )
 
         self.assertions.assertIsNotNone(response)
+        # This should fail because one timeline is in a 'fail' state.
+        self.assertions.assertEqual(response.status_code, 400)
 
         # Verify that the sketch status has not changed after the failed attempt.
         sketch.lazyload_data(refresh_cache=True)
@@ -599,7 +602,7 @@ level: high
         self.assertions.assertEqual(sketch.status, "new")
 
         # Verify that the timeline statuses have not changed.
-        ready_timeline = sketch.get_timeline(timeline_name="sigma_events.csv")
+        ready_timeline = sketch.get_timeline(timeline_name=ready_timeline_name)
         self.assertions.assertIsNotNone(ready_timeline)
         self.assertions.assertEqual(ready_timeline.status, "ready")
         self.assertions.assertEqual(failed_timeline.status, "fail")
