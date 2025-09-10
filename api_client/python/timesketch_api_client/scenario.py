@@ -44,6 +44,9 @@ class Scenario(resource.BaseResource):
         self.uuid = uuid
         self.api = api
         self.sketch_id = sketch_id
+        self._name = None
+        self._display_name = None
+        self._data = None
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/scenarios/{self.id}/"
         )
@@ -55,8 +58,67 @@ class Scenario(resource.BaseResource):
         Returns:
             Scenario name as string.
         """
+        if self._name:
+            return self._name
         scenario = self.lazyload_data()
-        return scenario["objects"][0]["name"]
+        self._name = scenario["objects"][0]["name"]
+        return self._name
+
+    @property
+    def display_name(self):
+        """Property that returns the scenario display name."""
+        if self._display_name:
+            return self._display_name
+        scenario = self.lazyload_data()
+        self._display_name = scenario["objects"][0]["display_name"]
+        return self._display_name
+
+    @display_name.setter
+    def display_name(self, value):
+        """Sets the display name of the scenario."""
+        resource_url = f"{self.api.api_root}/{self.resource_uri}"
+        data = {"scenario_name": value}
+        response = self.api.session.post(resource_url, json=data)
+        self._data = error.get_response_json(response, logger)
+        updated_object = self._data["objects"][0]
+        self._display_name = updated_object["display_name"]
+        self._name = updated_object["name"]
+
+    def set_status(self, status):
+        """Sets the status of the scenario.
+
+        Args:
+            status (str): The new status for the scenario.
+
+        Returns:
+            bool: True if the status was set successfully.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"scenarios/{self.id}/status/"
+        )
+        data = {"status": status}
+        response = self.api.session.post(resource_url, json=data)
+        status = error.check_return_status(response, logger)
+        self.lazyload_data(refresh_cache=True)
+        return status
+
+    def list_facets(self):
+        """Lists all facets for the scenario.
+
+        Returns:
+            A list of dictionaries, each representing a facet.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"scenarios/{self.id}/facets/"
+        )
+        response = self.api.session.get(resource_url)
+        response_json = error.get_response_json(response, logger)
+        objects = response_json.get("objects", [])
+        if objects and isinstance(objects[0], list):
+            return objects[0]
+        return objects
 
     @property
     def dfiq_identifier(self):
@@ -103,9 +165,40 @@ class Question(resource.BaseResource):
         self.uuid = uuid
         self.api = api
         self.sketch_id = sketch_id
+        self._name = None
+        self._display_name = None
+        self._description = None
+        self._data = None
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/questions/{self.id}/"
         )
+
+    def _update(self, data):
+        """Internal helper to update the question."""
+        resource_url = f"{self.api.api_root}/{self.resource_uri}"
+        response = self.api.session.post(resource_url, json=data)
+        self._data = error.get_response_json(response, logger)
+        updated_object = self._data["objects"][0]
+        self._name = updated_object["name"]
+        self._display_name = updated_object["display_name"]
+        self._description = updated_object["description"]
+
+    def add_attribute(self, name, value, ontology=None, description=None):
+        """Adds an attribute to the question.
+
+        Args:
+            name (str): The name of the attribute.
+            value (str): The value of the attribute.
+            ontology (str): Optional ontology for the attribute.
+            description (str): Optional description for the attribute.
+        """
+        attribute = {
+            "name": name,
+            "value": value,
+            "ontology": ontology,
+            "description": description,
+        }
+        self._update({"attributes": [attribute]})
 
     @property
     def name(self):
@@ -114,8 +207,77 @@ class Question(resource.BaseResource):
         Returns:
             Question name as string.
         """
+        if self._name:
+            return self._name
         question = self.lazyload_data()
-        return question["objects"][0]["name"]
+        self._name = question["objects"][0]["name"]
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        """Sets the name of the question."""
+        self._update({"name": value})
+
+    @property
+    def display_name(self):
+        """Property that returns the question display name."""
+        if self._display_name:
+            return self._display_name
+        question = self.lazyload_data()
+        self._display_name = question["objects"][0]["display_name"]
+        return self._display_name
+
+    @display_name.setter
+    def display_name(self, value):
+        """Sets the display name of the question."""
+        self._update({"display_name": value})
+
+    def set_status(self, status):
+        """Sets the status of the question."""
+        self._update({"status": status})
+
+    def set_priority(self, priority):
+        """Sets the priority of the question."""
+        self._update({"priority": priority})
+
+    def list_conclusions(self):
+        """Lists all conclusions for the question.
+
+        Returns:
+            A list of dictionaries, each representing a conclusion.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"questions/{self.id}/conclusions/"
+        )
+        response = self.api.session.get(resource_url)
+        response_json = error.get_response_json(response, logger)
+        objects = response_json.get("objects", [])
+        if objects and isinstance(objects[0], list):
+            return objects[0]
+        return objects
+
+    def add_conclusion(self, conclusion_text, automated=False):
+        """Adds a conclusion to the question.
+
+        If automated is False (default), it adds or updates the conclusion
+        for the current user. If automated is True, it adds a new conclusion
+        not associated with a user.
+
+        Args:
+            conclusion_text (str): The text of the conclusion.
+            automated (bool): Whether the conclusion is automated.
+
+        Returns:
+            A dictionary with the API response.
+        """
+        resource_url = (
+            f"{self.api.api_root}/sketches/{self.sketch_id}/"
+            f"questions/{self.id}/conclusions/"
+        )
+        data = {"conclusionText": conclusion_text, "automated": automated}
+        response = self.api.session.post(resource_url, json=data)
+        return error.get_response_json(response, logger)
 
     @property
     def dfiq_identifier(self):
@@ -134,8 +296,16 @@ class Question(resource.BaseResource):
         Returns:
             Question description as string.
         """
+        if self._description:
+            return self._description
         question = self.lazyload_data()
-        return question["objects"][0]["description"]
+        self._description = question["objects"][0]["description"]
+        return self._description
+
+    @description.setter
+    def description(self, value):
+        """Sets the description of the question."""
+        self._update({"description": value})
 
     @property
     def approaches(self):

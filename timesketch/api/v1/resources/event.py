@@ -343,9 +343,13 @@ class EventResource(resources.ResourceMixin, Resource):
                 }
                 comments.append(comment_dict)
 
+        event_obj = result.get("_source", {})
+        event_obj["_id"] = result.get("_id")
+        event_obj["_index"] = result.get("_index")
+
         schema = {
             "meta": {"comments": sorted(comments, key=lambda d: d["created_at"])},
-            "objects": result["_source"],
+            "objects": event_obj,
         }
         return jsonify(schema)
 
