@@ -40,7 +40,6 @@ from timesketch.api.v1 import utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 
 from timesketch.lib.stories import manager as story_export_manager
@@ -578,7 +577,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 error_details.append(error_message)
                 errors_occurred = True
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 errors_occurred = True
                 error_details.append(
                     f"Failed to close index {search_index.index_name}: {e}"

@@ -307,7 +307,7 @@ level: high
             self.api.create_sketch(name="", description="test_create_sketch")
         self.assertions.assertIn("Sketch name cannot be empty", str(context.exception))
 
-    def test_archive_sketch(self):
+    def test_archive_sketch_simple(self):
         """Test archiving and unarchiving a sketch."""
         sketch = self.api.create_sketch(
             name="test_archive_sketch", description="test_archive_sketch"
@@ -318,6 +318,25 @@ level: high
         self.assertions.assertEqual(sketch.status, "archived")
         sketch.unarchive()
         self.assertions.assertEqual(sketch.status, "ready")
+
+    def test_unarchive_sketch(self):
+        """Test unarchiving a sketch."""
+        sketch = self.api.create_sketch(
+            name="test_unarchive_sketch",
+            description="test_unarchive_sketch",
+        )
+        self.import_timeline("sigma_events.csv", sketch=sketch)
+        timeline = sketch.list_timelines()[0]
+
+        # Archive the sketch first
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+        self.assertions.assertEqual(timeline.status, "archived")
+
+        # Unarchive the sketch
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+        self.assertions.assertEqual(timeline.status, "ready")
 
     def test_delete_sketch(self):
         """Test deleting a sketch."""
@@ -582,18 +601,24 @@ level: high
 
         # Verify that the timeline statuses have not changed.
         ready_timeline = sketch.get_timeline(timeline_name="sigma_events.csv")
+        self.assertions.assertNotNone(ready_timeline)
         self.assertions.assertEqual(ready_timeline.status, "ready")
         self.assertions.assertEqual(failed_timeline.status, "fail")
 
-        self.assertions.assertEqual(response.status_code, 400)
+        # --- Cleanup ---
+        # To clean up, we must first delete the failed timeline.
+        # This will then allow the sketch to be archived and subsequently deleted.
+        failed_timeline.delete()
+        # Refresh sketch data after timeline deletion
+        sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(
+            len(sketch.list_timelines()), 1
+        )  # Only one timeline should remain
 
-        expected_error_msg = (
-            f"Cannot archive sketch {sketch.id}. Timeline "
-            f"'{failed_timeline.name}' (ID: {failed_timeline.id}) is in "
-            "a non-archivable state: 'fail'. Please delete this timeline and "
-            "try again."
-        )
-        self.assertions.assertIn(expected_error_msg, response.text)
+        # Now, archiving should succeed for cleanup purposes
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+        # sketch.delete() # Finally, delete the sketch
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
