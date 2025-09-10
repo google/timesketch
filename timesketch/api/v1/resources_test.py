@@ -30,8 +30,6 @@ from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Timeline
 from timesketch.api.v1.resources import ResourceMixin
 
 
