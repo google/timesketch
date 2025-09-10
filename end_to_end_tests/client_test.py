@@ -537,46 +537,21 @@ level: high
 
     def test_archive_sketch_with_failed_timeline(self):
         """Test archiving a sketch with a failed timeline."""
-        # 1. Create a new sketch and add a valid timeline
         sketch = self.api.create_sketch(
             name="test_archive_with_failed_timeline",
             description="A sketch for testing failed archival",
         )
+
+        # Add a valid timeline first so we have a mixed state.
         self.import_timeline("sigma_events.csv", sketch=sketch)
 
-        # 2. Generate a CSV file designed to cause an import failure
-        # by exceeding the OpenSearch mapping limit.
-        failing_csv_path = "/tmp/mapping_limit_exceed.csv"
-        num_unique_columns = 500  # > 455 will exceed the default limit
-        mandatory_headers = ["datetime", "message", "timestamp_desc"]
-        unique_headers = [
-            f"unique_field_{uuid.uuid4().hex}" for _ in range(num_unique_columns)
-        ]
-        all_headers = mandatory_headers + unique_headers
-
-        data_row = {
-            "datetime": "2023-10-27T10:00:00Z",
-            "message": "This event is designed to exceed the mapping limit.",
-            "timestamp_desc": "Mapping Limit Test",
-        }
-        for header in unique_headers:
-            data_row[header] = "some_value"
-
-        with open(failing_csv_path, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=all_headers)
-            writer.writeheader()
-            writer.writerow(data_row)
-
-        # 3. Import the failing CSV. This should create a timeline in a 'fail' state.
+        # Import an old Plaso file that is expected to fail processing.
+        failing_plaso_file = "plaso_will_fail_to_import.plaso"
         try:
-            self.import_timeline(failing_csv_path, sketch=sketch)
+            self.import_timeline(failing_plaso_file, sketch=sketch)
         except RuntimeError:
             # The import is expected to fail, so we catch the error and continue.
             pass
-        finally:
-            # Clean up the temporary file
-            if os.path.exists(failing_csv_path):
-                os.remove(failing_csv_path)
 
         # 4. Verify that one timeline is ready and one has failed.
         sketch.lazyload_data(refresh_cache=True)
@@ -592,15 +567,36 @@ level: high
         self.assertions.assertIsNotNone(failed_timeline, "No failed timeline found.")
 
         # 5. Attempt to archive the sketch and assert that it fails.
-        with self.assertions.assertRaises(RuntimeError) as context:
-            sketch.archive()
+        # We expect a 400 Bad Request, which the client library currently
+        # does not translate into a RuntimeError. We make a direct API call
+        # to check the HTTP status code.
+        resource_url = f"sketches/{sketch.id}/archive/"
+        data = {"action": "archive"}
+        response = sketch.api.session.post(
+            f"{sketch.api.api_root}/{resource_url}", json=data
+        )
+
+        # Verify that the sketch status has not changed after the failed attempt.
+        sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(sketch.status, "ready")
+
+        # Verify that the timeline statuses have not changed.
+        ready_timeline = sketch.get_timeline(timeline_name="sigma_events.csv")
+        self.assertions.assertEqual(ready_timeline.status, "ready")
+        self.assertions.assertEqual(failed_timeline.status, "fail")
+
+        self.assertions.assertEqual(response.status_code, 400)
 
         expected_error_msg = (
             f"Cannot archive sketch {sketch.id}. Timeline "
             f"'{failed_timeline.name}' (ID: {failed_timeline.id}) is in "
-            "a non-archivable state: 'fail'."
+            "a non-archivable state: 'fail'. Please delete this timeline and "
+            "try again."
         )
-        self.assertions.assertIn(expected_error_msg, str(context.exception))
+        self.assertions.assertIn(expected_error_msg, response.text)
+
+        with self.assertions.assertRaises(RuntimeError) as context:
+            sketch.archive()
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
