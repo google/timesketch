@@ -585,14 +585,13 @@ level: high
         self.assertions.assertIsNotNone(failed_timeline, "No failed timeline found.")
 
         # 5. Attempt to archive the sketch and assert that it fails.
-        # We expect a 400 Bad Request, which the client library currently
-        # does not translate into a RuntimeError. We make a direct API call
-        # to check the HTTP status code.
         resource_url = f"sketches/{sketch.id}/archive/"
         data = {"action": "archive"}
         response = sketch.api.session.post(
             f"{sketch.api.api_root}/{resource_url}", json=data
         )
+
+        self.assertions.assertIsNotNone(response)
 
         # Verify that the sketch status has not changed after the failed attempt.
         sketch.lazyload_data(refresh_cache=True)
@@ -601,7 +600,7 @@ level: high
 
         # Verify that the timeline statuses have not changed.
         ready_timeline = sketch.get_timeline(timeline_name="sigma_events.csv")
-        self.assertions.assertNotNone(ready_timeline)
+        self.assertions.assertIsNotNone(ready_timeline)
         self.assertions.assertEqual(ready_timeline.status, "ready")
         self.assertions.assertEqual(failed_timeline.status, "fail")
 
