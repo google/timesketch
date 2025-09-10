@@ -21,6 +21,7 @@ except ImportError:
 from timesketch.lib import emojis, sigma_util
 from timesketch.lib.analyzers import interface, manager
 
+logger = logging.getLogger("timesketch.analyzers.yetiindicators")
 
 TYPE_TO_EMOJI = {
     "malware": "SPIDER",
@@ -545,7 +546,8 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
                     # No matter the exception, we don't want to stop the
                     # analyzer. Errors are logged and reported in the UI.
                     logging.error(
-                        "Error processing events for indicator %s: %s",
+                        "Error processing events in sketch %s for indicator %s: %s",
+                        self.sketch.id,
                         indicator["id"],
                         str(exception),
                     )
