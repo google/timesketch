@@ -577,9 +577,8 @@ level: high
 
         # Verify that the sketch status has not changed after the failed attempt.
         sketch.lazyload_data(refresh_cache=True)
-        if sketch.status == "new":
-            time.sleep(5)  # might take a bit before it is ready
-        self.assertions.assertEqual(sketch.status, "ready")
+
+        self.assertions.assertEqual(sketch.status, "new")
 
         # Verify that the timeline statuses have not changed.
         ready_timeline = sketch.get_timeline(timeline_name="sigma_events.csv")
