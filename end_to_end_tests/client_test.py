@@ -32,6 +32,54 @@ class ClientTest(interface.BaseEndToEndTest):
     RULEID1 = str(uuid.uuid4())
     RULEID2 = str(uuid.uuid4())
 
+    def _wait_for_timelines(self, sketch, expected_count, timeout=600):
+        """Waits for all timelines in a sketch to reach a terminal state.
+
+        Args:
+            sketch (Sketch): The sketch object to check.
+            expected_count (int): The number of timelines expected in the sketch.
+            timeout (int): The maximum time to wait in seconds.
+
+        Raises:
+            TimeoutError: If timelines do not finish in time.
+        """
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            sketch.lazyload_data(refresh_cache=True)
+            timelines = sketch.list_timelines()
+
+            if len(timelines) >= expected_count:
+                if all(t.status in ("ready", "fail", "timeout") for t in timelines):
+                    return
+            time.sleep(5)
+
+        raise TimeoutError(
+            f"Timelines in sketch {sketch.id} did not finish processing in time."
+        )
+
+    def _wait_for_sketch_status(self, sketch, target_status, timeout=60):
+        """Waits for a sketch to reach a specific status.
+
+        Args:
+            sketch (Sketch): The sketch object to check.
+            target_status (str): The status to wait for (e.g., 'new', 'ready').
+            timeout (int): The maximum time to wait in seconds.
+
+        Raises:
+            TimeoutError: If the sketch does not reach the target status in time.
+        """
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            if sketch.status == target_status:
+                return
+            time.sleep(1)
+            sketch.lazyload_data(refresh_cache=True)
+
+        raise TimeoutError(
+            f"Sketch {sketch.id} did not reach status '{target_status}' in time. "
+            f"Current status: '{sketch.status}'"
+        )
+
     def test_client(self):
         """Client tests."""
         expected_user = "test"
@@ -312,6 +360,7 @@ level: high
         sketch = self.api.create_sketch(
             name="test_archive_sketch", description="test_archive_sketch"
         )
+        self._wait_for_sketch_status(sketch, "new")
         # check status before archiving
         self.assertions.assertEqual(sketch.status, "new")
         sketch.archive()
@@ -575,6 +624,9 @@ level: high
         except RuntimeError:
             # The import is expected to fail, so we catch the error and continue.
             pass
+
+        # Wait for all timelines to be processed.
+        self._wait_for_timelines(sketch, expected_count=2)
 
         # 4. Verify that one timeline is ready and one has failed.
         sketch.lazyload_data(refresh_cache=True)
