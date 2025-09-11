@@ -256,6 +256,12 @@ export default new Vuex.Store({
       context.commit('SET_EVENT_LABELS', allLabels)
   },
     updateTimelineTags(context, payload) {
+      // Don't fetch Tag data on archived sketches.
+      if (context.state.sketch.status[0].status === 'archived') {
+        context.commit('SET_TIMELINE_TAGS', [])
+        return
+      }
+
       const activeTimelines = context.state.sketch.active_timelines
       // Guard clause: If there are no active timelines (array is null, undefined,
       // or empty), there's nothing to process, so exit the function immediately.
@@ -308,6 +314,12 @@ export default new Vuex.Store({
         .catch((e) => {})
     },
     updateDataTypes(context, sketchId) {
+      // Don't fetch data types on archived sketches.
+      if (context.state.sketch.status[0].status === 'archived') {
+        context.commit('SET_DATA_TYPES', { objects: [{ field_bucket: { buckets: [] } }] })
+        return
+      }
+
       const activeTimelines = context.state.sketch.active_timelines
       // Guard clause: If there are no active timelines (array is null, undefined,
       // or empty), there's nothing to process, so exit the function immediately.

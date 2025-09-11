@@ -32,6 +32,54 @@ class ClientTest(interface.BaseEndToEndTest):
     RULEID1 = str(uuid.uuid4())
     RULEID2 = str(uuid.uuid4())
 
+    def _wait_for_timelines(self, sketch, expected_count, timeout=600):
+        """Waits for all timelines in a sketch to reach a terminal state.
+
+        Args:
+            sketch (Sketch): The sketch object to check.
+            expected_count (int): The number of timelines expected in the sketch.
+            timeout (int): The maximum time to wait in seconds.
+
+        Raises:
+            TimeoutError: If timelines do not finish in time.
+        """
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            sketch.lazyload_data(refresh_cache=True)
+            timelines = sketch.list_timelines()
+
+            if len(timelines) >= expected_count:
+                if all(t.status in ("ready", "fail", "timeout") for t in timelines):
+                    return
+            time.sleep(5)
+
+        raise TimeoutError(
+            f"Timelines in sketch {sketch.id} did not finish processing in time."
+        )
+
+    def _wait_for_sketch_status(self, sketch, target_status, timeout=60):
+        """Waits for a sketch to reach a specific status.
+
+        Args:
+            sketch (Sketch): The sketch object to check.
+            target_status (str): The status to wait for (e.g., 'new', 'ready').
+            timeout (int): The maximum time to wait in seconds.
+
+        Raises:
+            TimeoutError: If the sketch does not reach the target status in time.
+        """
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            if sketch.status == target_status:
+                return
+            time.sleep(1)
+            sketch.lazyload_data(refresh_cache=True)
+
+        raise TimeoutError(
+            f"Sketch {sketch.id} did not reach status '{target_status}' in time. "
+            f"Current status: '{sketch.status}'"
+        )
+
     def test_client(self):
         """Client tests."""
         expected_user = "test"
@@ -178,6 +226,7 @@ level: high
 
         # Test an actual query
         self.import_timeline("sigma_events.csv")
+        self._wait_for_timelines(self.sketch, expected_count=1)
         search_obj = search.Search(self.sketch)
         search_obj.query_string = rule.search_query
         data_frame = search_obj.table
@@ -307,17 +356,42 @@ level: high
             self.api.create_sketch(name="", description="test_create_sketch")
         self.assertions.assertIn("Sketch name cannot be empty", str(context.exception))
 
-    def test_archive_sketch(self):
+    def test_archive_sketch_simple(self):
         """Test archiving and unarchiving a sketch."""
         sketch = self.api.create_sketch(
             name="test_archive_sketch", description="test_archive_sketch"
         )
+        self._wait_for_sketch_status(sketch, "new")
         # check status before archiving
         self.assertions.assertEqual(sketch.status, "new")
         sketch.archive()
         self.assertions.assertEqual(sketch.status, "archived")
         sketch.unarchive()
         self.assertions.assertEqual(sketch.status, "ready")
+
+    def test_unarchive_sketch(self):
+        """Test unarchiving a sketch."""
+        sketch = self.api.create_sketch(
+            name="test_unarchive_sketch",
+            description="test_unarchive_sketch",
+        )
+        self.import_timeline("sigma_events.csv", sketch=sketch)
+        self._wait_for_timelines(sketch, expected_count=1)
+        sketch.lazyload_data(refresh_cache=True)
+        timelines = sketch.list_timelines()
+        self.assertions.assertEqual(len(timelines), 1)
+        timeline = sketch.list_timelines()[0]
+
+        # Archive the sketch first
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+        self.assertions.assertEqual(timeline.status, "archived")
+        sketch.lazyload_data(refresh_cache=True)
+
+        # Unarchive the sketch
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+        self.assertions.assertEqual(timeline.status, "ready")
 
     def test_delete_sketch(self):
         """Test deleting a sketch."""
@@ -533,6 +607,78 @@ level: high
         # check number of timelines
         _ = sketch.lazyload_data(refresh_cache=True)
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
+
+    def test_archive_sketch_with_failed_timeline(self):
+        """Test archiving a sketch with a failed timeline."""
+        sketch = self.api.create_sketch(
+            name="test_archive_with_failed_timeline",
+            description="A sketch for testing failed archival",
+        )
+
+        ready_timeline_name = os.path.join(interface.TEST_DATA_DIR, "sigma_events.csv")
+        # Add a valid timeline first so we have a mixed state.
+        self.import_timeline("sigma_events.csv", sketch=sketch)
+
+        # Import an old Plaso file that is expected to fail processing.
+        failing_plaso_file = "plaso_will_fail_to_import.plaso"
+        try:
+            self.import_timeline(failing_plaso_file, sketch=sketch)
+        except RuntimeError:
+            # The import is expected to fail, so we catch the error and continue.
+            pass
+
+        # Wait for all timelines to be processed.
+        self._wait_for_timelines(sketch, expected_count=2)
+
+        # 4. Verify that one timeline is ready and one has failed.
+        sketch.lazyload_data(refresh_cache=True)
+        timelines = sketch.list_timelines()
+        self.assertions.assertEqual(len(timelines), 2)
+
+        failed_timeline = None
+        for t in timelines:
+            if t.status == "fail":
+                failed_timeline = t
+                break
+
+        self.assertions.assertIsNotNone(failed_timeline, "No failed timeline found.")
+
+        # 5. Attempt to archive the sketch and assert that it fails.
+        resource_url = f"sketches/{sketch.id}/archive/"
+        data = {"action": "archive"}
+        response = sketch.api.session.post(
+            f"{sketch.api.api_root}/{resource_url}", json=data
+        )
+
+        self.assertions.assertIsNotNone(response)
+        # This should fail because one timeline is in a 'fail' state.
+        self.assertions.assertEqual(response.status_code, 400)
+
+        # Verify that the sketch status has not changed after the failed attempt.
+        sketch.lazyload_data(refresh_cache=True)
+
+        self.assertions.assertEqual(sketch.status, "new")
+
+        # Verify that the timeline statuses have not changed.
+        ready_timeline = sketch.get_timeline(timeline_name=ready_timeline_name)
+        self.assertions.assertIsNotNone(ready_timeline)
+        self.assertions.assertEqual(ready_timeline.status, "ready")
+        self.assertions.assertEqual(failed_timeline.status, "fail")
+
+        # --- Cleanup ---
+        # To clean up, we must first delete the failed timeline.
+        # This will then allow the sketch to be archived and subsequently deleted.
+        failed_timeline.delete()
+        # Refresh sketch data after timeline deletion
+        sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(
+            len(sketch.list_timelines()), 1
+        )  # Only one timeline should remain
+
+        # Now, archiving should succeed for cleanup purposes
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+        # sketch.delete() # Finally, delete the sketch
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
