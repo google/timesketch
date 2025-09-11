@@ -1146,7 +1146,8 @@ class OpenSearchDataStore:
 
         except NotFoundError as e:
             os_logger.error(
-                "Unable to count indices (index not found). Attempted indices: %s. Error: %s",
+                "Unable to count indices (index not found).",
+                " Attempted indices: %s. Error: %s",
                 ", ".join(indices),
                 e,
                 exc_info=True,
