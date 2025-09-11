@@ -513,6 +513,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # 2. Determine which OpenSearch indices can be closed.
         search_indexes_to_evaluate = {t.searchindex for t in sketch.timelines}
+        search_indexes_to_evaluate = {
+            t.searchindex for t in sketch.timelines if t.searchindex
+        }
         search_indexes_to_close = set()
         for search_index in search_indexes_to_evaluate:
             can_be_closed = True
@@ -558,6 +561,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 if timeline_status in ["fail", "timeout"]:
                     suggestion = " Please delete this timeline and try again."
                 error_msg = f"{base_error_msg}{suggestion}"
+                errors_occurred = True
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     error_msg,
@@ -584,6 +588,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 )
         # If any critical error occurred, abort before changing DB state.
         if errors_occurred:
+            logger.error(error_details)
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 f"Failed to archive sketch. Details: {'; '.join(error_details)}",

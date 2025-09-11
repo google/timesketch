@@ -326,12 +326,16 @@ level: high
             description="test_unarchive_sketch",
         )
         self.import_timeline("sigma_events.csv", sketch=sketch)
+        sketch.lazyload_data(refresh_cache=True)
+        timelines = sketch.list_timelines()
+        self.assertions.assertEqual(len(timelines), 1)
         timeline = sketch.list_timelines()[0]
 
         # Archive the sketch first
         sketch.archive()
         self.assertions.assertEqual(sketch.status, "archived")
         self.assertions.assertEqual(timeline.status, "archived")
+        sketch.lazyload_data(refresh_cache=True)
 
         # Unarchive the sketch
         sketch.unarchive()
