@@ -14,23 +14,28 @@
 """Tests for v1 of the Timesketch API."""
 
 import json
+import zipfile
+import io
 from unittest import mock
 
+from werkzeug.exceptions import Forbidden
+
+from timesketch.api.v1.resources import explore
+from timesketch.api.v1.resources import ResourceMixin
+from timesketch.api.v1.resources import scenarios
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.dfiq import DFIQCatalog
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
-from timesketch.lib.dfiq import DFIQCatalog
-from timesketch.api.v1.resources import scenarios
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
-from timesketch.api.v1.resources import ResourceMixin
 
 
 class ResourceMixinTest(BaseTest):
@@ -539,6 +544,35 @@ class ExploreResourceTest(BaseTest):
         del response_json["meta"]["search_node"]["query_time"]
         self.assertDictEqual(response_json, self.expected_response)
         self.assert200(response)
+
+    def test_validate_request_and_sketch_success(self):
+        """Test successful validation of sketch and permissions."""
+        self.login()
+        resource = explore.ExploreResource()
+        with self.app.test_request_context():
+            # pylint: disable=protected-access
+            sketch = resource._validate_request_and_sketch(self.sketch1.id)
+        self.assertIsNotNone(sketch)
+        self.assertEqual(sketch.id, self.sketch1.id)
+
+    def test_validate_request_and_sketch_no_permission(self):
+        """Test validation failure when user lacks permissions."""
+        self.login()
+        resource = explore.ExploreResource()
+
+        # sketch2 is not accessible by the default user 'test'
+        sketch_id_no_access = self.sketch2.id
+
+        with self.app.test_request_context():
+            with self.assertRaises(Forbidden) as context:
+                # pylint: disable=protected-access
+                resource._validate_request_and_sketch(sketch_id_no_access)
+
+        self.assertEqual(context.exception.code, HTTP_STATUS_CODE_FORBIDDEN)
+        self.assertIn(
+            "You don't have the permission to access the requested resource",
+            str(context.exception.description),
+        )
 
 
 class AggregationExploreResourceTest(BaseTest):
