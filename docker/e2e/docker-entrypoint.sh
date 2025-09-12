@@ -65,6 +65,11 @@ if [ "$1" = 'timesketch' ]; then
   tsctl create-user "$TIMESKETCH_USER2" --password "$TIMESKETCH_PASSWORD2"
   unset TIMESKETCH_PASSWORD2
 
+  # Make admin user for e2e tests
+  sleep 2
+  tsctl create-user admin --password admin
+  tsctl make-admin admin
+
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
     description: Testing the data finder in the e2e test.
