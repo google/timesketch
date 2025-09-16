@@ -832,12 +832,13 @@ def run_plaso(
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: %s\n%s", str(e), error_msg)
+        logger.error("Error (%s): %s\n%s", file_path, str(e), error_msg)
         return None
 
     logger.info(
-        "Index timeline (ID: %d) to index [%s] (source: %s)",
+        "Index timeline (ID: %d) [%s] to index [%s] (source: %s)",
         timeline_id,
+        file_path,
         index_name,
         source_type,
     )
