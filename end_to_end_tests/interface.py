@@ -111,6 +111,8 @@ class BaseEndToEndTest(object):
                 retry_count += 1
                 time.sleep(sleep_time_seconds)
                 continue
+            except OSError as e:
+                raise RuntimeError(f"Unable to import timeline, got an OS Error: {e}")
 
             if not timeline.index:
                 retry_count += 1

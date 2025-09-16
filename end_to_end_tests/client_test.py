@@ -227,6 +227,8 @@ level: high
         # Test an actual query
         self.import_timeline("sigma_events.csv")
         self._wait_for_timelines(self.sketch, expected_count=1)
+        # Give OpenSearch a moment to catch up.
+        time.sleep(2)
         search_obj = search.Search(self.sketch)
         search_obj.query_string = rule.search_query
         data_frame = search_obj.table
