@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
+import json
 import re
 import logging
 from typing import Any, Dict, Optional, Generator
@@ -101,41 +102,60 @@ class LogAnalyzer(LLMFeatureInterface):
                 sketch=sketch, form=form
             )
 
-            # Stream logs to LLM provider and get findings back
-            findings_generator = llm_provider.generate_stream_from_logs(
+            # The provider will yield a single item: the raw text response.
+            raw_response_generator = llm_provider.generate_stream_from_logs(
                 log_events_generator=log_events_generator
             )
+            full_response_text = next(raw_response_generator, None)
+
+            if not full_response_text:
+                logger.warning("LogAnalyzer: Received no response from provider.")
+                return {
+                    "status": "success",
+                    "feature": self.NAME,
+                    "total_findings_processed": 0,
+                    "errors_encountered": 0,
+                    "events_exported": self._events_exported,
+                    "findings_received": 0,
+                }
+
+            # Extract the JSON part of the response
+            json_match = re.search(
+                r"```json\n(\[.*\])\n```", full_response_text, re.DOTALL
+            )
+            if not json_match:
+                logger.error(
+                    "LogAnalyzer: No valid JSON summary found in the provider response."
+                )
+                self._errors_encountered.append("No JSON summary found in response")
+                return {
+                    "status": "error",
+                    "feature": self.NAME,
+                    "message": "No JSON summary found in the provider response.",
+                    "raw_response": full_response_text[:500],
+                }
+
+            try:
+                findings_list = json.loads(json_match.group(1))
+            except json.JSONDecodeError as e:
+                logger.error("LogAnalyzer: Failed to decode JSON from response: %s", e)
+                self._errors_encountered.append(f"JSON decode error: {e}")
+                return {
+                    "status": "error",
+                    "feature": self.NAME,
+                    "message": "Failed to decode JSON from the provider response.",
+                    "raw_response": full_response_text[:500],
+                }
 
             # Process findings
             processed_findings_summary = []
-
-            for finding_dict in findings_generator:
-                if finding_dict.get("error"):
-                    logger.error(
-                        "LogAnalyzer: Error from provider stream: %s",
-                        finding_dict["error"],
-                    )
-                    processed_findings_summary.append(
-                        {
-                            "status": "error_from_provider",
-                            "message": finding_dict["error"],
-                            "raw_line": finding_dict.get("raw_line"),
-                        }
-                    )
-                    self._errors_encountered.append(finding_dict["error"])
-                    if (
-                        len(self._errors_encountered) > 100
-                    ):  # Fail fast on too many errors
-                        raise LogAnalysisError("Too many errors from provider stream")
-                    continue
-
+            for finding_dict in findings_list:
                 self._findings_received += 1
 
                 # Process individual finding
                 processing_result = self.process_response(
                     llm_response=finding_dict, sketch=sketch
                 )
-
                 processed_findings_summary.append(processing_result)
 
                 if processing_result.get("status") == "error":
