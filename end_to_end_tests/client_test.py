@@ -225,7 +225,75 @@ level: high
         self.assertions.assertEqual(len(rule.logsource), 2)
 
         # Test an actual query
-        self.import_timeline("sigma_events.csv")
+        events = [
+            {
+                "message": "A message",
+                "datetime": "2015-07-24T19:01:01+00:00",
+                "timestamp_desc": "Write time",
+                "attributes": {
+                    "timestamp": 123456789,
+                    "extra_field_1": "foo",
+                    "command": "",
+                    "data_type": "",
+                    "display_name": "",
+                    "filename": "",
+                    "packages": "",
+                    "parser": "",
+                },
+            },
+            {
+                "message": "Another message",
+                "datetime": "2015-07-24T19:01:02+00:00",
+                "timestamp_desc": "Write time",
+                "attributes": {
+                    "timestamp": 123456790,
+                    "extra_field_1": "bar",
+                    "command": "",
+                    "data_type": "",
+                    "display_name": "",
+                    "filename": "",
+                    "packages": "",
+                    "parser": "",
+                },
+            },
+            {
+                "message": "Yet more messages",
+                "datetime": "2015-07-24T19:01:03+00:00",
+                "timestamp_desc": "Write time",
+                "attributes": {
+                    "timestamp": 123456791,
+                    "extra_field_1": "baz",
+                    "command": "",
+                    "data_type": "",
+                    "display_name": "",
+                    "filename": "",
+                    "packages": "",
+                    "parser": "",
+                },
+            },
+            {
+                "message": "Install: zmap:amd64 (1.1.0-1) [Commandline: apt-get install zmap]",
+                "datetime": "2015-07-24T19:01:03+00:00",
+                "timestamp_desc": "foo",
+                "attributes": {
+                    "timestamp": 123456791,
+                    "extra_field_1": "",
+                    "command": "Commandline: apt-get install zmap",
+                    "data_type": "apt:history:line",
+                    "display_name": "GZIP:/var/log/apt/history.log.1.gz",
+                    "filename": "/var/log/apt/history.log.1.gz",
+                    "packages": "Install: zmap:amd64 (1.1.0-1)",
+                    "parser": "apt_history",
+                },
+            },
+        ]
+        for event in events:
+            self.sketch.add_event(
+                message=event["message"],
+                date=event["datetime"],
+                timestamp_desc=event["timestamp_desc"],
+                attributes=event["attributes"],
+            )
         self._wait_for_timelines(self.sketch, expected_count=1)
         # Give OpenSearch a moment to catch up.
         time.sleep(2)
@@ -314,7 +382,10 @@ level: high
                 break
             time.sleep(1)
         else:
-            raise RuntimeError("Event creation failed for test.")
+            self.assertions.assertTrue(False)
+            raise RuntimeError(
+                "test_add_event_attributes_invalid: Event creation failed for test."
+            )
 
         # Have to use search to get event_id
         search_client = search.Search(sketch)
