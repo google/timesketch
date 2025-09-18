@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment
-RUN python3 -m venv /opt/venv
+RUN python3 -m venv /opt/venv --system-site-packages
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install timesketch from the current branch (In the context of CI platform)
