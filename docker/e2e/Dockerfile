@@ -1,5 +1,6 @@
+ARG UBUNTU_VERSION=22.04
 # Use the official Docker Hub Ubuntu base image
-FROM ubuntu:22.04
+FROM ubuntu:${UBUNTU_VERSION}
 
 ARG PLASO_PPA_TRACK=stable
 

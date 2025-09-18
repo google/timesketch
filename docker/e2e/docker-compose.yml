@@ -17,6 +17,7 @@ services:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
       args:
+        - UBUNTU_VERSION=${UBUNTU_VERSION}
         - PLASO_PPA_TRACK=${PLASO_PPA_TRACK}
     ports:
       - "127.0.0.1:80:80"
