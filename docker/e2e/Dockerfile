@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   wget \
   tzdata \
+  python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
@@ -25,6 +26,10 @@ RUN add-apt-repository -y ppa:gift/$PLASO_PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*
+
+# Create a virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
