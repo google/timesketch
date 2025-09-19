@@ -261,19 +261,22 @@ class OpenSearchDataStore:
                         {"host": single_host, "port": single_port}
                     ]
 
-        self.user = current_app.config.get("OPENSEARCH_USER", "user")
-        self.password = current_app.config.get("OPENSEARCH_PASSWORD", "pass")
-        self.ssl = current_app.config.get("OPENSEARCH_SSL", False)
-        self.verify = current_app.config.get("OPENSEARCH_VERIFY_CERTS", True)
+        user = current_app.config.get("OPENSEARCH_USER", "user")
+        password = current_app.config.get("OPENSEARCH_PASSWORD", "pass")
+        ssl = current_app.config.get("OPENSEARCH_SSL", False)
+        verify_certs = current_app.config.get("OPENSEARCH_VERIFY_CERTS", True)
         self.timeout = current_app.config.get("OPENSEARCH_TIMEOUT", 10)
+        ca_certs = current_app.config.get("OPENSEARCH_CA_CERTS")
 
         parameters = {}
-        if self.ssl:
-            parameters["use_ssl"] = self.ssl
-            parameters["verify_certs"] = self.verify
+        if ssl:
+            parameters["use_ssl"] = ssl
+            parameters["verify_certs"] = verify_certs
+            if ca_certs:
+                parameters["ca_certs"] = ca_certs
 
-        if self.user and self.password:
-            parameters["http_auth"] = (self.user, self.password)
+        if user and password:
+            parameters["http_auth"] = (user, password)
         if self.timeout:
             parameters["timeout"] = self.timeout
 
