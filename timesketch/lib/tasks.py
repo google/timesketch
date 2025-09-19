@@ -258,13 +258,19 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
 
     # Refresh the index so it is searchable for the analyzers right away.
     datastore = OpenSearchDataStore()
-    try:
-        datastore.client.indices.refresh(index=timeline.searchindex.index_name)
-    except NotFoundError:
-        logger.error(
-            "Unable to refresh index: {:s}, not found, "
-            "removing from list.".format(timeline.searchindex.index_name)
-        )
+    # Retry refreshing the index a few times if it fails.
+    for i in range(5):
+        try:
+            datastore.client.indices.refresh(index=timeline.searchindex.index_name)
+            break  # Success
+        except NotFoundError:
+            if i == 4:  # Last attempt
+                logger.error(
+                    "Unable to refresh index: %s, not found after 5 attempts.",
+                    timeline.searchindex.index_name,
+                )
+            else:
+                time.sleep(1)  # Wait a second before retrying
 
     # If status is set to ready, check for analyzers to execute.
     if timeline.get_status.status == "ready":
@@ -826,12 +832,13 @@ def run_plaso(
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: %s\n%s", str(e), error_msg)
+        logger.error("Error (%s): %s\n%s", file_path, str(e), error_msg)
         return None
 
     logger.info(
-        "Index timeline (ID: %d) to index [%s] (source: %s)",
+        "Index timeline (ID: %d) [%s] to index [%s] (source: %s)",
         timeline_id,
+        file_path,
         index_name,
         source_type,
     )
