@@ -64,8 +64,6 @@ class LogAnalyzer(LLMFeatureInterface):
             Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
         return OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
             pool_maxsize=60,
         )
 

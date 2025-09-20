@@ -15,18 +15,16 @@
 import json
 import logging
 import os
+import asyncio
 import pathlib
 import tempfile
 from typing import Any, Dict, Generator, Iterable, Optional
 
-# Check if the required dependencies are installed.
 has_required_deps = True
 try:
     from sec_gemini import SecGemini
 except ImportError:
     has_required_deps = False
-
-from flask import current_app
 
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
@@ -52,15 +50,11 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         """
         super().__init__(config, **kwargs)
 
-        llm_configs = current_app.config.get("LLM_PROVIDER_CONFIGS", {})
-        provider_configs = llm_configs.get("log_analyzer", {})
-        secgemini_config = provider_configs.get(self.NAME, {})
-
-        self.api_key = secgemini_config.get("api_key")
+        self.api_key = self.config.get("api_key")
         if not self.api_key:
             raise ValueError("SecGemini provider requires an 'api_key' in its config.")
 
-        self.server_url = secgemini_config.get("server_url")
+        self.server_url = self.config.get("server_url")
         if self.server_url:
             os.environ["SEC_GEMINI_LOGS_PROCESSOR_API_URL"] = self.server_url
 
@@ -70,10 +64,34 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
 
         self.model = self.config.get("model", "sec-gemini-experimental")
-        self.custom_fields_mapping = self.config.get("custom_fields_mapping")
+        self.custom_fields_mapping = {
+            "id": "_id",
+            "enrichment": "tag",
+            "timestamp": "datetime",
+        }
         self.enable_logging = self.config.get("enable_logging", True)
         self._events_sent = 0
         self._session = None
+
+    async def _run_async_stream(self, log_path, prompt):
+        """Runs the async streaming logic for SecGemini.
+
+        Args:
+            log_path: Path to the log file to analyze.
+            prompt: The prompt to use for the analysis.
+
+        Yields:
+            str: The content of the response from the LLM.
+        """
+        self._session = self.sg_client.create_session(
+            model=self.model, enable_logging=self.enable_logging
+        )
+        self._session.upload_and_attach_logs(
+            log_path, custom_fields_mapping=self.custom_fields_mapping
+        )
+
+        async for response in self._session.stream(prompt):
+            yield response.content
 
     def generate_stream_from_logs(
         self,
@@ -107,15 +125,30 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 logger.warning("No events were provided to the log analyzer.")
                 return
 
-            self.sg_client.create_session(
-                model=self.model, enable_logging=self.enable_logging
-            )
-            self._session.upload_and_attach_logs(
-                log_path, custom_fields_mapping=self.custom_fields_mapping
-            )
+            async def run_stream():
+                async for chunk in self._run_async_stream(log_path, prompt):
+                    yield chunk
 
-            response = self._session.query(prompt)
-            yield response.text()
+            async def main():
+                async for chunk in run_stream():
+                    yield chunk
+
+            # This is a bit of a hack to run an async generator from a sync method.
+            # It's not ideal, but it works for this use case.
+            # We create a new event loop and run the async generator in it.
+            # This is necessary because the SecGemini library is async.
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            gen = main()
+            while True:
+                try:
+                    yield loop.run_until_complete(gen.__anext__())
+                except StopAsyncIteration:
+                    break
 
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> Any:
         """Standard LLM generation method.
