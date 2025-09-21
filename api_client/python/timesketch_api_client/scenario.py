@@ -97,6 +97,7 @@ class Scenario(resource.BaseResource):
 
         Raises:
             RuntimeError: If the API request fails to update the scenario.
+            ValueError: If the object can't be updated.
         """
         resource_url = f"{self.api.api_root}/{self.resource_uri}"
         data = {"scenario_name": display_name}
@@ -108,7 +109,9 @@ class Scenario(resource.BaseResource):
             updated_object = self._data["objects"][0]
             self._display_name = updated_object.get("display_name")
         except (RuntimeError, ValueError) as e:
-            logger.error(f"Failed to set display name for scenario {self.id}: {e}")
+            logger.error(
+                "Failed to set display name for scenario %s: %s", str(self.id), str(e)
+            )
             raise
 
     def list_facets(self) -> List[Dict[str, Any]]:
@@ -199,6 +202,7 @@ class Question(resource.BaseResource):
 
         Raises:
             RuntimeError: If the API request fails.
+            ValueError: If the question can't be updated.
         """
         resource_url = f"{self.api.api_root}/{self.resource_uri}"
         response = self.api.session.post(resource_url, json=data)
@@ -211,7 +215,7 @@ class Question(resource.BaseResource):
             self._display_name = updated_object.get("display_name", self._display_name)
             self._description = updated_object.get("description", self._description)
         except (RuntimeError, ValueError) as e:
-            logger.error(f"Failed to update question {self.id}: {e}")
+            logger.error("Failed to update question %s: %s", str(self.id), str(e))
             raise
 
     def add_attribute(
