@@ -995,14 +995,21 @@ class OpenSearchDataStore:
             yield from result["hits"]["hits"]
 
     def get_filter_labels(self, sketch_id: int, indices: list):
-        """Aggregate labels for a sketch.
+        """Aggregate all labels applied to events within a sketch.
+
+        This method queries the datastore to find all unique labels associated
+        with events for a given sketch and within a specific set of indices.
+        It uses a nested aggregation on the 'timesketch_label' field.
 
         Args:
-            sketch_id: The Sketch ID
-            indices: List of indices to aggregate on
+            sketch_id: The integer primary key for the sketch.
+            indices: A list of OpenSearch index names to query.
 
         Returns:
-            List with label names.
+            A list of dictionaries, where each dictionary contains a 'label'
+            (the name of the label) and a 'count' (the number of events with
+            that label). Returns an empty list if no indices are provided or
+            if no labels are found.
         """
         # If no indices are provided, return an empty list. This indicates
         # there are no labels to aggregate within the specified sketch.
@@ -1062,7 +1069,6 @@ class OpenSearchDataStore:
                 "Unable to find the index/indices: {:s}".format(",".join(indices))
             )
             return labels
-
         buckets = (
             result.get("aggregations", {})
             .get("nested", {})
@@ -1117,13 +1123,20 @@ class OpenSearchDataStore:
             )
 
     def count(self, indices: list):
-        """Count number of documents.
+        """Count the number of documents in a list of indices.
+
+        This method queries OpenSearch to get the number of documents and the
+        total size on disk for the provided list of indices.
 
         Args:
-            indices: List of indices.
+            indices (list[str]): A list of OpenSearch index names to count.
 
         Returns:
-            Tuple containing number of documents and size on disk.
+            tuple[int, int]: A tuple containing two integers:
+                - The total number of documents in the specified indices.
+                - The total size of the indices on disk in bytes.
+            Returns (0, 0) if the indices are not found or if there is a
+            request error.
         """
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
@@ -1131,8 +1144,13 @@ class OpenSearchDataStore:
         try:
             es_stats = self.client.indices.stats(index=indices, metric="docs, store")
 
-        except NotFoundError:
-            os_logger.error("Unable to count indices (index not found)")
+        except NotFoundError as e:
+            os_logger.error(
+                "Unable to count indices (index not found). Attempted indices: %s. Error: %s",  # pylint: disable=line-too-long
+                ", ".join(indices),
+                e,
+                exc_info=True,
+            )
             return 0, 0
 
         except RequestError:

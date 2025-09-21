@@ -77,9 +77,10 @@ def _load_dfiq_from_yeti() -> Optional[DFIQCatalog]:
         return None
 
     try:
-        api = YetiApi(yeti_api_root)
-        if yeti_cert_path:
-            api.client.verify = yeti_cert_path
+        if yeti_cert_path and yeti_api_root.startswith("https://"):
+            api = YetiApi(yeti_api_root, tls_cert=yeti_cert_path)
+        else:
+            api = YetiApi(yeti_api_root)
         api.auth_api_key(yeti_api_key)
         scenarios = api.search_dfiq(name="", dfiq_type="scenario")
         facets = api.search_dfiq(name="", dfiq_type="facet")
