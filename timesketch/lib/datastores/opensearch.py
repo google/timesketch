@@ -1123,13 +1123,20 @@ class OpenSearchDataStore:
             )
 
     def count(self, indices: list):
-        """Count number of documents.
+        """Count the number of documents in a list of indices.
+
+        This method queries OpenSearch to get the number of documents and the
+        total size on disk for the provided list of indices.
 
         Args:
-            indices: List of indices.
+            indices (list[str]): A list of OpenSearch index names to count.
 
         Returns:
-            Tuple containing number of documents and size on disk.
+            tuple[int, int]: A tuple containing two integers:
+                - The total number of documents in the specified indices.
+                - The total size of the indices on disk in bytes.
+            Returns (0, 0) if the indices are not found or if there is a
+            request error.
         """
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
@@ -1137,8 +1144,13 @@ class OpenSearchDataStore:
         try:
             es_stats = self.client.indices.stats(index=indices, metric="docs, store")
 
-        except NotFoundError:
-            os_logger.error("Unable to count indices (index not found)")
+        except NotFoundError as e:
+            os_logger.error(
+                "Unable to count indices (index not found). Attempted indices: %s. Error: %s",  # pylint: disable=line-too-long
+                ", ".join(indices),
+                e,
+                exc_info=True,
+            )
             return 0, 0
 
         except RequestError:
