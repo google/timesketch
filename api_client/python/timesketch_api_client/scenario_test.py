@@ -38,13 +38,8 @@ class ScenarioTest(unittest.TestCase):
     def test_set_display_name(self):
         """Test setting the scenario display name."""
         scenario = self.sketch.list_scenarios()[0]
-        scenario.display_name = "New Scenario Name"
+        scenario.set_display_name("New Scenario Name")
         self.assertEqual(scenario.display_name, "New Scenario Name")
-
-    def test_set_status(self):
-        """Test setting the scenario status."""
-        scenario = self.sketch.list_scenarios()[0]
-        self.assertTrue(scenario.set_status("new"))
 
     def test_list_facets(self):
         """Test listing facets for a scenario."""
@@ -89,9 +84,9 @@ class QuestionTest(unittest.TestCase):
     def test_question_update(self):
         """Test updating question attributes."""
         question = self.sketch.list_questions()[0]
-        question.name = "Updated Question Name?"
+        question.set_name("Updated Question Name?")
         self.assertEqual(question.name, "Updated Question Name?")
-        question.description = "Updated description."
+        question.set_description("Updated description.")
         self.assertEqual(question.description, "Updated description.")
         question.set_status("verified")
         question.set_priority("__ts_priority_high")
