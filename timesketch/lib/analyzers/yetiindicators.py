@@ -21,6 +21,7 @@ except ImportError:
 from timesketch.lib import emojis, sigma_util
 from timesketch.lib.analyzers import interface, manager
 
+logger = logging.getLogger("timesketch.analyzers.yetiindicators")
 
 TYPE_TO_EMOJI = {
     "malware": "SPIDER",
@@ -115,9 +116,10 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         if not yeti_api_key:
             raise RuntimeError("YETI_API_KEY is not configured.")
 
-        self.api = YetiApi(yeti_api_root)
         if tls_cert and yeti_api_root.startswith("https://"):
-            self.api.client.verify = tls_cert
+            self.api = YetiApi(yeti_api_root, tls_cert=tls_cert)
+        else:
+            self.api = YetiApi(yeti_api_root)
 
         try:
             self.api.auth_api_key(yeti_api_key)
@@ -545,7 +547,8 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
                     # No matter the exception, we don't want to stop the
                     # analyzer. Errors are logged and reported in the UI.
                     logging.error(
-                        "Error processing events for indicator %s: %s",
+                        "Error processing events in sketch %s for indicator %s: %s",
+                        self.sketch.id,
                         indicator["id"],
                         str(exception),
                     )

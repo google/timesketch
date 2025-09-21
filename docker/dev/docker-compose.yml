@@ -1,4 +1,3 @@
-version: "3"
 services:
   timesketch:
     container_name: timesketch-dev
@@ -25,7 +24,7 @@ services:
       - TIMESKETCH_USER=dev
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
-      - prometheus_multiproc_dir=/tmp/
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/
 
     restart: always
     volumes:
@@ -83,4 +82,3 @@ services:
     ports:
       - 127.0.0.1:9090:9090
     command: --config.file=/etc/prometheus/prometheus.yml
-

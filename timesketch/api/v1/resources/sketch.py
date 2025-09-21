@@ -84,8 +84,32 @@ class SketchListResource(resources.ResourceMixin, Resource):
     def get(self):
         """Handles GET request to the resource.
 
+        Returns a list of sketches that the user has access to, filtered
+        and paginated according to the provided query parameters.
+
+        Query Parameters:
+            scope (str): Optional. Defines the scope of the sketches to return.
+                Can be one of:
+                - "user": (Default) Sketches owned by the current user.
+                - "shared": Sketches shared with the current user.
+                - "all": All sketches accessible by the user (owned and shared).
+                - "recent": Sketches recently accessed by the user.
+                - "archived": All archived sketches the user has access to.
+                - "admin": All sketches on the system (admin only).
+                - "search": Sketches matching the search_query.
+            page (int): Optional. The page number for pagination. Defaults to 1.
+            per_page (int): Optional. The number of sketches per page.
+                Defaults to 10.
+            search_query (str): Optional. The search term to use when scope
+                is "search".
+            include_archived (bool): Optional. Whether to include archived
+                sketches. This applies to "user", "shared", "all", and "admin"
+                scopes. Defaults to False.
+
         Returns:
-            List of sketches (instance of flask.wrappers.Response)
+            A flask.wrappers.Response object with a JSON payload containing:
+            - "objects": A list of sketch dictionaries.
+            - "meta": A dictionary with pagination information.
         """
         args = self.parser.parse_args()
         scope = args.get("scope")
@@ -109,7 +133,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
             not_(Sketch.Status.status == "deleted"), Sketch.Status.parent
         ).order_by(Sketch.updated_at.desc())
 
-        filtered_sketches = base_filter_with_archived
+        filtered_sketches = None
         sketches = []
         return_sketches = []
 
@@ -120,6 +144,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
         current_page = 1
         total_pages = 0
         total_items = 0
+
+        if include_archived:
+            base_filter = base_filter_with_archived
+        else:
+            base_filter = base_filter.filter(not_(Sketch.status.any(status="archived")))
 
         if scope == "recent":
             # Get list of sketches that the user has actively searched in.
@@ -136,30 +165,30 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 if view.sketch.get_status.status != "deleted"
             ]
             total_items = len(sketches)
+        elif scope == "archived":
+            filtered_sketches = base_filter_with_archived.filter(
+                Sketch.status.any(status="archived"),
+            )
         elif scope == "admin":
             if not current_user.admin:
                 abort(HTTP_STATUS_CODE_FORBIDDEN, "User is not an admin.")
-            if include_archived:
-                filtered_sketches = base_filter_with_archived
-            else:
-                filtered_sketches = base_filter
+            filtered_sketches = base_filter
         elif scope == "user":
             filtered_sketches = base_filter.filter_by(user=current_user)
-        elif scope == "archived":
-            filtered_sketches = sketch_query.filter(
-                Sketch.status.any(status="archived")
-            )
         elif scope == "shared":
             filtered_sketches = base_filter.filter(Sketch.user != current_user)
+        elif scope == "all":
+            filtered_sketches = base_filter
         elif scope == "search":
-            filtered_sketches = base_filter_with_archived.filter(
+            search_base = base_filter
+            filtered_sketches = search_base.filter(
                 or_(
                     Sketch.name.ilike(f"%{search_query}%"),
                     Sketch.description.ilike(f"%{search_query}%"),
                 )
             )
 
-        if not sketches:
+        if not sketches and filtered_sketches:
             pagination = filtered_sketches.paginate(page=page, per_page=per_page)
             sketches = pagination.items
             has_next = pagination.has_next
@@ -206,9 +235,13 @@ class SketchListResource(resources.ResourceMixin, Resource):
         """
         form = forms.NameDescriptionForm.build(request)
         if not form.validate_on_submit():
-            error_message = "Unable to validate form data: "
-            error_message += ", ".join(form.errors.values())
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message)
+            error_messages = []
+            for field_errors in form.errors.values():
+                error_messages.extend(field_errors)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                f"Unable to validate form data: {', '.join(error_messages)}",
+            )
 
         sketch = Sketch(name=form.name.data, description=form.description.data)
         db_session.add(sketch)
@@ -499,10 +532,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
             if sketch.has_label(label):
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    f"Sketch with the label [{label:s}] cannot be deleted.",
-                )
+                msg = f"Sketch with the label [{label}] cannot be deleted."
+                abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
         sketch.set_status(status="deleted")
         return HTTP_STATUS_CODE_OK
 
@@ -541,11 +572,11 @@ class SketchResource(resources.ResourceMixin, Resource):
         labels = form.get("labels", [])
         label_action = form.get("label_action", "add")
         if label_action not in ("add", "remove"):
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Label actions needs to be either "add" or "remove", '
-                f"not [{label_action:s}]",
+            msg = (
+                "Label actions needs to be either 'add' or 'remove', "
+                f"not [{label_action}]"
             )
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, msg)
 
         if labels and isinstance(labels, (tuple, list)):
             for label in labels:
