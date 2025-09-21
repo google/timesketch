@@ -15,6 +15,7 @@
 
 
 import logging
+from typing import Dict, List, Any, Optional
 
 from . import error
 from . import resource
@@ -26,8 +27,14 @@ logger = logging.getLogger("timesketch_api.scenario")
 class Scenario(resource.BaseResource):
     """Timesketch scenario object.
 
+    A Scenario represents an investigative playbook within a Timesketch sketch,
+    often derived from a DFIQ template. It contains facets and questions to
+    guide an investigation.
+
     Attributes:
         id: The ID of the scenario.
+        uuid: The UUID of the scenario.
+        sketch_id: The ID of the sketch this scenario belongs to.
         api: An instance of TimesketchApi object.
     """
 
@@ -35,10 +42,10 @@ class Scenario(resource.BaseResource):
         """Initializes the Scenario object.
 
         Args:
-            scenario_id: Primary key ID of the scenario.
-            api: An instance of TiscmesketchApi object.
-            uuid: UUID of the scenario.
             sketch_id: ID of a sketch.
+            scenario_id: Primary key ID of the scenario.
+            uuid: UUID of the scenario.
+            api: An instance of the TimesketchApi object.
         """
         self.id = scenario_id
         self.uuid = uuid
@@ -52,7 +59,7 @@ class Scenario(resource.BaseResource):
         )
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns the scenario name.
 
         Returns:
@@ -61,53 +68,54 @@ class Scenario(resource.BaseResource):
         if self._name:
             return self._name
         scenario = self.lazyload_data()
-        self._name = scenario["objects"][0]["name"]
+        self._name = scenario["objects"][0].get("name", "")
         return self._name
 
     @property
-    def display_name(self):
-        """Property that returns the scenario display name."""
+    def display_name(self) -> str:
+        """Property that returns the scenario display name.
+
+        Returns:
+            Scenario display name as string.
+        """
         if self._display_name:
             return self._display_name
         scenario = self.lazyload_data()
-        self._display_name = scenario["objects"][0]["display_name"]
+        # Fallback to name if display_name is not present.
+        self._display_name = scenario["objects"][0].get(
+            "display_name", scenario["objects"][0].get("name", "")
+        )
         return self._display_name
 
-    @display_name.setter
-    def display_name(self, value):
-        """Sets the display name of the scenario."""
-        resource_url = f"{self.api.api_root}/{self.resource_uri}"
-        data = {"scenario_name": value}
-        response = self.api.session.post(resource_url, json=data)
-        self._data = error.get_response_json(response, logger)
-        updated_object = self._data["objects"][0]
-        self._display_name = updated_object["display_name"]
-        self._name = updated_object["name"]
+    def set_display_name(self, display_name: str) -> None:
+        """Sets the display name of the scenario.
 
-    def set_status(self, status):
-        """Sets the status of the scenario.
+        This performs an API call to update the scenario on the server.
 
         Args:
-            status (str): The new status for the scenario.
+            display_name: The new display name for the scenario.
 
-        Returns:
-            bool: True if the status was set successfully.
+        Raises:
+            RuntimeError: If the API request fails to update the scenario.
         """
-        resource_url = (
-            f"{self.api.api_root}/sketches/{self.sketch_id}/"
-            f"scenarios/{self.id}/status/"
-        )
-        data = {"status": status}
+        resource_url = f"{self.api.api_root}/{self.resource_uri}"
+        data = {"scenario_name": display_name}
         response = self.api.session.post(resource_url, json=data)
-        status = error.check_return_status(response, logger)
-        self.lazyload_data(refresh_cache=True)
-        return status
 
-    def list_facets(self):
+        try:
+            response_json = error.get_response_json(response, logger)
+            self._data = response_json
+            updated_object = self._data["objects"][0]
+            self._display_name = updated_object.get("display_name")
+        except (RuntimeError, ValueError) as e:
+            logger.error(f"Failed to set display name for scenario {self.id}: {e}")
+            raise
+
+    def list_facets(self) -> List[Dict[str, Any]]:
         """Lists all facets for the scenario.
 
         Returns:
-            A list of dictionaries, each representing a facet.
+            list[dict]: A list of dictionaries, each representing a facet.
         """
         resource_url = (
             f"{self.api.api_root}/sketches/{self.sketch_id}/"
@@ -116,31 +124,32 @@ class Scenario(resource.BaseResource):
         response = self.api.session.get(resource_url)
         response_json = error.get_response_json(response, logger)
         objects = response_json.get("objects", [])
+        # Handle the case where the API returns a nested list
         if objects and isinstance(objects[0], list):
             return objects[0]
         return objects
 
     @property
-    def dfiq_identifier(self):
+    def dfiq_identifier(self) -> str:
         """Property that returns the dfiq identifier.
 
         Returns:
             dfiq identifier as string.
         """
         scenario = self.lazyload_data()
-        return scenario["objects"][0]["dfiq_identifier"]
+        return scenario["objects"][0].get("dfiq_identifier", "")
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns the scenario description.
 
         Returns:
             Description as string.
         """
         scenario = self.lazyload_data()
-        return scenario["objects"][0]["description"]
+        return scenario["objects"][0].get("description", "")
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict representation of the scenario."""
         return self.lazyload_data()
 
@@ -148,18 +157,24 @@ class Scenario(resource.BaseResource):
 class Question(resource.BaseResource):
     """Timesketch question object.
 
+    A Question represents a single investigative question within a sketch,
+    which can be part of a Scenario, Facet or standalone.
+
     Attributes:
         id: The ID of the question.
+        uuid: The UUID of the question.
+        sketch_id: The ID of the sketch this question belongs to.
         api: An instance of TimesketchApi object.
     """
 
     def __init__(self, sketch_id, question_id, uuid, api):
-        """Initializes the question object.
+        """Initializes the Question object.
 
         Args:
-            question_id: Primary key ID of the scenario.
-            api: An instance of TiscmesketchApi object.
             sketch_id: ID of a sketch.
+            question_id: Primary key ID of the question.
+            uuid: UUID of the question.
+            api: An instance of the TimesketchApi object.
         """
         self.id = question_id
         self.uuid = uuid
@@ -173,24 +188,46 @@ class Question(resource.BaseResource):
             api=api, resource_uri=f"sketches/{self.sketch_id}/questions/{self.id}/"
         )
 
-    def _update(self, data):
-        """Internal helper to update the question."""
-        resource_url = f"{self.api.api_root}/{self.resource_uri}"
-        response = self.api.session.post(resource_url, json=data)
-        self._data = error.get_response_json(response, logger)
-        updated_object = self._data["objects"][0]
-        self._name = updated_object["name"]
-        self._display_name = updated_object["display_name"]
-        self._description = updated_object["description"]
+    def _update(self, data: Dict[str, Any]) -> None:
+        """Internal helper to send updates to the Question API endpoint.
 
-    def add_attribute(self, name, value, ontology=None, description=None):
-        """Adds an attribute to the question.
+        On success, this method updates the local cache (_data, _name, etc.)
+        with the response from the server.
 
         Args:
-            name (str): The name of the attribute.
-            value (str): The value of the attribute.
-            ontology (str): Optional ontology for the attribute.
-            description (str): Optional description for the attribute.
+            data: A dictionary with the fields to update.
+
+        Raises:
+            RuntimeError: If the API request fails.
+        """
+        resource_url = f"{self.api.api_root}/{self.resource_uri}"
+        response = self.api.session.post(resource_url, json=data)
+
+        try:
+            response_json = error.get_response_json(response, logger)
+            self._data = response_json
+            updated_object = self._data["objects"][0]
+            self._name = updated_object.get("name", self._name)
+            self._display_name = updated_object.get("display_name", self._display_name)
+            self._description = updated_object.get("description", self._description)
+        except (RuntimeError, ValueError) as e:
+            logger.error(f"Failed to update question {self.id}: {e}")
+            raise
+
+    def add_attribute(
+        self,
+        name: str,
+        value: str,
+        ontology: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> None:
+        """Adds a single attribute to the question.
+
+        Args:
+            name: The name of the attribute.
+            value: The value of the attribute.
+            ontology: Optional ontology for the attribute (e.g., 'text').
+            description: Optional description for the attribute.
         """
         attribute = {
             "name": name,
@@ -201,7 +238,7 @@ class Question(resource.BaseResource):
         self._update({"attributes": [attribute]})
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns the question name.
 
         Returns:
@@ -210,37 +247,63 @@ class Question(resource.BaseResource):
         if self._name:
             return self._name
         question = self.lazyload_data()
-        self._name = question["objects"][0]["name"]
+        self._name = question["objects"][0].get("name", "")
         return self._name
 
-    @name.setter
-    def name(self, value):
-        """Sets the name of the question."""
-        self._update({"name": value})
+    def set_name(self, name: str) -> None:
+        """Sets the name of the question.
+
+        Args:
+            name: The new name for the question.
+
+        Raises:
+            RuntimeError: If the API request fails.
+        """
+        self._update({"name": name})
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         """Property that returns the question display name."""
         if self._display_name:
             return self._display_name
         question = self.lazyload_data()
-        self._display_name = question["objects"][0]["display_name"]
+        self._display_name = question["objects"][0].get("display_name", "")
         return self._display_name
 
-    @display_name.setter
-    def display_name(self, value):
-        """Sets the display name of the question."""
-        self._update({"display_name": value})
+    def set_display_name(self, display_name: str) -> None:
+        """Sets the display name of the question.
 
-    def set_status(self, status):
-        """Sets the status of the question."""
+        Args:
+            display_name: The new display name for the question.
+
+        Raises:
+            RuntimeError: If the API request fails.
+        """
+        self._update({"display_name": display_name})
+
+    def set_status(self, status: str) -> None:
+        """Sets the status of the question.
+
+        Args:
+            status: The new status (e.g., 'new', 'verified').
+
+        Raises:
+            RuntimeError: If the API request fails.
+        """
         self._update({"status": status})
 
-    def set_priority(self, priority):
-        """Sets the priority of the question."""
+    def set_priority(self, priority: str) -> None:
+        """Sets the priority of the question.
+
+        Args:
+            priority: The new priority (e.g., '__ts_priority_high').
+
+        Raises:
+            RuntimeError: If the API request fails.
+        """
         self._update({"priority": priority})
 
-    def list_conclusions(self):
+    def list_conclusions(self) -> List[Dict[str, Any]]:
         """Lists all conclusions for the question.
 
         Returns:
@@ -253,20 +316,23 @@ class Question(resource.BaseResource):
         response = self.api.session.get(resource_url)
         response_json = error.get_response_json(response, logger)
         objects = response_json.get("objects", [])
+        # Handle the case where the API returns a nested list
         if objects and isinstance(objects[0], list):
             return objects[0]
         return objects
 
-    def add_conclusion(self, conclusion_text, automated=False):
+    def add_conclusion(
+        self, conclusion_text: str, automated: bool = False
+    ) -> Dict[str, Any]:
         """Adds a conclusion to the question.
 
-        If automated is False (default), it adds or updates the conclusion
-        for the current user. If automated is True, it adds a new conclusion
+        If `automated` is False (default), it adds or updates the conclusion
+        for the current user. If `automated` is True, it adds a new conclusion
         not associated with a user.
 
         Args:
-            conclusion_text (str): The text of the conclusion.
-            automated (bool): Whether the conclusion is automated.
+            conclusion_text: The text of the conclusion.
+            automated: Whether the conclusion is automated.
 
         Returns:
             A dictionary with the API response.
@@ -280,17 +346,17 @@ class Question(resource.BaseResource):
         return error.get_response_json(response, logger)
 
     @property
-    def dfiq_identifier(self):
+    def dfiq_identifier(self) -> str:
         """Property that returns the question template id.
 
         Returns:
             Question DFIQ identifier as string.
         """
         question = self.lazyload_data()
-        return question["objects"][0]["dfiq_identifier"]
+        return question["objects"][0].get("dfiq_identifier", "")
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns the question description.
 
         Returns:
@@ -299,37 +365,43 @@ class Question(resource.BaseResource):
         if self._description:
             return self._description
         question = self.lazyload_data()
-        self._description = question["objects"][0]["description"]
+        self._description = question["objects"][0].get("description", "")
         return self._description
 
-    @description.setter
-    def description(self, value):
-        """Sets the description of the question."""
-        self._update({"description": value})
+    def set_description(self, description: str) -> None:
+        """Sets the description of the question.
+
+        Args:
+            description: The new description for the question.
+
+        Raises:
+            RuntimeError: If the API request fails.
+        """
+        self._update({"description": description})
 
     @property
-    def approaches(self):
+    def approaches(self) -> List[Dict[str, Any]]:
         """Property that returns the question approaches.
 
         Returns:
             Question approaches as list of dict.
         """
         question = self.lazyload_data()
-        return question["objects"][0]["approaches"]
+        return question["objects"][0].get("approaches", [])
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict representation of the question."""
         return self.lazyload_data()
 
 
-def getScenarioTemplateList(api):
-    """Retrieves a list of scenario templates.
+def getScenarioTemplateList(api) -> List[Dict[str, Any]]:
+    """Retrieves a list of all available scenario templates.
 
     Args:
-        api: An instance of TimesketchApi object.
+        api: An instance of the TimesketchApi object.
 
     Returns:
-        list: A list of Scenario templates.
+        A list of dictionaries, where each represents a Scenario template.
     """
     resource_url = f"{api.api_root}/scenarios/"
     response = api.session.get(resource_url)
@@ -338,14 +410,14 @@ def getScenarioTemplateList(api):
     return scenario_objects
 
 
-def getQuestionTemplateList(api):
-    """Retrieves a list of question templates.
+def getQuestionTemplateList(api) -> List[Dict[str, Any]]:
+    """Retrieves a list of all available question templates.
 
     Args:
-        api: An instance of TimesketchApi object.
+        api: An instance of the TimesketchApi object.
 
     Returns:
-        list: A list of Question templates.
+        A list of dictionaries, where each represents a Question template.
     """
     resource_url = f"{api.api_root}/questions/"
     response = api.session.get(resource_url)
