@@ -146,14 +146,6 @@ class OpenSearchDataStore:
         Attributes:
             client (opensearchpy.OpenSearch): The underlying OpenSearch client
                 instance used for all communication with the datastore.
-            user (str): The username for OpenSearch authentication, fetched
-                from `current_app.config.OPENSEARCH_USER`.
-            password (str): The password for OpenSearch authentication, fetched
-                from `current_app.config.OPENSEARCH_PASSWORD`.
-            ssl (bool): Whether to use SSL for the connection, fetched from
-                `current_app.config.OPENSEARCH_SSL`.
-            verify (bool): Whether to verify SSL certificates, fetched from
-                `current_app.config.OPENSEARCH_VERIFY_CERTS`.
             timeout (int): The default timeout in seconds for OpenSearch
                 requests, fetched from `current_app.config.OPENSEARCH_TIMEOUT`.
             flush_interval (int): The number of events to queue before a bulk
