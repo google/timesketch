@@ -248,9 +248,6 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
         status: An optional string to set the timeline's status to.
                 Valid values are "ready", "processing", or "fail". If not provided,
                 the status is determined automatically.
-
-    Returns:
-        None.
     """
     timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
