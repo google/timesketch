@@ -116,9 +116,10 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         if not yeti_api_key:
             raise RuntimeError("YETI_API_KEY is not configured.")
 
-        self.api = YetiApi(yeti_api_root)
         if tls_cert and yeti_api_root.startswith("https://"):
-            self.api.client.verify = tls_cert
+            self.api = YetiApi(yeti_api_root, tls_cert=tls_cert)
+        else:
+            self.api = YetiApi(yeti_api_root)
 
         try:
             self.api.auth_api_key(yeti_api_key)
