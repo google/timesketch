@@ -191,7 +191,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 )
             )
 
-        if not sketches:
+        if not sketches and filtered_sketches:
             pagination = filtered_sketches.paginate(page=page, per_page=per_page)
             sketches = pagination.items
             has_next = pagination.has_next

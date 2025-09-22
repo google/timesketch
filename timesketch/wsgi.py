@@ -48,7 +48,7 @@ application_legacy = create_app(legacy_ui=True)
 application_v3 = create_app(v3_ui=True)
 
 # Setup metrics endpoint.
-if os.environ.get("prometheus_multiproc_dir"):
+if os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
     logger.info("Metrics server enabled")
     GunicornPrometheusMetrics(application, group_by="endpoint")
 
