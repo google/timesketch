@@ -115,9 +115,9 @@ class BaseEndToEndTest(object):
                 # This can happen if the file is not found or permissions are wrong.
                 # It's better to raise a more specific error here.
                 raise RuntimeError(
-                    f"Unable to import timeline, got an OS Error: {e} for importing "
+                    "Unable to import timeline, got an OS Error for importing "
                     f"{file_path}"
-                )
+                ) from e
 
             if not timeline.index:
                 retry_count += 1
