@@ -226,11 +226,31 @@ def _close_index(index_name, data_store, timeline_id):
 
 
 def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
-    """Helper function to set status for searchindex and all related timelines.
+    """Sets the status for a timeline and its related search index.
+
+    This helper function updates the status of a timeline based on the status of its
+    data sources. The automatic status determination follows a specific logic:
+    - If all data sources have a "fail" status, the timeline is set to "fail".
+    - If any data source is in a "processing" state, the timeline is set to
+      "processing".
+    - Otherwise, if all data sources are "ready" or a mix of "ready" and "fail", the
+      timeline is set to "ready".
+
+    It can also accept an optional status string to override the automatic status
+    calculation. After updating the timeline's status, it commits the changes to
+    the database and refreshes the corresponding search index. The refresh is
+    attempted up to five times with a one-second delay between retries to account
+    for potential delays in index creation. If the new status is "ready," it
+    triggers any associated analyzers.
 
     Args:
-        timeline_id: (int) Timeline ID.
-        status: (str) Optional value to set the timeline status to.
+        timeline_id: The unique integer ID of the timeline to update.
+        status: An optional string to set the timeline's status to.
+                Valid values are "ready", "processing", or "fail". If not provided,
+                the status is determined automatically.
+
+    Returns:
+        None.
     """
     timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
