@@ -606,12 +606,13 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     index=",".join(sketch_indices), body=aggregation_dsl, size=0
                 )
             except RequestError as e:
+                indices_msg = ",".join(sketch_indices)
                 if e.error == "index_closed_exception":
                     logger.error(
-                        "Unable to run aggregation on a closed index."
-                        "index: %s and parameters: %s",
+                        "Unable to run aggregation on a closed index. "
+                        "index: %s and dsl: %s",
                         indices_msg,
-                        aggregator_parameters,
+                        aggregation_dsl,
                         exc_info=True,
                         stack_info=True,
                         extra={"request": request},
@@ -621,10 +622,11 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                         "Unable to run aggregation on a closed index.",
                     )
                 logger.error(
-                    "Unable to run aggregation on a index."
-                    "index: %s and parameters: %s",
+                    "Unable to run aggregation on an index with error: %s. "
+                    "index: %s and dsl: %s",
+                    str(e),
                     indices_msg,
-                    aggregator_parameters,
+                    aggregation_dsl,
                     exc_info=True,
                     stack_info=True,
                     extra={"request": request},
