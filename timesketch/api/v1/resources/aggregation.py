@@ -195,11 +195,15 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
-            msg = (
-                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
-                f"sketch ID ({aggregation.sketch_id:d})"
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "sketch ID (%d - cannot delete)"
             )
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, aggregation.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                msg_template % (sketch.id, aggregation.sketch_id),
+            )
 
         db_session.delete(aggregation)
         db_session.commit()
@@ -407,11 +411,14 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
 
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
-            msg = (
-                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
-                f"group sketch ID ({group.sketch_id:d})"
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "group sketch ID (%d) - cannot delete"
             )
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, group.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, msg_template % (sketch.id, group.sketch_id)
+            )
 
         if not sketch.has_permission(user=current_user, permission="write"):
             abort(
@@ -562,7 +569,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 )
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    f"Unable to run the aggregation, with error: {exc!s}"
+                    f"Unable to run the aggregation, with error: {exc!s} "
                     f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
                 )
             time_after = time.time()
@@ -605,12 +612,13 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     index=",".join(sketch_indices), body=aggregation_dsl, size=0
                 )
             except RequestError as e:
+                indices_msg = ",".join(sketch_indices)
                 if e.error == "index_closed_exception":
                     logger.error(
-                        "Unable to run aggregation on a closed index."
-                        "index: %s and parameters: %s",
+                        "Unable to run aggregation on a closed index. "
+                        "index: %s and dsl: %s",
                         indices_msg,
-                        aggregator_parameters,
+                        aggregation_dsl,
                         exc_info=True,
                         stack_info=True,
                         extra={"request": request},
@@ -620,10 +628,11 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                         "Unable to run aggregation on a closed index.",
                     )
                 logger.error(
-                    "Unable to run aggregation on a index."
-                    "index: %s and parameters: %s",
+                    "Unable to run aggregation on an index with error: %s. "
+                    "index: %s and dsl: %s",
+                    str(e),
                     indices_msg,
-                    aggregator_parameters,
+                    aggregation_dsl,
                     exc_info=True,
                     stack_info=True,
                     extra={"request": request},

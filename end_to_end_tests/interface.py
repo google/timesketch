@@ -112,7 +112,12 @@ class BaseEndToEndTest(object):
                 time.sleep(sleep_time_seconds)
                 continue
             except OSError as e:
-                raise RuntimeError(f"Unable to import timeline, got an OS Error: {e}")
+                # This can happen if the file is not found or permissions are wrong.
+                # It's better to raise a more specific error here.
+                raise RuntimeError(
+                    "Unable to import timeline, got an OS Error for importing "
+                    f"{file_path}"
+                ) from e
 
             if not timeline.index:
                 retry_count += 1
@@ -174,7 +179,7 @@ class BaseEndToEndTest(object):
 
         if os.path.isfile(OPENSEARCH_MAPPINGS_FILE):
             mappings = {}
-            with open(OPENSEARCH_MAPPINGS_FILE, "r") as file_object:
+            with open(OPENSEARCH_MAPPINGS_FILE, "r", encoding="utf-8") as file_object:
                 mappings = json.load(file_object)
 
             if not es.indices.exists(index_name):
