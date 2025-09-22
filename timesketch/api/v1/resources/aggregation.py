@@ -195,12 +195,15 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
-            msg = (
-                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
-                f"sketch ID ({aggregation.sketch_id:d} - cannot delete)"
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "sketch ID (%d - cannot delete)"
             )
-            logger.error(msg)
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, aggregation.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                msg_template % (sketch.id, aggregation.sketch_id),
+            )
 
         db_session.delete(aggregation)
         db_session.commit()
@@ -408,11 +411,14 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
 
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
-            msg = (
-                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
-                f"group sketch ID ({group.sketch_id:d}) - cannot delete"
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "group sketch ID (%d) - cannot delete"
             )
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, group.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, msg_template % (sketch.id, group.sketch_id)
+            )
 
         if not sketch.has_permission(user=current_user, permission="write"):
             abort(
