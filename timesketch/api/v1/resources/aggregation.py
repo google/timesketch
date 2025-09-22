@@ -563,7 +563,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 )
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    f"Unable to run the aggregation, with error: {exc!s}"
+                    f"Unable to run the aggregation, with error: {exc!s} "
                     f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
                 )
             time_after = time.time()
