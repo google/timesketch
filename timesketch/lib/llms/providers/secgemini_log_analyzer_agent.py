@@ -74,14 +74,19 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         self._session = None
 
     async def _run_async_stream(self, log_path, prompt):
-        """Runs the async streaming logic for SecGemini.
+        """Initializes a SecGemini session and streams the analysis response.
+
+        This is an async helper method that:
+        1. Creates a new SecGemini session.
+        2. Uploads the local log file to the session.
+        3. Streams the analysis results for the given prompt.
 
         Args:
-            log_path: Path to the log file to analyze.
-            prompt: The prompt to use for the analysis.
+            log_path: The local filesystem path to the JSONL log file.
+            prompt: The analysis prompt to send to the agent.
 
         Yields:
-            str: The content of the response from the LLM.
+            str: The content chunks of the streamed response from the agent.
         """
         self._session = self.sg_client.create_session(
             model=self.model, enable_logging=self.enable_logging
@@ -98,14 +103,26 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         log_events_generator: Iterable[Dict[str, Any]],
         prompt: str = "Analyze the attached logs for any signs of a compromise.",
     ) -> Generator[str, None, None]:
-        """Streams log events to SecGemini and yields the raw LLM response.
+        """Analyzes a stream of log events using the SecGemini log analysis agent.
+
+        This method orchestrates the entire analysis process:
+        1.  It receives a generator of Timesketch log events.
+        2.  Each event is serialized into a JSON string and written to a
+            temporary JSONL (JSON Lines) file on disk.
+        3.  It invokes the asynchronous SecGemini client, passing the path to the
+            log file.
+        4.  It manages an asyncio event loop to handle the async streaming response.
+        5.  It yields chunks of the response from the LLM as they are received.
+        6.  It includes logic to ensure the streaming continues until the complete
+            "JSON Summary of Findings" block has been received, then stops.
 
         Args:
-            log_events_generator: An iterable of log event dictionaries to analyze.
-            prompt: The prompt to use for the analysis.
+            log_events_generator: An iterable of dictionaries, where each
+                                dictionary is a Timesketch log event.
+            prompt: The prompt to send to the SecGemini agent for analysis.
 
         Yields:
-            str: The raw text response from the LLM.
+            str: Chunks of the raw text response from the LLM provider.
         """
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
@@ -113,7 +130,17 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             log_path = pathlib.Path(tmpfile.name)
             for event in log_events_generator:
                 try:
-                    tmpfile.write(json.dumps(event) + "\n")
+                    # Clean the event to only include required fields
+                    specific_fields = {"_id": event.get("_id", "")}
+                    source = event.get("_source", event)
+
+                    for key in ["data_type", "datetime", "message", "timestamp_desc"]:
+                        specific_fields[key] = source.get(key, "")
+
+                    # Explicitly stringify the tag field for now
+                    specific_fields["tag"] = json.dumps(source.get("tag", []))
+
+                    tmpfile.write(json.dumps(specific_fields) + "\n")
                     self._events_sent += 1
                 except TypeError as e:
                     logger.error(
@@ -125,18 +152,14 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 logger.warning("No events were provided to the log analyzer.")
                 return
 
-            async def run_stream():
+            accumulated_response = ""
+            found_json_summary = False
+            found_json_start = False
+
+            async def main():
                 async for chunk in self._run_async_stream(log_path, prompt):
                     yield chunk
 
-            async def main():
-                async for chunk in run_stream():
-                    yield chunk
-
-            # This is a bit of a hack to run an async generator from a sync method.
-            # It's not ideal, but it works for this use case.
-            # We create a new event loop and run the async generator in it.
-            # This is necessary because the SecGemini library is async.
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
@@ -146,7 +169,31 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             gen = main()
             while True:
                 try:
-                    yield loop.run_until_complete(gen.__anext__())
+                    chunk = loop.run_until_complete(gen.__anext__())
+                    # Some chunks may be empty
+                    if chunk is not None:
+                        accumulated_response += chunk
+                        yield chunk
+
+                        # Check for JSON Summary marker
+                        if (
+                            not found_json_summary
+                            and "**JSON Summary of Findings**" in accumulated_response
+                        ):
+                            found_json_summary = True
+
+                        if (
+                            found_json_summary
+                            and not found_json_start
+                            and "```json" in accumulated_response
+                        ):
+                            found_json_start = True
+
+                        if found_json_start:
+                            json_start = accumulated_response.index("```json")
+                            after_json_start = accumulated_response[json_start + 7 :]
+                            if "```" in after_json_start:
+                                break
                 except StopAsyncIteration:
                     break
 
