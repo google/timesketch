@@ -49,14 +49,59 @@ class Scenario(resource.BaseResource):
         """
         self.id = scenario_id
         self.uuid = uuid
-        self.api = api
         self.sketch_id = sketch_id
         self._name = None
         self._display_name = None
-        self._data = None
+        self._description = None
+        self._dfiq_identifier = None
+        self._is_populated = False
+
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/scenarios/{self.id}/"
         )
+
+    def _populate_attributes(self) -> None:
+        """Populates instance attributes from the API response data.
+
+        This internal helper method is called by `lazyload_data` after the raw
+        API response has been fetched. It parses the dictionary stored in
+        `self.resource_data` and sets the corresponding internal attributes
+        (e.g., `_name`, `_display_name`). It also sets the `_is_populated`
+        flag to True upon successful execution.
+        """
+        if not self.resource_data:
+            logger.warning("No data found in resource_data for scenario %d", self.id)
+            return
+
+        scenario_data = self.resource_data.get("objects", [{}])[0]
+
+        self._name = scenario_data.get("name", "")
+        self._display_name = scenario_data.get("display_name", self._name)
+        self._description = scenario_data.get("description", "")
+        self._dfiq_identifier = scenario_data.get("dfiq_identifier", "")
+        self._is_populated = True
+
+    def lazyload_data(self, refresh_cache: bool = False) -> Dict[str, Any]:
+        """Overrides the base `lazyload_data` to populate instance attributes.
+
+        This method ensures that the scenario's data is fetched from the API
+        and that the instance attributes are populated from that data. The API
+        call is only made on the first access or when a refresh is forced.
+        Subsequent calls will use the cached data unless `refresh_cache` is
+        True.
+
+        Args:
+            refresh_cache (bool): If True, forces a refresh of the cached data
+                from the API.
+
+        Returns:
+            dict: A dictionary containing the resource data from the API.
+        """
+        if not self._is_populated or refresh_cache:
+            super().lazyload_data(refresh_cache=refresh_cache)
+            self._populate_attributes()
+
+        return self.resource_data
 
     @property
     def name(self) -> str:
@@ -65,10 +110,7 @@ class Scenario(resource.BaseResource):
         Returns:
             Scenario name as string.
         """
-        if self._name:
-            return self._name
-        scenario = self.lazyload_data()
-        self._name = scenario["objects"][0].get("name", "")
+        self.lazyload_data()
         return self._name
 
     @property
@@ -78,13 +120,7 @@ class Scenario(resource.BaseResource):
         Returns:
             Scenario display name as string.
         """
-        if self._display_name:
-            return self._display_name
-        scenario = self.lazyload_data()
-        # Fallback to name if display_name is not present.
-        self._display_name = scenario["objects"][0].get(
-            "display_name", scenario["objects"][0].get("name", "")
-        )
+        self.lazyload_data()
         return self._display_name
 
     def set_display_name(self, display_name: str) -> None:
@@ -101,18 +137,16 @@ class Scenario(resource.BaseResource):
         """
         resource_url = f"{self.api.api_root}/{self.resource_uri}"
         data = {"scenario_name": display_name}
-        response = self.api.session.post(resource_url, json=data)
 
         try:
-            response_json = error.get_response_json(response, logger)
-            self._data = response_json
-            updated_object = self._data["objects"][0]
-            self._display_name = updated_object.get("display_name")
+            response = self.api.session.post(resource_url, json=data)
+            error.get_response_json(response, logger)
         except (RuntimeError, ValueError) as e:
             logger.error(
                 "Failed to set display name for scenario %s: %s", str(self.id), str(e)
             )
             raise
+        self.lazyload_data(refresh_cache=True)
 
     def list_facets(self) -> List[Dict[str, Any]]:
         """Lists all facets for the scenario.
@@ -139,8 +173,8 @@ class Scenario(resource.BaseResource):
         Returns:
             dfiq identifier as string.
         """
-        scenario = self.lazyload_data()
-        return scenario["objects"][0].get("dfiq_identifier", "")
+        self.lazyload_data()
+        return self._dfiq_identifier
 
     @property
     def description(self) -> str:
@@ -149,8 +183,8 @@ class Scenario(resource.BaseResource):
         Returns:
             Description as string.
         """
-        scenario = self.lazyload_data()
-        return scenario["objects"][0].get("description", "")
+        self.lazyload_data()
+        return self._description
 
     def to_dict(self) -> Dict[str, Any]:
         """Returns a dict representation of the scenario."""
@@ -181,21 +215,67 @@ class Question(resource.BaseResource):
         """
         self.id = question_id
         self.uuid = uuid
-        self.api = api
         self.sketch_id = sketch_id
         self._name = None
         self._display_name = None
         self._description = None
-        self._data = None
+        self._dfiq_identifier = None
+        self._approaches = []
+        self._is_populated = False
+
         super().__init__(
             api=api, resource_uri=f"sketches/{self.sketch_id}/questions/{self.id}/"
         )
 
+    def _populate_attributes(self) -> None:
+        """Populates instance attributes from the API response data.
+
+        This internal helper method is called by `lazyload_data` after the raw
+        API response has been fetched. It parses the dictionary stored in
+        `self.resource_data` and sets the corresponding internal attributes
+        (e.g., `_name`, `_description`). It also sets the `_is_populated`
+        flag to True upon successful execution.
+        """
+        if not self.resource_data:
+            logger.warning("No data found in resource_data for question %d", self.id)
+            return
+
+        question_data = self.resource_data.get("objects", [{}])[0]
+
+        self._name = question_data.get("name", "")
+        self._display_name = question_data.get("display_name", self._name)
+        self._description = question_data.get("description", "")
+        self._dfiq_identifier = question_data.get("dfiq_identifier", "")
+        self._approaches = question_data.get("approaches", [])
+        self._is_populated = True
+
+    def lazyload_data(self, refresh_cache: bool = False) -> Dict[str, Any]:
+        """Overrides the base `lazyload_data` to populate instance attributes.
+
+        This method ensures that the question's data is fetched from the API
+        and that the instance attributes are populated from that data. The API
+        call is only made on the first access or when a refresh is forced.
+        Subsequent calls will use the cached data unless `refresh_cache` is
+        True.
+
+        Args:
+            refresh_cache (bool): If True, forces a refresh of the cached data
+                from the API.
+
+        Returns:
+            dict: A dictionary containing the resource data from the API.
+        """
+        if not self._is_populated or refresh_cache:
+            super().lazyload_data(refresh_cache=refresh_cache)
+            self._populate_attributes()
+
+        return self.resource_data
+
     def _update(self, data: Dict[str, Any]) -> None:
         """Internal helper to send updates to the Question API endpoint.
 
-        On success, this method updates the local cache (_data, _name, etc.)
-        with the response from the server.
+        On success, this method forces a refresh of the local object state from
+        the server.
 
         Args:
             data: A dictionary with the fields to update.
@@ -205,18 +285,14 @@ class Question(resource.BaseResource):
             ValueError: If the question can't be updated.
         """
         resource_url = f"{self.api.api_root}/{self.resource_uri}"
-        response = self.api.session.post(resource_url, json=data)
 
         try:
-            response_json = error.get_response_json(response, logger)
-            self._data = response_json
-            updated_object = self._data["objects"][0]
-            self._name = updated_object.get("name", self._name)
-            self._display_name = updated_object.get("display_name", self._display_name)
-            self._description = updated_object.get("description", self._description)
+            response = self.api.session.post(resource_url, json=data)
+            error.get_response_json(response, logger)
         except (RuntimeError, ValueError) as e:
             logger.error("Failed to update question %s: %s", str(self.id), str(e))
             raise
+        self.lazyload_data(refresh_cache=True)
 
     def add_attribute(
         self,
@@ -248,10 +324,7 @@ class Question(resource.BaseResource):
         Returns:
             Question name as string.
         """
-        if self._name:
-            return self._name
-        question = self.lazyload_data()
-        self._name = question["objects"][0].get("name", "")
+        self.lazyload_data()
         return self._name
 
     def set_name(self, name: str) -> None:
@@ -268,10 +341,7 @@ class Question(resource.BaseResource):
     @property
     def display_name(self) -> str:
         """Property that returns the question display name."""
-        if self._display_name:
-            return self._display_name
-        question = self.lazyload_data()
-        self._display_name = question["objects"][0].get("display_name", "")
+        self.lazyload_data()
         return self._display_name
 
     def set_display_name(self, display_name: str) -> None:
@@ -356,8 +426,8 @@ class Question(resource.BaseResource):
         Returns:
             Question DFIQ identifier as string.
         """
-        question = self.lazyload_data()
-        return question["objects"][0].get("dfiq_identifier", "")
+        self.lazyload_data()
+        return self._dfiq_identifier
 
     @property
     def description(self) -> str:
@@ -366,10 +436,7 @@ class Question(resource.BaseResource):
         Returns:
             Question description as string.
         """
-        if self._description:
-            return self._description
-        question = self.lazyload_data()
-        self._description = question["objects"][0].get("description", "")
+        self.lazyload_data()
         return self._description
 
     def set_description(self, description: str) -> None:
@@ -390,8 +457,8 @@ class Question(resource.BaseResource):
         Returns:
             Question approaches as list of dict.
         """
-        question = self.lazyload_data()
-        return question["objects"][0].get("approaches", [])
+        self.lazyload_data()
+        return self._approaches
 
     def to_dict(self) -> Dict[str, Any]:
         """Returns a dict representation of the question."""

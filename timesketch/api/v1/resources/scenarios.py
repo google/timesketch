@@ -438,6 +438,8 @@ class ScenarioResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch",
             )
+        if not scenario:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No scenario found with this ID")
 
         if not scenario.sketch.id == sketch.id:
             abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")

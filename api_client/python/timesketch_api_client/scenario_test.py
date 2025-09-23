@@ -38,7 +38,31 @@ class ScenarioTest(unittest.TestCase):
     def test_set_display_name(self):
         """Test setting the scenario display name."""
         scenario = self.sketch.list_scenarios()[0]
-        scenario.set_display_name("New Scenario Name")
+
+        updated_scenario_data = {
+            "objects": [
+                {
+                    "id": 7,
+                    "name": "Test Scenario",
+                    "display_name": "New Scenario Name",
+                    "description": "A test scenario",
+                    "dfiq_identifier": "S0001",
+                }
+            ],
+            "meta": {},
+        }
+
+        mock_response_updated = mock.Mock()
+        mock_response_updated.status_code = 200
+        mock_response_updated.json.return_value = updated_scenario_data
+
+        with mock.patch.object(
+            self.api_client.session, "get", return_value=mock_response_updated
+        ) as mock_get:
+            scenario.set_display_name("New Scenario Name")
+            resource_url = f"http://127.0.0.1/api/v1/{scenario.resource_uri}"
+            mock_get.assert_called_once_with(resource_url, params=None)
+
         self.assertEqual(scenario.display_name, "New Scenario Name")
 
     def test_list_facets(self):
@@ -78,18 +102,56 @@ class QuestionTest(unittest.TestCase):
 
     def test_question_to_dict(self):
         """Test Question object to dict."""
-        scenario = self.sketch.list_questions()[0]
-        self.assertIsInstance(scenario.to_dict(), dict)
+        question = self.sketch.list_questions()[0]
+        self.assertIsInstance(question.to_dict(), dict)
 
     def test_question_update(self):
         """Test updating question attributes."""
         question = self.sketch.list_questions()[0]
-        question.set_name("Updated Question Name?")
-        self.assertEqual(question.name, "Updated Question Name?")
-        question.set_description("Updated description.")
-        self.assertEqual(question.description, "Updated description.")
-        question.set_status("verified")
-        question.set_priority("__ts_priority_high")
+        resource_url = f"http://127.0.0.1/api/v1/{question.resource_uri}"
+
+        with mock.patch.object(self.api_client.session, "get") as mock_get:
+            # --- Test updating the name ---
+            updated_name_data = {
+                "objects": [
+                    {"name": "Updated Question Name?", "description": "A test question"}
+                ]
+            }
+            mock_name_response = mock.Mock(status_code=200)
+            mock_name_response.json.return_value = updated_name_data
+            mock_get.return_value = mock_name_response
+
+            question.set_name("Updated Question Name?")
+
+            mock_get.assert_called_once_with(resource_url, params=None)
+            self.assertEqual(question.name, "Updated Question Name?")
+            mock_get.reset_mock()  # Reset the call counter for the next test
+
+            # --- Test updating the description ---
+            updated_desc_data = {
+                "objects": [
+                    {
+                        "name": "Updated Question Name?",
+                        "description": "Updated description.",
+                    }
+                ]
+            }
+            mock_desc_response = mock.Mock(status_code=200)
+            mock_desc_response.json.return_value = updated_desc_data
+            mock_get.return_value = mock_desc_response
+
+            question.set_description("Updated description.")
+
+            mock_get.assert_called_once_with(resource_url, params=None)
+            self.assertEqual(question.description, "Updated description.")
+            mock_get.reset_mock()
+
+            # --- Test setting status and priority ---
+            mock_get.return_value = mock_desc_response  # Re-use previous response
+            question.set_status("verified")
+            question.set_priority("__ts_priority_high")
+            # Verify get was called twice more
+            self.assertEqual(mock_get.call_count, 2)
 
     def test_question_conclusions(self):
         """Test adding and listing question conclusions."""
