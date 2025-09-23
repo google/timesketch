@@ -19,15 +19,14 @@ import asyncio
 import pathlib
 import tempfile
 from typing import Any, Dict, Generator, Iterable, Optional
+from timesketch.lib.llms.providers import interface
+from timesketch.lib.llms.providers import manager
 
 has_required_deps = True
 try:
     from sec_gemini import SecGemini
 except ImportError:
     has_required_deps = False
-
-from timesketch.lib.llms.providers import interface
-from timesketch.lib.llms.providers import manager
 
 logger = logging.getLogger(__name__)
 

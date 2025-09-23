@@ -17,7 +17,6 @@ import re
 import logging
 from typing import Any, Dict, Optional, Generator
 
-from flask import current_app
 from timesketch.models import db_session
 from timesketch.models.sketch import (
     Sketch,
@@ -131,7 +130,8 @@ class LogAnalyzer(LLMFeatureInterface):
             json_summary_marker = "**JSON Summary of Findings**"
             if json_summary_marker not in full_response_text:
                 logger.error(
-                    "LogAnalyzer: No JSON Summary of Findings section found in response."
+                    "LogAnalyzer: No JSON Summary of Findings section found "
+                    "in response."
                 )
                 self._errors_encountered.append("No JSON Summary section found")
                 return {
@@ -187,7 +187,7 @@ class LogAnalyzer(LLMFeatureInterface):
                     logger.warning("LogAnalyzer: Finding has no valid record IDs")
                     continue
 
-                # Create a finding that includes ALL record_ids with the same annotations
+                # Create a finding that includes ALL record_ids with same annotations
                 combined_finding = {
                     "record_ids": record_ids,
                     "annotations": finding_dict.get("annotations", []),
@@ -214,7 +214,7 @@ class LogAnalyzer(LLMFeatureInterface):
                 "processed_findings_summary": processed_findings_summary,
             }
 
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "LogAnalyzer: Failed to execute analysis for sketch %s: %s",
                 sketch.id,
@@ -266,7 +266,7 @@ class LogAnalyzer(LLMFeatureInterface):
                     event["__ts_index_name"] = event["_index"]
                 yield event
 
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "LogAnalyzer: Error during datastore.export_events_with_slicing "
                 "for sketch %s: %s",
@@ -367,7 +367,7 @@ class LogAnalyzer(LLMFeatureInterface):
             try:
                 db_session.add_all(events_to_link)
                 db_session.commit()
-            except Exception as exception:
+            except Exception as exception:  # pylint: disable=broad-exception-caught
                 db_session.rollback()
                 logger.error(
                     "LogAnalyzer: DB error for events: %s",
@@ -481,7 +481,7 @@ class LogAnalyzer(LLMFeatureInterface):
                 conclusions_created_this_finding,
                 len(events_to_link),
             )
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             db_session.rollback()
             logger.error(
                 "LogAnalyzer: DB commit error: %s",
