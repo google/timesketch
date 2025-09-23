@@ -198,7 +198,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     break
 
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> Any:
-        """Standard LLM generation method.
+        """Standard LLM generation method (not used for streaming log analysis).
 
         Args:
             prompt: The prompt to send to the LLM.
