@@ -899,6 +899,9 @@ def run_plaso(
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
         cmd.extend(["--use_ssl"])
+        ca_certs = current_app.config.get("OPENSEARCH_CA_CERTS")
+        if ca_certs:
+            cmd.extend(["--ca_certificates_file_path", ca_certs])
 
     psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", None)
     if psort_memory is not None:
