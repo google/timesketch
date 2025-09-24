@@ -416,7 +416,7 @@ level: high
         )
 
         # Import a timeline into the sketch
-        self.import_timeline("evtx_20250918.plaso", sketch=sketch)
+        self.import_timeline("sigma_events.csv", sketch=sketch)
 
         # List the timelines in the sketch
         timelines = sketch.list_timelines()
