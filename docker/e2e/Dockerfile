@@ -9,16 +9,16 @@ ARG PLASO_PPA_TRACK=stable
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  software-properties-common \
-  python3-pip \
-  python3-wheel \
-  python3-setuptools \
-  python3-psycopg2 \
-  gpg-agent \
   git \
-  wget \
-  tzdata \
+  gpg-agent \
+  python3-pip \
+  python3-psycopg2 \
+  python3-setuptools \
   python3-venv \
+  python3-wheel \
+  software-properties-common \
+  tzdata \
+  wget \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
