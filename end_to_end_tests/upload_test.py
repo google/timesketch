@@ -29,7 +29,9 @@ class UploadTest(interface.BaseEndToEndTest):
     def test_invalid_index_name(self):
         """Test uploading a timeline with an invalid index name."""
         with self.assertions.assertRaises(RuntimeError):
-            self.import_timeline("evtx.plaso", index_name="/invalid/index/name")
+            self.import_timeline(
+                "evtx_20250918.plaso", index_name="/invalid/index/name"
+            )
 
     def test_normal_upload_json(self):
         """Test the upload of a json file with a few events."""

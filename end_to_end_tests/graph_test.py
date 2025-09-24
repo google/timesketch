@@ -26,7 +26,7 @@ class GraphTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline("evtx.plaso")
+        self.import_timeline("evtx_20250918.plaso")
 
     def test_graph(self):
         """Test pulling graphs from the backend."""

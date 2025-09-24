@@ -128,7 +128,9 @@ class BaseEndToEndTest(object):
             if status == "fail" or timeline.index.status == "fail":
                 if retry_count > 3:
                     raise RuntimeError(
-                        f"Unable to import {filename}  into timeline {timeline.index.id} part of sketch: {sketch.id}."
+                        f"Unable to import {filename}"
+                        f" into timeline {timeline.index.id}"
+                        f" part of sketch: {sketch.id}."
                     )
 
             if status == "ready" and timeline.index.status == "ready":
