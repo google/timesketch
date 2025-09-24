@@ -115,7 +115,8 @@ class BaseEndToEndTest(object):
                 # This can happen if the file is not found or permissions are wrong.
                 # It's better to raise a more specific error here.
                 raise RuntimeError(
-                    "Unable to import timeline, got an OS Error for importing "
+                    f"Unable to import timeline {timeline.index.id}"
+                    f" sketch: {sketch.id}, got an OS Error for importing "
                     f"{file_path}"
                 ) from e
 
@@ -127,7 +128,7 @@ class BaseEndToEndTest(object):
             if status == "fail" or timeline.index.status == "fail":
                 if retry_count > 3:
                     raise RuntimeError(
-                        f"Unable to import timeline {timeline.index.id}."
+                        f"Unable to import {filename}  into timeline {timeline.index.id} part of sketch: {sketch.id}."
                     )
 
             if status == "ready" and timeline.index.status == "ready":
