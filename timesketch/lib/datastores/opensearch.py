@@ -1144,7 +1144,12 @@ class OpenSearchDataStore:
             return 0, 0
 
         except RequestError:
-            os_logger.error("Unable to count indices (request error)", exc_info=True)
+            os_logger.error(
+                "Unable to count indices (request error) %s. Error: %s",  # pylint: disable=line-too-long
+                ", ".join(indices),
+                e,
+                exc_info=True,
+            )
             return 0, 0
 
         doc_count_total = (
