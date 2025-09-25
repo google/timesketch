@@ -227,7 +227,7 @@ class ImportStreamer(object):
                 )
         else:
             try:
-                # Use format='mixed' for robust parsing of varied datetime strings
+                # Attempt to parse with 'mixed' format for robust parsing
                 date = pandas.to_datetime(
                     data_frame["datetime"], utc=True, format="mixed"
                 )
@@ -235,17 +235,24 @@ class ImportStreamer(object):
             except (ValueError, OverflowError) as e:
                 # Catch both ValueError (for malformed strings) and OverflowError
                 # (for out-of-range timestamps)
-                error_msg = (
-                    f"Unable to correct datetime due to invalid or out-of-range "
-                    f"values. Please check the 'datetime' column for values "
-                    f"like 1601-01-01 or dates beyond 2262. Original error: {e}"
+                # If 'mixed' parsing fails, fall back to coercing errors to NaT
+                logger.warning(
+                    "Mixed datetime parsing failed, falling back to 'coerce' to handle invalid values."
                 )
-                # Log the original error with its traceback
-                logger.error(error_msg, exc_info=True)
-                # Now, raise a more general RuntimeError
-                raise RuntimeError(error_msg) from e
-            except Exception:  # pylint: disable=broad-except
-                error_msg = f"Unable to correct datetime: {data_frame['datetime']}, is it correctly formatted?"
+                date = pandas.to_datetime(
+                    data_frame["datetime"], utc=True, errors="coerce"
+                )
+                # Identify and drop rows with invalid dates (converted to NaT)
+                invalid_rows = data_frame[date.isna()]
+                if not invalid_rows.empty:
+                    logger.warning(
+                        f"Dropping {len(invalid_rows)} rows with invalid or out-of-range timestamps."
+                    )
+                    data_frame.drop(invalid_rows.index, inplace=True)
+
+                data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+            except Exception as e:
+                error_msg = f"An unexpected error occurred: {e}"
                 logger.error(
                     error_msg,
                     exc_info=True,

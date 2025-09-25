@@ -65,7 +65,7 @@ class ClientTest(interface.BaseEndToEndTest):
         index_name = "direct_testing"
 
         self.import_directly_to_opensearch(
-            filename="evtx_direct.csv", index_name=index_name
+            filename="evtx_direct_without_label.csv", index_name=index_name
         )
 
         new_sketch = self.api.create_sketch(
