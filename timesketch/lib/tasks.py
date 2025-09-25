@@ -196,7 +196,8 @@ class SqlAlchemyTask(celery.Task):
 def init_worker(**kwargs):
     """Create new database engine per worker process."""
     url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
-    engine = create_engine(url)
+    engine_options = celery.conf.get("SQLALCHEMY_ENGINE_OPTIONS", {})
+    engine = create_engine(url, future=True, **engine_options)
     db_session.configure(bind=engine)
 
 
@@ -748,7 +749,7 @@ def run_plaso(
         DatastoreConnectionError: If the opensearch connection isn't available.
 
     Returns:
-        Name (str) of the index.
+        Name (str) of the index or None in case of an error
     """
     time_start = time.time()
     if not plaso:
@@ -767,6 +768,29 @@ def run_plaso(
 
     if events:
         raise RuntimeError("Plaso uploads needs a file, not events.")
+
+    # Run pinfo on storage file
+    try:
+        pinfo = pinfo_tool.PinfoTool()
+        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
+            file_path
+        )
+        storage_counters = (
+            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
+                storage_reader
+            )
+        )
+        total_file_events = storage_counters.get("parsers", {}).get("total")
+        if not total_file_events:
+            raise RuntimeError("Not able to get total event count from Plaso file.")
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        logger.error(
+            "Error importing Plaso file (%s): %s\n%s", file_path, str(e), error_msg
+        )
+        return None
 
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
@@ -835,27 +859,6 @@ def run_plaso(
         source_type,
     )
 
-    # Run pinfo on storage file
-    try:
-        pinfo = pinfo_tool.PinfoTool()
-        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
-            file_path
-        )
-        storage_counters = (
-            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
-                storage_reader
-            )
-        )
-        total_file_events = storage_counters.get("parsers", {}).get("total")
-        if not total_file_events:
-            raise RuntimeError("Not able to get total event count from Plaso file.")
-    except Exception as e:  # pylint: disable=broad-except
-        # Mark the searchindex and timelines as failed and exit the task
-        error_msg = traceback.format_exc()
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: %s\n%s", str(e), error_msg)
-        return None
-
     _set_datasource_total_events(timeline_id, file_path, total_file_events)
     _set_datasource_status(timeline_id, file_path, "processing")
 
@@ -896,6 +899,9 @@ def run_plaso(
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
         cmd.extend(["--use_ssl"])
+        ca_certs = current_app.config.get("OPENSEARCH_CA_CERTS")
+        if ca_certs:
+            cmd.extend(["--ca_certificates_file_path", ca_certs])
 
     psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", None)
     if psort_memory is not None:

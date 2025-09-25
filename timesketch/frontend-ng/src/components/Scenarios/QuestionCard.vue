@@ -41,16 +41,6 @@ limitations under the License.
             Select or create an investigative question
           </v-btn>
         </span>
-        <v-spacer></v-spacer>
-        <v-btn
-          v-if="activeQuestion.dfiq_identifier"
-          depressed
-          small
-          :href="getDfiqQuestionUrl(activeQuestion.dfiq_identifier)"
-          target="_blank"
-          rel="noreferrer"
-          ><v-icon small class="mr-1">mdi-open-in-new</v-icon>DFIQ {{ activeQuestion.dfiq_identifier }}
-        </v-btn>
       </v-toolbar>
 
       <v-card
@@ -556,9 +546,6 @@ export default {
         return
       }
       return DOMPurify.sanitize(marked(markdown))
-    },
-    getDfiqQuestionUrl(id) {
-      return 'https://dfiq.org/questions/' + id + '/'
     },
     onClickOutside(e) {
       if (e.target.id !== 'questionDropdownButton') {
