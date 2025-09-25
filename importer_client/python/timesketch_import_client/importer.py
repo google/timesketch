@@ -657,7 +657,9 @@ class ImportStreamer(object):
         self._ready()
 
         if not os.path.isfile(filepath):
-            raise TypeError("Entry object needs to be a file that exists.")
+            error_msg = f"File object {filepath} needs to be a file that exists."
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
         if not self._timeline_name:
             base_path = os.path.basename(filepath)
@@ -694,9 +696,9 @@ class ImportStreamer(object):
                         logger.error("Unable to decode line: {0!s}".format(e))
 
         else:
-            raise TypeError(
-                "File needs to have a file extension of: .csv, .jsonl or .plaso"
-            )
+            error_msg = f"File ({filepath}) needs to have a file extension of: .csv, .jsonl or .plaso"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
     def add_json(self, json_entry, column_names=None):
         """Add an entry that is in a JSON format.
