@@ -232,8 +232,20 @@ class ImportStreamer(object):
                     data_frame["datetime"], utc=True, format="mixed"
                 )
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+            except (ValueError, OverflowError) as e:
+                # Catch both ValueError (for malformed strings) and OverflowError
+                # (for out-of-range timestamps)
+                error_msg = (
+                    f"Unable to correct datetime due to invalid or out-of-range "
+                    f"values. Please check the 'datetime' column for values "
+                    f"like 1601-01-01 or dates beyond 2262. Original error: {e}"
+                )
+                # Log the original error with its traceback
+                logger.error(error_msg, exc_info=True)
+                # Now, raise a more general RuntimeError as per your requirement
+                raise RuntimeError(error_msg) from e
             except Exception:  # pylint: disable=broad-except
-                error_msg = f"Unable to correct datetime {data_frame['datetime']}, is it correctly formatted?"
+                error_msg = f"Unable to correct datetime: {data_frame['datetime']}, is it correctly formatted?"
                 logger.error(
                     error_msg,
                     exc_info=True,
