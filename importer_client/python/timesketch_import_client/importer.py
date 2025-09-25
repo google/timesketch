@@ -233,7 +233,7 @@ class ImportStreamer(object):
                 )
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
             except Exception:  # pylint: disable=broad-except
-                error_msg = f"Unable to change datetime {data_frame['datetime']}, is it correctly formatted?"
+                error_msg = f"Unable to correct datetime {data_frame['datetime']}, is it correctly formatted?"
                 logger.error(
                     error_msg,
                     exc_info=True,
