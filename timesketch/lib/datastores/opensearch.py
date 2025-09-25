@@ -18,6 +18,7 @@ import copy
 import codecs
 import json
 import logging
+import re
 import socket
 import time
 import queue
@@ -529,19 +530,26 @@ class OpenSearchDataStore:
 
         return start_range.strftime(TS_FORMAT), end_range.strftime(TS_FORMAT)
 
-    import re
-
     @staticmethod
     def _is_valid_opensearch_index_name(name):
         """
         Checks if a string is a valid OpenSearch index name.
         """
         if not name or name.startswith("_") or name.startswith("-"):
+            os_logger.warning(
+                f"OpenSearch Index Name: {name} is not valid, as it startes with _ or -"
+            )
             return False
         # Check for invalid characters according to OpenSearch docs
         if re.search(r'[\\/?, " #*<>]', name):
+            os_logger.warning(
+                f"OpenSearch Index Name: {name} is not valid: contains invalid characters"
+            )
             return False
         if len(name) > 255:
+            os_logger.warning(
+                f"OpenSearch Index Name: {name} is not valid: too long > 255"
+            )
             return False
         return name.lower() == name
 
