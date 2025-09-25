@@ -127,9 +127,10 @@ class OpenSearchDataStore:
     ):
         """Initialize the OpenSearchDataStore client.
 
-        This constructor sets up the connection to an OpenSearch instance.
-        It configures the client based on application settings and any
-        provided keyword arguments.
+        This constructor sets up a connection to an OpenSearch instance. It
+        configures the client based on application settings for authentication
+        and SSL (including OPENSEARCH_CA_CERTS for custom CA certificates) and
+        any provided keyword arguments.
 
         Args:
             host (str, optional): The hostname or IP address of the OpenSearch
@@ -142,58 +143,44 @@ class OpenSearchDataStore:
                 parameters. For example, `max_poolsize`, `timeout`, `use_ssl`,
                 `http_auth`, etc.
 
-        Instance Attributes:
+        Attributes:
             client (opensearchpy.OpenSearch): The underlying OpenSearch client
                 instance used for all communication with the datastore.
-            user (str): The username for OpenSearch authentication, fetched
-                from `current_app.config.OPENSEARCH_USER`.
-            password (str): The password for OpenSearch authentication, fetched
-                from `current_app.config.OPENSEARCH_PASSWORD`.
-            ssl (bool): Whether to use SSL for the connection, fetched from
-                `current_app.config.OPENSEARCH_SSL`.
-            verify (bool): Whether to verify SSL certificates, fetched from
-                `current_app.config.OPENSEARCH_VERIFY_CERTS`.
             timeout (int): The default timeout in seconds for OpenSearch
                 requests, fetched from `current_app.config.OPENSEARCH_TIMEOUT`.
             flush_interval (int): The number of events to queue before a bulk
                 insert is flushed to OpenSearch. Fetched from
                 `current_app.config.OPENSEARCH_FLUSH_INTERVAL` or defaults to
                 `DEFAULT_FLUSH_INTERVAL`.
-            import_counter (collections.Counter): A counter to track imported
-                events.
-            import_events (list): A list to temporarily store events before
-                they are bulk imported.
+            import_counter (collections.Counter): A counter for imported events.
+            import_events (list): A temporary store for events before bulk import.
             version (str): The version number of the connected OpenSearch
                 instance.
-            _request_timeout (int): Timeout value in seconds for importing events,
-                fetched from `current_app.config.TIMEOUT_FOR_EVENT_IMPORT` or
-                defaults to `DEFAULT_EVENT_IMPORT_TIMEOUT`.
+            _request_timeout (int): Timeout in seconds for importing events, from
+                `TIMEOUT_FOR_EVENT_IMPORT` config or `DEFAULT_EVENT_IMPORT_TIMEOUT`.
             index_timeout (int): Seconds to wait for an index to become ready,
-                fetched from `current_app.config.OPENSEARCH_INDEX_TIMEOUT` or
-                defaults to `DEFAULT_INDEX_WAIT_TIMEOUT`.
+                from `OPENSEARCH_INDEX_TIMEOUT` config or `DEFAULT_INDEX_WAIT_TIMEOUT`.
             min_health (str): Minimum health status required for an index
                 ('yellow' or 'green'), fetched from
                 `current_app.config.OPENSEARCH_MINIMUM_HEALTH` or defaults to
                 `DEFAULT_MINIMUM_HEALTH`.
             sliced_export_default_page_size (int): Default page size for sliced
-                exports, fetched from
-                `current_app.config.OPENSEARCH_SLICED_EXPORT_DEFAULT_PAGE_SIZE`.
+                exports, from `OPENSEARCH_SLICED_EXPORT_DEFAULT_PAGE_SIZE` config.
             sliced_export_pit_keep_alive (str): Default PIT keep-alive duration
-                for sliced exports, fetched from
-                `current_app.config.OPENSEARCH_SLICED_EXPORT_PIT_KEEP_ALIVE`.
+                for sliced exports, from `OPENSEARCH_SLI..._PIT_KEEP_ALIVE` config.
             sliced_export_num_slices_default (int): Default number of slices for
-                sliced exports, fetched from
-                `current_app.config.OPENSEARCH_SLICED_EXPORT_NUM_SLICES`.
+                sliced exports, from `OPENSEARCH_SLICED_EXPORT_NUM_SLICES` config.
             sliced_export_request_timeout_default (int): Default request timeout
-                for sliced exports, fetched from
-                `current_app.config.OPENSEARCH_SLICED_EXPORT_REQUEST_TIMEOUT`.
+                for sliced exports, from `OPENSEARCH_SLI..._REQUEST_TIMEOUT` config.
             sliced_export_queue_buffer_factor (int): Buffer factor for the queue
-                size in sliced exports, fetched from
-                `current_app.config.OPENSEARCH_SLICED_EXPORT_QUEUE_BUFFER_FACTOR`.
+                size in sliced exports, from `OPENSEARCH_SLI..._QUEUE_BUFFER_FACTOR`
+                config.
+            sliced_export_worker_join_timeout (int): Timeout for waiting on worker
+                threads to join during sliced exports.
             _error_container (dict): A dictionary to store error information
                 during bulk imports.
 
-          Raises:
+        Raises:
             ValueError: If the configuration is present but malformed.
             errors.DatastoreConnectionError: If the client fails to connect
                 to the configured OpenSearch cluster.
@@ -261,19 +248,22 @@ class OpenSearchDataStore:
                         {"host": single_host, "port": single_port}
                     ]
 
-        self.user = current_app.config.get("OPENSEARCH_USER", "user")
-        self.password = current_app.config.get("OPENSEARCH_PASSWORD", "pass")
-        self.ssl = current_app.config.get("OPENSEARCH_SSL", False)
-        self.verify = current_app.config.get("OPENSEARCH_VERIFY_CERTS", True)
+        user = current_app.config.get("OPENSEARCH_USER", "user")
+        password = current_app.config.get("OPENSEARCH_PASSWORD", "pass")
+        ssl = current_app.config.get("OPENSEARCH_SSL", False)
+        verify_certs = current_app.config.get("OPENSEARCH_VERIFY_CERTS", True)
         self.timeout = current_app.config.get("OPENSEARCH_TIMEOUT", 10)
+        ca_certs = current_app.config.get("OPENSEARCH_CA_CERTS")
 
         parameters = {}
-        if self.ssl:
-            parameters["use_ssl"] = self.ssl
-            parameters["verify_certs"] = self.verify
+        if ssl:
+            parameters["use_ssl"] = ssl
+            parameters["verify_certs"] = verify_certs
+            if ca_certs:
+                parameters["ca_certs"] = ca_certs
 
-        if self.user and self.password:
-            parameters["http_auth"] = (self.user, self.password)
+        if user and password:
+            parameters["http_auth"] = (user, password)
         if self.timeout:
             parameters["timeout"] = self.timeout
 

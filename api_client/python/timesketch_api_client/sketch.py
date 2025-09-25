@@ -1025,11 +1025,6 @@ class Sketch(resource.BaseResource):
             RuntimeError: if the query is missing needed values, or if the
                 sketch is archived.
         """
-        logger.warning(
-            "Using this function is discouraged, please consider using "
-            "the search.Search object instead, which is more flexible."
-        )
-
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError("You need to supply a query or view")
 
@@ -1408,12 +1403,15 @@ class Sketch(resource.BaseResource):
         response = self.api.session.get(resource_url_base + resource_url_params)
         return error.get_response_json(response, logger)
 
-    def label_events(self, events, label_name):
+    def label_events(self, events, label_name, remove=False, conclusion_id=None):
         """Labels one or more events with label_name.
 
         Args:
-            events: Array of JSON objects representing events.
-            label_name: String to label the event with.
+            events (json): Array of JSON objects representing events.
+            label_name (string): String to label the event with.
+            remove (bool): If true, the label will be removed instead of added.
+            conclusion_id (int): Optional. ID of a conclusion to link the
+                event to.
 
         Returns:
             Dictionary with query results.
@@ -1425,12 +1423,34 @@ class Sketch(resource.BaseResource):
             "annotation": label_name,
             "annotation_type": "label",
             "events": events,
+            "remove": remove,
         }
+        if conclusion_id:
+            form_data["conclusion_id"] = conclusion_id
+
         resource_url = "{0:s}/sketches/{1:d}/event/annotate/".format(
             self.api.api_root, self.id
         )
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
+
+    def link_event_to_conclusion(self, events, conclusion_id, unlink=False):
+        """Links one or more events to a conclusion as a fact.
+
+        Args:
+            events: Array of JSON objects representing events.
+            conclusion_id (int): ID of the conclusion to link the event to.
+            unlink (bool): If true, the link will be removed.
+
+        Returns:
+            Dictionary with query results.
+        """
+        return self.label_events(
+            events=events,
+            label_name="__ts_fact",
+            remove=unlink,
+            conclusion_id=conclusion_id,
+        )
 
     def untag_events(self, events, tags_to_remove: list):
         """Removes a list of tags from a list of events.
@@ -1623,7 +1643,7 @@ class Sketch(resource.BaseResource):
         if uuid:
             form_data["uuid"] = uuid
         elif dfiq_id:
-            form_data["template_id"] = dfiq_id
+            form_data["dfiq_id"] = dfiq_id
         else:  # name is provided
             scenario_templates = scenario_lib.getScenarioTemplateList(self.api)
             for template in scenario_templates:
