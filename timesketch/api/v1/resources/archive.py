@@ -505,7 +505,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         "issue."
                     )
                 error_msg = f"{base_error_msg} {suggestion}"
-                logger.error(error_message)
+                logger.error(error_msg)
                 errors_occurred = True
                 # Add the timeline name only to the error the user gets back
                 error_msg = (
