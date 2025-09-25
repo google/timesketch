@@ -243,12 +243,15 @@ export default new Vuex.Store({
           const timeFilters = []
 
           function parseNode(node) {
-            const qf = JSON.parse(node.query_filter);
+            if (!node || !node.query_filter) {
+              return
+            }
+            const qf = JSON.parse(node.query_filter)
             if (qf.chips.length > 0) {
-              timeFilters.push(...(qf.chips.filter(c => c.type === 'datetime_range')));
+              timeFilters.push(...(qf.chips.filter(c => c.type === 'datetime_range')))
             }
             for (let c of node.children) {
-              parseNode(c);
+              parseNode(c)
             }
           }
 
@@ -256,15 +259,15 @@ export default new Vuex.Store({
             parseNode(treeData)
           }
 
-          const deduped = [];
-          const timeFiltersSet = new Set();
+          const deduped = []
+          const timeFiltersSet = new Set()
           for (let tf of timeFilters) {
             if (!timeFiltersSet.has(tf.value)) {
               timeFiltersSet.add(tf.value)
               deduped.push(tf)
             }
           }
-          deduped.reverse();
+          deduped.reverse()
 
           context.commit('SET_TIME_FILTERS', deduped)
         })
