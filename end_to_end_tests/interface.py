@@ -37,6 +37,8 @@ OPENSEARCH_PORT = 9200
 OPENSEARCH_MAPPINGS_FILE = "/etc/timesketch/plaso.mappings"
 USERNAME = "test"
 PASSWORD = "test"
+ADMINUSERNAME = "admin"
+ADMINPASSWORD = "admin"
 
 
 class BaseEndToEndTest(object):
@@ -44,6 +46,7 @@ class BaseEndToEndTest(object):
 
     Attributes:
         api: Instance of an API client
+        admin_api: Instance of an API client with an admin user
         sketch: Instance of Sketch object
         assertions: Instance of unittest.TestCase
     """
@@ -55,6 +58,9 @@ class BaseEndToEndTest(object):
         """Initialize the end-to-end test object."""
         self.api = api_client.TimesketchApi(
             host_uri=HOST_URI, username=USERNAME, password=PASSWORD
+        )
+        self.admin_api = api_client.TimesketchApi(
+            host_uri=HOST_URI, username=ADMINUSERNAME, password=ADMINPASSWORD
         )
         self.sketch = self.api.create_sketch(name=self.NAME)
         self.assertions = unittest.TestCase()
