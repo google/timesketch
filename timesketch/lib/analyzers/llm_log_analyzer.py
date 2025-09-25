@@ -29,7 +29,10 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
 
     NAME = "llm_log_analyzer"
     DISPLAY_NAME = "LLM Log Analyzer"
-    DESCRIPTION = "Triggers the LLM Log Analyzer feature for the entire sketch."
+    DESCRIPTION = (
+        "IMPORTANT: This LLM analyzer needs to be configured on the backend "
+        "before it can be used!"
+    )
     IS_DFIQ_ANALYZER = False
 
     # The LLM Log analyzer will be triggered once per sketch, not per timeline.
@@ -39,7 +42,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
     def run(self):
         """Entry point for the analyzer."""
         logger.info(
-            "DFIQ analyzer for Log Analyzer feature started for sketch %d.",
+            "Analyzer for LLM Log Analyzer feature started for sketch [%d].",
             self.sketch.id,
         )
 
@@ -49,7 +52,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                 "log_analyzer"
             )
         except KeyError:
-            error_msg = "Log Analyzer LLM feature not found. Is it registered?"
+            error_msg = "LLM Log Analyzer feature not found. Is it registered?"
             logger.error(error_msg)
             self.output.result_status = "ERROR"
             self.output.result_summary = error_msg
@@ -61,7 +64,11 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                 feature_name=feature_instance.NAME
             )
         except Exception as e:  # pylint: disable=broad-except
-            error_msg = f"Failed to initialize LLM provider: {e!s}"
+            error_msg = (
+                f"Failed to initialize LLM provider: '{e!s}'. Please make sure "
+                "to configure a specific 'log_analyzer_agent' provider for this"
+                " feature!"
+            )
             logger.error(error_msg, exc_info=True)
             self.output.result_status = "ERROR"
             self.output.result_summary = error_msg
@@ -70,13 +77,22 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
         # 3. Call the feature's execute method.
         try:
             logger.info(
-                "Triggering Log Analyzer LLM feature for sketch %d", self.sketch.id
+                "Triggering Log Analyzer LLM feature for sketch [%d]", self.sketch.id
             )
-            # The 'form' can be an empty dict as the feature uses defaults or
-            # extracts what it needs from the sketch.
             result = feature_instance.execute(
                 sketch=self.sketch.sql_sketch,
-                form={},
+                form={
+                    "return_fields": [
+                        "data_type",
+                        "datetime",
+                        "message",
+                        "timestamp",
+                        "timestamp_desc",
+                        "tag",
+                        "_id",
+                        "_index",
+                    ]
+                },
                 llm_provider=llm_provider,
             )
 
@@ -87,8 +103,20 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
 
             summary = (
                 f"Log Analyzer finished. Exported {events_exported} events, "
-                f"processed {total_findings} findings with {errors_encountered} errors."
+                f"processed {total_findings} findings with {errors_encountered} "
+                "errors. "
             )
+
+            # Add provider-specific details if available
+            if llm_provider.NAME == "secgemini_log_analyzer_agent":
+                session_id = getattr(llm_provider, "session_id", "N/A")
+                table_hash = getattr(llm_provider, "table_hash", "N/A")
+                if session_id != "N/A" or table_hash != "N/A":
+                    summary += (
+                        " - SecGemini Provider Details:"
+                        f" Session ID: '{session_id}'"
+                        f" Table Hash (blake2s): '{table_hash}'"
+                    )
 
             self.output.result_status = "SUCCESS"
             self.output.result_priority = "NOTE"

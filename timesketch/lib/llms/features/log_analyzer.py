@@ -92,12 +92,14 @@ class LogAnalyzer(LLMFeatureInterface):
             LogAnalysisError: If the log stream preparation fails.
             Exception: For unexpected errors during execution.
         """
-        logger.info("LogAnalyzer: Starting streaming analysis for sketch %s", sketch.id)
+        logger.info(
+            "LogAnalyzer: Starting streaming analysis for sketch [%d]", sketch.id
+        )
 
         if not llm_provider.SUPPORTS_STREAMING:
             raise ValueError(
                 f'LLM provider "{llm_provider.NAME}" does not support '
-                "streaming operations"
+                "streaming operations!"
             )
 
         try:
@@ -173,6 +175,9 @@ class LogAnalyzer(LLMFeatureInterface):
                     "raw_response": json_match.group(1)[:500],
                 }
 
+            logger.info(
+                "LogAnalyzer: SecGemini returned %d findings", len(findings_list)
+            )
             # Each finding can have multiple records to same annotations
             processed_findings_summary = []
             for finding_dict in findings_list:
@@ -232,10 +237,12 @@ class LogAnalyzer(LLMFeatureInterface):
         active_timelines = list(sketch.active_timelines)
         if not active_timelines:
             logger.warning(
-                "LogAnalyzer: No active timelines found for sketch %s",
+                "LogAnalyzer: No active timelines found for sketch [%s]",
                 sketch.id,
             )
-            raise LogAnalysisError(f"No active timelines found for sketch {sketch.id}")
+            raise LogAnalysisError(
+                f"No active timelines found for sketch [{sketch.id}]"
+            )
 
         indices_for_pit = [
             timeline.searchindex.index_name for timeline in active_timelines
@@ -252,6 +259,10 @@ class LogAnalyzer(LLMFeatureInterface):
         must_clauses.append({"terms": {"__ts_timeline_id": timeline_ids}})
         base_query_body = {"query": {"bool": {"must": must_clauses}}}
 
+        return_fields = form.get("return_fields")
+        if return_fields and isinstance(return_fields, list):
+            base_query_body["_source"] = return_fields
+
         try:
             log_events_generator = self.datastore.export_events_with_slicing(
                 indices_for_pit=indices_for_pit,
@@ -261,15 +272,12 @@ class LogAnalyzer(LLMFeatureInterface):
 
             for event in log_events_generator:
                 self._events_exported += 1
-                # Add index name to event for better tracking
-                if "_index" in event:
-                    event["__ts_index_name"] = event["_index"]
                 yield event
 
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "LogAnalyzer: Error during datastore.export_events_with_slicing "
-                "for sketch %s: %s",
+                "for sketch [%s]: '%s'",
                 sketch.id,
                 exception,
                 exc_info=True,
@@ -311,7 +319,12 @@ class LogAnalyzer(LLMFeatureInterface):
                             "message": "...", "linked_event_id": "..."}
         """
         sketch = kwargs.get("sketch")
-        PRIORITY_MAP = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+        # Mapping from Sec-Gemini priority values to Timesketch internal priority names.
+        LLM_PRIORITY_TO_TS_PRIORITY = {
+            "notice": "low",
+            "critical": "high",
+        }
+        TS_PRIORITY_SCORES = {"low": 1, "medium": 2, "high": 3}
 
         if not isinstance(llm_response, dict):
             logger.error(
@@ -332,6 +345,15 @@ class LogAnalyzer(LLMFeatureInterface):
                 "message": "Finding is missing its associated Timesketch event IDs.",
             }
 
+        # Optimization: If all active timelines use the same searchindex,
+        # we can avoid per-event lookups.
+        single_searchindex_id = None
+        active_timelines = sketch.active_timelines
+        if active_timelines:
+            unique_searchindex_ids = {tl.searchindex_id for tl in active_timelines}
+            if len(unique_searchindex_ids) == 1:
+                single_searchindex_id = unique_searchindex_ids.pop()
+
         # Process each record and collect all events
         events_to_link = []
         for record_id in record_ids:
@@ -339,19 +361,22 @@ class LogAnalyzer(LLMFeatureInterface):
 
             # If newly created, find the event's searchindex
             if not event.searchindex_id:
-                try:
-                    searchindex_db_id = self._get_search_index(sketch, record_id)
-                    event.searchindex_id = searchindex_db_id
-                except ValueError as exception:
-                    logger.error(
-                        "LogAnalyzer: Could not find Event for ID %s: %s",
-                        record_id,
-                        exception,
-                    )
-                    self._errors_encountered.append(
-                        f"Failed to find searchindex for event {record_id}"
-                    )
-                    continue  # Skip this event but continue with others
+                if single_searchindex_id:
+                    event.searchindex_id = single_searchindex_id
+                else:
+                    try:
+                        searchindex_db_id = self._get_search_index(sketch, record_id)
+                        event.searchindex_id = searchindex_db_id
+                    except ValueError as exception:
+                        logger.error(
+                            "LogAnalyzer: Could not find Event for ID %s: %s",
+                            record_id,
+                            exception,
+                        )
+                        self._errors_encountered.append(
+                            f"Failed to find searchindex for event {record_id}"
+                        )
+                        continue  # Skip this event but continue with others
 
             events_to_link.append(event)
 
@@ -410,29 +435,33 @@ class LogAnalyzer(LLMFeatureInterface):
             if not question.display_name:
                 question.display_name = question_text
 
-            priority_value = ann_data.get("priority")
-            if priority_value and isinstance(priority_value, str):
-                priority_value = priority_value.lower()
-                if priority_value not in PRIORITY_MAP:
+            priority_value = ann_data.get("priority", "").lower()
+            if priority_value in LLM_PRIORITY_TO_TS_PRIORITY:
+                ts_priority = LLM_PRIORITY_TO_TS_PRIORITY[priority_value]
+
+                current_priority_level = None
+                for label_str in question.get_labels:
+                    if label_str.startswith("__ts_priority_"):
+                        current_priority_level = label_str.split("_")[-1]
+                        break
+
+                new_priority_score = TS_PRIORITY_SCORES.get(ts_priority, 0)
+                current_priority_score = TS_PRIORITY_SCORES.get(
+                    current_priority_level, 0
+                )
+
+                if new_priority_score > current_priority_score:
+                    if current_priority_level:
+                        old_priority_label = f"__ts_priority_{current_priority_level}"
+                        question.remove_label(old_priority_label)
+                    new_priority_label = f"__ts_priority_{ts_priority}"
+                    question.add_label(new_priority_label)
+            elif priority_value:
+                # Log if we receive a priority we don't have a mapping for.
+                if priority_value not in ["low", "medium", "high"]:
                     self._errors_encountered.append(
                         f"Unknown priority value: {priority_value}"
                     )
-                else:
-                    current_priority_level = None
-                    for label_str in question.get_labels:
-                        if label_str.startswith("__ts_priority_"):
-                            current_priority_level = label_str.split("_")[-1]
-                            break
-                    new_priority_score = PRIORITY_MAP.get(priority_value, 0)
-                    current_priority_score = PRIORITY_MAP.get(current_priority_level, 0)
-                    if new_priority_score > current_priority_score:
-                        if current_priority_level:
-                            old_priority_label = (
-                                f"__ts_priority_{current_priority_level}"
-                            )
-                            question.remove_label(old_priority_label)
-                        new_priority_label = f"__ts_priority_{priority_value}"
-                        question.add_label(new_priority_label)
 
             questions_created_this_finding += 1
             question.add_attribute("source", "AI_GENERATED")

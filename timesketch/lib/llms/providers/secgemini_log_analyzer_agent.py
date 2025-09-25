@@ -71,6 +71,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         self.enable_logging = self.config.get("enable_logging", True)
         self._events_sent = 0
         self._session = None
+        self.session_id = None
+        self.table_hash = None
 
     async def _run_async_stream(self, log_path, prompt):
         """Initializes a SecGemini session and streams the analysis response.
@@ -81,8 +83,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         3. Streams the analysis results for the given prompt.
 
         Args:
-            log_path: The local filesystem path to the JSONL log file.
-            prompt: The analysis prompt to send to the agent.
+            log_path (Path): The local filesystem path to the JSONL log file.
+            prompt (str): The analysis prompt to send to the agent.
 
         Yields:
             str: The content chunks of the streamed response from the agent.
@@ -90,10 +92,23 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         self._session = self.sg_client.create_session(
             model=self.model, enable_logging=self.enable_logging
         )
+        self.session_id = self._session.id
+        logger.info("Started new SecGemini session: '%s'", self._session.id)
         self._session.upload_and_attach_logs(
             log_path, custom_fields_mapping=self.custom_fields_mapping
         )
+        if hasattr(self._session, "logs_table") and hasattr(
+            self._session.logs_table, "blake2s"
+        ):
+            self.table_hash = self._session.logs_table.blake2s
+            logger.info(
+                "Uploaded logs table hash (blake2s): '%s'",
+                self._session.logs_table.blake2s,
+            )
+        else:
+            logger.warning("Uploaded logs did not produce a blake2s table hash!")
 
+        logger.info("Starting the SecGemini analysis...")
         async for response in self._session.stream(prompt):
             yield response.content
 
@@ -117,7 +132,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
         Args:
             log_events_generator: An iterable of dictionaries, where each
-                                dictionary is a Timesketch log event.
+                                  dictionary is a Timesketch log event.
             prompt: The prompt to send to the SecGemini agent for analysis.
 
         Yields:
@@ -127,6 +142,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
         ) as tmpfile:
             log_path = pathlib.Path(tmpfile.name)
+            logger.info("Write events to tmp file: '%s'", log_path)
             for event in log_events_generator:
                 try:
                     # Clean the event to only include required fields
@@ -143,13 +159,21 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     self._events_sent += 1
                 except TypeError as e:
                     logger.error(
-                        "Failed to serialize event to JSON: %s", e, exc_info=True
+                        "Failed to serialize event to JSON: '%s'", e, exc_info=True
                     )
             tmpfile.flush()
 
             if self._events_sent == 0:
                 logger.warning("No events were provided to the log analyzer.")
                 return
+
+            file_size_bytes = log_path.stat().st_size
+            logger.info(
+                "Finished writing %d events to tmp file: '%s' (size: %d bytes)",
+                self._events_sent,
+                log_path,
+                file_size_bytes,
+            )
 
             accumulated_response = ""
             found_json_summary = False
