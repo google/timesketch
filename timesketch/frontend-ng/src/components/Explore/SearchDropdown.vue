@@ -41,6 +41,7 @@ limitations under the License.
             >
           <v-list-item
             style="font-size: 0.9em"
+            :key="timeFilter.value"
             v-on:click="setTimeFilter(timeFilter)"
           >
             <v-list-item-content>
