@@ -492,7 +492,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             if timeline_status in statuses_preventing_archival:
                 base_error_msg = (
                     f"Cannot archive sketch {sketch.id}. Timeline "
-                    f"'{timeline_to_check.name}' (ID: {timeline_to_check.id}) is in "
+                    f" (ID: {timeline_to_check.id}) is in "
                     f"a non-archivable state: '{timeline_status}'."
                 )
                 suggestion = ""
@@ -504,9 +504,14 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         "stuck, contact your system administrator to resolve the "
                         "issue."
                     )
-                error_msg = f"{base_error_msg}{suggestion}"
-                logger.error(error_msg)
+                error_msg = f"{base_error_msg} {suggestion}"
+                logger.error(error_message)
                 errors_occurred = True
+                # Add the timeline name only to the error the user gets back
+                error_msg = (
+                    f"{base_error_msg} "
+                    f"Timeline name: {timeline_to_check.name} {suggestion}"
+                )
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     error_msg,
@@ -650,11 +655,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         Raises:
             HTTPException:
                 - If the sketch is not currently archived.
-                - If any timeline within the sketch is in a state that prevents
-                  unarchiving (e.g., 'processing').
                 - If a critical error occurs while opening an OpenSearch index.
         """
-        logger.info("Unarchiving sketch %s ('%s').", sketch.id, sketch.name)
+        logger.info("Unarchiving sketch '%s'.", sketch.id)
 
         # 1. Pre-flight checks
         if sketch.get_status.status != "archived":
@@ -676,7 +679,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             if timeline_status in statuses_preventing_unarchival:
                 base_warning_msg = (
                     f"Unarchiving sketch {sketch.id}, but it contains timeline "
-                    f"'{timeline.name}' (ID: {timeline.id}) in a '{timeline_status}' "
+                    f" (ID: {timeline.id}) in a '{timeline_status}' "
                     "state. "
                 )
                 specific_advice = ""
@@ -687,16 +690,13 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     )
                 elif timeline_status == "processing":
                     specific_advice = (
-                        "Please wait for it to finish processing. If it seems to be "
-                        "stuck, contact your system administrator to resolve the issue."
+                        "It seems to be stuck, "
+                        "contact your system administrator to resolve the issue."
                     )
-                    # only a processing timeline is stopping the flow
-                    errors_occurred = True
 
                 general_advice = " You can use 'tsctl find-inconsistent-archives' to find such sketches."  # pylint: disable=line-too-long
                 warning_msg = f"{base_warning_msg}{specific_advice}{general_advice}"
                 error_details.append(warning_msg)
-                logger.warning(warning_msg)
 
         if errors_occurred:
             logger.error(
@@ -705,11 +705,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 sketch.id,
                 "; ".join(error_details),
             )
-            abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                "Failed to unarchive sketch. One or more OpenSearch indices could not "
-                f"be opened. Details: {'; '.join(error_details)}",
-            )
+            # TODO: enforce here: https://github.com/google/timesketch/issues/3518
+            # abort(...
 
         # Identify all SearchIndex objects that need to be opened.
         search_indexes_to_open = {
@@ -777,18 +774,14 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             )
 
         # 4. If all indices are open, update the database statuses.
-        sketch.set_status(status="ready")
-        logger.info("Sketch %s status set to 'ready'.", sketch.id)
-
         # Set all timelines in the sketch to ready.
         for timeline in sketch.timelines:
             if timeline.get_status.status != "archived":
                 continue
             timeline.set_status(status="ready")
             logger.info(
-                "Timeline %d ('%s') status set to 'ready'.",
+                "Timeline '%s' status set to 'ready'.",
                 timeline.id,
-                timeline.name,
             )
 
         for search_index in successfully_opened_indexes:
@@ -798,6 +791,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 search_index.index_name,
                 search_index.id,
             )
+
+        sketch.set_status(status="ready")
+        logger.info("Sketch %s status set to 'ready'.", sketch.id)
 
         db_session.commit()
         logger.info("Unarchiving of sketch %s complete.", sketch.id)
