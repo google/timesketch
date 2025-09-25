@@ -242,7 +242,7 @@ class ImportStreamer(object):
                 )
                 # Log the original error with its traceback
                 logger.error(error_msg, exc_info=True)
-                # Now, raise a more general RuntimeError as per your requirement
+                # Now, raise a more general RuntimeError
                 raise RuntimeError(error_msg) from e
             except Exception:  # pylint: disable=broad-except
                 error_msg = f"Unable to correct datetime: {data_frame['datetime']}, is it correctly formatted?"
