@@ -529,6 +529,22 @@ class OpenSearchDataStore:
 
         return start_range.strftime(TS_FORMAT), end_range.strftime(TS_FORMAT)
 
+    import re
+
+    @staticmethod
+    def _is_valid_opensearch_index_name(name):
+        """
+        Checks if a string is a valid OpenSearch index name.
+        """
+        if not name or name.startswith("_") or name.startswith("-"):
+            return False
+        # Check for invalid characters according to OpenSearch docs
+        if re.search(r'[\\/?, " #*<>]', name):
+            return False
+        if len(name) > 255:
+            return False
+        return name.lower() == name
+
     def build_query(
         self,
         sketch_id: int,
@@ -1130,6 +1146,31 @@ class OpenSearchDataStore:
         """
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
+
+        # Filter out invalid indices
+        indices = [i for i in indices if self.is_valid_opensearch_index_name(i)]
+
+        # Create a new list for valid indices
+        valid_indices = []
+        for index_name in indices:
+            # Check if the index exists before attempting to get stats
+            try:
+                if self.client.indices.exists(index=index_name):
+                    valid_indices.append(index_name)
+                else:
+                    os_logger.warning("Index '%s' not found. Skipping...", index_name)
+            except Exception as e:
+                os_logger.error(
+                    "An error occurred while checking index '%s': %s",
+                    index_name,
+                    e,
+                    exc_info=True,
+                )
+                continue
+
+        # Now, attempt to get stats for the valid indices
+        if not valid_indices:
+            return 0, 0
 
         try:
             es_stats = self.client.indices.stats(index=indices, metric="docs, store")
