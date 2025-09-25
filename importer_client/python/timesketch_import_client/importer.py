@@ -696,7 +696,10 @@ class ImportStreamer(object):
                         logger.error("Unable to decode line: {0!s}".format(e))
 
         else:
-            error_msg = f"File ({filepath}) needs to have a file extension of: .csv, .jsonl or .plaso"
+            error_msg = (
+                f"File ({filepath}) needs to have a file extension"
+                "of: .csv, .jsonl or .plaso"
+            )
             logger.error(error_msg)
             raise TypeError(error_msg)
 
