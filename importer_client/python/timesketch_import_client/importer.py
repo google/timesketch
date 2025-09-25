@@ -241,7 +241,7 @@ class ImportStreamer(object):
         # TODO: Support labels in uploads/imports.
         if "label" in data_frame:
             del data_frame["label"]
-            logger.warning(
+            logger.info(
                 "Labels cannot be imported at this time. Therefore the "
                 "label column was dropped from the dataset."
             )
