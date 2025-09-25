@@ -772,7 +772,7 @@ def run_plaso(
         DatastoreConnectionError: If the opensearch connection isn't available.
 
     Returns:
-        Name (str) of the index.
+        Name (str) of the index or None in case of an error
     """
     time_start = time.time()
     if not plaso:
@@ -791,6 +791,29 @@ def run_plaso(
 
     if events:
         raise RuntimeError("Plaso uploads needs a file, not events.")
+
+    # Run pinfo on storage file
+    try:
+        pinfo = pinfo_tool.PinfoTool()
+        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
+            file_path
+        )
+        storage_counters = (
+            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
+                storage_reader
+            )
+        )
+        total_file_events = storage_counters.get("parsers", {}).get("total")
+        if not total_file_events:
+            raise RuntimeError("Not able to get total event count from Plaso file.")
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        logger.error(
+            "Error importing Plaso file (%s): %s\n%s", file_path, str(e), error_msg
+        )
+        return None
 
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
@@ -859,27 +882,6 @@ def run_plaso(
         index_name,
         source_type,
     )
-
-    # Run pinfo on storage file
-    try:
-        pinfo = pinfo_tool.PinfoTool()
-        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
-            file_path
-        )
-        storage_counters = (
-            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
-                storage_reader
-            )
-        )
-        total_file_events = storage_counters.get("parsers", {}).get("total")
-        if not total_file_events:
-            raise RuntimeError("Not able to get total event count from Plaso file.")
-    except Exception as e:  # pylint: disable=broad-except
-        # Mark the searchindex and timelines as failed and exit the task
-        error_msg = traceback.format_exc()
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: %s\n%s", str(e), error_msg)
-        return None
 
     _set_datasource_total_events(timeline_id, file_path, total_file_events)
     _set_datasource_status(timeline_id, file_path, "processing")
