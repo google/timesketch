@@ -52,7 +52,7 @@ def parse_requirements_from_file(path):
     Yields:
       str: package resource requirement.
     """
-    with open(path, "r") as file_object:
+    with open(path, "r", encoding="utf-8") as file_object:
         file_contents = file_object.read()
     for req in pkg_resources.parse_requirements(file_contents):
         try:
