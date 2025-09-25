@@ -506,6 +506,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     )
                 error_msg = f"{base_error_msg}{suggestion}"
                 logger.error(error_msg)
+                errors_occurred = True
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     error_msg,
@@ -547,14 +548,13 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         successfully_closed_indexes = set()
         failed_to_find_indexes = set()
 
-        # TODO: remove that
         # Re-check for non-archivable states before proceeding
         for timeline_to_check in sketch.timelines:
             timeline_status = timeline_to_check.get_status.status
             if timeline_status in statuses_preventing_archival:
                 base_error_msg = (
                     f"Cannot archive sketch {sketch.id}. Timeline "
-                    f"'{timeline_to_check.name}' (ID: {timeline_to_check.id}) is in "
+                    f"(ID: {timeline_to_check.id}) is in "
                     f"a non-archivable state: '{timeline_status}'."
                 )
                 suggestion = ""
@@ -580,7 +580,10 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 logger.warning(error_message)
                 error_details.append(error_message)
                 errors_occurred = True
-
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    error_message,
+                )
             except Exception as e:  # pylint: disable=broad-except
                 errors_occurred = True
                 error_details.append(
@@ -694,6 +697,19 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 warning_msg = f"{base_warning_msg}{specific_advice}{general_advice}"
                 error_details.append(warning_msg)
                 logger.warning(warning_msg)
+
+        if errors_occurred:
+            logger.error(
+                "Unarchiving sketch %s failed because one or more indices could not "
+                "be opened. Errors: %s",
+                sketch.id,
+                "; ".join(error_details),
+            )
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                "Failed to unarchive sketch. One or more OpenSearch indices could not "
+                f"be opened. Details: {'; '.join(error_details)}",
+            )
 
         # Identify all SearchIndex objects that need to be opened.
         search_indexes_to_open = {
