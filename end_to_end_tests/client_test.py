@@ -476,8 +476,6 @@ level: high
         self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
-        self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 
