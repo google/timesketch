@@ -1156,7 +1156,7 @@ class OpenSearchDataStore:
         indices = list(set(indices))
 
         # Filter out invalid indices
-        indices = [i for i in indices if self.is_valid_opensearch_index_name(i)]
+        indices = [i for i in indices if self._is_valid_opensearch_index_name(i)]
 
         # Create a new list for valid indices
         valid_indices = []
