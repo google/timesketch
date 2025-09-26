@@ -127,7 +127,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 file_object.write("\n")
 
         try:
-            self.import_timeline(file_path, index_name=rand, sketch=sketch)
+            self.import_timeline(file_path, sketch=sketch)
         except RuntimeError:
             print(
                 "Timeline import failing is expected. Checking for the correct "
@@ -164,7 +164,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
                 file_object.write(string)
 
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -219,7 +219,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 )
                 file_object.write(string)
 
-        self.import_timeline("/tmp/large.csv", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/large.csv", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -264,7 +264,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 )
                 file_object.write(string)
 
-        self.import_timeline("/tmp/verylarge.csv", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/verylarge.csv", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -301,7 +301,7 @@ class UploadTest(interface.BaseEndToEndTest):
         )
         self.sketch = sketch
         file_path = "/usr/local/src/timesketch/tests/test_events/validate_time_out_of_range.csv"  # pylint: disable=line-too-long
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
@@ -368,7 +368,7 @@ class UploadTest(interface.BaseEndToEndTest):
             )
             file_object.write(string)
 
-        self.import_timeline("/tmp/timestamptest.csv", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/timestamptest.csv", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
