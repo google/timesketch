@@ -19,8 +19,7 @@ limitations under the License.
       <div class="d-flex justify-space-between ga-1 align-baseline mb-2 flex-wrap">
         <h4>
           AI Analysis in progress
-          <p class="text-body-2 mb-1" v-if="questionsTotal">Processing results...</p>
-          <p class="text-body-2 mb-1" v-else>Sending events...</p>
+          <p class="text-body-2 mb-1">{{ currentMessage }}</p>
         </h4>
         <p v-if="questionsTotal" class="text-body-2">
           <span class="font-weight-bold">{{ questionsTotal }}</span>
@@ -93,6 +92,33 @@ export default {
     return {
       store: useAppStore(),
       showModal: false,
+      loadingMessages: [
+        'Calibrating the anomaly detector...',
+        'Sifting through heaps of data...',
+        'Connecting seemingly unrelated events...',
+        'Looking for needles...',
+        'Asking the agent about evil bits...',
+        'Consulting the forensic agent...',
+        'Untangling spaghetti logs...',
+        'Following the digital breadcrumbs...',
+        'Asking questions...',
+        'Polishing the findings...',
+        'Going down the rabbit hole...',
+        'Reticulating timelines.',
+        'Poking up the analysis agents...',
+        'Reconstructing the event sequence...',
+        'Dusting for digital fingerprints...',
+        'Correlating events across timelines...',
+        'Searching for anomalous patterns...',
+        'Generating initial hypotheses...',
+        'Identifying suspicious outliers...',
+        'Building a chain of evidence...',
+        'Normalizing timestamps...',
+        'Cooling the reasoning engine...',
+      ],
+      currentMessage: 'Log Analyzer is preparing...',
+      timerIds: [],
+      shuffledMessages: [],
     }
   },
   props: {
@@ -105,14 +131,70 @@ export default {
     toggleModal() {
       this.showModal = !this.showModal
     },
+    shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    },
+    updateRandomMessage() {
+      if (this.shuffledMessages.length === 0) {
+        this.shuffledMessages = this.shuffleArray([...this.loadingMessages])
+      }
+      this.currentMessage = this.shuffledMessages.pop()
+      this.scheduleNextRandomMessage()
+    },
+    scheduleNextRandomMessage() {
+      const randomDelay = Math.random() * (12000 - 5000) + 5000
+      const timerId = setTimeout(() => {
+        if (this.isGenerating) {
+          this.updateRandomMessage()
+        }
+      }, randomDelay)
+      this.timerIds.push(timerId)
+    },
+    startLoadingSequence() {
+      this.currentMessage = 'Sending events...'
+      const phase1Timer = setTimeout(() => {
+        if (!this.isGenerating) return
+
+        this.currentMessage = 'Preparing the Agents...'
+        const phase2Timer = setTimeout(() => {
+          if (!this.isGenerating) return
+          this.updateRandomMessage()
+        }, 10000)
+        this.timerIds.push(phase2Timer)
+      }, 20000)
+      this.timerIds.push(phase1Timer)
+    },
+    stopLoadingSequence() {
+      this.timerIds.forEach((id) => clearTimeout(id))
+      this.timerIds = []
+      this.currentMessage = 'Log Analyzer is working...'
+      this.shuffledMessages = []
+    },
   },
   computed: {
     percentageCompleted() {
       return this.questionsTotal ? (this.completedQuestionsTotal / this.questionsTotal) * 100 : 0
     },
   },
+  watch: {
+    isGenerating(newValue) {
+      if (newValue) {
+        this.startLoadingSequence()
+      } else {
+        this.stopLoadingSequence()
+      }
+    },
+  },
+  beforeUnmount() {
+    this.stopLoadingSequence()
+  },
 }
 </script>
+
 <style scoped>
 .progress-card {
   padding: 17px 20px 16px;
