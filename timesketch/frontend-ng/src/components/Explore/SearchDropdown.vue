@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-card outlined min-height="550" style="overflow: hidden">
     <v-row>
-      <v-col v-if="matches.savedSearches.length" cols="4">
+      <v-col v-if="matches.savedSearches.length" cols="3">
         <h5 class="mt-3 ml-4">Saved searches</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
           <v-list-item
@@ -33,28 +33,27 @@ limitations under the License.
       </v-col>
       <v-divider vertical></v-divider>
 
-      <v-col v-if="matches.timeFilters.length" cols="4">
+      <v-col v-if="matches.timeFilters.length" cols="3">
       <h5 class="mt-3 ml-4">Last time filters</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
           <template
             v-for="timeFilter in matches.timeFilters.slice(0, MAX_TIMELINE_ELEMENTS)"
-            >
-          <v-list-item
-            style="font-size: 0.9em"
-            :key="timeFilter.value"
-            v-on:click="setTimeFilter(timeFilter)"
           >
-            <v-list-item-content>
-                  {{timeFilter.value.split(',')[0]}} - {{  timeFilter.value.split(',')[1]}}
-            </v-list-item-content>
-          </v-list-item>
-
+            <v-list-item
+              style="font-size: 0.9em"
+              :key="timeFilter.value"
+              v-on:click="setTimeFilter(timeFilter)"
+            >
+              <v-list-item-content>
+                {{timeFilter.value.split(',')[0]}} - {{  timeFilter.value.split(',')[1]}}
+              </v-list-item-content>
+            </v-list-item>
           </template>
         </v-list>
       </v-col>
       <v-divider vertical></v-divider>
 
-      <v-col cols="4">
+      <v-col cols="3">
         <h5 class="mt-3 ml-4">Data types</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
           <v-list-item
@@ -76,7 +75,7 @@ limitations under the License.
       </v-col>
       <v-divider vertical></v-divider>
 
-      <v-col v-if="matches.labels.length || matches.tags.length" cols="4">
+      <v-col v-if="matches.labels.length || matches.tags.length" cols="3">
         <h5 class="mt-3 ml-5">Tags</h5>
         <ts-tags-list></ts-tags-list>
       </v-col>
@@ -149,9 +148,6 @@ export default {
       matches.savedSearches = this.meta.views.filter((savedSearch) =>
         savedSearch.name.toLowerCase().includes(this.queryString.toLowerCase())
       )
-
-      // Don't filter timeFilters. Always show the last timeFilters.
-      matches.timeFilters = this.timeFilters
 
       if (!Object.values(matches).filter((arr) => arr.length).length) {
         return this.all
