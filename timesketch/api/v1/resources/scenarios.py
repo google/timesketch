@@ -14,6 +14,7 @@
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
 import logging
+import uuid as uuid_lib
 import json
 from os.path import isdir
 from typing import Optional
@@ -437,6 +438,8 @@ class ScenarioResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch",
             )
+        if not scenario:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No scenario found with this ID")
 
         if not scenario.sketch.id == sketch.id:
             abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
@@ -759,6 +762,8 @@ class QuestionListResource(resources.ResourceMixin, Resource):
                 facet=facet,
                 user=current_user,
             )
+            if not new_question.uuid:
+                new_question.uuid = str(uuid_lib.uuid4())
 
         db_session.add(new_question)
         db_session.commit()
@@ -825,6 +830,23 @@ class QuestionResource(resources.ResourceMixin, Resource):
 
         # Flag to check if the object was updated, to avoid unnecessary DB writes.
         updated = False
+
+        attributes = form.get("attributes")
+        if attributes and isinstance(attributes, list):
+            for attr in attributes:
+                name = attr.get("name")
+                value = attr.get("value")
+                ontology = attr.get("ontology")
+                description = attr.get("description")
+                if name and value:
+                    question.add_attribute(
+                        name=name,
+                        value=value,
+                        ontology=ontology,
+                        user=current_user,
+                        description=description,
+                    )
+            updated = True
 
         status = form.get("status")
         if status:
@@ -900,7 +922,7 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        conclusions = InvestigativeQuestionConclusion.filter_by(
+        conclusions = InvestigativeQuestionConclusion.query.filter_by(
             investigativequestion=question
         ).all()
 
@@ -928,20 +950,32 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        # Create conclusion for the calling user if it doesn't exist.
-        conclusion = InvestigativeQuestionConclusion.get_or_create(
-            user=current_user, investigativequestion=question
-        )
-
         form = request.json
         if not form:
             form = request.data
 
         conclusion_text = form.get("conclusionText")
-        if conclusion_text:
-            conclusion.conclusion = conclusion_text
+        automated = form.get("automated", False)
+
+        if automated:
+            conclusion = InvestigativeQuestionConclusion(
+                conclusion=conclusion_text,
+                user=None,
+                investigativequestion=question,
+                automated=True,
+            )
             db_session.add(conclusion)
             db_session.commit()
+        else:
+            # Create conclusion for the calling user if it doesn't exist.
+            conclusion = InvestigativeQuestionConclusion.get_or_create(
+                user=current_user, investigativequestion=question
+            )
+
+            if conclusion_text:
+                conclusion.conclusion = conclusion_text
+                db_session.add(conclusion)
+                db_session.commit()
 
         meta = {"new_conclusion_id": conclusion.id}
         return self.to_json(question, meta=meta)
