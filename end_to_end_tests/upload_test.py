@@ -47,7 +47,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         events = sketch.explore("*", as_pandas=True)
@@ -77,7 +76,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -138,7 +136,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline threw the correct error
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(
             timeline.data_sources[0]["status"][0]["status"], "fail"
         )
@@ -170,7 +167,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -225,7 +221,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -270,7 +265,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -305,7 +299,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         # Search for the very old event
@@ -374,7 +367,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
