@@ -845,6 +845,23 @@ class ImportStreamer(object):
 
     def set_index_name(self, index):
         """Set the index name."""
+        if not isinstance(index, str):
+            raise ValueError("Index name must be a string.")
+
+        # OpenSearch/Elasticsearch index name restrictions.
+        invalid_chars = r'\/*?"<>| ,#'
+        for char in invalid_chars:
+            if char in index:
+                raise ValueError(
+                    f"Index name '{index}' contains invalid character: '{char}'"
+                )
+
+        if index.startswith(("-", "_", "+")):
+            raise ValueError(f"Index name '{index}' cannot start with '-', '_', or '+'")
+
+        if any(char.isupper() for char in index):
+            raise ValueError(f"Index name '{index}' cannot contain uppercase letters.")
+
         self._index = index
 
     def set_provider(self, provider):
