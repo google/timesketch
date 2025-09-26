@@ -84,6 +84,14 @@ class SketchTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Events need to be a list."):
             self.sketch.add_event_attributes(events)
 
+    def test_link_event_to_conclusion(self):
+        """Test linking an event to a conclusion."""
+        events = [{"_id": "1", "_type": "_doc", "_index": "1"}]
+        conclusion_id = 123
+        response = self.sketch.link_event_to_conclusion(events, conclusion_id)
+        self.assertIn("meta", response)
+        self.assertIn("objects", response)
+
     def test_list_aggregations(self):
         """Test the Sketch list_aggregations method."""
         aggregations = self.sketch.list_aggregations()
