@@ -70,9 +70,6 @@ export default new Vuex.Store({
     SET_SEARCH_HISTORY(state, payload) {
       Vue.set(state, 'searchHistory', payload.objects)
     },
-    SET_TIME_FILTERS(state, payload) {
-      Vue.set(state, 'timeFilters', payload.objects)
-    },
     SET_SCENARIOS(state, payload) {
       Vue.set(state, 'scenarios', payload.objects[0])
     },
