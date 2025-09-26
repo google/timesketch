@@ -109,6 +109,11 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             logger.warning("Uploaded logs did not produce a blake2s table hash!")
 
         logger.info("Starting the SecGemini analysis...")
+        logger.info(
+            "NOTE: 'ConnectionClosedOK' errors from the SecGemini client in the "
+            "log are expected. The client automatically reconnects during long-running "
+            "analysis."
+        )
         async for response in self._session.stream(prompt):
             yield response.content
 
@@ -190,11 +195,20 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 asyncio.set_event_loop(loop)
 
             gen = main()
+            log_trigger = 0
             while True:
                 try:
                     chunk = loop.run_until_complete(gen.__anext__())
                     # Some chunks may be empty
                     if chunk is not None:
+                        log_trigger += 1
+                        if log_trigger % 50 == 0:
+                            logger.info(
+                                "[%s] SecGemini is still processing table with "
+                                "hash [%s] ...",
+                                self.session_id,
+                                self.table_hash
+                            )
                         accumulated_response += chunk
                         yield chunk
 
