@@ -26,7 +26,7 @@ class AggregationTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline("evtx.plaso")
+        self.import_timeline("evtx_20250918.plaso")
         self.import_timeline("evtx_part.csv")
 
     def test_entire_set(self):

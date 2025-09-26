@@ -1,5 +1,6 @@
+ARG UBUNTU_VERSION=22.04
 # Use the official Docker Hub Ubuntu base image
-FROM ubuntu:22.04
+FROM ubuntu:${UBUNTU_VERSION}
 
 ARG PLASO_PPA_TRACK=stable
 
@@ -8,15 +9,16 @@ ARG PLASO_PPA_TRACK=stable
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  software-properties-common \
-  python3-pip \
-  python3-wheel \
-  python3-setuptools \
-  python3-psycopg2 \
-  gpg-agent \
   git \
-  wget \
+  gpg-agent \
+  python3-pip \
+  python3-psycopg2 \
+  python3-setuptools \
+  python3-venv \
+  python3-wheel \
+  software-properties-common \
   tzdata \
+  wget \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
@@ -24,6 +26,10 @@ RUN add-apt-repository -y ppa:gift/$PLASO_PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*
+
+# Create a virtual environment
+RUN python3 -m venv /opt/venv --system-site-packages
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch

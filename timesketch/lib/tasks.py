@@ -813,7 +813,7 @@ def run_plaso(
         logger.error(
             "Error importing Plaso file (%s): %s\n%s", file_path, str(e), error_msg
         )
-        return None
+        raise
 
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
