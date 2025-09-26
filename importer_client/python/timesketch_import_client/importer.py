@@ -236,7 +236,7 @@ class ImportStreamer(object):
                 # Catch both ValueError (for malformed strings) and OverflowError
                 # (for out-of-range timestamps)
                 # If 'mixed' parsing fails, fall back to coercing errors to NaT
-                logger.warning(
+                logger.info(
                     "Mixed datetime parsing failed, falling back to 'coerce' to handle invalid values."
                 )
                 date = pandas.to_datetime(

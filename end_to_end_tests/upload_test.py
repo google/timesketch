@@ -43,7 +43,7 @@ class UploadTest(interface.BaseEndToEndTest):
         file_path = (
             "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
         )
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
@@ -71,7 +71,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
                 file_object.write(string)
 
-        self.import_timeline("/tmp/large.jsonl", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/large.jsonl", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
