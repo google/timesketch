@@ -846,7 +846,9 @@ class ImportStreamer(object):
     def set_index_name(self, index):
         """Set the index name."""
         if not isinstance(index, str):
-            raise ValueError("Index name must be a string.")
+            raise ValueError(
+                f"Index name must be a string and not {index} {type(index)}."
+            )
 
         # OpenSearch/Elasticsearch index name restrictions.
         invalid_chars = r'\/*?"<>| ,#'
