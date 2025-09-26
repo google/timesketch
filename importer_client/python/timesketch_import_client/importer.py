@@ -242,13 +242,17 @@ class ImportStreamer(object):
                 date = pandas.to_datetime(
                     data_frame["datetime"], utc=True, errors="coerce"
                 )
-                # Identify and drop rows with invalid dates (converted to NaT)
-                invalid_rows = data_frame[date.isna()]
-                if not invalid_rows.empty:
+                # Identify and replace rows with invalid dates (converted to NaT)
+                invalid_mask = date.isna()
+                num_invalid = invalid_mask.sum()
+                if num_invalid > 0:
                     logger.warning(
-                        f"Dropping {len(invalid_rows)} rows with invalid or out-of-range timestamps."
+                        f"{num_invalid} rows with invalid or out-of-range "
+                        f"timestamps found. Setting their timestamp to epoch "
+                        f"(1970-01-01 00:00:00)."
                     )
-                    data_frame.drop(invalid_rows.index, inplace=True)
+                    epoch_ts = pandas.Timestamp("1970-01-01", tz="UTC")
+                    date.fillna(epoch_ts, inplace=True)
 
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
             except Exception as e:

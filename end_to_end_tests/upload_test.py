@@ -314,7 +314,7 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 1)
         self.assertions.assertEqual(
-            "1601-01-01" in str(search_obj.table["datetime"]), True
+            "1970-01-01" in str(search_obj.table["datetime"]), True
         )
 
         # Search for future event check if datetime value is in the result
@@ -323,7 +323,7 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj2.commit()
         self.assertions.assertEqual(len(search_obj2.table), 1)
         self.assertions.assertEqual(
-            "2227-12-31" in str(search_obj2.table["datetime"]), True
+            "1970-01-01" in str(search_obj2.table["datetime"]), True
         )
 
     def test_csv_different_timestamps(self):
