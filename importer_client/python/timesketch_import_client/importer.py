@@ -237,7 +237,8 @@ class ImportStreamer(object):
                 # (for out-of-range timestamps)
                 # If 'mixed' parsing fails, fall back to coercing errors to NaT
                 logger.info(
-                    "Mixed datetime parsing failed, falling back to 'coerce' to handle invalid values."
+                    "Mixed datetime parsing failed, falling back to 'coerce' "
+                    "to handle invalid values."
                 )
                 date = pandas.to_datetime(
                     data_frame["datetime"], utc=True, errors="coerce"
@@ -247,15 +248,15 @@ class ImportStreamer(object):
                 num_invalid = invalid_mask.sum()
                 if num_invalid > 0:
                     logger.warning(
-                        f"{num_invalid} rows with invalid or out-of-range "
-                        f"timestamps found. Setting their timestamp to epoch "
-                        f"(1970-01-01 00:00:00)."
+                        "%d rows with invalid or out-of-range timestamps found. "
+                        "Setting their timestamp to epoch (1970-01-01 00:00:00).",
+                        num_invalid,
                     )
                     epoch_ts = pandas.Timestamp("1970-01-01", tz="UTC")
                     date.fillna(epoch_ts, inplace=True)
 
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 error_msg = f"An unexpected error occurred: {e}"
                 logger.error(
                     error_msg,

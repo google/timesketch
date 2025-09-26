@@ -531,9 +531,21 @@ class OpenSearchDataStore:
         return start_range.strftime(TS_FORMAT), end_range.strftime(TS_FORMAT)
 
     @staticmethod
-    def _is_valid_opensearch_index_name(name):
-        """
-        Checks if a string is a valid OpenSearch index name.
+    def _is_valid_opensearch_index_name(name: str) -> bool:
+        """Validates if a string conforms to OpenSearch index naming conventions.
+
+        OpenSearch index names must adhere to the following rules:
+        - Must be lowercase.
+        - Cannot begin with an underscore (`_`) or a hyphen (`-`).
+        - Cannot contain the following characters: `\`, `/`, `?`, `,`, `"`,
+          ` `, `#`, `*`, `<`, `>`, `|`.
+        - Cannot be longer than 255 bytes.
+
+        Args:
+            name: The string to validate as an OpenSearch index name.
+
+        Returns:
+            True if the string is a valid OpenSearch index name, False otherwise.
         """
         if not name or name.startswith("_") or name.startswith("-"):
             os_logger.warning(
