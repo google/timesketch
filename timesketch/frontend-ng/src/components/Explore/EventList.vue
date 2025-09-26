@@ -926,6 +926,7 @@ export default {
           if (!incognito) {
             EventBus.$emit('createBranch', this.eventList.meta.search_node)
             this.$store.dispatch('updateSearchHistory')
+            this.$store.dispatch('updateTimeFilters')
             this.branchParent = this.eventList.meta.search_node.id
           }
           if (this.userSettings.eventSummarization  && this.eventList.objects.length > 0) {

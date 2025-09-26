@@ -24,6 +24,7 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     searchHistory: {},
+    timeFilters: {},
     scenarios: [],
     hiddenScenarios: [],
     scenarioTemplates: [],
@@ -160,6 +161,9 @@ export default new Vuex.Store({
     SET_ENABLED_TIMELINES(state, payload) {
       Vue.set(state, 'enabledTimelines', payload)
     },
+    SET_TIME_FILTERS(state, payload) {
+      Vue.set(state, 'timeFilters', payload)
+    },
     ADD_ENABLED_TIMELINES(state, payload) {
       const freshEnabledTimelines = [...state.enabledTimelines, ...payload]
       Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
@@ -224,6 +228,47 @@ export default new Vuex.Store({
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
         .catch((e) => {})
+    },
+    updateTimeFilters(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getSearchHistoryTree(sketchId)
+        .then((response) => {
+
+          const treeData = response.data.objects[0]
+          const timeFilters = []
+
+          function parseNode(node) {
+            if (!node || !node.query_filter) {
+              return
+            }
+            const qf = JSON.parse(node.query_filter)
+            if (qf.chips.length > 0) {
+              timeFilters.push(...(qf.chips.filter(c => c.type === 'datetime_range')))
+            }
+            for (let c of node.children) {
+              parseNode(c)
+            }
+          }
+
+          if (treeData) {
+            parseNode(treeData)
+          }
+
+          const deduped = []
+          const timeFiltersSet = new Set()
+          for (let tf of timeFilters) {
+            if (!timeFiltersSet.has(tf.value)) {
+              timeFiltersSet.add(tf.value)
+              deduped.push(tf)
+            }
+          }
+          deduped.reverse()
+
+          context.commit('SET_TIME_FILTERS', deduped)
+        })
+        .catch(console.error)
     },
     updateScenarios(context, sketchId) {
       if (!sketchId) {
