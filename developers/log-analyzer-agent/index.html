@@ -1551,6 +1551,48 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#integrating-custom-tools-and-ai-scripts-with-the-investigation-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integrating Custom Tools and AI Scripts with the Investigation View
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integrating Custom Tools and AI Scripts with the Investigation View">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-add-an-investigative-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Add an Investigative Question
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-add-a-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Add a Conclusion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-link-events-to-the-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Link Events to the Conclusion
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2214,6 +2256,48 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#integrating-custom-tools-and-ai-scripts-with-the-investigation-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integrating Custom Tools and AI Scripts with the Investigation View
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integrating Custom Tools and AI Scripts with the Investigation View">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-add-an-investigative-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Add an Investigative Question
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-add-a-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Add a Conclusion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-link-events-to-the-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Link Events to the Conclusion
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2364,23 +2448,27 @@ that works with the <code>log_analyzer</code> feature.</p>
 <li><code>Accept: application/x-ndjson</code></li>
 </ul>
 </li>
-<li><strong>Body:</strong> A stream of newline-delimited JSON objects. Each object is a complete Timesketch event.</li>
+<li><strong>Body:</strong> A stream of newline-delimited JSON objects. Each object is a complete
+              Timesketch event.</li>
 </ul>
 <p><strong>Example Request Body (NDJSON stream):</strong></p>
 <pre><code class="language-json">{&quot;_index&quot;: &quot;a1b2c3d4...&quot;, &quot;_id&quot;: &quot;event_id_1&quot;, &quot;_source&quot;: {&quot;message&quot;: &quot;User 'admin' logged in from 192.168.1.100&quot;, &quot;timestamp&quot;: 1672531200000000, ...}}
 {&quot;_index&quot;: &quot;a1b2c3d4...&quot;, &quot;_id&quot;: &quot;event_id_2&quot;, &quot;_source&quot;: {&quot;message&quot;: &quot;Process 'evil.exe' created by pid 1234&quot;, &quot;timestamp&quot;: 1672531201000000, ...}}
 </code></pre>
 <h4 id="response-format"><strong>Response Format</strong></h4>
-<p>Your agent must stream back a response with the following characteristics:</p>
+<p>Your agent should return a complete response as a single block of text. This
+response must contain a markdown-formatted section that includes a JSON object
+with the analysis findings.</p>
 <ul>
 <li><strong>Headers:</strong> <code>Content-Type: application/x-ndjson</code></li>
-<li><strong>Body:</strong> A stream of newline-delimited JSON objects. Each line should be a
-    complete, self-contained JSON object representing a question and "finding"
-    that links back to an original Timesketch event.</li>
+<li><strong>Body:</strong> A text response that includes a <code>**JSON Summary of Findings**</code> marker,
+              followed by a JSON code block. Timesketch will parse the entire response
+              to find and extract this specific JSON block.</li>
 </ul>
-<p><strong>Finding Object Schema:</strong></p>
-<p>The Timesketch backend will parse each incoming JSON object from the stream.
-The following table details the schema for a single finding object.</p>
+<p><strong>Finding List Schema:</strong></p>
+<p>The Timesketch backend will parse the JSON block from the response. This block
+should be a list of "finding" objects. The following table details the schema
+for a single object within that list.</p>
 <table>
 <thead>
 <tr>
@@ -2392,10 +2480,10 @@ The following table details the schema for a single finding object.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>record_id</code></td>
-<td>String</td>
+<td><code>log_records</code></td>
+<td>List of Objects</td>
 <td><strong>Yes</strong></td>
-<td>The <code>_id</code> of the original Timesketch event this finding relates to.</td>
+<td>A list of log record objects, each identifying a Timesketch event.</td>
 </tr>
 <tr>
 <td><code>annotations</code></td>
@@ -2403,20 +2491,9 @@ The following table details the schema for a single finding object.</p>
 <td><strong>Yes</strong></td>
 <td>A list of annotation objects. Each annotation will generate DFIQ objects in Timesketch.</td>
 </tr>
-<tr>
-<td><code>_index</code> or <code>__ts_index_name</code></td>
-<td>String</td>
-<td>No</td>
-<td>The OpenSearch index of the original event. Including this is recommended for performance.</td>
-</tr>
-<tr>
-<td><code>error</code></td>
-<td>String</td>
-<td>No</td>
-<td>If an error occurred while processing, send an object with this key instead of a finding.</td>
-</tr>
 </tbody>
 </table>
+<p>Each object inside the <code>log_records</code> list must have the following structure:</p>
 <p><strong>Annotation Object Schema:</strong></p>
 <p>Each object inside the <code>annotations</code> list must have the following structure:</p>
 <table>
@@ -2455,26 +2532,27 @@ The following table details the schema for a single finding object.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example of a Single Finding Object (one line in the NDJSON stream):</strong></p>
+<p><strong>Example of a Single Finding Object (from the list in the JSON block):</strong></p>
 <pre><code class="language-json">{
+  &quot;log_records&quot;: [
+    { &quot;record_id&quot;: &quot;8XdJUJgB092O9Z5p3KNH&quot; },
+    { &quot;record_id&quot;: &quot;another_event_id&quot; }
+  ],
   &quot;annotations&quot;: [
     {
       &quot;attack_stage&quot;: &quot;Initial access&quot;,
       &quot;priority&quot;: &quot;high&quot;,
       &quot;investigative_question&quot;: &quot;What is the initial access vector?&quot;,
       &quot;conclusions&quot;: [
-        &quot;Successful password-based root login from a known Tor exit node IP address, indicating potential anonymity seeking by the attacker.&quot;
+        &quot;Successful password-based root login from a known Tor exit node.&quot;
       ]
     },
     {
       &quot;attack_stage&quot;: &quot;Persistence&quot;,
       &quot;investigative_question&quot;: &quot;What is the persistence mechanism?&quot;,
-      &quot;conclusions&quot;: [
-        &quot;Creation of a malicious cron job file for cryptocurrency mining.&quot;
-      ]
+      &quot;conclusions&quot;: [&quot;Creation of a malicious cron job.&quot;]
     }
-  ],
-  &quot;record_id&quot;: &quot;8XdJUJgB092O9Z5p3KNH&quot;,
+  ]
 }
 </code></pre>
 <p><strong>A Note on API Flexibility:</strong></p>
@@ -2497,6 +2575,92 @@ to create your own LLM feature file.</p>
 </code></pre>
 <p>By following this architecture and API contract, you can seamlessly integrate
 custom, large-scale log analysis capabilities into the Timesketch Investigation View.</p>
+<hr />
+<h3 id="integrating-custom-tools-and-ai-scripts-with-the-investigation-view">Integrating Custom Tools and AI Scripts with the Investigation View</h3>
+<p>While the Hybrid AI Log Analyzer provides a powerful streaming interface, you
+can also programmatically interact with the Investigation View using the
+Timesketch API client. This is ideal for integrating your own external tools,
+AI scripts, or workflows that generate investigative questions, conclusions,
+and link them to specific events.</p>
+<p>This approach allows you to populate the Investigation View with findings from
+your custom analytics, making them immediately available to analysts within the
+Timesketch UI.</p>
+<p>Here’s how you can use the
+<a href="https://github.com/google/timesketch/blob/master/api_client/python/timesketch_api_client/scenario.py">scenario.py</a>
+and <a href="https://github.com/google/timesketch/blob/master/api_client/python/timesketch_api_client/sketch.py">sketch.py</a>
+API client methods to achieve this.</p>
+<h4 id="step-1-add-an-investigative-question">Step 1: Add an Investigative Question</h4>
+<p>First, you need to add a question to your sketch. You can do this by using the
+<code>add_question</code> method on a <code>Sketch</code> object. You can add a question that is
+already part of your DFIQ library of questions or a free text question. This
+will create a new <code>InvestigativeQuestion</code> in the Investigation View.</p>
+<pre><code class="language-python">from timesketch_api_client import config
+from timesketch_api_client import sketch
+
+# Authenticate and get a sketch object
+my_sketch = config.get_client().get_sketch(1)
+
+# Add a new question to the sketch
+question_text = &quot;What is the source of the anomalous network traffic?&quot;
+question = my_sketch.add_question(question_text=question_text)
+
+print(f&quot;Successfully added question '{question.name}' with ID: {question.id}&quot;)
+</code></pre>
+<h4 id="step-2-add-a-conclusion">Step 2: Add a Conclusion</h4>
+<p>Once you have a question object, you can add conclusions to it. A conclusion is
+the answer or finding that your tool or script has generated for that specific
+question. Use the <code>add_conclusion</code> method on the <code>Question</code> object.</p>
+<p>The API response from adding a conclusion will contain the <code>id</code> of the newly
+created conclusion, which you will need to link events to it.</p>
+<pre><code class="language-python"># Assume 'question' is the Question object from the previous step
+conclusion_text = &quot;The anomalous traffic originates from a compromised user's workstation (IP: 192.168.1.101).&quot;
+conclusion_response = question.add_conclusion(conclusion_text)
+
+# Extract the conclusion ID from the API response
+conclusion_objects = conclusion_response.get(&quot;objects&quot;, [])
+if conclusion_objects:
+    conclusion_id = conclusion_objects[0].get(&quot;id&quot;)
+    print(f&quot;Successfully added conclusion with ID: {conclusion_id}&quot;)
+else:
+    print(&quot;Failed to add conclusion.&quot;)
+    conclusion_id = None
+</code></pre>
+<h4 id="step-3-link-events-to-the-conclusion">Step 3: Link Events to the Conclusion</h4>
+<p>The final and most crucial step is to link the events from your timeline that
+support your conclusion. This provides the evidence for your findings. Use the
+<code>link_event_to_conclusion</code> method on the <code>Sketch</code> object.</p>
+<p>You need to provide the <code>conclusion_id</code> and a list of event dictionaries. Each
+dictionary must contain the <code>_id</code> and <code>_index</code> of the event you want to link.
+You would typically get these event details from a search query using
+<code>sketch.explore()</code> or <code>sketch.search()</code>.</p>
+<pre><code class="language-python"># Assume 'my_sketch' is your Sketch object and 'conclusion_id' is from the previous step
+
+# First, find the events you want to link.
+# For example, search for events from the compromised IP.
+search_results = my_sketch.explore(query_string='ip:&quot;192.168.1.101&quot;')
+events_to_link = search_results.get(&quot;objects&quot;, [])
+
+if events_to_link and conclusion_id:
+    # Format the events for the linking method
+    formatted_events = [
+        {
+            &quot;_id&quot;: event.get(&quot;_id&quot;),
+            &quot;_index&quot;: event.get(&quot;_index&quot;),
+        }
+        for event in events_to_link
+    ]
+
+    # Link the events to the conclusion
+    my_sketch.link_event_to_conclusion(
+        events=formatted_events,
+        conclusion_id=conclusion_id
+    )
+    print(f&quot;Successfully linked {len(formatted_events)} events to conclusion ID: {conclusion_id}&quot;)
+</code></pre>
+<p>By following these steps, you can build powerful integrations that leverage your
+own analytics and AI models to automatically populate the Timesketch
+Investigation View, providing analysts with structured, evidence-backed findings
+to accelerate their investigations.</p>
 
 
 
