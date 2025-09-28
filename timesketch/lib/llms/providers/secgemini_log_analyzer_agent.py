@@ -207,7 +207,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                 "[%s] SecGemini is still processing table with "
                                 "hash [%s] ...",
                                 self.session_id,
-                                self.table_hash
+                                self.table_hash,
                             )
                         accumulated_response += chunk
                         yield chunk

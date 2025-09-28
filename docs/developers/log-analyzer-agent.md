@@ -145,7 +145,8 @@ The provider will send a streaming `POST` request with the following characteris
 *   **Headers:**
     *   `Content-Type: application/x-ndjson`
     *   `Accept: application/x-ndjson`
-*   **Body:** A stream of newline-delimited JSON objects. Each object is a complete Timesketch event.
+*   **Body:** A stream of newline-delimited JSON objects. Each object is a complete
+              Timesketch event.
 
 **Example Request Body (NDJSON stream):**
 
@@ -156,24 +157,27 @@ The provider will send a streaming `POST` request with the following characteris
 
 #### **Response Format**
 
-Your agent must stream back a response with the following characteristics:
+Your agent should return a complete response as a single block of text. This
+response must contain a markdown-formatted section that includes a JSON object
+with the analysis findings.
 
 *   **Headers:** `Content-Type: application/x-ndjson`
-*   **Body:** A stream of newline-delimited JSON objects. Each line should be a
-    complete, self-contained JSON object representing a question and "finding"
-    that links back to an original Timesketch event.
+*   **Body:** A text response that includes a `**JSON Summary of Findings**` marker,
+              followed by a JSON code block. Timesketch will parse the entire response
+              to find and extract this specific JSON block.
 
-**Finding Object Schema:**
+**Finding List Schema:**
 
-The Timesketch backend will parse each incoming JSON object from the stream.
-The following table details the schema for a single finding object.
+The Timesketch backend will parse the JSON block from the response. This block
+should be a list of "finding" objects. The following table details the schema
+for a single object within that list.
 
 | Key | Type | Required | Description |
 |---|---|---|---|
-| `record_id` | String | **Yes** | The `_id` of the original Timesketch event this finding relates to. |
+| `log_records` | List of Objects | **Yes** | A list of log record objects, each identifying a Timesketch event. |
 | `annotations` | List of Objects | **Yes** | A list of annotation objects. Each annotation will generate DFIQ objects in Timesketch. |
-| `_index` or `__ts_index_name` | String | No | The OpenSearch index of the original event. Including this is recommended for performance. |
-| `error` | String | No | If an error occurred while processing, send an object with this key instead of a finding. |
+
+Each object inside the `log_records` list must have the following structure:
 
 **Annotation Object Schema:**
 
@@ -186,28 +190,29 @@ Each object inside the `annotations` list must have the following structure:
 | `priority` | String | No | The priority for the question. Can be `low`, `medium`, or `high`. |
 | `attack_stage` | String | No | A suggested attack stage (e.g., MITRE ATT&CK Tactic). This is stored as a question attribute. |
 
-**Example of a Single Finding Object (one line in the NDJSON stream):**
+**Example of a Single Finding Object (from the list in the JSON block):**
 
 ```json
 {
+  "log_records": [
+    { "record_id": "8XdJUJgB092O9Z5p3KNH" },
+    { "record_id": "another_event_id" }
+  ],
   "annotations": [
     {
       "attack_stage": "Initial access",
       "priority": "high",
       "investigative_question": "What is the initial access vector?",
       "conclusions": [
-        "Successful password-based root login from a known Tor exit node IP address, indicating potential anonymity seeking by the attacker."
+        "Successful password-based root login from a known Tor exit node."
       ]
     },
     {
       "attack_stage": "Persistence",
       "investigative_question": "What is the persistence mechanism?",
-      "conclusions": [
-        "Creation of a malicious cron job file for cryptocurrency mining."
-      ]
+      "conclusions": [ "Creation of a malicious cron job." ]
     }
-  ],
-  "record_id": "8XdJUJgB092O9Z5p3KNH",
+  ]
 }
 ```
 
@@ -237,3 +242,109 @@ LLM_PROVIDER_CONFIGS = {
 
 By following this architecture and API contract, you can seamlessly integrate
 custom, large-scale log analysis capabilities into the Timesketch Investigation View.
+
+---
+
+### Integrating Custom Tools and AI Scripts with the Investigation View
+
+While the Hybrid AI Log Analyzer provides a powerful streaming interface, you
+can also programmatically interact with the Investigation View using the
+Timesketch API client. This is ideal for integrating your own external tools,
+AI scripts, or workflows that generate investigative questions, conclusions,
+and link them to specific events.
+
+This approach allows you to populate the Investigation View with findings from
+your custom analytics, making them immediately available to analysts within the
+Timesketch UI.
+
+Here’s how you can use the
+[scenario.py](https://github.com/google/timesketch/blob/master/api_client/python/timesketch_api_client/scenario.py)
+and [sketch.py](https://github.com/google/timesketch/blob/master/api_client/python/timesketch_api_client/sketch.py)
+API client methods to achieve this.
+
+#### Step 1: Add an Investigative Question
+
+First, you need to add a question to your sketch. You can do this by using the
+`add_question` method on a `Sketch` object. You can add a question that is
+already part of your DFIQ library of questions or a free text question. This
+will create a new `InvestigativeQuestion` in the Investigation View.
+
+```python
+from timesketch_api_client import config
+from timesketch_api_client import sketch
+
+# Authenticate and get a sketch object
+my_sketch = config.get_client().get_sketch(1)
+
+# Add a new question to the sketch
+question_text = "What is the source of the anomalous network traffic?"
+question = my_sketch.add_question(question_text=question_text)
+
+print(f"Successfully added question '{question.name}' with ID: {question.id}")
+```
+
+#### Step 2: Add a Conclusion
+
+Once you have a question object, you can add conclusions to it. A conclusion is
+the answer or finding that your tool or script has generated for that specific
+question. Use the `add_conclusion` method on the `Question` object.
+
+The API response from adding a conclusion will contain the `id` of the newly
+created conclusion, which you will need to link events to it.
+
+```python
+# Assume 'question' is the Question object from the previous step
+conclusion_text = "The anomalous traffic originates from a compromised user's workstation (IP: 192.168.1.101)."
+conclusion_response = question.add_conclusion(conclusion_text)
+
+# Extract the conclusion ID from the API response
+conclusion_objects = conclusion_response.get("objects", [])
+if conclusion_objects:
+    conclusion_id = conclusion_objects[0].get("id")
+    print(f"Successfully added conclusion with ID: {conclusion_id}")
+else:
+    print("Failed to add conclusion.")
+    conclusion_id = None
+```
+
+#### Step 3: Link Events to the Conclusion
+
+The final and most crucial step is to link the events from your timeline that
+support your conclusion. This provides the evidence for your findings. Use the
+`link_event_to_conclusion` method on the `Sketch` object.
+
+You need to provide the `conclusion_id` and a list of event dictionaries. Each
+dictionary must contain the `_id` and `_index` of the event you want to link.
+You would typically get these event details from a search query using
+`sketch.explore()` or `sketch.search()`.
+
+```python
+# Assume 'my_sketch' is your Sketch object and 'conclusion_id' is from the previous step
+
+# First, find the events you want to link.
+# For example, search for events from the compromised IP.
+search_results = my_sketch.explore(query_string='ip:"192.168.1.101"')
+events_to_link = search_results.get("objects", [])
+
+if events_to_link and conclusion_id:
+    # Format the events for the linking method
+    formatted_events = [
+        {
+            "_id": event.get("_id"),
+            "_index": event.get("_index"),
+        }
+        for event in events_to_link
+    ]
+
+    # Link the events to the conclusion
+    my_sketch.link_event_to_conclusion(
+        events=formatted_events,
+        conclusion_id=conclusion_id
+    )
+    print(f"Successfully linked {len(formatted_events)} events to conclusion ID: {conclusion_id}")
+```
+
+By following these steps, you can build powerful integrations that leverage your
+own analytics and AI models to automatically populate the Timesketch
+Investigation View, providing analysts with structured, evidence-backed findings
+to accelerate their investigations.

@@ -92,6 +92,8 @@ export default {
     return {
       store: useAppStore(),
       showModal: false,
+      // Using a small UX trick here since we don't get the correct status from
+      // the AI agent in the frontend yet.
       loadingMessages: [
         'Calibrating the anomaly detector...',
         'Sifting through heaps of data...',
@@ -110,13 +112,13 @@ export default {
         'Dusting for digital fingerprints...',
         'Correlating events across timelines...',
         'Searching for anomalous patterns...',
-        'Generating initial hypotheses...',
+        'Generating new hypotheses...',
         'Identifying suspicious outliers...',
         'Building a chain of evidence...',
         'Normalizing timestamps...',
         'Cooling the reasoning engine...',
       ],
-      currentMessage: 'Log Analyzer is preparing...',
+      currentMessage: 'Log Analyzer is working...',
       timerIds: [],
       shuffledMessages: [],
     }
@@ -159,7 +161,7 @@ export default {
       const phase1Timer = setTimeout(() => {
         if (!this.isGenerating) return
 
-        this.currentMessage = 'Preparing the Agents...'
+        this.currentMessage = 'Preparing the agents...'
         const phase2Timer = setTimeout(() => {
           if (!this.isGenerating) return
           this.updateRandomMessage()

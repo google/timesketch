@@ -120,12 +120,15 @@ class LogAnalyzer(LLMFeatureInterface):
             if not full_response_text:
                 logger.warning("LogAnalyzer: Received no response from provider.")
                 return {
-                    "status": "success",
+                    "status": "error",
                     "feature": self.NAME,
+                    "message": "No response from LLM provider.",
                     "total_findings_processed": 0,
-                    "errors_encountered": 0,
+                    "errors_encountered": 1,
+                    "error_details": ["No response from LLM provider."],
                     "events_exported": self._events_exported,
                     "findings_received": 0,
+                    "full_response_text": full_response_text,
                 }
 
             # Look for the JSON Summary of Findings section
@@ -141,6 +144,9 @@ class LogAnalyzer(LLMFeatureInterface):
                     "feature": self.NAME,
                     "message": "No JSON Summary of Findings section found in response.",
                     "raw_response": full_response_text[:500],
+                    "errors_encountered": 1,
+                    "error_details": ["No JSON Summary section found in response."],
+                    "full_response_text": full_response_text,
                 }
 
             # Extract JSON only after the JSON Summary marker
@@ -161,6 +167,11 @@ class LogAnalyzer(LLMFeatureInterface):
                     "feature": self.NAME,
                     "message": "No valid JSON found in the JSON Summary section.",
                     "raw_response": text_after_marker[:500],
+                    "errors_encountered": 1,
+                    "error_details": [
+                        "No valid JSON found in the JSON Summary section."
+                    ],
+                    "full_response_text": full_response_text,
                 }
 
             try:
@@ -173,6 +184,11 @@ class LogAnalyzer(LLMFeatureInterface):
                     "feature": self.NAME,
                     "message": "Failed to decode JSON from the provider response.",
                     "raw_response": json_match.group(1)[:500],
+                    "errors_encountered": 1,
+                    "error_details": [
+                        "Failed to decode JSON from the provider response."
+                    ],
+                    "full_response_text": full_response_text,
                 }
 
             logger.info(
@@ -217,6 +233,7 @@ class LogAnalyzer(LLMFeatureInterface):
                     self._errors_encountered[:10] if self._errors_encountered else []
                 ),
                 "processed_findings_summary": processed_findings_summary,
+                "full_response_text": full_response_text,
             }
 
         except Exception as exception:  # pylint: disable=broad-exception-caught

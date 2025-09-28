@@ -101,36 +101,50 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
             errors_encountered = result.get("errors_encountered", 0)
             events_exported = result.get("events_exported", 0)
 
-            summary = (
-                f"Log Analyzer finished. Exported {events_exported} events, "
-                f"processed {total_findings} findings with {errors_encountered} "
-                "errors. "
-            )
+            if result.get("status") == "error":
+                self.output.result_status = "ERROR"
+                self.output.result_priority = "HIGH"
+                error_message = result.get(
+                    "message", "Unknown error from Log Analyzer feature."
+                )
+                summary = f"Log Analyzer failed: {error_message}"
+            else:
+                self.output.result_status = "SUCCESS"
+                self.output.result_priority = "NOTE"
+                summary = (
+                    f"Log Analyzer finished. Exported {events_exported} events, "
+                    f"processed {total_findings} findings with {errors_encountered} "
+                    "errors. "
+                )
 
             # Add provider-specific details if available
             if llm_provider.NAME == "secgemini_log_analyzer_agent":
                 session_id = getattr(llm_provider, "session_id", "N/A")
                 table_hash = getattr(llm_provider, "table_hash", "N/A")
-                if session_id != "N/A" or table_hash != "N/A":
-                    summary += (
-                        " - SecGemini Provider Details:"
-                        f" Session ID: '{session_id}'"
-                        f" Table Hash (blake2s): '{table_hash}'"
-                    )
+                summary += (
+                    "\n## SecGemini Session Details:\n"
+                    f" * Session ID: '{session_id}'\n"
+                    f" * Table Hash (blake2s): '{table_hash}'"
+                )
 
-            self.output.result_status = "SUCCESS"
-            self.output.result_priority = "NOTE"
+            # Create a story with the full AI response if available.
+            full_response_text = result.get("full_response_text")
+            if full_response_text:
+                if self.output.result_status == "ERROR":
+                    story_title = f"[err] Full AI Log Analysis Report - [{session_id}]"
+                else:
+                    story_title = f"Full AI Log Analysis Report - [{session_id}]"
+
+                story = self.sketch.add_story(story_title)
+                story.add_text(f"## Session Details\n\n{summary}")
+                story.add_text(
+                    "This story contains the complete, raw output from the "
+                    "AI Log Analyzer agent."
+                )
+
+                story.add_text(f"```\n{full_response_text}\n```")
+
             self.output.result_summary = summary
-
-            # Optionally, add more details to markdown.
-            self.output.result_markdown = f"### LLM Log Analyzer Results\n\n{summary}"
-
-            if errors_encountered > 0:
-                self.output.result_priority = "MEDIUM"
-                error_details = result.get("error_details", [])
-                self.output.result_markdown += "\n\n**Error samples:**\n"
-                for err in error_details:
-                    self.output.result_markdown += f"- `{err}`\n"
 
             logger.info(summary)
 
