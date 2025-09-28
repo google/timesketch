@@ -53,7 +53,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         if not self.api_key:
             raise ValueError("SecGemini provider requires an 'api_key' in its config.")
 
-        self.server_url = self.config.get("server_url")
+        self.server_url = self.config.get("logs_processor_api_url")
         if self.server_url:
             os.environ["SEC_GEMINI_LOGS_PROCESSOR_API_URL"] = self.server_url
 

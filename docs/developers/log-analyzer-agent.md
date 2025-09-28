@@ -210,7 +210,7 @@ Each object inside the `annotations` list must have the following structure:
     {
       "attack_stage": "Persistence",
       "investigative_question": "What is the persistence mechanism?",
-      "conclusions": [ "Creation of a malicious cron job." ]
+      "conclusions": ["Creation of a malicious cron job."]
     }
   ]
 }
