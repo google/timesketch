@@ -14,6 +14,7 @@
 """DFIQ plugin to trigger the LLM Log Analyzer feature."""
 
 import logging
+import time
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager as analyzer_manager
@@ -79,6 +80,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
             logger.info(
                 "Triggering Log Analyzer LLM feature for sketch [%d]", self.sketch.id
             )
+            start_time = time.time()
             result = feature_instance.execute(
                 sketch=self.sketch.sql_sketch,
                 form={
@@ -95,6 +97,12 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                 },
                 llm_provider=llm_provider,
             )
+            duration_seconds = time.time() - start_time
+            if duration_seconds > 60:
+                minutes, seconds = divmod(duration_seconds, 60)
+                duration_formatted = f"{int(minutes)} minutes and {seconds:.2f} seconds"
+            else:
+                duration_formatted = f"{duration_seconds:.2f} seconds"
 
             # 4. Summarize the result.
             total_findings = result.get("total_findings_processed", 0)
@@ -114,7 +122,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                 summary = (
                     f"Log Analyzer finished. Exported {events_exported} events, "
                     f"processed {total_findings} findings with {errors_encountered} "
-                    "errors. "
+                    f"errors."
                 )
 
             # Add provider-specific details if available
@@ -122,7 +130,8 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                 session_id = getattr(llm_provider, "session_id", "N/A")
                 table_hash = getattr(llm_provider, "table_hash", "N/A")
                 summary += (
-                    "\n## SecGemini Session Details:\n"
+                    f"\n\n## SecGemini Session Details:\n"
+                    f" * Execution time: {duration_formatted}:\n"
                     f" * Session ID: '{session_id}'\n"
                     f" * Table Hash (blake2s): '{table_hash}'"
                 )
