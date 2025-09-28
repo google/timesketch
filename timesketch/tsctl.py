@@ -344,15 +344,163 @@ def drop_db():
 
 
 @cli.command(name="list-sketches")
-def list_sketches():
-    """List all sketches."""
-    sketches = Sketch.query.all()
-    for sketch in sketches:
-        assert isinstance(sketch, Sketch)
-        status = sketch.get_status.status
-        if status == "deleted":
+@click.option(
+    "--archived",
+    is_flag=True,
+    help="Show only archived sketches. Mutually exclusive with --archived-with-open-indexes.",  # pylint: disable=line-too-long
+)
+@click.option(
+    "--archived-with-open-indexes",
+    is_flag=True,
+    help="Show archived sketches that have at least one searchindex with status "
+    "'new', 'ready', 'processing', 'fail','archived' or 'timeout'. "
+    "Mutually exclusive with --archived. This will query OpenSearch.",
+)
+@click.option(
+    "--include-deleted",
+    is_flag=True,
+    help="Include deleted sketches. Default: deleted sketches are hidden.",
+)
+def list_sketches(
+    archived: bool, archived_with_open_indexes: bool, include_deleted: bool
+):
+    """List sketches.
+
+    By default, this command lists all sketches that have not been deleted.
+
+    - If the --archived flag is provided, it will only list sketches
+      that have an 'archived' status.
+
+    - If the --archived-with-open-indexes flag is provided, it will list
+      archived sketches that have one or more associated SearchIndex database
+      objects with a status of 'new', 'ready', 'processing', 'fail', or 'timeout'.
+
+    - If the --include-deleted flag is provided, sketches marked as 'deleted'
+      will also be included in the list, respecting other filters like --archived.
+    """
+    # Initialize the datastore client if needed for OpenSearch checks.
+    datastore = None
+    if archived_with_open_indexes:
+        datastore = OpenSearchDataStore()
+    all_sketches = Sketch.query.all()
+
+    if archived and archived_with_open_indexes:
+        raise click.UsageError(
+            "The options --archived and --archived-with-open-indexes "
+            "are mutually exclusive. Please use only one."
+        )
+
+    # SearchIndex statuses that indicate it's not properly closed/archived
+    open_index_statuses = ["new", "ready", "processing", "fail", "timeout"]
+
+    if archived_with_open_indexes:
+        open_statuses_str = ", ".join(open_index_statuses)
+        click.echo(
+            "Searching for archived sketches with 'open' SearchIndex DB statuses "
+            f"({open_statuses_str}) OR indices that are actually open in OpenSearch..."
+        )
+
+        found_sketches_info = []
+
+        for sketch in all_sketches:
+            if sketch.get_status.status != "archived":
+                continue
+
+            sketch_inconsistency_details = []
+            indices_to_check_in_os = set()
+
+            for tl in sketch.timelines:
+                if tl.searchindex:
+                    si = tl.searchindex
+                    si_status = si.get_status.status
+                    if si_status in open_index_statuses:
+                        sketch_inconsistency_details.append(
+                            f"  - Timeline: '{tl.name}' (ID: {tl.id}), "
+                            f"SearchIndex DB: '{si.index_name}' (ID: {si.id}), "
+                            f"DB Status: '{si_status}' (Inconsistent)"
+                        )
+                    else:
+                        # If DB status is 'archived', add to list for OS check.
+                        indices_to_check_in_os.add(si.index_name)
+
+            if indices_to_check_in_os:
+                try:
+                    # Check the actual status of these indices in OpenSearch
+                    # pylint: disable=unexpected-keyword-arg
+                    indices_status = datastore.client.indices.get(
+                        index=list(indices_to_check_in_os), features="settings"
+                    )
+                    # pylint: enable=unexpected-keyword-arg
+                    for index_name, status_info in indices_status.items():
+                        is_closed = (
+                            status_info.get("settings", {})
+                            .get("index", {})
+                            .get("verified_before_close")
+                            == "true"
+                        )
+                        if not is_closed:
+                            sketch_inconsistency_details.append(
+                                f"  - SearchIndex DB: '{index_name}' is marked "
+                                "'archived' in DB, but is OPEN in OpenSearch."
+                            )
+                except Exception as e:  # pylint: disable=broad-except
+                    click.echo(f"ERROR checking OpenSearch for indices: {e}", err=True)
+
+            if sketch_inconsistency_details:
+                found_sketches_info.append(
+                    {
+                        "sketch_id": sketch.id,
+                        "sketch_name": sketch.name,
+                        "details": sketch_inconsistency_details,
+                    }
+                )
+
+        if not found_sketches_info:
+            print("No archived sketches with inconsistent index statuses found.")
+        else:
+            print("Archived sketches with inconsistent index statuses found:")
+            for sk_info in found_sketches_info:
+                print(
+                    f"Sketch ID: {sk_info['sketch_id']}, Name: '{sk_info['sketch_name']}' (status: archived)"  # pylint: disable=line-too-long
+                )
+                for detail in sk_info["details"]:
+                    print(detail)
+        return
+
+    # Handle default listing or --archived only
+    sketches_to_display = []
+    for sketch in all_sketches:
+        current_status = sketch.get_status.status
+
+        if current_status == "deleted" and not include_deleted:
             continue
-        print(sketch.id, sketch.name, f"status:{status}")
+
+        if archived:
+            if current_status == "archived":
+                sketches_to_display.append(sketch)
+        else:
+            sketches_to_display.append(sketch)
+
+    output_type = ""
+    if not sketches_to_display:
+        if archived:
+            print("No archived sketches found.")
+        elif include_deleted:
+            print("No sketches found (including deleted).")
+        else:
+            print("No sketches found (excluding deleted).")
+        return
+
+    if archived:
+        output_type = "Archived sketches"
+    elif include_deleted:
+        output_type = "Sketches (including deleted, ready, and archived)"
+    else:  # Default
+        output_type = "Sketches (excluding deleted; i.e., ready and archived)"
+
+    print(f"{output_type}:")
+    for sketch in sketches_to_display:
+        print(f"{sketch.id} '{sketch.name}' (status: {sketch.get_status.status})")
 
 
 @cli.command(name="list-groups")
@@ -1560,13 +1708,19 @@ def searchindex_info(searchindex_id: int, index_name: str):
         print("Searchindex not found in database.")
         return
 
-    print(f"Searchindex: {index_to_search.id} Name: {index_to_search.name} found")
+    print(
+        f"Searchindex: {index_to_search.id} Name: {index_to_search.name}"
+        f" [Status: {index_to_search.status[-1].status}] found"
+    )
 
     timelines = index_to_search.timelines
     if timelines:
         print("Associated Timelines:")
         for timeline in timelines:
-            print(f"  ID: {timeline.id}, Name: {timeline.name}")
+            print(
+                f"  ID: {timeline.id}, Name: {timeline.name}"
+                f"[Status: {timeline.status[-1].status}]"
+            )
             if timeline.sketch:
                 print(
                     f"    Sketch ID: {timeline.sketch.id}, Name: {timeline.sketch.name}"
