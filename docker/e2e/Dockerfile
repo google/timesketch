@@ -28,7 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 RUN dpkg -s plaso-tools
-RUN psort.py --help | grep formats
+RUN psort.py --version
+
 RUN psort.py -o list
 
 # Create a virtual environment
