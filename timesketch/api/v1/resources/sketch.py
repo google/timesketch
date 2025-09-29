@@ -594,7 +594,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             else:
                 logger.debug("Force delete not present, will keep the OS data.")
 
-        # A non admin user can mark a sketch to be deleted
+        # Check if user has admin privileges for force deletion
         if force_delete:
             if current_user.admin:
                 logger.debug(
