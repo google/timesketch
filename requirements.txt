@@ -4,7 +4,7 @@ celery==5.4.0
 cryptography==44.0.1
 datasketch==1.6.5
 dfir-unfurl==20240627
-opensearch-py==2.6.0
+opensearch-py==2.8.0
 Flask==3.0.3
 flask_bcrypt==1.0.1
 flask_login==0.6.3
