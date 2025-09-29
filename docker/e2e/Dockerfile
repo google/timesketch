@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN add-apt-repository -y ppa:gift/$PLASO_PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
+  python3-events \
   && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 show opensearch-py
