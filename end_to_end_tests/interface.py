@@ -157,7 +157,7 @@ class BaseEndToEndTest(object):
         if filename in self._imported_files:
             return
         file_path = os.path.join(TEST_DATA_DIR, filename)
-        print("Importing: {0:s}".format(file_path))
+        print("[import_directly_to_opensearch] Importing: {0:s}".format(file_path))
 
         if not os.path.isfile(file_path):
             raise ValueError("File [{0:s}] does not exist.".format(file_path))
