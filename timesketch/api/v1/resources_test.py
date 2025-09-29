@@ -562,9 +562,12 @@ class EventResourceTest(BaseTest):
     """Test EventResource."""
 
     resource_url = "/api/v1/sketches/1/event/"
+    maxDiff = None
     expected_response = {
         "objects": {
             "timestamp_desc": "",
+            "_id": "adc123",
+            "_index": [],
             "timestamp": 1410895419859714,
             "label": "",
             "source_long": "",
@@ -587,6 +590,8 @@ class EventResourceTest(BaseTest):
         )
         response_json = response.json
         del response_json["meta"]
+        print(f"response_json: {response_json}")
+        print(f"self.expected_response: {self.expected_response}")
         self.assertEqual(response.json, response.json | self.expected_response)
         self.assert200(response)
 

@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
+import json
 import re
 import logging
 from typing import Any, Dict, Optional, Generator
 
-from flask import current_app
 from timesketch.models import db_session
 from timesketch.models.sketch import (
     Sketch,
@@ -63,8 +63,6 @@ class LogAnalyzer(LLMFeatureInterface):
             Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
         return OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
             pool_maxsize=60,
         )
 
@@ -72,27 +70,36 @@ class LogAnalyzer(LLMFeatureInterface):
         self, sketch: Sketch, form: Dict, llm_provider: LLMProvider, **kwargs: Any
     ) -> Dict[str, Any]:
         """
-        Executes the log analysis streaming workflow.
+        Orchestrates the streaming log analysis workflow.
 
-        This method encapsulates all the streaming logic for log analysis,
-        including preparing the log stream, sending it to the LLM provider,
-        and processing the results.
+        This method prepares the stream of log events from the sketch, sends it
+        to the LLM provider for analysis, collects the streamed response, and
+        processes the findings (JSON summary) to create Timesketch annotations
+        (DFIQ).
 
         Args:
             sketch: The Timesketch Sketch object.
-            form: Form data from the request.
-            llm_provider: The LLM provider instance.
+            form: Form data from the request (e.g., search query).
+            llm_provider: The LLM provider instance, which must support streaming.
             **kwargs: Additional keyword arguments (for future extensibility).
 
         Returns:
-            Dict[str, Any]: Summary of the analysis results.
+            Dict[str, Any]: A summary of the analysis results, including counts
+                            of processed findings, errors, and exported events.
+
+        Raises:
+            ValueError: If the LLM provider does not support streaming.
+            LogAnalysisError: If the log stream preparation fails.
+            Exception: For unexpected errors during execution.
         """
-        logger.info("LogAnalyzer: Starting streaming analysis for sketch %s", sketch.id)
+        logger.info(
+            "LogAnalyzer: Starting streaming analysis for sketch [%d]", sketch.id
+        )
 
         if not llm_provider.SUPPORTS_STREAMING:
             raise ValueError(
                 f'LLM provider "{llm_provider.NAME}" does not support '
-                "streaming operations"
+                "streaming operations!"
             )
 
         try:
@@ -101,41 +108,115 @@ class LogAnalyzer(LLMFeatureInterface):
                 sketch=sketch, form=form
             )
 
-            # Stream logs to LLM provider and get findings back
-            findings_generator = llm_provider.generate_stream_from_logs(
+            raw_response_generator = llm_provider.generate_stream_from_logs(
                 log_events_generator=log_events_generator
             )
 
-            # Process findings
+            full_response_text = ""
+            for chunk in raw_response_generator:
+                if chunk:
+                    full_response_text += chunk
+
+            if not full_response_text:
+                logger.warning("LogAnalyzer: Received no response from provider.")
+                return {
+                    "status": "error",
+                    "feature": self.NAME,
+                    "message": "No response from LLM provider.",
+                    "total_findings_processed": 0,
+                    "errors_encountered": 1,
+                    "error_details": ["No response from LLM provider."],
+                    "events_exported": self._events_exported,
+                    "findings_received": 0,
+                    "full_response_text": full_response_text,
+                }
+
+            # Look for the JSON Summary of Findings section
+            json_summary_marker = "**JSON Summary of Findings**"
+            if json_summary_marker not in full_response_text:
+                logger.error(
+                    "LogAnalyzer: No JSON Summary of Findings section found "
+                    "in response."
+                )
+                self._errors_encountered.append("No JSON Summary section found")
+                return {
+                    "status": "error",
+                    "feature": self.NAME,
+                    "message": "No JSON Summary of Findings section found in response.",
+                    "raw_response": full_response_text[:500],
+                    "errors_encountered": 1,
+                    "error_details": ["No JSON Summary section found in response."],
+                    "full_response_text": full_response_text,
+                }
+
+            # Extract JSON only after the JSON Summary marker
+            text_after_marker = full_response_text[
+                full_response_text.index(json_summary_marker) :
+            ]
+            json_match = re.search(
+                r"```json\n(\[.*?\])\n```", text_after_marker, re.DOTALL
+            )
+
+            if not json_match:
+                logger.error(
+                    "LogAnalyzer: No valid JSON found after JSON Summary marker."
+                )
+                self._errors_encountered.append("No JSON found after Summary marker")
+                return {
+                    "status": "error",
+                    "feature": self.NAME,
+                    "message": "No valid JSON found in the JSON Summary section.",
+                    "raw_response": text_after_marker[:500],
+                    "errors_encountered": 1,
+                    "error_details": [
+                        "No valid JSON found in the JSON Summary section."
+                    ],
+                    "full_response_text": full_response_text,
+                }
+
+            try:
+                findings_list = json.loads(json_match.group(1))
+            except json.JSONDecodeError as e:
+                logger.error("LogAnalyzer: Failed to decode JSON from response: %s", e)
+                self._errors_encountered.append(f"JSON decode error: {e}")
+                return {
+                    "status": "error",
+                    "feature": self.NAME,
+                    "message": "Failed to decode JSON from the provider response.",
+                    "raw_response": json_match.group(1)[:500],
+                    "errors_encountered": 1,
+                    "error_details": [
+                        "Failed to decode JSON from the provider response."
+                    ],
+                    "full_response_text": full_response_text,
+                }
+
+            logger.info(
+                "LogAnalyzer: SecGemini returned %d findings", len(findings_list)
+            )
+            # Each finding can have multiple records to same annotations
             processed_findings_summary = []
-
-            for finding_dict in findings_generator:
-                if finding_dict.get("error"):
-                    logger.error(
-                        "LogAnalyzer: Error from provider stream: %s",
-                        finding_dict["error"],
-                    )
-                    processed_findings_summary.append(
-                        {
-                            "status": "error_from_provider",
-                            "message": finding_dict["error"],
-                            "raw_line": finding_dict.get("raw_line"),
-                        }
-                    )
-                    self._errors_encountered.append(finding_dict["error"])
-                    if (
-                        len(self._errors_encountered) > 100
-                    ):  # Fail fast on too many errors
-                        raise LogAnalysisError("Too many errors from provider stream")
-                    continue
-
+            for finding_dict in findings_list:
                 self._findings_received += 1
 
-                # Process individual finding
-                processing_result = self.process_response(
-                    llm_response=finding_dict, sketch=sketch
-                )
+                log_records = finding_dict.get("log_records", [])
+                record_ids = [
+                    lr.get("record_id") for lr in log_records if lr.get("record_id")
+                ]
 
+                if not record_ids:
+                    logger.warning("LogAnalyzer: Finding has no valid record IDs")
+                    continue
+
+                # Create a finding that includes ALL record_ids with same annotations
+                combined_finding = {
+                    "record_ids": record_ids,
+                    "annotations": finding_dict.get("annotations", []),
+                }
+
+                processing_result = self.process_response(
+                    llm_response=combined_finding, sketch=sketch
+                )
                 processed_findings_summary.append(processing_result)
 
                 if processing_result.get("status") == "error":
@@ -152,9 +233,10 @@ class LogAnalyzer(LLMFeatureInterface):
                     self._errors_encountered[:10] if self._errors_encountered else []
                 ),
                 "processed_findings_summary": processed_findings_summary,
+                "full_response_text": full_response_text,
             }
 
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "LogAnalyzer: Failed to execute analysis for sketch %s: %s",
                 sketch.id,
@@ -172,10 +254,12 @@ class LogAnalyzer(LLMFeatureInterface):
         active_timelines = list(sketch.active_timelines)
         if not active_timelines:
             logger.warning(
-                "LogAnalyzer: No active timelines found for sketch %s",
+                "LogAnalyzer: No active timelines found for sketch [%s]",
                 sketch.id,
             )
-            raise LogAnalysisError(f"No active timelines found for sketch {sketch.id}")
+            raise LogAnalysisError(
+                f"No active timelines found for sketch [{sketch.id}]"
+            )
 
         indices_for_pit = [
             timeline.searchindex.index_name for timeline in active_timelines
@@ -192,6 +276,10 @@ class LogAnalyzer(LLMFeatureInterface):
         must_clauses.append({"terms": {"__ts_timeline_id": timeline_ids}})
         base_query_body = {"query": {"bool": {"must": must_clauses}}}
 
+        return_fields = form.get("return_fields")
+        if return_fields and isinstance(return_fields, list):
+            base_query_body["_source"] = return_fields
+
         try:
             log_events_generator = self.datastore.export_events_with_slicing(
                 indices_for_pit=indices_for_pit,
@@ -201,15 +289,12 @@ class LogAnalyzer(LLMFeatureInterface):
 
             for event in log_events_generator:
                 self._events_exported += 1
-                # Add index name to event for better tracking
-                if "_index" in event:
-                    event["__ts_index_name"] = event["_index"]
                 yield event
 
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "LogAnalyzer: Error during datastore.export_events_with_slicing "
-                "for sketch %s: %s",
+                "for sketch [%s]: '%s'",
                 sketch.id,
                 exception,
                 exc_info=True,
@@ -251,7 +336,12 @@ class LogAnalyzer(LLMFeatureInterface):
                             "message": "...", "linked_event_id": "..."}
         """
         sketch = kwargs.get("sketch")
-        PRIORITY_MAP = {"low": 1, "medium": 2, "high": 3}
+        # Mapping from Sec-Gemini priority values to Timesketch internal priority names.
+        LLM_PRIORITY_TO_TS_PRIORITY = {
+            "notice": "low",
+            "critical": "high",
+        }
+        TS_PRIORITY_SCORES = {"low": 1, "medium": 2, "high": 3}
 
         if not isinstance(llm_response, dict):
             logger.error(
@@ -263,81 +353,77 @@ class LogAnalyzer(LLMFeatureInterface):
                 "message": "Invalid finding format received from LLM provider.",
             }
 
-        original_ts_event_id = llm_response.get("record_id")
-        if not original_ts_event_id:
-            logger.warning(
-                "LogAnalyzer: Finding missing 'record_id': %s",
-                str(llm_response)[:200],
-            )
+        # Handle new format with multiple record_ids
+        record_ids = llm_response.get("record_ids", [])
+        if not record_ids:
+            logger.warning("LogAnalyzer: Finding missing 'record_ids'")
             return {
                 "status": "error",
-                "message": "Finding is missing its associated Timesketch event ID.",
+                "message": "Finding is missing its associated Timesketch event IDs.",
             }
 
-        events_to_commit = []
+        # Optimization: If all active timelines use the same searchindex,
+        # we can avoid per-event lookups.
+        single_searchindex_id = None
+        active_timelines = sketch.active_timelines
+        if active_timelines:
+            unique_searchindex_ids = {tl.searchindex_id for tl in active_timelines}
+            if len(unique_searchindex_ids) == 1:
+                single_searchindex_id = unique_searchindex_ids.pop()
 
-        event_to_link = Event.get_or_create(
-            sketch_id=sketch.id, document_id=original_ts_event_id
-        )
+        # Process each record and collect all events
+        events_to_link = []
+        for record_id in record_ids:
+            event = Event.get_or_create(sketch_id=sketch.id, document_id=record_id)
 
-        # If newly created, find the event's searchindex
-        if not event_to_link.searchindex_id:
-            try:
-                # Extract index name from the finding if available
-                index_name = llm_response.get("__ts_index_name") or llm_response.get(
-                    "_index"
-                )
-                if index_name:
-                    searchindex_db_id = self._get_search_index_by_name(
-                        sketch, index_name
-                    )
+            # If newly created, find the event's searchindex
+            if not event.searchindex_id:
+                if single_searchindex_id:
+                    event.searchindex_id = single_searchindex_id
                 else:
-                    searchindex_db_id = self._get_search_index(
-                        sketch, original_ts_event_id
-                    )
-                event_to_link.searchindex_id = searchindex_db_id
-                events_to_commit.append(event_to_link)
-            except ValueError as exception:
+                    try:
+                        searchindex_db_id = self._get_search_index(sketch, record_id)
+                        event.searchindex_id = searchindex_db_id
+                    except ValueError as exception:
+                        logger.error(
+                            "LogAnalyzer: Could not find Event for ID %s: %s",
+                            record_id,
+                            exception,
+                        )
+                        self._errors_encountered.append(
+                            f"Failed to find searchindex for event {record_id}"
+                        )
+                        continue  # Skip this event but continue with others
+
+            events_to_link.append(event)
+
+        if not events_to_link:
+            return {
+                "status": "error",
+                "message": "Could not link any events from the finding.",
+            }
+
+        annotations = llm_response.get("annotations", [])
+        if not annotations:
+            logger.info("LogAnalyzer: No annotations for events")
+            try:
+                db_session.add_all(events_to_link)
+                db_session.commit()
+            except Exception as exception:  # pylint: disable=broad-exception-caught
+                db_session.rollback()
                 logger.error(
-                    "LogAnalyzer: Could not find Event for ID %s: %s",
-                    original_ts_event_id,
+                    "LogAnalyzer: DB error for events: %s",
                     exception,
-                )
-                self._errors_encountered.append(
-                    f"Failed to find searchindex for event {original_ts_event_id}"
+                    exc_info=True,
                 )
                 return {
                     "status": "error",
-                    "message": "Failed to associate finding with event "
-                    f"{original_ts_event_id}: {exception}",
+                    "message": "DB error saving events.",
                 }
-
-        # Process annotations
-        annotations = llm_response.get("annotations", [])
-        if not annotations:
-            logger.info(
-                "LogAnalyzer: No annotations for event %s", original_ts_event_id
-            )
-            if events_to_commit:
-                try:
-                    db_session.add_all(events_to_commit)
-                    db_session.commit()
-                except Exception as exception:  # pylint: disable=broad-exception-caught
-                    db_session.rollback()
-                    logger.error(
-                        "LogAnalyzer: DB error for event %s: %s",
-                        original_ts_event_id,
-                        exception,
-                        exc_info=True,
-                    )
-                    return {
-                        "status": "error",
-                        "message": f"DB error saving event for {original_ts_event_id}.",
-                    }
             return {
                 "status": "success",
                 "message": "Finding processed; no DFIQ objects from annotations.",
-                "linked_event_id": original_ts_event_id,
+                "linked_event_ids": record_ids,
             }
 
         questions_created_this_finding = 0
@@ -353,53 +439,46 @@ class LogAnalyzer(LLMFeatureInterface):
                 and conclusion_texts
                 and isinstance(conclusion_texts, list)
             ):
-                logger.warning(
-                    "LogAnalyzer: Malformed annotation for event %s",
-                    original_ts_event_id,
-                )
+                logger.warning("LogAnalyzer: Malformed annotation")
                 self._errors_encountered.append(
-                    f"Malformed annotation for event {original_ts_event_id}: "
-                    f"question={question_text}, "
+                    f"Malformed annotation: question={question_text}, "
                     f"conclusions={conclusion_texts}"
                 )
                 continue
 
-            # TODO: Remove the regex again once the agent adjsuted their response.
-            cleaned_question_text = re.sub(
-                r"^\s*q\d+:\s*", "", question_text, flags=re.IGNORECASE
-            ).strip()
-
             question = InvestigativeQuestion.get_or_create(
-                sketch=sketch, name=cleaned_question_text
+                sketch=sketch, name=question_text
             )
             if not question.display_name:
-                question.display_name = cleaned_question_text
+                question.display_name = question_text
 
-            priority_value = ann_data.get("priority")
-            if priority_value and isinstance(priority_value, str):
-                priority_value = priority_value.lower()
-                if priority_value not in PRIORITY_MAP:
+            priority_value = ann_data.get("priority", "").lower()
+            if priority_value in LLM_PRIORITY_TO_TS_PRIORITY:
+                ts_priority = LLM_PRIORITY_TO_TS_PRIORITY[priority_value]
+
+                current_priority_level = None
+                for label_str in question.get_labels:
+                    if label_str.startswith("__ts_priority_"):
+                        current_priority_level = label_str.split("_")[-1]
+                        break
+
+                new_priority_score = TS_PRIORITY_SCORES.get(ts_priority, 0)
+                current_priority_score = TS_PRIORITY_SCORES.get(
+                    current_priority_level, 0
+                )
+
+                if new_priority_score > current_priority_score:
+                    if current_priority_level:
+                        old_priority_label = f"__ts_priority_{current_priority_level}"
+                        question.remove_label(old_priority_label)
+                    new_priority_label = f"__ts_priority_{ts_priority}"
+                    question.add_label(new_priority_label)
+            elif priority_value:
+                # Log if we receive a priority we don't have a mapping for.
+                if priority_value not in ["low", "medium", "high"]:
                     self._errors_encountered.append(
-                        f"Unknown priority value for event {original_ts_event_id}:"
-                        f" question={question_text},"
-                        f" priority={priority_value}"
+                        f"Unknown priority value: {priority_value}"
                     )
-                else:
-                    current_priority_level = None
-                    for label_str in question.get_labels:
-                        if label_str.startswith("__ts_priority_"):
-                            current_priority_level = label_str.split("_")[-1]
-                            break
-                    new_priority_score = PRIORITY_MAP.get(priority_value, 0)
-                    current_priority_score = PRIORITY_MAP.get(current_priority_level, 0)
-                    if new_priority_score > current_priority_score:
-                        if current_priority_level:
-                            old_priority_label = (
-                                f"__ts_priority_{current_priority_level}"
-                            )
-                            question.remove_label(old_priority_label)
-                        new_priority_label = f"__ts_priority_{priority_value}"
-                        question.add_label(new_priority_label)
 
             questions_created_this_finding += 1
             question.add_attribute("source", "AI_GENERATED")
@@ -407,12 +486,11 @@ class LogAnalyzer(LLMFeatureInterface):
                 "attack_stage_suggestion", ann_data.get("attack_stage", "n/a")
             )
 
-            # Create individual conclusions for each conclusion text
+            # Create conclusions and link ALL events from this finding
             for conclusion_text in conclusion_texts:
                 if not isinstance(conclusion_text, str) or not conclusion_text.strip():
                     continue
 
-                # Check if this exact conclusion already exists for this question
                 existing_conclusion = InvestigativeQuestionConclusion.query.filter_by(
                     investigativequestion=question,
                     conclusion=conclusion_text,
@@ -420,9 +498,11 @@ class LogAnalyzer(LLMFeatureInterface):
                 ).first()
 
                 if existing_conclusion:
-                    if event_to_link not in existing_conclusion.events:
-                        existing_conclusion.events.append(event_to_link)
-                        db_session.add(existing_conclusion)
+                    # Link ALL events from this finding to the conclusion
+                    for event in events_to_link:
+                        if event not in existing_conclusion.events:
+                            existing_conclusion.events.append(event)
+                            db_session.add(existing_conclusion)
                 else:
                     new_conclusion = InvestigativeQuestionConclusion(
                         conclusion=conclusion_text,
@@ -431,8 +511,9 @@ class LogAnalyzer(LLMFeatureInterface):
                         automated=True,
                     )
 
-                    if event_to_link not in new_conclusion.events:
-                        new_conclusion.events.append(event_to_link)
+                    # Link ALL events from this finding to the conclusion
+                    for event in events_to_link:
+                        new_conclusion.events.append(event)
 
                     db_session.add(new_conclusion)
                     conclusions_created_this_finding += 1
@@ -441,36 +522,32 @@ class LogAnalyzer(LLMFeatureInterface):
         try:
             db_session.commit()
             logger.info(
-                "LogAnalyzer: Committed %d questions and %d conclusions for event %s",
+                "LogAnalyzer: Committed %d questions and %d conclusions for %d events",
                 questions_created_this_finding,
                 conclusions_created_this_finding,
-                original_ts_event_id,
+                len(events_to_link),
             )
         except Exception as exception:  # pylint: disable=broad-exception-caught
             db_session.rollback()
             logger.error(
-                "LogAnalyzer: DB commit error for event %s: %s",
-                original_ts_event_id,
+                "LogAnalyzer: DB commit error: %s",
                 exception,
                 exc_info=True,
             )
-            self._errors_encountered.append(
-                f"DB error for event {original_ts_event_id}: {str(exception)}"
-            )
+            self._errors_encountered.append(f"DB error: {str(exception)}")
             return {
                 "status": "error",
-                "message": f"DB error saving analysis for event "
-                f"{original_ts_event_id}.",
+                "message": "DB error saving analysis.",
             }
 
         return {
             "status": "success",
             "message": (
                 f"Successfully processed {questions_created_this_finding} question(s) "
-                f"and {conclusions_created_this_finding} conclusion(s) for event "
-                f"{original_ts_event_id}."
+                f"and {conclusions_created_this_finding} conclusion(s) for "
+                f"{len(events_to_link)} events."
             ),
-            "linked_event_id": original_ts_event_id,
+            "linked_event_ids": record_ids,
         }
 
     def _get_search_index_by_name(self, sketch: Sketch, index_name: str) -> int:
