@@ -36,13 +36,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # opensearch output module, but the python3-opensearch package is missing              │
 # this dependency. We install it globally for the system Python.                       │
 RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
-  echo '24.04 detected'  \
+  echo '24.04 detected';  \
   pip3 install --break-system-packages events; \ 
   fi
 
 RUN pip3 show opensearch-py
-RUN python3 -c "import opensearchpy"
-RUN python3 -c "import opensearchpy; print(f'OpenSearchPy version for Plaso')"
+#RUN python3 -c "import opensearchpy"
+#RUN python3 -c "import opensearchpy; print(f'OpenSearchPy version for Plaso')"
 RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes' 
 
 RUN dpkg -s plaso-tools
