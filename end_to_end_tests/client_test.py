@@ -73,7 +73,8 @@ class ClientTest(interface.BaseEndToEndTest):
         )
 
         context = "e2e - > test_direct_opensearch"
-        timeline_name = "Ingested Via Mechanism"
+        rand = random.randint(0, 10000)
+        timeline_name = f"test_direct_opensearch {rand}"
         timeline = new_sketch.generate_timeline_from_es_index(
             es_index_name=index_name,
             name=timeline_name,
