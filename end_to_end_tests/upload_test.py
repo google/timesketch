@@ -406,6 +406,4 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(events), 1)
 
 
-manager.EndToEndTestManager.register_test(ImportPlasoTest)
-
 manager.EndToEndTestManager.register_test(UploadTest)
