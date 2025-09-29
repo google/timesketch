@@ -1,6 +1,9 @@
 ARG UBUNTU_VERSION=22.04
 # Use the official Docker Hub Ubuntu base image
 FROM ubuntu:${UBUNTU_VERSION}
+# An `ARG` declared before a `FROM` instruction is only in scope
+# for the `FROM` instruction.
+ARG UBUNTU_VERSION
 
 ARG PLASO_PPA_TRACK=stable
 
@@ -33,6 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # opensearch output module, but the python3-opensearch package is missing              │
 # this dependency. We install it globally for the system Python.                       │
 RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
+  echo '24.04 detected'  \
   pip3 install --break-system-packages events; \ 
   fi
 
