@@ -403,7 +403,7 @@ class UploadTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         events = sketch.explore("*", as_pandas=True)
-        self.assertions.assertEqual(len(events), 1)
+        self.assertions.assertEqual(len(events), 3205)
 
 
 manager.EndToEndTestManager.register_test(UploadTest)
