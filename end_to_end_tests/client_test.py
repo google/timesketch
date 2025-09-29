@@ -180,7 +180,6 @@ level: high
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(len(rule.logsource), 2)
 
-
     def test_do_users_exist(self):
         """Tests if the essential 'test' and 'admin' users exist in Timesketch.
 
