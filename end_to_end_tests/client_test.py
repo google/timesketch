@@ -346,7 +346,8 @@ level: high
         # breakpoint()
         with self.assertions.assertRaises(RuntimeError):
             print(
-                "Expted that this sketch is not found - so API error (RuntimeError) for request is expected"
+                "Expted that this sketch is not found - "
+                "so API error (RuntimeError) for request is expected"
             )
             self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
             print("End of expected RuntimeError")
