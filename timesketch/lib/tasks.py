@@ -794,6 +794,7 @@ def run_plaso(
 
     # Run pinfo on storage file
     try:
+        print("Running pinfo")
         pinfo = pinfo_tool.PinfoTool()
         storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
@@ -806,6 +807,7 @@ def run_plaso(
         total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
+        print("Finished running pinfo")
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
@@ -943,6 +945,7 @@ def run_plaso(
 
     # Run psort.py
     try:
+        print(f"Plaso cmd line: {cmd}")
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task

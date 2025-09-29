@@ -549,18 +549,23 @@ class OpenSearchDataStore:
         """
         if not name or name.startswith("_") or name.startswith("-"):
             os_logger.warning(
-                f"OpenSearch Index Name: {name} is not valid, as it startes with _ or -"
+                "OpenSearch Index Name: %s is not valid, " "as it startes with _ or -",
+                name,
             )
             return False
         # Check for invalid characters according to OpenSearch docs
         if re.search(r'[\\/?, " #*<>]', name):
             os_logger.warning(
-                f"OpenSearch Index Name: {name} is not valid: contains invalid characters"
+                "OpenSearch Index Name: %s is not valid:"
+                " contains invalid characters",
+                name,
             )
             return False
         if len(name) > 255:
             os_logger.warning(
-                f"OpenSearch Index Name: {name} is not valid: too long > 255"
+                "OpenSearch Index Name: %s is not valid,"
+                " contains invalid characters",
+                name,
             )
             return False
         return name.lower() == name
@@ -1179,7 +1184,7 @@ class OpenSearchDataStore:
                     valid_indices.append(index_name)
                 else:
                     os_logger.warning("Index '%s' not found. Skipping...", index_name)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 os_logger.error(
                     "An error occurred while checking index '%s': %s",
                     index_name,
