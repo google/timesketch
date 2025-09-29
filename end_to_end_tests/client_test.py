@@ -62,10 +62,11 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_direct_opensearch(self):
         """Test injecting data into OpenSearch directly."""
-        index_name = "direct_testing"
+        rand = random.randint(0, 10000)
 
+        timeline_name = f"test_direct_opensearch_{rand}"
         self.import_directly_to_opensearch(
-            filename="evtx_direct_without_label.csv", index_name=index_name
+            filename="evtx_direct_without_label.csv", index_name=timeline_name
         )
 
         new_sketch = self.api.create_sketch(
@@ -73,10 +74,9 @@ class ClientTest(interface.BaseEndToEndTest):
         )
 
         context = "e2e - > test_direct_opensearch"
-        rand = random.randint(0, 10000)
-        timeline_name = f"test_direct_opensearch {rand}"
+
         timeline = new_sketch.generate_timeline_from_es_index(
-            es_index_name=index_name,
+            es_index_name=timeline_name,
             name=timeline_name,
             provider="end_to_end_testing_platform",
             context=context,
