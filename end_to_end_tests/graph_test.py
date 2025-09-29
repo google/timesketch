@@ -26,9 +26,7 @@ class GraphTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Import test timeline."""
-        # temporary change to a CSV here
-        # self.import_timeline("evtx_20250918.plaso")
-        self.import_timeline("sigma_events.csv")
+        self.import_timeline("evtx_20250918.plaso")
 
     def test_graph(self):
         """Test pulling graphs from the backend."""
@@ -47,11 +45,11 @@ class GraphTest(interface.BaseEndToEndTest):
 
         _ = self.sketch.lazyload_data(refresh_cache=True)
         graph_list = self.sketch.list_graphs()
-        # self.assertions.assertEqual(len(graph_list), 1)
-        # graph_saved = graph_list[0]
-        # self.assertions.assertEqual(graph_saved.graph.size(), 12)
-        # self.assertions.assertEqual(graph_saved.name, "foobar")
-        # self.assertions.assertEqual(graph_saved.description, "this is it")
+        self.assertions.assertEqual(len(graph_list), 1)
+        graph_saved = graph_list[0]
+        self.assertions.assertEqual(graph_saved.graph.size(), 12)
+        self.assertions.assertEqual(graph_saved.name, "foobar")
+        self.assertions.assertEqual(graph_saved.description, "this is it")
 
 
 manager.EndToEndTestManager.register_test(GraphTest)
