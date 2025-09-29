@@ -27,10 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 show opensearch-py
-RUN python3 -c "import opensearchpy"
-RUN python3 -c "import opensearchpy; print(f'OpenSearchPy version for Plaso')"
-RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes'
+
 # Install opensearch-py globally for Plaso to find it                                  │
 # Fix for broken PPA dependency: Plaso needs the 'events' library for its              │
 # opensearch output module, but the python3-opensearch package is missing              │
@@ -38,6 +35,11 @@ RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes'
 RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
   pip3 install --break-system-packages events; \ 
   fi
+
+RUN pip3 show opensearch-py
+RUN python3 -c "import opensearchpy"
+RUN python3 -c "import opensearchpy; print(f'OpenSearchPy version for Plaso')"
+RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes' 
 
 RUN dpkg -s plaso-tools
 RUN psort.py --version
