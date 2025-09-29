@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
+# Install opensearch-py globally for Plaso to find it                                  │
+RUN pip3 install opensearch-py==2.6.0  
+
 RUN dpkg -s plaso-tools
 RUN psort.py --version
 
