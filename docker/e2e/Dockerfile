@@ -35,7 +35,9 @@ RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes'
 # Fix for broken PPA dependency: Plaso needs the 'events' library for its              │
 # opensearch output module, but the python3-opensearch package is missing              │
 # this dependency. We install it globally for the system Python.                       │
-RUN pip3 install --break-system-packages events
+RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
+  pip3 install --break-system-packages events; \ 
+  fi
 
 RUN dpkg -s plaso-tools
 RUN psort.py --version
