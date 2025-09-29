@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
+RUN dpkg -s plaso-tools
+RUN psort.py --help | grep formats
+
 # Create a virtual environment
 RUN python3 -m venv /opt/venv --system-site-packages
 ENV PATH="/opt/venv/bin:$PATH"
