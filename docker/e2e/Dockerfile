@@ -43,6 +43,11 @@ RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/pyth
   pip3 install /tmp/timesketch/importer_client/python && \
   pip3 install /tmp/timesketch/cli_client/python
 
+RUN echo 'AAAAAAAAAAAAAA Only for debugging purposes'
+RUN pip3 show opensearch-py
+RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes'
+
+
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
 RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
