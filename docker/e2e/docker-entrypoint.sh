@@ -78,5 +78,15 @@ EOF
   gunicorn --reload -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
 fi
 
+
+echo 'AAAAAAAAAAAA'
+dpkg -s plaso-tools
+psort.py --version
+psort.py -o list
+pip3 show opensearch-py
+python3 -c "import opensearchpy"
+echo 'AAAAAAAAAAAA'
+
+
 # Run a custom command on container start
 exec "$@"
