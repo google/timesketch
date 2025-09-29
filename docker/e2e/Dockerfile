@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN dpkg -s plaso-tools
 RUN psort.py --help | grep formats
+RUN psort.py -o list
 
 # Create a virtual environment
 RUN python3 -m venv /opt/venv --system-site-packages
