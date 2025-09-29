@@ -13,6 +13,7 @@
 # limitations under the License.
 """End to end tests of Timesketch client functionality."""
 
+import logging
 import uuid
 import json
 import random
@@ -20,6 +21,7 @@ import os
 import time
 
 from timesketch_api_client import search
+
 
 from . import interface
 from . import manager
@@ -178,6 +180,33 @@ level: high
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(len(rule.logsource), 2)
 
+
+    def test_do_users_exist(self):
+        """Tests if the essential 'test' and 'admin' users exist in Timesketch.
+
+        This end-to-end test verifies the presence of two fundamental user accounts,
+        'test' and 'admin', which are typically part of a default Timesketch e2e
+        setup.
+        """
+        users = self.api.list_users()
+        found_test_user = False
+        found_admin_user = False
+
+        # Convert the iterable of user objects into a set of usernames
+        # for efficient lookup
+        user_usernames = {user.username for user in users}
+
+        if "test" in user_usernames:
+            found_test_user = True
+        if "admin" in user_usernames:
+            found_admin_user = True
+        self.assertions.assertTrue(
+            found_test_user, "User 'test' was not found in Timesketch."
+        )
+        self.assertions.assertTrue(
+            found_admin_user, "User 'admin' was not found in Timesketch."
+        )
+
     def test_sigmarule_remove(self):
         """Client Sigma delete tests.
         The test is called remove to avoid running it before the create test.
@@ -318,8 +347,9 @@ level: high
         sketches = list(self.api.list_sketches())
         number_of_sketches = len(sketches)
 
+        sketch_name = f"test_delete_sketch_{uuid.uuid4().hex}"
         sketch = self.api.create_sketch(
-            name="test_delete_sketch", description="test_delete_sketch"
+            name=sketch_name, description="test_delete_sketch"
         )
 
         sketches = list(self.api.list_sketches())
@@ -332,13 +362,29 @@ level: high
         sketches = self.api.list_sketches()
         found = False
         for s in sketches:
-            if s.name == "test_delete_sketch":
+            if s.name == sketch_name:
                 found = True
 
         self.assertions.assertEqual(found, True)
+        # Check the current user
+        expected_user = "test"
+        user = self.api.current_user
+        self.assertions.assertEqual(user.username, expected_user)
+        self.assertions.assertEqual(user.is_admin, False)
+        self.assertions.assertEqual(user.is_active, True)
 
-        # delete sketch
-        sketch.delete()
+        # switch to a different user
+        expected_admin_user = "admin"
+        user = self.admin_api.current_user
+        self.assertions.assertEqual(user.username, expected_admin_user)
+        self.assertions.assertEqual(user.is_admin, True)
+        self.assertions.assertEqual(user.is_active, True)
+
+        # allow the admin user to read, write and delete the sketch
+        sketch.add_to_acl(user_list=["admin"], permissions=["read", "write", "delete"])
+        admin_sketch_instance = self.admin_api.get_sketch(sketch.id)
+
+        admin_sketch_instance.delete(force_delete=True)
 
         sketches = list(self.api.list_sketches())
         self.assertions.assertEqual(len(sketches), number_of_sketches)
@@ -351,6 +397,145 @@ level: high
             )
             self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
             print("End of expected RuntimeError")
+        self.assertions.assertEqual(
+            len(sketches),
+            number_of_sketches,
+            "Sketch count should decrease after deletion",
+        )
+
+        # disable logging for a bit to avoid flooding
+        api_client_logger = logging.getLogger("timesketch_api_client")
+        # Store the current level
+        original_level = api_client_logger.level
+        api_client_logger.setLevel(logging.CRITICAL)
+
+        try:
+            # attempt to pull sketch it is expected that this will cause
+            # some 404 in the stdout
+            with self.assertions.assertRaises(RuntimeError):
+                # The .name attribute access will trigger the API call
+                # that then fails with 404 and raises RuntimeError.
+                self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+        finally:
+            # Restore the original logging level regardless of test outcome
+            api_client_logger.setLevel(original_level)
+
+    def test_delete_sketch_without_acls(self):
+        """Test to attempt to delete a sketch where the admin user has no ACLs,
+        and the deletion should fail."""
+        sketch_name_prefix = "test_sketch_no_admin_acls_fail_"
+        # Sketch created by the regular user (self.api)
+        initial_sketch_count_regular_user = len(list(self.api.list_sketches()))
+
+        sketch_by_regular_user = self.api.create_sketch(
+            name=f"{sketch_name_prefix}{uuid.uuid4().hex}",
+            description="Sketch created by regular user, admin will fail to delete.",
+        )
+        self.assertions.assertIsNotNone(sketch_by_regular_user)
+        sketch_id_to_delete = sketch_by_regular_user.id
+
+        # Verify sketch count increased for the regular user
+        current_sketch_count_regular_user = len(list(self.api.list_sketches()))
+        self.assertions.assertEqual(
+            current_sketch_count_regular_user, initial_sketch_count_regular_user + 1
+        )
+
+        # Check that admin is not explicitly part of the sketch's ACLs initially.
+        # The sketch is owned by the regular 'test' user.
+        acl = sketch_by_regular_user.acl
+        admin_username = self.admin_api.current_user.username  # Should be "admin"
+
+        admin_user = self.admin_api.current_user
+        self.assertions.assertEqual(admin_user.username, "admin")
+        self.assertions.assertEqual(admin_user.is_admin, True)
+        self.assertions.assertEqual(admin_user.is_active, True)
+
+        admin_has_direct_permission = any(
+            user_perm.get("username") == admin_username
+            for user_perm in acl.get("users", [])
+        )
+
+        self.assertions.assertFalse(
+            admin_has_direct_permission,
+            f"Admin user '{admin_username}' should not have explicit user ACLs "
+            "on this sketch initially as it was created by another user.",
+        )
+
+        # Admin user (self.admin_api) attempts to get the sketch.
+        # This might succeed if admins have global read by default.
+        admin_sketch_instance = None
+        try:
+            admin_sketch_instance = self.admin_api.get_sketch(sketch_id_to_delete)
+            self.assertions.assertIsNotNone(
+                admin_sketch_instance,
+                "Admin should generally be able to get/read any sketch.",
+            )
+        except RuntimeError as e:
+            self.assertions.fail(
+                f"Admin failed to even GET sketch {sketch_id_to_delete} "
+                f"which they did not own and had no explicit ACLs for. Error: {e}. "
+                "This might indicate admins don't have global read by default, "
+                "or the sketch was not found."
+            )
+
+        with self.assertions.assertRaises(RuntimeError) as context_delete:
+            admin_sketch_instance.delete(force_delete=True)  # type: ignore
+
+        self.assertions.assertIn(
+            "have the permission to access the requested resource",
+            str(context_delete.exception),
+        )
+
+        # Verify the sketch is actually still there (checked by regular user)
+        still_exists_sketch = self.api.get_sketch(sketch_id_to_delete)
+        self.assertions.assertIsNotNone(
+            still_exists_sketch,
+            "Sketch should still exist after failed admin deletion attempt.",
+        )
+        self.assertions.assertEqual(still_exists_sketch.id, sketch_id_to_delete)
+
+    def test_delete_sketch_without_force_delete(self):
+        """This test will attempt to delete a sketch
+        without passing the force_delete argument"""
+        sketch_n = f"test_delete_sketch_without_force_delete_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(
+            name=sketch_n,
+            description="test_delete_sketch_without_force_delete",
+        )
+        self.assertions.assertIsNotNone(sketch)
+        sketch_id = sketch.id
+
+        # switch to a different user
+        expected_admin_user = "admin"
+        user = self.admin_api.current_user
+        self.assertions.assertEqual(user.username, expected_admin_user)
+        self.assertions.assertEqual(user.is_admin, True)
+        self.assertions.assertEqual(user.is_active, True)
+
+        # allow the admin user to read, write and delete the sketch
+        sketch.add_to_acl(user_list=["admin"], permissions=["read", "write", "delete"])
+        admin_sketch_instance = self.admin_api.get_sketch(sketch_id)
+
+        # Perform a soft delete (force_delete=False is the default)
+        try:
+            admin_sketch_instance.delete(force_delete=False)
+        except RuntimeError as e:
+            self.assertions.fail(f"Soft delete failed unexpectedly: {e}")
+
+        # Verify the sketch status is 'deleted'
+        # We need to fetch the sketch again to get its updated status from the server.
+        # Depending on the API, a soft-deleted sketch might still be fetchable
+        # or might require admin privileges / specific flags.
+        # For this test, we assume it's fetchable by the owner to check status.
+        try:
+            updated_sketch = self.admin_api.get_sketch(sketch_id)
+            self.assertions.assertEqual(
+                updated_sketch.status,
+                "deleted",
+                "Sketch status should be 'deleted' after a soft delete.",
+            )
+        except RuntimeError as e:
+            self.assertions.fail(f"Failed to get sketch after soft delete: {e}")
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):

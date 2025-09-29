@@ -336,7 +336,7 @@ class SketchResourceTest(BaseTest):
         self.assert403(response)
 
     def test_attempt_to_delete_archived_sketch(self):
-        """Authenticated request to archive a sketch."""
+        """Test attempting to delete an archived sketch."""
         self.login()
 
         # Create sketch to test with
@@ -357,7 +357,7 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(
             response.json["objects"][0]["name"], "test_delete_archive_sketch"
         )
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
 
         # Archive sketch
         resource_url = f"/api/v1/sketches/{created_id}/archive/"
@@ -378,9 +378,8 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
-        # delete an archived sketch at the moment returns a 200
         response = self.client.delete(f"/api/v1/sketches/{created_id}/")
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
 
 
 class ViewListResourceTest(BaseTest):
