@@ -43,8 +43,8 @@ RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/pyth
   pip3 install /tmp/timesketch/importer_client/python && \
   pip3 install /tmp/timesketch/cli_client/python
 
-RUN echo 'AAAAAAAAAAAAAA Only for debugging purposes'
 RUN pip3 show opensearch-py
+RUN python3 -c "import opensearchpy"
 RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes'
 
 
