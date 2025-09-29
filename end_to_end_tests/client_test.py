@@ -344,7 +344,11 @@ level: high
         # attempt to pull sketch
         # breakpoint()
         with self.assertions.assertRaises(RuntimeError):
+            print(
+                "Expted that this sketch is not found - so API error (RuntimeError) for request is expected"
+            )
             self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+            print("End of expected RuntimeError")
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):

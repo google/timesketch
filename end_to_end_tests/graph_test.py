@@ -26,7 +26,9 @@ class GraphTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline("evtx_20250918.plaso")
+        # temporary change to a CSV here
+        # self.import_timeline("evtx_20250918.plaso")
+        self.import_timeline("sigma_events.csv")
 
     def test_graph(self):
         """Test pulling graphs from the backend."""
