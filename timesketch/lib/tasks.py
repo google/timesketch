@@ -957,7 +957,7 @@ def run_plaso(
     try:
         print(f"Plaso cmd line: {cmd} start")
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
-        print(f"Plaso cmd line: {cmd} finish")
+        logger.info("Plaso cmd line: %s finish", cmd)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = f"Psort process failed for {file_path}: {e.output}"
