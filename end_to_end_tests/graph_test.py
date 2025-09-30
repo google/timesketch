@@ -27,7 +27,7 @@ class GraphTest(interface.BaseEndToEndTest):
 
     NAME = "graph_test"
     TEST_PLASO_FILE = "evtx_20250918.plaso"
-    TEST_PLASO_FILE_NAME = f"{TEST_PLASO_FILE}_{NAME}"
+    TEST_PLASO_FILE_NAME = f"{TEST_PLASO_FILE}_{NAME}.plaso"
 
     def setup(self):
         """Import test timeline."""
