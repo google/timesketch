@@ -838,6 +838,11 @@ def run_plaso(
         opensearch_server = parsed_url.hostname
         opensearch_port = connection.port
 
+        if not opensearch.client.indices.exists(index=index_name):
+            error_msg = f"Index '{index_name}' does not exist, aborting."
+            logger.critical(error_msg)
+            raise RuntimeError(error_msg)
+
     except errors.DatastoreConnectionError as e:
         error_msg = f"Failed to connect to OpenSearch for Plaso import: {e}"
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
