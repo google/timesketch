@@ -955,7 +955,7 @@ def run_plaso(
 
     # Run psort.py
     try:
-        print(f"Plaso cmd line: {cmd} start")
+        logger.info("Plaso cmd line: %s start", cmd)
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
         logger.info("Plaso cmd line: %s finish", cmd)
     except subprocess.CalledProcessError as e:
