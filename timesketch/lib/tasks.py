@@ -770,6 +770,8 @@ def run_plaso(
         RequestError: If the searchidnex can't be created.
         IndexNotReadyError: If the searchindex isn't ready.
         DatastoreConnectionError: If the opensearch connection isn't available.
+        subprocess.CalledProcessError: If the psort command fails.
+        Exception: For any other unexpected errors during processing.
 
     Returns:
         Name (str) of the index or None in case of an error
