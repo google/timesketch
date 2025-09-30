@@ -873,7 +873,7 @@ class OpenSearchDataStore:
                 count_result = self.client.count(
                     body=query_dsl,
                     index=list(indices),
-                    params={"ignore_unavailable": True},
+                    params={"ignore_unavailable": "true"},
                 )
             except TransportError as e:
                 os_logger.error(
@@ -899,7 +899,7 @@ class OpenSearchDataStore:
                 index=list(indices),
                 search_type=search_type,
                 scroll=scroll_timeout,
-                params={"ignore_unavailable": True},
+                params={"ignore_unavailable": "true"},
             )
 
         # The argument " _source_include" changed to "_source_includes" in
@@ -913,7 +913,7 @@ class OpenSearchDataStore:
                     search_type=search_type,
                     _source_include=return_fields,
                     scroll=scroll_timeout,
-                    params={"ignore_unavailable": True},
+                    params={"ignore_unavailable": "true"},
                 )
             else:
                 _search_result = self.client.search(
@@ -922,7 +922,7 @@ class OpenSearchDataStore:
                     search_type=search_type,
                     _source_includes=return_fields,
                     scroll=scroll_timeout,
-                    params={"ignore_unavailable": True},
+                    params={"ignore_unavailable": "true"},
                 )
         except (RequestError, TransportError) as e:
             root_cause = e.info.get("error", {}).get("root_cause")
