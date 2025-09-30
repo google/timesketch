@@ -100,8 +100,14 @@ def get_response_json(response, logger):
     try:
         return response.json()
     except json.JSONDecodeError as e:
-        logger.warning("Unable to json decode the Timesketch API response!")
-        raise ValueError("Unable to json decode the Timesketch API response!") from e
+        response_text_snippet = response.text[:500]
+        logger.warning(
+            "Unable to JSON decode the Timesketch API response! "
+            "Response snippet: %s",
+            response_text_snippet,
+            exc_info=True,
+        )
+        raise ValueError("Unable to JSON decode the Timesketch API response.") from e
 
 
 def error_message(response, message=None, error=RuntimeError):
