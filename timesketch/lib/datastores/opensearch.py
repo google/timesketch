@@ -537,7 +537,7 @@ class OpenSearchDataStore:
         OpenSearch index names must adhere to the following rules:
         - Must be lowercase.
         - Cannot begin with an underscore (`_`) or a hyphen (`-`).
-        - Cannot contain the following characters: `\`, `/`, `?`, `,`, `"`,
+        - Cannot contain the following characters: `\\`, `/`, `?`, `,`, `"`,
           ` `, `#`, `*`, `<`, `>`, `|`.
         - Cannot be longer than 255 bytes.
 
@@ -549,7 +549,7 @@ class OpenSearchDataStore:
         """
         if not name or name.startswith("_") or name.startswith("-"):
             os_logger.warning(
-                "OpenSearch Index Name: %s is not valid, " "as it startes with _ or -",
+                "OpenSearch Index Name: %s is not valid, as it startes with _ or -",
                 name,
             )
             return False
@@ -871,7 +871,9 @@ class OpenSearchDataStore:
                 del query_dsl["sort"]
             try:
                 count_result = self.client.count(
-                    body=query_dsl, index=list(indices), ignore_unavailable=True
+                    body=query_dsl,
+                    index=list(indices),
+                    params={"ignore_unavailable": True},
                 )
             except TransportError as e:
                 os_logger.error(
@@ -897,6 +899,7 @@ class OpenSearchDataStore:
                 index=list(indices),
                 search_type=search_type,
                 scroll=scroll_timeout,
+                params={"ignore_unavailable": True},
             )
 
         # The argument " _source_include" changed to "_source_includes" in
@@ -910,6 +913,7 @@ class OpenSearchDataStore:
                     search_type=search_type,
                     _source_include=return_fields,
                     scroll=scroll_timeout,
+                    params={"ignore_unavailable": True},
                 )
             else:
                 _search_result = self.client.search(
@@ -918,6 +922,7 @@ class OpenSearchDataStore:
                     search_type=search_type,
                     _source_includes=return_fields,
                     scroll=scroll_timeout,
+                    params={"ignore_unavailable": True},
                 )
         except (RequestError, TransportError) as e:
             root_cause = e.info.get("error", {}).get("root_cause")
