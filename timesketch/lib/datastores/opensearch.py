@@ -871,15 +871,16 @@ class OpenSearchDataStore:
                 del query_dsl["sort"]
             try:
                 count_result = self.client.count(body=query_dsl, index=list(indices))
-            except NotFoundError:
-                # Add sketch_id and indices to the error message for better context
+            except (NotFoundError, TransportError) as e:
                 os_logger.error(
-                    (
-                        "Unable to count for sketch [%s] due to an index "
-                        "not found: [%s]"
-                    ),
+                    "Unable to count for sketch [%s] on indices [%s] - Error: %s",
                     sketch_id,
                     ",".join(indices),
+                    e,
+                    exc_info=True,
+                )
+                os_logger.debug(
+                    "Query DSL for count error: %s", json.dumps(query_dsl, indent=2)
                 )
                 return 0
             METRICS["search_requests"].labels(type="count").inc()
