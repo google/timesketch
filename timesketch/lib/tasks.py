@@ -838,14 +838,6 @@ def run_plaso(
         opensearch_server = parsed_url.hostname
         opensearch_port = connection.port
 
-        if not opensearch.client.indices.exists(index=index_name):
-            error_msg = (
-                f"Index '{index_name}' for timeline ID [{timeline_id}] "
-                f"and file [{file_path}] does not exist, aborting."
-            )
-            logger.critical(error_msg)
-            raise RuntimeError(error_msg)
-
     except errors.DatastoreConnectionError as e:
         error_msg = f"Failed to connect to OpenSearch for Plaso import: {e}"
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
@@ -884,6 +876,14 @@ def run_plaso(
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
         logger.error("Error (%s): %s\n%s", file_path, str(e), error_msg)
         return None
+
+    if not opensearch.client.indices.exists(index=index_name):
+        error_msg = (
+            f"Index '{index_name}' for timeline ID [{timeline_id}] "
+            f"and file [{file_path}] does not exist, aborting."
+        )
+        logger.critical(error_msg)
+        raise RuntimeError(error_msg)
 
     logger.info(
         "Index timeline (ID: %d) [%s] to index [%s] (source: %s)",
