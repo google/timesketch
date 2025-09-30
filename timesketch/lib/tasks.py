@@ -796,7 +796,7 @@ def run_plaso(
 
     # Run pinfo on storage file
     try:
-        print(f"Running pinfo on {file_path} for index {index_name}")
+        logger.info("Running pinfo on %s for index %s", file_path, index_name)
         pinfo = pinfo_tool.PinfoTool()
         storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
