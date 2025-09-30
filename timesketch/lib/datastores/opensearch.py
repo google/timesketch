@@ -870,8 +870,10 @@ class OpenSearchDataStore:
             if "sort" in query_dsl:
                 del query_dsl["sort"]
             try:
-                count_result = self.client.count(body=query_dsl, index=list(indices))
-            except (NotFoundError, TransportError) as e:
+                count_result = self.client.count(
+                    body=query_dsl, index=list(indices), ignore_unavailable=True
+                )
+            except TransportError as e:
                 os_logger.error(
                     "Unable to count for sketch [%s] on indices [%s] - Error: %s",
                     sketch_id,
