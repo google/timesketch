@@ -306,9 +306,7 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj.query_string = "data_type:csv_very_old_event"
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 1)
-        actual_datetime_old = str(search_obj.table["datetime"])
-        print(f"Actual datetime for old event: {actual_datetime_old}")
-        self.assertions.assertEqual("1970-01-01" in actual_datetime_old, True)
+        self.assertions.assertEqual("1970-01-01" in str(search_obj.table["datetime"]), True)
 
         # Search for future event check if datetime value is in the result
         search_obj2 = search.Search(sketch)
