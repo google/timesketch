@@ -64,6 +64,7 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_direct_opensearch(self):
         """Test injecting data into OpenSearch directly."""
+        # make the index name something random
         rand = random.randint(0, 10000)
 
         timeline_name = f"test_direct_opensearch_{rand}"
@@ -179,6 +180,14 @@ level: high
         self.assertions.assertIn("rmusser.net", rule.references[0])
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(len(rule.logsource), 2)
+
+        # Test an actual query
+        self.import_timeline("sigma_events.csv")
+        search_obj = search.Search(self.sketch)
+        search_obj.query_string = rule.search_query
+        data_frame = search_obj.table
+        count = len(data_frame)
+        self.assertions.assertEqual(count, 1)
 
     def test_do_users_exist(self):
         """Tests if the essential 'test' and 'admin' users exist in Timesketch.
@@ -387,8 +396,6 @@ level: high
 
         sketches = list(self.api.list_sketches())
         self.assertions.assertEqual(len(sketches), number_of_sketches)
-        # attempt to pull sketch
-        # breakpoint()
         with self.assertions.assertRaises(RuntimeError):
             print(
                 "Expted that this sketch is not found - "

@@ -40,15 +40,10 @@ RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
   pip3 install --break-system-packages events; \ 
   fi
 
+# Some information for e2e test debugging in case something goes wrong
 RUN pip3 show opensearch-py
-#RUN python3 -c "import opensearchpy"
-#RUN python3 -c "import opensearchpy; print(f'OpenSearchPy version for Plaso')"
-RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes' 
-
 RUN dpkg -s plaso-tools
 RUN psort.py --version
-
-RUN psort.py -o list
 
 # Create a virtual environment
 RUN python3 -m venv /opt/venv --system-site-packages
@@ -60,11 +55,6 @@ RUN pip3 install -r /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
   pip3 install /tmp/timesketch/importer_client/python && \
   pip3 install /tmp/timesketch/cli_client/python
-
-RUN pip3 show opensearch-py
-RUN python3 -c "import opensearchpy"
-RUN echo 'AAAAAAAAAAAAAAA Only for debugging purposes'
-
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch

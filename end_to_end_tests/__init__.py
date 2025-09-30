@@ -15,6 +15,7 @@
 
 # Register all tests by importing them.
 # TODO: Re-enable this test. Temporarily disabled while debugging issues.
+# https://github.com/google/timesketch/issues/3546
 # from . import agg_test
 # from . import graph_test
 from . import cli_client_e2e_test

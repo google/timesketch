@@ -35,8 +35,6 @@ class GraphTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Import test timeline."""
-        # Default values based on Docker config.
-        # TODO: Refactor once this is centralized.
         test_data_dir = "/usr/local/src/timesketch/end_to_end_tests/test_data"
         source_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE)
         self.test_plaso_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE_NAME)
@@ -56,7 +54,7 @@ class GraphTest(interface.BaseEndToEndTest):
 
         graph_obj = graph.Graph(self.sketch)
         graph_obj.from_plugin("winservice")
-        # self.assertions.assertEqual(graph_obj.graph.size(), 12)
+        self.assertions.assertEqual(graph_obj.graph.size(), 12)
 
         graph_obj.name = "foobar"
         graph_obj.description = "this is it"

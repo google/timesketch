@@ -27,9 +27,7 @@ class QueryTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Import test timeline."""
-        print("Importing evtx_20250918")
         self.import_timeline("evtx_20250918.plaso")
-        print("Finished uploading evtx_20250918")
 
     def test_wildcard_query(self):
         """Wildcard query over all data in the sketch."""

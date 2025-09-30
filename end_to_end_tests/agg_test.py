@@ -35,8 +35,6 @@ class AggregationTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Import test timeline."""
-        # Default values based on Docker config.
-        # TODO: Refactor once this is centralized.
         test_data_dir = "/usr/local/src/timesketch/end_to_end_tests/test_data"
         source_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE)
         self.test_plaso_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE_NAME)
