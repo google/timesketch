@@ -958,8 +958,11 @@ def run_plaso(
         print(f"Plaso cmd line: {cmd} finish")
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=e.output)
-        return e.output
+        error_msg = f"Psort process failed for {file_path}: {e.output}"
+        logger.error("Psort command failed: %s", " ".join(e.cmd))
+        logger.error(error_msg)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        raise RuntimeError(error_msg) from e
 
     # Mark the searchindex and timelines as ready
     _set_datasource_status(timeline_id, file_path, "ready")
