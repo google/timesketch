@@ -29,6 +29,10 @@ class AggregationTest(interface.BaseEndToEndTest):
     TEST_PLASO_FILE = "evtx_20250918.plaso"
     TEST_PLASO_FILE_NAME = f"{TEST_PLASO_FILE}_{NAME}.plaso"
 
+    def __init__(self):
+        super().__init__()
+        self.test_plaso_path = None
+
     def setup(self):
         """Import test timeline."""
         # Default values based on Docker config.
