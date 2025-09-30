@@ -809,7 +809,7 @@ def run_plaso(
         total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
-        print(f"Finished running pinfo on {file_path}")
+        logger.info("Finished running pinfo on %s", file_path)
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
