@@ -794,7 +794,7 @@ def run_plaso(
 
     # Run pinfo on storage file
     try:
-        print(f"Running pinfo on {file_path}")
+        print(f"Running pinfo on {file_path} for index {index_name}")
         pinfo = pinfo_tool.PinfoTool()
         storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
@@ -839,7 +839,10 @@ def run_plaso(
         opensearch_port = connection.port
 
         if not opensearch.client.indices.exists(index=index_name):
-            error_msg = f"Index '{index_name}' does not exist, aborting."
+            error_msg = (
+                f"Index '{index_name}' for timeline ID [{timeline_id}] "
+                f"and file [{file_path}] does not exist, aborting."
+            )
             logger.critical(error_msg)
             raise RuntimeError(error_msg)
 
@@ -992,6 +995,9 @@ def run_csv_jsonl(
                          (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
         delimiter: Delimiter to use. Default uses ","
+
+        DatastoreConnectionError: If the opensearch connection isn't available.
+        Exception: For any other unexpected errors during processing.
 
     Returns:
         Name (str) of the index.
