@@ -313,9 +313,7 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj2.query_string = "data_type:csv_very_future_event"
         search_obj2.commit()
         self.assertions.assertEqual(len(search_obj2.table), 1)
-        actual_datetime_future = str(search_obj2.table["datetime"])
-        print(f"Actual datetime for future event: {actual_datetime_future}")
-        self.assertions.assertEqual("2227-12-31" in actual_datetime_future, True)
+        self.assertions.assertEqual("2227-12-31" in str(search_obj2.table["datetime"]), True)
 
     def test_csv_different_timestamps(self):
         """Test uploading a timeline with different precision of timestamps."""
