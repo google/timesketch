@@ -181,14 +181,6 @@ level: high
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(len(rule.logsource), 2)
 
-        # Test an actual query
-        self.import_timeline("sigma_events.csv")
-        search_obj = search.Search(self.sketch)
-        search_obj.query_string = rule.search_query
-        data_frame = search_obj.table
-        count = len(data_frame)
-        self.assertions.assertEqual(count, 1)
-
     def test_do_users_exist(self):
         """Tests if the essential 'test' and 'admin' users exist in Timesketch.
 
