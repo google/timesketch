@@ -770,6 +770,8 @@ def run_plaso(
         RequestError: If the searchidnex can't be created.
         IndexNotReadyError: If the searchindex isn't ready.
         DatastoreConnectionError: If the opensearch connection isn't available.
+        subprocess.CalledProcessError: If the psort command fails.
+        Exception: For any other unexpected errors during processing.
 
     Returns:
         Name (str) of the index or None in case of an error
@@ -794,6 +796,7 @@ def run_plaso(
 
     # Run pinfo on storage file
     try:
+        logger.info("Running pinfo on %s for index %s", file_path, index_name)
         pinfo = pinfo_tool.PinfoTool()
         storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
@@ -806,6 +809,7 @@ def run_plaso(
         total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
+        logger.info("Finished running pinfo on %s", file_path)
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
@@ -813,7 +817,7 @@ def run_plaso(
         logger.error(
             "Error importing Plaso file (%s): %s\n%s", file_path, str(e), error_msg
         )
-        return None
+        raise
 
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
@@ -874,6 +878,14 @@ def run_plaso(
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
         logger.error("Error (%s): %s\n%s", file_path, str(e), error_msg)
         return None
+
+    if not opensearch.client.indices.exists(index=index_name):
+        error_msg = (
+            f"Index '{index_name}' for timeline ID [{timeline_id}] "
+            f"and file [{file_path}] does not exist, aborting."
+        )
+        logger.critical(error_msg)
+        raise RuntimeError(error_msg)
 
     logger.info(
         "Index timeline (ID: %d) [%s] to index [%s] (source: %s)",
@@ -943,11 +955,16 @@ def run_plaso(
 
     # Run psort.py
     try:
+        logger.info("Plaso cmd line: %s start", cmd)
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
+        logger.info("Plaso cmd line: %s finish", cmd)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=e.output)
-        return e.output
+        error_msg = f"Psort process failed for {file_path}: {e.output}"
+        logger.error("Psort command failed: %s", " ".join(e.cmd))
+        logger.error(error_msg)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        raise RuntimeError(error_msg) from e
 
     # Mark the searchindex and timelines as ready
     _set_datasource_status(timeline_id, file_path, "ready")
@@ -983,6 +1000,10 @@ def run_csv_jsonl(
                          (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
         delimiter: Delimiter to use. Default uses ","
+
+    Raises:
+        DatastoreConnectionError: If the opensearch connection isn\'t available.
+        Exception: For any other unexpected errors during processing.
 
     Returns:
         Name (str) of the index.

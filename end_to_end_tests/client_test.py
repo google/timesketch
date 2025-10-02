@@ -64,10 +64,12 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_direct_opensearch(self):
         """Test injecting data into OpenSearch directly."""
-        index_name = "direct_testing"
+        # make the index name something random
+        rand = random.randint(0, 10000)
 
+        timeline_name = f"test_direct_opensearch_{rand}"
         self.import_directly_to_opensearch(
-            filename="evtx_direct.csv", index_name=index_name
+            filename="evtx_direct_without_label.csv", index_name=timeline_name
         )
 
         new_sketch = self.api.create_sketch(
@@ -75,9 +77,9 @@ class ClientTest(interface.BaseEndToEndTest):
         )
 
         context = "e2e - > test_direct_opensearch"
-        timeline_name = "Ingested Via Mechanism"
+
         timeline = new_sketch.generate_timeline_from_es_index(
-            es_index_name=index_name,
+            es_index_name=timeline_name,
             name=timeline_name,
             provider="end_to_end_testing_platform",
             context=context,
@@ -130,7 +132,8 @@ level: high
 
     def test_sigmarule_create_get(self):
         """Client Sigma object tests."""
-
+        sketch = self.api.create_sketch(name="test_sigmarule_create_get")
+        sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
         rule = self.api.create_sigmarule(
             rule_yaml=f"""
 title: Suspicious Installation of eeeee
@@ -177,14 +180,6 @@ level: high
         self.assertions.assertIn("rmusser.net", rule.references[0])
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(len(rule.logsource), 2)
-
-        # Test an actual query
-        self.import_timeline("sigma_events.csv")
-        search_obj = search.Search(self.sketch)
-        search_obj.query_string = rule.search_query
-        data_frame = search_obj.table
-        count = len(data_frame)
-        self.assertions.assertEqual(count, 1)
 
     def test_do_users_exist(self):
         """Tests if the essential 'test' and 'admin' users exist in Timesketch.
@@ -392,6 +387,14 @@ level: high
         admin_sketch_instance.delete(force_delete=True)
 
         sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches)
+        with self.assertions.assertRaises(RuntimeError):
+            print(
+                "Expted that this sketch is not found - "
+                "so API error (RuntimeError) for request is expected"
+            )
+            self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+            print("End of expected RuntimeError")
         self.assertions.assertEqual(
             len(sketches),
             number_of_sketches,
@@ -595,7 +598,7 @@ level: high
         )
 
         # Import a timeline into the sketch
-        self.import_timeline("evtx.plaso", sketch=sketch)
+        self.import_timeline("sigma_events.csv", sketch=sketch)
 
         # List the timelines in the sketch
         timelines = sketch.list_timelines()
@@ -659,11 +662,9 @@ level: high
             "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
         )
 
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
-        self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 

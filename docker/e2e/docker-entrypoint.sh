@@ -79,9 +79,13 @@ EOF
 
   # Run the Timesketch server (without SSL)
   cd /tmp
-  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
+  exec `bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
   gunicorn --reload -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
 fi
+
+echo 'Debugging information for e2e tests'
+dpkg -s plaso-tools
+psort.py --version
 
 # Run a custom command on container start
 exec "$@"
