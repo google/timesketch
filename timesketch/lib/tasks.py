@@ -1001,7 +1001,8 @@ def run_csv_jsonl(
                          (iii) def. value if we add a new column [key=default_value]
         delimiter: Delimiter to use. Default uses ","
 
-        DatastoreConnectionError: If the opensearch connection isn't available.
+    Raises:
+        DatastoreConnectionError: If the opensearch connection isn\'t available.
         Exception: For any other unexpected errors during processing.
 
     Returns:
