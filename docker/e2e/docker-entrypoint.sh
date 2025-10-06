@@ -70,6 +70,34 @@ if [ "$1" = 'timesketch' ]; then
   tsctl create-user admin --password admin
   tsctl make-admin admin
 
+  echo '**** Debugging information for e2e tests ****'
+  echo '*** VENV Python'
+  echo '** Python version:'
+  /opt/venv/bin/python3 --version
+  echo '**'
+  echo '** pip3 freeze:'
+  /opt/venv/bin/pip3 freeze
+  echo '**'
+  echo '** Python path:'
+  which python3
+  echo '**'
+  echo '*** System Python'
+  echo '** Python version:'
+  /usr/bin/python3 --version
+  echo '**'
+  echo '** pip3 freeze:'
+  /usr/bin/pip3 freeze --break-system-packages
+  echo '**'
+  echo '** Python path:'
+  which /usr/bin/python3
+  echo '**'
+  echo '** PATH:'
+  echo $PATH
+  echo '**'
+  echo '** PYTHONPATH:'
+  echo $PYTHONPATH
+  echo '**** End of debugging information ****'
+
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
     description: Testing the data finder in the e2e test.
