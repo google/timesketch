@@ -227,21 +227,46 @@ class ImportStreamer(object):
                 )
         else:
             try:
-                # Use format='mixed' for robust parsing of varied datetime strings
+                # Attempt to parse with 'mixed' format for robust parsing
                 date = pandas.to_datetime(
                     data_frame["datetime"], utc=True, format="mixed"
                 )
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
-            except Exception:  # pylint: disable=broad-except
+            except (ValueError, OverflowError) as e:
+                # Catch both ValueError (for malformed strings) and OverflowError
+                # (for out-of-range timestamps)
+                # If 'mixed' parsing fails, fall back to coercing errors to NaT
+                logger.info(
+                    "Mixed datetime parsing failed, falling back to 'coerce' "
+                    "to handle invalid values."
+                )
+                date = pandas.to_datetime(
+                    data_frame["datetime"], utc=True, errors="coerce"
+                )
+                # Identify and replace rows with invalid dates (converted to NaT)
+                invalid_mask = date.isna()
+                num_invalid = invalid_mask.sum()
+                if num_invalid > 0:
+                    logger.warning(
+                        "%d rows with invalid or out-of-range timestamps found. "
+                        "Setting their timestamp to epoch (1970-01-01 00:00:00).",
+                        num_invalid,
+                    )
+                    epoch_ts = pandas.Timestamp("1970-01-01", tz="UTC")
+                    date.fillna(epoch_ts, inplace=True)
+
+                data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+            except Exception as e:  # pylint: disable=broad-except
+                error_msg = f"An unexpected error occurred: {e}"
                 logger.error(
-                    "Unable to change datetime, is it correctly formatted?",
+                    error_msg,
                     exc_info=True,
                 )
 
         # TODO: Support labels in uploads/imports.
         if "label" in data_frame:
             del data_frame["label"]
-            logger.warning(
+            logger.info(
                 "Labels cannot be imported at this time. Therefore the "
                 "label column was dropped from the dataset."
             )
@@ -657,7 +682,9 @@ class ImportStreamer(object):
         self._ready()
 
         if not os.path.isfile(filepath):
-            raise TypeError("Entry object needs to be a file that exists.")
+            error_msg = f"File object {filepath} needs to be a file that exists."
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
         if not self._timeline_name:
             base_path = os.path.basename(filepath)
@@ -694,9 +721,12 @@ class ImportStreamer(object):
                         logger.error("Unable to decode line: {0!s}".format(e))
 
         else:
-            raise TypeError(
-                "File needs to have a file extension of: .csv, .jsonl or .plaso"
+            error_msg = (
+                f"File ({filepath}) needs to have a file extension"
+                "of: .csv, .jsonl or .plaso"
             )
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
     def add_json(self, json_entry, column_names=None):
         """Add an entry that is in a JSON format.
@@ -816,6 +846,25 @@ class ImportStreamer(object):
 
     def set_index_name(self, index):
         """Set the index name."""
+        if not isinstance(index, str):
+            raise ValueError(
+                f"Index name must be a string and not {index} {type(index)}."
+            )
+
+        # OpenSearch/Elasticsearch index name restrictions.
+        invalid_chars = r'\/*?"<>| ,#'
+        for char in invalid_chars:
+            if char in index:
+                raise ValueError(
+                    f"Index name '{index}' contains invalid character: '{char}'"
+                )
+
+        if index.startswith(("-", "_", "+")):
+            raise ValueError(f"Index name '{index}' cannot start with '-', '_', or '+'")
+
+        if any(char.isupper() for char in index):
+            raise ValueError(f"Index name '{index}' cannot contain uppercase letters.")
+
         self._index = index
 
     def set_provider(self, provider):

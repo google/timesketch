@@ -37,6 +37,8 @@ OPENSEARCH_PORT = 9200
 OPENSEARCH_MAPPINGS_FILE = "/etc/timesketch/plaso.mappings"
 USERNAME = "test"
 PASSWORD = "test"
+ADMINUSERNAME = "admin"
+ADMINPASSWORD = "admin"
 
 
 class BaseEndToEndTest(object):
@@ -44,6 +46,7 @@ class BaseEndToEndTest(object):
 
     Attributes:
         api: Instance of an API client
+        admin_api: Instance of an API client with an admin user
         sketch: Instance of Sketch object
         assertions: Instance of unittest.TestCase
     """
@@ -55,6 +58,9 @@ class BaseEndToEndTest(object):
         """Initialize the end-to-end test object."""
         self.api = api_client.TimesketchApi(
             host_uri=HOST_URI, username=USERNAME, password=PASSWORD
+        )
+        self.admin_api = api_client.TimesketchApi(
+            host_uri=HOST_URI, username=ADMINUSERNAME, password=ADMINPASSWORD
         )
         self.sketch = self.api.create_sketch(name=self.NAME)
         self.assertions = unittest.TestCase()
@@ -115,7 +121,8 @@ class BaseEndToEndTest(object):
                 # This can happen if the file is not found or permissions are wrong.
                 # It's better to raise a more specific error here.
                 raise RuntimeError(
-                    "Unable to import timeline, got an OS Error for importing "
+                    f"Unable to import timeline {timeline.index.id}"
+                    f" sketch: {sketch.id}, got an OS Error for importing "
                     f"{file_path}"
                 ) from e
 
@@ -127,7 +134,9 @@ class BaseEndToEndTest(object):
             if status == "fail" or timeline.index.status == "fail":
                 if retry_count > 3:
                     raise RuntimeError(
-                        f"Unable to import timeline {timeline.index.id}."
+                        f"Unable to import {filename}"
+                        f" into timeline {timeline.index.id}"
+                        f" part of sketch: {sketch.id}."
                     )
 
             if status == "ready" and timeline.index.status == "ready":
@@ -154,7 +163,7 @@ class BaseEndToEndTest(object):
         if filename in self._imported_files:
             return
         file_path = os.path.join(TEST_DATA_DIR, filename)
-        print("Importing: {0:s}".format(file_path))
+        print("[import_directly_to_opensearch] Importing: {0:s}".format(file_path))
 
         if not os.path.isfile(file_path):
             raise ValueError("File [{0:s}] does not exist.".format(file_path))

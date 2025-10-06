@@ -226,11 +226,28 @@ def _close_index(index_name, data_store, timeline_id):
 
 
 def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
-    """Helper function to set status for searchindex and all related timelines.
+    """Sets the status for a timeline and its related search index.
+
+    This helper function updates the status of a timeline based on the status of its
+    data sources. The automatic status determination follows a specific logic:
+    - If all data sources have a "fail" status, the timeline is set to "fail".
+    - If any data source is in a "processing" state, the timeline is set to
+      "processing".
+    - Otherwise, if all data sources are "ready" or a mix of "ready" and "fail", the
+      timeline is set to "ready".
+
+    It can also accept an optional status string to override the automatic status
+    calculation. After updating the timeline's status, it commits the changes to
+    the database and refreshes the corresponding search index. The refresh is
+    attempted up to five times with a one-second delay between retries to account
+    for potential delays in index creation. If the new status is "ready," it
+    triggers any associated analyzers.
 
     Args:
-        timeline_id: (int) Timeline ID.
-        status: (str) Optional value to set the timeline status to.
+        timeline_id: The unique integer ID of the timeline to update.
+        status: An optional string to set the timeline's status to.
+                Valid values are "ready", "processing", or "fail". If not provided,
+                the status is determined automatically.
     """
     timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
@@ -258,13 +275,19 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
 
     # Refresh the index so it is searchable for the analyzers right away.
     datastore = OpenSearchDataStore()
-    try:
-        datastore.client.indices.refresh(index=timeline.searchindex.index_name)
-    except NotFoundError:
-        logger.error(
-            "Unable to refresh index: {:s}, not found, "
-            "removing from list.".format(timeline.searchindex.index_name)
-        )
+    # Retry refreshing the index a few times if it fails.
+    for i in range(5):
+        try:
+            datastore.client.indices.refresh(index=timeline.searchindex.index_name)
+            break  # Success
+        except NotFoundError:
+            if i == 4:  # Last attempt
+                logger.error(
+                    "Unable to refresh index: %s, not found after 5 attempts.",
+                    timeline.searchindex.index_name,
+                )
+            else:
+                time.sleep(1)  # Wait a second before retrying
 
     # If status is set to ready, check for analyzers to execute.
     if timeline.get_status.status == "ready":
@@ -747,9 +770,11 @@ def run_plaso(
         RequestError: If the searchidnex can't be created.
         IndexNotReadyError: If the searchindex isn't ready.
         DatastoreConnectionError: If the opensearch connection isn't available.
+        subprocess.CalledProcessError: If the psort command fails.
+        Exception: For any other unexpected errors during processing.
 
     Returns:
-        Name (str) of the index.
+        Name (str) of the index or None in case of an error
     """
     time_start = time.time()
     if not plaso:
@@ -768,6 +793,31 @@ def run_plaso(
 
     if events:
         raise RuntimeError("Plaso uploads needs a file, not events.")
+
+    # Run pinfo on storage file
+    try:
+        logger.info("Running pinfo on %s for index %s", file_path, index_name)
+        pinfo = pinfo_tool.PinfoTool()
+        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
+            file_path
+        )
+        storage_counters = (
+            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
+                storage_reader
+            )
+        )
+        total_file_events = storage_counters.get("parsers", {}).get("total")
+        if not total_file_events:
+            raise RuntimeError("Not able to get total event count from Plaso file.")
+        logger.info("Finished running pinfo on %s", file_path)
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        logger.error(
+            "Error importing Plaso file (%s): %s\n%s", file_path, str(e), error_msg
+        )
+        raise
 
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
@@ -826,36 +876,24 @@ def run_plaso(
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: %s\n%s", str(e), error_msg)
+        logger.error("Error (%s): %s\n%s", file_path, str(e), error_msg)
         return None
 
+    if not opensearch.client.indices.exists(index=index_name):
+        error_msg = (
+            f"Index '{index_name}' for timeline ID [{timeline_id}] "
+            f"and file [{file_path}] does not exist, aborting."
+        )
+        logger.critical(error_msg)
+        raise RuntimeError(error_msg)
+
     logger.info(
-        "Index timeline (ID: %d) to index [%s] (source: %s)",
+        "Index timeline (ID: %d) [%s] to index [%s] (source: %s)",
         timeline_id,
+        file_path,
         index_name,
         source_type,
     )
-
-    # Run pinfo on storage file
-    try:
-        pinfo = pinfo_tool.PinfoTool()
-        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
-            file_path
-        )
-        storage_counters = (
-            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
-                storage_reader
-            )
-        )
-        total_file_events = storage_counters.get("parsers", {}).get("total")
-        if not total_file_events:
-            raise RuntimeError("Not able to get total event count from Plaso file.")
-    except Exception as e:  # pylint: disable=broad-except
-        # Mark the searchindex and timelines as failed and exit the task
-        error_msg = traceback.format_exc()
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        logger.error("Error: %s\n%s", str(e), error_msg)
-        return None
 
     _set_datasource_total_events(timeline_id, file_path, total_file_events)
     _set_datasource_status(timeline_id, file_path, "processing")
@@ -917,11 +955,16 @@ def run_plaso(
 
     # Run psort.py
     try:
+        logger.info("Plaso cmd line: %s start", cmd)
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
+        logger.info("Plaso cmd line: %s finish", cmd)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=e.output)
-        return e.output
+        error_msg = f"Psort process failed for {file_path}: {e.output}"
+        logger.error("Psort command failed: %s", " ".join(e.cmd))
+        logger.error(error_msg)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        raise RuntimeError(error_msg) from e
 
     # Mark the searchindex and timelines as ready
     _set_datasource_status(timeline_id, file_path, "ready")
@@ -957,6 +1000,10 @@ def run_csv_jsonl(
                          (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
         delimiter: Delimiter to use. Default uses ","
+
+    Raises:
+        DatastoreConnectionError: If the opensearch connection isn\'t available.
+        Exception: For any other unexpected errors during processing.
 
     Returns:
         Name (str) of the index.

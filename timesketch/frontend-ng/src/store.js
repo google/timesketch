@@ -24,6 +24,7 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     searchHistory: {},
+    timeFilters: {},
     scenarios: [],
     hiddenScenarios: [],
     scenarioTemplates: [],
@@ -160,6 +161,9 @@ export default new Vuex.Store({
     SET_ENABLED_TIMELINES(state, payload) {
       Vue.set(state, 'enabledTimelines', payload)
     },
+    SET_TIME_FILTERS(state, payload) {
+      Vue.set(state, 'timeFilters', payload)
+    },
     ADD_ENABLED_TIMELINES(state, payload) {
       const freshEnabledTimelines = [...state.enabledTimelines, ...payload]
       Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
@@ -225,6 +229,47 @@ export default new Vuex.Store({
         })
         .catch((e) => {})
     },
+    updateTimeFilters(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getSearchHistoryTree(sketchId)
+        .then((response) => {
+
+          const treeData = response.data.objects[0]
+          const timeFilters = []
+
+          function parseNode(node) {
+            if (!node || !node.query_filter) {
+              return
+            }
+            const qf = JSON.parse(node.query_filter)
+            if (qf.chips.length > 0) {
+              timeFilters.push(...(qf.chips.filter(c => c.type === 'datetime_range')))
+            }
+            for (let c of node.children) {
+              parseNode(c)
+            }
+          }
+
+          if (treeData) {
+            parseNode(treeData)
+          }
+
+          const deduped = []
+          const timeFiltersSet = new Set()
+          for (let tf of timeFilters) {
+            if (!timeFiltersSet.has(tf.value)) {
+              timeFiltersSet.add(tf.value)
+              deduped.push(tf)
+            }
+          }
+          deduped.reverse()
+
+          context.commit('SET_TIME_FILTERS', deduped)
+        })
+        .catch(console.error)
+    },
     updateScenarios(context, sketchId) {
       if (!sketchId) {
         sketchId = context.state.sketch.id
@@ -256,6 +301,12 @@ export default new Vuex.Store({
       context.commit('SET_EVENT_LABELS', allLabels)
   },
     updateTimelineTags(context, payload) {
+      // Don't fetch Tag data on archived sketches.
+      if (context.state.sketch.status[0].status === 'archived') {
+        context.commit('SET_TIMELINE_TAGS', [])
+        return
+      }
+
       const activeTimelines = context.state.sketch.active_timelines
       // Guard clause: If there are no active timelines (array is null, undefined,
       // or empty), there's nothing to process, so exit the function immediately.
@@ -308,6 +359,12 @@ export default new Vuex.Store({
         .catch((e) => {})
     },
     updateDataTypes(context, sketchId) {
+      // Don't fetch data types on archived sketches.
+      if (context.state.sketch.status[0].status === 'archived') {
+        context.commit('SET_DATA_TYPES', { objects: [{ field_bucket: { buckets: [] } }] })
+        return
+      }
+
       const activeTimelines = context.state.sketch.active_timelines
       // Guard clause: If there are no active timelines (array is null, undefined,
       // or empty), there's nothing to process, so exit the function immediately.

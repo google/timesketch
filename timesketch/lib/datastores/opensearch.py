@@ -18,6 +18,7 @@ import copy
 import codecs
 import json
 import logging
+import re
 import socket
 import time
 import queue
@@ -529,6 +530,46 @@ class OpenSearchDataStore:
 
         return start_range.strftime(TS_FORMAT), end_range.strftime(TS_FORMAT)
 
+    @staticmethod
+    def _is_valid_opensearch_index_name(name: str) -> bool:
+        """Validates if a string conforms to OpenSearch index naming conventions.
+
+        OpenSearch index names must adhere to the following rules:
+        - Must be lowercase.
+        - Cannot begin with an underscore (`_`) or a hyphen (`-`).
+        - Cannot contain the following characters: `\\`, `/`, `?`, `,`, `"`,
+          ` `, `#`, `*`, `<`, `>`, `|`.
+        - Cannot be longer than 255 bytes.
+
+        Args:
+            name: The string to validate as an OpenSearch index name.
+
+        Returns:
+            True if the string is a valid OpenSearch index name, False otherwise.
+        """
+        if not name or name.startswith("_") or name.startswith("-"):
+            os_logger.warning(
+                "OpenSearch Index Name: %s is not valid, as it startes with _ or -",
+                name,
+            )
+            return False
+        # Check for invalid characters according to OpenSearch docs
+        if re.search(r'[\\/?, " #*<>]', name):
+            os_logger.warning(
+                "OpenSearch Index Name: %s is not valid:"
+                " contains invalid characters",
+                name,
+            )
+            return False
+        if len(name) > 255:
+            os_logger.warning(
+                "OpenSearch Index Name: %s is not valid,"
+                " contains invalid characters",
+                name,
+            )
+            return False
+        return name.lower() == name
+
     def build_query(
         self,
         sketch_id: int,
@@ -829,16 +870,21 @@ class OpenSearchDataStore:
             if "sort" in query_dsl:
                 del query_dsl["sort"]
             try:
-                count_result = self.client.count(body=query_dsl, index=list(indices))
-            except NotFoundError:
-                # Add sketch_id and indices to the error message for better context
+                count_result = self.client.count(
+                    body=query_dsl,
+                    index=list(indices),
+                    params={"ignore_unavailable": "true"},
+                )
+            except TransportError as e:
                 os_logger.error(
-                    (
-                        "Unable to count for sketch [%s] due to an index "
-                        "not found: [%s]"
-                    ),
+                    "Unable to count for sketch [%s] on indices [%s] - Error: %s",
                     sketch_id,
                     ",".join(indices),
+                    e,
+                    exc_info=True,
+                )
+                os_logger.debug(
+                    "Query DSL for count error: %s", json.dumps(query_dsl, indent=2)
                 )
                 return 0
             METRICS["search_requests"].labels(type="count").inc()
@@ -853,6 +899,7 @@ class OpenSearchDataStore:
                 index=list(indices),
                 search_type=search_type,
                 scroll=scroll_timeout,
+                params={"ignore_unavailable": "true"},
             )
 
         # The argument " _source_include" changed to "_source_includes" in
@@ -866,6 +913,7 @@ class OpenSearchDataStore:
                     search_type=search_type,
                     _source_include=return_fields,
                     scroll=scroll_timeout,
+                    params={"ignore_unavailable": "true"},
                 )
             else:
                 _search_result = self.client.search(
@@ -874,6 +922,7 @@ class OpenSearchDataStore:
                     search_type=search_type,
                     _source_includes=return_fields,
                     scroll=scroll_timeout,
+                    params={"ignore_unavailable": "true"},
                 )
         except (RequestError, TransportError) as e:
             root_cause = e.info.get("error", {}).get("root_cause")
@@ -1131,6 +1180,31 @@ class OpenSearchDataStore:
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
+        # Filter out invalid indices
+        indices = [i for i in indices if self._is_valid_opensearch_index_name(i)]
+
+        # Create a new list for valid indices
+        valid_indices = []
+        for index_name in indices:
+            # Check if the index exists before attempting to get stats
+            try:
+                if self.client.indices.exists(index=index_name):
+                    valid_indices.append(index_name)
+                else:
+                    os_logger.warning("Index '%s' not found. Skipping...", index_name)
+            except Exception as e:  # pylint: disable=broad-except
+                os_logger.error(
+                    "An error occurred while checking index '%s': %s",
+                    index_name,
+                    e,
+                    exc_info=True,
+                )
+                continue
+
+        # Now, attempt to get stats for the valid indices
+        if not valid_indices:
+            return 0, 0
+
         try:
             es_stats = self.client.indices.stats(index=indices, metric="docs, store")
 
@@ -1144,7 +1218,12 @@ class OpenSearchDataStore:
             return 0, 0
 
         except RequestError:
-            os_logger.error("Unable to count indices (request error)", exc_info=True)
+            os_logger.error(
+                "Unable to count indices (request error) %s. Error: %s",  # pylint: disable=line-too-long
+                ", ".join(indices),
+                e,
+                exc_info=True,
+            )
             return 0, 0
 
         doc_count_total = (

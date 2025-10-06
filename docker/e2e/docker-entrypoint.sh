@@ -65,6 +65,11 @@ if [ "$1" = 'timesketch' ]; then
   tsctl create-user "$TIMESKETCH_USER2" --password "$TIMESKETCH_PASSWORD2"
   unset TIMESKETCH_PASSWORD2
 
+  # Make admin user for e2e tests
+  sleep 2
+  tsctl create-user admin --password admin
+  tsctl make-admin admin
+
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
     description: Testing the data finder in the e2e test.
@@ -74,9 +79,13 @@ EOF
 
   # Run the Timesketch server (without SSL)
   cd /tmp
-  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
+  exec `bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
   gunicorn --reload -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
 fi
+
+echo 'Debugging information for e2e tests'
+dpkg -s plaso-tools
+psort.py --version
 
 # Run a custom command on container start
 exec "$@"
