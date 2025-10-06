@@ -16,8 +16,11 @@ if [ "$1" = 'timesketch' ]; then
   echo '** Python version:'
   /usr/bin/python3 --version
   echo '**'
-  echo '** pip3 freeze:'
-  /usr/bin/pip3 freeze --break-system-packages 2>/dev/null || /usr/bin/pip3 freeze
+  echo '** pip3 list:'
+  /usr/bin/pip3 list --break-system-packages 2>/dev/null || /usr/bin/pip3 list
+  echo '**'
+  echo '** dpkg list for python3:'
+  dpkg -l | grep python3
   echo '**'
   echo '** Python path:'
   which /usr/bin/python3
