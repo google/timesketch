@@ -2,6 +2,34 @@
 
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
+  echo '**** Debugging information for e2e tests ****'
+  echo '** VENV Python version:'
+  /opt/venv/bin/python3 --version
+  echo '**'
+  echo '** VENV pip3 freeze:'
+  /opt/venv/bin/pip3 freeze
+  echo '**'
+  echo '** Python path:'
+  which python3
+  echo '**'
+  echo '*** System Python'
+  echo '** Python version:'
+  /usr/bin/python3 --version
+  echo '**'
+  echo '** pip3 freeze:'
+  /usr/bin/pip3 freeze --break-system-packages 2>/dev/null || /usr/bin/pip3 freeze
+  echo '**'
+  echo '** Python path:'
+  which /usr/bin/python3
+  echo '**'
+  echo '** PATH:'
+  echo $PATH
+  echo '**'
+  echo '** PYTHONPATH:'
+  echo $PYTHONPATH
+  echo '**** End of debugging information ****'
+
+
   # Copy the mappings for plaso ingestion.
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/
@@ -70,33 +98,7 @@ if [ "$1" = 'timesketch' ]; then
   tsctl create-user admin --password admin
   tsctl make-admin admin
 
-  echo '**** Debugging information for e2e tests ****'
-  echo '*** VENV Python'
-  echo '** Python version:'
-  /opt/venv/bin/python3 --version
-  echo '**'
-  echo '** pip3 freeze:'
-  /opt/venv/bin/pip3 freeze
-  echo '**'
-  echo '** Python path:'
-  which python3
-  echo '**'
-  echo '*** System Python'
-  echo '** Python version:'
-  /usr/bin/python3 --version
-  echo '**'
-  echo '** pip3 freeze:'
-  /usr/bin/pip3 freeze --break-system-packages
-  echo '**'
-  echo '** Python path:'
-  which /usr/bin/python3
-  echo '**'
-  echo '** PATH:'
-  echo $PATH
-  echo '**'
-  echo '** PYTHONPATH:'
-  echo $PYTHONPATH
-  echo '**** End of debugging information ****'
+  
 
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
