@@ -39,6 +39,10 @@ RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
   echo '24.04 detected';  \
   pip3 install --break-system-packages events; \ 
   fi
+RUN if [ "$PLASO_PPA_TRACK" = "staging" ]; then \
+  echo 'Plaso staging detected, installing opensearch-py==3.0.0'; \
+  pip3 install --break-system-packages opensearch-py==3.0.0; \
+  fi
 
 # Some information for e2e test debugging in case something goes wrong
 RUN pip3 show opensearch-py
