@@ -139,7 +139,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
             # Search for a JSON block in the entire response.
             json_match = re.search(
-                r"```json\n(\{.*?\})\n```", full_response_text, re.DOTALL
+                r"```json\s*(.*?)\s*```", full_response_text, re.DOTALL | re.IGNORECASE
             )
 
             if not json_match:
