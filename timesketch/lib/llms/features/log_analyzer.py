@@ -146,34 +146,6 @@ class LogAnalyzer(LLMFeatureInterface):
 
             try:
                 response_json = json.loads(full_response_text)
-                if isinstance(response_json, dict):
-                    findings_list = response_json.get("summaries", [])
-                else:
-                    logger.warning(
-                        "LogAnalyzer: Expected a JSON object but received type %s. "
-                        "The LLM may be using an outdated format. Treating as "
-                        "no findings.",
-                        type(response_json).__name__,
-                    )
-                    findings_list = []
-                if not findings_list:
-                    logger.warning(
-                        "LogAnalyzer: JSON is valid, but 'summaries' key is "
-                        "missing or empty."
-                    )
-                    return {
-                        "status": "success",
-                        "feature": self.NAME,
-                        "message": (
-                            "Analysis complete. The AI provider returned a valid "
-                            "response but did not identify any specific findings."
-                        ),
-                        "total_findings_processed": 0,
-                        "errors_encountered": 0,
-                        "events_exported": self._events_exported,
-                        "findings_received": 0,
-                        "full_response_text": full_response_text,
-                    }
             except json.JSONDecodeError as e:
                 logger.error("LogAnalyzer: Failed to decode JSON from response: %s", e)
                 self._errors_encountered.append(f"JSON decode error: {e}")
@@ -186,6 +158,35 @@ class LogAnalyzer(LLMFeatureInterface):
                     "error_details": [
                         "Failed to decode JSON from the provider response."
                     ],
+                    "full_response_text": full_response_text,
+                }
+            if not isinstance(response_json, dict):
+                logger.warning(
+                    "LogAnalyzer: Expected a JSON object but received type %s. "
+                    "The LLM may be using an outdated format. Treating as "
+                    "no findings.",
+                    type(response_json).__name__,
+                )
+                findings_list = []
+
+            findings_list = response_json.get("summaries", [])
+
+            if not findings_list:
+                logger.warning(
+                    "LogAnalyzer: JSON is valid, but 'summaries' key is "
+                    "missing or empty."
+                )
+                return {
+                    "status": "success",
+                    "feature": self.NAME,
+                    "message": (
+                        "Analysis complete. The AI provider returned a valid "
+                        "response but did not identify any specific findings."
+                    ),
+                    "total_findings_processed": 0,
+                    "errors_encountered": 0,
+                    "events_exported": self._events_exported,
+                    "findings_received": 0,
                     "full_response_text": full_response_text,
                 }
 
