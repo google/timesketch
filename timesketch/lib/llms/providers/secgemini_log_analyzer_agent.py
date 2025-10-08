@@ -180,10 +180,6 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 file_size_bytes,
             )
 
-            accumulated_response = ""
-            found_json_summary = False
-            found_json_start = False
-
             async def main():
                 async for chunk in self._run_async_stream(log_path, prompt):
                     yield chunk
@@ -199,7 +195,6 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             while True:
                 try:
                     chunk = loop.run_until_complete(gen.__anext__())
-                    # Some chunks may be empty
                     if chunk is not None:
                         log_trigger += 1
                         if log_trigger % 50 == 0:
@@ -209,28 +204,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                 self.session_id,
                                 self.table_hash,
                             )
-                        accumulated_response += chunk
                         yield chunk
-
-                        # Check for JSON Summary marker
-                        if (
-                            not found_json_summary
-                            and "**JSON Summary of Findings**" in accumulated_response
-                        ):
-                            found_json_summary = True
-
-                        if (
-                            found_json_summary
-                            and not found_json_start
-                            and "```json" in accumulated_response
-                        ):
-                            found_json_start = True
-
-                        if found_json_start:
-                            json_start = accumulated_response.index("```json")
-                            after_json_start = accumulated_response[json_start + 7 :]
-                            if "```" in after_json_start:
-                                break
                 except StopAsyncIteration:
                     break
 
