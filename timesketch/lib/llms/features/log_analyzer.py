@@ -14,6 +14,7 @@
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
 import json
 import logging
+import uuid
 from typing import Any, Dict, Optional, Generator
 
 from timesketch.models import db_session
@@ -104,8 +105,9 @@ class LogAnalyzer(LLMFeatureInterface):
             LogAnalysisError: If the log stream preparation fails.
             Exception: For unexpected errors during execution.
         """
+        session_id = uuid.uuid4().hex[:8]
         logger.info(
-            "LogAnalyzer: Starting streaming analysis for sketch [%d]", sketch.id
+            "[%s] Log analysis session started for sketch [%d]", session_id, sketch.id
         )
 
         if not llm_provider.SUPPORTS_STREAMING:
@@ -116,6 +118,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
         try:
             # Prepare log stream
+            logger.debug("[%s] Preparing to stream events.", session_id)
             log_events_generator = self.prepare_log_stream_for_analysis(
                 sketch=sketch, form=form
             )
@@ -129,8 +132,14 @@ class LogAnalyzer(LLMFeatureInterface):
                 if chunk:
                     full_response_text += chunk
 
+            logger.debug(
+                "[%s] Received full response from provider (%d bytes).",
+                session_id,
+                len(full_response_text),
+            )
+
             if not full_response_text:
-                logger.warning("LogAnalyzer: Received no response from provider.")
+                logger.warning("[%s] Received no response from provider.", session_id)
                 return {
                     "status": "error",
                     "feature": self.NAME,
@@ -146,7 +155,9 @@ class LogAnalyzer(LLMFeatureInterface):
             try:
                 response_json = json.loads(full_response_text)
             except json.JSONDecodeError as e:
-                logger.error("LogAnalyzer: Failed to decode JSON from response: %s", e)
+                logger.error(
+                    "[%s] Failed to decode JSON from response: %s", session_id, e
+                )
                 self._errors_encountered.append(f"JSON decode error: {e}")
                 return {
                     "status": "error",
@@ -161,9 +172,10 @@ class LogAnalyzer(LLMFeatureInterface):
                 }
             if not isinstance(response_json, dict):
                 logger.warning(
-                    "LogAnalyzer: Expected a JSON object but received type %s. "
+                    "[%s] Expected a JSON object but received type %s. "
                     "The LLM may be using an outdated format. Treating as "
                     "no findings.",
+                    session_id,
                     type(response_json).__name__,
                 )
                 findings_list = []
@@ -172,8 +184,9 @@ class LogAnalyzer(LLMFeatureInterface):
 
             if not findings_list:
                 logger.warning(
-                    "LogAnalyzer: JSON is valid, but 'summaries' key is "
-                    "missing or empty."
+                    "[%s] LogAnalyzer: JSON is valid, but 'summaries' key is "
+                    "missing or empty.",
+                    session_id,
                 )
                 return {
                     "status": "success",
@@ -190,7 +203,8 @@ class LogAnalyzer(LLMFeatureInterface):
                 }
 
             logger.info(
-                "LogAnalyzer: %s returned %d findings",
+                "[%s] LogAnalyzer found %d findings.",
+                session_id,
                 llm_provider.NAME,
                 len(findings_list),
             )
@@ -205,7 +219,7 @@ class LogAnalyzer(LLMFeatureInterface):
                 ]
 
                 if not record_ids:
-                    logger.warning("LogAnalyzer: Finding has no valid record IDs")
+                    logger.warning("[%s] Finding has no valid record IDs", session_id)
                     continue
 
                 # Create a finding that includes ALL record_ids with same annotations
@@ -238,7 +252,8 @@ class LogAnalyzer(LLMFeatureInterface):
 
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "LogAnalyzer: Failed to execute analysis for sketch %s: %s",
+                "[%s] Failed to execute analysis for sketch %s: %s",
+                session_id,
                 sketch.id,
                 exception,
                 exc_info=True,
