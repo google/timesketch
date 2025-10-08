@@ -137,30 +137,8 @@ class LogAnalyzer(LLMFeatureInterface):
                     "full_response_text": full_response_text,
                 }
 
-            # Search for a JSON block in the entire response.
-            json_match = re.search(
-                r"```json\s*(.*?)\s*```", full_response_text, re.DOTALL | re.IGNORECASE
-            )
-
-            if not json_match:
-                logger.error(
-                    "LogAnalyzer: No valid JSON found after JSON Summary marker."
-                )
-                self._errors_encountered.append("No JSON found after Summary marker")
-                return {
-                    "status": "error",
-                    "feature": self.NAME,
-                    "message": "No valid JSON found in the JSON Summary section.",
-                    "raw_response": full_response_text[:500],
-                    "errors_encountered": 1,
-                    "error_details": [
-                        "No valid JSON found in the JSON Summary section."
-                    ],
-                    "full_response_text": full_response_text,
-                }
-
             try:
-                response_json = json.loads(json_match.group(1))
+                response_json = json.loads(full_response_text)
                 if isinstance(response_json, dict):
                     findings_list = response_json.get("summaries", [])
                 else:
@@ -196,7 +174,7 @@ class LogAnalyzer(LLMFeatureInterface):
                     "status": "error",
                     "feature": self.NAME,
                     "message": "Failed to decode JSON from the provider response.",
-                    "raw_response": json_match.group(1)[:500],
+                    "raw_response": full_response_text[:500],
                     "errors_encountered": 1,
                     "error_details": [
                         "Failed to decode JSON from the provider response."

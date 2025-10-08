@@ -34,7 +34,7 @@ class TestLogAnalyzerFeature(BaseTest):
         mock_provider.SUPPORTS_STREAMING = True
         mock_provider.NAME = "mock_provider"
 
-        # The fake response from the LLM provider.
+        # The fake response from the LLM provider (raw JSON string).
         fake_response_content = {
             "summaries": [
                 {
@@ -43,9 +43,7 @@ class TestLogAnalyzerFeature(BaseTest):
                 }
             ]
         }
-        fake_response = (
-            "Some text before.\n```json\n" f"{json.dumps(fake_response_content)}\n```"
-        )
+        fake_response = json.dumps(fake_response_content)
 
         # Make the provider's streaming method return our fake response.
         mock_provider.generate_stream_from_logs.return_value = [fake_response]
@@ -81,33 +79,6 @@ class TestLogAnalyzerFeature(BaseTest):
         self.assertEqual(call_kwargs.get("sketch"), mock_sketch)
 
     @mock.patch("timesketch.lib.llms.features.log_analyzer.LogAnalyzer.datastore")
-    def test_execute_with_parsing_variations(self, mock_datastore):
-        """Tests that the JSON parsing handles formatting variations."""
-        mock_provider = mock.Mock()
-        mock_provider.SUPPORTS_STREAMING = True
-        mock_provider.NAME = "mock_provider"
-        fake_response_content = {
-            "summaries": [{"log_records": [{"record_id": "test_id_1"}]}]
-        }
-        # Test with uppercase JSON and extra whitespace.
-        fake_response = "```JSON  \n" f"{json.dumps(fake_response_content)}  \n```"
-        mock_provider.generate_stream_from_logs.return_value = [fake_response]
-        mock_sketch = mock.Mock()
-        mock_sketch.id = 1
-        mock_datastore.export_events_with_slicing.return_value = iter(
-            [{"_id": "test_id_1"}]
-        )
-        feature = log_analyzer.LogAnalyzer()
-        feature.process_response = mock.Mock()
-
-        feature.execute(sketch=mock_sketch, form={}, llm_provider=mock_provider)
-
-        feature.process_response.assert_called_once()
-        _, call_kwargs = feature.process_response.call_args
-        llm_response = call_kwargs.get("llm_response", {})
-        self.assertEqual(llm_response.get("record_ids"), ["test_id_1"])
-
-    @mock.patch("timesketch.lib.llms.features.log_analyzer.LogAnalyzer.datastore")
     def test_execute_with_empty_findings(self, mock_datastore):
         """Tests the behavior when the LLM returns no findings."""
         mock_provider = mock.Mock()
@@ -115,7 +86,7 @@ class TestLogAnalyzerFeature(BaseTest):
         mock_provider.NAME = "mock_provider"
         # Test with an empty summaries list.
         fake_response_content = {"summaries": []}
-        fake_response = f"```json\n{json.dumps(fake_response_content)}\n```"
+        fake_response = json.dumps(fake_response_content)
         mock_provider.generate_stream_from_logs.return_value = [fake_response]
         mock_sketch = mock.Mock()
         mock_sketch.id = 1
