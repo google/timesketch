@@ -166,7 +166,8 @@ class LogAnalyzer(LLMFeatureInterface):
                 else:
                     logger.warning(
                         "LogAnalyzer: Expected a JSON object but received type %s. "
-                        "The LLM may be using an outdated format. Treating as no findings.",
+                        "The LLM may be using an outdated format. Treating as "
+                        "no findings.",
                         type(response_json).__name__,
                     )
                     findings_list = []
