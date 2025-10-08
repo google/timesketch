@@ -37,9 +37,16 @@ class LogAnalysisError(Exception):
 
 class LogAnalyzer(LLMFeatureInterface):
     """
-    LogAnalyzer feature for automated log analysis using LLMs via an
-    external service. It prepares a stream of logs, processes a stream
-    of findings, and creates/commits DFIQ objects in Timesketch.
+    LogAnalyzer feature for automated log analysis using LLMs.
+
+    This feature orchestrates the log analysis workflow by:
+    1. Preparing and sending a stream of logs to a compatible LLM provider.
+    2. Receiving a raw JSON string response from the provider.
+    3. Parsing the JSON, which is expected to be an object with a "summaries"
+       key containing a list of findings.
+    4. Processing each finding to create and commit DFIQ objects (Questions
+       and Conclusions) in Timesketch.
+
     This feature always processes ALL events within the active timelines of a sketch.
     """
 
@@ -74,8 +81,8 @@ class LogAnalyzer(LLMFeatureInterface):
 
         This method prepares a stream of log events from the sketch, sends it
         to the LLM provider for analysis, and collects the full streamed response.
-        It then searches the entire response for the first markdown JSON code
-        block (```json...```) and parses it.
+        It assumes the entire response is a raw JSON string and parses it
+        directly.
 
         The expected JSON format is an object with a top-level key "summaries",
         which should contain a list of finding objects. The method processes

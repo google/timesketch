@@ -32,7 +32,13 @@ logger = logging.getLogger(__name__)
 
 
 class SecGeminiLogAnalyzer(interface.LLMProvider):
-    """SecGemini Log Analyzer LLM provider."""
+    """
+    SecGemini Log Analyzer LLM provider.
+
+    This provider interfaces with a SecGemini backend to perform log analysis.
+    It uploads logs from a sketch and streams back a raw JSON response containing
+    the analysis findings.
+    """
 
     NAME = "secgemini_log_analyzer_agent"
     SUPPORTS_STREAMING = True
@@ -111,8 +117,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         logger.info("Starting the SecGemini analysis...")
         logger.info(
             "NOTE: 'ConnectionClosedOK' errors from the SecGemini client in the "
-            "log are expected. The client automatically reconnects during long-running "
-            "analysis."
+            "log are expected. The client automatically reconnects during "
+            "long-running analysis."
         )
         async for response in self._session.stream(prompt):
             yield response.content
@@ -131,9 +137,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         3.  It invokes the asynchronous SecGemini client, passing the path to the
             log file.
         4.  It manages an asyncio event loop to handle the async streaming response.
-        5.  It yields chunks of the response from the LLM as they are received.
-        6.  It includes logic to ensure the streaming continues until the complete
-            "JSON Summary of Findings" block has been received, then stops.
+        5.  It yields chunks of the raw JSON response from the LLM as they are
+            received.
 
         Args:
             log_events_generator: An iterable of dictionaries, where each
@@ -141,7 +146,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             prompt: The prompt to send to the SecGemini agent for analysis.
 
         Yields:
-            str: Chunks of the raw text response from the LLM provider.
+            str: Chunks of the raw JSON string response from the LLM provider.
         """
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
