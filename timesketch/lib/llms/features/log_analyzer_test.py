@@ -104,7 +104,8 @@ class TestLogAnalyzerFeature(BaseTest):
 
         feature.process_response.assert_called_once()
         _, call_kwargs = feature.process_response.call_args
-        self.assertEqual(call_kwargs["llm_response"]["record_ids"], ["test_id_1"])
+        llm_response = call_kwargs.get("llm_response", {})
+        self.assertEqual(llm_response.get("record_ids"), ["test_id_1"])
 
     @mock.patch("timesketch.lib.llms.features.log_analyzer.LogAnalyzer.datastore")
     def test_execute_with_empty_findings(self, mock_datastore):
