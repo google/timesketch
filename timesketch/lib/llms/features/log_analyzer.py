@@ -13,7 +13,6 @@
 # limitations under the License.
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
 import json
-import re
 import logging
 from typing import Any, Dict, Optional, Generator
 
