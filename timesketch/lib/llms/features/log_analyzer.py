@@ -161,7 +161,15 @@ class LogAnalyzer(LLMFeatureInterface):
 
             try:
                 response_json = json.loads(json_match.group(1))
-                findings_list = response_json.get("summaries", [])
+                if isinstance(response_json, dict):
+                    findings_list = response_json.get("summaries", [])
+                else:
+                    logger.warning(
+                        "LogAnalyzer: Expected a JSON object but received type %s. "
+                        "The LLM may be using an outdated format. Treating as no findings.",
+                        type(response_json).__name__,
+                    )
+                    findings_list = []
                 if not findings_list:
                     logger.warning(
                         "LogAnalyzer: JSON is valid, but 'summaries' key is "
