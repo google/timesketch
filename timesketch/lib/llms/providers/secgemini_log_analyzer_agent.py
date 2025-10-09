@@ -32,7 +32,13 @@ logger = logging.getLogger(__name__)
 
 
 class SecGeminiLogAnalyzer(interface.LLMProvider):
-    """SecGemini Log Analyzer LLM provider."""
+    """
+    SecGemini Log Analyzer LLM provider.
+
+    This provider interfaces with a SecGemini backend to perform log analysis.
+    It uploads logs from a sketch and streams back a raw JSON response containing
+    the analysis findings.
+    """
 
     NAME = "secgemini_log_analyzer_agent"
     SUPPORTS_STREAMING = True
@@ -111,8 +117,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         logger.info("Starting the SecGemini analysis...")
         logger.info(
             "NOTE: 'ConnectionClosedOK' errors from the SecGemini client in the "
-            "log are expected. The client automatically reconnects during long-running "
-            "analysis."
+            "log are expected. The client automatically reconnects during "
+            "long-running analysis."
         )
         async for response in self._session.stream(prompt):
             yield response.content
@@ -131,9 +137,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         3.  It invokes the asynchronous SecGemini client, passing the path to the
             log file.
         4.  It manages an asyncio event loop to handle the async streaming response.
-        5.  It yields chunks of the response from the LLM as they are received.
-        6.  It includes logic to ensure the streaming continues until the complete
-            "JSON Summary of Findings" block has been received, then stops.
+        5.  It yields chunks of the raw JSON response from the LLM as they are
+            received.
 
         Args:
             log_events_generator: An iterable of dictionaries, where each
@@ -141,7 +146,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             prompt: The prompt to send to the SecGemini agent for analysis.
 
         Yields:
-            str: Chunks of the raw text response from the LLM provider.
+            str: Chunks of the raw JSON string response from the LLM provider.
         """
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
@@ -180,10 +185,6 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 file_size_bytes,
             )
 
-            accumulated_response = ""
-            found_json_summary = False
-            found_json_start = False
-
             async def main():
                 async for chunk in self._run_async_stream(log_path, prompt):
                     yield chunk
@@ -199,7 +200,6 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             while True:
                 try:
                     chunk = loop.run_until_complete(gen.__anext__())
-                    # Some chunks may be empty
                     if chunk is not None:
                         log_trigger += 1
                         if log_trigger % 50 == 0:
@@ -209,28 +209,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                 self.session_id,
                                 self.table_hash,
                             )
-                        accumulated_response += chunk
                         yield chunk
-
-                        # Check for JSON Summary marker
-                        if (
-                            not found_json_summary
-                            and "**JSON Summary of Findings**" in accumulated_response
-                        ):
-                            found_json_summary = True
-
-                        if (
-                            found_json_summary
-                            and not found_json_start
-                            and "```json" in accumulated_response
-                        ):
-                            found_json_start = True
-
-                        if found_json_start:
-                            json_start = accumulated_response.index("```json")
-                            after_json_start = accumulated_response[json_start + 7 :]
-                            if "```" in after_json_start:
-                                break
                 except StopAsyncIteration:
                     break
 
