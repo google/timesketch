@@ -718,7 +718,7 @@ level: high
     def test_export_sketch(self):
         """Test exporting a sketch via the API client."""
         # 1. Ensure the sketch has some data to export.
-        self.import_timeline("evtx.plaso")
+        self.import_timeline("evtx_20250918.plaso")
         self.sketch.add_label("test-export-label")
 
         # 2. Call the export method on the sketch object.
