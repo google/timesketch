@@ -206,7 +206,6 @@ class LogAnalyzer(LLMFeatureInterface):
             logger.info(
                 "%s LogAnalyzer found %d findings.",
                 log_pretext,
-                llm_provider.NAME,
                 len(findings_list),
             )
             # Each finding can have multiple records to same annotations
