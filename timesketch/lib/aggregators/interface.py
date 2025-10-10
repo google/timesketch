@@ -120,7 +120,8 @@ class AggregationResult:
         if not chart_class:
             raise RuntimeError(f"No such chart type: {chart_name:s}")
 
-        chart_data = self.to_dict(encoding=True)
+        df = pandas.DataFrame(self.values)
+        chart_data = {"values": df.to_dict("records"), "encoding": self.encoding}
         chart_object = chart_class(
             chart_data,
             title=chart_title,
