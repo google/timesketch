@@ -36,7 +36,8 @@ limitations under the License.
             variant="outlined"
             hide-details
             v-on:click="showPicker = true"
-            v-on:change="setStartTime"
+            @blur="setStartTimeFromEvent"
+            @keydown.enter="setStartTimeFromEvent"
           >
           </v-text-field>
         </v-col>
@@ -47,7 +48,8 @@ limitations under the License.
             variant="outlined"
             hide-details
             v-on:click="showPicker = true"
-            v-on:change="setEndTime"
+            @blur="setEndTimeFromEvent"
+            @keydown.enter="setEndTimeFromEvent"
             :append-outer-icon="showPicker ? 'mdi-calendar-remove' : 'mdi-calendar'"
             @click:append-outer="showPicker = !showPicker"
           >
@@ -80,6 +82,7 @@ limitations under the License.
 
 <script>
 import dayjs from '@/plugins/dayjs'
+import { ref } from 'vue';
 
 import { DatePicker } from 'v-calendar';
 import 'v-calendar/style.css';
@@ -102,8 +105,13 @@ export default {
   computed: {
     dateRange: {
       set(val) {
-        this.range.start = dayjs.utc(val.start).millisecond(0).toISOString()
-        this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
+        if (val && val.start && val.end) {
+          this.range.start = dayjs.utc(val.start).millisecond(0).toISOString()
+          this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
+        } else {
+          this.range.start = ''
+          this.range.end = ''
+        }
       },
       get() {
         let range = {
@@ -147,6 +155,11 @@ export default {
 
       return { start: now, end: then }
     },
+
+    setStartTimeFromEvent: function(event) {
+      const newValue = event.target.value;
+      this.setStartTime(newValue);
+    },
     setStartTime: function (newDateTime) {
       if (!newDateTime) {
         this.range.start = ''
@@ -158,7 +171,11 @@ export default {
           this.range.end = this.range.start || ''
         }
       }
-      this.$refs.picker.focusDate(this.range.start)
+      this.$refs.picker.move(this.range.start)
+    },
+    setEndTimeFromEvent: function(event) {
+      const newValue = event.target.value;
+      this.setEndTime(newValue);
     },
     setEndTime: function (newDateTime) {
       if (!newDateTime) {
@@ -166,7 +183,7 @@ export default {
         return
       }
       this.range.end = dayjs.utc(newDateTime).toISOString()
-      this.$refs.picker.focusDate(this.range.start)
+      this.$refs.picker.move(this.range.end)
     },
     addDateTimeChip: function (chipValue) {
       const chipType = 'datetime_range'
