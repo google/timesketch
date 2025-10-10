@@ -82,7 +82,6 @@ limitations under the License.
 
 <script>
 import dayjs from '@/plugins/dayjs'
-import { ref } from 'vue';
 
 import { DatePicker } from 'v-calendar';
 import 'v-calendar/style.css';
