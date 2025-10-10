@@ -102,8 +102,13 @@ export default {
   computed: {
     dateRange: {
       set(val) {
-        this.range.start = dayjs.utc(val.start).millisecond(0).toISOString()
-        this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
+        if (val && val.start && val.end) {
+          this.range.start = dayjs.utc(val.start).millisecond(0).toISOString()
+          this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
+        } else {
+          this.range.start = ''
+          this.range.end = ''
+        }
       },
       get() {
         let range = {
