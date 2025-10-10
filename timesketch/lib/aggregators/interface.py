@@ -146,8 +146,10 @@ class AggregationResult:
 
         except Exception as e:  # pylint: disable=broad-except
             logger.error(
-                f"Unable to generate chart [{chart_name:s}] with title "
-                f"[{chart_title:s}]. The error was: {e!s}",
+                "Unable to generate chart [%s] with title [%s]. The error was: %s",
+                chart_name,
+                chart_title,
+                e,
                 exc_info=True,
             )
             if as_html:
