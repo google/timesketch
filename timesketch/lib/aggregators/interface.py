@@ -120,29 +120,43 @@ class AggregationResult:
         if not chart_class:
             raise RuntimeError(f"No such chart type: {chart_name:s}")
 
-        chart_data = self.to_dict(encoding=True)
-        chart_object = chart_class(
-            chart_data,
-            title=chart_title,
-            sketch_url=self._sketch_url,
-            field=self.field,
-            extra_query_url=self._extra_query_url,
-        )
+        try:
+            chart_object = chart_class(
+                self.to_pandas(),
+                title=chart_title,
+                sketch_url=self._sketch_url,
+                field=self.field,
+                extra_query_url=self._extra_query_url,
+            )
 
-        if color:
-            chart_object.set_color(color)
+            if color:
+                chart_object.set_color(color)
 
-        chart = chart_object.generate()
+            chart = chart_object.generate()
 
-        if interactive:
-            chart = chart.interactive()
+            if interactive:
+                chart = chart.interactive()
 
-        if as_html:
-            return chart.to_html()
+            if as_html:
+                return chart.to_html()
 
-        if as_chart:
-            return chart
-        return chart.to_dict()
+            if as_chart:
+                return chart
+            return chart.to_dict()
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(
+                "Unable to generate chart [%s] with title [%s]. The error was: %s",
+                chart_name,
+                chart_title,
+                e,
+                exc_info=True,
+            )
+            if as_html:
+                return ""
+            if as_chart:
+                return None
+            return {}
 
 
 class BaseAggregator:
