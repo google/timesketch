@@ -632,7 +632,7 @@ level: high
 
         # 2. Call the export method on the sketch object.
         export_file_path = "/tmp/export.zip"
-        exported_zip_file = self.sketch.export(export_file_path)
+        self.sketch.export(export_file_path)
 
         # 3. Verify the contents of the returned zip file.
         self.assertions.assertTrue(
