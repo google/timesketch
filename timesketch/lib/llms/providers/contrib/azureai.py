@@ -1,7 +1,7 @@
 """Azure AI Foundry LLM provider."""
 
 import json
-from typing import Optional, Any
+from typing import Optional, Any, Union
 import requests
 from timesketch.lib.llms.providers import interface, manager
 
@@ -41,7 +41,7 @@ class AzureAI(interface.LLMProvider):
                 "endpoint, api_key, and model are required for AzureAI provider"
             )
 
-    def generate(self, prompt: str, response_schema: Optional[dict] = None) -> dict:
+    def generate(self, prompt: str, response_schema: Optional[dict] = None) -> Union[dict, str]:
 
         url = (
             f"{self.endpoint}/openai/deployments/{self.model}/chat/completions?"
