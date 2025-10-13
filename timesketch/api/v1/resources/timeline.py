@@ -321,22 +321,37 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
         meta = {"lines_indexed": None}
         if timeline.get_status.status != "fail":
-            result = self.datastore.search(
-                sketch_id=timeline.searchindex.id,
-                query_string="*",
-                query_filter={
-                    "from": 0,
-                    "indices": [timeline.id],
-                    "order": "asc",
-                    "chips": [],
-                    "fields": [{"field": "message", "type": "text"}],
-                },
-                query_dsl=None,
-                indices=[timeline.searchindex.index_name],
-                timeline_ids=[timeline.id],
-                count=True,
-            )
-            meta["lines_indexed"] = result
+            try:
+                result = self.datastore.search(
+                    sketch_id=timeline.searchindex.id,
+                    query_string="*",
+                    query_filter={
+                        "from": 0,
+                        "indices": [timeline.id],
+                        "order": "asc",
+                        "chips": [],
+                        "fields": [{"field": "message", "type": "text"}],
+                    },
+                    query_dsl=None,
+                    indices=[timeline.searchindex.index_name],
+                    timeline_ids=[timeline.id],
+                    count=True,
+                )
+                meta["lines_indexed"] = result
+            except ValueError as e:
+                logger.error(
+                    "Unable to get indexed line count for sketch [%s], timeline [%s] "
+                    "on index [%s]. Error: %s",
+                    sketch_id,
+                    timeline_id,
+                    timeline.searchindex.index_name,
+                    e,
+                    exc_info=True,
+                )
+                abort(
+                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                    f"Error retrieving timeline data: {e}",
+                )
 
         return self.to_json(timeline, meta=meta)
 

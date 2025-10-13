@@ -13,8 +13,8 @@
 # limitations under the License.
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
 import json
-import re
 import logging
+import uuid
 from typing import Any, Dict, Optional, Generator
 
 from timesketch.models import db_session
@@ -37,9 +37,16 @@ class LogAnalysisError(Exception):
 
 class LogAnalyzer(LLMFeatureInterface):
     """
-    LogAnalyzer feature for automated log analysis using LLMs via an
-    external service. It prepares a stream of logs, processes a stream
-    of findings, and creates/commits DFIQ objects in Timesketch.
+    LogAnalyzer feature for automated log analysis using LLMs.
+
+    This feature orchestrates the log analysis workflow by:
+    1. Preparing and sending a stream of logs to a compatible LLM provider.
+    2. Receiving a raw JSON string response from the provider.
+    3. Parsing the JSON, which is expected to be an object with a "summaries"
+       key containing a list of findings.
+    4. Processing each finding to create and commit DFIQ objects (Questions
+       and Conclusions) in Timesketch.
+
     This feature always processes ALL events within the active timelines of a sketch.
     """
 
@@ -72,10 +79,16 @@ class LogAnalyzer(LLMFeatureInterface):
         """
         Orchestrates the streaming log analysis workflow.
 
-        This method prepares the stream of log events from the sketch, sends it
-        to the LLM provider for analysis, collects the streamed response, and
-        processes the findings (JSON summary) to create Timesketch annotations
-        (DFIQ).
+        This method prepares a stream of log events from the sketch, sends it
+        to the LLM provider for analysis, and collects the full streamed response.
+        It assumes the entire response is a raw JSON string and parses it
+        directly.
+
+        The expected JSON format is an object with a top-level key "summaries",
+        which should contain a list of finding objects. The method processes
+        these findings to create Timesketch annotations (DFIQ). It also
+        handles cases where the "summaries" list is empty, returning a specific
+        informational message.
 
         Args:
             sketch: The Timesketch Sketch object.
@@ -92,8 +105,10 @@ class LogAnalyzer(LLMFeatureInterface):
             LogAnalysisError: If the log stream preparation fails.
             Exception: For unexpected errors during execution.
         """
+        session_id = uuid.uuid4().hex[:8]  # create a uuid to track a session
+        log_pretext = f"LogAnalyzer [{session_id}]:"
         logger.info(
-            "LogAnalyzer: Starting streaming analysis for sketch [%d]", sketch.id
+            "%s Log analysis session started for sketch [%d]", log_pretext, sketch.id
         )
 
         if not llm_provider.SUPPORTS_STREAMING:
@@ -104,6 +119,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
         try:
             # Prepare log stream
+            logger.debug("%s Preparing to stream events.", log_pretext)
             log_events_generator = self.prepare_log_stream_for_analysis(
                 sketch=sketch, form=form
             )
@@ -117,8 +133,14 @@ class LogAnalyzer(LLMFeatureInterface):
                 if chunk:
                     full_response_text += chunk
 
+            logger.debug(
+                "%s Received full response from provider (%d bytes).",
+                log_pretext,
+                len(full_response_text),
+            )
+
             if not full_response_text:
-                logger.warning("LogAnalyzer: Received no response from provider.")
+                logger.warning("%s Received no response from provider.", log_pretext)
                 return {
                     "status": "error",
                     "feature": self.NAME,
@@ -131,68 +153,60 @@ class LogAnalyzer(LLMFeatureInterface):
                     "full_response_text": full_response_text,
                 }
 
-            # Look for the JSON Summary of Findings section
-            json_summary_marker = "**JSON Summary of Findings**"
-            if json_summary_marker not in full_response_text:
-                logger.error(
-                    "LogAnalyzer: No JSON Summary of Findings section found "
-                    "in response."
-                )
-                self._errors_encountered.append("No JSON Summary section found")
-                return {
-                    "status": "error",
-                    "feature": self.NAME,
-                    "message": "No JSON Summary of Findings section found in response.",
-                    "raw_response": full_response_text[:500],
-                    "errors_encountered": 1,
-                    "error_details": ["No JSON Summary section found in response."],
-                    "full_response_text": full_response_text,
-                }
-
-            # Extract JSON only after the JSON Summary marker
-            text_after_marker = full_response_text[
-                full_response_text.index(json_summary_marker) :
-            ]
-            json_match = re.search(
-                r"```json\n(\[.*?\])\n```", text_after_marker, re.DOTALL
-            )
-
-            if not json_match:
-                logger.error(
-                    "LogAnalyzer: No valid JSON found after JSON Summary marker."
-                )
-                self._errors_encountered.append("No JSON found after Summary marker")
-                return {
-                    "status": "error",
-                    "feature": self.NAME,
-                    "message": "No valid JSON found in the JSON Summary section.",
-                    "raw_response": text_after_marker[:500],
-                    "errors_encountered": 1,
-                    "error_details": [
-                        "No valid JSON found in the JSON Summary section."
-                    ],
-                    "full_response_text": full_response_text,
-                }
-
             try:
-                findings_list = json.loads(json_match.group(1))
+                response_json = json.loads(full_response_text)
             except json.JSONDecodeError as e:
-                logger.error("LogAnalyzer: Failed to decode JSON from response: %s", e)
+                logger.error(
+                    "%s Failed to decode JSON from response: %s", log_pretext, e
+                )
                 self._errors_encountered.append(f"JSON decode error: {e}")
                 return {
                     "status": "error",
                     "feature": self.NAME,
                     "message": "Failed to decode JSON from the provider response.",
-                    "raw_response": json_match.group(1)[:500],
+                    "raw_response": full_response_text[:500],
                     "errors_encountered": 1,
                     "error_details": [
                         "Failed to decode JSON from the provider response."
                     ],
                     "full_response_text": full_response_text,
                 }
+            if not isinstance(response_json, dict):
+                logger.warning(
+                    "%s Expected a JSON object but received type %s. "
+                    "The LLM may be using an outdated format. Treating as "
+                    "no findings.",
+                    log_pretext,
+                    type(response_json).__name__,
+                )
+                findings_list = []
+
+            findings_list = response_json.get("summaries", [])
+
+            if not findings_list:
+                logger.warning(
+                    "%s LogAnalyzer: JSON is valid, but 'summaries' key is "
+                    "missing or empty.",
+                    log_pretext,
+                )
+                return {
+                    "status": "success",
+                    "feature": self.NAME,
+                    "message": (
+                        "Analysis complete. The AI provider returned a valid "
+                        "response but did not identify any specific findings."
+                    ),
+                    "total_findings_processed": 0,
+                    "errors_encountered": 0,
+                    "events_exported": self._events_exported,
+                    "findings_received": 0,
+                    "full_response_text": full_response_text,
+                }
 
             logger.info(
-                "LogAnalyzer: SecGemini returned %d findings", len(findings_list)
+                "%s LogAnalyzer found %d findings.",
+                log_pretext,
+                len(findings_list),
             )
             # Each finding can have multiple records to same annotations
             processed_findings_summary = []
@@ -205,7 +219,7 @@ class LogAnalyzer(LLMFeatureInterface):
                 ]
 
                 if not record_ids:
-                    logger.warning("LogAnalyzer: Finding has no valid record IDs")
+                    logger.warning("%s Finding has no valid record IDs", log_pretext)
                     continue
 
                 # Create a finding that includes ALL record_ids with same annotations
@@ -238,7 +252,8 @@ class LogAnalyzer(LLMFeatureInterface):
 
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "LogAnalyzer: Failed to execute analysis for sketch %s: %s",
+                "%s Failed to execute analysis for sketch %s: %s",
+                log_pretext,
                 sketch.id,
                 exception,
                 exc_info=True,

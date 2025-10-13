@@ -13,6 +13,9 @@
 # limitations under the License.
 """End to end tests of Timesketch graph functionality."""
 
+import os
+import shutil
+
 from timesketch_api_client import graph
 
 from . import interface
@@ -23,10 +26,25 @@ class GraphTest(interface.BaseEndToEndTest):
     """End to end tests for query functionality."""
 
     NAME = "graph_test"
+    TEST_PLASO_FILE = "evtx_20250918.plaso"
+    TEST_PLASO_FILE_NAME = f"{TEST_PLASO_FILE}_{NAME}.plaso"
+
+    def __init__(self):
+        super().__init__()
+        self.test_plaso_path = None
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline("evtx.plaso")
+        test_data_dir = "/usr/local/src/timesketch/end_to_end_tests/test_data"
+        source_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE)
+        self.test_plaso_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE_NAME)
+        shutil.copy(source_path, self.test_plaso_path)
+
+        self.import_timeline(self.TEST_PLASO_FILE_NAME)
+
+    def teardown(self):
+        """Remove the plaso test file."""
+        os.remove(self.test_plaso_path)
 
     def test_graph(self):
         """Test pulling graphs from the backend."""

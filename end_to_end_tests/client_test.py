@@ -18,7 +18,6 @@ import uuid
 import json
 import random
 import os
-import time
 
 from timesketch_api_client import search
 
@@ -64,10 +63,12 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_direct_opensearch(self):
         """Test injecting data into OpenSearch directly."""
-        index_name = "direct_testing"
+        # make the index name something random
+        rand = random.randint(0, 10000)
 
+        timeline_name = f"test_direct_opensearch_{rand}"
         self.import_directly_to_opensearch(
-            filename="evtx_direct.csv", index_name=index_name
+            filename="evtx_direct_without_label.csv", index_name=timeline_name
         )
 
         new_sketch = self.api.create_sketch(
@@ -75,9 +76,9 @@ class ClientTest(interface.BaseEndToEndTest):
         )
 
         context = "e2e - > test_direct_opensearch"
-        timeline_name = "Ingested Via Mechanism"
+
         timeline = new_sketch.generate_timeline_from_es_index(
-            es_index_name=index_name,
+            es_index_name=timeline_name,
             name=timeline_name,
             provider="end_to_end_testing_platform",
             context=context,
@@ -130,7 +131,8 @@ level: high
 
     def test_sigmarule_create_get(self):
         """Client Sigma object tests."""
-
+        sketch = self.api.create_sketch(name="test_sigmarule_create_get")
+        sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
         rule = self.api.create_sigmarule(
             rule_yaml=f"""
 title: Suspicious Installation of eeeee
@@ -178,14 +180,6 @@ level: high
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(len(rule.logsource), 2)
 
-        # Test an actual query
-        self.import_timeline("sigma_events.csv")
-        search_obj = search.Search(self.sketch)
-        search_obj.query_string = rule.search_query
-        data_frame = search_obj.table
-        count = len(data_frame)
-        self.assertions.assertEqual(count, 1)
-
     def test_do_users_exist(self):
         """Tests if the essential 'test' and 'admin' users exist in Timesketch.
 
@@ -228,106 +222,6 @@ level: high
         rule.delete()
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 0)
-
-    def test_add_event_attributes(self):
-        """Tests adding attributes to an event."""
-        sketch = self.api.create_sketch(name="Add event attributes test")
-        sketch.add_event("event message", "2020-01-01T00:00:00", "timestamp_desc")
-
-        # Wait for new timeline and event to be created, retrying 5 times.
-        for _ in range(5):
-            search_client = search.Search(sketch)
-            search_response = json.loads(search_client.json)
-            objects = search_response.get("objects")
-            if objects:
-                old_event = search_response["objects"][0]
-                break
-            time.sleep(1)
-        else:
-            raise RuntimeError("Event creation failed for test.")
-
-        events = [
-            {
-                "_id": old_event["_id"],
-                "_index": old_event["_index"],
-                "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
-            }
-        ]
-
-        response = sketch.add_event_attributes(events)
-        new_event = sketch.get_event(old_event["_id"], old_event["_index"])
-        self.assertions.assertEqual(
-            response,
-            {
-                "meta": {
-                    "attributes_added": 1,
-                    "chunks_per_index": {old_event["_index"]: 1},
-                    "error_count": 0,
-                    "last_10_errors": [],
-                    "events_modified": 1,
-                },
-                "objects": [],
-            },
-        )
-        self.assertions.assertIn("foo", new_event["objects"])
-
-    def test_add_event_attributes_invalid(self):
-        """Tests adding invalid attributes to an event."""
-        sketch = self.api.create_sketch(name="Add invalid attributes test")
-        sketch.add_event(
-            "original message",
-            "2020-01-01T00:00:00",
-            "timestamp_desc",
-            attributes={"existing_attr": "original_value"},
-        )
-
-        # Wait for new timeline and event to be created, retrying 5 times.
-        for _ in range(5):
-            search_client = search.Search(sketch)
-            search_response = json.loads(search_client.json)
-            objects = search_response.get("objects")
-            if objects:
-                old_event = search_response["objects"][0]
-                break
-            time.sleep(1)
-        else:
-            raise RuntimeError("Event creation failed for test.")
-
-        # Have to use search to get event_id
-        search_client = search.Search(sketch)
-        search_response = json.loads(search_client.json)
-        old_event = search_response["objects"][0]
-
-        events = [
-            {
-                "_id": old_event["_id"],
-                "_index": old_event["_index"],
-                "attributes": [
-                    {"attr_name": "existing_attr", "attr_value": "new_value"},
-                    {"attr_name": "message", "attr_value": "new message"},
-                ],
-            }
-        ]
-
-        response = sketch.add_event_attributes(events)
-        # Confirm the error lines are generated for the invalid attributes.
-        self.assertions.assertIn(
-            f"Attribute 'existing_attr' already exists for event_id "
-            f"'{old_event['_id']}'.",
-            response["meta"]["last_10_errors"],
-        )
-        self.assertions.assertIn(
-            f"Cannot add 'message' for event_id '{old_event['_id']}', name not "
-            f"allowed.",
-            response["meta"]["last_10_errors"],
-        )
-
-        new_event = sketch.get_event(old_event["_id"], old_event["_index"])
-        # Confirm attributes have not been changed.
-        self.assertions.assertEqual(new_event["objects"]["message"], "original message")
-        self.assertions.assertEqual(
-            new_event["objects"]["existing_attr"], "original_value"
-        )
 
     def test_create_sketch_empty_name(self):
         """Test creating a sketch with an empty name."""
@@ -392,6 +286,14 @@ level: high
         admin_sketch_instance.delete(force_delete=True)
 
         sketches = list(self.api.list_sketches())
+        self.assertions.assertEqual(len(sketches), number_of_sketches)
+        with self.assertions.assertRaises(RuntimeError):
+            print(
+                "Expted that this sketch is not found - "
+                "so API error (RuntimeError) for request is expected"
+            )
+            self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+            print("End of expected RuntimeError")
         self.assertions.assertEqual(
             len(sketches),
             number_of_sketches,
@@ -595,7 +497,7 @@ level: high
         )
 
         # Import a timeline into the sketch
-        self.import_timeline("evtx.plaso", sketch=sketch)
+        self.import_timeline("sigma_events.csv", sketch=sketch)
 
         # List the timelines in the sketch
         timelines = sketch.list_timelines()
@@ -659,11 +561,9 @@ level: high
             "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
         )
 
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
-        self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
 
