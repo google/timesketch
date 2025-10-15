@@ -17,6 +17,7 @@ import logging
 import uuid
 import json
 import random
+import zipfile
 import os
 
 from timesketch_api_client import search
@@ -612,6 +613,44 @@ level: high
         # check number of timelines
         _ = sketch.lazyload_data(refresh_cache=True)
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
+
+    def test_export_sketch(self):
+        """Test exporting a sketch via the API client."""
+        # 1. Ensure the sketch has some data to export.
+
+        # create a new sketch
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(
+            name=f"test_delete_timeline {rand}", description="test_delete_timeline"
+        )
+        self.sketch = sketch
+        file_path = (
+            "/usr/local/src/timesketch/end_to_end_tests/test_data/evtx_20250918.plaso"
+        )
+
+        self.import_timeline(file_path, sketch=sketch)
+
+        # 2. Call the export method on the sketch object.
+        export_file_path = "/tmp/export.zip"
+        self.sketch.export(export_file_path)
+
+        # 3. Verify the contents of the returned zip file.
+        self.assertions.assertTrue(
+            zipfile.is_zipfile(export_file_path), "Exported file is not a valid zip."
+        )
+
+        with zipfile.ZipFile(export_file_path, "r") as zipf:
+            # Check for expected files in the archive
+            self.assertions.assertIn("METADATA", zipf.namelist())
+            self.assertions.assertIn("events/starred_events.csv", zipf.namelist())
+
+            # Check the content of the metadata file
+            with zipf.open("METADATA") as meta_file:
+                metadata = json.loads(meta_file.read().decode("utf-8"))
+                self.assertions.assertEqual(metadata.get("sketch_id"), self.sketch.id)
+                self.assertions.assertEqual(
+                    metadata.get("sketch_name"), self.sketch.name
+                )
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
