@@ -36,7 +36,8 @@ limitations under the License.
             variant="outlined"
             hide-details
             v-on:click="showPicker = true"
-            v-on:change="setStartTime"
+            @blur="setStartTimeFromEvent"
+            @keydown.enter="setStartTimeFromEvent"
           >
           </v-text-field>
         </v-col>
@@ -47,7 +48,8 @@ limitations under the License.
             variant="outlined"
             hide-details
             v-on:click="showPicker = true"
-            v-on:change="setEndTime"
+            @blur="setEndTimeFromEvent"
+            @keydown.enter="setEndTimeFromEvent"
             :append-outer-icon="showPicker ? 'mdi-calendar-remove' : 'mdi-calendar'"
             @click:append-outer="showPicker = !showPicker"
           >
@@ -152,6 +154,11 @@ export default {
 
       return { start: now, end: then }
     },
+
+    setStartTimeFromEvent: function(event) {
+      const newValue = event.target.value;
+      this.setStartTime(newValue);
+    },
     setStartTime: function (newDateTime) {
       if (!newDateTime) {
         this.range.start = ''
@@ -163,7 +170,11 @@ export default {
           this.range.end = this.range.start || ''
         }
       }
-      this.$refs.picker.focusDate(this.range.start)
+      this.$refs.picker.move(this.range.start)
+    },
+    setEndTimeFromEvent: function(event) {
+      const newValue = event.target.value;
+      this.setEndTime(newValue);
     },
     setEndTime: function (newDateTime) {
       if (!newDateTime) {
@@ -171,7 +182,7 @@ export default {
         return
       }
       this.range.end = dayjs.utc(newDateTime).toISOString()
-      this.$refs.picker.focusDate(this.range.start)
+      this.$refs.picker.move(this.range.end)
     },
     addDateTimeChip: function (chipValue) {
       const chipType = 'datetime_range'
