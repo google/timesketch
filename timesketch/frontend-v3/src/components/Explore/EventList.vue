@@ -1098,6 +1098,7 @@ export default {
           if (!incognito) {
             EventBus.$emit("createBranch", this.eventList.meta.search_node)
             this.appStore.updateSearchHistory()
+            this.appStore.updateTimeFilters()
             this.branchParent = this.eventList.meta.search_node.id
           }
           if (
