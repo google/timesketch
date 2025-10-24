@@ -565,7 +565,9 @@ class Search(resource.SketchResource):
             )
             if not error.check_return_status(more_response, logger):
                 error.error_message(
-                    response, message="Unable to query results", error=ValueError
+                    more_response,
+                    message="Unable to query results while scrolling",
+                    error=ValueError,
                 )
             more_response_json = error.get_response_json(more_response, logger)
             count = len(more_response_json.get("objects", []))
