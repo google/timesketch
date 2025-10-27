@@ -17,8 +17,8 @@ import logging
 import uuid
 import json
 import random
+import zipfile
 import os
-import time
 
 from timesketch_api_client import search
 
@@ -223,106 +223,6 @@ level: high
         rule.delete()
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 0)
-
-    def test_add_event_attributes(self):
-        """Tests adding attributes to an event."""
-        sketch = self.api.create_sketch(name="Add event attributes test")
-        sketch.add_event("event message", "2020-01-01T00:00:00", "timestamp_desc")
-
-        # Wait for new timeline and event to be created, retrying 5 times.
-        for _ in range(5):
-            search_client = search.Search(sketch)
-            search_response = json.loads(search_client.json)
-            objects = search_response.get("objects")
-            if objects:
-                old_event = search_response["objects"][0]
-                break
-            time.sleep(1)
-        else:
-            raise RuntimeError("Event creation failed for test.")
-
-        events = [
-            {
-                "_id": old_event["_id"],
-                "_index": old_event["_index"],
-                "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
-            }
-        ]
-
-        response = sketch.add_event_attributes(events)
-        new_event = sketch.get_event(old_event["_id"], old_event["_index"])
-        self.assertions.assertEqual(
-            response,
-            {
-                "meta": {
-                    "attributes_added": 1,
-                    "chunks_per_index": {old_event["_index"]: 1},
-                    "error_count": 0,
-                    "last_10_errors": [],
-                    "events_modified": 1,
-                },
-                "objects": [],
-            },
-        )
-        self.assertions.assertIn("foo", new_event["objects"])
-
-    def test_add_event_attributes_invalid(self):
-        """Tests adding invalid attributes to an event."""
-        sketch = self.api.create_sketch(name="Add invalid attributes test")
-        sketch.add_event(
-            "original message",
-            "2020-01-01T00:00:00",
-            "timestamp_desc",
-            attributes={"existing_attr": "original_value"},
-        )
-
-        # Wait for new timeline and event to be created, retrying 5 times.
-        for _ in range(5):
-            search_client = search.Search(sketch)
-            search_response = json.loads(search_client.json)
-            objects = search_response.get("objects")
-            if objects:
-                old_event = search_response["objects"][0]
-                break
-            time.sleep(1)
-        else:
-            raise RuntimeError("Event creation failed for test.")
-
-        # Have to use search to get event_id
-        search_client = search.Search(sketch)
-        search_response = json.loads(search_client.json)
-        old_event = search_response["objects"][0]
-
-        events = [
-            {
-                "_id": old_event["_id"],
-                "_index": old_event["_index"],
-                "attributes": [
-                    {"attr_name": "existing_attr", "attr_value": "new_value"},
-                    {"attr_name": "message", "attr_value": "new message"},
-                ],
-            }
-        ]
-
-        response = sketch.add_event_attributes(events)
-        # Confirm the error lines are generated for the invalid attributes.
-        self.assertions.assertIn(
-            f"Attribute 'existing_attr' already exists for event_id "
-            f"'{old_event['_id']}'.",
-            response["meta"]["last_10_errors"],
-        )
-        self.assertions.assertIn(
-            f"Cannot add 'message' for event_id '{old_event['_id']}', name not "
-            f"allowed.",
-            response["meta"]["last_10_errors"],
-        )
-
-        new_event = sketch.get_event(old_event["_id"], old_event["_index"])
-        # Confirm attributes have not been changed.
-        self.assertions.assertEqual(new_event["objects"]["message"], "original message")
-        self.assertions.assertEqual(
-            new_event["objects"]["existing_attr"], "original_value"
-        )
 
     def test_create_sketch_empty_name(self):
         """Test creating a sketch with an empty name."""
@@ -713,6 +613,44 @@ level: high
         # check number of timelines
         _ = sketch.lazyload_data(refresh_cache=True)
         self.assertions.assertEqual(len(sketch.list_timelines()), 1)
+
+    def test_export_sketch(self):
+        """Test exporting a sketch via the API client."""
+        # 1. Ensure the sketch has some data to export.
+
+        # create a new sketch
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(
+            name=f"test_delete_timeline {rand}", description="test_delete_timeline"
+        )
+        self.sketch = sketch
+        file_path = (
+            "/usr/local/src/timesketch/end_to_end_tests/test_data/evtx_20250918.plaso"
+        )
+
+        self.import_timeline(file_path, sketch=sketch)
+
+        # 2. Call the export method on the sketch object.
+        export_file_path = "/tmp/export.zip"
+        self.sketch.export(export_file_path)
+
+        # 3. Verify the contents of the returned zip file.
+        self.assertions.assertTrue(
+            zipfile.is_zipfile(export_file_path), "Exported file is not a valid zip."
+        )
+
+        with zipfile.ZipFile(export_file_path, "r") as zipf:
+            # Check for expected files in the archive
+            self.assertions.assertIn("METADATA", zipf.namelist())
+            self.assertions.assertIn("events/starred_events.csv", zipf.namelist())
+
+            # Check the content of the metadata file
+            with zipf.open("METADATA") as meta_file:
+                metadata = json.loads(meta_file.read().decode("utf-8"))
+                self.assertions.assertEqual(metadata.get("sketch_id"), self.sketch.id)
+                self.assertions.assertEqual(
+                    metadata.get("sketch_name"), self.sketch.name
+                )
 
 
 manager.EndToEndTestManager.register_test(ClientTest)

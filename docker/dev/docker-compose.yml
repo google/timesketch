@@ -60,7 +60,7 @@ services:
 
   redis:
     container_name: redis
-    image: redis:6.0.10-alpine
+    image: redis:7.2.11-alpine
     restart: always
 
   notebook:

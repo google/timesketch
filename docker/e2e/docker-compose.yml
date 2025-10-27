@@ -55,5 +55,5 @@ services:
     restart: always
 
   redis:
-    image: redis
+    image: redis:latest
     restart: always
