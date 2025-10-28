@@ -109,7 +109,6 @@ class LogAnalyzer(LLMFeatureInterface):
         log_pretext = f"LogAnalyzer [{session_id}]:"
         logger.info(
             "%s Log analysis session started for sketch [%d]", log_pretext, sketch.id
-            "LogAnalyzer: Starting streaming analysis for sketch [%d]", sketch.id
         )
 
         if not llm_provider.SUPPORTS_STREAMING:
@@ -158,8 +157,9 @@ class LogAnalyzer(LLMFeatureInterface):
             )
 
             if not response_json:
-                logger.warning("%s Received no valid summary blocks from provider.",
-                               log_pretext)
+                logger.warning(
+                    "%s Received no valid summary blocks from provider.", log_pretext
+                )
                 return {
                     "status": "error",
                     "feature": self.NAME,
