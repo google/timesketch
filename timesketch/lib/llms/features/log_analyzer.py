@@ -163,7 +163,8 @@ class LogAnalyzer(LLMFeatureInterface):
                 return {
                     "status": "error",
                     "feature": self.NAME,
-                    "message": "No valid summary blocks were received from the LLM provider.",
+                    "message": "No valid summary blocks were received from the "
+                    "LLM provider.",
                     "total_findings_processed": 0,
                     "errors_encountered": 1,
                     "error_details": ["No valid summary blocks were received."],
