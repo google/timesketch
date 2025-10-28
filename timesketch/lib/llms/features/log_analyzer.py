@@ -14,6 +14,7 @@
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
 import json
 import logging
+import uuid
 from typing import Any, Dict, Optional, Generator
 
 from timesketch.models import db_session
@@ -104,7 +105,10 @@ class LogAnalyzer(LLMFeatureInterface):
             LogAnalysisError: If the log stream preparation fails.
             Exception: For unexpected errors during execution.
         """
+        session_id = uuid.uuid4().hex[:8]  # create a uuid to track a session
+        log_pretext = f"LogAnalyzer [{session_id}]:"
         logger.info(
+            "%s Log analysis session started for sketch [%d]", log_pretext, sketch.id
             "LogAnalyzer: Starting streaming analysis for sketch [%d]", sketch.id
         )
 
@@ -116,6 +120,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
         try:
             # Prepare log stream
+            logger.debug("%s Preparing to stream events.", log_pretext)
             log_events_generator = self.prepare_log_stream_for_analysis(
                 sketch=sketch, form=form
             )
@@ -146,10 +151,15 @@ class LogAnalyzer(LLMFeatureInterface):
                     except json.JSONDecodeError:
                         break
 
+            logger.debug(
+                "%s Received full response from provider (%d bytes).",
+                log_pretext,
+                len(buffer),
+            )
+
             if not response_json:
-                logger.warning(
-                    "LogAnalyzer: Received no valid summary blocks from provider."
-                )
+                logger.warning("%s Received no valid summary blocks from provider.",
+                               log_pretext)
                 return {
                     "status": "error",
                     "feature": self.NAME,
@@ -161,15 +171,6 @@ class LogAnalyzer(LLMFeatureInterface):
                     "findings_received": 0,
                     "full_response_text": buffer,
                 }
-
-            if not isinstance(response_json, dict):
-                logger.warning(
-                    "LogAnalyzer: Expected a JSON object but received type %s. "
-                    "The LLM may be using an outdated format. Treating as "
-                    "no findings.",
-                    type(response_json).__name__,
-                )
-                findings_list = []
 
             findings_list = response_json.get("summaries", [])
             full_response_text = json.dumps(response_json, indent=2)
