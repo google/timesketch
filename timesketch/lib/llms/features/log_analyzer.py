@@ -61,6 +61,7 @@ class LogAnalyzer(LLMFeatureInterface):
         self._errors_encountered = []
         self._events_exported = 0
         self._findings_received = 0
+        self._log_pretext = f"LogAnalyzer [{uuid.uuid4().hex[:8]}]:"
 
     @property
     def datastore(self) -> OpenSearchDataStore:
@@ -105,10 +106,11 @@ class LogAnalyzer(LLMFeatureInterface):
             LogAnalysisError: If the log stream preparation fails.
             Exception: For unexpected errors during execution.
         """
-        session_id = uuid.uuid4().hex[:8]  # create a uuid to track a session
-        log_pretext = f"LogAnalyzer [{session_id}]:"
+
         logger.info(
-            "%s Log analysis session started for sketch [%d]", log_pretext, sketch.id
+            "%s Log analysis session started for sketch [%d]",
+            self._log_pretext,
+            sketch.id,
         )
 
         if not llm_provider.SUPPORTS_STREAMING:
@@ -119,7 +121,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
         try:
             # Prepare log stream
-            logger.debug("%s Preparing to stream events.", log_pretext)
+            logger.debug("%s Preparing to stream events.", self._log_pretext)
             log_events_generator = self.prepare_log_stream_for_analysis(
                 sketch=sketch, form=form
             )
@@ -152,13 +154,14 @@ class LogAnalyzer(LLMFeatureInterface):
 
             logger.debug(
                 "%s Received full response from provider (%d bytes).",
-                log_pretext,
+                self._log_pretext,
                 len(buffer),
             )
 
             if not response_json:
                 logger.warning(
-                    "%s Received no valid summary blocks from provider.", log_pretext
+                    "%s Received no valid summary blocks from provider.",
+                    self._log_pretext,
                 )
                 return {
                     "status": "error",
@@ -178,9 +181,8 @@ class LogAnalyzer(LLMFeatureInterface):
 
             if not findings_list:
                 logger.warning(
-                    "%s LogAnalyzer: JSON is valid, but 'summaries' key is "
-                    "missing or empty.",
-                    log_pretext,
+                    "%s JSON is valid, but 'summaries' key is " "missing or empty.",
+                    self._log_pretext,
                 )
                 return {
                     "status": "success",
@@ -197,8 +199,8 @@ class LogAnalyzer(LLMFeatureInterface):
                 }
 
             logger.info(
-                "%s LogAnalyzer: %s returned %d findings",
-                log_pretext,
+                "%s %s returned %d findings",
+                self._log_pretext,
                 llm_provider.NAME,
                 len(findings_list),
             )
@@ -214,7 +216,8 @@ class LogAnalyzer(LLMFeatureInterface):
 
                 if not record_ids:
                     logger.warning(
-                        "%s LogAnalyzer: Finding has no valid record IDs", log_pretext
+                        "%s Finding has no valid record IDs",
+                        self._log_pretext,
                     )
                     continue
 
@@ -248,7 +251,8 @@ class LogAnalyzer(LLMFeatureInterface):
 
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "LogAnalyzer: Failed to execute analysis for sketch %s: %s",
+                "%s Failed to execute analysis for sketch %s: %s",
+                self._log_pretext,
                 sketch.id,
                 exception,
                 exc_info=True,
@@ -264,7 +268,8 @@ class LogAnalyzer(LLMFeatureInterface):
         active_timelines = list(sketch.active_timelines)
         if not active_timelines:
             logger.warning(
-                "%s LogAnalyzer: No active timelines found for sketch [%s]",
+                "%s No active timelines found for sketch [%s]",
+                self._log_pretext,
                 sketch.id,
             )
             raise LogAnalysisError(
@@ -303,8 +308,9 @@ class LogAnalyzer(LLMFeatureInterface):
 
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "LogAnalyzer: Error during datastore.export_events_with_slicing "
+                "%s Error during datastore.export_events_with_slicing "
                 "for sketch [%s]: '%s'",
+                self._log_pretext,
                 sketch.id,
                 exception,
                 exc_info=True,
@@ -320,7 +326,9 @@ class LogAnalyzer(LLMFeatureInterface):
         The log_analyzer uses an agent instead of generating any prompts, so this
         method is not used here.
         """
-        logger.debug("LogAnalyzer.generate_prompt called for sketch %s", sketch.id)
+        logger.debug(
+            "%s generate_prompt called for sketch %s", self._log_pretext, sketch.id
+        )
         return (
             "Log analysis initiated for events in sketch "
             f'"{sketch.name}" (ID: {sketch.id})'
@@ -355,7 +363,8 @@ class LogAnalyzer(LLMFeatureInterface):
 
         if not isinstance(llm_response, dict):
             logger.error(
-                "LogAnalyzer.process_response: Expected dict, got %s",
+                "%s process_response: Expected dict, got %s",
+                self._log_pretext,
                 type(llm_response),
             )
             return {
@@ -366,7 +375,7 @@ class LogAnalyzer(LLMFeatureInterface):
         # Handle new format with multiple record_ids
         record_ids = llm_response.get("record_ids", [])
         if not record_ids:
-            logger.warning("LogAnalyzer: Finding missing 'record_ids'")
+            logger.warning("%s Finding missing 'record_ids'", self._log_pretext)
             return {
                 "status": "error",
                 "message": "Finding is missing its associated Timesketch event IDs.",
@@ -396,7 +405,8 @@ class LogAnalyzer(LLMFeatureInterface):
                         event.searchindex_id = searchindex_db_id
                     except ValueError as exception:
                         logger.error(
-                            "LogAnalyzer: Could not find Event for ID %s: %s",
+                            "%s Could not find Event for ID %s: %s",
+                            self._log_pretext,
                             record_id,
                             exception,
                         )
@@ -422,7 +432,8 @@ class LogAnalyzer(LLMFeatureInterface):
             except Exception as exception:  # pylint: disable=broad-exception-caught
                 db_session.rollback()
                 logger.error(
-                    "LogAnalyzer: DB error for events: %s",
+                    "%s DB error for events: %s",
+                    self._log_pretext,
                     exception,
                     exc_info=True,
                 )
@@ -540,7 +551,8 @@ class LogAnalyzer(LLMFeatureInterface):
         except Exception as exception:  # pylint: disable=broad-exception-caught
             db_session.rollback()
             logger.error(
-                "LogAnalyzer: DB commit error: %s",
+                "%s: DB commit error: %s",
+                self._log_pretext,
                 exception,
                 exc_info=True,
             )
@@ -615,8 +627,9 @@ class LogAnalyzer(LLMFeatureInterface):
 
             except Exception as exception:  # pylint: disable=broad-exception-caught
                 logger.warning(
-                    'LogAnalyzer: Error checking event %s in index "%s": %s. '
+                    '%s Error checking event %s in index "%s": %s. '
                     "Will try other indices.",
+                    self._log_pretext,
                     document_id,
                     opensearch_index_name,
                     exception,
@@ -625,8 +638,9 @@ class LogAnalyzer(LLMFeatureInterface):
                 continue
 
         logger.error(
-            "LogAnalyzer: Event %s was not found in any OpenSearch indices "
+            "%s: Event %s was not found in any OpenSearch indices "
             "associated with active timelines for sketch %s.",
+            self._log_pretext,
             document_id,
             sketch.id,
         )
