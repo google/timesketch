@@ -181,7 +181,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
             if not findings_list:
                 logger.warning(
-                    "%s JSON is valid, but 'summaries' key is " "missing or empty.",
+                    "%s JSON is valid, but 'summaries' key is missing or empty.",
                     self._log_pretext,
                 )
                 return {
