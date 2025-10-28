@@ -178,8 +178,9 @@ class LogAnalyzer(LLMFeatureInterface):
 
             if not findings_list:
                 logger.warning(
-                    "LogAnalyzer: JSON is valid, but 'summaries' key is "
-                    "missing or empty."
+                    "%s LogAnalyzer: JSON is valid, but 'summaries' key is "
+                    "missing or empty.",
+                    log_pretext,
                 )
                 return {
                     "status": "success",
@@ -196,7 +197,8 @@ class LogAnalyzer(LLMFeatureInterface):
                 }
 
             logger.info(
-                "LogAnalyzer: %s returned %d findings",
+                "%s LogAnalyzer: %s returned %d findings",
+                log_pretext,
                 llm_provider.NAME,
                 len(findings_list),
             )
@@ -211,7 +213,9 @@ class LogAnalyzer(LLMFeatureInterface):
                 ]
 
                 if not record_ids:
-                    logger.warning("LogAnalyzer: Finding has no valid record IDs")
+                    logger.warning(
+                        "%s LogAnalyzer: Finding has no valid record IDs", log_pretext
+                    )
                     continue
 
                 # Create a finding that includes ALL record_ids with same annotations
@@ -260,7 +264,7 @@ class LogAnalyzer(LLMFeatureInterface):
         active_timelines = list(sketch.active_timelines)
         if not active_timelines:
             logger.warning(
-                "LogAnalyzer: No active timelines found for sketch [%s]",
+                "%s LogAnalyzer: No active timelines found for sketch [%s]",
                 sketch.id,
             )
             raise LogAnalysisError(
