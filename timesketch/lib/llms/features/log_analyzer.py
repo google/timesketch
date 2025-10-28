@@ -14,7 +14,6 @@
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
 import json
 import logging
-import uuid
 from typing import Any, Dict, Optional, Generator
 
 from timesketch.models import db_session
@@ -105,10 +104,8 @@ class LogAnalyzer(LLMFeatureInterface):
             LogAnalysisError: If the log stream preparation fails.
             Exception: For unexpected errors during execution.
         """
-        session_id = uuid.uuid4().hex[:8]  # create a uuid to track a session
-        log_pretext = f"LogAnalyzer [{session_id}]:"
         logger.info(
-            "%s Log analysis session started for sketch [%d]", log_pretext, sketch.id
+            "LogAnalyzer: Starting streaming analysis for sketch [%d]", sketch.id
         )
 
         if not llm_provider.SUPPORTS_STREAMING:
@@ -119,7 +116,6 @@ class LogAnalyzer(LLMFeatureInterface):
 
         try:
             # Prepare log stream
-            logger.debug("%s Preparing to stream events.", log_pretext)
             log_events_generator = self.prepare_log_stream_for_analysis(
                 sketch=sketch, form=form
             )
@@ -128,66 +124,60 @@ class LogAnalyzer(LLMFeatureInterface):
                 log_events_generator=log_events_generator
             )
 
-            full_response_text = ""
+            buffer = ""
+            response_json = None
+            decoder = json.JSONDecoder()
+
             for chunk in raw_response_generator:
-                if chunk:
-                    full_response_text += chunk
+                if not chunk:
+                    continue
 
-            logger.debug(
-                "%s Received full response from provider (%d bytes).",
-                log_pretext,
-                len(full_response_text),
-            )
+                buffer += chunk
 
-            if not full_response_text:
-                logger.warning("%s Received no response from provider.", log_pretext)
+                while buffer:
+                    try:
+                        obj, end_index = decoder.raw_decode(buffer)
+
+                        # We only store the final/last seen summary block.
+                        if "summaries" in obj:
+                            response_json = obj
+
+                        buffer = buffer[end_index:].lstrip()
+                    except json.JSONDecodeError:
+                        break
+
+            if not response_json:
+                logger.warning(
+                    "LogAnalyzer: Received no valid summary blocks from provider."
+                )
                 return {
                     "status": "error",
                     "feature": self.NAME,
-                    "message": "No response from LLM provider.",
+                    "message": "No valid summary blocks were received from the LLM provider.",
                     "total_findings_processed": 0,
                     "errors_encountered": 1,
-                    "error_details": ["No response from LLM provider."],
+                    "error_details": ["No valid summary blocks were received."],
                     "events_exported": self._events_exported,
                     "findings_received": 0,
-                    "full_response_text": full_response_text,
+                    "full_response_text": buffer,
                 }
 
-            try:
-                response_json = json.loads(full_response_text)
-            except json.JSONDecodeError as e:
-                logger.error(
-                    "%s Failed to decode JSON from response: %s", log_pretext, e
-                )
-                self._errors_encountered.append(f"JSON decode error: {e}")
-                return {
-                    "status": "error",
-                    "feature": self.NAME,
-                    "message": "Failed to decode JSON from the provider response.",
-                    "raw_response": full_response_text[:500],
-                    "errors_encountered": 1,
-                    "error_details": [
-                        "Failed to decode JSON from the provider response."
-                    ],
-                    "full_response_text": full_response_text,
-                }
             if not isinstance(response_json, dict):
                 logger.warning(
-                    "%s Expected a JSON object but received type %s. "
+                    "LogAnalyzer: Expected a JSON object but received type %s. "
                     "The LLM may be using an outdated format. Treating as "
                     "no findings.",
-                    log_pretext,
                     type(response_json).__name__,
                 )
                 findings_list = []
 
             findings_list = response_json.get("summaries", [])
+            full_response_text = json.dumps(response_json, indent=2)
 
             if not findings_list:
                 logger.warning(
-                    "%s LogAnalyzer: JSON is valid, but 'summaries' key is "
-                    "missing or empty.",
-                    log_pretext,
+                    "LogAnalyzer: JSON is valid, but 'summaries' key is "
+                    "missing or empty."
                 )
                 return {
                     "status": "success",
@@ -204,8 +194,8 @@ class LogAnalyzer(LLMFeatureInterface):
                 }
 
             logger.info(
-                "%s LogAnalyzer found %d findings.",
-                log_pretext,
+                "LogAnalyzer: %s returned %d findings",
+                llm_provider.NAME,
                 len(findings_list),
             )
             # Each finding can have multiple records to same annotations
@@ -219,7 +209,7 @@ class LogAnalyzer(LLMFeatureInterface):
                 ]
 
                 if not record_ids:
-                    logger.warning("%s Finding has no valid record IDs", log_pretext)
+                    logger.warning("LogAnalyzer: Finding has no valid record IDs")
                     continue
 
                 # Create a finding that includes ALL record_ids with same annotations
@@ -252,8 +242,7 @@ class LogAnalyzer(LLMFeatureInterface):
 
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "%s Failed to execute analysis for sketch %s: %s",
-                log_pretext,
+                "LogAnalyzer: Failed to execute analysis for sketch %s: %s",
                 sketch.id,
                 exception,
                 exc_info=True,

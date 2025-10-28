@@ -25,6 +25,7 @@ from timesketch.lib.llms.providers import manager
 has_required_deps = True
 try:
     from sec_gemini import SecGemini
+    from sec_gemini.models.enums import MessageType
 except ImportError:
     has_required_deps = False
 
@@ -121,7 +122,11 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             "long-running analysis."
         )
         async for response in self._session.stream(prompt):
-            yield response.content
+            if (
+                response.message_type == MessageType.RESULT
+                and response.actor == "summarization_agent"
+            ):
+                yield response.content
 
     def generate_stream_from_logs(
         self,
