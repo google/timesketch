@@ -18,9 +18,11 @@ import os
 import asyncio
 import pathlib
 import tempfile
-from typing import Any, Dict, Generator, Iterable, Optional
-from flask import current_app
 from datetime import datetime
+from typing import Any, Dict, Generator, Iterable, Optional
+
+from flask import current_app
+
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
 
