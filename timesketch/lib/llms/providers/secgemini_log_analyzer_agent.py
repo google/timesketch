@@ -19,10 +19,10 @@ import asyncio
 import pathlib
 import tempfile
 from typing import Any, Dict, Generator, Iterable, Optional
-from timesketch.lib.llms.providers import interface
-from timesketch.lib.llms.providers import manager
 from flask import current_app
 from datetime import datetime
+from timesketch.lib.llms.providers import interface
+from timesketch.lib.llms.providers import manager
 
 has_required_deps = True
 try:
