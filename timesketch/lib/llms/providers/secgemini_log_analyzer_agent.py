@@ -139,12 +139,16 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
         if current_app.config.get("DEBUG"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_file_path = f"/tmp/secgemini_response_{timestamp}_{self.session_id}.log"
+            log_filename = f"secgemini_response_{timestamp}_{self.session_id}.log"
+            log_file_path = os.path.join(tempfile.gettempdir(), log_filename)
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
             try:
-                with open(log_file_path, "w", encoding="utf-8") as f:
+                with os.fdopen(
+                    os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
+                ) as f:
                     f.write("".join(full_response_content))
                 logger.debug("SecGemini raw response saved to %s", log_file_path)
-            except IOError as e:
+            except (IOError, FileExistsError) as e:
                 logger.error(
                     "Failed to write SecGemini debug log to %s: %s",
                     log_file_path,
