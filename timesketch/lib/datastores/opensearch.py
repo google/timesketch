@@ -122,6 +122,9 @@ class OpenSearchDataStore(object):
 
         if self.user and self.password:
             parameters["http_auth"] = (self.user, self.password)
+        if self.user == "api" and self.password:
+            parameters.pop("http_auth", None)
+            parameters["headers"] = {"Authorization": f"ApiKey {self.password}"}
         if self.timeout:
             parameters["timeout"] = self.timeout
 

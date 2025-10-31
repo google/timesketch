@@ -325,6 +325,15 @@ class BaseAggregator(object):
             Field name as string formatted after mapping type.
         """
         # Default field format is just the name unchanged.
+
+        known_field_types = {
+            "datetime": "date",
+            "timestamp_desc": "keyword",
+            "data_type": "keyword",
+            "tag": "keyword",
+            "__ts_timeline_id": "long",
+        }
+
         field_format = field_name
         field_type = None
 
@@ -339,6 +348,12 @@ class BaseAggregator(object):
             )
         except opensearchpy.NotFoundError:
             mapping = {}
+        except opensearchpy.exceptions.TransportError:
+            # Check if we already know the field type, else still raise the error.
+            if field_name in known_field_types:
+                return f"{field_name}.{known_field_types[field_name]}"
+
+            raise opensearchpy.exceptions.TransportError
 
         # The returned structure is nested so we need to unpack it.
         # Example:
@@ -354,6 +369,7 @@ class BaseAggregator(object):
         #         }
         #     }
         # }}
+
         for value in mapping.values():
             mappings = value.get("mappings", {})
             mapping = mappings.get(field_name, {}).get("mapping", {})
