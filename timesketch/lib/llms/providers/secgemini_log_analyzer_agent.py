@@ -21,6 +21,8 @@ import tempfile
 from typing import Any, Dict, Generator, Iterable, Optional
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
+from flask import current_app
+from datetime import datetime
 
 has_required_deps = True
 try:
@@ -100,6 +102,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             model=self.model, enable_logging=self.enable_logging
         )
         self.session_id = self._session.id
+        # TODO: Could we check if the API key has logging enabled and if not ERR
         logger.info("Started new SecGemini session: '%s'", self._session.id)
         self._session.upload_and_attach_logs(
             log_path, custom_fields_mapping=self.custom_fields_mapping
@@ -121,12 +124,31 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             "log are expected. The client automatically reconnects during "
             "long-running analysis."
         )
+
+        full_response_content = []
         async for response in self._session.stream(prompt):
             if (
                 response.message_type == MessageType.RESULT
                 and response.actor == "summarization_agent"
             ):
-                yield response.content
+                content_chunk = response.content
+                full_response_content.append(content_chunk)
+                yield content_chunk
+
+        if current_app.config.get("DEBUG"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            log_file_path = f"/tmp/secgemini_response_{timestamp}_{self.session_id}.log"
+            try:
+                with open(log_file_path, "w", encoding="utf-8") as f:
+                    f.write("".join(full_response_content))
+                logger.debug("SecGemini raw response saved to %s", log_file_path)
+            except IOError as e:
+                logger.error(
+                    "Failed to write SecGemini debug log to %s: %s",
+                    log_file_path,
+                    e,
+                    exc_info=True,
+                )
 
     def generate_stream_from_logs(
         self,
