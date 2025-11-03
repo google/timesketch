@@ -41,7 +41,9 @@ class AzureAI(interface.LLMProvider):
                 "endpoint, api_key, and model are required for AzureAI provider"
             )
 
-    def generate(self, prompt: str, response_schema: Optional[dict] = None) -> Union[dict, str]:
+    def generate(
+        self, prompt: str, response_schema: Optional[dict] = None
+    ) -> Union[dict, str]:
 
         url = (
             f"{self.endpoint}/openai/deployments/{self.model}/chat/completions?"
@@ -50,16 +52,24 @@ class AzureAI(interface.LLMProvider):
         headers = {"Content-Type": "application/json", "api-key": self.api_key}
         data = {
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": self.config.get("max_output_tokens", interface.DEFAULT_MAX_OUTPUT_TOKENS),
-            "temperature": self.config.get("temperature", interface.DEFAULT_TEMPERATURE),
+            "max_tokens": self.config.get(
+                "max_output_tokens", interface.DEFAULT_MAX_OUTPUT_TOKENS
+            ),
+            "temperature": self.config.get(
+                "temperature", interface.DEFAULT_TEMPERATURE
+            ),
             "top_p": self.config.get("top_p", interface.DEFAULT_TOP_P),
         }
         try:
-            response = requests.post(url, headers=headers, json=data, timeout=self.timeout)
+            response = requests.post(
+                url, headers=headers, json=data, timeout=self.timeout
+            )
             response.raise_for_status()
             response_data = response.json()["choices"][0]["message"]["content"]
         except (KeyError, IndexError) as e:
-            raise ValueError(f"Unexpected response structure from Azure API: {response.json()}") from e        
+            raise ValueError(
+                f"Unexpected response structure from Azure API: {response.json()}"
+            ) from e
 
         if isinstance(response_schema, dict):
             try:
