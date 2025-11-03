@@ -22,6 +22,7 @@ from typing import Optional, Union
 
 from flask import Flask
 from celery import Celery
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask_login import LoginManager
 from flask_login import login_required
@@ -67,6 +68,12 @@ def create_app(
         static_folder = "frontend-ng/dist"
 
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+
+    # Apply ProxyFix middleware to handle proxy headers for HTTPS redirects
+    # This ensures Flask generates HTTPS URLs when behind a reverse proxy
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+    )
 
     if not config:
         # Where to find the config file
