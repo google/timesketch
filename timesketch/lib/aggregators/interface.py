@@ -349,11 +349,13 @@ class BaseAggregator(object):
         except opensearchpy.NotFoundError:
             mapping = {}
         except opensearchpy.exceptions.TransportError:
-            # Check if we already know the field type, else still raise the error.
-            if field_name in known_field_types:
-                return f"{field_name}.{known_field_types[field_name]}"
-
-            raise opensearchpy.exceptions.TransportError
+            try:
+                mapping = self.opensearch.client.http.get(url=f"/{indices}/_mapping")
+            except Exception as e:
+                if field_name in known_field_types:
+                    return f"{field_name}.{known_field_types[field_name]}"
+                else:
+                    raise Exception(e)
 
         # The returned structure is nested so we need to unpack it.
         # Example:
