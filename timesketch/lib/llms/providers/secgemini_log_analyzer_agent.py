@@ -92,6 +92,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         1. Creates a new SecGemini session.
         2. Uploads the local log file to the session.
         3. Streams the analysis results for the given prompt.
+        4. If debugging is enabled, streams the raw sec-gemini response to a log.
 
         Args:
             log_path (Path): The local filesystem path to the JSONL log file.
@@ -127,34 +128,58 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             "long-running analysis."
         )
 
-        full_response_content = []
-        async for response in self._session.stream(prompt):
-            if (
-                response.message_type == MessageType.RESULT
-                and response.actor == "summarization_agent"
-            ):
-                content_chunk = response.content
-                full_response_content.append(content_chunk)
-                yield content_chunk
-
+        debug_log_file = None
         if current_app.config.get("DEBUG"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             log_filename = f"secgemini_response_{timestamp}_{self.session_id}.log"
             log_file_path = os.path.join(tempfile.gettempdir(), log_filename)
             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
             try:
-                with os.fdopen(
+                debug_log_file = os.fdopen(
                     os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
-                ) as f:
-                    f.write("".join(full_response_content))
-                logger.debug("SecGemini raw response saved to %s", log_file_path)
+                )
+                logger.info(
+                    "SecGemini raw response is being streamed to: %s", log_file_path
+                )
             except (IOError, FileExistsError) as e:
                 logger.error(
-                    "Failed to write SecGemini debug log to %s: %s",
+                    "Failed to create SecGemini debug log at %s: %s",
                     log_file_path,
                     e,
                     exc_info=True,
                 )
+                debug_log_file = None
+
+        try:
+            async for response in self._session.stream(prompt):
+                if debug_log_file:
+                    try:
+                        if hasattr(response, "to_json") and callable(
+                            getattr(response, "to_json")
+                        ):
+                            json_bytes = response.to_json()
+                            json_string = json_bytes.decode("utf-8")
+                            debug_log_file.write(json_string + "\n")
+                        else:
+                            debug_log_file.write(str(response) + "\n")
+                        debug_log_file.flush()
+                    except IOError as e:
+                        logger.error(
+                            "Failed to write to SecGemini debug log: %s",
+                            e,
+                            exc_info=True,
+                        )
+
+                if (
+                    response.message_type == MessageType.RESULT
+                    and response.actor == "summarization_agent"
+                ):
+                    content_chunk = response.content
+                    yield content_chunk
+        finally:
+            if debug_log_file:
+                debug_log_file.close()
+                logger.info("Finished writing SecGemini debug log: %s", log_file_path)
 
     def generate_stream_from_logs(
         self,
