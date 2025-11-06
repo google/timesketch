@@ -193,6 +193,7 @@ def create_app(
     CSRFProtect(app)
 
     if app.config.get("DEBUG"):
+        # pylint: disable=import-outside-toplevel
         from werkzeug.middleware.profiler import ProfilerMiddleware
 
         # Profiles are stored in a 'profiles' directory in the project root.
