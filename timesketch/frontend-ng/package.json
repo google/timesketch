@@ -12,7 +12,7 @@
   "dependencies": {
     "@mdi/font": "^7.1.96",
     "@popperjs/core": "^2.4.0",
-    "apexcharts": "^3.27.1",
+    "apexcharts": "^4.0.0",
     "axios": "^1.12.0",
     "cytoscape": "^3.24.0",
     "cytoscape-dagre": "^2.5.0",
@@ -27,7 +27,7 @@
     "vega-embed": "^4.2.2",
     "vega-lite": "3.4.0",
     "vue": "^2.6.12",
-    "vue-apexcharts": "^1.6.1",
+    "vue-apexcharts": "^1.7.0",
     "vue-dragscroll": "^3.0.0",
     "vue-moment": "^4.0.0",
     "vue-router": "^3.0.2",
