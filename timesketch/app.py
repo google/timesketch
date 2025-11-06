@@ -192,6 +192,19 @@ def create_app(
     # Setup CSRF protection for the whole application
     CSRFProtect(app)
 
+    if app.config.get("DEBUG"):
+        from werkzeug.middleware.profiler import ProfilerMiddleware
+
+        # Profiles are stored in a 'profiles' directory in the project root.
+        # app.root_path is the path to the 'timesketch' package directory.
+        project_root = os.path.dirname(app.root_path)
+        profile_dir = os.path.join(project_root, "profiles")
+        print(profile_dir)
+        os.makedirs(profile_dir, exist_ok=True)
+        app.wsgi_app = ProfilerMiddleware(
+            app.wsgi_app, stream=None, profile_dir=profile_dir
+        )
+
     return app
 
 
