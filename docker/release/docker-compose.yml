@@ -1,3 +1,13 @@
+# Timesketch container dependencies
+x-timesketch-dependencies: &timesketch-dependencies
+  depends_on:
+    opensearch:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
 services:
   timesketch-web:
     container_name: timesketch-web
@@ -10,13 +20,7 @@ services:
       - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
-    depends_on:
-      opensearch:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    <<: *timesketch-dependencies
 
   # [DEPRECATED] Add "--profile legacy-ui" to your docker compose command to use the legacy UI
   timesketch-web-legacy:
@@ -32,13 +36,7 @@ services:
       - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
-    depends_on:
-      opensearch:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    <<: *timesketch-dependencies
 
   # [WIP] Add "--profile v3-ui" to your docker compose command to use the vue3 UI
   timesketch-web-v3:
@@ -54,13 +52,7 @@ services:
       - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
-    depends_on:
-      opensearch:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    <<: *timesketch-dependencies
 
   timesketch-worker:
     container_name: timesketch-worker
@@ -73,13 +65,7 @@ services:
       - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
-    depends_on:
-      opensearch:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    <<: *timesketch-dependencies
 
   opensearch:
     container_name: opensearch
