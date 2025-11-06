@@ -27,7 +27,7 @@ You can analyze these files using Python's built-in `pstats` module, which provi
 1.  **Navigate to the profiles directory:**
 
     ```bash
-    cd /usr/local/google/home/jaegeral/dev/timesketch/profiles/
+    cd /path/to/timesketch/profiles/
     ```
 
 2.  **Open a `.prof` file with `pstats`:**
