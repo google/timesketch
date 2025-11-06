@@ -200,7 +200,6 @@ def create_app(
         # app.root_path is the path to the 'timesketch' package directory.
         project_root = os.path.dirname(app.root_path)
         profile_dir = os.path.join(project_root, "profiles")
-        print(profile_dir)
         os.makedirs(profile_dir, exist_ok=True)
         app.wsgi_app = ProfilerMiddleware(
             app.wsgi_app, stream=None, profile_dir=profile_dir
