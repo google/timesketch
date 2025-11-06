@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-psycopg2 \
     tzdata \
     nano \
+    vim \
     python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
