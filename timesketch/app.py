@@ -196,10 +196,15 @@ def create_app(
         # pylint: disable=import-outside-toplevel
         from werkzeug.middleware.profiler import ProfilerMiddleware
 
-        # Profiles are stored in a 'profiles' directory in the project root.
-        # app.root_path is the path to the 'timesketch' package directory.
-        project_root = os.path.dirname(app.root_path)
-        profile_dir = os.path.join(project_root, "profiles")
+        # Profiles are stored in a 'profiles' directory.
+        # For local dev deployments (e.g. timesketch-dev container) this will be
+        # in the project root. For release containers it will be in /var/log.
+        if app.root_path.startswith("/usr/local/src/timesketch"):
+            project_root = os.path.dirname(app.root_path)
+            profile_dir = os.path.join(project_root, "profiles")
+        else:
+            profile_dir = "/var/log/timesketch/profiles"
+
         os.makedirs(profile_dir, exist_ok=True)
         app.wsgi_app = ProfilerMiddleware(
             app.wsgi_app, stream=None, profile_dir=profile_dir
