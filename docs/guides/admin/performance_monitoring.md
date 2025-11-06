@@ -16,18 +16,25 @@ To enable the performance profiler, you need to edit your `timesketch.conf` file
 
 3.  **Restart the Timesketch server:** For the change to take effect, you must restart the application server.
 
-Once enabled, the profiler will start writing `.prof` files for each request into the `profiles/` directory within your Timesketch project root (e.g., `/usr/local/src/timesketch/profiles`).
+Once enabled, the profiler will start writing `.prof` files for each request into a `profiles/` directory. The location of this directory depends on your deployment:
+
+*   **Local Development (timesketch-dev container):** `/usr/local/src/timesketch/profiles/`
+*   **Release Containers:** `/var/log/timesketch/profiles/`
 
 ## Analyzing Performance Profiles with `pstats`
 
-If you have enabled performance profiling (by setting `DEBUG = True` in `timesketch.conf`), the application will generate `.prof` files in the `profiles/` directory at the project root. These files contain detailed performance statistics for each request.
+If you have enabled performance profiling (by setting `DEBUG = True` in `timesketch.conf`), the application will generate `.prof` files in the appropriate `profiles/` directory. These files contain detailed performance statistics for each request.
 
 You can analyze these files using Python's built-in `pstats` module, which provides a command-line browser for profiling statistics.
 
 1.  **Navigate to the profiles directory:**
 
     ```bash
-    cd /path/to/timesketch/profiles/
+    # For local development
+    cd /usr/local/src/timesketch/profiles/
+
+    # For release containers
+    # cd /var/log/timesketch/profiles/
     ```
 
 2.  **Open a `.prof` file with `pstats`:**
@@ -78,8 +85,11 @@ pip install snakeviz
 Navigate to the directory where the profiling data is stored and start the `snakeviz` server. It will bind to `localhost` by default, which is ideal for use with SSH port forwarding.
 
 ```bash
-# Navigate to the profiles directory
-cd /usr/local/src/timesketch/profiles
+# For local development
+cd /usr/local/src/timesketch/profiles/
+
+# For release containers
+# cd /var/log/timesketch/profiles/
 
 # Start snakeviz, pointing it to all .prof files
 snakeviz . -s
