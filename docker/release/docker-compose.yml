@@ -130,5 +130,5 @@ services:
     depends_on:
       # Nginx should wait for the web backends to be started.
       - timesketch-web
-      - timesketch-web-legacy
-      - timesketch-web-v3
+      # - timesketch-web-legacy
+      # - timesketch-web-v3
