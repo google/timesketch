@@ -82,7 +82,7 @@ Navigate to the directory where the profiling data is stored and start the `snak
 cd /usr/local/src/timesketch/profiles
 
 # Start snakeviz, pointing it to all .prof files
-snakeviz ./profiles -s
+snakeviz . -s
 ```
 
 SnakeViz will start a web server, typically on `http://127.0.0.1:8080`.
