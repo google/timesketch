@@ -102,7 +102,7 @@ services:
     volumes:
       - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U timesketch"]
+      test: ["CMD-SHELL", "pg_isready -U timesketch -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
