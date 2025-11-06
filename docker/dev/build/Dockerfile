@@ -1,5 +1,5 @@
 # Use the official Docker Hub Ubuntu base image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ARG PPA_TRACK=stable
 
@@ -21,6 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-setuptools \
     python3-psycopg2 \
     tzdata \
+    nano \
+    python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
@@ -28,6 +30,10 @@ RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
+
+# Fix for broken PPA dependency in Ubuntu 24.04: Plaso needs the 'events'
+# library for its opensearch output module.
+RUN pip3 install --break-system-packages events
 
 # Install NodeJS for frontend development
 RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
@@ -39,11 +45,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Yarn for frontend development
 RUN npm install --global yarn
 
-# Install dependencies for Timesketch
+# Create a virtual environment and add it to the PATH
+RUN python3 -m venv /opt/venv --system-site-packages
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install dependencies for Timesketch into the virtual environment
 COPY ./requirements.txt /timesketch-requirements.txt
 RUN pip3 install -r /timesketch-requirements.txt
 
-# Install test dependencies for Timesketch
+# Install test dependencies for Timesketch into the virtual environment
 COPY ./test_requirements.txt /timesketch-test-requirements.txt
 RUN pip3 install -r /timesketch-test-requirements.txt
 
