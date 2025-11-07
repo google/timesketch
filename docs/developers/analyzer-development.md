@@ -51,7 +51,7 @@ If you just want to extract a simple feature, e.g. want to extract a hostname or
 IP that is somewhere in the message field, or inside another attribute you don't
 have to write a new analyzer, you can take advantage of the feature_extraction
 analyzer. All you need to do is to edit the `regex_features.yaml` file found here:
-https://github.com/google/timesketch/blob/master/data/regex_features.yaml
+https://github.com/google/timesketch/blob/main/data/regex_features.yaml
 
 An example extraction entry looks like this:
 
@@ -80,7 +80,7 @@ new analyzer if you have a specific search query or an existing community rule
 and want to tag all those events.
 
 Check the
-[sigma analyzer docs](https://github.com/google/timesketch/blob/master/docs/guides/analyzers/sigma_analyzer.md)
+[sigma analyzer docs](https://github.com/google/timesketch/blob/main/docs/guides/analyzers/sigma_analyzer.md)
 for more information.
 
 ### Tagger Analyzer
@@ -89,14 +89,14 @@ If your query requires a more advanced search query like dynamically tagging
 based on values derived from event attributes, you should make use of the tagger
 analyzer. This also allows you to tag all events based on a generic search query
 and regex searches. See the
-[tagger doc](https://github.com/google/timesketch/blob/master/docs/guides/analyzers/tagger.md)
+[tagger doc](https://github.com/google/timesketch/blob/main/docs/guides/analyzers/tagger.md)
 for more information.
 
 TIP: If your detection idea can be implemented with a Sigma rule use that
 instead of the tagger analyzer!
 
 To use it, just add a new tagger entry in the `tags.yaml` file:
-https://github.com/google/timesketch/blob/master/data/tags.yaml
+https://github.com/google/timesketch/blob/main/data/tags.yaml
 
 An example tagger entry looks like this:
 
@@ -184,18 +184,18 @@ File: ./timesketch/lib/analyzers/__init__.py written to disk.
 ```
 
 The scaffolder will create a new branch for you as well, so don't worry about
-messing with the master branch.
+messing with the main branch.
 
 ```shell
 $ git branch
-  master
+  main
 * best_analyzer
 ```
 
 Three files will be edited/created.
 
 ```shell
-$ git diff master --stat
+$ git diff main --stat
  timesketch/lib/analyzers/__init__.py        |  1 +
  timesketch/lib/analyzers/best_analyzer.py      | 55 +++++++++++++++++++++
  timesketch/lib/analyzers/BEST_ANALYZER_test.py | 24 ++++++++++++++
@@ -398,7 +398,7 @@ When you develop an analyzer that would benefit from creating smaller sub-jobs,
 you should use a Multi Analyzer.
 
 For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma
-analyzer is calling `get_kwargs()` from [sigma_tagger.py](https://github.com/google/timesketch/blob/master/timesketch/lib/analyzers/sigma_tagger.py).
+analyzer is calling `get_kwargs()` from [sigma_tagger.py](https://github.com/google/timesketch/blob/main/timesketch/lib/analyzers/sigma_tagger.py).
 That will return a list of all Sigma rules installed on the instance. The Main
 celery job then spawns one celery job per Sigma rule that can run in parallel
 or serial depending on the celery config and sizing of the Timesketch instance.

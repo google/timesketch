@@ -258,8 +258,8 @@ your custom analytics, making them immediately available to analysts within the
 Timesketch UI.
 
 Here’s how you can use the
-[scenario.py](https://github.com/google/timesketch/blob/master/api_client/python/timesketch_api_client/scenario.py)
-and [sketch.py](https://github.com/google/timesketch/blob/master/api_client/python/timesketch_api_client/sketch.py)
+[scenario.py](https://github.com/google/timesketch/blob/main/api_client/python/timesketch_api_client/scenario.py)
+and [sketch.py](https://github.com/google/timesketch/blob/main/api_client/python/timesketch_api_client/sketch.py)
 API client methods to achieve this.
 
 #### Step 1: Add an Investigative Question

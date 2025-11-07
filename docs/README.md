@@ -5,7 +5,7 @@ This is the place for user facing documentation. This is the source for the publ
 ## Adding/edit docs
 
 We are using a site generation tool called mkdocs. It is fully automated using GH actions.
-To update or add new content you edit the files under this directory (/docs/). When the code is merged to the master branch it will automatically be build and deployed.
+To update or add new content you edit the files under this directory (/docs/). When the code is merged to the main branch it will automatically be build and deployed.
 
 ## Preview changes locally before opening a PR
 

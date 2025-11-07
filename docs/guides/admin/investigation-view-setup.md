@@ -23,8 +23,8 @@ the `v3-ui` profile in your Docker Compose setup.
 *   A standard Timesketch installation using Docker Compose, as outlined in the
     [installation guide](/guides/admin/install/).
 *   If you have an existing Timesketch deployment, please ensure to collect the
-    latest version of the files in the [data](https://github.com/google/timesketch/tree/master/data)
-    folder and [nginx.conf](https://github.com/google/timesketch/blob/master/contrib/nginx.conf).
+    latest version of the files in the [data](https://github.com/google/timesketch/tree/main/data)
+    folder and [nginx.conf](https://github.com/google/timesketch/blob/main/contrib/nginx.conf).
 
 **Steps:**
 
@@ -112,14 +112,14 @@ The Investigation View includes LLM text drafting features (e.g. drafting an
 answer based on conclusions) that can be enabled with default LLM services.
 
 1. Follow the steps described for [configuring LLM Features](/guides/admin/llm-features/)
-2. Add your prefered LLM provider for the new `llm_synthesize` feature in your `timesketch.conf`.
+2. Add your preferred LLM provider for the new `llm_synthesize` feature in your `timesketch.conf`.
 3. Ensure the prompt file configured in `PROMPT_LLM_SYNTHESIZE` exists and the
    prompt works for your needs.
 
 ### 4. Connecting the AI Investigation Capabilities
 
 The Investigation View includes an experimental AI mode designed to support workflows
-utilizing AI Log Analysis Capabilities wich automate the generation of key findings
+utilizing AI Log Analysis Capabilities which automate the generation of key findings
 and investigative questions by analyzing timeline data. This feature is powered
 by a dedicated AI service that must be configured by an administrator.
 

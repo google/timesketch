@@ -3,7 +3,7 @@ name: Build and Deploy frontend-ng
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'timesketch/frontend-ng/**'
       - '!timesketch/frontend-ng/dist/**' # Exclude changes in the dist folder

@@ -37,7 +37,7 @@ We have created a helper script to get you started with all necessary configurat
 Download the script here:
 
 ```shell
-curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+curl -s -O https://raw.githubusercontent.com/google/timesketch/main/contrib/deploy_timesketch.sh
 chmod 755 deploy_timesketch.sh
 ```
 

@@ -3,7 +3,7 @@ name: Publish docs to GitHub Pages
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'docs/**'
   workflow_dispatch:

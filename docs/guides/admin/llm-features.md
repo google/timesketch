@@ -110,8 +110,8 @@ PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_summarize/prompt.txt'
     injecting the event data into the prompt using Python-style string formatting
     using curly braces `{}`.
 Timesketch provides some default configuration files for both features:
-* [NL2Q default configuration](https://github.com/google/timesketch/tree/master/data/nl2q).
-* [LLM Summarization default configuration](https://github.com/google/timesketch/tree/master/data/llm_summarize).
+* [NL2Q default configuration](https://github.com/google/timesketch/tree/main/data/nl2q).
+* [LLM Summarization default configuration](https://github.com/google/timesketch/tree/main/data/llm_summarize).
 
 
 # AI Investigation Agent
