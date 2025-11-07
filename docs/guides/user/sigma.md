@@ -136,7 +136,7 @@ Some adjustments verified:
 - s/EventID/event_identifier
 - s/Source/source_name
 
-There are many entries in https://github.com/google/timesketch/blob/master/data/sigma_config.yaml mapped to `xml_string`. This is because a lot of data in Windows EVTX XML is not valid XML and will be represented in the section `xml_string` (see https://github.com/log2timeline/plaso/issues/442).
+There are many entries in https://github.com/google/timesketch/blob/main/data/sigma_config.yaml mapped to `xml_string`. This is because a lot of data in Windows EVTX XML is not valid XML and will be represented in the section `xml_string` (see https://github.com/log2timeline/plaso/issues/442).
 
 Field mappings like:
 

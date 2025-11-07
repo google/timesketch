@@ -26,7 +26,7 @@ over at osdfir blog.
 [instructions on GitHub](https://github.com/google/hashr).
 
 1. Add the information to connect to your hashR database in the
-[timesketch.conf](https://github.com/google/timesketch/blob/master/data/timesketch.conf#L235)
+[timesketch.conf](https://github.com/google/timesketch/blob/main/data/timesketch.conf#L235)
 at the `#-- hashR integration --#` section.
 
 ```
