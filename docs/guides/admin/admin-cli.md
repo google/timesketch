@@ -350,12 +350,12 @@ tsctl searchindex-info --searchindex_id 1
 tsctl searchindex-info --index_name 4c5afdf60c6e49499801368b7f238353
 ```
 
-#### `timeline-status` / `searchindex-status`
+#### `timeline-status`
 
-Gets or sets the status of a timeline or search index. This is useful for manually correcting the state of an import that has failed or stalled.
+Gets or sets the status of a timeline. This is useful for manually correcting the state of an import that has failed or stalled.
 
 **Arguments:**
-*   `TIMELINE_ID` or `--searchindex_id`
+*   `TIMELINE_ID`: The ID of the timeline.
 
 **Options:**
 *   `--action [get|set]`: The action to perform.
@@ -368,6 +368,20 @@ tsctl timeline-status 123 --action get
 
 # Set the status of timeline with ID 456 to "ready":
 tsctl timeline-status 456 --action set --status ready
+```
+
+#### `searchindex-status`
+
+Gets or sets the status of a search index.
+
+**Options:**
+*   `--searchindex_id`: The ID of the search index.
+*   `--action [get|set]`: The action to perform.
+*   `--status [ready|processing|fail]`: The status to set.
+
+**Example:**
+```bash
+tsctl searchindex-status --searchindex_id 1 --action set --status fail
 ```
 
 ---
@@ -469,7 +483,7 @@ tsctl db upgrade
 Permanently drops all tables from the relational database. This is a destructive action.
 
 **Example:**
-```shell
+```bash
 tsctl drop-db
 ```
 
