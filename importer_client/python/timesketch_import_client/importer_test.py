@@ -238,6 +238,18 @@ class TimesketchImporterTest(unittest.TestCase):
         )
         self.assertIs("1331698658276340" in fixed_frame["timestamp"].values, True)
 
+    def test_fix_data_frame_precision(self):
+        """Test fixing a data frame with a datetime that has microsecond precision."""
+        data_frame = pandas.DataFrame(
+            {
+                "datetime": ["2023-05-03T07:36:43.9116468Z"],
+                "message": ["test message"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+        self.assertIn(".911646", fixed_frame["datetime"].iloc[0])
+
     # pylint: enable=protected-access
     def _run_all_tests(self, columns, lines):
         """Run all tests on the result set of a streamer."""
