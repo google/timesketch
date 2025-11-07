@@ -2,6 +2,37 @@
 
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
+  echo '**** Debugging information for e2e tests ****'
+  echo '** VENV Python version:'
+  /opt/venv/bin/python3 --version
+  echo '**'
+  echo '** VENV pip3 freeze:'
+  /opt/venv/bin/pip3 freeze
+  echo '**'
+  echo '** Python path:'
+  which python3
+  echo '**'
+  echo '*** System Python'
+  echo '** Python version:'
+  /usr/bin/python3 --version
+  echo '**'
+  echo '** pip3 list:'
+  /usr/bin/pip3 list --break-system-packages 2>/dev/null || /usr/bin/pip3 list
+  echo '**'
+  echo '** dpkg list for python3:'
+  dpkg -l | grep python3
+  echo '**'
+  echo '** Python path:'
+  which /usr/bin/python3
+  echo '**'
+  echo '** PATH:'
+  echo $PATH
+  echo '**'
+  echo '** PYTHONPATH:'
+  echo $PYTHONPATH
+  echo '**** End of debugging information ****'
+
+
   # Copy the mappings for plaso ingestion.
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/
@@ -69,6 +100,8 @@ if [ "$1" = 'timesketch' ]; then
   sleep 2
   tsctl create-user admin --password admin
   tsctl make-admin admin
+
+  
 
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
