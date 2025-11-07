@@ -289,6 +289,13 @@ def grant_group(group_name, sketch_id, read_only):
     print(f"Group {group_name} added to the sketch {sketch.id} ({sketch.name})")
 
 
+@cli.command(name="help")
+@click.pass_context
+def help_command(ctx):
+    """Show this message and exit."""
+    print(ctx.parent.get_help())
+
+
 @cli.command(name="version")
 def get_version():
     """Return the version information of Timesketch."""
@@ -525,6 +532,21 @@ def create_group(group_name):
     db_session.add(group)
     db_session.commit()
     print(f"Group created: {group_name}")
+
+
+@cli.command(name="delete-group")
+@click.argument("group_name")
+def delete_group(group_name):
+    """Delete a group."""
+    group = Group.query.filter_by(name=group_name).first()
+    if not group:
+        print("No such group.")
+        return
+
+    if click.confirm(f"Are you sure you want to delete the group {group_name}?"):
+        db_session.delete(group)
+        db_session.commit()
+        print(f"Group {group_name} deleted.")
 
 
 @cli.command(name="list-group-members")

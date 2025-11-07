@@ -200,6 +200,18 @@ Creates a new group.
 tsctl create-group analysts
 ```
 
+#### `delete-group`
+
+Deletes a group.
+
+**Arguments:**
+*   `GROUP_NAME`: The name of the group to delete.
+
+**Example:**
+```shell
+tsctl delete-group analysts
+```
+
 #### `list-group-members`
 
 Lists all members of a group.
