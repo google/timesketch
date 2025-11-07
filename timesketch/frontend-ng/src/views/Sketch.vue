@@ -345,7 +345,7 @@ limitations under the License.
           <v-divider></v-divider>
           <v-expand-transition>
             <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
-              <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
+              <ts-event-list v-if="showTimelineView" :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
             </v-card-text>
           </v-expand-transition>
         </v-card>
