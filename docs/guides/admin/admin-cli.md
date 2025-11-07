@@ -178,6 +178,9 @@ tsctl revoke-admin dev
 
 Lists all groups.
 
+**Options:**
+*   `--showmembership`: Includes a list of members for each group.
+
 **Example:**
 ```bash
 tsctl list-groups --showmembership
