@@ -39,6 +39,7 @@ nav:
       - LLM Features: guides/admin/llm-features.md
       - Investigation View: guides/admin/investigation-view-setup.md
       - DFIQ Templates: guides/admin/load-dfiq.md
+      - Performance Monitoring: guides/admin/performance-monitoring.md
   - Developers:
       - Getting started: developers/getting-started.md
       - Frontend development: developers/frontend-development.md

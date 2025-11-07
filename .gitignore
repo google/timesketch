@@ -51,3 +51,6 @@ vagrant/*.log
 
 # Exclude JetBrains IDE files
 .idea/
+
+# Exclude debugging profiles
+profiles/
