@@ -111,6 +111,6 @@ This command forwards your local port `8080` to the remote server's port `8080`.
 
 Now, open a web browser on your local machine and navigate to:
 
-[http://localhost:8080](http://localhost:8080)
+[http://localhost:8080/snakeviz](http://localhost:8080/snakeviz)
 
 You can now interact with the `snakeviz` UI to analyze the performance data for your Timesketch application.
