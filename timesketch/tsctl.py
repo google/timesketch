@@ -536,7 +536,7 @@ def create_group(group_name):
 
 @cli.command(name="delete-group")
 @click.argument("group_name")
-def delete_group(group_name):
+def delete_group(group_name: str):
     """Delete a group."""
     group = Group.query.filter_by(name=group_name).first()
     if not group:
