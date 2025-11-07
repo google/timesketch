@@ -178,9 +178,6 @@ tsctl revoke-admin dev
 
 Lists all groups.
 
-**Options:**
-*   `--showmembership`: Includes a list of members for each group.
-
 **Example:**
 ```bash
 tsctl list-groups --showmembership
@@ -198,6 +195,18 @@ Creates a new group.
 **Example:**
 ```shell
 tsctl create-group analysts
+```
+
+#### `list-group-members`
+
+Lists all members of a group.
+
+**Arguments:**
+*   `GROUP_NAME`: The group to list members for.
+
+**Example:**
+```shell
+tsctl list-group-members analysts
 ```
 
 #### `add-group-member` / `remove-group-member`
@@ -323,19 +332,6 @@ tsctl sketch-label-stats --sketch_id 1 --verbose
 
 ## Timeline & SearchIndex Management
 
-#### `import`
-
-Creates a new timeline by importing events from a file. Supported file formats are: plaso, csv and jsonl.
-
-**Options:**
-*   `--file / -f`: Path to the file to import (plaso, csv, jsonl).
-*   `--sketch_id / -s`: (Optional) ID of the sketch to add the timeline to.
-*   `--timeline_name / -n`: (Optional) Name for the new timeline.
-
-**Example:**
-```shell
-tsctl import --file /tmp/my_plaso_file.plaso --sketch_id 1 --timeline_name "My New Timeline"
-```
 
 #### `searchindex-info`
 
@@ -369,6 +365,22 @@ tsctl timeline-status 123 --action get
 
 # Set the status of timeline with ID 456 to "ready":
 tsctl timeline-status 456 --action set --status ready
+```
+
+---
+
+## Search Template Management
+
+#### `import-search-templates`
+
+Imports search templates from YAML files in a given directory path.
+
+**Arguments:**
+*   `PATH`: The directory to import templates from.
+
+**Example:**
+```shell
+tsctl import-search-templates /path/to/my_templates/
 ```
 
 ---
