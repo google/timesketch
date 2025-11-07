@@ -291,7 +291,7 @@ def grant_group(group_name, sketch_id, read_only):
 
 @cli.command(name="help")
 @click.pass_context
-def help_command(ctx):
+def help_command(ctx: click.Context):
     """Show this message and exit."""
     print(ctx.parent.get_help())
 
