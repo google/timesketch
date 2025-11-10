@@ -50,8 +50,8 @@ def mock_session():
         @staticmethod
         def get(*args, **kwargs):
             """Mock GET request handler."""
-            if args[0] == "http://127.0.0.1":
-                return mock_response(text_data=auth_text_data)
+            if args and args[0] == "http://127.0.0.1":
+                return mock_response(args[0], text_data=auth_text_data)
             return mock_response(*args, **kwargs)
 
         # pylint: disable=unused-argument
