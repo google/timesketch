@@ -887,7 +887,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         sketch: Sketch,
         event_id: str,
     ) -> str:
-        """Get's the search index name associated with the event.
+        """Gets the search index name associated with the event.
 
         This function queries the datastore to find the specific search index
         that an event belongs to within the context of a given sketch. It's
