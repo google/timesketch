@@ -16,11 +16,11 @@ from __future__ import unicode_literals
 
 import json
 
+auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
+
 
 def mock_session():
     """Mock HTTP requests session."""
-
-    auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
 
     class MockHeaders:
         """Mock requests HTTP headers."""

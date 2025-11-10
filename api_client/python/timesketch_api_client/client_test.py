@@ -59,6 +59,11 @@ class TimesketchApiRetryTest(unittest.TestCase):
     @mock.patch("requests.Session")
     def test_session_retry_configuration(self, mock_session):
         """Test that the session is configured with retry logic."""
+        # Mock the response from the server.
+        mock_response = mock.Mock()
+        mock_response.text = '<input id="csrf_token" name="csrf_token" value="test">'
+        mock_session.return_value.get.return_value = mock_response
+
         mock_adapter = mock.MagicMock()
         with mock.patch(
             "timesketch_api_client.client.HTTPAdapter", return_value=mock_adapter
