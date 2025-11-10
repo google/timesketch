@@ -523,9 +523,9 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                                 f"exists for event_id '{request_event_id}'."
                             )
                         else:
-                            new_attributes[request_attribute_name] = (
-                                request_attribute_value
-                            )
+                            new_attributes[
+                                request_attribute_name
+                            ] = request_attribute_value
 
                     if new_attributes:
                         datastore.import_event(
@@ -887,7 +887,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         sketch: Sketch,
         event_id: str,
     ) -> str:
-        """Get's the search index name associated with the event.
+        """Gets the search index name associated with the event.
 
         This function queries the datastore to find the specific search index
         that an event belongs to within the context of a given sketch. It's
