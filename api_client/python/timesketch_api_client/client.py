@@ -407,7 +407,7 @@ class TimesketchApi:
                 or a "falsy" JSON response (e.g., null, empty list/dict)
                 after all retry attempts.
         """
-        resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
+        resource_url = f"{self.api_root}/{resource_uri}"
 
         response = self.session.get(resource_url, params=params)
         result = error.get_response_json(response, logger)
