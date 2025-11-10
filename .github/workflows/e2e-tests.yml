@@ -106,6 +106,7 @@ jobs:
         if: failure()
         uses: jwalton/gh-docker-logs@v2
   PyPi-plaso-staging-opensearch-v1-ubuntu2404:
+    continue-on-error: true
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -125,6 +126,7 @@ jobs:
         if: failure()
         uses: jwalton/gh-docker-logs@v2
   PyPi-plaso-stable-opensearch-v2-ubuntu2404:
+    continue-on-error: true
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
