@@ -14,7 +14,7 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
-import time
+
 import os
 import logging
 import sys
@@ -24,7 +24,7 @@ import bs4
 import requests
 
 # pylint: disable=redefined-builtin
-from requests.exceptions import ConnectionError, RequestException
+from requests.exceptions import ConnectionError
 from requests.adapters import HTTPAdapter
 from urllib3.exceptions import InsecureRequestWarning, MaxRetryError
 from urllib3.util.retry import Retry
@@ -872,7 +872,7 @@ class VerboseRetry(Retry):
         if response and response.data:
             try:
                 decoded_body = response.data.decode("utf-8", "ignore")
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.debug("Failed to decode response body: %s", e)
 
         # Log a warning for each retry attempt that receives a status code
