@@ -51,3 +51,29 @@ class TimesketchApiTest(unittest.TestCase):
         self.assertIsInstance(sketches, list)
         self.assertEqual(len(sketches), 1)
         self.assertIsInstance(sketches[0], sketch_lib.Sketch)
+
+
+class TimesketchApiRetryTest(unittest.TestCase):
+    """Test TimesketchApi client retry logic."""
+
+    @mock.patch("requests.Session")
+    def test_session_retry_configuration(self, mock_session):
+        """Test that the session is configured with retry logic."""
+        mock_adapter = mock.MagicMock()
+        with mock.patch(
+            "timesketch_api_client.client.HTTPAdapter", return_value=mock_adapter
+        ) as mock_http_adapter:
+            client.TimesketchApi(
+                host_uri="http://testhost", username="testuser", password="testpassword"
+            )
+
+            # Check that a Retry object was created with the correct params
+            mock_http_adapter.assert_called_once()
+            retry_arg = mock_http_adapter.call_args[1]["max_retries"]
+            self.assertEqual(retry_arg.total, client.TimesketchApi.DEFAULT_RETRY_COUNT)
+            self.assertEqual(retry_arg.status_forcelist, [500, 502, 503, 504])
+
+            # Check that the adapter was mounted for http and https
+            mock_session_instance = mock_session.return_value
+            mock_session_instance.mount.assert_any_call("http://", mock_adapter)
+            mock_session_instance.mount.assert_any_call("https://", mock_adapter)

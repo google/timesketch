@@ -25,7 +25,9 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, RequestException
+from requests.adapters import HTTPAdapter
 from urllib3.exceptions import InsecureRequestWarning
+from urllib3.util.retry import Retry
 import webbrowser
 
 # pylint: disable-msg=import-error
@@ -349,6 +351,17 @@ class TimesketchApi:
 
         session = requests.Session()
 
+        # Configure retry logic
+        retry_strategy = Retry(
+            total=self.DEFAULT_RETRY_COUNT,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS"],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
         # If using HTTP Basic auth, add the user/pass to the session
         if auth_mode == "http-basic":
             session.auth = (username, password)
@@ -426,11 +439,11 @@ class TimesketchApi:
                     raise RuntimeError(error_msg) from e
 
                 logger.warning(
-                    "[%d/%d] API error (RuntimeError) for request '%s' "
-                    "failed. Error: %s. Trying again...",
+                    "API error (RuntimeError) for request '%s' failed (Attempt %d of %d). "
+                    "Error: %s. Retrying...",
+                    resource_url,
                     attempt,
                     self.DEFAULT_RETRY_COUNT,
-                    resource_url,
                     str(e),
                 )
             except ValueError as e:
@@ -443,11 +456,11 @@ class TimesketchApi:
                     raise ValueError(error_msg) from e
 
                 logger.warning(
-                    "[%d/%d] Parsing the JSON response for request '%s' "
-                    "failed. Error: %s. Trying again...",
+                    "Parsing the JSON response for request '%s' failed (Attempt %d of %d). "
+                    "Error: %s. Retrying...",
+                    resource_url,
                     attempt,
                     self.DEFAULT_RETRY_COUNT,
-                    resource_url,
                     e,
                 )
             except ConnectionError as e:  # Explicitly catch connection errors
@@ -460,10 +473,10 @@ class TimesketchApi:
                     raise ConnectionError(error_msg) from e
 
                 logger.warning(
-                    "[%d/%d] Connection error for request '%s': %s. Trying again...",
+                    "Connection error for request '%s' (Attempt %d of %d): %s. Retrying...",
+                    resource_url,
                     attempt,
                     self.DEFAULT_RETRY_COUNT,
-                    resource_url,
                     e,
                 )
 

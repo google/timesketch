@@ -20,6 +20,8 @@ import json
 def mock_session():
     """Mock HTTP requests session."""
 
+    auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
+
     class MockHeaders:
         """Mock requests HTTP headers."""
 
@@ -40,8 +42,16 @@ def mock_session():
 
         # pylint: disable=unused-argument
         @staticmethod
+        def mount(*args, **kwargs):
+            """Mock mount method."""
+            return
+
+        # pylint: disable=unused-argument
+        @staticmethod
         def get(*args, **kwargs):
             """Mock GET request handler."""
+            if args[0] == "http://127.0.0.1":
+                return mock_response(text_data=auth_text_data)
             return mock_response(*args, **kwargs)
 
         # pylint: disable=unused-argument
@@ -71,8 +81,6 @@ def mock_response(*args, **kwargs):
         def json(self):
             """Mock JSON response."""
             return self.json_data
-
-    auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
 
     archive_data = {
         "is_archived": False,
