@@ -51,9 +51,13 @@ logger = logging.getLogger("timesketch_api.client")
 class TimesketchApi:
     """Timesketch API object
 
+    This class provides a client for interacting with the Timesketch API.
+    It includes robust error handling and retry mechanisms using the
+    VerboseRetry class for network requests.
+
     Attributes:
         api_root: The full URL to the server API endpoint.
-        session: Authenticated HTTP session.
+        session: Authenticated HTTP session with retry logic configured.
     """
 
     DEFAULT_OAUTH_SCOPE = [
@@ -68,8 +72,9 @@ class TimesketchApi:
     DEFAULT_OAUTH_LOCALHOST_URL = "http://localhost"
     DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
-    # Default retry count for operations that attempt a retry.
-    DEFAULT_RETRY_COUNT = 5
+    # Default total attempts (initial request + retries) for operations.
+    # A value of 4 means 1 initial attempt + 4 retries = 5 total attempts.
+    DEFAULT_RETRY_COUNT = 4
 
     def __init__(
         self,
@@ -380,15 +385,11 @@ class TimesketchApi:
         return session
 
     def fetch_resource_data(self, resource_uri, params=None):
-        """Makes an HTTP GET request to the specified resource URI with retries.
+        """Makes an HTTP GET request to the specified resource URI.
 
-        This method attempts to fetch data from the Timesketch API. It implements
-        a manual retry mechanism with a fixed 1-second backoff between attempts
-        if the initial request fails or returns an empty (but valid JSON) response.
-        Retries occur for network connection errors, API errors (non-20x status codes),
-        JSON decoding errors, or if the API returns a successful (20x) response
-        with a "falsy" JSON payload (e.g., null, empty list/dictionary).
-
+        This method attempts to fetch data from the Timesketch API. It relies on
+        the configured session's retry strategy (VerboseRetry) to handle
+        transient network errors or server-side issues (e.g., 5xx status codes).
 
         Args:
             resource_uri (str): The URI to the resource to be fetched.
@@ -400,11 +401,13 @@ class TimesketchApi:
 
         Raises:
             requests.exceptions.ConnectionError: If a connection error persists
-                after all retry attempts.
-            ValueError: If the API response cannot be JSON-decoded after all
-                retry attempts.
+                after all retry attempts configured in the session.
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            ValueError: If the API response cannot be JSON-decoded.
             RuntimeError: If the API server returns an error (non-20x status code)
-                or a "falsy" JSON response (e.g., null, empty list/dict)
+                or a "falsy" JSON response (e.g., null, empty list/dictionary)
                 after all retry attempts.
         """
         resource_url = f"{self.api_root}/{resource_uri}"
@@ -427,9 +430,8 @@ class TimesketchApi:
         """Create a new sketch.
 
         This method attempts to create a new sketch on the Timesketch server.
-        It implements a retry mechanism with exponential backoff if the initial
-        request fails due to network issues, API errors, or unexpected
-        response formats.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
 
         Args:
             name (str): Name of the sketch. Cannot be empty.
@@ -440,13 +442,13 @@ class TimesketchApi:
             Instance of a Sketch object representing the newly created sketch.
 
         Raises:
-            ValueError: If the provided sketch name is empty, or if the API
-                response cannot be JSON-decoded after all retry attempts.
-            requests.exceptions.ConnectionError: If a connection error persists
-                after all retry attempts.
+            ValueError: If the provided sketch name is empty.
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
             RuntimeError: If the API server returns an error (non-20x status code),
                 or if the expected 'objects' structure with a sketch ID is not
-                found in the API response after all retry attempts.
+                found in the API response after all retries.
         """
         if not description:
             description = name
@@ -480,6 +482,10 @@ class TimesketchApi:
     def create_user(self, username, password):
         """Create a new user.
 
+        This method attempts to create a new user on the Timesketch server.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
+
         Args:
             username (str): Name of the user
             password (str): Password of the user
@@ -488,10 +494,12 @@ class TimesketchApi:
             True if user created successfully.
 
         Raises:
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
             RuntimeError: If response does not contain an 'objects' key after
-                DEFAULT_RETRY_COUNT attempts.
+                all retries.
         """
-
         resource_url = "{0:s}/users/".format(self.api_root)
         form_data = {"username": username, "password": password}
         response = self.session.post(resource_url, json=form_data)
@@ -652,9 +660,8 @@ class TimesketchApi:
         """Create a new SearchIndex.
 
         This method attempts to create a new searchindex on the Timesketch server.
-        It implements a retry mechanism with exponential backoff if the initial
-        request fails due to network issues, API errors, or unexpected
-        response formats.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
 
         Args:
             searchindex_name: Name for the searchindex.
@@ -664,11 +671,12 @@ class TimesketchApi:
             Instance of a SearchIndex object.
 
         Raises:
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
             RuntimeError: If the SearchIndex fails to create after all retries,
                 or if the API returns an unexpected response format.
-            requests.exceptions.RequestException: If a connection error persists
-                after all retries.
-            ValueError: If the API response cannot be JSON-decoded after all retries.
+            ValueError: If the API response cannot be JSON-decoded.
         """
         resource_url = f"{self.api_root}/searchindices/"
         form_data = {
@@ -791,11 +799,21 @@ class TimesketchApi:
         If no `rule_yaml` is found in the request, the method will fail as this
         is required to parse the rule.
 
+        This method relies on the configured session's retry strategy (VerboseRetry)
+        to handle transient network errors or server-side issues.
+
         Args:
             rule_yaml (str): YAML of the Sigma Rule.
 
         Returns:
             Instance of a Sigma object.
+
+        Raises:
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            RuntimeError: If response does not contain an 'objects' key after
+                all retries.
         """
 
         resource_url = "{0:s}/sigmarules/".format(self.api_root)
