@@ -356,7 +356,7 @@ class TimesketchApi:
             total=self.DEFAULT_RETRY_COUNT,
             backoff_factor=0.5,
             status_forcelist=[500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS"],
+            allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "POST"],
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("http://", adapter)
