@@ -1145,7 +1145,9 @@ class Search(resource.SketchResource):
         data_frame = pandas.DataFrame(return_list)
         if "datetime" in data_frame:
             try:
-                data_frame["datetime"] = pandas.to_datetime(data_frame.datetime)
+                data_frame["datetime"] = pandas.to_datetime(
+                    data_frame.datetime, format="mixed"
+                )
             except pandas.errors.OutOfBoundsDatetime:
                 pass
         elif "timestamp" in data_frame:
