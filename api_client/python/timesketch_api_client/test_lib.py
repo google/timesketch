@@ -62,6 +62,15 @@ def mock_session():
                 return mock_response(*args, empty=True)
             return mock_response(*args, **kwargs)
 
+        # pylint: disable=unused-argument
+        def request(self, method, *args, **kwargs):
+            """Mock request handler."""
+            if method.upper() == "GET":
+                return self.get(*args, **kwargs)
+            if method.upper() == "POST":
+                return self.post(*args, **kwargs)
+            return None
+
     return MockSession()
 
 
