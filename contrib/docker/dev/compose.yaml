@@ -4,6 +4,9 @@ networks:
   timesketch-dev:
 
 volumes:
+  setup-data:
+  timesketch-data:
+  celery-worker-data:
   opensearch-data:
   postgresql-data:
   redis-data:
@@ -11,13 +14,18 @@ volumes:
   notebook-data:
 
 services:
-  timesketch:
-    image: timesketch-timesketch/dev:latest
+  setup:
+    image: timesketch-setup:latest
     build:
       context: ../../..
       dockerfile: contrib/docker/dev/timesketch/Dockerfile
+      target: setup
       args:
         BASE_IMAGE: "${TIMESKETCH_BASE_IMAGE:?}"
+        TIMESKETCH_USER_NAME: "${TIMESKETCH_USER_NAME:?}"
+        TIMESKETCH_USER_UID: "${TIMESKETCH_USER_UID:?}"
+        TIMESKETCH_USER_GID: "${TIMESKETCH_USER_GID:?}"
+        TIMESKETCH_CONF_DIR: "${TIMESKETCH_CONF_DIR:?}"
         GIFT_PPA_TRACK: "${GIFT_PPA_TRACK:?}"
         GIFT_PPA_URL: "${GIFT_PPA_URL:?}"
         NODE_VERSION: "${NODE_VERSION:?}"
@@ -26,22 +34,47 @@ services:
         YARN_YARNRC: "${YARN_YARNRC?}"
         PYTHON_PIP_CONF: "${PYTHON_PIP_CONF?}"
     command: timesketch
-    ports:
-      - name: gunicorn
-        published: "5000"
-        target: 5000
-      - name: vite
-        published: "5001"
-        target: 5001
-      - name: metrics
-        published: "8080"
-        target: 8080
+    env_file:
+      - timesketch/timesketch.env
+    volumes:
+      - "setup-data:/usr/local/src/sigma"
+      - "../../../:/usr/local/src/timesketch"
+      - "./timesketch/timesketch.conf:${TIMESKETCH_CONF_DIR:?}/timesketch.conf:ro"
+      - "./timesketch/sigma_rules.txt:${TIMESKETCH_CONF_DIR:?}/sigma_rules.txt:ro"
+      - "../../../data/sigma_config.yaml:${TIMESKETCH_CONF_DIR:?}/sigma_config.yaml:ro"
+      - "../../../data/sigma:${TIMESKETCH_CONF_DIR:?}/sigma:ro"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - timesketch-dev
+
+  celery-worker:
+    image: timesketch-celery-worker:latest
+    build:
+      context: ../../..
+      dockerfile: contrib/docker/dev/timesketch/Dockerfile
+      target: celery-worker
+      args:
+        BASE_IMAGE: "${TIMESKETCH_BASE_IMAGE:?}"
+        TIMESKETCH_USER_NAME: "${TIMESKETCH_USER_NAME:?}"
+        TIMESKETCH_USER_UID: "${TIMESKETCH_USER_UID:?}"
+        TIMESKETCH_USER_GID: "${TIMESKETCH_USER_GID:?}"
+        TIMESKETCH_CONF_DIR: "${TIMESKETCH_CONF_DIR:?}"
+        GIFT_PPA_TRACK: "${GIFT_PPA_TRACK:?}"
+        GIFT_PPA_URL: "${GIFT_PPA_URL:?}"
+        NODE_VERSION: "${NODE_VERSION:?}"
+        NODE_PPA_URL: "${NODE_PPA_URL:?}"
+        NODE_NPMRC: "${NODE_NPMRC?}"
+        YARN_YARNRC: "${YARN_YARNRC?}"
+        PYTHON_PIP_CONF: "${PYTHON_PIP_CONF?}"
     env_file:
       - timesketch/timesketch.env
     volumes:
       - "../../../:/usr/local/src/timesketch/"
       - "./timesketch/timesketch.conf:${TIMESKETCH_CONF_DIR:?}/timesketch.conf:ro"
-      - "./timesketch/sigma_rules.txt:${TIMESKETCH_CONF_DIR:?}/sigma_rules.txt:ro"
       - "../../../data/regex_features.yaml:${TIMESKETCH_CONF_DIR:?}/regex_features.yaml:ro"
       - "../../../data/winevt_features.yaml:${TIMESKETCH_CONF_DIR:?}/winevt_features.yaml:ro"
       - "../../../data/tags.yaml:${TIMESKETCH_CONF_DIR:?}/tags.yaml:ro"
@@ -58,12 +91,100 @@ services:
       - "../../../data/plaso_formatters.yaml:${TIMESKETCH_CONF_DIR:?}/plaso_formatters.yaml:ro"
       - "../../../data/nl2q:${TIMESKETCH_CONF_DIR:?}/nl2q:ro"
       - "../../../data/llm_summarize:${TIMESKETCH_CONF_DIR:?}/llm_summarize:ro"
+      - "timesketch-data:/tmp"
+      - "celery-worker-data:/var/log/timesketch/psort"
     depends_on:
-      postgresql:
-        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
       opensearch:
-        condition: service_healthy
-      redis:
+        condition: service_started
+    networks:
+      - timesketch-dev
+
+  gunicorn:
+    image: timesketch-gunicorn:latest
+    build:
+      context: ../../..
+      dockerfile: contrib/docker/dev/timesketch/Dockerfile
+      target: gunicorn
+      args:
+        BASE_IMAGE: "${TIMESKETCH_BASE_IMAGE:?}"
+        TIMESKETCH_USER_NAME: "${TIMESKETCH_USER_NAME:?}"
+        TIMESKETCH_USER_UID: "${TIMESKETCH_USER_UID:?}"
+        TIMESKETCH_USER_GID: "${TIMESKETCH_USER_GID:?}"
+        TIMESKETCH_CONF_DIR: "${TIMESKETCH_CONF_DIR:?}"
+        GIFT_PPA_TRACK: "${GIFT_PPA_TRACK:?}"
+        GIFT_PPA_URL: "${GIFT_PPA_URL:?}"
+        NODE_VERSION: "${NODE_VERSION:?}"
+        NODE_PPA_URL: "${NODE_PPA_URL:?}"
+        NODE_NPMRC: "${NODE_NPMRC?}"
+        YARN_YARNRC: "${YARN_YARNRC?}"
+        PYTHON_PIP_CONF: "${PYTHON_PIP_CONF?}"
+    ports:
+      - name: gunicorn
+        published: "5000"
+        target: 5000
+      - name: metrics
+        published: "8080"
+        target: 8080
+    env_file:
+      - timesketch/timesketch.env
+    volumes:
+      - "../../../:/usr/local/src/timesketch/"
+      - "./timesketch/timesketch.conf:${TIMESKETCH_CONF_DIR:?}/timesketch.conf:ro"
+      - "../../../data/regex_features.yaml:${TIMESKETCH_CONF_DIR:?}/regex_features.yaml:ro"
+      - "../../../data/winevt_features.yaml:${TIMESKETCH_CONF_DIR:?}/winevt_features.yaml:ro"
+      - "../../../data/tags.yaml:${TIMESKETCH_CONF_DIR:?}/tags.yaml:ro"
+      - "../../../data/intelligence_tag_metadata.yaml:${TIMESKETCH_CONF_DIR:?}/intelligence_tag_metadata.yaml:ro"
+      - "../../../data/plaso.mappings:${TIMESKETCH_CONF_DIR:?}/plaso.mappings:ro"
+      - "../../../data/generic.mappings:${TIMESKETCH_CONF_DIR:?}/generic.mappings:ro"
+      - "../../../data/ontology.yaml:${TIMESKETCH_CONF_DIR:?}/ontology.yaml:ro"
+      - "../../../data/data_finder.yaml:${TIMESKETCH_CONF_DIR:?}/data_finder.yaml:ro"
+      - "../../../data/bigquery_matcher.yaml:${TIMESKETCH_CONF_DIR:?}/bigquery_matcher.yaml:ro"
+      - "../../../data/sigma_config.yaml:${TIMESKETCH_CONF_DIR:?}/sigma_config.yaml:ro"
+      - "../../../data/sigma:${TIMESKETCH_CONF_DIR:?}/sigma:ro"
+      - "../../../data/dfiq:${TIMESKETCH_CONF_DIR:?}/dfiq:ro"
+      - "../../../data/context_links.yaml:${TIMESKETCH_CONF_DIR:?}/context_links.yaml:ro"
+      - "../../../data/plaso_formatters.yaml:${TIMESKETCH_CONF_DIR:?}/plaso_formatters.yaml:ro"
+      - "../../../data/nl2q:${TIMESKETCH_CONF_DIR:?}/nl2q:ro"
+      - "../../../data/llm_summarize:${TIMESKETCH_CONF_DIR:?}/llm_summarize:ro"
+      - "timesketch-data:/tmp"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - timesketch-dev
+
+  vue-cli-service:
+    image: timesketch-vue-cli-service:latest
+    build:
+      context: ../../..
+      dockerfile: contrib/docker/dev/timesketch/Dockerfile
+      target: vue-cli-service
+      args:
+        BASE_IMAGE: "${TIMESKETCH_BASE_IMAGE:?}"
+        TIMESKETCH_USER_NAME: "${TIMESKETCH_USER_NAME:?}"
+        TIMESKETCH_USER_UID: "${TIMESKETCH_USER_UID:?}"
+        TIMESKETCH_USER_GID: "${TIMESKETCH_USER_GID:?}"
+        TIMESKETCH_CONF_DIR: "${TIMESKETCH_CONF_DIR:?}"
+        GIFT_PPA_TRACK: "${GIFT_PPA_TRACK:?}"
+        GIFT_PPA_URL: "${GIFT_PPA_URL:?}"
+        NODE_VERSION: "${NODE_VERSION:?}"
+        NODE_PPA_URL: "${NODE_PPA_URL:?}"
+        NODE_NPMRC: "${NODE_NPMRC?}"
+        YARN_YARNRC: "${YARN_YARNRC?}"
+        PYTHON_PIP_CONF: "${PYTHON_PIP_CONF?}"
+        FRONTEND_VERSION: "${FRONTEND_VERSION?}"
+    ports:
+      - name: vue-cli-service
+        published: "5001"
+        target: 5001
+    env_file:
+      - timesketch/timesketch.env
+    volumes:
+      - "../../../:/usr/local/src/timesketch/"
+    depends_on:
+      gunicorn:
         condition: service_healthy
     networks:
       - timesketch-dev
@@ -130,7 +251,8 @@ services:
 
     command: --config.file=/etc/prometheus/prometheus.yml
     depends_on:
-      - timesketch
+      gunicorn:
+        condition: service_healthy
     networks:
       - timesketch-dev
 
@@ -150,6 +272,6 @@ services:
       - "notebook-data:/usr/local/src/picadata"
     depends_on:
       opensearch:
-        condition: service_healthy
+        condition: service_started
     networks:
       - timesketch-dev
