@@ -1,5 +1,5 @@
 # Use the official Docker Hub Ubuntu base image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ARG RELEASE_TAG
 ARG PPA_TRACK=stable
@@ -17,18 +17,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gpg-agent \
     wget \
     tzdata \
+    python3-venv \
   && rm -rf /var/lib/apt/lists/*
-
-# Install Timesketch
-RUN wget https://raw.githubusercontent.com/google/timesketch/$RELEASE_TAG/requirements.txt
-RUN pip3 install -r requirements.txt
-RUN pip3 install https://github.com/google/timesketch/archive/$RELEASE_TAG.zip
 
 # Install Plaso
 RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
+
+# Fix for broken PPA dependency in Ubuntu 24.04: Plaso needs the 'events'
+# library for its opensearch output module.
+RUN pip3 install --break-system-packages events
+
+# Create a virtual environment and add it to the PATH
+RUN python3 -m venv /opt/venv --system-site-packages
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Timesketch
+RUN wget https://raw.githubusercontent.com/google/timesketch/$RELEASE_TAG/requirements.txt
+RUN pip3 install -r requirements.txt
+RUN pip3 install https://github.com/google/timesketch/archive/$RELEASE_TAG.zip
 
 # Copy the entrypoint script into the container
 COPY docker/release/build/docker-entrypoint.sh /
