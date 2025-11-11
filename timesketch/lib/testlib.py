@@ -65,6 +65,7 @@ class TestConfig:
     """Config for the test environment."""
 
     DEBUG = True
+    TESTING = True
     SECRET_KEY = "testing"
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     WTF_CSRF_ENABLED = False

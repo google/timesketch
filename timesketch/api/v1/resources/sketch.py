@@ -342,13 +342,15 @@ class SketchResource(resources.ResourceMixin, Resource):
         """
         if current_user.admin:
             sketch = Sketch.get_by_id(sketch_id)
-            if not sketch.has_permission(current_user, "read"):
-                return self._get_sketch_for_admin(sketch)
         else:
             sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if current_user.admin:
+            if not sketch.has_permission(current_user, "read"):
+                return self._get_sketch_for_admin(sketch)
 
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
