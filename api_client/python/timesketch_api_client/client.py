@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import os
 import logging
 import sys
+import time
 
 # pylint: disable=wrong-import-order
 import bs4
@@ -384,12 +385,82 @@ class TimesketchApi:
 
         return session
 
+    def _send_request_with_retry(self, method, resource_uri, **kwargs):
+        """Makes an HTTP request with manual retries for application-level errors.
+
+        This is the core private helper for all API requests. It wraps the
+        session requests and adds a manual retry loop to handle cases where
+        the API returns a 200 OK status but with an empty or invalid JSON
+        payload.
+
+        For GET requests, it is preferred to use the `fetch_resource_data`
+        wrapper method for clarity and convenience.
+
+        Args:
+            method (str): HTTP method (e.g., 'GET', 'POST').
+            resource_uri (str): The URI for the resource.
+            **kwargs: Keyword arguments passed to the request.
+
+        Returns:
+            dict: The JSON response data.
+
+        Raises:
+            ValueError: If JSON decoding fails after all retries.
+            RuntimeError: If the response is falsy after all retries.
+        """
+        resource_url = f"{self.api_root}/{resource_uri}"
+
+        last_exception = None
+        for attempt in range(3):
+            try:
+                response = self.session.request(method, resource_url, **kwargs)
+                result = error.get_response_json(response, logger)
+                if result:
+                    return result
+
+                logger.warning(
+                    "Received falsy response for %s %s, retrying (%d/3)...",
+                    method.upper(),
+                    resource_url,
+                    attempt + 1,
+                )
+                time.sleep(1)
+
+            except ValueError as e:
+                last_exception = e
+                logger.warning(
+                    "ValueError decoding JSON for %s %s, retrying (%d/3)...",
+                    method.upper(),
+                    resource_url,
+                    attempt + 1,
+                )
+                time.sleep(1)
+                continue
+
+        if last_exception:
+            raise ValueError(
+                f"Failed to decode JSON response from {resource_url} "
+                "after multiple retries."
+            ) from last_exception
+
+        error_msg = (
+            f"Unable to get valid JSON response for request: "
+            f"'{method.upper()} {resource_url}' - Received falsy response "
+            "after multiple retries."
+        )
+        raise RuntimeError(error_msg)
+
     def fetch_resource_data(self, resource_uri, params=None):
         """Makes an HTTP GET request to the specified resource URI.
 
-        This method attempts to fetch data from the Timesketch API. It relies on
-        the configured session's retry strategy (VerboseRetry) to handle
-        transient network errors or server-side issues (e.g., 5xx status codes).
+        This method is a convenience wrapper around `_send_request_with_retry`
+        for making GET requests. This provides a clear, descriptive interface
+        for fetching data and a single point of modification for all GET
+        requests, enhancing maintainability.
+
+        It uses a robust retry mechanism for both HTTP-level errors (e.g.,
+        5xx status codes) and application-level issues like invalid or empty
+        JSON responses.
 
         Args:
             resource_uri (str): The URI to the resource to be fetched.
@@ -398,33 +469,8 @@ class TimesketchApi:
 
         Returns:
             dict: A dictionary containing the JSON response data from the API.
-
-        Raises:
-            requests.exceptions.ConnectionError: If a connection error persists
-                after all retry attempts configured in the session.
-            urllib3.exceptions.MaxRetryError: If the maximum number of retries
-                is exceeded due to persistent server errors or connection issues.
-                The exception message will include the last server response body.
-            ValueError: If the API response cannot be JSON-decoded.
-            RuntimeError: If the API server returns an error (non-20x status code)
-                or a "falsy" JSON response (e.g., null, empty list/dictionary)
-                after all retry attempts.
         """
-        resource_url = f"{self.api_root}/{resource_uri}"
-
-        response = self.session.get(resource_url, params=params)
-        result = error.get_response_json(response, logger)
-        if result:
-            return result
-
-        # If we reach here, it means get_response_json did not raise an error
-        # but returned a falsy result (e.g., empty dict/list). This should
-        # be treated as an error after all retries by VerboseRetry.
-        error_msg = (
-            f"Unable to fetch JSON resource data for request: '{resource_url}'"
-            f" - Response: '{result!s}'"
-        )
-        raise RuntimeError(error_msg)
+        return self._send_request_with_retry("GET", resource_uri, params=params)
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
@@ -455,10 +501,11 @@ class TimesketchApi:
 
         if not name:
             raise ValueError("Sketch name cannot be empty")
-        resource_url = "{0:s}/sketches/".format(self.api_root)
+        resource_uri = "sketches/"
         form_data = {"name": name, "description": description}
-        response = self.session.post(resource_url, json=form_data)
-        response_dict = error.get_response_json(response, logger)
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
         objects = response_dict.get("objects")
 
         if (
@@ -500,10 +547,11 @@ class TimesketchApi:
             RuntimeError: If response does not contain an 'objects' key after
                 all retries.
         """
-        resource_url = "{0:s}/users/".format(self.api_root)
+        resource_uri = "users/"
         form_data = {"username": username, "password": password}
-        response = self.session.post(resource_url, json=form_data)
-        response_dict = error.get_response_json(response, logger)
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
         objects = response_dict.get("objects")
 
         if not objects:
@@ -573,9 +621,9 @@ class TimesketchApi:
 
         if name:
             data = {"aggregator": name}
-            resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
-            response = self.session.post(resource_url, json=data)
-            response_json = error.get_response_json(response, logger)
+            response_json = self._send_request_with_retry(
+                "POST", resource_uri, json=data
+            )
         else:
             response_json = self.fetch_resource_data(resource_uri)
 
@@ -678,13 +726,14 @@ class TimesketchApi:
                 or if the API returns an unexpected response format.
             ValueError: If the API response cannot be JSON-decoded.
         """
-        resource_url = f"{self.api_root}/searchindices/"
+        resource_uri = "searchindices/"
         form_data = {
             "searchindex_name": searchindex_name,
             "es_index_name": opensearch_index_name,
         }
-        response = self.session.post(resource_url, json=form_data)
-        response_dict = error.get_response_json(response, logger)
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
         objects = response_dict.get("objects")
 
         if (
@@ -816,10 +865,11 @@ class TimesketchApi:
                 all retries.
         """
 
-        resource_url = "{0:s}/sigmarules/".format(self.api_root)
+        resource_uri = "sigmarules/"
         form_data = {"rule_yaml": rule_yaml}
-        response = self.session.post(resource_url, json=form_data)
-        response_dict = error.get_response_json(response, logger)
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
         objects = response_dict.get("objects")
 
         if not objects:
