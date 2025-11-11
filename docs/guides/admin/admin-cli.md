@@ -257,20 +257,20 @@ Displays detailed information about a specific sketch. This includes a summary o
 **Example:**
 ```shell
 tsctl sketch-info 1
-tsctl sketch-info 20
-Sketch 20 Name: (New Sketch From Importer CLI)
+Sketch 1 Name: (New Sketch From Importer CLI)
 
 Timelines:
-ID Name              Index Name                       Status Description
-36 3173_web          b857825d9c024bb2bdefe8f98c9519d8 ready  3173
-38 new_cli           b857825d9c024bb2bdefe8f98c9519d8 ready  new_cli
-37 import_client_old b857825d9c024bb2bdefe8f98c9519d8 ready  import_client
+ID Name              Search Index ID Index Name                       Created At                 User ID Description   Status
+36 3173_web          27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:43:24.489482 1       3173          ready
+38 new_cli           27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 15:46:11.607402 1       new_cli       ready
+37 import_client_old 27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:53:04.528269 1       import_client ready
 
 Data Sources per Timeline:
 
 Timeline: 3173_web (ID: 36)
 ID File Path                             Status Error Message
 37 /tmp/0bed74e6918f4262a5a72ce319123b5f ready  N/A
+
 Timeline: new_cli (ID: 38)
 ID File Path Status Error Message
 39           ready  N/A

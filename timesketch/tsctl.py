@@ -954,9 +954,12 @@ def sketch_info(sketch_id: int):
         [
             "ID",
             "Name",
+            "Search Index ID",
             "Index Name",
-            "Status",
+            "Created At",
+            "User ID",
             "Description",
+            "Status",
         ],
     ]
     for t in sketch.timelines:
@@ -964,9 +967,12 @@ def sketch_info(sketch_id: int):
             [
                 t.id,
                 t.name,
+                t.searchindex_id,
                 t.searchindex.index_name,
-                t.status[-1].status,
+                t.created_at,
+                t.user_id,
                 t.description,
+                t.status[-1].status,
             ]
         )
     print_table(timeline_table_data)
