@@ -435,6 +435,46 @@ level: high
         except RuntimeError as e:
             self.assertions.fail(f"Failed to get sketch after soft delete: {e}")
 
+    def test_hard_delete_soft_deleted_sketch(self):
+        """Test that a soft-deleted sketch can be hard-deleted."""
+        sketch_name = f"test_hard_delete_soft_deleted_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(
+            name=sketch_name,
+            description="Test for hard-deleting a soft-deleted sketch",
+        )
+        self.assertions.assertIsNotNone(sketch)
+        sketch_id = sketch.id
+
+        # Switch to admin user for deletion
+        admin_user = self.admin_api.current_user
+        self.assertions.assertEqual(admin_user.username, "admin")
+
+        # Grant admin necessary permissions
+        sketch.add_to_acl(user_list=["admin"], permissions=["read", "write", "delete"])
+        admin_sketch_instance = self.admin_api.get_sketch(sketch_id)
+
+        # Soft-delete the sketch
+        try:
+            admin_sketch_instance.delete(force_delete=False)
+        except RuntimeError as e:
+            self.assertions.fail(f"Soft delete failed unexpectedly: {e}")
+
+        # Verify the sketch is marked as 'deleted'
+        updated_sketch = self.admin_api.get_sketch(sketch_id)
+        self.assertions.assertEqual(updated_sketch.status, "deleted")
+
+        # Hard-delete the now soft-deleted sketch
+        try:
+            admin_sketch_instance.delete(force_delete=True)
+        except RuntimeError as e:
+            self.assertions.fail(
+                f"Hard delete of soft-deleted sketch failed unexpectedly: {e}"
+            )
+
+        # Verify the sketch is no longer found after hard delete
+        with self.assertions.assertRaises(RuntimeError):
+            self.api.get_sketch(sketch_id).name
+
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
         """Test deleting an archived sketch."""
