@@ -352,7 +352,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 for comment in event.comments:
                     comments.setdefault(event.document_id, [])
                     comments[event.document_id].append(comment.comment)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(
                 "Failed to get comments for events in sketch ID [%s], "
                 "but explore will "
