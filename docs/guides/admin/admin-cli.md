@@ -249,7 +249,7 @@ tsctl list-sketches
 
 #### `sketch-info`
 
-Displays detailed information about a specific sketch, including timelines, sharing status, labels, and status history.
+Displays detailed information about a specific sketch. This includes a summary of all timelines, a list of data sources for each timeline, sharing status, labels, and a history of status changes.
 
 **Arguments:**
 *   `SKETCH_ID`: The ID of the sketch.
@@ -257,9 +257,40 @@ Displays detailed information about a specific sketch, including timelines, shar
 **Example:**
 ```shell
 tsctl sketch-info 1
-Sketch 1 Name: (aaa)
-searchindex_id index_name                       created_at                 user_id description             status timeline_name           timeline_id
-1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 14:49:52.402364 1       my_file_with_a_timeline ready  my_file_with_a_timeline 2
+Sketch 1 Name: (New Sketch From Importer CLI)
+
+Timelines:
+ID Name              Search Index ID Index Name                       Created At                 User ID Description   Status
+36 3173_web          27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:43:24.489482 1       3173          ready
+38 new_cli           27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 15:46:11.607402 1       new_cli       ready
+37 import_client_old 27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:53:04.528269 1       import_client ready
+
+Data Sources per Timeline:
+
+Timeline: 3173_web (ID: 36)
+ID File Path                             Status Error Message
+37 /tmp/0bed74e6918f4262a5a72ce319123b5f ready  N/A
+
+Timeline: new_cli (ID: 38)
+ID File Path Status Error Message
+39           ready  N/A
+
+Timeline: import_client_old (ID: 37)
+ID File Path Status Error Message
+38           ready  N/A
+
+Created by: dev
+Shared with:
+	Users: (user_id, username, access_level)
+	No users shared with.
+	Groups (0): (group_name, access_level)
+	No groups shared with.
+Sketch Status: new
+Sketch is public: False
+Sketch Labels: ([],)
+Status:
+id status created_at                 user_id
+65 new    2025-11-07 14:42:18.813488 None
 ...
 ```
 
