@@ -287,13 +287,25 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         zip_file.writestr("events/tagged_event_stats.meta", data=json.dumps(meta))
 
-        html = result_obj.to_chart(
-            chart_name="hbarchart",
-            chart_title="Top 100 identified tags",
-            interactive=True,
-            as_html=True,
-        )
-        zip_file.writestr("events/tagged_event_stats.html", data=html)
+        html = ""
+        try:
+            html = result_obj.to_chart(
+                chart_name="hbarchart",
+                chart_title="Top 100 identified tags",
+                interactive=True,
+                as_html=True,
+            )
+        except RuntimeError as e:
+            logger.warning(
+                "Sketch ID [%s]: Unable to generate chart [%s] with title [%s]. "
+                "The error was: %s. Skipping chart export.",
+                sketch.id,
+                "hbarchart",
+                "Top 100 identified tags",
+                e,
+            )
+        if html:
+            zip_file.writestr("events/tagged_event_stats.html", data=html)
 
         string_io = io.StringIO()
         data_frame = result_obj.to_pandas()
