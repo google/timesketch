@@ -162,13 +162,10 @@ class LogAnalyzer(LLMFeatureInterface):
                 }
 
             try:
-                # Parse the JSON string into a Python dictionary
                 response_data = json.loads(full_response_text)
 
-                # Extract the list of findings from the 'findings' key
                 findings_list = response_data.get("findings", [])
 
-                # For logging and response consistency, re-serialize the original structure
                 full_response_text = json.dumps(response_data, indent=2)
             except json.JSONDecodeError:
                 logger.error(
@@ -178,7 +175,9 @@ class LogAnalyzer(LLMFeatureInterface):
                 return {
                     "status": "error",
                     "feature": self.NAME,
-                    "message": "Failed to decode the JSON response from the LLM provider.",
+                    "message": (
+                        "Failed to decode the JSON response from the " "LLM provider."
+                    ),
                     "total_findings_processed": 0,
                     "errors_encountered": 1,
                     "error_details": ["JSONDecodeError"],
