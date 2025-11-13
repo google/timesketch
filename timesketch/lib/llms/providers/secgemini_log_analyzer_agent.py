@@ -18,13 +18,18 @@ import os
 import asyncio
 import pathlib
 import tempfile
+from datetime import datetime
 from typing import Any, Dict, Generator, Iterable, Optional
+
+from flask import current_app
+
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
 
 has_required_deps = True
 try:
     from sec_gemini import SecGemini
+    from sec_gemini.models.enums import MessageType
 except ImportError:
     has_required_deps = False
 
@@ -87,6 +92,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         1. Creates a new SecGemini session.
         2. Uploads the local log file to the session.
         3. Streams the analysis results for the given prompt.
+        4. If debugging is enabled, streams the raw sec-gemini response to a log.
 
         Args:
             log_path (Path): The local filesystem path to the JSONL log file.
@@ -99,6 +105,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             model=self.model, enable_logging=self.enable_logging
         )
         self.session_id = self._session.id
+        # TODO: Could we check if the API key has logging enabled and if not ERR
         logger.info("Started new SecGemini session: '%s'", self._session.id)
         self._session.upload_and_attach_logs(
             log_path, custom_fields_mapping=self.custom_fields_mapping
@@ -120,8 +127,59 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             "log are expected. The client automatically reconnects during "
             "long-running analysis."
         )
-        async for response in self._session.stream(prompt):
-            yield response.content
+
+        debug_log_file = None
+        if current_app.config.get("DEBUG"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            log_filename = f"secgemini_response_{timestamp}_{self.session_id}.log"
+            log_file_path = os.path.join(tempfile.gettempdir(), log_filename)
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            try:
+                debug_log_file = os.fdopen(
+                    os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
+                )
+                logger.info(
+                    "SecGemini raw response is being streamed to: %s", log_file_path
+                )
+            except (IOError, FileExistsError) as e:
+                logger.error(
+                    "Failed to create SecGemini debug log at %s: %s",
+                    log_file_path,
+                    e,
+                    exc_info=True,
+                )
+                debug_log_file = None
+
+        try:
+            async for response in self._session.stream(prompt):
+                if debug_log_file:
+                    try:
+                        if hasattr(response, "to_json") and callable(
+                            getattr(response, "to_json")
+                        ):
+                            json_bytes = response.to_json()
+                            json_string = json_bytes.decode("utf-8")
+                            debug_log_file.write(json_string + "\n")
+                        else:
+                            debug_log_file.write(str(response) + "\n")
+                        debug_log_file.flush()
+                    except IOError as e:
+                        logger.error(
+                            "Failed to write to SecGemini debug log: %s",
+                            e,
+                            exc_info=True,
+                        )
+
+                if (
+                    response.message_type == MessageType.RESULT
+                    and response.actor == "summarization_agent"
+                ):
+                    content_chunk = response.content
+                    yield content_chunk
+        finally:
+            if debug_log_file:
+                debug_log_file.close()
+                logger.info("Finished writing SecGemini debug log: %s", log_file_path)
 
     def generate_stream_from_logs(
         self,

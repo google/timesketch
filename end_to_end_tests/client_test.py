@@ -18,6 +18,7 @@ import uuid
 import json
 import zipfile
 import random
+import zipfile
 import os
 
 from timesketch_api_client import search

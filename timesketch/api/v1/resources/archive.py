@@ -359,6 +359,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 content to.
         """
         name = f"{view.id:04d}_{view.name:s}"
+        query_filter = None
 
         if view.query_filter:
             query_filter = json.loads(view.query_filter)
