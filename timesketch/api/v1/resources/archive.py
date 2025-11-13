@@ -295,7 +295,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 interactive=True,
                 as_html=True,
             )
-        except RuntimeError as e:
+            if html:
+                zip_file.writestr("events/tagged_event_stats.html", data=html)
+        except Exception as e:  # pylint: disable=broad-except
             logger.warning(
                 "Sketch ID [%s]: Unable to generate chart [%s] with title [%s]. "
                 "The error was: %s. Skipping chart export.",
@@ -304,8 +306,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 "Top 100 identified tags",
                 e,
             )
-        if html:
-            zip_file.writestr("events/tagged_event_stats.html", data=html)
 
         string_io = io.StringIO()
         data_frame = result_obj.to_pandas()
