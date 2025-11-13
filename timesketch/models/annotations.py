@@ -238,8 +238,7 @@ class CommentMixin:
 
         It first attempts to use `subqueryload` for eager loading,
         which is generally efficient for many-to-one relationships. If a
-        `KeyError` occurs during this process (a known compatibility issue
-        with SQLAlchemy 2.0 and certain internal row processing), it falls
+        `KeyError` occurs during this process, it falls
         back to using `selectinload`. A warning is logged when the fallback
         occurs, including details about the class and query parameters.
 
@@ -254,6 +253,7 @@ class CommentMixin:
                 cls.query.filter_by(**kwargs).options(subqueryload(cls.comments)).all()
             )
         except KeyError:
+            # to get the Sketch id (for troubleshooting)
             log_kwargs = {}
             for key, value in kwargs.items():
                 if hasattr(value, "id"):
@@ -264,7 +264,7 @@ class CommentMixin:
             logger.warning(
                 "Subqueryload failed for [%s] with kwargs [%s], falling back to "
                 "selectinload. You might want to upgrade SQLAlchemy to 1.4.54"
-                "be removed in a future version.",
+                "this hotfix might be removed in a future version.",
                 cls.__name__,
                 log_kwargs,
             )
