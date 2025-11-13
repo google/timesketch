@@ -332,21 +332,22 @@ class ExploreResource(resources.ResourceMixin, Resource):
         count_total_complete = sum(count_per_index.values())
 
         comments = {}
-        try:
-            events_with_comments = Event.get_with_comments(sketch=sketch)
-            for event in events_with_comments:
-                for comment in event.comments:
-                    comments.setdefault(event.document_id, [])
-                    comments[event.document_id].append(comment.comment)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(
-                "Failed to get comments for events in sketch ID [%s], "
-                "but explore will "
-                "proceed without them. Error: %s",
-                sketch_id,
-                e,
-                exc_info=True,
-            )
+        if "comment" in return_fields:
+            try:
+                events_with_comments = Event.get_with_comments(sketch=sketch)
+                for event in events_with_comments:
+                    for comment in event.comments:
+                        comments.setdefault(event.document_id, [])
+                        comments[event.document_id].append(comment.comment)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error(
+                    "Failed to get comments for events in sketch ID [%s], "
+                    "but explore will "
+                    "proceed without them. Error: %s",
+                    sketch_id,
+                    e,
+                    exc_info=True,
+                )
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
