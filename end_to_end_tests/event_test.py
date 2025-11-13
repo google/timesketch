@@ -27,9 +27,6 @@ class EventTest(interface.BaseEndToEndTest):
 
     NAME = "event_test"
 
-    def __init__(self):
-        super().__init__()
-
     def test_add_event_attributes(self):
         """Tests adding attributes to an event."""
         sketch = self.api.create_sketch(name="Add event attributes test")
