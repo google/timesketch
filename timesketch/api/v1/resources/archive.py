@@ -288,24 +288,35 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         zip_file.writestr("events/tagged_event_stats.meta", data=json.dumps(meta))
 
         html = ""
-        try:
-            html = result_obj.to_chart(
-                chart_name="hbarchart",
-                chart_title="Top 100 identified tags",
-                interactive=True,
-                as_html=True,
-            )
-            if html:
-                zip_file.writestr("events/tagged_event_stats.html", data=html)
-        except Exception as e:  # pylint: disable=broad-except
+        if result_obj.values is not None and result_obj.encoding:
+            try:
+                html = result_obj.to_chart(
+                    chart_name="hbarchart",
+                    chart_title="Top 100 identified tags",
+                    interactive=True,
+                    as_html=True,
+                )
+            except RuntimeError as e:
+                logger.warning(
+                    "Sketch ID [%s]: Unable to generate chart [%s] with title [%s]. "
+                    "The error was: %s. Skipping chart export.",
+                    sketch.id,
+                    "hbarchart",
+                    "Top 100 identified tags",
+                    e,
+                )
+
+        else:
             logger.warning(
-                "Sketch ID [%s]: Unable to generate chart [%s] with title [%s]. "
-                "The error was: %s. Skipping chart export.",
+                "Sketch ID [%s]: No values or encoding found for chart [%s] with title [%s]. "
+                "Skipping chart export.",
                 sketch.id,
                 "hbarchart",
                 "Top 100 identified tags",
-                e,
             )
+
+        if html:
+            zip_file.writestr("events/tagged_event_stats.html", data=html)
 
         string_io = io.StringIO()
         data_frame = result_obj.to_pandas()
