@@ -18,6 +18,7 @@ import os
 import zipfile
 import json
 import csv
+import time
 from click.testing import CliRunner
 from timesketch.tsctl import cli
 from . import interface
@@ -66,7 +67,26 @@ class TestTsctl(interface.BaseEndToEndTest):  # Or inherit from BaseTest if appl
         """Tests the 'tsctl export-sketch' command."""
         # Ensure the default sketch for the test has some data
         # Using 'sigma_events.csv' which is known to have 4 events + header
-        self.import_timeline("sigma_events.csv")
+        timeline = self.import_timeline("sigma_events.csv")
+
+        # Wait for timeline and events to be ready with exponential backoff
+        max_retries = 5
+        wait_time = 0.5  # Initial wait time in seconds
+        for i in range(max_retries):
+            timeline.lazyload_data(refresh_cache=True)
+            search_client = self.api.get_sketch(self.sketch.id).explore()
+            search_response = json.loads(search_client.json)
+            events_found = len(search_response.get("objects", [])) > 0
+
+            if timeline.status == "ready" and events_found:
+                break
+
+            time.sleep(wait_time)
+            wait_time *= 2  # Double the wait time for the next iteration
+        else:
+            self.assertions.fail(
+                "Timeline did not become ready or events were not found within the timeout period."
+            )
 
         sketch_id = self.sketch.id
         sketch_name = self.sketch.name
