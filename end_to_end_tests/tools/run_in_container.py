@@ -22,6 +22,13 @@ from end_to_end_tests import manager as test_manager
 manager = test_manager.EndToEndTestManager()
 counter = Counter()
 
+# We had past cases where tests where not ran, this print ensures we can see
+# which ones run
+
+print("--- Registered Test Classes ---")
+for name, _ in manager.get_tests():
+    print(f"- {name}")
+print("-------------------------------")
 
 if __name__ == "__main__":
     # Sleep to make sure all containers are operational
