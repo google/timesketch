@@ -250,7 +250,9 @@ class CommentMixin:
             List of objects with comments eagerly loaded.
         """
         try:
-            return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
+            return (
+                cls.query.filter_by(**kwargs).options(subqueryload(cls.comments)).all()
+            )
         except KeyError:
             logger.warning(
                 "Subqueryload failed for [%s] with kwargs [%s], falling back to "
@@ -259,7 +261,9 @@ class CommentMixin:
                 cls.__name__,
                 kwargs,
             )
-            return cls.query.filter_by(**kwargs).options(selectinload(cls.comments))
+            return (
+                cls.query.filter_by(**kwargs).options(selectinload(cls.comments)).all()
+            )
 
     def remove_comment(self, comment_id):
         """Remove a comment from an event.
