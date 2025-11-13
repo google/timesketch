@@ -177,7 +177,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     content = response.content
                     json_str = None
                     if "```json" in content:
-                        json_str = content.split("```json")[1].split("```")[0]
+                        json_str = content.split("```json")[1].split("```")[0].strip()
 
                     if json_str:
                         yield json_str
