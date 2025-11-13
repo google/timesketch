@@ -254,12 +254,19 @@ class CommentMixin:
                 cls.query.filter_by(**kwargs).options(subqueryload(cls.comments)).all()
             )
         except KeyError:
+            log_kwargs = {}
+            for key, value in kwargs.items():
+                if hasattr(value, "id"):
+                    log_kwargs[key] = f"<{value.__class__.__name__} id: {value.id}>"
+                else:
+                    log_kwargs[key] = repr(value)
+
             logger.warning(
                 "Subqueryload failed for [%s] with kwargs [%s], falling back to "
-                "selectinload. This is a known issue with SQLAlchemy 2.0 and will "
+                "selectinload. You might want to upgrade SQLAlchemy to 1.4.54"
                 "be removed in a future version.",
                 cls.__name__,
-                kwargs,
+                log_kwargs,
             )
             return (
                 cls.query.filter_by(**kwargs).options(selectinload(cls.comments)).all()
