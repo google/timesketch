@@ -26,6 +26,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
@@ -228,10 +229,19 @@ class CommentMixin:
 
     @classmethod
     def get_with_comments(cls, **kwargs):
-        """Eagerly loads comments for a given object query using subquery.
+        """Eagerly loads comments for a given object query.
 
-        subqueryload is more efficient than joinedload for many-to-one
-        references on large datasets.
+        This method is designed to prevent the "N+1 Query Problem" by fetching
+        the primary objects and their related comments in a minimal number of
+        database queries, significantly improving performance compared to lazy
+        loading.
+
+        It first attempts to use `subqueryload` for eager loading,
+        which is generally efficient for many-to-one relationships. If a
+        `KeyError` occurs during this process (a known compatibility issue
+        with SQLAlchemy 2.0 and certain internal row processing), it falls
+        back to using `selectinload`. A warning is logged when the fallback
+        occurs, including details about the class and query parameters.
 
         Args:
             kwargs: Keyword arguments passed to filter_by.
@@ -239,7 +249,17 @@ class CommentMixin:
         Returns:
             List of objects with comments eagerly loaded.
         """
-        return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
+        try:
+            return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
+        except KeyError:
+            logger.warning(
+                "Subqueryload failed for [%s] with kwargs [%s], falling back to "
+                "selectinload. This is a known issue with SQLAlchemy 2.0 and will "
+                "be removed in a future version.",
+                cls.__name__,
+                kwargs,
+            )
+            return cls.query.filter_by(**kwargs).options(selectinload(cls.comments))
 
     def remove_comment(self, comment_id):
         """Remove a comment from an event.
