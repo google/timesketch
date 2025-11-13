@@ -130,35 +130,20 @@ class LogAnalyzer(LLMFeatureInterface):
                 log_events_generator=log_events_generator
             )
 
-            buffer = ""
-            response_json = None
-            decoder = json.JSONDecoder()
+            final_summary_json = None
+            for json_chunk in raw_response_generator:
+                final_summary_json = json_chunk
 
-            for chunk in raw_response_generator:
-                if not chunk:
-                    continue
+            full_response_text = final_summary_json
 
-                buffer += chunk
+            if full_response_text:
+                logger.debug(
+                    "%s Received final summary from provider (%d bytes).",
+                    self._log_pretext,
+                    len(full_response_text),
+                )
 
-                while buffer:
-                    try:
-                        obj, end_index = decoder.raw_decode(buffer)
-
-                        # We only store the final/last seen summary block.
-                        if "summaries" in obj:
-                            response_json = obj
-
-                        buffer = buffer[end_index:].lstrip()
-                    except json.JSONDecodeError:
-                        break
-
-            logger.debug(
-                "%s Received full response from provider (%d bytes).",
-                self._log_pretext,
-                len(buffer),
-            )
-
-            if not response_json:
+            if not full_response_text:
                 logger.warning(
                     "%s Received no valid summary blocks from provider.",
                     self._log_pretext,
@@ -173,15 +158,38 @@ class LogAnalyzer(LLMFeatureInterface):
                     "error_details": ["No valid summary blocks were received."],
                     "events_exported": self._events_exported,
                     "findings_received": 0,
-                    "full_response_text": buffer,
+                    "full_response_text": full_response_text,
                 }
 
-            findings_list = response_json.get("summaries", [])
-            full_response_text = json.dumps(response_json, indent=2)
+            try:
+                # Parse the JSON string into a Python dictionary
+                response_data = json.loads(full_response_text)
+
+                # Extract the list of findings from the 'findings' key
+                findings_list = response_data.get("findings", [])
+
+                # For logging and response consistency, re-serialize the original structure
+                full_response_text = json.dumps(response_data, indent=2)
+            except json.JSONDecodeError:
+                logger.error(
+                    "%s Failed to decode the full response from provider.",
+                    self._log_pretext,
+                )
+                return {
+                    "status": "error",
+                    "feature": self.NAME,
+                    "message": "Failed to decode the JSON response from the LLM provider.",
+                    "total_findings_processed": 0,
+                    "errors_encountered": 1,
+                    "error_details": ["JSONDecodeError"],
+                    "events_exported": self._events_exported,
+                    "findings_received": 0,
+                    "full_response_text": full_response_text,
+                }
 
             if not findings_list:
                 logger.warning(
-                    "%s JSON is valid, but 'summaries' key is missing or empty.",
+                    "%s JSON is valid, but the findings list is empty.",
                     self._log_pretext,
                 )
                 return {
