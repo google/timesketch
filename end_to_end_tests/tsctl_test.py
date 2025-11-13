@@ -25,7 +25,7 @@ from . import interface
 from . import manager
 
 
-class TestTsctl(interface.BaseEndToEndTest):  # Or inherit from BaseTest if applicable
+class TestTsctl(interface.BaseEndToEndTest):
     """Tests for tsctl commands."""
 
     NAME = "tsctl_test"
