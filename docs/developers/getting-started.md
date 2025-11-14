@@ -51,6 +51,10 @@ $ docker compose exec timesketch tsctl create-user <USER> --password <PW>
 User <USER> created/updated
 ```
 
+### Running End-to-End Tests Locally
+For detailed instructions on how to run end-to-end tests locally using `act`,
+please refer to the [How to Run GitHub Actions Locally with act](local_github_actions_with_act.md) guide.
+
 ### Web server
 
 Now, start the `gunicon` server that will serve the Timsketch WSGI app.
