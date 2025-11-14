@@ -54,3 +54,6 @@ vagrant/*.log
 
 # Exclude debugging profiles
 profiles/
+
+# Exclude timesketch.dev.conf
+data/timesketch.dev.conf
