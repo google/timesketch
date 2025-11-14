@@ -64,6 +64,7 @@ sudo chown $(whoami) metadata.json
 ### Secrets
 
 `act` does not have access to your repository's GitHub secrets. If a workflow depends on secrets, you can provide them locally by creating a `.secrets` file in the root of the repository and running `act` with the `--secret-file .secrets` flag. The e2e tests do not require any secrets.
+
 ### Controlling Log Verbosity
 By default, `act` can produce very verbose output, logging every detail of the workflow execution. You can control this verbosity using the following flags:
 *   **`--quiet`** (or **`-q`**): Disables the logging of output from individual steps, making the overall output less verbose. This is useful when you only care about the job's success or failure.
