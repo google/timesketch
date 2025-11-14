@@ -12,8 +12,7 @@ Running your GitHub Actions workflows locally before pushing your changes can sa
 You can install `act` using its official installation script. Open a terminal and run the following command. You will be prompted for your password as it installs the binary into `/usr/local/bin/`.
 
 ```bash
-go install github.com/nektos/act@latest
-```
+curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
 
 For other installation methods, please refer to the [official `act` documentation](https://github.com/nektos/act#installation).
 
