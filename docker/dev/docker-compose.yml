@@ -30,6 +30,9 @@ services:
     restart: always
     volumes:
       - ../../:/usr/local/src/timesketch/
+    # Make docker host accessible for local development.
+    extra_hosts:
+      - host.docker.internal:host-gateway
 
   opensearch:
     container_name: opensearch
