@@ -188,6 +188,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
                     if json_str:
                         yield json_str
+                        # force termination to avoid back2back runs
+                        break
         finally:
             if debug_log_file:
                 debug_log_file.close()
