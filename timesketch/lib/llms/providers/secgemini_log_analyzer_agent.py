@@ -73,7 +73,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         except Exception as e:
             raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
 
-        self.model = self.config.get("model", "sec-gemini-experimental")
+        self.model = self.config.get("model", "logs_analysis_agent-1.1")
         self.custom_fields_mapping = {
             "id": "_id",
             "enrichment": "tag",
@@ -172,10 +172,15 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
                 if (
                     response.message_type == MessageType.RESULT
-                    and response.actor == "summarization_agent"
+                    and response.actor == "chat_summarization_agent"
                 ):
-                    content_chunk = response.content
-                    yield content_chunk
+                    content = response.content
+                    json_str = None
+                    if "```json" in content:
+                        json_str = content.split("```json")[1].split("```")[0].strip()
+
+                    if json_str:
+                        yield json_str
         finally:
             if debug_log_file:
                 debug_log_file.close()
