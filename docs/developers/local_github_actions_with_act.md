@@ -54,6 +54,7 @@ act pull_request --container-options "-m 4g --privileged"
 
 The Timesketch e2e test workflow uses `docker compose` to set up its test environment. This means `act` will be running a Docker container, which in turn needs to run `docker compose`. This "Docker-in-Docker" scenario requires the `act` container to have access to your system's Docker daemon.
 `act` typically handles this automatically by mounting the Docker socket (`/var/run/docker.sock`). If you encounter errors related to `docker` not being found, ensure your Docker setup is standard and the socket is accessible.
+
 ### File Permissions
 If you encounter `permission denied` errors, particularly related to `metadata.json`, you may need to adjust the file's ownership on your host machine. You can do this by running:
 ```bash
