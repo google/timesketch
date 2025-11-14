@@ -27,7 +27,7 @@ requests==2.32.4
 setuptools>=67.0.0
 sigmatools==0.19.1 ; python_version > '3.4'
 six==1.17.0
-SQLAlchemy==1.4.48
+SQLAlchemy==1.4.54
 Werkzeug==3.0.6
 WTForms==3.0.1
 xlrd==1.2.0
