@@ -73,7 +73,13 @@ def create_app(
     # This ensures Flask generates HTTPS URLs when behind a reverse proxy.
     # The number of proxies is configurable via REVERSE_PROXY_COUNT.
     num_proxies = app.config.get("REVERSE_PROXY_COUNT", 1)
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=num_proxies, x_proto=num_proxies, x_host=num_proxies, x_prefix=num_proxies)
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=num_proxies,
+        x_proto=num_proxies,
+        x_host=num_proxies,
+        x_prefix=num_proxies,
+    )
 
     if not config:
         # Where to find the config file
