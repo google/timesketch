@@ -70,10 +70,10 @@ def create_app(
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
     # Apply ProxyFix middleware to handle proxy headers for HTTPS redirects
-    # This ensures Flask generates HTTPS URLs when behind a reverse proxy
-    app.wsgi_app = ProxyFix(
-        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
-    )
+    # This ensures Flask generates HTTPS URLs when behind a reverse proxy.
+    # The number of proxies is configurable via REVERSE_PROXY_COUNT.
+    num_proxies = app.config.get("REVERSE_PROXY_COUNT", 1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=num_proxies, x_proto=num_proxies, x_host=num_proxies, x_prefix=num_proxies)
 
     if not config:
         # Where to find the config file
