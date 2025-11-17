@@ -915,6 +915,45 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-story" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create-story
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-stories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list-stories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3154,6 +3193,45 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-story" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create-story
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-stories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list-stories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3626,6 +3704,24 @@ Label added
 <p>Example:</p>
 <pre><code class="language-bash">timesketch --sketch 14 --output-format json sketch remove_label --label=foobar
 Label removed
+</code></pre>
+<h3 id="stories">Stories</h3>
+<h4 id="create-story">create-story</h4>
+<p>Running <code>sketch create-story --title "My new story"</code> will create a new story in the sketch.</p>
+<p>Example:</p>
+<pre><code class="language-bash">timesketch --sketch 14 create-story --title=&quot;My new story&quot;
+Story created: My new story
+</code></pre>
+<h4 id="list-stories">list-stories</h4>
+<p>Running <code>sketch list-stories</code> will give you a list of all stories of a sketch.</p>
+<p>Example:</p>
+<pre><code class="language-bash">timesketch --sketch 14 --output-format json sketch list-stories
+[
+    {
+        &quot;id&quot;: 1,
+        &quot;title&quot;: &quot;My new story&quot;
+    }
+]
 </code></pre>
 <h2 id="intelligence">Intelligence</h2>
 <p>Intelligence is always sketch specific. The same can be achieved using 
