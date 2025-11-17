@@ -328,7 +328,35 @@ timesketch --sketch 14 --output-format json sketch remove_label --label=foobar
 Label removed
 ```
 
+### Stories
+
+#### create-story
+
+Running `sketch create-story --title "My new story"` will create a new story in the sketch.
+
+Example:
+```bash
+timesketch --sketch 14 create-story --title="My new story"
+Story created: My new story
+```
+
+#### list-stories
+
+Running `sketch list-stories` will give you a list of all stories of a sketch.
+
+Example:
+```bash
+timesketch --sketch 14 --output-format json sketch list-stories
+[
+    {
+        "id": 1,
+        "title": "My new story"
+    }
+]
+```
+
 ## Intelligence
+
 
 Intelligence is always sketch specific. The same can be achieved using 
 `timesketch attributes` command, but then the ontology type and data needs 
