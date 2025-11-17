@@ -31,7 +31,7 @@ if __name__ == "__main__":
     for name, _ in manager.get_tests():
         print(f"- {name}")
     print("-------------------------------")
-    
+
     # Sleep to make sure all containers are operational
     time.sleep(30)  # seconds
 
