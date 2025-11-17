@@ -58,6 +58,15 @@ class ViewListResource(resources.ResourceMixin, Resource):
         # Stripping potential pagination from views before saving it.
         if "from" in query_filter_dict:
             del query_filter_dict["from"]
+
+        if not query_filter_dict.get("fields"):
+            default_fields = [
+                {"field": "datetime"},
+                {"field": "timestamp_desc"},
+                {"field": "message"},
+            ]
+            query_filter_dict["fields"] = default_fields
+
         query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
         query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
