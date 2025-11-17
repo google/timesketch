@@ -24,8 +24,8 @@
     "moment": "^2.24.0",
     "v-calendar": "2.4.1",
     "vega": "^6.2.0",
-    "vega-embed": "^4.2.2",
-    "vega-lite": "3.4.0",
+    "vega-embed": "^7.1.0",
+    "vega-lite": "6.4.1",
     "vue": "^2.6.12",
     "vue-apexcharts": "^1.7.0",
     "vue-dragscroll": "^3.0.0",
@@ -35,6 +35,7 @@
     "vuex": "^3.1.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.3.4",
     "@vue/cli-plugin-babel": "^5.0.9",
     "@vue/cli-plugin-eslint": "^5.0.9",
     "@vue/cli-service": "^5.0.9",
@@ -46,12 +47,11 @@
     "deepmerge": "^4.2.2",
     "eslint": "^7.5.0",
     "eslint-config-prettier": "^8.3.0",
-    "happy-dom": "^20.0.2",
     "eslint-plugin-vue": "^7.0.0",
+    "happy-dom": "^20.0.2",
     "sass": "1.77.6",
     "sass-loader": "^10.1.1",
     "vite": "^5.4.21",
-    "vite-plugin-vue2": "^2.0.3",
     "vitest": "~1.6.1",
     "vue-template-compiler": "^2.6.12",
     "webpack": "^5.102.1"
