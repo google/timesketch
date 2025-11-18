@@ -356,6 +356,40 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
             return
 
 
+@sketch_group.command("create-story", help="Create a new story")
+@click.option("--title", required=True, help="Title of the story.")
+@click.pass_context
+def create_story(ctx: click.Context, title: str) -> None:
+    """Creates a new story in the active sketch.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+        title (str): The title of the new story.
+    """
+    sketch = ctx.obj.sketch
+    story = sketch.create_story(title=title)
+    click.echo(f"Story created: {story.title}")
+
+
+@sketch_group.command("list-stories", help="List all stories in the sketch.")
+@click.pass_context
+def list_stories(ctx: click.Context):
+    """List all stories in the sketch."""
+    sketch = ctx.obj.sketch
+    output = ctx.obj.output_format
+    stories = []
+    for story in sketch.list_stories():
+        stories.append({"id": story.id, "title": story.title})
+
+    stories_panda = pd.DataFrame(stories, columns=["id", "title"])
+    if output == "json":
+        click.echo(stories_panda.to_json(orient="records", indent=4))
+    elif output == "text":
+        click.echo(f"{stories_panda.to_string(index=False)}")
+    else:
+        click.echo(f"{stories_panda.to_string(index=False)}")
+
+
 @sketch_group.command(
     "export-only-with-annotations",
     help="Export events with comments, stars, OR labels.",  # Updated help

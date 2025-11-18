@@ -157,3 +157,7 @@ To generate a CSV file named `dummy_events.csv` with 50 events between January 1
 ```bash
 python3 utils/generate_sample_data.py --output dummy_events.csv --count 50 --start-date 2023-01-01T09:00:00 --end-date 2023-01-01T17:00:00
 ```
+
+### Running End-to-End Tests Locally
+For detailed instructions on how to run end-to-end tests locally using `act`,
+please refer to the [How to Run GitHub Actions Locally with act](local_github_actions_with_act.md) guide.

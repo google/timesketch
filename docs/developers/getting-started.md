@@ -146,6 +146,32 @@ Point your browser to `http://localhost:5001/` to access the new frontend UI.
 All changes to the `timesketch/frontend-ng/` path will be automatically build
 and loaded in the new frontend.
 
+### Accessing services on your host machine
+
+In some development scenarios, you might need the Timesketch container to
+communicate with a service running directly on your host machine (the "docker
+host"). A common use case is when you are running local LLM (Large Language
+Model) services (e.g., Ollama) that need access to hardware like GPUs which may
+not be available to the container.
+
+To enable this, you need to make the docker host accessible from within the
+Timesketch container. You can achieve this by adding an `extra_hosts` entry to
+the `timesketch` service in your `docker/dev/docker-compose.yml` file:
+
+```yaml
+services:
+  timesketch:
+    ...
+    # Make docker host accessible for local development.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+```
+
+After adding this and restarting your container, you can configure Timesketch to
+connect to services on your host using `http://host.docker.internal:<PORT>`. For
+example, you could configure an LLM provider in `timesketch.conf` to use a base
+URL of `http://host.docker.internal:8000`.
+
 ## API development
 
 Exposing new functionality via the API starts at `/timesketch/api/v1/routes.py`.
