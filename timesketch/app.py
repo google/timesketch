@@ -22,6 +22,7 @@ from typing import Optional, Union
 
 from flask import Flask
 from celery import Celery
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask_login import LoginManager
 from flask_login import login_required
@@ -67,6 +68,18 @@ def create_app(
         static_folder = "frontend-ng/dist"
 
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+
+    # Apply ProxyFix middleware to handle proxy headers for HTTPS redirects
+    # This ensures Flask generates HTTPS URLs when behind a reverse proxy.
+    # The number of proxies is configurable via REVERSE_PROXY_COUNT.
+    num_proxies = app.config.get("REVERSE_PROXY_COUNT", 1)
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=num_proxies,
+        x_proto=num_proxies,
+        x_host=num_proxies,
+        x_prefix=num_proxies,
+    )
 
     if not config:
         # Where to find the config file
