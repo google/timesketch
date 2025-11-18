@@ -1457,6 +1457,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#accessing-services-on-your-host-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessing services on your host machine
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2628,6 +2639,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#accessing-services-on-your-host-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessing services on your host machine
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2818,6 +2840,26 @@ documented <a href="https://timesketch.org/developers/frontend-development/">her
 <p>Point your browser to <code>http://localhost:5001/</code> to access the new frontend UI.
 All changes to the <code>timesketch/frontend-ng/</code> path will be automatically build
 and loaded in the new frontend.</p>
+<h3 id="accessing-services-on-your-host-machine">Accessing services on your host machine</h3>
+<p>In some development scenarios, you might need the Timesketch container to
+communicate with a service running directly on your host machine (the "docker
+host"). A common use case is when you are running local LLM (Large Language
+Model) services (e.g., Ollama) that need access to hardware like GPUs which may
+not be available to the container.</p>
+<p>To enable this, you need to make the docker host accessible from within the
+Timesketch container. You can achieve this by adding an <code>extra_hosts</code> entry to
+the <code>timesketch</code> service in your <code>docker/dev/docker-compose.yml</code> file:</p>
+<pre><code class="language-yaml">services:
+  timesketch:
+    ...
+    # Make docker host accessible for local development.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+</code></pre>
+<p>After adding this and restarting your container, you can configure Timesketch to
+connect to services on your host using <code>http://host.docker.internal:&lt;PORT&gt;</code>. For
+example, you could configure an LLM provider in <code>timesketch.conf</code> to use a base
+URL of <code>http://host.docker.internal:8000</code>.</p>
 <h2 id="api-development">API development</h2>
 <p>Exposing new functionality via the API starts at <code>/timesketch/api/v1/routes.py</code>.
 In that file the different routes / endpoints are defined that can be used.
