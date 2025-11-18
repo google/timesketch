@@ -67,14 +67,18 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         self.server_url = self.config.get("logs_processor_api_url")
         if self.server_url:
             os.environ["SEC_GEMINI_LOGS_PROCESSOR_API_URL"] = self.server_url
-        
+
         self.base_url = self.config.get("base_url")
         self.wss_url = self.config.get("wss_url")
         self.agents_config = self.config.get("agents_config", {})
 
         try:
             if self.base_url and self.wss_url:
-                self.sg_client = SecGemini(base_url=self.base_url, base_websockets_url=self.wss_url, api_key=self.api_key)
+                self.sg_client = SecGemini(
+                    base_url=self.base_url,
+                    base_websockets_url=self.wss_url,
+                    api_key=self.api_key,
+                )
             else:
                 self.sg_client = SecGemini(api_key=self.api_key)
         except Exception as e:
@@ -109,7 +113,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             str: The content chunks of the streamed response from the agent.
         """
         self._session = self.sg_client.create_session(
-            model=self.model, enable_logging=self.enable_logging, agents_config=self.agents_config
+            model=self.model,
+            enable_logging=self.enable_logging,
+            agents_config=self.agents_config,
         )
         self.session_id = self._session.id
         # TODO: Could we check if the API key has logging enabled and if not ERR
