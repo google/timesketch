@@ -54,12 +54,17 @@ class TimesketchApi:
 
     This class provides a client for interacting with the Timesketch API.
     It includes robust error handling and retry mechanisms using the
-    VerboseRetry class for network requests.
+    VerboseRetry class for network requests, with a configurable retry count.
 
-    Attributes:
-        api_root: The full URL to the server API endpoint.
-        session: Authenticated HTTP session with retry logic configured.
-    """
+                    Attributes:
+
+                        api_root: The full URL to the server API endpoint.
+
+                        session: Authenticated HTTP session with retry logic configured.
+
+                        _retry_count: The number of retries configured for the session.
+
+                        _backoff_factor: The backoff factor used for retries."""
 
     DEFAULT_OAUTH_SCOPE = [
         "https://www.googleapis.com/auth/userinfo.email",
@@ -87,6 +92,8 @@ class TimesketchApi:
         client_secret="",
         auth_mode="userpass",
         create_session=True,
+        retry_count=None,
+        backoff_factor=0.5,
     ):
         """Initializes the TimesketchApi object.
 
@@ -103,6 +110,9 @@ class TimesketchApi:
             create_session: Boolean indicating whether the client object
                 should create a session object. If set to False the
                 function "set_session" needs to be called before proceeding.
+            retry_count: Number of retries for HTTP requests and internal API
+                request retries. Defaults to DEFAULT_RETRY_COUNT.
+            backoff_factor: The backoff factor to use for retries. Defaults to 0.5.
 
         Raises:
             ConnectionError: If the Timesketch server is unreachable.
@@ -113,6 +123,11 @@ class TimesketchApi:
         self.api_root = "{0:s}/api/v1".format(host_uri)
         self.credentials = None
         self._flow = None
+        if retry_count is None:
+            self._retry_count = self.DEFAULT_RETRY_COUNT
+        else:
+            self._retry_count = retry_count
+        self._backoff_factor = backoff_factor
 
         if not create_session:
             # Session needs to be set manually later using set_session()
@@ -127,6 +142,8 @@ class TimesketchApi:
                 client_id=client_id,
                 client_secret=client_secret,
                 auth_mode=auth_mode,
+                retry_count=self._retry_count,
+                backoff_factor=self._backoff_factor,
             )
         except ConnectionError as exc:
             raise ConnectionError("Timesketch server unreachable") from exc
@@ -327,7 +344,15 @@ class TimesketchApi:
         return session
 
     def _create_session(
-        self, username, password, verify, client_id, client_secret, auth_mode
+        self,
+        username,
+        password,
+        verify,
+        client_id,
+        client_secret,
+        auth_mode,
+        retry_count,
+        backoff_factor,
     ):
         """Create authenticated HTTP session for server communication.
 
@@ -340,6 +365,8 @@ class TimesketchApi:
             auth_mode (str): The authentication mode to use. Supported values are
                 'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth
+            retry_count (int): Number of retries for HTTP requests.
+            backoff_factor (float): The backoff factor to use for retries.
 
         Returns:
             Instance of requests.Session.
@@ -359,8 +386,8 @@ class TimesketchApi:
 
         # Configure retry logic
         retry_strategy = VerboseRetry(
-            total=self.DEFAULT_RETRY_COUNT,
-            backoff_factor=0.5,
+            total=retry_count,
+            backoff_factor=backoff_factor,
             status_forcelist=[500, 502, 503, 504],
             allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "POST"],
         )
@@ -393,8 +420,9 @@ class TimesketchApi:
         the API returns a 200 OK status but with an empty or invalid JSON
         payload.
 
-        For GET requests, it is preferred to use the `fetch_resource_data`
-        wrapper method for clarity and convenience.
+        For GET requests, you can still use the `fetch_resource_data`
+        which is just a wrapper for `_send_request_with_retry` with fixed
+        `GET`.
 
         Args:
             method (str): HTTP method (e.g., 'GET', 'POST').
@@ -411,7 +439,7 @@ class TimesketchApi:
         resource_url = f"{self.api_root}/{resource_uri}"
 
         last_exception = None
-        for attempt in range(3):
+        for attempt in range(self._retry_count):
             try:
                 response = self.session.request(method, resource_url, **kwargs)
                 result = error.get_response_json(response, logger)
@@ -419,22 +447,24 @@ class TimesketchApi:
                     return result
 
                 logger.warning(
-                    "Received falsy response for %s %s, retrying (%d/3)...",
+                    "Received falsy response for %s %s, retrying (%d/%d)...",
                     method.upper(),
                     resource_url,
                     attempt + 1,
+                    self._retry_count,
                 )
-                time.sleep(1)
+                time.sleep(2**attempt)
 
             except ValueError as e:
                 last_exception = e
                 logger.warning(
-                    "ValueError decoding JSON for %s %s, retrying (%d/3)...",
+                    "ValueError decoding JSON for %s %s, retrying (%d/%d)...",
                     method.upper(),
                     resource_url,
                     attempt + 1,
+                    self._retry_count,
                 )
-                time.sleep(1)
+                time.sleep(2**attempt)
                 continue
 
         if last_exception:
@@ -488,13 +518,13 @@ class TimesketchApi:
             Instance of a Sketch object representing the newly created sketch.
 
         Raises:
-            ValueError: If the provided sketch name is empty.
+            ValueError: If the provided sketch name is empty, or if the expected
+                'objects' structure with a sketch ID is not found in the API
+                response.
             urllib3.exceptions.MaxRetryError: If the maximum number of retries
                 is exceeded due to persistent server errors or connection issues.
                 The exception message will include the last server response body.
-            RuntimeError: If the API server returns an error (non-20x status code),
-                or if the expected 'objects' structure with a sketch ID is not
-                found in the API response after all retries.
+            RuntimeError: If the API server returns an error (non-20x status code).
         """
         if not description:
             description = name
@@ -524,7 +554,7 @@ class TimesketchApi:
             "API for sketch creation returned an unexpected 'objects' "
             f"format or it was empty. Response: {response_dict!s}"
         )
-        raise RuntimeError(error_message_detail)
+        raise ValueError(error_message_detail)
 
     def create_user(self, username, password):
         """Create a new user.
@@ -722,8 +752,6 @@ class TimesketchApi:
             urllib3.exceptions.MaxRetryError: If the maximum number of retries
                 is exceeded due to persistent server errors or connection issues.
                 The exception message will include the last server response body.
-            RuntimeError: If the SearchIndex fails to create after all retries,
-                or if the API returns an unexpected response format.
             ValueError: If the API response cannot be JSON-decoded.
         """
         resource_uri = "searchindices/"
@@ -752,7 +780,7 @@ class TimesketchApi:
             "API for searchindex creation returned an unexpected 'objects' "
             f"format or it was empty. Response: {response_dict!s}"
         )
-        raise RuntimeError(error_message_detail)
+        raise ValueError(error_message_detail)
 
     def check_celery_status(self, job_id=""):
         """Return information about outstanding celery tasks or a specific one.
