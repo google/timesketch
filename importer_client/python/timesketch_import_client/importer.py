@@ -220,7 +220,7 @@ class ImportStreamer(object):
 
             if "timestamp" in data_frame:
                 data_frame["datetime"] = data_frame["timestamp"].dt.strftime(
-                    "%Y-%m-%dT%H:%M:%S%z"
+                    "%Y-%m-%dT%H:%M:%S.%f%z"
                 )
                 data_frame["timestamp"] = (
                     data_frame["timestamp"].astype(numpy.int64) / 1e9
@@ -231,7 +231,7 @@ class ImportStreamer(object):
                 date = pandas.to_datetime(
                     data_frame["datetime"], utc=True, format="mixed"
                 )
-                data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+                data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
             except (ValueError, OverflowError) as e:
                 # Catch both ValueError (for malformed strings) and OverflowError
                 # (for out-of-range timestamps)

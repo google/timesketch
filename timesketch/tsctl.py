@@ -970,35 +970,63 @@ def sketch_info(sketch_id: int):
 
     print(f"Sketch {sketch_id} Name: ({sketch.name})")
 
-    # define the table data
-    table_data = [
+    # Timelines table
+    print("\nTimelines:")
+    timeline_table_data = [
         [
-            "searchindex_id",
-            "index_name",
-            "created_at",
-            "user_id",
-            "description",
-            "status",
-            "timeline_name",
-            "timeline_id",
+            "ID",
+            "Name",
+            "Search Index ID",
+            "Index Name",
+            "Created At",
+            "User ID",
+            "Description",
+            "Status",
         ],
     ]
     for t in sketch.timelines:
-        table_data.append(
+        timeline_table_data.append(
             [
+                t.id,
+                t.name,
                 t.searchindex_id,
                 t.searchindex.index_name,
                 t.created_at,
                 t.user_id,
                 t.description,
                 t.status[-1].status,
-                t.name,
-                t.id,
             ]
         )
-    print_table(table_data)
+    print_table(timeline_table_data)
 
-    print(f"Created by: {sketch.user.username}")
+    # Data sources per timeline
+    print("\nData Sources per Timeline:")
+    for t in sketch.timelines:
+        print(f"\nTimeline: {t.name} (ID: {t.id})")
+        if t.datasources:
+            ds_table_data = [
+                [
+                    "ID",
+                    "File Path",
+                    "Status",
+                    "Error Message",
+                ],
+            ]
+            for ds in t.datasources:
+                error_message = ds.error_message or "N/A"
+                ds_table_data.append(
+                    [
+                        ds.id,
+                        ds.file_on_disk,
+                        (ds.status[-1].status if ds.status else "N/A"),
+                        error_message,
+                    ]
+                )
+            print_table(ds_table_data)
+        else:
+            print("  No data sources found for this timeline.")
+
+    print(f"\nCreated by: {sketch.user.username}")
     all_permissions = sketch.get_all_permissions()
 
     print("Shared with:")
