@@ -93,7 +93,7 @@ class TimesketchApi:
         client_secret="",
         auth_mode="userpass",
         create_session=True,
-        retry_count=None,
+        retry_count=DEFAULT_RETRY_COUNT,
         backoff_factor=0.5,
     ):
         """Initializes the TimesketchApi object.
