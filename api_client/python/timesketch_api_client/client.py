@@ -467,7 +467,7 @@ class TimesketchApi:
                     attempt + 1,
                     self._retry_count + 1,
                 )
-                time.sleep(self._backoff_factor**attempt)
+                time.sleep(self._backoff_factor * (2**attempt))
                 continue
 
         if last_exception:
