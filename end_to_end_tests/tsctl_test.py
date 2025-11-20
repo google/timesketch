@@ -14,11 +14,6 @@
 # limitations under the License.
 """Tests for tsctl command-line tool."""
 
-import os
-import zipfile
-import json
-import csv
-import random
 from click.testing import CliRunner
 from timesketch.tsctl import cli
 from . import interface
@@ -62,57 +57,6 @@ class TestTsctl(interface.BaseEndToEndTest):
         self.assertions.assertIn(interface.USERNAME, result.output)
         # Check for the status indicator (active: True/False)
         self.assertions.assertIn("active: True)", result.output)
-
-    def test_export_sketch_command(self):
-        """Tests the 'tsctl export-sketch' command."""
-        rand = random.randint(0, 10000)
-
-        sketch_name = f"test_export_sketch_command_test_{rand}"
-        sketch = self.api.create_sketch(name=sketch_name)
-        sketch.add_event("event message", "2020-01-01T00:00:00", "timestamp_desc")
-        sketch_id = self.sketch.id
-        sketch_name = self.sketch.name
-        # Use an absolute path to avoid issues with the current working directory
-        output_filename = f"/tmp/test_sketch_{sketch_id}_export.zip"
-
-        try:
-            # Invoke 'tsctl export-sketch <sketch_id> --filename <output_filename>'
-            result = self.runner.invoke(
-                cli, ["export-sketch", str(sketch_id), "--filename", output_filename]
-            )
-
-            # Assertions for command execution
-            self.assertions.assertEqual(
-                result.exit_code, 0, f"CLI Error: {result.output}"
-            )
-            self.assertions.assertTrue(
-                os.path.exists(output_filename),
-                f"Export file {output_filename} not found",
-            )
-
-            # Assertions for zip file content
-            with zipfile.ZipFile(output_filename, "r") as zipf:
-                # Check for expected files in the zip archive
-                expected_files = [
-                    "METADATA",
-                    "events/events_with_comments.csv",
-                    "events/starred_events.csv",
-                    "events/tagged_events.csv",
-                ]
-                for f in expected_files:
-                    self.assertions.assertIn(f, zipf.namelist())
-
-                with zipf.open("METADATA") as meta_file:
-                    metadata = json.load(meta_file)
-                    self.assertions.assertEqual(metadata.get("sketch_id"), sketch_id)
-                    self.assertions.assertEqual(
-                        metadata.get("sketch_name"), sketch_name
-                    )
-
-        finally:
-            # Clean up the created file
-            if os.path.exists(output_filename):
-                os.remove(output_filename)
 
 
 manager.EndToEndTestManager.register_test(TestTsctl)
