@@ -994,7 +994,7 @@ class VerboseRetry(Retry):
         except MaxRetryError as e:
             # When MaxRetryError is raised, enhance its message with more context.
             # This includes the number of attempts and the server's last response.
-            reason_str = str(e.reason)
+            reason_str = repr(e.reason)
             new_reason = f"{reason_str} | Attempts: {len(self.history)}"
             if decoded_body:
                 new_reason += f" | Server Response: {decoded_body}"
