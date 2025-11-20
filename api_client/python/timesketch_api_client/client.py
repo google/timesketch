@@ -227,6 +227,7 @@ class TimesketchApi:
     def _create_oauth_session(
         self,
         client_id="",
+        *,
         client_secret="",
         client_secrets_file=None,
         host="localhost",
@@ -348,6 +349,7 @@ class TimesketchApi:
         self,
         username,
         password,
+        *,
         verify,
         client_id,
         client_secret,
@@ -440,7 +442,7 @@ class TimesketchApi:
         resource_url = f"{self.api_root}/{resource_uri}"
 
         last_exception = None
-        for attempt in range(self._retry_count):
+        for attempt in range(self._retry_count + 1):
             try:
                 response = self.session.request(method, resource_url, **kwargs)
                 result = error.get_response_json(response, logger)
@@ -452,9 +454,9 @@ class TimesketchApi:
                     method.upper(),
                     resource_url,
                     attempt + 1,
-                    self._retry_count,
+                    self._retry_count + 1,
                 )
-                time.sleep(2**attempt)
+                time.sleep(self._backoff_factor**attempt)
 
             except ValueError as e:
                 last_exception = e
@@ -463,9 +465,9 @@ class TimesketchApi:
                     method.upper(),
                     resource_url,
                     attempt + 1,
-                    self._retry_count,
+                    self._retry_count + 1,
                 )
-                time.sleep(2**attempt)
+                time.sleep(self._backoff_factor**attempt)
                 continue
 
         if last_exception:
@@ -553,7 +555,7 @@ class TimesketchApi:
         # but returned an unexpected 'objects' format or it was empty.
         error_message_detail = (
             "API for sketch creation returned an unexpected 'objects' "
-            f"format or it was empty. Response: {response_dict!s}"
+            f"format or it was empty. Response: {response_dict}"
         )
         raise ValueError(error_message_detail)
 
@@ -779,7 +781,7 @@ class TimesketchApi:
         # but returned an unexpected 'objects' format or it was empty.
         error_message_detail = (
             "API for searchindex creation returned an unexpected 'objects' "
-            f"format or it was empty. Response: {response_dict!s}"
+            f"format or it was empty. Response: {response_dict}"
         )
         raise ValueError(error_message_detail)
 
@@ -998,4 +1000,4 @@ class VerboseRetry(Retry):
                 new_reason += f" | Server Response: {decoded_body}"
 
             # Re-raise the MaxRetryError with the enriched reason.
-            raise MaxRetryError(e.pool, e.url, reason=new_reason) from e
+            raise MaxRetryError(e.pool, e.url, reason=Exception(new_reason)) from e
