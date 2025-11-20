@@ -14,11 +14,11 @@
 # limitations under the License.
 """Tests for tsctl command-line tool."""
 
-# import os
-# import zipfile
-# import json
-# import csv
-# import random
+import os
+import zipfile
+import json
+import csv
+import random
 from click.testing import CliRunner
 from timesketch.tsctl import cli
 from . import interface
@@ -63,10 +63,10 @@ class TestTsctl(interface.BaseEndToEndTest):
         # Check for the status indicator (active: True/False)
         self.assertions.assertIn("active: True)", result.output)
 
-        # def test_export_sketch_command(self):
-        # """Tests the 'tsctl export-sketch' command."""
-        # rand = random.randint(0, 10000)
-        """
+    def test_export_sketch_command(self):
+        """Tests the 'tsctl export-sketch' command."""
+        rand = random.randint(0, 10000)
+
         sketch_name = f"test_export_sketch_command_test_{rand}"
         sketch = self.api.create_sketch(name=sketch_name)
         sketch.add_event("event message", "2020-01-01T00:00:00", "timestamp_desc")
@@ -113,7 +113,6 @@ class TestTsctl(interface.BaseEndToEndTest):
             # Clean up the created file
             if os.path.exists(output_filename):
                 os.remove(output_filename)
-        """
 
 
 manager.EndToEndTestManager.register_test(TestTsctl)
