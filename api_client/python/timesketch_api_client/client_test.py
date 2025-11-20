@@ -35,7 +35,31 @@ class TimesketchApiTest(unittest.TestCase):
         response = self.api_client.fetch_resource_data("sketches/")
         self.assertIsInstance(response, dict)
 
-    # TODO: Add test for create_sketch()
+    @mock.patch("timesketch_api_client.error.get_response_json")
+    def test_create_sketch(self, mock_get_json):
+        """Test create sketch."""
+        # Test successful creation
+        mock_get_json.return_value = {
+            "objects": [{"id": 1, "name": "test", "description": "test"}]
+        }
+        sketch = self.api_client.create_sketch("test", "test")
+        self.assertIsInstance(sketch, sketch_lib.Sketch)
+        self.assertEqual(sketch.id, 1)
+
+        # Test missing 'objects' key
+        mock_get_json.return_value = {"meta": {}}
+        with self.assertRaises(ValueError):
+            self.api_client.create_sketch("test", "test")
+
+        # Test empty 'objects' list
+        mock_get_json.return_value = {"objects": []}
+        with self.assertRaises(ValueError):
+            self.api_client.create_sketch("test", "test")
+
+        # Test malformed 'objects' (not a list of dicts with 'id')
+        mock_get_json.return_value = {"objects": "invalid"}
+        with self.assertRaises(ValueError):
+            self.api_client.create_sketch("test", "test")
 
     def test_get_sketch(self):
         """Test to get a sketch."""

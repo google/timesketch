@@ -137,8 +137,8 @@ class TimesketchApi:
 
         try:
             self._session = self._create_session(
-                username,
-                password,
+                username=username,
+                password=password,
                 verify=verify,
                 client_id=client_id,
                 client_secret=client_secret,
@@ -227,6 +227,7 @@ class TimesketchApi:
     def _create_oauth_session(
         self,
         client_id="",
+        *,
         client_secret="",
         client_secrets_file=None,
         host="localhost",
@@ -348,6 +349,7 @@ class TimesketchApi:
         self,
         username,
         password,
+        *,
         verify,
         client_id,
         client_secret,
@@ -373,7 +375,9 @@ class TimesketchApi:
             Instance of requests.Session.
         """
         if auth_mode == "oauth":
-            return self._create_oauth_session(client_id, client_secret)
+            return self._create_oauth_session(
+                client_id=client_id, client_secret=client_secret
+            )
 
         if auth_mode == "oauth_local":
             return self._create_oauth_session(
@@ -440,7 +444,7 @@ class TimesketchApi:
         resource_url = f"{self.api_root}/{resource_uri}"
 
         last_exception = None
-        for attempt in range(self._retry_count):
+        for attempt in range(self._retry_count + 1):
             try:
                 response = self.session.request(method, resource_url, **kwargs)
                 result = error.get_response_json(response, logger)
@@ -452,9 +456,9 @@ class TimesketchApi:
                     method.upper(),
                     resource_url,
                     attempt + 1,
-                    self._retry_count,
+                    self._retry_count + 1,
                 )
-                time.sleep(2**attempt)
+                time.sleep(self._backoff_factor * (2**attempt))
 
             except ValueError as e:
                 last_exception = e
@@ -463,9 +467,9 @@ class TimesketchApi:
                     method.upper(),
                     resource_url,
                     attempt + 1,
-                    self._retry_count,
+                    self._retry_count + 1,
                 )
-                time.sleep(2**attempt)
+                time.sleep(self._backoff_factor * (2**attempt))
                 continue
 
         if last_exception:
@@ -553,7 +557,7 @@ class TimesketchApi:
         # but returned an unexpected 'objects' format or it was empty.
         error_message_detail = (
             "API for sketch creation returned an unexpected 'objects' "
-            f"format or it was empty. Response: {response_dict!s}"
+            f"format or it was empty. Response: {response_dict}"
         )
         raise ValueError(error_message_detail)
 
@@ -779,7 +783,7 @@ class TimesketchApi:
         # but returned an unexpected 'objects' format or it was empty.
         error_message_detail = (
             "API for searchindex creation returned an unexpected 'objects' "
-            f"format or it was empty. Response: {response_dict!s}"
+            f"format or it was empty. Response: {response_dict}"
         )
         raise ValueError(error_message_detail)
 
@@ -992,10 +996,10 @@ class VerboseRetry(Retry):
         except MaxRetryError as e:
             # When MaxRetryError is raised, enhance its message with more context.
             # This includes the number of attempts and the server's last response.
-            reason_str = str(e.reason)
+            reason_str = repr(e.reason)
             new_reason = f"{reason_str} | Attempts: {len(self.history)}"
             if decoded_body:
                 new_reason += f" | Server Response: {decoded_body}"
 
             # Re-raise the MaxRetryError with the enriched reason.
-            raise MaxRetryError(e.pool, e.url, reason=new_reason) from e
+            raise MaxRetryError(e.pool, e.url, reason=Exception(new_reason)) from e
