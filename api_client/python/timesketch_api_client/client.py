@@ -62,9 +62,9 @@ class TimesketchApi:
 
                         session: Authenticated HTTP session with retry logic configured.
 
-                        _retry_count: The number of retries configured for the session.
+                        retry_count: The number of retries configured for the session.
 
-                        _backoff_factor: The backoff factor used for retries."""
+                        backoff_factor: The backoff factor used for retries."""
 
     DEFAULT_OAUTH_SCOPE = [
         "https://www.googleapis.com/auth/userinfo.email",
