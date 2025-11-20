@@ -375,7 +375,9 @@ class TimesketchApi:
             Instance of requests.Session.
         """
         if auth_mode == "oauth":
-            return self._create_oauth_session(client_id, client_secret)
+            return self._create_oauth_session(
+                client_id=client_id, client_secret=client_secret
+            )
 
         if auth_mode == "oauth_local":
             return self._create_oauth_session(
