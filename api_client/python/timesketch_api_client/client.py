@@ -14,18 +14,21 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
-import time
+
 import os
 import logging
 import sys
+import time
 
 # pylint: disable=wrong-import-order
 import bs4
 import requests
 
 # pylint: disable=redefined-builtin
-from requests.exceptions import ConnectionError, RequestException
-from urllib3.exceptions import InsecureRequestWarning
+from requests.exceptions import ConnectionError
+from requests.adapters import HTTPAdapter
+from urllib3.exceptions import InsecureRequestWarning, MaxRetryError
+from urllib3.util.retry import Retry
 import webbrowser
 
 # pylint: disable-msg=import-error
@@ -49,10 +52,19 @@ logger = logging.getLogger("timesketch_api.client")
 class TimesketchApi:
     """Timesketch API object
 
-    Attributes:
-        api_root: The full URL to the server API endpoint.
-        session: Authenticated HTTP session.
-    """
+    This class provides a client for interacting with the Timesketch API.
+    It includes robust error handling and retry mechanisms using the
+    VerboseRetry class for network requests, with a configurable retry count.
+
+                    Attributes:
+
+                        api_root: The full URL to the server API endpoint.
+
+                        session: Authenticated HTTP session with retry logic configured.
+
+                        retry_count: The number of retries configured for the session.
+
+                        backoff_factor: The backoff factor used for retries."""
 
     DEFAULT_OAUTH_SCOPE = [
         "https://www.googleapis.com/auth/userinfo.email",
@@ -66,9 +78,11 @@ class TimesketchApi:
     DEFAULT_OAUTH_LOCALHOST_URL = "http://localhost"
     DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
-    # Default retry count for operations that attempt a retry.
-    DEFAULT_RETRY_COUNT = 5
+    # Default total attempts (initial request + retries) for operations.
+    # A value of 4 means 1 initial attempt + 4 retries = 5 total attempts.
+    DEFAULT_RETRY_COUNT = 4
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         host_uri,
@@ -79,6 +93,8 @@ class TimesketchApi:
         client_secret="",
         auth_mode="userpass",
         create_session=True,
+        retry_count=DEFAULT_RETRY_COUNT,
+        backoff_factor=0.5,
     ):
         """Initializes the TimesketchApi object.
 
@@ -95,6 +111,9 @@ class TimesketchApi:
             create_session: Boolean indicating whether the client object
                 should create a session object. If set to False the
                 function "set_session" needs to be called before proceeding.
+            retry_count: Number of retries for HTTP requests and internal API
+                request retries. Defaults to DEFAULT_RETRY_COUNT.
+            backoff_factor: The backoff factor to use for retries. Defaults to 0.5.
 
         Raises:
             ConnectionError: If the Timesketch server is unreachable.
@@ -105,6 +124,11 @@ class TimesketchApi:
         self.api_root = "{0:s}/api/v1".format(host_uri)
         self.credentials = None
         self._flow = None
+        if retry_count is None:
+            self._retry_count = self.DEFAULT_RETRY_COUNT
+        else:
+            self._retry_count = retry_count
+        self._backoff_factor = backoff_factor
 
         if not create_session:
             # Session needs to be set manually later using set_session()
@@ -119,6 +143,8 @@ class TimesketchApi:
                 client_id=client_id,
                 client_secret=client_secret,
                 auth_mode=auth_mode,
+                retry_count=self._retry_count,
+                backoff_factor=self._backoff_factor,
             )
         except ConnectionError as exc:
             raise ConnectionError("Timesketch server unreachable") from exc
@@ -319,7 +345,15 @@ class TimesketchApi:
         return session
 
     def _create_session(
-        self, username, password, verify, client_id, client_secret, auth_mode
+        self,
+        username,
+        password,
+        verify,
+        client_id,
+        client_secret,
+        auth_mode,
+        retry_count,
+        backoff_factor,
     ):
         """Create authenticated HTTP session for server communication.
 
@@ -332,6 +366,8 @@ class TimesketchApi:
             auth_mode (str): The authentication mode to use. Supported values are
                 'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth
+            retry_count (int): Number of retries for HTTP requests.
+            backoff_factor (float): The backoff factor to use for retries.
 
         Returns:
             Instance of requests.Session.
@@ -348,6 +384,17 @@ class TimesketchApi:
             )
 
         session = requests.Session()
+
+        # Configure retry logic
+        retry_strategy = VerboseRetry(
+            total=retry_count,
+            backoff_factor=backoff_factor,
+            status_forcelist=[500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "POST"],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
 
         # If using HTTP Basic auth, add the user/pass to the session
         if auth_mode == "http-basic":
@@ -366,16 +413,85 @@ class TimesketchApi:
 
         return session
 
+    def _send_request_with_retry(self, method, resource_uri, **kwargs):
+        """Makes an HTTP request with manual retries for application-level errors.
+
+        This is the core private helper for all API requests. It wraps the
+        session requests and adds a manual retry loop to handle cases where
+        the API returns a 200 OK status but with an empty or invalid JSON
+        payload.
+
+        For GET requests, you can still use the `fetch_resource_data`
+        which is just a wrapper for `_send_request_with_retry` with fixed
+        `GET`.
+
+        Args:
+            method (str): HTTP method (e.g., 'GET', 'POST').
+            resource_uri (str): The URI for the resource.
+            **kwargs: Keyword arguments passed to the request.
+
+        Returns:
+            dict: The JSON response data.
+
+        Raises:
+            ValueError: If JSON decoding fails after all retries.
+            RuntimeError: If the response is falsy after all retries.
+        """
+        resource_url = f"{self.api_root}/{resource_uri}"
+
+        last_exception = None
+        for attempt in range(self._retry_count):
+            try:
+                response = self.session.request(method, resource_url, **kwargs)
+                result = error.get_response_json(response, logger)
+                if result:
+                    return result
+
+                logger.warning(
+                    "Received falsy response for %s %s, retrying (%d/%d)...",
+                    method.upper(),
+                    resource_url,
+                    attempt + 1,
+                    self._retry_count,
+                )
+                time.sleep(2**attempt)
+
+            except ValueError as e:
+                last_exception = e
+                logger.warning(
+                    "ValueError decoding JSON for %s %s, retrying (%d/%d)...",
+                    method.upper(),
+                    resource_url,
+                    attempt + 1,
+                    self._retry_count,
+                )
+                time.sleep(2**attempt)
+                continue
+
+        if last_exception:
+            raise ValueError(
+                f"Failed to decode JSON response from {resource_url} "
+                "after multiple retries."
+            ) from last_exception
+
+        error_msg = (
+            f"Unable to get valid JSON response for request: "
+            f"'{method.upper()} {resource_url}' - Received falsy response "
+            "after multiple retries."
+        )
+        raise RuntimeError(error_msg)
+
     def fetch_resource_data(self, resource_uri, params=None):
-        """Makes an HTTP GET request to the specified resource URI with retries.
+        """Makes an HTTP GET request to the specified resource URI.
 
-        This method attempts to fetch data from the Timesketch API. It implements
-        a manual retry mechanism with a fixed 1-second backoff between attempts
-        if the initial request fails or returns an empty (but valid JSON) response.
-        Retries occur for network connection errors, API errors (non-20x status codes),
-        JSON decoding errors, or if the API returns a successful (20x) response
-        with a "falsy" JSON payload (e.g., null, empty list/dictionary).
+        This method is a convenience wrapper around `_send_request_with_retry`
+        for making GET requests. This provides a clear, descriptive interface
+        for fetching data and a single point of modification for all GET
+        requests, enhancing maintainability.
 
+        It uses a robust retry mechanism for both HTTP-level errors (e.g.,
+        5xx status codes) and application-level issues like invalid or empty
+        JSON responses.
 
         Args:
             resource_uri (str): The URI to the resource to be fetched.
@@ -384,103 +500,15 @@ class TimesketchApi:
 
         Returns:
             dict: A dictionary containing the JSON response data from the API.
-
-        Raises:
-            requests.exceptions.ConnectionError: If a connection error persists
-                after all retry attempts.
-            ValueError: If the API response cannot be JSON-decoded after all
-                retry attempts.
-            RuntimeError: If the API server returns an error (non-20x status code)
-                or a "falsy" JSON response (e.g., null, empty list/dict)
-                after all retry attempts.
         """
-        resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
-
-        # Start attempt count from 0, first loop with set it to 1
-        attempt = 0
-        result = None
-        while True:
-            attempt += 1
-            # If this is not the first attempt, wait before trying again
-            if attempt > 1:
-                backoff_time = 0.5 * (2 ** (attempt - 2))
-                logger.info(
-                    "Waiting %.1fs before next attempt for request '%s'.",
-                    backoff_time,
-                    resource_url,
-                )
-                time.sleep(backoff_time)
-
-            try:
-                response = self.session.get(resource_url, params=params)
-                result = error.get_response_json(response, logger)
-                if result:
-                    return result
-            except error.NotFoundError as e:
-                # This is immediately raised and not retried by the loop.
-                raise RuntimeError(f"Resource not found: {resource_url}") from e
-            except RuntimeError as e:
-                if attempt >= self.DEFAULT_RETRY_COUNT:
-                    # Re-raise the original error after exhausting retries
-                    error_msg = f"Error for request '{resource_url}' - '{e!s}'"
-                    raise RuntimeError(error_msg) from e
-
-                logger.warning(
-                    "[%d/%d] API error (RuntimeError) for request '%s' "
-                    "failed. Error: %s. Trying again...",
-                    attempt,
-                    self.DEFAULT_RETRY_COUNT,
-                    resource_url,
-                    str(e),
-                )
-            except ValueError as e:
-                if attempt >= self.DEFAULT_RETRY_COUNT:
-                    # Re-raise the original error after exhausting retries
-                    error_msg = (
-                        f"Error parsing response for request '{resource_url}'"
-                        f" - {e!s}"
-                    )
-                    raise ValueError(error_msg) from e
-
-                logger.warning(
-                    "[%d/%d] Parsing the JSON response for request '%s' "
-                    "failed. Error: %s. Trying again...",
-                    attempt,
-                    self.DEFAULT_RETRY_COUNT,
-                    resource_url,
-                    e,
-                )
-            except ConnectionError as e:  # Explicitly catch connection errors
-                if attempt >= self.DEFAULT_RETRY_COUNT:
-                    # Re-raise the original error after exhausting retries
-                    error_msg = (
-                        f"Connection error for request '{resource_url}' "
-                        f"after {self.DEFAULT_RETRY_COUNT} attempts: {e!s}"
-                    )
-                    raise ConnectionError(error_msg) from e
-
-                logger.warning(
-                    "[%d/%d] Connection error for request '%s': %s. Trying again...",
-                    attempt,
-                    self.DEFAULT_RETRY_COUNT,
-                    resource_url,
-                    e,
-                )
-
-            if attempt >= self.DEFAULT_RETRY_COUNT:
-                error_msg = (
-                    "Unable to fetch JSON resource data for request: '{0:s}'"
-                    " - Response: '{1!s}'".format(resource_url, result)
-                )
-                raise RuntimeError(error_msg)
+        return self._send_request_with_retry("GET", resource_uri, params=params)
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
 
         This method attempts to create a new sketch on the Timesketch server.
-        It implements a retry mechanism with exponential backoff if the initial
-        request fails due to network issues, API errors, or unexpected
-        response formats.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
 
         Args:
             name (str): Name of the sketch. Cannot be empty.
@@ -491,116 +519,50 @@ class TimesketchApi:
             Instance of a Sketch object representing the newly created sketch.
 
         Raises:
-            ValueError: If the provided sketch name is empty, or if the API
-                response cannot be JSON-decoded after all retry attempts.
-            requests.exceptions.ConnectionError: If a connection error persists
-                after all retry attempts.
-            RuntimeError: If the API server returns an error (non-20x status code),
-                or if the expected 'objects' structure with a sketch ID is not
-                found in the API response after all retry attempts.
+            ValueError: If the provided sketch name is empty, or if the expected
+                'objects' structure with a sketch ID is not found in the API
+                response.
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            RuntimeError: If the API server returns an error (non-20x status code).
         """
         if not description:
             description = name
 
         if not name:
             raise ValueError("Sketch name cannot be empty")
-        resource_url = "{0:s}/sketches/".format(self.api_root)
+        resource_uri = "sketches/"
         form_data = {"name": name, "description": description}
-        last_exception = None
-
-        for attempt in range(self.DEFAULT_RETRY_COUNT):
-            response = self.session.post(resource_url, json=form_data)
-            try:
-                response_dict = error.get_response_json(response, logger)
-                objects = response_dict.get("objects")
-
-                if (
-                    objects
-                    and isinstance(objects, list)
-                    and len(objects) > 0
-                    and isinstance(objects[0], dict)
-                    and "id" in objects[0]
-                ):
-                    sketch_id = objects[0]["id"]
-                    return self.get_sketch(sketch_id)
-
-                # Handle cases where 'objects' is missing, not a list, empty,
-                # or its first element is not a dict or lacks an 'id'.
-                # This assumes a 2xx response, as get_response_json would
-                # raise otherwise.
-                log_message = (
-                    "API for sketch creation returned an unexpected 'objects' "
-                    "format or it was empty."
-                )
-                logger.warning(
-                    "[%d/%d] %s Response: %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    log_message,
-                    response_dict,
-                )
-                last_exception = RuntimeError(
-                    f"{log_message} Response: {response_dict!s}"
-                )
-
-            except RequestException as e:
-                logger.warning(
-                    "[%d/%d] Request error creating sketch '%s': %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    name,
-                    e,
-                )
-                last_exception = e
-            except ValueError as e:  # JSON decoding error
-                logger.warning(
-                    "[%d/%d] JSON error creating sketch '%s': %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    name,
-                    e,
-                )
-                last_exception = e
-            except RuntimeError as e:  # Non-20x status
-                logger.warning(
-                    "[%d/%d] API error creating sketch '%s': %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    name,
-                    e,
-                )
-                last_exception = e
-
-            if attempt < self.DEFAULT_RETRY_COUNT - 1:
-                backoff_time = 0.5 * (2**attempt)  # Exponential backoff
-                logger.info(
-                    "Waiting %.1fs before next attempt to create sketch '%s'.",
-                    backoff_time,
-                    name,
-                )
-                time.sleep(backoff_time)
-            else:
-                # All attempts failed
-                error_message_detail = (
-                    "All {0:d} attempts to create sketch '{1:s}' failed.".format(
-                        self.DEFAULT_RETRY_COUNT, name
-                    )
-                )
-                logger.error("%s Last error: %s", error_message_detail, last_exception)
-                if last_exception:
-                    raise RuntimeError(
-                        f"{error_message_detail} Last error: {last_exception!s}"
-                    ) from last_exception
-                raise RuntimeError(error_message_detail)
-
-        # Fallback, should ideally be unreachable.
-        raise RuntimeError(
-            "Failed to create sketch '{0:s}' after all retries "
-            "(unexpected loop exit).".format(name)
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
         )
+        objects = response_dict.get("objects")
+
+        if (
+            objects
+            and isinstance(objects, list)
+            and len(objects) > 0
+            and isinstance(objects[0], dict)
+            and "id" in objects[0]
+        ):
+            sketch_id = objects[0]["id"]
+            return self.get_sketch(sketch_id)
+
+        # If we reach here, it means get_response_json did not raise an error
+        # but returned an unexpected 'objects' format or it was empty.
+        error_message_detail = (
+            "API for sketch creation returned an unexpected 'objects' "
+            f"format or it was empty. Response: {response_dict!s}"
+        )
+        raise ValueError(error_message_detail)
 
     def create_user(self, username, password):
         """Create a new user.
+
+        This method attempts to create a new user on the Timesketch server.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
 
         Args:
             username (str): Name of the user
@@ -610,24 +572,21 @@ class TimesketchApi:
             True if user created successfully.
 
         Raises:
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
             RuntimeError: If response does not contain an 'objects' key after
-                DEFAULT_RETRY_COUNT attempts.
+                all retries.
         """
+        resource_uri = "users/"
+        form_data = {"username": username, "password": password}
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
+        objects = response_dict.get("objects")
 
-        retry_count = 0
-        objects = None
-        while True:
-            resource_url = "{0:s}/users/".format(self.api_root)
-            form_data = {"username": username, "password": password}
-            response = self.session.post(resource_url, json=form_data)
-            response_dict = error.get_response_json(response, logger)
-            objects = response_dict.get("objects")
-            if objects:
-                break
-            retry_count += 1
-
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError("Unable to create a new user.")
+        if not objects:
+            raise RuntimeError("Unable to create a new user.")
 
         return user.User(user_id=objects[0]["id"], api=self)
 
@@ -693,9 +652,9 @@ class TimesketchApi:
 
         if name:
             data = {"aggregator": name}
-            resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
-            response = self.session.post(resource_url, json=data)
-            response_json = error.get_response_json(response, logger)
+            response_json = self._send_request_with_retry(
+                "POST", resource_uri, json=data
+            )
         else:
             response_json = self.fetch_resource_data(resource_uri)
 
@@ -780,9 +739,8 @@ class TimesketchApi:
         """Create a new SearchIndex.
 
         This method attempts to create a new searchindex on the Timesketch server.
-        It implements a retry mechanism with exponential backoff if the initial
-        request fails due to network issues, API errors, or unexpected
-        response formats.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
 
         Args:
             searchindex_name: Name for the searchindex.
@@ -792,107 +750,38 @@ class TimesketchApi:
             Instance of a SearchIndex object.
 
         Raises:
-            RuntimeError: If the SearchIndex fails to create after all retries,
-                or if the API returns an unexpected response format.
-            requests.exceptions.RequestException: If a connection error persists
-                after all retries.
-            ValueError: If the API response cannot be JSON-decoded after all retries.
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            ValueError: If the API response cannot be JSON-decoded.
         """
-        resource_url = f"{self.api_root}/searchindices/"
+        resource_uri = "searchindices/"
         form_data = {
             "searchindex_name": searchindex_name,
             "es_index_name": opensearch_index_name,
         }
-        last_exception = None
-
-        for attempt in range(self.DEFAULT_RETRY_COUNT):
-            try:
-                response = self.session.post(resource_url, json=form_data)
-                response_dict = error.get_response_json(
-                    response, logger
-                )  # Raises RuntimeError for non-20x, ValueError for JSON decode
-                objects = response_dict.get("objects")
-
-                if (
-                    objects
-                    and isinstance(objects, list)
-                    and len(objects) > 0
-                    and isinstance(objects[0], dict)
-                    and "id" in objects[0]
-                ):
-                    searchindex_id = objects[0]["id"]
-                    return index.SearchIndex(searchindex_id, api=self)
-
-                log_message = (
-                    "API for searchindex creation returned an unexpected 'objects' "
-                    "format or it was empty."
-                )
-                logger.warning(
-                    "[%d/%d] %s Response: %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    log_message,
-                    response_dict,
-                )
-                last_exception = RuntimeError(
-                    "{0:s} Response: {1!s}".format(log_message, response_dict)
-                )
-
-            except RequestException as e:
-                logger.warning(
-                    "[%d/%d] Request error creating searchindex '%s': %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    searchindex_name,
-                    e,
-                )
-                last_exception = e
-            except ValueError as e:  # JSON decoding error
-                logger.warning(
-                    "[%d/%d] JSON error creating searchindex '%s': %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    searchindex_name,
-                    e,
-                )
-                last_exception = e
-            except RuntimeError as e:  # Non-20x status or other API error
-                logger.warning(
-                    "[%d/%d] API error creating searchindex '%s': %s. Retrying...",
-                    attempt + 1,
-                    self.DEFAULT_RETRY_COUNT,
-                    searchindex_name,
-                    e,
-                )
-                last_exception = e
-
-            if attempt < self.DEFAULT_RETRY_COUNT - 1:
-                backoff_time = 0.5 * (2**attempt)  # Exponential backoff
-                logger.info(
-                    "Waiting %.1fs before next attempt to create searchindex '%s'.",
-                    backoff_time,
-                    searchindex_name,
-                )
-                time.sleep(backoff_time)
-            else:
-                # All attempts failed
-                error_message_detail = (
-                    "All {0:d} attempts to create searchindex '{1:s}' failed.".format(
-                        self.DEFAULT_RETRY_COUNT, searchindex_name
-                    )
-                )
-                logger.error("%s Last error: %s", error_message_detail, last_exception)
-                if last_exception:
-                    last_exception = RuntimeError(
-                        f"{0:s} Response: {1!s}".format(log_message, response_dict)
-                    )
-                raise RuntimeError(error_message_detail)
-
-        # Fallback, should ideally be unreachable.
-        raise RuntimeError(
-            "Failed to create searchindex '{0:s}' after all retries "
-            "(unexpected loop exit).".format(searchindex_name)
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
         )
+        objects = response_dict.get("objects")
+
+        if (
+            objects
+            and isinstance(objects, list)
+            and len(objects) > 0
+            and isinstance(objects[0], dict)
+            and "id" in objects[0]
+        ):
+            searchindex_id = objects[0]["id"]
+            return index.SearchIndex(searchindex_id, api=self)
+
+        # If we reach here, it means get_response_json did not raise an error
+        # but returned an unexpected 'objects' format or it was empty.
+        error_message_detail = (
+            "API for searchindex creation returned an unexpected 'objects' "
+            f"format or it was empty. Response: {response_dict!s}"
+        )
+        raise ValueError(error_message_detail)
 
     def check_celery_status(self, job_id=""):
         """Return information about outstanding celery tasks or a specific one.
@@ -988,27 +877,32 @@ class TimesketchApi:
         If no `rule_yaml` is found in the request, the method will fail as this
         is required to parse the rule.
 
+        This method relies on the configured session's retry strategy (VerboseRetry)
+        to handle transient network errors or server-side issues.
+
         Args:
             rule_yaml (str): YAML of the Sigma Rule.
 
         Returns:
             Instance of a Sigma object.
+
+        Raises:
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            RuntimeError: If response does not contain an 'objects' key after
+                all retries.
         """
 
-        retry_count = 0
-        objects = None
-        while True:
-            resource_url = "{0:s}/sigmarules/".format(self.api_root)
-            form_data = {"rule_yaml": rule_yaml}
-            response = self.session.post(resource_url, json=form_data)
-            response_dict = error.get_response_json(response, logger)
-            objects = response_dict.get("objects")
-            if objects:
-                break
-            retry_count += 1
+        resource_uri = "sigmarules/"
+        form_data = {"rule_yaml": rule_yaml}
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
+        objects = response_dict.get("objects")
 
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError("Unable to create a new Sigma Rule.")
+        if not objects:
+            raise RuntimeError("Unable to create a new Sigma Rule.")
 
         rule_uuid = objects[0]["rule_uuid"]
         return self.get_sigmarule(rule_uuid)
@@ -1053,3 +947,55 @@ class TimesketchApi:
             logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
         return sigma_obj  # pytype: disable=name-error  # py310-upgrade
+
+
+class VerboseRetry(Retry):
+    """
+    A custom Retry class that includes the last response body in the
+    MaxRetryError reason.
+    """
+
+    def increment(self, *args, **kwargs):
+        """Increment the retry counter and potentially raise MaxRetryError.
+
+        This method is called by urllib3 before each retry attempt. It's overridden
+        here to add custom logging for 5xx errors and to enhance the final
+        MaxRetryError message with server response details and attempt count.
+        """
+        response = kwargs.get("response")
+        decoded_body = None
+        # Attempt to decode the response body once, if available.
+        # This avoids redundant decoding and handles potential errors gracefully.
+        if response and response.data:
+            try:
+                decoded_body = response.data.decode("utf-8", "ignore")
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.debug("Failed to decode response body: %s", e)
+
+        # Log a warning for each retry attempt that receives a status code
+        # from the configured status_forcelist (e.g., 500, 502, etc.).
+        # This provides real-time feedback on transient server issues.
+        if response and response.status in self.status_forcelist:
+            attempt_num = len(self.history) + 1
+            max_attempts = self.total + len(self.history) + 1
+            logger.warning(
+                "Error %d received (Attempt %d/%d): %s",
+                response.status,
+                attempt_num,
+                max_attempts,
+                decoded_body or "[No response body]",
+            )
+
+        try:
+            # Call the original increment method to handle the core retry logic.
+            return super().increment(*args, **kwargs)
+        except MaxRetryError as e:
+            # When MaxRetryError is raised, enhance its message with more context.
+            # This includes the number of attempts and the server's last response.
+            reason_str = str(e.reason)
+            new_reason = f"{reason_str} | Attempts: {len(self.history)}"
+            if decoded_body:
+                new_reason += f" | Server Response: {decoded_body}"
+
+            # Re-raise the MaxRetryError with the enriched reason.
+            raise MaxRetryError(e.pool, e.url, reason=new_reason) from e
