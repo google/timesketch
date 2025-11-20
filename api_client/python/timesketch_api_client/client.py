@@ -137,8 +137,8 @@ class TimesketchApi:
 
         try:
             self._session = self._create_session(
-                username,
-                password,
+                username=username,
+                password=password,
                 verify=verify,
                 client_id=client_id,
                 client_secret=client_secret,
