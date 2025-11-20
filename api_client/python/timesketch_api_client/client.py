@@ -82,6 +82,7 @@ class TimesketchApi:
     # A value of 4 means 1 initial attempt + 4 retries = 5 total attempts.
     DEFAULT_RETRY_COUNT = 4
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         host_uri,
