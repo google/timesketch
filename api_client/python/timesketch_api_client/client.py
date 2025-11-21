@@ -460,7 +460,7 @@ class TimesketchApi:
                     attempt + 1,
                     retry_count + 1,
                 )
-                time.sleep(backoff_factor**attempt)
+                time.sleep(backoff_factor * (2**attempt))
 
             except ValueError as e:
                 last_exception = e
@@ -471,7 +471,7 @@ class TimesketchApi:
                     attempt + 1,
                     retry_count + 1,
                 )
-                time.sleep(backoff_factor**attempt)
+                time.sleep(backoff_factor * (2**attempt))
                 continue
 
         if last_exception:
