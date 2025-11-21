@@ -24,3 +24,4 @@ from . import data_finder_test
 from . import query_test
 from . import upload_test
 from . import tsctl_test
+from . import event_test
