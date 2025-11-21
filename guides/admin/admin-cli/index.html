@@ -1361,6 +1361,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#delete-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete-group
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#list-group-members" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3206,6 +3217,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#delete-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete-group
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#list-group-members" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3749,6 +3771,18 @@ incident-responders: jane
 *   <code>GROUP_NAME</code>: The name for the new group.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="language-shell">tsctl create-group analysts
+</code></pre>
+<h4 id="delete-group"><code>delete-group</code></h4>
+<p>Deletes a group from the database. If the group is associated with any sketches, a warning message will be displayed, and the deletion will be aborted unless the <code>--force</code> flag is used.</p>
+<p><strong>Arguments:</strong>
+*   <code>GROUP_NAME</code>: The name of the group to delete.</p>
+<p><strong>Options:</strong>
+*   <code>--force</code>: Force deletes the group even if it's used in sketches.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-shell">tsctl delete-group analysts
+</code></pre>
+<p><strong>Example (force delete):</strong></p>
+<pre><code class="language-shell">tsctl delete-group my-shared-group --force
 </code></pre>
 <h4 id="list-group-members"><code>list-group-members</code></h4>
 <p>Lists all members of a group.</p>
