@@ -21,6 +21,7 @@ import zipfile
 import os
 
 from timesketch_api_client import search
+from timesketch_api_client.error import NotFoundError
 
 
 from . import interface
@@ -288,13 +289,13 @@ level: high
 
         sketches = list(self.api.list_sketches())
         self.assertions.assertEqual(len(sketches), number_of_sketches)
-        with self.assertions.assertRaises(RuntimeError):
+        with self.assertions.assertRaises(NotFoundError):
             print(
                 "Expted that this sketch is not found - "
-                "so API error (RuntimeError) for request is expected"
+                "so API error (NotFoundError) for request is expected"
             )
             self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
-            print("End of expected RuntimeError")
+            print("End of expected NotFoundError")
         self.assertions.assertEqual(
             len(sketches),
             number_of_sketches,
@@ -310,9 +311,9 @@ level: high
         try:
             # attempt to pull sketch it is expected that this will cause
             # some 404 in the stdout
-            with self.assertions.assertRaises(RuntimeError):
+            with self.assertions.assertRaises(NotFoundError):
                 # The .name attribute access will trigger the API call
-                # that then fails with 404 and raises RuntimeError.
+                # that then fails with 404 and raises NotFoundError.
                 self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
         finally:
             # Restore the original logging level regardless of test outcome

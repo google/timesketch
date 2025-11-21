@@ -68,12 +68,23 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         if self.server_url:
             os.environ["SEC_GEMINI_LOGS_PROCESSOR_API_URL"] = self.server_url
 
+        self.base_url = self.config.get("base_url")
+        self.wss_url = self.config.get("wss_url")
+        self.agents_config = self.config.get("agents_config", {})
+
         try:
-            self.sg_client = SecGemini(api_key=self.api_key)
+            if self.base_url and self.wss_url:
+                self.sg_client = SecGemini(
+                    base_url=self.base_url,
+                    base_websockets_url=self.wss_url,
+                    api_key=self.api_key,
+                )
+            else:
+                self.sg_client = SecGemini(api_key=self.api_key)
         except Exception as e:
             raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
 
-        self.model = self.config.get("model", "sec-gemini-experimental")
+        self.model = self.config.get("model", "logs_analysis_agent-1.1")
         self.custom_fields_mapping = {
             "id": "_id",
             "enrichment": "tag",
@@ -102,7 +113,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             str: The content chunks of the streamed response from the agent.
         """
         self._session = self.sg_client.create_session(
-            model=self.model, enable_logging=self.enable_logging
+            model=self.model,
+            enable_logging=self.enable_logging,
+            agents_config=self.agents_config,
         )
         self.session_id = self._session.id
         # TODO: Could we check if the API key has logging enabled and if not ERR
@@ -172,10 +185,17 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
                 if (
                     response.message_type == MessageType.RESULT
-                    and response.actor == "summarization_agent"
+                    and response.actor == "chat_summarization_agent"
                 ):
-                    content_chunk = response.content
-                    yield content_chunk
+                    content = response.content
+                    json_str = None
+                    if "```json" in content:
+                        json_str = content.split("```json")[1].split("```")[0].strip()
+
+                    if json_str:
+                        yield json_str
+                        # force termination to avoid back2back runs
+                        break
         finally:
             if debug_log_file:
                 debug_log_file.close()
