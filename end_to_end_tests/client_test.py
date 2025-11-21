@@ -474,7 +474,7 @@ level: high
 
         # Verify the sketch is no longer found after hard delete
         with self.assertions.assertRaises(RuntimeError):
-            self.api.get_sketch(sketch_id).name
+            self.api.get_sketch(sketch_id)
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
