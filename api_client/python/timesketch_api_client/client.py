@@ -442,9 +442,11 @@ class TimesketchApi:
             RuntimeError: If the response is falsy after all retries.
         """
         resource_url = f"{self.api_root}/{resource_uri}"
+        retry_count = getattr(self, "_retry_count", self.DEFAULT_RETRY_COUNT)
+        backoff_factor = getattr(self, "_backoff_factor", 0.5)
 
         last_exception = None
-        for attempt in range(self._retry_count + 1):
+        for attempt in range(retry_count + 1):
             try:
                 response = self.session.request(method, resource_url, **kwargs)
                 result = error.get_response_json(response, logger)
@@ -456,9 +458,9 @@ class TimesketchApi:
                     method.upper(),
                     resource_url,
                     attempt + 1,
-                    self._retry_count + 1,
+                    retry_count + 1,
                 )
-                time.sleep(self._backoff_factor * (2**attempt))
+                time.sleep(backoff_factor**attempt)
 
             except ValueError as e:
                 last_exception = e
@@ -467,9 +469,9 @@ class TimesketchApi:
                     method.upper(),
                     resource_url,
                     attempt + 1,
-                    self._retry_count + 1,
+                    retry_count + 1,
                 )
-                time.sleep(self._backoff_factor * (2**attempt))
+                time.sleep(backoff_factor**attempt)
                 continue
 
         if last_exception:
