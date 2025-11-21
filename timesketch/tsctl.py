@@ -536,12 +536,42 @@ def create_group(group_name):
 
 @cli.command(name="delete-group")
 @click.argument("group_name")
-def delete_group(group_name: str):
-    """Delete a group."""
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force delete even if group is used in sketches.",
+)
+def delete_group(group_name: str, force: bool):
+    """Deletes a group from the database.
+
+    If the group is associated with any sketches, a warning message will be displayed,
+    and the deletion will be aborted unless the '--force' flag is used.
+
+    Args:
+        group_name (str): The name of the group to delete.
+        force (bool): If True, force deletes the group even if it's used in sketches.
+    """
     group = Group.query.filter_by(name=group_name).first()
     if not group:
         print("No such group.")
         return
+
+    # Check if group is used in any sketches
+    sketches = (
+        Sketch.query.join(Sketch.AccessControlEntry)
+        .filter(Sketch.AccessControlEntry.group_id == group.id)
+        .all()
+    )
+
+    if sketches:
+        print(f"Group '{group_name}' is used in the following sketches:")
+        for sketch in sketches:
+            print(f"  - {sketch.id}: {sketch.name}")
+
+        if not force:
+            print("\nError: Cannot delete group because it is used in sketches.")
+            print("Use --force to delete the group.")
+            return
 
     if click.confirm(f"Are you sure you want to delete the group {group_name}?"):
         db_session.delete(group)
