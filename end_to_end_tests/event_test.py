@@ -139,7 +139,7 @@ class EventTest(interface.BaseEndToEndTest):
 
         # 2. Get an event to annotate.
         search_client = search.Search(sketch)
-        search_client.query_string = 'source_short:"LOG"'
+        search_client.query_string = "zmap"
         search_response = json.loads(search_client.json)
         self.assertions.assertGreater(
             len(search_response["objects"]), 0, "No events found to annotate"
@@ -151,13 +151,22 @@ class EventTest(interface.BaseEndToEndTest):
         # 3. Add a comment and a label.
         comment_text = "This is a test comment."
         label_text = "test_label"
-        sketch.add_comment_to_event(event_id, index_id, comment_text)
-        sketch.add_label_to_event(event_id, index_id, label_text)
+        sketch.comment_event(event_id, index_id, comment_text)
+
+        events_to_label = [
+            {"_id": event_id, "_index": index_id, "_type": "generic_event"}
+        ]
+        sketch.label_events(events_to_label, label_text)
 
         # 4. Retrieve the event again to verify the annotations.
         # A short delay might be needed for the changes to be indexed.
-        time.sleep(2)
-        annotated_event_data = sketch.get_event(event_id, index_id)
+        annotated_event_data = None
+        for _ in range(20):
+            time.sleep(1)
+            annotated_event_data = sketch.get_event(event_id, index_id)
+            labels = annotated_event_data.get("objects", {}).get("label", [])
+            if label_text in labels:
+                break
 
         # Verify the comment
         comments = annotated_event_data.get("meta", {}).get("comments", [])
@@ -183,7 +192,7 @@ class EventTest(interface.BaseEndToEndTest):
 
         # 2. Get an event to annotate.
         search_client = search.Search(sketch)
-        search_client.query_string = 'source_short:"LOG"'
+        search_client.query_string = "*"
         search_response = json.loads(search_client.json)
         self.assertions.assertGreater(
             len(search_response["objects"]), 0, "No events found to annotate"
@@ -191,26 +200,36 @@ class EventTest(interface.BaseEndToEndTest):
         event_to_annotate = search_response["objects"][0]
         event_id = event_to_annotate["_id"]
         index_id = event_to_annotate["_index"]
+        event_type = event_to_annotate.get("_type", "generic_event")
         label_to_toggle = "__ts_star"
 
         # 3. Add the label.
-        sketch.add_label_to_event(event_id, index_id, label_to_toggle)
+        events_to_label = [{"_id": event_id, "_index": index_id, "_type": event_type}]
+        sketch.label_events(events_to_label, label_to_toggle)
 
         # 4. Verify the label was added.
-        time.sleep(2)  # Allow for indexing.
-        event_after_add = sketch.get_event(event_id, index_id)
-        labels_after_add = event_after_add.get("objects", {}).get("label", [])
+        for _ in range(20):
+            time.sleep(1)
+            event_after_add = sketch.get_event(event_id, index_id)
+            labels_after_add = event_after_add.get("objects", {}).get("label", [])
+            if label_to_toggle in labels_after_add:
+                break
+
         self.assertions.assertIn(
             label_to_toggle, labels_after_add, "The star label was not added."
         )
 
         # 5. Remove the label.
-        sketch.add_label_to_event(event_id, index_id, label_to_toggle, remove=True)
+        sketch.label_events(events_to_label, label_to_toggle, remove=True)
 
         # 6. Verify the label was removed.
-        time.sleep(2)  # Allow for indexing.
-        event_after_remove = sketch.get_event(event_id, index_id)
-        labels_after_remove = event_after_remove.get("objects", {}).get("label", [])
+        for _ in range(20):
+            time.sleep(1)
+            event_after_remove = sketch.get_event(event_id, index_id)
+            labels_after_remove = event_after_remove.get("objects", {}).get("label", [])
+            if label_to_toggle not in labels_after_remove:
+                break
+
         self.assertions.assertNotIn(
             label_to_toggle,
             labels_after_remove,
