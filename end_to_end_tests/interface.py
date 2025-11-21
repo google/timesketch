@@ -66,6 +66,7 @@ class BaseEndToEndTest(object):
         self.assertions = unittest.TestCase()
         self._counter = collections.Counter()
         self._imported_files = []
+        self._imported_sketch_timelines = set()
 
     def import_timeline(self, filename, index_name=None, sketch=None):
         """Import a Plaso, CSV or JSONL file.
@@ -81,8 +82,10 @@ class BaseEndToEndTest(object):
         """
         if not sketch:
             sketch = self.sketch
-        if filename in self._imported_files:
+
+        if (sketch.id, filename) in self._imported_sketch_timelines:
             return
+
         file_path = os.path.join(TEST_DATA_DIR, filename)
         if not index_name:
             index_name = uuid.uuid4().hex
@@ -147,6 +150,7 @@ class BaseEndToEndTest(object):
         # Adding in one more sleep for good measure (preventing flaky tests).
         time.sleep(sleep_time_seconds)
 
+        self._imported_sketch_timelines.add((sketch.id, filename))
         self._imported_files.append(filename)
 
     def import_directly_to_opensearch(self, filename, index_name):
