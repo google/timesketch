@@ -192,22 +192,31 @@ class EventTest(interface.BaseEndToEndTest):
                     found_label = True
                     break
 
-        if not found_label:
-            print(
-                f"DEBUG (Label Annotation Failure): Sketch ID: {sketch.id}, Name: {sketch.name}"
-            )
-            print(
-                f"DEBUG (Label Annotation Failure): Event ID: {event_id}, Index ID: {index_id}"
-            )
-            print(f"DEBUG (Label Annotation Failure): Expected label: {label_text}")
-            print(
-                f"DEBUG (Label Annotation Failure): Labels found in OpenSearch: {search_result_labels}"
-            )
+                if not found_label:
+                    print(
+                        f"DEBUG (Label Annotation Failure): Sketch ID: {sketch.id}, "
+                        f"Name: {sketch.name}"
+                    )
 
-        self.assertions.assertTrue(
-            found_label,
-            f"The test label '{label_text}' was not found on event {event_id} in sketch {sketch.id} via search. Found labels: {search_result_labels}",
-        )
+                    print(
+                        f"DEBUG (Label Annotation Failure): Event ID: {event_id}, "
+                        f"Index ID: {index_id}"
+                    )
+
+                    print(
+                        f"DEBUG (Label Annotation Failure): Expected label: {label_text}"
+                    )
+
+                    print(
+                        "DEBUG (Label Annotation Failure): Labels found in OpenSearch: "
+                        f"{search_result_labels}"
+                    )
+
+                self.assertions.assertTrue(
+                    found_label,
+                    f"The test label '{label_text}' was not found on event {event_id} "
+                    f"in sketch {sketch.id} via search. Found labels: {search_result_labels}",
+                )
 
     def test_toggle_event_label(self):
         """Test toggling a label on an event."""
@@ -257,20 +266,24 @@ class EventTest(interface.BaseEndToEndTest):
 
         if not found_label_add:
             print(
-                f"DEBUG (Add Label Failure): Sketch ID: {sketch.id}, Name: {sketch.name}"
+                f"DEBUG (Add Label Failure): Sketch ID: {sketch.id}, "
+                f"Name: {sketch.name}"
             )
             print(
-                f"DEBUG (Add Label Failure): Event ID: {event_id}, Index ID: {index_id}"
+                f"DEBUG (Add Label Failure): Event ID: {event_id}, "
+                f"Index ID: {index_id}"
             )
             print(
                 f"DEBUG (Add Label Failure): Expected label to add: {label_to_toggle}"
             )
             print(
-                f"DEBUG (Add Label Failure): Labels found in OpenSearch after add: {labels_after_add}"
+                "DEBUG (Add Label Failure): Labels found in OpenSearch after add: "
+                f"{labels_after_add}"
             )
         self.assertions.assertTrue(
             found_label_add,
-            f"The star label '{label_to_toggle}' was not added to event {event_id} in sketch {sketch.id}. Found labels: {labels_after_add}",
+            f"The star label '{label_to_toggle}' was not added to event {event_id} "
+            f"in sketch {sketch.id}. Found labels: {labels_after_add}",
         )
 
         # 5. Remove the label.
@@ -296,20 +309,27 @@ class EventTest(interface.BaseEndToEndTest):
 
         if not label_removed:
             print(
-                f"DEBUG (Remove Label Failure): Sketch ID: {sketch.id}, Name: {sketch.name}"
+                f"DEBUG (Remove Label Failure): Sketch ID: {sketch.id}, "
+                f"Name: {sketch.name}"
             )
             print(
-                f"DEBUG (Remove Label Failure): Event ID: {event_id}, Index ID: {index_id}"
+                f"DEBUG (Remove Label Failure): Event ID: {event_id}, "
+                f"Index ID: {index_id}"
             )
             print(
-                f"DEBUG (Remove Label Failure): Expected label to be removed: {label_to_toggle}"
+                f"DEBUG (Remove Label Failure): Expected label to be removed: "
+                f"{label_to_toggle}"
             )
             print(
-                f"DEBUG (Remove Label Failure): Labels found in OpenSearch after remove: {labels_after_remove}"
+                "DEBUG (Remove Label Failure): Labels found in OpenSearch after remove: "
+                f"{labels_after_remove}"
             )
         self.assertions.assertTrue(
             label_removed,
-            f"The star label '{label_to_toggle}' was not removed from event {event_id} in sketch {sketch.id}. Found labels: {labels_after_remove}",
+            (
+                f"The star label '{label_to_toggle}' was not removed from event {event_id} "
+                f"in sketch {sketch.id}. Found labels: {labels_after_remove}"
+            ),
         )
 
 
