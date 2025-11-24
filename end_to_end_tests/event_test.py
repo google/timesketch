@@ -221,7 +221,8 @@ class EventTest(interface.BaseEndToEndTest):
             found_label,
             (
                 f"The test label '{label_text}' was not found on event {event_id} "
-                f"in sketch {sketch.id} via search. Found labels: {search_result_labels}"
+                f"in sketch {sketch.id} via search. Found labels: "
+                f"{search_result_labels}"
             ),
         )
 
@@ -346,8 +347,8 @@ class EventTest(interface.BaseEndToEndTest):
                     )
 
                     print(
-                        "DEBUG (Remove Label Failure): Labels found in OpenSearch after remove: "
-                        f"{labels_after_remove}"
+                        "DEBUG (Remove Label Failure): Labels found in OpenSearch after "
+                        f"remove: {labels_after_remove}"
                     )
 
                     if search_result["objects"]:
@@ -360,7 +361,8 @@ class EventTest(interface.BaseEndToEndTest):
             label_removed,
             (
                 f"The star label '{label_to_toggle}' was not removed from event {event_id} "
-                f"in sketch {sketch.id}. Found labels: {labels_after_remove}"
+                f"in sketch {sketch.id}. Found labels: "
+                f"{labels_after_remove}"
             ),
         )
 
