@@ -66,7 +66,7 @@ class ExportListResource(resources.ResourceMixin, Resource):
         Handler for /api/v1/sketches/:sketch_id/export/
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id (int): Integer primary key for a sketch database model.
 
         Returns:
             Streamed response of events in JSONL format.
