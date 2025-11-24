@@ -158,6 +158,7 @@ class EventTest(interface.BaseEndToEndTest):
             {"_id": event_id, "_index": index_id, "_type": "generic_event"}
         ]
         sketch.label_events(events_to_label, label_text)
+        time.sleep(2)  # Added sleep
 
         # 4. Retrieve the event again to verify the annotations.
         # A short delay might be needed for the changes to be indexed.
@@ -185,13 +186,18 @@ class EventTest(interface.BaseEndToEndTest):
 
             if search_result["objects"]:
                 event_data = search_result["objects"][0]
-                timesketch_labels = event_data.get("timesketch_label", [])
-                search_result_labels = [l.get("name") for l in timesketch_labels]
+                source_data = event_data.get("_source", event_data)
+
+                ts_labels = source_data.get("timesketch_label", [])
+                search_result_labels = [l.get("name") for l in ts_labels]
+                search_result_labels.extend(source_data.get("label", []))
+
                 if label_text in search_result_labels:
                     found_label = True
                     break
 
         if not found_label:
+            print(f"DEBUG search_result: {search_result}")
             print(
                 f"DEBUG (Label Annotation Failure): Sketch ID: {sketch.id}, "
                 f"Name: {sketch.name}"
@@ -288,6 +294,12 @@ class EventTest(interface.BaseEndToEndTest):
         response = sketch.label_events(events_to_label, label_to_toggle)
 
         print(f"DEBUG: label_events response (add): {response}")
+
+        self.assertions.assertEqual(
+            response.get("meta", {}).get("events_modified", 0),
+            1,
+            f"Failed to modify event when adding star label. Response: {response}",
+        )
 
         # 4. Verify the label was added.
         labels_after_add = []
