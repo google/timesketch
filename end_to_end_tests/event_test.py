@@ -14,6 +14,7 @@
 """End to end tests of Timesketch event functionality."""
 
 import json
+import random
 import time
 
 from timesketch_api_client import search
@@ -129,9 +130,9 @@ class EventTest(interface.BaseEndToEndTest):
 
     def test_annotate_event(self):
         """Test annotating an event with a comment and a label."""
-        sketch = self.api.create_sketch(
-            name="test_annotate_event", description="A sketch for annotation testing"
-        )
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(name=f"test_annotate_event_{rand}")
+        self.sketch = sketch
 
         # 1. Import a timeline with a known event.
         self.import_timeline("sigma_events.csv", sketch=sketch)
@@ -161,22 +162,51 @@ class EventTest(interface.BaseEndToEndTest):
         # 4. Retrieve the event again to verify the annotations.
         # A short delay might be needed for the changes to be indexed.
         annotated_event_data = None
+        # Verify comments (from SQL via get_event)
         for _ in range(20):
             time.sleep(1)
             annotated_event_data = sketch.get_event(event_id, index_id)
-            labels = annotated_event_data.get("objects", {}).get("label", [])
-            if label_text in labels:
+            comments = annotated_event_data.get("meta", {}).get("comments", [])
+            if len(comments) > 0 and comments[0]["comment"] == comment_text:
                 break
 
-        # Verify the comment
-        comments = annotated_event_data.get("meta", {}).get("comments", [])
         self.assertions.assertEqual(len(comments), 1)
         self.assertions.assertEqual(comments[0]["comment"], comment_text)
 
-        # Verify the label
-        labels = annotated_event_data.get("objects", {}).get("label", [])
-        self.assertions.assertIn(
-            label_text, labels, "The test label was not found on the event."
+        # Verify the label (from OpenSearch via Search, as get_event excludes it)
+        found_label = False
+        search_result_labels = []
+        for _ in range(20):
+            time.sleep(1)
+            search_obj = search.Search(sketch)
+            search_obj.query_string = f'_id:"{event_id}"'
+            # We need to ensure we return the timesketch_label field
+            search_obj.return_fields = "timesketch_label"
+            search_result = json.loads(search_obj.json)
+
+            if search_result["objects"]:
+                event_data = search_result["objects"][0]
+                timesketch_labels = event_data.get("timesketch_label", [])
+                search_result_labels = [l.get("name") for l in timesketch_labels]
+                if label_text in search_result_labels:
+                    found_label = True
+                    break
+
+        if not found_label:
+            print(
+                f"DEBUG (Label Annotation Failure): Sketch ID: {sketch.id}, Name: {sketch.name}"
+            )
+            print(
+                f"DEBUG (Label Annotation Failure): Event ID: {event_id}, Index ID: {index_id}"
+            )
+            print(f"DEBUG (Label Annotation Failure): Expected label: {label_text}")
+            print(
+                f"DEBUG (Label Annotation Failure): Labels found in OpenSearch: {search_result_labels}"
+            )
+
+        self.assertions.assertTrue(
+            found_label,
+            f"The test label '{label_text}' was not found on event {event_id} in sketch {sketch.id} via search. Found labels: {search_result_labels}",
         )
 
     def test_toggle_event_label(self):
@@ -208,32 +238,78 @@ class EventTest(interface.BaseEndToEndTest):
         sketch.label_events(events_to_label, label_to_toggle)
 
         # 4. Verify the label was added.
+        labels_after_add = []
+        found_label_add = False
         for _ in range(20):
             time.sleep(1)
-            event_after_add = sketch.get_event(event_id, index_id)
-            labels_after_add = event_after_add.get("objects", {}).get("label", [])
-            if label_to_toggle in labels_after_add:
-                break
+            search_obj = search.Search(sketch)
+            search_obj.query_string = f'_id:"{event_id}"'
+            search_obj.return_fields = "timesketch_label"
+            search_result = json.loads(search_obj.json)
 
-        self.assertions.assertIn(
-            label_to_toggle, labels_after_add, "The star label was not added."
+            if search_result["objects"]:
+                event_data = search_result["objects"][0]
+                timesketch_labels = event_data.get("timesketch_label", [])
+                labels_after_add = [l.get("name") for l in timesketch_labels]
+                if label_to_toggle in labels_after_add:
+                    found_label_add = True
+                    break
+
+        if not found_label_add:
+            print(
+                f"DEBUG (Add Label Failure): Sketch ID: {sketch.id}, Name: {sketch.name}"
+            )
+            print(
+                f"DEBUG (Add Label Failure): Event ID: {event_id}, Index ID: {index_id}"
+            )
+            print(
+                f"DEBUG (Add Label Failure): Expected label to add: {label_to_toggle}"
+            )
+            print(
+                f"DEBUG (Add Label Failure): Labels found in OpenSearch after add: {labels_after_add}"
+            )
+        self.assertions.assertTrue(
+            found_label_add,
+            f"The star label '{label_to_toggle}' was not added to event {event_id} in sketch {sketch.id}. Found labels: {labels_after_add}",
         )
 
         # 5. Remove the label.
         sketch.label_events(events_to_label, label_to_toggle, remove=True)
 
         # 6. Verify the label was removed.
+        labels_after_remove = []
+        label_removed = False
         for _ in range(20):
             time.sleep(1)
-            event_after_remove = sketch.get_event(event_id, index_id)
-            labels_after_remove = event_after_remove.get("objects", {}).get("label", [])
-            if label_to_toggle not in labels_after_remove:
-                break
+            search_obj = search.Search(sketch)
+            search_obj.query_string = f'_id:"{event_id}"'
+            search_obj.return_fields = "timesketch_label"
+            search_result = json.loads(search_obj.json)
 
-        self.assertions.assertNotIn(
-            label_to_toggle,
-            labels_after_remove,
-            "The star label was not removed.",
+            if search_result["objects"]:
+                event_data = search_result["objects"][0]
+                timesketch_labels = event_data.get("timesketch_label", [])
+                labels_after_remove = [l.get("name") for l in timesketch_labels]
+                if label_to_toggle not in labels_after_remove:
+                    label_removed = True
+                    break
+
+        if not label_removed:
+            print(
+                f"DEBUG (Remove Label Failure): Sketch ID: {sketch.id}, Name: {sketch.name}"
+            )
+            print(
+                f"DEBUG (Remove Label Failure): Event ID: {event_id}, Index ID: {index_id}"
+            )
+            print(
+                f"DEBUG (Remove Label Failure): Expected label to be removed: {label_to_toggle}"
+            )
+            print(
+                f"DEBUG (Remove Label Failure): Labels found in OpenSearch after remove: {labels_after_remove}"
+            )
+        self.assertions.assertTrue(
+            label_removed,
+            f"The star label '{label_to_toggle}' was not removed from event {event_id} in sketch {sketch.id}. Found labels: {labels_after_remove}",
         )
 
 
