@@ -180,8 +180,7 @@ class EventTest(interface.BaseEndToEndTest):
             time.sleep(1)
             search_obj = search.Search(sketch)
             search_obj.query_string = f'_id:"{event_id}"'
-            # We need to ensure we return the timesketch_label field
-            search_obj.return_fields = "timesketch_label"
+            # Return all fields to be sure
             search_result = json.loads(search_obj.json)
 
             if search_result["objects"]:
@@ -192,31 +191,27 @@ class EventTest(interface.BaseEndToEndTest):
                     found_label = True
                     break
 
-                if not found_label:
-                    print(
-                        f"DEBUG (Label Annotation Failure): Sketch ID: {sketch.id}, "
-                        f"Name: {sketch.name}"
-                    )
-
-                    print(
-                        f"DEBUG (Label Annotation Failure): Event ID: {event_id}, "
-                        f"Index ID: {index_id}"
-                    )
-
-                    print(
-                        f"DEBUG (Label Annotation Failure): Expected label: {label_text}"
-                    )
-
-                    print(
-                        "DEBUG (Label Annotation Failure): Labels found in OpenSearch: "
-                        f"{search_result_labels}"
-                    )
-
-                self.assertions.assertTrue(
-                    found_label,
-                    f"The test label '{label_text}' was not found on event {event_id} "
-                    f"in sketch {sketch.id} via search. Found labels: {search_result_labels}",
+        if not found_label:
+            print(
+                f"DEBUG (Label Annotation Failure): Sketch ID: {sketch.id}, Name: {sketch.name}"
+            )
+            print(
+                f"DEBUG (Label Annotation Failure): Event ID: {event_id}, Index ID: {index_id}"
+            )
+            print(f"DEBUG (Label Annotation Failure): Expected label: {label_text}")
+            print(
+                f"DEBUG (Label Annotation Failure): Labels found in OpenSearch: {search_result_labels}"
+            )
+            if search_result["objects"]:
+                print(
+                    f"DEBUG (Label Annotation Failure): Full Event Data: {json.dumps(search_result['objects'][0], default=str)}"
                 )
+
+        self.assertions.assertTrue(
+            found_label,
+            f"The test label '{label_text}' was not found on event {event_id} "
+            f"in sketch {sketch.id} via search. Found labels: {search_result_labels}",
+        )
 
     def test_toggle_event_label(self):
         """Test toggling a label on an event."""
@@ -242,9 +237,47 @@ class EventTest(interface.BaseEndToEndTest):
         event_type = event_to_annotate.get("_type", "generic_event")
         label_to_toggle = "__ts_star"
 
-        # 3. Add the label.
+        # 3. Add a normal label first (Debug Step)
+
         events_to_label = [{"_id": event_id, "_index": index_id, "_type": event_type}]
-        sketch.label_events(events_to_label, label_to_toggle)
+
+        normal_label = "debug_normal_label"
+
+        sketch.label_events(events_to_label, normal_label)
+
+        found_normal = False
+
+        for _ in range(20):
+            time.sleep(1)
+
+            search_obj = search.Search(sketch)
+
+            search_obj.query_string = f'_id:"{event_id}"'
+
+            search_result = json.loads(search_obj.json)
+
+            if search_result["objects"]:
+                event_data = search_result["objects"][0]
+
+                timesketch_labels = event_data.get("timesketch_label", [])
+
+                search_result_labels = [l.get("name") for l in timesketch_labels]
+
+                if normal_label in search_result_labels:
+                    found_normal = True
+
+                    break
+
+        self.assertions.assertTrue(
+            found_normal,
+            f"Debug: Normal label '{normal_label}' could not be added to event {event_id}.",
+        )
+
+        # 3b. Add the star label.
+
+        response = sketch.label_events(events_to_label, label_to_toggle)
+
+        print(f"DEBUG: label_events response (add): {response}")
 
         # 4. Verify the label was added.
         labels_after_add = []
@@ -253,7 +286,6 @@ class EventTest(interface.BaseEndToEndTest):
             time.sleep(1)
             search_obj = search.Search(sketch)
             search_obj.query_string = f'_id:"{event_id}"'
-            search_obj.return_fields = "timesketch_label"
             search_result = json.loads(search_obj.json)
 
             if search_result["objects"]:
@@ -280,6 +312,11 @@ class EventTest(interface.BaseEndToEndTest):
                 "DEBUG (Add Label Failure): Labels found in OpenSearch after add: "
                 f"{labels_after_add}"
             )
+            if search_result["objects"]:
+                print(
+                    f"DEBUG (Add Label Failure): Full Event Data: {json.dumps(search_result['objects'][0], default=str)}"
+                )
+
         self.assertions.assertTrue(
             found_label_add,
             f"The star label '{label_to_toggle}' was not added to event {event_id} "
@@ -296,7 +333,6 @@ class EventTest(interface.BaseEndToEndTest):
             time.sleep(1)
             search_obj = search.Search(sketch)
             search_obj.query_string = f'_id:"{event_id}"'
-            search_obj.return_fields = "timesketch_label"
             search_result = json.loads(search_obj.json)
 
             if search_result["objects"]:
@@ -324,6 +360,11 @@ class EventTest(interface.BaseEndToEndTest):
                 "DEBUG (Remove Label Failure): Labels found in OpenSearch after remove: "
                 f"{labels_after_remove}"
             )
+            if search_result["objects"]:
+                print(
+                    f"DEBUG (Remove Label Failure): Full Event Data: {json.dumps(search_result['objects'][0], default=str)}"
+                )
+
         self.assertions.assertTrue(
             label_removed,
             (
