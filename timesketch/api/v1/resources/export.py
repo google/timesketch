@@ -26,7 +26,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
+from timesketch.lib import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
@@ -43,7 +43,7 @@ class ExportListResource(resources.ResourceMixin, Resource):
     """Resource to export all events for a sketch."""
 
     @property
-    def datastore(self) -> OpenSearchDataStore:
+    def datastore(self):
         """Property to get an instance of the datastore backend.
 
         We override the default datastore property to ensure we have a
@@ -53,6 +53,7 @@ class ExportListResource(resources.ResourceMixin, Resource):
         Returns:
             Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
+        # Default to 60 connections to align with the LLM Log Analyzer implementation
         pool_maxsize = current_app.config.get(
             "OPENSEARCH_SLICED_EXPORT_POOL_MAXSIZE", 60
         )
@@ -93,7 +94,7 @@ class ExportListResource(resources.ResourceMixin, Resource):
             )
 
         query_dsl = form.dsl.data
-        query_filter = request.json.get("filter", {})
+        query_filter = request.json.get("filter") or {}
         return_field_string = form.fields.data
 
         # Resolve return fields
