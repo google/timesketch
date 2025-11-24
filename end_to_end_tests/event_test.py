@@ -331,26 +331,6 @@ class EventTest(interface.BaseEndToEndTest):
                     break
 
                 if not label_removed:
-                    print(
-                        f"DEBUG (Remove Label Failure): Sketch ID: {sketch.id}, "
-                        f"Name: {sketch.name}"
-                    )
-
-                    print(
-                        f"DEBUG (Remove Label Failure): Event ID: {event_id}, "
-                        f"Index ID: {index_id}"
-                    )
-
-                    print(
-                        f"DEBUG (Remove Label Failure): Expected label to be removed: "
-                        f"{label_to_toggle}"
-                    )
-
-                    print(
-                        "DEBUG (Remove Label Failure): Labels found in OpenSearch after "
-                        f"remove: {labels_after_remove}"
-                    )
-
                     if search_result["objects"]:
                         print(
                             f"DEBUG (Remove Label Failure): Full Event Data: "
@@ -360,7 +340,7 @@ class EventTest(interface.BaseEndToEndTest):
         self.assertions.assertTrue(
             label_removed,
             (
-                f"The star label '{label_to_toggle}' was not removed from event {event_id} "
+                f"star '{label_to_toggle}' was not removed from event {event_id} "
                 f"in sketch {sketch.id}. Found labels: "
                 f"{labels_after_remove}"
             ),
