@@ -308,7 +308,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         else:
             logger.warning(
-                "Sketch ID [%s]: No values or encoding found for chart [%s] with title [%s]. "
+                "Sketch ID [%s]: No values or encoding found "
+                "for chart [%s] with title [%s]. "
                 "Skipping chart export.",
                 sketch.id,
                 "hbarchart",
