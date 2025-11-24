@@ -1982,7 +1982,7 @@ class Sketch(resource.BaseResource):
         query_string=None,
         query_dsl=None,
         query_filter=None,
-        return_fields=["datetime", "message", "timestamp_desc"],
+        return_fields=None,
     ):
         """Exports all events from the sketch matching the query.
 
@@ -1997,6 +1997,9 @@ class Sketch(resource.BaseResource):
         Yields:
             dict: A dictionary representing an event.
         """
+        if return_fields is None:
+            return_fields = ["datetime", "message", "timestamp_desc"]
+
         resource_url = "{0:s}/sketches/{1:d}/export/".format(self.api.api_root, self.id)
 
         if not (query_string or query_filter or query_dsl):
