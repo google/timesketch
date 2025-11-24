@@ -1982,7 +1982,7 @@ class Sketch(resource.BaseResource):
         query_string=None,
         query_dsl=None,
         query_filter=None,
-        return_fields=["datetime","message","timestamp_desc"],
+        return_fields=["datetime", "message", "timestamp_desc"],
     ):
         """Exports all events from the sketch matching the query.
 
@@ -1997,12 +1997,10 @@ class Sketch(resource.BaseResource):
         Yields:
             dict: A dictionary representing an event.
         """
-        resource_url = "{0:s}/sketches/{1:d}/export/".format(
-            self.api.api_root, self.id
-        )
+        resource_url = "{0:s}/sketches/{1:d}/export/".format(self.api.api_root, self.id)
 
         if not (query_string or query_filter or query_dsl):
-             query_string = "*"
+            query_string = "*"
 
         if return_fields and isinstance(return_fields, list):
             return_fields = ",".join(return_fields)
@@ -2024,7 +2022,7 @@ class Sketch(resource.BaseResource):
         for line in response.iter_lines():
             if line:
                 try:
-                    yield json.loads(line.decode('utf-8'))
+                    yield json.loads(line.decode("utf-8"))
                 except json.JSONDecodeError:
                     logger.warning("Received invalid JSON line during export")
                     continue

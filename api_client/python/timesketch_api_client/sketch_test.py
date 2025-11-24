@@ -159,7 +159,7 @@ class SketchTest(unittest.TestCase):
         # iter_lines yields bytes
         mock_response.iter_lines.return_value = [
             b'{"_id": "1", "message": "test1"}',
-            b'{"_id": "2", "message": "test2"}'
+            b'{"_id": "2", "message": "test2"}',
         ]
 
         # Patch the session.post method on the api client instance
@@ -168,8 +168,7 @@ class SketchTest(unittest.TestCase):
         ) as mock_post:
 
             generator = self.sketch.export_events_stream(
-                query_string="*",
-                return_fields=["message"]
+                query_string="*", return_fields=["message"]
             )
 
             results = list(generator)

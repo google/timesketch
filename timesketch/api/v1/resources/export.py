@@ -82,9 +82,7 @@ class ExportListResource(resources.ResourceMixin, Resource):
             )
 
         if sketch.get_status.status == "archived":
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN, "Unable to query on an archived sketch."
-            )
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Unable to query on an archived sketch.")
 
         form = forms.ExploreForm.build(request)
         if not form.validate_on_submit():
@@ -166,6 +164,5 @@ class ExportListResource(resources.ResourceMixin, Resource):
                 raise
 
         return Response(
-            stream_with_context(generate()),
-            mimetype="application/x-json-stream"
+            stream_with_context(generate()), mimetype="application/x-json-stream"
         )
