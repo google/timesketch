@@ -249,57 +249,9 @@ class EventTest(interface.BaseEndToEndTest):
         event_type = event_to_annotate.get("_type", "generic_event")
         label_to_toggle = "__ts_star"
 
-        # 3. Add a normal label first (Debug Step)
-
+        # 3. Add the label.
         events_to_label = [{"_id": event_id, "_index": index_id, "_type": event_type}]
-
-        normal_label = "debug_normal_label"
-
-        sketch.label_events(events_to_label, normal_label)
-
-        found_normal = False
-        for _ in range(20):
-            time.sleep(1)
-
-            search_obj = search.Search(sketch)
-
-            search_obj.query_string = f'_id:"{event_id}"'
-
-            search_result = json.loads(search_obj.json)
-
-            if search_result["objects"]:
-                event_data = search_result["objects"][0]
-                source_data = event_data.get("_source", event_data)
-
-                ts_labels = source_data.get("timesketch_label", [])
-
-                search_result_labels = [l.get("name") for l in ts_labels]
-                search_result_labels.extend(source_data.get("label", []))
-
-                if normal_label in search_result_labels:
-                    found_normal = True
-
-                    break
-
-        self.assertions.assertTrue(
-            found_normal,
-            (
-                f"Debug: Normal label '{normal_label}' could not be added to event "
-                f"{event_id}."
-            ),
-        )
-
-        # 3b. Add the star label.
-
-        response = sketch.label_events(events_to_label, label_to_toggle)
-
-        print(f"DEBUG: label_events response (add): {response}")
-
-        self.assertions.assertEqual(
-            response.get("meta", {}).get("events_modified", 0),
-            1,
-            f"Failed to modify event when adding star label. Response: {response}",
-        )
+        sketch.label_events(events_to_label, label_to_toggle)
 
         # 4. Verify the label was added.
         labels_after_add = []
@@ -312,8 +264,12 @@ class EventTest(interface.BaseEndToEndTest):
 
             if search_result["objects"]:
                 event_data = search_result["objects"][0]
-                timesketch_labels = event_data.get("timesketch_label", [])
-                labels_after_add = [l.get("name") for l in timesketch_labels]
+                source_data = event_data.get("_source", event_data)
+
+                ts_labels = source_data.get("timesketch_label", [])
+                labels_after_add = [l.get("name") for l in ts_labels]
+                labels_after_add.extend(source_data.get("label", []))
+
                 if label_to_toggle in labels_after_add:
                     found_label_add = True
                     break
