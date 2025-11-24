@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main entry point for running tests."""
 import subprocess
+import sys
 
 
 def run_python_tests():
@@ -8,7 +9,7 @@ def run_python_tests():
     # of workers like "4") to the list of arguments.
     subprocess.check_call(
         [
-            "python3",
+            sys.executable,
             "-m",
             "pytest",
             "-n",

@@ -81,6 +81,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                 "Triggering Log Analyzer LLM feature for sketch [%d]", self.sketch.id
             )
             start_time = time.time()
+            prompt = self.analyzer_kwargs.get("prompt")
             result = feature_instance.execute(
                 sketch=self.sketch.sql_sketch,
                 form={
@@ -96,6 +97,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                     ]
                 },
                 llm_provider=llm_provider,
+                prompt=prompt,
             )
             duration_seconds = time.time() - start_time
             if duration_seconds > 60:
