@@ -77,7 +77,6 @@ from .resources.contextlinks import ContextLinkConfigResource
 from .resources.unfurl import UnfurlResource
 from .resources.llm import LLMResource
 from .resources.settings import SystemSettingsResource
-from .resources.log_analyzer import LogAnalyzerPromptResource
 
 
 from .resources.scenarios import ScenarioTemplateListResource
@@ -240,5 +239,4 @@ API_ROUTES = [
         QuestionConclusionResource,
         "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/<int:conclusion_id>/",
     ),
-    (LogAnalyzerPromptResource, "/loganalyzer/prompt/"),
 ]
