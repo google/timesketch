@@ -1914,7 +1914,7 @@ class ExportListResourceTest(BaseTest):
         )
 
     @mock.patch("timesketch.api.v1.resources.export.OpenSearchDataStore")
-    def test_export_no_indices(self, mock_ds_cls):
+    def test_export_no_indices(self, mock_ds_cls):  # pylint: disable=unused-argument
         """Test export with no valid indices found."""
         self.login()
         with mock.patch(
