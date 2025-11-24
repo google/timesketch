@@ -1977,6 +1977,58 @@ class Sketch(resource.BaseResource):
         with open(file_path, "wb") as fw:
             fw.write(response.content)
 
+    def export_events_stream(
+        self,
+        query_string=None,
+        query_dsl=None,
+        query_filter=None,
+        return_fields=["datetime","message","timestamp_desc"],
+    ):
+        """Exports all events from the sketch matching the query.
+
+        This uses the high-performance sliced export API endpoint.
+
+        Args:
+            query_string (str): OpenSearch query string.
+            query_dsl (str): OpenSearch query DSL as JSON string.
+            query_filter (dict): Filter for the query as a dict.
+            return_fields (list): List of strings with fields to return.
+
+        Yields:
+            dict: A dictionary representing an event.
+        """
+        resource_url = "{0:s}/sketches/{1:d}/export/".format(
+            self.api.api_root, self.id
+        )
+
+        if not (query_string or query_filter or query_dsl):
+             query_string = "*"
+
+        if return_fields and isinstance(return_fields, list):
+            return_fields = ",".join(return_fields)
+
+        form_data = {
+            "query": query_string,
+            "filter": query_filter,
+            "dsl": query_dsl,
+            "fields": return_fields,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data, stream=True)
+
+        if not error.check_return_status(response, logger):
+            error.error_message(
+                response, message="Unable to export events", error=RuntimeError
+            )
+
+        for line in response.iter_lines():
+            if line:
+                try:
+                    yield json.loads(line.decode('utf-8'))
+                except json.JSONDecodeError:
+                    logger.warning("Received invalid JSON line during export")
+                    continue
+
     def create_timeline(self, searchindex_id: int, timeline_name: str):
         """Creates a Timeline in this Sketch
 

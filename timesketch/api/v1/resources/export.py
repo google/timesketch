@@ -20,6 +20,7 @@ from flask import request
 from flask import abort
 from flask import Response
 from flask import stream_with_context
+from flask import current_app
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
@@ -31,6 +32,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Sketch
 
 
@@ -39,6 +41,22 @@ logger = logging.getLogger("timesketch.api.export")
 
 class ExportListResource(resources.ResourceMixin, Resource):
     """Resource to export all events for a sketch."""
+
+    @property
+    def datastore(self) -> OpenSearchDataStore:
+        """Property to get an instance of the datastore backend.
+
+        We override the default datastore property to ensure we have a
+        connection pool large enough to support the multiple threads
+        used during sliced export.
+
+        Returns:
+            Instance of lib.datastores.opensearch.OpenSearchDatastore
+        """
+        pool_maxsize = current_app.config.get(
+            "OPENSEARCH_SLICED_EXPORT_POOL_MAXSIZE", 60
+        )
+        return OpenSearchDataStore(pool_maxsize=pool_maxsize)
 
     @login_required
     def post(self, sketch_id):
@@ -144,8 +162,6 @@ class ExportListResource(resources.ResourceMixin, Resource):
                     yield json.dumps(event) + "\n"
             except Exception as e:
                 logger.error("Error during streaming export: %s", e, exc_info=True)
-                # Note: Once streaming starts, we cannot change the HTTP status code.
-                # The stream will simply terminate, potentially raising an error on the client.
                 raise
 
         return Response(
