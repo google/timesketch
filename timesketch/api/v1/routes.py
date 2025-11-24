@@ -28,6 +28,7 @@ from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
 from .resources.explore import SearchHistoryResource
 from .resources.explore import SearchHistoryTreeResource
+from .resources.export import ExportListResource
 from .resources.datafinder import DataFinderResource
 from .resources.datasource import DataSourceResource
 from .resources.datasource import DataSourceListResource
@@ -238,4 +239,5 @@ API_ROUTES = [
         QuestionConclusionResource,
         "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/<int:conclusion_id>/",
     ),
+    (ExportListResource, "/sketches/<int:sketch_id>/export/"),
 ]
