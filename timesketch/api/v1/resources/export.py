@@ -38,6 +38,8 @@ from timesketch.models.sketch import Sketch
 
 logger = logging.getLogger("timesketch.api.export")
 
+DEFAULT_POOL_MAXSIZE = 60
+
 
 class ExportListResource(resources.ResourceMixin, Resource):
     """Resource to export all events for a sketch."""
@@ -55,7 +57,7 @@ class ExportListResource(resources.ResourceMixin, Resource):
         """
         # Default to 60 connections to align with the LLM Log Analyzer implementation
         pool_maxsize = current_app.config.get(
-            "OPENSEARCH_SLICED_EXPORT_POOL_MAXSIZE", 60
+            "OPENSEARCH_SLICED_EXPORT_POOL_MAXSIZE", DEFAULT_POOL_MAXSIZE
         )
         return OpenSearchDataStore(pool_maxsize=pool_maxsize)
 
@@ -70,6 +72,11 @@ class ExportListResource(resources.ResourceMixin, Resource):
 
         Returns:
             Streamed response of events in JSONL format.
+
+        Raises:
+            HTTPException: If the sketch is not found, the user does not have
+                           read access, the sketch is archived, or if the form
+                           data is invalid.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:

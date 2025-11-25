@@ -19,6 +19,7 @@ import os
 import json
 import time
 import logging
+from typing import Dict, Generator, List, Optional
 
 import pandas
 
@@ -1979,11 +1980,11 @@ class Sketch(resource.BaseResource):
 
     def export_events_stream(
         self,
-        query_string=None,
-        query_dsl=None,
-        query_filter=None,
-        return_fields=None,
-    ):
+        query_string: Optional[str] = None,
+        query_dsl: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        return_fields: Optional[List[str]] = None,
+    ) -> Generator[Dict, None, None]:
         """Exports all events from the sketch matching the query.
 
         This uses the high-performance sliced export API endpoint.
@@ -2000,7 +2001,7 @@ class Sketch(resource.BaseResource):
         if return_fields is None:
             return_fields = ["datetime", "message", "timestamp_desc"]
 
-        resource_url = "{0:s}/sketches/{1:d}/export/".format(self.api.api_root, self.id)
+        resource_url = f"{self.api.api_root}/sketches/{self.id}/export/"
 
         if not (query_string or query_filter or query_dsl):
             query_string = "*"
