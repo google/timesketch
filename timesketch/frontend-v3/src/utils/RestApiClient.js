@@ -444,7 +444,11 @@ export default {
       analyzer_force_run: forceRun,
     }
     if (customPrompt) {
-      formData.analyzer_kwargs = { prompt: customPrompt }
+      let kwargs = {}
+      analyzers.forEach((name) => {
+        kwargs[name] = { prompt: customPrompt }
+      })
+      formData.analyzer_kwargs = kwargs
     }
     return RestApiClient.post("/sketches/" + sketchId + "/analyzer/", formData)
   },

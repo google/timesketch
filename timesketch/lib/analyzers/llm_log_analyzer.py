@@ -40,6 +40,17 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
     # The `timeline_id` will be None, and the analyzer should operate on all
     # timelines within the sketch.
 
+    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
+        """Initialize the analyzer object.
+
+        Args:
+            index_name: OpenSearch index name.
+            sketch_id: Sketch ID.
+            timeline_id: The timeline ID.
+        """
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
+        self.analyzer_kwargs = kwargs
+
     def run(self):
         """Entry point for the analyzer."""
         logger.info(

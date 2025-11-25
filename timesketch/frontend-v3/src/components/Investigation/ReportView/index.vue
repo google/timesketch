@@ -27,7 +27,8 @@ limitations under the License.
       <v-textarea
         label="Custom Prompt (Optional)"
         v-model="customPrompt"
-        class="mb-4"
+        class="mb-4 mx-auto"
+        style="max-width: 600px"
         rows="3"
         shaped
         filled
@@ -220,8 +221,7 @@ export default {
       filteredQuestions: [],
       showModal: false,
       isCompleting: false,
-      isCompleting: false,
-      customPrompt: this.store.systemSettings.LOG_ANALYZER_DEFAULT_PROMPT,
+      customPrompt: store.systemSettings.LOG_ANALYZER_DEFAULT_PROMPT,
     }
   },
   computed: {
@@ -304,6 +304,16 @@ export default {
       return this.questions.filter(
         (question) => question.status?.status !== 'verified' && question.status?.status !== 'rejected'
       )
+    },
+  },
+  watch: {
+    'store.systemSettings.LOG_ANALYZER_DEFAULT_PROMPT': {
+      handler(newVal) {
+        if (newVal && !this.customPrompt) {
+          this.customPrompt = newVal
+        }
+      },
+      immediate: true,
     },
   },
   methods: {
