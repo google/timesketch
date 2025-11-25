@@ -187,3 +187,43 @@ class SketchTest(unittest.TestCase):
             self.assertEqual(call_args.args[0], expected_url)
             self.assertEqual(call_args.kwargs["json"]["query"], "*")
             self.assertEqual(call_args.kwargs["json"]["fields"], "message")
+
+    def test_export_events_stream_invalid_json(self):
+        """Test export_events_stream handles invalid JSON lines gracefully."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        # Middle line is garbage bytes
+        mock_response.iter_lines.return_value = [
+            b'{"_id": "1", "message": "valid"}',
+            b"NOT JSON",
+            b'{"_id": "2", "message": "valid"}',
+        ]
+
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=mock_response
+        ):
+            # We check that it logs a warning but keeps yielding valid results
+            with self.assertLogs(logger="timesketch_api.sketch", level="WARNING") as cm:
+                generator = self.sketch.export_events_stream(
+                    query_string="*", return_fields=["message"]
+                )
+                results = list(generator)
+
+            self.assertEqual(len(results), 2)
+            self.assertEqual(results[0]["_id"], "1")
+            self.assertEqual(results[1]["_id"], "2")
+            self.assertTrue(any("Received invalid JSON line" in o for o in cm.output))
+
+    def test_export_events_stream_api_error(self):
+        """Test export_events_stream raises RuntimeError on API error."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Server Error"
+
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=mock_response
+        ):
+            with self.assertRaises(RuntimeError):
+                generator = self.sketch.export_events_stream()
+                list(generator)

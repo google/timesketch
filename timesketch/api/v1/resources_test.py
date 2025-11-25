@@ -1930,3 +1930,26 @@ class ExportListResourceTest(BaseTest):
         self.login()
         response = self.client.post("/api/v1/sketches/2/export/", json={})
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+    @mock.patch("timesketch.api.v1.resources.export.OpenSearchDataStore")
+    @mock.patch("timesketch.api.v1.resources.export.utils.validate_indices")
+    @mock.patch("timesketch.api.v1.resources.export.utils.get_validated_indices")
+    def test_post_export_no_valid_backend_indices(
+        self, mock_get_validated, mock_validate, mock_ds_cls
+    ):
+        """Test export when backend validation returns no indices."""
+        # pylint: disable=unused-argument
+        self.login()
+        mock_ds_cls.return_value = mock.Mock()
+
+        # DB says the timeline exists...
+        mock_get_validated.return_value = (["test_index"], [1])
+        # ...but OpenSearch validation says it does not.
+        mock_validate.return_value = []
+
+        data = {"filter": {"indices": [1]}}
+        response = self.client.post(self.resource_url, json=data)
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        # Verify we hit the specific abort for empty indices_for_pit
+        self.assertIn("No valid search indices", response.json["message"])
