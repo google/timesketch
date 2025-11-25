@@ -9,7 +9,7 @@ def run_python_tests():
     # of workers like "4") to the list of arguments.
     subprocess.check_call(
         [
-            sys.executable,
+            "python3",
             "-m",
             "pytest",
             "-n",
