@@ -27,13 +27,10 @@ class ExportStreamTest(interface.BaseEndToEndTest):
         super().setUp()
         self.import_timeline("evtx_20250918.plaso")
 
-    def test_export(self):
-        """Test streaming export of events."""
-        events = self.sketch.export_events_stream(
-            query_string="*", return_fields=["message", "timestamp"]
-        )
+    def test_export_all(self):
+        """Test streaming export of all events."""
+        events = self.sketch.export_events_stream()
         count = len(list(events))
         self.assertions.assertEqual(count, 3205)
-
 
 manager.EndToEndTestManager.register_test(ExportStreamTest)
