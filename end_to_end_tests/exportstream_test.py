@@ -13,7 +13,6 @@
 # limitations under the License.
 """End to end tests for export functionality."""
 
-import time
 from . import interface
 from . import manager
 
@@ -22,18 +21,21 @@ class ExportStreamTest(interface.BaseEndToEndTest):
     """End to end tests for export functionality."""
 
     NAME = "export_stream_test"
+    TEST_PLASO_FILE = "evtx_20250918.plaso"
 
-    def setUp(self):
+    def setup(self):
         """Import test timeline."""
-        super().setUp()
-        self.import_timeline("evtx_20250918.plaso")
-        # Give the import a moment to propagate.
-        time.sleep(5)
+        self.import_timeline(self.TEST_PLASO_FILE)
 
     def test_export_all(self):
         """Test streaming export of all events."""
+        # Export all events
         events = self.sketch.export_events_stream()
+
+        # Consume the generator to count events
         count = len(list(events))
+
+        # 3205 is the known event count for TEST_PLASO_FILE_NAME
         self.assertions.assertEqual(count, 3205)
 
 
