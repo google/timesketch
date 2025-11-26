@@ -35,8 +35,19 @@ class ExportStreamTest(interface.BaseEndToEndTest):
         # Consume the generator to count events
         count = len(list(events))
 
-        # 3205 is the known event count for TEST_PLASO_FILE_NAME
+        # 3205 is the known event count for evtx_20250918.plaso
         self.assertions.assertEqual(count, 3205)
+
+    def test_export_subset(self):
+        """Test streaming export of partial events."""
+        # Export only events with data_type:"fs:stat"
+        events = self.sketch.export_events_stream(query_string='data_type:"fs:stat"')
+
+        # Consume the generator to count events
+        count = len(list(events))
+
+        # 3 is the known event count for data_type:"fs:stat" in evtx_20250918.plaso
+        self.assertions.assertEqual(count, 3)
 
 
 manager.EndToEndTestManager.register_test(ExportStreamTest)
