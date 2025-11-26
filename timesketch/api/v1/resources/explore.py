@@ -382,8 +382,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 )
 
         for event in result["hits"]["hits"]:
-
-        for event in result["hits"]["hits"]:
             if "comment" in return_fields:
                 event["_source"]["comment"] = comments.get(event["_id"], [])
 
