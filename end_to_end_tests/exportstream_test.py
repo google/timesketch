@@ -53,7 +53,7 @@ class ExportStreamTest(interface.BaseEndToEndTest):
         """Test streaming export with field selection."""
         # Export only a few fields
         events = self.sketch.export_events_stream(
-            query_string='data_type:"fs:stat"', fields=["data_type", "message"]
+            query_string='data_type:"fs:stat"', return_fields=["data_type", "message"]
         )
         first_event = next(events)
         # 1. Assert required fields are present (and others are not)
