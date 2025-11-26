@@ -13,6 +13,7 @@
 # limitations under the License.
 """End to end tests for export functionality."""
 
+import time
 from . import interface
 from . import manager
 
@@ -26,6 +27,8 @@ class ExportStreamTest(interface.BaseEndToEndTest):
         """Import test timeline."""
         super().setUp()
         self.import_timeline("evtx_20250918.plaso")
+        # Give the import a moment to propagate.
+        time.sleep(5)
 
     def test_export_all(self):
         """Test streaming export of all events."""
