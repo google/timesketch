@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Export resources for version 1 of the Timesketch API."""
+"""Export stream resources for version 1 of the Timesketch API."""
 
 import json
 import logging
@@ -63,7 +63,7 @@ class ExportStreamListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, sketch_id):
-        """Handles POST request to export events.
+        """Handles POST request to export stream events.
 
         Handler for /api/v1/sketches/:sketch_id/exportstream/
 
@@ -71,7 +71,8 @@ class ExportStreamListResource(resources.ResourceMixin, Resource):
             This endpoint is optimized for streaming large volumes of event
             data and is not intended as a substitute for the interactive
             `/explore` endpoint. While it supports basic filtering to narrow
-            down the export scope, complex search features are not available.
+            down the export scope, advanced search features (like filtering for
+            labels and pagination) are not available.
 
         Args:
             sketch_id (int): Integer primary key for a sketch database model.
@@ -131,10 +132,12 @@ class ExportStreamListResource(resources.ResourceMixin, Resource):
         indices, timeline_ids = utils.get_validated_indices(indices, sketch)
 
         # Map to actual OpenSearch index names for the PIT
-        indices_for_pit = []
-        for timeline in sketch.timelines:
-            if timeline.id in timeline_ids:
-                indices_for_pit.append(timeline.searchindex.index_name)
+        timeline_ids_set = set(timeline_ids)
+        indices_for_pit = [
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.id in timeline_ids_set
+        ]
 
         # Final check to ensure indices exist in backend
         indices_for_pit = utils.validate_indices(indices_for_pit, self.datastore)
@@ -164,8 +167,9 @@ class ExportStreamListResource(resources.ResourceMixin, Resource):
         if return_fields:
             base_query_body["_source"] = return_fields
 
-        if "post_filter" in full_query_dsl:
-            base_query_body["post_filter"] = full_query_dsl["post_filter"]
+        post_filter = full_query_dsl.get("post_filter")
+        if post_filter:
+            base_query_body["post_filter"] = post_filter
 
         def generate():
             try:
