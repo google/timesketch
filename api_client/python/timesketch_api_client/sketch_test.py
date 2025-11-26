@@ -150,3 +150,82 @@ class SketchTest(unittest.TestCase):
         self.assertEqual(question.uuid, "1234a567-b89c-123d-e45f-g6h7ijk8l910")
         self.assertEqual(question.dfiq_identifier, "Q0001")
         self.assertEqual(question.description, "Test Question Description")
+
+    def test_export_events_stream(self):
+        """Test export_events_stream method."""
+        # Mock the response object to simulate a stream
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        # iter_lines yields bytes
+        mock_response.iter_lines.return_value = [
+            b'{"_id": "1", "message": "test1"}',
+            b'{"_id": "2", "message": "test2"}',
+        ]
+
+        # Patch the session.post method on the api client instance
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=mock_response
+        ) as mock_post:
+
+            generator = self.sketch.export_events_stream(
+                query_string="*", return_fields=["message"]
+            )
+
+            results = list(generator)
+
+            self.assertEqual(len(results), 2)
+            self.assertEqual(results[0]["_id"], "1")
+            self.assertEqual(results[1]["message"], "test2")
+
+            # Verify that stream=True was passed to the request
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            self.assertTrue(call_args.kwargs.get("stream"))
+
+            # Verify URL and payload
+            expected_url = (
+                f"http://127.0.0.1/api/v1/sketches/{self.sketch.id}/exportstream/"
+            )
+            self.assertEqual(call_args.args[0], expected_url)
+            self.assertEqual(call_args.kwargs["json"]["query"], "*")
+            self.assertEqual(call_args.kwargs["json"]["fields"], "message")
+
+    def test_export_events_stream_invalid_json(self):
+        """Test export_events_stream handles invalid JSON lines gracefully."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        # Middle line is garbage bytes
+        mock_response.iter_lines.return_value = [
+            b'{"_id": "1", "message": "valid"}',
+            b"NOT JSON",
+            b'{"_id": "2", "message": "valid"}',
+        ]
+
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=mock_response
+        ):
+            # We check that it logs a warning but keeps yielding valid results
+            with self.assertLogs(logger="timesketch_api.sketch", level="WARNING") as cm:
+                generator = self.sketch.export_events_stream(
+                    query_string="*", return_fields=["message"]
+                )
+                results = list(generator)
+
+            self.assertEqual(len(results), 2)
+            self.assertEqual(results[0]["_id"], "1")
+            self.assertEqual(results[1]["_id"], "2")
+            self.assertTrue(any("Received invalid JSON line" in o for o in cm.output))
+
+    def test_export_events_stream_api_error(self):
+        """Test export_events_stream raises RuntimeError on API error."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Server Error"
+
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=mock_response
+        ):
+            with self.assertRaises(RuntimeError):
+                generator = self.sketch.export_events_stream()
+                list(generator)
