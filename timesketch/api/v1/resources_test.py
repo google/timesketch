@@ -1855,16 +1855,16 @@ class LLMResourceTest(BaseTest):
         process_instance.terminate.assert_called_once()
 
 
-class ExportListResourceTest(BaseTest):
-    """Tests for the ExportListResource."""
+class ExportStreamListResourceTest(BaseTest):
+    """Tests for the ExportStreamListResource."""
 
     def setUp(self):
         super().setUp()
-        self.resource_url = "/api/v1/sketches/1/export/"
+        self.resource_url = "/api/v1/sketches/1/exportstream/"
 
-    @mock.patch("timesketch.api.v1.resources.export.OpenSearchDataStore")
-    @mock.patch("timesketch.api.v1.resources.export.utils.validate_indices")
-    @mock.patch("timesketch.api.v1.resources.export.utils.get_validated_indices")
+    @mock.patch("timesketch.api.v1.resources.exportstream.OpenSearchDataStore")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.validate_indices")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.get_validated_indices")
     def test_post_export(self, mock_get_validated, mock_validate, mock_ds_cls):
         """Test the POST request for exporting events."""
         self.login()
@@ -1913,12 +1913,12 @@ class ExportListResourceTest(BaseTest):
             call_args.kwargs["base_query_body"]["_source"], ["message", "datetime"]
         )
 
-    @mock.patch("timesketch.api.v1.resources.export.OpenSearchDataStore")
+    @mock.patch("timesketch.api.v1.resources.exportstream.OpenSearchDataStore")
     def test_export_no_indices(self, mock_ds_cls):  # pylint: disable=unused-argument
         """Test export with no valid indices found."""
         self.login()
         with mock.patch(
-            "timesketch.api.v1.resources.export.utils.get_validated_indices",
+            "timesketch.api.v1.resources.exportstream.utils.get_validated_indices",
             return_value=([], []),
         ):
             response = self.client.post(self.resource_url, json={})
@@ -1928,12 +1928,12 @@ class ExportListResourceTest(BaseTest):
         """Test export on a sketch the user doesn't have access to."""
         # Sketch 2 is not owned by the default test user
         self.login()
-        response = self.client.post("/api/v1/sketches/2/export/", json={})
+        response = self.client.post("/api/v1/sketches/2/exportstream/", json={})
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
 
-    @mock.patch("timesketch.api.v1.resources.export.OpenSearchDataStore")
-    @mock.patch("timesketch.api.v1.resources.export.utils.validate_indices")
-    @mock.patch("timesketch.api.v1.resources.export.utils.get_validated_indices")
+    @mock.patch("timesketch.api.v1.resources.exportstream.OpenSearchDataStore")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.validate_indices")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.get_validated_indices")
     def test_post_export_no_valid_backend_indices(
         self, mock_get_validated, mock_validate, mock_ds_cls
     ):

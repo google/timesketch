@@ -183,7 +183,9 @@ class SketchTest(unittest.TestCase):
             self.assertTrue(call_args.kwargs.get("stream"))
 
             # Verify URL and payload
-            expected_url = f"http://127.0.0.1/api/v1/sketches/{self.sketch.id}/export/"
+            expected_url = (
+                f"http://127.0.0.1/api/v1/sketches/{self.sketch.id}/exportstream/"
+            )
             self.assertEqual(call_args.args[0], expected_url)
             self.assertEqual(call_args.kwargs["json"]["query"], "*")
             self.assertEqual(call_args.kwargs["json"]["fields"], "message")

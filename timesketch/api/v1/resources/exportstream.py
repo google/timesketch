@@ -36,12 +36,12 @@ from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Sketch
 
 
-logger = logging.getLogger("timesketch.api.export")
+logger = logging.getLogger("timesketch.api.exportstream")
 
 DEFAULT_POOL_MAXSIZE = 60
 
 
-class ExportListResource(resources.ResourceMixin, Resource):
+class ExportStreamListResource(resources.ResourceMixin, Resource):
     """Resource to export all events for a sketch."""
 
     @property
@@ -65,7 +65,13 @@ class ExportListResource(resources.ResourceMixin, Resource):
     def post(self, sketch_id):
         """Handles POST request to export events.
 
-        Handler for /api/v1/sketches/:sketch_id/export/
+        Handler for /api/v1/sketches/:sketch_id/exportstream/
+
+        Note:
+            This endpoint is optimized for streaming large volumes of event
+            data and is not intended as a substitute for the interactive
+            `/explore` endpoint. While it supports basic filtering to narrow
+            down the export scope, complex search features are not available.
 
         Args:
             sketch_id (int): Integer primary key for a sketch database model.
@@ -74,9 +80,13 @@ class ExportListResource(resources.ResourceMixin, Resource):
             Streamed response of events in JSONL format.
 
         Raises:
-            HTTPException: If the sketch is not found, the user does not have
-                           read access, the sketch is archived, or if the form
-                           data is invalid.
+            HTTPException:
+                - 400 (BAD_REQUEST): If the form data is invalid or if no
+                  valid search indices are found for the export.
+                - 403 (FORBIDDEN): If the user does not have read permissions
+                  for the sketch, or if the sketch is archived.
+                - 404 (NOT_FOUND): If the sketch with the given ID does not
+                  exist.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -167,7 +177,13 @@ class ExportListResource(resources.ResourceMixin, Resource):
                 for event in event_generator:
                     yield json.dumps(event) + "\n"
             except Exception as e:
-                logger.error("Error during streaming export: %s", e, exc_info=True)
+                logger.error(
+                    "Error during streaming export for sketch %s on timelines %s: %s",
+                    sketch_id,
+                    ",".join(map(str, timeline_ids)),
+                    e,
+                    exc_info=True,
+                )
                 raise
 
         return Response(

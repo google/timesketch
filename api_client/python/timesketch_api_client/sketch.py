@@ -2001,7 +2001,7 @@ class Sketch(resource.BaseResource):
         if return_fields is None:
             return_fields = ["datetime", "message", "timestamp_desc"]
 
-        resource_url = f"{self.api.api_root}/sketches/{self.id}/export/"
+        resource_url = f"{self.api.api_root}/sketches/{self.id}/exportstream/"
 
         if not (query_string or query_filter or query_dsl):
             query_string = "*"
