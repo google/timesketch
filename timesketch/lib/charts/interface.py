@@ -83,7 +83,7 @@ class BaseChart:
 
         if self.values.empty:
             logger.warning(
-                "Chart '%s' ('%s') " "was created with an empty DataFrame.",
+                "Chart '%s' ('%s') was created with an empty DataFrame.",
                 self.name,
                 self.chart_title,
             )
@@ -109,13 +109,13 @@ class BaseChart:
         if not self._field:
             return chart
 
-        datum = getattr(alt.datum, self._field)
+        date = getattr(alt.datum, self._field)
         if self._aggregation_id:
             agg_string = f"a={self._aggregation_id:d}&"
         else:
             agg_string = ""
         url = f'{self._sketch_url:s}?{agg_string:s}q={self._field:s}:"'
-        return chart.transform_calculate(url=url + datum + '" ' + self._extra_query_url)
+        return chart.transform_calculate(url=url + date + '" ' + self._extra_query_url)
 
     def _add_url_href(self, encoding):
         """Adds a HREF reference to encoding dict if needed.
