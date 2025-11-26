@@ -2394,14 +2394,14 @@
 <h1 id="performance-monitoring">Performance Monitoring</h1>
 <p>Timesketch includes a built-in performance profiler to help diagnose and troubleshoot performance issues. When enabled, it captures detailed profiling data for every HTTP request to the backend and saves it for later analysis.</p>
 <h2 id="enabling-the-profiler">Enabling the Profiler</h2>
-<p>To enable the performance profiler, you need to edit your <code>timesketch.conf</code> file and set the <code>DEBUG</code> configuration option to <code>True</code>.</p>
+<p>To enable the performance profiler, you need to edit your <code>timesketch.conf</code> file and set the <code>ENABLE_PROFILING</code> configuration option to <code>True</code>.</p>
 <ol>
 <li><strong>Locate your configuration file:</strong> This is typically at <code>/etc/timesketch/timesketch.conf</code>.</li>
 <li>
-<p><strong>Enable debug mode:</strong> Find the <code>DEBUG</code> setting and change it to <code>True</code>.</p>
+<p><strong>Enable profiling:</strong> Find the <code>ENABLE_PROFILING</code> setting and change it to <code>True</code>.</p>
 <p>```ini</p>
 <h1 id="in-etctimesketchtimesketchconf">In /etc/timesketch/timesketch.conf</h1>
-<p>DEBUG = True
+<p>ENABLE_PROFILING = True
 ```</p>
 </li>
 <li>
@@ -2414,7 +2414,7 @@
 <li><strong>Release Containers:</strong> <code>/var/log/timesketch/profiles/</code></li>
 </ul>
 <h2 id="analyzing-performance-profiles-with-pstats">Analyzing Performance Profiles with <code>pstats</code></h2>
-<p>If you have enabled performance profiling (by setting <code>DEBUG = True</code> in <code>timesketch.conf</code>), the application will generate <code>.prof</code> files in the appropriate <code>profiles/</code> directory. These files contain detailed performance statistics for each request.</p>
+<p>If you have enabled performance profiling (by setting <code>ENABLE_PROFILING = True</code> in <code>timesketch.conf</code>), the application will generate <code>.prof</code> files in the appropriate <code>profiles/</code> directory. These files contain detailed performance statistics for each request.</p>
 <p>You can analyze these files using Python's built-in <code>pstats</code> module, which provides a command-line browser for profiling statistics.</p>
 <ol>
 <li>
