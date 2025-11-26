@@ -67,12 +67,15 @@ class BaseChart:
         if _values is None or not _encoding:
             error_message = (
                 f"Values and/or Encoding missing from data. "
-                f"Values type: {type(_values).__name__}, empty: {not bool(_values)}. "
-                f"Encoding type: {type(_encoding).__name__}, empty: {not bool(_encoding)}."
+                f"Values type: {type(_values).__name__}, "
+                f"empty: {not bool(_values)}. "
+                f"Encoding type: {type(_encoding).__name__}, "
+                f"empty: {not bool(_encoding)}."
             )
             raise RuntimeError(error_message)
 
         self.name = self.NAME
+        self.chart_title = title
         if isinstance(_values, pd.DataFrame):
             self.values = _values
         else:
@@ -80,13 +83,12 @@ class BaseChart:
 
         if self.values.empty:
             logger.warning(
-                "Chart '%s' ('%s') was created with an empty DataFrame.",
+                "Chart '%s' ('%s') " "was created with an empty DataFrame.",
                 self.name,
                 self.chart_title,
             )
 
         self.encoding = _encoding
-        self.chart_title = title
 
         self._aggregation_id = aggregation_id
         self._extra_query_url = extra_query_url
