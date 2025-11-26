@@ -33,4 +33,5 @@ class ExportStreamTest(interface.BaseEndToEndTest):
         count = len(list(events))
         self.assertions.assertEqual(count, 3205)
 
+
 manager.EndToEndTestManager.register_test(ExportStreamTest)
