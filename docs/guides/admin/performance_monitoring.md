@@ -4,14 +4,14 @@ Timesketch includes a built-in performance profiler to help diagnose and trouble
 
 ## Enabling the Profiler
 
-To enable the performance profiler, you need to edit your `timesketch.conf` file and set the `DEBUG` configuration option to `True`.
+To enable the performance profiler, you need to edit your `timesketch.conf` file and set the `ENABLE_PROFILING` configuration option to `True`.
 
 1.  **Locate your configuration file:** This is typically at `/etc/timesketch/timesketch.conf`.
-2.  **Enable debug mode:** Find the `DEBUG` setting and change it to `True`.
+2.  **Enable profiling:** Find the `ENABLE_PROFILING` setting and change it to `True`.
 
     ```ini
     # In /etc/timesketch/timesketch.conf
-    DEBUG = True
+    ENABLE_PROFILING = True
     ```
 
 3.  **Restart the Timesketch server:** For the change to take effect, you must restart the application server.
@@ -23,7 +23,7 @@ Once enabled, the profiler will start writing `.prof` files for each request int
 
 ## Analyzing Performance Profiles with `pstats`
 
-If you have enabled performance profiling (by setting `DEBUG = True` in `timesketch.conf`), the application will generate `.prof` files in the appropriate `profiles/` directory. These files contain detailed performance statistics for each request.
+If you have enabled performance profiling (by setting `ENABLE_PROFILING = True` in `timesketch.conf`), the application will generate `.prof` files in the appropriate `profiles/` directory. These files contain detailed performance statistics for each request.
 
 You can analyze these files using Python's built-in `pstats` module, which provides a command-line browser for profiling statistics.
 
