@@ -19,6 +19,7 @@
 # from . import agg_test
 # from . import graph_test
 from . import cli_client_e2e_test
+from . import exportstream_test
 from . import client_test
 from . import data_finder_test
 from . import event_test
