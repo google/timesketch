@@ -43,7 +43,8 @@ class BaseChart:
 
         Args:
             data: A dictionary containing:
-                - 'values': A pandas DataFrame or a list of dictionaries representing the chart data.
+                - 'values': A pandas DataFrame or a list of dictionaries
+                    representing the chart data.
                 - 'encoding': A dictionary with Vega-Lite encoding information.
             title: String used for the chart title.
             sketch_url: Sketch URL for rendering href links.
@@ -54,8 +55,10 @@ class BaseChart:
             aggregation_id: Integer with the aggregation ID.
 
         Raises:
-            RuntimeError: If 'values' is None or 'encoding' is empty in the data dictionary.
-                The error message now includes types and emptiness status for debugging.
+            RuntimeError: If 'values' is None or 'encoding' is empty in the data
+                dictionary.
+                The error message now includes types and emptiness status for
+                debugging.
 
         Logs:
             A warning if the chart is initialized with an empty pandas DataFrame,
