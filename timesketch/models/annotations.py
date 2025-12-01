@@ -26,6 +26,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
@@ -228,10 +229,18 @@ class CommentMixin:
 
     @classmethod
     def get_with_comments(cls, **kwargs):
-        """Eagerly loads comments for a given object query using subquery.
+        """Eagerly loads comments for a given object query.
 
-        subqueryload is more efficient than joinedload for many-to-one
-        references on large datasets.
+        This method is designed to prevent the "N+1 Query Problem" by fetching
+        the primary objects and their related comments in a minimal number of
+        database queries, significantly improving performance compared to lazy
+        loading.
+
+        It first attempts to use `subqueryload` for eager loading,
+        which is generally efficient for many-to-one relationships. If a
+        `KeyError` occurs during this process, it falls
+        back to using `selectinload`. A warning is logged when the fallback
+        occurs, including details about the class and query parameters.
 
         Args:
             kwargs: Keyword arguments passed to filter_by.
@@ -239,7 +248,29 @@ class CommentMixin:
         Returns:
             List of objects with comments eagerly loaded.
         """
-        return cls.query.filter_by(**kwargs).options(subqueryload(cls.comments))
+        try:
+            return (
+                cls.query.filter_by(**kwargs).options(subqueryload(cls.comments)).all()
+            )
+        except KeyError:
+            # to get the Sketch id (for troubleshooting)
+            log_kwargs = {}
+            for key, value in kwargs.items():
+                if hasattr(value, "id"):
+                    log_kwargs[key] = f"<{value.__class__.__name__} id: {value.id}>"
+                else:
+                    log_kwargs[key] = repr(value)
+
+            logger.warning(
+                "Subqueryload failed for [%s] with kwargs [%s], falling back to "
+                "selectinload. You might want to upgrade SQLAlchemy to 1.4.54"
+                "this hotfix might be removed in a future version.",
+                cls.__name__,
+                log_kwargs,
+            )
+            return (
+                cls.query.filter_by(**kwargs).options(selectinload(cls.comments)).all()
+            )
 
     def remove_comment(self, comment_id):
         """Remove a comment from an event.

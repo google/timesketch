@@ -14,8 +14,14 @@
 """Interface for charts."""
 
 
+import logging
+from typing import Any, Dict, List, Optional, Union
+
 import altair as alt
 import pandas as pd
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseChart:
@@ -26,17 +32,20 @@ class BaseChart:
 
     def __init__(
         self,
-        data,
-        title="",
-        sketch_url="",
-        field="",
-        extra_query_url="",
-        aggregation_id=None,
+        data: Dict[str, Union[pd.DataFrame, List[Dict[str, Any]]]],
+        title: str = "",
+        sketch_url: str = "",
+        field: str = "",
+        extra_query_url: str = "",
+        aggregation_id: Optional[int] = None,
     ):
         """Initialize the chart object.
 
         Args:
-            data: Dictionary with list of values and dict of encoding info.
+            data: A dictionary containing:
+                - 'values': A pandas DataFrame or a list of dictionaries
+                    representing the chart data.
+                - 'encoding': A dictionary with Vega-Lite encoding information.
             title: String used for the chart title.
             sketch_url: Sketch URL for rendering href links.
             field: The field used to generate search terms for URL.
@@ -46,22 +55,43 @@ class BaseChart:
             aggregation_id: Integer with the aggregation ID.
 
         Raises:
-            RuntimeError if values or encoding is missing from data.
+            RuntimeError: If 'values' is None or 'encoding' is empty in the data
+                dictionary.
+                The error message now includes types and emptiness status for
+                debugging.
+
+        Logs:
+            A warning if the chart is initialized with an empty pandas DataFrame,
+            indicating that no data will be rendered.
         """
         _values = data.get("values")
         _encoding = data.get("encoding")
 
         if _values is None or not _encoding:
-            raise RuntimeError("Values and/or Encoding missing from data")
+            error_message = (
+                f"Values and/or Encoding missing from data. "
+                f"Values type: {type(_values).__name__}, "
+                f"empty: {not bool(_values)}. "
+                f"Encoding type: {type(_encoding).__name__}, "
+                f"empty: {not bool(_encoding)}."
+            )
+            raise RuntimeError(error_message)
 
         self.name = self.NAME
+        self.chart_title = title
         if isinstance(_values, pd.DataFrame):
             self.values = _values
         else:
             self.values = pd.DataFrame(_values)
 
+        if self.values.empty:
+            logger.warning(
+                "Chart '%s' ('%s') was created with an empty DataFrame.",
+                self.name,
+                self.chart_title,
+            )
+
         self.encoding = _encoding
-        self.chart_title = title
 
         self._aggregation_id = aggregation_id
         self._extra_query_url = extra_query_url
@@ -88,7 +118,9 @@ class BaseChart:
         else:
             agg_string = ""
         url = f'{self._sketch_url:s}?{agg_string:s}q={self._field:s}:"'
-        return chart.transform_calculate(url=url + datum + '" ' + self._extra_query_url)
+        return chart.transform_calculate(
+            url=url + datum + '" ' + self._extra_query_url
+        )  # pylint: disable=line-too-long
 
     def _add_url_href(self, encoding):
         """Adds a HREF reference to encoding dict if needed.
