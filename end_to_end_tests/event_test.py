@@ -355,7 +355,7 @@ class EventTest(interface.BaseEndToEndTest):
 
         # 4. Explore for the event and request the comment field.
         explore_response = sketch.explore(
-            query_string='_id:"{0}"'.format(event_id),
+            query_string=f'_id:"{event_id}"',
             return_fields="comment",
         )
 
