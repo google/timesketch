@@ -351,20 +351,23 @@ class EventTest(interface.BaseEndToEndTest):
         # 3. Add a comment.
         comment_text = "This is a test comment for explore."
         sketch.comment_event(event_id, index_id, comment_text)
-        time.sleep(2)  # Allow for indexing.
-
         # 4. Explore for the event and request the comment field.
-        explore_response = sketch.explore(
-            query_string=f'_id:"{event_id}"',
-            return_fields="comment",
-        )
+        comments = []
+        for _ in range(20):
+            time.sleep(1)
+            explore_response = sketch.explore(
+                query_string=f'_id:"{event_id}"',
+                return_fields="comment",
+            )
 
-        explore_objects = explore_response.get("objects", [])
+            explore_objects = explore_response.get("objects", [])
+            if len(explore_objects) == 1:
+                event_source = explore_objects[0].get("_source", {})
+                comments = event_source.get("comment", [])
+                if len(comments) == 1 and comments[0] == comment_text:
+                    break
+
         self.assertions.assertEqual(len(explore_objects), 1)
-
-        event_source = explore_objects[0].get("_source", {})
-        comments = event_source.get("comment", [])
-
         self.assertions.assertEqual(len(comments), 1)
         self.assertions.assertEqual(comments[0], comment_text)
 
