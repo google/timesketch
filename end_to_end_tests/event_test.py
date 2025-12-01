@@ -196,27 +196,6 @@ class EventTest(interface.BaseEndToEndTest):
                     found_label = True
                     break
 
-        if not found_label:
-            print(f"DEBUG search_result: {search_result}")
-            print(
-                f"DEBUG (Label Annotation Failure): Sketch ID: {sketch.id}, "
-                f"Name: {sketch.name}"
-            )
-            print(
-                f"DEBUG (Label Annotation Failure): Event ID: {event_id}, "
-                f"Index ID: {index_id}"
-            )
-            print(f"DEBUG (Label Annotation Failure): Expected label: {label_text}")
-            print(
-                "DEBUG (Label Annotation Failure): Labels found in OpenSearch: "
-                f"{search_result_labels}"
-            )
-            if search_result["objects"]:
-                print(
-                    f"DEBUG (Label Annotation Failure): Full Event Data: "
-                    f"{json.dumps(search_result['objects'][0], default=str)}"
-                )
-
         self.assertions.assertTrue(
             found_label,
             (
