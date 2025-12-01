@@ -16,7 +16,6 @@
 import json
 import random
 import time
-import random
 
 from timesketch_api_client import search
 
