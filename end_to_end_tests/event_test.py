@@ -350,7 +350,7 @@ class EventTest(interface.BaseEndToEndTest):
 
         # 3. Add a comment.
         comment_text = "This is a test comment for explore."
-        sketch.add_comment_to_event(event_id, index_id, comment_text)
+        sketch.comment_event(event_id, index_id, comment_text)
         time.sleep(2)  # Allow for indexing.
 
         # 4. Explore for the event and request the comment field.
