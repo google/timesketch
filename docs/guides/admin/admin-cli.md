@@ -200,6 +200,25 @@ Creates a new group.
 tsctl create-group analysts
 ```
 
+#### `delete-group`
+
+Deletes a group from the database. If the group is associated with any sketches, a warning message will be displayed, and the deletion will be aborted unless the `--force` flag is used.
+
+**Arguments:**
+*   `GROUP_NAME`: The name of the group to delete.
+
+**Options:**
+*   `--force`: Force deletes the group even if it's used in sketches.
+
+**Example:**
+```shell
+tsctl delete-group analysts
+```
+**Example (force delete):**
+```shell
+tsctl delete-group my-shared-group --force
+```
+
 #### `list-group-members`
 
 Lists all members of a group.
