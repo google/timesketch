@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import subprocess
-import time
 import random
+import requests  # Added here
 
 from . import interface
 from . import manager
@@ -129,18 +129,15 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         self.assertions.assertIn("Status: archived", output.decode("utf-8"))
 
         # 6. Verify the OpenSearch index is actually closed via requests
-        import requests
-
         try:
             response = requests.get(
-                "http://opensearch:9200/_cat/indices?h=status,index"
+                "http://opensearch:9200/_cat/indices?h=status,index", timeout=5
             )
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
             opensearch_status_output = response.text
             self.assertions.assertIn(f"close {index_name}", opensearch_status_output)
-        except Exception as e:
-            self.assertions.fail(
-                f"Index {index_name} not found or not closed in OpenSearch. Error: {e}"
-            )
+        except requests.exceptions.RequestException as e:
+            self.assertions.fail(f"OpenSearch index check failed for {index_name}: {e}")
 
 
 manager.EndToEndTestManager.register_test(TimelineDeletionTest)
