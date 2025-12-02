@@ -28,11 +28,9 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
     def test_delete_failed_timeline(self):
         rand = random.randint(0, 10000)
         sketch = self.api.create_sketch(name=f"test-timeline-deletion_{rand}")
-        timeline_name = "test-timeline"
+        index_name = f"test-timeline_{rand}"
         # Import a timeline into the sketch
-        self.import_timeline(
-            "sigma_events.csv", sketch=sketch, timeline_name=timeline_name
-        )
+        self.import_timeline("sigma_events.csv", sketch=sketch, index_name=index_name)
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline = sketch.list_timelines()[0]
         timeline.set_status("fail")
@@ -48,7 +46,8 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         self.assertIn("Status: archived", output.decode("utf-8"))
 
     def test_delete_failed_timeline_with_soft_deleted_sibling(self):
-        """Test that index is archived when deleting a failed timeline if sibling is soft-deleted."""
+        """Test that index is archived when deleting a failed timeline if other
+        sibling is soft-deleted."""
         rand = random.randint(0, 10000)
         sketch = self.api.create_sketch(
             name=f"test-deletion-soft-deleted-sibling_{rand}"
@@ -98,7 +97,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         self.assertIn("Status: archived", output.decode("utf-8"))
 
         # 6. Verify the OpenSearch index is actually closed via curl
-        curl_command = f'curl -X GET "http://opensearch:9200/_cat/indices?h=status,index" | grep {index_name}'
+        curl_command = f'curl -X GET "http://opensearch:9200/_cat/indices?h=status,index" | grep {index_name}'  # pylint: disable=line-too-long
         try:
             opensearch_status_output = subprocess.check_output(
                 ["bash", "-c", curl_command]
