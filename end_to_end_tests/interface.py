@@ -84,7 +84,7 @@ class BaseEndToEndTest(object):
             sketch = self.sketch
 
         if (sketch.id, filename) in self._imported_sketch_timelines:
-            return
+            return False
 
         file_path = os.path.join(TEST_DATA_DIR, filename)
         if not index_name:
