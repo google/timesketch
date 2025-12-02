@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import subprocess
+import time
+import os
 import random
 
 from . import interface
@@ -28,12 +30,21 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
     def test_delete_failed_timeline(self):
         rand = random.randint(0, 10000)
         sketch = self.api.create_sketch(name=f"test-timeline-deletion_{rand}")
-        index_name = f"test-timeline_{rand}"
-        # Import a timeline into the sketch
-        self.import_timeline("sigma_events.csv", sketch=sketch, index_name=index_name)
+
+        # This file is known to cause an import failure.
+        file_path = os.path.join(
+            os.path.dirname(__file__), "test_data", "invalid_jsonl.jsonl"
+        )
+        timeline = self.import_timeline(file_path, sketch=sketch)
+
+        # Wait for the timeline to fail.
+        for _ in range(20):
+            time.sleep(1)
+            if timeline.status == "fail":
+                break
+        self.assertions.assertEqual(timeline.status, "fail")
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline = sketch.list_timelines()[0]
-        timeline.set_status("fail")
 
         # Delete the timeline
         sketch.delete_timeline(timeline)
@@ -73,17 +84,31 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         )
 
         # 3. Create Timeline B (Failed) sharing the same index
-        timeline_b = sketch.generate_timeline_from_es_index(
-            es_index_name=index_name, name="timeline_b_failed", provider="test"
+        # timeline_b = sketch.generate_timeline_from_es_index(
+        #    es_index_name=index_name, name="timeline_b_failed", provider="test"
+        # )
+        # _ = sketch.lazyload_data(refresh_cache=True)
+
+        # This file is known to cause an import failure.
+        file_path = os.path.join(
+            os.path.dirname(__file__), "test_data", "invalid_jsonl.jsonl"
         )
+        timeline = self.import_timeline(
+            file_path, sketch=sketch, index_name="timeline_b_failed"
+        )
+
+        # Wait for the timeline to fail.
+        for _ in range(20):
+            time.sleep(1)
+            if timeline.status == "fail":
+                break
+        self.assertions.assertEqual(timeline.status, "fail")
         _ = sketch.lazyload_data(refresh_cache=True)
+        timeline = sketch.list_timelines()[0]
 
         # Reload timelines to find B
         timelines = sketch.list_timelines()
         timeline_b = next(t for t in timelines if t.name == "timeline_b_failed")
-
-        # Set B to "fail"
-        timeline_b.set_status("fail")
 
         # 4. Delete Timeline B
         sketch.delete_timeline(timeline_b)
