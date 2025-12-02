@@ -128,16 +128,19 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         )
         self.assertions.assertIn("Status: archived", output.decode("utf-8"))
 
-        # 6. Verify the OpenSearch index is actually closed via curl
-        curl_command = f'curl -X GET "http://opensearch:9200/_cat/indices?h=status,index" | grep {index_name}'  # pylint: disable=line-too-long
+        # 6. Verify the OpenSearch index is actually closed via requests
+        import requests
+
         try:
-            opensearch_status_output = subprocess.check_output(
-                ["bash", "-c", curl_command]
-            ).decode("utf-8")
-            self.assertIn(f"close {index_name}", opensearch_status_output)
-        except subprocess.CalledProcessError:
-            # grep returns 1 if not found, which raises CalledProcessError
-            self.fail(f"Index {index_name} not found or not closed in OpenSearch.")
+            response = requests.get(
+                "http://opensearch:9200/_cat/indices?h=status,index"
+            )
+            opensearch_status_output = response.text
+            self.assertions.assertIn(f"close {index_name}", opensearch_status_output)
+        except Exception as e:
+            self.assertions.fail(
+                f"Index {index_name} not found or not closed in OpenSearch. Error: {e}"
+            )
 
 
 manager.EndToEndTestManager.register_test(TimelineDeletionTest)
