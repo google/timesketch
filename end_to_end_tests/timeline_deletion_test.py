@@ -126,7 +126,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         output = subprocess.check_output(
             ["tsctl", "searchindex-info", "--index_name", index_name]
         )
-        self.assertIn("Status: archived", output.decode("utf-8"))
+        self.assertions.assertIn("Status: archived", output.decode("utf-8"))
 
         # 6. Verify the OpenSearch index is actually closed via curl
         curl_command = f'curl -X GET "http://opensearch:9200/_cat/indices?h=status,index" | grep {index_name}'  # pylint: disable=line-too-long
