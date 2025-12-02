@@ -61,10 +61,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # Delete the timeline
         timeline.delete()
 
-        output = subprocess.check_output(
-            ["tsctl", "searchindex-info", "--index_name", searchindex_name]
-        )
-        self.assertIn("Status: archived", output.decode("utf-8"))
+        self.assertions.assertIn("Status: archived", output.decode("utf-8"))
 
     def test_delete_failed_timeline_with_soft_deleted_sibling(self):
         """Test that index is archived when deleting a failed timeline if other
@@ -84,20 +81,17 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         timeline_a.delete()
 
         # 3. Create Timeline B (Failed) sharing the same index
-        self.import_timeline(
+        timeline_b = self.import_timeline(
             "sigma_events.csv", sketch=sketch, index_name="timeline_b_failed"
         )
         _ = sketch.lazyload_data(refresh_cache=True)
-        # Reload timelines to find B
-        timelines = sketch.list_timelines()
-        timeline = timelines[-1]
 
         # Force the timeline status to fail using tsctl.
         subprocess.check_call(
             [
                 "tsctl",
                 "timeline-status",
-                str(timeline.id),
+                str(timeline_b.id),
                 "--action",
                 "set",
                 "--status",
@@ -107,9 +101,11 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
         # Reload the timeline to get the updated status.
         _ = sketch.lazyload_data(refresh_cache=True)
-        timelines = sketch.list_timelines()
-        timeline = timelines[-1]
-        self.assertions.assertEqual(timeline.status, "fail")
+        timelines = sketch.list_timelines()  # Refresh the list of timelines
+        # Find timeline_b again after status update. This lookup should now work.
+        timeline_b = next(t for t in timelines if t.id == timeline_b.id)
+
+        self.assertions.assertEqual(timeline_b.status, "fail")
 
         # 4. Delete Timeline B
         timeline.delete()
