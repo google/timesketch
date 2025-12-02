@@ -55,11 +55,12 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline = sketch.list_timelines()[0]
 
+        # Check that the search index is archived
+        searchindex_name = timeline.index.index_name
+
         # Delete the timeline
         timeline.delete()
 
-        # Check that the search index is archived
-        searchindex_name = timeline.index.index_name
         output = subprocess.check_output(
             ["tsctl", "searchindex-info", "--index_name", searchindex_name]
         )
@@ -89,9 +90,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         _ = sketch.lazyload_data(refresh_cache=True)
         # Reload timelines to find B
         timelines = sketch.list_timelines()
-        timeline = next(
-            t for t in timelines if t.index.index_name == "timeline_b_failed"
-        )
+        timeline = timelines[-1]
 
         # Force the timeline status to fail using tsctl.
         subprocess.check_call(
@@ -109,19 +108,11 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # Reload the timeline to get the updated status.
         _ = sketch.lazyload_data(refresh_cache=True)
         timelines = sketch.list_timelines()
-        timeline = next(
-            t for t in timelines if t.index.index_name == "timeline_b_failed"
-        )
+        timeline = timelines[-1]
         self.assertions.assertEqual(timeline.status, "fail")
-        _ = sketch.lazyload_data(refresh_cache=True)
-        timeline = sketch.list_timelines()[0]
-
-        # Reload timelines to find B
-        timelines = sketch.list_timelines()
-        timeline_b = next(t for t in timelines if t.name == "timeline_b_failed")
 
         # 4. Delete Timeline B
-        timeline_b.delete()
+        timeline.delete()
 
         # 5. Verify Index is Archived via tsctl
         output = subprocess.check_output(
