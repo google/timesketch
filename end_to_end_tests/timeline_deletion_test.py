@@ -53,8 +53,6 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline = sketch.list_timelines()[0]
         self.assertions.assertEqual(timeline.status, "fail")
-        _ = sketch.lazyload_data(refresh_cache=True)
-        timeline = sketch.list_timelines()[0]
 
         # Check that the search index is archived
         searchindex_name = timeline.index.index_name
@@ -94,10 +92,6 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         _ = sketch.lazyload_data(refresh_cache=True)
         timelines = sketch.list_timelines()
         self.assertions.assertIsNotNone(timeline_b)
-        if timeline_b is None:
-            timeline_b = next(
-                t for t in timelines if t.index.index_name == "timeline_b_failed"
-            )
 
         # Force the timeline status to fail using tsctl.
         subprocess.check_call(
@@ -132,7 +126,8 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # 6. Verify the OpenSearch index is actually closed via requests
         try:
             response = requests.get(
-                f"http://{interface.OPENSEARCH_HOST}:{interface.OPENSEARCH_PORT}/_cat/indices?h=status,index", timeout=5
+                f"http://{interface.OPENSEARCH_HOST}:{interface.OPENSEARCH_PORT}/_cat/indices?h=status,index",
+                timeout=5,
             )
             response.raise_for_status()  # Raise HTTPError
             opensearch_status_output = response.text
