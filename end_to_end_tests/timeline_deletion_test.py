@@ -47,5 +47,66 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         )
         self.assertIn("Status: archived", output.decode("utf-8"))
 
+    def test_delete_failed_timeline_with_soft_deleted_sibling(self):
+        """Test that index is archived when deleting a failed timeline if sibling is soft-deleted."""
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(
+            name=f"test-deletion-soft-deleted-sibling_{rand}"
+        )
+
+        # 1. Create Timeline A (Sibling)
+        self.import_timeline(
+            "sigma_events.csv", sketch=sketch, timeline_name="timeline_a"
+        )
+        _ = sketch.lazyload_data(refresh_cache=True)
+        timeline_a = sketch.list_timelines()[0]
+        index_name = timeline_a.searchindex.index_name
+
+        # 2. Soft-delete Timeline A using tsctl workaround
+        subprocess.check_call(
+            [
+                "tsctl",
+                "timeline-status",
+                str(timeline_a.id),
+                "--action",
+                "set",
+                "--status",
+                "deleted",
+            ]
+        )
+
+        # 3. Create Timeline B (Failed) sharing the same index
+        timeline_b = sketch.generate_timeline_from_es_index(
+            es_index_name=index_name, name="timeline_b_failed", provider="test"
+        )
+        _ = sketch.lazyload_data(refresh_cache=True)
+
+        # Reload timelines to find B
+        timelines = sketch.list_timelines()
+        timeline_b = next(t for t in timelines if t.name == "timeline_b_failed")
+
+        # Set B to "fail"
+        timeline_b.set_status("fail")
+
+        # 4. Delete Timeline B
+        sketch.delete_timeline(timeline_b)
+
+        # 5. Verify Index is Archived via tsctl
+        output = subprocess.check_output(
+            ["tsctl", "searchindex-info", "--index_name", index_name]
+        )
+        self.assertIn("Status: archived", output.decode("utf-8"))
+
+        # 6. Verify the OpenSearch index is actually closed via curl
+        curl_command = f'curl -X GET "http://opensearch:9200/_cat/indices?h=status,index" | grep {index_name}'
+        try:
+            opensearch_status_output = subprocess.check_output(
+                ["bash", "-c", curl_command]
+            ).decode("utf-8")
+            self.assertIn(f"close {index_name}", opensearch_status_output)
+        except subprocess.CalledProcessError:
+            # grep returns 1 if not found, which raises CalledProcessError
+            self.fail(f"Index {index_name} not found or not closed in OpenSearch.")
+
 
 manager.EndToEndTestManager.register_test(TimelineDeletionTest)
