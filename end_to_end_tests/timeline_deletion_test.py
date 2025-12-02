@@ -86,9 +86,15 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
         # 3. Create Timeline B (Failed) sharing the same index
         timeline_b = self.import_timeline(
-            "sigma_events.csv", sketch=sketch, index_name="timeline_b_failed"
+            "evtx_part.csv", sketch=sketch, index_name="timeline_b_failed"
         )
+
+        # Reload the sketch and find Timeline B from the list of timelines.
         _ = sketch.lazyload_data(refresh_cache=True)
+        timelines = sketch.list_timelines()
+        timeline_b = next(
+            t for t in timelines if t.index.index_name == "timeline_b_failed"
+        )
 
         # Force the timeline status to fail using tsctl.
         subprocess.check_call(
@@ -105,10 +111,10 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
         # Reload the timeline to get the updated status.
         _ = sketch.lazyload_data(refresh_cache=True)
-        timelines = sketch.list_timelines()  # Refresh the list of timelines
-        # Find timeline_b again after status update. This lookup should now work.
-        timeline_b = next(t for t in timelines if t.id == timeline_b.id)
-
+        timelines = sketch.list_timelines()
+        timeline_b = next(
+            t for t in timelines if t.id == timeline_b.id
+        )  # Re-fetch to ensure status is fresh
         self.assertions.assertEqual(timeline_b.status, "fail")
 
         # 4. Delete Timeline B
