@@ -152,6 +152,7 @@ class BaseEndToEndTest(object):
 
         self._imported_sketch_timelines.add((sketch.id, filename))
         self._imported_files.append(filename)
+        return timeline
 
     def import_directly_to_opensearch(self, filename, index_name):
         """Import a CSV file directly into OpenSearch.
