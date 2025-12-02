@@ -27,3 +27,4 @@ from . import import_plaso_test
 from . import query_test
 from . import upload_test
 from . import tsctl_test
+from . import timeline_deletion_test

@@ -1,3 +1,5 @@
+"""End to end tests for timeline deletion functionality."""
+
 # Copyright 2025 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

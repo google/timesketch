@@ -450,6 +450,14 @@ level: high
         admin_user = self.admin_api.current_user
         self.assertions.assertEqual(admin_user.username, "admin")
 
+        # Import a timeline into the sketch
+        self.import_timeline("sigma_events.csv", sketch=sketch)
+
+        timeline = sketch.list_timelines()[0]
+        # Check that there is at least one timeline
+        self.assertions.assertEqual(timeline.index.status, "ready")
+        self.assertions.assertEqual(len(sketch.list_timelines()), 1)
+
         # Grant admin necessary permissions
         sketch.add_to_acl(user_list=["admin"], permissions=["read", "write", "delete"])
         admin_sketch_instance = self.admin_api.get_sketch(sketch_id)
