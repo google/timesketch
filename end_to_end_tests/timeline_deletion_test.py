@@ -31,16 +31,26 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         rand = random.randint(0, 10000)
         sketch = self.api.create_sketch(name=f"test-timeline-deletion_{rand}")
 
-        # This file is known to cause an import failure.
-        timeline = self.import_timeline(
-            "evtx_20221023.plaso", sketch=sketch, index_name="timeline_b_failed"
+        # Import a valid timeline.
+        self.import_timeline("sigma_events.csv", sketch=sketch)
+        timeline = sketch.list_timelines()[0]
+
+        # Force the timeline status to fail using tsctl.
+        subprocess.check_call(
+            [
+                "tsctl",
+                "timeline-status",
+                str(timeline.id),
+                "--action",
+                "set",
+                "--status",
+                "fail",
+            ]
         )
 
-        # Wait for the timeline to fail.
-        for _ in range(20):
-            time.sleep(1)
-            if timeline.status == "fail":
-                break
+        # Reload the timeline to get the updated status.
+        _ = sketch.lazyload_data(refresh_cache=True)
+        timeline = sketch.list_timelines()[0]
         self.assertions.assertEqual(timeline.status, "fail")
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline = sketch.list_timelines()[0]
@@ -73,17 +83,31 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         timeline_a.delete()
 
         # 3. Create Timeline B (Failed) sharing the same index
+        self.import_timeline(
+            "sigma_events.csv", sketch=sketch, index_name="timeline_b_failed"
+        )
+        _ = sketch.lazyload_data(refresh_cache=True)
+        # Reload timelines to find B
+        timelines = sketch.list_timelines()
+        timeline = next(t for t in timelines if t.name == "timeline_b_failed")
 
-        # This file is known to cause an import failure
-        timeline = self.import_timeline(
-            "evtx_20221023.plaso", sketch=sketch, index_name="timeline_b_failed"
+        # Force the timeline status to fail using tsctl.
+        subprocess.check_call(
+            [
+                "tsctl",
+                "timeline-status",
+                str(timeline.id),
+                "--action",
+                "set",
+                "--status",
+                "fail",
+            ]
         )
 
-        # Wait for the timeline to fail.
-        for _ in range(20):
-            time.sleep(1)
-            if timeline.status == "fail":
-                break
+        # Reload the timeline to get the updated status.
+        _ = sketch.lazyload_data(refresh_cache=True)
+        timelines = sketch.list_timelines()
+        timeline = next(t for t in timelines if t.name == "timeline_b_failed")
         self.assertions.assertEqual(timeline.status, "fail")
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline = sketch.list_timelines()[0]
