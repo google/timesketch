@@ -132,7 +132,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # 6. Verify the OpenSearch index is actually closed via requests
         try:
             response = requests.get(
-                "http://opensearch:9200/_cat/indices?h=status,index", timeout=5
+                f"http://{interface.OPENSEARCH_HOST}:{interface.OPENSEARCH_PORT}/_cat/indices?h=status,index", timeout=5
             )
             response.raise_for_status()  # Raise HTTPError
             opensearch_status_output = response.text
