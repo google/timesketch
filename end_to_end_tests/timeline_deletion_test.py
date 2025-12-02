@@ -15,7 +15,6 @@
 # limitations under the License.
 import subprocess
 import time
-import os
 import random
 
 from . import interface
@@ -34,7 +33,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
         # This file is known to cause an import failure.
         timeline = self.import_timeline(
-            "invalid_jsonl.jsonl", sketch=sketch, index_name="timeline_b_failed"
+            "evtx_20221023.plaso", sketch=sketch, index_name="timeline_b_failed"
         )
 
         # Wait for the timeline to fail.
@@ -77,7 +76,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
         # This file is known to cause an import failure
         timeline = self.import_timeline(
-            "invalid_jsonl.jsonl", sketch=sketch, index_name="timeline_b_failed"
+            "evtx_20221023.plaso", sketch=sketch, index_name="timeline_b_failed"
         )
 
         # Wait for the timeline to fail.
