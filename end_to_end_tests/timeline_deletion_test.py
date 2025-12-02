@@ -33,10 +33,9 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"test-timeline-deletion_{rand}")
 
         # This file is known to cause an import failure.
-        file_path = os.path.join(
-            os.path.dirname(__file__), "test_data", "invalid_jsonl.jsonl"
+        timeline = self.import_timeline(
+            "invalid_jsonl.jsonl", sketch=sketch, index_name="timeline_b_failed"
         )
-        timeline = self.import_timeline(file_path, sketch=sketch)
 
         # Wait for the timeline to fail.
         for _ in range(20):
@@ -76,12 +75,9 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
         # 3. Create Timeline B (Failed) sharing the same index
 
-        # This file is known to cause an import failure.
-        file_path = os.path.join(
-            os.path.dirname(__file__), "test_data", "invalid_jsonl.jsonl"
-        )
+        # This file is known to cause an import failure
         timeline = self.import_timeline(
-            file_path, sketch=sketch, index_name="timeline_b_failed"
+            "invalid_jsonl.jsonl", sketch=sketch, index_name="timeline_b_failed"
         )
 
         # Wait for the timeline to fail.
