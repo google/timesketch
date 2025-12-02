@@ -29,9 +29,12 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         rand = random.randint(0, 10000)
         sketch = self.api.create_sketch(name=f"test-timeline-deletion_{rand}")
         timeline_name = "test-timeline"
-        timeline = sketch.upload(
-            file_path="test_data/sigma_events.csv", timeline_name=timeline_name
+        # Import a timeline into the sketch
+        self.import_timeline(
+            "sigma_events.csv", sketch=sketch, timeline_name=timeline_name
         )
+        _ = sketch.lazyload_data(refresh_cache=True)
+        timeline = sketch.list_timelines()[0]
         timeline.set_status("fail")
 
         # Delete the timeline

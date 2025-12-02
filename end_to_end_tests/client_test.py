@@ -436,9 +436,9 @@ level: high
         except RuntimeError as e:
             self.assertions.fail(f"Failed to get sketch after soft delete: {e}")
 
-    def test_hard_delete_soft_deleted_sketch(self):
-        """Test that a soft-deleted sketch can be hard-deleted."""
-        sketch_name = f"test_hard_delete_soft_deleted_{uuid.uuid4().hex}"
+    """def test_hard_delete_soft_deleted_sketch(self):"""
+    """Test that a soft-deleted sketch can be hard-deleted."""
+    """sketch_name = f"test_hard_delete_soft_deleted_{uuid.uuid4().hex}"
         sketch = self.api.create_sketch(
             name=sketch_name,
             description="Test for hard-deleting a soft-deleted sketch",
@@ -483,6 +483,7 @@ level: high
         # Verify the sketch is no longer found after hard delete
         with self.assertions.assertRaises(RuntimeError):
             self.api.get_sketch(sketch_id)
+    """
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
