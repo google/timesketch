@@ -133,7 +133,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
             response = requests.get(
                 "http://opensearch:9200/_cat/indices?h=status,index", timeout=5
             )
-            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            response.raise_for_status()  # Raise HTTPError
             opensearch_status_output = response.text
             self.assertions.assertIn(f"close {index_name}", opensearch_status_output)
         except requests.exceptions.RequestException as e:
