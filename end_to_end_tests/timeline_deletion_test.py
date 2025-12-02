@@ -28,6 +28,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
     NAME = "delete_timeline_test"
 
     def test_delete_failed_timeline(self):
+        """Test to delete a failed timeline"""
         rand = random.randint(0, 10000)
         sketch = self.api.create_sketch(name=f"test-timeline-deletion_{rand}")
 
@@ -50,7 +51,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         sketch.delete_timeline(timeline)
 
         # Check that the search index is archived
-        searchindex_name = timeline.searchindex.index_name
+        searchindex_name = timeline.index.index_name
         output = subprocess.check_output(
             ["tsctl", "searchindex-info", "--index_name", searchindex_name]
         )
@@ -68,26 +69,12 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         self.import_timeline("sigma_events.csv", sketch=sketch, index_name="timeline_a")
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline_a = sketch.list_timelines()[0]
-        index_name = timeline_a.searchindex.index_name
+        index_name = timeline_a.index.index_name
 
-        # 2. Soft-delete Timeline A using tsctl workaround
-        subprocess.check_call(
-            [
-                "tsctl",
-                "timeline-status",
-                str(timeline_a.id),
-                "--action",
-                "set",
-                "--status",
-                "deleted",
-            ]
-        )
+        # 2. Delete Timeline A
+        timeline_a.delete()
 
         # 3. Create Timeline B (Failed) sharing the same index
-        # timeline_b = sketch.generate_timeline_from_es_index(
-        #    es_index_name=index_name, name="timeline_b_failed", provider="test"
-        # )
-        # _ = sketch.lazyload_data(refresh_cache=True)
 
         # This file is known to cause an import failure.
         file_path = os.path.join(

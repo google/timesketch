@@ -1,0 +1,3 @@
+{"message": "This is a valid JSON line"}
+This is not a valid JSON line
+{"message": "This is another valid JSON line"}
