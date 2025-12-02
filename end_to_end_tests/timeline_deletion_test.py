@@ -61,6 +61,10 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # Delete the timeline
         timeline.delete()
 
+        output = subprocess.check_output(
+            ["tsctl", "searchindex-info", "--index_name", searchindex_name]
+        )
+
         self.assertions.assertIn("Status: archived", output.decode("utf-8"))
 
     def test_delete_failed_timeline_with_soft_deleted_sibling(self):
@@ -108,7 +112,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(timeline_b.status, "fail")
 
         # 4. Delete Timeline B
-        timeline.delete()
+        timeline_b.delete()
 
         # 5. Verify Index is Archived via tsctl
         output = subprocess.check_output(

@@ -576,7 +576,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             if timeline_.id != timeline_id:
                 # There are more than a single timeline using this index_name,
                 # we can't close it (unless this timeline is archived).
-                if timeline_.get_status.status not in ("archived", "fail"):
+                if timeline_.get_status.status not in ("archived", "fail", "deleted"):
                     close_index = False
                     break
 
