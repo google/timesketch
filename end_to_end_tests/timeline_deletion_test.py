@@ -92,9 +92,11 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # Reload the sketch and find Timeline B from the list of timelines.
         _ = sketch.lazyload_data(refresh_cache=True)
         timelines = sketch.list_timelines()
-        timeline_b = next(
-            t for t in timelines if t.index.index_name == "timeline_b_failed"
-        )
+        self.assertions.assertIsNotNone(timeline_b)
+        if timeline_b is None:
+            timeline_b = next(
+                t for t in timelines if t.index.index_name == "timeline_b_failed"
+            )
 
         # Force the timeline status to fail using tsctl.
         subprocess.check_call(
