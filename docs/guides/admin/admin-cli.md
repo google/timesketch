@@ -247,7 +247,7 @@ tsctl add-group-member analysts --username john
 tsctl remove-group-member analysts --username john
 ```
 
-#### `sync-group-memberships`
+#### `sync-groups-from-json`
 
 Synchronizes user group memberships from a JSON file. This command will create,
 add, and remove users from groups to match the state defined in the JSON file.
@@ -284,10 +284,10 @@ is a list of usernames to be in that group.
 **Example Usage:**
 ```shell
 # Perform a dry run to see what changes would be made
-tsctl sync-group-memberships /tmp/groups.json --dry-run
+tsctl sync-groups-from-json /tmp/groups.json --dry-run
 
 # Apply the changes to the database
-tsctl sync-group-memberships /tmp/groups.json
+tsctl sync-groups-from-json /tmp/groups.json
 ```
 
 ---
