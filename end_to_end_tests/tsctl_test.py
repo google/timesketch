@@ -69,30 +69,32 @@ class TestTsctl(interface.BaseEndToEndTest):
         self.assertions.assertIn("active: True)", result.output)
 
     def test_sync_group_memberships_file_not_found(self):
-        """Tests sync-groups with a non-existent file."""
-        result = self.runner.invoke(cli, ["sync-groups", "nonexistent.json"])
+        """Tests sync-groups-from-json with a non-existent file."""
+        result = self.runner.invoke(cli, ["sync-groups-from-json", "nonexistent.json"])
         self.assertions.assertNotEqual(result.exit_code, 0)
         self.assertions.assertIn("Error: File not found", result.output)
 
     def test_sync_group_memberships_invalid_json(self):
-        """Tests sync-groups with an invalid JSON file."""
+        """Tests sync-groups-from-json with an invalid JSON file."""
         file_path = "invalid.json"
         try:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write("{'invalid_json':}")
-            result = self.runner.invoke(cli, ["sync-groups", file_path])
+            result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
             self.assertions.assertNotEqual(result.exit_code, 0)
             self.assertions.assertIn("Error: Invalid JSON file", result.output)
         finally:
             os.remove(file_path)
 
     def test_sync_groups_dry_run(self):
-        """Tests sync-groups with --dry-run."""
+        """Tests sync-groups-from-json with --dry-run."""
         group_data = {"new_group": ["user1", "user2"]}
         file_path = self._create_group_sync_file(group_data)
 
         try:
-            result = self.runner.invoke(cli, ["sync-groups", file_path, "--dry-run"])
+            result = self.runner.invoke(
+                cli, ["sync-groups-from-json", file_path, "--dry-run"]
+            )
             self.assertions.assertEqual(
                 result.exit_code, 0, f"CLI Error: {result.output}"
             )
@@ -104,11 +106,11 @@ class TestTsctl(interface.BaseEndToEndTest):
             os.remove(file_path)
 
     def test_sync_groups_full_run(self):
-        """Tests the full sync-groups command."""
+        """Tests the full sync-groups-from-json command."""
         # 1. Initial setup: Create a new group with one user
         group_data = {"test_sync_group": ["user_a"]}
         file_path = self._create_group_sync_file(group_data)
-        result = self.runner.invoke(cli, ["sync-groups", file_path])
+        result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
         self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
         self.assertions.assertIn("Creating new group: 'test_sync_group'", result.output)
         self.assertions.assertIn("Creating new user: 'user_a'", result.output)
@@ -120,7 +122,7 @@ class TestTsctl(interface.BaseEndToEndTest):
         # 2. Update: Add a user, remove a user
         group_data = {"test_sync_group": ["user_b"]}
         file_path = self._create_group_sync_file(group_data)
-        result = self.runner.invoke(cli, ["sync-groups", file_path])
+        result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
         self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
         self.assertions.assertIn("Creating new user: 'user_b'", result.output)
         self.assertions.assertIn(
@@ -135,7 +137,7 @@ class TestTsctl(interface.BaseEndToEndTest):
         self.runner.invoke(cli, ["create-group", "unmanaged_group"])
         group_data = {"test_sync_group": []}
         file_path = self._create_group_sync_file(group_data)
-        result = self.runner.invoke(cli, ["sync-groups", file_path])
+        result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
         self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
         self.assertions.assertIn(
             "Removing user 'user_b' from group 'test_sync_group'", result.output

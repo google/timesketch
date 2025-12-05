@@ -3442,7 +3442,7 @@ def import_db(filepath, yes):
         click.echo("Database import finished.")
 
 
-@cli.command(name="sync-groups")
+@cli.command(name="sync-groups-from-json")
 @click.argument("filepath")
 @click.option(
     "--dry-run", is_flag=True, help="Calculate changes/logs without committing."
