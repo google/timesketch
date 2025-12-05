@@ -3442,13 +3442,13 @@ def import_db(filepath, yes):
         click.echo("Database import finished.")
 
 
-@cli.command(name="sync-group-memberships")
+@cli.command(name="sync-groups")
 @click.argument("filepath")
 @click.option(
     "--dry-run", is_flag=True, help="Calculate changes/logs without committing."
 )
-def sync_group_memberships(filepath, dry_run):
-    """Synchronize user group memberships from a JSON file.
+def sync_groups(filepath, dry_run):
+    """Synchronize user groups from a JSON file.
 
     The JSON file should be a dictionary where keys are group names and values
     are lists of usernames (email addresses).
@@ -3458,6 +3458,8 @@ def sync_group_memberships(filepath, dry_run):
     2. Create users that don't exist (with a random password).
     3. Add users to groups defined in the JSON.
     4. Remove users from groups if they are NOT in the JSON list for that group.
+       (User accounts are NOT deleted and keep access to Sketches they own or
+       dirtectly shared with the user)
     5. Log all actions.
 
     Groups existing in the database but NOT in the JSON file will be ignored
