@@ -3464,17 +3464,21 @@ def sync_group_memberships(filepath, dry_run):
     (not deleted), but a warning will be logged.
     """
     if not os.path.isfile(filepath):
-        print(f"Error: File not found: {filepath}")
+        click.echo(f"Error: File not found: {filepath}")
         return
 
     try:
         with open(filepath, "r", encoding="utf-8") as fh:
             group_mapping = json.load(fh)
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON file: {e}")
+        click.echo(f"Error: Invalid JSON file: {e}")
         return
 
-    print("Pre-fetching existing users and groups...")
+    if not isinstance(group_mapping, dict):
+        click.echo("Error: JSON root must be a dictionary.")
+        return
+
+    click.echo("Pre-fetching existing users and groups...")
     # Pre-fetch existing data to prevent N+1 queries
     existing_users = {u.username: u for u in User.query.all()}
     existing_groups = {g.name: g for g in Group.query.all()}
@@ -3492,7 +3496,7 @@ def sync_group_memberships(filepath, dry_run):
         # 1. Get or Create Group
         group = existing_groups.get(group_name)
         if not group:
-            print(f"Creating new group: '{group_name}'")
+            click.echo(f"Creating new group: '{group_name}'")
             if not dry_run:
                 group = Group(name=group_name, display_name=group_name)
                 db_session.add(group)
@@ -3500,11 +3504,10 @@ def sync_group_memberships(filepath, dry_run):
                 db_session.flush()
                 existing_groups[group_name] = group
             else:
-                print(
+                click.echo(
                     f"[DRY-RUN] Would create group {group_name} and add "
                     f"{len(desired_members)} users."
                 )
-                continue
 
         # 2. Create missing users
         # If dry-run and group doesn't exist, we can't inspect members,
@@ -3519,7 +3522,7 @@ def sync_group_memberships(filepath, dry_run):
         # Identify users that need to be created first
         for username in desired_member_set:
             if username not in existing_users:
-                print(f"Creating new user: '{username}'")
+                click.echo(f"Creating new user: '{username}'")
                 if not dry_run:
                     new_user = User(username=username, name=username, active=True)
                     # Set a random password so the account is valid
@@ -3528,9 +3531,9 @@ def sync_group_memberships(filepath, dry_run):
                     db_session.add(new_user)
                     db_session.flush()  # Flush to make available for relationship
                     existing_users[username] = new_user
-                    print(f"User '{username}' created with random password.")
+                    click.echo(f"User '{username}' created with random password.")
                 else:
-                    print(f"[DRY-RUN] Would create user '{username}'")
+                    click.echo(f"[DRY-RUN] Would create user '{username}'")
 
         # 3. Sync Membership (Add/Remove)
         users_to_add = desired_member_set - current_member_usernames
@@ -3541,19 +3544,19 @@ def sync_group_memberships(filepath, dry_run):
             user_obj = existing_users.get(username)
             # user_obj exists if not dry_run, or if it existed before this run
             if user_obj and not dry_run:
-                print(f"Adding user '{username}' to group '{group_name}'")
+                click.echo(f"Adding user '{username}' to group '{group_name}'")
                 group.users.append(user_obj)
             elif dry_run:
-                print(f"[DRY-RUN] Would add user '{username}' to group '{group_name}'")
+                click.echo(f"[DRY-RUN] Would add user '{username}' to group '{group_name}'")
 
         # Removals
         for username in users_to_remove:
             user_obj = existing_users.get(username)
             if user_obj and not dry_run:
-                print(f"Removing user '{username}' from group '{group_name}'")
+                click.echo(f"Removing user '{username}' from group '{group_name}'")
                 group.users.remove(user_obj)
             elif dry_run:
-                print(
+                click.echo(
                     f"[DRY-RUN] Would remove user '{username}' from group "
                     f"'{group_name}'"
                 )
@@ -3563,20 +3566,20 @@ def sync_group_memberships(filepath, dry_run):
     unmanaged_groups = all_db_group_names - processed_groups
 
     if unmanaged_groups:
-        print(
+        click.echo(
             "The following groups exist in the DB but were not in the sync file"
             " (skipped):"
         )
         for g in unmanaged_groups:
-            print(f" -> {g}")
+            click.echo(f" -> {g}")
 
     if not dry_run:
-        print("Committing changes to database...")
+        click.echo("Committing changes to database...")
         try:
             db_session.commit()
-            print("Sync complete.")
+            click.echo("Sync complete.")
         except Exception as e:
-            print(f"Error: Failed to commit changes: {e}")
+            click.echo(f"Error: Failed to commit changes: {e}")
             db_session.rollback()
     else:
-        print("[DRY-RUN] No changes committed.")
+        click.echo("[DRY-RUN] No changes committed.")
