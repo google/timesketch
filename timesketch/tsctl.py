@@ -2889,18 +2889,24 @@ def check_opensearch_links():
         print("No search indices found in the database.")
         return
 
-    # Collect all index names from the database for a single bulk check.
+    # Collect all index names from the database.
     db_index_names = {s.index_name for s in search_indices}
+    db_index_names_list = list(db_index_names)
+    existing_os_index_names = set()
+
+    # Chunk size to avoid "too_long_http_line_exception"
+    chunk_size = 50
 
     try:
-        # Get all existing indices from OpenSearch in a single API call.
-        # ignore_unavailable=True is a valid argument
-        # pylint: disable-next=unexpected-keyword-arg
-        existing_indices_info = datastore.client.indices.get(
-            index=list(db_index_names),
-            ignore_unavailable=True,
-        )
-        existing_os_index_names = set(existing_indices_info.keys())
+        for i in range(0, len(db_index_names_list), chunk_size):
+            chunk = db_index_names_list[i : i + chunk_size]
+            # Get existing indices from OpenSearch for this chunk.
+            # pylint: disable-next=unexpected-keyword-arg
+            existing_indices_info = datastore.client.indices.get(
+                index=chunk,
+                ignore_unavailable=True,
+            )
+            existing_os_index_names.update(existing_indices_info.keys())
 
         # Determine which indices are in the DB but not in OpenSearch.
         missing_index_names = db_index_names - existing_os_index_names
