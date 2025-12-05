@@ -3447,7 +3447,7 @@ def import_db(filepath, yes):
 @click.option(
     "--dry-run", is_flag=True, help="Calculate changes/logs without committing."
 )
-def sync_groups(filepath, dry_run):
+def sync_groups_from_json(filepath, dry_run):
     """Synchronize user groups from a JSON file.
 
     The JSON file should be a dictionary where keys are group names and values
