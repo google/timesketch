@@ -95,7 +95,9 @@ class TestTsctl(interface.BaseEndToEndTest):
             result = self.runner.invoke(
                 cli, ["sync-group-memberships", file_path, "--dry-run"]
             )
-            self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
+            self.assertions.assertEqual(
+                result.exit_code, 0, f"CLI Error: {result.output}"
+            )
             self.assertions.assertIn("[DRY-RUN]", result.output)
             self.assertions.assertIn("Would create group new_group", result.output)
             self.assertions.assertIn("Would create user 'user1'", result.output)
