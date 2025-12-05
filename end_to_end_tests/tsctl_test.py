@@ -77,12 +77,14 @@ class TestTsctl(interface.BaseEndToEndTest):
     def test_sync_group_memberships_invalid_json(self):
         """Tests sync-group-memberships with an invalid JSON file."""
         file_path = "invalid.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write("{'invalid_json':}")
-        result = self.runner.invoke(cli, ["sync-group-memberships", file_path])
-        self.assertions.assertNotEqual(result.exit_code, 0)
-        self.assertions.assertIn("Error: Invalid JSON file", result.output)
-        os.remove(file_path)
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write("{'invalid_json':}")
+            result = self.runner.invoke(cli, ["sync-group-memberships", file_path])
+            self.assertions.assertNotEqual(result.exit_code, 0)
+            self.assertions.assertIn("Error: Invalid JSON file", result.output)
+        finally:
+            os.remove(file_path)
 
     def test_sync_group_memberships_dry_run(self):
         """Tests sync-group-memberships with --dry-run."""
