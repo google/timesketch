@@ -91,16 +91,17 @@ class TestTsctl(interface.BaseEndToEndTest):
         group_data = {"new_group": ["user1", "user2"]}
         file_path = self._create_group_sync_file(group_data)
 
-        result = self.runner.invoke(
-            cli, ["sync-group-memberships", file_path, "--dry-run"]
-        )
-        self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
-        self.assertions.assertIn("[DRY-RUN]", result.output)
-        self.assertions.assertIn("Would create group new_group", result.output)
-        self.assertions.assertIn("Would create user 'user1'", result.output)
-        self.assertions.assertIn("No changes committed", result.output)
-
-        os.remove(file_path)
+        try:
+            result = self.runner.invoke(
+                cli, ["sync-group-memberships", file_path, "--dry-run"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
+            self.assertions.assertIn("[DRY-RUN]", result.output)
+            self.assertions.assertIn("Would create group new_group", result.output)
+            self.assertions.assertIn("Would create user 'user1'", result.output)
+            self.assertions.assertIn("No changes committed", result.output)
+        finally:
+            os.remove(file_path)
 
     def test_sync_group_memberships_full_run(self):
         """Tests the full sync-group-memberships command."""
