@@ -92,9 +92,7 @@ class TestTsctl(interface.BaseEndToEndTest):
         file_path = self._create_group_sync_file(group_data)
 
         try:
-            result = self.runner.invoke(
-                cli, ["sync-groups", file_path, "--dry-run"]
-            )
+            result = self.runner.invoke(cli, ["sync-groups", file_path, "--dry-run"])
             self.assertions.assertEqual(
                 result.exit_code, 0, f"CLI Error: {result.output}"
             )
