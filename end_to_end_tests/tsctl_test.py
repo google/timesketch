@@ -70,9 +70,7 @@ class TestTsctl(interface.BaseEndToEndTest):
 
     def test_sync_group_memberships_file_not_found(self):
         """Tests sync-group-memberships with a non-existent file."""
-        result = self.runner.invoke(
-            cli, ["sync-group-memberships", "nonexistent.json"]
-        )
+        result = self.runner.invoke(cli, ["sync-group-memberships", "nonexistent.json"])
         self.assertions.assertNotEqual(result.exit_code, 0)
         self.assertions.assertIn("Error: File not found", result.output)
 

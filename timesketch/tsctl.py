@@ -26,10 +26,10 @@ import csv
 import datetime
 import traceback
 from typing import Optional
-import yaml
-import redis
 import secrets
 import string
+import yaml
+import redis
 
 
 import sqlalchemy
@@ -3580,7 +3580,7 @@ def sync_group_memberships(filepath, dry_run):
         try:
             db_session.commit()
             click.echo("Sync complete.")
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             click.echo(f"Error: Failed to commit changes: {e}")
             db_session.rollback()
     else:
