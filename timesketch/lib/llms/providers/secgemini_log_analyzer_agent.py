@@ -204,7 +204,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
     def generate_stream_from_logs(
         self,
         log_events_generator: Iterable[Dict[str, Any]],
-        prompt: str = "Analyze the attached logs for any signs of a compromise.",
+        prompt: str = "Perform a forensic analysis of the provided logs. Identify and explain all log records indicative of system compromise. Reconstruct the timeline of any attack you find. The most important records you find that are representative of the attack must be marked with `critical` severity. Those events with `critical` severity will later be used to write a detailed attack report. Be highly precise, because marking benign events with `critical` severity is detrimental.",
     ) -> Generator[str, None, None]:
         """Analyzes a stream of log events using the SecGemini log analysis agent.
 
