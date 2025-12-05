@@ -12,38 +12,42 @@ USER root
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 # -----------------------------------------------------------------------------
-# PLASO TRACK SWITCHING LOGIC
+# SYSTEM DEPENDENCIES & PLASO TRACK SETUP
 # -----------------------------------------------------------------------------
-# If PLASO_PPA_TRACK is 'staging', we switch the PPA and upgrade.
-# Since the base image already has the heavy dependencies, this is fast.
-RUN if [ "$PLASO_PPA_TRACK" = "staging" ]; then \
+# Combined to reduce Docker layers and avoid redundant apt-get updates.
+RUN \
+  # 1. PREPARE STAGING (Conditional)
+  # If Staging is requested, remove stable PPA and add Staging PPA.
+  # We use '-n' to skip the immediate apt-update, deferring it to the next step.
+  if [ "$PLASO_PPA_TRACK" = "staging" ]; then \
     echo "Staging track detected. Switching PPA from Stable to Staging..."; \
     # Remove the existing stable PPA file provided by the base image
     rm -f /etc/apt/sources.list.d/gift-*.list; \
     # Add the staging repository
-    add-apt-repository -y ppa:gift/staging; \
-    apt-get update; \
-    # Upgrade plaso-tools to the staging version
-    apt-get install -y --only-upgrade plaso-tools; \
+    add-apt-repository -y -n ppa:gift/staging; \
   else \
-    echo "Stable track detected. Using pre-installed Plaso from base image."; \
-  fi
-
-# -----------------------------------------------------------------------------
-# DEPENDENCIES
-# -----------------------------------------------------------------------------
-# Install system tools needed for Timesketch (git, build tools, etc.)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  git \
-  gpg-agent \
-  python3-pip \
-  python3-psycopg2 \
-  python3-setuptools \
-  python3-venv \
-  python3-wheel \
-  tzdata \
-  wget \
-  && rm -rf /var/lib/apt/lists/*
+    echo "Stable track detected. Keeping base image PPA."; \
+  fi && \
+  # 2. UPDATE & INSTALL COMMON TOOLS
+  # This runs a single update for either the Stable or Staging repos
+  apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    gpg-agent \
+    python3-pip \
+    python3-psycopg2 \
+    python3-setuptools \
+    python3-venv \
+    python3-wheel \
+    tzdata \
+    wget \
+  && \
+  # 3. UPGRADE PLASO (Conditional)
+  # If we are on staging, we explicitly upgrade the tools to the version found in the new PPA
+  if [ "$PLASO_PPA_TRACK" = "staging" ]; then \
+    apt-get install -y --only-upgrade plaso-tools; \
+  fi && \
+  # 4. CLEANUP
+  rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # PYTHON / OPENSEARCH FIXES
@@ -76,11 +80,16 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Timesketch
 ADD . /tmp/timesketch
+
+# Install dependencies first (better caching)
 RUN pip3 install -r /tmp/timesketch/requirements.txt
-RUN pip3 install /tmp/timesketch && \
-    pip3 install /tmp/timesketch/api_client/python && \
-    pip3 install /tmp/timesketch/importer_client/python && \
-    pip3 install /tmp/timesketch/cli_client/python
+
+# Install Timesketch and clients in one go for atomic dependency resolution
+RUN pip3 install \
+    /tmp/timesketch \
+    /tmp/timesketch/api_client/python \
+    /tmp/timesketch/importer_client/python \
+    /tmp/timesketch/cli_client/python
 
 # Configs
 RUN mkdir -p /etc/timesketch
