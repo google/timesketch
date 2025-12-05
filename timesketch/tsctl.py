@@ -3547,7 +3547,9 @@ def sync_group_memberships(filepath, dry_run):
                 click.echo(f"Adding user '{username}' to group '{group_name}'")
                 group.users.append(user_obj)
             elif dry_run:
-                click.echo(f"[DRY-RUN] Would add user '{username}' to group '{group_name}'")
+                click.echo(
+                    f"[DRY-RUN] Would add user '{username}' to group '{group_name}'"
+                )
 
         # Removals
         for username in users_to_remove:
