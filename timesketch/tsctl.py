@@ -3466,19 +3466,16 @@ def sync_groups(filepath, dry_run):
     (not deleted), but a warning will be logged.
     """
     if not os.path.isfile(filepath):
-        click.echo(f"Error: File not found: {filepath}")
-        return
+        raise click.ClickException(f"File not found: {filepath}")
 
     try:
         with open(filepath, "r", encoding="utf-8") as fh:
             group_mapping = json.load(fh)
     except json.JSONDecodeError as e:
-        click.echo(f"Error: Invalid JSON file: {e}")
-        return
+        raise click.ClickException(f"Invalid JSON file: {e}")
 
     if not isinstance(group_mapping, dict):
-        click.echo("Error: JSON root must be a dictionary.")
-        return
+        raise click.ClickException("JSON root must be a dictionary.")
 
     click.echo("Pre-fetching existing users and groups...")
     # Pre-fetch existing data to prevent N+1 queries
