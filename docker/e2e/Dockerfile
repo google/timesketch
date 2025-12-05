@@ -1,16 +1,38 @@
-ARG UBUNTU_VERSION=22.04
-# Use the official Docker Hub Ubuntu base image
-FROM ubuntu:${UBUNTU_VERSION}
-# An `ARG` declared before a `FROM` instruction is only in scope
-# for the `FROM` instruction.
-ARG UBUNTU_VERSION
+# We use the official Plaso image as our base cache.
+# This corresponds to Plaso Stable (latest release).
+FROM log2timeline/plaso:latest
 
 ARG PLASO_PPA_TRACK=stable
+ARG UBUNTU_VERSION=24.04
 
-# Prevent needing to configure debian packages, stopping the setup of
-# the docker container.
+# Switch to root to perform updates and installs
+USER root
+
+# Prevent interactive prompts
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
+# -----------------------------------------------------------------------------
+# PLASO TRACK SWITCHING LOGIC
+# -----------------------------------------------------------------------------
+# If PLASO_PPA_TRACK is 'staging', we switch the PPA and upgrade.
+# Since the base image already has the heavy dependencies, this is fast.
+RUN if [ "$PLASO_PPA_TRACK" = "staging" ]; then \
+    echo "Staging track detected. Switching PPA from Stable to Staging..."; \
+    # Remove the existing stable PPA file provided by the base image
+    rm -f /etc/apt/sources.list.d/gift-*.list; \
+    # Add the staging repository
+    add-apt-repository -y ppa:gift/staging; \
+    apt-get update; \
+    # Upgrade plaso-tools to the staging version
+    apt-get install -y --only-upgrade plaso-tools; \
+  else \
+    echo "Stable track detected. Using pre-installed Plaso from base image."; \
+  fi
+
+# -----------------------------------------------------------------------------
+# DEPENDENCIES
+# -----------------------------------------------------------------------------
+# Install system tools needed for Timesketch (git, build tools, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   gpg-agent \
@@ -19,63 +41,64 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   python3-setuptools \
   python3-venv \
   python3-wheel \
-  software-properties-common \
   tzdata \
   wget \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Plaso
-RUN add-apt-repository -y ppa:gift/$PLASO_PPA_TRACK
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  plaso-tools \
-  && rm -rf /var/lib/apt/lists/*
+# -----------------------------------------------------------------------------
+# PYTHON / OPENSEARCH FIXES
+# -----------------------------------------------------------------------------
 
-
-# Install opensearch-py globally for Plaso to find it                                  │
-# Fix for broken PPA dependency: Plaso needs the 'events' library for its              │
-# opensearch output module, but the python3-opensearch package is missing              │
-# this dependency. We install it globally for the system Python.                       │
+# 1. Fix for Ubuntu 24.04 (Noble) missing 'events' dependency for Plaso
+# This is required for both Stable and Staging on 24.04
 RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
-  echo '24.04 detected';  \
-  pip3 install --break-system-packages events; \ 
+    echo "Applying 'events' library fix for Ubuntu 24.04..."; \
+    pip3 install --break-system-packages events; \
   fi
 
+# 2. Fix for Staging Track (Opensearch-py version mismatch)
+# Staging often requires a newer or specific opensearch-py version not yet in apt
 RUN if [ "$PLASO_PPA_TRACK" = "staging" ] && [ "$UBUNTU_VERSION" = "24.04" ]; then \
-  echo 'Plaso staging on Ubuntu 24.04 detected, installing opensearch-py==3.0.0'; \
-  pip3 install --break-system-packages opensearch-py==3.0.0; \
+    echo "Plaso staging on 24.04 detected, installing opensearch-py==3.0.0"; \
+    pip3 install --break-system-packages opensearch-py==3.0.0; \
   fi
 
-# Some information for e2e test debugging in case something goes wrong
-RUN pip3 show opensearch-py
-RUN dpkg -s plaso-tools
+# Debugging info
 RUN psort.py --version
 
-# Create a virtual environment
+# -----------------------------------------------------------------------------
+# TIMESKETCH SETUP
+# -----------------------------------------------------------------------------
+
+# Create venv inheriting the Plaso site-packages (System)
 RUN python3 -m venv /opt/venv --system-site-packages
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install timesketch from the current branch (In the context of CI platform)
+# Install Timesketch
 ADD . /tmp/timesketch
 RUN pip3 install -r /tmp/timesketch/requirements.txt
-RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
-  pip3 install /tmp/timesketch/importer_client/python && \
-  pip3 install /tmp/timesketch/cli_client/python
+RUN pip3 install /tmp/timesketch && \
+    pip3 install /tmp/timesketch/api_client/python && \
+    pip3 install /tmp/timesketch/importer_client/python && \
+    pip3 install /tmp/timesketch/cli_client/python
 
-# Copy Timesketch config files into /etc/timesketch
-RUN mkdir /etc/timesketch
-RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
-RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/intelligence_tag_metadata.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/regex_features.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/winevt_features.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
-RUN cp /tmp/timesketch/data/generic.mappings /etc/timesketch/
-RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/data_finder.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/plaso_formatters.yaml /etc/timesketch/
-RUN chmod -R go+r /etc/timesketch
+# Configs
+RUN mkdir -p /etc/timesketch
+WORKDIR /tmp/timesketch/data
+RUN cp timesketch.conf \
+       ontology.yaml \
+       tags.yaml \
+       intelligence_tag_metadata.yaml \
+       regex_features.yaml \
+       winevt_features.yaml \
+       plaso.mappings \
+       generic.mappings \
+       sigma_config.yaml \
+       data_finder.yaml \
+       bigquery_matcher.yaml \
+       plaso_formatters.yaml \
+       /etc/timesketch/ && \
+    chmod -R go+r /etc/timesketch
 
 # Copy the entrypoint script into the container
 COPY docker/e2e/docker-entrypoint.sh /
