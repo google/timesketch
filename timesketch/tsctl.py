@@ -3472,20 +3472,11 @@ def sync_group_memberships(filepath, dry_run):
         print(f"Error: Invalid JSON file: {e}")
         return
 
-    # Configure logging for audit trail
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - [SYNC] - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
-    logger = logging.getLogger("group_sync")
-
-    # 1. Pre-fetch existing data to prevent N+1 queries
     print("Pre-fetching existing users and groups...")
+    # Pre-fetch existing data to prevent N+1 queries
     existing_users = {u.username: u for u in User.query.all()}
     existing_groups = {g.name: g for g in Group.query.all()}
 
-    # Track processed groups to identify unmanaged ones later
     processed_groups = set()
 
     # Helper to generate random password for new users
@@ -3496,11 +3487,10 @@ def sync_group_memberships(filepath, dry_run):
     for group_name, desired_members in group_mapping.items():
         processed_groups.add(group_name)
 
-        # --- Handle Group Existence ---
+        # 1. Get or Create Group
         group = existing_groups.get(group_name)
         if not group:
-            msg = f"Creating new group: '{group_name}'"
-            logger.info(msg)
+            print(f"Creating new group: '{group_name}'")
             if not dry_run:
                 group = Group(name=group_name, display_name=group_name)
                 db_session.add(group)
@@ -3512,15 +3502,16 @@ def sync_group_memberships(filepath, dry_run):
                 print(f"[DRY-RUN] Would create group {group_name} and add {len(desired_members)} users.")
                 continue
 
-        # --- Handle User Existence ---
-        current_member_usernames = {u.username for u in group.users}
+        # 2. Create missing users
+        # If dry-run and group doesn't exist, we can't inspect members,
+        # but we know we would create all desired members if they don't exist.
+        current_member_usernames = {u.username for u in group.users} if group else set()
         desired_member_set = set(desired_members)
 
         # Identify users that need to be created first
         for username in desired_member_set:
             if username not in existing_users:
-                msg = f"Creating new user: '{username}'"
-                logger.info(msg)
+                print(f"Creating new user: '{username}'")
                 if not dry_run:
                     new_user = User(username=username, name=username, active=True)
                     # Set a random password so the account is valid
@@ -3529,61 +3520,49 @@ def sync_group_memberships(filepath, dry_run):
                     db_session.add(new_user)
                     db_session.flush() # Flush to make available for relationship
                     existing_users[username] = new_user
-                    logger.info(f"User '{username}' created with random password.")
+                    print(f"User '{username}' created with random password.")
                 else:
-                    print(f"[DRY-RUN] Would create user {username}")
+                    print(f"[DRY-RUN] Would create user '{username}'")
 
-        # --- Calculate Deltas ---
-        # Users to Add: In desired set, but not in current DB set
+        # 3. Sync Membership (Add/Remove)
         users_to_add = desired_member_set - current_member_usernames
-
-        # Users to Remove: In current DB set, but not in desired set
         users_to_remove = current_member_usernames - desired_member_set
-
-        # --- Apply Changes ---
 
         # Additions
         for username in users_to_add:
-            # We know user exists now (created above or existed previously)
             user_obj = existing_users.get(username)
-            if user_obj:
-                msg = f"Adding user '{username}' to group '{group_name}'"
-                logger.info(msg)
-                if not dry_run:
-                    group.users.append(user_obj)
+            # user_obj exists if not dry_run, or if it existed before this run
+            if user_obj and not dry_run:
+                print(f"Adding user '{username}' to group '{group_name}'")
+                group.users.append(user_obj)
             elif dry_run:
-                print(f"[DRY-RUN] Would add {username} to {group_name}")
+                print(f"[DRY-RUN] Would add user '{username}' to group '{group_name}'")
 
         # Removals
         for username in users_to_remove:
-            # We have to find the user object in the group's current list to remove it
-            # (Fetching from existing_users is faster than iterating group.users)
             user_obj = existing_users.get(username)
-            if user_obj:
-                msg = f"Removing user '{username}' from group '{group_name}'"
-                logger.info(msg)
-                if not dry_run:
-                    group.users.remove(user_obj)
+            if user_obj and not dry_run:
+                print(f"Removing user '{username}' from group '{group_name}'")
+                group.users.remove(user_obj)
             elif dry_run:
-                 print(f"[DRY-RUN] Would remove {username} from {group_name}")
+                print(f"[DRY-RUN] Would remove user '{username}' from group '{group_name}'")
 
-    # --- Identify Unmanaged Groups ---
+    # 4. Warn about unmanaged groups
     all_db_group_names = set(existing_groups.keys())
     unmanaged_groups = all_db_group_names - processed_groups
 
     if unmanaged_groups:
-        logger.warning("The following groups exist in the DB but were not in the sync file (skipped):")
+        print("The following groups exist in the DB but were not in the sync file (skipped):")
         for g in unmanaged_groups:
-            logger.warning(f" -> {g}")
+            print(f" -> {g}")
 
-    # --- Commit ---
     if not dry_run:
         print("Committing changes to database...")
         try:
             db_session.commit()
             print("Sync complete.")
         except Exception as e:
-            logger.error(f"Failed to commit changes: {e}")
+            print(f"Error: Failed to commit changes: {e}")
             db_session.rollback()
     else:
         print("[DRY-RUN] No changes committed.")
