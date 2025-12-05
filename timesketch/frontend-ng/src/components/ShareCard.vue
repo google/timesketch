@@ -31,14 +31,15 @@ limitations under the License.
         deletable-chips
         label="Add people and groups"
       >
-        <template v-slot:item="{ item }">
-          <v-list-item-icon class="mr-3">
-            <v-icon v-if="item.type === 'user'">mdi-account</v-icon>
-            <v-icon v-else>mdi-account-group-outline</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title v-text="item.text"></v-list-item-title>
-          </v-list-item-content>
+        <template v-slot:item="{ item, on, attrs }">
+          <v-list-item v-bind="attrs" v-on="on">
+            <v-list-item-icon class="mr-3">
+              <v-icon>{{ item.type === 'user' ? 'mdi-account' : 'mdi-account-group-outline' }}</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title v-text="item.text"></v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </template>
       </v-autocomplete>
       <br />
