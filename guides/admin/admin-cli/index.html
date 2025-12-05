@@ -1393,6 +1393,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sync-groups-from-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sync-groups-from-json
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3249,6 +3260,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sync-groups-from-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sync-groups-from-json
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3800,6 +3822,38 @@ incident-responders: jane
 <p><strong>Examples:</strong></p>
 <pre><code class="language-shell">tsctl add-group-member analysts --username john
 tsctl remove-group-member analysts --username john
+</code></pre>
+<h4 id="sync-groups-from-json"><code>sync-groups-from-json</code></h4>
+<p>Synchronizes user group memberships from a JSON file. This command will create,
+add, and remove users from groups to match the state defined in the JSON file.</p>
+<p><strong>Arguments:</strong>
+*   <code>FILEPATH</code>: Path to a JSON file containing the group membership definition.</p>
+<p><strong>Options:</strong>
+*   <code>--dry-run</code>: If set, the command will print the changes it would make without
+    actually modifying the database.</p>
+<p><strong>JSON File Format:</strong></p>
+<p>The JSON file must be a dictionary where each key is a group name and the value
+is a list of usernames to be in that group.</p>
+<p><strong>Example JSON (<code>/tmp/groups.json</code>):</strong></p>
+<pre><code class="language-json">{
+    &quot;analysts&quot;: [&quot;user1@timesketch.org&quot;, &quot;user2@timesketch.org&quot;],
+    &quot;incident-responders&quot;: [&quot;user2@timesketch.org&quot;, &quot;user3@timesketch.org&quot;]
+}
+</code></pre>
+<p><strong>Behavior:</strong>
+*   <strong>Groups</strong>: Creates groups if they don't exist. Groups in the database but
+    not in the JSON file are ignored.
+*   <strong>Users</strong>: Creates users if they don't exist (with a random password).
+*   <strong>Membership</strong>:
+    *   Adds users to groups to match the JSON file.
+    *   Removes users from groups if they are in the database but not in the
+        corresponding list in the JSON file.</p>
+<p><strong>Example Usage:</strong></p>
+<pre><code class="language-shell"># Perform a dry run to see what changes would be made
+tsctl sync-groups-from-json /tmp/groups.json --dry-run
+
+# Apply the changes to the database
+tsctl sync-groups-from-json /tmp/groups.json
 </code></pre>
 <hr />
 <h2 id="sketch-management">Sketch Management</h2>
