@@ -3444,7 +3444,9 @@ def import_db(filepath, yes):
 
 @cli.command(name="sync-group-memberships")
 @click.argument("filepath")
-@click.option("--dry-run", is_flag=True, help="Calculate changes/logs without committing to DB.")
+@click.option(
+    "--dry-run", is_flag=True, help="Calculate changes/logs without committing."
+)
 def sync_group_memberships(filepath, dry_run):
     """Synchronize user group memberships from a JSON file.
 
@@ -3482,7 +3484,7 @@ def sync_group_memberships(filepath, dry_run):
     # Helper to generate random password for new users
     def generate_random_password(length=16):
         alphabet = string.ascii_letters + string.digits + string.punctuation
-        return ''.join(secrets.choice(alphabet) for i in range(length))
+        return "".join(secrets.choice(alphabet) for i in range(length))
 
     for group_name, desired_members in group_mapping.items():
         processed_groups.add(group_name)
@@ -3498,14 +3500,20 @@ def sync_group_memberships(filepath, dry_run):
                 db_session.flush()
                 existing_groups[group_name] = group
             else:
-                # In dry run, we can't really proceed with logic requiring the object
-                print(f"[DRY-RUN] Would create group {group_name} and add {len(desired_members)} users.")
+                print(
+                    f"[DRY-RUN] Would create group {group_name} and add "
+                    f"{len(desired_members)} users."
+                )
                 continue
 
         # 2. Create missing users
         # If dry-run and group doesn't exist, we can't inspect members,
         # but we know we would create all desired members if they don't exist.
-        current_member_usernames = {u.username for u in group.users} if group else set()
+        if group:
+            current_member_usernames = {u.username for u in group.users}
+        else:
+            current_member_usernames = set()
+
         desired_member_set = set(desired_members)
 
         # Identify users that need to be created first
@@ -3518,7 +3526,7 @@ def sync_group_memberships(filepath, dry_run):
                     random_pw = generate_random_password()
                     new_user.set_password(random_pw)
                     db_session.add(new_user)
-                    db_session.flush() # Flush to make available for relationship
+                    db_session.flush()  # Flush to make available for relationship
                     existing_users[username] = new_user
                     print(f"User '{username}' created with random password.")
                 else:
@@ -3545,14 +3553,20 @@ def sync_group_memberships(filepath, dry_run):
                 print(f"Removing user '{username}' from group '{group_name}'")
                 group.users.remove(user_obj)
             elif dry_run:
-                print(f"[DRY-RUN] Would remove user '{username}' from group '{group_name}'")
+                print(
+                    f"[DRY-RUN] Would remove user '{username}' from group "
+                    f"'{group_name}'"
+                )
 
     # 4. Warn about unmanaged groups
     all_db_group_names = set(existing_groups.keys())
     unmanaged_groups = all_db_group_names - processed_groups
 
     if unmanaged_groups:
-        print("The following groups exist in the DB but were not in the sync file (skipped):")
+        print(
+            "The following groups exist in the DB but were not in the sync file"
+            " (skipped):"
+        )
         for g in unmanaged_groups:
             print(f" -> {g}")
 
