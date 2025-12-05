@@ -30,7 +30,17 @@ limitations under the License.
         return-object
         deletable-chips
         label="Add people and groups"
-      ></v-autocomplete>
+      >
+        <template v-slot:item="{ item }">
+          <v-list-item-icon class="mr-3">
+            <v-icon v-if="item.type === 'user'">mdi-account</v-icon>
+            <v-icon v-else>mdi-account-group-outline</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title v-text="item.text"></v-list-item-title>
+          </v-list-item-content>
+        </template>
+      </v-autocomplete>
       <br />
       People with access
       <v-list>
