@@ -40,6 +40,17 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
     # The `timeline_id` will be None, and the analyzer should operate on all
     # timelines within the sketch.
 
+    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
+        """Initialize the analyzer object.
+
+        Args:
+            index_name: OpenSearch index name.
+            sketch_id: Sketch ID.
+            timeline_id: The timeline ID.
+        """
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
+        self.analyzer_kwargs = kwargs
+
     def run(self):
         """Entry point for the analyzer."""
         logger.info(
@@ -81,6 +92,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                 "Triggering Log Analyzer LLM feature for sketch [%d]", self.sketch.id
             )
             start_time = time.time()
+            prompt = self.analyzer_kwargs.get("prompt")
             result = feature_instance.execute(
                 sketch=self.sketch.sql_sketch,
                 form={
@@ -96,6 +108,7 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                     ]
                 },
                 llm_provider=llm_provider,
+                prompt=prompt,
             )
             duration_seconds = time.time() - start_time
             if duration_seconds > 60:
