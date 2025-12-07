@@ -26,6 +26,8 @@ import csv
 import datetime
 import traceback
 from typing import Optional
+import secrets
+import string
 import yaml
 import redis
 
@@ -3444,3 +3446,147 @@ def import_db(filepath, yes):
                 sqlalchemy.text("SET session_replication_role = 'origin'")
             )
         click.echo("Database import finished.")
+
+
+@cli.command(name="sync-groups-from-json")
+@click.argument("filepath")
+@click.option(
+    "--dry-run", is_flag=True, help="Calculate changes/logs without committing."
+)
+def sync_groups_from_json(filepath, dry_run):
+    """Synchronize user groups from a JSON file.
+
+    The JSON file should be a dictionary where keys are group names and values
+    are lists of usernames (email addresses).
+
+    The script will:
+    1. Create groups that don't exist.
+    2. Create users that don't exist (with a random password).
+    3. Add users to groups defined in the JSON.
+    4. Remove users from groups if they are NOT in the JSON list for that group.
+       (User accounts are NOT deleted and keep access to Sketches they own or
+       dirtectly shared with the user)
+    5. Log all actions.
+
+    Groups existing in the database but NOT in the JSON file will be ignored
+    (not deleted), but a warning will be logged.
+    """
+    if not os.path.isfile(filepath):
+        raise click.ClickException(f"File not found: {filepath}")
+
+    try:
+        with open(filepath, "r", encoding="utf-8") as fh:
+            group_mapping = json.load(fh)
+    except json.JSONDecodeError as e:
+        raise click.ClickException(f"Invalid JSON file: {e}")
+
+    if not isinstance(group_mapping, dict):
+        raise click.ClickException("JSON root must be a dictionary.")
+
+    click.echo("Pre-fetching existing users and groups...")
+    # Pre-fetch existing data to prevent N+1 queries
+    existing_users = {u.username: u for u in User.query.all()}
+    existing_groups = {g.name: g for g in Group.query.all()}
+
+    processed_groups = set()
+
+    # Helper to generate random password for new users
+    def generate_random_password(length=16):
+        alphabet = string.ascii_letters + string.digits + string.punctuation
+        return "".join(secrets.choice(alphabet) for i in range(length))
+
+    for group_name, desired_members in group_mapping.items():
+        processed_groups.add(group_name)
+
+        # 1. Get or Create Group
+        group = existing_groups.get(group_name)
+        if not group:
+            click.echo(f"Creating new group: '{group_name}'")
+            if not dry_run:
+                group = Group(name=group_name, display_name=group_name)
+                db_session.add(group)
+                # We need to flush to get an ID and allow relationships to work
+                db_session.flush()
+                existing_groups[group_name] = group
+            else:
+                click.echo(
+                    f"[DRY-RUN] Would create group {group_name} and add "
+                    f"{len(desired_members)} users."
+                )
+
+        # 2. Create missing users
+        # If dry-run and group doesn't exist, we can't inspect members,
+        # but we know we would create all desired members if they don't exist.
+        if group:
+            current_member_usernames = {u.username for u in group.users}
+        else:
+            current_member_usernames = set()
+
+        desired_member_set = set(desired_members)
+
+        # Identify users that need to be created first
+        for username in desired_member_set:
+            if username not in existing_users:
+                click.echo(f"Creating new user: '{username}'")
+                if not dry_run:
+                    new_user = User(username=username, name=username, active=True)
+                    # Set a random password so the account is valid
+                    random_pw = generate_random_password()
+                    new_user.set_password(random_pw)
+                    db_session.add(new_user)
+                    db_session.flush()  # Flush to make available for relationship
+                    existing_users[username] = new_user
+                    click.echo(f"User '{username}' created with random password.")
+                else:
+                    click.echo(f"[DRY-RUN] Would create user '{username}'")
+
+        # 3. Sync Membership (Add/Remove)
+        users_to_add = desired_member_set - current_member_usernames
+        users_to_remove = current_member_usernames - desired_member_set
+
+        # Additions
+        for username in users_to_add:
+            user_obj = existing_users.get(username)
+            # user_obj exists if not dry_run, or if it existed before this run
+            if user_obj and not dry_run:
+                click.echo(f"Adding user '{username}' to group '{group_name}'")
+                group.users.append(user_obj)
+            elif dry_run:
+                click.echo(
+                    f"[DRY-RUN] Would add user '{username}' to group '{group_name}'"
+                )
+
+        # Removals
+        for username in users_to_remove:
+            user_obj = existing_users.get(username)
+            if user_obj and not dry_run:
+                click.echo(f"Removing user '{username}' from group '{group_name}'")
+                group.users.remove(user_obj)
+            elif dry_run:
+                click.echo(
+                    f"[DRY-RUN] Would remove user '{username}' from group "
+                    f"'{group_name}'"
+                )
+
+    # 4. Warn about unmanaged groups
+    all_db_group_names = set(existing_groups.keys())
+    unmanaged_groups = all_db_group_names - processed_groups
+
+    if unmanaged_groups:
+        click.echo(
+            "The following groups exist in the DB but were not in the sync file"
+            " (skipped):"
+        )
+        for g in unmanaged_groups:
+            click.echo(f" -> {g}")
+
+    if not dry_run:
+        click.echo("Committing changes to database...")
+        try:
+            db_session.commit()
+            click.echo("Sync complete.")
+        except Exception as e:  # pylint: disable=broad-except
+            click.echo(f"Error: Failed to commit changes: {e}")
+            db_session.rollback()
+    else:
+        click.echo("[DRY-RUN] No changes committed.")
