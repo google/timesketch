@@ -205,8 +205,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         self,
         log_events_generator: Iterable[Dict[str, Any]],
         prompt: str = (
-          "Perform a forensics investigation on the provided logs. Determine if the host has been compromised "
-          "and if so, reconstruct the complete attacker timeline, from initial compromise to actions on objectives."
+            "Perform a forensics investigation on the provided logs. Determine if the "
+            "host has been compromised, and if so, reconstruct the complete attacker "
+            "timeline, from initial compromise to actions on objectives."
         ),
     ) -> Generator[str, None, None]:
         """Analyzes a stream of log events using the SecGemini log analysis agent.
