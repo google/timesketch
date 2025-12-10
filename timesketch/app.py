@@ -205,7 +205,7 @@ def create_app(
     # Setup CSRF protection for the whole application
     CSRFProtect(app)
 
-    if app.config.get("DEBUG") and not app.config.get("TESTING"):
+    if app.config.get("ENABLE_PROFILING", False) and not app.config.get("TESTING"):
         # pylint: disable=import-outside-toplevel
         from werkzeug.middleware.profiler import ProfilerMiddleware
 

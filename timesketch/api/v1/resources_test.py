@@ -1857,3 +1857,103 @@ class LLMResourceTest(BaseTest):
         self.assertIn("LLM call timed out", response_data["message"])
 
         process_instance.terminate.assert_called_once()
+
+
+class ExportStreamListResourceTest(BaseTest):
+    """Tests for the ExportStreamListResource."""
+
+    def setUp(self):
+        super().setUp()
+        self.resource_url = "/api/v1/sketches/1/exportstream/"
+
+    @mock.patch("timesketch.api.v1.resources.exportstream.OpenSearchDataStore")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.validate_indices")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.get_validated_indices")
+    def test_post_export(self, mock_get_validated, mock_validate, mock_ds_cls):
+        """Test the POST request for exporting events."""
+        self.login()
+
+        # Mock the datastore instance
+        mock_ds = mock.Mock()
+        mock_ds_cls.return_value = mock_ds
+
+        # Mock index validation
+        mock_get_validated.return_value = (["test_index"], [1])
+        mock_validate.return_value = ["test_index"]
+
+        # Mock the query builder
+        mock_ds.build_query.return_value = {"query": {"match_all": {}}}
+
+        # Mock the slicing export generator
+        mock_events = [
+            {"_id": "1", "_index": "test_index", "_source": {"message": "event1"}},
+            {"_id": "2", "_index": "test_index", "_source": {"message": "event2"}},
+        ]
+        mock_ds.export_events_with_slicing.return_value = iter(mock_events)
+
+        data = {"filter": {"indices": [1]}, "fields": "message,datetime"}
+
+        response = self.client.post(self.resource_url, json=data)
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
+        # Verify the datastore was initialized with the correct pool size
+        mock_ds_cls.assert_called_with(pool_maxsize=60)
+
+        # Verify the streamed response content
+        response_text = response.get_data(as_text=True).strip()
+        lines = response_text.split("\n")
+
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(json.loads(lines[0]), mock_events[0])
+        self.assertEqual(json.loads(lines[1]), mock_events[1])
+
+        # Verify export_events_with_slicing arguments
+        mock_ds.export_events_with_slicing.assert_called_once()
+        call_args = mock_ds.export_events_with_slicing.call_args
+        self.assertEqual(call_args.kwargs["indices_for_pit"], ["test_index"])
+        # Check that source filtering was applied based on fields
+        self.assertEqual(
+            call_args.kwargs["base_query_body"]["_source"], ["message", "datetime"]
+        )
+
+    @mock.patch("timesketch.api.v1.resources.exportstream.OpenSearchDataStore")
+    def test_export_no_indices(self, mock_ds_cls):  # pylint: disable=unused-argument
+        """Test export with no valid indices found."""
+        self.login()
+        with mock.patch(
+            "timesketch.api.v1.resources.exportstream.utils.get_validated_indices",
+            return_value=([], []),
+        ):
+            response = self.client.post(self.resource_url, json={})
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+    def test_export_forbidden(self):
+        """Test export on a sketch the user doesn't have access to."""
+        # Sketch 2 is not owned by the default test user
+        self.login()
+        response = self.client.post("/api/v1/sketches/2/exportstream/", json={})
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+    @mock.patch("timesketch.api.v1.resources.exportstream.OpenSearchDataStore")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.validate_indices")
+    @mock.patch("timesketch.api.v1.resources.exportstream.utils.get_validated_indices")
+    def test_post_export_no_valid_backend_indices(
+        self, mock_get_validated, mock_validate, mock_ds_cls
+    ):
+        """Test export when backend validation returns no indices."""
+        # pylint: disable=unused-argument
+        self.login()
+        mock_ds_cls.return_value = mock.Mock()
+
+        # DB says the timeline exists...
+        mock_get_validated.return_value = (["test_index"], [1])
+        # ...but OpenSearch validation says it does not.
+        mock_validate.return_value = []
+
+        data = {"filter": {"indices": [1]}}
+        response = self.client.post(self.resource_url, json=data)
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        # Verify we hit the specific abort for empty indices_for_pit
+        self.assertIn("No valid search indices", response.json["message"])
