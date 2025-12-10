@@ -31,6 +31,9 @@ from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
 from timesketch.api.v1.resources import ResourceMixin
+from timesketch.lib.llms.providers.secgemini_log_analyzer_agent import (
+    DEFAULT_PROMPT as LOG_ANALYZER_DEFAULT_PROMPT,
+)
 
 
 class ResourceMixinTest(BaseTest):
@@ -1493,6 +1496,7 @@ class SystemSettingsResourceTest(BaseTest):
             "SEARCH_PROCESSING_TIMELINES": False,
             "ENABLE_V3_INVESTIGATION_VIEW": False,
             "LLM_FEATURES_AVAILABLE": {"default": False},
+            "LOG_ANALYZER_DEFAULT_PROMPT": LOG_ANALYZER_DEFAULT_PROMPT,
         }
 
         self.assertDictEqual(response.json, expected_response)

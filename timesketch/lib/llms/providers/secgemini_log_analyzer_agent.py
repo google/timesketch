@@ -36,7 +36,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_PROMPT = "Analyze the attached logs for any signs of a compromise."
+DEFAULT_PROMPT = (
+    "Perform a forensics investigation on the provided logs. Determine if the "
+    "host has been compromised, and if so, reconstruct the complete attacker "
+    "timeline, from initial compromise to actions on objectives."
+)
 
 
 class SecGeminiLogAnalyzer(interface.LLMProvider):
