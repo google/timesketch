@@ -141,8 +141,6 @@ def upload_file(
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
-        streamer.close()
-
     logger.info("File upload completed.")
     return timeline, task_id
 
