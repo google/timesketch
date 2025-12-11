@@ -29,7 +29,15 @@ import queue
 import signal
 
 from watchdog.observers.polling import PollingObserverVFS
-from watchdog.events import DirCreatedEvent, FileCreatedEvent, DirMovedEvent, FileMovedEvent, DirModifiedEvent, FileModifiedEvent, FileSystemEventHandler
+from watchdog.events import (
+    DirCreatedEvent,
+    FileCreatedEvent,
+    DirMovedEvent,
+    FileMovedEvent,
+    DirModifiedEvent,
+    FileModifiedEvent,
+    FileSystemEventHandler,
+)
 
 from timesketch_api_client import cli_input
 from timesketch_api_client import credentials as ts_credentials
@@ -74,8 +82,11 @@ def get_name_by_path(path: str, n: int) -> str:
 
 
 def get_sketch_by_opts(
-    sketch_id: int, sketch_name: str, sketch_name_path_pos: int,
-    file_path: str, ts_client
+    sketch_id: int,
+    sketch_name: str,
+    sketch_name_path_pos: int,
+    file_path: str,
+    ts_client,
 ) -> sketch.Sketch:
     """Get or create a sketch based on the provided options.
 
@@ -274,10 +285,19 @@ class WatchdogDirectoryMonitor:
 
     FIRST_BYTES = 200  # needs to be low, as otherwise small files may have issues.
 
-    def __init__(self, directory_path, ts_client, config_dict: dict, state_file, poll_interval: int = 1, ):
+    def __init__(
+        self,
+        directory_path,
+        ts_client,
+        config_dict: dict,
+        state_file,
+        poll_interval: int = 1,
+    ):
         self.directory_path = os.path.abspath(directory_path)
         self.poll_interval = poll_interval
-        self._observer = PollingObserverVFS(stat=os.stat, listdir=os.scandir, polling_interval=self.poll_interval)
+        self._observer = PollingObserverVFS(
+            stat=os.stat, listdir=os.scandir, polling_interval=self.poll_interval
+        )
         self._handler = _WatchdogEventHandler(self)
         self._observer.schedule(self._handler, self.directory_path, recursive=True)
         self._q = queue.Queue()
@@ -306,7 +326,9 @@ class WatchdogDirectoryMonitor:
         try:
             with open(path, "rb") as fh:
                 data = fh.read(nbytes)
-            return zlib.crc32(data)  # faster than hashlib, we don't care about collisions
+            return zlib.crc32(
+                data
+            )  # faster than hashlib, we don't care about collisions
         except Exception:
             return None
 
@@ -398,11 +420,9 @@ class WatchdogDirectoryMonitor:
             start_line = 0
             last_line = self.process_file(path, start_line=start_line)
             with self._lock:
-                self.state[path].update({
-                    "hash": cur_hash,
-                    "last_line": int(last_line or 0),
-                    "mtime": mtime
-                })
+                self.state[path].update(
+                    {"hash": cur_hash, "last_line": int(last_line or 0), "mtime": mtime}
+                )
             self._save_state()
             return
 
@@ -412,11 +432,13 @@ class WatchdogDirectoryMonitor:
             start_line = int(entry.get("last_line", 0))
             last_line = self.process_file(path, start_line=start_line)
             with self._lock:
-                self.state[path].update({
-                    "hash": cur_hash,
-                    "last_line": int(last_line or start_line),
-                    "mtime": mtime
-                })
+                self.state[path].update(
+                    {
+                        "hash": cur_hash,
+                        "last_line": int(last_line or start_line),
+                        "mtime": mtime,
+                    }
+                )
             self._save_state()
             return
 
@@ -459,7 +481,9 @@ class WatchdogDirectoryMonitor:
         """Stub: process .jsonl file lines starting at start_line (0-based).
         Must return the number of lines processed (i.e., next start_line).
         """
-        logger.debug("process_file called for %s starting at line %d", file_path, start_line)
+        logger.debug(
+            "process_file called for %s starting at line %d", file_path, start_line
+        )
         last_processed = start_line
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as fh:
@@ -469,7 +493,8 @@ class WatchdogDirectoryMonitor:
                     sketch_name=self._config_dict.get("sketch_name"),  # type: ignore
                     sketch_name_path_pos=self._config_dict.get("sketch_name_path_pos"),  # type: ignore
                     file_path=file_path,
-                    ts_client=self._ts_client)
+                    ts_client=self._ts_client,
+                )
 
                 if not my_sketch:
                     logger.error("Unable to get or create sketch.")
@@ -478,9 +503,12 @@ class WatchdogDirectoryMonitor:
                 timeline_name = get_timeline_name_by_opts(
                     timeline_name=self._config_dict.get("timeline_name"),  # type: ignore
                     timeline_name_path_pos=self._config_dict.get("timeline_name_path_pos"),  # type: ignore
-                    file_path=file_path)
+                    file_path=file_path,
+                )
 
-                logger.debug(f"Processing file {file_path} with sketch_name {my_sketch.name} and timeline_name {timeline_name}")
+                logger.debug(
+                    f"Processing file {file_path} with sketch_name {my_sketch.name} and timeline_name {timeline_name}"
+                )
                 import_helper = helper.ImportHelper()
                 import_helper.add_config_dict(self._config_dict)
                 with importer.ImportStreamer() as streamer:
@@ -490,11 +518,14 @@ class WatchdogDirectoryMonitor:
                     streamer.set_timeline_name(timeline_name)
 
                     for idx, _line in enumerate(fh):
-                        if idx < start_line:   # skip already processed lines
+                        if idx < start_line:  # skip already processed lines
                             continue
                         if not _line.endswith("\n"):
-                            logger.debug("Line %d incomplete, stopping processing file and keeping previous index", idx + 1)
-                            return idx         # incomplete line at EOF , this means the line may still be written to by the writer
+                            logger.debug(
+                                "Line %d incomplete, stopping processing file and keeping previous index",
+                                idx + 1,
+                            )
+                            return idx  # incomplete line at EOF , this means the line may still be written to by the writer
 
                         streamer.add_json(json_entry=_line)
                         last_processed = idx + 1  # increment last processed line
@@ -876,7 +907,9 @@ def main(args=None):
         action="store",
         type=str,
         dest="monitor_state_file",
-        default=os.path.join(os.path.expanduser("~"), ".timesketch_importer_monitor_state.json"),
+        default=os.path.join(
+            os.path.expanduser("~"), ".timesketch_importer_monitor_state.json"
+        ),
         help=(
             "Path to the monitor state file to persist per-file state. "
             "Default location is in the home directory."
@@ -910,8 +943,6 @@ def main(args=None):
             "Path {0:s} is not valid, unable to continue.".format(options.path)
         )
         sys.exit(1)
-
-
 
     config_section = options.config_section
     assistant = config.ConfigAssistant()
@@ -1022,7 +1053,6 @@ def main(args=None):
             "log_config_file": options.log_config_file,
             "data_label": options.data_label,
             "analyzer_names": options.analyzer_names,
-
             "sketch_id": options.sketch_id,
             "sketch_name": options.sketch_name,
             "timeline_name": options.timeline_name,
@@ -1030,7 +1060,9 @@ def main(args=None):
             "timeline_name_path_pos": options.timeline_name_path_pos,
         }
 
-        logger.info("Starting to monitor directory for new/updated files: %s", options.path)
+        logger.info(
+            "Starting to monitor directory for new/updated files: %s", options.path
+        )
         monitor = WatchdogDirectoryMonitor(
             directory_path=options.path,
             ts_client=ts_client,
