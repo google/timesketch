@@ -19,6 +19,9 @@ from flask import current_app, jsonify
 from flask_restful import Resource
 from flask_login import login_required
 from timesketch.lib.llms.providers import manager as llm_manager
+from timesketch.lib.llms.providers.secgemini_log_analyzer_agent import (
+    DEFAULT_PROMPT as LOG_ANALYZER_DEFAULT_PROMPT,
+)
 
 logger = logging.getLogger("timesketch.system_settings")
 
@@ -44,6 +47,7 @@ class SystemSettingsResource(Resource):
             "LLM_FEATURES_AVAILABLE": self._get_llm_features_availability(
                 current_app.config.get("LLM_PROVIDER_CONFIGS", {})
             ),
+            "LOG_ANALYZER_DEFAULT_PROMPT": LOG_ANALYZER_DEFAULT_PROMPT,
         }
 
         return jsonify(result)

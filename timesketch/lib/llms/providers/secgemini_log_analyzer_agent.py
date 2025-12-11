@@ -36,6 +36,13 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_PROMPT = (
+    "Perform a forensics investigation on the provided logs. Determine if the "
+    "host has been compromised, and if so, reconstruct the complete attacker "
+    "timeline, from initial compromise to actions on objectives."
+)
+
+
 class SecGeminiLogAnalyzer(interface.LLMProvider):
     """
     SecGemini Log Analyzer LLM provider.
@@ -204,11 +211,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
     def generate_stream_from_logs(
         self,
         log_events_generator: Iterable[Dict[str, Any]],
-        prompt: str = (
-            "Perform a forensics investigation on the provided logs. Determine if the "
-            "host has been compromised, and if so, reconstruct the complete attacker "
-            "timeline, from initial compromise to actions on objectives."
-        ),
+        prompt: str = None,
     ) -> Generator[str, None, None]:
         """Analyzes a stream of log events using the SecGemini log analysis agent.
 
@@ -230,6 +233,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Yields:
             str: Chunks of the raw JSON string response from the LLM provider.
         """
+        if not prompt:
+            prompt = DEFAULT_PROMPT
+
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
         ) as tmpfile:

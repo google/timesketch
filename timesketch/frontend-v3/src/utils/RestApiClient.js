@@ -437,13 +437,20 @@ export default {
   getAnalyzers(sketchId) {
     return RestApiClient.get("/sketches/" + sketchId + "/analyzer/");
   },
-  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false) {
+  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false, customPrompt = null) {
     let formData = {
       timeline_ids: timelineIds,
       analyzer_names: analyzers,
       analyzer_force_run: forceRun,
-    };
-    return RestApiClient.post("/sketches/" + sketchId + "/analyzer/", formData);
+    }
+    if (customPrompt) {
+      let kwargs = {}
+      analyzers.forEach((name) => {
+        kwargs[name] = { prompt: customPrompt }
+      })
+      formData.analyzer_kwargs = kwargs
+    }
+    return RestApiClient.post("/sketches/" + sketchId + "/analyzer/", formData)
   },
   getAnalyzerSession(sketchId, sessionId) {
     return RestApiClient.get(
@@ -590,12 +597,12 @@ export default {
   getFacetQuestions(sketchId, scenarioId, facetId) {
     return RestApiClient.get(
       "/sketches/" +
-        sketchId +
-        "/scenarios/" +
-        scenarioId +
-        "/facets/" +
-        facetId +
-        "/questions/"
+      sketchId +
+      "/scenarios/" +
+      scenarioId +
+      "/facets/" +
+      facetId +
+      "/questions/"
     );
   },
   getQuestion(sketchId, questionId) {
@@ -632,24 +639,24 @@ export default {
     let formData = { conclusionText: conclusionText };
     return RestApiClient.put(
       "/sketches/" +
-        sketchId +
-        "/questions/" +
-        questionId +
-        "/conclusions/" +
-        conclusionId +
-        "/",
+      sketchId +
+      "/questions/" +
+      questionId +
+      "/conclusions/" +
+      conclusionId +
+      "/",
       formData
     );
   },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
     return RestApiClient.delete(
       "/sketches/" +
-        sketchId +
-        "/questions/" +
-        questionId +
-        "/conclusions/" +
-        conclusionId +
-        "/"
+      sketchId +
+      "/questions/" +
+      questionId +
+      "/conclusions/" +
+      conclusionId +
+      "/"
     );
   },
   // Misc resources

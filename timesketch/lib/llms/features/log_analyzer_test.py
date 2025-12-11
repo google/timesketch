@@ -106,3 +106,33 @@ class TestLogAnalyzerFeature(BaseTest):
             "did not identify any specific findings", result.get("message", "")
         )
         self.assertEqual(result.get("status"), "success")
+
+    @mock.patch("timesketch.lib.llms.features.log_analyzer.LogAnalyzer.datastore")
+    def test_execute_passes_prompt_to_provider(self, mock_datastore):
+        """Tests that the custom prompt is passed to the LLM provider."""
+        mock_provider = mock.Mock()
+        mock_provider.SUPPORTS_STREAMING = True
+        mock_provider.NAME = "mock_provider"
+        # Test with an empty findings list to avoid processing logic
+        fake_response_content = {"findings": []}
+        fake_response = json.dumps(fake_response_content)
+        mock_provider.generate_stream_from_logs.return_value = [fake_response]
+
+        mock_sketch = mock.Mock()
+        mock_sketch.id = 1
+        mock_datastore.export_events_with_slicing.return_value = iter([{}])
+
+        feature = log_analyzer.LogAnalyzer()
+        feature.process_response = mock.Mock()
+
+        custom_prompt = "Find evil stuff"
+        feature.execute(
+            sketch=mock_sketch,
+            form={},
+            llm_provider=mock_provider,
+            prompt=custom_prompt,
+        )
+
+        mock_provider.generate_stream_from_logs.assert_called_once()
+        _, call_kwargs = mock_provider.generate_stream_from_logs.call_args
+        self.assertEqual(call_kwargs.get("prompt"), custom_prompt)
