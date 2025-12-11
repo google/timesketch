@@ -247,6 +247,49 @@ tsctl add-group-member analysts --username john
 tsctl remove-group-member analysts --username john
 ```
 
+#### `sync-groups-from-json`
+
+Synchronizes user group memberships from a JSON file. This command will create,
+add, and remove users from groups to match the state defined in the JSON file.
+
+**Arguments:**
+*   `FILEPATH`: Path to a JSON file containing the group membership definition.
+
+**Options:**
+*   `--dry-run`: If set, the command will print the changes it would make without
+    actually modifying the database.
+
+**JSON File Format:**
+
+The JSON file must be a dictionary where each key is a group name and the value
+is a list of usernames to be in that group.
+
+**Example JSON (`/tmp/groups.json`):**
+```json
+{
+    "analysts": ["user1@timesketch.org", "user2@timesketch.org"],
+    "incident-responders": ["user2@timesketch.org", "user3@timesketch.org"]
+}
+```
+
+**Behavior:**
+*   **Groups**: Creates groups if they don't exist. Groups in the database but
+    not in the JSON file are ignored.
+*   **Users**: Creates users if they don't exist (with a random password).
+*   **Membership**:
+    *   Adds users to groups to match the JSON file.
+    *   Removes users from groups if they are in the database but not in the
+        corresponding list in the JSON file.
+
+**Example Usage:**
+```shell
+# Perform a dry run to see what changes would be made
+tsctl sync-groups-from-json /tmp/groups.json --dry-run
+
+# Apply the changes to the database
+tsctl sync-groups-from-json /tmp/groups.json
+```
+
 ---
 
 ## Sketch Management
