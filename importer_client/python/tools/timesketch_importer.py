@@ -26,7 +26,7 @@ from typing import Dict
 from timesketch_api_client import cli_input
 from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
-from timesketch_api_client import config
+from timesketch_api_client import config, client
 from timesketch_api_client import sketch
 from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
@@ -59,10 +59,20 @@ def configure_logger_default():
         handler.setFormatter(logger_formatter)
 
 
-def get_sketch_by_name(ts_client, sketch_name):
-    """
-    Return a Sketch object for sketch_name or raise KeyError if not found.
-    ts_client is an instance of timesketch_api_client.TimesketchApi (or similar).
+def get_sketch_by_name(
+    ts_client: client.TimesketchApi, sketch_name: str
+) -> sketch.Sketch:
+    """Gets a sketch by its name.
+
+    Args:
+        ts_client: An instance of timesketch_api_client.TimesketchApi (or similar).
+        sketch_name: The name of the sketch to find.
+
+    Raises:
+        KeyError: If a sketch with the given name is not found.
+
+    Returns:
+        A sketch object.
     """
     sketches = ts_client.list_sketches()  # may return Sketch objects or dicts
     for s in sketches:
@@ -624,15 +634,17 @@ def main(args=None):
             # check if the sketch name already exists
             my_sketch = get_sketch_by_name(ts_client, sketch_name)
             logger.info(
-                "Using existing sketch: [{0:d}] {1:s}".format(
-                    my_sketch.id, my_sketch.name
-                )
+                "Using existing sketch: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
             )
         except KeyError:
             # no existing sketch found, create a new one
             my_sketch = ts_client.create_sketch(sketch_name)
             logger.info(
-                "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
+                "New sketch created: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
             )
 
     if not my_sketch:
