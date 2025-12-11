@@ -59,6 +59,25 @@ def configure_logger_default():
         handler.setFormatter(logger_formatter)
 
 
+def get_sketch_by_name(ts_client, sketch_name):
+    """
+    Return a Sketch object for sketch_name or raise KeyError if not found.
+    ts_client is an instance of timesketch_api_client.TimesketchApi (or similar).
+    """
+    sketches = ts_client.list_sketches()  # may return Sketch objects or dicts
+    for s in sketches:
+        # Sketch object
+        if hasattr(s, "name") and s.name.lower() == sketch_name.lower():
+            return s
+        # dict representation
+        if isinstance(s, dict) and s.get("name", "").lower() == sketch_name.lower():
+            sketch_id = s.get("id")
+            if sketch_id and hasattr(ts_client, "get_sketch"):
+                return ts_client.get_sketch(sketch_id)
+            return s
+    raise KeyError(f"Sketch named {sketch_name!s} not found")
+
+
 def upload_file(
     my_sketch: sketch.Sketch, config_dict: Dict[str, any], file_path: str
 ) -> str:
@@ -601,10 +620,20 @@ def main(args=None):
         my_sketch = ts_client.get_sketch(sketch_id)
     else:
         sketch_name = options.sketch_name or "New Sketch From Importer CLI"
-        my_sketch = ts_client.create_sketch(sketch_name)
-        logger.info(
-            "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
-        )
+        try:
+            # check if the sketch name already exists
+            my_sketch = get_sketch_by_name(ts_client, sketch_name)
+            logger.info(
+                "Using existing sketch: [{0:d}] {1:s}".format(
+                    my_sketch.id, my_sketch.name
+                )
+            )
+        except KeyError:
+            # no existing sketch found, create a new one
+            my_sketch = ts_client.create_sketch(sketch_name)
+            logger.info(
+                "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
+            )
 
     if not my_sketch:
         logger.error("Unable to get sketch ID: {0:d}".format(sketch_id))
