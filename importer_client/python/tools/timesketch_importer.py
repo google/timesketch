@@ -32,8 +32,6 @@ from watchdog.observers.polling import PollingObserverVFS
 from watchdog.events import (
     DirCreatedEvent,
     FileCreatedEvent,
-    DirMovedEvent,
-    FileMovedEvent,
     DirModifiedEvent,
     FileModifiedEvent,
     FileSystemEventHandler,
