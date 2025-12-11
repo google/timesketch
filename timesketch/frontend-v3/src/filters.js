@@ -56,6 +56,14 @@ export const formatTimestamp = (input) => {
   if (input === null || input === undefined) {
     return null;
   }
+
+  // Check if the input is a float
+  if (typeof input === 'number' && !Number.isInteger(input)) {
+    // It's a float (seconds), so convert to milliseconds
+    return Math.round(input * 1000);
+  }
+
+  // Original integer-based logic for web uploads
   let tsLength = parseInt(input).toString().length;
   if (tsLength === 13) {
     return input; // exit early if timestamp is already in milliseconds
