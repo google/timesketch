@@ -16,13 +16,20 @@ limitations under the License.
 export default {
   name: 'formatTimestamp',
   filter: function (input) {
+    // Check if the input is a float
+    if (typeof input === 'number' && !Number.isInteger(input)) {
+      // It's a float (seconds), so convert to milliseconds
+      return Math.round(input * 1000)
+    }
+
+    // Original integer-based logic for web uploads
     let tsLength = parseInt(input).toString().length
     if (tsLength === 13) {
       return input // exit early if timestamp is already in milliseconds
     } else if (tsLength === 15 || tsLength === 16) {
       input = input / 1000 // microseconds -> milliseconds
     } else if (tsLength === 10) {
-      input = input * 1000000 // seconds -> milliseconds
+      input = input * 1000 // seconds -> milliseconds
     }
     return parseInt(input)
   },
