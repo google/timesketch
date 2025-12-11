@@ -22,11 +22,19 @@ import sys
 import time
 
 from typing import Dict
+import json
+import zlib
+import threading
+import queue
+import signal
+
+from watchdog.observers.polling import PollingObserverVFS
+from watchdog.events import DirCreatedEvent, FileCreatedEvent, DirMovedEvent, FileMovedEvent, DirModifiedEvent, FileModifiedEvent, FileSystemEventHandler
 
 from timesketch_api_client import cli_input
 from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
-from timesketch_api_client import config
+from timesketch_api_client import config, client
 from timesketch_api_client import sketch
 from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
@@ -57,6 +65,102 @@ def configure_logger_default():
     )
     for handler in logger.parent.handlers:
         handler.setFormatter(logger_formatter)
+
+
+def get_name_by_path(path: str, n: int) -> str:
+    """Return a name based on the provided path."""
+    name = os.path.normpath(path).split(os.sep)[n]
+    return name
+
+
+def get_sketch_by_opts(
+    sketch_id: int, sketch_name: str, sketch_name_path_pos: int,
+    file_path: str, ts_client
+) -> sketch.Sketch:
+    """Get or create a sketch based on the provided options.
+
+    Args:
+        sketch_id (int): The sketch ID to retrieve.
+        sketch_name (str): The sketch name to retrieve or create.
+        sketch_name_path_pos (int): If not -1, use the n-th folder in the file path as sketch name.
+        file_path (str): The file path being processed (used if sketch_name_path_pos is set).
+        ts_client: An instance of timesketch_api_client.TimesketchApi (or similar).
+    Returns:
+        A sketch object.
+    """
+    if sketch_id:
+        my_sketch = ts_client.get_sketch(sketch_id)
+    else:
+        if sketch_name_path_pos != -1:
+            sketch_name = get_name_by_path(file_path, sketch_name_path_pos)
+        else:
+            sketch_name = sketch_name or "New Sketch From Importer CLI"
+        try:
+            # check if the sketch name already exists
+            my_sketch = get_sketch_by_name(ts_client, sketch_name)
+            logger.info(
+                "Using existing sketch: [{0:d}] {1:s}".format(
+                    my_sketch.id, my_sketch.name
+                )
+            )
+        except KeyError:
+            # create a new sketch
+            my_sketch = ts_client.create_sketch(sketch_name)
+            logger.info(
+                "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
+            )
+
+    return my_sketch
+
+
+def get_timeline_name_by_opts(
+    timeline_name: str, timeline_name_path_pos: int, file_path: str
+) -> str:
+    """Get timeline name based on provided options.
+    Args:
+        timeline_name (str): The timeline name to use.
+        timeline_name_path_pos (int): If not -1, use the n-th folder in the file path as timeline name.
+        file_path (str): The file path being processed (used if timeline_name_path_pos is set).
+    Returns:
+        A timeline name string.
+    """
+    filename = os.path.basename(file_path)
+    default_timeline_name, _, _ = filename.rpartition(".")
+
+    if timeline_name:
+        return timeline_name
+    elif timeline_name_path_pos != -1:
+        return get_name_by_path(file_path, timeline_name_path_pos)
+    else:
+        return cli_input.ask_question(
+            "What is the timeline name", input_type=str, default=default_timeline_name
+        )
+
+
+def get_sketch_by_name(
+    ts_client: client.TimesketchApi, sketch_name: str
+) -> sketch.Sketch:
+    """Gets a sketch by its name.
+    Args:
+        ts_client: An instance of timesketch_api_client.TimesketchApi (or similar).
+        sketch_name: The name of the sketch to find.
+    Raises:
+        KeyError: If a sketch with the given name is not found.
+    Returns:
+        A sketch object.
+    """
+    sketches = ts_client.list_sketches()  # may return Sketch objects or dicts
+    for s in sketches:
+        # Sketch object
+        if hasattr(s, "name") and s.name.lower() == sketch_name.lower():
+            return s
+        # dict representation
+        if isinstance(s, dict) and s.get("name", "").lower() == sketch_name.lower():
+            sketch_id = s.get("id")
+            if sketch_id and hasattr(ts_client, "get_sketch"):
+                return ts_client.get_sketch(sketch_id)
+            return s
+    raise KeyError(f"Sketch named {sketch_name!s} not found")
 
 
 def upload_file(
@@ -141,10 +245,264 @@ def upload_file(
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
-        streamer.close()
-
     logger.info("File upload completed.")
     return timeline, task_id
+
+
+class _WatchdogEventHandler(FileSystemEventHandler):
+    def __init__(self, monitor):
+        super().__init__()
+        self.monitor = monitor
+
+    def on_created(self, event: DirCreatedEvent | FileCreatedEvent) -> None:
+        if not event.is_directory:
+            self.monitor.enqueue(event.src_path)
+
+    def on_modified(self, event: DirModifiedEvent | FileModifiedEvent) -> None:
+        if not event.is_directory:
+            self.monitor.enqueue(event.src_path)
+
+
+class WatchdogDirectoryMonitor:
+    """PollingObserver-based monitor for .jsonl files that tracks per-file state.
+
+    - Uses watchdog.observers.polling.PollingObserver (platform-independent polling).
+    - Tracks: sha256 of first N bytes, last processed line, mtime.
+    - Persists state to a JSON file on stop and loads it on start.
+    - process_file(file_path, start_line=0) must return last_processed_line (int).
+    """
+
+    FIRST_BYTES = 200  # needs to be low, as otherwise small files may have issues.
+
+    def __init__(self, directory_path, ts_client, config_dict: dict, state_file, poll_interval: int = 1, ):
+        self.directory_path = os.path.abspath(directory_path)
+        self.poll_interval = poll_interval
+        self._observer = PollingObserverVFS(stat=os.stat, listdir=os.scandir, polling_interval=self.poll_interval)
+        self._handler = _WatchdogEventHandler(self)
+        self._observer.schedule(self._handler, self.directory_path, recursive=True)
+        self._q = queue.Queue()
+        self._lock = threading.Lock()
+        self._worker = None
+        self._stop_event = threading.Event()
+        self._ts_client = ts_client
+        self._config_dict = config_dict
+        self.state_file = state_file
+        # state: { "<abs_path>": {"hash": "<hex>", "last_line": int, "mtime": float} }
+        self.state = {}
+        self._load_state()
+
+        # install signal handlers to persist state on termination
+        try:
+            signal.signal(signal.SIGTERM, self._signal_stop)
+            signal.signal(signal.SIGINT, self._signal_stop)
+        except Exception:
+            # not all platforms allow signal registration (e.g. Windows threading edge-cases)
+            pass
+
+    def _signal_stop(self, signum, frame):
+        self.stop_monitoring()
+
+    def _hash_first_bytes(self, path, nbytes=FIRST_BYTES):
+        try:
+            with open(path, "rb") as fh:
+                data = fh.read(nbytes)
+            return zlib.crc32(data)  # faster than hashlib, we don't care about collisions
+        except Exception:
+            return None
+
+    def _load_state(self):
+        try:
+            if os.path.exists(self.state_file):
+                with open(self.state_file, "r") as fh:
+                    self.state = json.load(fh)
+        except Exception:
+            logger.debug("Could not load monitor state, starting fresh.", exc_info=True)
+            self.state = {}
+
+    def _save_state(self):
+        try:
+            tmp = self.state_file + ".tmp"
+            with open(tmp, "w") as fh:
+                json.dump(self.state, fh, indent=2)
+            os.replace(tmp, self.state_file)
+        except Exception:
+            logger.error("Failed to save monitor state.", exc_info=True)
+
+    def enqueue(self, path):
+        """Queue a file path for processing (called from event handler)."""
+        if not path.lower().endswith(".jsonl") and not path.lower().endswith(".csv"):
+            return
+        abs_path = os.path.abspath(path)
+        try:
+            self._q.put_nowait(abs_path)
+        except queue.Full:
+            pass
+
+    def _initial_scan(self):
+        """Enqueue existing files at startup so they get processed once."""
+        for root, _, files in os.walk(self.directory_path):
+            for fname in files:
+                if fname.lower().endswith(".jsonl") or fname.lower().endswith(".csv"):
+                    self.enqueue(os.path.join(root, fname))
+
+    def _worker_loop(self):
+        """Worker thread that processes queued paths."""
+        while not self._stop_event.is_set():
+            try:
+                path = self._q.get(timeout=0.5)
+            except queue.Empty:
+                continue
+            try:
+                self._process_path(path)
+            except Exception:
+                logger.exception("Error processing path: %s", path)
+            finally:
+                self._q.task_done()
+
+    def _process_path(self, path):
+        """Check state and call process_file with appropriate start_line."""
+        try:
+            if not os.path.exists(path):
+                # removed files are cleaned from state
+                with self._lock:
+                    self.state.pop(path, None)
+                    self._save_state()
+                return
+            cur_hash = self._hash_first_bytes(path)
+            st = os.stat(path)
+            mtime = st.st_mtime
+        except Exception:
+            logger.debug("Unable to stat/hash file: %s", path, exc_info=True)
+            return
+
+        with self._lock:
+            entry = self.state.get(path)
+
+        # New file
+        if entry is None:
+            logger.info("New file detected: %s", path)
+            start_line = 0
+            last_line = self.process_file(path, start_line=start_line)
+            with self._lock:
+                self.state[path] = {
+                    "hash": cur_hash,
+                    "last_line": int(last_line or 0),
+                    "mtime": mtime,
+                }
+            self._save_state()
+            return
+
+        # Header changed -> reprocess from start
+        if cur_hash is not None and cur_hash != entry.get("hash"):
+            logger.info("File header changed, reprocessing from start: %s", path)
+            start_line = 0
+            last_line = self.process_file(path, start_line=start_line)
+            with self._lock:
+                self.state[path].update({
+                    "hash": cur_hash,
+                    "last_line": int(last_line or 0),
+                    "mtime": mtime
+                })
+            self._save_state()
+            return
+
+        # If mtime changed -> process appended lines
+        if mtime != entry.get("mtime"):
+            logger.info("File modified, processing appended lines: %s", path)
+            start_line = int(entry.get("last_line", 0))
+            last_line = self.process_file(path, start_line=start_line)
+            with self._lock:
+                self.state[path].update({
+                    "hash": cur_hash,
+                    "last_line": int(last_line or start_line),
+                    "mtime": mtime
+                })
+            self._save_state()
+            return
+
+    def start_monitoring(self, block=True):
+        """Start the observer and worker thread. If block is True this call blocks."""
+        logger.info("Starting PollingObserver monitor for: %s", self.directory_path)
+        # schedule handler
+        self._observer.schedule(self._handler, self.directory_path, recursive=True)
+        self._observer.start()
+
+        # # initial scan
+        self._initial_scan()
+
+        # start worker threadon
+        self._worker = threading.Thread(target=self._worker_loop, daemon=True)
+        self._worker.start()
+
+        if block:
+            try:
+                while not self._stop_event.is_set():
+                    time.sleep(0.5)
+            except KeyboardInterrupt:
+                logger.info("KeyboardInterrupt received, stopping monitor.")
+                self.stop_monitoring()
+
+    def stop_monitoring(self):
+        """Stop observer and worker and persist state."""
+        logger.info("Stopping monitor and saving state.")
+        self._stop_event.set()
+        try:
+            self._observer.stop()
+            self._observer.join(timeout=2.0)
+        except Exception:
+            pass
+        if self._worker and self._worker.is_alive():
+            self._worker.join(timeout=2.0)
+        self._save_state()
+
+    def process_file(self, file_path, start_line: int = 0) -> int:
+        """Stub: process .jsonl file lines starting at start_line (0-based).
+        Must return the number of lines processed (i.e., next start_line).
+        """
+        logger.debug("process_file called for %s starting at line %d", file_path, start_line)
+        last_processed = start_line
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as fh:
+
+                my_sketch = get_sketch_by_opts(
+                    sketch_id=self._config_dict.get("sketch_id"),  # type: ignore
+                    sketch_name=self._config_dict.get("sketch_name"),  # type: ignore
+                    sketch_name_path_pos=self._config_dict.get("sketch_name_path_pos"),  # type: ignore
+                    file_path=file_path,
+                    ts_client=self._ts_client)
+
+                if not my_sketch:
+                    logger.error("Unable to get or create sketch.")
+                    sys.exit(1)
+
+                timeline_name = get_timeline_name_by_opts(
+                    timeline_name=self._config_dict.get("timeline_name"),  # type: ignore
+                    timeline_name_path_pos=self._config_dict.get("timeline_name_path_pos"),  # type: ignore
+                    file_path=file_path)
+
+                logger.debug(f"Processing file {file_path} with sketch_name {my_sketch.name} and timeline_name {timeline_name}")
+                import_helper = helper.ImportHelper()
+                import_helper.add_config_dict(self._config_dict)
+                with importer.ImportStreamer() as streamer:
+                    streamer.set_sketch(my_sketch)
+                    streamer.set_config_helper(import_helper)
+                    streamer.set_provider("File monitor importer tool")
+                    streamer.set_timeline_name(timeline_name)
+
+                    for idx, _line in enumerate(fh):
+                        if idx < start_line:   # skip already processed lines
+                            continue
+                        if not _line.endswith("\n"):
+                            logger.debug("Line %d incomplete, stopping processing file and keeping previous index", idx + 1)
+                            return idx         # incomplete line at EOF , this means the line may still be written to by the writer
+
+                        streamer.add_json(json_entry=_line)
+                        last_processed = idx + 1  # increment last processed line
+
+            return last_processed
+        except Exception:
+            logger.exception("Error while processing file: %s", file_path)
+            return last_processed
 
 
 def main(args=None):
@@ -337,6 +695,19 @@ def main(args=None):
     )
 
     config_group.add_argument(
+        "--timeline_name_path_pos",
+        "--timeline-name-path-pos",
+        action="store",
+        type=int,
+        dest="timeline_name_path_pos",
+        default=-1,
+        help=(
+            "Use the n-th folder in the file path as timeline name, mostly useful in directory monitoring mode. "
+            "Default is -1 (not used)."
+        ),
+    )
+
+    config_group.add_argument(
         "--sketch_name",
         "--sketch-name",
         action="store",
@@ -346,6 +717,19 @@ def main(args=None):
         help=(
             "String that will be used as the sketch name in case a new "
             "sketch is created."
+        ),
+    )
+
+    config_group.add_argument(
+        "--sketch_name_path_pos",
+        "--sketch-name-path-pos",
+        action="store",
+        type=int,
+        dest="sketch_name_path_pos",
+        default=-1,
+        help=(
+            "Use the n-th folder in the file path as sketch name, mostly useful in directory monitoring mode. "
+            "Default is -1 (not used)."
         ),
     )
 
@@ -459,7 +843,7 @@ def main(args=None):
         action="store",
         nargs="?",
         type=str,
-        help=("Path to the file that is to be imported."),
+        help=("Path to the file that is to be imported, or folder to be monitored."),
     )
 
     config_group.add_argument(
@@ -471,8 +855,31 @@ def main(args=None):
         default=[],
         help=(
             "Set of analyzers that we will automatically run right after the "
-            "timelines are uploaded. The input needs to be the analyzers names."
+            "timelines are uploaded. The input needs to be the analyzers names. "
             "Provided as strings separated by space"
+        ),
+    )
+
+    config_group.add_argument(
+        "--monitor",
+        action="store_true",
+        dest="monitor",
+        default=False,
+        help=(
+            "Monitor the path for new or changed files and automatically load new data."
+        ),
+    )
+
+    config_group.add_argument(
+        "--monitor_state_file",
+        "--monitor-state-file",
+        action="store",
+        type=str,
+        dest="monitor_state_file",
+        default=os.path.join(os.path.expanduser("~"), ".timesketch_importer_monitor_state.json"),
+        help=(
+            "Path to the monitor state file to persist per-file state. "
+            "Default location is in the home directory."
         ),
     )
 
@@ -492,11 +899,19 @@ def main(args=None):
         logger.error("A valid file path needs to be provided, unable to continue.")
         sys.exit(1)
 
-    if not os.path.isfile(options.path):
+    if options.monitor:
+        if not os.path.isdir(options.path):
+            logger.error(
+                "Path {0:s} is not a directory, unable to monitor.".format(options.path)
+            )
+            sys.exit(1)
+    elif not os.path.isfile(options.path):
         logger.error(
             "Path {0:s} is not valid, unable to continue.".format(options.path)
         )
         sys.exit(1)
+
+
 
     config_section = options.config_section
     assistant = config.ConfigAssistant()
@@ -596,29 +1011,57 @@ def main(args=None):
             config_assistant=assistant,
         )
 
-    sketch_id = options.sketch_id
-    if sketch_id:
-        my_sketch = ts_client.get_sketch(sketch_id)
-    else:
-        sketch_name = options.sketch_name or "New Sketch From Importer CLI"
-        my_sketch = ts_client.create_sketch(sketch_name)
-        logger.info(
-            "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
+    if options.monitor:
+
+        config_dict = {
+            "message_format_string": options.format_string,
+            "index_name": options.index_name,
+            "timestamp_description": options.time_desc,
+            "entry_threshold": options.entry_threshold,
+            "size_threshold": options.size_threshold,
+            "log_config_file": options.log_config_file,
+            "data_label": options.data_label,
+            "analyzer_names": options.analyzer_names,
+
+            "sketch_id": options.sketch_id,
+            "sketch_name": options.sketch_name,
+            "timeline_name": options.timeline_name,
+            "sketch_name_path_pos": options.sketch_name_path_pos,
+            "timeline_name_path_pos": options.timeline_name_path_pos,
+        }
+
+        logger.info("Starting to monitor directory for new/updated files: %s", options.path)
+        monitor = WatchdogDirectoryMonitor(
+            directory_path=options.path,
+            ts_client=ts_client,
+            config_dict=config_dict,
+            state_file=options.monitor_state_file,
+            # wait_timeline=options.wait_timeline,
         )
+        try:
+            monitor.start_monitoring()
+        except KeyboardInterrupt:
+            logger.info("Stopping monitoring of directory.")
+            monitor.stop_monitoring()
+        return
+
+    my_sketch = get_sketch_by_opts(
+        sketch_id=options.sketch_id,
+        sketch_name=options.sketch_name,
+        sketch_name_path_pos=options.sketch_name_path_pos,
+        file_path=options.path,
+        ts_client=ts_client,
+    )
 
     if not my_sketch:
-        logger.error("Unable to get sketch ID: {0:d}".format(sketch_id))
+        logger.error("Unable to get sketch ID: {0:d}".format(options.sketch_id))
         sys.exit(1)
 
-    filename = os.path.basename(options.path)
-    default_timeline_name, _, _ = filename.rpartition(".")
-
-    if options.timeline_name:
-        conf_timeline_name = options.timeline_name
-    else:
-        conf_timeline_name = cli_input.ask_question(
-            "What is the timeline name", input_type=str, default=default_timeline_name
-        )
+    conf_timeline_name = get_timeline_name_by_opts(
+        timeline_name=options.timeline_name,
+        timeline_name_path_pos=options.timeline_name_path_pos,
+        file_path=options.path,
+    )
 
     context = options.context
     if not context:
