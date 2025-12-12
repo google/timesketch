@@ -435,11 +435,9 @@ def list_sketches(
             if indices_to_check_in_os:
                 try:
                     # Check the actual status of these indices in OpenSearch
-                    # pylint: disable=unexpected-keyword-arg
                     indices_status = datastore.client.indices.get(
-                        index=list(indices_to_check_in_os), features="settings"
+                        index=list(indices_to_check_in_os)
                     )
-                    # pylint: enable=unexpected-keyword-arg
                     for index_name, status_info in indices_status.items():
                         is_closed = (
                             status_info.get("settings", {})
