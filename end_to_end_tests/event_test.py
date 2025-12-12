@@ -339,7 +339,7 @@ class EventTest(interface.BaseEndToEndTest):
 
         # 2. Get an event to annotate.
         search_client = search.Search(sketch)
-        search_client.query_string = 'source_short:"LOG"'
+        search_client.query_string = "*"
         search_response = json.loads(search_client.json)
         self.assertions.assertGreater(
             len(search_response["objects"]), 0, "No events found to annotate"
