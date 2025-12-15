@@ -50,10 +50,20 @@ export default {
       }
       this.$store.dispatch('setSnackBar', snackbar)
     },
+    setWarningSnackBar: function (message) {
+        const snackbar = {
+            message: message,
+            color: 'warning',
+            timeout: 3000
+        }
+        this.$store.dispatch('setSnackBar', snackbar)
+    }
   },
   mounted() {
     // Listen on errors from REST API calls
     EventBus.$on('errorSnackBar', this.setErrorSnackBar)
+    // Register the listener for the warning snackbar event
+    EventBus.$on('warningSnackBar', this.setWarningSnackBar)
 
     const isDark = localStorage.getItem('isDarkTheme')
     if (isDark) {
@@ -68,6 +78,7 @@ export default {
   },
   beforeDestroy() {
     EventBus.$off('errorSnackBar')
+    EventBus.$off('warningSnackBar')
   },
 }
 </script>
