@@ -325,5 +325,51 @@ class EventTest(interface.BaseEndToEndTest):
             ),
         )
 
+    def test_explore_with_comment(self):
+        """Test exploring events and retrieving comments."""
+        rand = str(random.randint(0, 10000))
+        sketch = self.api.create_sketch(
+            name=f"test_explore_with_comment_{rand}",
+            description="A sketch for explore testing with comments",
+        )
+
+        # 1. Import a timeline with a known event.
+        self.import_timeline("sigma_events.csv", sketch=sketch)
+        _ = sketch.lazyload_data(refresh_cache=True)
+
+        # 2. Get an event to annotate.
+        search_client = search.Search(sketch)
+        search_client.query_string = "*"
+        search_response = json.loads(search_client.json)
+        self.assertions.assertGreater(
+            len(search_response["objects"]), 0, "No events found to annotate"
+        )
+        event_to_annotate = search_response["objects"][0]
+        event_id = event_to_annotate["_id"]
+        index_id = event_to_annotate["_index"]
+
+        # 3. Add a comment.
+        comment_text = "This is a test comment for explore."
+        sketch.comment_event(event_id, index_id, comment_text)
+        # 4. Explore for the event and request the comment field.
+        comments = []
+        for _ in range(20):
+            time.sleep(1)
+            explore_response = sketch.explore(
+                query_string=f'_id:"{event_id}"',
+                return_fields="comment",
+            )
+
+            explore_objects = explore_response.get("objects", [])
+            if len(explore_objects) == 1:
+                event_source = explore_objects[0].get("_source", {})
+                comments = event_source.get("comment", [])
+                if len(comments) == 1 and comments[0] == comment_text:
+                    break
+
+        self.assertions.assertEqual(len(explore_objects), 1)
+        self.assertions.assertEqual(len(comments), 1)
+        self.assertions.assertEqual(comments[0], comment_text)
+
 
 manager.EndToEndTestManager.register_test(EventTest)
