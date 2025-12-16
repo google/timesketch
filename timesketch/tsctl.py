@@ -2093,8 +2093,6 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
                 for task in tasks:
                     analysis_id = _get_analysis_id_from_task(task)
                     if analysis_id is not None:
-                        # Only keep the first found status to keep it simple, or overwrite?
-                        # Usually a task shouldn't be in multiple states/workers.
                         status_string = (
                             f"{state_label} ({worker})"  # pylint: disable=line-too-long
                         )
