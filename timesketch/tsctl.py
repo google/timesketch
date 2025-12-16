@@ -2095,7 +2095,8 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
                     if analysis_id is not None:
                         # Only keep the first found status to keep it simple, or overwrite?
                         # Usually a task shouldn't be in multiple states/workers.
-                        running_analyses[analysis_id] = f"{state_label} ({worker})"
+                        status_string = f"{state_label} ({worker})"
+                        running_analyses[analysis_id] = status_string
 
         _process_tasks(inspector.active(), "Active")
         _process_tasks(inspector.reserved(), "Reserved")
@@ -2243,7 +2244,8 @@ def manage_analyzer_run(analysis_ids, status, kill):
                     status = "ERROR"
             else:
                 print(
-                    f"No active, reserved, or scheduled Celery task found for analysis {analysis.id}."
+                    f"No active, reserved, or scheduled Celery task found for "
+                    f"analysis {analysis.id}."
                 )
 
         if status:
