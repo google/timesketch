@@ -2048,6 +2048,43 @@ def list_analyzer_runs(sketch_id, show_all):
         print(f"Sketch {sketch_id} not found.")
         return
 
+    print("Inspecting Celery workers for active tasks...")
+    celery_app = create_celery_app()
+    inspector = celery_app.control.inspect()
+    running_analyses = {}
+
+    try:
+        # Helper to process task lists
+        def _process_tasks(tasks_by_worker, state_label):
+            if not tasks_by_worker:
+                return
+            for worker, tasks in tasks_by_worker.items():
+                for task in tasks:
+                    analysis_id = None
+                    task_kwargs = task.get("kwargs", {})
+                    task_args = task.get("args", [])
+
+                    if task_kwargs.get("analysis_id"):
+                        analysis_id = task_kwargs["analysis_id"]
+                    elif len(task_args) >= 3:
+                        analysis_id = task_args[2]
+
+                    if analysis_id:
+                        try:
+                            analysis_id = int(analysis_id)
+                            # Only keep the first found status to keep it simple, or overwrite?
+                            # Usually a task shouldn't be in multiple states/workers.
+                            running_analyses[analysis_id] = f"{state_label} ({worker})"
+                        except (ValueError, TypeError):
+                            pass
+
+        _process_tasks(inspector.active(), "Active")
+        _process_tasks(inspector.reserved(), "Reserved")
+        _process_tasks(inspector.scheduled(), "Scheduled")
+
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Warning: Could not inspect Celery tasks: {e}")
+
     print(f"Analyzer runs for sketch {sketch.id} ({sketch.name}):")
     if not show_all:
         print("(Showing only PENDING runs. Use --show-all to see everything)")
@@ -2058,16 +2095,24 @@ def list_analyzer_runs(sketch_id, show_all):
             "Analyzer",
             "Timeline ID",
             "Status",
+            "Celery Status",
             "Created At",
             "Updated At",
         ]
     ]
 
     # Analysis objects are related to the sketch
-    for analysis in sketch.analysis:
+    # Sort by ID in ascending order for consistent output.
+    for analysis in sorted(sketch.analysis, key=lambda x: x.id):
         status = analysis.get_status.status
         if not show_all and status != "PENDING":
             continue
+
+        celery_status = ""
+        if status == "PENDING":
+            celery_status = running_analyses.get(analysis.id, "Pending (no worker)")
+        else:
+            celery_status = "N/A"
 
         table_data.append(
             [
@@ -2075,6 +2120,7 @@ def list_analyzer_runs(sketch_id, show_all):
                 analysis.analyzer_name,
                 analysis.timeline_id,
                 status,
+                celery_status,
                 analysis.created_at,
                 analysis.updated_at,
             ]
@@ -2160,7 +2206,13 @@ def manage_analyzer_run(analysis_id, status, kill):
             print("No active Celery task found for this analysis ID.")
 
     if status:
+        old_result = analysis.result or ""
+        new_result = f"{old_result}\n(Status manually set to {status} via tsctl on {datetime.datetime.now(datetime.timezone.utc).isoformat()})"
+        analysis.result = new_result
         analysis.set_status(status)
+        analysis.updated_at = datetime.datetime.now(datetime.timezone.utc)
+        db_session.add(analysis)
+        db_session.commit()
         print(f"Analysis {analysis.id} status updated to: {status}")
 
 
