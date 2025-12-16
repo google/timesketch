@@ -17,6 +17,7 @@ import multiprocessing
 import multiprocessing.managers
 import time
 from typing import Any
+from werkzeug.exceptions import HTTPException
 
 import prometheus_client
 from flask import request, abort, jsonify, Response
@@ -31,6 +32,19 @@ from timesketch.lib.llms.features import manager as feature_manager
 from timesketch.models.sketch import Sketch
 
 logger = logging.getLogger("timesketch.api.llm")
+
+# List of error substrings that indicate operational issues (quotas, auth, etc.)
+# rather than system failures. These will be logged as warnings, not errors.
+_OPERATIONAL_ERROR_SUBSTRINGS = (
+    "429",
+    "Resource exhausted",
+    "Quota exceeded",
+    "Overloaded",
+    "401",
+    "Unauthenticated",
+    "invalid authentication credentials",
+    "Invalid private key",
+)
 
 
 class LLMResource(resources.ResourceMixin, Resource):
@@ -157,13 +171,26 @@ class LLMResource(resources.ResourceMixin, Resource):
                 definitions.HTTP_STATUS_CODE_BAD_REQUEST,
                 f"Unable to execute LLM feature ({feature_instance.NAME}): {str(e)}.",
             )
+        except HTTPException as e:
+            logger.error(
+                "HTTPException during execution of '%s' on sketch %s: %s",
+                feature_instance.NAME,
+                sketch_id,
+                getattr(e, "description", str(e)),
+                exc_info=False,
+            )
+            self.METRICS["llm_errors_total"].labels(
+                sketch_id=str(sketch_id),
+                feature=feature_instance.NAME,
+                error_type="http_exception",
+            ).inc()
+            raise e
         except Exception as e:  # pylint: disable=broad-except
             logger.error(
                 "Unhandled exception during execution of '%s' on sketch %s: %s",
                 feature_instance.NAME,
                 sketch_id,
                 e,
-                exc_info=True,
             )
             self.METRICS["llm_errors_total"].labels(
                 sketch_id=str(sketch_id),
@@ -503,7 +530,19 @@ class LLMResource(resources.ResourceMixin, Resource):
             shared_response.update({"response": api_response})
         except Exception as e:  # pylint: disable=broad-except
             process_logger = logging.getLogger("timesketch.api.llm.subprocess")
-            process_logger.error(
-                "Error in LLM call for feature '%s': %s", feature.NAME, e, exc_info=True
-            )
-            shared_response.update({"error": str(e)})
+            error_str = str(e)
+
+            # Reduce log noise for expected operational errors
+            if any(x in error_str for x in _OPERATIONAL_ERROR_SUBSTRINGS):
+                process_logger.warning(
+                    "LLM operational error in subprocess for feature '%s': %s",
+                    feature.NAME,
+                    error_str,
+                )
+            else:
+                process_logger.error(
+                    "Error in LLM call for feature '%s': %s",
+                    feature.NAME,
+                    e,
+                )
+            shared_response.update({"error": error_str})
