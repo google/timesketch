@@ -2030,6 +2030,32 @@ def analyzer_stats(
         print(df)
 
 
+def _get_analysis_id_from_task(task: dict) -> Optional[int]:
+    """Extracts the analysis ID from a Celery task dictionary.
+
+    Args:
+        task: A dictionary representing a Celery task.
+
+    Returns:
+        The analysis ID as an integer if found, otherwise None.
+    """
+    analysis_id = None
+    task_kwargs = task.get("kwargs", {})
+    task_args = task.get("args", [])
+
+    if task_kwargs.get("analysis_id") is not None:
+        analysis_id = task_kwargs["analysis_id"]
+    elif len(task_args) >= 3 and task_args[2] is not None:
+        analysis_id = task_args[2]
+
+    if analysis_id is not None:
+        try:
+            return int(analysis_id)
+        except (ValueError, TypeError):
+            pass
+    return None
+
+
 @cli.command(name="list-analyzer-runs")
 @click.argument("sketch_id", type=int)
 @click.option(
@@ -2065,23 +2091,11 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
                 return
             for worker, tasks in tasks_by_worker.items():
                 for task in tasks:
-                    analysis_id = None
-                    task_kwargs = task.get("kwargs", {})
-                    task_args = task.get("args", [])
-
-                    if task_kwargs.get("analysis_id"):
-                        analysis_id = task_kwargs["analysis_id"]
-                    elif len(task_args) >= 3:
-                        analysis_id = task_args[2]
-
-                    if analysis_id:
-                        try:
-                            analysis_id = int(analysis_id)
-                            # Only keep the first found status to keep it simple, or overwrite?
-                            # Usually a task shouldn't be in multiple states/workers.
-                            running_analyses[analysis_id] = f"{state_label} ({worker})"
-                        except (ValueError, TypeError):
-                            pass
+                    analysis_id = _get_analysis_id_from_task(task)
+                    if analysis_id is not None:
+                        # Only keep the first found status to keep it simple, or overwrite?
+                        # Usually a task shouldn't be in multiple states/workers.
+                        running_analyses[analysis_id] = f"{state_label} ({worker})"
 
         _process_tasks(inspector.active(), "Active")
         _process_tasks(inspector.reserved(), "Reserved")
@@ -2135,7 +2149,7 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
 
 
 @cli.command(name="manage-analyzer-run")
-@click.argument("analysis_id", type=int)
+@click.argument("analysis_ids")
 @click.option(
     "--status",
     required=False,
@@ -2146,84 +2160,136 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
     "--kill",
     is_flag=True,
     default=False,
-    help="Attempt to find and revoke (kill) the running Celery task for this analysis.",
+    help="Attempt to find and revoke (kill) the active or queued Celery task for this analysis.",
 )
-def manage_analyzer_run(analysis_id: int, status: str, kill: bool) -> None:
-    """Manage a specific analyzer run.
+def manage_analyzer_run(analysis_ids, status, kill):
+    """Manage a specific analyzer run or multiple runs.
 
-    Allows setting the status of an analysis run and/or killing the associated
-    Celery task if it is currently active.
 
-    Args:
-        analysis_id: The ID of the analysis run to manage.
-        status: The status to set for the analysis (e.g., ERROR, DONE).
-        kill: If true, attempt to find and revoke the running Celery task.
+
+
+
+    Allows setting the status of analysis runs and/or killing the associated
+
+
+    Celery tasks if they are currently active or queued.
+
+
     """
-    analysis = Analysis.get_by_id(analysis_id)
-    if not analysis:
-        print(f"Analysis with ID {analysis_id} not found.")
+
+    analysis_id_list = []
+
+    for an_id_str in analysis_ids.split(","):
+        try:
+            analysis_id_list.append(int(an_id_str.strip()))
+
+        except ValueError:
+            print(f"Invalid analysis ID: {an_id_str}. Skipping.")
+
+            return
+
+    if not analysis_id_list:
+        print("No valid analysis IDs provided.")
+
         return
 
-    print(
-        f"Analysis {analysis.id} ({analysis.analyzer_name}) "
-        f"on Timeline {analysis.timeline_id}"
-    )
-    print(f"Current Status: {analysis.get_status.status}")
+    for analysis_id in analysis_id_list:
+        analysis = Analysis.get_by_id(analysis_id)
 
-    if kill:
-        celery_app = create_celery_app()
-        inspector = celery_app.control.inspect()
-        active_tasks = inspector.active()
-        task_found = False
+        if not analysis:
+            print(f"Analysis with ID {analysis_id} not found. Skipping.")
 
-        if active_tasks:
-            print("Searching active Celery tasks...")
-            for worker_name, tasks in active_tasks.items():
-                for task in tasks:
-                    # Check if this task corresponds to our analysis.
-                    # run_sketch_analyzer task kwargs usually contain 'analysis_id'
-                    task_kwargs = task.get("kwargs", {})
-                    task_args = task.get("args", [])
+            continue
 
-                    # Check kwargs
-                    if task_kwargs.get("analysis_id") == analysis.id:
-                        task_found = True
-                    # Check args (order depends on task definition)
-                    # run_sketch_analyzer(index_name, sketch_id, analysis_id, ...)
-                    elif len(task_args) >= 3 and task_args[2] == analysis.id:
-                        task_found = True
+        print(
+            f"Processing Analysis {analysis.id} ({analysis.analyzer_name}) "
+            f"on Timeline {analysis.timeline_id}"
+        )
+
+        print(f"Current Status: {analysis.get_status.status}")
+
+        if kill:
+            celery_app = create_celery_app()
+
+            inspector = celery_app.control.inspect()
+
+            search_targets = [
+                (inspector.active(), True, "active"),
+                (inspector.reserved(), False, "reserved"),
+                (inspector.scheduled(), False, "scheduled"),
+            ]
+
+            task_found = False
+
+            print("Searching Celery tasks (active, reserved, scheduled)...")
+
+            for tasks_dict, is_active, state_name in search_targets:
+                if not tasks_dict:
+                    continue
+
+                for worker_name, tasks in tasks_dict.items():
+                    for task in tasks:
+                        celery_analysis_id = _get_analysis_id_from_task(task)
+
+                        if celery_analysis_id == analysis.id:
+                            task_found = True
+
+                            task_id = task["id"]
+
+                            print(
+                                f"Found {state_name} task {task_id} on worker {worker_name} "
+                                f"for analysis {analysis.id}."
+                            )
+
+                            print(f"Revoking task (terminate={is_active})...")
+
+                            celery_app.control.revoke(task_id, terminate=is_active)
+
+                            print("Task revoked.")
+
+                            if not status:
+                                print("Setting analysis status to 'ERROR' due to kill.")
+
+                                status = "ERROR"
+
+                            break
 
                     if task_found:
-                        task_id = task["id"]
-                        print(
-                            f"Found running task {task_id} on worker {worker_name} "
-                            f"for analysis {analysis.id}."
-                        )
-                        print("Revoking (killing) task...")
-                        celery_app.control.revoke(task_id, terminate=True)
-                        print("Task revoked.")
-
-                        # Automatically set status to ERROR if killed, unless
-                        # status is explicitly provided
-                        if not status:
-                            print("Setting analysis status to 'ERROR' due to kill.")
-                            status = "ERROR"
                         break
+
                 if task_found:
                     break
 
-        if not task_found:
-            print("No active Celery task found for this analysis ID.")
+            if not task_found:
+                print(
+                    f"No active, reserved, or scheduled Celery task found for analysis {analysis.id}."
+                )
 
-    if status:
-        old_result = analysis.result or ""
-        new_result = f"{old_result}\n(Status manually set to {status} via tsctl on {datetime.datetime.now(datetime.timezone.utc).isoformat()})"
-        analysis.result = new_result
-        analysis.set_status(status)
-        analysis.updated_at = datetime.datetime.now(datetime.timezone.utc)
-        db_session.add(analysis)
-        db_session.commit()
-        print(f"Analysis {analysis.id} status updated to: {status}")
+        if status:
+            old_result = analysis.result or ""
+
+            current_timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+            new_result = (
+                f"{old_result}\n(Status manually set to {status} via tsctl on "
+                f"{current_timestamp})"
+            )
+
+            analysis.result = new_result
+
+            analysis.set_status(status)
+
+            analysis.updated_at = datetime.datetime.now(datetime.timezone.utc)
+
+            db_session.add(analysis)
+
+            db_session.commit()
+
+            print(f"Analysis {analysis.id} status updated to: {status}")
+
+        print(
+            "\n"
+        )  # Add a newline for better separation between processing multiple analyses
 
 
 @cli.command(name="celery-tasks-redis")
