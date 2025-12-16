@@ -163,8 +163,8 @@ class LLMResource(resources.ResourceMixin, Resource):
                 "HTTPException during execution of '%s' on sketch %s: %s",
                 feature_instance.NAME,
                 sketch_id,
-                e.description if hasattr(e, 'description') else str(e),
-                exc_info=False
+                e.description if hasattr(e, "description") else str(e),
+                exc_info=False,
             )
             self.METRICS["llm_errors_total"].labels(
                 sketch_id=str(sketch_id),
