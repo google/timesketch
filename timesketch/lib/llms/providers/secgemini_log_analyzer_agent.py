@@ -127,7 +127,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 "The installed version of 'sec_gemini' does not support the "
                 "'agents_config' parameter. Please upgrade the library to a "
                 "version > 1.1.5 to use the log analyzer feature."
-                )
+            )
         self._session = self.sg_client.create_session(**session_params)
         self.session_id = self._session.id
         # TODO: Could we check if the API key has logging enabled and if not ERR
