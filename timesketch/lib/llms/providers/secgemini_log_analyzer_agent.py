@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import asyncio
+import inspect
 import pathlib
 import tempfile
 from datetime import datetime
@@ -34,13 +35,6 @@ except ImportError:
     has_required_deps = False
 
 logger = logging.getLogger(__name__)
-
-
-DEFAULT_PROMPT = (
-    "Perform a forensics investigation on the provided logs. Determine if the "
-    "host has been compromised, and if so, reconstruct the complete attacker "
-    "timeline, from initial compromise to actions on objectives."
-)
 
 
 class SecGeminiLogAnalyzer(interface.LLMProvider):
@@ -119,11 +113,22 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Yields:
             str: The content chunks of the streamed response from the agent.
         """
-        self._session = self.sg_client.create_session(
-            model=self.model,
-            enable_logging=self.enable_logging,
-            agents_config=self.agents_config,
-        )
+        session_params = {
+            "model": self.model,
+            "enable_logging": self.enable_logging,
+        }
+
+        # Check if the installed sec-gemini library supports agents_config
+        sig = inspect.signature(self.sg_client.create_session)
+        if "agents_config" in sig.parameters:
+            session_params["agents_config"] = self.agents_config
+        else:
+            raise ValueError(
+                "The installed version of 'sec_gemini' does not support the "
+                "'agents_config' parameter. Please upgrade the library to a "
+                "version > 1.1.5 to use the log analyzer feature."
+                )
+        self._session = self.sg_client.create_session(**session_params)
         self.session_id = self._session.id
         # TODO: Could we check if the API key has logging enabled and if not ERR
         logger.info("Started new SecGemini session: '%s'", self._session.id)
@@ -234,7 +239,10 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             str: Chunks of the raw JSON string response from the LLM provider.
         """
         if not prompt:
-            prompt = DEFAULT_PROMPT
+            prompt = current_app.config.get(
+                "LLM_LOG_ANALYZER_DEFAULT_PROMPT",
+                "Perform a forensics investigation on the provided logs.",
+            )
 
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
