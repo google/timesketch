@@ -2148,6 +2148,46 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
     print_table(table_data)
 
 
+def _find_and_revoke_task(analysis_id, celery_app, inspector):
+    """Finds and revokes a Celery task for a given analysis ID.
+
+    Args:
+        analysis_id (int): The ID of the analysis run.
+        celery_app (Celery): The Celery application instance.
+        inspector (Celery.control.inspect): The Celery inspector instance.
+
+    Returns:
+        bool: True if a task was found and revoked, False otherwise.
+    """
+    search_targets = [
+        (inspector.active(), True, "active"),
+        (inspector.reserved(), False, "reserved"),
+        (inspector.scheduled(), False, "scheduled"),
+    ]
+
+    print("Searching Celery tasks (active, reserved, scheduled)...")
+
+    for tasks_dict, is_active, state_name in search_targets:
+        if not tasks_dict:
+            continue
+
+        for worker_name, tasks in tasks_dict.items():
+            for task in tasks:
+                celery_analysis_id = _get_analysis_id_from_task(task)
+
+                if celery_analysis_id == analysis_id:
+                    task_id = task["id"]
+                    print(
+                        f"Found {state_name} task {task_id} on worker {worker_name} "
+                        f"for analysis {analysis_id}."
+                    )
+                    print(f"Revoking task (terminate={is_active})...")
+                    celery_app.control.revoke(task_id, terminate=is_active)
+                    print("Task revoked.")
+                    return True
+    return False
+
+
 @cli.command(name="manage-analyzer-run")
 @click.argument("analysis_ids")
 @click.option(
@@ -2160,45 +2200,28 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
     "--kill",
     is_flag=True,
     default=False,
-    help="Attempt to find and revoke (kill) the active or queued Celery task for this analysis.",
+    help="Attempt to find and revoke (kill) the active or queued Celery task for this analysis.",  # pylint: disable=line-too-long
 )
 def manage_analyzer_run(analysis_ids, status, kill):
     """Manage a specific analyzer run or multiple runs.
-
-
-
-
-
     Allows setting the status of analysis runs and/or killing the associated
-
-
     Celery tasks if they are currently active or queued.
-
-
     """
-
     analysis_id_list = []
-
     for an_id_str in analysis_ids.split(","):
         try:
             analysis_id_list.append(int(an_id_str.strip()))
-
         except ValueError:
             print(f"Invalid analysis ID: {an_id_str}. Skipping.")
-
-            return
-
+            continue
     if not analysis_id_list:
         print("No valid analysis IDs provided.")
-
         return
 
     for analysis_id in analysis_id_list:
         analysis = Analysis.get_by_id(analysis_id)
-
         if not analysis:
             print(f"Analysis with ID {analysis_id} not found. Skipping.")
-
             continue
 
         print(
@@ -2210,81 +2233,33 @@ def manage_analyzer_run(analysis_ids, status, kill):
 
         if kill:
             celery_app = create_celery_app()
-
             inspector = celery_app.control.inspect()
 
-            search_targets = [
-                (inspector.active(), True, "active"),
-                (inspector.reserved(), False, "reserved"),
-                (inspector.scheduled(), False, "scheduled"),
-            ]
+            task_found = _find_and_revoke_task(analysis.id, celery_app, inspector)
 
-            task_found = False
-
-            print("Searching Celery tasks (active, reserved, scheduled)...")
-
-            for tasks_dict, is_active, state_name in search_targets:
-                if not tasks_dict:
-                    continue
-
-                for worker_name, tasks in tasks_dict.items():
-                    for task in tasks:
-                        celery_analysis_id = _get_analysis_id_from_task(task)
-
-                        if celery_analysis_id == analysis.id:
-                            task_found = True
-
-                            task_id = task["id"]
-
-                            print(
-                                f"Found {state_name} task {task_id} on worker {worker_name} "
-                                f"for analysis {analysis.id}."
-                            )
-
-                            print(f"Revoking task (terminate={is_active})...")
-
-                            celery_app.control.revoke(task_id, terminate=is_active)
-
-                            print("Task revoked.")
-
-                            if not status:
-                                print("Setting analysis status to 'ERROR' due to kill.")
-
-                                status = "ERROR"
-
-                            break
-
-                    if task_found:
-                        break
-
-                if task_found:
-                    break
-
-            if not task_found:
+            if task_found:
+                if not status:
+                    print("Setting analysis status to 'ERROR' due to kill.")
+                    status = "ERROR"
+            else:
                 print(
                     f"No active, reserved, or scheduled Celery task found for analysis {analysis.id}."
                 )
 
         if status:
             old_result = analysis.result or ""
-
-            current_timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-
+            current_utc_timestamp = datetime.datetime.now(
+                datetime.timezone.utc
+            ).isoformat()
             new_result = (
                 f"{old_result}\n(Status manually set to {status} via tsctl on "
-                f"{current_timestamp})"
+                f"{current_utc_timestamp})"
             )
-
             analysis.result = new_result
-
             analysis.set_status(status)
-
             analysis.updated_at = datetime.datetime.now(datetime.timezone.utc)
-
             db_session.add(analysis)
-
             db_session.commit()
-
             print(f"Analysis {analysis.id} status updated to: {status}")
 
         print(
