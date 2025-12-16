@@ -21,7 +21,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
