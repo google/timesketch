@@ -2038,10 +2038,15 @@ def analyzer_stats(
     default=False,
     help="Show all analyzer runs, including completed and failed ones.",
 )
-def list_analyzer_runs(sketch_id, show_all):
+def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
     """List analyzer runs for a specific sketch.
 
     By default, only PENDING runs are shown. Use --show-all to see all runs.
+
+    Args:
+        sketch_id: The ID of the sketch to list runs for.
+        show_all: If true, show all analyzer runs, including completed and
+            failed ones.
     """
     sketch = Sketch.get_by_id(sketch_id)
     if not sketch:
