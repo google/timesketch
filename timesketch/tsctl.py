@@ -2143,11 +2143,16 @@ def list_analyzer_runs(sketch_id, show_all):
     default=False,
     help="Attempt to find and revoke (kill) the running Celery task for this analysis.",
 )
-def manage_analyzer_run(analysis_id, status, kill):
+def manage_analyzer_run(analysis_id: int, status: str, kill: bool) -> None:
     """Manage a specific analyzer run.
 
     Allows setting the status of an analysis run and/or killing the associated
     Celery task if it is currently active.
+
+    Args:
+        analysis_id: The ID of the analysis run to manage.
+        status: The status to set for the analysis (e.g., ERROR, DONE).
+        kill: If true, attempt to find and revoke the running Celery task.
     """
     analysis = Analysis.get_by_id(analysis_id)
     if not analysis:
