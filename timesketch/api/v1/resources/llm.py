@@ -33,6 +33,19 @@ from timesketch.models.sketch import Sketch
 
 logger = logging.getLogger("timesketch.api.llm")
 
+# List of error substrings that indicate operational issues (quotas, auth, etc.)
+# rather than system failures. These will be logged as warnings, not errors.
+_OPERATIONAL_ERROR_SUBSTRINGS = (
+    "429",
+    "Resource exhausted",
+    "Quota exceeded",
+    "Overloaded",
+    "401",
+    "Unauthenticated",
+    "invalid authentication credentials",
+    "Invalid private key",
+)
+
 
 class LLMResource(resources.ResourceMixin, Resource):
     """Resource to interact with Large Language Models (LLMs).
@@ -163,7 +176,7 @@ class LLMResource(resources.ResourceMixin, Resource):
                 "HTTPException during execution of '%s' on sketch %s: %s",
                 feature_instance.NAME,
                 sketch_id,
-                e.description if hasattr(e, "description") else str(e),
+                getattr(e, "description", str(e)),
                 exc_info=False,
             )
             self.METRICS["llm_errors_total"].labels(
@@ -520,19 +533,7 @@ class LLMResource(resources.ResourceMixin, Resource):
             error_str = str(e)
 
             # Reduce log noise for expected operational errors
-            if any(
-                x in error_str
-                for x in [
-                    "429",
-                    "Resource exhausted",
-                    "Quota exceeded",
-                    "Overloaded",
-                    "401",
-                    "Unauthenticated",
-                    "invalid authentication credentials",
-                    "Invalid private key",
-                ]
-            ):
+            if any(x in error_str for x in _OPERATIONAL_ERROR_SUBSTRINGS):
                 process_logger.warning(
                     "LLM operational error in subprocess for feature '%s': %s",
                     feature.NAME,

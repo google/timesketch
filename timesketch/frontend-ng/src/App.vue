@@ -51,13 +51,13 @@ export default {
       this.$store.dispatch('setSnackBar', snackbar)
     },
     setWarningSnackBar: function (message) {
-        const snackbar = {
-            message: message,
-            color: 'warning',
-            timeout: 3000
-        }
-        this.$store.dispatch('setSnackBar', snackbar)
-    }
+      const snackbar = {
+        message: message,
+        color: 'warning',
+        timeout: 5000,
+      }
+      this.$store.dispatch('setSnackBar', snackbar)
+    },
   },
   mounted() {
     // Listen on errors from REST API calls
