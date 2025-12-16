@@ -2030,6 +2030,140 @@ def analyzer_stats(
         print(df)
 
 
+@cli.command(name="list-analyzer-runs")
+@click.argument("sketch_id", type=int)
+@click.option(
+    "--show-all",
+    is_flag=True,
+    default=False,
+    help="Show all analyzer runs, including completed and failed ones.",
+)
+def list_analyzer_runs(sketch_id, show_all):
+    """List analyzer runs for a specific sketch.
+
+    By default, only PENDING runs are shown. Use --show-all to see all runs.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        print(f"Sketch {sketch_id} not found.")
+        return
+
+    print(f"Analyzer runs for sketch {sketch.id} ({sketch.name}):")
+    if not show_all:
+        print("(Showing only PENDING runs. Use --show-all to see everything)")
+
+    table_data = [
+        [
+            "ID",
+            "Analyzer",
+            "Timeline ID",
+            "Status",
+            "Created At",
+            "Updated At",
+        ]
+    ]
+
+    # Analysis objects are related to the sketch
+    for analysis in sketch.analysis:
+        status = analysis.get_status.status
+        if not show_all and status != "PENDING":
+            continue
+
+        table_data.append(
+            [
+                analysis.id,
+                analysis.analyzer_name,
+                analysis.timeline_id,
+                status,
+                analysis.created_at,
+                analysis.updated_at,
+            ]
+        )
+
+    print_table(table_data)
+
+
+@cli.command(name="manage-analyzer-run")
+@click.argument("analysis_id", type=int)
+@click.option(
+    "--status",
+    required=False,
+    type=click.Choice(["ERROR", "DONE", "STARTED"], case_sensitive=False),
+    help="Set the status of the analysis.",
+)
+@click.option(
+    "--kill",
+    is_flag=True,
+    default=False,
+    help="Attempt to find and revoke (kill) the running Celery task for this analysis.",
+)
+def manage_analyzer_run(analysis_id, status, kill):
+    """Manage a specific analyzer run.
+
+    Allows setting the status of an analysis run and/or killing the associated
+    Celery task if it is currently active.
+    """
+    analysis = Analysis.get_by_id(analysis_id)
+    if not analysis:
+        print(f"Analysis with ID {analysis_id} not found.")
+        return
+
+    print(
+        f"Analysis {analysis.id} ({analysis.analyzer_name}) "
+        f"on Timeline {analysis.timeline_id}"
+    )
+    print(f"Current Status: {analysis.get_status.status}")
+
+    if kill:
+        celery_app = create_celery_app()
+        inspector = celery_app.control.inspect()
+        active_tasks = inspector.active()
+        task_found = False
+
+        if active_tasks:
+            print("Searching active Celery tasks...")
+            for worker_name, tasks in active_tasks.items():
+                for task in tasks:
+                    # Check if this task corresponds to our analysis.
+                    # run_sketch_analyzer task kwargs usually contain 'analysis_id'
+                    task_kwargs = task.get("kwargs", {})
+                    task_args = task.get("args", [])
+
+                    # Check kwargs
+                    if task_kwargs.get("analysis_id") == analysis.id:
+                        task_found = True
+                    # Check args (order depends on task definition)
+                    # run_sketch_analyzer(index_name, sketch_id, analysis_id, ...)
+                    elif len(task_args) >= 3 and task_args[2] == analysis.id:
+                        task_found = True
+
+                    if task_found:
+                        task_id = task["id"]
+                        print(
+                            f"Found running task {task_id} on worker {worker_name} "
+                            f"for analysis {analysis.id}."
+                        )
+                        print("Revoking (killing) task...")
+                        celery_app.control.revoke(task_id, terminate=True)
+                        print("Task revoked.")
+
+                        # Automatically set status to ERROR if killed, unless
+                        # status is explicitly provided
+                        if not status:
+                            print("Setting analysis status to 'ERROR' due to kill.")
+                            status = "ERROR"
+                        break
+                if task_found:
+                    break
+
+        if not task_found:
+            print("No active Celery task found for this analysis ID.")
+
+    if status:
+        analysis.set_status(status)
+        print(f"Analysis {analysis.id} status updated to: {status}")
+
+
 @cli.command(name="celery-tasks-redis")
 def celery_tasks_redis():
     """Check and display the status of all Celery tasks stored in Redis.
