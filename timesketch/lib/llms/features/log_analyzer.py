@@ -127,7 +127,8 @@ class LogAnalyzer(LLMFeatureInterface):
             )
 
             raw_response_generator = llm_provider.generate_stream_from_logs(
-                log_events_generator=log_events_generator
+                log_events_generator=log_events_generator,
+                prompt=kwargs.get("prompt"),
             )
 
             final_summary_json = None
