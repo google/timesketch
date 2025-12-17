@@ -21,7 +21,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.dfiq import DFIQCatalog
@@ -1799,7 +1799,7 @@ class LLMResourceTest(BaseTest):
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertIn("Prompt generation failed", response_data["message"])
 
@@ -1810,12 +1810,14 @@ class LLMResourceTest(BaseTest):
         "timesketch.lib.llms.features.manager.FeatureManager.get_feature_instance"
     )
     @mock.patch("timesketch.lib.utils.get_validated_indices")
+    @mock.patch("multiprocessing.Manager")
     @mock.patch("multiprocessing.Process")
     @mock.patch("timesketch.lib.llms.providers.manager.LLMManager.create_provider")
     def test_post_llm_execution_timeout(
         self,
         mock_create_provider,
         mock_process,
+        mock_manager,
         mock_get_validated_indices,
         mock_get_feature,
         mock_get_with_acl,
@@ -1827,9 +1829,13 @@ class LLMResourceTest(BaseTest):
         mock_sketch.id = 1
         mock_get_with_acl.return_value = mock_sketch
 
+        # Setup Manager Mock
+        mock_manager_instance = mock.MagicMock()
+        mock_manager.return_value.__enter__.return_value = mock_manager_instance
+        mock_manager_instance.dict.return_value = {}
+
         mock_feature = mock.MagicMock()
         mock_feature.NAME = "test_feature"
-        # Force legacy workflow path
         del mock_feature.execute
         mock_feature.generate_prompt.return_value = "test prompt"
         mock_get_feature.return_value = mock_feature
@@ -1848,7 +1854,7 @@ class LLMResourceTest(BaseTest):
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_GATEWAY_TIMEOUT)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertIn("LLM call timed out", response_data["message"])
 
