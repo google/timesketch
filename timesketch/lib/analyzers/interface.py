@@ -1175,9 +1175,12 @@ class BaseAnalyzer:
 
             if status == "fail":
                 logger.error(
-                    "Unable to run analyzer on a failed index ({:s})".format(
-                        searchindex.index_name
-                    )
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Unable to run on a failed index (%s)",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
+                    searchindex.index_name,
                 )
                 return "Failed"
 
@@ -1185,7 +1188,11 @@ class BaseAnalyzer:
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
                 logger.error(
-                    "Indexing has taken too long time, aborting run of analyzer"
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Indexing has taken too long time, aborting run of analyzer",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
                 )
                 return "Failed"
             # Refresh the searchindex object.
@@ -1199,6 +1206,13 @@ class BaseAnalyzer:
         except Exception:  # pylint: disable=broad-except
             analysis.set_status("ERROR")
             result = traceback.format_exc()
+            logger.error(
+                "Analyzer %s (ID:%d) in sketch (ID:%d): failed with error: %s",
+                self.name,
+                analysis_id,
+                self.sketch.id,
+                result,
+            )
 
         # Update database analysis object with result and status
         analysis.result = f"{result:s}"
