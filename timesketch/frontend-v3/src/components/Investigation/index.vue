@@ -108,7 +108,7 @@ export default {
       }
     },
 
-    async runLogAnalysis() {
+    async runLogAnalysis(customPrompt) {
       this.isGeneratingReport = true;
       if (this.store.report?.content?.removedQuestions?.length > 0) {
         await this.store.updateReport({ removedQuestions: [] });
@@ -117,7 +117,8 @@ export default {
           // onComplete callback
           () => { this.isGeneratingReport = false; this.fetchData(false); },
           // onUpdate callback
-          () => { this.fetchData(false); }
+          () => { this.fetchData(false); },
+          customPrompt
       );
     },
 
