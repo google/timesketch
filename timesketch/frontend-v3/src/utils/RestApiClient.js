@@ -437,18 +437,14 @@ export default {
   getAnalyzers(sketchId) {
     return RestApiClient.get("/sketches/" + sketchId + "/analyzer/");
   },
-  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false, customPrompt = null) {
+  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false, analyzerKwargs = null) {
     let formData = {
       timeline_ids: timelineIds,
       analyzer_names: analyzers,
       analyzer_force_run: forceRun,
     }
-    if (customPrompt) {
-      let kwargs = {}
-      analyzers.forEach((name) => {
-        kwargs[name] = { prompt: customPrompt }
-      })
-      formData.analyzer_kwargs = kwargs
+    if (analyzerKwargs) {
+      formData.analyzer_kwargs = analyzerKwargs;
     }
     return RestApiClient.post("/sketches/" + sketchId + "/analyzer/", formData)
   },

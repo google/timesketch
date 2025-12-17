@@ -309,7 +309,7 @@ export default {
   watch: {
     'store.systemSettings.LOG_ANALYZER_DEFAULT_PROMPT': {
       handler(newVal) {
-        if (newVal && !this.customPrompt) {
+        if (newVal && this.customPrompt == null) {
           this.customPrompt = newVal
         }
       },

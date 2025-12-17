@@ -56,6 +56,12 @@ class LLMAnalyzerService {
             return;
         }
 
+        let analyzerKwargs = null;
+        if (customPrompt) {
+            analyzerKwargs = {};
+            analyzerKwargs[ANALYZER_NAME] = { prompt: customPrompt };
+        }
+
         const timelineIds = this.store.sketch.timelines.map(tl => tl.id);
         if (!timelineIds.length) {
             this.store.setNotification({
@@ -74,7 +80,7 @@ class LLMAnalyzerService {
 
         try {
             // The analyzer only needs one timeline ID to run against the whole sketch.
-            await RestApiClient.runAnalyzers(this.sketchId, [timelineIds[0]], [ANALYZER_NAME], true, customPrompt);
+            await RestApiClient.runAnalyzers(this.sketchId, [timelineIds[0]], [ANALYZER_NAME], true, analyzerKwargs);
             this._startPolling(onComplete, onUpdate);
         } catch (error) {
             this.store.setNotification({
