@@ -1207,7 +1207,7 @@ class BaseAnalyzer:
             analysis.set_status("ERROR")
             result = traceback.format_exc()
             logger.error(
-                "Analyzer %s (ID:%d) failed for sketch (ID:%d) with error: %s",
+                "Analyzer %s (ID:%d) in sketch (ID:%d): failed with error: %s",
                 self.name,
                 analysis_id,
                 self.sketch.id,
