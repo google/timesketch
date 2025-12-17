@@ -2121,12 +2121,20 @@ def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
         ]
     ]
 
-    # Analysis objects are related to the sketch
-    # Sort by ID in ascending order for consistent output.
-    for analysis in sorted(sketch.analysis, key=lambda x: x.id):
+    # Build the base query for Analysis objects related to the sketch
+    analysis_query = Analysis.query.filter_by(sketch=sketch)
+
+    # If --show-all is not used, filter for PENDING status
+    if not show_all:
+        analysis_query = analysis_query.join(Analysis.status).filter(
+            Analysis.Status.status == "PENDING"
+        )
+
+    # Fetch and sort the results for consistent output
+    analysis_runs = analysis_query.order_by(Analysis.id.asc()).all()
+
+    for analysis in analysis_runs:
         status = analysis.get_status.status
-        if not show_all and status != "PENDING":
-            continue
 
         celery_status = ""
         if status == "PENDING":
@@ -2258,10 +2266,21 @@ def manage_analyzer_run(analysis_ids, status, kill):
             current_utc_timestamp = datetime.datetime.now(
                 datetime.timezone.utc
             ).isoformat()
-            new_result = (
-                f"{old_result}\n(Status manually set to {status} via tsctl on "
+            status_message = (
+                f"(Status manually set to {status} via tsctl on "
                 f"{current_utc_timestamp})"
             )
+
+            try:
+                result_dict = json.loads(old_result)
+                if isinstance(result_dict, dict):
+                    result_dict.setdefault("status_updates", []).append(status_message)
+                    new_result = json.dumps(result_dict)
+                else:
+                    new_result = f"{old_result}\n{status_message}"
+            except json.JSONDecodeError:
+                new_result = f"{old_result}\n{status_message}"
+
             analysis.result = new_result
             analysis.set_status(status)
             analysis.updated_at = datetime.datetime.now(datetime.timezone.utc)
