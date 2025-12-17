@@ -2247,6 +2247,11 @@ def manage_analyzer_run(analysis_ids, status, kill):
                     f"No active, reserved, or scheduled Celery task found for "
                     f"analysis {analysis.id}."
                 )
+                if not status:
+                    print(
+                        "Task not found in queue. To force the DB status to ERROR, "
+                        "run this command again with --status ERROR."
+                    )
 
         if status:
             old_result = analysis.result or ""
