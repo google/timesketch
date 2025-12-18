@@ -111,6 +111,11 @@ def create_app(
     # See: https://flask.palletsprojects.com/en/2.3.x/config/
     app.config.from_prefixed_env()
 
+    # Configure Werkzeug 3.1+ form memory limit
+    # This is needed to support large form uploads (e.g. from import client)
+    if "MAX_FORM_MEMORY_SIZE" in app.config:
+        app.request_class.max_form_memory_size = app.config["MAX_FORM_MEMORY_SIZE"]
+
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:
         sys.stderr.write(
