@@ -398,9 +398,14 @@ limitations under the License.
 
           <!-- Datetime field with action buttons -->
           <template v-slot:item._source.timestamp="{ item }">
-            <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-              {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-            </div>
+            <v-tooltip left open-delay="1000">
+              <template v-slot:activator="{ on, attrs }">
+                <div v-bind="attrs" v-on="on" v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
+                  {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+                </div>
+              </template>
+              <span>{{ getTimeline(item).name }}</span>
+            </v-tooltip>
           </template>
 
           <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -601,7 +606,7 @@ export default {
         showTags: true,
         showEmojis: true,
         showMillis: false,
-        showTimelineName: true,
+        showTimelineName: false,
       },
       showHistogram: false,
       branchParent: null,
