@@ -58,6 +58,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../event-bus.js'
+import EventMixin from '../../mixins/EventMixin'
 
 export default {
   props: ['event'],
@@ -67,6 +68,7 @@ export default {
       originalContext: false,
     }
   },
+  mixins: [EventMixin],
   computed: {
     sketch() {
       return this.$store.state.sketch
@@ -105,23 +107,13 @@ export default {
         console.error(error)
       }
     },
-    getTimeline() {
-      let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
-      let timeline
-      if (isLegacy) {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === this.event._index)
-      } else {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === this.event._source.__ts_timeline_id)
-      }
-      return timeline
-    },
     focusOnTimeline() {
-      const timeline = this.getTimeline()
+      const timeline = this.getTimeline(this.event)
       if (!timeline) return
       this.$store.dispatch('updateEnabledTimelines', [timeline.id])
     },
     filterOutTimeline() {
-      const timeline = this.getTimeline()
+      const timeline = this.getTimeline(this.event)
       if (!timeline) return
       const currentEnabled = this.$store.state.enabledTimelines || []
       const newEnabled = currentEnabled.filter((id) => id !== timeline.id)
