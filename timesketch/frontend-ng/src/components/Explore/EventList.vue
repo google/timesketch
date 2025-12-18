@@ -398,7 +398,7 @@ limitations under the License.
 
           <!-- Datetime field with action buttons -->
           <template v-slot:item._source.timestamp="{ item }">
-            <v-tooltip left open-delay="1000">
+            <v-tooltip right open-delay="700">
               <template v-slot:activator="{ on, attrs }">
                 <div v-bind="attrs" v-on="on" v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
                   {{ item._source.timestamp | formatTimestamp | toISO8601 }}

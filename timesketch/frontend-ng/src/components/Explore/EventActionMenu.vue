@@ -42,7 +42,7 @@ limitations under the License.
           <v-list-item-icon>
             <v-icon small>mdi-eye</v-icon>
           </v-list-item-icon>
-          <v-list-item-title>Focus on this timeline</v-list-item-title>
+          <v-list-item-title>Unselect other timelines</v-list-item-title>
         </v-list-item>
         <v-list-item style="cursor: pointer" @click="filterOutTimeline()">
           <v-list-item-icon>
