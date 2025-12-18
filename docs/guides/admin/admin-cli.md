@@ -632,6 +632,49 @@ tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
 
 ---
 
+## Analyzer Management
+
+#### `list-analyzer-runs`
+
+Lists the analyzer runs for a specific sketch. By default, only runs with a `PENDING` status are shown.
+
+**Arguments:**
+*   `SKETCH_ID`: The ID of the sketch to list runs for.
+
+**Options:**
+*   `--show-all`: Show all analyzer runs, regardless of their status (e.g., DONE, ERROR, REVOKED).
+
+**Example:**
+```bash
+tsctl list-analyzer-runs 1
+tsctl list-analyzer-runs 1 --show-all
+```
+
+#### `manage-analyzer-run`
+
+Manages specific analyzer runs, allowing you to change their status or revoke associated Celery tasks.
+
+**Arguments:**
+*   `ANALYSIS_IDS`: A comma-separated list of analysis run IDs to manage (e.g., `123,456,789`).
+
+**Options:**
+*   `--status [ERROR|DONE|STARTED]`: Manually set the status of the analysis run(s). This will also update the result field with an audit note.
+*   `--kill`: Attempt to find and revoke (kill) the active or queued Celery task associated with this analysis. If no status is provided, it defaults to `ERROR`.
+
+**Examples:**
+```bash
+# Set status to ERROR for a single analysis
+tsctl manage-analyzer-run 123 --status ERROR
+
+# Kill multiple tasks (sets status to ERROR for each)
+tsctl manage-analyzer-run 123,456,789 --kill
+
+# Set status to DONE for multiple analyses
+tsctl manage-analyzer-run 123,456 --status DONE
+```
+
+---
+
 ## Celery Task Management
 
 #### `celery-tasks-redis`
