@@ -1726,6 +1726,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#analyzer-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyzer Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyzer Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-analyzer-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list-analyzer-runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manage-analyzer-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        manage-analyzer-run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#celery-task-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3593,6 +3632,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#analyzer-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyzer Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyzer Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-analyzer-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list-analyzer-runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manage-analyzer-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        manage-analyzer-run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#celery-task-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4076,6 +4154,35 @@ tsctl import-db output.zip
 *   <code>--limit INTEGER</code>: Limits the number of results.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="language-shell">tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
+</code></pre>
+<hr />
+<h2 id="analyzer-management">Analyzer Management</h2>
+<h4 id="list-analyzer-runs"><code>list-analyzer-runs</code></h4>
+<p>Lists the analyzer runs for a specific sketch. By default, only runs with a <code>PENDING</code> status are shown.</p>
+<p><strong>Arguments:</strong>
+*   <code>SKETCH_ID</code>: The ID of the sketch to list runs for.</p>
+<p><strong>Options:</strong>
+*   <code>--show-all</code>: Show all analyzer runs, regardless of their status (e.g., DONE, ERROR, REVOKED).</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">tsctl list-analyzer-runs 1
+tsctl list-analyzer-runs 1 --show-all
+</code></pre>
+<h4 id="manage-analyzer-run"><code>manage-analyzer-run</code></h4>
+<p>Manages specific analyzer runs, allowing you to change their status or revoke associated Celery tasks.</p>
+<p><strong>Arguments:</strong>
+*   <code>ANALYSIS_IDS</code>: A comma-separated list of analysis run IDs to manage (e.g., <code>123,456,789</code>).</p>
+<p><strong>Options:</strong>
+*   <code>--status [ERROR|DONE|STARTED]</code>: Manually set the status of the analysis run(s). This will also update the result field with an audit note.
+*   <code>--kill</code>: Attempt to find and revoke (kill) the active or queued Celery task associated with this analysis. If no status is provided, it defaults to <code>ERROR</code>.</p>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Set status to ERROR for a single analysis
+tsctl manage-analyzer-run 123 --status ERROR
+
+# Kill multiple tasks (sets status to ERROR for each)
+tsctl manage-analyzer-run 123,456,789 --kill
+
+# Set status to DONE for multiple analyses
+tsctl manage-analyzer-run 123,456 --status DONE
 </code></pre>
 <hr />
 <h2 id="celery-task-management">Celery Task Management</h2>
