@@ -1473,6 +1473,7 @@ class SystemSettingsResourceTest(BaseTest):
         """Authenticated request to get system settings."""
         self.app.config["LLM_PROVIDER_CONFIGS"] = {"default": {"test": {}}}
         self.app.config["DFIQ_ENABLED"] = False
+        self.app.config["LLM_LOG_ANALYZER_DEFAULT_PROMPT"] = "test prompt"
         self.login()
         response = self.client.get(self.resource_url)
 
@@ -1481,10 +1482,12 @@ class SystemSettingsResourceTest(BaseTest):
 
         self.assertIn("LLM_FEATURES_AVAILABLE", response.json)
         self.assertIn("default", response.json["LLM_FEATURES_AVAILABLE"])
+        self.assertEqual(response.json["LOG_ANALYZER_DEFAULT_PROMPT"], "test prompt")
 
     def test_system_settings_invalid_llm_config(self):
         """Test with invalid LLM configuration."""
         self.app.config["LLM_PROVIDER_CONFIGS"] = "invalid_config"
+        self.app.config["LLM_LOG_ANALYZER_DEFAULT_PROMPT"] = "another prompt"
         self.login()
         response = self.client.get(self.resource_url)
 
@@ -1493,6 +1496,7 @@ class SystemSettingsResourceTest(BaseTest):
             "SEARCH_PROCESSING_TIMELINES": False,
             "ENABLE_V3_INVESTIGATION_VIEW": False,
             "LLM_FEATURES_AVAILABLE": {"default": False},
+            "LOG_ANALYZER_DEFAULT_PROMPT": "another prompt",
         }
 
         self.assertDictEqual(response.json, expected_response)
