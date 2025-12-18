@@ -38,6 +38,18 @@ limitations under the License.
           </v-list-item-icon>
           <v-list-item-title>Context search</v-list-item-title>
         </v-list-item>
+        <v-list-item style="cursor: pointer" @click="focusOnTimeline()">
+          <v-list-item-icon>
+            <v-icon small>mdi-eye</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>Focus on this timeline</v-list-item-title>
+        </v-list-item>
+        <v-list-item style="cursor: pointer" @click="filterOutTimeline()">
+          <v-list-item-icon>
+            <v-icon small>mdi-eye-off</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>Unselect this timeline</v-list-item-title>
+        </v-list-item>
       </v-list>
     </v-menu>
   </span>
@@ -58,6 +70,9 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    meta() {
+      return this.$store.state.meta
     },
     settings() {
       return this.$store.state.settings
@@ -89,6 +104,28 @@ export default {
         this.errorSnackBar('Failed to load Event URL into the clipboard')
         console.error(error)
       }
+    },
+    getTimeline() {
+      let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
+      let timeline
+      if (isLegacy) {
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === this.event._index)
+      } else {
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === this.event._source.__ts_timeline_id)
+      }
+      return timeline
+    },
+    focusOnTimeline() {
+      const timeline = this.getTimeline()
+      if (!timeline) return
+      this.$store.dispatch('updateEnabledTimelines', [timeline.id])
+    },
+    filterOutTimeline() {
+      const timeline = this.getTimeline()
+      if (!timeline) return
+      const currentEnabled = this.$store.state.enabledTimelines || []
+      const newEnabled = currentEnabled.filter((id) => id !== timeline.id)
+      this.$store.dispatch('updateEnabledTimelines', newEnabled)
     },
   },
 }
