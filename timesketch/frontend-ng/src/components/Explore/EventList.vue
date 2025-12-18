@@ -353,7 +353,7 @@ limitations under the License.
           </template>
 
           <!-- Event details -->
-          <template v-slot:expanded-item="{ headers, item }">
+          <template slot="expanded-item" slot-scope="{ headers, item }">
             <td :colspan="headers.length">
               <!-- Details -->
               <v-container v-if="item.showDetails" fluid class="mt-4">
@@ -381,7 +381,7 @@ limitations under the License.
           </template>
 
           <!-- Actions field -->
-          <template v-slot:item.actions="{ item }">
+          <template slot="item.actions" slot-scope="{ item }">
             <v-btn small icon @click="toggleStar(item)">
               <v-icon title="Toggle star status" v-if="item._source.label.includes('__ts_star')" color="amber"
                 >mdi-star</v-icon
@@ -397,7 +397,7 @@ limitations under the License.
           </template>
 
           <!-- Datetime field with action buttons -->
-          <template v-slot:item._source.timestamp="{ item }">
+          <template slot="item._source.timestamp" slot-scope="{ item }">
             <v-tooltip right open-delay="700">
               <template v-slot:activator="{ on, attrs }">
                 <div v-bind="attrs" v-on="on" v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
@@ -449,7 +449,7 @@ limitations under the License.
           </template>
 
           <!-- Timeline name field -->
-          <template v-slot:item.timeline_name="{ item }">
+          <template slot="item.timeline_name" slot-scope="{ item }">
             <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em">
               <span class="timeline-name-ellipsis" style="width: 130px; text-align: center">{{
                 getTimeline(item).name
@@ -457,7 +457,7 @@ limitations under the License.
           </template>
 
           <!-- Comment field -->
-          <template v-slot:item._source.comment="{ item }">
+          <template slot="item._source.comment" slot-scope="{ item }">
             <div class="d-inline-block">
               <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
                 <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
