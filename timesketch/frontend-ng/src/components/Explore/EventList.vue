@@ -606,7 +606,7 @@ export default {
         showTags: true,
         showEmojis: true,
         showMillis: false,
-        showTimelineName: false,
+        showTimelineName: localStorage.getItem('showTimelineName') === 'true',
       },
       showHistogram: false,
       branchParent: null,
@@ -1161,6 +1161,9 @@ export default {
       handler() {
         this.updateShowBanner()
       },
+    },
+    'displayOptions.showTimelineName': function (val) {
+      localStorage.setItem('showTimelineName', String(val))
     },
   },
   created() {
