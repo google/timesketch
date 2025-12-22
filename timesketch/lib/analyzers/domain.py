@@ -120,6 +120,34 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
                 # Commit the event to the datastore.
                 event.commit()
 
+        # Create aggregation for all domains.
+        domain_table_name = f"Domains ({self.timeline_name})"
+        domain_table_params = {
+            "aggregator_name": "top_terms",
+            "aggregator_class": "apex",
+            "aggregator_parameters": {
+                "fields": [{"field": "domain", "type": "text"}],
+                "aggregator_options": {
+                    "metric": "value_count",
+                    "max_items": len(domain_counter),
+                    "timeline_ids": [self.timeline_id],
+                },
+                "chart_type": "table",
+                "chart_options": {
+                    "chartTitle": domain_table_name,
+                    "height": 600,
+                    "width": 800,
+                },
+            },
+        }
+        self.sketch.add_apex_aggregation(
+            name=domain_table_name,
+            params=domain_table_params,
+            chart_type="table",
+            description="Table of all domains",
+            label="informational",
+        )
+
         self.output.result_status = "SUCCESS"
         self.output.result_priority = "NOTE"
         self.output.result_summary = (
