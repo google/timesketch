@@ -89,12 +89,12 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
             else:
                 domain_85th_percentile = 100
 
-        common_domains = [
-            x for x, y in domain_counter.most_common() if y >= domain_85th_percentile
-        ]
-        rare_domains = [
-            x for x, y in domain_counter.most_common() if y <= domain_20th_percentile
-        ]
+        common_domains = {
+            x for x, y in domain_counter.items() if y >= domain_85th_percentile
+        }
+        rare_domains = {
+            x for x, y in domain_counter.items() if y <= domain_20th_percentile
+        }
 
         for domain, count in iter(domain_counter.items()):
             tags_to_add = []
@@ -107,14 +107,14 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
             if domain in rare_domains:
                 tags_to_add.append("rare-domain")
 
+            new_attributes = {"domain": domain, "domain_count": count}
+            if domain in common_domains:
+                new_attributes["is_common_domain"] = True
+            if cdn_provider:
+                new_attributes["cdn_provider"] = cdn_provider
+
             for event in domains.get(domain, []):
                 event.add_tags(tags_to_add)
-
-                new_attributes = {"domain": domain, "domain_count": count}
-                if domain in common_domains:
-                    new_attributes["is_common_domain"] = True
-                if cdn_provider:
-                    new_attributes["cdn_provider"] = cdn_provider
                 event.add_attributes(new_attributes)
 
                 # Commit the event to the datastore.
