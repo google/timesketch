@@ -121,7 +121,7 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
                 event.commit()
 
         # Create aggregation for all domains.
-        domain_table_name = f"Domains ({self.timeline_name})"
+        domain_table_name = f"Domain Analyzer: ({self.timeline_name})"
         domain_table_params = {
             "aggregator_name": "top_terms",
             "aggregator_class": "apex",
@@ -140,13 +140,14 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
                 },
             },
         }
-        self.sketch.add_apex_aggregation(
+        aggregation = self.sketch.add_apex_aggregation(
             name=domain_table_name,
             params=domain_table_params,
             chart_type="table",
             description="Table of all domains",
             label="informational",
         )
+        self.output.add_saved_aggregation(aggregation.id)
 
         self.output.result_status = "SUCCESS"
         self.output.result_priority = "NOTE"
