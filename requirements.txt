@@ -14,7 +14,6 @@ flask_sqlalchemy==3.0.3
 flask_wtf==1.2.1
 google-auth==2.32.0
 google_auth_oauthlib==0.4.1
-google-cloud-aiplatform==1.70.0
 gunicorn==23.0.0
 numpy==1.26.4
 oauthlib==3.1.0

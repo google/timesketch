@@ -12,8 +12,48 @@ the steps required to configure these features for Timesketch administrators.
 
 ## Prerequisites
 
-*  For usage of Vertex AI as provider, install `sudo docker exec timesketch-web pip install google-cloud-aiplatform==1.70.0`
-*  For usage of AI Studio as provider, install `sudo docker exec timesketch-web pip install google-generativeai`
+To use LLM features, specific Python libraries must be installed in the
+Timesketch container. Depending on your provider, you will need:
+
+*  **Vertex AI:** `google-cloud-aiplatform`
+*  **AI Studio:** `google-generativeai`
+*  **Sec-Gemini:** `sec_gemini`
+
+There are two ways to install these dependencies:
+
+### Option 1: Persistent Installation (Recommended for operational deployments)
+
+For production environments, you should build a custom Docker image. This
+ensures the libraries persist across container restarts and upgrades.
+
+1.  **Build the image** using the `EXTRA_PIP_PACKAGES` argument:
+
+    ```
+    docker build \
+      --build-arg EXTRA_PIP_PACKAGES="google-cloud-aiplatform google-generativeai sec_gemini" \
+      -t timesketch:ai-enabled .
+    ```
+
+2.  **Update your deployment** to use this new image. Edit your
+    `docker-compose.yml` to reference `image: timesketch:ai-enabled` (or the tag
+    you used) instead of the official release image.
+
+### Option 2: Ephemeral Installation
+
+For quick testing without rebuilding images, you can install the libraries into
+a running container.
+**Note:** These changes will be lost if the container is removed or recreated
+(e.g., during `docker compose down` and `up`).
+
+```
+# For Vertex AI
+sudo docker exec timesketch-web pip install google-cloud-aiplatform==1.70.0
+sudo docker exec timesketch-worker pip install google-cloud-aiplatform==1.70.0
+
+# For AI Studio
+sudo docker exec timesketch-web pip install google-generativeai
+sudo docker exec timesketch-worker pip install google-generativeai
+```
 
 ## LLM Provider Configuration
 
