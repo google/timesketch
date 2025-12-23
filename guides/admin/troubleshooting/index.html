@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1255,6 +1255,17 @@
     <span class="md-ellipsis">
       
         Timesketch / Celery worker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plaso-psort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plaso / Psort
       
     </span>
   </a>
@@ -2711,6 +2722,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#plaso-psort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plaso / Psort
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#opensearch" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2839,6 +2861,7 @@
 <li>Which Plaso version was used to create the Plaso file?</li>
 <li>Is the issue for both web upload and <code>import_client</code>?</li>
 <li>If you open a Github Issue, please indicate the Plaso version used to generate the file.</li>
+<li><strong>Note:</strong> By default, <code>psort</code> execution logs are logged. If you need to debug a specific crash, see the <a href="#plaso-psort">Plaso / Psort</a> section below.</li>
 </ul>
 <p>Try to run the following in the Docker container after the file was uploaded (but not successfully imported):</p>
 <pre><code class="language-shell">pinfo.py $FILENAME
@@ -2871,6 +2894,18 @@
 <pre><code class="language-shell">docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks inspect query_task $TASKID
 </code></pre>
 <p>Where $TASKID is the id that was shown in the previous step.</p>
+<h3 id="plaso-psort">Plaso / Psort</h3>
+<p>By default, the <code>psort</code> process (used to process Plaso files) writes execution
+logs to <code>/var/log/timesketch/psort/</code> which should be mapped to the host.</p>
+<p>If this is not set it will be logged to <code>/dev/null</code> to prevent cluttering the disk.</p>
+<p>You can configure the path in the <code>timesketch.conf</code>:</p>
+<pre><code># Directory to store Plaso (psort) log files.
+# If this is set, psort will write execution logs here.
+# If this is NOT set, logs will be discarded to /dev/null.
+PLASO_LOG_FOLDER = '/var/log/timesketch/psort/'
+</code></pre>
+<p><strong>Note:</strong> Psort logs can be large. If you enable this, ensure you have log
+          rotation configured on the target directory.</p>
 <h3 id="opensearch">OpenSearch</h3>
 <pre><code class="language-shell">/var/log/opensearch
 </code></pre>
@@ -2943,10 +2978,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
