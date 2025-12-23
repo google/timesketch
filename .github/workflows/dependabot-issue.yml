@@ -50,14 +50,5 @@ jobs:
 
             console.log(`Created tracking issue #${issue.number} for PR #${pr.number}`);
 
-            // Update PR body to reference the issue
-            const updatedBody = `${pr.body || ''}\n\n---\nCloses #${issue.number}`;
-
-            await github.rest.pulls.update({
-              owner,
-              repo,
-              pull_number: pr.number,
-              body: updatedBody
-            });
-
-            console.log(`Updated PR #${pr.number} to close issue #${issue.number}`);
+            // Note: We don't update the PR body because Dependabot PRs have
+            // restricted permissions. The issue references the PR instead.
