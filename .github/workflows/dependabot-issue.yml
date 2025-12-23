@@ -1,0 +1,54 @@
+name: Create Issue for Dependabot PRs
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  create-tracking-issue:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create tracking issue for Dependabot PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Extract version info from PR title
+            // Typical format: "Bump actions/checkout from 3 to 4"
+            const title = pr.title;
+
+            const issueTitle = `deps: ${title}`;
+            const issueBody = `## Dependabot Update
+
+            ${pr.body || 'Automated dependency update.'}
+
+            ## Pull Request
+
+            - PR: #${pr.number}
+            - Author: @${pr.user.login}
+            - URL: ${pr.html_url}
+
+            ---
+            This issue was automatically created to track the Dependabot update.
+            `;
+
+            const { data: issue } = await github.rest.issues.create({
+              owner,
+              repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['dependencies', 'github-actions']
+            });
+
+            console.log(`Created tracking issue #${issue.number} for PR #${pr.number}`);
+
+            // Note: We don't update the PR body because Dependabot PRs have
+            // restricted permissions. The issue references the PR instead.
