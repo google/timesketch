@@ -3,6 +3,7 @@ FROM ubuntu:24.04
 
 ARG RELEASE_TAG
 ARG PPA_TRACK=stable
+ARG EXTRA_PIP_PACKAGES=""
 
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
@@ -38,6 +39,12 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN wget https://raw.githubusercontent.com/google/timesketch/$RELEASE_TAG/requirements.txt
 RUN pip3 install -r requirements.txt
 RUN pip3 install https://github.com/google/timesketch/archive/$RELEASE_TAG.zip
+
+# Install optional dependencies if build-arg is provided.
+RUN if [ ! -z "$EXTRA_PIP_PACKAGES" ]; then \
+        echo "Installing extra packages: $EXTRA_PIP_PACKAGES"; \
+        pip3 install ${EXTRA_PIP_PACKAGES}; \
+    fi
 
 # Copy the entrypoint script into the container
 COPY docker/release/build/docker-entrypoint.sh /
