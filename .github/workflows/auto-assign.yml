@@ -1,0 +1,95 @@
+name: Auto Assign Owner
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  check-and-assign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check collaborator count and assign owner
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Get collaborators with push or admin access
+            const { data: collaborators } = await github.rest.repos.listCollaborators({
+              owner,
+              repo,
+              permission: 'push'
+            });
+
+            // Filter to only users with push or admin (not just read)
+            const pushCollaborators = collaborators.filter(c =>
+              c.permissions?.push || c.permissions?.admin
+            );
+
+            console.log(`Found ${pushCollaborators.length} collaborators with push access`);
+
+            // Only auto-assign if there's 1 or fewer collaborators with push access
+            if (pushCollaborators.length > 1) {
+              console.log('Multiple collaborators found, skipping auto-assign');
+              return;
+            }
+
+            // Determine the assignee (repo owner)
+            const assignee = owner;
+
+            if (context.eventName === 'issues') {
+              const issue = context.payload.issue;
+
+              // Skip if already assigned
+              if (issue.assignees && issue.assignees.length > 0) {
+                console.log('Issue already has assignees, skipping');
+                return;
+              }
+
+              // Skip if author is a bot
+              if (issue.user.type === 'Bot') {
+                console.log('Issue author is a bot, skipping');
+                return;
+              }
+
+              await github.rest.issues.addAssignees({
+                owner,
+                repo,
+                issue_number: issue.number,
+                assignees: [assignee]
+              });
+
+              console.log(`Assigned issue #${issue.number} to ${assignee}`);
+
+            } else if (context.eventName === 'pull_request_target') {
+              const pr = context.payload.pull_request;
+
+              // Skip if already assigned
+              if (pr.assignees && pr.assignees.length > 0) {
+                console.log('PR already has assignees, skipping');
+                return;
+              }
+
+              // Skip if author is a bot
+              if (pr.user.type === 'Bot') {
+                console.log('PR author is a bot, skipping');
+                return;
+              }
+
+              await github.rest.issues.addAssignees({
+                owner,
+                repo,
+                issue_number: pr.number,
+                assignees: [assignee]
+              });
+
+              console.log(`Assigned PR #${pr.number} to ${assignee}`);
+            }
