@@ -46,7 +46,7 @@ RUN if [ ! -z "$EXTRA_PIP_PACKAGES" ]; then \
     fi
 
 # Copy the entrypoint script into the container
-COPY docker/release/build/docker-entrypoint.sh /
+COPY docker-entrypoint.sh /
 RUN chmod a+x /docker-entrypoint.sh
 
 # Load the entrypoint script to be run later
