@@ -919,6 +919,7 @@ def run_plaso(
         index_name,
     ]
 
+    log_file_path = "/dev/null"
     log_dir = current_app.config.get("PLASO_LOG_FOLDER")
 
     if log_dir:
@@ -931,7 +932,7 @@ def run_plaso(
             log_filename = f"psort_{index_name}_{timestamp}_{unique_suffix}.log.gz"
             log_full_path = os.path.join(log_dir, log_filename)
 
-            cmd.extend(["--logfile", log_full_path])
+            log_file_path = log_full_path
             logger.info(
                 "[%s] Psort log enabled: Writing to [%s]", index_name, log_full_path
             )
@@ -945,10 +946,8 @@ def run_plaso(
                 log_dir,
                 e,
             )
-            cmd.extend(["--logfile", "/dev/null"])
-    else:
-        # If no logging path for plaso is defined use /dev/null
-        cmd.extend(["--logfile", "/dev/null"])
+
+    cmd.extend(["--logfile", log_file_path])
 
     if mappings_file_path:
         cmd.extend(["--opensearch_mappings", mappings_file_path])
