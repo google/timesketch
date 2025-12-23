@@ -27,6 +27,7 @@ For production environments, you should build a custom Docker image. This
 ensures the libraries persist across container restarts and upgrades.
 
 1.  **Build the image** using the `EXTRA_PIP_PACKAGES` argument:
+
     ```
     docker build \
       --build-arg EXTRA_PIP_PACKAGES="google-cloud-aiplatform google-generativeai sec_gemini" \
