@@ -11,6 +11,8 @@ import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 import { defineConfig } from "vite";
 import { fileURLToPath, URL } from "node:url";
 
+const backendUrl = process.env.BACKEND_URL || "http://localhost:5000/";
+
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.NODE_ENV === "development" ? "/" : "/v3/",
@@ -58,12 +60,12 @@ export default defineConfig({
     port: 5001,
     proxy: {
       "^/api": {
-        target: "http://127.0.0.1:5000/",
+        target: backendUrl,
         changeOrigin: true,
         secure: false,
       },
       '^/login|logout': {
-        target: 'http://127.0.0.1:5000/',
+        target: backendUrl,
         changeOrigin: true,
         secure: false,
       },
