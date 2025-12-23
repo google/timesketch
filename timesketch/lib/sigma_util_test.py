@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for sigma_util score."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+
 
 import datetime
 
@@ -47,6 +44,49 @@ falsepositives:
     - Monitoring tools
     - Legitimate system administration
 level: low
+"""
+
+SIGMA_MOCK_RULE_TEST5 = r"""
+
+title: Proxy Execution via Wuauclt
+id: af77cf95-c469-471c-b6a0-946c685c4798
+related:
+    - id: ba1bb0cb-73da-42de-ad3a-de10c643a5d0
+      type: obsoletes
+    - id: d7825193-b70a-48a4-b992-8b5b3015cc11
+      type: obsoletes
+status: test
+description: Detects the use of the Windows Update Client binary (wuauclt.exe) to proxy execute code.
+references:
+    - https://dtm.uk/wuauclt/
+    - https://blog.malwarebytes.com/threat-intelligence/2022/01/north-koreas-lazarus-apt-leverages-windows-update-client-github-in-latest-campaign/
+author: Roberto Rodriguez (Cyb3rWard0g), OTR (Open Threat Research), Florian Roth (Nextron Systems), Sreeman, FPT.EagleEye Team
+date: 2020/10/12
+modified: 2023/02/13
+tags:
+    - attack.defense_evasion
+    - attack.t1218
+    - attack.execution
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        - Image|endswith: '\wuauclt.exe'
+        - OriginalFileName: 'wuauclt.exe'
+    selection_cli:
+        CommandLine|contains|all:
+            - 'UpdateDeploymentProvider'
+            - '.dll'
+            - 'RunHandlerComServer'
+    filter:
+        CommandLine|contains:
+            - ' /UpdateDeploymentProvider UpdateDeploymentProvider.dll '
+            - ' wuaueng.dll '
+    condition: all of selection_* and not filter
+falsepositives:
+    - Unknown
+level: high
 """
 
 
@@ -150,6 +190,49 @@ level: high
         self.assertIn("2020/06/26", rule.get("date"))
         self.assertIsInstance(rule.get("date"), str)
 
+    def test_get_rule_by_text_no_sanitize(self):
+        """Test getting sigma rule by text with no sanitization."""
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
+title: TEST
+id: BLAH
+status: test
+description: test
+author: test
+date: 2020/02/01
+modified: 2020/02/01
+tags:
+    - tag1
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        - Image|endswith: '\foo.exe'
+        - OriginalFileName: 'origfile.exe'
+    selection_cli:
+        CommandLine|contains|all:
+            - 'bar'
+            - '.dll'
+            - 'Baz'
+    filter:
+        CommandLine|contains:
+            - ' /foo bar.dll '
+            - ' baz.dll '
+    condition: all of selection_* and not filter
+falsepositives:
+    - Unknown
+level: high
+""",
+            sanitize=True,
+        )
+
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            '(data_type:"windows:evtx:record" AND event_identifier:("1" OR "4688") AND source_name:("Microsoft-Windows-Sysmon" OR "Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND ((message:"\\\\foo.exe" OR xml_string:"origfile.exe") AND (xml_string:*bar* AND xml_string:*.dll* AND xml_string:"Baz")) AND (NOT (xml_string:(" \\/foo bar.dll " OR " baz.dll "))))',  # pylint: disable=line-too-long
+            rule.get("search_query"),
+        )
+
     def test_get_rule_by_text_parsing_error(self):
         """Test getting sigma rule by text with a rule causing parsing error."""
         with self.assertRaises(sigma_exceptions.SigmaParseError):
@@ -188,7 +271,6 @@ falsepositives:
 level: high
 """
         )
-
         self.assertIsNotNone(rule)
         self.assertEqual(
             '("Whitespace at" OR " beginning " OR " and extra text ")',
@@ -283,7 +365,7 @@ detection:
         self.assertIsNotNone(rule)
         self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
-            r'("aaa:bbb" OR "ccc\:\:ddd")',
+            '("aaa:bbb" OR "ccc\\:\\:ddd")',
             rule.get("search_query"),
         )
 
@@ -383,7 +465,11 @@ level: medium
         self.assertIsNotNone(rule)
         self.assertEqual("5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id"))
         self.assertIn(
-            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
+            'event_identifier:"10"',
+            rule.get("search_query"),
+        )
+        self.assertIn(
+            'xml_string:"\\\\foobar.exe" AND xml_string:"10"',
             rule.get("search_query"),
         )
 
@@ -425,6 +511,87 @@ detection:
             - 'quote'
     condition:
         (1 of star) and (1 of quote)
+"""
+        )
+        self.assertIsNotNone(rule)
+
+    def test_sigmarule_by_text_three_words(self):
+        """
+        Testing the different terms in a Sigma rule and how each is treated.
+        Reference: https://github.com/google/timesketch/issues/2550
+        """
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
+title: test terms
+id: 6d8ca9f2-79e2-44bd-957d-b4d810374972
+description: Rule to test combination of three words and how they are parsed
+author: Alexander Jaeger
+date: 2023/02/13
+modified: 2023/02/13
+falsepositives:
+    - Legitimate usage of the terms
+tags:
+    - testrule
+status: experimental
+level: medium
+detection:
+    keywords:
+        - '*onlyoneterm*'
+        - '*two words*'
+        - '*completely new term*'
+    condition: keywords"""
+        )
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            '("onlyoneterm" OR "two words" OR "completely new term")',
+            rule.get("search_query"),
+        )
+
+    def test_get_rule_by_text_specialchar(self):
+        """
+        Testing rules, that contain special characters (like "'") in their description
+        """
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
+title: Vim GTFOBin Abuse - Linux
+id: 7ab8f73a-fcff-428b-84aa-6a5ff7877dea
+status: test
+description: Detects usage of "vim" and it's siblings as a GTFOBin to execute and proxy command and binary execution # pylint: disable=line-too-long
+references:
+    - https://gtfobins.github.io/gtfobins/vim/
+    - https://gtfobins.github.io/gtfobins/rvim/
+    - https://gtfobins.github.io/gtfobins/vimdiff/
+author: Nasreddine Bencherchali (Nextron Systems)
+date: 2022/12/28
+tags:
+    - attack.discovery
+    - attack.t1083
+logsource:
+    category: process_creation
+    product: linux
+detection:
+    selection_img:
+        Image|endswith:
+            - '/vim'
+            - '/rvim'
+            - '/vimdiff'
+        CommandLine|contains:
+            - ' -c '
+            - ' --cmd'
+    selection_cli:
+        CommandLine|contains:
+            - ':!/'
+            - ':py '
+            - ':lua '
+            - '/bin/sh'
+            - '/bin/bash'
+            - '/bin/dash'
+            - '/bin/zsh'
+            - '/bin/fish'
+    condition: all of selection_*
+falsepositives:
+    - Unknown
+level: high
 """
         )
         self.assertIsNotNone(rule)

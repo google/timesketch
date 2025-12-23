@@ -1,11 +1,10 @@
 """Tests for WinEVTXSessionizerSketchPlugin, LogonSessionizerSketchPludin and
 UnlockSessionizerSketchPlugin"""
 
-from __future__ import unicode_literals
-
 import unittest
 import copy
-import mock
+from unittest import mock
+from typing import Optional
 
 from timesketch.lib.analyzers.evtx_sessionizers import LogonSessionizerSketchPlugin
 from timesketch.lib.analyzers.evtx_sessionizers import UnlockSessionizerSketchPlugin
@@ -60,8 +59,8 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_get_event_data(self):
         """Test getEventData returns the correct values."""
-        user = User("test_user")
-        sketch = Sketch("test_sketch", "description", user)
+        user = User(username="test_user", name="test user")
+        sketch = Sketch(name="test_sketch", description="description", user=user)
         label = sketch.Label(label="Test label", user=user)
         sketch.labels.append(label)
 
@@ -254,7 +253,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             event3 = datastore.event_store["2"]
             self.assertEqual(
                 set(event3["_source"]["session_id"][analyzer.session_type]),
-                set(["0 (USER_1)", "1 (USER_2)"]),
+                {"0 (USER_1)", "1 (USER_2)"},
             )
             event4 = datastore.event_store["3"]
             self.assertTrue(
@@ -486,7 +485,11 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
 
 def _create_mock_event(
-    datastore, event_id, quantity, time_diffs=None, source_attrs=None
+    datastore: MockDataStore,
+    event_id: str,
+    quantity: int,
+    time_diffs: Optional[list] = None,
+    source_attrs: Optional[list] = None,
 ):
     """
     Loads in the datastore mock events that based on the given arguments.

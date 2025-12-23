@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-sigma-lower</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
       class="pa-4"
@@ -31,10 +43,12 @@ limitations under the License.
         :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Add Sigma rules">mdi-plus</v-icon>
       </v-btn>
+      <span v-if="!expanded" class="float-right" style="margin-right: 3px">
+        <v-progress-circular v-if="isLoading" :size="24" :width="1" indeterminate></v-progress-circular>
+      </span>
       <span v-if="!expanded" class="float-right" style="margin-right: 10px">
-        <v-progress-circular v-if="isLoading" :size="12" :width="1" indeterminate></v-progress-circular>
         <small v-if="sigmaRules && sigmaRules.length"
           ><strong>{{ ruleCount }}</strong></small
         >
@@ -81,6 +95,7 @@ import TsSigmaRule from './SigmaRule.vue'
 export default {
   props: {
     startExpanded: Boolean,
+    iconOnly: Boolean,
   },
   components: {
     TsSigmaRule,

@@ -3,50 +3,75 @@ name: unit-tests
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
+      - 'README.md'
 
 jobs:
   # Backend tests (Python/Flask)
   Python:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
-        python-version: ['3.8', '3.10']
+        os: [ubuntu-24.04]
+        python-version: ['3.10']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Cache pip dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('Pipfile.lock', 'requirements.txt', 'test_requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
       - name: Install dependencies
         run: |
           pip install pipenv
           pipenv install -d
-          pipenv install -r test_requirements.txt
+          pipenv run pip install -r test_requirements.txt
+          pipenv run pip install -e ./api_client/python
+          pipenv run pip install -e ./importer_client/python
+          pipenv run pip install -e ./cli_client/python
+          pip install pytest pytest-xdist
+      - name: Check pytest installation
+        run: pipenv run pip show pytest
       - name: Run unit tests
         run: |
-          pipenv run python run_tests.py
+          pipenv run python3 run_tests.py
 
   # Frontend tests (VueJS)
   VueJS:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: timesketch/frontend
+        working-directory: timesketch/frontend-ng
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
-        node-version: ["14"]
+        os: [ubuntu-24.04]
+        node-version: ["20"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Set up Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Cache yarn dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/yarn
+          key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('timesketch/frontend-ng/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-${{ matrix.node-version }}-
       - name: Install dependencies
         run: |
-          sudo apt install yarn npm --no-install-recommends
           yarn install
 
       - name: Run unit tests with yarn
-        run: yarn run test:unit
+        run: yarn run test

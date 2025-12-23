@@ -14,10 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-book-open-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       no-gutters
-      :style="!(meta.stories && meta.stories.length) ? '' : 'cursor: pointer'"
+      :style="!(filteredStories && filteredStories.length) ? '' : 'cursor: pointer'"
       class="pa-4"
       flat
       @click="expanded = !expanded"
@@ -26,26 +38,26 @@ limitations under the License.
       <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
       <v-btn
         icon
-        v-if="expanded || !meta.stories.length"
+        v-if="expanded || !(filteredStories && filteredStories.length)"
         text
-        class="float-right mt-n1"
+        class="float-right mt-n1 mr-n1"
         @click="createStory()"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Create New Story">mdi-plus</v-icon>
       </v-btn>
 
-      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
-        <small v-if="meta.stories.length"
-          ><strong>{{ meta.stories.length }}</strong></small
+      <span v-if="!expanded && filteredStories && filteredStories.length" class="float-right" style="margin-right: 10px">
+        <small v-if="filteredStories"
+          ><strong>{{ filteredStories.length }}</strong></small
         >
       </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded && meta.stories.length">
+      <div v-show="expanded && filteredStories.length">
         <router-link
-          v-for="story in meta.stories"
+          v-for="story in filteredStories"
           :key="story.id"
           :to="{ name: 'Story', params: { storyId: story.id } }"
           style="cursor: pointer; font-size: 0.9em; text-decoration: none"
@@ -64,7 +76,9 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   data: function () {
     return {
       expanded: false,
@@ -76,6 +90,12 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+  filteredStories() {
+      if (!this.meta.stories) {
+        return []
+      }
+      return this.meta.stories.filter(story => !story.title.startsWith('__ts_'))
     },
   },
   methods: {

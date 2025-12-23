@@ -18,6 +18,7 @@ import os
 import logging
 import string
 from functools import lru_cache
+from typing import Optional
 import yaml
 
 from flask import current_app
@@ -33,7 +34,7 @@ from timesketch.models.sigma import SigmaRule
 logger = logging.getLogger("timesketch.lib.sigma")
 
 
-def get_sigma_config_file(config_file=None):
+def get_sigma_config_file(config_file: Optional[str] = None):
     """Get a sigma.configuration.SigmaConfiguration object.
 
     Args:
@@ -56,23 +57,21 @@ def get_sigma_config_file(config_file=None):
         raise ValueError("No config_file_path set via param or config file")
 
     if not os.path.isfile(config_file_path):
-        raise ValueError(
-            "Unable to open: [{0:s}], does not exist.".format(config_file_path)
-        )
+        raise ValueError(f"Unable to open: [{config_file_path:s}], does not exist.")
 
     if not os.access(config_file_path, os.R_OK):
         raise ValueError(
-            "Unable to open file: [{0:s}], cannot open it for "
+            "Unable to open file: [{:s}], cannot open it for "
             "read, please check permissions.".format(config_file_path)
         )
 
-    with open(config_file_path, "r", encoding="utf-8") as config_file_read:
+    with open(config_file_path, encoding="utf-8") as config_file_read:
         sigma_config_file = config_file_read.read()
 
     try:
         sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
     except SigmaConfigParseError:
-        logger.error("Parsing error with {0:s}".format(sigma_config_file))
+        logger.error("Parsing error with %s", sigma_config_file)
         raise
 
     return sigma_config
@@ -101,6 +100,7 @@ def enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
         parsed_rule = parse_sigma_rule_by_text(rule.rule_yaml)
 
     parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
+    parsed_rule["id"] = parsed_rule.get("id", rule.rule_uuid)
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
     parsed_rule["title"] = parsed_rule.get("title", rule.title)
@@ -114,9 +114,12 @@ def enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
     return parsed_rule
 
 
-def get_all_sigma_rules():
+def get_all_sigma_rules(parse_yaml: bool = False):
     """Returns all Sigma rules from the database.
 
+    Args:
+        parse_yaml: type bool. If set to True, the rule will be parsed from
+            the yaml (slower).
     Returns:
         A array of Sigma rules
 
@@ -125,13 +128,19 @@ def get_all_sigma_rules():
     sigma_rules = []
 
     for rule in SigmaRule.query.all():
-        sigma_rules.append(enrich_sigma_rule_object(rule=rule, parse_yaml=False))
+        sigma_rules.append(enrich_sigma_rule_object(rule=rule, parse_yaml=parse_yaml))
 
     return sigma_rules
 
 
 def _sanitize_query(sigma_rule_query: str) -> str:
-    """Returns a sanitized query
+    """Returns a sanitized query.
+
+    This function requires more thorough testing as it
+    generated OpenSearch queries with an invalid syntax. The Sigma library
+    does a good enough job at generating compatible (albeit maybe inefficient)
+    queries.
+
     Args:
         sigma_rule_query: path to the sigma rule to be parsed
     Returns:
@@ -201,12 +210,16 @@ def sanitize_incoming_sigma_rule_text(rule_text: string):
 
 
 @lru_cache(maxsize=8)
-def parse_sigma_rule_by_text(rule_text, sigma_config=None):
+def parse_sigma_rule_by_text(
+    rule_text: str, sigma_config: object = None, sanitize: bool = True
+):
     """Returns a JSON representation for a rule
 
     Args:
         rule_text: Text of the sigma rule to be parsed
         sigma_config: config file object
+        sanitize: If set to True, sanitization rules will be ran over the
+            resulting Lucene query.
 
     Returns:
         JSON representation of the parsed rule
@@ -247,29 +260,29 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
         for doc in rule_yaml_data:
             parser = sigma_collection.SigmaCollectionParser(
-                str(doc), sigma_conf_obj, None
+                str(rule_text), sigma_conf_obj, None
             )
             parsed_sigma_rules = parser.generate(sigma_backend)
             rule_return.update(doc)
 
     except NotImplementedError as exception:
-        logger.error("Error generating rule {0!s}".format(exception))
+        logger.error("Error generating rule %s", str(exception))
         raise
 
     except sigma_exceptions.SigmaParseError as exception:
-        logger.error("Sigma parsing error rule {0!s}".format(exception))
+        logger.error("Sigma parsing error rule %s", str(exception))
         raise
 
     except yaml.parser.ParserError as exception:
-        logger.error("Yaml parsing error rule {0!s}".format(exception))
+        logger.error("Yaml parsing error rule %s", str(exception))
         raise
 
     assert parsed_sigma_rules is not None
 
-    sigma_search_query = ""
-
-    for sigma_rule in parsed_sigma_rules:
-        sigma_search_query = _sanitize_query(sigma_rule)
+    sigma_search_query = list(parsed_sigma_rules)[0]
+    if sanitize:
+        sigma_search_query = _sanitize_query(sigma_search_query)
+    sigma_search_query = sigma_search_query.replace("*.keyword:", "message.keyword:")
 
     if not isinstance(rule_return.get("title"), str):
         error_msg = "Missing value: 'title' from the YAML data."

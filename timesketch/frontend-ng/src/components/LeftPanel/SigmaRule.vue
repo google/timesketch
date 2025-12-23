@@ -23,8 +23,8 @@ limitations under the License.
       style="cursor: pointer; font-size: 0.9em"
     >
       <v-col cols="1" class="pl-1">
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
+        <v-icon title="Show details" v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon title="Close details" v-else>mdi-chevron-down</v-icon>
       </v-col>
 
       <v-col cols="10">
@@ -35,7 +35,7 @@ limitations under the License.
         <v-menu offset-y>
           <template v-slot:activator="{ on, attrs }">
             <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-dots-vertical</v-icon>
+              <v-icon title="Manage Sigma rule" small>mdi-dots-vertical</v-icon>
             </v-btn>
           </template>
           <v-card>
@@ -86,18 +86,29 @@ limitations under the License.
                   </td>
                   <td>
                     <span v-if="key === 'references'">
-                      <div v-for="ref in value" :key="ref">
-                        <a :href="ref" target="new">{{ ref }}</a>
-                      </div>
+                      <ul v-for="ref in value" :key="ref">
+                        <li>
+                          <a :href="ref" target="new">{{ ref }}</a>
+                        </li>
+                      </ul>
                     </span>
                     <span v-else-if="key === 'falsepositives'">
-                      <v-chip v-for="falsepositive in value" :key="falsepositive" rounded x-small class="mr-2">{{
-                        falsepositive
-                      }}</v-chip>
+                      <ul v-for="falsepositive in value" :key="falsepositive">
+                        <li>{{ falsepositive }}</li>
+                      </ul>
                     </span>
 
                     <span v-else-if="key === 'tags' && value">
-                      <v-chip v-for="tag in value" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
+                      <v-chip
+                        v-for="tag in value"
+                        :key="tag"
+                        rounded
+                        x-small
+                        class="mr-2"
+                        @click="applyFilterChip(tag)"
+                      >
+                        {{ tag }}
+                      </v-chip>
                     </span>
                     <span v-else>
                       {{ value }}
@@ -126,19 +137,8 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 import ApiClient from '../../utils/RestApiClient'
-
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
 
 export default {
   components: {},
@@ -175,7 +175,6 @@ export default {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
-      eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     deleteRule(ruleUuid) {
@@ -243,6 +242,20 @@ export default {
         .catch((e) => {
           console.error(e)
         })
+    },
+    applyFilterChip(value) {
+      let eventData = {}
+      eventData.doSearch = true
+      eventData.queryString = '*'
+      let chip = {
+        field: 'tag',
+        value: value,
+        type: 'term',
+        operator: 'must',
+        active: true,
+      }
+      eventData.chip = chip
+      EventBus.$emit('setQueryAndFilter', eventData)
     },
   },
 }

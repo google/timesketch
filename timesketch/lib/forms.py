@@ -13,7 +13,6 @@
 # limitations under the License.
 """Form definitions and validators for the forms used in the application."""
 
-from __future__ import unicode_literals
 
 from flask_wtf import FlaskForm
 from wtforms import widgets
@@ -25,6 +24,7 @@ from wtforms.fields import RadioField
 from wtforms.fields import SelectField
 from wtforms.fields import SelectMultipleField
 from wtforms.fields import StringField
+from wtforms.fields import FieldList
 from wtforms.validators import DataRequired
 from wtforms.validators import Length
 from wtforms.validators import Optional
@@ -109,7 +109,16 @@ class UsernamePasswordForm(BaseForm):
 class NameDescriptionForm(BaseForm):
     """Generic form for name and description forms. Used in multiple places."""
 
-    name = StringField("Name", validators=[DataRequired()])
+    name = StringField(
+        "Name",
+        validators=[
+            DataRequired(),
+            Length(
+                max=255,
+                message="Name must be less than 255 characters.",
+            ),
+        ],
+    )
     description = StringField("Description", widget=widgets.TextArea())
 
 
@@ -161,7 +170,16 @@ class TogglePublic(BaseForm):
 class SaveViewForm(BaseForm):
     """Form used to save a view."""
 
-    name = StringField("Name")
+    name = StringField(
+        "Name",
+        validators=[
+            DataRequired(),
+            Length(
+                max=255,
+                message="Name must be less than 255 characters.",
+            ),
+        ],
+    )
     description = StringField("Description", validators=[Optional()])
     query = StringField("Query")
     filter = StringField("Filter")
@@ -205,6 +223,9 @@ class AggregationExploreForm(BaseForm):
     aggregator_parameters = StringField(
         "Aggregator Parameters", validators=[Optional()]
     )
+    include_processing_timelines = BooleanField(
+        "Include processing timelines", validators=[Optional()], default=False
+    )
 
 
 class AggregationLegacyForm(ExploreForm):
@@ -247,8 +268,9 @@ class EventAnnotationForm(BaseForm):
 class StoryForm(BaseForm):
     """Form to handle stories."""
 
-    title = StringField("Title", validators=[])
+    title = StringField("Title", validators=[DataRequired()])
     content = StringField("Content", validators=[], widget=widgets.TextArea())
+    labels = FieldList(StringField("Label"), validators=[Optional()])
 
 
 class SearchIndexForm(BaseForm):

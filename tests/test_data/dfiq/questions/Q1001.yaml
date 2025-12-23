@@ -1,0 +1,27 @@
+name: Test Question
+description: Test Question
+type: question
+id: Q1001
+uuid: bb094c9a-afb7-4daf-a853-7859d2f99d0c
+approaches:
+- name: Test approach
+  description: Test approach description
+  tags:
+  - Test Tag
+  references:
+  - '[Test Tag](http://go/yeti-dev)'
+  notes:
+    covered:
+    - Test covered
+    not_covered:
+    - Test not covered
+  steps:
+  - name: Test step
+    description: Test step description
+    stage: collection
+    type: ForensicArtifact
+    value: TestArtifact
+tags:
+parent_ids:
+  - F1001
+dfiq_version: 1.1.0

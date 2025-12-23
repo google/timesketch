@@ -13,7 +13,6 @@
 # limitations under the License.
 """URL routes for API resources."""
 
-from __future__ import unicode_literals
 
 from .resources.aggregation import AggregationGroupResource
 from .resources.aggregation import AggregationGroupListResource
@@ -29,6 +28,7 @@ from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
 from .resources.explore import SearchHistoryResource
 from .resources.explore import SearchHistoryTreeResource
+from .resources.exportstream import ExportStreamListResource
 from .resources.datafinder import DataFinderResource
 from .resources.datasource import DataSourceResource
 from .resources.datasource import DataSourceListResource
@@ -36,6 +36,7 @@ from .resources.event import EventResource
 from .resources.event import EventAnnotationResource
 from .resources.event import EventCreateResource
 from .resources.event import EventTaggingResource
+from .resources.event import EventUnTagResource
 from .resources.event import EventAddAttributeResource
 from .resources.event import CountEventsResource
 from .resources.event import MarkEventsWithTimelineIdentifier
@@ -55,10 +56,13 @@ from .resources.story import StoryResource
 from .resources.explore import QueryResource
 from .resources.timeline import TimelineResource
 from .resources.timeline import TimelineListResource
+from .resources.timeline import TimelineFieldsResource
 from .resources.searchindex import SearchIndexListResource
 from .resources.searchindex import SearchIndexResource
 from .resources.session import SessionResource
 from .resources.user import UserListResource
+from .resources.user import UserResource
+from .resources.user import UserSettingsResource
 from .resources.user import GroupListResource
 from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
@@ -71,11 +75,21 @@ from .resources.graph import GraphPluginListResource
 from .resources.graph import GraphCacheResource
 from .resources.intelligence import TagMetadataResource
 from .resources.contextlinks import ContextLinkConfigResource
+from .resources.unfurl import UnfurlResource
+from .resources.llm import LLMResource
+from .resources.settings import SystemSettingsResource
 
 from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
 from .resources.scenarios import ScenarioResource
 from .resources.scenarios import ScenarioStatusResource
+from .resources.scenarios import FacetListResource
+from .resources.scenarios import QuestionOrphanListResource
+from .resources.scenarios import QuestionWithScenarioListResource
+from .resources.scenarios import QuestionWithFacetListResource
+from .resources.scenarios import QuestionTemplateListResource
+from .resources.scenarios import QuestionListResource
+from .resources.scenarios import QuestionResource
 from .resources.scenarios import QuestionConclusionListResource
 from .resources.scenarios import QuestionConclusionResource
 
@@ -127,6 +141,7 @@ API_ROUTES = [
     (EventResource, "/sketches/<int:sketch_id>/event/"),
     (EventAddAttributeResource, "/sketches/<int:sketch_id>/event/attributes/"),
     (EventTaggingResource, "/sketches/<int:sketch_id>/event/tagging/"),
+    (EventUnTagResource, "/sketches/<int:sketch_id>/event/untag/"),
     (EventAnnotationResource, "/sketches/<int:sketch_id>/event/annotate/"),
     (EventCreateResource, "/sketches/<int:sketch_id>/event/create/"),
     (
@@ -138,7 +153,10 @@ API_ROUTES = [
     (ViewResource, "/sketches/<int:sketch_id>/views/<int:view_id>/"),
     (SearchTemplateListResource, "/searchtemplates/"),
     (SearchTemplateResource, "/searchtemplates/<int:searchtemplate_id>/"),
-    (SearchTemplateParseResource, "/searchtemplates/<int:searchtemplate_id>/parse/"),
+    (
+        SearchTemplateParseResource,
+        "/searchtemplates/<int:searchtemplate_id>/parse/",
+    ),
     (UploadFileResource, "/upload/"),
     (TaskResource, "/tasks/"),
     (StoryListResource, "/sketches/<int:sketch_id>/stories/"),
@@ -149,6 +167,10 @@ API_ROUTES = [
     (
         TimelineResource,
         "/sketches/<int:sketch_id>/timelines/<int:timeline_id>/",
+    ),
+    (
+        TimelineFieldsResource,
+        "/sketches/<int:sketch_id>/timelines/<int:timeline_id>/fields/",
     ),
     (SearchIndexListResource, "/searchindices/"),
     (SearchIndexResource, "/searchindices/<int:searchindex_id>/"),
@@ -164,6 +186,8 @@ API_ROUTES = [
     (SigmaRuleResource, "/sigmarules/<string:rule_uuid>/"),
     (SigmaRuleByTextResource, "/sigmarules/text/"),
     (LoggedInUserResource, "/users/me/"),
+    (UserSettingsResource, "/users/me/settings/"),
+    (UserResource, "/users/<int:user_id>/"),
     (GraphListResource, "/sketches/<int:sketch_id>/graphs/"),
     (GraphResource, "/sketches/<int:sketch_id>/graphs/<int:graph_id>/"),
     (GraphPluginListResource, "/graphs/"),
@@ -176,23 +200,44 @@ API_ROUTES = [
     (DataFinderResource, "/sketches/<int:sketch_id>/data/find/"),
     (TagMetadataResource, "/intelligence/tagmetadata/"),
     (ContextLinkConfigResource, "/contextlinks/"),
-    # Scenarios
+    (UnfurlResource, "/unfurl/"),
+    (LLMResource, "/sketches/<int:sketch_id>/llm/"),
+    (SystemSettingsResource, "/settings/"),
+    # Scenario templates
     (ScenarioTemplateListResource, "/scenarios/"),
+    # Scenarios
     (ScenarioListResource, "/sketches/<int:sketch_id>/scenarios/"),
-    (
-        ScenarioResource,
-        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/",
-    ),
+    (ScenarioResource, "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/"),
     (
         ScenarioStatusResource,
         "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/status/",
     ),
+    # Facets
+    (
+        FacetListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/facets/",
+    ),
+    # (FacetResource, "/sketches/<int:sketch_id>/facets/<int:facet_id>/"),
+    # Questions
+    (QuestionOrphanListResource, "/sketches/<int:sketch_id>/questions/"),
+    (
+        QuestionWithScenarioListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/questions/",
+    ),
+    (
+        QuestionWithFacetListResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/facets/<int:facet_id>/questions/",
+    ),
+    (QuestionTemplateListResource, "/questions/"),
+    (QuestionListResource, "/sketches/<int:sketch_id>/questions/"),
+    (QuestionResource, "/sketches/<int:sketch_id>/questions/<int:question_id>/"),
     (
         QuestionConclusionListResource,
-        "/sketches/<int:sketch_id>/questions/<int:question_id>/",
+        "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/",
     ),
     (
         QuestionConclusionResource,
         "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/<int:conclusion_id>/",
     ),
+    (ExportStreamListResource, "/sketches/<int:sketch_id>/exportstream/"),
 ]

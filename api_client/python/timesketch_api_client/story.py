@@ -554,11 +554,11 @@ class Story(resource.BaseResource):
         """Adds an aggregation object to the story.
 
         Args:
-            agg_obj: an aggregation object (instance of aggregation.Aggregation)
+            agg_obj (aggregation.Aggregation): an aggregation object
             chart_type (str): string indicating the type of aggregation, can be:
                 "table" or the name of the chart to be used, eg "barcharct",
                 "hbarchart". Defaults to "table".
-            index: an integer, if supplied determines where the new
+            index (int): an integer, if supplied determines where the new
                 block will be added. If not supplied it will be
                 appended at the end.
 
@@ -623,8 +623,8 @@ class Story(resource.BaseResource):
         """Add a saved search to the story.
 
         Args:
-            search_obj: a search object (instance of search.Search)
-            index: an integer, if supplied determines where the new
+            search_obj (search.Search): a search object
+            index (int): an integer, if supplied determines where the new
                 block will be added. If not supplied it will be
                 appended at the end.
 
@@ -729,6 +729,9 @@ class Story(resource.BaseResource):
                 string_list.append(block.text)
             elif block.TYPE == "view":
                 search_obj = block.view
+                if search_obj is None:
+                    logging.warning("Block has no view. Skipping")
+                    continue
                 data_frame = search_obj.to_pandas()
                 string_list.append(data_frame.to_string(index=False))
             elif block.TYPE == "aggregation":

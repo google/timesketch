@@ -158,7 +158,9 @@ class DateIntervalChip(Chip):
         """Property that returns back the date."""
         if not self._date:
             return ""
-        return self._date.strftime(self._DATE_FORMAT)
+        if self._date.microsecond == 0:
+            return self._date.strftime(self._DATE_FORMAT)
+        return self._date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @date.setter
     def date(self, date):
@@ -176,8 +178,6 @@ class DateIntervalChip(Chip):
                         "Unable to add date chip, wrong date format", exc_info=True
                     )
                     raise ValueError("Wrong date format") from exc
-        if dt.microsecond > 0:
-            raise ValueError("Microsecond dates are not currently supported")
         self._date = dt
 
     def from_dict(self, chip_dict):
@@ -260,7 +260,7 @@ class DateRangeChip(Chip):
 
         try:
             dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT_MICROSECONDS)
-        except ValueError as exc:
+        except ValueError:
             try:
                 dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT)
             except ValueError as exc:
@@ -268,8 +268,6 @@ class DateRangeChip(Chip):
                     "Unable to add date chip, wrong date format", exc_info=True
                 )
                 raise ValueError("Wrong date format") from exc
-        if dt.microsecond > 0:
-            raise ValueError("Microsecond dates are not currently supported")
         self._end_date = dt
 
     def add_start_time(self, start_time):
@@ -290,7 +288,7 @@ class DateRangeChip(Chip):
 
         try:
             dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT_MICROSECONDS)
-        except ValueError as exc:
+        except ValueError:
             try:
                 dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT)
             except ValueError as exc:
@@ -298,8 +296,6 @@ class DateRangeChip(Chip):
                     "Unable to add date chip, wrong date format", exc_info=True
                 )
                 raise ValueError("Wrong date format") from exc
-        if dt.microsecond > 0:
-            raise ValueError("Microsecond dates are not currently supported")
         self._start_date = dt
 
     @property
@@ -307,7 +303,9 @@ class DateRangeChip(Chip):
         """Property that returns the end time of a range."""
         if not self._end_date:
             return ""
-        return self._end_date.strftime(self._DATE_FORMAT)
+        if self._end_date.microsecond == 0:
+            return self._end_date.strftime(self._DATE_FORMAT)
+        return self._end_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @end_time.setter
     def end_time(self, end_time):
@@ -340,7 +338,9 @@ class DateRangeChip(Chip):
         """Property that returns the start time of a range."""
         if not self._start_date:
             return ""
-        return self._start_date.strftime(self._DATE_FORMAT)
+        if self._start_date.microsecond == 0:
+            return self._start_date.strftime(self._DATE_FORMAT)
+        return self._start_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @start_time.setter
     def start_time(self, start_time):
@@ -493,27 +493,34 @@ class Search(resource.SketchResource):
         """Execute a search request and store the results.
 
         Args:
-            file_name (str): optional file path to a filename that
+            file_name (str): Optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
-            count (bool): optional boolean that determines whether
+            count (bool): Optional boolean that determines whether
                 we want to execute the query or only count the
-                number of events that the query would produce.
+                number of events that the query would produce. If
+                set to True, the results will be stored in the
+                search object, and the number of events will be
+                returned.
+
+        Returns:
+            A dict with the search results or the total number of events
+            (if count=True) or None if saved to file.
         """
         query_filter = self.query_filter
         if not isinstance(query_filter, dict):
             raise ValueError("Unable to query with a query filter that isn't a dict.")
 
-        stop_size = self._max_entries
+        stop_size = self.max_entries
         scrolling = not bool(stop_size and (stop_size < self.DEFAULT_SIZE_LIMIT))
 
         if self.scrolling is not None:
             scrolling = self.scrolling
 
         form_data = {
-            "query": self._query_string,
+            "query": self.query_string,
             "filter": query_filter,
-            "dsl": self._query_dsl,
+            "dsl": self.query_dsl,
             "count": count,
             "fields": self.return_fields,
             "enable_scroll": scrolling,
@@ -531,14 +538,14 @@ class Search(resource.SketchResource):
         if file_name:
             with open(file_name, "wb") as fw:
                 fw.write(response.content)
-            return
+            return None
 
         response_json = error.get_response_json(response, logger)
 
         if count:
             meta = response_json.get("meta", {})
             self._total_elastic_size = meta.get("total_count", 0)
-            return
+            return meta.get("total_count", 0)
 
         scroll_id = response_json.get("meta", {}).get("scroll_id", "")
         form_data["scroll_id"] = scroll_id
@@ -546,7 +553,7 @@ class Search(resource.SketchResource):
         count = len(response_json.get("objects", []))
         total_count = count
         while count > 0:
-            if self._max_entries and total_count >= self._max_entries:
+            if self.max_entries and total_count >= self.max_entries:
                 break
 
             if not scroll_id:
@@ -558,7 +565,9 @@ class Search(resource.SketchResource):
             )
             if not error.check_return_status(more_response, logger):
                 error.error_message(
-                    response, message="Unable to query results", error=ValueError
+                    more_response,
+                    message="Unable to query results while scrolling",
+                    error=ValueError,
                 )
             more_response_json = error.get_response_json(more_response, logger)
             count = len(more_response_json.get("objects", []))
@@ -573,12 +582,13 @@ class Search(resource.SketchResource):
         )
         if self._total_elastic_size != total_count:
             logger.info(
-                "%d results were returned, but " "%d records matched the search query",
+                "%d results were returned, but %d records matched the search query",
                 total_count,
                 self._total_elastic_size,
             )
 
         self._raw_response = response_json
+        return response_json
 
     def add_chip(self, chip):
         """Add a chip to the ..."""
@@ -647,7 +657,7 @@ class Search(resource.SketchResource):
         if self._total_elastic_size:
             return self._total_elastic_size
 
-        self._execute_query(count=True)
+        _ = self._execute_query(count=True)
         return self._total_elastic_size
 
     def from_manual(  # pylint: disable=arguments-differ
@@ -692,12 +702,12 @@ class Search(resource.SketchResource):
         if query_filter:
             self.query_filter = query_filter
 
-        self._query_string = query_string
+        self.query_string = query_string
         self.query_dsl = query_dsl
-        self._return_fields = return_fields
+        self.return_fields = return_fields
 
         if max_entries:
-            self._max_entries = max_entries
+            self.max_entries = max_entries
 
         # TODO: Make use of search templates and aggregations.
         # self._searchtemplate = data.get('searchtemplate', 0)
@@ -708,11 +718,11 @@ class Search(resource.SketchResource):
 
         self.resource_data = {}
 
-    def from_saved(self, search_id):  # pylint: disable=arguments-differ
+    def from_saved(self, search_id):  # pylint: disable=arguments-renamed
         """Initialize the search object from a saved search.
 
         Args:
-            search_id: integer value for the saved
+            search_id (int): integer value for the saved
                 search (primary key).
         """
         resource_uri = f"sketches/{self._sketch.id}/views/{search_id}/"
@@ -740,14 +750,14 @@ class Search(resource.SketchResource):
             if "fields" in filter_dict:
                 fields = filter_dict.pop("fields")
                 return_fields = [x.get("field") for x in fields]
-                self._return_fields = ",".join(return_fields)
+                self.return_fields = ",".join(return_fields)
 
             indices = filter_dict.get("indices", [])
             if indices:
                 self.indices = indices
 
             self.query_filter = filter_dict
-        self._query_string = data.get("query_string", "")
+        self.query_string = data.get("query_string", "")
         self._resource_id = search_id
         self._searchtemplate = data.get("searchtemplate", 0)
         self._updated_at = data.get("updated_at", "")
@@ -816,10 +826,11 @@ class Search(resource.SketchResource):
                     new_indices.append(str(index))
                     continue
 
-            if index.isdigit():
-                if int(index) in valid_ids:
-                    new_indices.append(index)
-                    continue
+            if isinstance(index, str):
+                if index.isdigit():
+                    if int(index) in valid_ids:
+                        new_indices.append(index)
+                        continue
 
             # Is this a timeline name?
             if index in timeline_names:
@@ -1072,9 +1083,11 @@ class Search(resource.SketchResource):
         self._scrolling = True
 
     def to_dict(self):
-        """Returns a dict with the respone of the query."""
-        if not self._raw_response:
+        """Returns a dict with the response of the query."""
+        if self._raw_response is None:
             self._execute_query()
+            if self._raw_response is None:
+                raise ValueError("No results to return.")
 
         return self._raw_response
 
@@ -1097,8 +1110,10 @@ class Search(resource.SketchResource):
 
     def to_pandas(self):
         """Returns a pandas DataFrame with the response of the query."""
-        if not self._raw_response:
-            self._execute_query()
+        if self._raw_response is None:
+            self._raw_response = self._execute_query()
+            if self._raw_response is None:
+                raise ValueError("No results to return.")
 
         return_list = []
         timelines = {t.id: t.name for t in self._sketch.list_timelines()}
@@ -1130,7 +1145,9 @@ class Search(resource.SketchResource):
         data_frame = pandas.DataFrame(return_list)
         if "datetime" in data_frame:
             try:
-                data_frame["datetime"] = pandas.to_datetime(data_frame.datetime)
+                data_frame["datetime"] = pandas.to_datetime(
+                    data_frame.datetime, format="mixed"
+                )
             except pandas.errors.OutOfBoundsDatetime:
                 pass
         elif "timestamp" in data_frame:

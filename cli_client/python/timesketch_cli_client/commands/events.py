@@ -14,6 +14,7 @@
 """Commands for events."""
 
 import sys
+from typing import Optional
 import click
 
 
@@ -31,15 +32,8 @@ def events_group():
     help="Comma separated list of Tags to add to the event.",
 )
 @click.option("--comment", required=False, help="Comment to add to the event.")
-# TODO(jaegeral): Make this part of the root command as we do with sketch-id
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format (overrides global setting).",
-)
 @click.pass_context
-def annotate(ctx, timeline_id, event_id, tag, comment, output):
+def annotate(ctx, timeline_id, event_id, tag, comment):
     """Annotate to an event.
 
     This can be used to add tags and comments to an event.
@@ -48,9 +42,6 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     current annotations for the event.
     """
     sketch = ctx.obj.sketch
-    # If no output format is specified, use the global one.
-    if not output:
-        output = ctx.obj.output_format
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
         click.echo("No such timeline.")
@@ -89,3 +80,109 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     # TODO: At the moment json is only really supported here. Add more options
     # as needed (like YAML).
     click.echo(return_value)
+
+
+@events_group.command("add")
+@click.option("--message", required=True, help="Message of the event.")
+@click.option(
+    "--date",
+    required=True,
+    help="Date of the event (ISO 8601). Example: 2023-03-08T10:59:24+00:00",
+)
+@click.option(
+    "--attributes",
+    required=False,
+    help="Attributes of the event. Example: key1=value1,key2=value2",
+)
+@click.option(
+    "--timestamp-desc",
+    required=True,
+    help="Timestamp description of the event.",
+)
+@click.pass_context
+def add_event(ctx, message, date, attributes, timestamp_desc):
+    """Add an event to the sketch."""
+    sketch = ctx.obj.sketch
+    output = ctx.obj.output_format
+
+    attributes_dict = {}
+    if attributes:
+        attributes_comma_split = attributes.split(",")
+
+        for attribute in attributes_comma_split:
+            key, value = attribute.split("=")
+            attributes_dict[key] = value
+    try:
+        return_value = sketch.add_event(
+            message=message,
+            date=date,
+            timestamp_desc=timestamp_desc,
+            attributes=attributes_dict,
+        )
+    except ValueError as e:
+        click.echo(f"Problem adding event to sketch: {e}")
+        sys.exit(1)
+
+    # TODO (jaegeral): Add more details to the output (e.g. event id, which
+    # is currently not passed back by the API).
+    if output == "json":
+        click.echo(f"{return_value}")
+    else:
+        click.echo(f"Event added to sketch: {sketch.name}")
+
+
+@events_group.command("remove_tag")
+@click.option("--timeline-id", type=int, required=True)
+@click.option("--event-id", required=True, help="ID of the event.")
+@click.option(
+    "--tag",
+    required=False,
+    help="Tag to remove from the event.",
+)
+@click.pass_context
+def tag_mod(
+    ctx: click.Context, timeline_id: int, event_id: str, tag: Optional[str] = None
+) -> None:
+    """Removes a tag from an event or lists the event's current tags.
+
+    Removes a specified tag from an event within a timeline. If no tag is provided,
+    the command lists the event's current tags.
+
+    Args:
+        ctx (click.Context): The Click context object, containing the sketch.
+        timeline_id (int): The ID of the timeline containing the event.
+        event_id (str): The ID of the event to modify.
+        tag (Optional[str]): The tag to remove from the event, or a comma-separated
+                             list of tags. If None, lists the event's tags.
+
+    Errors:
+        * If the specified timeline or event does not exist.
+        * If the specified event does not exist.
+
+    Outputs:
+        Text: If a tag is specified, a message indicating the tag was removed.
+              If no tag is specified, the event's current tags are printed.
+    """
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline.")
+        return
+
+    if tag:
+        # if tag is a string with commas, make it a list
+        if "," in tag:
+            tags = tag.split(",")
+            return_value = sketch.untag_events([event_id], timeline.index_name, tags)
+        else:
+            return_value = sketch.untag_event(event_id, timeline.index_name, tag)
+            click.echo(return_value)
+    else:  # just get the event
+        try:
+            return_value = sketch.get_event(event_id, timeline.index_name)
+            if return_value is None:
+                click.echo("No such event.")
+                sys.exit(1)
+        except KeyError:
+            click.echo("No such event.")
+            sys.exit(1)

@@ -43,29 +43,4 @@ class SigmaRule(
     description = Column(UnicodeText())
     rule_uuid = Column(Unicode(255), unique=True)
     rule_yaml = Column(UnicodeText())
-    user_id = Column(
-        Integer, ForeignKey("user.id")
-    )  # who added the rule to the system (TS user)
-
-    def __init__(
-        self,
-        user,
-        title=None,
-        description=None,
-        rule_uuid=None,
-        rule_yaml=None,
-    ):
-        """Initialize the SigmaRule object.
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            title: Title for the rule
-            description: description of the rule
-            rule_uuid: uuid of the rule
-            rule_yaml: yaml content of the rule
-        """
-        super().__init__()
-        self.user = user
-        self.rule_uuid = rule_uuid
-        self.rule_yaml = rule_yaml
-        self.title = title
-        self.description = description
+    user_id = Column(Integer, ForeignKey("user.id"))

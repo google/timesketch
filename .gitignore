@@ -1,5 +1,7 @@
 # Files to ignore by git
 
+.DS_Store
+
 # Back-up files
 *~
 *.swp
@@ -9,20 +11,29 @@
 *.pyo
 **/.ipynb_checkpoints/
 
-# Ignore back-up files.
-*~
-
 # Specific auto-generated build files
 /.eggs
 /.tox
 /__pycache__
-**/build/
+api_client/python/build/
+cli_client/python/build/
+importer_client/python/build/
 /dependencies/
 *.egg-info
 
 # Ignore frontend build related files
 node_modules
 timesketch/static/dist
+
+# Frontend Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# local frontend env files
+.env.local
+.env.*.local
 
 # Test files
 .coverage
@@ -34,4 +45,12 @@ vagrant/*.log
 
 # Exclude .venv folder
 .venv/
+
+# Exclude Visual Studio Code files
 .vscode/*
+
+# Exclude JetBrains IDE files
+.idea/
+
+# Exclude debugging profiles
+profiles/

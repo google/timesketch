@@ -44,7 +44,7 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the data sources.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -74,13 +74,13 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         if not rule_names:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Need a list of rule names to be able to start the " "data discovery.",
+                "Need a list of rule names to be able to start the data discovery.",
             )
 
         if not isinstance(rule_names, (list, tuple)):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Rule names needs to a list")
 
-        if any([not isinstance(x, str) for x in rule_names]):
+        if any(not isinstance(x, str) for x in rule_names):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Rule names needs to a list of string values.",

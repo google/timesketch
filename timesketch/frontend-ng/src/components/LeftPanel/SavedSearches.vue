@@ -1,5 +1,5 @@
 <!--
-Copyright 2022 Google Inc. All rights reserved.
+Copyright 2025 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-content-save-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
       class="pa-4"
@@ -30,17 +42,8 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
-        <div
-          v-for="savedSearch in meta.views"
-          :key="savedSearch.name"
-          @click="setView(savedSearch)"
-          style="cursor: pointer; font-size: 0.9em"
-        >
-          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">{{
-            savedSearch.name
-          }}</v-row>
-        </div>
+      <div v-show="expanded && meta.views.length">
+        <ts-saved-searches-list></ts-saved-searches-list>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -48,10 +51,15 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import TsSavedSearchesList from './SavedSearchesList.vue'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
+  components: {
+    TsSavedSearchesList,
+  },
   data: function () {
     return {
       expanded: false,
@@ -65,11 +73,6 @@ export default {
       return this.$store.state.meta
     },
   },
-  methods: {
-    setView: function (savedSearch) {
-      EventBus.$emit('setActiveView', savedSearch)
-    },
-  },
-  created() {},
+  methods: {},
 }
 </script>

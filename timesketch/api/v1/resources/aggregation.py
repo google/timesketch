@@ -14,10 +14,12 @@
 """Aggregation resources for version 1 of the Timesketch API."""
 
 import json
+import logging
 import time
 
-from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError, RequestError
 
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import abort
@@ -30,6 +32,7 @@ from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib import utils as lib_utils
+from timesketch.lib.aggregators import apex
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -42,11 +45,14 @@ from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Sketch
 
 
+logger = logging.getLogger("timesketch.api.aggregation")
+
+
 class AggregationResource(resources.ResourceMixin, Resource):
     """Resource to query for aggregated results."""
 
     @login_required
-    def get(self, sketch_id, aggregation_id):  # pylint: disable=unused-argument
+    def get(self, sketch_id: int, aggregation_id: int):
         """Handles GET request to the resource.
 
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
@@ -59,7 +65,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
         Returns:
             JSON with aggregation results
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -67,16 +73,20 @@ class AggregationResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have read access controls on sketch.",
             )
-        aggregation = Aggregation.query.get(aggregation_id)
+        aggregation = Aggregation.get_by_id(aggregation_id)
 
+        # Check that the aggregation exists
+        if not aggregation:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The aggregation ID ({aggregation_id:d}) does not exist.",
+            )
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the defined "
-                "sketch in the aggregation ({1:d})".format(
-                    aggregation.sketch_id, sketch.id
-                ),
+                f"The sketch ID ({aggregation.sketch_id:d}) does not match with "
+                f"the defined sketch in the aggregation ({sketch.id:d})",
             )
 
         # If this is a user state view, check that it
@@ -84,7 +94,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
         if aggregation.name == "" and aggregation.user != current_user:
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                ("A user state view can only be viewed by the user it " "belongs to."),
+                ("A user state view can only be viewed by the user it belongs to."),
             )
 
         # Update the last activity of a sketch.
@@ -94,7 +104,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
     @login_required
     # pylint: disable=unused-argument
-    def post(self, sketch_id, aggregation_id):
+    def post(self, sketch_id: int, aggregation_id: int):
         """Handles POST request to the resource.
 
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
@@ -111,7 +121,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
         if not form:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "write"):
@@ -120,7 +130,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch.",
             )
 
-        aggregation = Aggregation.query.get(aggregation_id)
+        aggregation = Aggregation.get_by_id(aggregation_id)
         if not aggregation:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No aggregation found with this ID.")
 
@@ -161,19 +171,19 @@ class AggregationResource(resources.ResourceMixin, Resource):
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
-    def delete(self, sketch_id, aggregation_id):
+    def delete(self, sketch_id: int, aggregation_id: int):
         """Handles DELETE request to the resource.
 
         Args:
             sketch_id: Integer primary key for a sketch database model.
-            group_id: Integer primary key for an aggregation group database
+            aggregation_id: Integer primary key for an aggregation group database
                 model.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        aggregation = Aggregation.query.get(aggregation_id)
+        aggregation = Aggregation.get_by_id(aggregation_id)
         if not aggregation:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No aggregation found with this ID.")
 
@@ -185,11 +195,15 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
-            msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "sketch ID ({1:d})".format(sketch.id, aggregation.sketch_id)
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "sketch ID (%d - cannot delete)"
             )
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, aggregation.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                msg_template % (sketch.id, aggregation.sketch_id),
+            )
 
         db_session.delete(aggregation)
         db_session.commit()
@@ -267,15 +281,15 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
     """Resource for aggregation group requests."""
 
     @login_required
-    def get(self, sketch_id, group_id):
+    def get(self, sketch_id: int, group_id: int):
         """Handles GET request to the resource.
 
         Args:
             sketch_id: Integer primary key for a sketch database model.
             group_id: Integer primary key for an aggregation group database
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        group = AggregationGroup.query.get(group_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        group = AggregationGroup.get_by_id(group_id)
 
         if not group:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Group found with this ID.")
@@ -292,8 +306,8 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "group sketch ID ({1:d})".format(sketch.id, group.sketch_id)
+                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
+                f"group sketch ID ({group.sketch_id:d})"
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
@@ -313,7 +327,7 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         return jsonify(schema)
 
     @login_required
-    def post(self, sketch_id, group_id):
+    def post(self, sketch_id: int, group_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -321,8 +335,8 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
             group_id: Integer primary key for an aggregation group database
                 model.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        group = AggregationGroup.query.get(group_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        group = AggregationGroup.get_by_id(group_id)
         if not group:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Group found with this ID.")
 
@@ -332,8 +346,8 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "group sketch ID ({1:d})".format(sketch.id, group.sketch_id)
+                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
+                f"group sketch ID ({group.sketch_id:d})"
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
@@ -362,11 +376,11 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         aggregations = []
 
         for agg_id in agg_ids:
-            aggregation = Aggregation.query.get(agg_id)
+            aggregation = Aggregation.get_by_id(agg_id)
             if not aggregation:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "No aggregation found for ID: {0:d}".format(agg_id),
+                    f"No aggregation found for ID: {agg_id:d}",
                 )
             aggregations.append(aggregation)
 
@@ -378,7 +392,7 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
         return self.to_json(group, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
-    def delete(self, sketch_id, group_id):
+    def delete(self, sketch_id: int, group_id: int):
         """Handles DELETE request to the resource.
 
         Args:
@@ -386,8 +400,8 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
             group_id: Integer primary key for an aggregation group database
                 model.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        group = AggregationGroup.query.get(group_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        group = AggregationGroup.get_by_id(group_id)
 
         if not group:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Group found with this ID.")
@@ -397,11 +411,14 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
 
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
-            msg = (
-                "The sketch ID ({0:d}) does not match with the aggregation "
-                "group sketch ID ({1:d})".format(sketch.id, group.sketch_id)
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "group sketch ID (%d) - cannot delete"
             )
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, group.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, msg_template % (sketch.id, group.sketch_id)
+            )
 
         if not sketch.has_permission(user=current_user, permission="write"):
             abort(
@@ -424,7 +441,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
     REMOVE_FIELDS = frozenset(["_shards", "hits", "timed_out", "took"])
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Handler for /api/v1/sketches/<int:sketch_id>/aggregation/explore/
@@ -442,7 +459,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 "Not able to run aggregation, unable to validate form data.",
             )
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -458,70 +475,118 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 "Not able to run aggregation on an archived sketch.",
             )
 
+        include_processing_timelines = form.include_processing_timelines.data
+        allowed_statuses = ["ready"]
+        if include_processing_timelines and current_app.config.get(
+            "SEARCH_PROCESSING_TIMELINES", False
+        ):
+            allowed_statuses.append("processing")
+
         sketch_indices = {
             t.searchindex.index_name
             for t in sketch.timelines
-            if t.get_status.status.lower() == "ready"
+            if t.get_status.status.lower() in allowed_statuses
         }
 
         aggregation_dsl = form.aggregation_dsl.data
         aggregator_name = form.aggregator_name.data
 
         if aggregator_name:
-            if isinstance(form.aggregator_parameters.data, dict):
-                aggregator_parameters = form.aggregator_parameters.data
-            else:
-                aggregator_parameters = json.loads(form.aggregator_parameters.data)
-
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
                 aggregator_name
             )
             if not agg_class:
-                return {}
-            if not aggregator_parameters:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    f"Aggregator {aggregator_name} not found",
+                )
+
+            if form.aggregator_parameters.data:
+                aggregator_parameters = form.aggregator_parameters.data
+                if not isinstance(aggregator_parameters, dict):
+                    aggregator_parameters = json.loads(aggregator_parameters)
+            else:
                 aggregator_parameters = {}
 
             indices = aggregator_parameters.pop("index", sketch_indices)
-            indices, timeline_ids = lib_utils.get_validated_indices(indices, sketch)
+            indices, timeline_ids = lib_utils.get_validated_indices(
+                indices, sketch, form.include_processing_timelines.data
+            )
 
             if not (indices or timeline_ids):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST, "No indices to aggregate on")
+                abort(HTTP_STATUS_CODE_NOT_FOUND, "No indices to aggregate on found.")
 
             aggregator = agg_class(
                 sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids
             )
+            aggregator_description = aggregator.describe
 
+            # legacy chart settings
             chart_type = aggregator_parameters.pop("supported_charts", None)
-            chart_color = aggregator_parameters.pop("chart_color", "")
-            chart_title = aggregator_parameters.pop(
-                "chart_title", aggregator.chart_title
-            )
 
             time_before = time.time()
             try:
                 result_obj = aggregator.run(**aggregator_parameters)
             except NotFoundError:
+                indices_msg = ", ".join(indices)
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
-                    "Attempting to run an aggregation on a non-existing "
-                    "index, index: {0:s} and parameters: {1!s}".format(
-                        ",".join(indices), aggregator_parameters
-                    ),
+                    "Attempting to run an aggregation on a non-existing index, "
+                    f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
                 )
             except ValueError as exc:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Unable to run the aggregation, with error: {0!s}".format(exc),
+                    f"Unable to run the aggregation, with error: {exc!s}",
+                )
+            except RequestError as exc:
+                indices_msg = ", ".join(indices)
+                if exc.error == "index_closed_exception":
+                    logger.error(
+                        "Unable to run aggregation on a closed index."
+                        "index: %s and parameters: %s",
+                        indices_msg,
+                        aggregator_parameters,
+                        exc_info=True,
+                        stack_info=True,
+                        extra={"request": request},
+                    )
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to run aggregation on a closed index."
+                        f"index: {indices_msg:s} and parameters:"
+                        f" {aggregator_parameters!s}",
+                    )
+                logger.error(
+                    "Unable to run aggregation, with error: %s, "
+                    "index: %s and parameters: %s",
+                    str(exc),
+                    indices_msg,
+                    aggregator_parameters,
+                    exc_info=True,
+                    stack_info=True,
+                    extra={"request": request},
+                )
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Unable to run the aggregation, with error: {exc!s} "
+                    f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
                 )
             time_after = time.time()
 
-            aggregator_description = aggregator.describe
-
             buckets = result_obj.to_dict()
             buckets["buckets"] = buckets.pop("values")
+            if "labels" in buckets:
+                buckets["labels"] = buckets.pop("labels")
+            if "chart_options" in buckets:
+                buckets["chart_options"] = buckets.pop("chart_options")
+
             result = {"aggregation_result": {aggregator_name: buckets}}
             meta = {
                 "method": "aggregator_run",
+                "aggregator_class": (
+                    "apex" if isinstance(aggregator, apex.ApexAggregation) else "legacy"
+                ),
                 "chart_type": chart_type,
                 "name": aggregator_description.get("name"),
                 "description": aggregator_description.get("description"),
@@ -529,16 +594,53 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             }
 
             if chart_type:
-                meta["vega_spec"] = result_obj.to_chart(
+                chart_color = aggregator_parameters.pop("chart_color", "")
+                chart_title = aggregator_parameters.pop("chart_title", None)
+                chart_spec = result_obj.to_chart(
                     chart_name=chart_type, chart_title=chart_title, color=chart_color
                 )
-                meta["vega_chart_title"] = chart_title
+                if chart_spec:
+                    meta["vega_spec"] = chart_spec
+                    if not chart_title:
+                        chart_title = aggregator.chart_title
+                    meta["vega_chart_title"] = chart_title
 
         elif aggregation_dsl:
-            # pylint: disable=unexpected-keyword-arg
-            result = self.datastore.client.search(
-                index=",".join(sketch_indices), body=aggregation_dsl, size=0
-            )
+            try:
+                # pylint: disable=unexpected-keyword-arg
+                result = self.datastore.client.search(
+                    index=",".join(sketch_indices), body=aggregation_dsl, size=0
+                )
+            except RequestError as e:
+                indices_msg = ",".join(sketch_indices)
+                if e.error == "index_closed_exception":
+                    logger.error(
+                        "Unable to run aggregation on a closed index. "
+                        "index: %s and dsl: %s",
+                        indices_msg,
+                        aggregation_dsl,
+                        exc_info=True,
+                        stack_info=True,
+                        extra={"request": request},
+                    )
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to run aggregation on a closed index.",
+                    )
+                logger.error(
+                    "Unable to run aggregation on an index with error: %s. "
+                    "index: %s and dsl: %s",
+                    str(e),
+                    indices_msg,
+                    aggregation_dsl,
+                    exc_info=True,
+                    stack_info=True,
+                    extra={"request": request},
+                )
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Unable to run the aggregation, with error: {e!s}",
+                )
 
             meta = {
                 "es_time": result.get("took", 0),
@@ -568,7 +670,7 @@ class AggregationListResource(resources.ResourceMixin, Resource):
     """Resource to query for a list of stored aggregation queries."""
 
     @login_required
-    def get(self, sketch_id):
+    def get(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Handler for /api/v1/sketches/<int:sketch_id>/aggregation/
@@ -579,7 +681,7 @@ class AggregationListResource(resources.ResourceMixin, Resource):
         Returns:
             Views in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -596,7 +698,9 @@ class AggregationListResource(resources.ResourceMixin, Resource):
         return self.to_json(aggregations)
 
     @staticmethod
-    def create_aggregation_from_form(sketch, form):
+    def create_aggregation_from_form(
+        sketch: Sketch, form: forms.AggregationExploreForm
+    ):
         """Creates an aggregation from form data.
 
         Args:
@@ -640,7 +744,7 @@ class AggregationListResource(resources.ResourceMixin, Resource):
         return aggregation
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -656,7 +760,7 @@ class AggregationListResource(resources.ResourceMixin, Resource):
         if not form:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -678,7 +782,7 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
     """Resource to query for a list of stored aggregation queries."""
 
     @login_required
-    def get(self, sketch_id):
+    def get(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Handler for /api/v1/sketches/<int:sketch_id>/aggregation/group/
@@ -689,7 +793,7 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
         Returns:
             Views in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -722,7 +826,7 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
         return response
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -731,7 +835,7 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
         Returns:
             An aggregation in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

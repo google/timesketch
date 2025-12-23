@@ -51,7 +51,7 @@ class GraphListResource(resources.ResourceMixin, Resource):
         Returns:
             List of graphs in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -61,7 +61,7 @@ class GraphListResource(resources.ResourceMixin, Resource):
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource."""
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -112,10 +112,10 @@ class GraphResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("format", type=str, required=False)
+        self.parser.add_argument("format", type=str, required=False, location="args")
 
     @login_required
-    def get(self, sketch_id, graph_id):
+    def get(self, sketch_id: int, graph_id: int):
         """Handles GET request to the resource.
 
         Returns:
@@ -124,11 +124,11 @@ class GraphResource(resources.ResourceMixin, Resource):
         args = self.parser.parse_args()
         output_format = args.get("format", None)
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        graph = Graph.query.get(graph_id)
+        graph = Graph.get_by_id(graph_id)
         if not graph:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No graph found with this ID.")
 
@@ -165,13 +165,13 @@ class GraphResource(resources.ResourceMixin, Resource):
         return jsonify(response)
 
     @login_required
-    def post(self, sketch_id, graph_id):
+    def post(self, sketch_id: int, graph_id: int):
         """Handles GET request to the resource.
 
         Returns:
             List of graphs in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -181,7 +181,7 @@ class GraphResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch.",
             )
 
-        graph = Graph.query.get(graph_id)
+        graph = Graph.get_by_id(graph_id)
         if not graph:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No graph found with this ID.")
 
@@ -223,15 +223,15 @@ class GraphResource(resources.ResourceMixin, Resource):
         return self.to_json(graph, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
-    def delete(self, sketch_id, graph_id):
+    def delete(self, sketch_id: int, graph_id: int):
         """Handles DELETE request to the resource.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
             graph_id: Integer primary key for a graph database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        graph = Graph.query.get(graph_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        graph = Graph.get_by_id(graph_id)
 
         if not graph:
             msg = "No Graph found with this ID."
@@ -297,7 +297,7 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         Returns:
             Graph in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -313,7 +313,7 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
                 "Timeline IDs if supplied need to be a list.",
             )
 
-        if timeline_ids and not all([isinstance(x, int) for x in timeline_ids]):
+        if timeline_ids and not all(isinstance(x, int) for x in timeline_ids):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Timeline IDs needs to be a list of integers.",

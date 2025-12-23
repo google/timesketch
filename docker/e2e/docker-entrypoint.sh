@@ -2,6 +2,37 @@
 
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
+  echo '**** Debugging information for e2e tests ****'
+  echo '** VENV Python version:'
+  /opt/venv/bin/python3 --version
+  echo '**'
+  echo '** VENV pip3 freeze:'
+  /opt/venv/bin/pip3 freeze
+  echo '**'
+  echo '** Python path:'
+  which python3
+  echo '**'
+  echo '*** System Python'
+  echo '** Python version:'
+  /usr/bin/python3 --version
+  echo '**'
+  echo '** pip3 list:'
+  /usr/bin/pip3 list --break-system-packages 2>/dev/null || /usr/bin/pip3 list
+  echo '**'
+  echo '** dpkg list for python3:'
+  dpkg -l | grep python3
+  echo '**'
+  echo '** Python path:'
+  which /usr/bin/python3
+  echo '**'
+  echo '** PATH:'
+  echo $PATH
+  echo '**'
+  echo '** PYTHONPATH:'
+  echo $PYTHONPATH
+  echo '**** End of debugging information ****'
+
+
   # Copy the mappings for plaso ingestion.
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/
@@ -61,6 +92,16 @@ if [ "$1" = 'timesketch' ]; then
   sleep 5
   tsctl create-user "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
   unset TIMESKETCH_PASSWORD
+  # create second user
+  tsctl create-user "$TIMESKETCH_USER2" --password "$TIMESKETCH_PASSWORD2"
+  unset TIMESKETCH_PASSWORD2
+
+  # Make admin user for e2e tests
+  sleep 2
+  tsctl create-user admin --password admin
+  tsctl make-admin admin
+
+  
 
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
@@ -71,9 +112,13 @@ EOF
 
   # Run the Timesketch server (without SSL)
   cd /tmp
-  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
+  exec `bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
   gunicorn --reload -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
 fi
+
+echo 'Debugging information for e2e tests'
+dpkg -s plaso-tools
+psort.py --version
 
 # Run a custom command on container start
 exec "$@"

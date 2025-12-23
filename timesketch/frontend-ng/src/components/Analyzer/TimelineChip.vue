@@ -14,15 +14,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip class="timeline-chip" :style="getTimelineStyle()"
-  @click:close="$emit('click:close')"
-  :close="close"
+  <ts-timeline-component
+    :timeline="timeline"
   >
-    <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
-  </v-chip>
+    <template v-slot:processed="slotProps">
+      <v-chip
+        :style="timelineStyle"
+        class="timeline-chip"
+        :ripple="false"
+        :close="close"
+        @click:close="$emit('click:close')"
+      >
+        <div class="chip-content">
+          <v-icon left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
+          <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="200">
+            <template v-slot:activator="{ on: onTooltip, attrs }">
+              <span
+                class="timeline-name-ellipsis"
+                v-bind="attrs"
+                v-on="onTooltip"
+                >{{ timeline.name }}</span
+              >
+            </template>
+            <span>{{ timeline.name }}</span>
+          </v-tooltip>
+          <span v-if="timeline.status[0].status === 'processing'" class="ml-3 mr-3">
+            <v-progress-circular small indeterminate color="grey" :size="17" :width="2"></v-progress-circular>
+          </span>
+        </div>
+      </v-chip>
+    </template>
+  </ts-timeline-component>
 </template>
 
 <script>
+import TsTimelineComponent from '../Explore/TimelineComponent.vue'
+
 export default {
   props: {
     timeline: Object,
@@ -31,38 +58,32 @@ export default {
       default: false
     }
   },
-  data() {
-    return {
-    }
+  components: {
+    TsTimelineComponent,
   },
   computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-  },
-  methods: {
-    getTimelineStyle() {
+    timelineStyle() {
       return {
-        'background-color': this.normalizeBgColor(this.timeline.color),
-      };
+        backgroundColor: this.$vuetify.theme.dark ? '#4d4d4d' : '#e6e6e6',
+      }
     },
-    normalizeBgColor(bgColor) {
-      return bgColor.startsWith('#') ? bgColor : `#${bgColor}`;
-    }
   },
 }
 </script>
 
+<!-- CSS scoped to this component only -->
 <style scoped lang="scss">
 .timeline-chip {
-  text-decoration: 'none';
-  opacity: '100%';
-}
-.theme--dark.timeline-chip {
-  filter: grayscale(25%);
-  color: #333333;
-}
-.timeline-chip .theme--dark.v-icon{
-  color: #333333;
+  .chip-content {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    width: 300px;
+  }
+
+  .timeline-name-ellipsis {
+    width: 300px;
+  }
 }
 </style>

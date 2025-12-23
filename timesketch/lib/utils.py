@@ -13,7 +13,6 @@
 # limitations under the License.
 """Common functions and utilities."""
 
-from __future__ import unicode_literals
 
 import colorsys
 import csv
@@ -25,9 +24,8 @@ import random
 import smtplib
 import time
 import codecs
-
+from typing import List, Optional
 import pandas
-import six
 
 from dateutil import parser
 from flask import current_app
@@ -61,7 +59,7 @@ def random_color():
     hue += golden_ratio_conjugate
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
-    return "{0:02X}{1:02X}{2:02X}".format(rgb[0], rgb[1], rgb[2])
+    return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
 
 
 def _parse_tag_field(row):
@@ -91,7 +89,37 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
+def _convert_timestamp_to_datetime(timestamp: int) -> pandas.Timestamp:
+    """Convert numeric timestamp to datetime based on magnitude.
+
+    This function infers the unit of a given integer timestamp by checking its
+    number of digits. It is designed to handle mixed-precision timestamps
+    (e.g. seconds, ms, us) within the same dataset.
+
+    Args:
+        timestamp: The timestamp to convert.
+
+    Returns:
+        A pandas Timestamp object with UTC timezone or NaT if conversion fails.
+    """
+    if pandas.isna(timestamp):
+        return pandas.NaT
+
+    # Heuristic to guess the unit of the timestamp based on its magnitude.
+    if timestamp > 1e17:  # nanoseconds
+        return pandas.to_datetime(timestamp, unit="ns", utc=True, errors="coerce")
+    if timestamp > 1e14:  # microseconds
+        return pandas.to_datetime(timestamp, unit="us", utc=True, errors="coerce")
+    if timestamp > 1e11:  # milliseconds
+        return pandas.to_datetime(timestamp, unit="ms", utc=True, errors="coerce")
+    return pandas.to_datetime(timestamp, unit="s", utc=True, errors="coerce")
+
+
+def _validate_csv_fields(
+    mandatory_fields: List,
+    data: pandas.DataFrame,
+    headers_mapping: Optional[List] = None,
+):
     """Validate parsed CSV fields against mandatory fields.
 
     Args:
@@ -111,7 +139,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
 
     if headers_mapping:
         check_mapping_errors(parsed_set, headers_mapping)
-        headers_mapping_set = set(m["target"] for m in headers_mapping)
+        headers_mapping_set = {m["target"] for m in headers_mapping}
         headers_missing = headers_missing - headers_mapping_set
     else:
         headers_mapping_set = {}
@@ -156,11 +184,11 @@ def validate_indices(indices, datastore):
     return [i for i in indices if datastore.client.indices.exists(index=i)]
 
 
-def check_mapping_errors(headers, headers_mapping):
+def check_mapping_errors(headers: List, headers_mapping: List):
     """Sanity check for headers mapping
 
     Args:
-        csv_headers: list of headers found in the CSV file.
+        headers: list of headers found in the CSV file.
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
                          (ii) sources header we want to rename/combine [key=source],
@@ -214,7 +242,7 @@ def check_mapping_errors(headers, headers_mapping):
         )
 
 
-def rename_csv_headers(chunk, headers_mapping):
+def rename_csv_headers(chunk: pandas.DataFrame, headers_mapping: List):
     """ "Rename the headers of the dataframe
 
     Args:
@@ -249,31 +277,64 @@ def rename_csv_headers(chunk, headers_mapping):
 
 
 def read_and_validate_csv(
-    file_handle, delimiter=",", mandatory_fields=None, headers_mapping=None
+    file_handle: object,
+    delimiter: str = ",",
+    mandatory_fields: Optional[List[str]] = None,
+    headers_mapping: Optional[List[dict]] = None,
 ):
-    """Generator for reading a CSV file.
+    """Generator for reading and validating a CSV file, yielding event dictionaries.
+
+    This function reads a CSV file in chunks using pandas, which is memory
+    efficient for large files. It performs several validation and normalization
+    steps:
+
+    - Validates that mandatory headers are present.
+    - Supports custom header mapping to rename, combine, or create new columns.
+    - Normalizes the 'datetime' column from various formats, including epoch
+      timestamps (seconds, milliseconds, microseconds, or nanoseconds). If
+      'datetime' is missing, it attempts to generate it from a 'timestamp' column.
+    - Ensures a 'timestamp' column (in microsecond epoch format) exists and is
+      consistent with the parsed 'datetime' field, overwriting any existing
+      'timestamp' to maintain data integrity.
+    - Parses a 'tag' column into a list of tags.
+    - Scrubs internal OpenSearch fields before yielding.
 
     Args:
-        file_handle: a file-like object containing the CSV content.
-        delimiter: character used as a field separator, default: ','
-        mandatory_fields: list of fields that must be present in the CSV header
-        headers_mapping: list of dicts containing:
-                         (i) target header we want to insert [key=target],
-                         (ii) sources header we want to rename/combine [key=source],
-                         (iii) def. value if we add a new column [key=default_value]
+        file_handle (object): A file-like object containing the CSV content.
+        delimiter (str): The character used as a field separator. Defaults to ','.
+        mandatory_fields (list[str], optional): A list of fields that must be
+            present in the CSV header. Defaults to TIMESKETCH_FIELDS.
+        headers_mapping (list[dict], optional): A list of dictionaries for
+            header mapping. Each dictionary can define:
+            - 'target': The name of the new or renamed column.
+            - 'source': A list of source column names to use. If one, it's a
+              rename. If multiple, they are combined.
+            - 'default_value': A value to use if creating a new column without
+              a source.
+
+    Yields:
+        dict: A dictionary representing a single event, ready for ingestion.
+
     Raises:
-        RuntimeError: when there are missing fields.
-        DataIngestionError: when there are issues with the data ingestion.
+        RuntimeError: If there are missing mandatory fields or errors in the
+            header mapping.
+        DataIngestionError: If the file is empty or cannot be parsed by pandas.
     """
     if not mandatory_fields:
-        mandatory_fields = TIMESKETCH_FIELDS
+        mandatory_fields = list(TIMESKETCH_FIELDS)
 
     # Ensures delimiter is a string.
-    if not isinstance(delimiter, six.text_type):
+    if not isinstance(delimiter, str):
         delimiter = codecs.decode(delimiter, "utf8")
 
     # Ensure that required headers are present
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
+
+    # If datetime is not present, timestamp can be used instead.
+    headers = set(header_reader.columns)
+    if "datetime" not in headers and "timestamp" in headers:
+        if "datetime" in mandatory_fields:
+            mandatory_fields.remove("datetime")
     _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
@@ -288,30 +349,46 @@ def read_and_validate_csv(
                 # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
-            # Check if the datetime field is present and not empty.
-            # TODO(jaegeral): Do we really want to skip rows with empty datetime
-            # we could also calculate the datetime from timestamp if present.
-            skipped_rows = chunk[chunk["datetime"].isnull()]
-            if not skipped_rows.empty:
-                logger.warning(
-                    "{0} rows skipped since they were missing datetime field "
-                    "or it was empty ".format(len(skipped_rows))
-                )
+            # If datetime is missing but timestamp is present, calculate it.
+            if "datetime" not in chunk.columns or chunk["datetime"].isnull().all():
+                if "timestamp" in chunk.columns and pandas.api.types.is_numeric_dtype(
+                    chunk["timestamp"]
+                ):
+                    chunk["datetime"] = chunk["timestamp"].apply(
+                        _convert_timestamp_to_datetime
+                    )
 
-            try:
-                # Normalize datetime to ISO 8601 format if it's not the case.
-                # Lines with unrecognized datetime format will result in "NaT"
-                # (not available) as its value and the event row will be
-                # dropped in the next line
-                chunk["datetime"] = pandas.to_datetime(
-                    chunk["datetime"], errors="coerce"
+            if "datetime" not in chunk.columns:
+                logger.warning(
+                    "Chunk %d skipped because it is missing a datetime field.", idx
                 )
+                continue
+            try:
+                # Handle case where 'datetime' column contains epoch timestamps.
+                if (
+                    "datetime" in chunk.columns
+                    and pandas.api.types.is_numeric_dtype(chunk["datetime"])
+                    and (chunk["datetime"].dropna() > 1e15).any()
+                ):
+                    # Attempt to convert from microseconds if values are large integers.
+                    # This is a heuristic based on the magnitude of the number.
+                    chunk["datetime"] = pandas.to_datetime(
+                        chunk["datetime"], unit="us", errors="coerce", utc=True
+                    )
+                else:
+                    # Normalize datetime to ISO 8601 format if it's not the case.
+                    # Lines with unrecognized datetime format will result in "NaT"
+                    # (not available) as its value and the event row will be
+                    # dropped in the next line.
+                    chunk["datetime"] = pandas.to_datetime(
+                        chunk["datetime"], format="mixed", errors="coerce", utc=True
+                    )
                 num_chunk_rows = chunk.shape[0]
 
                 chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
-                        "{0} rows dropped from Rows {1} to {2} due to invalid "
+                        "{} rows dropped from Rows {} to {} due to invalid "
                         "datetime values".format(
                             num_chunk_rows - len(chunk),
                             idx * reader.chunksize,
@@ -322,13 +399,11 @@ def read_and_validate_csv(
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
-
             except ValueError:
                 logger.warning(
-                    "Rows {0} to {1} skipped due to malformed "
+                    "Rows {} to {} skipped due to malformed "
                     "datetime values ".format(
-                        idx * reader.chunksize,
-                        idx * reader.chunksize + chunk.shape[0],
+                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
                     )
                 )
                 continue
@@ -342,20 +417,18 @@ def read_and_validate_csv(
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
 
-                # Make sure we always have a timestamp
-                if not "timestamp" in row:
-                    row["timestamp"] = int(
-                        pandas.Timestamp(row["datetime"]).value / 1000
-                    )
-
+                # Ensure the timestamp is consistent with the datetime object,
+                # in microsecond epoch format. This overwrites any existing
+                # timestamp to prevent inconsistencies.
+                row["timestamp"] = int(pandas.Timestamp(row["datetime"]).value / 1000)
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
-        error_string = "Unable to read file, with error: {0!s}".format(e)
+        error_string = f"Unable to read file, with error: {e!s}"
         logger.error(error_string)
         raise errors.DataIngestionError(error_string) from e
 
 
-def read_and_validate_redline(file_handle):
+def read_and_validate_redline(file_handle: object):
     """Generator for reading a Redline CSV file.
 
     Args:
@@ -396,7 +469,7 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def rename_jsonl_headers(linedict, headers_mapping, lineno):
+def rename_jsonl_headers(linedict: dict, headers_mapping: List, lineno: int):
     """Rename the headers of the dictionary
 
     Args:
@@ -453,7 +526,7 @@ def rename_jsonl_headers(linedict, headers_mapping, lineno):
 
 
 def read_and_validate_jsonl(
-    file_handle, delimiter=None, headers_mapping=None
+    file_handle: object, delimiter: str = "", headers_mapping: Optional[List] = None
 ):  # pylint: disable=unused-argument
     """Generator for reading a JSONL (json lines) file.
 
@@ -495,14 +568,14 @@ def read_and_validate_jsonl(
                 except TypeError:
                     logger.error(
                         "Unable to parse timestamp, skipping line "
-                        "{0:d}".format(lineno),
+                        "{:d}".format(lineno),
                         exc_info=True,
                     )
                     continue
                 except parser.ParserError:
                     logger.error(
                         "Unable to parse timestamp, skipping line "
-                        "{0:d}".format(lineno),
+                        "{:d}".format(lineno),
                         exc_info=True,
                     )
                     continue
@@ -522,25 +595,35 @@ def read_and_validate_jsonl(
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                "Error parsing JSON at line {0:n}: {1:s}".format(lineno, str(e))
+                f"Error parsing JSON at line {lineno:n}: {str(e):s}"
             )
 
 
-def get_validated_indices(indices, sketch):
+def get_validated_indices(
+    indices: List, sketch: object, include_processing_timelines: bool = False
+):
     """Exclude any deleted search index references.
 
     Args:
         indices: List of indices from the user
         sketch: A sketch object (instance of models.sketch.Sketch).
+        include_processing_timelines: True to include Timelines
+          in status "processing". False by default.
 
     Returns:
         Tuple of two items:
           List of indices with those removed that is not in the sketch
           List of timeline IDs that should be part of the output.
     """
+    allowed_statuses = ["ready"]
+    if include_processing_timelines and current_app.config.get(
+        "SEARCH_PROCESSING_TIMELINES", False
+    ):
+        allowed_statuses.append("processing")
+
     sketch_structure = {}
     for timeline in sketch.timelines:
-        if timeline.get_status.status.lower() != "ready":
+        if timeline.get_status.status.lower() not in allowed_statuses:
             continue
         index_ = timeline.searchindex.index_name
         sketch_structure.setdefault(index_, [])
@@ -580,7 +663,7 @@ def get_validated_indices(indices, sketch):
     return list(set(indices)), list(timelines)
 
 
-def send_email(subject, body, to_username, use_html=False):
+def send_email(subject: str, body: str, to_username: str, use_html: bool = False):
     """Send email using configure SMTP server.
 
     Args:
@@ -598,6 +681,10 @@ def send_email(subject, body, to_username, use_html=False):
     email_smtp_server = current_app.config.get("EMAIL_SMTP_SERVER")
     email_from_user = current_app.config.get("EMAIL_FROM_ADDRESS", "timesketch")
     email_user_whitelist = current_app.config.get("EMAIL_USER_WHITELIST", [])
+    email_login_username = current_app.config.get("EMAIL_AUTH_USERNAME")
+    email_login_password = current_app.config.get("EMAIL_AUTH_PASSWORD")
+    email_ssl = current_app.config.get("EMAIL_SSL")
+    email_tls = current_app.config.get("EMAIL_TLS")
 
     if not email_enabled:
         raise RuntimeError("Email notifications are not enabled, aborting.")
@@ -612,9 +699,9 @@ def send_email(subject, body, to_username, use_html=False):
     if to_username not in email_user_whitelist:
         return
 
-    from_address = "{0:s}@{1:s}".format(email_from_user, email_domain)
+    from_address = f"{email_from_user:s}@{email_domain:s}"
     # TODO: Add email address to user object and pick it up from there.
-    to_address = "{0:s}@{1:s}".format(to_username, email_domain)
+    to_address = f"{to_username:s}@{email_domain:s}"
     email_content_type = "text"
     if use_html:
         email_content_type = "text/html"
@@ -626,6 +713,28 @@ def send_email(subject, body, to_username, use_html=False):
     msg.add_header("Content-Type", email_content_type)
     msg.set_payload(body)
 
+    # EMAIL_SSL in timesketch.conf must be set to True
+    if email_ssl:
+        smtp = smtplib.SMTP_SSL(email_smtp_server)
+        if email_login_username and email_login_password:
+            smtp.login(email_login_username, email_login_password)
+        smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
+        smtp.quit()
+        return
+    # EMAIL_TLS in timesketch.conf must be set to True
+    if email_tls:
+        smtp = smtplib.SMTP(email_smtp_server)
+        smtp.ehlo()
+        smtp.starttls()
+        if email_login_username and email_login_password:
+            smtp.login(email_login_username, email_login_password)
+        smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
+        smtp.quit()
+        return
+
+    # default - no SSL/TLS configured
     smtp = smtplib.SMTP(email_smtp_server)
+    if email_login_username and email_login_password:
+        smtp.login(email_login_username, email_login_password)
     smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
     smtp.quit()

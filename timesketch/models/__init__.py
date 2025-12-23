@@ -13,14 +13,12 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
-from __future__ import unicode_literals
 
 from flask import abort
 from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import as_declarative
+from sqlalchemy.orm import scoped_session, sessionmaker, as_declarative
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -32,20 +30,20 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
 # The database session
 engine = None
-session_maker = sessionmaker()
+session_maker = sessionmaker(future=True)
 db_session = scoped_session(session_maker)
 
 
-def configure_engine(url):
+def configure_engine(url, engine_options):
     """Configure and setup the database session."""
     # These needs to be global because of the way Flask works.
     # pylint: disable=global-statement,global-variable-not-assigned
     # TODO: Can we wrap this in a class?
     global engine, session_maker, db_session
-    engine = create_engine(url)
-    # Set the query class to our own AclBaseQuery
+    engine = create_engine(url, future=True, **engine_options)
+    # Configure the session
     session_maker.configure(
-        autocommit=False, autoflush=False, bind=engine, query_cls=AclBaseQuery
+        autocommit=False, autoflush=False, bind=engine, query_cls=Query
     )
 
 
@@ -55,6 +53,7 @@ def init_db():
     """
     BaseModel.metadata.create_all(bind=engine)
     BaseModel.query = db_session.query_property()
+    BaseModel.session = db_session
     return BaseModel
 
 
@@ -63,39 +62,8 @@ def drop_all():
     BaseModel.metadata.drop_all(bind=engine)
 
 
-class AclBaseQuery(BaseQuery):
-    """The query object used for models. It subclasses
-    flask_sqlalchemy.BaseQuery and has the same methods as a SQLAlchemy Query
-    as well.
-    """
-
-    def get_with_acl(self, model_id, user=current_user):
-        """Get a database object with permission check enforced.
-
-        Args:
-            model_id: The integer ID of the model to get.
-            user: User (instance of timesketch.models.user.User)
-
-        Returns:
-            A BaseQuery instance.
-        """
-        result_obj = self.get(model_id)
-        if not result_obj:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
-        try:
-            if result_obj.get_status.status == "deleted":
-                abort(HTTP_STATUS_CODE_NOT_FOUND)
-        except AttributeError:
-            pass
-        if result_obj.is_public:
-            return result_obj
-        if not result_obj.has_permission(user=user, permission="read"):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
-        return result_obj
-
-
 @as_declarative()
-class BaseModel(object):
+class BaseModel:
     """Base class used for database models. It adds common model fields to all
     models classes that subclass it.
     """
@@ -111,6 +79,43 @@ class BaseModel(object):
     def update_modification_time(self):
         """Set updated_at field to current time."""
         self.updated_at = func.now()
+
+    @classmethod
+    def get_with_acl(cls, model_id, user=current_user):
+        """Get a database object with permission check enforced.
+
+        Args:
+            model_id: The integer ID of the model to get.
+            user: User (instance of timesketch.models.user.User)
+
+        Returns:
+            A BaseQuery instance.
+        """
+        result_obj = db_session.get(cls, model_id)
+        if not result_obj:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+        try:
+            if result_obj.get_status.status == "deleted":
+                abort(HTTP_STATUS_CODE_NOT_FOUND)
+        except AttributeError:
+            pass
+        if result_obj.is_public:
+            return result_obj
+        if not result_obj.has_permission(user=user, permission="read"):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+        return result_obj
+
+    @classmethod
+    def get_by_id(cls, model_id):
+        """Get model instance by id.
+
+        Args:
+            model_id: The integer ID of the model to get.
+
+        Returns:
+            A model instance.
+        """
+        return db_session.get(cls, model_id)
 
     @classmethod
     def get_or_create(cls, **kwargs):

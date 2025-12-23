@@ -28,9 +28,39 @@ import pandas
 
 from timesketch_api_client import timeline
 from timesketch_api_client import definitions
+from timesketch_api_client.error import UnableToRunAnalyzer
 from timesketch_import_client import utils
 
 logger = logging.getLogger("timesketch_importer.importer")
+
+
+def run_analyzers(analyzer_names=None, timeline_obj=None):
+    """Run the analyzers on the uploaded timeline."""
+
+    if not timeline_obj:
+        logger.error("Unable to run analyzers: Timeline object not found.")
+        raise ValueError("Timeline object not found.")
+
+    if timeline_obj.status not in ("ready", "success"):
+        logger.error("The provided timeline '%s' is not ready yet!", timeline_obj.name)
+        return None
+
+    if not analyzer_names:
+        logger.info("No analyzer names provided, skipping analysis.")
+        return None
+
+    try:
+        analyzer_results = timeline_obj.run_analyzers(analyzer_names)
+    except UnableToRunAnalyzer as e:
+        logger.error(
+            "Failed to run requested analyzers '%s'! Error: %s",
+            str(analyzer_names),
+            str(e),
+        )
+        return None
+
+    logger.debug("Analyzer results: %s", analyzer_results)
+    return analyzer_results
 
 
 class ImportStreamer(object):
@@ -92,7 +122,7 @@ class ImportStreamer(object):
           * All keys that start with an underscore ("_") are removed.
 
         Args:
-            my_dict: a dictionary that may be missing few fields needed
+            my_dict (dict): a dictionary that may be missing few fields needed
                     for Timesketch.
         """
         if "message" not in my_dict:
@@ -140,7 +170,7 @@ class ImportStreamer(object):
         """Returns a data frame with added columns for Timesketch upload.
 
         Args:
-            data_frame: a pandas data frame.
+            data_frame (DataFrame): a pandas data frame.
 
         Returns:
             A pandas data frame with added columns needed for Timesketch.
@@ -183,31 +213,60 @@ class ImportStreamer(object):
                         break
                     except ValueError as e:
                         logger.info(
-                            "Unable to convert timestamp in column: " "%s, error %s",
+                            "Unable to convert timestamp in column: %s, error %s",
                             column,
                             e,
                         )
 
             if "timestamp" in data_frame:
                 data_frame["datetime"] = data_frame["timestamp"].dt.strftime(
-                    "%Y-%m-%dT%H:%M:%S%z"
+                    "%Y-%m-%dT%H:%M:%S.%f%z"
                 )
                 data_frame["timestamp"] = (
                     data_frame["timestamp"].astype(numpy.int64) / 1e9
                 )
         else:
             try:
-                date = pandas.to_datetime(data_frame["datetime"], utc=True)
+                # Attempt to parse with 'mixed' format for robust parsing
+                date = pandas.to_datetime(
+                    data_frame["datetime"], utc=True, format="mixed"
+                )
+                data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+            except (ValueError, OverflowError) as e:
+                # Catch both ValueError (for malformed strings) and OverflowError
+                # (for out-of-range timestamps)
+                # If 'mixed' parsing fails, fall back to coercing errors to NaT
+                logger.info(
+                    "Mixed datetime parsing failed, falling back to 'coerce' "
+                    "to handle invalid values."
+                )
+                date = pandas.to_datetime(
+                    data_frame["datetime"], utc=True, errors="coerce"
+                )
+                # Identify and replace rows with invalid dates (converted to NaT)
+                invalid_mask = date.isna()
+                num_invalid = invalid_mask.sum()
+                if num_invalid > 0:
+                    logger.warning(
+                        "%d rows with invalid or out-of-range timestamps found. "
+                        "Setting their timestamp to epoch (1970-01-01 00:00:00).",
+                        num_invalid,
+                    )
+                    epoch_ts = pandas.Timestamp("1970-01-01", tz="UTC")
+                    date.fillna(epoch_ts, inplace=True)
+
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
-            except Exception:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
+                error_msg = f"An unexpected error occurred: {e}"
                 logger.error(
-                    "Unable to change datetime, is it badly formed?", exc_info=True
+                    error_msg,
+                    exc_info=True,
                 )
 
         # TODO: Support labels in uploads/imports.
         if "label" in data_frame:
             del data_frame["label"]
-            logger.warning(
+            logger.info(
                 "Labels cannot be imported at this time. Therefore the "
                 "label column was dropped from the dataset."
             )
@@ -234,9 +293,9 @@ class ImportStreamer(object):
         """Upload data to Timesketch.
 
         Args:
-            end_stream: boolean indicating whether this is the last chunk of
+            end_stream (bool): boolean indicating whether this is the last chunk of
                 the stream.
-            retry_count: optional int that is only set if this is a retry
+            retry_count (int): optional int that is only set if this is a retry
                 of the upload.
 
         Raises:
@@ -245,7 +304,6 @@ class ImportStreamer(object):
         if not self._data_lines:
             return None
 
-        start_time = time.time()
         data = {
             "name": self._timeline_name,
             "sketch_id": self._sketch.id,
@@ -260,11 +318,6 @@ class ImportStreamer(object):
         if self._upload_context:
             data["context"] = self._upload_context
 
-        logger.debug(
-            "Data buffer ready for upload, took {0:.2f} seconds to "
-            "prepare.".format(time.time() - start_time)
-        )
-
         response = self._sketch.api.session.post(self._resource_url, data=data)
 
         # TODO: Investigate why the sleep is needed, fix the underlying issue
@@ -272,12 +325,11 @@ class ImportStreamer(object):
         # To prevent unexpected errors with connection refusal adding a quick
         # sleep.
         time.sleep(2)
-
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             if retry_count >= self.DEFAULT_RETRY_LIMIT:
                 raise RuntimeError(
                     "Error uploading data: [{0:d}] {1!s} {2!s}, "
-                    "index {3:s}".format(
+                    "index {3!s}".format(
                         response.status_code,
                         response.reason,
                         response.text,
@@ -296,11 +348,6 @@ class ImportStreamer(object):
                 end_stream=end_stream, retry_count=retry_count + 1
             )
 
-        logger.debug(
-            "Data buffer nr. {0:d} uploaded, total time: {1:.2f}s".format(
-                self._chunk, time.time() - start_time
-            )
-        )
         self._chunk += 1
         response_dict = response.json()
         object_dict = response_dict.get("objects", [{}])[0]
@@ -317,10 +364,10 @@ class ImportStreamer(object):
         """Upload data to Timesketch.
 
         Args:
-            data_frame: a pandas DataFrame with the content to upload.
-            end_stream: boolean indicating whether this is the last chunk of
+            data_frame (DataFrame): a pandas DataFrame with the content to upload.
+            end_stream (bool): boolean indicating whether this is the last chunk of
                 the stream.
-            retry_count: optional int that is only set if this is a retry
+            retry_count (int): optional int that is only set if this is a retry
                 of the upload.
 
         Raises:
@@ -379,7 +426,7 @@ class ImportStreamer(object):
         """Upload binary data to Timesketch, potentially chunking it up.
 
         Args:
-            file_path: a full path to the file that is about to be uploaded.
+            file_path (str): a full path to the file that is about to be uploaded.
         """
         file_size = os.path.getsize(file_path)
 
@@ -404,10 +451,11 @@ class ImportStreamer(object):
             data["context"] = self._upload_context
 
         if file_size <= self._threshold_filesize:
-            file_dict = {"file": open(file_path, "rb")}
-            response = self._sketch.api.session.post(
-                self._resource_url, files=file_dict, data=data
-            )
+            with open(file_path, "rb") as fh:
+                file_dict = {"file": fh}
+                response = self._sketch.api.session.post(
+                    self._resource_url, files=file_dict, data=data
+                )
         else:
             chunks = int(math.ceil(float(file_size) / self._threshold_filesize))
             data["chunk_total_chunks"] = chunks
@@ -417,12 +465,12 @@ class ImportStreamer(object):
                 data["chunk_index"] = index
                 start = self._threshold_filesize * index
                 data["chunk_byte_offset"] = start
-                fh = open(file_path, "rb")
-                fh.seek(start)
-                binary_data = fh.read(self._threshold_filesize)
-                file_stream = io.BytesIO(binary_data)
-                file_stream.name = file_path
-                file_dict = {"file": file_stream}
+                with open(file_path, "rb") as fh:
+                    fh.seek(start)
+                    binary_data = fh.read(self._threshold_filesize)
+                    file_stream = io.BytesIO(binary_data)
+                    file_stream.name = file_path
+                    file_dict = {"file": file_stream}
 
                 retry_count = 0
                 while True:
@@ -449,7 +497,10 @@ class ImportStreamer(object):
                     logger.warning(
                         "Error uploading data chunk {0:d}/{1:d}, retry "
                         "attempt {2:d}/{3:d}".format(
-                            index, chunks, retry_count, self.DEFAULT_RETRY_LIMIT
+                            index,
+                            chunks,
+                            retry_count,
+                            self.DEFAULT_RETRY_LIMIT,
                         )
                     )
 
@@ -478,14 +529,15 @@ class ImportStreamer(object):
         """Add a data frame into the buffer.
 
         Args:
-              data_frame: a pandas data frame object to add to the buffer.
-              part_of_iter: if it is expected that this function is called
+              data_frame (DataFrame): a pandas data frame object to add to the buffer.
+              part_of_iter (bool): if it is expected that this function is called
                   as part of an iterator, or that many data frames may be
                   added to the importer set to True, defaults to False.
 
         Raises:
               ValueError: if the data frame does not contain the correct
                   columns for Timesketch upload.
+              TypeError: if the entry is not a DataFrame.
         """
         self._ready()
 
@@ -544,7 +596,7 @@ class ImportStreamer(object):
         """Add an entry into the buffer.
 
         Args:
-            entry: a dict object to add to the buffer.
+            entry (dict): a dict object to add to the buffer.
 
         Raises:
             TypeError: if the entry is not a dict.
@@ -575,7 +627,7 @@ class ImportStreamer(object):
         """Add a Microsoft Excel sheet to importer.
 
         Args:
-            filepath: full file path to a XLS or XLSX file to add to the
+            filepath (str): full file path to a XLS or XLSX file to add to the
                 importer.
             kwargs:
                 Other parameters can be passed in that match the
@@ -621,8 +673,8 @@ class ImportStreamer(object):
         """Add a CSV, JSONL or a PLASO file to the buffer.
 
         Args:
-            filepath: the path to the file to add.
-            delimiter: if this is a CSV file then a delimiter can be defined.
+            filepath (str): the path to the file to add.
+            delimiter (str): if this is a CSV file then a delimiter can be defined.
 
         Raises:
             TypeError: if the entry does not fulfill requirements.
@@ -630,7 +682,9 @@ class ImportStreamer(object):
         self._ready()
 
         if not os.path.isfile(filepath):
-            raise TypeError("Entry object needs to be a file that exists.")
+            error_msg = f"File object {filepath} needs to be a file that exists."
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
         if not self._timeline_name:
             base_path = os.path.basename(filepath)
@@ -667,16 +721,19 @@ class ImportStreamer(object):
                         logger.error("Unable to decode line: {0!s}".format(e))
 
         else:
-            raise TypeError(
-                "File needs to have a file extension of: .csv, .jsonl or " ".plaso"
+            error_msg = (
+                f"File ({filepath}) needs to have a file extension"
+                "of: .csv, .jsonl or .plaso"
             )
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
     def add_json(self, json_entry, column_names=None):
         """Add an entry that is in a JSON format.
 
         Args:
-            json_entry: a single entry encoded in JSON.
-            column_names: a list of column names if the JSON object
+            json_entry (str): a single entry encoded in JSON.
+            column_names (list): a list of column names if the JSON object
                 is a list as an opposed to a dict.
 
         Raises:
@@ -716,8 +773,18 @@ class ImportStreamer(object):
         """Return the celery task identification for the upload."""
         return self._celery_task_id
 
+    def _trigger_analyzers(self, analyzer_names=None):
+        """Run the analyzers on the uploaded timeline."""
+
+        self._ready()
+
+        if self._data_lines:
+            self.flush(end_stream=True)
+
+        return run_analyzers(analyzer_names=analyzer_names, timeline_obj=self.timeline)
+
     def close(self):
-        """Close the streamer."""
+        """Close the streamer"""
         try:
             self._ready()
         except ValueError:
@@ -725,13 +792,7 @@ class ImportStreamer(object):
 
         if self._data_lines:
             self.flush(end_stream=True)
-
-        # Trigger auto analyzer pipeline to kick in.
-        pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
-            self._sketch.api.api_root, self._sketch.id
-        )
-        data = {"index_name": self._index}
-        _ = self._sketch.api.session.post(pipe_resource, json=data)
+            self._reset()
 
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
@@ -744,6 +805,7 @@ class ImportStreamer(object):
             ValueError: if the stream object is not fully configured.
             RuntimeError: if the stream was not uploaded.
         """
+
         if not self._data_lines:
             return
 
@@ -785,6 +847,25 @@ class ImportStreamer(object):
 
     def set_index_name(self, index):
         """Set the index name."""
+        if not isinstance(index, str):
+            raise ValueError(
+                f"Index name must be a string and not {index} {type(index)}."
+            )
+
+        # OpenSearch/Elasticsearch index name restrictions.
+        invalid_chars = r'\/*?"<>| ,#'
+        for char in invalid_chars:
+            if char in index:
+                raise ValueError(
+                    f"Index name '{index}' contains invalid character: '{char}'"
+                )
+
+        if index.startswith(("-", "_", "+")):
+            raise ValueError(f"Index name '{index}' cannot start with '-', '_', or '+'")
+
+        if any(char.isupper() for char in index):
+            raise ValueError(f"Index name '{index}' cannot contain uppercase letters.")
+
         self._index = index
 
     def set_provider(self, provider):

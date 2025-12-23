@@ -138,6 +138,7 @@ class CredentialStorage:
 
         Raises:
             IOError: If not able to decrypt the data.
+            OSError: If the file does not exist.
 
         Returns:
             Credential object (oauth2.credentials.Credentials) read from
@@ -158,7 +159,7 @@ class CredentialStorage:
                     password = bytes(password, "utf-8")
             except KeyError as exc:
                 raise IOError(
-                    "Not able to determine encryption key from " "config."
+                    "Not able to determine encryption key from config."
                 ) from exc
         else:
             raise IOError(

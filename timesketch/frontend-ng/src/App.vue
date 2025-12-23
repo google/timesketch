@@ -23,15 +23,13 @@ limitations under the License.
       </template>
     </v-snackbar>
 
-    <v-main>
-      <!-- Main view -->
-      <router-view></router-view>
-    </v-main>
+    <!-- Main router view -->
+    <router-view></router-view>
   </v-app>
 </template>
 
 <script>
-import EventBus from './main'
+import EventBus from './event-bus.js'
 
 export default {
   name: 'app',
@@ -52,10 +50,20 @@ export default {
       }
       this.$store.dispatch('setSnackBar', snackbar)
     },
+    setWarningSnackBar: function (message) {
+      const snackbar = {
+        message: message,
+        color: 'warning',
+        timeout: 5000,
+      }
+      this.$store.dispatch('setSnackBar', snackbar)
+    },
   },
   mounted() {
     // Listen on errors from REST API calls
     EventBus.$on('errorSnackBar', this.setErrorSnackBar)
+    // Register the listener for the warning snackbar event
+    EventBus.$on('warningSnackBar', this.setWarningSnackBar)
 
     const isDark = localStorage.getItem('isDarkTheme')
     if (isDark) {
@@ -70,6 +78,7 @@ export default {
   },
   beforeDestroy() {
     EventBus.$off('errorSnackBar')
+    EventBus.$off('warningSnackBar')
   },
 }
 </script>

@@ -22,7 +22,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsSigmaEditor from '../components/Sigma/SigmaEditor'
+import TsSigmaEditor from '../components/Sigma/SigmaEditor.vue'
 
 export default {
   props: ['ruleId'],

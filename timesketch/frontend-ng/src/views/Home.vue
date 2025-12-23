@@ -25,7 +25,6 @@ limitations under the License.
       <span style="font-size: 1.2em">timesketch</span>
 
       <v-spacer></v-spacer>
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
         <span class="white--text">{{ currentUser | initialLetter }}</span>
       </v-avatar>
@@ -33,7 +32,7 @@ limitations under the License.
         <template v-slot:activator="{ on, attrs }">
           <v-avatar>
             <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-dots-vertical</v-icon>
+              <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
             </v-btn>
           </v-avatar>
         </template>
@@ -47,6 +46,23 @@ limitations under the License.
                 <v-list-item-content>
                   <v-list-item-title>Toggle theme</v-list-item-title>
                 </v-list-item-content>
+              </v-list-item>
+              <v-list-item v-on:click="switchUI">
+                <v-list-item-icon>
+                  <v-icon>mdi-view-dashboard-outline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Use the old UI</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item @click="showSettingsDialog = true">
+                  <v-list-item-icon>
+                    <v-icon>mdi-cog-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Settings</v-list-item-title>
+                  </v-list-item-content>
               </v-list-item>
 
               <a href="/logout/" style="text-decoration: none; color: inherit">
@@ -66,53 +82,100 @@ limitations under the License.
       </v-menu>
     </v-toolbar>
 
-    <v-container fluid pa-0>
-      <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
-        <h2>Start new investigation</h2>
-        <v-row no-gutters class="mt-5">
-          <v-dialog width="500">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
-            </template>
-            <v-card class="pa-4">
-              <h3>New sketch</h3>
-              <br />
-              <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
-              </v-text-field>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-        </v-row>
-      </v-sheet>
-      <div class="pa-5">
-        <h2>Your recent work</h2>
-        <ts-sketch-list></ts-sketch-list>
-      </div>
-    </v-container>
+    <!-- Main view -->
+    <v-main class="notransition">
+      <v-container fluid pa-0>
+        <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
+          <h2>Start new investigation</h2>
+          <v-row no-gutters class="mt-5">
+            <v-dialog v-model="createSketchDialog" width="500">
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
+              </template>
+              <v-card class="pa-4">
+                <h3>New sketch</h3>
+                <br />
+                <v-form @submit.prevent="createSketch()">
+                  <v-text-field
+                    v-model="sketchForm.name"
+                    outlined
+                    dense
+                    placeholder="Name your sketch"
+                    autofocus
+                    clearable
+                    :rules="sketchNameRules"
+                  >
+                  </v-text-field>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="createSketchDialog = false"> Cancel </v-btn>
+                    <v-btn
+                      :disabled="!sketchForm.name || sketchForm.name.length > 255"
+                      @click="createSketch()"
+                      color="primary"
+                      text
+                    >
+                      Create
+                    </v-btn>
+                  </v-card-actions>
+                </v-form>
+              </v-card>
+            </v-dialog>
+          </v-row>
+        </v-sheet>
+        <div class="pa-5">
+          <h2>Your recent work</h2>
+          <ts-sketch-list></ts-sketch-list>
+        </div>
+      </v-container>
+
+      <!-- Settings dialog -->
+      <v-dialog v-model="showSettingsDialog" width="700px">
+        <ts-settings-dialog></ts-settings-dialog>
+      </v-dialog>
+
+    </v-main>
   </div>
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import TsSketchList from '../components/SketchList'
+import ApiClient from '../utils/RestApiClient.js'
+import TsSketchList from '../components/SketchList.vue'
+import TsSettingsDialog from '../components/SettingsDialog.vue'
+
 
 export default {
-  components: { TsSketchList },
+  components: { TsSketchList,
+      TsSettingsDialog,
+ },
   data() {
     return {
       sketchForm: {
         name: '',
       },
+      createSketchDialog: false,
       scenarioTemplates: [],
+      showSettingsDialog: false,
+      sketchNameRules: [
+        (v) => !!v || 'Sketch name is required.',
+        (v) => (v && v.length <= 255) || 'Sketch name is too long.',
+      ],
     }
   },
   computed: {
     currentUser() {
       return this.$store.state.currentUser
     },
+    userSettings() {
+      return this.$store.state.settings
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
+    },
+  },
+  mounted() {
+    this.$store.dispatch('updateSystemSettings')
+    this.$store.dispatch('updateUserSettings')
   },
   methods: {
     toggleTheme: function () {

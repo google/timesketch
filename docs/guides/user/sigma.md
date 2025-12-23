@@ -35,7 +35,7 @@ This will show a list on the left with all Sigma rules installed on a system. Yo
 
 So if you want to search for ZMap related rules, you can search for `zma` and it will show you the pre installed rule.
 
-![Sigma studio](../assets/images/sigma_studio.png)
+![Sigma studio](../../assets/images/sigma_studio.png)
 
 #### Analyzer
 
@@ -71,7 +71,7 @@ To use the official community rules you can visit [github.com/Neo23x0/sigma](htt
 In the past, Sigma rules where stored on disk, in 2022 this has been changed and Sigma rules are stored in the database.
 New rules can be added / modified via the Sigma portion of the Studio.
 
-Visit 
+Visit
 
 ```
 https://$TIMESKETCH/v2/studio/sigma/new
@@ -146,7 +146,7 @@ Field mappings like:
       default: xml_string
 ```
 
-Are interpreted depending on the selected product in the rule. If the product in the rule is `linux` the Selector `TargetFilename` in a rule would be tranlated to `filename:"foobar"`. If the product is anything else, e.g. `Windows` it would be `xml_string:"foobar"`
+Are interpreted depending on the selected product in the rule. If the product in the rule is `linux` the Selector `TargetFilename` in a rule would be translated to `filename:"foobar"`. If the product is anything else, e.g. `Windows` it would be `xml_string:"foobar"`
 
 ## Test data
 

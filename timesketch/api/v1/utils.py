@@ -16,6 +16,8 @@ import logging
 import json
 import time
 import os
+import pathlib
+import re
 import yaml
 
 from flask import abort
@@ -25,6 +27,7 @@ from flask_login import current_user
 
 
 import altair as alt
+import pandas as pd
 
 from timesketch.lib import ontology
 from timesketch.lib.aggregators import manager as aggregator_manager
@@ -186,7 +189,7 @@ def run_aggregator_group(group, sketch_id):
         if aggregator.sketch_id != group.sketch_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "All aggregations in a group must belong to the group " "sketch",
+                "All aggregations in a group must belong to the group sketch",
             )
 
         if aggregator.parameters:
@@ -235,7 +238,7 @@ def run_aggregator_group(group, sketch_id):
 
     meta = {
         "method": "aggregator_group",
-        "chart_type": "compound: {0:s}".format(orientation),
+        "chart_type": f"compound: {orientation:s}",
         "name": group.name,
         "description": group.description,
         "es_time": time_after - time_before,
@@ -249,7 +252,7 @@ def run_aggregator_group(group, sketch_id):
 def load_yaml_config(config_parameter_name):
     """Load a YAML file.
     Args:
-        config_paramater_name (str): Name of the config paramter to get the
+        config_paramater_name (str): Name of the config parameter to get the
         path to the YAML file from.
 
     Returns:
@@ -258,18 +261,37 @@ def load_yaml_config(config_parameter_name):
     yaml_path = current_app.config.get(config_parameter_name, "")
     if not yaml_path:
         logger.error(
-            "The path to the YAML file isn't defined in the " "main configuration file"
+            "The path to the YAML file isn't defined in the main configuration file"
         )
         return {}
     if not os.path.isfile(yaml_path):
-        logger.error(
-            "Unable to read the config, file: "
-            "[{0:s}] does not exist".format(yaml_path)
-        )
+        logger.error("Unable to read the config, file: [%s] does not exist", yaml_path)
         return {}
 
-    with open(yaml_path, "r") as fh:
+    with open(yaml_path, encoding="utf-8") as fh:
         return yaml.safe_load(fh)
+
+
+def load_csv_file(config_parametre_name):
+    """Load a CSV file.
+    Args:
+        config_paramater_name (str): Name of the config parameter to get the
+        path to the CSV file from.
+
+    Returns:
+        A data frame with the CSV content
+    """
+    csv_file = current_app.config.get(config_parametre_name, "")
+    if not csv_file:
+        logger.error(
+            "The path to the CSV file isn't defined in the main configuration file"
+        )
+        return {}
+    if not os.path.isfile(csv_file):
+        logger.error("Unable to read the config, file: [%s] does not exist", csv_file)
+        return {}
+
+    return pd.read_csv(csv_file)
 
 
 def escape_query_string(query_string):
@@ -291,3 +313,40 @@ def escape_query_string(query_string):
         )
     )
     return escaped_query_string
+
+
+def is_valid_index_name(index_name):
+    """Validate index name.
+
+    Args:
+        index_name: string with the index name in uuid.uuid4.hex format.
+
+    Returns:
+        A boolean indicating whether the index name is valid or not.
+    """
+    regex = re.compile(r"[0-9a-f]{32}", re.I)
+    match = regex.match(index_name)
+    return bool(match)
+
+
+def format_upload_path(upload_path, index_name):
+    """Format upload path.
+
+    Args:
+        upload_path: string with the upload path.
+        index_name: string with the index name in uuid.uuid4.hex format.
+
+    Returns:
+        A string with the formatted upload path.
+    """
+    base_path = pathlib.Path(upload_path)
+    index_name_path = pathlib.Path(index_name)
+    if not base_path.is_absolute():
+        raise ValueError("Upload path must be absolute")
+
+    if not index_name_path.is_absolute():
+        full_path = base_path / index_name_path
+        return full_path.as_posix()
+
+    full_path = base_path / index_name_path.relative_to(base_path.anchor)
+    return full_path.as_posix()

@@ -14,9 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-tag-multiple-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
-      :style="tags && tags.length ? 'cursor: pointer' : ''"
+      :style="(tags && tags.length) || (filteredLabels && filteredLabels.length) ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
@@ -25,43 +37,14 @@ limitations under the License.
 
       <span class="float-right" style="margin-right: 10px">
         <small
-          ><strong>{{ tags.length }}</strong></small
+          ><strong v-if="tags && filteredLabels">{{ tags.length + filteredLabels.length }}</strong></small
         >
       </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded && tags.length">
-        <div
-          v-for="label in labels"
-          :key="label.label"
-          @click="searchForLabel(label.label)"
-          style="cursor: pointer; font-size: 0.9em"
-        >
-          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-            <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
-            <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-            <span>
-              {{ label.label | formatLabelText }} (<small
-                ><strong>{{ label.count | compactNumber }}</strong></small
-              >)
-            </span>
-          </v-row>
-        </div>
-        <div
-          v-for="tag in tags"
-          :key="tag.tag"
-          @click="searchForTag(tag.tag)"
-          style="cursor: pointer; font-size: 0.9em"
-        >
-          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-            <span
-              >{{ tag.tag }} (<small
-                ><strong>{{ tag.count | compactNumber }}</strong></small
-              >)</span
-            >
-          </v-row>
-        </div>
+      <div v-show="expanded && (tags.length || filteredLabels.length)">
+        <ts-tags-list></ts-tags-list>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -69,21 +52,15 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
-
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
+import TsTagsList from './TagsList.vue'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
+  components: {
+    TsTagsList,
+  },
   data: function () {
     return {
       expanded: false,
@@ -99,32 +76,9 @@ export default {
     tags() {
       return this.$store.state.tags
     },
-    labels() {
-      return this.meta.filter_labels
-    },
-  },
-  methods: {
-    searchForTag(tag) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
-      eventData.queryFilter = defaultQueryFilter()
-      EventBus.$emit('setQueryAndFilter', eventData)
-    },
-    searchForLabel(label) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = '*'
-      eventData.queryFilter = defaultQueryFilter()
-      let chip = {
-        field: '',
-        value: label,
-        type: 'label',
-        operator: 'must',
-        active: true,
-      }
-      eventData.queryFilter.chips.push(chip)
-      EventBus.$emit('setQueryAndFilter', eventData)
+    filteredLabels() {
+      if (!this.meta.filter_labels) return []
+      return this.meta.filter_labels.filter((label) => !label.label.startsWith('__ts_fact'))
     },
   },
 }

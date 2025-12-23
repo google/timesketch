@@ -14,48 +14,90 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-auto-fix</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       class="pa-4"
-      :style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
+      :style="!sortedAnalyzerResults.length ? '' : 'cursor: pointer'"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span>
-        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
-      </span>
+      <span> <v-icon left>mdi-auto-fix</v-icon> Analyzer Results </span>
       <v-btn
-        v-if="expanded || (analyzerResults && !analyzerResults.length && analyzerResultsReady)"
+        v-if="expanded || (sortedAnalyzerResults && !sortedAnalyzerResults.length && analyzerResultsReady)"
         icon
         text
         class="float-right mt-n1 mr-n1"
         :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: undefined } }"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Select analyzers for execution">mdi-plus</v-icon>
       </v-btn>
-      <span class="float-right mr-2">
+      <span class="float-right" style="margin-right: 3px">
         <v-progress-circular
-          v-if="!analyzerResultsReady || activeAnalyzerQueue.length > 0"
-          :size="20"
+          v-if="!analyzerResultsReady || (activeAnalyzerSessionIds.length > 0 && !activeAnalyzerTimeoutTriggered)"
+          :size="24"
           :width="1"
           indeterminate
-          color="primary"
-        ></v-progress-circular>
-        <small class="ml-1" v-if="!expanded && (analyzerResults && analyzerResults.length && analyzerResultsReady)"><strong>{{ resultCounter }}</strong></small>
+          :value="activeAnalyzerDisplayCount"
+          >{{ activeAnalyzerDisplayCount }}</v-progress-circular
+        >
+        <v-tooltip v-if="activeAnalyzerTimeoutTriggered" top>
+          <template v-slot:activator="{ on }">
+            <v-btn v-on="on" small icon @click.stop="" @click="startPolling()">
+              <v-icon small>mdi-reload-alert</v-icon>
+            </v-btn>
+          </template>
+          <span>Analyzer status check timeout, click to reload</span>
+        </v-tooltip>
+      </span>
+      <span class="float-right" style="margin-right: 10px">
+        <small
+          class="ml-3"
+          v-if="!expanded && sortedAnalyzerResults && sortedAnalyzerResults.length && analyzerResultsReady"
+          ><strong>{{ resultCounter }}</strong></small
+        >
       </span>
     </div>
     <v-expand-transition>
       <div v-show="expanded">
-        <div v-if="analyzerResults.length > 0">
+        <div v-if="sortedAnalyzerResults.length > 0">
           <!-- TODO: issue#2565 -->
           <!-- Add a severity and timeline filter here. -->
-          <v-data-iterator v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
+          <v-data-iterator
+            v-if="sortedAnalyzerResults.length <= 10"
+            :items="sortedAnalyzerResults"
+            hide-default-footer
+            disable-pagination
+          >
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
+              <ts-analyzer-result
+                v-for="analyzer in props.items"
+                :key="analyzer.analyzerName"
+                :analyzer="analyzer"
+                :isActive="activeAnalyzers.has(analyzer.analyzerName)"
+              ></ts-analyzer-result>
             </template>
           </v-data-iterator>
-          <v-data-iterator v-else :items="analyzerResults" hide-default-footer disable-pagination :search="search">
+          <v-data-iterator
+            v-else
+            :items="sortedAnalyzerResults"
+            hide-default-footer
+            disable-pagination
+            :search="search"
+            :custom-filter="filterAnalyzers"
+          >
             <template v-slot:header>
               <v-toolbar flat height="45">
                 <v-text-field
@@ -71,7 +113,12 @@ limitations under the License.
             </template>
 
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
+              <ts-analyzer-result
+                v-for="analyzer in props.items"
+                :key="analyzer.analyzerName"
+                :analyzer="analyzer"
+                :isActive="activeAnalyzers.has(analyzer.analyzerName)"
+              ></ts-analyzer-result>
             </template>
           </v-data-iterator>
         </div>
@@ -83,11 +130,12 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
 import TsAnalyzerResult from './AnalyzerResult.vue'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   components: {
     TsAnalyzerResult,
   },
@@ -96,9 +144,10 @@ export default {
       expanded: false,
       search: '',
       analyzerResultsReady: false,
-      analyzerResults: [],
-      analyzerResultsData: {},
-      activeAnalyzerQueue: [],
+      activeAnalyzerInterval: 15000, // milliseconds
+      activeAnalyzerTimeout: 300000, // milliseconds
+      activeAnalyzerTimeoutTriggered: false,
+      activeAnalyzerTimerStart: null,
     }
   },
   computed: {
@@ -111,140 +160,284 @@ export default {
     analyzerList() {
       return this.$store.state.sketchAnalyzerList
     },
+    activeAnalyses() {
+      return this.$store.state.activeAnalyses
+    },
+    analyzerResults() {
+      return this.$store.state.analyzerResults
+    },
+    sortedAnalyzerResults() {
+      const perAnalyzer = this.groupByAnalyzer([...this.analyzerResults, ...this.activeAnalyses])
+      // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
+      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
+      sortedAnalyzerList.sort((a, b) =>
+        a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name)
+      )
+      return sortedAnalyzerList
+    },
     resultCounter() {
       let counter = 0
-      for (const analzyer of this.analyzerResults) {
-        for (const timeline in analzyer.data.timelines) {
-          if (analzyer.data.timelines[timeline].analysis_status === 'DONE' || analzyer.data.timelines[timeline].analysis_status === 'ERROR') {
+      for (const analyzer of this.sortedAnalyzerResults) {
+        for (const timeline in analyzer.data.timelines) {
+          if (
+            analyzer.data.timelines[timeline].analysis_status === 'DONE' ||
+            analyzer.data.timelines[timeline].analysis_status === 'ERROR'
+          ) {
             counter += 1
           }
         }
       }
       return counter
     },
+    activeAnalyzers() {
+      return new Set(this.activeAnalyses.map((a) => a.analyzer_name))
+    },
+    activeAnalyzerSessionIds() {
+      return Array.from(new Set(this.activeAnalyses.map((a) => a.analysissession_id)))
+    },
+    activeAnalyzerDisplayCount() {
+      return this.activeAnalyzerSessionIds.length > 0 ? this.activeAnalyzerSessionIds.length : ''
+    },
   },
   methods: {
     async initializeAnalyzerResults() {
-      let sketchAnalyzerSessions = []
+      let allAnalyses = []
       for (const timeline of this.sketch.timelines) {
-        const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id);
-        let analyzerSessions = response.data.objects[0]
-        if (!analyzerSessions) continue
-        sketchAnalyzerSessions = sketchAnalyzerSessions.concat(analyzerSessions)
+        const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
+        let analyses = response.data.objects[0]
+        if (!analyses) continue
+        allAnalyses = allAnalyses.concat(analyses)
       }
-      this.updateAnalyzerResultsData(sketchAnalyzerSessions)
-    },
-    updateAnalyzerResultsData(analyzerSessions) {
-      let perAnalyzer = this.analyzerResultsData
-      try {
-        for (const session of analyzerSessions) {
-          if (!perAnalyzer[session.analyzer_name]) {
-            // the analyzer is not yet in the results: create new entry
-            perAnalyzer[session.analyzer_name] = {
-              timelines: {},
-              analyzerInfo: {
-                name: session.analyzer_name,
-                description: this.analyzerList[session.analyzer_name].description,
-                is_multi: this.analyzerList[session.analyzer_name].is_multi,
-                display_name: this.analyzerList[session.analyzer_name].display_name,
-              }
-            }
-          }
-
-          if (!perAnalyzer[session.analyzer_name].timelines[session.timeline.name]) {
-            // this timeline is not yet in the results for this analyzer: add it
-            perAnalyzer[session.analyzer_name].timelines[session.timeline.name] = {
-              id: session.timeline.id,
-              name: session.timeline.name,
-              color: session.timeline.color,
-              verdict: session.result,
-              created_at: session.created_at,
-              last_analysissession_id: session.analysissession_id,
-              analysis_status: session.status[0].status,
-            }
-          }
-
-          if (perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id < session.analysissession_id) {
-            // this timeline is already in the results for this analyzer but check if the session is newer and update it
-            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].created_at = session.created_at
-            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].verdict = session.result
-            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id = session.analysissession_id
-            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].analysis_status = session.status[0].status
-          }
-
-          if (session.status[0].status === 'PENDING' || session.status[0].status === 'STARTED') {
-            // if the session is PENDING or STARTED, add the session to the queue (if not there yet)
-            if (this.activeAnalyzerQueue.indexOf(session.analysissession_id) === -1) this.activeAnalyzerQueue.push(session.analysissession_id)
-          }
-          if (session.status[0].status === 'DONE' || session.status[0].status === 'ERROR') {
-            // if the session is DONE or ERROR, remove it from the queue
-            const index = this.activeAnalyzerQueue.indexOf(session.analysissession_id)
-            if (index > -1) this.activeAnalyzerQueue.splice(index, 1)
-          }
-        }
-      } catch(e) {
-        console.error(e)
-      }
-
-      // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
-      this.analyzerResultsData = perAnalyzer
-      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({analyzerName, data}))]
-      sortedAnalyzerList.sort((a, b) => a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name))
-      this.analyzerResults = sortedAnalyzerList
+      this.$store.dispatch('updateAnalyzerResults', allAnalyses)
+      this.updateActiveAnalyses(this.$store, allAnalyses)
       this.analyzerResultsReady = true
     },
-    async fetchActiveSessions() {
-      const response = await ApiClient.getActiveAnalyzerSessions(this.sketch.id)
-      let activeSessions = response.data.objects[0]['sessions']
-      if (activeSessions) {
-        activeSessions.forEach(sessionId => {
-          if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
+    groupByAnalyzer(analyses) {
+      let perAnalyzer = {}
+      let multiResults = {}
+      for (const analysis of analyses) {
+        if (!perAnalyzer[analysis.analyzer_name]) {
+          // the analyzer is not yet in the results: create new entry
+          // There is an edge case where the analyzer is not in the analyzer list.
+          // If this happens, fall back to the analyzer short name.
+          if (this.analyzerList[analysis.analyzer_name]) {
+            perAnalyzer[analysis.analyzer_name] = {
+              timelines: {},
+              analyzerInfo: {
+                name: analysis.analyzer_name,
+                description: this.analyzerList[analysis.analyzer_name].description,
+                is_multi: this.analyzerList[analysis.analyzer_name].is_multi,
+                display_name: this.analyzerList[analysis.analyzer_name].display_name,
+              },
+            }
+          } else {
+            perAnalyzer[analysis.analyzer_name] = {
+              timelines: {},
+              analyzerInfo: {
+                name: analysis.analyzer_name,
+                description: 'No description available.',
+                is_multi: false,
+                display_name: analysis.analyzer_name,
+              },
+            }
+          }
+        }
+
+        if (!perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name]) {
+          // this timeline is not yet in the results for this analyzer: add it
+          const analyzerTimelineInfo = {
+            id: analysis.timeline.id,
+            name: analysis.timeline.name,
+            color: analysis.timeline.color,
+            last_analysissession_id: analysis.analysissession_id,
+          }
+
+          if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
+            // this analyzer is a multi analyzer, so add all results for this analysis session
+            multiResults = this.getAnalyzerMultiResults(
+              analyses,
+              analysis.analyzer_name,
+              analysis.analysissession_id,
+              analysis.timeline.id
+            )
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+              ...analyzerTimelineInfo,
+              analysis_status: multiResults.analysis_status,
+              results: multiResults.results,
+            }
+          } else {
+            // this is not a multi analyzer, so add the results for this timeline
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+              ...analyzerTimelineInfo,
+              analysis_status: analysis.status[0].status,
+              results: [
+                {
+                  verdict: analysis.result,
+                  created_at: analysis.created_at,
+                  analysis_status: analysis.status[0].status,
+                },
+              ],
+            }
+          }
+        }
+
+        if (
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id <
+          analysis.analysissession_id
+        ) {
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
+            analysis.analysissession_id
+          // there is a newer session for this analyzer on this timeline. Update the results.
+          if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
+            multiResults = this.getAnalyzerMultiResults(
+              analyses,
+              analysis.analyzer_name,
+              analysis.analysissession_id,
+              analysis.timeline.id
+            )
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status =
+              multiResults.analysis_status
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results = multiResults.results
+          } else {
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].created_at =
+              analysis.created_at
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].verdict = analysis.result
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status =
+              analysis.status[0].status
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status =
+              analysis.status[0].status
+          }
+        }
+      }
+      return perAnalyzer
+    },
+    getAnalyzerMultiResults(analyses, analyzerName, sessionId, timelineId) {
+      let results = []
+      let status = new Set()
+      for (const analysis of analyses) {
+        if (
+          analysis.analyzer_name === analyzerName &&
+          analysis.analysissession_id === sessionId &&
+          analysis.timeline.id === timelineId
+        ) {
+          results.push({
+            verdict: analysis.result,
+            created_at: analysis.created_at,
+            analysis_status: analysis.status[0].status,
+          })
+          status.add(analysis.status[0].status)
+        }
+      }
+      return {
+        results,
+        analysis_status: this.getMultiStatus(status),
+      }
+    },
+    getMultiStatus(status) {
+      if (status.size === 1 && (status.has('DONE') || status.has('ERROR'))) {
+        return [...status][0]
+      } else if (status.size === 2 && status.has('DONE') && status.has('ERROR')) {
+        return 'ERROR'
+      } else {
+        return 'PENDING'
+      }
+    },
+    filterAnalyzers(items, search) {
+      const searchStr = (search || '').toLowerCase()
+      return (
+        items &&
+        items.filter((item) => {
+          const displayNameMatches = item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1
+          const timelineNameMatches = Object.keys(item.data.timelines).find(
+            (timelineName) => timelineName.indexOf(searchStr) !== -1
+          )
+          return displayNameMatches || timelineNameMatches
         })
+      )
+    },
+    startPolling() {
+      if (this.activeAnalyzerSessionIds.length > 0 && !this.interval) {
+        this.activeAnalyzerTimerStart = Date.now()
+        this.interval = setInterval(
+          async function () {
+            if (this.activeAnalyzerSessionIds.length === 0) {
+              // the queue is empty so stop the interval
+              this.stopPolling()
+              this.initializeAnalyzerResults()
+              return
+            }
+            // check if the timeout of the interval has been reached.
+            // This prevents the analyzer frontend from checking stuck anayzers indefinetly.
+            if (
+              this.activeAnalyzerTimerStart !== null &&
+              Date.now() - this.activeAnalyzerTimerStart > this.activeAnalyzerTimeout
+            ) {
+              this.stopPolling()
+              this.activeAnalyzerTimeoutTriggered = true
+              return
+            }
+            const lastActiveCount = this.activeAnalyses.length
+            const activeAnalyses = await this.fetchActiveAnalyses(this.sketch.id)
+
+            // Refetch analyzer results if some analyzer finished.
+            if (lastActiveCount !== activeAnalyses.length) {
+              this.initializeAnalyzerResults()
+            } else {
+              this.updateActiveAnalyses(activeAnalyses)
+            }
+          }.bind(this),
+          this.activeAnalyzerInterval
+        )
       }
     },
-    async fetchAnalyzerSessionData() {
-      let activeAnalyzerSessionData = []
-      for (const sessionId of this.activeAnalyzerQueue) {
-        const response = await ApiClient.getAnalyzerSession(this.sketch.id, sessionId)
-        let analyzerSession = response.data.objects[0]
-        if (!analyzerSession) continue
-        activeAnalyzerSessionData.push(...analyzerSession['analyses'])
-      }
-      this.updateAnalyzerResultsData(activeAnalyzerSessionData)
+    stopPolling() {
+      clearInterval(this.interval)
+      this.activeAnalyzerTimerStart = null
+      this.interval = false
     },
-    triggeredAnalyzerRuns: function (data) {
-      data.forEach(sessionId => {
-        if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
-      })
+    async fetchActiveAnalyses(sketchId) {
+      try {
+        const activeAnalyses = []
+        const response = await ApiClient.getActiveAnalyzerSessions(sketchId)
+        if (response && response.data && response.data.objects && response.data.objects[0]) {
+          const activeSessionsDetailed = response.data.objects[0].detailed_sessions
+          if (activeSessionsDetailed.length > 0) {
+            for (const session of activeSessionsDetailed) {
+              activeAnalyses.push(...session.objects[0]['analyses'])
+            }
+          }
+        }
+        return activeAnalyses
+      } catch (error) {
+        console.error(error)
+      }
+    },
+    updateActiveAnalyses(store, analyses) {
+      const activeAnalyses = analyses.filter(
+        (a) => a.status[0].status === 'PENDING' || a.status[0].status === 'STARTED'
+      )
+      store.dispatch('updateActiveAnalyses', activeAnalyses)
     },
   },
   mounted() {
-    EventBus.$on('triggeredAnalyzerRuns', this.triggeredAnalyzerRuns)
     this.initializeAnalyzerResults()
+    this.activeAnalyzerTimerStart = Date.now()
   },
   beforeDestroy() {
-    EventBus.$off('triggeredAnalyzerRuns')
     clearInterval(this.interval)
     this.interval = false
   },
   watch: {
-    activeAnalyzerQueue: function (sessionQueue) {
-      if (sessionQueue.length > 0 && !this.interval) {
-        this.interval = setInterval(function() {
-          if (sessionQueue.length > 0) {
-            // fetch data for sessions in the queue
-            this.fetchAnalyzerSessionData()
-            // update active session queue
-            this.fetchActiveSessions()
-          } else {
-            // the queue is empty so stop the interval
-            clearInterval(this.interval)
-            this.interval = false
-          }
-        }.bind(this),
-        5000)
-      }
+    activeAnalyzerSessionIds: function () {
+      this.startPolling()
     },
   },
 }
 </script>
+
+<style scoped lang="scss">
+.v-progress-circular {
+  font-size: 12px;
+}
+</style>
+

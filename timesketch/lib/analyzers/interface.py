@@ -13,7 +13,6 @@
 # limitations under the License.
 """Interface for analyzers."""
 
-from __future__ import unicode_literals
 
 import datetime
 import json
@@ -22,10 +21,14 @@ import os
 import random
 import time
 import traceback
+from typing import Dict, List, Optional
+
+
 import yaml
 
 import opensearchpy
 from flask import current_app
+from jsonschema import validate, ValidationError, SchemaError
 
 import pandas
 
@@ -95,7 +98,7 @@ def get_config_path(file_name):
     return None
 
 
-def get_yaml_config(file_name):
+def get_yaml_config(file_name: str):
     """Return a dict parsed from a YAML file within the config directory.
 
     Args:
@@ -110,20 +113,20 @@ def get_yaml_config(file_name):
     if not path:
         return {}
 
-    with open(path, "r") as fh:
+    with open(path, "r", encoding="utf-8") as fh:
         try:
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
             # pylint: disable=logging-format-interpolation
             logger.warning(
-                ("Unable to read in YAML config file, " "with error: {0!s}").format(
+                ("Unable to read in YAML config file, " "with error: {!s}").format(
                     exception
                 )
             )
             return {}
 
 
-class Event(object):
+class Event:
     """Event object with helper methods.
 
     Attributes:
@@ -158,7 +161,7 @@ class Event(object):
             self.timeline_id = event.get("_source", {}).get("__ts_timeline_id")
             self.source = event.get("_source", None)
         except KeyError as e:
-            raise KeyError("Malformed event: {0!s}".format(e)) from e
+            raise KeyError(f"Malformed event: {e!s}") from e
 
     def _update(self, event):
         """Update event attributes to add.
@@ -196,6 +199,10 @@ class Event(object):
         Args:
             attributes: Dictionary with new or updated values to add.
         """
+        # TODO: add attributes to the analyzer output object!
+        if self._analyzer:
+            self._analyzer.output.add_created_attributes(list(attributes.keys()))
+
         self._update(attributes)
 
     def add_label(self, label, toggle=False):
@@ -222,7 +229,7 @@ class Event(object):
         )
         self.commit(updated_event)
 
-    def add_tags(self, tags):
+    def add_tags(self, tags: List):
         """Add tags to the Event.
 
         Args:
@@ -241,14 +248,18 @@ class Event(object):
                     "tags": existing_tags,
                 }
 
-        new_tags = list(set().union(existing_tags, tags))
+        new_tags = list(set(existing_tags) | set(tags))
         if self._analyzer:
             self._analyzer.tagged_events[self.event_id]["tags"] = new_tags
         else:
             updated_event_attribute = {"tag": new_tags}
             self._update(updated_event_attribute)
 
-    def add_emojis(self, emojis):
+        # Add new tags to the analyzer output object
+        if self._analyzer:
+            self._analyzer.output.add_created_tags(tags)
+
+    def add_emojis(self, emojis: List):
         """Add emojis to the Event.
 
         Args:
@@ -328,7 +339,9 @@ class Event(object):
         )
         return db_event.comments
 
-    def add_human_readable(self, human_readable, analyzer_name, append=True):
+    def add_human_readable(
+        self, human_readable: str, analyzer_name: str, append: bool = True
+    ):
         """Add a human readable string to event.
 
         Args:
@@ -342,7 +355,7 @@ class Event(object):
         """
         existing_human_readable = self.source.get("human_readable", [])
 
-        human_readable = "[{0:s}] {1:s}".format(analyzer_name, human_readable)
+        human_readable = f"[{analyzer_name:s}] {human_readable:s}"
 
         if human_readable in existing_human_readable:
             return
@@ -356,7 +369,7 @@ class Event(object):
         self._update(updated_human_readable)
 
 
-class Sketch(object):
+class Sketch:
     """Sketch object with helper methods.
 
     Attributes:
@@ -364,27 +377,83 @@ class Sketch(object):
         sql_sketch: Instance of a SQLAlchemy Sketch object.
     """
 
-    def __init__(self, sketch_id):
+    def __init__(self, sketch_id, analyzer=None):
         """Initializes a Sketch object.
 
         Args:
             sketch_id: The Sketch ID.
         """
         self.id = sketch_id
-        self.sql_sketch = SQLSketch.query.get(sketch_id)
+        self.sql_sketch = SQLSketch.get_by_id(sketch_id)
+        self._analyzer = analyzer
 
         if not self.sql_sketch:
             raise RuntimeError("No such sketch")
 
+    def add_apex_aggregation(
+        self,
+        name: str,
+        params: Dict,
+        chart_type: str,
+        description: str = "",
+        label: Optional[str] = None,
+        view_id: Optional[int] = None,
+    ):
+        """Add aggregation to the sketch using apex charts and tables.
+
+        Note: since this is updating the database directly, the caller needs
+        to ensure the chart type and parameters are valid since no checks are
+        performed in this function.
+
+        Args:
+            name: the name.
+            params: a dictionary of the parameters for the aggregation.
+            chart_type: the chart type.
+            description: the description, visible in the UI.
+            label: string with a label to attach to the aggregation.
+            view_id: optional ID of the view to attach the aggregation to.
+        """
+        if not name:
+            raise ValueError("Aggregator name needs to be defined.")
+        if not params:
+            raise ValueError("Aggregator parameters have to be defined.")
+
+        if view_id:
+            view = View.get_by_id(view_id)
+        else:
+            view = None
+
+        if "aggregator_name" not in params:
+            raise ValueError("Aggregator name not specified")
+        aggregator = params["aggregator_name"]
+
+        aggregation = Aggregation.get_or_create(
+            agg_type=aggregator,
+            chart_type=chart_type,
+            description=description,
+            name=name,
+            parameters=json.dumps(params, ensure_ascii=False),
+            sketch=self.sql_sketch,
+            user=None,
+            view=view,
+        )
+
+        if label:
+            aggregation.add_label(label)
+        db_session.add(aggregation)
+        db_session.commit()
+
+        return aggregation
+
     def add_aggregation(
         self,
-        name,
-        agg_name,
-        agg_params,
-        description="",
-        view_id=None,
-        chart_type=None,
-        label="",
+        name: str,
+        agg_name: str,
+        agg_params: Dict,
+        description: str = "",
+        view_id: Optional[int] = None,
+        chart_type: Optional[str] = None,
+        label: str = "",
     ):
         """Add aggregation to the sketch.
 
@@ -404,7 +473,7 @@ class Sketch(object):
             raise ValueError("Aggregator parameters have to be defined.")
 
         if view_id:
-            view = View.query.get(view_id)
+            view = View.get_by_id(view_id)
         else:
             view = None
 
@@ -429,7 +498,9 @@ class Sketch(object):
         db_session.commit()
         return aggregation
 
-    def add_aggregation_group(self, name, description="", view_id=None):
+    def add_aggregation_group(
+        self, name: str, description: str = "", view_id: Optional[int] = None
+    ):
         """Add aggregation Group to the sketch.
 
         Args:
@@ -442,7 +513,7 @@ class Sketch(object):
             raise ValueError("Aggregator group name needs to be defined.")
 
         if view_id:
-            view = View.query.get(view_id)
+            view = View.get_by_id(view_id)
         else:
             view = None
 
@@ -463,12 +534,12 @@ class Sketch(object):
 
     def add_view(
         self,
-        view_name,
-        analyzer_name,
-        query_string=None,
-        query_dsl=None,
-        query_filter=None,
-        additional_fields=None,
+        view_name: str,
+        analyzer_name: str,
+        query_string: Optional[str] = None,
+        query_dsl: Optional[Dict] = None,
+        query_filter: Optional[Dict] = None,
+        additional_fields: Optional[List] = None,
     ):
         """Add saved view to the Sketch.
 
@@ -495,7 +566,7 @@ class Sketch(object):
         if additional_fields:
             query_filter["fields"] = [{"field": x.strip()} for x in additional_fields]
 
-        description = "analyzer: {0:s}".format(analyzer_name)
+        description = f"analyzer: {analyzer_name:s}"
         view = View.get_or_create(
             name=view_name, description=description, sketch=self.sql_sketch, user=None
         )
@@ -508,6 +579,11 @@ class Sketch(object):
 
         db_session.add(view)
         db_session.commit()
+
+        # Add new view to the list of saved_views in the analyzer output object
+        if self._analyzer:
+            self._analyzer.output.add_saved_view(view.id)
+
         return view
 
     def add_sketch_attribute(self, name, values, ontology="text", overwrite=False):
@@ -560,7 +636,7 @@ class Sketch(object):
             raise ValueError(f"Attribute {name} does not exist in sketch.")
         return attributes[name]["value"]
 
-    def add_story(self, title):
+    def add_story(self, title: str):
         """Add a story to the Sketch.
 
         Args:
@@ -584,6 +660,11 @@ class Sketch(object):
         )
         db_session.add(story)
         db_session.commit()
+
+        # Add new story to the analyzer output object.
+        if self._analyzer:
+            self._analyzer.output.add_saved_story(story.id)
+
         return Story(story)
 
     def get_all_indices(self):
@@ -596,7 +677,7 @@ class Sketch(object):
         return indices
 
 
-class AggregationGroup(object):
+class AggregationGroup:
     """Aggregation Group object with helper methods.
 
     Attributes:
@@ -694,7 +775,7 @@ class AggregationGroup(object):
         self.commit()
 
 
-class Story(object):
+class Story:
     """Story object with helper methods.
 
     Attributes:
@@ -767,37 +848,22 @@ class Story(object):
         block["content"] = text
         self._commit(block)
 
-    def add_aggregation(self, aggregation, agg_type=""):
+    def add_aggregation(self, aggregation):
         """Add a saved aggregation to the Story.
 
         Args:
             aggregation (Aggregation): Saved aggregation to add to the story.
-            agg_type (str): string indicating the type of aggregation, can be:
-                "table" or the name of the chart to be used, eg "barcharct",
-                "hbarchart". Defaults to the value of supported_charts.
         """
         today = datetime.datetime.utcnow()
         block = self._create_new_block()
-        parameter_dict = json.loads(aggregation.parameters)
-        if agg_type:
-            parameter_dict["supported_charts"] = agg_type
-        else:
-            agg_type = parameter_dict.get("supported_charts")
-            # Neither agg_type nor supported_charts is set.
-            if not agg_type:
-                agg_type = "table"
-                parameter_dict["supported_charts"] = "table"
 
-        block["componentName"] = "TsAggregationCompact"
-        block["componentProps"]["aggregation"] = {
-            "agg_type": aggregation.agg_type,
-            "id": aggregation.id,
+        block["componentName"] = "TsSavedVisualization"
+        block["componentProps"] = {
             "name": aggregation.name,
-            "chart_type": agg_type,
+            "savedVisualizationId": aggregation.id,
             "description": aggregation.description,
             "created_at": today.isoformat(),
             "updated_at": today.isoformat(),
-            "parameters": json.dumps(parameter_dict),
             "user": {"username": None},
         }
         self._commit(block)
@@ -848,6 +914,7 @@ class BaseAnalyzer:
     NAME = "name"
     DISPLAY_NAME = None
     DESCRIPTION = None
+    IS_DFIQ_ANALYZER = False
 
     # If this analyzer depends on another analyzer
     # it needs to be included in this frozenset by using
@@ -872,16 +939,25 @@ class BaseAnalyzer:
         """
         self.name = self.NAME
         self.index_name = index_name
-        self.sketch = Sketch(sketch_id=sketch_id)
+        self.sketch = Sketch(sketch_id=sketch_id, analyzer=self)
         self.timeline_id = timeline_id
         self.timeline_name = ""
 
         self.tagged_events = {}
         self.emoji_events = {}
 
-        self.datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
+        self.datastore = OpenSearchDataStore()
+
+        # Add AnalyzerOutput instance and set all attributes that can be set
+        # automatically
+        self.output = AnalyzerOutput(
+            analyzer_identifier=self.NAME,
+            analyzer_name=self.DISPLAY_NAME,
+            timesketch_instance=current_app.config.get(
+                "EXTERNAL_HOST_URL", "https://localhost"
+            ),
+            sketch_id=sketch_id,
+            timeline_id=timeline_id,
         )
 
         if not hasattr(self, "sketch"):
@@ -889,11 +965,11 @@ class BaseAnalyzer:
 
     def event_pandas(
         self,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        indices=None,
-        return_fields=None,
+        query_string: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        indices: Optional[List] = None,
+        return_fields: Optional[List] = None,
     ):
         """Search OpenSearch.
 
@@ -931,7 +1007,7 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to refresh index: {0:s}, not found, "
+                    "Unable to refresh index: {:s}, not found, "
                     "removing from list.".format(index)
                 )
                 broken_index = indices.index(index)
@@ -968,12 +1044,12 @@ class BaseAnalyzer:
 
     def event_stream(
         self,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        indices=None,
-        return_fields=None,
-        scroll=True,
+        query_string: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        indices: Optional[List] = None,
+        return_fields: Optional[List] = None,
+        scroll: bool = True,
     ):
         """Search OpenSearch.
 
@@ -986,11 +1062,12 @@ class BaseAnalyzer:
             scroll: Boolean determining whether we support scrolling searches
                 or not. Defaults to True.
 
-        Returns:
+        Yields:
             Generator of Event objects.
 
         Raises:
             ValueError: if neither query_string or query_dsl is provided.
+            TransportError: If connection issues happen.
         """
         if not (query_string or query_dsl):
             raise ValueError("Both query_string and query_dsl are missing")
@@ -1016,7 +1093,7 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to find index: {0:s}, removing from "
+                    "Unable to find index: {:s}, removing from "
                     "result set.".format(index)
                 )
                 broken_index = indices.index(index)
@@ -1040,6 +1117,7 @@ class BaseAnalyzer:
         for x in range(0, retries):
             try:
                 event_generator = self.datastore.search_stream(
+                    sketch_id=self.sketch.id,
                     query_string=query_string,
                     query_filter=query_filter,
                     query_dsl=query_dsl,
@@ -1052,11 +1130,11 @@ class BaseAnalyzer:
                     yield Event(
                         event, self.datastore, sketch=self.sketch, analyzer=self
                     )
-                break  # Query was succesful
+                break  # Query was successful
             except opensearchpy.TransportError as e:
                 sleep_seconds = backoff_in_seconds * 2**x + random.uniform(3, 7)
                 logger.info(
-                    "Attempt: {0:d}/{1:d} sleeping {2:f} for query {3:s}".format(
+                    "Attempt: {:d}/{:d} sleeping {:f} for query {:s}".format(
                         x + 1, retries, sleep_seconds, query_string
                     )
                 )
@@ -1064,7 +1142,7 @@ class BaseAnalyzer:
 
                 if x == retries - 1:
                     logger.error(
-                        "Timeout executing search for {0:s}: {1!s}".format(
+                        "Timeout executing search for {:s}: {!s}".format(
                             query_string, e
                         ),
                         exc_info=True,
@@ -1081,7 +1159,7 @@ class BaseAnalyzer:
         Returns:
             Return value of the run method.
         """
-        analysis = Analysis.query.get(analysis_id)
+        analysis = Analysis.get_by_id(analysis_id)
         analysis.set_status("STARTED")
 
         timeline = analysis.timeline
@@ -1097,9 +1175,12 @@ class BaseAnalyzer:
 
             if status == "fail":
                 logger.error(
-                    "Unable to run analyzer on a failed index ({0:s})".format(
-                        searchindex.index_name
-                    )
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Unable to run on a failed index (%s)",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
+                    searchindex.index_name,
                 )
                 return "Failed"
 
@@ -1107,7 +1188,11 @@ class BaseAnalyzer:
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
                 logger.error(
-                    "Indexing has taken too long time, aborting run of " "analyzer"
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Indexing has taken too long time, aborting run of analyzer",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
                 )
                 return "Failed"
             # Refresh the searchindex object.
@@ -1121,9 +1206,16 @@ class BaseAnalyzer:
         except Exception:  # pylint: disable=broad-except
             analysis.set_status("ERROR")
             result = traceback.format_exc()
+            logger.error(
+                "Analyzer %s (ID:%d) in sketch (ID:%d): failed with error: %s",
+                self.name,
+                analysis_id,
+                self.sketch.id,
+                result,
+            )
 
         # Update database analysis object with result and status
-        analysis.result = "{0:s}".format(result)
+        analysis.result = f"{result:s}"
         db_session.add(analysis)
         db_session.commit()
 
@@ -1150,3 +1242,327 @@ class BaseAnalyzer:
     def run(self):
         """Entry point for the analyzer."""
         raise NotImplementedError
+
+
+class AnalyzerOutputException(Exception):
+    """Analyzer output exception."""
+
+
+class AnalyzerOutput:
+    """A class to record timesketch analyzer output.
+
+    Attributes:
+        platform (str): [Required] Analyzer platform.
+        analyzer_identifier (str): [Required] Unique analyzer identifier.
+        analyzer_name (str): [Required] Analyzer display name.
+        result_status (str): [Required] Analyzer result status.
+            Valid values are success or error.
+        result_priority (str): [Required] Priority of the result based on the
+            analysis findings. Valid values are NOTE (default), LOW, MEDIUM, HIGH.
+        result_summary (str): [Required] A summary statement of the analyzer
+            finding. A result summary must exist even if there is no finding.
+        result_markdown (str): [Optional] A detailed information about the
+            analyzer finding in a markdown format.
+        references (List[str]): [Optional] A list of references about the
+            analyzer or the issue the analyzer attempts to address.
+        result_attributes (dict): [Optional] A dict of key : value pairs that
+            holds additional finding details.
+        platform_meta_data: (dict): [Required] A dict of key : value pairs that
+            holds the following information:
+            timesketch_instance (str): [Required] The Timesketch instance URL.
+            sketch_id (int): [Required] Timesketch sketch ID for this analyzer.
+            timeline_id (int): [Required] Timesketch timeline ID for this analyzer.
+            saved_views (List[int]): [Optional] Views generatred by the analyzer.
+            saved_stories (List[int]): [Optional] Stories generated by the analyzer.
+            saved_graphs (List[int|str]): [Optional] Graphs generated by the analyzer.
+            saved_aggregations (List[int]): [Optional] Aggregations generated
+                by the analyzer.
+            created_tags (List[str]): [Optional] Tags created by the analyzer.
+            created_attributes (List[str]): [Optional] Attributes created by
+                the analyzer.
+    """
+
+    def __init__(
+        self,
+        analyzer_identifier,
+        analyzer_name,
+        timesketch_instance,
+        sketch_id,
+        timeline_id,
+    ):
+        """Initialize analyzer output."""
+        self.platform = "timesketch"
+        self.analyzer_identifier = analyzer_identifier
+        self.analyzer_name = analyzer_name
+        self.result_status = ""  # TODO: link to analyzer status/error?
+        self.result_priority = "NOTE"
+        self.result_summary = ""
+        self.result_markdown = ""
+        self.references = []
+        self.result_attributes = {}
+        self.platform_meta_data = {
+            "timesketch_instance": timesketch_instance,
+            "sketch_id": sketch_id,
+            "timeline_id": timeline_id,
+            "saved_views": [],
+            "saved_stories": [],
+            "saved_graphs": [],
+            "saved_aggregations": [],
+            "created_tags": [],
+            "created_attributes": [],
+        }
+
+    def validate(self):
+        """Validates the analyzer output and raises exception."""
+        schema = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+                "platform": {"type": "string", "enum": ["timesketch"]},
+                "analyzer_identifier": {"type": "string", "minLength": 1},
+                "analyzer_name": {"type": "string", "minLength": 1},
+                "result_status": {
+                    "type": "string",
+                    "enum": ["SUCCESS", "NO-FINDINGS", "ERROR"],
+                },
+                "result_priority": {
+                    "type": "string",
+                    "default": "NOTE",
+                    "enum": ["HIGH", "MEDIUM", "LOW", "NOTE"],
+                },
+                "result_summary": {"type": "string", "minLength": 1},
+                "result_markdown": {"type": "string", "minLength": 1},
+                "references": {
+                    "type": "array",
+                    "items": [{"type": "string", "minLength": 1}],
+                },
+                "result_attributes": {"type": "object"},
+                "platform_meta_data": {
+                    "type": "object",
+                    "properties": {
+                        "timesketch_instance": {"type": "string", "minLength": 1},
+                        "sketch_id": {"type": "integer"},
+                        "timeline_id": {"type": "integer"},
+                        "saved_views": {
+                            "type": "array",
+                            "items": [
+                                {"type": "integer"},
+                            ],
+                        },
+                        "saved_stories": {
+                            "type": "array",
+                            "items": [{"type": "integer"}],
+                        },
+                        "saved_graphs": {
+                            "type": "array",
+                            "items": [
+                                {"type": ["integer", "string"]},
+                            ],
+                        },
+                        "saved_aggregations": {
+                            "type": "array",
+                            "items": [
+                                {"type": "integer"},
+                            ],
+                        },
+                        "created_tags": {
+                            "type": "array",
+                            "items": [
+                                {"type": "string"},
+                            ],
+                        },
+                        "created_attributes": {
+                            "type": "array",
+                            "items": [
+                                {"type": "string"},
+                            ],
+                        },
+                    },
+                    "required": [
+                        "timesketch_instance",
+                        "sketch_id",
+                        "timeline_id",
+                    ],
+                },
+            },
+            "required": [
+                "platform",
+                "analyzer_identifier",
+                "analyzer_name",
+                "result_status",
+                "result_priority",
+                "result_summary",
+                "platform_meta_data",
+            ],
+        }
+
+        try:
+            validate(instance=self.to_json(), schema=schema)
+            return True
+        except (ValidationError, SchemaError) as e:
+            raise AnalyzerOutputException(f"json schema error: {e}") from e
+
+    def add_reference(self, reference):
+        """Adds a reference to the list of references.
+
+        Args:
+            reference: A reference e.g. URL to add to the list of references.
+        """
+        if not isinstance(reference, list):
+            reference = [reference]
+        self.references = list(set().union(self.references, reference))
+
+    def set_meta_timesketch_instance(self, timesketch_instance):
+        """Sets the timesketch instance URL.
+
+        Args:
+            timesketch_instance: The timesketch instance URL.
+        """
+        self.platform_meta_data["timesketch_instance"] = timesketch_instance
+
+    def set_meta_sketch_id(self, sketch_id):
+        """Sets the sketch ID.
+
+        Args:
+            sketch_id: The sketch ID.
+        """
+        self.platform_meta_data["sketch_id"] = sketch_id
+
+    def set_meta_timeline_id(self, timeline_id):
+        """Sets the timeline ID.
+
+        Args:
+            timeline_id: The timeline ID.
+        """
+        self.platform_meta_data["timeline_id"] = timeline_id
+
+    def add_meta_item(self, key, item):
+        """Handles the addition of platform_meta_data items.
+
+        Args:
+            key: The key to add to the platform_meta_data dict.
+            item: The value to add to the platform_meta_data dict.
+        """
+        if not isinstance(item, list):
+            item = [item]
+        if key in self.platform_meta_data:
+            self.platform_meta_data[key] = list(
+                set(self.platform_meta_data[key]) | set(item)
+            )
+        else:
+            self.platform_meta_data[key] = item
+
+    def add_saved_view(self, view_id):
+        """Adds a view ID to the list of saved_views.
+
+        Args:
+            view_id: The view ID to add to the list of saved_views.
+        """
+        self.add_meta_item("saved_views", view_id)
+
+    def add_saved_story(self, story_id):
+        """Adds a story ID to the list of saved_stories.
+
+        Args:
+            story_id: The story ID to add to the list of saved_stories.
+        """
+        self.add_meta_item("saved_stories", story_id)
+
+    def add_saved_graph(self, graph_id):
+        """Adds a graph ID to the list of saved_graphs.
+
+        Args:
+            graph_id: The graph ID to add to the list of saved_graphs.
+        """
+        self.add_meta_item("saved_graphs", graph_id)
+
+    def add_saved_aggregation(self, aggregation_id):
+        """Adds an aggregation ID to the list of saved_aggregations.
+
+        Args:
+            aggregation_id: The aggregation ID to add to the list of saved_aggregations.
+        """
+        self.add_meta_item("saved_aggregations", aggregation_id)
+
+    def add_created_tags(self, tags):
+        """Adds a tags to the list of created_tags.
+
+        Args:
+            tags: The tags to add to the list of created_tags.
+        """
+        existing_tags = self.platform_meta_data["created_tags"]
+        analyzer_tags = list(set(existing_tags) | set(tags))
+        self.add_meta_item("created_tags", analyzer_tags)
+
+    def add_created_attributes(self, attributes):
+        """Adds a attributes to the list of created_attributes.
+
+        Args:
+            attributes: The attributes to add to the list of created_attributes.
+        """
+        self.add_meta_item("created_attributes", attributes)
+
+    def to_json(self) -> dict:
+        """Returns JSON output of AnalyzerOutput. Filters out empty values."""
+        # add required fields
+        output = {
+            "platform": self.platform,
+            "analyzer_identifier": self.analyzer_identifier,
+            "analyzer_name": self.analyzer_name,
+            "result_status": self.result_status.upper(),
+            "result_priority": self.result_priority.upper(),
+            "result_summary": self.result_summary,
+            "platform_meta_data": {
+                "timesketch_instance": self.platform_meta_data["timesketch_instance"],
+                "sketch_id": self.platform_meta_data["sketch_id"],
+                "timeline_id": self.platform_meta_data["timeline_id"],
+            },
+        }
+
+        # add optional fields if they are not empty
+        if self.result_markdown and self.result_markdown != "":
+            output["result_markdown"] = self.result_markdown
+
+        if self.references:
+            output["references"] = self.references
+
+        if self.result_attributes:
+            output["result_attributes"] = self.result_attributes
+
+        if self.platform_meta_data["saved_views"]:
+            output["platform_meta_data"]["saved_views"] = self.platform_meta_data[
+                "saved_views"
+            ]
+
+        if self.platform_meta_data["saved_stories"]:
+            output["platform_meta_data"]["saved_stories"] = self.platform_meta_data[
+                "saved_stories"
+            ]
+
+        if self.platform_meta_data["saved_graphs"]:
+            output["platform_meta_data"]["saved_graphs"] = self.platform_meta_data[
+                "saved_graphs"
+            ]
+
+        if self.platform_meta_data["saved_aggregations"]:
+            output["platform_meta_data"]["saved_aggregations"] = (
+                self.platform_meta_data["saved_aggregations"]
+            )
+
+        if self.platform_meta_data["created_tags"]:
+            output["platform_meta_data"]["created_tags"] = self.platform_meta_data[
+                "created_tags"
+            ]
+
+        if self.platform_meta_data["created_attributes"]:
+            output["platform_meta_data"]["created_attributes"] = (
+                self.platform_meta_data["created_attributes"]
+            )
+
+        return output
+
+    def __str__(self) -> str:
+        """Returns string output of AnalyzerOutput."""
+        if self.validate():
+            return json.dumps(self.to_json())
+        return ""

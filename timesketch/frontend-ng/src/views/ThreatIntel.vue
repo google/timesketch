@@ -15,20 +15,14 @@ limitations under the License.
 -->
 <template>
   <div>
-    <ts-indicator-dialog
-      :dialog.sync="indicatorDialog"
-      :index="currentIndex"
-      :tag-info="tagInfo"
-      @open-dialog="indicatorDialog = true"
-      @close-dialog="
+    <ts-indicator-dialog :dialog.sync="indicatorDialog" :index="currentIndex" :tag-info="tagInfo" :ioc="indicator"
+      @open-dialog="indicatorDialog = true" @close-dialog="
         indicatorDialog = false
-        currentIndex = -1
-      "
-      @save="
-        saveIntelligence($event)
+      currentIndex = -1
+        " @save="
+          saveIntelligence($event)
         indicatorDialog = false
-      "
-    >
+          ">
     </ts-indicator-dialog>
 
     <v-container fluid>
@@ -38,43 +32,42 @@ limitations under the License.
       </v-btn>
 
       <v-card outlined class="mt-3 mx-3">
-        <v-data-table
-          :headers="headers"
-          :items="intelligenceData"
+        <v-data-table :headers="headers" :items="intelligenceData"
           :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
-          :items-per-page="40"
-        >
+          :items-per-page="40" selectable>
           <template v-slot:item.search="{ item }">
             <v-btn icon small @click="generateSearchQuery(item.ioc)">
-              <v-icon small>mdi-magnify</v-icon>
+              <v-icon title="Search this indicator" small>mdi-magnify</v-icon>
             </v-btn>
           </template>
 
           <template v-slot:item.externalURI="{ item }">
-            <v-icon v-if="item.externalURI" x-small>mdi-open-in-new</v-icon>
-            <a
-              style="text-decoration: none"
-              v-if="getValidUrl(item.externalURI)"
-              :href="getValidUrl(item.externalURI)"
-              target="_blank"
-            >
-              {{ getValidUrl(item.externalURI).host }}</a
-            >
+            <v-icon title="Open link" v-if="item.externalURI" x-small>mdi-open-in-new</v-icon>
+            <a style="text-decoration: none" v-if="getValidUrl(item.externalURI)" :href="getValidUrl(item.externalURI)"
+              target="_blank">
+              {{ getValidUrl(item.externalURI).host }}</a>
           </template>
+
+          <template v-slot:item.type="{ item }">
+            {{ getIocTypeMetadata(item).humanReadable }}
+          </template>
+
           <template v-slot:item.tags="{ item }">
             <v-chip-group>
-              <v-chip small v-for="tag in item.tags" :key="tag" @click="searchForIOC(tag)">
-                {{ tag }}
+              <v-chip small v-for="tag in augmentedTags(item.tags).sort((a, b) => b.weight - a.weight)"
+                :color="tag.color" :text-color="tag.textColor" :outlined="tag.style === 'outlined'" :key="tag.name"
+                @click="searchForIOC(tag)">
+                {{ tag.name }}
               </v-chip>
             </v-chip-group>
           </template>
 
           <template v-slot:item.actions="{ item }">
             <v-btn small icon @click="editIndicator(item.index)">
-              <v-icon small>mdi-pencil</v-icon>
+              <v-icon small title="Edit indicator">mdi-pencil</v-icon>
             </v-btn>
             <v-btn small icon @click="deleteIndicator(item.index)">
-              <v-icon small>mdi-trash-can-outline</v-icon>
+              <v-icon small title="Delete indicator">mdi-trash-can-outline</v-icon>
             </v-btn>
           </template>
         </v-data-table>
@@ -84,9 +77,10 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import EventBus from '../main'
-import TsIndicatorDialog from '../components/ThreatIntel/IndicatorDialog'
+import ApiClient from '../utils/RestApiClient.js'
+import EventBus from '../event-bus.js'
+import TsIndicatorDialog from '../components/ThreatIntel/IndicatorDialog.vue'
+import { IOCTypes } from '@/utils/ThreatIntelMetadata'
 
 const defaultQueryFilter = () => {
   return {
@@ -117,6 +111,15 @@ export default {
       tagInfo: {},
       indicatorDialog: false,
       currentIndex: -1,
+      indicator: '',
+      tagMetadata: { default: { weight: 0, type: 'default' } },
+      tagColorDefinitions: {
+        danger: { color: 'red', textColor: 'white' },
+        warning: { color: 'orange', textColor: 'white' },
+        legit: { color: 'green', textColor: 'white' },
+        default: { color: 'default', textColor: null },
+        info: { color: 'blue', textColor: null, style: 'outlined' }
+      }
     }
   },
   computed: {
@@ -139,6 +142,35 @@ export default {
   methods: {
     addIndicator() {
       this.indicatorDialog = true
+    },
+    loadTagMetadata() {
+      ApiClient.getTagMetadata().then((response) => {
+        this.tagMetadata = response.data
+      })
+    },
+    metadataForTag(tag) {
+      let metadata = this.tagMetadata['default'];
+      if (this.tagMetadata[tag]) {
+        metadata = this.tagMetadata[tag]
+      } else {
+        for (var regex in this.tagMetadata['regexes']) {
+          if (tag.match(regex)) {
+            metadata = this.tagMetadata['regexes'][regex]
+          }
+        }
+      }
+      return { ...this.tagColorDefinitions[metadata.type], name: tag, weight: metadata.weight }
+    },
+    augmentedTags(tags) {
+      return tags.map(tag => this.metadataForTag(tag))
+    },
+    getIocTypeMetadata(ioc) {
+      let iocTypeMetatada = IOCTypes.find(def => def.type === ioc.type)
+      if (iocTypeMetatada !== undefined) {
+        return iocTypeMetatada
+      } else {
+        return IOCTypes.find(def => def.type === 'other')
+      }
     },
     deleteIndicator(index) {
       if (confirm('Delete indicator?')) {
@@ -227,13 +259,15 @@ export default {
           console.error(e)
         })
     },
-    showIndicatorDialog() {
+    showIndicatorDialog(payload) {
+      this.indicator = payload
       this.indicatorDialog = true
     },
   },
   mounted() {
     EventBus.$on('addIndicator', this.showIndicatorDialog)
     this.buildTagInfo()
+    this.loadTagMetadata()
   },
   beforeDestroy() {
     EventBus.$off('addIndicator')

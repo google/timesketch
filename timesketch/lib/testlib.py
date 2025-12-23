@@ -13,19 +13,20 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
-from __future__ import unicode_literals
 
 import codecs
 import json
-import six
 
+from typing import Optional, Dict
 from flask_testing import TestCase
+from sqlalchemy import create_engine
+
 
 from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
-from timesketch.models import db_session
+from timesketch.models import db_session, BaseModel
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
@@ -60,10 +61,11 @@ level: high
 """
 
 
-class TestConfig(object):
+class TestConfig:
     """Config for the test environment."""
 
     DEBUG = True
+    TESTING = True
     SECRET_KEY = "testing"
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     WTF_CSRF_ENABLED = False
@@ -79,10 +81,16 @@ class TestConfig(object):
     SIMILARITY_DATA_TYPES = []
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
-    CONTEXT_LINKS_CONFIG_PATH = "./test_tools/test_events/mock_context_links.yaml"
+    CONTEXT_LINKS_CONFIG_PATH = "./tests/test_events/mock_context_links.yaml"
+    LLM_PROVIDER = "test"
+    LLM_PROVIDER_CONFIGS = {"default": {"test": "test"}}
+    DFIQ_ENABLED = False
+    DATA_TYPES_PATH = "./tests/test_data/nl2q/test_data_types.csv"
+    PROMPT_NL2Q = "./tests/test_data/nl2q/test_prompt_nl2q"
+    EXAMPLES_NL2Q = "./tests/test_data/nl2q/test_examples_nl2q"
 
 
-class MockOpenSearchClient(object):
+class MockOpenSearchClient:
     """A mock implementation of a OpenSearch client."""
 
     def __init__(self):
@@ -153,7 +161,7 @@ class MockOpenSearchClient(object):
         return aggregation_search_result
 
 
-class MockOpenSearchIndices(object):
+class MockOpenSearchIndices:
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
@@ -169,7 +177,7 @@ class MockOpenSearchIndices(object):
         return True
 
 
-class MockDataStore(object):
+class MockDataStore:
     """A mock implementation of a Datastore."""
 
     event_dict = {
@@ -220,7 +228,8 @@ class MockDataStore(object):
         "timed_out": False,
     }
 
-    def __init__(self, host, port):
+    # pylint: disable=unused-argument
+    def __init__(self, host=None, port=None, **kwargs):
         """Initialize the datastore.
         Args:
             host: Hostname or IP address to the datastore
@@ -331,13 +340,14 @@ class MockDataStore(object):
     # pylint: disable=unused-argument
     def search_stream(
         self,
-        query_string,
-        query_filter,
-        query_dsl,
-        indices,
-        return_fields,
-        enable_scroll=True,
-        timeline_ids=None,
+        sketch_id: int,
+        indices: list,
+        query_string: str = "",
+        query_filter: Optional[Dict] = None,
+        query_dsl: Optional[Dict] = None,
+        return_fields: Optional[list] = None,
+        enable_scroll: bool = True,
+        timeline_ids: Optional[list] = None,
     ):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
@@ -346,7 +356,7 @@ class MockDataStore(object):
         """No-op mock to flush_queued_events for the datastore."""
 
 
-class MockGraphDatabase(object):
+class MockGraphDatabase:
     """A mock implementation of a Datastore."""
 
     def __init__(self, host, username, password):
@@ -360,7 +370,7 @@ class MockGraphDatabase(object):
         self.username = username
         self.password = password
 
-    class MockQuerySequence(object):
+    class MockQuerySequence:
         """A mock implementation of a QuerySequence."""
 
         MOCK_GRAPH = [
@@ -396,7 +406,7 @@ class MockGraphDatabase(object):
             self.rows = self.MOCK_ROWS
             self.stats = self.MOCK_ROWS
 
-    class MockEmptyQuerySequence(object):
+    class MockEmptyQuerySequence:
         def __init__(self):
             self.graph = None
             self.rows = {}
@@ -435,17 +445,23 @@ class BaseTest(TestCase):
         db_session.add(model)
         db_session.commit()
 
-    def _create_user(self, username, set_password=False):
+    def _create_user(
+        self, username, set_password=False, set_admin=False, password="test"
+    ):
         """Create a user in the database.
         Args:
             username: Username (string)
             set_password: Boolean value to decide if a password should be set
+            set_admin: Boolean value to decide if the user should be an admin
+            password: Password (string) Defaults to 'test'
         Returns:
             A user (instance of timesketch.models.user.User)
         """
-        user = User.get_or_create(username=username)
+        user = User.get_or_create(username=username, name=username)
         if set_password:
-            user.set_password(plaintext="test", rounds=4)
+            user.set_password(plaintext=password, rounds=4)
+        if set_admin:
+            user.admin = True
         self._commit_to_database(user)
         return user
 
@@ -457,7 +473,7 @@ class BaseTest(TestCase):
         Returns:
             A group (instance of timesketch.models.user.Group)
         """
-        group = Group.get_or_create(name=name)
+        group = Group.get_or_create(name=name, display_name=name, description=name)
         user.groups.append(group)
         self._commit_to_database(group)
         return group
@@ -568,7 +584,7 @@ class BaseTest(TestCase):
         view = View(
             name=name,
             query_string=name,
-            query_filter=json.dumps(dict()),
+            query_filter=json.dumps({}),
             user=user,
             sketch=sketch,
         )
@@ -584,7 +600,7 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name, query_string=name, query_filter=json.dumps(dict()), user=user
+            name=name, query_string=name, query_filter=json.dumps({}), user=user
         )
         self._commit_to_database(searchtemplate)
         return searchtemplate
@@ -615,7 +631,10 @@ class BaseTest(TestCase):
         init_db()
 
         self.user1 = self._create_user(username="test1", set_password=True)
-        self.user2 = self._create_user(username="test2", set_password=False)
+        self.user2 = self._create_user(username="test2", set_password=True)
+        self.useradmin = self._create_user(
+            username="testadmin", set_password=True, set_admin=True
+        )
 
         self.group1 = self._create_group(name="test_group1", user=self.user1)
         self.group2 = self._create_group(name="test_group2", user=self.user1)
@@ -669,11 +688,24 @@ class BaseTest(TestCase):
         db_session.remove()
         drop_all()
 
-    def login(self):
-        """Authenticate the test user."""
+    def login(self, username="test1", password="test"):
+        """Authenticate a user.
+
+        Args:
+            username: The username to login with.
+            password: The password for the user.
+        """
         self.client.post(
             "/login/",
-            data=dict(username="test1", password="test"),
+            data={"username": username, "password": password},
+            follow_redirects=True,
+        )
+
+    def login_admin(self):
+        """Authenticate the test user with admin privileges."""
+        self.client.post(
+            "/login/",
+            data={"username": "testadmin", "password": "test"},
             follow_redirects=True,
         )
 
@@ -688,7 +720,7 @@ class BaseTest(TestCase):
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        if isinstance(response.data, six.binary_type):
+        if isinstance(response.data, bytes):
             response_data = codecs.decode(response.data, "utf-8")
         else:
             response_data = response.data
@@ -699,9 +731,18 @@ class BaseTest(TestCase):
 class ModelBaseTest(BaseTest):
     """Base class for database model tests."""
 
+    def setUp(self):
+        super().setUp()  # Call parent setUp if it exists
+        # Configure an in-memory SQLite database for testing
+        self.engine = create_engine("sqlite:///:memory:")
+        # Bind the engine to the session
+        db_session.configure(bind=self.engine)
+        # Create all tables defined in BaseModel.metadata
+        BaseModel.metadata.create_all(self.engine)
+        self.db_session = db_session
+
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""
-        db_obj = model_cls.query.get(1)
-        for x in expected_result:
-            k, v = x[0], x[1]
-            self.assertEqual(db_obj.__getattribute__(k), v)
+        db_obj = model_cls.get_by_id(1)
+        for key, value in expected_result:
+            self.assertEqual(getattr(db_obj, key), value)

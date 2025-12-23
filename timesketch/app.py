@@ -13,18 +13,19 @@
 # limitations under the License.
 """Entry point for the application."""
 
-from __future__ import unicode_literals
 
 import logging
 import os
 import sys
+from typing import Optional, Union
 
-import six
 
 from flask import Flask
 from celery import Celery
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask_login import LoginManager
+from flask_login import login_required
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
@@ -38,27 +39,47 @@ from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
 
 
-def create_app(config=None, legacy_ui=False):
+def create_app(
+    config: Optional[Union[str, object]] = None,
+    legacy_ui: bool = False,
+    v3_ui: bool = False,
+):
     """Create the Flask app instance that is used throughout the application.
 
     Args:
-        config: Path to configuration file as a string or an object with config
-        directives.
-        legacy_ui: Temporary flag to indicate to serve the old UI.
-            TODO: Remove this when the old UI has been removed.
+        config: (str or object, optional) Path to configuration file as a string
+                or an object with config directives.
+        legacy_ui: (bool, optional) Temporary flag to indicate to serve the old UI.
+                  TODO: Remove this when the old UI has been removed.
+        v3_ui: (bool, optional) Flag to indicate to serve the v3 UI.
 
     Returns:
         Application object (instance of flask.Flask).
     """
-    template_folder = "frontend-ng/dist"
-    static_folder = "frontend-ng/dist"
-
-    # Serve the old UI.
+    # Determine which frontend assets to serve
     if legacy_ui:
         template_folder = "frontend/dist"
         static_folder = "frontend/dist"
+    elif v3_ui:
+        template_folder = "frontend-v3/dist"
+        static_folder = "frontend-v3/dist/assets"
+    else:
+        template_folder = "frontend-ng/dist"
+        static_folder = "frontend-ng/dist"
 
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+
+    # Apply ProxyFix middleware to handle proxy headers for HTTPS redirects
+    # This ensures Flask generates HTTPS URLs when behind a reverse proxy.
+    # The number of proxies is configurable via REVERSE_PROXY_COUNT.
+    num_proxies = app.config.get("REVERSE_PROXY_COUNT", 1)
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=num_proxies,
+        x_proto=num_proxies,
+        x_host=num_proxies,
+        x_prefix=num_proxies,
+    )
 
     if not config:
         # Where to find the config file
@@ -70,7 +91,7 @@ def create_app(config=None, legacy_ui=False):
         else:
             config = legacy_path
 
-    if isinstance(config, six.text_type):
+    if isinstance(config, str):
         os.environ["TIMESKETCH_SETTINGS"] = config
         try:
             app.config.from_envvar("TIMESKETCH_SETTINGS")
@@ -80,11 +101,20 @@ def create_app(config=None, legacy_ui=False):
                     "Warning, EMAIL_USER_WHITELIST has been deprecated. "
                     "Please update timesketch.conf."
                 )
-        except IOError:
-            sys.stderr.write("Config file {0} does not exist.\n".format(config))
+        except OSError:
+            sys.stderr.write(f"Config file {config} does not exist.\n")
             sys.exit()
     else:
         app.config.from_object(config)
+
+    # Load config values from environment variables.
+    # See: https://flask.palletsprojects.com/en/2.3.x/config/
+    app.config.from_prefixed_env()
+
+    # Configure Werkzeug 3.1+ form memory limit
+    # This is needed to support large form uploads (e.g. from import client)
+    if "MAX_FORM_MEMORY_SIZE" in app.config:
+        app.request_class.max_form_memory_size = app.config["MAX_FORM_MEMORY_SIZE"]
 
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:
@@ -95,22 +125,6 @@ def create_app(config=None, legacy_ui=False):
             "$ openssl rand -base64 32\n\n"
         )
         sys.exit()
-
-    # Support old style config using Elasticsearch as backend.
-    # TODO: Deprecate the old ELASTIC_* config in 2023.
-    if not app.config.get("OPENSEARCH_HOST"):
-        sys.stderr.write(
-            "Deprecated config field found: ELASTIC_HOST. "
-            "Update your config to use OPENSEARCH_HOST.\n"
-        )
-        app.config["OPENSEARCH_HOST"] = app.config.get("ELASTIC_HOST")
-
-    if not app.config.get("OPENSEARCH_PORT"):
-        sys.stderr.write(
-            "Deprecated config field found: ELASTIC_PORT. "
-            "Update your config to use OPENSEARCH_PORT.\n"
-        )
-        app.config["OPENSEARCH_PORT"] = app.config.get("ELASTIC_PORT")
 
     # Plaso version that we support
     if app.config["UPLOAD_ENABLED"]:
@@ -123,7 +137,10 @@ def create_app(config=None, legacy_ui=False):
             pass
 
     # Setup the database.
-    configure_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    configure_engine(
+        app.config["SQLALCHEMY_DATABASE_URI"],
+        app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {}),
+    )
     db = init_db()
 
     # Alembic migration support:
@@ -141,6 +158,22 @@ def create_app(config=None, legacy_ui=False):
     api_v1 = Api(app, prefix="/api/v1")
     for route in V1_API_ROUTES:
         api_v1.add_resource(*route)
+
+    # Returns 404 for invalid api routes
+    # pylint: disable=unused-variable
+    @app.route("/api/v1/<path:path>")
+    @login_required
+    def handle_invalid_api_route(path):
+        """Error handler for non-existent API routes.
+
+        Raises:
+            ApiHTTPError: Error 404 - not found
+        """
+        raise ApiHTTPError(
+            "The requested URL was not found on the server. If you entered the "
+            "URL manually please check your spelling and try again.",
+            404,
+        )
 
     # Register error handlers
     # pylint: disable=unused-variable
@@ -172,10 +205,28 @@ def create_app(config=None, legacy_ui=False):
         Returns:
             A user object (Instance of timesketch.models.user.User).
         """
-        return User.query.get(user_id)
+        return User.session.get(User, user_id)
 
     # Setup CSRF protection for the whole application
     CSRFProtect(app)
+
+    if app.config.get("ENABLE_PROFILING", False) and not app.config.get("TESTING"):
+        # pylint: disable=import-outside-toplevel
+        from werkzeug.middleware.profiler import ProfilerMiddleware
+
+        # Profiles are stored in a 'profiles' directory.
+        # For local dev deployments (e.g. timesketch-dev container) this will be
+        # in the project root. For release containers it will be in /var/log.
+        if app.root_path.startswith("/usr/local/src/timesketch"):
+            project_root = os.path.dirname(app.root_path)
+            profile_dir = os.path.join(project_root, "profiles")
+        else:
+            profile_dir = "/var/log/timesketch/profiles"
+
+        os.makedirs(profile_dir, exist_ok=True)
+        app.wsgi_app = ProfilerMiddleware(
+            app.wsgi_app, stream=None, profile_dir=profile_dir
+        )
 
     return app
 
@@ -208,7 +259,6 @@ def create_celery_app():
     celery.conf.update(app.config)
     TaskBase = celery.Task
 
-    # pylint: disable=no-init
     class ContextTask(TaskBase):
         """Add Flask context to the Celery tasks created."""
 

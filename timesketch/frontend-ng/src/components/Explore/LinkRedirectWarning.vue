@@ -17,23 +17,27 @@ limitations under the License.
         <span class="text-h6 ml-2">External redirect warning!</span>
       </v-card-title>
       <v-card-text>
-        <div>
-          This action will open the link below in a new tab! Do you really 
+        <div v-if="contextValue" class="mb-2">
+          This action will open the link below in a new tab! Do you really
           want to send the following value to this external service?
         </div>
-        <div>
+        <div v-else class="mb-2">
+          This action will open the link below in a new tab! Do you really
+          want to visit this external website?
+        </div>
+        <div v-if="contextValue">
           <b>Value:</b><br/>
           <code class="code">
-            {{ contextValue }}
+            {{ getContextValue }}
           </code>
         </div>
         <div>
           <b>External website:</b><br/>
           <code class="code">
-            {{ contextUrl }}
+            {{ getContextUrl }}
           </code>
         </div>
-  
+
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -56,8 +60,10 @@ limitations under the License.
       </v-card-actions>
     </v-card>
   </template>
-  
+
   <script>
+  import DOMPurify from 'dompurify';
+
   export default {
     props: ['contextValue', 'contextUrl' ],
     methods: {
@@ -65,7 +71,15 @@ limitations under the License.
         this.$emit('cancel')
       },
     },
+    computed: {
+      getContextValue() {
+        return DOMPurify.sanitize(this.contextValue)
+      },
+      getContextUrl() {
+        return DOMPurify.sanitize(this.contextUrl)
+      }
+    }
   }
   </script>
-  
+
   <style scoped lang="scss"></style>

@@ -34,7 +34,7 @@ def _get_message(response):
     """
     soup = bs4.BeautifulSoup(response.text, features="html.parser")
     if soup.p:
-        return soup.p.string
+        return soup.p.string  # pytype: disable=attribute-error
 
     if isinstance(response.text, bytes):
         response_text = response.text.decode("utf-8")
@@ -74,30 +74,40 @@ def get_response_json(response, logger):
     """Return the JSON object from a response, logging any errors.
 
     Args:
-        response (requests.Response): a response object from a HTTP
-            request.
-        logger (logging.Logger): a logger object that can be used to
-            write log messages.
+        response (requests.Response): a response object from a HTTP request.
+        logger (logging.Logger): a logger object that can be used to write log
+          messages.
 
     Returns:
         dict: a dict with the decoded JSON object within the HTTP
             response object.
+
+    Raises:
+        RuntimeError: if the API returns an HTTP error.
+        ValueError: if the API response cannot be JSON decoded.
+        NotFoundError: if the API returns a 404 HTTP error.
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
-        reason = _get_reason(response)
-        logger.warning(
-            "Failed response: [{0:d}] {2:s} {1:s}".format(
-                response.status_code, reason, _get_message(response)
-            )
+        if response.status_code == definitions.HTTP_STATUS_CODE_NOT_FOUND:
+            error_message(response, "Not Found", error=NotFoundError)
+
+        error_message(
+            response,
+            message=("Failed to get a valid response json from Timesketch API"),
         )
 
     try:
         return response.json()
     except json.JSONDecodeError as e:
-        logger.error("Unable to decode response: {0!s}".format(e), exc_info=True)
-
-    return {}
+        response_text_snippet = response.text[:500]
+        logger.warning(
+            "Unable to JSON decode the Timesketch API response! "
+            "Response snippet: %s",
+            response_text_snippet,
+            exc_info=True,
+        )
+        raise ValueError("Unable to JSON decode the Timesketch API response.") from e
 
 
 def error_message(response, message=None, error=RuntimeError):
@@ -140,6 +150,10 @@ def check_return_status(response, logger):
 
 class Error(Exception):
     """Base error class."""
+
+
+class NotFoundError(Error):
+    """Raised when a resource is not found."""
 
 
 class UnableToRunAnalyzer(Error):

@@ -16,91 +16,40 @@ limitations under the License.
 <template>
   <v-menu v-model="showMenu" offset-x :close-on-content-click="false">
     <template v-slot:activator="{ on, attrs }">
-      <v-icon v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
+      <v-icon title="Modify tags" v-if="assignedTags.length > 0" v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus</v-icon>
+      <v-icon title="Modify tags" v-else v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
     </template>
 
-    <v-card min-width="500px" class="mx-auto">
-      <v-card-text>
-        <strong>Quick tags</strong>
-        <v-chip-group>
-          <v-chip
-            v-for="tag in quickTags"
-            :key="tag.tag"
-            :color="tag.color"
-            :text-color="tag.textColor"
-            class="text-center"
-            small
-            @click="addTags(tag.tag)"
-          >
-            <v-icon small left> {{ tag.label }} </v-icon>
-            {{ tag.tag }}</v-chip
-          >
-        </v-chip-group>
-        <br />
-        <v-combobox
-          v-model="selectedTags"
-          :items="tags"
-          label="Add tags.."
-          outlined
-          chips
-          small-chips
-          multiple
-        ></v-combobox>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn text @click="addTags(selectedTags)">Save</v-btn>
-      </v-card-actions>
-    </v-card>
+    <ts-event-tag-dialog :events="[event]" @close="showMenu = false"></ts-event-tag-dialog>
+
   </v-menu>
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
+import TsEventTagDialog from './EventTagDialog.vue'
 
 export default {
+  components: {
+    TsEventTagDialog
+  },
   props: ['event'],
   data() {
     return {
       showMenu: false,
-      listItems: [],
-      selectedTags: [],
+      selectedTags: null,
       // TODO: Refactor this into a configurable option
       quickTags: [
         { tag: 'bad', color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
         { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
         { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
       ],
+      search: null,
     }
   },
   computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-    tags() {
-      return this.$store.state.tags.map((tag) => tag.tag)
-    },
-  },
-  methods: {
-    addTags: function (tagsToAdd) {
-      if (!Array.isArray(tagsToAdd)) {
-        tagsToAdd = [tagsToAdd]
-      }
-
-      tagsToAdd.forEach((tag) => {
-        if (this.event._source.tag.indexOf(tag) === -1) {
-          this.event._source.tag.push(tag)
-          ApiClient.tagEvents(this.sketch.id, [this.event], [tag])
-            .then((response) => {
-              this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: 1 })
-            })
-            .catch((e) => {
-              console.error('Cannot tag event')
-            })
-        }
-        this.selectedTags = []
-        this.showMenu = false
-      })
+    assignedTags() {
+      if (!this.event._source.tag) return []
+      return this.event._source.tag
     },
   },
 }

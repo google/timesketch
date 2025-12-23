@@ -13,10 +13,10 @@
 # limitations under the License.
 """This module implements the models for the Timesketch core system."""
 
-from __future__ import unicode_literals
 
 import json
 import logging
+from typing import Optional, Union
 from uuid import uuid4
 
 from flask import current_app
@@ -58,34 +58,96 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
-    timelines = relationship("Timeline", backref="sketch", lazy="select")
-    views = relationship("View", backref="sketch", lazy="select")
-    events = relationship("Event", backref="sketch", lazy="select")
-    stories = relationship("Story", backref="sketch", lazy="select")
-    aggregations = relationship("Aggregation", backref="sketch", lazy="select")
-    attributes = relationship("Attribute", backref="sketch", lazy="select")
-    graphs = relationship("Graph", backref="sketch", lazy="select")
-    graphcaches = relationship("GraphCache", backref="sketch", lazy="select")
-    aggregationgroups = relationship(
-        "AggregationGroup", backref="sketch", lazy="select"
+    timelines = relationship(
+        "Timeline",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
     )
-    analysis = relationship("Analysis", backref="sketch", lazy="select")
-    analysissessions = relationship("AnalysisSession", backref="sketch", lazy="select")
-    searchhistories = relationship("SearchHistory", backref="sketch", lazy="dynamic")
-    scenarios = relationship("Scenario", backref="sketch", lazy="dynamic")
-
-    def __init__(self, name, description, user):
-        """Initialize the Sketch object.
-
-        Args:
-            name: The name of the sketch
-            description: Description of the sketch
-            user: A user (instance of timesketch.models.user.User)
-        """
-        super().__init__()
-        self.name = name
-        self.description = description
-        self.user = user
+    views = relationship(
+        "View",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    events = relationship(
+        "Event",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    stories = relationship(
+        "Story",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    aggregations = relationship(
+        "Aggregation",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    attributes = relationship(
+        "Attribute",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    graphs = relationship(
+        "Graph",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    graphcaches = relationship(
+        "GraphCache",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    aggregationgroups = relationship(
+        "AggregationGroup",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    analysis = relationship(
+        "Analysis",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    analysissessions = relationship(
+        "AnalysisSession",
+        backref="sketch",
+        lazy="select",
+        cascade="save-update, merge, delete",
+    )
+    searchhistories = relationship(
+        "SearchHistory",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
+    scenarios = relationship(
+        "Scenario",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
+    facets = relationship(
+        "Facet",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
+    questions = relationship(
+        "InvestigativeQuestion",
+        backref="sketch",
+        lazy="dynamic",
+        cascade="save-update, merge, delete",
+    )
 
     @property
     def get_named_aggregations(self):
@@ -146,16 +208,20 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
 
     @property
     def active_timelines(self):
-        """List timelines that are ready for analysis.
+        """List timelines that are being processed or ready for analysis.
 
         Returns:
             List of instances of timesketch.models.sketch.Timeline
         """
         _timelines = []
+        statuts_exclus = ["processing", "fail", "archived"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            statuts_exclus.remove("processing")
+
         for timeline in self.timelines:
             timeline_status = timeline.get_status.status
             index_status = timeline.searchindex.get_status.status
-            if (timeline_status or index_status) in ("processing", "fail", "archived"):
+            if (timeline_status or index_status) in statuts_exclus:
                 continue
             _timelines.append(timeline)
         return _timelines
@@ -205,44 +271,16 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
 
     name = Column(Unicode(255))
     description = Column(UnicodeText())
-    color = Column(Unicode(6))
+    color = Column(Unicode(6), default=random_color())
     user_id = Column(Integer, ForeignKey("user.id"))
     searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
-    analysis = relationship("Analysis", backref="timeline", lazy="select")
-    datasources = relationship("DataSource", backref="timeline", lazy="select")
-
-    def __init__(
-        self,
-        name,
-        user,
-        sketch,
-        searchindex,
-        color=None,
-        description=None,
-    ):
-        """Initialize the Timeline object.
-
-        Args:
-            name: The name of the timeline
-            user: A user (instance of timesketch.models.user.User)
-            sketch: A sketch (instance of timesketch.models.sketch.Sketch)
-            searchindex: A searchindex
-                (instance of timesketch.models.sketch.SearchIndex)
-            color: Color for the timeline in HEX as string (e.g. F1F1F1F1)
-            description: The description for the timeline
-        """
-        super().__init__()
-        self.name = name
-        self.description = description
-
-        if not color:
-            color = random_color()
-
-        self.color = color
-        self.user = user
-        self.sketch = sketch
-        self.searchindex = searchindex
+    analysis = relationship(
+        "Analysis", backref="timeline", lazy="select"
+    )  # No cascade needed here due to Sketch.analysis cascade
+    datasources = relationship(
+        "DataSource", backref="timeline", lazy="select", cascade="all, delete-orphan"
+    )
 
 
 class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -252,23 +290,10 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, Bas
     description = Column(UnicodeText())
     index_name = Column(Unicode(255))
     user_id = Column(Integer, ForeignKey("user.id"))
-    timelines = relationship("Timeline", backref="searchindex", lazy="dynamic")
+    timelines = relationship(
+        "Timeline", backref="searchindex", lazy="dynamic", cascade="all, delete-orphan"
+    )
     events = relationship("Event", backref="searchindex", lazy="dynamic")
-
-    def __init__(self, name, description, index_name, user):
-        """Initialize the SearchIndex object.
-
-        Args:
-            name: The name of the timeline
-            description: The description for the timeline
-            index_name: The name of the searchindex
-            user: A user (instance of timesketch.models.user.User)
-        """
-        super().__init__()
-        self.name = name
-        self.description = description
-        self.index_name = index_name
-        self.user = user
 
 
 class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -286,43 +311,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
     aggregations = relationship("Aggregation", backref="view", lazy="select")
     aggregationgroups = relationship("AggregationGroup", backref="view", lazy="select")
 
-    def __init__(
-        self,
-        name,
-        sketch,
-        user,
-        description=None,
-        searchtemplate=None,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        searchtemplate_json=None,
-    ):
-        """Initialize the View object.
-
-        Args:
-            name: The name of the timeline
-            sketch: A sketch (instance of timesketch.models.sketch.Sketch)
-            user: A user (instance of timesketch.models.user.User)
-            description (str): Description of the view
-            searchtemplate: Instance of timesketch.models.sketch.SearchTemplate
-            query_string: The query string
-            query_filter: The filter to apply (JSON format as string)
-            query_dsl: A query DSL document (JSON format as string)
-            searchtemplate_json: The search template used (JSON format as string)
-        """
-        super().__init__()
-        self.name = name
-        self.sketch = sketch
-        self.user = user
-        self.description = description
-        self.searchtemplate = searchtemplate
-        self.query_string = query_string
-        self.query_filter = query_filter
-        self.query_dsl = query_dsl
-        self.searchtemplate_json = searchtemplate_json
-
-    def validate_filter(self, query_filter=None):
+    def validate_filter(self, query_filter: Optional[Union[str, dict]] = None):
         """Validate the Query Filter.
 
         Make sure that we have all expected attributes in the query filter
@@ -377,59 +366,10 @@ class SearchTemplate(
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
-    template_uuid = Column(Unicode(255), unique=True)
+    template_uuid = Column(Unicode(255), unique=True, default=str(uuid4()))
     template_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     views = relationship("View", backref="searchtemplate", lazy="select")
-
-    def __init__(
-        self,
-        name,
-        user=None,
-        short_name=None,
-        description=None,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        template_uuid=None,
-        template_json=None,
-    ):
-        """Initialize the Search Template object.
-
-        Args:
-            name: The human readable name of the template
-            user: A user (instance of timesketch.models.user.User)
-            short_name: The name of the template (snake case)
-            description (str): Description of the search template
-            query_string: The query string
-            query_filter: The filter to apply (JSON format as string)
-            query_dsl: A query DSL document (JSON format as string)
-            template_uuid: UUID of the template
-            template_json: Specification of the template (JSON format as string)
-        """
-        super().__init__()
-        self.name = name
-        self.user = user
-        if not short_name:
-            short_name = name.replace(" ", "_").lower()
-        self.short_name = short_name
-        self.description = description
-        self.query_string = query_string
-        if not query_filter:
-            filter_template = {
-                "exclude": [],
-                "indices": "_all",
-                "terminate_after": 40,
-                "order": "asc",
-                "size": "40",
-            }
-            query_filter = json.dumps(filter_template, ensure_ascii=False)
-        self.query_filter = query_filter
-        self.query_dsl = query_dsl
-        if not template_uuid:
-            template_uuid = str(uuid4())
-        self.template_uuid = template_uuid
-        self.template_json = template_json
 
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -439,20 +379,6 @@ class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
     document_id = Column(Unicode(255))
 
-    def __init__(self, sketch, searchindex, document_id):
-        """Initialize the Event object.
-
-        Args:
-            sketch: A sketch (instance of timesketch.models.sketch.Sketch)
-            searchindex: A searchindex
-                (instance of timesketch.models.sketch.SearchIndex)
-            document_id = String with the datastore document ID
-        """
-        super().__init__()
-        self.sketch = sketch
-        self.searchindex = searchindex
-        self.document_id = document_id
-
 
 class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Story model."""
@@ -461,21 +387,6 @@ class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel
     content = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
-
-    def __init__(self, title, content, sketch, user):
-        """Initialize the Story object.
-
-        Args:
-            title: The title of the story
-            content: Content of the story
-            sketch: A sketch (instance of timesketch.models.sketch.Sketch)
-            user: A user (instance of timesketch.models.user.User)
-        """
-        super().__init__()
-        self.title = title
-        self.content = content
-        self.sketch = sketch
-        self.user = user
 
 
 class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -490,43 +401,6 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, Bas
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     view_id = Column(Integer, ForeignKey("view.id"))
     aggregationgroup_id = Column(Integer, ForeignKey("aggregationgroup.id"))
-
-    def __init__(
-        self,
-        name,
-        description,
-        agg_type,
-        parameters,
-        chart_type,
-        user,
-        sketch,
-        view=None,
-        aggregationgroup=None,
-    ):
-        """Initialize the Aggregation object.
-
-        Args:
-            name (str): Name of the aggregation
-            description (str): Description of the aggregation
-            agg_type (str): Aggregation plugin type
-            parameters (str): JSON serialized dict with aggregation parameters
-            chart_type (str): Chart plugin type
-            user (User): The user who created the aggregation
-            sketch (Sketch): The sketch that the aggregation is bound to
-            view (View): Optional, the view that the aggregation is bound to
-            aggregationgroup (AggregationGroup): Optional, an AggregationGroup
-                that the aggregation is bound to.
-        """
-        super().__init__()
-        self.name = name
-        self.description = description
-        self.agg_type = agg_type
-        self.aggregationgroup = aggregationgroup
-        self.parameters = parameters
-        self.chart_type = chart_type
-        self.user = user
-        self.sketch = sketch
-        self.view = view
 
 
 class AggregationGroup(
@@ -545,42 +419,8 @@ class AggregationGroup(
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     view_id = Column(Integer, ForeignKey("view.id"))
 
-    def __init__(
-        self,
-        name,
-        description,
-        user,
-        sketch,
-        aggregations=None,
-        parameters="",
-        orientation="",
-        view=None,
-    ):
-        """Initialize the AggregationGroup object.
 
-        Args:
-            name (str): Name of the aggregation
-            description (str): Description of the aggregation
-            user (User): The user who created the aggregation
-            sketch (Sketch): The sketch that the aggregation is bound to
-            aggregations (Aggregation): List of aggregation objects.
-            parameters (str): A JSON formatted dict with parameters for
-                charting.
-            orientation (str): Describes how charts should be joined together.
-            view (View): Optional: The view that the aggregation is bound to
-        """
-        super().__init__()
-        self.name = name
-        self.description = description
-        self.aggregations = aggregations or []
-        self.parameters = parameters
-        self.orientation = orientation
-        self.user = user
-        self.sketch = sketch
-        self.view = view
-
-
-class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+class Analysis(GenericAttributeMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the analysis model."""
 
     name = Column(Unicode(255))
@@ -594,43 +434,10 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     timeline_id = Column(Integer, ForeignKey("timeline.id"))
     searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
-
-    def __init__(
-        self,
-        name,
-        description,
-        analyzer_name,
-        parameters,
-        user,
-        sketch,
-        timeline=None,
-        searchindex=None,
-        result=None,
-    ):
-        """Initialize the Analysis object.
-
-        Args:
-            name (str): Name of the analysis
-            description (str): Description of the analysis
-            analyzer_name (str): Name of the analyzer
-            parameters (str): JSON serialized dict with analyser parameters
-            user (User): The user who created the aggregation
-            sketch (Sketch): The sketch that the aggregation is bound to
-            timeline (Timeline): Timeline the analysis was run on
-            searchindex (SearchIndex): SearchIndex the analysis was run on
-            result (str): Result report of the analysis
-        """
-        super().__init__()
-        self.name = name
-        self.description = description
-        self.analyzer_name = analyzer_name
-        self.parameters = parameters
-        self.user = user
-        self.sketch = sketch
-        self.timeline = timeline
-        self.searchindex = searchindex
-        self.result = result
-        self.log = ""
+    approach_id = Column(Integer, ForeignKey("investigativequestionapproach.id"))
+    question_conclusion_id = Column(
+        Integer, ForeignKey("investigativequestionconclusion.id")
+    )
 
 
 class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -639,17 +446,6 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     user_id = Column(Integer, ForeignKey("user.id"))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     analyses = relationship("Analysis", backref="analysissession", lazy="select")
-
-    def __init__(self, user, sketch):
-        """Initialize the AnalysisSession object.
-
-        Args:
-            user (User): The user who created the aggregation
-            sketch (Sketch): The sketch that the aggregation is bound to
-        """
-        super().__init__()
-        self.user = user
-        self.sketch = sketch
 
 
 class Attribute(BaseModel):
@@ -661,22 +457,6 @@ class Attribute(BaseModel):
     ontology = Column(UnicodeText())
     values = relationship("AttributeValue", backref="attribute", lazy="select")
 
-    def __init__(self, user, sketch, name, ontology):
-        """Initialize the Attribute object.
-
-        Args:
-            user (User): The user who created the attribute
-            sketch (Sketch): The sketch that the attribute is bound to
-            name (str): the name of the attribute.
-            ontology (str): The ontology of the value, The values that can
-                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
-        """
-        super().__init__()
-        self.user = user
-        self.sketch = sketch
-        self.name = name
-        self.ontology = ontology
-
 
 class AttributeValue(BaseModel):
     """Implements the attribute value model."""
@@ -684,21 +464,6 @@ class AttributeValue(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id"))
     attribute_id = Column(Integer, ForeignKey("attribute.id"))
     value = Column(UnicodeText())
-
-    def __init__(self, user, attribute, value):
-        """Initialize the Attribute value object.
-
-        Args:
-            user (User): The user who created the attribute value.
-            attribute (Attribute): The attribute this value is bound to.
-            value (str): a string that contains the value for the attribute.
-                The ontology could influence how this will be cast when
-                interpreted.
-        """
-        super().__init__()
-        self.user = user
-        self.attribute = attribute
-        self.value = value
 
 
 class Graph(LabelMixin, CommentMixin, BaseModel):
@@ -714,42 +479,6 @@ class Graph(LabelMixin, CommentMixin, BaseModel):
     num_nodes = Column(Integer)
     num_edges = Column(Integer)
 
-    def __init__(
-        self,
-        user,
-        sketch,
-        name,
-        description=None,
-        graph_config=None,
-        graph_elements=None,
-        graph_thumbnail=None,
-        num_nodes=None,
-        num_edges=None,
-    ):
-        """Initialize the Graph object.
-
-        Args:
-            user (User): The user who created the graph.
-            sketch (Sketch): The sketch that the graph is bound to.
-            name (str): Name of the graph.
-            description (str): Description of the graph.
-            graph_config (dict): Config used when generating the graph.
-            graph_elements (str): Graph in json string format.
-            graph_thumbnail (str): Image of graph in Base64 format.
-            num_nodes (int): Number of nodes in the graph.
-            num_edges (int): Number of edges in the graph.
-        """
-        super().__init__()
-        self.user = user
-        self.sketch = sketch
-        self.name = name
-        self.description = description
-        self.graph_config = graph_config
-        self.graph_elements = graph_elements
-        self.graph_thumbnail = graph_thumbnail
-        self.num_nodes = num_nodes
-        self.num_edges = num_edges
-
 
 class GraphCache(BaseModel):
     """Implements the graph cache model."""
@@ -760,33 +489,6 @@ class GraphCache(BaseModel):
     graph_elements = Column(UnicodeText())
     num_nodes = Column(Integer)
     num_edges = Column(Integer)
-
-    def __init__(
-        self,
-        sketch,
-        graph_plugin=None,
-        graph_config=None,
-        graph_elements=None,
-        num_nodes=None,
-        num_edges=None,
-    ):
-        """Initialize the GraphCache object.
-
-        Args:
-            sketch (Sketch): The sketch that the graph is bound to.
-            graph_plugin (str): Name of the graph plugin that was used.
-            graph_config (dict): Config used when generating the graph.
-            graph_elements (str): Graph in json string format.
-            num_nodes (int): Number of nodes in the graph.
-            num_edges (int): Number of edges in the graph.
-        """
-        super().__init__()
-        self.sketch = sketch
-        self.graph_plugin = graph_plugin
-        self.graph_config = graph_config
-        self.graph_elements = graph_elements
-        self.num_nodes = num_nodes
-        self.num_edges = num_edges
 
 
 class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -800,54 +502,17 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     file_size = Column(BigInteger())
     original_filename = Column(UnicodeText())
     data_label = Column(UnicodeText())
-    error_message = Column(UnicodeText())
-    total_file_events = Column(BigInteger())
-
-    def __init__(
-        self,
-        timeline,
-        user,
-        provider,
-        context,
-        file_on_disk,
-        file_size,
-        original_filename,
-        data_label,
-        error_message="",
-        total_file_events=0,
-    ):  # pylint: disable=too-many-arguments
-        """Initialize the DataSource object.
-
-        Args:
-            timeline (Timeline): Timeline that this datasource is part of.
-            user (User): The user who imported the data.
-            provider (str): Name of the application that collected the data.
-            context (str): Context on how the data was collected.
-            file_on_disk (str): Path to uploaded file.
-            file_size (int): Size on disk for uploaded file.
-            original_filename (str): Original filename for uploaded file.
-            data_label (str): Data label for the uploaded data.
-            error_message (str): Optional error message in case the data source
-                did not successfully import.
-        """
-        super().__init__()
-        self.timeline = timeline
-        self.user = user
-        self.provider = provider
-        self.context = context
-        self.file_on_disk = file_on_disk
-        self.file_size = file_size
-        self.original_filename = original_filename
-        self.data_label = data_label
-        self.error_message = error_message
-        self.total_file_events = total_file_events
+    error_message = Column(UnicodeText(), default="")
+    total_file_events = Column(BigInteger(), default=0)
 
     def set_total_file_events(self, total_file_events):
         self.total_file_events = total_file_events
+        db_session.add(self)
         db_session.commit()
 
     def set_error_message(self, error_message):
         self.error_message = error_message
+        db_session.add(self)
         db_session.commit()
 
     @property
@@ -880,6 +545,10 @@ class SearchHistory(LabelMixin, BaseModel):
     parent_id = Column(Integer, ForeignKey(id))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
+    scenario_id = Column(Integer, ForeignKey("scenario.id"))
+    facet_id = Column(Integer, ForeignKey("facet.id"))
+    question_id = Column(Integer, ForeignKey("investigativequestion.id"))
+    approach_id = Column(Integer, ForeignKey("investigativequestionapproach.id"))
     description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
@@ -895,35 +564,6 @@ class SearchHistory(LabelMixin, BaseModel):
         collection_class=attribute_mapped_collection("id"),
     )
 
-    def __init__(
-        self,
-        user,
-        sketch,
-        description=None,
-        query_string=None,
-        query_filter=None,
-        query_dsl=None,
-        parent=None,
-    ):
-        """ "Initialize the SearchHistory object
-
-        Args:
-            user (User): The user who owns the search history.
-            sketch (Sketch): The sketch for the search history.
-            description (str): Description for the search history entry.
-            query_string (str): The query string.
-            query_filter (str): The filter to apply (JSON format as string).
-            query_dsl (str): A query DSL document (JSON format as string).
-            parent (SearchHistory): Reference to parent search history entry.
-        """
-        self.user = user
-        self.sketch = sketch
-        self.description = description
-        self.query_string = query_string
-        self.query_filter = query_filter
-        self.query_dsl = query_dsl
-        self.parent = parent
-
     @staticmethod
     def build_node_dict(node_dict, node):
         node_dict["id"] = node.id
@@ -936,6 +576,9 @@ class SearchHistory(LabelMixin, BaseModel):
         node_dict["query_string"] = node.query_string
         node_dict["query_filter"] = node.query_filter
         node_dict["query_dsl"] = node.query_dsl
+        node_dict["scenario"] = node.scenario_id
+        node_dict["facet"] = node.facet_id
+        node_dict["question"] = node.question_id
         node_dict["children"] = []
         return node_dict
 
@@ -980,29 +623,14 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, Bas
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     summary = Column(UnicodeText())
+    dfiq_identifier = Column(UnicodeText())
+    uuid = Column(UnicodeText())
     spec_json = Column(UnicodeText())
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
     facets = relationship("Facet", backref="scenario", lazy="select")
-
-    def __init__(self, name, display_name, sketch, user, spec_json, description=None):
-        """Initialize the Scenario object.
-
-        Args:
-            name (str): The name of the scenario
-            display_name (str): The display name of the scenario
-            sketch (timesketch.models.sketch.Sketch): A sketch
-            user (timesketch.models.user.User): A user
-            spec_json (str): Scenario specification from YAML
-            description (str): Description of the scenario
-        """
-        super().__init__()
-        self.name = name
-        self.display_name = display_name
-        self.sketch = sketch
-        self.user = user
-        self.spec_json = spec_json
-        self.description = description
+    questions = relationship("InvestigativeQuestion", backref="scenario", lazy="select")
+    search_histories = relationship("SearchHistory", backref="scenario", lazy="select")
 
 
 class FacetTimeFrame(BaseModel):
@@ -1017,22 +645,6 @@ class FacetTimeFrame(BaseModel):
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     facet_id = Column(Integer, ForeignKey("facet.id"))
-
-    def __init__(self, start_time, end_time, facet, user=None, description=None):
-        """Initialize the InvestigationTimeFrame object.
-
-        Args:
-            start_time (datetime): Timezone-aware UTC datetime object.
-            end_time (datetime): Timezone-aware UTC datetime object.
-            facet (Facet): Facet for this time frame
-            description (str): Description of the timeframe (optional)
-        """
-        super().__init__()
-        self.start_time = start_time
-        self.end_time = end_time
-        self.facet = facet
-        self.user = user
-        self.description = description
 
 
 # Association tables for the many-to-many relationship for a conclusion.
@@ -1090,21 +702,6 @@ class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         "Aggregation", secondary=facetconclusion_aggregation_association_table
     )
 
-    def __init__(self, conclusion, user, facet, automated=False):
-        """Initialize the InvestigationConclusion object.
-
-        Args:
-            conclusion (str): The conclusion of the investigation
-            user (User): A user
-            facet (Facet): Facet for this conclusion
-            automated (bool): Indicate if conclusion was automated
-        """
-        super().__init__()
-        self.conclusion = conclusion
-        self.user = user
-        self.facet = facet
-        self.automated = automated
-
 
 # Association table for the many-to-many relationship for timelines in an
 # investigation.
@@ -1129,31 +726,17 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
+    dfiq_identifier = Column(UnicodeText())
+    uuid = Column(UnicodeText())
     spec_json = Column(UnicodeText())
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
     scenario_id = Column(Integer, ForeignKey("scenario.id"))
     timeframes = relationship("FacetTimeFrame", backref="facet", lazy="select")
     timelines = relationship("Timeline", secondary=facet_timeline_association_table)
     questions = relationship("InvestigativeQuestion", backref="facet", lazy="select")
     conclusions = relationship("FacetConclusion", backref="facet", lazy="select")
-
-    def __init__(self, name, display_name, user, spec_json, description=None):
-        """Initialize the Facet object.
-
-        Args:
-            name (str): The name of the investigation
-            display_name (str): The display name of the investigation
-            user (User): A userinvestigationconclusion
-            scenario (Scenario): The Scenario this investigation belongs to
-            spec_json (str): Investigation specification
-            description (str): Description of the investigation
-        """
-        super().__init__()
-        self.name = name
-        self.display_name = display_name
-        self.user = user
-        self.spec_json = spec_json
-        self.description = description
+    search_histories = relationship("SearchHistory", backref="facet", lazy="select")
 
 
 # Association tables for the many-to-many relationship for a question conclusion.
@@ -1201,6 +784,17 @@ questionconclusion_aggregation_association_table = Table(
     Column("aggregation_id", Integer, ForeignKey("aggregation.id")),
 )
 
+questionconclusion_event_association_table = Table(
+    "investigativequestionconclusion_event",
+    BaseModel.metadata,
+    Column(
+        "investigativequestionconclusion_id",
+        Integer,
+        ForeignKey("investigativequestionconclusion.id"),
+    ),
+    Column("event_id", Integer, ForeignKey("event.id")),
+)
+
 
 class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the InvestigativeQuestionConclusion model.
@@ -1228,45 +822,15 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
     saved_aggregations = relationship(
         "Aggregation", secondary=questionconclusion_aggregation_association_table
     )
-
-    def __init__(self, user, investigativequestion, conclusion=None, automated=False):
-        """Initialize the QuestionConclusion object.
-
-        Args:
-            conclusion (str): The conclusion of the question
-            user (timesketch.models.user.User): A user
-            investigativequestion (InvestigativeQuestion): A question
-            automated (bool): Indicate if conclusion was automated
-        """
-        super().__init__()
-        self.user = user
-        self.investigativequestion = investigativequestion
-        self.conclusion = conclusion
-        self.automated = automated
-
-
-# Association tables for the many-to-many relationships for a question.
-question_searchtemplate_association_table = Table(
-    "investigativequestion_searchtemplate",
-    BaseModel.metadata,
-    Column(
-        "investigativequestion_id",
-        Integer,
-        ForeignKey("investigativequestion.id"),
-    ),
-    Column("searchtemplate_id", Integer, ForeignKey("searchtemplate.id")),
-)
-
-question_sigmarule_association_table = Table(
-    "investigativequestion_sigmarule",
-    BaseModel.metadata,
-    Column(
-        "investigativequestion_id",
-        Integer,
-        ForeignKey("investigativequestion.id"),
-    ),
-    Column("sigmarule_id", Integer, ForeignKey("sigmarule.id")),
-)
+    analysis = relationship(
+        "Analysis", backref="investigativequestionconclusion", lazy="select"
+    )
+    events = relationship(
+        "Event",
+        secondary=questionconclusion_event_association_table,
+        backref="conclusions",
+        lazy="select",
+    )
 
 
 class InvestigativeQuestion(
@@ -1280,34 +844,76 @@ class InvestigativeQuestion(
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey("user.id"))
+    dfiq_identifier = Column(UnicodeText())
+    uuid = Column(UnicodeText())
     spec_json = Column(UnicodeText())
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    scenario_id = Column(Integer, ForeignKey("scenario.id"))
     facet_id = Column(Integer, ForeignKey("facet.id"))
-    search_templates = relationship(
-        "SearchTemplate", secondary=question_searchtemplate_association_table
-    )
-    sigma_rules = relationship(
-        "SigmaRule", secondary=question_sigmarule_association_table
+    approaches = relationship(
+        "InvestigativeQuestionApproach",
+        backref="investigativequestion",
+        lazy="select",
     )
     conclusions = relationship(
         "InvestigativeQuestionConclusion",
         backref="investigativequestion",
         lazy="select",
     )
+    search_histories = relationship(
+        "SearchHistory", backref="investigativequestion", lazy="select"
+    )
 
-    def __init__(self, name, display_name, user, spec_json, description=None):
-        """Initialize the InvestigativeQuestion object.
 
-        Args:
-            name (str): The name of the question
-            display_name (str): The display name of the question
-            user (timesketch.models.user.User): A user
-            spec_json (str): Question specification
-            description (str): Description of the question
-        """
-        super().__init__()
-        self.name = name
-        self.display_name = display_name
-        self.user = user
-        self.spec_json = spec_json
-        self.description = description
+# Association tables for the many-to-many relationships for an approach.
+approach_searchtemplate_association_table = Table(
+    "investigativequestionapproach_searchtemplate",
+    BaseModel.metadata,
+    Column(
+        "investigativequestionapproach_id",
+        Integer,
+        ForeignKey("investigativequestionapproach.id"),
+    ),
+    Column("searchtemplate_id", Integer, ForeignKey("searchtemplate.id")),
+)
+
+approach_sigmarule_association_table = Table(
+    "investigativequestionapproach_sigmarule",
+    BaseModel.metadata,
+    Column(
+        "investigativequestionapproach_id",
+        Integer,
+        ForeignKey("investigativequestionapproach.id"),
+    ),
+    Column("sigmarule_id", Integer, ForeignKey("sigmarule.id")),
+)
+
+
+class InvestigativeQuestionApproach(
+    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel
+):
+    """Implements the Investigative Question Approach model.
+
+    An approach is the smallest component of an investigation.
+    """
+
+    name = Column(UnicodeText())
+    display_name = Column(UnicodeText())
+    description = Column(UnicodeText())
+    dfiq_identifier = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey("user.id"))
+    spec_json = Column(UnicodeText())
+    investigativequestion_id = Column(Integer, ForeignKey("investigativequestion.id"))
+    search_templates = relationship(
+        "SearchTemplate", secondary=approach_searchtemplate_association_table
+    )
+    sigma_rules = relationship(
+        "SigmaRule", secondary=approach_sigmarule_association_table
+    )
+    search_histories = relationship(
+        "SearchHistory", backref="investigativequestionapproach", lazy="select"
+    )
+    analysis = relationship(
+        "Analysis", backref="investigativequestionapproach", lazy="dynamic"
+    )

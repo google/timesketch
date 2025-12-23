@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-card outlined min-height="550" style="overflow: hidden">
     <v-row>
-      <v-col v-if="matches.savedSearches.length" cols="4">
+      <v-col v-if="matches.savedSearches.length" cols="3">
         <h5 class="mt-3 ml-4">Saved searches</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
           <v-list-item
@@ -33,7 +33,27 @@ limitations under the License.
       </v-col>
       <v-divider vertical></v-divider>
 
-      <v-col cols="4">
+      <v-col v-if="matches.timeFilters.length" cols="3">
+      <h5 class="mt-3 ml-4">Last time filters</h5>
+        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
+          <template
+            v-for="timeFilter in matches.timeFilters.slice(0, MAX_TIMELINE_ELEMENTS)"
+          >
+            <v-list-item
+              style="font-size: 0.9em"
+              :key="timeFilter.value"
+              v-on:click="setTimeFilter(timeFilter)"
+            >
+              <v-list-item-content>
+                {{timeFilter.value.split(',')[0]}} - {{  timeFilter.value.split(',')[1]}}
+              </v-list-item-content>
+            </v-list-item>
+          </template>
+        </v-list>
+      </v-col>
+      <v-divider vertical></v-divider>
+
+      <v-col cols="3">
         <h5 class="mt-3 ml-4">Data types</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
           <v-list-item
@@ -55,59 +75,26 @@ limitations under the License.
       </v-col>
       <v-divider vertical></v-divider>
 
-      <v-col v-if="matches.labels.length || matches.tags.length" cols="4">
+      <v-col v-if="matches.labels.length || matches.tags.length" cols="3">
         <h5 class="mt-3 ml-5">Tags</h5>
-        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
-          <v-list-item
-            v-for="label in matches.labels"
-            :key="label.label"
-            v-on:click="searchForLabel(label.label)"
-            style="font-size: 0.9em"
-          >
-            <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
-            <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-
-            <v-list-item-content>
-              <span
-                >{{ label.label | formatLabelText }}
-                <span class="font-weight-bold" style="font-size: 0.8em">({{ label.count | compactNumber }})</span></span
-              >
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item
-            v-for="tag in matches.tags"
-            :key="tag.tag"
-            v-on:click="searchForTag(tag.tag)"
-            style="font-size: 0.9em"
-          >
-            <v-list-item-content>
-              <span
-                >{{ tag.tag }}
-                <span class="font-weight-bold" style="font-size: 0.8em">({{ tag.count | compactNumber }})</span></span
-              >
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
+        <ts-tags-list></ts-tags-list>
       </v-col>
     </v-row>
   </v-card>
 </template>
 
 <script>
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
+import TsTagsList from '../LeftPanel/TagsList.vue'
 
 export default {
+  components: {
+    TsTagsList,
+  },
   props: ['selectedLabels', 'queryString'],
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     meta() {
       return this.$store.state.meta
     },
@@ -120,14 +107,23 @@ export default {
     dataTypes() {
       return this.$store.state.dataTypes
     },
+    filteredMetaLabels() {
+      return this.meta.filter_labels.filter(
+        (label) => !label.label.startsWith('__ts_fact')
+      );
+    },
     all() {
       return {
         fields: this.meta.mappings,
         tags: this.tags,
-        labels: this.meta.filter_labels,
+        labels: this.filteredMetaLabels,
         dataTypes: this.dataTypes,
         savedSearches: this.meta.views,
+        timeFilters: this.timeFilters
       }
+    },
+    timeFilters() {
+      return this.$store.state.timeFilters;
     },
     scrollbarTheme() {
       return this.$vuetify.theme.dark ? 'dark' : 'light'
@@ -139,17 +135,17 @@ export default {
         return this.all
       }
 
-      matches['fields'] = this.meta.mappings.filter((field) =>
+      matches.fields = this.meta.mappings.filter((field) =>
         field.field.toLowerCase().includes(this.queryString.toLowerCase())
       )
-      matches['tags'] = this.tags.filter((tag) => tag.tag.toLowerCase().includes(this.queryString.toLowerCase()))
-      matches['labels'] = this.meta.filter_labels.filter((label) =>
+      matches.tags = this.tags.filter((tag) => tag.tag.toLowerCase().includes(this.queryString.toLowerCase()))
+      matches.labels = this.filteredMetaLabels.filter((label) =>
         label.label.toLowerCase().includes(this.queryString.toLowerCase())
       )
-      matches['dataTypes'] = this.dataTypes.filter((dataType) =>
+      matches.dataTypes = this.dataTypes.filter((dataType) =>
         dataType.data_type.toLowerCase().includes(this.queryString.toLowerCase())
       )
-      matches['savedSearches'] = this.meta.views.filter((savedSearch) =>
+      matches.savedSearches = this.meta.views.filter((savedSearch) =>
         savedSearch.name.toLowerCase().includes(this.queryString.toLowerCase())
       )
 
@@ -161,33 +157,10 @@ export default {
     },
   },
   methods: {
-    searchForLabel(label) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = '*'
-      eventData.queryFilter = defaultQueryFilter()
-      let chip = {
-        field: '',
-        value: label,
-        type: 'label',
-        operator: 'must',
-        active: true,
-      }
-      eventData.queryFilter.chips.push(chip)
-      this.$emit('setQueryAndFilter', eventData)
-    },
-    searchForTag(tag) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'tag:' + tag
-      eventData.queryFilter = defaultQueryFilter()
-      this.$emit('setQueryAndFilter', eventData)
-    },
     searchForDataType(dataType) {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'data_type:' + '"' + dataType + '"'
-      eventData.queryFilter = defaultQueryFilter()
       this.$emit('setQueryAndFilter', eventData)
     },
     searchForField(field) {
@@ -201,10 +174,23 @@ export default {
       }
       eventData.doSearch = false
       eventData.queryString = separator + field + ':'
-      eventData.queryFilter = defaultQueryFilter()
       this.$emit('setQueryAndFilter', eventData)
     },
+    setTimeFilter(timeFilter) {
+      this.$emit('addChip', timeFilter)
+    },
+    fetchTimeFilters() {
+      this.$store.dispatch('updateTimeFilters')
+    },
   },
+  created: function () {
+    this.fetchTimeFilters()
+  },
+  setup: function() {
+    return {
+      MAX_TIMELINE_ELEMENTS: 10
+    }
+  }
 }
 </script>
 

@@ -15,37 +15,22 @@ limitations under the License.
 -->
 <template>
   <span>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn icon v-on:click="searchHistoryBack" :disabled="!hasParent" v-bind="attrs" v-on="on">
-          <v-icon>mdi-arrow-left</v-icon>
-        </v-btn>
-      </template>
-      <span>Click to go back</span>
-    </v-tooltip>
+    <v-btn icon v-on:click="searchHistoryBack" :disabled="!hasParent">
+      <v-icon title="Go back to your last search">mdi-arrow-left</v-icon>
+    </v-btn>
 
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn icon v-on:click="searchHistoryForward" :disabled="!hasChild" v-bind="attrs" v-on="on">
-          <v-icon>mdi-arrow-right</v-icon>
-        </v-btn>
-      </template>
-      <span>Click to go forward</span>
-    </v-tooltip>
+    <v-btn icon v-on:click="searchHistoryForward" :disabled="!hasChild">
+      <v-icon title="Go to your next search">mdi-arrow-right</v-icon>
+    </v-btn>
 
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn icon v-on:click="$emit('toggleSearchHistory')" v-bind="attrs" v-on="on">
-          <v-icon>mdi-history</v-icon>
-        </v-btn>
-      </template>
-      <span>Click to see your search history</span>
-    </v-tooltip>
+    <v-btn icon v-on:click="$emit('toggleSearchHistory')">
+      <v-icon title="Open your search history">mdi-history</v-icon>
+    </v-btn>
   </span>
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 
 export default {
   computed: {

@@ -15,10 +15,9 @@
 This module implements annotations that can be use on other database models.
 """
 
-from __future__ import unicode_literals
 
 import json
-import six
+import logging
 
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -27,12 +26,16 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import subqueryload
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
 
+logger = logging.getLogger("timesketch.models.annotations")
 
-class BaseAnnotation(object):
+
+class BaseAnnotation:
     """Base class with common attributes."""
 
     @declared_attr
@@ -59,50 +62,17 @@ class Label(BaseAnnotation):
 
     label = Column(Unicode(255))
 
-    def __init__(self, user, label):
-        """Initialize the model.
-
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            name: Name of the label
-        """
-        super().__init__()
-        self.user = user
-        self.label = label
-
 
 class Comment(BaseAnnotation):
     """A comment annotation."""
 
     comment = Column(UnicodeText())
 
-    def __init__(self, user, comment):
-        """Initialize the model.
-
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            body: The body if the comment
-        """
-        super().__init__()
-        self.user = user
-        self.comment = comment
-
 
 class Status(BaseAnnotation):
     """A status annotation."""
 
     status = Column(Unicode(255))
-
-    def __init__(self, user, status):
-        """Initialize the model.
-
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            status: The type of status (string, e.g. open)
-        """
-        super().__init__()
-        self.user = user
-        self.status = status
 
 
 class GenericAttribute(BaseAnnotation):
@@ -113,25 +83,8 @@ class GenericAttribute(BaseAnnotation):
     ontology = Column(UnicodeText())
     description = Column(UnicodeText())
 
-    def __init__(self, user, name, value, ontology, description):
-        """Initialize the Attribute object.
 
-        Args:
-            user: A user (instance of timesketch.models.user.User)
-            name (str): The name of the attribute.
-            value (str):  The value of the attribute
-            ontology (str): The ontology (type) of the value, The values that
-                can be used are defined in timesketch/lib/ontology.py.
-        """
-        super().__init__()
-        self.user = user
-        self.name = name
-        self.value = value
-        self.ontology = ontology
-        self.description = description
-
-
-class LabelMixin(object):
+class LabelMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -147,10 +100,7 @@ class LabelMixin(object):
         Returns:
             A relationship to an label (timesketch.models.annotation.Label)
         """
-        if six.PY2:
-            class_name = b"{0:s}Label".format(self.__name__)
-        else:
-            class_name = "{0:s}Label".format(self.__name__)
+        class_name = f"{self.__name__:s}Label"
 
         self.Label = type(
             class_name,
@@ -158,20 +108,18 @@ class LabelMixin(object):
                 Label,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_label".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_label",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
-        return relationship(self.Label)
+        return relationship(self.Label, cascade="all, delete-orphan")
 
     def add_label(self, label, user=None):
         """Add a label to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple labels.
 
         Args:
             label: Name of the label.
@@ -180,6 +128,7 @@ class LabelMixin(object):
         if self.has_label(label):
             return
         self.labels.append(self.Label(user=user, label=label))
+        db_session.add(self)
         db_session.commit()
 
     def remove_label(self, label):
@@ -188,10 +137,22 @@ class LabelMixin(object):
         Args:
             label: Name of the label.
         """
-        for label_obj in self.labels:
-            if label_obj.label.lower() != label.lower():
-                continue
+        labels_to_remove = [
+            label_obj
+            for label_obj in self.labels
+            if label_obj.label.lower() == label.lower()
+        ]
+
+        if not labels_to_remove:
+            logger.warning(
+                "Attempted to remove non-existent label: %s from object: %s",
+                str(label),
+                str(type(self).__name__),
+            )
+
+        for label_obj in labels_to_remove:
             self.labels.remove(label_obj)
+        db_session.add(self)
         db_session.commit()
 
     def has_label(self, label):
@@ -234,7 +195,7 @@ class LabelMixin(object):
         return json.dumps([x.label for x in self.labels])
 
 
-class CommentMixin(object):
+class CommentMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -250,10 +211,7 @@ class CommentMixin(object):
         Returns:
             A relationship to a comment (timesketch.models.annotation.Comment)
         """
-        if six.PY2:
-            class_name = b"{0:s}Comment".format(self.__name__)
-        else:
-            class_name = "{0:s}Comment".format(self.__name__)
+        class_name = f"{self.__name__:s}Comment"
 
         self.Comment = type(
             class_name,
@@ -261,32 +219,86 @@ class CommentMixin(object):
                 Comment,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_comment".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_comment",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
-        return relationship(self.Comment)
+        return relationship(self.Comment, cascade="all, delete-orphan")
+
+    @classmethod
+    def get_with_comments(cls, **kwargs):
+        """Eagerly loads comments for a given object query.
+
+        This method is designed to prevent the "N+1 Query Problem" by fetching
+        the primary objects and their related comments in a minimal number of
+        database queries, significantly improving performance compared to lazy
+        loading.
+
+        It first attempts to use `subqueryload` for eager loading,
+        which is generally efficient for many-to-one relationships. If a
+        `KeyError` occurs during this process, it falls
+        back to using `selectinload`. A warning is logged when the fallback
+        occurs, including details about the class and query parameters.
+
+        Args:
+            kwargs: Keyword arguments passed to filter_by.
+
+        Returns:
+            List of objects with comments eagerly loaded.
+        """
+        try:
+            return (
+                cls.query.filter_by(**kwargs).options(subqueryload(cls.comments)).all()
+            )
+        except KeyError:
+            # to get the Sketch id (for troubleshooting)
+            log_kwargs = {}
+            for key, value in kwargs.items():
+                if hasattr(value, "id"):
+                    log_kwargs[key] = f"<{value.__class__.__name__} id: {value.id}>"
+                else:
+                    log_kwargs[key] = repr(value)
+
+            logger.warning(
+                "Subqueryload failed for [%s] with kwargs [%s], falling back to "
+                "selectinload. You might want to upgrade SQLAlchemy to 1.4.54"
+                "this hotfix might be removed in a future version.",
+                cls.__name__,
+                log_kwargs,
+            )
+            return (
+                cls.query.filter_by(**kwargs).options(selectinload(cls.comments)).all()
+            )
 
     def remove_comment(self, comment_id):
         """Remove a comment from an event.
 
         Args:
             comment_id: Id of the comment.
-        """
-        for comment_obj in self.comments:
-            if comment_obj.id == int(comment_id):
-                self.comments.remove(comment_obj)
-                db_session.commit()
-                return True
 
-        return False
+        Returns:
+            True if the comment was removed, False otherwise.
+        """
+
+        comments_to_remove = [
+            comment_obj
+            for comment_obj in self.comments
+            if comment_obj.id == int(comment_id)
+        ]
+        if not comments_to_remove:
+            logger.debug("Comment to delete not found")
+            return False  # Comment not found
+        for comment_obj in comments_to_remove:
+            logger.debug("Removing comment")
+            self.comments.remove(comment_obj)
+        db_session.add(self)
+        db_session.commit()
+        return True
 
     def get_comment(self, comment_id):
-        """Retrives a comment.
+        """Retrieves a comment.
 
         Args:
             comment_id: Id of the comment.
@@ -308,13 +320,14 @@ class CommentMixin(object):
         for comment_obj in self.comments:
             if comment_obj.id == int(comment_id):
                 comment_obj.comment = comment
+                db_session.add(self)
                 db_session.commit()
                 return comment_obj
 
         return False
 
 
-class StatusMixin(object):
+class StatusMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -330,10 +343,7 @@ class StatusMixin(object):
         Returns:
             A relationship to a status (timesketch.models.annotation.Status)
         """
-        if six.PY2:
-            class_name = b"{0:s}Status".format(self.__name__)
-        else:
-            class_name = "{0:s}Status".format(self.__name__)
+        class_name = f"{self.__name__:s}Status"
 
         self.Status = type(
             class_name,
@@ -341,15 +351,13 @@ class StatusMixin(object):
                 Status,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_status".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_status",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
-        return relationship(self.Status)
+        return relationship(self.Status, cascade="all, delete-orphan")
 
     def set_status(self, status):
         """
@@ -359,24 +367,49 @@ class StatusMixin(object):
         Args:
             status: Name of the status
         """
-        for _status in self.status:
-            self.status.remove(_status)
+        self.status = []  # replace the list with an empty list.
         self.status.append(self.Status(user=None, status=status))
+        db_session.add(self)
         db_session.commit()
 
     @property
     def get_status(self):
         """Get the current status.
 
+        Only one status should be in the database at a time.
+
+        Raises:
+            RuntimeError: If more than one status is available.
+
         Returns:
             The status as a string
         """
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
+        if len(self.status) > 1:
+            self_id = getattr(self, "id", "N/A")
+            object_type_name = str(type(self).__name__)
+
+            log_details = f"ID: [{self_id}]"
+            # If the object has a sketch_id attribute, it's likely a component
+            # of a sketch (e.g., Timeline, View, Event).
+            if hasattr(self, "sketch_id"):
+                sketch_id_val = getattr(self, "sketch_id", None)
+                if sketch_id_val is not None:
+                    log_details = f"ID: [{self_id}], Sketch ID: [{sketch_id_val}]"
+
+            # TODO: Change from warning to raising an exception once we ensured
+            # it won't affect the deployment.
+            # raise RuntimeError(
+            logging.warning(
+                "More than one status available for object [%s] (%s)",
+                object_type_name,
+                log_details,
+            )
         return self.status[0]
 
 
-class GenericAttributeMixin(object):
+class GenericAttributeMixin:
     """
     A MixIn for generating the necessary tables in the database and to make
     it accessible from the parent model object (the model object that uses this
@@ -392,7 +425,7 @@ class GenericAttributeMixin(object):
         Returns:
             A relationship with (timesketch.models.annotation.GenericAttribute)
         """
-        class_name = "{0:s}GenericAttribute".format(self.__name__)
+        class_name = f"{self.__name__:s}GenericAttribute"
 
         self.GenericAttribute = type(
             class_name,
@@ -400,24 +433,25 @@ class GenericAttributeMixin(object):
                 GenericAttribute,
                 BaseModel,
             ),
-            dict(
-                __tablename__="{0:s}_genericattribute".format(self.__tablename__),
-                parent_id=Column(
-                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
-                ),
-                parent=relationship(self),
-            ),
+            {
+                "__tablename__": f"{self.__tablename__:s}_genericattribute",
+                "parent_id": Column(Integer, ForeignKey(f"{self.__tablename__:s}.id")),
+                "parent": relationship(self, viewonly=True),
+            },
         )
         return relationship(self.GenericAttribute)
 
     def add_attribute(self, name, value, ontology=None, user=None, description=None):
-        """Add a label to an object.
+        """Add a attribute to an object.
 
-        Each entry can have multible labels.
+        Each entry can have multiple generic attributes.
 
         Args:
-            label: Name of the label.
-            user: Optional user that adds the label (sketch.User).
+            name: Name of the attribute.
+            value: Value of the attribute.
+            ontology: Optional ontology of the attribute.
+            user: Optional user that adds the attribute (timesketch.models.user.User).
+            description: Optional description of the attribute.
         """
         self.genericattributes.append(
             self.GenericAttribute(
@@ -428,6 +462,7 @@ class GenericAttributeMixin(object):
                 description=description,
             )
         )
+        db_session.add(self)
         db_session.commit()
 
     @property

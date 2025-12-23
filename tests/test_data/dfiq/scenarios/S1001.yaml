@@ -1,0 +1,8 @@
+name: Test Scenario
+description: Test Scenario
+type: scenario
+id: S1001
+uuid: 6e5d9e63-b477-4392-8742-c85ac9b653e2
+tags:
+  - test
+dfiq_version: 1.1.0

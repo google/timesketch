@@ -49,7 +49,7 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         Returns:
             Search template in JSON (instance of flask.wrappers.Response)
         """
-        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        searchtemplate = SearchTemplate.get_by_id(searchtemplate_id)
 
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
@@ -66,7 +66,7 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         Returns:
             HTTP status 200 if successful, otherwise error messages.
         """
-        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        searchtemplate = SearchTemplate.get_by_id(searchtemplate_id)
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
 
@@ -84,7 +84,7 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
     """Resource to parse a search template query string using Jinja2 template."""
 
     @login_required
-    def post(self, searchtemplate_id):
+    def post(self, searchtemplate_id: int):
         """Parse the query string template with Jinja2.
 
         This resource take a form with parameters to be parsed with the Jinja2
@@ -95,13 +95,13 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
         }
 
         Args:
-            searchtemplate_id: Primary key for a search template database model
+            searchtemplate_id: (int) Primary key for a search template database model
 
         Returns:
             Parsed and sanitized search query string.
         """
         form = request.json or {}
-        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        searchtemplate = SearchTemplate.get_by_id(searchtemplate_id)
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
 
@@ -148,6 +148,14 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         Returns:
             View in JSON (instance of flask.wrappers.Response)
         """
+        # Disable adding search templates from the API. This is not supported yet and
+        # can only be done by the server admin using the YAML format.
+        # TODO: Remove this when support is added for template reviews and tooling.
+        abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            "Unable to save template. Please contact server admin to add using YAML",
+        )
+
         form = request.json
         if not form:
             form = request.data
@@ -156,10 +164,10 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         if not search_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to save the searchtemplate, the saved search ID is " "missing.",
+                "Unable to save the searchtemplate, the saved search ID is missing.",
             )
 
-        search_obj = View.query.get(search_id)
+        search_obj = View.get_by_id(search_id)
         if not search_obj:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No search found with this ID.")
 
@@ -173,7 +181,7 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
                 "This search has already been saved as a template.",
             )
 
-        sketch = Sketch.query.get_with_acl(search_obj.sketch.id)
+        sketch = Sketch.get_with_acl(search_obj.sketch.id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

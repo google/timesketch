@@ -45,9 +45,10 @@ logger = logging.getLogger("timesketch.wsgi_server")
 configure_logger()
 application = create_app()
 application_legacy = create_app(legacy_ui=True)
+application_v3 = create_app(v3_ui=True)
 
 # Setup metrics endpoint.
-if os.environ.get("prometheus_multiproc_dir"):
+if os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
     logger.info("Metrics server enabled")
     GunicornPrometheusMetrics(application, group_by="endpoint")
 
@@ -62,5 +63,12 @@ def shutdown_session(exception=None):
 # pylint: disable=unused-argument
 @application_legacy.teardown_appcontext
 def shutdown_session_legacy(exception=None):
+    """Remove the database session after every request or app shutdown."""
+    db_session.remove()
+
+
+# pylint: disable=unused-argument
+@application_v3.teardown_appcontext
+def shutdown_session_v3(exception=None):
     """Remove the database session after every request or app shutdown."""
     db_session.remove()

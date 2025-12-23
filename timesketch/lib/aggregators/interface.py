@@ -15,8 +15,6 @@
 import datetime
 import logging
 
-from flask import current_app
-
 import opensearchpy
 import pandas
 
@@ -28,7 +26,7 @@ from timesketch.models.sketch import Sketch as SQLSketch
 logger = logging.getLogger("timesketch.aggregator_interface")
 
 
-class AggregationResult(object):
+class AggregationResult:
     """Result object for aggregations.
 
     Attributes:
@@ -75,7 +73,7 @@ class AggregationResult(object):
         Returns:
             Dict with aggregation result.
         """
-        aggregation_data = dict(values=self.values)
+        aggregation_data = {"values": self.values}
         if encoding:
             aggregation_data["encoding"] = self.encoding
         return aggregation_data
@@ -90,12 +88,12 @@ class AggregationResult(object):
 
     def to_chart(
         self,
-        chart_name="",
-        chart_title="",
-        as_html=False,
-        interactive=False,
-        as_chart=False,
-        color="",
+        chart_name: str = "",
+        chart_title: str = "",
+        as_html: bool = False,
+        interactive: bool = False,
+        as_chart: bool = False,
+        color: str = "",
     ):
         """Encode aggregation result as Vega-Lite chart.
 
@@ -120,34 +118,48 @@ class AggregationResult(object):
         chart_class = chart_manager.ChartManager.get_chart(chart_name)
 
         if not chart_class:
-            raise RuntimeError("No such chart type: {0:s}".format(chart_name))
+            raise RuntimeError(f"No such chart type: {chart_name:s}")
 
-        chart_data = self.to_dict(encoding=True)
-        chart_object = chart_class(
-            chart_data,
-            title=chart_title,
-            sketch_url=self._sketch_url,
-            field=self.field,
-            extra_query_url=self._extra_query_url,
-        )
+        try:
+            chart_object = chart_class(
+                self.to_pandas(),
+                title=chart_title,
+                sketch_url=self._sketch_url,
+                field=self.field,
+                extra_query_url=self._extra_query_url,
+            )
 
-        if color:
-            chart_object.set_color(color)
+            if color:
+                chart_object.set_color(color)
 
-        chart = chart_object.generate()
+            chart = chart_object.generate()
 
-        if interactive:
-            chart = chart.interactive()
+            if interactive:
+                chart = chart.interactive()
 
-        if as_html:
-            return chart.to_html()
+            if as_html:
+                return chart.to_html()
 
-        if as_chart:
-            return chart
-        return chart.to_dict()
+            if as_chart:
+                return chart
+            return chart.to_dict()
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(
+                "Unable to generate chart [%s] with title [%s]. The error was: %s",
+                chart_name,
+                chart_title,
+                e,
+                exc_info=True,
+            )
+            if as_html:
+                return ""
+            if as_chart:
+                return None
+            return {}
 
 
-class BaseAggregator(object):
+class BaseAggregator:
     """Base class for an aggregator."""
 
     # Name that the aggregator will be registered as.
@@ -178,15 +190,12 @@ class BaseAggregator(object):
         if not sketch_id and not indices:
             raise RuntimeError("Need at least sketch_id or index")
 
-        self.opensearch = OpenSearchDataStore(
-            host=current_app.config.get("OPENSEARCH_HOST"),
-            port=current_app.config.get("OPENSEARCH_PORT"),
-        )
+        self.opensearch = OpenSearchDataStore()
 
-        self._sketch_url = "/sketch/{0:d}/explore".format(sketch_id)
+        self._sketch_url = f"/sketch/{sketch_id:d}/explore"
         self.field = ""
         self.indices = indices
-        self.sketch = SQLSketch.query.get(sketch_id)
+        self.sketch = SQLSketch.get_by_id(sketch_id)
         self.timeline_ids = None
 
         active_timelines = self.sketch.active_timelines
@@ -211,7 +220,7 @@ class BaseAggregator(object):
         }
 
     def _add_query_to_aggregation_spec(
-        self, aggregation_spec, start_time="", end_time=""
+        self, aggregation_spec: dict, start_time: str = "", end_time: str = ""
     ):
         """Returns an aggregation spec, adjusted for constraints.
 
@@ -250,7 +259,7 @@ class BaseAggregator(object):
                 _ = datetime.datetime.fromisoformat(start_time)
             except ValueError:
                 raise ValueError(
-                    "Start time is not ISO formatted [{0:s}".format(start_time)
+                    f"Start time is not ISO formatted [{start_time:s}"
                 ) from ValueError
 
         if end_time:
@@ -258,7 +267,7 @@ class BaseAggregator(object):
                 _ = datetime.datetime.fromisoformat(end_time)
             except ValueError:
                 raise ValueError(
-                    "End time is not ISO formatted [{0:s}".format(end_time)
+                    f"End time is not ISO formatted [{end_time:s}"
                 ) from ValueError
 
         if start_time and end_time:
@@ -384,7 +393,7 @@ class BaseAggregator(object):
                 index=self.indices, body=aggregation_spec, size=0
             )
         except opensearchpy.NotFoundError:
-            logger.error("Unable to find indices: {0:s}".format(",".join(self.indices)))
+            logger.error("Unable to find indices: {:s}".format(",".join(self.indices)))
             raise
         return aggregation
 

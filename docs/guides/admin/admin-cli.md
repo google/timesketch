@@ -2,282 +2,90 @@
 hide:
   - footer
 ---
-## tsctl
+# tsctl - Timesketch Control Tool
 
-tsctl is a command-line tool for managing and interacting with a Timesketch instance. It allows users to create and delete sketches, add and remove data sources, manage users and groups, and perform various other tasks.
+`tsctl` is a command-line tool for managing and interacting with a Timesketch instance. It allows administrators to perform a wide range of tasks, from user and sketch management to system maintenance and data integrity checks.
 
-Its commands can be accessed by running tsctl followed by the desired subcommand. For example, to list all the available sketches in a Timesketch instance, tsctl list-sketches can be run.
+## Usage
 
-### Config
-
-The `--config` parameter in tsctl is used to specify the location of a configuration file that contains settings for tsctl. This configuration file can specify default values for various tsctl options, such as the `hostname` and `port` of the Timesketch server, the `username` and `password` to use when authenticating with the server, and other settings.
-
-Parameters:
+All commands are run by invoking `tsctl` followed by a specific subcommand and any necessary options.
 
 ```shell
---config / -c (optional)
+tsctl <COMMAND> [OPTIONS] [ARGUMENTS]
 ```
 
-Example
+### Configuration
+
+Most `tsctl` commands require application context to interact with the database and other services. You can specify the location of your `timesketch.conf` file to ensure the tool is properly configured.
 
 ```shell
-tsctl run -c /etc/timesketch/timesketch.conf
+tsctl --config /etc/timesketch/timesketch.conf <COMMAND>
 ```
 
-### version
+---
 
-Displays the version of Timesketch installed on the system
+## General Commands
 
-Example
+#### `version`
 
+Displays the installed version of Timesketch.
+
+**Example:**
 ```shell
 tsctl version
 Timesketch version: 20210602
 ```
 
-### info
+#### `info`
 
-Displays various useful version information used on the system Timesketch is installed on.
+Displays detailed version information for Timesketch and its key dependencies, including the Git commit hash if available.
 
-Example
-
+**Example:**
 ```shell
 tsctl info
-Timesketch version: 20210602
-plaso - psort version 20220930
-Node version: v14.20.1
-npm version: 6.14.17
-yarn version: 1.22.19
-Python version: Python 3.10.6
+Timesketch version: 20250708
+Timesketch commit: 2cb3356b (dirty)
+plaso - psort version 20240308
+Node version: v20.19.1
+npm version: 10.8.2
+yarn version: 1.22.22
+Python version: Python 3.10.12
 pip version: pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
 ```
 
-### User management
+#### `list-config`
 
-#### Adding users
+Lists all configuration variables currently loaded by the Timesketch application. Sensitive values like keys and passwords are automatically redacted.
 
-tsctl provides a subcommand for creating users in a Timesketch instance. This subcommand is called `create-user`, and it allows you to specify the `username`, `password`, and other details for the user you want to create.
-
-To use the `create-user` subcommand, you would run `tsctl create-user` followed by the desired options and arguments. For example, to create a user with the username "john" and the password "123456", you could run the following command: `tsctl create-user --username john --password 123456`.
-
-Once the user is created, they will be able to log in to the Timesketch instance using their username and password. You can then use the list-users subcommand to verify that the user was created successfully.
-
-Command:
-
+**Example:**
 ```shell
-tsctl create-user
+tsctl list-config
+Timesketch Configuration Variables:
+-----------------------------------
+ANALYZERS_DEFAULT_KWARGS: {}
+APPLICATION_ROOT: /
+AUTO_SKETCH_ANALYZERS: []
+AUTO_SKETCH_ANALYZERS_KWARGS: {}
+CELERY_BROKER_URL: redis://redis:6379
+CELERY_RESULT_BACKEND: redis://redis:6379
+CONTEXT_LINKS_CONFIG_PATH: /etc/timesketch/context_links.yaml
+DATA_FINDER_PATH: /etc/timesketch/data_finder.yaml
+DEBUG: False
+OPENSEARCH_HOST: 127.0.0.1
+OPENSEARCH_PORT: 9200
+SECRET_KEY: ******** (redacted)
+SQLALCHEMY_DATABASE_URI: ******** (redacted)
+UPLOAD_ENABLED: True
+...
+-----------------------------------
+Note: Some values might be sensitive and have been redacted.
 ```
 
-Parameters:
+#### `routes`
 
-```shell
---name / -n
---password / -p (optional)
-```
+Displays all available API routes in the Timesketch instance.
 
-Example
-
-```shell
-tsctl create-user foo
-```
-
-#### Change user password
-
-To change a user password, the create-user command can be used, as it is checking if the user exists if yes it will update the update.
-
-This command would change the password of the user with the specified username to the new password provided. The user will then be able to log in to the Timesketch instance using their new password.
-
-Command:
-
-```shell
-tsctl create-user
-```
-
-Parameters:
-
-```shell
---username / -u
---password / -p (optional)
-```
-
-Example
-
-```shell
-tsctl create-user foo
-```
-
-#### Removing users
-
-tsctl provides a subcommand for disabling users in a Timesketch instance. This subcommand is called `disable-user`, and it allows you to specify the username or user ID of the user you want to disable.
-
-To use the `disable-user` subcommand, you would run `tsctl disable-user` followed by the desired options and arguments. For example, to disable a user with the username "john", you could run the following command:
-`tsctl disable-user john`.
-
-This command would disable the user with the specified username, preventing them from logging in to the Timesketch instance. However, their user account will still exist in the system, and you can use the enable-user subcommand to re-enable their account at any time.
-
-Disabled users are not removed from the system, but marked as disabled.
-The current implementation is not complete. Disabled users will still show up for other commands.
-
-Command:
-
-```shell
-tsctl disable_user
-tsctl enable_user
-```
-
-
-Example
-
-```shell
-tsctl disable_user foo
-tsctl enable_user foo
-```
-
-#### List users
-
-tsctl provides a subcommand for listing the users in a Timesketch instance. This subcommand is called `list-users`, and it allows you to view a list of the users in the system, along with their username, user ID, and other details.
-
-To use the `list-users` subcommand, you would run `tsctl list-users` followed by the desired options and arguments. For example, to list all the users in the Timesketch instance, you could run the following command: `tsctl list-users`.
-
-This command would display a list of the users in the Timesketch instance, along with their username and other details.
-
-Example
-
-```shell
-tsctl list-users
-foo
-bar
-dev (admin)
-```
-
-#### Make admin
-
-tsctl provides a subcommand for granting administrator privileges to a user in a Timesketch instance. This subcommand is called `make-admin`, and it allows you to specify the username of the user you want to grant administrator privileges to.
-
-To use the `make-admin` subcommand, you would run `tsctl make-admin` followed by the desired options and arguments. For example, to grant administrator privileges to a user with the username "john", you could run the following command: `tsctl make-admin  john`
-
-This command would grant the user with the specified username administrator privileges.
-
-Once a user has administrator privileges, they will be able to perform a wider range of tasks in the Timesketch instance. You can use the `list-users` subcommand to verify that the user has been granted administrator privileges successfully.
-
-You can use `tsctl revoke-admin` to revoke admin privileges.
-
-#### Revoke admin
-
-tsctl provides a subcommand for revoking administrator privileges from a user in a Timesketch instance. This subcommand is called `revoke-admin`, and it allows you to specify the username of the user you want to revoke administrator privileges from.
-
-To use the `revoke-admin` subcommand, you would run `tsctl revoke-admin` followed by the desired options and arguments. For example, to revoke administrator privileges from a user with the username "john", you could run the following command: `tsctl revoke-admin john`
-
-This command would revoke the administrator privileges of the user with the specified username.
-
-Once a user's administrator privileges are revoked, they will no longer be able to perform tasks that require administrator privileges in the Timesketch instance. You can use the `list-users` subcommand to verify that the user's administrator privileges have been revoked successfully.
-
-### Group management
-
-#### Adding groups
-
-tsctl provides a subcommand for adding groups in a Timesketch instance. This subcommand is called `add-group`, and it allows you to specify the name and description of the group you want to add.
-
-To use the `add-group` subcommand, you would run tsctl add-group followed by the desired options and arguments. For example, to add a group called "analysts" with the description "Group for analysts", you could run the following command: `tsctl add-group --name analysts --description "Group for analysts"`
-This command would create a new group with the specified name and description. Once the group is created, you can use the `list-groups` subcommand to verify that the group was added successfully.
-
-You can also use the `add-user-to-group` subcommand to add users to the group you have created. This allows you to manage the members of the group, and control which users have access to the sketches and data sources associated with the group.
-
-Command:
-
-```shell
-tsctl add_group
-```
-
-Parameters:
-
-```shell
---name / -n
-```
-
-#### Removing groups
-
-Not yet implemented.
-
-#### Managing group membership
-
-##### Add a suer to a group
-
-tsctl provides a subcommand for adding users to a group in a Timesketch instance. This subcommand is called `add-group-member`, and it allows you to specify the username of the user you want to add to the group, as well as the name of the group you want to add the user to.
-
-To use the `add-group-member` subcommand, you would run `tsctl add-group-member` followed by the desired options and arguments. For example, to add a user with the username "john" to a group called "analysts", you could run the following command: `tsctl add-group-member --username john --group-name analysts`.
-This command would add the user with the specified username to the group with the specified name.
-
-Once the user is added to the group, they will be able to access the sketches and data sources associated with the group, based on the permissions granted to the group. You can use the `list-groups` subcommand to verify that the user was added to the group successfully.
-
-Command:
-
-```shell
-tsctl add-group-member
-```
-
-Example:
-
-```shell
-tsctl add-group-member --username john --group-name analysts
-```
-
-##### Removing a group member
-
-tsctl provides a subcommand for removing users from a group in a Timesketch instance. This subcommand is called `remove-group-member`, and it allows you to specify the username of the user you want to remove from the group, as well as the name of the group you want to remove the user from.
-
-To use the `remove-group-member` subcommand, you would run `tsctl remove-group-member` followed by the desired options and arguments. For example, to remove a user with the username "john" from a group called "analysts", you could run the following command: `tsctl remove-group-member --username john --group-name analysts`
-
-This command would remove the user with the specified username from the group with the specified name.
-
-Once the user is removed from the group, they will no longer be able to access the sketches and data sources associated with the group. You can use the list-groups subcommand to verify that the user was removed from the group successfully.
-
-
-Command:
-
-```shell
-tsctl remove-group-member
-```
-
-Example:
-
-```shell
-tsctl remove-group-member --username john --group-name analysts
-```
-
-### add_index
-
-Create a new Timesketch searchindex.
-
-Command:
-
-```shell
-tsctl add_index
-```
-
-Parameters:
-
-```shell
---name / -n
---index / -i
---user / -u
-```
-
-Example:
-
-```shell
-tsctl add_index -u user_foo -i test_index_name -n sample
-```
-
-### routes
-
-tsctl provides a subcommand for displaying the available API routes in a Timesketch instance. This subcommand is called `routes`, and it allows you to view a list of the API routes that are available in the Timesketch instance, along with their URL and description.
-
-To use the routes subcommand, you would run `tsctl routes` followed by the desired options and arguments. For example, to list all the available API routes in the Timesketch instance, you could run the following command: `tsctl routes`.
-This command would display a list of the available API routes in the Timesketch instance, along with their URL and description.
-
-Example:
-
+**Example:**
 ```bash
 tsctl routes
 Endpoint                           Methods            Rule
@@ -285,340 +93,622 @@ Endpoint                           Methods            Rule
 aggregationexploreresource         POST               /api/v1/sketches/<int:sketch_id>/aggregation/explore/
 ```
 
-### db
+#### `shell`
 
-tsctl provides a subcommand for managing the database in a Timesketch instance. This subcommand is called `db`, and it allows you to perform various operations on the Timesketch database, such as creating the database tables, initializing the database schema, and migrating the database to the latest version.
+Starts an interactive Python shell with the Timesketch API client pre-initialized, allowing for direct interaction with the Timesketch backend.
 
-To use the `db` subcommand, you would run `tsctl db` followed by the desired options and arguments. For example, to initialize the database schema in the Timesketch instance, you could run the following command:
-`tsctl db init`
-
-Command:
-
-```shell
-tsctl db
-```
-
-Example
-
+**Example:**
 ```bash
-tsctl db --help
-Usage: tsctl db [OPTIONS] COMMAND [ARGS]...
-
-  Perform database migrations.
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  branches   Show current branch points
-  current    Display the current revision for each database.
-  downgrade  Revert to a previous version
-  edit       Edit a revision file
-  heads      Show current available heads in the script directory
-  history    List changeset scripts in chronological order.
-  init       Creates a new migration repository.
-  merge      Merge two revisions together, creating a new revision file
-  migrate    Autogenerate a new revision file (Alias for 'revision...
-  revision   Create a new revision file.
-  show       Show the revision denoted by the given symbol.
-  stamp      'stamp' the revision table with the given revision; don't...
-  upgrade    Upgrade to a later version
+tsctl shell
 ```
 
+---
 
-#### Upgrade DB After Schema Change
+## User Management
 
-After changing the schema for the database a revision file needs to be generated.
+#### `list-users`
 
-(temporary solution)
-Before doing the database migration you'll need to modify the file `timesketch/models/__init__.py`:
+Lists all users in the system.
 
-```python
+**Options:**
+*   `--status`: Shows the active/inactive status of each user.
 
-def init_db():
-...
-        BaseModel.metadata.create_all(bind=engine)
-```
-
-This line needs to be commented out, eg:
-
-```python
-
-def init_db():
-...
-        #BaseModel.metadata.create_all(bind=engine)
-```
-
-Then inside the timesketch container, to generate the file use the command:
-
+**Examples:**
 ```shell
-cd /usr/local/src/timesketch/timesketch
-tsctl db stamp head
-tsctl db upgrade
+tsctl list-users
+foo
+bar
+dev (admin)
+```
+```shell
+tsctl list-users --status
+dev (active: True)
+admin (active: True)
+foobar2 (active: True)
+foobar (active: False)
 ```
 
-This makes sure that the database is current. Then create a revision file:
+#### `create-user`
 
+Creates a new user or updates the password for an existing user.
+
+**Arguments:**
+*   `USERNAME`: The username for the new user.
+
+**Options:**
+*   `--password`: Set the password directly. If omitted, you will be prompted interactively.
+
+**Examples:**
 ```shell
-tsctl db migrate -m "<message>"
+tsctl create-user foo
+tsctl create-user foo --password bar
 ```
 
-Once the migration is done, remove the comment to re-enable the line in `timesketch/models/__init.py`.
+#### `enable-user` / `disable-user`
 
-##### Troubleshooting Database Schema Changes
+Activates or deactivates a user account. Disabled users cannot log in.
 
-If the migration file is not created, which could be an indication that the schema change
-is not detected by the automation one can create an empty revision file:
+**Arguments:**
+*   `USERNAME`: The user to enable or disable.
 
+**Examples:**
 ```shell
-tsctl db revision
+tsctl disable-user foo
+tsctl enable-user foo
 ```
 
-And then fill in the blanks, see examples of changes in `timesketch/migrations/versions/*_.py`.
+#### `make-admin` / `revoke-admin`
 
-### Drop database
+Grants or revokes administrator privileges for a user.
 
-Will drop all databases.
+**Arguments:**
+*   `USERNAME`: The target user.
 
-Command:
-
+**Examples:**
 ```shell
-tsctl drop_db
+tsctl make-admin dev
+tsctl revoke-admin dev
 ```
 
-### search_template
+---
 
-Export/Import search templates to/from file.
+## Group Management
 
-Command:
+#### `list-groups`
 
-```shell
-tsctl search_template
+Lists all groups.
+
+**Options:**
+*   `--showmembership`: Includes a list of members for each group.
+
+**Example:**
+```bash
+tsctl list-groups --showmembership
+analysts: john, jane
+incident-responders: jane
 ```
 
-Parameters:
+#### `create-group`
 
+Creates a new group.
+
+**Arguments:**
+*   `GROUP_NAME`: The name for the new group.
+
+**Example:**
 ```shell
---import / -i
---export / -e
+tsctl create-group analysts
 ```
 
-import_location: Path to the yaml file to import templates.
-export_location: Path to the yaml file to export templates.
+#### `delete-group`
 
-### import
+Deletes a group from the database. If the group is associated with any sketches, a warning message will be displayed, and the deletion will be aborted unless the `--force` flag is used.
 
-Creates a new Timesketch timeline from a file. Supported file formats are: plaso, csv and jsonl.
+**Arguments:**
+*   `GROUP_NAME`: The name of the group to delete.
 
-Command:
+**Options:**
+*   `--force`: Force deletes the group even if it's used in sketches.
 
+**Example:**
 ```shell
-tsctl import
+tsctl delete-group analysts
+```
+**Example (force delete):**
+```shell
+tsctl delete-group my-shared-group --force
 ```
 
-Parameters:
+#### `list-group-members`
 
+Lists all members of a group.
+
+**Arguments:**
+*   `GROUP_NAME`: The group to list members for.
+
+**Example:**
 ```shell
---file / -f
---sketch_id / -s      (optional)
---username / -f       (optional)
---timeline_name / -n  (optional)
+tsctl list-group-members analysts
 ```
 
-The sketch id is inferred from the filename if it starts with a number. The timeline name can also be generated from the filename if not specified.
+#### `add-group-member` / `remove-group-member`
 
-### similarity_score
+Adds a user to a group or removes them.
 
-Command:
+**Arguments:**
+*   `GROUP_NAME`: The target group.
 
+**Options:**
+*   `--username`: The user to add or remove.
+
+**Examples:**
 ```shell
-tsctl similarity_score
+tsctl add-group-member analysts --username john
+tsctl remove-group-member analysts --username john
 ```
 
-### Sketch
+#### `sync-groups-from-json`
 
-#### sketch-info Get information about a sketch
+Synchronizes user group memberships from a JSON file. This command will create,
+add, and remove users from groups to match the state defined in the JSON file.
 
-Displays verious information about a given sketch.
+**Arguments:**
+*   `FILEPATH`: Path to a JSON file containing the group membership definition.
 
-```shell
-tsctl sketch-info
+**Options:**
+*   `--dry-run`: If set, the command will print the changes it would make without
+    actually modifying the database.
+
+**JSON File Format:**
+
+The JSON file must be a dictionary where each key is a group name and the value
+is a list of usernames to be in that group.
+
+**Example JSON (`/tmp/groups.json`):**
+```json
+{
+    "analysts": ["user1@timesketch.org", "user2@timesketch.org"],
+    "incident-responders": ["user2@timesketch.org", "user3@timesketch.org"]
+}
 ```
 
-Example:
+**Behavior:**
+*   **Groups**: Creates groups if they don't exist. Groups in the database but
+    not in the JSON file are ignored.
+*   **Users**: Creates users if they don't exist (with a random password).
+*   **Membership**:
+    *   Adds users to groups to match the JSON file.
+    *   Removes users from groups if they are in the database but not in the
+        corresponding list in the JSON file.
 
+**Example Usage:**
 ```shell
-Sketch 1 Name: (aaa)
-searchindex_id index_name                       created_at                 user_id description
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:06:52.849124 1       20200918_0417_DESKTOP-SDN1RPT
-3              88002da782f64061bf3703bc782b6006 2022-10-21 15:19:26.072964 1       all_packets
-1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:28:55.474166 1       E01-DC01_20200918_0347_CDrive
-4              11d761cd266640d798e30bb897c8dd4e 2022-10-21 15:32:15.060184 1       autoruns-desktop-sdn1rpt_fresh_import
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:12.316273 1       sigma_events
-3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:48.592320 1       sigma_events2
+# Perform a dry run to see what changes would be made
+tsctl sync-groups-from-json /tmp/groups.json --dry-run
+
+# Apply the changes to the database
+tsctl sync-groups-from-json /tmp/groups.json
+```
+
+---
+
+## Sketch Management
+
+#### `list-sketches`
+
+Lists sketches in the database.
+
+**Options:**
+*   `--archived`: Show only archived sketches.
+*   `--include-deleted`: Include sketches marked as deleted.
+
+**Example:**
+```shell
+tsctl list-sketches
+1 'Project-X' (status: new)
+2 'Incident-Y' (status: archived)
+```
+
+#### `sketch-info`
+
+Displays detailed information about a specific sketch. This includes a summary of all timelines, a list of data sources for each timeline, sharing status, labels, and a history of status changes.
+
+**Arguments:**
+*   `SKETCH_ID`: The ID of the sketch.
+
+**Example:**
+```shell
+tsctl sketch-info 1
+Sketch 1 Name: (New Sketch From Importer CLI)
+
+Timelines:
+ID Name              Search Index ID Index Name                       Created At                 User ID Description   Status
+36 3173_web          27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:43:24.489482 1       3173          ready
+38 new_cli           27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 15:46:11.607402 1       new_cli       ready
+37 import_client_old 27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:53:04.528269 1       import_client ready
+
+Data Sources per Timeline:
+
+Timeline: 3173_web (ID: 36)
+ID File Path                             Status Error Message
+37 /tmp/0bed74e6918f4262a5a72ce319123b5f ready  N/A
+
+Timeline: new_cli (ID: 38)
+ID File Path Status Error Message
+39           ready  N/A
+
+Timeline: import_client_old (ID: 37)
+ID File Path Status Error Message
+38           ready  N/A
+
+Created by: dev
 Shared with:
-    Users: (user_id, username)
-        3: bar
-    Groups:
-        user-group
+	Users: (user_id, username, access_level)
+	No users shared with.
+	Groups (0): (group_name, access_level)
+	No groups shared with.
 Sketch Status: new
-Sketch is public: True
+Sketch is public: False
 Sketch Labels: ([],)
 Status:
 id status created_at                 user_id
-1  new    2022-10-21 15:04:59.935504 None
-```
-
-### Sigma
-
-#### List Sigma rules
-
-Lists all Sigma rules installed on a system
-
-```shell
-tsctl list-sigma-rules
-```
-
-```bash
-tsctl list-sigma-rules --columns=rule_uuid,title,status
-rule_uuid,title,status
-['8c10509b-9ba5-4387-bf6c-e347931b646f', 'SigmaRuleTemplateTitledddd', 'experimental']
-['5266a592-b793-11ea-b3de-0242ac130004', 'Suspicious Installation of Zenmap', 'experimental']
-['e5684ad6-5824-4680-9cc5-e8f0babd77bb', 'Foobar', 'experimental']
-tsctl list-sigma-rules --columns=rule_uuid,title,status | grep experimental | wc -l
-3
-```
-
-#### Add Sigma rules in a folder
-
-Will add all Sigma rules in a folder and its subfolders to the databse.
-
-```shell
-tsctl import-sigma-rules sigma/rules/cloud/gcp/
-Importing: Google Cloud Kubernetes RoleBinding
-Importing: Google Cloud Storage Buckets Modified or Deleted
-Importing: Google Cloud VPN Tunnel Modified or Deleted
-Importing: Google Cloud Re-identifies Sensitive Information
+65 new    2025-11-07 14:42:18.813488 None
 ...
 ```
 
-#### Export Sigma rules
+#### `grant-user`
 
-Will export all Sigma rules to a folder.
+Grants a user access to a specific sketch.
 
+**Arguments:**
+*   `USERNAME`: The user to grant access to.
+
+**Options:**
+*   `--sketch_id INTEGER`: (Required) The ID of the sketch.
+*   `--read-only`: Grant only read access.
+
+**Examples:**
 ```shell
-tsctl export-sigma-rules ./test
-13 Sigma rules exported
+# Grant read and write access to user 'john' for sketch ID 123
+tsctl grant-user john --sketch_id 123
+# Grant read-only access to user 'jane' for sketch ID 456
+tsctl grant-user jane --sketch_id 456 --read-only
 ```
 
-#### Remove a Sigma rule
+#### `grant-group`
 
-This will remove a single Sigma rule from the databse
+Grants a group access to a specific sketch.
 
+**Arguments:**
+*   `GROUP_NAME`: The group to grant access to.
+
+**Options:**
+*   `--sketch_id INTEGER`: (Required) The ID of the sketch.
+*   `--read-only`: Grant only read access.
+
+**Examples:**
+```shell
+tsctl grant-group analysts --sketch_id 123
+tsctl grant-group incident-responders --sketch_id 456 --read-only
+```
+
+#### `export-sketch`
+
+Exports a sketch to a zip archive, including all metadata and event data.
+
+!!! warning "Archive and Re-import"
+    This export is primarily for data archival or external analysis. Re-importing this archive into Timesketch is not natively supported.
+
+**Arguments:**
+*   `SKETCH_ID`: The ID of the sketch to export.
+
+**Options:**
+*   `--filename / -f`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
+*   `--output-format`: Format for event data ('csv' or 'jsonl'). Default: 'csv'.
+
+**Example:**
+```bash
+tsctl export-sketch 1 --filename "project_x_export.zip"
+```
+
+#### `sketch-label-stats`
+
+Provides detailed statistics on label and tag usage within a sketch, querying both the database and OpenSearch.
+
+**Options:**
+*   `--sketch_id <SKETCH_ID>`: (Required) The ID of the sketch to analyze.
+*   `--verbose`: If set, the command will show full event data instead of just counts for each category.
+
+**Example:**
+```bash
+tsctl sketch-label-stats --sketch_id 1 --verbose
+```
+
+---
+
+## Timeline & SearchIndex Management
+
+
+#### `searchindex-info`
+
+Displays information about a search index, including which timelines and sketches it belongs to.
+
+**Options:**
+*   `--searchindex_id INTEGER`: The database ID of the search index.
+*   `--index_name TEXT`: The OpenSearch name of the index.
+
+**Examples:**
+```bash
+tsctl searchindex-info --searchindex_id 1
+tsctl searchindex-info --index_name 4c5afdf60c6e49499801368b7f238353
+```
+
+#### `timeline-status`
+
+Gets or sets the status of a timeline. This is useful for manually correcting the state of an import that has failed or stalled.
+
+**Arguments:**
+*   `TIMELINE_ID`: The ID of the timeline.
+
+**Options:**
+*   `--action [get|set]`: The action to perform.
+*   `--status [ready|processing|fail]`: The status to set.
+
+**Examples:**
+```bash
+# Get the status of timeline with ID 123:
+tsctl timeline-status 123 --action get
+
+# Set the status of timeline with ID 456 to "ready":
+tsctl timeline-status 456 --action set --status ready
+```
+
+#### `searchindex-status`
+
+Gets or sets the status of a search index.
+
+**Options:**
+*   `--searchindex_id`: The ID of the search index.
+*   `--action [get|set]`: The action to perform.
+*   `--status [ready|processing|fail]`: The status to set.
+
+**Example:**
+```bash
+tsctl searchindex-status --searchindex_id 1 --action set --status fail
+```
+
+---
+
+## Search Template Management
+
+#### `import-search-templates`
+
+Imports search templates from YAML files in a given directory path.
+
+**Arguments:**
+*   `PATH`: The directory to import templates from.
+
+**Example:**
+```shell
+tsctl import-search-templates /path/to/my_templates/
+```
+
+---
+
+## Sigma Rule Management
+
+#### `list-sigma-rules`
+
+Lists all installed Sigma rules.
+
+**Options:**
+*   `--columns`: Comma-separated list of columns to display (e.g., `rule_uuid,title,status`).
+
+**Example:**
+```bash
+tsctl list-sigma-rules --columns=rule_uuid,title,status
+```
+
+#### `import-sigma-rules`
+
+Imports Sigma rules from a given file or directory path.
+
+**Arguments:**
+*   `PATH`: The file or directory to import from.
+
+**Example:**
+```shell
+tsctl import-sigma-rules sigma/rules/cloud/gcp/
+```
+
+#### `export-sigma-rules`
+
+Exports all Sigma rules from the database to a directory.
+
+**Arguments:**
+*   `PATH`: The directory to export rules to.
+
+**Example:**
+```shell
+tsctl export-sigma-rules ./my_exported_rules
+```
+
+#### `remove-sigma-rule`
+
+Deletes a single Sigma rule from the database.
+
+**Arguments:**
+*   `RULE_UUID`: The UUID of the rule to delete.
+
+**Example:**
 ```shell
 tsctl remove-sigma-rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f
-Rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f deleted
 ```
 
-#### Drop all Sigma rules
+#### `remove-all-sigma-rules`
 
-Will drop all Sigma rules from database.
+Deletes all Sigma rules from the database after confirmation.
 
-Command:
-
+**Example:**
 ```shell
 tsctl remove-all-sigma-rules
-Do you really want to drop all the Sigma rules? [y/N]: y
-Are you REALLLY sure you want to DROP ALL the Sigma rules? [y/N]: y
-All rules deleted
 ```
 
-### Shell
+---
 
-tsctl provides a subcommand for starting an interactive Python shell with the Timesketch API client pre-initialized. This subcommand is called `shell`, and it allows you to access the Timesketch API and perform various operations using the Python interpreter.
+## System Administration
 
-To use the `shell` subcommand, you would run `tsctl shell` followed by the desired options and arguments. For example, to start an interactive Python shell with the Timesketch API client pre-initialized, you could run the following command: `tsctl shell`.
+#### `db`
 
-### Context Links Configuration
+Provides access to database migration commands (init, migrate, upgrade, etc.) via `Flask-Migrate`.
 
-We can use `tsctl` to test the yaml config file for the context link feature.
-This is especially useful if an entry that is added to the configuration file
-does not show up as a context link in the frontend.
-
-```
-tsctl validate-context-links-conf <PATH TO CONFIG FILE>
-```
-
-The default config can be found at `data/context_links.yaml` .
-
-The output will tell if there is a value not matching the schema requirements:
-
-**No error:** All entries in the configuration file match the schema requirements.
-
-```
-$ tsctl validate-context-links-conf ./context_links.yaml
-=> OK: "virustotal"
-=> OK: "unfurl"
-=> OK: "mseventid"
-=> OK: "urlhaus"
-```
-
-**With an error:** Here the validator tells us that there is an error with the
-replacement pattern in the `context_link` entry.
-
-```
-$ tsctl validate-context-links-conf ./context_links.yaml
-=> ERROR: "virustotal" >> 'https://www.virustotal.com/gui/search/<ATTR_VALUE' does not match '<ATTR_VALUE>'
-
-Failed validating 'pattern' in schema['properties']['context_link']:
-    {'pattern': '<ATTR_VALUE>', 'type': 'string'}
-
-On instance['context_link']:
-    'https://www.virustotal.com/gui/search/<ATTR_VALUE'
-
-=> OK: "unfurl"
-=> OK: "mseventid"
-=> OK: "urlhaus"
-```
-
-### Analyzer-stats
-
-`tsctl`offers a method called `analyzer-stats` to display various information about analyzer runs of the past.
-
-To use the `analyzer-stats` subcommand, you would run `tsctl analyzer-stats` followed by the desired options and arguments.
-
+**Example:**
 ```shell
-tsctl analyzer-stats
+# Generate a new migration after a schema change
+tsctl db migrate -m "Add new column to user table"
+
+# Apply migrations
+tsctl db upgrade
 ```
 
-Example:
+#### `drop-db`
 
+Permanently drops all tables from the relational database. This is a destructive action.
+
+**Example:**
+```bash
+tsctl drop-db
+```
+
+#### `export-db` / `import-db`
+
+Exports or imports the relational database metadata.
+
+!!! warning "Metadata Only - Use with Caution"
+    These commands only handle the relational database (e.g., PostgreSQL) and do **NOT** affect the event data in OpenSearch. For a full backup or migration, you must handle OpenSearch data separately (e.g., with snapshots). Importing a DB without its corresponding OpenSearch indices will result in a broken system.
+
+**Examples:**
 ```shell
-tsctl analyzer-stats --help
-Usage: tsctl analyzer-stats [OPTIONS] ANALYZER_NAME
+tsctl export-db output.zip
+tsctl import-db output.zip
+```
 
-  Prints analyzer stats.
+#### `check-opensearch-links`
 
-Options:
-  --timeline_id TEXT         Timeline ID if the analyzer results should be
-                             filtered by timeline.
-  --scope TEXT               Scope on: [many_hits, long_runtime, recent]
-  --result_text_search TEXT  Search in result text. E.g. for a specific
-                             rule_id.
-  --help                     Show this message and exit.
+Verifies that every timeline in the database has a corresponding index in OpenSearch, helping to identify broken timelines.
+
+**Example:**
+```bash
+tsctl check-opensearch-links
+```
+
+#### `validate-context-links-conf`
+
+Validates the syntax of a context links YAML configuration file.
+
+**Arguments:**
+*   `PATH`: Path to the `context_links.yaml` file.
+
+**Example:**
+```bash
+tsctl validate-context-links-conf data/context_links.yaml
+```
+
+#### `analyzer-stats`
+
+Displays statistics about past analyzer runs.
+
+**Arguments:**
+*   `ANALYZER_NAME`: (Optional) The name of the analyzer to filter by.
+
+**Options:**
+*   `--scope [many_hits|long_runtime|recent]`: Sorts the results.
+*   `--limit INTEGER`: Limits the number of results.
+
+**Example:**
+```shell
 tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
-     runtime  hits                                                                          result  analysis_id                 created_at
-36  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           51 2023-01-03 21:33:14.475700
-37  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           52 2023-01-03 21:33:40.477309
-39  0.083333  2344  2344 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           54 2023-01-03 21:33:40.594573
-38  0.000000   145   145 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           55 2023-01-03 21:33:40.626931
-47  0.100000   145   145 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           61 2023-01-04 17:09:04.078641
-40  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           53 2023-01-03 21:33:40.521002
-41  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           56 2023-01-03 21:33:40.658743
-42  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           57 2023-01-03 21:33:40.696942
-43  2.800000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           58 2023-01-04 17:09:03.751176
-44  2.816667     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           62 2023-01-04 17:09:04.112822
-45  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           60 2023-01-04 17:09:04.046003
-46  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           59 2023-01-04 17:09:04.014973
-48  2.750000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           63 2023-01-04 17:09:04.148185
+```
+
+---
+
+## Analyzer Management
+
+#### `list-analyzer-runs`
+
+Lists the analyzer runs for a specific sketch. By default, only runs with a `PENDING` status are shown.
+
+**Arguments:**
+*   `SKETCH_ID`: The ID of the sketch to list runs for.
+
+**Options:**
+*   `--show-all`: Show all analyzer runs, regardless of their status (e.g., DONE, ERROR, REVOKED).
+
+**Example:**
+```bash
+tsctl list-analyzer-runs 1
+tsctl list-analyzer-runs 1 --show-all
+```
+
+#### `manage-analyzer-run`
+
+Manages specific analyzer runs, allowing you to change their status or revoke associated Celery tasks.
+
+**Arguments:**
+*   `ANALYSIS_IDS`: A comma-separated list of analysis run IDs to manage (e.g., `123,456,789`).
+
+**Options:**
+*   `--status [ERROR|DONE|STARTED]`: Manually set the status of the analysis run(s). This will also update the result field with an audit note.
+*   `--kill`: Attempt to find and revoke (kill) the active or queued Celery task associated with this analysis. If no status is provided, it defaults to `ERROR`.
+
+**Examples:**
+```bash
+# Set status to ERROR for a single analysis
+tsctl manage-analyzer-run 123 --status ERROR
+
+# Kill multiple tasks (sets status to ERROR for each)
+tsctl manage-analyzer-run 123,456,789 --kill
+
+# Set status to DONE for multiple analyses
+tsctl manage-analyzer-run 123,456 --status DONE
+```
+
+---
+
+## Celery Task Management
+
+#### `celery-tasks-redis`
+
+Displays the status of all Celery tasks as recorded in Redis.
+
+**Example:**
+```bash
+tsctl celery-tasks-redis
+```
+
+#### `celery-tasks`
+
+Shows running or past Celery tasks from the Celery worker.
+
+**Options:**
+*   `--task_id TEXT`: Show information for a specific task.
+*   `--active`: Show only currently active tasks.
+*   `--show_all`: Show all tasks (pending, active, failed).
+
+**Examples:**
+```bash
+tsctl celery-tasks --active
+tsctl celery-tasks --task_id <TASK_ID>
+```
+
+#### `celery-revoke-task`
+
+Revokes (cancels) a running Celery task.
+
+**Arguments:**
+*   `TASK_ID`: The ID of the task to revoke.
+
+**Example:**
+```bash
+tsctl celery-revoke-task 8115648e-944c-4452-962e-644041603419
 ```

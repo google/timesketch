@@ -1,32 +1,54 @@
 # Use the official Docker Hub Ubuntu base image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
+ARG RELEASE_TAG
 ARG PPA_TRACK=stable
+ARG EXTRA_PIP_PACKAGES=""
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Prevent needing to configure debian packages, stopping the setup of
+# the docker container.
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-RUN apt-get -y update
-RUN apt-get -y install apt-transport-https apt-utils gpg-agent
-RUN apt-get -y install libterm-readline-gnu-perl software-properties-common
-RUN add-apt-repository -y ppa:gift/$PPA_TRACK
-
-RUN apt-get -y update
-RUN apt-get -y upgrade
-
-# Install dependencies
-RUN apt-get -y install ca-certificates lsb-release locales python3-psycopg2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    python3-pip \
+    python3-wheel \
+    python3-setuptools \
+    python3-psycopg2 \
+    gpg-agent \
+    wget \
+    tzdata \
+    python3-venv \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
-RUN apt-get -y install plaso-tools
+RUN add-apt-repository -y ppa:gift/$PPA_TRACK
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    plaso-tools \
+  && rm -rf /var/lib/apt/lists/*
+
+# Fix for broken PPA dependency in Ubuntu 24.04: Plaso needs the 'events'
+# library for its opensearch output module.
+RUN pip3 install --no-cache-dir --break-system-packages events
+
+# Create a virtual environment and add it to the PATH
+RUN python3 -m venv /opt/venv --system-site-packages
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Timesketch
-RUN apt-get -y install timesketch-server
+RUN wget https://raw.githubusercontent.com/google/timesketch/$RELEASE_TAG/requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir https://github.com/google/timesketch/archive/$RELEASE_TAG.zip
 
-# Clean up apt-get cache files
-RUN apt-get clean && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
+# Install optional dependencies if build-arg is provided.
+RUN if [ ! -z "$EXTRA_PIP_PACKAGES" ]; then \
+        echo "Installing extra packages: $EXTRA_PIP_PACKAGES" && \
+        pip3 install --no-cache-dir ${EXTRA_PIP_PACKAGES}; \
+    fi
 
-# Set terminal to UTF-8 by default
-RUN locale-gen en_US.UTF-8
-RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
+# Copy the entrypoint script into the container
+COPY docker/release/build/docker-entrypoint.sh /
+RUN chmod a+x /docker-entrypoint.sh
+
+# Load the entrypoint script to be run later
+ENTRYPOINT ["/docker-entrypoint.sh"]

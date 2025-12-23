@@ -21,6 +21,7 @@ from typing import Text
 import configparser
 import logging
 import os
+import sys
 import requests
 
 from google.auth.transport import requests as auth_requests
@@ -241,7 +242,7 @@ class ConfigAssistant:
         if config_file_path:
             if not os.path.isfile(config_file_path):
                 error_msg = (
-                    "Unable to load config file, file {0:s} does not " "exist."
+                    "Unable to load config file, file {0:s} does not exist."
                 ).format(config_file_path)
                 logger.error(error_msg)
                 raise IOError(error_msg)
@@ -250,8 +251,8 @@ class ConfigAssistant:
             config_file_path = os.path.join(home_path, self.RC_FILENAME)
 
         if not os.path.isfile(config_file_path):
-            fw = open(config_file_path, "a")
-            fw.close()
+            with open(config_file_path, "a", encoding="utf-8") as fw:
+                fw.close()
 
         config = configparser.ConfigParser()
         try:
@@ -339,8 +340,8 @@ class ConfigAssistant:
         config = configparser.ConfigParser()
 
         if not os.path.isfile(file_path):
-            fw = open(file_path, "a")
-            fw.close()
+            with open(file_path, "a", encoding="utf-8") as fw:
+                fw.close()
 
         # Read in other sections in the config file as well.
         try:
@@ -378,7 +379,7 @@ class ConfigAssistant:
                 cred_key = cred_key.decode("utf-8")
             config[section]["cred_key"] = cred_key
 
-        with open(file_path, "w") as fw:
+        with open(file_path, "w", encoding="utf-8") as fw:
             config.write(fw)
 
     def set_config(self, name: Text, value: Any):
@@ -425,13 +426,16 @@ def get_client(
     assistant = ConfigAssistant()
     try:
         assistant.load_config_file(
-            config_path, section=config_section, load_cli_config=load_cli_config
+            config_path,
+            section=config_section,
+            load_cli_config=load_cli_config,
         )
         if config_dict:
             assistant.load_config_dict(config_dict)
     except IOError as e:
         logger.error("Unable to load the config file, is it valid?")
         logger.error("Error: %s", e)
+        return None
 
     try:
         configure_missing_parameters(
@@ -449,6 +453,7 @@ def get_client(
             "message is %s",
             e,
         )
+        return None
     except IOError as e:
         logger.error("Unable to get a client, with error: %s", e)
         logger.error(
@@ -458,6 +463,7 @@ def get_client(
             "both files. Or you could have supplied a wrong "
             "password to undecrypt the token file."
         )
+        return None
 
 
 def configure_missing_parameters(
@@ -490,6 +496,15 @@ def configure_missing_parameters(
             file.
     """
     just_configured = []
+
+    if config_assistant.missing:
+        if not sys.stdout.isatty() or not sys.stdin.isatty():
+            msg = (
+                "You will be asked to provide config values, but the session"
+                " doesn't have a tty. Please set up your config file, or "
+                "rerun in a tty."
+            )
+            raise RuntimeError(msg)
 
     for field in config_assistant.missing:
         hint = config_assistant.CONFIG_HINTS.get(field, "")

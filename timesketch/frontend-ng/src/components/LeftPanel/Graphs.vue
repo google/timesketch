@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-source-branch</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       style="cursor: pointer"
       class="pa-4"
@@ -33,38 +45,44 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded">
         <!-- Saved graphs -->
-        <router-link
-          v-for="graph in savedGraphs"
-          :key="graph.id"
-          :to="{ name: 'Graph', query: { graph: graph.id } }"
-          style="cursor: pointer; font-size: 0.9em; text-decoration: none"
-        >
-          <v-row
-            no-gutters
-            @click="setSavedGraph(graph.id)"
-            class="pa-2 pl-5"
-            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+        <div v-show="savedGraphs.length">
+          <v-subheader>Saved Graphs</v-subheader>
+          <router-link
+            v-for="graph in savedGraphs"
+            :key="graph.id"
+            :to="{ name: 'Graph', query: { graph: graph.id } }"
+            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
           >
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
-          </v-row>
-        </router-link>
+            <v-row
+              no-gutters
+              @click="setSavedGraph(graph.id)"
+              class="pa-2 pl-5"
+              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+            >
+              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
+            </v-row>
+          </router-link>
+        </div>
 
         <!-- Graph plugins -->
-        <router-link
-          v-for="graph in graphs"
-          :key="graph.name"
-          :to="{ name: 'Graph', query: { plugin: graph.name } }"
-          style="cursor: pointer; font-size: 0.9em; text-decoration: none"
-        >
-          <v-row
-            no-gutters
-            @click="setGraphPlugin(graph)"
-            class="pa-2 pl-5"
-            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+        <div v-show="graphs.length">
+          <v-subheader>Plugins</v-subheader>
+          <router-link
+            v-for="graph in graphs"
+            :key="graph.name"
+            :to="{ name: 'Graph', query: { plugin: graph.name } }"
+            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
           >
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
-          </v-row>
-        </router-link>
+            <v-row
+              no-gutters
+              @click="setGraphPlugin(graph.name)"
+              class="pa-2 pl-5"
+              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+            >
+              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
+            </v-row>
+          </router-link>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -72,10 +90,12 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   data: function () {
     return {
       expanded: false,

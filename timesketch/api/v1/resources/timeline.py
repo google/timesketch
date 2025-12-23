@@ -17,9 +17,9 @@ import codecs
 import json
 import logging
 import uuid
-import six
 
 import opensearchpy
+from flask import jsonify
 from flask import request
 from flask import abort
 from flask import current_app
@@ -35,10 +35,12 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+from timesketch.lib.aggregators import manager as aggregator_manager
 
 
 logger = logging.getLogger("timesketch.timeline_api")
@@ -49,12 +51,27 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self, sketch_id):
-        """Handles GET request to the resource.
+        """Handles GET requests to retrieve a list of timelines associated with
+        a sketch.
+
+        This method fetches all timelines that are linked to a specific sketch.
+        It verifies that the sketch exists and that the current user has read
+        permissions for that sketch.
+
+        Args:
+            sketch_id (int): The ID of the sketch for which to retrieve timelines.
 
         Returns:
-            View in JSON (instance of flask.wrappers.Response)
+            flask.wrappers.Response: A JSON response containing a list of timeline
+                objects associated with the sketch. Each timeline object includes
+                details such as ID, name, description, and other relevant metadata.
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND: If no sketch is found with the given ID.
+            HTTP_STATUS_CODE_FORBIDDEN: If the current user does not have read
+                access to the specified sketch.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -66,12 +83,50 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, sketch_id):
-        """Handles POST request to the resource.
+        """Handles POST requests to create or associate a timeline with a sketch.
+
+        This method either creates a new timeline and associates it with a sketch,
+        or associates an existing timeline (identified by its search index ID)
+        with a sketch. It handles the following scenarios:
+
+        Creating a New Timeline: If a timeline with the given search index ID
+            does not already exist within the sketch, a new timeline is created.
+            The new timeline's name and description are derived from the search
+            index, and it is associated with the provided sketch.
+        Associating an Existing Timeline: If a timeline with the given
+            search index ID already exists within the sketch, it is associated
+            with the sketch.
+        Running Sketch Analyzers: If the `AUTO_SKETCH_ANALYZERS` config is enabled,
+            sketch analyzers will be run on the newly created or associated timeline.
+        Adding Labels: If the sketch has labels that are in the
+            `LABELS_TO_PREVENT_DELETION` config, those labels will be added
+            to the timeline and search index.
+
+        The method ensures that:
+        - The sketch exists.
+        - The current user has write access to the sketch.
+        - The provided search index ID is valid and not associated with a deleted index.
+
+        Args:
+            sketch_id (int): The ID of the sketch to which the timeline should be
+                associated.
 
         Returns:
-            A sketch in JSON (instance of flask.wrappers.Response)
+            flask.wrappers.Response: A JSON response containing the timeline object
+                and metadata.
+                - HTTP_STATUS_CODE_CREATED (201): If a new timeline was created.
+                - HTTP_STATUS_CODE_OK (200): If an existing timeline was associated.
+                The metadata indicates whether a new timeline was created or not.
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND: If no sketch is found with the given ID.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write access to
+                the sketch.
+            HTTP_STATUS_CODE_BAD_REQUEST: If the request data is invalid, such as:
+                - The timeline (searchindex id) is not an integer.
+                - The search index is deleted.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -97,7 +152,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                 "The timeline (searchindex id) needs to be an integer.",
             )
 
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
         if searchindex.get_status.status == "deleted":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -139,7 +194,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         else:
             metadata["created"] = False
             return_code = HTTP_STATUS_CODE_OK
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
@@ -167,41 +222,79 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 class TimelineResource(resources.ResourceMixin, Resource):
     """Resource to get timeline."""
 
-    def _add_label(self, timeline, label):
-        """Add a label to the timeline."""
+    def _add_label(self, timeline: object, label: str) -> bool:
+        """Adds a label to the timeline if it does not already exist.
+
+        Args:
+            timeline: The timeline object to add the label to.
+            label: The label string to add.
+
+        Returns:
+            True if the label was successfully added, False otherwise.
+            Returns False if the label already exists on the timeline.
+        """
         if timeline.has_label(label):
             logger.warning(
-                "Unable to apply the label [{0:s}] to timeline {1:s}, "
-                "already exists.".format(label, timeline.name)
+                "Unable to apply the label [%s] to timeline (ID: %d), already exists.",
+                label,
+                timeline.id,
             )
             return False
         timeline.add_label(label, user=current_user)
         return True
 
-    def _remove_label(self, timeline, label):
-        """Removes a label from a timeline."""
+    def _remove_label(self, timeline: object, label: str) -> bool:
+        """Removes a label from a timeline.
+
+        Args:
+            timeline: The timeline object to remove the label from.
+            label: The label string to remove.
+
+        Returns:
+            True if the label was successfully removed, False otherwise.
+            Returns False if the label does not exist on the timeline.
+        """
         if not timeline.has_label(label):
             logger.warning(
-                "Unable to remove the label [{0:s}] from timeline {1:s}, "
-                "label does not exist.".format(label, timeline.name)
+                "Unable to remove the label [%s] from timeline (ID: %d), label does "
+                "not exist.",
+                label,
+                timeline.id,
             )
             return False
         timeline.remove_label(label)
         return True
 
     @login_required
-    def get(self, sketch_id, timeline_id):
-        """Handles GET request to the resource.
+    def get(self, sketch_id: int, timeline_id: int):
+        """Handles GET requests for a specific timeline within a sketch.
+
+        This method retrieves a specific timeline by its ID within a given sketch.
+        It verifies that both the sketch and the timeline exist, that the timeline
+        belongs to the sketch, and that the current user has read permission for
+        the sketch. It also fetches metadata about the timeline, such as the number
+        of indexed events.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            timeline_id: Integer primary key for a timeline database model
+            sketch_id (int): The ID of the sketch.
+            timeline_id (int): The ID of the timeline to retrieve.
+
+        Returns:
+            flask.wrappers.Response: A JSON response containing the timeline object
+                and metadata. The metadata includes the number of indexed events
+                in the timeline.
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found, or
+                if the timeline does not belong to the sketch.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have read permission
+                on the sketch.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Timeline found with this ID.")
 
@@ -216,8 +309,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the timeline "
-                "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
+                f"The sketch ID ({sketch.id:d}) does not match with the timeline "
+                f"sketch ID ({timeline.sketch.id:d})",
             )
 
         if not sketch.has_permission(user=current_user, permission="read"):
@@ -228,37 +321,79 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
         meta = {"lines_indexed": None}
         if timeline.get_status.status != "fail":
-            result = self.datastore.search(
-                sketch_id=timeline.searchindex.id,
-                query_string="*",
-                query_filter={
-                    "from": 0,
-                    "indices": [timeline.id],
-                    "order": "asc",
-                    "chips": [],
-                    "fields": [{"field": "message", "type": "text"}],
-                },
-                query_dsl=None,
-                indices=[timeline.searchindex.index_name],
-                timeline_ids=[timeline.id],
-                count=True,
-            )
-            meta["lines_indexed"] = result
+            try:
+                result = self.datastore.search(
+                    sketch_id=timeline.searchindex.id,
+                    query_string="*",
+                    query_filter={
+                        "from": 0,
+                        "indices": [timeline.id],
+                        "order": "asc",
+                        "chips": [],
+                        "fields": [{"field": "message", "type": "text"}],
+                    },
+                    query_dsl=None,
+                    indices=[timeline.searchindex.index_name],
+                    timeline_ids=[timeline.id],
+                    count=True,
+                )
+                meta["lines_indexed"] = result
+            except ValueError as e:
+                logger.error(
+                    "Unable to get indexed line count for sketch [%s], timeline [%s] "
+                    "on index [%s]. Error: %s",
+                    sketch_id,
+                    timeline_id,
+                    timeline.searchindex.index_name,
+                    e,
+                    exc_info=True,
+                )
+                abort(
+                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                    f"Error retrieving timeline data: {e}",
+                )
 
         return self.to_json(timeline, meta=meta)
 
     @login_required
-    def post(self, sketch_id, timeline_id):
-        """Handles POST request to the resource.
+    def post(self, sketch_id: int, timeline_id: int):
+        """Handles POST requests to modify an existing timeline.
+
+        This method allows for updating the properties of a timeline, such as
+        its name, description, and color. It also supports adding or removing
+        labels from the timeline. The method verifies that the sketch and
+        timeline exist, that the timeline belongs to the sketch, and that the
+        current user has write permission on the sketch.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            timeline_id: Integer primary key for a timeline database model
+            sketch_id (int): The ID of the sketch to which the timeline belongs.
+            timeline_id (int): The ID of the timeline to modify.
+
+        Returns:
+            flask.wrappers.Response:
+                - HTTP_STATUS_CODE_OK (200): If the timeline is successfully
+                modified.
+                - HTTP_STATUS_CODE_BAD_REQUEST (400): If the form data is
+                invalid or if there's an issue with the label action or
+                label format.
+                - HTTP_STATUS_CODE_NOT_FOUND (404): If the sketch or timeline
+                is not found.
+                - HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have
+                write permission on the sketch.
+
+        Raises:
+            HTTP_STATUS_CODE_BAD_REQUEST: If the form data is invalid, if the
+                label action is not "add" or "remove", or if the label format
+                is incorrect.
+            HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found,
+                or if the timeline does not belong to the sketch.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write
+                permission on the sketch.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -271,8 +406,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The sketch ID ({0:d}) does not match with the timeline "
-                "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
+                f"The sketch ID ({sketch.id:d}) does not match with the timeline "
+                f"sketch ID ({timeline.sketch.id:d})",
             )
 
         if not sketch.has_permission(user=current_user, permission="write"):
@@ -296,7 +431,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
                         "converts to a list of strings."
                     ),
                 )
-            if not all([isinstance(x, str) for x in labels]):
+            if not all(isinstance(x, str) for x in labels):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     (
@@ -325,9 +460,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 changed = any(changes)
 
             if not changed:
+                msg = ", ".join(labels)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Label [{0:s}] not {1:s}".format(", ".join(labels), label_action),
+                    f"Label [{msg:s}] not {label_action:s}",
                 )
 
             db_session.add(timeline)
@@ -346,18 +482,47 @@ class TimelineResource(resources.ResourceMixin, Resource):
         return HTTP_STATUS_CODE_OK
 
     @login_required
-    def delete(self, sketch_id, timeline_id):
-        """Handles DELETE request to the resource.
+    def delete(self, sketch_id: int, timeline_id: int) -> int:
+        """Handles DELETE requests to remove a timeline from a sketch.
+
+        This method dissociates a timeline from a specific sketch. If the
+        underlying search index associated with the timeline is not in use by any
+        other active timelines (across any sketch), the index will be closed
+        and archived to free up resources.
+
+        The method performs the following checks:
+        1. Validates that the sketch and timeline exist.
+        2. Ensures the timeline belongs to the specified sketch.
+        3. Verifies that the current user has 'write' permission on the sketch.
+        4. Checks if the timeline has any labels that prevent deletion (as defined
+           in the `LABELS_TO_PREVENT_DELETION` configuration).
+        5. Considers the timeline's status (e.g., 'archived', 'fail', 'deleted')
+           when determining if its search index can be safely closed and archived.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            timeline_id: Integer primary key for a timeline database model
+            sketch_id (int): The unique identifier (primary key) of the sketch.
+            timeline_id (int): The unique identifier (primary key) of the
+                timeline to be deleted.
+
+        Returns:
+            int: The HTTP status code indicating the outcome of the operation.
+                - HTTP_STATUS_CODE_OK (200): If the timeline was successfully
+                  deleted (and potentially archived).
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found,
+                or if the timeline is not associated with the sketch.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user lacks write permission for
+                the sketch, or if the timeline is protected from deletion by a
+                restricted label.
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If an unexpected error
+                occurs while attempting to close the search index in the datastore.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -382,8 +547,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 timeline_string = str(timeline_use)
 
                 msg = (
-                    "The sketch ID ({0:s}) does not match with the timeline "
-                    "sketch ID ({1:s})".format(sketch_string, timeline_string)
+                    f"The sketch ID ({sketch_string:s}) does not match with the "
+                    f"timeline sketch ID ({timeline_string:s})"
                 )
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
@@ -398,7 +563,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             if timeline.has_label(label):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    "Timelines with label [{0:s}] cannot be deleted.".format(label),
+                    f"Timelines with label [{label:s}] cannot be deleted.",
                 )
 
         # Check if this searchindex is used in other sketches.
@@ -421,7 +586,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             if timeline_.id != timeline_id:
                 # There are more than a single timeline using this index_name,
                 # we can't close it (unless this timeline is archived).
-                if timeline_.get_status.status != "archived":
+                if timeline_.get_status.status not in ("archived", "fail", "deleted"):
                     close_index = False
                     break
 
@@ -430,9 +595,17 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 self.datastore.client.indices.close(index=searchindex.index_name)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    "Unable to close index: {0:s} - index not "
-                    "found".format(searchindex.index_name)
+                    "Unable to close index: %s - index not found",
+                    searchindex.index_name,
                 )
+            except opensearchpy.RequestError as e:
+                error_msg = (
+                    f"RequestError when closing index {searchindex.index_name:s}"
+                    " - please try again in 5 min or contact your admin. "
+                    f"Error: {e:s}"
+                )
+                logger.error(error_msg)
+                abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)
 
             searchindex.set_status(status="archived")
             timeline.set_status(status="archived")
@@ -451,10 +624,30 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self):
-        """Handles POST request to the resource.
+        """Handles POST requests to create a new timeline.
+
+        This method processes a POST request to create a new timeline. It
+        validates the incoming form data, creates a new search index, and
+        optionally associates the timeline with an existing sketch.
 
         Returns:
-            A view in JSON (instance of flask.wrappers.Response)
+            flask.wrappers.Response: A JSON response containing the newly
+                created timeline or search index object.
+                - HTTP_STATUS_CODE_CREATED (201): If the timeline or search
+                  index is successfully created.
+                - HTTP_STATUS_CODE_BAD_REQUEST (400): If the upload is not
+                  enabled or if the form data is invalid.
+                - HTTP_STATUS_CODE_NOT_FOUND (404): If the specified sketch
+                  is not found.
+                - HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have
+                  write access to the sketch.
+
+        Raises:
+            HTTP_STATUS_CODE_BAD_REQUEST: If the upload is not enabled or if
+                the form data is invalid.
+            HTTP_STATUS_CODE_NOT_FOUND: If the specified sketch is not found.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write
+                access to the sketch.
         """
         upload_enabled = current_app.config["UPLOAD_ENABLED"]
         if not upload_enabled:
@@ -475,14 +668,14 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
 
         sketch = None
         if sketch_id:
-            sketch = Sketch.query.get_with_acl(sketch_id)
+            sketch = Sketch.get_with_acl(sketch_id)
             if not sketch:
                 abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
         index_name = uuid.uuid4().hex
-        if not isinstance(index_name, six.text_type):
+        if not isinstance(index_name, str):
             index_name = codecs.decode(index_name, "utf-8")
 
         # Create the search index in the Timesketch database
@@ -495,7 +688,6 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         searchindex.grant_permission(permission="read", user=current_user)
         searchindex.grant_permission(permission="write", user=current_user)
         searchindex.grant_permission(permission="delete", user=current_user)
-        searchindex.set_status("processing")
         db_session.add(searchindex)
         db_session.commit()
 
@@ -521,3 +713,100 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         utils.update_sketch_last_activity(sketch)
 
         return self.to_json(searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+# TODO(Issue 3200): Research more efficient ways to gather unique fields.
+class TimelineFieldsResource(resources.ResourceMixin, Resource):
+    """Resource to retrieve unique fields present in a timeline.
+
+    This resource aggregates data types within a timeline and then queries
+    OpenSearch to retrieve all unique fields present across those data types,
+    excluding default Timesketch fields.
+    """
+
+    @login_required
+    def get(self, sketch_id, timeline_id):
+        """Handles GET request to retrieve unique fields in a timeline.
+
+        Args:
+            sketch_id (int): The ID of the sketch.
+            timeline_id (int): The ID of the timeline.
+
+        Returns:
+            flask.wrappers.Response: A JSON response containing a list of
+                unique fields in the timeline, sorted alphabetically. Returns
+                an empty list if no fields are found or if there's an error.
+                Possible error codes: 400, 403, 404.
+        """
+
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        timeline = Timeline.get_by_id(timeline_id)
+        if not timeline:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch.id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "The timeline does not belong to the sketch.",
+            )
+
+        index_name = timeline.searchindex.index_name
+        timeline_fields = set()
+
+        # 1. Get distinct data types for the timeline using aggregation
+        aggregator_name = "field_bucket"
+        aggregator_parameters = {
+            "field": "data_type",
+            "limit": "10000",  # Get all data types
+        }
+
+        agg_class = aggregator_manager.AggregatorManager.get_aggregator(aggregator_name)
+        if not agg_class:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"Aggregator {aggregator_name} not found")
+
+        aggregator = agg_class(
+            sketch_id=sketch_id, indices=[index_name], timeline_ids=[timeline_id]
+        )
+        result_obj = aggregator.run(**aggregator_parameters)
+
+        if not result_obj:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Error running data type aggregation.")
+
+        data_types = sorted([bucket["data_type"] for bucket in result_obj.values])
+
+        # 2. For each data type, query for a single event to get fields
+        for data_type in data_types:
+            query_filter = {"indices": [timeline_id], "size": 1}
+
+            try:
+                result = self.datastore.search(
+                    sketch_id=sketch_id,
+                    query_string=f'data_type:"{data_type}"',
+                    query_filter=query_filter,
+                    query_dsl=None,
+                    indices=[index_name],
+                    timeline_ids=[timeline_id],
+                )
+            except ValueError as e:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+            if isinstance(result, dict) and result.get("hits", {}).get("hits", []):
+                event = result["hits"]["hits"][0]["_source"]
+                for field in event:
+                    if field not in [
+                        "datetime",
+                        "timestamp",
+                        "__ts_timeline_id",
+                    ]:
+                        timeline_fields.add(field)
+
+        return jsonify({"objects": sorted(list(timeline_fields))})

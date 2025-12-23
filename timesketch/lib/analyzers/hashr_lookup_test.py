@@ -1,11 +1,13 @@
 """Tests for OsshashdbLookupPlugin."""
-from __future__ import unicode_literals
+
+# pylint: disable=unnecessary-dunder-call
 
 import copy
 import logging
+import json
 
+from unittest import mock
 from flask import current_app
-import mock
 import sqlalchemy
 
 from timesketch.lib.analyzers import hashr_lookup
@@ -23,11 +25,17 @@ class TestHashRLookup(BaseTest):
         self.logger = logging.getLogger("timesketch.analyzers.hashR")
 
     @mock.patch.object(sqlalchemy, "create_engine", autospec=False)
+    @mock.patch.object(sqlalchemy, "MetaData", autospec=True)
     @mock.patch.object(logging.Logger, "warning", autospec=True)
     @mock.patch.object(logging.Logger, "error", autospec=True)
     @mock.patch.object(logging.Logger, "debug", autospec=True)
     def test_connect_hashR_no_errors(
-        self, mock_debug, mock_error, mock_warning, mock_create_engine
+        self,
+        mock_debug: logging.Logger,
+        mock_error: logging.Logger,
+        mock_warning: logging.Logger,
+        mock_meta_data: sqlalchemy.MetaData,
+        mock_create_engine: object,
     ):
         """Test the connect_hashR function with no errors.
 
@@ -35,6 +43,7 @@ class TestHashRLookup(BaseTest):
             mock_debug: Mock object for the logger.debug function.
             mock_error: Mock object for the logger.error function.
             mock_warning: Mock objext for the logger.warning function.
+            mock_meta_data: Mock object for the sqlalchemy meta_data function.
             mock_create_engine: Mock object for the sqlalchemy.create_engine
                                 function.
         """
@@ -47,12 +56,15 @@ class TestHashRLookup(BaseTest):
         current_app.config["HASHR_QUERY_BATCH_SIZE"] = 10000
 
         mock_create_engine().connect.return_value = True
+        test_meta_data = mock.MagicMock()
+        mock_meta_data.return_value = test_meta_data
+        test_meta_data.tables = ["samples", "sources", "samples_sources"]
 
         test_conn = self.analyzer.connect_hashr()
         self.assertEqual(test_conn, True)
         mock_debug.assert_called_with(
             self.logger,
-            "Successful connected to hashR postgress database: %s",
+            "Successful connected to hashR postgresql database: %s",
             "postgresql://hashR:***@127.0.0.1:5432/hashRdb",
         )
         mock_error.assert_not_called()
@@ -84,7 +96,12 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(sqlalchemy, "create_engine", autospec=False)
     @mock.patch.object(logging.Logger, "error", autospec=True)
     @mock.patch.object(logging.Logger, "debug", autospec=True)
-    def test_connect_hashr_conn_error(self, mock_debug, mock_error, mock_create_engine):
+    def test_connect_hashr_conn_error(
+        self,
+        mock_debug: logging.Logger,
+        mock_error: logging.Logger,
+        mock_create_engine: object,
+    ):
         """Test the connect_hashr function simulating a connection error.
 
         Args:
@@ -131,7 +148,10 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(sqlalchemy, "MetaData", autospec=True)
     @mock.patch.object(logging.Logger, "debug", autospec=True)
     def test_check_against_hashr_matching_hashes_tags(
-        self, mock_debug, mock_meta_data, mock_select
+        self,
+        mock_debug: logging.Logger,
+        mock_meta_data: sqlalchemy.MetaData,
+        mock_select: object,
     ):
         """Test the check_against_hashr function with existing matches and tags only.
 
@@ -211,7 +231,10 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(sqlalchemy, "MetaData", autospec=True)
     @mock.patch.object(logging.Logger, "debug", autospec=True)
     def test_check_against_hashr_matching_hashes_sources(
-        self, mock_debug, mock_meta_data, mock_select
+        self,
+        mock_debug: logging.Logger,
+        mock_meta_data: sqlalchemy.MetaData,
+        mock_select: object,
     ):
         """Test check_against_hashr function with matches + tags & attributes.
 
@@ -356,14 +379,16 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(sqlalchemy, "MetaData", autospec=True)
     @mock.patch.object(logging.Logger, "debug", autospec=True)
     def test_check_against_hashr_no_matches(
-        self, mock_debug, mock_meta_data, _mock_select
+        self,
+        mock_debug: logging.Logger,
+        mock_meta_data: sqlalchemy.MetaData,
+        _mock_select: object,
     ):
         """Test the check_against_hashr function with no matching hashes.
 
         Args:
             mock_debug: Mock object for the logger.debug function.
             mock_meta_data: Mock object for the sqlalchemy meta_data function.
-            _mock_select: Mock object for the sqlalchemy Select class.
         """
         test_input_hashes = [
             "78a249b6e0f74979d2d2a230abbe5f3c9b558fcc01e61c7c09950304cf95c7c0",
@@ -384,7 +409,8 @@ class TestHashRLookup(BaseTest):
         self.analyzer.add_source_attribute = True
         test_bind = mock.MagicMock()
         self.analyzer.hashr_conn = test_bind
-        test_bind.connect().__enter__().execute.return_value = test_db_return
+        with test_bind.connect() as connection:
+            connection.execute.return_value = test_db_return
         test_meta_data = mock.MagicMock()
         mock_meta_data.return_value = test_meta_data
 
@@ -413,12 +439,16 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(hashr_lookup.HashRLookup, "connect_hashr", autospec=True)
     @mock.patch.object(hashr_lookup.HashRLookup, "check_against_hashr", autospec=True)
     def test_run_tags_only(
-        self, mock_check, mock_connect, _mock_info, mock_debug, mock_warning
+        self,
+        mock_check: hashr_lookup.HashRLookup,
+        mock_connect: hashr_lookup.HashRLookup,
+        _mock_info: logging.Logger,
+        mock_debug: logging.Logger,
+        mock_warning: logging.Logger,
     ):
         """Test the run function with the flag add_source_attribute=False.
 
         Args:
-            _mock_info: Unused mock object to catch info messages.
             mock_debug: Mock object for the logger.debug function.
             mock_warning: Mock object for the logger.warning function.
             mock_check: Mock object for the check_against_hashr function.
@@ -474,7 +504,43 @@ class TestHashRLookup(BaseTest):
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         ]
 
-        analyzer = hashr_lookup.HashRLookup("test_index", 1)
+        expected_result_message_one = json.dumps(
+            {
+                "platform": "timesketch",
+                "analyzer_identifier": "hashr_lookup",
+                "analyzer_name": "hashR lookup",
+                "result_status": "SUCCESS",
+                "result_priority": "NOTE",
+                "result_summary": "Found a total of 13 events that contain a sha256 hash value - 6 / 11 unique hashes known in hashR - 6 events tagged - 1 entries were tagged as zerobyte files - 2 events raised an error",
+                "platform_meta_data": {
+                    "timesketch_instance": "https://localhost",
+                    "sketch_id": 1,
+                    "timeline_id": 1,
+                    "created_tags": ["zerobyte-file", "known-hash"],
+                },
+                "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 6 / 11 unique hashes known in hashR\n* 6 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
+            }
+        )
+
+        expected_result_message_two = json.dumps(
+            {
+                "platform": "timesketch",
+                "analyzer_identifier": "hashr_lookup",
+                "analyzer_name": "hashR lookup",
+                "result_status": "SUCCESS",
+                "result_priority": "NOTE",
+                "result_summary": "Found a total of 13 events that contain a sha256 hash value - 6 / 11 unique hashes known in hashR - 6 events tagged - 1 entries were tagged as zerobyte files - 2 events raised an error",
+                "platform_meta_data": {
+                    "timesketch_instance": "https://localhost",
+                    "sketch_id": 1,
+                    "timeline_id": 1,
+                    "created_tags": ["known-hash", "zerobyte-file"],
+                },
+                "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 6 / 11 unique hashes known in hashR\n* 6 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
+            }
+        )
+
+        analyzer = hashr_lookup.HashRLookup("test_index", 1, 1)
         analyzer.datastore.client = mock.Mock()
 
         event_id = 0
@@ -482,7 +548,7 @@ class TestHashRLookup(BaseTest):
             event = copy.deepcopy(MockDataStore.event_dict)
             event["_source"].update(entry)
             analyzer.datastore.import_event(
-                "test_index", event["_source"], "{}".format(event_id)
+                "test_index", event["_source"], f"{event_id}"
             )
             event_id += 1
 
@@ -490,18 +556,14 @@ class TestHashRLookup(BaseTest):
         mock_check.return_value = expected_matching_hashes
         analyzer.add_source_attribute = False
         analyzer.unique_known_hash_counter = 5
-
         result_message = analyzer.run()
-        self.assertEqual(
-            result_message,
-            "Found a total of 13 events that contain a sha256 hash value "
-            "- 6 / 11 unique hashes known in hashR - 6 events tagged - 1 "
-            "entries were tagged as zerobyte files - 2 events raised an error",
+        self.assertIn(
+            result_message, [expected_result_message_one, expected_result_message_two]
         )
         mock_warning.assert_any_call(
             self.logger,
-            "The extracted hash does not match the required lenght (64) of "
-            "a SHA256 hash. Skipping this event! Hash: %s - Lenght: %d",
+            "The extracted hash does not match the required length (64) of "
+            "a SHA256 hash. Skipping this event! Hash: %s - Length: %d",
             "8bbd7976b2b86e1746494c98425e7830",
             32,
         )
@@ -520,12 +582,16 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(hashr_lookup.HashRLookup, "connect_hashr", autospec=True)
     @mock.patch.object(hashr_lookup.HashRLookup, "check_against_hashr", autospec=True)
     def test_run_tags_and_sources(
-        self, mock_check, mock_connect, _mock_info, mock_debug, mock_warning
+        self,
+        mock_check: hashr_lookup.HashRLookup,
+        mock_connect: hashr_lookup.HashRLookup,
+        _mock_info: logging.Logger,
+        mock_debug: logging.Logger,
+        mock_warning: logging.Logger,
     ):
         """Test the run function with the flag add_source_attribute=True.
 
         Args:
-            _mock_info: Unused mock object to catch info messages.
             mock_debug: Mock object for the logger.debug function.
             mock_warning: Mock object for the logger.warning function.
             mock_check: Mock object for the check_against_hashr function.
@@ -592,7 +658,45 @@ class TestHashRLookup(BaseTest):
             ],
         }
 
-        analyzer = hashr_lookup.HashRLookup("test_index", 1)
+        expected_result_message_one = json.dumps(
+            {
+                "platform": "timesketch",
+                "analyzer_identifier": "hashr_lookup",
+                "analyzer_name": "hashR lookup",
+                "result_status": "SUCCESS",
+                "result_priority": "NOTE",
+                "result_summary": "Found a total of 13 events that contain a sha256 hash value - 5 / 11 unique hashes known in hashR - 5 events tagged - 1 entries were tagged as zerobyte files - 2 events raised an error",
+                "platform_meta_data": {
+                    "timesketch_instance": "https://localhost",
+                    "sketch_id": 1,
+                    "timeline_id": 1,
+                    "created_tags": ["zerobyte-file", "known-hash"],
+                    "created_attributes": ["hashR_sample_sources"],
+                },
+                "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 5 / 11 unique hashes known in hashR\n* 5 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
+            }
+        )
+
+        expected_result_message_two = json.dumps(
+            {
+                "platform": "timesketch",
+                "analyzer_identifier": "hashr_lookup",
+                "analyzer_name": "hashR lookup",
+                "result_status": "SUCCESS",
+                "result_priority": "NOTE",
+                "result_summary": "Found a total of 13 events that contain a sha256 hash value - 5 / 11 unique hashes known in hashR - 5 events tagged - 1 entries were tagged as zerobyte files - 2 events raised an error",
+                "platform_meta_data": {
+                    "timesketch_instance": "https://localhost",
+                    "sketch_id": 1,
+                    "timeline_id": 1,
+                    "created_tags": ["known-hash", "zerobyte-file"],
+                    "created_attributes": ["hashR_sample_sources"],
+                },
+                "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 5 / 11 unique hashes known in hashR\n* 5 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
+            }
+        )
+
+        analyzer = hashr_lookup.HashRLookup("test_index", 1, 1)
         analyzer.datastore.client = mock.Mock()
 
         event_id = 0
@@ -600,7 +704,7 @@ class TestHashRLookup(BaseTest):
             event = copy.deepcopy(MockDataStore.event_dict)
             event["_source"].update(entry)
             analyzer.datastore.import_event(
-                "test_index", event["_source"], "{}".format(event_id)
+                "test_index", event["_source"], f"{event_id}"
             )
             event_id += 1
 
@@ -610,16 +714,13 @@ class TestHashRLookup(BaseTest):
         analyzer.unique_known_hash_counter = 5
 
         result_message = analyzer.run()
-        self.assertEqual(
-            result_message,
-            "Found a total of 13 events that contain a sha256 hash value "
-            "- 5 / 11 unique hashes known in hashR - 5 events tagged - 1 "
-            "entries were tagged as zerobyte files - 2 events raised an error",
+        self.assertIn(
+            result_message, [expected_result_message_one, expected_result_message_two]
         )
         mock_warning.assert_any_call(
             self.logger,
-            "The extracted hash does not match the required lenght (64) of "
-            "a SHA256 hash. Skipping this event! Hash: %s - Lenght: %d",
+            "The extracted hash does not match the required length (64) of "
+            "a SHA256 hash. Skipping this event! Hash: %s - Length: %d",
             "8bbd7976b2b86e1746494c98425e7830",
             32,
         )
@@ -636,25 +737,40 @@ class TestHashRLookup(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch.object(logging.Logger, "debug", autospec=True)
     @mock.patch.object(hashr_lookup.HashRLookup, "connect_hashr", autospec=True)
-    def test_run_no_hashes(self, mock_connect, _mock_debug):
+    def test_run_no_hashes(
+        self, mock_connect: hashr_lookup.HashRLookup, _mock_debug: logging.Logger
+    ):
         """Test the run function with no hashes in the events.
 
         Args:
-            _mock_debug: Unused mock object for the logger.debug function.
             mock_connect: Mock object for the connect_hashr function.
         """
-        analyzer = hashr_lookup.HashRLookup("test_index", 1)
+        analyzer = hashr_lookup.HashRLookup("test_index", 1, 1)
         analyzer.datastore.client = mock.Mock()
+
+        expected_result_message = json.dumps(
+            {
+                "platform": "timesketch",
+                "analyzer_identifier": "hashr_lookup",
+                "analyzer_name": "hashR lookup",
+                "result_status": "SUCCESS",
+                "result_priority": "NOTE",
+                "result_summary": (
+                    "This timeline does not contain any fields with a sha256 hash."
+                ),
+                "platform_meta_data": {
+                    "timesketch_instance": "https://localhost",
+                    "sketch_id": 1,
+                    "timeline_id": 1,
+                },
+            }
+        )
 
         mock_connect.return_value = True
         analyzer.add_source_attribute = True
 
         result_message = analyzer.run()
-        self.assertEqual(
-            result_message,
-            'The selected timeline "" does not contain any fields with a '
-            "sha256 hash.",
-        )
+        self.assertEqual(result_message, expected_result_message)
 
     def test_process_event(self):
         """Test the process_event function with no special cases."""

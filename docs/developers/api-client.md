@@ -46,6 +46,17 @@ ts_client = config.get_client(token_password='MY_SUPER_L337_PWD')
 
 If the token file does not exist, it will be generated and encrypted using the supplied password.
 
+### Directly passing username / password
+
+Another option to create a connection to the Timesketch server is by creating an `TimesketchApi` object and passing `
+
+```python
+from timesketch_api_client import client as timesketch_client
+client = timesketch_client.TimesketchApi(host_uri='https://demo.timesketch.org', username='demo', password='demo')
+```
+
+> Careful with storing credentials in code that you intend to publish or make available to others. 
+
 ## Client Config
 
 In order to make it simpler to connect to the API client a config file
@@ -132,22 +143,24 @@ There are some ways to list sketches by adjusting the ```scope```.
 Following scopes are available:
 
 - recent: Get list of sketches that the user has actively searched in.
-- shared: Get sketches that can be accessed
+- user: Get sketches owned by the user.
+- shared: Get sketches shared with the user (but not owned by them).
 - admin: Get all sketches if the user is an admin
 - archived: get archived sketches
 - search: pass additional search query
+- all: Get all sketches the user has access to (owned and shared).
 
 ```
 ts_client.list_sketches(per_page=1000, scope='user', include_archived=True)
 ```
 
-Will return all sketches that are owned by the specified user.
+Will return all sketches that are owned by the user.
 
 ```
 ts_client.list_sketches(per_page=1000, scope='shared', include_archived=True)
 ```
 
-Will return all sketches that the account used to connect to the API has access to.
+Will return all sketches that are shared with the user (but not owned by them).
 
 ## Connecting to a Sketch
 
@@ -568,6 +581,31 @@ Both will give you something like:
  'tags_applied': 1,
  'total_number_of_events_sent_by_client': 1}
 ```
+### Remove tags from Events
+
+`untag_event`and `untag_events` in the context of a sketch.
+
+`untag_event(self, event_id: str, index, tag: str):` - Untags the specified tag from the event with the specified ID.
+`untag_events(self, events, tags_to_remove: list):` - Untags the specified tag from all of the events with the specified IDs.
+
+Example code:
+
+```python
+
+import timesketch_api_client
+
+Create a client
+client = timesketch_api_client.TimesketchAPIClient()
+sketch = client.get_sketch(1)
+
+# Get the event ID
+event_id = "k8P1MYcBkeTGnypeeKJL"
+
+# Untag the event
+sketch.untag_event(event_id, "foobar")
+```
+
+> Note the maximum of events passed via API is 500. The maximum number of tags to be removed in one API call is also 500.
 
 ### Add Attributes to Events
 

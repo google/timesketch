@@ -42,7 +42,7 @@ def configure_logger_debug():
     logging.basicConfig()
     logger.setLevel(logging.DEBUG)
     logger_formatter = logging.Formatter(
-        "[%(asctime)s] %(name)s/%(levelname)s %(message)s " "<%(module)s/%(funcName)s>"
+        "[%(asctime)s] %(name)s/%(levelname)s %(message)s <%(module)s/%(funcName)s>"
     )
     for handler in logger.parent.handlers:
         handler.setFormatter(logger_formatter)
@@ -135,16 +135,13 @@ def upload_file(
         context = config_dict.get("context")
         if context:
             streamer.set_upload_context(context)
-        else:
-            streamer.set_upload_context(" ".join(sys.argv))
 
         streamer.add_file(file_path)
 
-        # Force a flush.
-        streamer.flush()
-
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
+
+        streamer.close()
 
     logger.info("File upload completed.")
     return timeline, task_id
@@ -414,7 +411,7 @@ def main(args=None):
         type=int,
         default=0,
         dest="entry_threshold",
-        help=("How many entries should be buffered up before being " "sent to server."),
+        help=("How many entries should be buffered up before being sent to server."),
     )
 
     config_group.add_argument(
@@ -463,6 +460,20 @@ def main(args=None):
         nargs="?",
         type=str,
         help=("Path to the file that is to be imported."),
+    )
+
+    config_group.add_argument(
+        "--analyzer_names",
+        "--analyzer-names",
+        nargs="*",
+        action="store",
+        dest="analyzer_names",
+        default=[],
+        help=(
+            "Set of analyzers that we will automatically run right after the "
+            "timelines are uploaded. The input needs to be the analyzers names."
+            "Provided as strings separated by space"
+        ),
     )
 
     options = argument_parser.parse_args(args)
@@ -609,6 +620,24 @@ def main(args=None):
             "What is the timeline name", input_type=str, default=default_timeline_name
         )
 
+    context = options.context
+    if not context:
+        # Create a copy to modify
+        argv_sanitized = []
+        password_args = ["-p", "--password", "--pwd"]
+        skip_next = False
+        for arg in sys.argv:
+            if skip_next:
+                skip_next = False
+                continue
+            if arg in password_args:
+                skip_next = True
+                continue
+            if arg.startswith(tuple(f"{a}=" for a in password_args)):
+                continue
+            argv_sanitized.append(arg)
+        context = " ".join(argv_sanitized)
+
     config_dict = {
         "message_format_string": options.format_string,
         "timeline_name": conf_timeline_name,
@@ -618,7 +647,8 @@ def main(args=None):
         "size_threshold": options.size_threshold,
         "log_config_file": options.log_config_file,
         "data_label": options.data_label,
-        "context": options.context,
+        "context": context,
+        "analyzer_names": options.analyzer_names,
     }
 
     logger.info("Uploading file.")
@@ -630,6 +660,11 @@ def main(args=None):
         logger.info(
             "File got successfully uploaded to sketch: {0:d}".format(my_sketch.id)
         )
+        if options.analyzer_names:
+            logger.warning(
+                "Argument 'analyzer_names' only works with 'wait_timeline = "
+                "True'! Skipping execution of analyzers: {analyzer_names}"
+            )
         return
 
     if not timeline:
@@ -645,8 +680,8 @@ def main(args=None):
         if status in ("archived", "failed", "fail"):
             print("[FAIL]")
             print(
-                "Unable to index timeline {0:s}, reason: {1:s}".format(
-                    timeline.description, timeline.status
+                "Unable to index timeline (ID: {0:d}), reason: {1:s}".format(
+                    timeline.id, timeline.status
                 )
             )
             return
@@ -666,6 +701,16 @@ def main(args=None):
                 task_state = task.get("state", "Unknown")
         print(f"Status of the index is: {task_state}")
         break
+
+    if options.analyzer_names:
+        logger.info(
+            "Trigger analyzers: %s on Timeline '%s'",
+            str(options.analyzer_names),
+            str(timeline.name),
+        )
+        _ = importer.run_analyzers(
+            analyzer_names=options.analyzer_names, timeline_obj=timeline
+        )
 
 
 if __name__ == "__main__":

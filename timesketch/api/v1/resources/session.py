@@ -47,7 +47,7 @@ class SessionResource(resources.ResourceMixin, Resource):
         sessions = []
         is_truncated = False
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -84,7 +84,7 @@ class SessionResource(resources.ResourceMixin, Resource):
         ts_query_string = ts_filter["bool"]["must"][0]["query_string"]
 
         for session_type in session_types:
-            id_terms["field"] = "session_id.{}.keyword".format(session_type)
+            id_terms["field"] = f"session_id.{session_type}.keyword"
             # pylint: disable=unexpected-keyword-arg
             id_agg = self.datastore.client.search(
                 index=list(sketch_indices), body=id_agg_spec, size=0

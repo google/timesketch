@@ -107,12 +107,12 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         Returns:
             Search index in JSON (instance of flask.wrappers.Response)
         """
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
 
         try:
             mapping = self.datastore.client.indices.get_mapping(searchindex.index_name)
         except opensearchpy.NotFoundError:
-            logger.error("Unable to find index: {0:s}".format(searchindex.index_name))
+            logger.error("Unable to find index: %s", searchindex.index_name)
             mapping = {}
             searchindex.set_status("fail")
             db_session.commit()
@@ -144,7 +144,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         if not searchindex_id:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Need to define a search index ID")
 
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
         if not searchindex:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No searchindex found with this ID.")
 
@@ -184,7 +184,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
     @login_required
     def delete(self, searchindex_id):
         """Handles DELETE request to the resource."""
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
         if not searchindex:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No searchindex found with this ID.")
 
@@ -210,10 +210,11 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         if sketches:
             error_strings = ["WARNING: This timeline is in use by:"]
             for sketch in sketches:
-                error_strings.append(" * {0:s}".format(sketch.name))
+                error_strings.append(f" * {sketch.id:d}")
             abort(HTTP_STATUS_CODE_FORBIDDEN, "\n".join(error_strings))
 
         searchindex.set_status(status="deleted")
+        # TODO: Actually implement to delete the index
         db_session.commit()
 
         other_indexes = SearchIndex.query.filter_by(
@@ -221,7 +222,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         ).all()
         if len(other_indexes) > 1:
             logger.warning(
-                "Search index: {0:s} belongs to more than one "
+                "Search index: {:s} belongs to more than one "
                 "db entry.".format(searchindex.index_name)
             )
             return HTTP_STATUS_CODE_OK
@@ -230,7 +231,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             self.datastore.client.indices.close(index=searchindex.index_name)
         except opensearchpy.NotFoundError:
             logger.warning(
-                "Unable to close index: {0:s}, the index wasn't "
+                "Unable to close index: {:s}, the index wasn't "
                 "found.".format(searchindex.index_name)
             )
 

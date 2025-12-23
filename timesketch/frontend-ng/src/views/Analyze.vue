@@ -17,7 +17,7 @@ limitations under the License.
   <v-container fluid>
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
       <div class="mt-2">
-        <ts-timeline-search :analyzer-timeline-id="analyzerTimelineId" @selectedTimelines="timelineSelection = $event"></ts-timeline-search>
+        <ts-timeline-search componentName="analysis" :includeProcessingTimelines="false" :analyzer-timeline-id="analyzerTimelineId" @selectedTimelines="timelineSelection = $event"></ts-timeline-search>
       </div>
       <v-divider></v-divider>
       <div>
@@ -29,8 +29,8 @@ limitations under the License.
 </template>
 
 <script>
-import TsTimelineSearch from '../components/Analyzer/TimelineSearch'
-import TsAnalyzerList from '../components/Analyzer/AnalyzerList'
+import TsTimelineSearch from '../components/Analyzer/TimelineSearch.vue'
+import TsAnalyzerList from '../components/Analyzer/AnalyzerList.vue'
 
 export default {
   components: {

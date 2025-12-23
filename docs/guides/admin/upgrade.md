@@ -4,14 +4,25 @@ hide:
 ---
 # Upgrade an existing installation
 
-When upgrading Timesketch you might need to migrate the database to use the latest database schema. This is how you do that.
+When upgrading Timesketch you might need to migrate the database to use the latest database schema. This will be made clear within any release notifications.
+
+If a databse migration is required, then the following guide is how you do so:
 
 ## Backup you database (!)
 First you should backup your current database in case something goes wrong in the upgrade process. For PostgreSQL you do the following (Ref: https://www.postgresql.org/docs/9.1/static/backup.html):
 
+### general postgres
+
 ```shell
 $ sudo -u postgres pg_dump timesketch > ~/timesketch-db.sql
 $ sudo -u postgres pg_dumpall > ~/timesketch-db-all.sql
+```
+
+### docker postgres
+
+```shell
+$ sudo docker exec -t postgres pg_dump -U timesketch timesketch > ~/timesketch-db.sql
+$ sudo docker exec -t postgres pg_dumpall -U timesketch > ~/timesketch-db-all.sql
 ```
 
 ## Change to your Timesketch installation directory
@@ -25,7 +36,7 @@ $ cd /<PATH TO TIMESKETCH INSTALLATION>
 Have you backed up your database..? good. Let's upgrade the schema. First connect to the timesketch-web container:
 
 ```shell
-$ docker-compose exec timesketch-web /bin/bash
+$ docker compose exec timesketch-web /bin/bash
 ```
 
 While connected to the container:
@@ -57,10 +68,14 @@ root@<CONTAINER_ID>$ tsctl db upgrade
 ```
 
 ## Upgrade timesketch
-Exit from the container (CTRL-D), then pull new versions of the docker images and upgrade Timesketch:
+If upgrading the database then exit from the container (CTRL-D).
+The current version of timesketch is defined within the `config.env` file located within the parent directory of the timesketch installation.
+Simply amend the `TIMESKETCH_VERSION=` to the one required and upgrading to.
+
+In order to pull new versions of the docker images and upgrade Timesketch:
 
 ```shell
-$ docker-compose pull
-$ docker-compose down
-$ docker-compose up -d
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml pull
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml down
+$ docker compose --env-file /opt/timesketch/config.env -f /opt/timesketch/docker-compose.yml up -d
 ```

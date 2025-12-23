@@ -1,5 +1,6 @@
 """Analyzer plugin for tagging."""
-from collections.abc import Iterable
+
+from collections.abc import Iterable  # pylint: disable no-name-in-module
 import logging
 
 from timesketch.lib import emojis
@@ -59,7 +60,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         ]
         return tags_kwargs
 
-    def tagger(self, name, config):
+    def tagger(self, name: str, config: dict):
         """Tag and add emojis to events.
 
         Args:
@@ -126,11 +127,15 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
             for attribute in dynamic_tags:
                 tag_value = event.source.get(attribute)
                 for mod in config.get("modifiers", []):
-                    tag_value = self.MODIFIERS[mod](tag_value)
-                if isinstance(tag_value, Iterable):
-                    dynamic_tag_values.extend(tag_value)
-                else:
+                    if isinstance(tag_value, str):
+                        tag_value = self.MODIFIERS[mod](tag_value)
+
+                if isinstance(tag_value, str):
                     dynamic_tag_values.append(tag_value)
+                elif isinstance(tag_value, Iterable):
+                    dynamic_tag_values.extend(tag_value)
+                elif tag_value is not None:
+                    dynamic_tag_values.append(str(tag_value))
             event.add_tags(dynamic_tag_values)
 
             event.add_emojis(emojis_to_add)
@@ -142,7 +147,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
             self.sketch.add_view(
                 search_name, self.NAME, query_string=query, query_dsl=query_dsl
             )
-        return "{0:d} events tagged for [{1:s}]".format(event_counter, name)
+        return f"{event_counter:d} events tagged for [{name:s}]"
 
 
 manager.AnalysisManager.register_analyzer(TaggerSketchPlugin)

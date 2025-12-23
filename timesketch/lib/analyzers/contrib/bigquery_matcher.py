@@ -1,4 +1,5 @@
 """Index analyzer plugin for matching against data in BigQuery tables."""
+
 import itertools
 import logging
 
@@ -47,7 +48,7 @@ class BigQueryMatcherPlugin(interface.BaseAnalyzer):
         """
         bq_config = interface.get_yaml_config("bigquery_matcher.yaml")
         if not bq_config:
-            logger.error("BigQuery Matcher could not load configuration file.")
+            logger.debug("BigQuery Matcher configuration file not found or empty.")
             return []
 
         matcher_kwargs = [
@@ -109,7 +110,7 @@ class BigQueryMatcherPlugin(interface.BaseAnalyzer):
         try:
             bq_client = bigquery.Client(project=bq_project)
         except google_auth_exceptions.DefaultCredentialsError as exception:
-            return "Could not authenticate to BigQuery: {0!s}".format(exception)
+            return f"Could not authenticate to BigQuery: {exception!s}"
 
         num_matches = 0
         for i in range(0, len(events), self._BQ_BATCH_SIZE):
@@ -123,7 +124,7 @@ class BigQueryMatcherPlugin(interface.BaseAnalyzer):
                     event.add_emojis(emojis_to_add)
                     event.commit()
                     num_matches += 1
-        return ("{0:d} events found for matcher [{1:s}]").format(num_matches, name)
+        return ("{:d} events found for matcher [{:s}]").format(num_matches, name)
 
 
 if has_required_deps:

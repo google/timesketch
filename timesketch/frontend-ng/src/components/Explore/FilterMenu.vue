@@ -72,7 +72,7 @@ limitations under the License.
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
+        <v-btn text @click="clearAndCancel"> Cancel </v-btn>
         <v-btn text color="primary" @click="submit()"> Add filter </v-btn>
       </v-card-actions>
     </v-container>
@@ -101,8 +101,13 @@ export default {
   computed: {
     dateRange: {
       set(val) {
-        this.range.start = dayjs.utc(val.start).millisecond(0).toISOString()
-        this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
+        if (val && val.start && val.end) {
+          this.range.start = dayjs.utc(val.start).millisecond(0).toISOString()
+          this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
+        } else {
+          this.range.start = ''
+          this.range.end = ''
+        }
       },
       get() {
         let range = {

@@ -16,10 +16,16 @@
 set -e
 
 START_CONTAINER=
+SKIP_CREATE_USER=
 
-if [ "$1" == "--start-container" ]; then
-    START_CONTAINER=yes
-fi
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --start-container) START_CONTAINER=yes ;;
+        --skip-create-user) SKIP_CREATE_USER=yes ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 
 # Exit early if run as non-root user.
 if [ "$EUID" -ne 0 ]; then
@@ -40,9 +46,9 @@ if ! command -v docker; then
   exit 1
 fi
 
-# Exit early if docker-compose is not installed.
-if ! command -v docker-compose; then
-  echo "ERROR: docker-compose is not installed."
+# Exit early if docker compose is not installed.
+if ! docker compose &>/dev/null; then
+  echo "ERROR: docker-compose-plugin is not installed."
   exit 1
 fi
 
@@ -53,14 +59,14 @@ if [ ! -z "$(docker ps | grep timesketch)" ]; then
 fi
 
 # Tweak for OpenSearch
-echo "* Setting vm.max_map_count for Elasticsearch"
+echo "* Setting vm.max_map_count for OpenSearch"
 sysctl -q -w vm.max_map_count=262144
 if [ -z "$(grep vm.max_map_count /etc/sysctl.conf)" ]; then
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
 fi
 
 # Create dirs
-mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload}
+mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload,etc/timesketch/llm_summarize,etc/timesketch/nl2q}
 # TODO: Switch to named volumes instead of host volumes.
 chown 1000 timesketch/data/opensearch
 
@@ -89,22 +95,26 @@ curl -s $GITHUB_BASE_URL/data/timesketch.conf > timesketch/etc/timesketch/timesk
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/plaso.mappings > timesketch/etc/timesketch/plaso.mappings
 curl -s $GITHUB_BASE_URL/data/generic.mappings > timesketch/etc/timesketch/generic.mappings
-curl -s $GITHUB_BASE_URL/data/features.yaml > timesketch/etc/timesketch/features.yaml
+curl -s $GITHUB_BASE_URL/data/regex_features.yaml > timesketch/etc/timesketch/regex_features.yaml
+curl -s $GITHUB_BASE_URL/data/winevt_features.yaml > timesketch/etc/timesketch/winevt_features.yaml
 curl -s $GITHUB_BASE_URL/data/ontology.yaml > timesketch/etc/timesketch/ontology.yaml
-curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
-curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml > timesketch/etc/timesketch/intelligence_tag_metadata.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
-curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
+curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
+curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
+curl -s $GITHUB_BASE_URL/data/llm_summarize/prompt.txt > timesketch/etc/timesketch/llm_summarize/prompt.txt
+curl -s $GITHUB_BASE_URL/data/nl2q/data_types.csv > timesketch/etc/timesketch/nl2q/data_types.csv
+curl -s $GITHUB_BASE_URL/data/nl2q/prompt_nl2q > timesketch/etc/timesketch/nl2q/prompt_nl2q
+curl -s $GITHUB_BASE_URL/data/nl2q/examples_nl2q > timesketch/etc/timesketch/nl2q/examples_nl2q
 echo "OK"
 
 # Create a minimal Timesketch config
 echo -n "* Edit configuration files.."
 sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$SECRET_KEY'\x27#' timesketch/etc/timesketch/timesketch.conf
 
-# Set up the Elastic connection
+# Set up the OpenSearch connection
 sed -i 's#^OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_ADDRESS'\x27#' timesketch/etc/timesketch/timesketch.conf
 sed -i 's#^OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' timesketch/etc/timesketch/timesketch.conf
 
@@ -123,15 +133,48 @@ sed -i 's#^OPENSEARCH_MEM_USE_GB=#OPENSEARCH_MEM_USE_GB='$OPENSEARCH_MEM_USE_GB'
 
 ln -s ./config.env ./timesketch/.env
 echo "OK"
+
+echo
 echo "* Installation done."
 
 if [ -z $START_CONTAINER ]; then
-  read -p "Would you like to start the containers? [Y/n] (default:no)" START_CONTAINER
+  read -p "Would you like to start the containers? [y/N]" START_CONTAINER
 fi
 
 if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
   cd timesketch
-  docker-compose up -d
+  echo "* Starting Timesketch containers..."
+  docker compose up -d
+  echo -n "* Waiting for Timesketch web interface to become healthy.."
+  TIMEOUT=300 # 5 minutes timeout
+  SECONDS=0
+  while true; do
+    # Suppress errors in case container is not yet created or health check not configured
+    HEALTH_STATUS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web 2>/dev/null || echo "checking")
+    if [ "$HEALTH_STATUS" = "healthy" ]; then
+      echo ".OK"
+      break
+    fi
+    if [ $SECONDS -gt $TIMEOUT ]; then
+      echo ".FAIL"
+      echo "ERROR: Timesketch web container did not become healthy after $TIMEOUT seconds."
+      echo "Please check the container logs: docker logs timesketch-web"
+      exit 1
+    fi
+    echo -n "."
+    sleep 5
+  done
+
+  echo
+  echo "Timesketch is now running!"
+  echo "You can typically access it by navigating to:"
+  echo "  http://<YOUR_SERVER_IP_OR_HOSTNAME>"
+  echo
+  echo "IMPORTANT: By default, Timesketch is running WITHOUT SSL/TLS encryption."
+  echo "For production use, it is CRITICAL to configure SSL/TLS for HTTPS access (https://<YOUR_SERVER_IP_OR_HOSTNAME>)."
+  echo "Please follow the SSL/TLS setup instructions here:"
+  echo "  https://timesketch.org/guides/admin/https/"
+  echo
 else
   echo
   echo "You have chosen not to start the containers,"
@@ -139,27 +182,29 @@ else
   echo
   echo "Start the system:"
   echo "1. cd timesketch"
-  echo "2. docker-compose up -d"
-  echo "3. docker-compose exec timesketch-web tsctl create-user <USERNAME>"
+  echo "2. docker compose up -d"
+  echo "3. docker compose exec timesketch-web tsctl create-user <USERNAME>"
   echo
   echo "WARNING: The server is running without encryption."
   echo "Follow the instructions to enable SSL to secure the communications:"
   echo "https://github.com/google/timesketch/blob/master/docs/Installation.md"
   echo
   echo
-  exit 1
+  exit
 fi
 
-read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
+if [ -z "$SKIP_CREATE_USER" ]; then
+  read -p "Would you like to create a new timesketch user? [y/N]" CREATE_USER
+fi
 
 if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   read -p "Please provide a new username: " NEWUSERNAME
 
   if [ ! -z "$NEWUSERNAME" ] ;then
-    until [ "`docker inspect -f {{.State.Health.Status}} timesketch-web`"=="healthy" ]; do
-      sleep 1;
+    until [ "$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web)" = "healthy" ]; do
+        sleep 1;
     done;
 
-    docker-compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
+    docker compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
   fi
 fi

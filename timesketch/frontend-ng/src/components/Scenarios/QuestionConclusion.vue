@@ -14,52 +14,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <v-progress-linear v-if="loading" color="primary" indeterminate height="2"></v-progress-linear>
-    <v-list three-line>
-      <v-list-item @mouseover="showControls = true" @mouseleave="showControls = false">
-        <v-list-item-content>
-          <v-list-item-title style="font-size: 0.9em">
-            <strong>{{ conclusion.user.username }}</strong>
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            <small>{{ conclusion.created_at | shortDateTime }} ({{ conclusion.created_at | timeSince }})</small>
-          </v-list-item-subtitle>
+  <div @mouseover="showControls = true" @mouseleave="showControls = false" style="position: relative">
+    <div style="font-size: 0.9em" class="mb-4">
+      <strong>{{ conclusion.user.username }}</strong>
+      <small class="ml-3">{{ conclusion.created_at | shortDateTime }} ({{ conclusion.created_at | timeSince }})</small>
+    </div>
 
-          <div v-if="editable">
-            <v-textarea
-              style="font-size: 0.9em"
-              hide-details
-              auto-grow
-              outlined
-              v-model="conclusionText"
-              :value="conclusion.conclusion"
-            >
-            </v-textarea>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn small text @click="editable = false"> Cancel </v-btn>
-              <v-btn small text color="primary" @click="saveConclusion()" :disabled="!conclusionText"> Save </v-btn>
-            </v-card-actions>
-          </div>
-          <div v-else style="max-width: 90%; font-size: 0.9em">{{ conclusion.conclusion }}</div>
-        </v-list-item-content>
+    <div v-if="editable">
+      <v-textarea
+        style="font-size: 0.9em"
+        outlined
+        flat
+        hide-details
+        auto-grow
+        rows="3"
+        clearable
+        v-model="conclusionText"
+        :value="conclusion.conclusion"
+      >
+      </v-textarea>
+      <v-card-actions>
+        <v-btn small text color="primary" @click="saveConclusion()" :disabled="!conclusionText"> Save </v-btn>
+        <v-btn small text @click="editable = false"> Cancel </v-btn>
+      </v-card-actions>
+    </div>
+    <div v-else style="font-size: 0.9em">{{ conclusion.conclusion }}</div>
 
-        <v-list-item-action
-          v-if="showControls && currentUser == conclusion.user.username"
-          style="position: absolute; right: 0"
-        >
-          <v-chip outlined style="margin-right: 10px">
-            <v-btn icon small>
-              <v-icon small @click="editConclusion()">mdi-square-edit-outline</v-icon>
-            </v-btn>
-            <v-btn icon small>
-              <v-icon small @click="deleteConclusion()">mdi-trash-can-outline</v-icon>
-            </v-btn>
-          </v-chip>
-        </v-list-item-action>
-      </v-list-item>
-    </v-list>
+    <div v-if="showControls && currentUser == conclusion.user.username" style="position: absolute; top: 0; right: 0">
+      <v-chip outlined style="margin-right: 10px">
+        <v-btn icon small>
+          <v-icon small @click="editConclusion()">mdi-square-edit-outline</v-icon>
+        </v-btn>
+        <v-btn icon small>
+          <v-icon small @click="deleteConclusion()">mdi-trash-can-outline</v-icon>
+        </v-btn>
+      </v-chip>
+    </div>
   </div>
 </template>
 
@@ -73,7 +63,6 @@ export default {
       conclusionText: '',
       editable: false,
       showControls: false,
-      loading: false,
     }
   },
   computed: {
@@ -85,18 +74,14 @@ export default {
     },
   },
   methods: {
-    saveConclusion: function () {
-      this.loading = true
+    saveConclusion() {
       this.editable = false
       this.showControls = false
       ApiClient.editQuestionConclusion(this.sketch.id, this.question.id, this.conclusion.id, this.conclusionText)
         .then((response) => {
-          this.$store.dispatch('updateScenarios', this.sketch.id).then(() => {
-            this.loading = false
-          })
+          this.$emit('save-conclusion')
         })
         .catch((e) => {
-          this.loading = false
           this.editable = true
           this.errorSnackBar(e)
           console.error(e)
@@ -106,18 +91,9 @@ export default {
       this.conclusionText = this.conclusion.conclusion
       this.editable = true
     },
-    deleteConclusion(conclusion) {
-      this.loading = true
+    deleteConclusion() {
       if (confirm('Are you sure?')) {
-        ApiClient.deleteQuestionConclusion(this.sketch.id, this.question.id, this.conclusion.id)
-          .then((response) => {
-            this.$store.dispatch('updateScenarios', this.sketch.id).then(() => {
-              this.loading = false
-            })
-          })
-          .catch((e) => {})
-      } else {
-        this.loading = false
+        this.$emit('delete')
       }
     },
   },

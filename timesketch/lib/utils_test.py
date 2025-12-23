@@ -13,8 +13,8 @@
 # limitations under the License.
 """Tests for utils."""
 
-from __future__ import unicode_literals
 
+import io
 import re
 import pandas as pd
 
@@ -23,11 +23,12 @@ from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.utils import random_color
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
+from timesketch.lib.utils import _convert_timestamp_to_datetime
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
 
 
-TEST_CSV = "test_tools/test_events/sigma_events.csv"
+TEST_CSV = "tests/test_events/sigma_events.csv"
 ISO8601_REGEX = (
     r"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0["
     r"1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5]["
@@ -180,6 +181,7 @@ class TestUtils(BaseTest):
         """Test for parsing datetime values in CSV file"""
 
         # Test that a timestamp is generated if missing.
+
         expected_output = {
             "message": "No timestamp",
             "datetime": "2022-07-24T19:01:01+00:00",
@@ -190,11 +192,251 @@ class TestUtils(BaseTest):
         self.assertDictEqual(
             next(
                 read_and_validate_csv(
-                    "test_tools/test_events/validate_date_events_missing_timestamp.csv"
+                    "tests/test_events/validate_date_events_missing_timestamp.csv"
                 )
             ),
             expected_output,
         )
+
+    def test_timestamp_is_ISOformat(self):
+        """Test that timestamp values in CSV file are not altered"""
+
+        # Make sure timestamp is processed correctly, and the format is not altered
+        expected_outputs = [
+            {
+                "message": "Checking timestamp conversion",
+                "timestamp": 1331698658000000,
+                "datetime": "2012-03-14T04:17:38+00:00",
+                "timestamp_desc": "Time Logged",
+                "data_type": "This event has timestamp",
+            },
+            {
+                "message": "Checking timestamp conversion",
+                "timestamp": 1658689261000000,
+                "datetime": "2022-07-24T19:01:01+00:00",
+                "timestamp_desc": "Time Logged",
+                "data_type": "This event has timestamp",
+            },
+            {
+                "message": "Make sure message is same",
+                "timestamp": 1437789661000000,
+                "datetime": "2015-07-25T02:01:01+00:00",
+                "timestamp_desc": "Logging",
+                "data_type": "This data_type should stay the same",
+            },
+        ]
+        results = iter(
+            read_and_validate_csv("tests/test_events/validate_timestamp_conversion.csv")
+        )
+        for output in expected_outputs:
+            self.assertDictEqual(next(results), output)
+
+    def test_missing_datetime_in_CSV(self):
+        """Test for parsing a file with missing datetime field does attempt
+        to get it from timestamp or fail"""
+        results = iter(
+            read_and_validate_csv(
+                "tests/test_events/validate_no_datetime_timestamps.csv"
+            )
+        )
+
+        n = 1
+        for item in results:
+            n = n + 1
+            if item["data_type"] == "No timestamp1":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1437789661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2015-07-25T02:01:01+00:00")
+
+            elif item["data_type"] == "No timestamp2":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["timestamp"], 1406253661000000)
+                self.assertIsNotNone(item["datetime"])
+                self.assertEqual(item["datetime"], "2014-07-25T02:01:01+00:00")
+            elif item["data_type"] == "Whitespace datetime":
+                self.assertIsNotNone(item["timestamp"])
+                self.assertEqual(item["datetime"], "2016-07-25T02:01:01+00:00")
+                self.assertIsNotNone(item["datetime"])
+
+        self.assertGreaterEqual(n, 3)
+
+    def test_time_datetime_valueerror(self):
+        """Test for parsing a file with time precision
+
+        The file is currently parsed as:
+        {'message': 'Missing timezone info', 'timestamp': 123456,
+            'datetime': '2017-09-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'Missing_timezone_info'}
+        {'message': 'Wrong epoch', 'timestamp': 123456,
+            'datetime': '2017-07-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'wrong_timestamp'}
+        {'message': 'Wrong epoch', 'timestamp': 9999999999999,
+            'datetime': '2017-10-24T19:01:01',
+            'timestamp_desc': 'Write time',
+            'data_type': 'long_timestamp'}
+
+        """
+
+        results = iter(read_and_validate_csv("tests/test_events/invalid_datetime.csv"))
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item)
+        # check that certain values are not present in results_list
+        self.assertNotIn(
+            "wrong_datetime_1",
+            str(results_list),
+            "Parsed line is in results but should be skipped",
+        )
+        self.assertIn("long_timestamp", str(results_list))
+
+    def test_datetime_out_of_normal_range_in_csv(self):
+        """Test for parsing a file with datetimes that are way out of range for
+        normal usage
+        One of the reasons to create this is:
+        https://github.com/google/timesketch/issues/1617
+        """
+        results = iter(
+            read_and_validate_csv("tests/test_events/validate_time_out_of_range.csv")
+        )
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item["timestamp"])
+
+        self.assertIn("csv_very_future_event", str(results_list))
+        self.assertIn("2227-12-31T23:01:01+00:00", str(results_list))
+        self.assertNotIn("1601-01-01", str(results_list))
+
+    def test_time_precision_in_csv(self):
+        """Test for parsing a file with time precision"""
+        results = iter(
+            read_and_validate_csv("tests/test_events/validate_time_precision.csv")
+        )
+        results_list = []
+        for item in results:
+            results_list.append(item)
+            self.assertIsNotNone(item["timestamp"])
+
+        self.assertIn("timestamptest1", str(results_list))
+        self.assertIn("2024-07-24T10:57:02.877297+00:00", str(results_list))
+        self.assertIn("timestamptest2", str(results_list))
+
+    def test_datetime_parsing_six_digit_microseconds(self):
+        """Test parsing a datetime string with 6-digit microseconds."""
+        datetime_string = "2021-07-30T18:32:26.975000+00:00"
+        csv_data = (
+            "message,datetime,timestamp_desc\n" f'test_event,"{datetime_string}",test'
+        )
+        file_handle = io.StringIO(csv_data)
+        data_generator = read_and_validate_csv(file_handle)
+        result = next(data_generator)
+
+        self.assertEqual(result["datetime"], datetime_string)
+        # This timestamp is in microseconds.
+        self.assertEqual(result["timestamp"], 1627669946975000)
+
+    def test_csv_with_timestamp_in_datetime_field(self):
+        """Test parsing a CSV where the datetime column contains a timestamp."""
+        data_generator = read_and_validate_csv(
+            "tests/test_events/csv_timestamp_as_datetime.csv"
+        )
+        results = list(data_generator)
+
+        expected_output_1 = {
+            "datetime": "2024-08-12T15:03:14.349345+00:00",
+            "uid": "mustermann",
+            "tool": "exampletool",
+            "message": "PageView",
+            "event_type": "foobar",
+            "organization_name": "example.my.org.com",
+            "timestamp_desc": "<URL placeholder>",
+            "unique_id": "DETAILED DATA",
+            "timestamp": 1723474994349345,
+        }
+
+        expected_output_2 = {
+            "datetime": "2025-06-30T19:50:29.117113+00:00",
+            "uid": "jondoe",
+            "tool": "exampletool",
+            "message": "PageView",
+            "event_type": "foobar",
+            "organization_name": "example.my.org.com",
+            "timestamp_desc": "<URL placeholder>",
+            "unique_id": "DETAILED DATA",
+            "timestamp": 1751313029117113,
+        }
+
+        self.assertEqual(len(results), 4)
+        self.assertDictEqual(results[0], expected_output_1)
+        self.assertDictEqual(results[1], expected_output_2)
+
+    def test_csv_with_timestamp_and_no_datetime(self):
+        """Test parsing a CSV with a timestamp column but no datetime."""
+        data_generator = read_and_validate_csv(
+            "tests/test_events/csv_timestamp_no_datetime.csv"
+        )
+        results = list(data_generator)
+
+        self.assertEqual(len(results), 3)
+
+        expected_output_1 = {
+            "datetime": "2022-07-24T19:01:01+00:00",
+            "message": "seconds_timestamp",
+            "timestamp_desc": "test",
+            "timestamp": 1658689261000000,
+        }
+        expected_output_2 = {
+            "datetime": "2022-07-24T19:01:01.123000+00:00",
+            "message": "milliseconds_timestamp",
+            "timestamp_desc": "test",
+            "timestamp": 1658689261123000,
+        }
+        expected_output_3 = {
+            "datetime": "2022-07-24T19:01:01.123456+00:00",
+            "message": "microseconds_timestamp",
+            "timestamp_desc": "test",
+            "timestamp": 1658689261123456,
+        }
+
+        self.assertDictEqual(results[0], expected_output_1)
+        self.assertDictEqual(results[1], expected_output_2)
+        self.assertDictEqual(results[2], expected_output_3)
+
+    def test_csv_datetime_as_last_column(self):
+        """Test parsing a CSV where datetime is the last column."""
+        data_generator = read_and_validate_csv(
+            "tests/test_events/csv_datetime_last_column.csv"
+        )
+        results = list(data_generator)
+
+        self.assertEqual(len(results), 4)
+
+        expected_output_1 = {
+            "timestamp": 1532689087000000,
+            "message": "193408 foobar true",
+            "timestamp_desc": "Access Time",
+            "datetime": "2018-07-27T10:58:07+00:00",
+        }
+        expected_output_2 = {
+            "timestamp": 1532691305000000,
+            "message": "193408 foobar true",
+            "timestamp_desc": "Access Time",
+            "datetime": "2018-07-27T11:35:05+00:00",
+        }
+        expected_output_3 = {
+            "timestamp": 1532692593000000,
+            "message": "193408 foobar true",
+            "timestamp_desc": "Access Time",
+            "datetime": "2018-07-27T11:56:33+00:00",
+        }
+
+        self.assertDictEqual(results[0], expected_output_1)
+        self.assertDictEqual(results[1], expected_output_2)
+        self.assertDictEqual(results[2], expected_output_3)
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
@@ -260,3 +502,33 @@ class TestUtils(BaseTest):
         self.assertTrue(
             isinstance(rename_jsonl_headers(linedict, headers_mapping, lineno), dict)
         )
+
+    def test_convert_timestamp_to_datetime(self):
+        """Test the timestamp to datetime conversion helper."""
+        # Test seconds
+        ts_seconds = 1658689261
+        dt_seconds = _convert_timestamp_to_datetime(ts_seconds)
+        self.assertEqual(dt_seconds, pd.Timestamp("2022-07-24 19:01:01+00:00"))
+
+        # Test milliseconds
+        ts_milliseconds = 1658689261123
+        dt_milliseconds = _convert_timestamp_to_datetime(ts_milliseconds)
+        self.assertEqual(dt_milliseconds, pd.Timestamp("2022-07-24 19:01:01.123+00:00"))
+
+        # Test microseconds
+        ts_microseconds = 1658689261123456
+        dt_microseconds = _convert_timestamp_to_datetime(ts_microseconds)
+        self.assertEqual(
+            dt_microseconds, pd.Timestamp("2022-07-24 19:01:01.123456+00:00")
+        )
+
+        # Test nanoseconds
+        ts_nanoseconds = 1658689261123456789
+        dt_nanoseconds = _convert_timestamp_to_datetime(ts_nanoseconds)
+        self.assertEqual(
+            dt_nanoseconds, pd.Timestamp("2022-07-24 19:01:01.123456789+00:00")
+        )
+
+        # Test NaN
+        dt_nan = _convert_timestamp_to_datetime(float("nan"))
+        self.assertTrue(pd.isna(dt_nan))

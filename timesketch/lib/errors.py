@@ -13,7 +13,6 @@
 # limitations under the License.
 """Error classes."""
 
-from __future__ import unicode_literals
 
 from flask import jsonify
 
@@ -49,3 +48,15 @@ class ApiHTTPError(Error):
 
 class DataIngestionError(Error):
     """Raised when unable to ingest data."""
+
+
+class IndexNotReadyError(Error):
+    """Index was created but did not become healthy in time."""
+
+
+class DatastoreConnectionError(Error):
+    """Cannot connect to the datastore."""
+
+
+class DatastoreQueryError(Error):
+    """Error with the datastore query."""

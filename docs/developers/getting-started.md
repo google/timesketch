@@ -27,13 +27,13 @@ Start a shell, change to the `timesketch/docker/dev` directory
 ```bash
 $ git clone timesketch
 $ cd timesketch/docker/dev
-$ docker-compose up
+$ docker compose up
 ```
 
 Wait a few minutes for the installation script to complete.
 
 ```bash
-$ docker-compose logs timesketch
+$ docker compose logs timesketch
 Attaching to timesketch-dev
 timesketch-dev         | Obtaining file:///usr/local/src/timesketch
 timesketch-dev         | Installing collected packages: timesketch
@@ -47,7 +47,7 @@ Per default a user `dev` with password `dev` is created for you. If you want to
 add additional users to your Timesketch server, run the following command:
 
 ```bash
-$ docker-compose exec timesketch tsctl create-user <USER> --password <PW>
+$ docker compose exec timesketch tsctl create-user <USER> --password <PW>
 User <USER> created/updated
 ```
 
@@ -55,7 +55,7 @@ User <USER> created/updated
 
 Now, start the `gunicon` server that will serve the Timsketch WSGI app.
 
-To make this task easier, we recommend using the `timesketch/contrib/tsdev.sh`
+To make this task easier, we recommend using the `timesketch/utils/tsdev.sh`
 script.
 
 In one shell:
@@ -67,7 +67,7 @@ In one shell:
 OR
 
 ```bash
-$ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+$ docker compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
 [2021-05-25 16:36:32 +0000] [94] [INFO] Starting gunicorn 19.10.0
 [2021-05-25 16:36:32 +0000] [94] [INFO] Listening at: http://0.0.0.0:5000 (94)
 [2021-05-25 16:36:32 +0000] [94] [INFO] Using worker: sync
@@ -92,7 +92,7 @@ If you're planning to work on those (or even just import timelines into your
 Timesketch instance), you'll need to launch a Celery worker, and re-launch it
 every time you bring changes to its code.
 
-You can use `timesketch/contrib/tsdev.sh` for this task as well.
+You can use `timesketch/utils/tsdev.sh` for this task as well.
 
 In a new shell, run the following:
 
@@ -103,7 +103,7 @@ $ ./tsdev.sh celery
 OR
 
 ```bash
-$ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
+$ docker compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
 ```
 
 ### Restarting
@@ -120,8 +120,8 @@ $ ./tsdev.sh celery
 OR
 
 ```bash
-$ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
-$ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
+$ docker compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+$ docker compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
 ```
 
 ### frontend-ng UI development
@@ -130,7 +130,7 @@ For development on the new `frontend-ng` UI, you need to install some
 dependencies once and start the new frontend. More on frontend development is
 documented [here](https://timesketch.org/developers/frontend-development/).
 
-We recommend using the `timesketch/contrib/tsdev.sh` script for this task as well.
+We recommend using the `timesketch/utils/tsdev.sh` script for this task as well.
 
 Install frontend-ng dependencies:
 ```bash
@@ -145,6 +145,32 @@ Start the new frondend-ng:
 Point your browser to `http://localhost:5001/` to access the new frontend UI.
 All changes to the `timesketch/frontend-ng/` path will be automatically build
 and loaded in the new frontend.
+
+### Accessing services on your host machine
+
+In some development scenarios, you might need the Timesketch container to
+communicate with a service running directly on your host machine (the "docker
+host"). A common use case is when you are running local LLM (Large Language
+Model) services (e.g., Ollama) that need access to hardware like GPUs which may
+not be available to the container.
+
+To enable this, you need to make the docker host accessible from within the
+Timesketch container. You can achieve this by adding an `extra_hosts` entry to
+the `timesketch` service in your `docker/dev/docker-compose.yml` file:
+
+```yaml
+services:
+  timesketch:
+    ...
+    # Make docker host accessible for local development.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+```
+
+After adding this and restarting your container, you can configure Timesketch to
+connect to services on your host using `http://host.docker.internal:<PORT>`. For
+example, you could configure an LLM provider in `timesketch.conf` to use a base
+URL of `http://host.docker.internal:8000`.
 
 ## API development
 

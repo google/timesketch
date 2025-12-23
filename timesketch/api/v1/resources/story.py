@@ -40,7 +40,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
     """Resource to get all stories for a sketch or to create a new story."""
 
     @login_required
-    def get(self, sketch_id):
+    def get(self, sketch_id: int):
         """Handles GET request to the resource.
 
         Args:
@@ -49,7 +49,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
         Returns:
             Stories in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -66,7 +66,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
         return self.to_json(stories)
 
     @login_required
-    def post(self, sketch_id):
+    def post(self, sketch_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -79,7 +79,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "write"):
@@ -88,10 +88,15 @@ class StoryListResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch.",
             )
 
-        title = ""
-        if form.title.data:
-            title = form.title.data
-        story = Story(title=title, content="[]", sketch=sketch, user=current_user)
+        title = form.title.data
+        content = form.content.data or "[]"
+        labels_to_add = form.labels.data or []
+
+        story = Story(title=title, content=content, sketch=sketch, user=current_user)
+
+        for label_text in labels_to_add:
+            story.add_label(label=str(label_text), user=current_user)
+
         db_session.add(story)
         db_session.commit()
 
@@ -104,7 +109,7 @@ class StoryResource(resources.ResourceMixin, Resource):
     """Resource to get a story."""
 
     @staticmethod
-    def _export_story(story, sketch_id, export_format="markdown"):
+    def _export_story(story: Story, sketch_id: int, export_format: str = "markdown"):
         """Returns a story in a format as requested in export_format.
 
         Args:
@@ -138,7 +143,7 @@ class StoryResource(resources.ResourceMixin, Resource):
             return exporter.export_story()
 
     @login_required
-    def get(self, sketch_id, story_id):
+    def get(self, sketch_id: int, story_id: int):
         """Handles GET request to the resource.
 
         Args:
@@ -148,8 +153,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         Returns:
             A story in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        story = Story.query.get(story_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        story = Story.get_by_id(story_id)
 
         if not story:
             msg = "No Story found with this ID."
@@ -169,21 +174,21 @@ class StoryResource(resources.ResourceMixin, Resource):
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the ID in "
-                "the story ({1:d})".format(sketch.id, story.sketch_id),
+                "Sketch ID ({:d}) does not match with the ID in "
+                "the story ({:d})".format(sketch.id, story.sketch_id),
             )
 
         # Only allow editing if the current user is the author.
         # This is needed until we have proper collaborative editing and
         # locking implemented.
-        meta = dict(is_editable=False)
+        meta = {"is_editable": False}
         if current_user == story.user:
             meta["is_editable"] = True
 
         return self.to_json(story, meta=meta)
 
     @login_required
-    def post(self, sketch_id, story_id):
+    def post(self, sketch_id: int, story_id: int):
         """Handles POST request to the resource.
 
         Args:
@@ -193,8 +198,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        story = Story.query.get(story_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        story = Story.get_by_id(story_id)
 
         if not story:
             msg = "No Story found with this ID."
@@ -207,8 +212,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Sketch ID ({0:d}) does not match with the ID in "
-                "the story ({1:d})".format(sketch.id, story.sketch_id),
+                "Sketch ID ({:d}) does not match with the ID in "
+                "the story ({:d})".format(sketch.id, story.sketch_id),
             )
 
         if not sketch.has_permission(current_user, "write"):
@@ -240,15 +245,15 @@ class StoryResource(resources.ResourceMixin, Resource):
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
-    def delete(self, sketch_id, story_id):
+    def delete(self, sketch_id: int, story_id: int):
         """Handles DELETE request to the resource.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
             story_id: Integer primary key for a story database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        story = Story.query.get(story_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        story = Story.get_by_id(story_id)
 
         if not story:
             msg = "No Story found with this ID."
@@ -261,8 +266,8 @@ class StoryResource(resources.ResourceMixin, Resource):
         # Check that this timeline belongs to the sketch
         if story.sketch_id != sketch.id:
             msg = (
-                "The sketch ID ({0:d}) does not match with the story"
-                "sketch ID ({1:d})".format(sketch.id, story.sketch_id)
+                "The sketch ID ({:d}) does not match with the story"
+                "sketch ID ({:d})".format(sketch.id, story.sketch_id)
             )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 

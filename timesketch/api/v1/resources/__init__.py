@@ -15,9 +15,9 @@
 
 The timesketch API is a RESTful API that exposes the following resources:
 """
-from __future__ import unicode_literals
 
 import logging
+from typing import Optional, Dict
 
 from flask import current_app
 from flask import jsonify
@@ -35,17 +35,26 @@ logging.basicConfig(
 )
 
 
-class ResourceMixin(object):
+class ResourceMixin:
     """Mixin for API resources."""
 
     # Schemas for database model resources
     group_fields = {"name": fields.String}
 
+    user_profile_fields = {
+        "picture_url": fields.String,
+        "picture_filename": fields.String,
+    }
+
     user_fields = {
+        "id": fields.Integer,
         "username": fields.String,
+        "name": fields.String,
+        "email": fields.String,
         "admin": fields.Boolean,
         "active": fields.Boolean,
         "groups": fields.Nested(group_fields),
+        "profile": fields.Nested(user_profile_fields),
     }
 
     aggregation_fields = {
@@ -192,6 +201,7 @@ class ResourceMixin(object):
         "user": fields.Nested(user_fields),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "labels": fields.List(fields.String(attribute="label")),
     }
 
     story_compact_fields = {
@@ -244,10 +254,28 @@ class ResourceMixin(object):
     }
 
     label_fields = {
-        "name": fields.String,
+        "name": fields.String(attribute="label"),
         "user": fields.Nested(user_fields),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+    }
+
+    approach_fields = {
+        "id": fields.Integer,
+        "name": fields.String,
+        "display_name": fields.String,
+        "description": fields.String,
+        "spec_json": fields.String,
+        "search_templates": fields.List(fields.Nested(searchtemplate_fields)),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
+    }
+
+    event_fields = {
+        "id": fields.Integer,
+        "sketch_id": fields.Integer,
+        "document_id": fields.String,
+        "searchindex_name": fields.String(attribute="searchindex.index_name"),
     }
 
     question_conclusion_fields = {
@@ -257,6 +285,9 @@ class ResourceMixin(object):
         "automated": fields.Boolean,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "conclusion_events": fields.List(
+            fields.Nested(event_fields), attribute="events"
+        ),
     }
 
     question_fields = {
@@ -264,12 +295,16 @@ class ResourceMixin(object):
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
+        "dfiq_identifier": fields.String,
+        "uuid": fields.String,
         "spec_json": fields.String,
-        "search_templates": fields.List(fields.Nested(searchtemplate_fields)),
         "user": fields.Nested(user_fields),
+        "approaches": fields.List(fields.Nested(approach_fields)),
         "conclusions": fields.List(fields.Nested(question_conclusion_fields)),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "labels": fields.List(fields.Nested(label_fields)),
+        "status": fields.Nested(status_fields, attribute="get_status"),
     }
 
     facet_fields = {
@@ -277,6 +312,8 @@ class ResourceMixin(object):
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
+        "dfiq_identifier": fields.String,
+        "uuid": fields.String,
         "spec_json": fields.String,
         "user": fields.Nested(user_fields),
         "questions": fields.List(fields.Nested(question_fields)),
@@ -294,6 +331,8 @@ class ResourceMixin(object):
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
+        "dfiq_identifier": fields.String,
+        "uuid": fields.String,
         "spec_json": fields.String,
         "user": fields.Nested(user_fields),
         "facets": fields.List(fields.Nested(facet_fields)),
@@ -324,15 +363,18 @@ class ResourceMixin(object):
         "searchtemplate": searchtemplate_fields,
         "view": view_fields,
         "user": user_fields,
+        "userprofile": user_profile_fields,
         "graph": graph_fields,
         "graphcache": graphcache_fields,
         "group": group_fields,
         "sketch": sketch_fields,
         "story": story_fields,
+        "event": event_fields,
         "event_comment": comment_fields,
         "event_label": label_fields,
+        "Investigativequestionapproach": approach_fields,
         "investigativequestionconclusion": question_conclusion_fields,
-        "investigative_question": question_fields,
+        "investigativequestion": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
         "sigmarule": sigmarule_fields,
@@ -345,13 +387,14 @@ class ResourceMixin(object):
         Returns:
             Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
-        return OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        return OpenSearchDataStore()
 
     def to_json(
-        self, model, model_fields=None, meta=None, status_code=HTTP_STATUS_CODE_OK
+        self,
+        model: object,
+        model_fields: Optional[Dict] = None,
+        meta: Optional[Dict] = None,
+        status_code: int = HTTP_STATUS_CODE_OK,
     ):
         """Create json response from a database models.
 
@@ -365,7 +408,7 @@ class ResourceMixin(object):
             Response in json format (instance of flask.wrappers.Response)
         """
         if not meta:
-            meta = dict()
+            meta = {}
 
         schema = {"meta": meta, "objects": []}
 

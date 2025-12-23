@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for timelines command."""
+"""Tests for events command."""
 
 import unittest
 import mock
@@ -19,6 +19,7 @@ import mock
 from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
+
 
 from .. import test_lib
 from .events import events_group
@@ -75,68 +76,26 @@ class EventsTest(unittest.TestCase):
         expected_output = "No such option: --comments Did you mean --comment?"
         assert expected_output in result.output
 
-    def test_add_event_tag(self):
-        """Test to add a tag to an event."""
+    def test_failed_add_event(self):
+        """Test to add an event to a sketch with an error."""
+        runner = CliRunner()
+        result = runner.invoke(events_group, ["add"], obj=self.ctx)
+        assert "Error: Missing option '--message'" in result.output
+
+    def test_add_event(self):
+        """Test to add an event to a sketch."""
         runner = CliRunner()
         result = runner.invoke(
             events_group,
             [
-                "annotate",
-                "--event-id",
-                "1",
-                "--timeline-id",
-                "1",
-                "--tag",
+                "add",
+                "--message",
+                "test message",
+                "--date",
+                "2023-03-04T11:31:12",
+                "--timestamp-desc",
                 "test",
-                "--output-format",
-                "json",
             ],
             obj=self.ctx,
         )
-        print(result.output)
-        print(result.exception)
-        print(result.exit_code)
-        assert "['test']" in result.output
-
-    # todo: Fix the remaining tests here
-
-    def test_add_event_tags(self):
-        """Test to add multiple tags to an event."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "annotate",
-                "--event-id",
-                "1",
-                "--tag",
-                "test1,test2",
-                "--timeline-id",
-                "1",
-            ],
-            obj=self.ctx,
-        )
-
-        assert 0 is result.exit_code
-
-    def test_add_event_tags_json(self):
-        """Test to add multiple tags to an event and output as json."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "annotate",
-                "--event-id",
-                "1",
-                "--tag",
-                "test1,test2",
-                "--timeline-id",
-                "1",
-                "--output-format",
-                "json",
-            ],
-            obj=self.ctx,
-        )
-
-        assert "No such event" in result.output
-        assert 1 is result.exit_code
+        assert "Event added to sketch: test" in result.output

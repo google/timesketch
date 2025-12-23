@@ -17,18 +17,6 @@ limitations under the License.
   <v-container fluid>
     <!-- Right side menu -->
     <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
-    <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
-      <template v-slot:prepend>
-        <v-toolbar flat>
-          <v-toolbar-title>Right Side Panel</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn icon @click="showRightSidePanel = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-      </template>
-      <v-container> TODO: Add content here </v-container>
-    </v-navigation-drawer>
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
@@ -46,18 +34,20 @@ limitations under the License.
               placeholder="Search"
               single-line
               dense
-              filled
               flat
               solo
-              class="pa-1"
-              append-icon="mdi-magnify"
+              class="pa-2"
               id="tsSearchInput"
-              @keyup.enter="search"
+              @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
               v-bind="attrs"
               v-on="on"
             >
+              <template v-slot:append>
+                <v-icon title="Run search" @click="search()" class="mr-3">mdi-magnify</v-icon>
+                <v-icon title="Show search examples" @click="showSearchHelp = true">mdi-help-circle-outline</v-icon>
+              </template>
             </v-text-field>
           </template>
 
@@ -97,7 +87,7 @@ limitations under the License.
             </v-slider>
 
             <v-btn icon @click="showSearchHistory = false" class="ml-4">
-              <v-icon>mdi-close</v-icon>
+              <v-icon title="Close search history">mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
 
@@ -118,38 +108,57 @@ limitations under the License.
         </v-card>
       </div>
 
+      <!-- Search Help Dialog -->
+      <v-dialog v-model="showSearchHelp" max-width="1800" scrollable>
+        <ts-search-help-card :flat="true" @close-dialog="showSearchHelp = false"></ts-search-help-card>
+      </v-dialog>
+
+
       <!-- Timeline picker -->
-      <v-sheet class="mb-4 mt-4" color="transparent">
-        <ts-timeline-picker
-          @updateSelectedTimelines="updateSelectedTimelines($event)"
-          :current-query-filter="currentQueryFilter"
-          :count-per-index="countPerIndex"
-          :count-per-timeline="countPerTimeline"
-        ></ts-timeline-picker>
-
-        <span style="position: relative; top: -5px">
-          <ts-upload-timeline-form btn-type="small"></ts-upload-timeline-form>
-        </span>
-
-        <span style="position: relative; top: -5px">
-          <v-dialog v-model="addManualEvent" width="600">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                <v-icon left small> mdi-plus </v-icon>
-                Add manual event
-              </v-btn>
-            </template>
-            <ts-add-manual-event
-              app
-              @cancel="addManualEvent = false"
-              :datetimeProp="datetimeManualEvent"
-            ></ts-add-manual-event>
-          </v-dialog>
-        </span>
-      </v-sheet>
+      <div>
+        <v-toolbar flat dense style="background-color: transparent" class="mt-n3">
+          <v-btn small icon @click="showTimelines = !showTimelines">
+            <v-icon v-if="showTimelines" title="Hide Timelines">mdi-chevron-up</v-icon>
+            <v-icon v-else title="Show Timelines">mdi-chevron-down</v-icon>
+          </v-btn>
+          <span class="timeline-header">
+            <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
+            <v-dialog v-model="addManualEvent" width="600">
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+                  <v-icon left small> mdi-plus </v-icon>
+                  Add manual event
+                </v-btn>
+              </template>
+              <ts-add-manual-event
+                app
+                @cancel="addManualEvent = false"
+                :datetimeProp="datetimeManualEvent"
+              ></ts-add-manual-event>
+            </v-dialog>
+            <v-btn small text rounded color="primary" @click.stop="enableAllTimelines()">
+              <v-icon left small>mdi-eye</v-icon>
+              <span>Select all</span>
+            </v-btn>
+            <v-btn small text rounded color="primary" @click.stop="disableAllTimelines()">
+              <v-icon left small>mdi-eye-off</v-icon>
+              <span>Unselect all</span>
+            </v-btn>
+          </span>
+        </v-toolbar>
+        <v-expand-transition>
+          <div v-show="showTimelines">
+            <ts-timeline-picker
+              :current-query-filter="currentQueryFilter"
+              :count-per-index="countPerIndex"
+              :count-per-timeline="countPerTimeline"
+            ></ts-timeline-picker>
+          </div>
+        </v-expand-transition>
+      </div>
 
       <!-- Time filter chips -->
-      <div class="mt-n3">
+      <div>
         <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
           <v-menu offset-y content-class="menu-with-gap">
             <template v-slot:activator="{ on }">
@@ -185,7 +194,12 @@ limitations under the License.
                   </template>
                   <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
                 </v-menu>
-
+                <v-list-item @click="copyFilterChip(chip)">
+                  <v-list-item-action>
+                    <v-icon>mdi-content-copy</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-subtitle>Copy filter</v-list-item-subtitle>
+                </v-list-item>
                 <v-list-item @click="toggleChip(chip)">
                   <v-list-item-action>
                     <v-icon v-if="chip.active">mdi-eye-off</v-icon>
@@ -219,7 +233,7 @@ limitations under the License.
           >
             <template v-slot:activator="{ on, attrs }">
               <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                <v-icon left small> mdi-plus </v-icon>
+                <v-icon left small> mdi-clock-plus-outline </v-icon>
                 Add timefilter
               </v-btn>
             </template>
@@ -230,38 +244,44 @@ limitations under the License.
       </div>
 
       <!-- Term filters -->
-      <div v-if="filterChips.length">
-        <v-chip-group>
+      <div v-if="filterChips.length" class="mt-1">
+        <v-chip-group column>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip small outlined close @click:close="removeChip(chip)">
-              <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
-              <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-              {{ chip.value | formatLabelText }}
-            </v-chip>
+            <v-tooltip top :disabled="chip.value.length < 33" open-delay="300">
+              <template v-slot:activator="{ on: onTooltip, attrs }">
+                <v-chip
+                  outlined
+                  close
+                  close-icon="mdi-close"
+                  @click:close="removeChip(chip)"
+                  @click="copyFilterChip(chip)"
+                  v-bind="attrs"
+                  v-on="onTooltip"
+                >
+                  <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+                  <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+                  <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color">{{
+                    getQuickTag(chip.value).label
+                  }}</v-icon>
+                  <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
+                    <span style="color: red">NOT </span>
+                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                  </span>
+                  <span v-else class="filter-chip-truncate">
+                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                  </span>
+                </v-chip>
+              </template>
+              <span>{{ chip.value }}</span>
+            </v-tooltip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
           </span>
         </v-chip-group>
       </div>
     </v-card>
 
-    <!-- DFIQ context -->
-    <div class="mt-3 mx-3">
-      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
-        <v-toolbar dense flat color="transparent">
-          <h4>{{ activeContext.question.display_name }}</h4>
-          <v-spacer></v-spacer>
-          <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <p class="mt-1 pb-4 px-4" style="font-size: 0.9em">
-          {{ activeContext.question.description }}
-        </p>
-      </div>
-    </div>
-
     <!-- Eventlist -->
-    <v-card flat class="mt-5 mx-3">
+    <v-card flat class="mt-5 mx-3" color="transparent">
       <ts-event-list
         :query-request="activeQueryRequest"
         @countPerIndex="updateCountPerIndex($event)"
@@ -272,26 +292,27 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import EventBus from '../main'
+import ApiClient from '../utils/RestApiClient.js'
+import EventBus from '../event-bus.js'
 
 import { dragscroll } from 'vue-dragscroll'
 
-import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
-import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons'
-import TsSearchDropdown from '../components/Explore/SearchDropdown'
-import TsTimelinePicker from '../components/Explore/TimelinePicker'
-import TsFilterMenu from '../components/Explore/FilterMenu'
-import TsUploadTimelineForm from '../components/UploadForm'
-import TsAddManualEvent from '../components/Explore/AddManualEvent'
-import TsEventList from '../components/Explore/EventList'
+import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree.vue'
+import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons.vue'
+import TsSearchDropdown from '../components/Explore/SearchDropdown.vue'
+import TsTimelinePicker from '../components/Explore/TimelinePicker.vue'
+import TsFilterMenu from '../components/Explore/FilterMenu.vue'
+import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
+import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
+import TsEventList from '../components/Explore/EventList.vue'
+import TsSearchHelpCard from '../components/Explore/SearchHelpCard.vue'
 
 const defaultQueryFilter = () => {
   return {
     from: 0,
     terminate_after: 40,
     size: 40,
-    indices: [],
+    indices: '_all',
     order: 'asc',
     chips: [],
   }
@@ -307,9 +328,10 @@ export default {
     TsSearchDropdown,
     TsTimelinePicker,
     TsFilterMenu,
-    TsUploadTimelineForm,
+    TsUploadTimelineFormButton,
     TsAddManualEvent,
     TsEventList,
+    TsSearchHelpCard,
   },
   props: ['sketchId'],
   data() {
@@ -331,16 +353,27 @@ export default {
       currentQueryFilter: defaultQueryFilter(),
       selectedLabels: [],
       showSearchHistory: false,
+      showSearchHelp: false,
       zoomLevel: 0.7,
       zoomOrigin: {
         x: 0,
         y: 0,
       },
+      // TODO: Refactor this into a configurable option
+      quickTags: [
+        { tag: 'bad', color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
+        { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
+        { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
+      ],
+      showTimelines: true,
     }
   },
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    enabledTimelines() {
+      return this.$store.state.enabledTimelines
     },
     meta() {
       return this.$store.state.meta
@@ -360,8 +393,23 @@ export default {
     activeContext() {
       return this.$store.state.activeContext
     },
+    activeTimelines() {
+      // Sort alphabetically based on timeline name.
+      let timelines = [...this.sketch.active_timelines]
+      return timelines.sort(function (a, b) {
+        return a.name.localeCompare(b.name)
+      })
+    },
+  },
+  watch: {
+    enabledTimelines: function () {
+      this.updateEnabledTimelines(this.enabledTimelines)
+    },
   },
   methods: {
+    getQuickTag(tag) {
+      return this.quickTags.find((el) => el.tag === tag)
+    },
     updateCountPerIndex: function (count) {
       this.countPerIndex = count
     },
@@ -378,15 +426,39 @@ export default {
       if (this.$route.name !== 'Explore') {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
-      this.currentQueryString = searchEvent.queryString
+      if (searchEvent.queryString) {
+        this.currentQueryString = searchEvent.queryString
+      }
+
+      // Preserve user defined filter instead of resetting, if it exist.
+      if (!searchEvent.queryFilter) {
+        searchEvent.queryFilter = this.currentQueryFilter
+      }
       this.currentQueryFilter = searchEvent.queryFilter
+
+      // Add any chips from the search event and make sure they are not in the
+      // current filter already. E.g. don't add a star filter twice.
+      if (searchEvent.chip) {
+        const chipExist = this.currentQueryFilter.chips.find((chip) => chip.value === searchEvent.chip.value)
+        if (!chipExist) {
+          this.currentQueryFilter.chips.push(searchEvent.chip)
+        }
+      }
+
       // Preserve user defined item count instead of resetting.
       this.currentQueryFilter.size = this.currentItemsPerPage
       this.currentQueryFilter.terminate_after = this.currentItemsPerPage
+
+      // Run the search
       if (searchEvent.doSearch) {
-        this.search()
+        if (searchEvent.incognito) {
+          this.search(true, true)
+        } else {
+          this.search()
+        }
       }
     },
+
     search: function (resetPagination = true, incognito = false, parent = false) {
       let queryRequest = {}
       queryRequest['queryString'] = this.currentQueryString
@@ -400,10 +472,14 @@ export default {
     searchView: function (viewId) {
       this.showSearchDropdown = false
 
+      if (this.$route.name !== 'Explore') {
+        this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
+      }
+
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
-        this.$router.push({ name: 'Explore', query: { view: viewId } })
       }
+
       ApiClient.getView(this.sketchId, viewId)
         .then((response) => {
           let view = response.data.objects[0]
@@ -413,18 +489,6 @@ export default {
             this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
           }
           this.selectedFields = this.currentQueryFilter.fields
-          if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
-            let allIndices = []
-            this.sketch.active_timelines.forEach((timeline) => {
-              let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
-              if (isLegacy) {
-                allIndices.push(timeline.searchindex.index_name)
-              } else {
-                allIndices.push(timeline.id)
-              }
-            })
-            this.currentQueryFilter.indices = allIndices
-          }
           let chips = this.currentQueryFilter.chips
           if (chips) {
             for (let i = 0; i < chips.length; i++) {
@@ -488,17 +552,8 @@ export default {
       this.currentQueryFilter = JSON.parse(JSON.stringify(this.originalContext.queryFilter))
       this.search()
     },
-    updateSelectedTimelines: function (timelines) {
-      let selected = []
-      timelines.forEach((timeline) => {
-        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
-        if (isLegacy) {
-          selected.push(timeline.searchindex.index_name)
-        } else {
-          selected.push(timeline.id)
-        }
-      })
-      this.currentQueryFilter.indices = selected
+    updateEnabledTimelines: function (timelineIds) {
+      this.currentQueryFilter.indices = timelineIds
       this.search()
     },
     toggleChip: function (chip) {
@@ -508,6 +563,30 @@ export default {
       }
       chip.active = !chip.active
       this.search()
+    },
+    copyFilterChip(chip) {
+      let textToCopy = ''
+      // Different handling based on chip type
+      if (chip.type.startsWith('datetime')) {
+        // For datetime chips, just copy the value
+        textToCopy = chip.value
+      } else {
+        // For other chips, copy both field and value
+        textToCopy =
+          chip.operator === 'must_not'
+            ? `NOT ${chip.field ? `${chip.field}:` : ''}"${chip.value}"`
+            : `${chip.field ? `${chip.field}:` : ''}"${chip.value}"`
+      }
+      // Copy to clipboard
+      navigator.clipboard
+        .writeText(textToCopy)
+        .then(() => {
+          this.infoSnackBar('Copied to clipboard!')
+        })
+        .catch((e) => {
+          this.errorSnackBar('Failed to copy to clipboard.')
+          console.error(e)
+        })
     },
     removeChip: function (chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
@@ -640,6 +719,15 @@ export default {
         this.showSearchDropdown = false
       }
     },
+    enableAllTimelines() {
+      this.$store.dispatch(
+        'updateEnabledTimelines',
+        this.activeTimelines.map((tl) => tl.id)
+      )
+    },
+    disableAllTimelines() {
+      this.$store.dispatch('updateEnabledTimelines', [])
+    },
   },
   mounted() {
     this.$refs.searchInput.focus()
@@ -721,5 +809,29 @@ export default {
 .no-scrollbars {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.filter-chip-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400px;
+}
+
+.expanded .timeline-header {
+  .v-icon.open-indicator {
+    display: inline;
+  }
+  .v-icon.closed-indicator {
+    display: none;
+  }
+}
+.timeline-header {
+  display: flex;
+  align-items: center;
+
+  .v-icon.open-indicator {
+    display: none;
+  }
 }
 </style>

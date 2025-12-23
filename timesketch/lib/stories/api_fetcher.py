@@ -13,11 +13,9 @@
 # limitations under the License.
 """This file contains the interface for a story exporter."""
 
-from __future__ import unicode_literals
 
 import json
 
-from flask import current_app
 import altair as alt
 import pandas as pd
 
@@ -37,10 +35,7 @@ class ApiDataFetcher(interface.DataFetcher):
     def __init__(self):
         """Initialize the data fetcher."""
         super().__init__()
-        self._datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        self._datastore = OpenSearchDataStore()
 
     def get_aggregation(self, agg_dict):
         """Returns an aggregation object from an aggregation dict.
@@ -58,7 +53,7 @@ class ApiDataFetcher(interface.DataFetcher):
         if not aggregation_id:
             return {}
 
-        aggregation = Aggregation.query.get(aggregation_id)
+        aggregation = Aggregation.get_by_id(aggregation_id)
         if not aggregation:
             return {}
 
@@ -113,7 +108,7 @@ class ApiDataFetcher(interface.DataFetcher):
         if not group_id:
             return None
 
-        group = AggregationGroup.query.get(group_id)
+        group = AggregationGroup.get_by_id(group_id)
         if not group:
             return None
 
@@ -210,7 +205,7 @@ class ApiDataFetcher(interface.DataFetcher):
         if not view_id:
             return pd.DataFrame()
 
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
         if not view:
             return pd.DataFrame()
 
@@ -228,7 +223,7 @@ class ApiDataFetcher(interface.DataFetcher):
         else:
             query_dsl = None
 
-        sketch = Sketch.query.get_with_acl(self._sketch_id)
+        sketch = Sketch.get_with_acl(self._sketch_id)
         sketch_indices = [t.searchindex.index_name for t in sketch.active_timelines]
 
         results = self._datastore.search_stream(

@@ -2,6 +2,16 @@
 hide:
   - footer
 ---
+## Opening bug / getting support
+
+Please provide as much detailed information as possible, keep in mind that:
+
+* we cannot fix errors based on vague descriptions;
+* we cannot look into your thoughts or on your systems;
+* we cannot easily isolate errors if you keep changing your test environment.
+
+If you report a bug or ask for help in Slack, please provide as much information as possible, error messages, log lines, stacktraces, screenshots, videos etc.
+
 ## Troubleshooting playbook
 
 - Is it only affecting one user?
@@ -13,6 +23,7 @@ hide:
 - Any errors in Timesketch / celery worker logs
 - Any errors in ES logs?
 - Any errors in postgres logs?
+- What versions is running (Timesketch, Plaso, ...) `cat /usr/local/src/timesketch/timesketch/version.py` in the Docker container to get the Timesketch version
 
 ## Frontend issues
 
@@ -50,7 +61,7 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 - Is it a specific file that causes problems?
 - What is the WebUI status of the import?
 - Try switching from WebUI to the `import_client.py` to upload the same file
-- Try to upload one of the [sample files](https://github.com/google/timesketch/blob/master/test_tools/test_events/sigma_events.csv)
+- Try to upload one of the [sample files](https://github.com/google/timesketch/blob/master/tests/test_events/sigma_events.csv)
 - If you open a Github issue for an import issue, please indicate, what type of file you try to upload and what error message / stacktrace you have
 
 ### Issues importing a CSV file
@@ -60,15 +71,16 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 - Is there an encoding issue in the CSV file
 - If you tried to upload via web, try the import client and the other way around
 - Check the celery logs
-- Try to upload [This sample](https://github.com/google/timesketch/blob/master/test_tools/test_events/sigma_events.csv)
+- Try to upload [This sample](https://github.com/google/timesketch/blob/master/tests/test_events/sigma_events.csv)
 - If you open a Github issue, provide at least the header of your CSV and a few lines of content (please scramble PII) so it can be reproduced.
 
 ### Issues importing Plaso file
 
-- Which Plaso version is installed on the Timesketch server?
+- Which Plaso version is installed on the Timesketch server? (Run `psort.py --version` in the Timesketch docker instance
 - Which Plaso version was used to create the Plaso file?
 - Is the issue for both web upload and `import_client`?
 - If you open a Github Issue, please indicate the Plaso version used to generate the file.
+- **Note:** By default, `psort` execution logs are logged. If you need to debug a specific crash, see the [Plaso / Psort](#plaso-psort) section below.
 
 Try to run the following in the Docker container after the file was uploaded (but not successfully imported):
 
@@ -131,6 +143,25 @@ docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks inspect query_task 
 ```
 
 Where $TASKID is the id that was shown in the previous step.
+
+### Plaso / Psort
+
+By default, the `psort` process (used to process Plaso files) writes execution
+logs to `/var/log/timesketch/psort/` which should be mapped to the host.
+
+If this is not set it will be logged to `/dev/null` to prevent cluttering the disk.
+
+You can configure the path in the `timesketch.conf`:
+
+```
+# Directory to store Plaso (psort) log files.
+# If this is set, psort will write execution logs here.
+# If this is NOT set, logs will be discarded to /dev/null.
+PLASO_LOG_FOLDER = '/var/log/timesketch/psort/'
+```
+
+**Note:** Psort logs can be large. If you enable this, ensure you have log
+          rotation configured on the target directory.
 
 ### OpenSearch
 

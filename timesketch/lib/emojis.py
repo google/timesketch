@@ -16,7 +16,6 @@
 See https://emojipedia.org for list of available unicode emojis.
 """
 
-from __future__ import unicode_literals
 
 import collections
 
@@ -25,24 +24,31 @@ emoji = collections.namedtuple("emoji", "code help")
 
 
 EMOJI_MAP = {
-    "VALIDATE": emoji("&#x2705", "Validate"),
     "BUCKET": emoji("&#x1FAA3", "Storage bucket"),
+    "BOMB": emoji("&#x1F4A3", "Malicious campaign activity"),
     "CAMERA": emoji("&#x1F4F7", "Screenshot activity"),
+    "HIGH_VOLTAGE": emoji("&#x26A1", "Attack pattern"),
     "FISHING_POLE": emoji("&#x1F3A3", "Phishing"),
+    "FIRE": emoji("&#x1F525", "Investigation activity"),
     "GLOBE": emoji("&#x1F30F", "The world"),
+    "HAMMER": emoji("&#x1F528", "Tool match"),
     "ID_BUTTON": emoji("&#x1F194", "Account ID"),
     "LINK": emoji("&#x1F517", "Events Linked"),
     "LOCK": emoji("&#x1F512", "Logon activity"),
     "LOCOMOTIVE": emoji("&#x1F682", "Execution activity"),
     "MAGNIFYING_GLASS": emoji("&#x1F50E", "Search related activity"),
     "PERSON_STANDING": emoji("&#x1F9CD", "Person"),
+    "RAT": emoji("&#x1F400", "Remote access"),
     "SATELLITE": emoji("&#x1F4E1", "Domain activity"),
     "SCREEN": emoji("&#x1F5B5", "Screensaver activity"),
-    "SKULL": emoji("&#x1F480;", "Threat intel match"),
+    "SHIELD": emoji("&#x1F6E1", "Vulnerability"),
     "SKULL_CROSSBONE": emoji("&#x2620", "Suspicious entry"),
+    "SKULL": emoji("&#x1F480", "Threat intel match"),
     "SLEEPING_FACE": emoji("&#x1F634", "Activity outside of regular hours"),
     "SPARKLES": emoji("&#x2728", "New entity created"),
+    "SPIDER": emoji("&#x1F577", "Malware activity"),
     "UNLOCK": emoji("&#x1F513", "Logoff activity"),
+    "VALIDATE": emoji("&#x2705", "Validate"),
     "WASTEBASKET": emoji("&#x1F5D1", "Deletion activity"),
     "FLAG_AC": emoji("&#x1F1E6&#x1F1E8", "Ascension Island"),
     "FLAG_AD": emoji("&#x1F1E6&#x1F1E9", "Andorra"),

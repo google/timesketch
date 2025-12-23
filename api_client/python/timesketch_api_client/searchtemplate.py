@@ -69,8 +69,8 @@ class SearchTemplate(resource.BaseResource):
         """Initialize the search template from a saved template, by ID value.
 
         Args:
-            template_id: integer value for the saved search template.
-            sketch_id: optional integer value for a sketch ID. If not
+            template_id (int): integer value for the saved search template.
+            sketch_id (int): optional integer value for a sketch ID. If not
                 provided, an attempt is made to figure it out.
 
         Raises:
@@ -159,7 +159,7 @@ class SearchTemplate(resource.BaseResource):
             self._sketch_id = sketch_id
         else:
             raise ValueError(
-                "Sketch needs to be set, or an integer value for " "a sketch ID."
+                "Sketch needs to be set, or an integer value for a sketch ID."
             )
 
     def save(self):
@@ -200,19 +200,19 @@ class SearchTemplate(resource.BaseResource):
         """Returns a search object from a template."""
         if not self._resource_id:
             raise ValueError(
-                "Unable to get a search object unless it is tied to a " "template."
+                "Unable to get a search object unless it is tied to a template."
             )
 
         if not self._sketch_id:
             raise ValueError(
-                "Unable to get a search object unless it is tied to " "a sketch."
+                "Unable to get a search object unless it is tied to a sketch."
             )
 
         data = self.lazyload_data(refresh_cache=True)
         objects = data.get("objects")
         if not objects:
             raise ValueError(
-                "Unable to get search object, issue with retrieving " "template data."
+                "Unable to get search object, issue with retrieving template data."
             )
 
         template_dict = objects[0]
