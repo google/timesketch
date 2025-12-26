@@ -26,7 +26,7 @@ from typing import Dict
 from timesketch_api_client import cli_input
 from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
-from timesketch_api_client import config
+from timesketch_api_client import config, client
 from timesketch_api_client import sketch
 from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
@@ -57,6 +57,35 @@ def configure_logger_default():
     )
     for handler in logger.parent.handlers:
         handler.setFormatter(logger_formatter)
+
+
+def get_sketch_by_name(
+    ts_client: client.TimesketchApi, sketch_name: str
+) -> sketch.Sketch:
+    """Gets a sketch by its name.
+
+    Args:
+        ts_client: An instance of timesketch_api_client.TimesketchApi (or similar).
+        sketch_name: The name of the sketch to find.
+
+    Raises:
+        KeyError: If a sketch with the given name is not found.
+
+    Returns:
+        A sketch object.
+    """
+    sketches = ts_client.list_sketches()  # may return Sketch objects or dicts
+    for s in sketches:
+        # Sketch object
+        if hasattr(s, "name") and s.name.lower() == sketch_name.lower():
+            return s
+        # dict representation
+        if isinstance(s, dict) and s.get("name", "").lower() == sketch_name.lower():
+            sketch_id = s.get("id")
+            if sketch_id and hasattr(ts_client, "get_sketch"):
+                return ts_client.get_sketch(sketch_id)
+            return s
+    raise KeyError(f"Sketch named {sketch_name!s} not found")
 
 
 def upload_file(
@@ -601,10 +630,22 @@ def main(args=None):
         my_sketch = ts_client.get_sketch(sketch_id)
     else:
         sketch_name = options.sketch_name or "New Sketch From Importer CLI"
-        my_sketch = ts_client.create_sketch(sketch_name)
-        logger.info(
-            "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
-        )
+        try:
+            # check if the sketch name already exists
+            my_sketch = get_sketch_by_name(ts_client, sketch_name)
+            logger.info(
+                "Using existing sketch: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
+            )
+        except KeyError:
+            # no existing sketch found, create a new one
+            my_sketch = ts_client.create_sketch(sketch_name)
+            logger.info(
+                "New sketch created: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
+            )
 
     if not my_sketch:
         logger.error("Unable to get sketch ID: {0:d}".format(sketch_id))
