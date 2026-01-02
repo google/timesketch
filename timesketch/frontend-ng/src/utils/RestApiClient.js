@@ -51,6 +51,11 @@ RestApiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    // Skip snackbar for 403 errors on sketch endpoints - we show a dedicated Access Denied page instead
+    if (status === 403 && url.includes('/sketches/')) {
+      return Promise.reject(error)
+    }
+
     if (status === 500) {
       EventBus.$emit(
         'errorSnackBar',
@@ -121,7 +126,7 @@ export default {
   getSketchTimelineAnalysis(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },
-  getTimelineFields(sketchId, timelineId){
+  getTimelineFields(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/fields/')
   },
   saveSketchTimeline(sketchId, timelineId, name, description, color) {
