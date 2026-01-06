@@ -81,12 +81,13 @@ class BaseModel:
         self.updated_at = func.now()
 
     @classmethod
-    def get_with_acl(cls, model_id, user=current_user):
+    def get_with_acl(cls, model_id, user=current_user, include_deleted=False):
         """Get a database object with permission check enforced.
 
         Args:
             model_id: The integer ID of the model to get.
             user: User (instance of timesketch.models.user.User)
+            include_deleted: Boolean to include deleted objects.
 
         Returns:
             A BaseQuery instance.
@@ -96,7 +97,8 @@ class BaseModel:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
         try:
             if result_obj.get_status.status == "deleted":
-                abort(HTTP_STATUS_CODE_NOT_FOUND)
+                if not (include_deleted and user.admin):
+                    abort(HTTP_STATUS_CODE_NOT_FOUND)
         except AttributeError:
             pass
         if result_obj.is_public:

@@ -566,9 +566,18 @@ class SketchResource(resources.ResourceMixin, Resource):
             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR (500): If there's an unrecoverable
                 error during OpenSearch index deletion.
         """
-        sketch = Sketch.get_with_acl(sketch_id)
+        if not force_delete:
+            url_force_delete = request.args.get("force")
+            if url_force_delete is not None:
+                force_delete = True  # If the 'force' URL parameter exists, set to True
+                logger.debug("Force delete detected from URL parameter.")
+            else:
+                logger.debug("Force delete not present, will keep the OS data.")
+
+        sketch = Sketch.get_with_acl(sketch_id, include_deleted=force_delete)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
         if not sketch.has_permission(current_user, "delete"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -587,14 +596,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to delete a sketch that is already archived.",
             )
-
-        if not force_delete:
-            url_force_delete = request.args.get("force")
-            if url_force_delete is not None:
-                force_delete = True  # If the 'force' URL parameter exists, set to True
-                logger.debug("Force delete detected from URL parameter.")
-            else:
-                logger.debug("Force delete not present, will keep the OS data.")
 
         # Check if user has admin privileges for force deletion
         if force_delete:
@@ -623,6 +624,19 @@ class SketchResource(resources.ResourceMixin, Resource):
         # Default behaviour for historical reasons: exit with 200 without
         # deleting
         if not force_delete:
+            # Close indices to save resources
+            for timeline in sketch.timelines:
+                searchindex = timeline.searchindex
+                try:
+                    self.datastore.client.indices.close(index=searchindex.index_name)
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.warning(
+                        "Failed to close index %s for soft-deleted sketch %s: %s",
+                        searchindex.index_name,
+                        sketch.id,
+                        e,
+                    )
+            db_session.commit()
             return HTTP_STATUS_CODE_OK
 
         # now the real deletion
