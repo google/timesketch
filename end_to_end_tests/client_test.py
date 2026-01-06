@@ -19,6 +19,7 @@ import json
 import random
 import zipfile
 import os
+import opensearchpy
 
 from timesketch_api_client import search
 from timesketch_api_client.error import NotFoundError
@@ -435,6 +436,79 @@ level: high
             )
         except RuntimeError as e:
             self.assertions.fail(f"Failed to get sketch after soft delete: {e}")
+
+    def test_soft_delete_closes_indices(self):
+        """Test that soft-deleting a sketch closes its OpenSearch indices."""
+        sketch_name = f"test_soft_delete_indices_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+        timeline = self.import_timeline("sigma_events.jsonl", sketch=sketch)
+        index_name = timeline.index_name
+
+        # Verify index is open
+        es = opensearchpy.OpenSearch(
+            [
+                {
+                    "host": interface.OPENSEARCH_HOST,
+                    "port": interface.OPENSEARCH_PORT,
+                }
+            ],
+            http_compress=True,
+        )
+        stats = es.cat.indices(index=index_name, format="json")
+        self.assertions.assertEqual(stats[0].get("status"), "open")
+
+        # Soft delete
+        sketch.delete(force_delete=False)
+
+        # Verify index is closed
+        stats = es.cat.indices(index=index_name, format="json")
+        self.assertions.assertEqual(
+            stats[0].get("status"),
+            "close",
+            f"Index {index_name} should be closed",
+        )
+
+    def test_force_delete_soft_deleted_sketch(self):
+        """Test that admins can force-delete a soft-deleted sketch."""
+        sketch_name = f"test_force_delete_soft_deleted_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+        sketch_id = sketch.id
+        timeline = self.import_timeline("sigma_events.jsonl", sketch=sketch)
+        index_name = timeline.index_name
+
+        # Soft delete as owner
+        sketch.delete(force_delete=False)
+
+        # Verify it's soft-deleted
+        sketch = self.api.get_sketch(sketch_id)
+        self.assertions.assertEqual(sketch.status, "deleted")
+
+        # Grant admin permission
+        sketch.add_to_acl(
+            user_list=["admin"],
+            permissions=["read", "write", "delete"],
+        )
+
+        # Force delete as admin
+        admin_sketch = self.admin_api.get_sketch(sketch_id)
+        admin_sketch.delete(force_delete=True)
+
+        # Verify it's completely gone
+        with self.assertions.assertRaises(NotFoundError):
+            self.api.get_sketch(sketch_id).name
+
+        es = opensearchpy.OpenSearch(
+            [
+                {
+                    "host": interface.OPENSEARCH_HOST,
+                    "port": interface.OPENSEARCH_PORT,
+                }
+            ],
+            http_compress=True,
+        )
+        self.assertions.assertFalse(
+            es.indices.exists(index=index_name), "Index should be deleted"
+        )
 
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
