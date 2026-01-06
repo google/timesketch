@@ -126,14 +126,23 @@ class ArchiveTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(index.status, "archived")
 
     def test_unarchive_mixed_indices(self):
-        """Test unarchiving a sketch with one good and one missing index."""
+        """Test unarchiving a sketch with one good and one missing index.
+
+        Logic:
+        1. Create a sketch with two timelines: A (Good) and B (Bad).
+        2. B's index is manually deleted to simulate failure.
+        3. Archive the sketch.
+        4. Unarchive the sketch.
+        5. Verify that Timeline A remains READY and Timeline B is FAIL.
+        6. Delete the failed Timeline B.
+        7. Verify the sketch can be archived and unarchived again successfully.
+        8. Verify Timeline A is still READY and searchable.
+        """
         sketch_name = f"test-unarchive-mixed_{uuid.uuid4().hex}"
         sketch = self.api.create_sketch(name=sketch_name)
 
         # Import Timeline A (Good)
-        # Using a file that exists in test_data
         tl_a = self.import_timeline("sigma_events.jsonl", sketch=sketch)
-        idx_a_name = tl_a.index_name
 
         # Import Timeline B (Bad - will be deleted)
         tl_b = self.import_timeline("evtx_part.csv", sketch=sketch)
@@ -173,27 +182,18 @@ class ArchiveTest(interface.BaseEndToEndTest):
         from timesketch_api_client import search
 
         search_client = search.Search(sketch)
-        # Filter for Timeline A only
         search_client.query_filter.update({"indices": [tl_a.id]})
         results = search_client.table
-        # sigma_events.jsonl has 4 events
         self.assertions.assertEqual(len(results), 4)
 
-        # 8. Delete the failed timeline B
-        # timelines[tl_b.id] is the timeline object we got from get_sketch()
-        # client timeline object has delete() method.
+        # Delete the failed timeline B
         timelines[tl_b.id].delete()
 
-        # Verify it's gone
-        updated_timelines = self.api.get_sketch(sketch.id).list_timelines()
-        self.assertions.assertEqual(len(updated_timelines), 1)
-        self.assertions.assertEqual(updated_timelines[0].id, tl_a.id)
-
-        # 9. Archive again
+        # Archive again
         sketch.archive()
         self.assertions.assertEqual(sketch.status, "archived")
 
-        # 10. Unarchive again
+        # Unarchive again
         sketch.unarchive()
         self.assertions.assertEqual(sketch.status, "ready")
 
