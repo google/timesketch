@@ -32,6 +32,7 @@ from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
+from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
 
 
@@ -295,7 +296,11 @@ class SketchResourceTest(BaseTest):
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
     def test_unarchive_sketch_with_failed_timeline(self):
-        """Authenticated request to unarchive a sketch with a failed timeline."""
+        """Tests that a sketch can be successfully unarchived even if it contains
+        a timeline in a 'fail' state. This ensures that users can recover
+        sketches with problematic timelines and fix them (e.g., by deleting
+        the failed timeline) after unarchiving.
+        """
         self.login()
 
         # Create sketch to test with
@@ -336,30 +341,11 @@ class SketchResourceTest(BaseTest):
         db_session.add(timeline)
         db_session.commit()
 
-        # Manually archive the sketch (bypass API check for failed timeline during archive if any)
-        # Actually, archive API might block it too if we don't fix archive API.
-        # But we are testing UNARCHIVE here. So let's force the state.
+        # Manually archive the sketch (bypass API check for failed timeline
+        # during archive if any). Actually, archive API might block it too
+        # if we don't fix archive API. But we are testing UNARCHIVE here.
+        # So let's force the state.
         sketch.set_status("archived")
-        timeline.set_status(
-            "archived"
-        )  # Timelines in archived sketches are usually 'archived'
-        # But here we want to simulate a timeline that was failed AND the sketch is archived.
-        # Wait, if a timeline is failed, it stays failed when archived?
-        # The archive logic says:
-        # "If a timeline is in another sketch... if timeline.get_status.status != 'archived': can_be_closed = False"
-        # And during archive: "Check if any timeline is in a state that prevents archiving... statuses_preventing_archival = ['processing', 'fail', 'timeout']"
-        # So normally you CANNOT archive a sketch with a failed timeline.
-
-        # So we must simulate a state where it IS archived but has a failed timeline.
-        # This can happen if the timeline failed *after* archiving (unlikely) or if it was force-archived directly in DB.
-        # Or if the check didn't exist in older versions.
-
-        # Let's verify our assumption:
-        # We set sketch to 'archived'.
-        # We set timeline to 'fail'. (Because the issue report says: "Unarchiving sketch 1346, but it contains timeline ... in a 'fail' state")
-
-        sketch.set_status("archived")
-        # Ensure timeline is failed
         timeline.set_status("fail")
         db_session.commit()
 
@@ -380,13 +366,15 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(sketch.get_status.status, "ready")
 
         # Verify failed timeline is still failed (or whatever the logic does)
-        # The logic iterates over timelines: "if timeline.get_status.status != 'archived': continue"
-        # So it skips non-archived timelines.
-        # Our timeline is 'fail', so it skips it. It remains 'fail'.
         self.assertEqual(timeline.get_status.status, "fail")
 
     def test_unarchive_sketch_with_mixed_states(self):
-        """Authenticated request to unarchive a sketch with mixed fail/processing timelines."""
+        """Tests that a sketch can be successfully unarchived even if it contains
+        both 'fail' and 'processing' timelines. This confirms that the
+        unarchive operation is robust against various non-ready timeline
+        states, allowing users to regain access to the sketch and address
+        each problematic timeline individually.
+        """
         self.login()
 
         # Create sketch
@@ -408,7 +396,10 @@ class SketchResourceTest(BaseTest):
         idx_fail.set_status("fail")
         db_session.add(idx_fail)
         tl_fail = Timeline(
-            name="tl_fail", sketch=sketch, user=sketch.user, searchindex=idx_fail
+            name="tl_fail",
+            sketch=sketch,
+            user=sketch.user,
+            searchindex=idx_fail,
         )
         tl_fail.set_status("fail")
         db_session.add(tl_fail)
@@ -418,7 +409,10 @@ class SketchResourceTest(BaseTest):
         idx_proc.set_status("processing")
         db_session.add(idx_proc)
         tl_proc = Timeline(
-            name="tl_proc", sketch=sketch, user=sketch.user, searchindex=idx_proc
+            name="tl_proc",
+            sketch=sketch,
+            user=sketch.user,
+            searchindex=idx_proc,
         )
         tl_proc.set_status("processing")
         db_session.add(tl_proc)
@@ -443,7 +437,8 @@ class SketchResourceTest(BaseTest):
         sketch = Sketch.get_by_id(created_id)
         self.assertEqual(sketch.get_status.status, "ready")
 
-        # Verify timelines retained their stuck states (so user can see/fix them)
+        # Verify timelines retained their stuck states (so user can see/fix
+        # them)
         self.assertEqual(tl_fail.get_status.status, "fail")
         self.assertEqual(tl_proc.get_status.status, "processing")
 
@@ -531,7 +526,8 @@ class SketchResourceTest(BaseTest):
             "test_delete_archive_sketch",
         )
         self.assert200(response)
-        self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
+        status_list = response.json["objects"][0]["status"]
+        self.assertIn("archived", status_list[0]["status"])
 
         # Soft delete should fail
         response = self.client.delete(f"/api/v1/sketches/{created_id}/")
@@ -542,9 +538,44 @@ class SketchResourceTest(BaseTest):
             response.json["message"],
         )
 
-        # Force delete should succeed when run by an admin
+        # Force delete should also fail because the sketch is archived
+        # We need to give the admin permission to delete the sketch first
+        from timesketch.models import db_session
+        from timesketch.models.sketch import Sketch
+
+        sketch = Sketch.get_by_id(created_id)
+        sketch.grant_permission(permission="delete", user=self.useradmin)
+        db_session.commit()
+
         self.login_admin()
-        response = self.client.delete(f"/api/v1/sketches/{created_id}/?force=true")
+        resource_url = f"/api/v1/sketches/{created_id}/?force=true"
+        response = self.client.delete(resource_url)
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertEqual(
+            "Unable to delete a sketch that is already archived.",
+            response.json["message"],
+        )
+
+        # Unarchive the sketch (should succeed now even if we had failed
+        # timelines, though this test sketch has no timelines)
+        self.login()
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "unarchive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        # Now delete should succeed (soft)
+        response = self.client.delete(f"/api/v1/sketches/{created_id}/")
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+
+        # Or force delete (admin)
+        self.login_admin()
+        resource_url = f"/api/v1/sketches/{created_id}/?force=true"
+        response = self.client.delete(resource_url)
         self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
 
 
