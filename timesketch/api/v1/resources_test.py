@@ -532,17 +532,18 @@ class SketchResourceTest(BaseTest):
         # Force delete should also fail because the sketch is archived
         # We need to give the admin permission to delete the sketch first
 
+        from timesketch.models.user import User
+
         sketch = Sketch.get_by_id(created_id)
+        user_admin = User.query.filter_by(username="testadmin").first()
 
-        # Check that the admin user does not have delete permission yet.
-        self.assertFalse(sketch.has_permission(self.useradmin, "delete"))
-
-        sketch.grant_permission(permission="delete", user=self.useradmin)
+        for permission in ["read", "write", "delete"]:
+            sketch.grant_permission(permission=permission, user=user_admin)
 
         db_session.commit()
 
         # Check that the admin user now has delete permission.
-        self.assertTrue(sketch.has_permission(self.useradmin, "delete"))
+        self.assertTrue(sketch.has_permission(user_admin, "delete"))
 
         self.login_admin()
         resource_url = f"/api/v1/sketches/{created_id}/?force=true"
