@@ -85,9 +85,9 @@ class BaseModel:
         """Get a database object with permission check enforced.
 
         Args:
-            model_id: The integer ID of the model to get.
-            user: User (instance of timesketch.models.user.User)
-            include_deleted: Boolean to include deleted objects.
+            model_id (int): The integer ID of the model to get.
+            user (User): User (instance of timesketch.models.user.User)
+            include_deleted (bool): Boolean to include deleted objects.
 
         Returns:
             A BaseQuery instance.
