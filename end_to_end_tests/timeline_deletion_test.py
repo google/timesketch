@@ -135,5 +135,83 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         except requests.exceptions.RequestException as e:
             self.assertions.fail(f"OpenSearch index check failed for {index_name}: {e}")
 
+    def test_delete_shared_index_timeline_safety(self):
+        """Test that deleting a timeline with a shared index does NOT close the
+        index.
+
+        Logic:
+        1. Create a sketch and import two timelines (Timeline A and B) that
+           share the same underlying OpenSearch index.
+        2. Verify that the shared index is initially 'open'.
+        3. Delete Timeline A.
+        4. Verify that the shared index remains 'open' because Timeline B
+           still depends on it.
+        5. Delete Timeline B.
+        6. Verify that the shared index is now 'closed' as no more active
+           timelines are using it.
+        """
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test-shared-index-safety_{rand}")
+
+        shared_index_name = uuid.uuid4().hex
+
+        # 1. Create Timeline A
+        tl_a = self.import_timeline(
+            "sigma_events.csv", sketch=sketch, index_name=shared_index_name
+        )
+
+        # 2. Create Timeline B sharing same index
+        tl_b = self.import_timeline(
+            "evtx_part.csv", sketch=sketch, index_name=shared_index_name
+        )
+
+        # Verify index exists and is open
+        try:
+            response = requests.get(
+                f"http://{interface.OPENSEARCH_HOST}:{interface.OPENSEARCH_PORT}/_cat/indices/{shared_index_name}?format=json",
+                timeout=5,
+            )
+            response.raise_for_status()
+            stats = response.json()
+            self.assertions.assertEqual(stats[0].get("status"), "open")
+        except requests.exceptions.RequestException as e:
+            self.assertions.fail(f"OS check failed: {e}")
+
+        # 3. Delete Timeline A
+        tl_a.delete()
+
+        # 4. Verify Index is STILL OPEN
+        try:
+            response = requests.get(
+                f"http://{interface.OPENSEARCH_HOST}:{interface.OPENSEARCH_PORT}/_cat/indices/{shared_index_name}?format=json",
+                timeout=5,
+            )
+            response.raise_for_status()
+            stats = response.json()
+            self.assertions.assertEqual(
+                stats[0].get("status"), "open", "Shared index should remain open"
+            )
+        except requests.exceptions.RequestException as e:
+            self.assertions.fail(f"OS check failed: {e}")
+
+        # 5. Delete Timeline B (Last one)
+        tl_b.delete()
+
+        # 6. Verify Index is NOW CLOSED
+        try:
+            response = requests.get(
+                f"http://{interface.OPENSEARCH_HOST}:{interface.OPENSEARCH_PORT}/_cat/indices/{shared_index_name}?format=json",
+                timeout=5,
+            )
+            if response.status_code == 200:
+                stats = response.json()
+                self.assertions.assertEqual(
+                    stats[0].get("status"),
+                    "close",
+                    "Index should be closed after last timeline deleted",
+                )
+        except requests.exceptions.RequestException as e:
+            self.assertions.fail(f"OS check failed: {e}")
+
 
 manager.EndToEndTestManager.register_test(TimelineDeletionTest)
