@@ -660,22 +660,21 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
     def _unarchive_sketch(self, sketch: Sketch):
         """Unarchives a sketch, making it and its data active again.
 
-        This method follows a transactional approach to ensure data consistency.
-        It first attempts to open all necessary OpenSearch indices associated
-        with the sketch's archived timelines. If any index fails to open for a
-        critical reason (e.g., not found), the entire operation is aborted,
-        leaving the sketch in its archived state.
+        This method attempts to open all necessary OpenSearch indices
+        associated with the sketch's archived timelines.
 
-        If all indices are successfully opened (or confirmed to be already open),
-        the method proceeds to update the database, setting the status of the
-        sketch, its timelines, and the corresponding SearchIndex objects to 'ready'.
+        If an index fails to open (e.g., not found) or if a timeline is in
+        a 'fail' or 'processing' state, the operation is no longer aborted.
+        Instead, a warning is logged, and the problematic timeline and its
+        search index are set to a 'fail' state in the database. All other
+        healthy timelines and indices are successfully opened and set to
+        'ready', and the sketch itself is returned to a 'ready' status.
 
         Args:
             sketch: An instance of timesketch.models.sketch.Sketch to unarchive.
 
         Returns:
-            An integer representing the HTTP status of the operation.
-            - HTTP_STATUS_CODE_OK if successful.
+            A flask.wrappers.Response object with a JSON payload.
 
         Raises:
             HTTPException:
@@ -776,12 +775,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     "OpenSearch index '%s' not found. It might have been deleted.",
                     search_index.index_name,
                 )
-                # We consider the index "successfully opened" in the sense that
-                # we are done with it (it's gone).
-                # We don't add it to successfully_opened_indexes so its status
-                # won't be set to 'ready', it will remain 'archived' (or 'fail'?).
-                # Ideally we should set it to 'fail' or something indicating loss.
-                # But for now, just don't abort.
             except Exception as e:  # pylint: disable=broad-except
                 errors_occurred = True
                 error_details.append(
@@ -819,17 +812,27 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 # If index wasn't opened (e.g. not found), set timeline to fail
                 timeline.set_status(status="fail")
                 logger.warning(
-                    "Timeline '%s' status set to 'fail' because index could not be opened.",
+                    "Timeline '%s' status set to 'fail' because index could "
+                    "not be opened.",
                     timeline.id,
                 )
 
-        for search_index in successfully_opened_indexes:
-            search_index.set_status(status="ready")
-            logger.info(
-                "SearchIndex DB object %s (ID: %s) status updated to 'ready'.",
-                search_index.index_name,
-                search_index.id,
-            )
+        for search_index in search_indexes_to_open:
+            if search_index in successfully_opened_indexes:
+                search_index.set_status(status="ready")
+                logger.info(
+                    "SearchIndex DB object %s (ID: %s) status updated to 'ready'.",
+                    search_index.index_name,
+                    search_index.id,
+                )
+            else:
+                search_index.set_status(status="fail")
+                logger.warning(
+                    "SearchIndex DB object %s (ID: %s) status updated to "
+                    "'fail' because index could not be opened.",
+                    search_index.index_name,
+                    search_index.id,
+                )
 
         sketch.set_status(status="ready")
         logger.info("Sketch %s status set to 'ready'.", sketch.id)
