@@ -23,6 +23,7 @@ import os
 import subprocess
 import time
 import traceback
+import uuid
 from typing import Optional
 from urllib.parse import urlparse
 import yaml
@@ -917,6 +918,36 @@ def run_plaso(
         "--index_name",
         index_name,
     ]
+
+    log_file_path = "/dev/null"
+    log_dir = current_app.config.get("PLASO_LOG_FOLDER")
+
+    if log_dir:
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+
+            # Generate unique filename: psort_INDEXNAME_TIMESTAMP_UUID.log.gz
+            timestamp = time.strftime("%Y%m%dT%H%M%S")
+            unique_suffix = uuid.uuid4().hex[:8]
+            log_filename = f"psort_{index_name}_{timestamp}_{unique_suffix}.log.gz"
+            log_full_path = os.path.join(log_dir, log_filename)
+
+            log_file_path = log_full_path
+            logger.info(
+                "[%s] Psort log enabled: Writing to [%s]", index_name, log_full_path
+            )
+
+        except OSError as e:
+            # If the admin defined a path but it's not writable, log a warning
+            # and fall back to /dev/null/
+            logger.error(
+                "PLASO_LOG_FOLDER is set to [%s] but could not be created/"
+                "accessed: %s. Logging falling back to /dev/null.",
+                log_dir,
+                e,
+            )
+
+    cmd.extend(["--logfile", log_file_path])
 
     if mappings_file_path:
         cmd.extend(["--opensearch_mappings", mappings_file_path])

@@ -792,6 +792,7 @@ class ImportStreamer(object):
 
         if self._data_lines:
             self.flush(end_stream=True)
+            self._reset()
 
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.

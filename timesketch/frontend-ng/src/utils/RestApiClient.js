@@ -121,7 +121,7 @@ export default {
   getSketchTimelineAnalysis(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },
-  getTimelineFields(sketchId, timelineId){
+  getTimelineFields(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/fields/')
   },
   saveSketchTimeline(sketchId, timelineId, name, description, color) {

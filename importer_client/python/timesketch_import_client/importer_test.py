@@ -201,7 +201,7 @@ class TimesketchImporterTest(unittest.TestCase):
         self.assertIs("ille" in fixed_frame["vital_stats"].values, True)
         print(fixed_frame["datetime"].values)
         self.assertIs(
-            "2019-01-03T02:39:42+0000" in fixed_frame["datetime"].values, True
+            "2019-01-03T02:39:42.000000+0000" in fixed_frame["datetime"].values, True
         )
 
     def test_fix_data_frame_precision_datetime(self):
@@ -218,7 +218,7 @@ class TimesketchImporterTest(unittest.TestCase):
 
         print(fixed_frame["datetime"].values)
         self.assertIs(
-            "2024-07-24T10:57:02+0000" in fixed_frame["datetime"].values, True
+            "2024-07-24T10:57:02.877297+0000" in fixed_frame["datetime"].values, True
         )
 
     def test_fix_data_frame_precision_timestamp(self):
@@ -234,7 +234,7 @@ class TimesketchImporterTest(unittest.TestCase):
         self.assertIsNotNone(fixed_frame)
 
         self.assertIs(
-            "1985-01-21T10:57:02+0000" in fixed_frame["datetime"].values, True
+            "1985-01-21T10:57:02.250000+0000" in fixed_frame["datetime"].values, True
         )
         self.assertIs("1331698658276340" in fixed_frame["timestamp"].values, True)
 

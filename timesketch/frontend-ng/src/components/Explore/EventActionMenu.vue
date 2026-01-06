@@ -38,6 +38,18 @@ limitations under the License.
           </v-list-item-icon>
           <v-list-item-title>Context search</v-list-item-title>
         </v-list-item>
+        <v-list-item style="cursor: pointer" @click="focusOnTimeline()">
+          <v-list-item-icon>
+            <v-icon small>mdi-eye</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>Unselect other timelines</v-list-item-title>
+        </v-list-item>
+        <v-list-item style="cursor: pointer" @click="filterOutTimeline()">
+          <v-list-item-icon>
+            <v-icon small>mdi-eye-off</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>Unselect this timeline</v-list-item-title>
+        </v-list-item>
       </v-list>
     </v-menu>
   </span>
@@ -46,6 +58,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../event-bus.js'
+import EventMixin from '../../mixins/EventMixin'
 
 export default {
   props: ['event'],
@@ -55,9 +68,13 @@ export default {
       originalContext: false,
     }
   },
+  mixins: [EventMixin],
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    meta() {
+      return this.$store.state.meta
     },
     settings() {
       return this.$store.state.settings
@@ -89,6 +106,18 @@ export default {
         this.errorSnackBar('Failed to load Event URL into the clipboard')
         console.error(error)
       }
+    },
+    focusOnTimeline() {
+      const timeline = this.getTimeline(this.event)
+      if (!timeline) return
+      this.$store.dispatch('updateEnabledTimelines', [timeline.id])
+    },
+    filterOutTimeline() {
+      const timeline = this.getTimeline(this.event)
+      if (!timeline) return
+      const currentEnabled = this.$store.state.enabledTimelines || []
+      const newEnabled = currentEnabled.filter((id) => id !== timeline.id)
+      this.$store.dispatch('updateEnabledTimelines', newEnabled)
     },
   },
 }

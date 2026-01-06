@@ -57,14 +57,14 @@ RUN \
 # This is required for both Stable and Staging on 24.04
 RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
   echo "Applying 'events' library fix for Ubuntu 24.04..."; \
-  pip3 install --break-system-packages events; \
+  pip3 install --no-cache-dir --break-system-packages events; \
   fi
 
 # 2. Fix for Staging Track (Opensearch-py version mismatch)
 # Staging often requires a newer or specific opensearch-py version not yet in apt
 RUN if [ "$PLASO_PPA_TRACK" = "staging" ] && [ "$UBUNTU_VERSION" = "24.04" ]; then \
   echo "Plaso staging on 24.04 detected, installing opensearch-py==3.0.0"; \
-  pip3 install --break-system-packages opensearch-py==3.0.0; \
+  pip3 install --no-cache-dir --break-system-packages opensearch-py==3.0.0; \
   fi
 
 # Debugging info
@@ -82,10 +82,10 @@ ENV PATH="/opt/venv/bin:$PATH"
 ADD . /tmp/timesketch
 
 # Install dependencies first (better caching)
-RUN pip3 install -r /tmp/timesketch/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/timesketch/requirements.txt
 
 # Install Timesketch and clients in one go for atomic dependency resolution
-RUN pip3 install \
+RUN pip3 install --no-cache-dir \
   /tmp/timesketch \
   /tmp/timesketch/api_client/python \
   /tmp/timesketch/importer_client/python \
