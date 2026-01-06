@@ -66,7 +66,7 @@ class ClientTest(interface.BaseEndToEndTest):
     def test_direct_opensearch(self):
         """Test injecting data into OpenSearch directly."""
         # make the index name something random
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
 
         timeline_name = f"test_direct_opensearch_{rand}"
         self.import_directly_to_opensearch(
@@ -620,7 +620,7 @@ level: high
         # 1. Ensure the sketch has some data to export.
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(
             name=f"test_delete_timeline {rand}", description="test_delete_timeline"
         )
