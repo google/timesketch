@@ -84,13 +84,16 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         and the archival status of its associated timelines.
 
         Returns:
-            A flask.wrappers.Response object with a JSON payload.
+            A flask.wrappers.Response object containing a JSON payload
+            with archiving status and basic information for a given sketch.
             The JSON payload has a "meta" object containing:
-                - is_archived (bool): True if the sketch is archived, False otherwise.
+                - is_archived (bool): True if the sketch is archived, False
+                                    otherwise.
                 - sketch_id (int): The ID of the sketch.
                 - sketch_name (str): The name of the sketch.
-                - timelines (dict): A dictionary where keys are timeline index names
-                                    and values are booleans (True if archived).
+                - timelines (dict): A dictionary where keys are timeline index
+                                    names and values are booleans (True if
+                                    archived).
             And an empty "objects" list.
 
         Raises:
@@ -487,6 +490,10 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         Args:
             sketch (Sketch): Instance of timesketch.models.sketch.Sketch
+
+        Returns:
+            A flask.wrappers.Response object containing a JSON payload
+            confirming the archiving process has completed.
         """
         # 1. Pre flight checks
         if sketch.get_status.status == "archived":
@@ -674,7 +681,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             sketch: An instance of timesketch.models.sketch.Sketch to unarchive.
 
         Returns:
-            A flask.wrappers.Response object with a JSON payload.
+            A flask.wrappers.Response object containing a JSON payload
+            confirming the unarchiving process has completed.
 
         Raises:
             HTTPException:
