@@ -116,8 +116,6 @@ class UploadTest(interface.BaseEndToEndTest):
                 }
                 for j in range(num_keys_per_line):
                     key = f"field_name_{j}_{uuid.uuid4().hex}"
-                    while key in all_keys:  # Avoid duplicate keys
-                        key = f"field_name_{j}_{uuid.uuid4().hex}"
                     all_keys.add(key)
                     line_data[key] = f"value_{j}_{uuid.uuid4().hex}"
 
