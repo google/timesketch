@@ -528,20 +528,21 @@ class SketchResource(resources.ResourceMixin, Resource):
         """Handles DELETE request to mark a sketch as deleted or permanently remove it.
 
         By default (force_delete=False), this method marks the sketch as 'deleted'
-        in the database but does not remove the underlying OpenSearch indices or
-        associated data. This is a soft delete, primarily for historical reasons
-        and safety.
+        in the database and attempts to close all associated OpenSearch indices
+        to free up cluster resources. This is a soft delete.
 
         If force_delete is set to True (either via the parameter or the 'force'
         URL query parameter), the sketch, its timelines, associated search indices,
         and all related data in the database and OpenSearch will be permanently
-        removed. This is a hard delete and is irreversible.
+        removed. This is a hard delete and is irreversible. Administrators can
+        use this to permanently remove sketches that have already been
+        soft-deleted.
 
         Deletion (both soft and hard) is prevented if the sketch has a label
         defined in the LABELS_TO_PREVENT_DELETION configuration setting.
 
-        Requires 'delete' permission on the sketch and the
-            user must be an administrator.
+        Requires 'delete' permission on the sketch and the user must be an
+        administrator for force deletion.
 
         Args:
             sketch_id (int): The ID of the sketch to delete.
@@ -551,15 +552,16 @@ class SketchResource(resources.ResourceMixin, Resource):
                 Can also be triggered by setting the 'force' URL query parameter.
 
         Returns:
-            int: HTTP_STATUS_CODE_OK (200) if the operation is successful (even
-                 for a soft delete where data is only marked).
+            int: HTTP_STATUS_CODE_OK (200) if the operation is successful.
 
         Raises:
             HTTP_STATUS_CODE_NOT_FOUND (404): If no sketch is found with the
-                given ID.
+                given ID, or if the sketch is soft-deleted and the request
+                is not a force delete by an admin.
             HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have 'delete'
                 permission on the sketch, or if the sketch has a label
-                preventing deletion, or if the user is not an admin.
+                preventing deletion, or if the user is not an admin when
+                attempting a force delete.
             HTTP_STATUS_CODE_BAD_REQUEST (400): If there's an issue during the
                 deletion process e.g. the sketch being archived,
                 or if timelines are still processing.

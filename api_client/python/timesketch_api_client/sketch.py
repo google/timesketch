@@ -471,10 +471,12 @@ class Sketch(resource.BaseResource):
         Args:
             force_delete (bool): If True, a hard delete is performed, which
                 permanently removes the sketch and all its associated data
-                (timelines, events, views, etc.) from the Timesketch database.
-                If False (default), the sketch is soft-deleted, typically by
-                marking it as deleted for admins to pick it up e.g. in a
-                cron job.
+                (timelines, events, views, etc.) from the Timesketch database
+                and OpenSearch. Administrators can use this to permanently
+                remove sketches that have already been soft-deleted.
+                If False (default), the sketch is soft-deleted by marking it
+                as deleted in the database and closing associated OpenSearch
+                indices to free up cluster resources.
 
         Returns:
             bool: True if the sketch was successfully deleted (either soft or hard).
