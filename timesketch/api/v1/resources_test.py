@@ -33,6 +33,7 @@ from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
+from timesketch.models.user import User
 from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
 
@@ -531,8 +532,6 @@ class SketchResourceTest(BaseTest):
 
         # Force delete should also fail because the sketch is archived
         # We need to give the admin permission to delete the sketch first
-
-        from timesketch.models.user import User
 
         sketch = Sketch.get_by_id(created_id)
         user_admin = User.query.filter_by(username="testadmin").first()
