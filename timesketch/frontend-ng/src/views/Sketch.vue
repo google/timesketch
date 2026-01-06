@@ -381,7 +381,7 @@ import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 import TsQuestionCard from '../components/Scenarios/QuestionCard.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsInvestigation from '../components/LeftPanel/Investigation.vue'
-import TsAccessDenied from '../components/AccessDenied.vue'
+import TsAccessDenied from '../components/SketchAccessDenied.vue'
 
 export default {
   props: ['sketchId'],
