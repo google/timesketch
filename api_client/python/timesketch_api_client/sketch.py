@@ -162,6 +162,42 @@ class Sketch(resource.BaseResource):
         return meta.get("last_activity", "")
 
     @property
+    def created_at(self):
+        """Property that returns sketch creation time.
+
+        Returns:
+            str: Sketch creation time as string.
+        """
+        data = self.lazyload_data(refresh_cache=True)
+        objects = data.get("objects")
+        if not objects:
+            return ""
+        data_object = objects[0]
+        created_at_string = data_object.get("created_at", "")
+        return created_at_string
+
+    @property
+    def creator(self):
+        """Property that returns sketch creator.
+
+        Returns:
+            str: Sketch creator as string.
+        """
+        data = self.lazyload_data(refresh_cache=True)
+        objects = data.get("objects")
+        if not objects:
+            return ""
+        data_object = objects[0]
+        try:
+            username_string = data_object.get("user").get("username")
+            if not username_string:
+                return ""
+            return username_string
+        except Exception as e:
+            logger.error("Error getting sketch creator: %s", e)
+            return ""
+
+    @property
     def my_acl(self):
         """Property that returns back the ACL for the current user."""
         data = self.lazyload_data(refresh_cache=True)

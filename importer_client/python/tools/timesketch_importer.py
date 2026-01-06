@@ -59,35 +59,6 @@ def configure_logger_default():
         handler.setFormatter(logger_formatter)
 
 
-def get_sketch_by_name(
-    ts_client: client.TimesketchApi, sketch_name: str
-) -> sketch.Sketch:
-    """Gets a sketch by its name.
-
-    Args:
-        ts_client: An instance of timesketch_api_client.TimesketchApi (or similar).
-        sketch_name: The name of the sketch to find.
-
-    Raises:
-        KeyError: If a sketch with the given name is not found.
-
-    Returns:
-        A sketch object.
-    """
-    sketches = ts_client.list_sketches()  # may return Sketch objects or dicts
-    for s in sketches:
-        # Sketch object
-        if hasattr(s, "name") and s.name.lower() == sketch_name.lower():
-            return s
-        # dict representation
-        if isinstance(s, dict) and s.get("name", "").lower() == sketch_name.lower():
-            sketch_id = s.get("id")
-            if sketch_id and hasattr(ts_client, "get_sketch"):
-                return ts_client.get_sketch(sketch_id)
-            return s
-    raise KeyError(f"Sketch named {sketch_name!s} not found")
-
-
 def upload_file(
     my_sketch: sketch.Sketch, config_dict: Dict[str, any], file_path: str
 ) -> str:
@@ -379,6 +350,22 @@ def main(args=None):
     )
 
     config_group.add_argument(
+        "--sketch_strategy",
+        "--sketch-strategy",
+        action="store",
+        type=str,
+        dest="sketch_strategy",
+        default="ask",
+        help=(
+            "Strategy to use when a sketch name is provided and a sketch "
+            "with the same name already exists. Supported strategies are: "
+            "'ask' (default) which will raise an error, 'newest' which will "
+            "use the most recently created sketch, and 'oldest' which will "
+            "use the earliest created sketch."
+        ),
+    )
+
+    config_group.add_argument(
         "--data_label",
         "--data-label",
         action="store",
@@ -631,8 +618,37 @@ def main(args=None):
     else:
         sketch_name = options.sketch_name or "New Sketch From Importer CLI"
         try:
-            # check if the sketch name already exists
-            my_sketch = get_sketch_by_name(ts_client, sketch_name)
+            sketches = ts_client.get_sketches_by_name(sketch_name)
+            if len(sketches) > 1:
+                if options.sketch_strategy == 'newest':
+                    my_sketch = sorted(
+                        sketches, key=lambda s: s.created_at, reverse=True
+                    )[0]
+                elif options.sketch_strategy == 'oldest':
+                    my_sketch = sorted(
+                        sketches, key=lambda s: s.created_at
+                    )[0]
+                else:
+                    # ask user for clarification using cli_input
+                    print("Multiple sketches found with the name '{0:s}':".format(sketch_name))
+                    for s in sketches:
+                        print(" - [{0:d}] created_at: {1:s}, by {2:s}".format(
+                            s.id, s.created_at, s.creator))
+
+                    selected_option = cli_input.ask_question(
+                        "Select the sketch to use by entering the corresponding number",
+                        input_type=int,
+                        default=sketches[0].id,
+                    )
+                    try:
+                        # select sketch by ID from the sketches list
+                        my_sketch = next(s for s in sketches if s.id == selected_option)
+                    except StopIteration:
+                        logger.error("Selected sketch ID not found, exiting.")
+                        sys.exit(1)
+            else:
+                my_sketch = sketches[0]
+
             logger.info(
                 "Using existing sketch: [%d] %s",
                 my_sketch.id,
