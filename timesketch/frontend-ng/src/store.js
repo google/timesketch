@@ -211,6 +211,8 @@ export default new Vuex.Store({
         .catch((e) => {
           if (e.response && e.response.status === 403) {
             context.commit('SET_SKETCH_ACCESS_DENIED', true)
+          } else {
+            console.error(e)
           }
         })
     },
@@ -220,7 +222,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     resetState(context) {
       context.commit('RESET_STATE')
@@ -236,7 +238,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateTimeFilters(context, sketchId) {
       if (!sketchId) {
@@ -287,14 +289,14 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SCENARIOS', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateScenarioTemplates(context, sketchId) {
       return ApiClient.getScenarioTemplates(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateEventLabels(context, { label: inputLabel, num }) {
       if (!inputLabel || !num) {
@@ -365,7 +367,7 @@ export default new Vuex.Store({
           }
           context.commit('SET_TIMELINE_TAGS', buckets)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateDataTypes(context, sketchId) {
       // Don't fetch data types on archived sketches.
@@ -413,21 +415,21 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_DATA_TYPES', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateSigmaList(context) {
       ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateSavedVisualizationList(context, sketchId) {
       ApiClient.getAggregations(sketchId)
         .then((response) => {
           context.commit('SET_VISUALIZATION_LIST', response.data.objects[0] || [])
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     setActiveContext(context, activeScenarioContext) {
       context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
@@ -448,14 +450,14 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_CONTEXT_LINKS', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateGraphPlugins(context) {
       ApiClient.getGraphPluginList()
         .then((response) => {
           context.commit('SET_GRAPH_PLUGINS', response.data)
         })
-        .catch((e) => { })
+        .catch((e) => { console.error(e) })
     },
     updateSavedGraphs(context, sketchId) {
       if (!sketchId) {

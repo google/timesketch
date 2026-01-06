@@ -17,10 +17,10 @@ limitations under the License.
 <template>
   <v-container fill-height fluid>
     <v-row align="center" justify="center">
-      <v-sheet class="pa-4" style="background: transparent">
+      <v-sheet class="pa-4" color="transparent">
         <div class="text-center">
           <v-icon size="80" color="grey">mdi-lock</v-icon>
-          <div style="font-size: 2em" class="mb-3 mt-3">Access Denied</div>
+          <div class="text-h4 mb-3 mt-3">Access Denied</div>
           <div class="mb-5 text--secondary">
             You don't have permission to access this sketch.<br />
             Contact the sketch owner to request access.
