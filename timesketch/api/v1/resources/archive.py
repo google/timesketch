@@ -772,11 +772,16 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         f"(DB ID: {search_index.id}). Error: {str(e)}."
                     )
             except opensearchpy.exceptions.NotFoundError:
-                errors_occurred = True
-                error_details.append(
-                    f"OpenSearch index '{search_index.index_name}' not found. "
-                    "Cannot unarchive."
+                logger.warning(
+                    "OpenSearch index '%s' not found. It might have been deleted.",
+                    search_index.index_name,
                 )
+                # We consider the index "successfully opened" in the sense that
+                # we are done with it (it's gone).
+                # We don't add it to successfully_opened_indexes so its status
+                # won't be set to 'ready', it will remain 'archived' (or 'fail'?).
+                # Ideally we should set it to 'fail' or something indicating loss.
+                # But for now, just don't abort.
             except Exception as e:  # pylint: disable=broad-except
                 errors_occurred = True
                 error_details.append(
@@ -803,11 +808,20 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         for timeline in sketch.timelines:
             if timeline.get_status.status != "archived":
                 continue
-            timeline.set_status(status="ready")
-            logger.info(
-                "Timeline '%s' status set to 'ready'.",
-                timeline.id,
-            )
+            # Only set timeline to ready if its index was successfully opened
+            if timeline.searchindex in successfully_opened_indexes:
+                timeline.set_status(status="ready")
+                logger.info(
+                    "Timeline '%s' status set to 'ready'.",
+                    timeline.id,
+                )
+            else:
+                # If index wasn't opened (e.g. not found), set timeline to fail
+                timeline.set_status(status="fail")
+                logger.warning(
+                    "Timeline '%s' status set to 'fail' because index could not be opened.",
+                    timeline.id,
+                )
 
         for search_index in successfully_opened_indexes:
             search_index.set_status(status="ready")
