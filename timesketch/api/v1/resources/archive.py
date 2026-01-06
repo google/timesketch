@@ -721,8 +721,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
                 general_advice = " You can use 'tsctl find-inconsistent-archives' to find such sketches."  # pylint: disable=line-too-long
                 warning_msg = f"{base_warning_msg}{specific_advice}{general_advice}"
-                error_details.append(warning_msg)
-                errors_occurred = True
+                logger.warning(warning_msg)
 
         if errors_occurred:
             logger.error(

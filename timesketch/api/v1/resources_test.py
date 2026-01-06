@@ -30,6 +30,8 @@ from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
+from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import SearchIndex
 from timesketch.api.v1.resources import ResourceMixin
 
 
@@ -292,6 +294,159 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
+    def test_unarchive_sketch_with_failed_timeline(self):
+        """Authenticated request to unarchive a sketch with a failed timeline."""
+        self.login()
+
+        # Create sketch to test with
+        data = {"name": "test_unarchive_fail", "description": "desc"}
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        # Create a failed timeline
+        # We need to manually add a timeline to the sketch and set it to fail
+        # relying on BaseTest helper or manual DB session
+        from timesketch.models import db_session
+        from timesketch.models.sketch import Sketch
+
+        sketch = Sketch.get_by_id(created_id)
+
+        # Create a dummy search index
+        searchindex = SearchIndex(
+            name="failed_index",
+            description="failed_index",
+            user=sketch.user,
+            index_name="failed_index",
+        )
+        searchindex.set_status("fail")
+        db_session.add(searchindex)
+
+        timeline = Timeline(
+            name="failed_timeline",
+            description="failed_timeline",
+            sketch=sketch,
+            user=sketch.user,
+            searchindex=searchindex,
+        )
+        timeline.set_status("fail")
+        db_session.add(timeline)
+        db_session.commit()
+
+        # Manually archive the sketch (bypass API check for failed timeline during archive if any)
+        # Actually, archive API might block it too if we don't fix archive API.
+        # But we are testing UNARCHIVE here. So let's force the state.
+        sketch.set_status("archived")
+        timeline.set_status(
+            "archived"
+        )  # Timelines in archived sketches are usually 'archived'
+        # But here we want to simulate a timeline that was failed AND the sketch is archived.
+        # Wait, if a timeline is failed, it stays failed when archived?
+        # The archive logic says:
+        # "If a timeline is in another sketch... if timeline.get_status.status != 'archived': can_be_closed = False"
+        # And during archive: "Check if any timeline is in a state that prevents archiving... statuses_preventing_archival = ['processing', 'fail', 'timeout']"
+        # So normally you CANNOT archive a sketch with a failed timeline.
+
+        # So we must simulate a state where it IS archived but has a failed timeline.
+        # This can happen if the timeline failed *after* archiving (unlikely) or if it was force-archived directly in DB.
+        # Or if the check didn't exist in older versions.
+
+        # Let's verify our assumption:
+        # We set sketch to 'archived'.
+        # We set timeline to 'fail'. (Because the issue report says: "Unarchiving sketch 1346, but it contains timeline ... in a 'fail' state")
+
+        sketch.set_status("archived")
+        # Ensure timeline is failed
+        timeline.set_status("fail")
+        db_session.commit()
+
+        # Try to unarchive
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "unarchive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        # This should now succeed with 200 OK instead of 500
+        self.assert200(response)
+
+        # Verify sketch is ready
+        sketch = Sketch.get_by_id(created_id)
+        self.assertEqual(sketch.get_status.status, "ready")
+
+        # Verify failed timeline is still failed (or whatever the logic does)
+        # The logic iterates over timelines: "if timeline.get_status.status != 'archived': continue"
+        # So it skips non-archived timelines.
+        # Our timeline is 'fail', so it skips it. It remains 'fail'.
+        self.assertEqual(timeline.get_status.status, "fail")
+
+    def test_unarchive_sketch_with_mixed_states(self):
+        """Authenticated request to unarchive a sketch with mixed fail/processing timelines."""
+        self.login()
+
+        # Create sketch
+        data = {"name": "test_unarchive_mixed", "description": "desc"}
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        from timesketch.models import db_session
+        from timesketch.models.sketch import Sketch
+
+        sketch = Sketch.get_by_id(created_id)
+
+        # Create a failed timeline
+        idx_fail = SearchIndex(name="idx_fail", user=sketch.user, index_name="idx_fail")
+        idx_fail.set_status("fail")
+        db_session.add(idx_fail)
+        tl_fail = Timeline(
+            name="tl_fail", sketch=sketch, user=sketch.user, searchindex=idx_fail
+        )
+        tl_fail.set_status("fail")
+        db_session.add(tl_fail)
+
+        # Create a processing timeline
+        idx_proc = SearchIndex(name="idx_proc", user=sketch.user, index_name="idx_proc")
+        idx_proc.set_status("processing")
+        db_session.add(idx_proc)
+        tl_proc = Timeline(
+            name="tl_proc", sketch=sketch, user=sketch.user, searchindex=idx_proc
+        )
+        tl_proc.set_status("processing")
+        db_session.add(tl_proc)
+
+        # Set sketch to archived to simulate the stuck state
+        sketch.set_status("archived")
+        db_session.commit()
+
+        # Try to unarchive
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "unarchive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        # Should succeed
+        self.assert200(response)
+
+        # Verify sketch is ready
+        sketch = Sketch.get_by_id(created_id)
+        self.assertEqual(sketch.get_status.status, "ready")
+
+        # Verify timelines retained their stuck states (so user can see/fix them)
+        self.assertEqual(tl_fail.get_status.status, "fail")
+        self.assertEqual(tl_proc.get_status.status, "processing")
+
     def test_sketch_delete_not_existant_sketch(self):
         """Authenticated request to delete a sketch that does not exist."""
         self.login()
@@ -378,8 +533,19 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
+        # Soft delete should fail
         response = self.client.delete(f"/api/v1/sketches/{created_id}/")
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertEqual(
+            "Unable to delete an archived sketch, first unarchive then delete "
+            "or use force delete.",
+            response.json["message"],
+        )
+
+        # Force delete should succeed when run by an admin
+        self.login_admin()
+        response = self.client.delete(f"/api/v1/sketches/{created_id}/?force=true")
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
 
 
 class ViewListResourceTest(BaseTest):
