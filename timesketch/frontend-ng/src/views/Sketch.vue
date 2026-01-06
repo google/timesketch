@@ -19,9 +19,12 @@ limitations under the License.
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
-    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
+    <!-- Access Denied state -->
+    <ts-access-denied v-if="sketchAccessDenied && !loadingSketch"></ts-access-denied>
+
+    <div v-if="sketch.id && !loadingSketch && !sketchAccessDenied" style="height: 70vh">
       <!-- Empty state -->
-      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" fill-height fluid>
+      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived && !sketchAccessDenied" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4" style="background: transparent">
             <center>
@@ -378,6 +381,7 @@ import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 import TsQuestionCard from '../components/Scenarios/QuestionCard.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
 import TsInvestigation from '../components/LeftPanel/Investigation.vue'
+import TsAccessDenied from '../components/SketchAccessDenied.vue'
 
 export default {
   props: ['sketchId'],
@@ -401,6 +405,7 @@ export default {
     TsQuestionCard,
     TsSettingsDialog,
     TsInvestigation,
+    TsAccessDenied,
   },
   data() {
     return {
@@ -493,6 +498,9 @@ export default {
     },
     systemSettings() {
       return this.$store.state.systemSettings
+    },
+    sketchAccessDenied() {
+      return this.$store.state.sketchAccessDenied
     },
   },
   methods: {
