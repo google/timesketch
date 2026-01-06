@@ -534,9 +534,15 @@ class SketchResourceTest(BaseTest):
 
         sketch = Sketch.get_by_id(created_id)
 
+        # Check that the admin user does not have delete permission yet.
+        self.assertFalse(sketch.has_permission(self.useradmin, "delete"))
+
         sketch.grant_permission(permission="delete", user=self.useradmin)
 
         db_session.commit()
+
+        # Check that the admin user now has delete permission.
+        self.assertTrue(sketch.has_permission(self.useradmin, "delete"))
 
         self.login_admin()
         resource_url = f"/api/v1/sketches/{created_id}/?force=true"
