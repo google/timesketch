@@ -454,14 +454,14 @@ level: high
             ],
             http_compress=True,
         )
-        stats = es.cat.indices(index=index_name, format="json")
+        stats = es.cat.indices(index=index_name, params={"format": "json"})
         self.assertions.assertEqual(stats[0].get("status"), "open")
 
         # Soft delete
         sketch.delete(force_delete=False)
 
         # Verify index is closed
-        stats = es.cat.indices(index=index_name, format="json")
+        stats = es.cat.indices(index=index_name, params={"format": "json"})
         self.assertions.assertEqual(
             stats[0].get("status"),
             "close",
@@ -495,7 +495,7 @@ level: high
 
         # Verify it's completely gone
         with self.assertions.assertRaises(NotFoundError):
-            self.api.get_sketch(sketch_id).name
+            _ = self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
 
         es = opensearchpy.OpenSearch(
             [
