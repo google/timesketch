@@ -24,10 +24,20 @@ limitations under the License.
         connected Log Reasoning Agent analyze all timeline data in this sketch.
         It will automatically generate key findings and investigative questions to kickstart your analysis.
       </p>
+      <v-textarea
+        label="Custom Prompt (Optional)"
+        v-model="customPrompt"
+        class="mb-4 mx-auto"
+        style="max-width: 600px"
+        rows="3"
+        shaped
+        filled
+        :disabled="isGeneratingReport"
+      ></v-textarea>
       <v-btn
         size="large"
         color="primary"
-        @click="runLogAnalysis()"
+        @click="runLogAnalysis(customPrompt)"
         :loading="isGeneratingReport"
         :disabled="isGeneratingReport"
       >
@@ -211,6 +221,7 @@ export default {
       filteredQuestions: [],
       showModal: false,
       isCompleting: false,
+      customPrompt: store.systemSettings.LOG_ANALYZER_DEFAULT_PROMPT,
     }
   },
   computed: {
@@ -293,6 +304,16 @@ export default {
       return this.questions.filter(
         (question) => question.status?.status !== 'verified' && question.status?.status !== 'rejected'
       )
+    },
+  },
+  watch: {
+    'store.systemSettings.LOG_ANALYZER_DEFAULT_PROMPT': {
+      handler(newVal) {
+        if (newVal && this.customPrompt == null) {
+          this.customPrompt = newVal
+        }
+      },
+      immediate: true,
     },
   },
   methods: {

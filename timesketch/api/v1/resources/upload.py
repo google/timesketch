@@ -540,9 +540,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not upload_enabled:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Upload not enabled")
 
-        form = request.get_data(parse_form_data=True)
-        if not form:
-            form = request.form
+        form = request.form
 
         # headers mapping: map between mandatory headers and new ones
         headers_mapping = json.loads(form.get("headersMapping", "{}")) or None

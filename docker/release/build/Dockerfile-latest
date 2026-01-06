@@ -2,6 +2,7 @@
 FROM ubuntu:24.04
 
 ARG PPA_TRACK=stable
+ARG EXTRA_PIP_PACKAGES=""
 
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
@@ -27,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Fix for broken PPA dependency in Ubuntu 24.04: Plaso needs the 'events'
 # library for its opensearch output module.
-RUN pip3 install --break-system-packages events
+RUN pip3 install --no-cache-dir --break-system-packages events
 
 # Create a virtual environment and add it to the PATH
 RUN python3 -m venv /opt/venv --system-site-packages
@@ -35,8 +36,14 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Timesketch in the virtual environment
 RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
-RUN pip3 install -r requirements.txt
-RUN pip3 install https://github.com/google/timesketch/archive/master.zip
+RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir https://github.com/google/timesketch/archive/master.zip
+
+# Install optional dependencies if build-arg is provided.
+RUN if [ ! -z "$EXTRA_PIP_PACKAGES" ]; then \
+        echo "Installing extra packages: $EXTRA_PIP_PACKAGES" && \
+        pip3 install --no-cache-dir ${EXTRA_PIP_PACKAGES}; \
+    fi
 
 # Copy the entrypoint script into the container
 COPY docker-entrypoint.sh /

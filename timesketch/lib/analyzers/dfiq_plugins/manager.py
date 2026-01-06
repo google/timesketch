@@ -276,6 +276,18 @@ class DFIQAnalyzerManager:
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
 
+        analyzer_kwargs = {}
+        approach_spec = json.loads(approach.spec_json)
+        if approach_spec.get("steps"):
+            for step in approach_spec.get("steps"):
+                if (
+                    step.get("stage") == "analysis"
+                    and step.get("type") == "timesketch-analyzer"
+                ):
+                    args = step.get("args")
+                    if args:
+                        analyzer_kwargs[step.get("value")] = args
+
         sessions = []
         for timeline_id, analyzer_names in analyzer_by_timeline.items():
             if not analyzer_names:
@@ -289,7 +301,7 @@ class DFIQAnalyzerManager:
                     searchindex_id=timeline.searchindex.id,
                     user_id=approach.user.id,
                     analyzer_names=analyzer_names,
-                    analyzer_kwargs=None,
+                    analyzer_kwargs=analyzer_kwargs,
                     timeline_id=timeline_id,
                     analyzer_force_run=False,
                     include_dfiq=True,
