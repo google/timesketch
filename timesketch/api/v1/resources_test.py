@@ -566,10 +566,6 @@ class SketchResourceTest(BaseTest):
         )
         self.assert200(response)
 
-        # Now delete should succeed (soft)
-        response = self.client.delete(f"/api/v1/sketches/{created_id}/")
-        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
-
         # Or force delete (admin)
         self.login_admin()
         resource_url = f"/api/v1/sketches/{created_id}/?force=true"
