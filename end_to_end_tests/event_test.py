@@ -14,7 +14,7 @@
 """End to end tests of Timesketch event functionality."""
 
 import json
-import random
+import uuid
 import time
 
 from timesketch_api_client import search
@@ -130,7 +130,7 @@ class EventTest(interface.BaseEndToEndTest):
 
     def test_annotate_event(self):
         """Test annotating an event with a comment and a label."""
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_annotate_event_{rand}")
         self.sketch = sketch
 
@@ -327,7 +327,7 @@ class EventTest(interface.BaseEndToEndTest):
 
     def test_explore_with_comment(self):
         """Test exploring events and retrieving comments."""
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(
             name=f"test_explore_with_comment_{rand}",
             description="A sketch for explore testing with comments",
