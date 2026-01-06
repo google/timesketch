@@ -51,11 +51,6 @@ RestApiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Skip snackbar for 403 errors on sketch endpoints - we show a dedicated Access Denied page instead
-    if (status === 403 && url.includes('/sketches/')) {
-      return Promise.reject(error)
-    }
-
     if (status === 500) {
       EventBus.$emit(
         'errorSnackBar',
