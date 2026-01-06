@@ -47,10 +47,32 @@ class ArchiveTest(interface.BaseEndToEndTest):
         sketch.archive()
         self.assertions.assertEqual(sketch.status, "archived")
 
-        # Check that the index is closed.
+        # Check that the index is closed.´
         index_name = timeline.index_name
         index = self.api.get_searchindex(index_name)
         self.assertions.assertEqual(index.status, "closed")
+
+    def test_unarchive_sketch_with_failed_timeline(self):
+        """Test unarchiving a sketch with a failed timeline."""
+        sketch = self.api.create_sketch(name="test-unarchive-failed")
+        self.sketch = sketch
+
+        # This file is known to cause an import failure.
+        timeline = self.import_timeline("invalid_jsonl.jsonl", sketch=sketch)
+
+        # Wait for the timeline to fail.
+        for _ in range(20):
+            time.sleep(1)
+            if timeline.status == "fail":
+                break
+
+        self.assertions.assertEqual(timeline.status, "fail")
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+        # Unarchive
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+        self.assertions.assertEqual(timeline.status, "fail")
 
     def test_unarchive_sketch_with_missing_index(self):
         """Test unarchiving a sketch where the OpenSearch index is missing."""
@@ -66,7 +88,12 @@ class ArchiveTest(interface.BaseEndToEndTest):
 
         # Manually delete the index from OpenSearch
         es = opensearchpy.OpenSearch(
-            [{"host": interface.OPENSEARCH_HOST, "port": interface.OPENSEARCH_PORT}],
+            [
+                {
+                    "host": interface.OPENSEARCH_HOST,
+                    "port": interface.OPENSEARCH_PORT,
+                }
+            ],
             http_compress=True,
         )
         # Note: Index should be closed now, so delete might need it to be open?
@@ -86,9 +113,10 @@ class ArchiveTest(interface.BaseEndToEndTest):
 
         timeline = self.api.get_sketch(sketch.id).list_timelines()[0]
 
-        # So ALL timelines in the sketch are set to 'ready', regardless of index status!
-        # This is because timelines and searchindices are separate.
-        # SearchIndex status is updated only if in successfully_opened_indexes.
+        # So ALL timelines in the sketch are set to 'ready', regardless of
+        # index status! This is because timelines and searchindices are
+        # separate. SearchIndex status is updated only if in
+        # successfully_opened_indexes.
 
         self.assertions.assertEqual(timeline.status, "fail")
 
