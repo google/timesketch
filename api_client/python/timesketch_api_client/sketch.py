@@ -488,9 +488,10 @@ class Sketch(resource.BaseResource):
                 or server-side errors). The error message will provide more
                 details on the specific failure.
         """
-        if self.is_archived():
+        if self.is_archived() and not force_delete:
             raise RuntimeError(
-                "Unable to delete an archived sketch, first unarchive then delete."
+                "Unable to delete an archived sketch, first unarchive then delete "
+                "or use force_delete=True."
             )
 
         resource_url = "{0:s}/sketches/{1:d}/".format(self.api.api_root, self.id)

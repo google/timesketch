@@ -447,9 +447,15 @@ level: high
         with self.assertions.assertRaises(RuntimeError) as context:
             sketch.delete()
         self.assertions.assertIn(
-            "Unable to delete an archived sketch, first unarchive then delete.",
+            "Unable to delete an archived sketch, first unarchive then delete "
+            "or use force_delete=True.",
             str(context.exception),
         )
+
+        # allow the admin user to read, write and delete the sketch
+        sketch.add_to_acl(user_list=["admin"], permissions=["read", "write", "delete"])
+        admin_sketch_instance = self.admin_api.get_sketch(sketch.id)
+        admin_sketch_instance.delete(force_delete=True)
 
     def test_modify_sketch_name_description(self):
         """Test modifying a sketch's name and description."""

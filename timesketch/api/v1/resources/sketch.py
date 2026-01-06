@@ -582,11 +582,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_FORBIDDEN,
                     f"Sketch with the label [{label:s}] cannot be deleted.",
                 )
-        if sketch.get_status.status == "archived":
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to delete a sketch that is already archived.",
-            )
 
         if not force_delete:
             url_force_delete = request.args.get("force")
@@ -595,6 +590,13 @@ class SketchResource(resources.ResourceMixin, Resource):
                 logger.debug("Force delete detected from URL parameter.")
             else:
                 logger.debug("Force delete not present, will keep the OS data.")
+
+        if sketch.get_status.status == "archived" and not force_delete:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to delete an archived sketch, first unarchive then delete "
+                "or use force delete.",
+            )
 
         # Check if user has admin privileges for force deletion
         if force_delete:
