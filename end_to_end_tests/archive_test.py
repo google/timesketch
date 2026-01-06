@@ -47,7 +47,7 @@ class ArchiveTest(interface.BaseEndToEndTest):
         sketch.archive()
         self.assertions.assertEqual(sketch.status, "archived")
 
-        # Check that the index is closed.´
+        # Check that the index is closed.
         index_name = timeline.index_name
         index = self.api.get_searchindex(index_name)
         self.assertions.assertEqual(index.status, "closed")
