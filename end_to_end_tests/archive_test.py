@@ -58,10 +58,7 @@ class ArchiveTest(interface.BaseEndToEndTest):
         self.sketch = sketch
 
         # Import a valid timeline first
-        file_path = os.path.join(
-            os.path.dirname(__file__), "test_data", "sigma_events.jsonl"
-        )
-        timeline = self.import_timeline(file_path, sketch=sketch)
+        timeline = self.import_timeline("sigma_events.jsonl", sketch=sketch)
         index_name = timeline.index_name
 
         sketch.archive()

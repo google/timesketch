@@ -669,12 +669,10 @@ level: high
         sketch = self.api.create_sketch(name="test_delete_missing_index")
 
         # Import a timeline
-        file_path = os.path.join(
-            os.path.dirname(__file__), "test_data", "sigma_events.jsonl"
-        )
-        timeline = self.import_timeline(file_path, sketch=sketch)
+        # Just use the filename, import_timeline handles the full path resolution
+        filename = "sigma_events.jsonl"
+        timeline = self.import_timeline(filename, sketch=sketch)
         index_name = timeline.index_name
-
         # Manually delete the index from OpenSearch
         es = opensearchpy.OpenSearch(
             [{"host": interface.OPENSEARCH_HOST, "port": interface.OPENSEARCH_PORT}],
@@ -686,7 +684,8 @@ level: high
         # Owner can delete their own sketch.
 
         # Delete the sketch
-        # This should succeed despite the missing index (it should just warn and continue)
+        # This should succeed despite the missing index (it should just warn
+        # and continue)
         sketch.delete()
 
         # Verify it's gone
