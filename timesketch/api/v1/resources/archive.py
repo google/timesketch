@@ -670,12 +670,14 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         This method attempts to open all necessary OpenSearch indices
         associated with the sketch's archived timelines.
 
-        If an index fails to open (e.g., not found) or if a timeline is in
-        a 'fail' or 'processing' state, the operation is no longer aborted.
-        Instead, a warning is logged, and the problematic timeline and its
-        search index are set to a 'fail' state in the database. All other
-        healthy timelines and indices are successfully opened and set to
-        'ready', and the sketch itself is returned to a 'ready' status.
+        The status of a SearchIndex is determined by the availability of
+        its underlying OpenSearch index. If an index cannot be opened
+        (e.g., if it is missing), it is marked as 'fail' in the database.
+        Timelines associated with failed indices are also updated to a
+        'fail' status. All other healthy timelines and indices are
+        successfully opened and set to 'ready', and the sketch itself is
+        returned to a 'ready' status. This ensures that users can regain
+        access to the sketch even if some data is broken or missing.
 
         Args:
             sketch: An instance of timesketch.models.sketch.Sketch to unarchive.
@@ -702,13 +704,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         errors_occurred = False
         error_details = []
 
-        # Check if any timeline is in a state that would prevents unarchiving.
-        # TODO enforce after 2026-01-01
-        # https://github.com/google/timesketch/issues/3518
-        statuses_preventing_unarchival = ["processing", "fail"]
+        # Check if any timeline is in a state that warrants a warning.
+        statuses_to_warn_about = ["processing", "fail"]
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status
-            if timeline_status in statuses_preventing_unarchival:
+            if timeline_status in statuses_to_warn_about:
                 base_warning_msg = (
                     f"Unarchiving sketch {sketch.id}, but it contains timeline "
                     f" (ID: {timeline.id}) in a '{timeline_status}' "
@@ -729,16 +729,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 general_advice = " You can use 'tsctl find-inconsistent-archives' to find such sketches."  # pylint: disable=line-too-long
                 warning_msg = f"{base_warning_msg}{specific_advice}{general_advice}"
                 logger.warning(warning_msg)
-
-        if errors_occurred:
-            logger.error(
-                "Unarchiving sketch %s failed because one or more indices could not "
-                "be opened. Errors: %s",
-                sketch.id,
-                "; ".join(error_details),
-            )
-            # TODO: enforce here: https://github.com/google/timesketch/issues/3518
-            # abort(...
 
         # Identify all SearchIndex objects that need to be opened.
         search_indexes_to_open = {
@@ -805,6 +795,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             )
 
         # 4. If all indices are open, update the database statuses.
+        # The searchindex can be shared between a "ready" and "fail" timeline.
+        # Therefore the state of a searchindex is not tied to timeline states,
+        # but rather to the existence of the OS index.
         # Set all timelines in the sketch to ready.
         for timeline in sketch.timelines:
             if timeline.get_status.status != "archived":

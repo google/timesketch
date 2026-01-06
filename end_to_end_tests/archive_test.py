@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests for sketch archiving."""
-import os
 import time
+import uuid
 import opensearchpy
 
 from . import interface
@@ -27,15 +27,13 @@ class ArchiveTest(interface.BaseEndToEndTest):
 
     def test_archive_sketch_with_failed_timeline(self):
         """Test archiving a sketch with a failed timeline."""
-        sketch = self.api.create_sketch(name="test-archive-failed")
+        sketch_name = f"test-archive-failed_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
         self.sketch = sketch
         self.assertions.assertIsNotNone(sketch)
 
         # This file is known to cause an import failure.
-        file_path = os.path.join(
-            os.path.dirname(__file__), "test_data", "invalid_jsonl.jsonl"
-        )
-        timeline = self.import_timeline(file_path, sketch=sketch)
+        timeline = self.import_timeline("invalid_jsonl.jsonl", sketch=sketch)
 
         # Wait for the timeline to fail.
         for _ in range(20):
@@ -54,7 +52,8 @@ class ArchiveTest(interface.BaseEndToEndTest):
 
     def test_unarchive_sketch_with_failed_timeline(self):
         """Test unarchiving a sketch with a failed timeline."""
-        sketch = self.api.create_sketch(name="test-unarchive-failed")
+        sketch_name = f"test-unarchive-failed_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
         self.sketch = sketch
 
         # This file is known to cause an import failure.
@@ -76,7 +75,8 @@ class ArchiveTest(interface.BaseEndToEndTest):
 
     def test_unarchive_sketch_with_missing_index(self):
         """Test unarchiving a sketch where the OpenSearch index is missing."""
-        sketch = self.api.create_sketch(name="test-unarchive-missing-index")
+        sketch_name = f"test-unarchive-missing-index_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
         self.sketch = sketch
 
         # Import a valid timeline first
