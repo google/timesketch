@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import random
+import uuid
 import subprocess
 
 import requests  # Added here
@@ -29,7 +29,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
     def test_delete_failed_timeline(self):
         """Test to delete a failed timeline"""
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test-timeline-deletion_{rand}")
 
         # Import a valid timeline.
@@ -69,7 +69,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
     def test_delete_failed_timeline_with_soft_deleted_sibling(self):
         """Test that index is archived when deleting a failed timeline if other
         sibling is soft-deleted."""
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(
             name=f"test-deletion-soft-deleted-sibling_{rand}"
         )
