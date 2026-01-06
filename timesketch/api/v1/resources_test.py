@@ -32,6 +32,7 @@ from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import Sketch
 from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
 
@@ -312,12 +313,6 @@ class SketchResourceTest(BaseTest):
         )
         created_id = response.json["objects"][0]["id"]
 
-        # Create a failed timeline
-        # We need to manually add a timeline to the sketch and set it to fail
-        # relying on BaseTest helper or manual DB session
-        from timesketch.models import db_session
-        from timesketch.models.sketch import Sketch
-
         sketch = Sketch.get_by_id(created_id)
 
         # Create a dummy search index
@@ -385,9 +380,6 @@ class SketchResourceTest(BaseTest):
             content_type="application/json",
         )
         created_id = response.json["objects"][0]["id"]
-
-        from timesketch.models import db_session
-        from timesketch.models.sketch import Sketch
 
         sketch = Sketch.get_by_id(created_id)
 
@@ -533,18 +525,17 @@ class SketchResourceTest(BaseTest):
         response = self.client.delete(f"/api/v1/sketches/{created_id}/")
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertEqual(
-            "Unable to delete an archived sketch, first unarchive then delete "
-            "or use force delete.",
+            "Unable to delete a sketch that is already archived.",
             response.json["message"],
         )
 
         # Force delete should also fail because the sketch is archived
         # We need to give the admin permission to delete the sketch first
-        from timesketch.models import db_session
-        from timesketch.models.sketch import Sketch
 
         sketch = Sketch.get_by_id(created_id)
+
         sketch.grant_permission(permission="delete", user=self.useradmin)
+
         db_session.commit()
 
         self.login_admin()
