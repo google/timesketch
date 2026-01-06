@@ -125,5 +125,162 @@ class ArchiveTest(interface.BaseEndToEndTest):
         # Should be 'archived' because it wasn't successfully opened.
         self.assertions.assertEqual(index.status, "archived")
 
+    def test_unarchive_mixed_indices(self):
+        """Test unarchiving a sketch with one good and one missing index."""
+        sketch_name = f"test-unarchive-mixed_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+
+        # Import Timeline A (Good)
+        # Using a file that exists in test_data
+        tl_a = self.import_timeline("sigma_events.jsonl", sketch=sketch)
+        idx_a_name = tl_a.index_name
+
+        # Import Timeline B (Bad - will be deleted)
+        tl_b = self.import_timeline("evtx_part.csv", sketch=sketch)
+        idx_b_name = tl_b.index_name
+
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+
+        # Delete Index B
+        es = opensearchpy.OpenSearch(
+            [
+                {
+                    "host": interface.OPENSEARCH_HOST,
+                    "port": interface.OPENSEARCH_PORT,
+                }
+            ],
+            http_compress=True,
+        )
+        es.indices.delete(index=idx_b_name)
+
+        # Unarchive
+        sketch.unarchive()
+
+        # Verify Sketch Ready
+        self.assertions.assertEqual(sketch.status, "ready")
+
+        # Refetch timelines
+        timelines = {t.id: t for t in self.api.get_sketch(sketch.id).list_timelines()}
+
+        # Timeline A should be ready
+        self.assertions.assertEqual(timelines[tl_a.id].status, "ready")
+
+        # Timeline B should be fail
+        self.assertions.assertEqual(timelines[tl_b.id].status, "fail")
+
+        # Verify we can search Timeline A
+        from timesketch_api_client import search
+
+        search_client = search.Search(sketch)
+        # Filter for Timeline A only
+        search_client.query_filter.update({"indices": [tl_a.id]})
+        results = search_client.table
+        # sigma_events.jsonl has 4 events
+        self.assertions.assertEqual(len(results), 4)
+
+        # 8. Delete the failed timeline B
+        # timelines[tl_b.id] is the timeline object we got from get_sketch()
+        # client timeline object has delete() method.
+        timelines[tl_b.id].delete()
+
+        # Verify it's gone
+        updated_timelines = self.api.get_sketch(sketch.id).list_timelines()
+        self.assertions.assertEqual(len(updated_timelines), 1)
+        self.assertions.assertEqual(updated_timelines[0].id, tl_a.id)
+
+        # 9. Archive again
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+
+        # 10. Unarchive again
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+
+        # Verify Timeline A is still ready and working
+        final_timelines = self.api.get_sketch(sketch.id).list_timelines()
+        self.assertions.assertEqual(final_timelines[0].status, "ready")
+
+        # Verify search still works
+        results = search_client.table
+        self.assertions.assertEqual(len(results), 4)
+
+    def test_unarchive_shared_index_missing(self):
+        """Test unarchiving when a shared index is missing."""
+        sketch_name = f"test-unarchive-shared-missing_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+
+        shared_index_name = uuid.uuid4().hex
+
+        # Import Timeline A
+        tl_a = self.import_timeline(
+            "sigma_events.jsonl", sketch=sketch, index_name=shared_index_name
+        )
+
+        # Import Timeline B into same index
+        tl_b = self.import_timeline(
+            "evtx_part.csv", sketch=sketch, index_name=shared_index_name
+        )
+
+        # Verify they share the index
+        self.assertions.assertEqual(tl_a.index_name, tl_b.index_name)
+
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+
+        # Delete the shared index
+        es = opensearchpy.OpenSearch(
+            [
+                {
+                    "host": interface.OPENSEARCH_HOST,
+                    "port": interface.OPENSEARCH_PORT,
+                }
+            ],
+            http_compress=True,
+        )
+        es.indices.delete(index=shared_index_name)
+
+        # Unarchive
+        sketch.unarchive()
+
+        # Both timelines should be 'fail' because their shared index is gone
+        timelines = {t.id: t for t in self.api.get_sketch(sketch.id).list_timelines()}
+        self.assertions.assertEqual(timelines[tl_a.id].status, "fail")
+        self.assertions.assertEqual(timelines[tl_b.id].status, "fail")
+
+    def test_archive_cycle_with_deletion(self):
+        """Test archive -> unarchive -> delete timeline -> archive -> unarchive."""
+        sketch_name = f"test-archive-cycle_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+
+        # 1. Setup: Import Timeline
+        timeline = self.import_timeline("sigma_events.jsonl", sketch=sketch)
+
+        # 2. Cycle 1: Archive -> Unarchive
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+
+        # Verify timeline is ready
+        timeline = sketch.list_timelines()[0]
+        self.assertions.assertEqual(timeline.status, "ready")
+
+        # 3. Delete Timeline
+        timeline.delete()
+
+        # Verify it's gone from list (or deleted status if list includes deleted?)
+        # sketch.list_timelines() usually excludes deleted by default in client?
+        # Let's check length.
+        self.assertions.assertEqual(len(sketch.list_timelines()), 0)
+
+        # 4. Cycle 2: Archive -> Unarchive (Empty sketch)
+        sketch.archive()
+        self.assertions.assertEqual(sketch.status, "archived")
+
+        sketch.unarchive()
+        self.assertions.assertEqual(sketch.status, "ready")
+
 
 manager.EndToEndTestManager.register_test(ArchiveTest)
