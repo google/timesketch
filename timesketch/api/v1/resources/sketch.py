@@ -82,6 +82,13 @@ class SketchListResource(resources.ResourceMixin, Resource):
             default=False,
             location="args",
         )
+        self.parser.add_argument(
+            "include_deleted",
+            type=inputs.boolean,
+            required=False,
+            default=False,
+            location="args",
+        )
 
     @login_required
     def get(self):
@@ -120,21 +127,32 @@ class SketchListResource(resources.ResourceMixin, Resource):
         per_page = args.get("per_page")
         search_query = args.get("search_query")
         include_archived = args.get("include_archived")
+        include_deleted = args.get("include_deleted")
 
         if current_user.admin and scope == "admin":
             sketch_query = Sketch.query
         else:
             sketch_query = Sketch.all_with_acl()
 
-        base_filter = sketch_query.filter(
-            not_(Sketch.Status.status == "deleted"),
-            not_(Sketch.Status.status == "archived"),
-            Sketch.Status.parent,
-        ).order_by(Sketch.updated_at.desc())
+        if include_deleted and current_user.admin:
+            base_filter = sketch_query.filter(
+                not_(Sketch.Status.status == "archived"),
+                Sketch.Status.parent,
+            ).order_by(Sketch.updated_at.desc())
 
-        base_filter_with_archived = sketch_query.filter(
-            not_(Sketch.Status.status == "deleted"), Sketch.Status.parent
-        ).order_by(Sketch.updated_at.desc())
+            base_filter_with_archived = sketch_query.filter(
+                Sketch.Status.parent
+            ).order_by(Sketch.updated_at.desc())
+        else:
+            base_filter = sketch_query.filter(
+                not_(Sketch.Status.status == "deleted"),
+                not_(Sketch.Status.status == "archived"),
+                Sketch.Status.parent,
+            ).order_by(Sketch.updated_at.desc())
+
+            base_filter_with_archived = sketch_query.filter(
+                not_(Sketch.Status.status == "deleted"), Sketch.Status.parent
+            ).order_by(Sketch.updated_at.desc())
 
         filtered_sketches = None
         sketches = []
