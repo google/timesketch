@@ -381,6 +381,7 @@ class TestUploadLogic(unittest.TestCase):
 
         # Should be called multiple times
         self.assertGreater(self.importer._sketch.api.session.post.call_count, 1)
+
     # pylint: enable=protected-access
 
 
