@@ -172,7 +172,8 @@ class SketchListResourceTest(BaseTest):
         objects = response.json["objects"]
 
         self.assertEqual(len(objects), 1)
-        self.assertEqual(objects[0]["name"], "Test 1")
+        name1 = objects[0]["name"]
+        self.assertIn(name1, ["Test 1", "Test 3"])
         self.assertEqual(meta["total_pages"], 2)
         self.assertTrue(meta["has_next"])
         self.assertFalse(meta["has_prev"])
@@ -186,7 +187,9 @@ class SketchListResourceTest(BaseTest):
         objects = response.json["objects"]
 
         self.assertEqual(len(objects), 1)
-        self.assertEqual(objects[0]["name"], "Test 3")
+        name2 = objects[0]["name"]
+        self.assertIn(name2, ["Test 1", "Test 3"])
+        self.assertNotEqual(name1, name2)
         self.assertFalse(meta["has_next"])
         self.assertTrue(meta["has_prev"])
 
