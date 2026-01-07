@@ -67,7 +67,7 @@ class ImportStreamer(object):
     """Upload object used to stream results to Timesketch."""
 
     # Timesketch default max form size is 200MB (209715200 bytes).
-    DEFAULT_MAX_PAYLOAD_SIZE = 209715200 # 200 Mb
+    DEFAULT_MAX_PAYLOAD_SIZE = 209715200  # 200 Mb
 
     # Reserve 1MB for HTTP headers, multipart boundaries, and JSON overhead.
     PAYLOAD_SAFETY_BUFFER = 1 * 1024 * 1024
@@ -115,9 +115,7 @@ class ImportStreamer(object):
         self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
         self._threshold_filesize = self.DEFAULT_FILESIZE_THRESHOLD
         self._max_payload_size = self.DEFAULT_MAX_PAYLOAD_SIZE
-        self._safe_payload_limit = (
-            self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER
-        )
+        self._safe_payload_limit = self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER
 
     def _fix_dict(self, my_dict):
         """Adjusts a dict with so that it can be uploaded to Timesketch.
@@ -354,16 +352,12 @@ class ImportStreamer(object):
 
                 # Recursive Call 1: First half
                 self._upload_data_buffer(
-                    end_stream=False,
-                    data_lines=first_half,
-                    retry_count=0
+                    end_stream=False, data_lines=first_half, retry_count=0
                 )
 
                 # Recursive Call 2: Second half
                 self._upload_data_buffer(
-                    end_stream=end_stream,
-                    data_lines=second_half,
-                    retry_count=0
+                    end_stream=end_stream, data_lines=second_half, retry_count=0
                 )
                 return
 
@@ -383,15 +377,11 @@ class ImportStreamer(object):
 
         # 5. Prepare "Events" as a multipart/form-data field
         # (None, data, content_type) -> Treated as form field, not file upload
-        files = {
-            "events": (None, events_string, "application/json")
-        }
+        files = {"events": (None, events_string, "application/json")}
 
         # 6. Send Request
         response = self._sketch.api.session.post(
-            self._resource_url,
-            data=data,
-            files=files
+            self._resource_url, data=data, files=files
         )
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
@@ -416,7 +406,7 @@ class ImportStreamer(object):
             return self._upload_data_buffer(
                 end_stream=end_stream,
                 data_lines=data_lines,
-                retry_count=retry_count + 1
+                retry_count=retry_count + 1,
             )
 
         self._chunk += 1
@@ -461,13 +451,16 @@ class ImportStreamer(object):
                 logger.warning(
                     "Single row (%d bytes) exceeds safe limit (%d bytes). "
                     "Attempting upload anyway.",
-                    payload_size, self._safe_payload_limit
+                    payload_size,
+                    self._safe_payload_limit,
                 )
             else:
                 logger.info(
                     "Payload size (%d bytes) exceeds safe limit (%d bytes). "
                     "Splitting %d rows.",
-                    payload_size, self._safe_payload_limit, num_rows
+                    payload_size,
+                    self._safe_payload_limit,
+                    num_rows,
                 )
 
                 mid_point = num_rows // 2
@@ -475,15 +468,9 @@ class ImportStreamer(object):
                 second_half = data_frame.iloc[mid_point:]
 
                 # Recursive split
+                self._upload_data_frame(first_half, end_stream=False, retry_count=0)
                 self._upload_data_frame(
-                    first_half,
-                    end_stream=False,
-                    retry_count=0
-                )
-                self._upload_data_frame(
-                    second_half,
-                    end_stream=end_stream,
-                    retry_count=0
+                    second_half, end_stream=end_stream, retry_count=0
                 )
                 return
 
@@ -505,17 +492,13 @@ class ImportStreamer(object):
         # (None, data) tells requests to send this as a form field, not a file
         # upload
         # This ensures it ends up in request.form on the Flask backend
-        files = {
-            "events": (None, events_json, "application/json")
-        }
+        files = {"events": (None, events_json, "application/json")}
 
         # 5. Send Request
         # 'data' contains metadata fields, 'files' contains the events payload.
         # Requests automatically sets Content-Type to multipart/form-data.
         response = self._sketch.api.session.post(
-            self._resource_url,
-            data=data,
-            files=files
+            self._resource_url, data=data, files=files
         )
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
@@ -1044,11 +1027,9 @@ class ImportStreamer(object):
         """
         self._max_payload_size = size_in_bytes
         # Recalculate safe limit
-        self._safe_payload_limit = (
-            self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER
-        )
+        self._safe_payload_limit = self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER
         if self._safe_payload_limit <= 0:
-             # Fallback if someone sets a ridiculously low limit
+            # Fallback if someone sets a ridiculously low limit
             self._safe_payload_limit = 1024 * 1024  # 1MB minimum
 
     @property
