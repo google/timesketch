@@ -115,6 +115,8 @@ def create_app(
     # This is needed to support large form uploads (e.g. from import client)
     if "MAX_FORM_MEMORY_SIZE" in app.config:
         app.request_class.max_form_memory_size = app.config["MAX_FORM_MEMORY_SIZE"]
+    else:
+        app.request_class.max_form_memory_size = 209715200
 
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:
