@@ -16,6 +16,8 @@ import time
 import uuid
 import opensearchpy
 
+from timesketch_api_client import search
+
 from . import interface
 from . import manager
 
@@ -111,8 +113,6 @@ class ArchiveTest(interface.BaseEndToEndTest):
 
         timeline = sketch.list_timelines()[0]
 
-        timeline = self.api.get_sketch(sketch.id).list_timelines()[0]
-
         # So ALL timelines in the sketch are set to 'ready', regardless of
         # index status! This is because timelines and searchindices are
         # separate. SearchIndex status is updated only if in
@@ -179,8 +179,6 @@ class ArchiveTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(timelines[tl_b.id].status, "fail")
 
         # Verify we can search Timeline A
-        from timesketch_api_client import search
-
         search_client = search.Search(sketch)
         search_client.query_filter.update({"indices": [tl_a.id]})
         results = search_client.table
