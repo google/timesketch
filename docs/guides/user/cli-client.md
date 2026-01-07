@@ -294,7 +294,20 @@ Running `sketch unarchive` will set the archive flag to the sketch.
 
 ### Export a sketch
 
-Running `sketch export` will export the complete Sketch to a file.
+Running `sketch export` will export all events from the sketch to a ZIP file.
+
+```bash
+timesketch sketch export --filename my_export.zip
+```
+
+Options:
+- `--stream`: Stream the download. This is useful for large exports to avoid memory issues.
+- `--use_sketch_export`: Use the full sketch export functionality (same as Web UI export) instead of just exporting events. This export includes metadata, stories, and views in addition to events.
+
+Example:
+```bash
+timesketch sketch export --filename my_export.zip --stream
+```
 
 ### Labels
 
