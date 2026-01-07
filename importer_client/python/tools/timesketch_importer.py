@@ -136,6 +136,10 @@ def upload_file(
         if context:
             streamer.set_upload_context(context)
 
+        max_payload = config_dict.get("max_payload_size")
+        if max_payload:
+            streamer.set_max_payload_size(max_payload)
+
         streamer.add_file(file_path)
 
         timeline = streamer.timeline
@@ -476,6 +480,20 @@ def main(args=None):
         ),
     )
 
+    config_group.add_argument(
+        "--max-payload-size",
+        "--max_payload_size",
+        action="store",
+        type=int,
+        default=209715200,
+        dest="max_payload_size",
+        help=(
+            "The maximum size in bytes for a single HTTP upload request. "
+            "This should match the server's MAX_FORM_MEMORY_SIZE. "
+            "Defaults to 200MB."
+        ),
+    )
+
     options = argument_parser.parse_args(args)
 
     if options.show_version:
@@ -649,6 +667,7 @@ def main(args=None):
         "data_label": options.data_label,
         "context": context,
         "analyzer_names": options.analyzer_names,
+        "max_payload_size": options.max_payload_size,
     }
 
     logger.info("Uploading file.")
