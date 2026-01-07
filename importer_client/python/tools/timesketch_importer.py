@@ -485,7 +485,7 @@ def main(args=None):
         "--max_payload_size",
         action="store",
         type=int,
-        default=209715200,
+        default=importer.ImportStreamer.DEFAULT_MAX_PAYLOAD_SIZE,
         dest="max_payload_size",
         help=(
             "The maximum size in bytes for a single HTTP upload request. "
