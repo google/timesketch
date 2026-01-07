@@ -310,6 +310,7 @@ class TestUploadLogic(unittest.TestCase):
             )
         self.df = pandas.DataFrame(self.lines)
 
+    # pylint: disable=protected-access
     def test_upload_data_frame_multipart(self):
         """Test that data frame upload uses multipart/form-data logic."""
         # Use the real _upload_data_frame method, not the MockStreamer one
@@ -380,6 +381,7 @@ class TestUploadLogic(unittest.TestCase):
 
         # Should be called multiple times
         self.assertGreater(self.importer._sketch.api.session.post.call_count, 1)
+    # pylint: enable=protected-access
 
 
 class RunAnalyzersTest(unittest.TestCase):
