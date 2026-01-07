@@ -359,7 +359,7 @@ class ImportStreamer(object):
                 self._upload_data_buffer(
                     end_stream=end_stream, data_lines=second_half, retry_count=0
                 )
-                return
+                return None
 
         # 4. Prepare Metadata fields
         data = {
@@ -472,7 +472,7 @@ class ImportStreamer(object):
                 self._upload_data_frame(
                     second_half, end_stream=end_stream, retry_count=0
                 )
-                return
+                return None
 
         # 3. Prepare Metadata fields
         data = {
