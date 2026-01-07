@@ -121,8 +121,26 @@ class AggregationResult:
             raise RuntimeError(f"No such chart type: {chart_name:s}")
 
         try:
+            # We need to check if there is an encoding.
+            encoding = self.encoding
+            values_dataframe = self.to_pandas()
+
+            if not encoding:
+                logger.warning(
+                    "No encoding found for chart [%s] with title [%s]. "
+                    "Skipping chart generation.",
+                    chart_name,
+                    chart_title,
+                )
+                if as_html:
+                    return ""
+                if as_chart:
+                    return None
+                return {}
+
+            chart_data = {"values": values_dataframe, "encoding": encoding}
             chart_object = chart_class(
-                self.to_pandas(),
+                chart_data,
                 title=chart_title,
                 sketch_url=self._sketch_url,
                 field=self.field,
