@@ -148,8 +148,18 @@ def create_sketch(
 
 @sketch_group.command("export", help="Export a sketch")
 @click.option("--filename", required=True, help="Filename to export to.")
+@click.option(
+    "--stream", is_flag=True, help="Stream the download to avoid memory issues."
+)
+@click.option(
+    "--use_sketch_export",
+    is_flag=True,
+    help="Use the sketch export functionality instead of search.",
+)
 @click.pass_context
-def export_sketch(ctx: click.Context, filename: str) -> None:
+def export_sketch(
+    ctx: click.Context, filename: str, stream: bool, use_sketch_export: bool
+) -> None:
     """Export a sketch to a file.
 
     Exports all events within the active sketch to a specified file.
@@ -159,6 +169,8 @@ def export_sketch(ctx: click.Context, filename: str) -> None:
     Args:
         ctx (click.Context): The Click context object, containing the sketch.
         filename (str): The name of the file to export the sketch data to.
+        stream (bool): Whether to stream the download.
+        use_sketch_export (bool): Whether to use the sketch export functionality.
 
     Raises:
         click.exceptions.Exit: If a ValueError occurs during the export process.
@@ -174,17 +186,17 @@ def export_sketch(ctx: click.Context, filename: str) -> None:
     # start counting the time the export took
     start_time = time.time()
     try:
-        search_obj = search.Search(sketch=sketch)
+        if use_sketch_export:
+            sketch.export(filename)
+        else:
+            search_obj = search.Search(sketch=sketch)
+            click.echo(f"Number of events in that sketch: {search_obj.expected_size}")
+            search_obj.to_file(filename, stream=stream)
 
-        click.echo(f"Number of events in that sketch: {search_obj.expected_size}")
-
-        search_obj.to_file(filename)
-        # Using the sketch.export function could be an alternative here
-        # TODO: https://github.com/google/timesketch/issues/2344
         end_time = time.time()
         click.echo(f"Export took {end_time - start_time} seconds")
         click.echo("Finish")
-    except ValueError as e:
+    except Exception as e:  # pylint: disable=broad-except
         click.echo(f"Error: {e}")
         ctx.exit(1)
 
