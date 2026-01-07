@@ -95,23 +95,29 @@ class AggregationResult:
         as_chart: bool = False,
         color: str = "",
     ):
-        """Encode aggregation result as Vega-Lite chart.
+        """Encode aggregation result as a Vega-Lite chart.
 
         Args:
-            chart_name: Name of chart as string, defaults to initialized
-                value of the chart type..
+            chart_name: Name of chart as string. Defaults to the initialized
+                chart type of the aggregation result.
             chart_title: The title of the chart.
-            as_html: Boolean indicating if chart should be returned in HTML.
+            as_html: Boolean indicating if chart should be returned as HTML
+                string.
             interactive: Boolean indicating if chart should be interactive.
-            as_chart: Boolean indicating if chart should be returned as a
-                chart object (instance of altair.vegalite.v3.api.LayerChart).
+            as_chart: Boolean indicating if chart should be returned as an
+                Altair chart object (instance of altair.Chart).
             color: String with the color information for the chart.
 
         Returns:
-            Vega-Lite chart spec in either JSON or HTML format.
+            - If as_html is True: String containing HTML representation of
+              the chart.
+            - If as_chart is True: Altair Chart object.
+            - Default: Dictionary containing the Vega-Lite JSON specification.
+            - Returns empty result (according to return type) if chart
+              generation fails or if encoding is missing.
 
         Raises:
-            RuntimeError if chart type does not exist.
+            RuntimeError: If the requested chart type does not exist.
         """
         if not chart_name:
             chart_name = self.chart_type
@@ -121,8 +127,26 @@ class AggregationResult:
             raise RuntimeError(f"No such chart type: {chart_name:s}")
 
         try:
+            # We need to check if there is an encoding.
+            encoding = self.encoding
+            values_dataframe = self.to_pandas()
+
+            if not encoding:
+                logger.warning(
+                    "No encoding found for chart [%s] with title [%s]. "
+                    "Skipping chart generation.",
+                    chart_name,
+                    chart_title,
+                )
+                if as_html:
+                    return ""
+                if as_chart:
+                    return None
+                return {}
+
+            chart_data = {"values": values_dataframe, "encoding": encoding}
             chart_object = chart_class(
-                self.to_pandas(),
+                chart_data,
                 title=chart_title,
                 sketch_url=self._sketch_url,
                 field=self.field,
@@ -146,7 +170,7 @@ class AggregationResult:
 
         except Exception as e:  # pylint: disable=broad-except
             logger.error(
-                "Unable to generate chart [%s] with title [%s]. The error was: %s",
+                "Unable to generate chart [%s] with title [%s]. " "The error was: %s",
                 chart_name,
                 chart_title,
                 e,
@@ -192,19 +216,25 @@ class BaseAggregator:
 
         self.opensearch = OpenSearchDataStore()
 
-        self._sketch_url = f"/sketch/{sketch_id:d}/explore"
+        if sketch_id:
+            self._sketch_url = f"/sketch/{sketch_id:d}/explore"
+            self.sketch = SQLSketch.get_by_id(sketch_id)
+        else:
+            self._sketch_url = ""
+            self.sketch = None
+
         self.field = ""
         self.indices = indices
-        self.sketch = SQLSketch.get_by_id(sketch_id)
         self.timeline_ids = None
 
-        active_timelines = self.sketch.active_timelines
-        if not self.indices:
-            self.indices = [t.searchindex.index_name for t in active_timelines]
+        if self.sketch:
+            active_timelines = self.sketch.active_timelines
+            if not self.indices:
+                self.indices = [t.searchindex.index_name for t in active_timelines]
 
-        if timeline_ids:
-            valid_ids = [t.id for t in active_timelines]
-            self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
+            if timeline_ids:
+                valid_ids = [t.id for t in active_timelines]
+                self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
 
     @property
     def chart_title(self):
