@@ -1019,18 +1019,18 @@ class ImportStreamer(object):
         """Set the timestamp description field."""
         self._timestamp_desc = description
 
-    def set_max_payload_size(self, size_in_bytes):
+    def set_max_payload_size(self, size_in_bytes: int) -> None:
         """Set the maximum payload size allowed by the server.
 
         Args:
             size_in_bytes (int): The server limit (e.g. MAX_FORM_MEMORY_SIZE).
         """
+        if size_in_bytes <= 0:
+            raise ValueError(f"Payload size must be positive, got {size_in_bytes}")
         self._max_payload_size = size_in_bytes
-        # Recalculate safe limit
-        self._safe_payload_limit = self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER
-        if self._safe_payload_limit <= 0:
-            # Fallback if someone sets a ridiculously low limit
-            self._safe_payload_limit = 1024 * 1024  # 1MB minimum
+        self._safe_payload_limit = max(
+            (self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER), 1048576
+        )
 
     @property
     def state(self):
