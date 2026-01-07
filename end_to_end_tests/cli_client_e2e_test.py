@@ -14,6 +14,7 @@
 """End to end tests for Timesketch CLI client commands."""
 
 import os
+import uuid
 from click.testing import CliRunner
 
 from timesketch_cli_client.commands.sketch import sketch_group
@@ -112,8 +113,9 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
 
     def test_cli_sketch_export(self):
         """Tests 'timesketch sketch export'."""
-        active_sketch = self.sketch
-        self.import_timeline("evtx_part.csv")  # ensure some data
+        sketch_name = f"cli_client_e2e_test_export_{uuid.uuid4().hex}"
+        active_sketch = self.api.create_sketch(name=sketch_name)
+        self.import_timeline("evtx_part.csv", sketch=active_sketch)  # ensure some data
 
         cli_ctx_obj = E2ECliContextObject(
             api_client=self.api,

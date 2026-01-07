@@ -125,10 +125,12 @@ def create_sketch(
 ) -> None:
     """Creates a new sketch.
 
-    Creates a new Timesketch sketch with the specified name and optional description.
+    Creates a new Timesketch sketch with the specified name and optional
+    description.
 
     Args:
-        ctx (click.Context): The Click context object, containing the API client.
+        ctx (click.Context): The Click context object, containing the API
+            client.
         name (str): The name of the new sketch.
         description (Optional[str]): The description of the new sketch
             (defaults to the name if not provided).
@@ -162,23 +164,33 @@ def export_sketch(
 ) -> None:
     """Export a sketch to a file.
 
-    Exports all events within the active sketch to a specified file.
+    By default, this command uses the search-based export, which fetches
+    all events from the sketch and saves them to a ZIP file containing
+    a CSV of the results and metadata.
+
+    If the `--use_sketch_export` flag is provided, it uses the full sketch
+    export functionality. This creates a comprehensive ZIP file that includes
+    not only all events but also stories (as HTML), aggregations, views,
+    and metadata associated with the sketch.
+
     The export process can take a significant amount of time depending on the
     sketch size.
 
     Args:
         ctx (click.Context): The Click context object, containing the sketch.
         filename (str): The name of the file to export the sketch data to.
-        stream (bool): Whether to stream the download.
-        use_sketch_export (bool): Whether to use the sketch export functionality.
+        stream (bool): Whether to stream the download (recommended for large
+            exports to avoid memory issues).
+        use_sketch_export (bool): Whether to use the full sketch export
+            functionality instead of the default search-based event export.
 
     Raises:
-        click.exceptions.Exit: If a ValueError occurs during the export process.
+        click.exceptions.Exit: If an error occurs during the export process.
 
     Outputs:
         Text: Messages indicating the start, progress, and completion of the
             export process, including the time taken.
-        Error message: If a ValueError occurs during export.
+        Error message: If an error occurs during export.
     """
     sketch = ctx.obj.sketch
     click.echo("Executing export . . . ")
