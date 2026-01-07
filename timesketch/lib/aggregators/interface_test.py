@@ -15,7 +15,6 @@
 
 import unittest
 from unittest import mock
-import pandas as pd
 
 from timesketch.lib.aggregators import interface
 from timesketch.lib.charts import interface as chart_interface
@@ -123,16 +122,17 @@ class TestBaseAggregator(unittest.TestCase):
 
     @mock.patch("timesketch.lib.aggregators.interface.OpenSearchDataStore")
     @mock.patch("timesketch.lib.aggregators.interface.SQLSketch")
-    def test_init_no_sketch_id(self, mock_sketch, mock_ds):
+    def test_init_no_sketch_id(self, _mock_sketch, _mock_ds):
         """Test initialization without sketch_id."""
         agg = interface.BaseAggregator(indices=["index1"])
         self.assertIsNone(agg.sketch)
         self.assertEqual(agg.indices, ["index1"])
+        # pylint: disable=protected-access
         self.assertEqual(agg._sketch_url, "")
 
     @mock.patch("timesketch.lib.aggregators.interface.OpenSearchDataStore")
     @mock.patch("timesketch.lib.aggregators.interface.SQLSketch")
-    def test_init_with_sketch_id(self, mock_sketch, mock_ds):
+    def test_init_with_sketch_id(self, mock_sketch, _mock_ds):
         """Test initialization with sketch_id."""
         mock_sketch_obj = mock.Mock()
         mock_t1 = mock.Mock()
@@ -144,4 +144,5 @@ class TestBaseAggregator(unittest.TestCase):
         agg = interface.BaseAggregator(sketch_id=1)
         self.assertEqual(agg.sketch, mock_sketch_obj)
         self.assertEqual(agg.indices, ["index1"])
+        # pylint: disable=protected-access
         self.assertEqual(agg._sketch_url, "/sketch/1/explore")
