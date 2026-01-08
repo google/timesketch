@@ -803,7 +803,8 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             if timeline.get_status.status != "archived":
                 continue
             # Only set timeline to ready if its index was successfully opened
-            # OR if the index was already ready (e.g. shared with another unarchived timeline)
+            # OR if the index was already ready (e.g. shared with another
+            # unarchived timeline)
             if (
                 timeline.searchindex in successfully_opened_indexes
                 or timeline.searchindex.get_status.status == "ready"
