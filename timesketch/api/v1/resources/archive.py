@@ -566,7 +566,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     continue
 
                 # If a timeline is in another sketch, it must already be archived.
-                if timeline.get_status.status != "archived":
+                if timeline.get_status.status not in ("archived", "deleted"):
                     can_be_closed = False
                     logger.info(
                         "SearchIndex %s (ID: %s) will not be closed because "
@@ -803,7 +803,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             if timeline.get_status.status != "archived":
                 continue
             # Only set timeline to ready if its index was successfully opened
-            if timeline.searchindex in successfully_opened_indexes:
+            # OR if the index was already ready (e.g. shared with another unarchived timeline)
+            if (
+                timeline.searchindex in successfully_opened_indexes
+                or timeline.searchindex.get_status.status == "ready"
+            ):
                 timeline.set_status(status="ready")
                 logger.info(
                     "Timeline '%s' status set to 'ready'.",
