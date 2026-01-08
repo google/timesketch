@@ -121,8 +121,26 @@ class AggregationResult:
             raise RuntimeError(f"No such chart type: {chart_name:s}")
 
         try:
+            # We need to check if there is an encoding.
+            encoding = self.encoding
+            values_dataframe = self.to_pandas()
+
+            if not encoding:
+                logger.warning(
+                    "No encoding found for chart [%s] with title [%s]. "
+                    "Skipping chart generation.",
+                    chart_name,
+                    chart_title,
+                )
+                if as_html:
+                    return ""
+                if as_chart:
+                    return None
+                return {}
+
+            chart_data = {"values": values_dataframe, "encoding": encoding}
             chart_object = chart_class(
-                self.to_pandas(),
+                chart_data,
                 title=chart_title,
                 sketch_url=self._sketch_url,
                 field=self.field,
@@ -192,19 +210,25 @@ class BaseAggregator:
 
         self.opensearch = OpenSearchDataStore()
 
-        self._sketch_url = f"/sketch/{sketch_id:d}/explore"
+        if sketch_id:
+            self._sketch_url = f"/sketch/{sketch_id:d}/explore"
+            self.sketch = SQLSketch.get_by_id(sketch_id)
+        else:
+            self._sketch_url = ""
+            self.sketch = None
+
         self.field = ""
         self.indices = indices
-        self.sketch = SQLSketch.get_by_id(sketch_id)
         self.timeline_ids = None
 
-        active_timelines = self.sketch.active_timelines
-        if not self.indices:
-            self.indices = [t.searchindex.index_name for t in active_timelines]
+        if self.sketch:
+            active_timelines = self.sketch.active_timelines
+            if not self.indices:
+                self.indices = [t.searchindex.index_name for t in active_timelines]
 
-        if timeline_ids:
-            valid_ids = [t.id for t in active_timelines]
-            self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
+            if timeline_ids:
+                valid_ids = [t.id for t in active_timelines]
+                self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
 
     @property
     def chart_title(self):
