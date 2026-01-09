@@ -185,7 +185,8 @@ def export_sketch(
             functionality instead of the default search-based event export.
 
     Raises:
-        click.exceptions.Exit: If an error occurs during the export process.
+        click.exceptions.Exit: If an error occurs during the export process or
+            if mutually exclusive options are provided.
 
     Outputs:
         Text: Messages indicating the start, progress, and completion of the
@@ -193,9 +194,10 @@ def export_sketch(
         Error message: If an error occurs during export.
     """
     if stream and use_sketch_export:
-        raise click.UsageError(
-            "Options --stream and --use_sketch_export are mutually exclusive."
+        click.echo(
+            "Error: Options --stream and --use_sketch_export are mutually exclusive."
         )
+        ctx.exit(1)
 
     sketch = ctx.obj.sketch
     click.echo("Executing export . . . ")
