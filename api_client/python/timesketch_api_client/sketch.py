@@ -1938,35 +1938,45 @@ class Sketch(resource.BaseResource):
         self._archived = not return_status
         return return_status
 
-    def export(self, file_path):
+    def export(self, file_path, stream=False):
         """Exports the content of the sketch to a ZIP file.
 
         Args:
             file_path (str): a file path where the ZIP file will be saved.
+            stream (bool): whether to stream the download.
 
         Raises:
             RuntimeError: if sketch cannot be exported.
         """
-        directory = os.path.dirname(file_path)
-        if not os.path.isdir(directory):
-            raise RuntimeError(
-                "The directory needs to exist, please create: "
-                "{0:s} first".format(directory)
-            )
+        # Expand ~ to home directory if present
+        file_path = os.path.expanduser(file_path)
 
+        # Ensure we have a .zip extension
         if not file_path.lower().endswith(".zip"):
             logger.warning("File does not end with a .zip, adding it.")
-            file_path = "{0:s}.zip".format(file_path)
+            file_path = f"{file_path}.zip"
+
+        directory = os.path.dirname(file_path) or "."
+        if not os.path.isdir(directory):
+            raise RuntimeError(
+                "The directory needs to exist and be a directory: "
+                f"{os.path.abspath(directory)} first"
+            )
+
+        if not os.access(directory, os.W_OK):
+            raise RuntimeError(
+                f"The directory is not writable: {os.path.abspath(directory)}"
+            )
 
         if os.path.isfile(file_path):
-            raise RuntimeError("File [{0:s}] already exists.".format(file_path))
+            raise RuntimeError(f"File [{file_path}] already exists.")
 
         form_data = {"action": "export"}
         resource_url = "{0:s}/sketches/{1:d}/archive/".format(
             self.api.api_root, self.id
         )
 
-        response = self.api.session.post(resource_url, json=form_data)
+        response = self.api.session.post(resource_url, json=form_data, stream=stream)
         status = error.check_return_status(response, logger)
         if not status:
             error.error_message(
@@ -1976,7 +1986,12 @@ class Sketch(resource.BaseResource):
             )
 
         with open(file_path, "wb") as fw:
-            fw.write(response.content)
+            if stream:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        fw.write(chunk)
+            else:
+                fw.write(response.content)
 
     def export_events_stream(
         self,
