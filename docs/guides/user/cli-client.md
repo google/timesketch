@@ -305,17 +305,20 @@ export functionality. This creates a comprehensive ZIP file that includes
 not only all events but also stories (as HTML), aggregations, views,
 and metadata associated with the sketch.
 
+The filename can be just a name (e.g. `my_export.zip` which saves to the
+current directory) or a full path.
+
 ```bash
 timesketch sketch export --filename my_export.zip
 ```
 
 Options:
-- `--stream`: Stream the download. This is useful for large exports to avoid memory issues.
-- `--use_sketch_export`: Use the full sketch export functionality (same as Web UI export) instead of just exporting events. This export includes metadata, stories, and views in addition to events.
+- `--stream`: Stream the download. This is useful for large exports to avoid memory issues. Can be used with either export method.
+- `--use_sketch_export`: Use the full sketch export functionality (same as Web UI export) instead of just exporting events.
 
-Example:
+Example of a full, streamed export:
 ```bash
-timesketch sketch export --filename my_export.zip --stream
+timesketch sketch export --filename my_large_export.zip --use_sketch_export --stream
 ```
 
 ### Labels
