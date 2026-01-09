@@ -1959,7 +1959,8 @@ class Sketch(resource.BaseResource):
         directory = os.path.dirname(file_path) or "."
         if not os.path.isdir(directory):
             raise RuntimeError(
-                f"The directory needs to exist and be a directory: {os.path.abspath(directory)} first"
+                "The directory needs to exist and be a directory: "
+                f"{os.path.abspath(directory)} first"
             )
 
         if not os.access(directory, os.W_OK):
