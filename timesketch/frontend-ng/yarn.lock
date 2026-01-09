@@ -8316,9 +8316,9 @@ vega-format@^2.1.0, vega-format@~2.1.0:
     vega-util "^2.1.0"
 
 vega-functions@^6.1.0, vega-functions@~6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/vega-functions/-/vega-functions-6.1.0.tgz#d3726c46744f8a9769df5954a41a3d42fefad57e"
-  integrity sha512-yooEbWt0FWMBNoohwLsl25lEh08WsWabTXbbS+q0IXZzWSpX4Cyi45+q7IFyy/2L4oaIfGIIV14dgn3srQQcGA==
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/vega-functions/-/vega-functions-6.1.1.tgz#5d4e9746aadde2b3b70d8da3e6338892d05cd9d2"
+  integrity sha512-Due6jP0y0FfsGMTrHnzUGnEwXPu7VwE+9relfo+LjL/tRPYnnKqwWvzt7n9JkeBuZqjkgYjMzm/WucNn6Hkw5A==
   dependencies:
     d3-array "^3.2.4"
     d3-color "^3.1.0"
