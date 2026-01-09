@@ -1948,7 +1948,7 @@ class Sketch(resource.BaseResource):
             RuntimeError: if sketch cannot be exported.
         """
         directory = os.path.dirname(file_path)
-        if not os.path.isdir(directory):
+        if directory and not os.path.isdir(directory):
             raise RuntimeError(
                 "The directory needs to exist, please create: "
                 "{0:s} first".format(directory)

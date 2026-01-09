@@ -192,6 +192,11 @@ def export_sketch(
             export process, including the time taken.
         Error message: If an error occurs during export.
     """
+    if stream and use_sketch_export:
+        raise click.UsageError(
+            "Options --stream and --use_sketch_export are mutually exclusive."
+        )
+
     sketch = ctx.obj.sketch
     click.echo("Executing export . . . ")
     click.echo("Depending on the sketch size, this can take a while")
