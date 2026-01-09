@@ -2938,12 +2938,16 @@
 <li>If there's a critical error opening an OpenSearch index (e.g., the index is genuinely missing or a network error occurs), the entire unarchival process will be aborted, and the sketch will remain in its <strong>'archived'</strong> state.</li>
 </ul>
 <h3 id="export">Export</h3>
-<p>Export will export the following items:</p>
+<p>Export allows you to download sketch data. In the Web UI, this will export a
+comprehensive ZIP file containing:</p>
 <ul>
-<li>events (starred, tagged, tagged_event_stats, comments, ...)</li>
-<li>stories as html</li>
-<li>views (as csv)</li>
+<li>Events (starred, tagged, tagged_event_stats, comments, ...)</li>
+<li>Stories as HTML</li>
+<li>Views (as CSV)</li>
+<li>Metadata</li>
 </ul>
+<p>This is equivalent to the <code>--use_sketch_export</code> option in the <a href="../cli-client/#export-a-sketch">CLI tool</a>.
+By default, the CLI tool exports just the events from the sketch.</p>
 
 
 

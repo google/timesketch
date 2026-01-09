@@ -3685,7 +3685,24 @@ Value: 12345
 <h3 id="unarchive-a-sketch">Unarchive a sketch</h3>
 <p>Running <code>sketch unarchive</code> will set the archive flag to the sketch.</p>
 <h3 id="export-a-sketch">Export a sketch</h3>
-<p>Running <code>sketch export</code> will export the complete Sketch to a file.</p>
+<p>Running <code>sketch export</code> will export events from the sketch to a ZIP file.</p>
+<p>By default, this command uses the search-based export, which fetches
+all events from the sketch and saves them to a ZIP file containing
+a CSV of the results and metadata.</p>
+<p>If the <code>--use_sketch_export</code> flag is provided, it uses the full sketch
+export functionality. This creates a comprehensive ZIP file that includes
+not only all events but also stories (as HTML), aggregations, views,
+and metadata associated with the sketch.</p>
+<p>The filename can be just a name (e.g. <code>my_export.zip</code> which saves to the
+current directory) or a full path.</p>
+<pre><code class="language-bash">timesketch sketch export --filename my_export.zip
+</code></pre>
+<p>Options:
+- <code>--stream</code>: Stream the download. This is useful for large exports to avoid memory issues. Can be used with either export method.
+- <code>--use_sketch_export</code>: Use the full sketch export functionality (same as Web UI export) instead of just exporting events.</p>
+<p>Example of a full, streamed export:</p>
+<pre><code class="language-bash">timesketch sketch export --filename my_large_export.zip --use_sketch_export --stream
+</code></pre>
 <h3 id="labels">Labels</h3>
 <h4 id="list_labels">list_labels</h4>
 <p>Running <code>sketch list_labels</code> will give you a list of all labels of a sketch.</p>

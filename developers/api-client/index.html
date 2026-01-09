@@ -3355,7 +3355,10 @@ results.</p>
 + a dict, use <code>search_obj.dict</code>
 + a JSON string, use <code>search_obj.json</code></p>
 <p>Or if you want to store the results as a file:</p>
-<pre><code>search_obj.to_file('/tmp/myresults.zip')
+<pre><code class="language-python">search_obj.to_file('/tmp/myresults.zip')
+</code></pre>
+<p>For large results, you can use the <code>stream</code> parameter to avoid loading the whole result into memory:</p>
+<pre><code class="language-python">search_obj.to_file('/tmp/myresults.zip', stream=True)
 </code></pre>
 <p>(use the ZIP ending, since the resulting file will be a ZIP file with both the
 results as a CSV file and a METADATA file.</p>
