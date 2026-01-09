@@ -35,6 +35,7 @@ class TestBaseChart(unittest.TestCase):
         # We want to verify that alt.Chart is called with a list of dicts,
         # not a DataFrame.
         with mock.patch("timesketch.lib.charts.interface.alt.Chart") as mock_chart:
+            # pylint: disable=protected-access
             chart._get_chart_with_transform()
 
             # Get the argument passed to alt.Chart
@@ -44,3 +45,27 @@ class TestBaseChart(unittest.TestCase):
             # Assert it is a list (result of to_dict)
             self.assertIsInstance(passed_data, list)
             self.assertEqual(passed_data, [{"a": 1, "b": 2}])
+
+    def test_get_chart_with_transform_invalid_data(self):
+        """Test that _get_chart_with_transform handles invalid data gracefully."""
+        # Setup mock data where values is not a DataFrame or list
+        # Since init forces DataFrame, we have to mock self.values
+        # on the instance.
+
+        data = {"values": pd.DataFrame(), "encoding": {"x": "a", "y": "b"}}
+        chart = interface.BaseChart(data)
+
+        # Override values with invalid type
+        chart.values = "invalid_string"
+
+        with mock.patch("timesketch.lib.charts.interface.logger") as mock_logger:
+            with mock.patch("timesketch.lib.charts.interface.alt.Chart") as mock_chart:
+                # pylint: disable=protected-access
+                chart._get_chart_with_transform()
+
+                # Check error logged
+                mock_logger.error.assert_called()
+
+                # Check alt.Chart called with empty list
+                args, _ = mock_chart.call_args
+                self.assertEqual(args[0], [])
