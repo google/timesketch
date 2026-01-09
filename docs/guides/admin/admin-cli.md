@@ -300,6 +300,7 @@ Lists sketches in the database.
 
 **Options:**
 *   `--archived`: Show only archived sketches.
+*   `--archived-with-open-indexes`: Show archived sketches that have at least one searchindex with status 'new', 'ready', 'processing', 'fail', 'archived' or 'timeout'. Mutually exclusive with --archived.
 *   `--include-deleted`: Include sketches marked as deleted.
 
 **Example:**
@@ -356,6 +357,20 @@ id status created_at                 user_id
 ...
 ```
 
+#### `event-details`
+
+Display all data for a specific event.
+
+**Options:**
+*   `--sketch-id INTEGER`: (Required) The ID of the sketch.
+*   `--event-id TEXT`: (Required) The ID of the event.
+*   `--searchindex-id TEXT`: The OpenSearch index name for the event.
+
+**Example:**
+```bash
+tsctl event-details --sketch-id 1 --event-id 12345
+```
+
 #### `grant-user`
 
 Grants a user access to a specific sketch.
@@ -403,8 +418,9 @@ Exports a sketch to a zip archive, including all metadata and event data.
 *   `SKETCH_ID`: The ID of the sketch to export.
 
 **Options:**
-*   `--filename / -f`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
+*   `--filename`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
 *   `--output-format`: Format for event data ('csv' or 'jsonl'). Default: 'csv'.
+*   `--default-fields`: Export only the default set of event fields. If not specified, all fields are exported.
 
 **Example:**
 ```bash
@@ -614,6 +630,29 @@ Validates the syntax of a context links YAML configuration file.
 tsctl validate-context-links-conf data/context_links.yaml
 ```
 
+#### `check-db-orphaned-data`
+
+Checks for various types of orphaned data in the database.
+
+**Options:**
+*   `--verbose-checks`: Show output for all checks, even those that find no orphans.
+
+**Example:**
+```bash
+tsctl check-db-orphaned-data --verbose-checks
+```
+
+#### `find-inconsistent-archives`
+
+Finds sketches that are in an inconsistent archival state.
+
+An inconsistent state is defined as a sketch that has been marked as 'archived', but still contains one or more timelines that are not also archived.
+
+**Example:**
+```bash
+tsctl find-inconsistent-archives
+```
+
 #### `analyzer-stats`
 
 Displays statistics about past analyzer runs.
@@ -622,8 +661,11 @@ Displays statistics about past analyzer runs.
 *   `ANALYZER_NAME`: (Optional) The name of the analyzer to filter by.
 
 **Options:**
+*   `--timeline_id INTEGER`: Timeline ID if the analyzer results should be filtered by timeline.
 *   `--scope [many_hits|long_runtime|recent]`: Sorts the results.
+*   `--result_text_search TEXT`: Search in result text. E.g. for a specific rule_id.
 *   `--limit INTEGER`: Limits the number of results.
+*   `--export_csv TEXT`: Export the results to a CSV file.
 
 **Example:**
 ```shell
