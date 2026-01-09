@@ -31,6 +31,26 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="showExportLimitDialog" width="500">
+      <v-card class="pa-4">
+        <h3>Export limit reached</h3>
+        <br />
+        <p>
+          Downloading more than 10,000 events is not supported in the UI due to database limitations. Please use the
+          Timesketch CLI client to export larger datasets.
+        </p>
+        <p>
+          <a href="https://timesketch.org/guides/user/cli-client/#search" target="_blank" rel="noopener noreferrer">
+            Timesketch CLI Client Documentation
+          </a>
+        </p>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="showExportLimitDialog = false"> Close </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
       <v-card class="pa-4">
         <h3>Save Search</h3>
@@ -620,6 +640,7 @@ export default {
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
+      showExportLimitDialog: false,
     }
   },
   computed: {
@@ -970,6 +991,10 @@ export default {
         })
     },
     exportSearchResult: function () {
+      if (this.totalHits > 10000) {
+        this.showExportLimitDialog = true
+        return
+      }
       this.exportDialog = true
       const now = new Date()
       const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'
