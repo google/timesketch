@@ -98,7 +98,7 @@ class BaseEndToEndTest(object):
             streamer.add_file(file_path)
             timeline = streamer.timeline
             if not timeline:
-                print("Error creating timeline, please try again.")
+                print("Info: Timeline object not yet created by streamer.")
 
         # Poll the timeline status and wait for the timeline to be ready
         max_time_seconds = 600  # Timeout after 10min
@@ -107,22 +107,32 @@ class BaseEndToEndTest(object):
         retry_count = 0
         while True:
             if retry_count >= max_retries:
-                raise TimeoutError
+                raise RuntimeError(
+                    f"Timeout: Timeline for {filename} (Sketch {sketch.id}) "
+                    "did not become ready within 10 minutes."
+                )
 
             try:
                 if not timeline:
-                    print("Error no timeline yet, trying to get the new one")
+                    print(f"Waiting for timeline object for {filename}...")
                     timeline = streamer.timeline
-                _ = timeline.lazyload_data(refresh_cache=True)
-                status = timeline.status
+
+                if timeline:
+                    _ = timeline.lazyload_data(refresh_cache=True)
+                    status = timeline.status
+                else:
+                    # Object not yet created by the asynchronous streamer
+                    retry_count += 1
+                    time.sleep(sleep_time_seconds)
+                    continue
+
             except AttributeError:
-                # The timeline is not ready yet, so we need to wait
+                # The timeline object exists but is not fully initialized yet
                 retry_count += 1
                 time.sleep(sleep_time_seconds)
                 continue
             except OSError as e:
                 # This can happen if the file is not found or permissions are wrong.
-                # It's better to raise a more specific error here.
                 raise RuntimeError(
                     f"Unable to import timeline {timeline.index.id}"
                     f" sketch: {sketch.id}, got an OS Error for importing "
@@ -137,15 +147,21 @@ class BaseEndToEndTest(object):
             if status == "fail" or timeline.index.status == "fail":
                 if retry_count > 3:
                     raise RuntimeError(
-                        f"Unable to import {filename}"
-                        f" into timeline {timeline.index.id}"
-                        f" part of sketch: {sketch.id}."
+                        f"Failed to import {filename} into sketch {sketch.id}. "
+                        "Timeline or Index status is 'fail'."
                     )
 
             if status == "ready" and timeline.index.status == "ready":
                 break
             retry_count += 1
             time.sleep(sleep_time_seconds)
+
+        # Final safety check
+        if not timeline:
+            raise RuntimeError(
+                f"Critical Error: import_timeline finished for {filename} "
+                "but no timeline object was ever created."
+            )
 
         # Adding in one more sleep for good measure (preventing flaky tests).
         time.sleep(sleep_time_seconds)
