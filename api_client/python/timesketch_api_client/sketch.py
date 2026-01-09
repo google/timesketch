@@ -1954,23 +1954,23 @@ class Sketch(resource.BaseResource):
         # Ensure we have a .zip extension
         if not file_path.lower().endswith(".zip"):
             logger.warning("File does not end with a .zip, adding it.")
-            file_path = "{0:s}.zip".format(file_path)
+            file_path = f"{file_path}.zip"
 
         directory = os.path.dirname(file_path) or "."
         if not os.path.isdir(directory):
             raise RuntimeError(
                 "The directory needs to exist and be a directory: "
-                "{0:s} first".format(os.path.abspath(directory))
+                f"{os.path.abspath(directory)} first"
             )
 
         if not os.access(directory, os.W_OK):
             raise RuntimeError(
                 "The directory is not writable: "
-                "{0:s}".format(os.path.abspath(directory))
+                f"{os.path.abspath(directory)}"
             )
 
         if os.path.isfile(file_path):
-            raise RuntimeError("File [{0:s}] already exists.".format(file_path))
+            raise RuntimeError(f"File [{file_path}] already exists.")
 
         form_data = {"action": "export"}
         resource_url = "{0:s}/sketches/{1:d}/archive/".format(
