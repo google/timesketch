@@ -97,11 +97,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if data_label in ("csv", "json", "jsonl"):
             data_label = "csv_jsonl"
 
-        indices = [
+        indices = (
             t.searchindex
             for t in sketch.timelines
             if t.get_status.status not in ("deleted", "archived")
-        ]
+        )
         for index in indices:
             if index.has_label(data_label) and sketch.has_permission(
                 permission="write", user=current_user
