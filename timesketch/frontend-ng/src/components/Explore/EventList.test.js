@@ -96,7 +96,7 @@ describe('EventList.vue', () => {
     await wrapper.setData({
       eventList: {
         meta: {
-          es_total_count: 5000,
+          es_total_count: 10000,
           es_total_count_complete: 0
         },
         objects: []
