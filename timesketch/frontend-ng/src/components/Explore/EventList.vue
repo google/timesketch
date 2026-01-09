@@ -33,8 +33,7 @@ limitations under the License.
 
     <v-dialog v-model="showExportLimitDialog" width="500">
       <v-card class="pa-4">
-        <h3>Export limit reached</h3>
-        <br />
+        <h3 class="mb-4">Export limit reached</h3>
         <p>
           Downloading more than 10,000 events is not supported in the UI due to database limitations. Please use the
           Timesketch CLI client to export larger datasets.
