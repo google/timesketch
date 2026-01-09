@@ -163,133 +163,50 @@ def export_sketch(
     ctx: click.Context, filename: str, stream: bool, use_sketch_export: bool
 ) -> None:
     """Export a sketch to a file.
-
-
-
-
-
     By default, this command uses the search-based export, which fetches
-
-
     all events from the sketch and saves them to a ZIP file containing
-
-
     a CSV of the results and metadata.
-
-
-
-
-
     If the `--use_sketch_export` flag is provided, it uses the full sketch
-
-
     export functionality. This creates a comprehensive ZIP file that includes
-
-
     not only all events but also stories (as HTML), aggregations, views,
-
-
     and metadata associated with the sketch.
-
-
-
-
-
     The `--stream` flag can be used with either method to download the file in
-
-
     chunks, which is recommended for large exports to avoid memory issues.
-
-
-
-
-
     The export process can take a significant amount of time depending on the
-
-
     sketch size.
-
-
-
-
-
     Args:
-
-
         ctx (click.Context): The Click context object, containing the sketch.
-
-
         filename (str): The name of the file to export the sketch data to.
-
-
         stream (bool): Whether to stream the download (recommended for large
-
-
             exports to avoid memory issues).
-
-
         use_sketch_export (bool): Whether to use the full sketch export
-
-
             functionality instead of the default search-based event export.
 
-
-
-
-
     Raises:
-
-
         click.exceptions.Exit: If an error occurs during the export process.
 
-
-
-
-
     Outputs:
-
-
         Text: Messages indicating the start, progress, and completion of the
-
-
             export process, including the time taken.
-
-
         Error message: If an error occurs during export.
-
-
     """
-
     sketch = ctx.obj.sketch
-
     click.echo("Executing export . . . ")
-
     click.echo("Depending on the sketch size, this can take a while")
-
     # start counting the time the export took
-
     start_time = time.time()
-
     try:
         if use_sketch_export:
             sketch.export(filename, stream=stream)
-
         else:
             search_obj = search.Search(sketch=sketch)
-
             click.echo(f"Number of events in that sketch: {search_obj.expected_size}")
-
             search_obj.to_file(filename, stream=stream)
-
         end_time = time.time()
-
         click.echo(f"Export took {end_time - start_time} seconds")
-
         click.echo("Finish")
-
     except Exception as e:  # pylint: disable=broad-except
         click.echo(f"Error: {e}")
-
         ctx.exit(1)
 
 
