@@ -9,7 +9,7 @@ if [ "$1" = "timesketch-web" ]; then
            --error-logfile /var/log/timesketch/wsgi_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
            --workers ${NUM_WSGI_WORKERS} \
-           --max-requests 100 --max-requests-jitter 10 \
+           --max-requests 1000 --max-requests-jitter 100 \
            timesketch.wsgi:application
 
 elif [ "$1" = "timesketch-web-legacy" ]; then
@@ -18,7 +18,7 @@ elif [ "$1" = "timesketch-web-legacy" ]; then
            --error-logfile /var/log/timesketch/wsgi_legacy_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
            --workers ${NUM_WSGI_WORKERS} \
-           --max-requests 100 --max-requests-jitter 10 \
+           --max-requests 1000 --max-requests-jitter 100 \
            timesketch.wsgi:application
 
 elif [ "$1" = "timesketch-web-v3" ]; then
@@ -27,7 +27,7 @@ elif [ "$1" = "timesketch-web-v3" ]; then
            --error-logfile /var/log/timesketch/wsgi_v3_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
            --workers ${NUM_WSGI_WORKERS} \
-           --max-requests 100 --max-requests-jitter 10 \
+           --max-requests 1000 --max-requests-jitter 100 \
            timesketch.wsgi:application
 
 elif [ "$1" = "timesketch-worker" ]; then
