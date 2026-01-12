@@ -111,14 +111,14 @@ EOF
   # Run the Timesketch server (without SSL)
   export TIMESKETCH_UI_MODE="ng"
   cd /tmp
-  exec `bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
+  exec bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
   gunicorn --reload -b 0.0.0.0:80 \
   --access-logfile - --error-logfile - --log-level info \
   --timeout 120 \
   --workers 2 \
   --max-requests 100 --max-requests-jitter 10 \
   --limit-request-line 8190 \
-  timesketch.wsgi:application"`
+  timesketch.wsgi:application"
 fi
 
 echo 'Debugging information for e2e tests'
