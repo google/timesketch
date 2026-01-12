@@ -62,6 +62,11 @@ if os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
 
 
 @application.teardown_appcontext
-def shutdown_session(exception=None):
-    """Remove the database session after every request or app shutdown."""
+def shutdown_session(_exception=None):
+    """Remove the database session after every request or app shutdown.
+
+    Args:
+        _exception: An exception that occurred during the request, if any.
+                    (Unused, but required by the Flask teardown signal).
+    """
     db_session.remove()
