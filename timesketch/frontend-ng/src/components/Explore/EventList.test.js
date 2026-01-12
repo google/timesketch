@@ -107,6 +107,7 @@ describe('EventList.vue', () => {
     await wrapper.vm.exportSearchResult()
 
     expect(ApiClient.exportSearchResult).toHaveBeenCalled()
+    expect(wrapper.vm.showExportLimitDialog).toBe(false)
   })
 
   it('does NOT call exportSearchResult and shows dialog when totalHits > 10000', async () => {
