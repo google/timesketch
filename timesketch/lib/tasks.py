@@ -198,6 +198,9 @@ def init_worker(**kwargs):
     """Create new database engine per worker process."""
     url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
     engine_options = celery.conf.get("SQLALCHEMY_ENGINE_OPTIONS", {})
+    # Ensure pool_pre_ping is enabled by default.
+    if not "pool_pre_ping" in engine_options:
+        engine_options["pool_pre_ping"] = True
     engine = create_engine(url, future=True, **engine_options)
     db_session.configure(bind=engine)
 
@@ -876,8 +879,24 @@ def run_plaso(
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
         logger.error("Error (%s): %s\n%s", file_path, str(e), error_msg)
+        try:
+            # Closing the db session here ensures we use a fresh connection from
+            # the pool when we try to write the fail status into the DB!
+            db_session.remove()
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If the db is so broken we can't even close the session, log it!
+            logger.error(
+                "Failed to remove broken db_session: %s", db_err, exc_info=True
+            )
+
+        try:
+            _set_datasource_status(
+                timeline_id, file_path, "fail", error_message=error_msg
+            )
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If we still can't write to DB (e.g. DB server is down), log it!
+            logger.critical("Could not update timeline status to failed: %s", db_err)
         return None
 
     if not opensearch.client.indices.exists(index=index_name):
@@ -1215,10 +1234,28 @@ def run_csv_jsonl(
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_datasource_status(
-            timeline_id, file_path, "fail", error_message=str(error_msg)
-        )
         logger.error("Error: %s\n%s", str(e), error_msg)
+        try:
+            # Closing the db session here ensures we use a fresh connection from
+            # the pool when we try to write the fail status into the DB!
+            db_session.remove()
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If the db is so broken we can't even close the session, log it!
+            logger.error(
+                "Failed to remove db_session during error handling. " "DB Error: %s",
+                db_err,
+                exc_info=True,
+            )
+        try:
+            _set_datasource_status(
+                timeline_id, file_path, "fail", error_message=str(error_msg)
+            )
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If we still can't write to DB (e.g. DB server is down), log it!
+            logger.critical(
+                "CRITICAL: Could not update timeline status to failed. " "DB Error: %s",
+                db_err,
+            )
         return None
 
     METRICS["worker_events_added"].labels(
