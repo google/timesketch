@@ -101,8 +101,6 @@ if [ "$1" = 'timesketch' ]; then
   tsctl create-user admin --password admin
   tsctl make-admin admin
 
-  
-
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
     description: Testing the data finder in the e2e test.
@@ -111,9 +109,16 @@ test_data_finder:
 EOF
 
   # Run the Timesketch server (without SSL)
+  export TIMESKETCH_UI_MODE="ng"
   cd /tmp
-  exec `bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
-  gunicorn --reload -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
+  exec bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
+  gunicorn --reload -b 0.0.0.0:80 \
+  --access-logfile - --error-logfile - --log-level info \
+  --timeout 120 \
+  --workers 2 \
+  --max-requests 100 --max-requests-jitter 10 \
+  --limit-request-line 8190 \
+  timesketch.wsgi:application"
 fi
 
 echo 'Debugging information for e2e tests'
