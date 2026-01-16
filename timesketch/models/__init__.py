@@ -40,7 +40,7 @@ def configure_engine(url, engine_options):
     # pylint: disable=global-statement,global-variable-not-assigned
     # TODO: Can we wrap this in a class?
     # Ensure pool_pre_ping is enabled by default.
-    if not "pool_pre_ping" in engine_options:
+    if "pool_pre_ping" not in engine_options:
         engine_options["pool_pre_ping"] = True
     global engine, session_maker, db_session
     engine = create_engine(url, future=True, **engine_options)

@@ -199,7 +199,7 @@ def init_worker(**kwargs):
     url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
     engine_options = celery.conf.get("SQLALCHEMY_ENGINE_OPTIONS", {})
     # Ensure pool_pre_ping is enabled by default.
-    if not "pool_pre_ping" in engine_options:
+    if "pool_pre_ping" not in engine_options:
         engine_options["pool_pre_ping"] = True
     engine = create_engine(url, future=True, **engine_options)
     db_session.configure(bind=engine)
@@ -1242,7 +1242,7 @@ def run_csv_jsonl(
         except Exception as db_err:  # pylint: disable=broad-except
             # If the db is so broken we can't even close the session, log it!
             logger.error(
-                "Failed to remove db_session during error handling. " "DB Error: %s",
+                "Failed to remove db_session during error handling. DB Error: %s",
                 db_err,
                 exc_info=True,
             )
@@ -1253,7 +1253,7 @@ def run_csv_jsonl(
         except Exception as db_err:  # pylint: disable=broad-except
             # If we still can't write to DB (e.g. DB server is down), log it!
             logger.critical(
-                "CRITICAL: Could not update timeline status to failed. " "DB Error: %s",
+                "CRITICAL: Could not update timeline status to failed. DB Error: %s",
                 db_err,
             )
         return None
