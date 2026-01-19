@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests for sketch export."""
+
 import os
 import uuid
 import zipfile
