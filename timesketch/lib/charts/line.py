@@ -13,7 +13,6 @@
 # limitations under the License.
 """Line Chart object."""
 
-
 import altair as alt
 
 from timesketch.lib.charts import manager

@@ -7,7 +7,6 @@ from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
-
 logger = logging.getLogger("timesketch.analyzers.login")
 LOGON_TYPES = {
     "0": "Unknown",

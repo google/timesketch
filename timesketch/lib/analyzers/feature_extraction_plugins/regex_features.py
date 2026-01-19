@@ -9,7 +9,6 @@ from timesketch.lib.analyzers.feature_extraction_plugins import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import manager
 from timesketch.lib.analyzers import utils
 
-
 logger = logging.getLogger("timesketch.analyzers.feature_extraction.regex")
 RE_FLAGS = [
     "re.ASCII",

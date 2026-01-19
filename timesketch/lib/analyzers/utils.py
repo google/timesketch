@@ -22,7 +22,6 @@ import numpy
 
 from timesketch.lib.analyzers import interface
 
-
 logger = logging.getLogger("timesketch.analyzer_utils")
 
 # Title and header text of a story that is common among browser

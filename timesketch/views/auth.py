@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
-
 import requests
 
 from flask import abort
