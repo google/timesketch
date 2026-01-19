@@ -630,7 +630,7 @@ class SketchResource(resources.ResourceMixin, Resource):
         for timeline in timelines:
             # If the timeline has already been deleted (e.g. by cascade from
             # a shared searchindex), we skip it.
-            if timeline not in db_session:
+            if not db_session.contains(timeline):
                 continue
 
             timeline.set_status(status="deleted")
@@ -642,7 +642,7 @@ class SketchResource(resources.ResourceMixin, Resource):
 
             # If the searchindex has already been deleted, we just delete the
             # timeline and continue.
-            if searchindex not in db_session:
+            if not db_session.contains(searchindex):
                 db_session.delete(timeline)
                 continue
 
