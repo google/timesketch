@@ -9,6 +9,9 @@
     "test": "vitest --dom",
     "test:unit": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service test:unit"
   },
+  "resolutions": {
+    "qs": "6.14.1"
+  },
   "dependencies": {
     "@mdi/font": "^7.1.96",
     "@popperjs/core": "^2.4.0",
