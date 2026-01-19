@@ -13,7 +13,6 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
-
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy.query import Query

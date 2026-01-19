@@ -30,7 +30,6 @@ from timesketch_api_client import timeline
 from timesketch_api_client.error import UnableToRunAnalyzer
 from timesketch_import_client import utils
 
-
 logger = logging.getLogger("timesketch_importer.importer")
 
 

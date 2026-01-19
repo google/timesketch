@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Interface for aggregators."""
+
 import datetime
 import logging
 
@@ -21,7 +22,6 @@ import pandas
 from timesketch.lib.charts import manager as chart_manager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
-
 
 logger = logging.getLogger("timesketch.aggregator_interface")
 

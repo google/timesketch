@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 import json
 import logging
 
@@ -21,7 +22,6 @@ from . import aggregation
 from . import error
 from . import resource
 from . import search
-
 
 logger = logging.getLogger("timesketch_api.story")
 

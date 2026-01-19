@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for analysis utils."""
 
-
 import pandas as pd
 
 from timesketch.lib.testlib import BaseTest

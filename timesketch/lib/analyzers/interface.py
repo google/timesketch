@@ -13,7 +13,6 @@
 # limitations under the License.
 """Interface for analyzers."""
 
-
 import datetime
 import json
 import logging
@@ -47,7 +46,6 @@ from timesketch.models.sketch import Story as SQLStory
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
-
 
 logger = logging.getLogger("timesketch.analyzers")
 

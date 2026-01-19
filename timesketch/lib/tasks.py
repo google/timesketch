@@ -13,7 +13,6 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
-
 import codecs
 from hashlib import sha1
 import io
@@ -56,7 +55,6 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.models.user import User
-
 
 # Metrics definitions
 METRICS = {

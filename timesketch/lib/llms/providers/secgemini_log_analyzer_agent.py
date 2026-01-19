@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SecGemini Log Analyzer LLM provider for Timesketch."""
+
 import json
 import logging
 import os

@@ -16,6 +16,7 @@
 This library contains classes that define how to serialize the different
 credential objects Timesketch supports.
 """
+
 from __future__ import unicode_literals
 
 import json

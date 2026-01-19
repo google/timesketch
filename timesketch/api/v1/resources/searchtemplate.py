@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SearchTemplate resources for version 1 of the Timesketch API."""
+
 import json
 
 from flask import abort
