@@ -625,9 +625,27 @@ class SketchResource(resources.ResourceMixin, Resource):
             return HTTP_STATUS_CODE_OK
 
         # now the real deletion
-        for timeline in sketch.timelines:
+        # Convert to list to avoid collection modification issues during deletion
+        timelines = list(sketch.timelines)
+        for timeline in timelines:
+            # If the timeline has already been deleted (e.g. by cascade from
+            # a shared searchindex), we skip it.
+            if timeline not in db_session:
+                continue
+
             timeline.set_status(status="deleted")
             searchindex = timeline.searchindex
+
+            if not searchindex:
+                db_session.delete(timeline)
+                continue
+
+            # If the searchindex has already been deleted, we just delete the
+            # timeline and continue.
+            if searchindex not in db_session:
+                db_session.delete(timeline)
+                continue
+
             # remove the opensearch index
             index_name_to_delete = searchindex.index_name
 
