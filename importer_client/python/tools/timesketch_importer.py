@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A simple frontend to the Timesketch data importer."""
+
 from __future__ import unicode_literals
 
 import argparse
@@ -32,7 +33,6 @@ from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
 from timesketch_import_client import importer
 from timesketch_import_client import version as importer_version
-
 
 logger = logging.getLogger("timesketch_importer.importer_frontend")
 
