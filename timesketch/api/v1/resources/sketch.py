@@ -636,13 +636,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             timeline.set_status(status="deleted")
             searchindex = timeline.searchindex
 
-            if not searchindex:
-                db_session.delete(timeline)
-                continue
-
-            # If the searchindex has already been deleted, we just delete the
-            # timeline and continue.
-            if not db_session.contains(searchindex):
+            if not searchindex or not db_session.contains(searchindex):
                 db_session.delete(timeline)
                 continue
 
