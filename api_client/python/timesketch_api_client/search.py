@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API search object."""
+
 import datetime
 import json
 import logging
@@ -22,7 +23,6 @@ import pandas
 from . import error
 from . import resource
 from . import searchtemplate
-
 
 logger = logging.getLogger("timesketch_api.search")
 

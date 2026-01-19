@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Google Cloud Storage importer."""
+
 # Unmaintained contrib. Skip linting this file.
 # pylint: skip-file
 

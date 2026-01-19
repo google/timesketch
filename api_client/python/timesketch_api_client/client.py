@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client."""
+
 from __future__ import unicode_literals
 
 
@@ -44,7 +45,6 @@ from . import sketch
 from . import user
 from . import version
 from . import sigma
-
 
 logger = logging.getLogger("timesketch_api.client")
 

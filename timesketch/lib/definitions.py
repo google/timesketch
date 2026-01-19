@@ -13,7 +13,6 @@
 # limitations under the License.
 """Definitions for Timesketch."""
 
-
 # HTTP status codes
 HTTP_STATUS_CODE_OK = 200
 HTTP_STATUS_CODE_CREATED = 201

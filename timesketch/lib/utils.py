@@ -13,7 +13,6 @@
 # limitations under the License.
 """Common functions and utilities."""
 
-
 import colorsys
 import csv
 import datetime

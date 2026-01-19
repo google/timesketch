@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for API utils."""
+
 from timesketch.api.v1 import utils
 from timesketch.lib.testlib import BaseTest
 

@@ -13,13 +13,11 @@
 # limitations under the License.
 """Interface for charts."""
 
-
 import logging
 from typing import Any, Dict, List, Optional, Union
 
 import altair as alt
 import pandas as pd
-
 
 logger = logging.getLogger(__name__)
 

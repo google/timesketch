@@ -13,7 +13,6 @@
 # limitations under the License.
 """URL routes for API resources."""
 
-
 from .resources.aggregation import AggregationGroupResource
 from .resources.aggregation import AggregationGroupListResource
 from .resources.aggregation import AggregationListResource
@@ -92,7 +91,6 @@ from .resources.scenarios import QuestionListResource
 from .resources.scenarios import QuestionResource
 from .resources.scenarios import QuestionConclusionListResource
 from .resources.scenarios import QuestionConclusionResource
-
 
 # Disable error for long line. Readability is more important than line
 # length in this case.

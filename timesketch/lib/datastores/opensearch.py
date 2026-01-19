@@ -45,7 +45,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib import errors
 
-
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
 os_logger.setLevel(logging.WARNING)

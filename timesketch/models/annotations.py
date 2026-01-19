@@ -15,7 +15,6 @@
 This module implements annotations that can be use on other database models.
 """
 
-
 import json
 import logging
 

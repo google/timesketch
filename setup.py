@@ -32,7 +32,6 @@ from setuptools import setup
 
 from timesketch import version
 
-
 version_tuple = (sys.version_info[0], sys.version_info[1])
 if version_tuple < (3, 6):
     print(

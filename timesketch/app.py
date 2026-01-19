@@ -13,7 +13,6 @@
 # limitations under the License.
 """Entry point for the application."""
 
-
 import logging
 import os
 import sys

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """LogAnalyzer feature for automated log analysis using LLMs via an external service."""
+
 import json
 import logging
 import uuid
