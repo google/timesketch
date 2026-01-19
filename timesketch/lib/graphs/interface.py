@@ -20,7 +20,6 @@ import networkx as nx
 
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
-
 GRAPH_TYPES = {
     "Graph": nx.Graph,
     "MultiGraph": nx.MultiGraph,

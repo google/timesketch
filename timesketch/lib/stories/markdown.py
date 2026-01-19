@@ -13,7 +13,6 @@
 # limitations under the License.
 """This file contains a markdown story exporter."""
 
-
 import tabulate
 
 from timesketch.lib.stories import interface

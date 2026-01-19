@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module holds archive API calls for version 1 of the Timesketch API."""
 
-
 import datetime
 import io
 import json
@@ -46,7 +45,6 @@ from timesketch.lib.stories import manager as story_export_manager
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
-
 
 logger = logging.getLogger("timesketch.api_archive")
 

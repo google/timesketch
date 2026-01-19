@@ -11,7 +11,6 @@ from timesketch.version import get_version as get_timesketch_version
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
-
 logger = logging.getLogger("timesketch.tasks")
 
 

@@ -42,7 +42,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.models.sigma import SigmaRule
 from timesketch.models import db_session
 
-
 logger = logging.getLogger("timesketch.api.sigma")
 
 

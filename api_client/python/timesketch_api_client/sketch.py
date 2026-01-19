@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 from __future__ import unicode_literals
 
 import copy
@@ -38,7 +39,6 @@ from . import searchtemplate
 from . import story
 from . import timeline
 from . import scenario as scenario_lib
-
 
 logger = logging.getLogger("timesketch_api.sketch")
 

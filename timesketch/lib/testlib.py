@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
-
 import codecs
 import json
 

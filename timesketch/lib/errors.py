@@ -13,7 +13,6 @@
 # limitations under the License.
 """Error classes."""
 
-
 from flask import jsonify
 
 

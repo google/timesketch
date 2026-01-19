@@ -51,7 +51,6 @@ from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 
-
 logger = logging.getLogger("timesketch.scenario_api")
 
 

@@ -25,7 +25,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.models.sketch import InvestigativeQuestionApproach, Timeline
 
-
 logger = logging.getLogger("timesketch.analyzers.dfiq_plugins.manager")
 
 
