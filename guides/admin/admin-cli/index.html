@@ -1444,6 +1444,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#event-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event-details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#grant-user" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1703,6 +1714,28 @@
     <span class="md-ellipsis">
       
         validate-context-links-conf
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-db-orphaned-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check-db-orphaned-data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-inconsistent-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find-inconsistent-archives
       
     </span>
   </a>
@@ -3350,6 +3383,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#event-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event-details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#grant-user" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3609,6 +3653,28 @@
     <span class="md-ellipsis">
       
         validate-context-links-conf
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-db-orphaned-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check-db-orphaned-data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-inconsistent-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find-inconsistent-archives
       
     </span>
   </a>
@@ -3939,6 +4005,7 @@ tsctl sync-groups-from-json /tmp/groups.json
 <p>Lists sketches in the database.</p>
 <p><strong>Options:</strong>
 *   <code>--archived</code>: Show only archived sketches.
+*   <code>--archived-with-open-indexes</code>: Show archived sketches that have at least one searchindex with status 'new', 'ready', 'processing', 'fail', 'archived' or 'timeout'. Mutually exclusive with --archived.
 *   <code>--include-deleted</code>: Include sketches marked as deleted.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="language-shell">tsctl list-sketches
@@ -3987,6 +4054,15 @@ id status created_at                 user_id
 65 new    2025-11-07 14:42:18.813488 None
 ...
 </code></pre>
+<h4 id="event-details"><code>event-details</code></h4>
+<p>Display all data for a specific event.</p>
+<p><strong>Options:</strong>
+*   <code>--sketch-id INTEGER</code>: (Required) The ID of the sketch.
+*   <code>--event-id TEXT</code>: (Required) The ID of the event.
+*   <code>--searchindex-id TEXT</code>: The OpenSearch index name for the event.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">tsctl event-details --sketch-id 1 --event-id 12345
+</code></pre>
 <h4 id="grant-user"><code>grant-user</code></h4>
 <p>Grants a user access to a specific sketch.</p>
 <p><strong>Arguments:</strong>
@@ -4018,8 +4094,9 @@ tsctl grant-group incident-responders --sketch_id 456 --read-only
 <p><strong>Arguments:</strong>
 *   <code>SKETCH_ID</code>: The ID of the sketch to export.</p>
 <p><strong>Options:</strong>
-*   <code>--filename / -f</code>: The name for the output zip file. Default: <code>sketch_{sketch_id}_{output_format}_export.zip</code>
-*   <code>--output-format</code>: Format for event data ('csv' or 'jsonl'). Default: 'csv'.</p>
+*   <code>--filename</code>: The name for the output zip file. Default: <code>sketch_{sketch_id}_{output_format}_export.zip</code>
+*   <code>--output-format</code>: Format for event data ('csv' or 'jsonl'). Default: 'csv'.
+*   <code>--default-fields</code>: Export only the default set of event fields. If not specified, all fields are exported.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="language-bash">tsctl export-sketch 1 --filename &quot;project_x_export.zip&quot;
 </code></pre>
@@ -4145,13 +4222,29 @@ tsctl import-db output.zip
 <p><strong>Example:</strong></p>
 <pre><code class="language-bash">tsctl validate-context-links-conf data/context_links.yaml
 </code></pre>
+<h4 id="check-db-orphaned-data"><code>check-db-orphaned-data</code></h4>
+<p>Checks for various types of orphaned data in the database.</p>
+<p><strong>Options:</strong>
+*   <code>--verbose-checks</code>: Show output for all checks, even those that find no orphans.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">tsctl check-db-orphaned-data --verbose-checks
+</code></pre>
+<h4 id="find-inconsistent-archives"><code>find-inconsistent-archives</code></h4>
+<p>Finds sketches that are in an inconsistent archival state.</p>
+<p>An inconsistent state is defined as a sketch that has been marked as 'archived', but still contains one or more timelines that are not also archived.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">tsctl find-inconsistent-archives
+</code></pre>
 <h4 id="analyzer-stats"><code>analyzer-stats</code></h4>
 <p>Displays statistics about past analyzer runs.</p>
 <p><strong>Arguments:</strong>
 *   <code>ANALYZER_NAME</code>: (Optional) The name of the analyzer to filter by.</p>
 <p><strong>Options:</strong>
+*   <code>--timeline_id INTEGER</code>: Timeline ID if the analyzer results should be filtered by timeline.
 *   <code>--scope [many_hits|long_runtime|recent]</code>: Sorts the results.
-*   <code>--limit INTEGER</code>: Limits the number of results.</p>
+*   <code>--result_text_search TEXT</code>: Search in result text. E.g. for a specific rule_id.
+*   <code>--limit INTEGER</code>: Limits the number of results.
+*   <code>--export_csv TEXT</code>: Export the results to a CSV file.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="language-shell">tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
 </code></pre>
