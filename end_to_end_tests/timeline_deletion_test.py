@@ -245,7 +245,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
 
         # 3. Delete the sketch with force=true
         session = self.api.session
-        resource_url = f"{self.api.host_uri}/api/v1/sketches/{sketch.id}/?force=true"
+        resource_url = f"{interface.HOST_URI}/api/v1/sketches/{sketch.id}/?force=true"
         response = session.delete(resource_url)
 
         self.assertions.assertEqual(response.status_code, 200)
