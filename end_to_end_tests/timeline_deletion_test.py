@@ -217,16 +217,19 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
     def test_delete_sketch_with_shared_index(self):
         """Test deleting a sketch where multiple timelines share the same index.
 
-        This test verifies that the 'InvalidRequestError' is resolved and the
-        sketch is successfully deleted even when multiple timelines in it
-        point to the same search index.
+        This test verifies that the a sketch is successfully deleted
+        even when multiple timelines in it point to the same search index.
         """
         rand = uuid.uuid4().hex
-        sketch = self.api.create_sketch(name=f"test-sketch-deletion-shared_{rand}")
+
+        sketch = self.admin_api.create_sketch(
+            name=f"test-sketch-deletion-shared_{rand}"
+        )
 
         shared_index_name = f"shared_index_{rand}"
 
         # 1. Import Timeline A
+
         self.import_timeline(
             "sigma_events.csv", sketch=sketch, index_name=shared_index_name
         )
@@ -241,15 +244,16 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(timelines), 2)
 
         # Verify index exists in OpenSearch
+
         self.check_opensearch_index_status(shared_index_name, "open")
 
         # 3. Delete the sketch with force=true
+
         sketch.delete(force_delete=True)
 
         # 4. Verify the sketch is gone
-        deleted_sketch = self.api.get_sketch(sketch.id)
+        deleted_sketch = self.admin_api.get_sketch(sketch.id)
         self.assertions.assertIsNone(deleted_sketch)
-
         # 5. Verify the OpenSearch index is gone (since it was force deleted)
         self.check_opensearch_index_status(shared_index_name, "deleted")
 
