@@ -30,6 +30,7 @@ from flask_login import login_required
 from flask_login import current_user
 from sqlalchemy import not_
 from sqlalchemy import or_
+from sqlalchemy import inspect
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
@@ -630,13 +631,13 @@ class SketchResource(resources.ResourceMixin, Resource):
         for timeline in timelines:
             # If the timeline has already been deleted (e.g. by cascade from
             # a shared searchindex), we skip it.
-            if not db_session.contains(timeline):
+            if not inspect(timeline).persistent:
                 continue
 
             timeline.set_status(status="deleted")
             searchindex = timeline.searchindex
 
-            if not searchindex or not db_session.contains(searchindex):
+            if not searchindex or not inspect(searchindex).persistent:
                 db_session.delete(timeline)
                 continue
 
