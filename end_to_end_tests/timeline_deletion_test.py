@@ -244,11 +244,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         self.check_opensearch_index_status(shared_index_name, "open")
 
         # 3. Delete the sketch with force=true
-        session = self.api.session
-        resource_url = f"{interface.HOST_URI}/api/v1/sketches/{sketch.id}/?force=true"
-        response = session.delete(resource_url)
-
-        self.assertions.assertEqual(response.status_code, 200)
+        sketch.delete(force_delete=True)
 
         # 4. Verify the sketch is gone
         deleted_sketch = self.api.get_sketch(sketch.id)
