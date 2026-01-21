@@ -634,8 +634,12 @@ class SketchResource(resources.ResourceMixin, Resource):
             # a shared searchindex), we skip it.
             try:
                 if not inspect(timeline).persistent:
+                    # No further action needed as the object is already deleted
+                    # or inaccessible.
                     continue
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
+                # If inspection fails, the object is likely in an invalid state
+                # or already removed from the session.
                 continue
 
             searchindex = timeline.searchindex
@@ -652,18 +656,23 @@ class SketchResource(resources.ResourceMixin, Resource):
             if searchindex_id in processed_indices:
                 if inspect(timeline).persistent:
                     db_session.delete(timeline)
+                # Searchindex was already handled in a previous iteration.
                 continue
+
             # If the searchindex has already been deleted from the session,
             # we just delete the timeline and continue.
             try:
                 if not inspect(searchindex).persistent:
                     if inspect(timeline).persistent:
                         db_session.delete(timeline)
+                    # Searchindex is gone, no further cleanup for it needed.
                     continue
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if inspect(timeline).persistent:
                     db_session.delete(timeline)
+                # Searchindex state is invalid, skip further processing for it.
                 continue
+
             # remove the opensearch index
             index_name_to_delete = searchindex.index_name
             if index_name_to_delete:
@@ -706,7 +715,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                     )
                     logger.error(e_msg)
                     abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
-                except Exception as e:  # pylint: disable=broad-except
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     # Catch any other unexpected errors during deletion
                     e_msg = (
                         f"An unexpected error occurred while deleting "
