@@ -540,6 +540,14 @@ class SketchResource(resources.ResourceMixin, Resource):
         Deletion (both soft and hard) is prevented if the sketch has a label
         defined in the LABELS_TO_PREVENT_DELETION configuration setting.
 
+        The method ensures data integrity by following a specific order
+        of operations during a hard delete:
+        1. Permanently delete the data from OpenSearch.
+        2. Mark associated Timelines for deletion.
+        3. Mark unique Search Indices for deletion.
+        4. Mark the Sketch itself for deletion.
+        5. Commit the transaction to the database.
+
         Requires 'delete' permission on the sketch and the
             user must be an administrator.
 
@@ -723,12 +731,13 @@ class SketchResource(resources.ResourceMixin, Resource):
                     )
                     logger.error(e_msg)
                     abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
+            if inspect(timeline).persistent:
+                db_session.delete(timeline)
+
             if inspect(searchindex).persistent:
                 db_session.delete(searchindex)
                 if searchindex_id:
                     processed_indices.add(searchindex_id)
-            if inspect(timeline).persistent:
-                db_session.delete(timeline)
 
         db_session.delete(sketch)
         db_session.commit()
