@@ -574,6 +574,64 @@ class SketchResourceTest(BaseTest):
         response = self.client.delete(resource_url)
         self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
 
+    def test_delete_sketch_with_shared_searchindex(self):
+        """Test deleting a sketch where multiple timelines share the same searchindex."""
+        self.login_admin()
+
+        # 1. Create a sketch
+        sketch = self._create_sketch(
+            name="Crash Test Sketch", user=self.useradmin, acl=True
+        )
+        sketch_id = sketch.id
+
+        # 2. Create a shared search index
+        searchindex = self._create_searchindex(
+            name="Shared Index", user=self.useradmin, acl=True
+        )
+
+        # 3. Create two timelines using the same search index
+        timeline1 = self._create_timeline(
+            name="Timeline 1",
+            sketch=sketch,
+            searchindex=searchindex,
+            user=self.useradmin,
+        )
+        timeline2 = self._create_timeline(
+            name="Timeline 2",
+            sketch=sketch,
+            searchindex=searchindex,
+            user=self.useradmin,
+        )
+
+        db_session.commit()
+
+        # Verify setup
+        sketch = Sketch.query.get(sketch_id)
+        self.assertEqual(len(sketch.timelines), 2)
+        self.assertEqual(
+            sketch.timelines[0].searchindex.id, sketch.timelines[1].searchindex.id
+        )
+
+        # 4. Attempt to force delete the sketch
+        resource_url = f"/api/v1/sketches/{sketch_id}/?force=true"
+
+        mock_datastore = MockDataStore(host="localhost", port=9200)
+
+        with mock.patch(
+            "timesketch.api.v1.resources.ResourceMixin.datastore",
+            new_callable=mock.PropertyMock,
+        ) as mock_ds:
+            mock_ds.return_value = mock_datastore
+            response = self.client.delete(resource_url)
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
+        # Verify deletion
+        self.assertIsNone(Sketch.query.get(sketch_id))
+        self.assertIsNone(SearchIndex.query.get(searchindex.id))
+        self.assertIsNone(Timeline.query.get(timeline1.id))
+        self.assertIsNone(Timeline.query.get(timeline2.id))
+
 
 class ViewListResourceTest(BaseTest):
     """Test ViewListResource."""

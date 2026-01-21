@@ -161,6 +161,9 @@ class MockOpenSearchClient:
 
 
 class MockOpenSearchIndices:
+    def __init__(self):
+        self.deleted_indices = set()
+
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
@@ -172,8 +175,16 @@ class MockOpenSearchIndices:
     def refresh(self, *args, **kwargs):
         return
 
-    def exists(self, *args, **kwargs):
+    def exists(self, index=None, *args, **kwargs):
+        if index in self.deleted_indices:
+            return False
         return True
+
+    def delete(self, index=None):
+        """Mock delete index."""
+        if index:
+            self.deleted_indices.add(index)
+        return
 
 
 class MockDataStore:
