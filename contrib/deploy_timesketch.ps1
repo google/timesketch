@@ -56,7 +56,7 @@ Function Get-RandomString {
 # config parameters
 Write-Host "* Setting default config parameters.."
 $POSTGRES_USER="timesketch"
-$POSTGRES_PASSWORD=Get-RandomString -length 42 
+$POSTGRES_PASSWORD=Get-RandomString -length 42
 $POSTGRES_ADDRESS="postgres"
 $POSTGRES_PORT="5432"
 $SECRET_KEY=Get-RandomString -length 42
@@ -94,21 +94,20 @@ Write-Host "OK"
 Write-Host "* Edit configuration files."
 $timesketchconf = 'timesketch\etc\timesketch\timesketch.conf'
 $convfenv = 'timesketch\config.env'
-(Get-Content $timesketchconf).replace("SECRET_KEY = '<KEY_GOES_HERE>'", "SECRET_KEY = '$SECRET_KEY'") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace('SECRET_KEY = "<KEY_GOES_HERE>"', "SECRET_KEY = ""$SECRET_KEY""") | Set-Content $timesketchconf
 
 # Set up the OpenSearch connection
-(Get-Content $timesketchconf).replace("OPENSEARCH_HOST = '127.0.0.1'", "ELASTIC_HOST = '$OPENSEARCH_ADDRESS'") | Set-Content $timesketchconf
-(Get-Content $timesketchconf).replace("OPENSEARCH_PORT = 9200", "ELASTIC_PORT = $OPENSEARCH_PORT") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace('OPENSEARCH_HOSTS = [{"host": "opensearch", "port": 9200}]', 'OPENSEARCH_HOSTS = [{"host": "' + $OPENSEARCH_ADDRESS + '", "port": ' + $OPENSEARCH_PORT + '}]') | Set-Content $timesketchconf
 
 # Set up the Redis connection
-(Get-Content $timesketchconf).replace("UPLOAD_ENABLED = False", "UPLOAD_ENABLED = True") | Set-Content $timesketchconf
-(Get-Content $timesketchconf).replace("UPLOAD_FOLDER = '/tmp'", "UPLOAD_FOLDER = '/usr/share/timesketch/upload'") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace('UPLOAD_ENABLED = False', 'UPLOAD_ENABLED = True') | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace('UPLOAD_FOLDER = "/tmp"', 'UPLOAD_FOLDER = "/usr/share/timesketch/upload"') | Set-Content $timesketchconf
 
-(Get-Content $timesketchconf).replace("CELERY_BROKER_URL = 'redis://127.0.0.1:6379'", "CELERY_BROKER_URL = 'redis://$($REDIS_ADDRESS):$($REDIS_PORT)'") | Set-Content $timesketchconf
-(Get-Content $timesketchconf).replace("CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379'", "CELERY_RESULT_BACKEND = 'redis://$($REDIS_ADDRESS):$($REDIS_PORT)'") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace('CELERY_BROKER_URL = "redis://127.0.0.1:6379"', "CELERY_BROKER_URL = ""redis://$($REDIS_ADDRESS):$($REDIS_PORT)""") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace('CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379"', "CELERY_RESULT_BACKEND = ""redis://$($REDIS_ADDRESS):$($REDIS_PORT)""") | Set-Content $timesketchconf
 
 # Set up the Postgres connection
-(Get-Content $timesketchconf).replace("SQLALCHEMY_DATABASE_URI = 'postgresql://<USERNAME>:<PASSWORD>@localhost/timesketch'", "SQLALCHEMY_DATABASE_URI = 'postgresql://$($POSTGRES_USER):$($POSTGRES_PASSWORD)@$($POSTGRES_ADDRESS):$($POSTGRES_PORT)/timesketch'") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace('SQLALCHEMY_DATABASE_URI = "postgresql://<USERNAME>:<PASSWORD>@localhost/timesketch"', "SQLALCHEMY_DATABASE_URI = ""postgresql://$($POSTGRES_USER):$($POSTGRES_PASSWORD)@$($POSTGRES_ADDRESS):$($POSTGRES_PORT)/timesketch""") | Set-Content $timesketchconf
 
 (Get-Content $convfenv).replace("POSTGRES_PASSWORD=", "POSTGRES_PASSWORD=$POSTGRES_PASSWORD") | Set-Content $convfenv
 (Get-Content $convfenv).replace("OPENSEARCH_MEM_USE_GB=", "OPENSEARCH_MEM_USE_GB=$OPENSEARCH_MEM_USE_GB") | Set-Content $convfenv
