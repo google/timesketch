@@ -252,8 +252,12 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         sketch.delete(force_delete=True)
 
         # 4. Verify the sketch is gone
-        deleted_sketch = self.admin_api.get_sketch(sketch.id)
-        self.assertions.assertIsNone(deleted_sketch)
+        # The API client's get_sketch() always returns a Sketch object,
+        # but loading data for it will fail with a 404 error if it's deleted.
+        sketch_to_check = self.admin_api.get_sketch(sketch.id)
+        with self.assertions.assertRaises(RuntimeError):
+            sketch_to_check.lazyload_data(refresh_cache=True)
+
         # 5. Verify the OpenSearch index is gone (since it was force deleted)
         self.check_opensearch_index_status(shared_index_name, "deleted")
 
