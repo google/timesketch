@@ -628,78 +628,98 @@ class SketchResource(resources.ResourceMixin, Resource):
         # now the real deletion
         # Convert to list to avoid collection modification issues during deletion
         timelines = list(sketch.timelines)
+        processed_indices = set()
         for timeline in timelines:
             # If the timeline has already been deleted (e.g. by cascade from
             # a shared searchindex), we skip it.
-            if not inspect(timeline).persistent:
+            try:
+                if not inspect(timeline).persistent:
+                    continue
+            except Exception:
                 continue
 
-            timeline.set_status(status="deleted")
             searchindex = timeline.searchindex
 
-            if not searchindex or not inspect(searchindex).persistent:
-                db_session.delete(timeline)
+            # If the timeline has no searchindex, we just delete the timeline
+            # and continue.
+            if not searchindex:
+                if inspect(timeline).persistent:
+                    db_session.delete(timeline)
                 continue
-
+            # If the searchindex has already been processed (e.g. shared by
+            # another timeline), we just delete the timeline and continue.
+            searchindex_id = getattr(searchindex, "id", None)
+            if searchindex_id in processed_indices:
+                if inspect(timeline).persistent:
+                    db_session.delete(timeline)
+                continue
+            # If the searchindex has already been deleted from the session,
+            # we just delete the timeline and continue.
+            try:
+                if not inspect(searchindex).persistent:
+                    if inspect(timeline).persistent:
+                        db_session.delete(timeline)
+                    continue
+            except Exception:
+                if inspect(timeline).persistent:
+                    db_session.delete(timeline)
+                continue
             # remove the opensearch index
             index_name_to_delete = searchindex.index_name
-
-            try:
-                # Attempt to delete the OpenSearch index
-                self.datastore.client.indices.delete(index=index_name_to_delete)
-                logger.debug(
-                    "User: %s is going to delete OS index %s",
-                    current_user,
-                    index_name_to_delete,
-                )
-
-                # Check if the index is really deleted
-                if self.datastore.client.indices.exists(index=index_name_to_delete):
-                    e_msg = (
-                        f"Failed to delete OpenSearch index "
-                        f"{index_name_to_delete}. Please check logs."
-                    )
-                    logger.error(e_msg)
-                    abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
-                else:
+            if index_name_to_delete:
+                try:
+                    # Attempt to delete the OpenSearch index
+                    self.datastore.client.indices.delete(index=index_name_to_delete)
                     logger.debug(
-                        "OpenSearch index %s successfully deleted.",
+                        "User: %s is going to delete OS index %s",
+                        current_user,
                         index_name_to_delete,
                     )
 
-            except NotFoundError:
-                # This can happen if the index was already deleted or never existed.
-                e_msg = (
-                    f"OpenSearch index {index_name_to_delete} was not found "
-                    f"during deletion attempt. It might have been deleted "
-                    f"already."
-                )
-                logger.warning(e_msg)
-            except ConnectionError as e:
-                e_msg = (
-                    f"Connection error while trying to delete OpenSearch index "
-                    f"{index_name_to_delete}:\n"
-                    f"{e}"
-                )
-                logger.error(e_msg)
-                abort(
-                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                    e_msg,
-                )
-            except Exception as e:  # pylint: disable=broad-except
-                # Catch any other unexpected errors during deletion
-                e_msg = (
-                    f"An unexpected error occurred while deleting "
-                    f"OpenSearch index {index_name_to_delete}: {e}"
-                )
-                logger.error(e_msg)
-                abort(
-                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                    e_msg,
-                )
+                    # Check if the index is really deleted
+                    if self.datastore.client.indices.exists(index=index_name_to_delete):
+                        e_msg = (
+                            f"Failed to delete OpenSearch index "
+                            f"{index_name_to_delete}. Please check logs."
+                        )
+                        logger.error(e_msg)
+                        abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
+                    else:
+                        logger.debug(
+                            "OpenSearch index %s successfully deleted.",
+                            index_name_to_delete,
+                        )
 
-            db_session.delete(searchindex)
-            db_session.delete(timeline)
+                except NotFoundError:
+                    # This can happen if the index was already deleted or never existed.
+                    e_msg = (
+                        f"OpenSearch index {index_name_to_delete} was not found "
+                        f"during deletion attempt. It might have been deleted "
+                        f"already."
+                    )
+                    logger.warning(e_msg)
+                except ConnectionError as e:
+                    e_msg = (
+                        f"Connection error while trying to delete OpenSearch index "
+                        f"{index_name_to_delete}:\n"
+                        f"{e}"
+                    )
+                    logger.error(e_msg)
+                    abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
+                except Exception as e:  # pylint: disable=broad-except
+                    # Catch any other unexpected errors during deletion
+                    e_msg = (
+                        f"An unexpected error occurred while deleting "
+                        f"OpenSearch index {index_name_to_delete}: {e}"
+                    )
+                    logger.error(e_msg)
+                    abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
+            if inspect(searchindex).persistent:
+                db_session.delete(searchindex)
+                if searchindex_id:
+                    processed_indices.add(searchindex_id)
+            if inspect(timeline).persistent:
+                db_session.delete(timeline)
 
         db_session.delete(sketch)
         db_session.commit()
