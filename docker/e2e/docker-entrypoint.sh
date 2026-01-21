@@ -41,7 +41,7 @@ if [ "$1" = 'timesketch' ]; then
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then
     OPENSSL_RAND=$( openssl rand -base64 32 )
     # Using the pound sign as a delimiter to avoid problems with / being output from openssl
-    sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$OPENSSL_RAND'\x27#' /etc/timesketch/timesketch.conf
+    sed -i 's#SECRET_KEY = "<KEY_GOES_HERE>"#SECRET_KEY = "'$OPENSSL_RAND'"#' /etc/timesketch/timesketch.conf
   fi
 
   # Set up the Postgres connection
@@ -59,8 +59,7 @@ if [ "$1" = 'timesketch' ]; then
 
   # Set up the OpenSearch connection
   if [ $OPENSEARCH_HOST ] && [ $OPENSEARCH_PORT ]; then
-    sed -i 's#OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_HOST'\x27#' /etc/timesketch/timesketch.conf
-    sed -i 's#OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' /etc/timesketch/timesketch.conf
+    sed -i 's#OPENSEARCH_HOSTS = \[{"host": "opensearch", "port": 9200}\]#OPENSEARCH_HOSTS = [{"host": "'$OPENSEARCH_HOST'", "port": '$OPENSEARCH_PORT'}]#' /etc/timesketch/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
     echo "Please pass values for the OPENSEARCH_HOST and OPENSEARCH_PORT environment variables"
@@ -69,8 +68,8 @@ if [ "$1" = 'timesketch' ]; then
   # Set up the Redis connection
   if [ $REDIS_ADDRESS ] && [ $REDIS_PORT ]; then
     sed -i 's#UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' /etc/timesketch/timesketch.conf
-    sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch/timesketch.conf
-    sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch/timesketch.conf
+    sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = "redis://'$REDIS_ADDRESS':'$REDIS_PORT'"#' /etc/timesketch/timesketch.conf
+    sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = "redis://'$REDIS_ADDRESS':'$REDIS_PORT'"#' /etc/timesketch/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
     echo "Please pass values for the REDIS_ADDRESS and REDIS_PORT environment variables"
