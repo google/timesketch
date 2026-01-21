@@ -523,117 +523,20 @@ class SketchResource(resources.ResourceMixin, Resource):
         }
         return self.to_json(sketch, meta=meta)
 
-    @login_required
-    def delete(self, sketch_id: int, force_delete: bool = False):
-        """Handles DELETE request to mark a sketch as deleted or permanently remove it.
-
-        By default (force_delete=False), this method marks the sketch as 'deleted'
-        in the database but does not remove the underlying OpenSearch indices or
-        associated data. This is a soft delete, primarily for historical reasons
-        and safety.
-
-        If force_delete is set to True (either via the parameter or the 'force'
-        URL query parameter), the sketch, its timelines, associated search indices,
-        and all related data in the database and OpenSearch will be permanently
-        removed. This is a hard delete and is irreversible.
-
-        Deletion (both soft and hard) is prevented if the sketch has a label
-        defined in the LABELS_TO_PREVENT_DELETION configuration setting.
+    def _force_delete_sketch(self, sketch):
+        """Permanently delete a sketch and all its associated data.
 
         The method ensures data integrity by following a specific order
-        of operations during a hard delete:
+        of operations:
         1. Permanently delete the data from OpenSearch.
         2. Mark associated Timelines for deletion.
         3. Mark unique Search Indices for deletion.
         4. Mark the Sketch itself for deletion.
         5. Commit the transaction to the database.
 
-        Requires 'delete' permission on the sketch and the
-            user must be an administrator.
-
         Args:
-            sketch_id (int): The ID of the sketch to delete.
-            force_delete (bool): If True, performs a hard delete, permanently
-                removing the sketch and all its associated data (timelines,
-                search indices, etc.). Defaults to False (soft delete).
-                Can also be triggered by setting the 'force' URL query parameter.
-
-        Returns:
-            int: HTTP_STATUS_CODE_OK (200) if the operation is successful (even
-                 for a soft delete where data is only marked).
-
-        Raises:
-            HTTP_STATUS_CODE_NOT_FOUND (404): If no sketch is found with the
-                given ID.
-            HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have 'delete'
-                permission on the sketch, or if the sketch has a label
-                preventing deletion, or if the user is not an admin.
-            HTTP_STATUS_CODE_BAD_REQUEST (400): If there's an issue during the
-                deletion process e.g. the sketch being archived,
-                or if timelines are still processing.
-            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR (500): If there's an unrecoverable
-                error during OpenSearch index deletion.
+            sketch (Sketch): The sketch object to delete.
         """
-        sketch = Sketch.get_with_acl(sketch_id)
-        if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        if not sketch.has_permission(current_user, "delete"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                ("User does not have sufficient access rights to delete a sketch."),
-            )
-
-        not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
-        for label in not_delete_labels:
-            if sketch.has_label(label):
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    f"Sketch with the label [{label:s}] cannot be deleted.",
-                )
-        if sketch.get_status.status == "archived":
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to delete a sketch that is already archived.",
-            )
-
-        if not force_delete:
-            url_force_delete = request.args.get("force")
-            if url_force_delete is not None:
-                force_delete = True  # If the 'force' URL parameter exists, set to True
-                logger.debug("Force delete detected from URL parameter.")
-            else:
-                logger.debug("Force delete not present, will keep the OS data.")
-
-        # Check if user has admin privileges for force deletion
-        if force_delete:
-            if current_user.admin:
-                logger.debug(
-                    "User: %s is going to delete sketch %s", current_user, sketch_id
-                )
-            else:
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    "Sketch cannot be deleted. User is not an admin",
-                )
-
-        # Check if any timeline is still processing
-        is_any_timeline_processing = any(
-            t.get_status.status == "processing" for t in sketch.timelines
-        )
-        if is_any_timeline_processing:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Cannot delete sketch: one or more timelines are still processing.",
-            )
-
-        sketch.set_status(status="deleted")
-
-        # Default behaviour for historical reasons: exit with 200 without
-        # deleting
-        if not force_delete:
-            return HTTP_STATUS_CODE_OK
-
-        # now the real deletion
         # Convert to list to avoid collection modification issues during deletion
         timelines = list(sketch.timelines)
         processed_indices = set()
@@ -658,6 +561,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 if inspect(timeline).persistent:
                     db_session.delete(timeline)
                 continue
+
             # If the searchindex has already been processed (e.g. shared by
             # another timeline), we just delete the timeline and continue.
             searchindex_id = getattr(searchindex, "id", None)
@@ -731,6 +635,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                     )
                     logger.error(e_msg)
                     abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, e_msg)
+
             if inspect(timeline).persistent:
                 db_session.delete(timeline)
 
@@ -741,6 +646,113 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         db_session.delete(sketch)
         db_session.commit()
+
+    @login_required
+    def delete(self, sketch_id: int, force_delete: bool = False):
+        """Handles DELETE request to the resource.
+
+        This method supports both a 'soft' and a 'hard' (force) delete.
+
+        Soft delete (default): Marks the sketch as 'deleted'. This is often used
+            to hide the sketch from general users while allowing administrators
+            to review or permanently remove it later.
+
+        Hard delete (force): Permanently removes the sketch and all its
+            associated data (timelines, search indices, and OpenSearch data).
+            This action is irreversible.
+
+        Safety Checks:
+            The sketch cannot be deleted if it is archived or if it has any
+            labels defined in the LABELS_TO_PREVENT_DELETION configuration setting.
+
+        The method ensures data integrity by following a specific order
+        of operations during a hard delete:
+        1. Permanently delete the data from OpenSearch.
+        2. Mark associated Timelines for deletion.
+        3. Mark unique Search Indices for deletion.
+        4. Mark the Sketch itself for deletion.
+        5. Commit the transaction to the database.
+
+        Requires 'delete' permission on the sketch and the
+            user must be an administrator for force_delete.
+
+        Args:
+            sketch_id (int): The ID of the sketch to delete.
+            force_delete (bool): If True, performs a hard delete, permanently
+                removing the sketch and all its associated data (timelines,
+                search indices, etc.). Defaults to False (soft delete).
+                Can also be triggered by setting the 'force' URL query parameter.
+
+        Returns:
+            int: HTTP_STATUS_CODE_OK (200) if the operation is successful (even
+                 for a soft delete where data is only marked).
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND (404): If no sketch is found with the
+                given ID.
+            HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have 'delete'
+                permission on the sketch, or if the sketch has a label
+                preventing deletion, or if the user is not an admin.
+            HTTP_STATUS_CODE_BAD_REQUEST (400): If there's an issue during the
+                deletion process e.g. the sketch being archived,
+                or if timelines are still processing.
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR (500): If there's an unrecoverable
+                error during OpenSearch index deletion.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if not sketch.has_permission(current_user, "delete"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have sufficient access rights to delete a sketch.",
+            )
+
+        not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
+        for label in not_delete_labels:
+            if sketch.has_label(label):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Sketch with the label [{label:s}] cannot be deleted.",
+                )
+
+        if sketch.get_status.status == "archived":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to delete a sketch that is already archived.",
+            )
+
+        # Allow triggering force delete via URL parameter
+        if not force_delete and request.args.get("force"):
+            force_delete = True
+            logger.debug("Force delete detected from URL parameter.")
+
+        # Permissions and state checks for force deletion
+        if force_delete:
+            if not current_user.admin:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    "Sketch cannot be deleted. User is not an admin",
+                )
+
+            # Check if any timeline is still processing
+            is_any_timeline_processing = any(
+                t.get_status.status == "processing" for t in sketch.timelines
+            )
+            if is_any_timeline_processing:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Cannot delete sketch: one or more timelines are still processing.",
+                )
+
+        # Soft delete is always performed, even as a first step of force delete
+        sketch.set_status(status="deleted")
+
+        if force_delete:
+            logger.debug("User %s is force-deleting sketch %s", current_user, sketch_id)
+            self._force_delete_sketch(sketch)
+
         return HTTP_STATUS_CODE_OK
 
     @login_required
