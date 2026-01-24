@@ -9,6 +9,7 @@ def run_python_tests():
     # of workers like "4") to the list of arguments.
     subprocess.check_call(
         [
+            # changed to python3 from python
             "python",
             "-m",
             "pytest",
