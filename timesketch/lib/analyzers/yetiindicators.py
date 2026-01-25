@@ -144,7 +144,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             tags = {slugify(tag) for tag in indicator["relevant_tags"]}
             msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
         if indicator["root_type"] == "observable":
-            tags = {slugify(tag) for tag in indicator["tags"].keys()}
+            tags = {slugify(tag['name']) for tag in indicator["tags"]}
             msg = f'Observable match: "{indicator["value"]}" (ID: {indicator["id"]})\n'
         for neighbor in neighbors:
             tags.add(slugify(neighbor["name"]))
@@ -198,7 +198,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             match_in_sketch = indicator["value"]
             intel_type = OBSERVABLE_INTEL_MAPPING.get(indicator["type"], "other")
             uri = f"{self.yeti_web_root}/observables/{indicator['id']}"
-            tags = list(indicator["tags"].keys())
+            tags = [tag['name'] for tag in indicator["tags"]]
 
         if not match_in_sketch:
             return
@@ -603,8 +603,8 @@ class YetiTriageIndicators(YetiGraphAnalyzer):
 
     DEPENDENCIES = frozenset(["domain"])
 
-    _TYPE_SELECTOR = ["attack-pattern:insider"]
-    _TARGET_NEIGHBOR_TYPE = ["observable"]
+    _TYPE_SELECTOR = ["attack-pattern:triage"]
+    _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
     _DIRECTION = "inbound"
     _SAVE_INTELLIGENCE = False
 
@@ -671,10 +671,10 @@ class YetiKeywords(YetiGraphAnalyzer):
     """Analyzer for Yeti investigation-related indicators."""
 
     NAME = "yetikeywords"
-    DISPLAY_NAME = "Yeti Investigations intelligence"
+    DISPLAY_NAME = "Yeti Keyword matching"
     DESCRIPTION = (
-        "Mark events that match Yeti investigation indicators and observables."
-        " {investigation} ← {indicators, observables}"
+        "Mark events that match Yeti keywords linked to attack patterns."
+        " {attack-pattern:keywords} ← {observable}"
     )
 
     _TYPE_SELECTOR = ["attack-pattern:keywords"]
@@ -775,8 +775,9 @@ class YetiBloomChecker(YetiBaseAnalyzer):
         return str(self.output)
 
 
-manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
 manager.AnalysisManager.register_analyzer(YetiBadnessIndicators)
-manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
-manager.AnalysisManager.register_analyzer(YetiInvestigations)
 manager.AnalysisManager.register_analyzer(YetiBloomChecker)
+manager.AnalysisManager.register_analyzer(YetiInvestigations)
+manager.AnalysisManager.register_analyzer(YetiKeywords)
+manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
+manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
