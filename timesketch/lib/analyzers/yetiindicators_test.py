@@ -315,13 +315,15 @@ tags:
                 "context": [],
                 "last_analysis": {},
                 "id": "46833442",
-                "tags": [{
+                "tags": [
+                    {
                         "name": "mimikatz",
                         "last_seen": "2024-04-18T08:42:11.370806Z",
                         "expires": "2024-05-18T08:42:11.370811Z",
                         "fresh": True,
                         "id": None,
-                }],
+                    }
+                ],
                 "root_type": "observable",
             }
         )
