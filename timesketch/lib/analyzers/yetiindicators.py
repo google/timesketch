@@ -144,7 +144,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             tags = {slugify(tag) for tag in indicator["relevant_tags"]}
             msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
         if indicator["root_type"] == "observable":
-            tags = {slugify(tag['name']) for tag in indicator["tags"]}
+            tags = {slugify(tag["name"]) for tag in indicator["tags"]}
             msg = f'Observable match: "{indicator["value"]}" (ID: {indicator["id"]})\n'
         for neighbor in neighbors:
             tags.add(slugify(neighbor["name"]))
@@ -198,7 +198,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             match_in_sketch = indicator["value"]
             intel_type = OBSERVABLE_INTEL_MAPPING.get(indicator["type"], "other")
             uri = f"{self.yeti_web_root}/observables/{indicator['id']}"
-            tags = [tag['name'] for tag in indicator["tags"]]
+            tags = [tag["name"] for tag in indicator["tags"]]
 
         if not match_in_sketch:
             return
