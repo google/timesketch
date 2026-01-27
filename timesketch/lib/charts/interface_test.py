@@ -16,7 +16,6 @@
 import unittest
 from unittest import mock
 import pandas as pd
-import altair as alt
 
 from timesketch.lib.charts import interface
 
