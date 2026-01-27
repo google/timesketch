@@ -15,7 +15,6 @@
 
 import unittest
 from unittest import mock
-import pandas as pd
 
 from timesketch.lib.aggregators import interface
 from timesketch.lib.charts import interface as chart_interface

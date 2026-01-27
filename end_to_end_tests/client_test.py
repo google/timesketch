@@ -148,6 +148,7 @@ level: high
         """Client Sigma object tests."""
         sketch = self.api.create_sketch(name="test_sigmarule_create_get")
         sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
+        # fmt: off
         rule = self.api.create_sigmarule(
             rule_yaml=f"""
 title: Suspicious Installation of eeeee
@@ -169,8 +170,8 @@ detection:
 falsepositives:
     - Unknown
 level: high
-"""
-        )
+""")
+        # fmt: on
         self.assertions.assertIsNotNone(rule)
 
         rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
