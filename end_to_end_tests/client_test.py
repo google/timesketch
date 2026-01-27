@@ -36,6 +36,18 @@ class ClientTest(interface.BaseEndToEndTest):
     RULEID1 = str(uuid.uuid4())
     RULEID2 = str(uuid.uuid4())
 
+    def _get_opensearch_client(self):
+        """Returns an OpenSearch client."""
+        return opensearchpy.OpenSearch(
+            [
+                {
+                    "host": interface.OPENSEARCH_HOST,
+                    "port": interface.OPENSEARCH_PORT,
+                }
+            ],
+            http_compress=True,
+        )
+
     def test_client(self):
         """Client tests."""
         expected_user = "test"
@@ -445,15 +457,7 @@ level: high
         index_name = timeline.index_name
 
         # Verify index is open
-        es = opensearchpy.OpenSearch(
-            [
-                {
-                    "host": interface.OPENSEARCH_HOST,
-                    "port": interface.OPENSEARCH_PORT,
-                }
-            ],
-            http_compress=True,
-        )
+        es = self._get_opensearch_client()
         stats = es.cat.indices(index=index_name, params={"format": "json"})
         self.assertions.assertEqual(stats[0].get("status"), "open")
 
@@ -498,7 +502,9 @@ level: high
         )
 
         # 3. Verify admin CAN find it in the list with include_deleted=True
-        resource_url = f"{self.admin_api.api_root}/sketches/?include_deleted=true"
+        resource_url = (
+            f"{self.admin_api.api_root}/sketches/?" "include_deleted=true&scope=admin"
+        )
         response = self.admin_api.session.get(resource_url)
         self.assertions.assertEqual(response.status_code, 200)
         sketch_list = response.json()["objects"]
@@ -512,15 +518,7 @@ level: high
         with self.assertions.assertRaises(NotFoundError):
             _ = self.admin_api.get_sketch(sketch_id).name  # pylint: disable=W0106
 
-        es = opensearchpy.OpenSearch(
-            [
-                {
-                    "host": interface.OPENSEARCH_HOST,
-                    "port": interface.OPENSEARCH_PORT,
-                }
-            ],
-            http_compress=True,
-        )
+        es = self._get_opensearch_client()
         self.assertions.assertFalse(
             es.indices.exists(index=index_name), "Index should be deleted"
         )
@@ -537,15 +535,7 @@ level: high
         index_name = timeline.index_name
 
         # Manually delete the index from OpenSearch
-        es = opensearchpy.OpenSearch(
-            [
-                {
-                    "host": interface.OPENSEARCH_HOST,
-                    "port": interface.OPENSEARCH_PORT,
-                }
-            ],
-            http_compress=True,
-        )
+        es = self._get_opensearch_client()
         es.indices.delete(index=index_name)
 
         # Delete the sketch
