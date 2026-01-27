@@ -27,7 +27,7 @@ from typing import Dict
 from timesketch_api_client import cli_input
 from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
-from timesketch_api_client import config
+from timesketch_api_client import config, client
 from timesketch_api_client import sketch
 from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
@@ -354,6 +354,22 @@ def main(args=None):
     )
 
     config_group.add_argument(
+        "--sketch_strategy",
+        "--sketch-strategy",
+        action="store",
+        type=str,
+        dest="sketch_strategy",
+        default="ask",
+        help=(
+            "Strategy to use when a sketch name is provided and a sketch "
+            "with the same name already exists. Supported strategies are: "
+            "'ask' (default) which will raise an error, 'newest' which will "
+            "use the most recently created sketch, and 'oldest' which will "
+            "use the earliest created sketch."
+        ),
+    )
+
+    config_group.add_argument(
         "--data_label",
         "--data-label",
         action="store",
@@ -619,10 +635,51 @@ def main(args=None):
         my_sketch = ts_client.get_sketch(sketch_id)
     else:
         sketch_name = options.sketch_name or "New Sketch From Importer CLI"
-        my_sketch = ts_client.create_sketch(sketch_name)
-        logger.info(
-            "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
-        )
+        try:
+            sketches = ts_client.get_sketches_by_name(sketch_name)
+            if len(sketches) > 1:
+                if options.sketch_strategy == 'newest':
+                    my_sketch = sorted(
+                        sketches, key=lambda s: s.created_at, reverse=True
+                    )[0]
+                elif options.sketch_strategy == 'oldest':
+                    my_sketch = sorted(
+                        sketches, key=lambda s: s.created_at
+                    )[0]
+                else:
+                    # ask user for clarification using cli_input
+                    print("Multiple sketches found with the name '{0:s}':".format(sketch_name))
+                    for s in sketches:
+                        print(" - [{0:d}] created_at: {1:s}, by {2:s}".format(
+                            s.id, s.created_at, s.creator))
+
+                    selected_option = cli_input.ask_question(
+                        "Select the sketch to use by entering the corresponding number",
+                        input_type=int,
+                        default=sketches[0].id,
+                    )
+                    try:
+                        # select sketch by ID from the sketches list
+                        my_sketch = next(s for s in sketches if s.id == selected_option)
+                    except StopIteration:
+                        logger.error("Selected sketch ID not found, exiting.")
+                        sys.exit(1)
+            else:
+                my_sketch = sketches[0]
+
+            logger.info(
+                "Using existing sketch: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
+            )
+        except KeyError:
+            # no existing sketch found, create a new one
+            my_sketch = ts_client.create_sketch(sketch_name)
+            logger.info(
+                "New sketch created: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
+            )
 
     if not my_sketch:
         logger.error("Unable to get sketch ID: {0:d}".format(sketch_id))
