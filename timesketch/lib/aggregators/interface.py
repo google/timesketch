@@ -95,23 +95,29 @@ class AggregationResult:
         as_chart: bool = False,
         color: str = "",
     ):
-        """Encode aggregation result as Vega-Lite chart.
+        """Encode aggregation result as a Vega-Lite chart.
 
         Args:
-            chart_name: Name of chart as string, defaults to initialized
-                value of the chart type..
+            chart_name: Name of chart as string. Defaults to the initialized
+                chart type of the aggregation result.
             chart_title: The title of the chart.
-            as_html: Boolean indicating if chart should be returned in HTML.
+            as_html: Boolean indicating if chart should be returned as HTML
+                string.
             interactive: Boolean indicating if chart should be interactive.
-            as_chart: Boolean indicating if chart should be returned as a
-                chart object (instance of altair.vegalite.v3.api.LayerChart).
+            as_chart: Boolean indicating if chart should be returned as an
+                Altair chart object (instance of altair.Chart).
             color: String with the color information for the chart.
 
         Returns:
-            Vega-Lite chart spec in either JSON or HTML format.
+            - If as_html is True: String containing HTML representation of
+              the chart.
+            - If as_chart is True: Altair Chart object.
+            - Default: Dictionary containing the Vega-Lite JSON specification.
+            - Returns empty result (according to return type) if chart
+              generation fails or if encoding is missing.
 
         Raises:
-            RuntimeError if chart type does not exist.
+            RuntimeError: If the requested chart type does not exist.
         """
         if not chart_name:
             chart_name = self.chart_type

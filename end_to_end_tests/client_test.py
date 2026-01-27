@@ -36,6 +36,18 @@ class ClientTest(interface.BaseEndToEndTest):
     RULEID1 = str(uuid.uuid4())
     RULEID2 = str(uuid.uuid4())
 
+    def _get_opensearch_client(self):
+        """Returns an OpenSearch client."""
+        return opensearchpy.OpenSearch(
+            [
+                {
+                    "host": interface.OPENSEARCH_HOST,
+                    "port": interface.OPENSEARCH_PORT,
+                }
+            ],
+            http_compress=True,
+        )
+
     def test_client(self):
         """Client tests."""
         expected_user = "test"
@@ -136,7 +148,9 @@ level: high
         """Client Sigma object tests."""
         sketch = self.api.create_sketch(name="test_sigmarule_create_get")
         sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
-        rule = self.api.create_sigmarule(rule_yaml=f"""
+        # fmt: off
+        rule = self.api.create_sigmarule(
+            rule_yaml=f"""
 title: Suspicious Installation of eeeee
 id: {self.RULEID2}
 description: Detects suspicious installation of eeeee
@@ -157,6 +171,7 @@ falsepositives:
     - Unknown
 level: high
 """)
+        # fmt: on
         self.assertions.assertIsNotNone(rule)
 
         rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
@@ -435,6 +450,108 @@ level: high
         except RuntimeError as e:
             self.assertions.fail(f"Failed to get sketch after soft delete: {e}")
 
+    def test_soft_delete_closes_indices(self):
+        """Test that soft-deleting a sketch closes its OpenSearch indices."""
+        sketch_name = f"test_soft_delete_indices_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+        timeline = self.import_timeline("sigma_events.jsonl", sketch=sketch)
+        index_name = timeline.index_name
+
+        # Verify index is open
+        es = self._get_opensearch_client()
+        stats = es.cat.indices(index=index_name, params={"format": "json"})
+        self.assertions.assertEqual(stats[0].get("status"), "open")
+
+        # Soft delete
+        sketch.delete(force_delete=False)
+
+        # Verify index is closed
+        stats = es.cat.indices(index=index_name, params={"format": "json"})
+        self.assertions.assertEqual(
+            stats[0].get("status"),
+            "close",
+            f"Index {index_name} should be closed",
+        )
+
+    def test_force_delete_soft_deleted_sketch(self):
+        """Test that admins can force-delete a soft-deleted sketch."""
+        sketch_name = f"test_force_delete_soft_deleted_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+        sketch_id = sketch.id
+        timeline = self.import_timeline("sigma_events.jsonl", sketch=sketch)
+        index_name = timeline.index_name
+
+        # Grant admin permission before soft-deleting
+        sketch.add_to_acl(
+            user_list=["admin"],
+            permissions=["read", "write", "delete"],
+        )
+
+        # Soft delete as owner
+        sketch.delete(force_delete=False)
+
+        # 1. Verify it's hidden from owner (should raise NotFoundError)
+        with self.assertions.assertRaises(NotFoundError):
+            _ = self.api.get_sketch(sketch_id).name  # pylint: disable=W0106
+
+        # 2. Verify admin CAN find it and see it is deleted
+        admin_sketch = self.admin_api.get_sketch(sketch_id)
+        self.assertions.assertEqual(
+            admin_sketch.status,
+            "deleted",
+            "Admin should see sketch status as 'deleted'",
+        )
+
+        # 3. Verify admin CAN find it in the list with include_deleted=True
+        resource_url = (
+            f"{self.admin_api.api_root}/sketches/?" "include_deleted=true&scope=admin"
+        )
+        response = self.admin_api.session.get(resource_url)
+        self.assertions.assertEqual(response.status_code, 200)
+        sketch_list = response.json()["objects"]
+        found = any(s["id"] == sketch_id for s in sketch_list)
+        self.assertions.assertTrue(found, "Admin should find deleted sketch in list")
+
+        # 4. Force delete as admin
+        admin_sketch.delete(force_delete=True)
+
+        # Verify it's completely gone (even for admin now)
+        with self.assertions.assertRaises(NotFoundError):
+            _ = self.admin_api.get_sketch(sketch_id).name  # pylint: disable=W0106
+
+        es = self._get_opensearch_client()
+        self.assertions.assertFalse(
+            es.indices.exists(index=index_name), "Index should be deleted"
+        )
+
+    def test_delete_sketch_with_missing_index(self):
+        """Test deleting a sketch where the OpenSearch index is missing."""
+        sketch_name = f"test_delete_missing_index_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+
+        # Import a timeline
+        # Just use the filename, import_timeline handles the full path resolution
+        filename = "sigma_events.jsonl"
+        timeline = self.import_timeline(filename, sketch=sketch)
+        index_name = timeline.index_name
+
+        # Manually delete the index from OpenSearch
+        es = self._get_opensearch_client()
+        es.indices.delete(index=index_name)
+
+        # Delete the sketch
+        # This should succeed despite the missing index (it should just warn
+        # and continue)
+        sketch.delete()
+
+        # Verify it's gone
+        sketches = list(self.api.list_sketches())
+        found = False
+        for s in sketches:
+            if s.id == sketch.id:
+                found = True
+        self.assertions.assertFalse(found, "Sketch should be deleted")
+
     # test to delete a sketch that is archived
     def test_delete_archived_sketch(self):
         """Test deleting an archived sketch."""
@@ -661,38 +778,6 @@ level: high
                 self.assertions.assertEqual(
                     metadata.get("sketch_name"), self.sketch.name
                 )
-
-    def test_delete_sketch_with_missing_index(self):
-        """Test deleting a sketch where the OpenSearch index is missing."""
-        sketch = self.api.create_sketch(name="test_delete_missing_index")
-
-        # Import a timeline
-        # Just use the filename, import_timeline handles the full path resolution
-        filename = "sigma_events.jsonl"
-        timeline = self.import_timeline(filename, sketch=sketch)
-        index_name = timeline.index_name
-        # Manually delete the index from OpenSearch
-        es = opensearchpy.OpenSearch(
-            [{"host": interface.OPENSEARCH_HOST, "port": interface.OPENSEARCH_PORT}],
-            http_compress=True,
-        )
-        es.indices.delete(index=index_name)
-
-        # Switch to admin to force delete (or just delete as owner)
-        # Owner can delete their own sketch.
-
-        # Delete the sketch
-        # This should succeed despite the missing index (it should just warn
-        # and continue)
-        sketch.delete()
-
-        # Verify it's gone
-        sketches = list(self.api.list_sketches())
-        found = False
-        for s in sketches:
-            if s.id == sketch.id:
-                found = True
-        self.assertions.assertFalse(found, "Sketch should be deleted")
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
