@@ -20,7 +20,7 @@ MOCK_YETI_ENTITIES = [
         "aliases": [],
         "family": "miner",
         "id": "2152646",
-        "tags": {},
+        "tags": [],
         "root_type": "entity",
     }
 ]
@@ -315,16 +315,15 @@ tags:
                 "context": [],
                 "last_analysis": {},
                 "id": "46833442",
-                "tags": {
-                    "mimikatz": {
-                        "source": "observables/46833442",
-                        "target": "tags/46833460",
+                "tags": [
+                    {
+                        "name": "mimikatz",
                         "last_seen": "2024-04-18T08:42:11.370806Z",
                         "expires": "2024-05-18T08:42:11.370811Z",
                         "fresh": True,
-                        "id": "tagged/46833473",
+                        "id": None,
                     }
-                },
+                ],
                 "root_type": "observable",
             }
         )
