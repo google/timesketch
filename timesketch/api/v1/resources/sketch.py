@@ -309,13 +309,14 @@ class SketchResource(resources.ResourceMixin, Resource):
     def _get_sketch_for_admin(sketch: Sketch):
         """Returns a limited sketch view for administrators.
 
-        An administrator needs to get information about all sketches
-        that are stored on the backend. However that view should be
-        limited for sketches that user does not have explicit read
-        or other permissions as well. In those cases the returned
-        sketch only contains information about the name, description,
-        etc but not any information about the data, nor any access
-        to the underlying data of the sketch.
+        Administrators may need to access information about any sketch on the
+        system. This method provides a limited view for sketches where the
+        administrator does not have explicit read permissions, or for sketches
+        that are archived or soft-deleted (where associated OpenSearch indices
+        may be closed or unavailable).
+
+        The limited view includes basic metadata like name and description
+        but excludes access to the underlying timeline data.
 
         Args:
             sketch: (object) a sketch object (instance of models.Sketch)
@@ -326,6 +327,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         """
         if sketch.get_status.status == "archived":
             status = "archived"
+        elif sketch.get_status.status == "deleted":
+            status = "deleted"
         else:
             status = "admin_view"
 
@@ -368,6 +371,15 @@ class SketchResource(resources.ResourceMixin, Resource):
         if current_user.admin:
             if not sketch.has_permission(current_user, "read"):
                 return self._get_sketch_for_admin(sketch)
+
+        # If the sketch is soft-deleted, we return a minimal response only for admins.
+        # This is because the OpenSearch indices are closed when a sketch
+        # is soft-deleted, and attempting to load full details (mappings,
+        # counts, etc) would result in a 500 error from OpenSearch.
+        if sketch.get_status.status == "deleted":
+            if not current_user.admin:
+                abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+            return self._get_sketch_for_admin(sketch)
 
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():

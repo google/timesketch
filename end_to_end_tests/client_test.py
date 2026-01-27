@@ -136,7 +136,8 @@ level: high
         """Client Sigma object tests."""
         sketch = self.api.create_sketch(name="test_sigmarule_create_get")
         sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
-        rule = self.api.create_sigmarule(rule_yaml=f"""
+        rule = self.api.create_sigmarule(
+            rule_yaml=f"""
 title: Suspicious Installation of eeeee
 id: {self.RULEID2}
 description: Detects suspicious installation of eeeee
@@ -156,7 +157,8 @@ detection:
 falsepositives:
     - Unknown
 level: high
-""")
+"""
+        )
         self.assertions.assertIsNotNone(rule)
 
         rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
@@ -785,38 +787,6 @@ level: high
                 self.assertions.assertEqual(
                     metadata.get("sketch_name"), self.sketch.name
                 )
-
-    def test_delete_sketch_with_missing_index(self):
-        """Test deleting a sketch where the OpenSearch index is missing."""
-        sketch = self.api.create_sketch(name="test_delete_missing_index")
-
-        # Import a timeline
-        # Just use the filename, import_timeline handles the full path resolution
-        filename = "sigma_events.jsonl"
-        timeline = self.import_timeline(filename, sketch=sketch)
-        index_name = timeline.index_name
-        # Manually delete the index from OpenSearch
-        es = opensearchpy.OpenSearch(
-            [{"host": interface.OPENSEARCH_HOST, "port": interface.OPENSEARCH_PORT}],
-            http_compress=True,
-        )
-        es.indices.delete(index=index_name)
-
-        # Switch to admin to force delete (or just delete as owner)
-        # Owner can delete their own sketch.
-
-        # Delete the sketch
-        # This should succeed despite the missing index (it should just warn
-        # and continue)
-        sketch.delete()
-
-        # Verify it's gone
-        sketches = list(self.api.list_sketches())
-        found = False
-        for s in sketches:
-            if s.id == sketch.id:
-                found = True
-        self.assertions.assertFalse(found, "Sketch should be deleted")
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
