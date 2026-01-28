@@ -275,6 +275,13 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     db_session.add(timeline)
     db_session.commit()
 
+    logger.debug(
+        "Status for timeline (ID: %d) in sketch (ID: %d) set to %s",
+        timeline.id,
+        timeline.sketch.id,
+        status,
+    )
+
     # Refresh the index so it is searchable for the analyzers right away.
     datastore = OpenSearchDataStore()
     # Retry refreshing the index a few times if it fails.
@@ -285,8 +292,10 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
         except NotFoundError:
             if i == 4:  # Last attempt
                 logger.error(
-                    "Unable to refresh index: %s, not found after 5 attempts.",
+                    "Unable to refresh index: %s in sketch (ID: %d), "
+                    "not found after 5 attempts.",
                     timeline.searchindex.index_name,
+                    timeline.sketch.id,
                 )
             else:
                 time.sleep(1)  # Wait a second before retrying
@@ -299,9 +308,11 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
         )
         if sessions:
             logger.info(
-                "Executed %d analyzers on the new timeline (ID: %d)",
+                "Executed %d analyzers on the new timeline (ID: %d) "
+                "in sketch (ID: %d)",
                 len(sessions),
                 timeline.id,
+                timeline.sketch.id,
             )
 
 
