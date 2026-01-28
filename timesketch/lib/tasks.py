@@ -330,7 +330,7 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
                 "in sketch (ID: %d)",
                 len(sessions),
                 timeline.id,
-                timeline.sketch.id,
+                sketch_id,
             )
 
 
