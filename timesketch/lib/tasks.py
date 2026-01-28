@@ -261,6 +261,11 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     ]
 
     if not status:
+        logger.debug(
+            "Calculating status for timeline %d based on datasources: %s",
+            timeline_id,
+            str(list_datasources_status),
+        )
         status = ""
         if len(set(list_datasources_status)) == 1 and "fail" in list_datasources_status:
             status = "fail"
@@ -275,29 +280,42 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     db_session.add(timeline)
     db_session.commit()
 
-    logger.debug(
+    # Defensive check for orphaned timelines to prevent worker crashes.
+    sketch_id = timeline.sketch.id if timeline.sketch else 0
+
+    logger.info(
         "Status for timeline (ID: %d) in sketch (ID: %d) set to %s",
         timeline.id,
-        timeline.sketch.id,
+        sketch_id,
         status,
     )
 
     # Refresh the index so it is searchable for the analyzers right away.
     datastore = OpenSearchDataStore()
     # Retry refreshing the index a few times if it fails.
+    index_name = timeline.searchindex.index_name
     for i in range(5):
         try:
-            datastore.client.indices.refresh(index=timeline.searchindex.index_name)
+            datastore.client.indices.refresh(index=index_name)
             break  # Success
-        except NotFoundError:
+        except Exception as e:  # pylint: disable=broad-except
             if i == 4:  # Last attempt
                 logger.error(
-                    "Unable to refresh index: %s in sketch (ID: %d), "
-                    "not found after 5 attempts.",
-                    timeline.searchindex.index_name,
-                    timeline.sketch.id,
+                    "Unable to refresh index: %s in sketch (ID: %d). "
+                    "Gave up after 5 attempts. Error: %s",
+                    index_name,
+                    sketch_id,
+                    str(e),
+                    exc_info=True,
                 )
             else:
+                # Show error message for attempts 0-4 only if debug is enabled
+                logger.debug(
+                    "Attempt %d to refresh index %s failed: %s",
+                    i + 1,
+                    index_name,
+                    str(e),
+                )
                 time.sleep(1)  # Wait a second before retrying
 
     # If status is set to ready, check for analyzers to execute.
