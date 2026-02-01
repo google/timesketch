@@ -33,42 +33,26 @@ Additional fields come from the imported Plaso file and depend on source type. Y
 
 Timesketch uses special internal fields that are prefixed with `__ts_` or are named `timesketch_label`. These fields are automatically created and managed by Timesketch to track event metadata, annotations, and user interactions.
 
-| Field                    | Description                                                      | Example query                                  |
+| Field                    | Description                                                      | How to Search                                  |
 | ------------------------ | ---------------------------------------------------------------- | ---------------------------------------------- |
-| `timesketch_label`       | Labels/tags applied to events (stars, comments, priority, etc.)  | `timesketch_label.name:"__ts_star"`            |
-| `__ts_star`              | Events marked as starred/favorited                               | `label:"__ts_star"`                            |
-| `__ts_comment`           | Events with user comments attached                               | `label:"__ts_comment"`                         |
+| `timesketch_label`       | Labels/tags applied to events (stars, comments, priority, etc.)  | Use Tags filter in search dropdown             |
+| `__ts_star`              | Events marked as starred/favorited                               | Use Tags filter in search dropdown             |
+| `__ts_comment`           | Events with user comments attached                               | Use Tags filter in search dropdown             |
 | `__ts_timeline_id`       | Internal timeline identifier                                     | `__ts_timeline_id:1`                           |
 | `__ts_emojis`            | Emoji tags added to events                                       | `__ts_emojis:*`                                |
-| `__ts_priority_*`        | Priority level assigned to events (e.g., `__ts_priority_1`)      | `label:"__ts_priority_1"`                      |
+| `__ts_priority_*`        | Priority level assigned to events (e.g., `__ts_priority_1`)      | Use Tags filter in search dropdown             |
 | `comment`                | User comments text on events                                     | `comment:"important observation"`              |
 
 #### Internal Field Usage Examples
 
-**Find all starred events:**
-```
-label:"__ts_star"
-```
+**Find events with internal labels (starred, commented, priority, etc.):**
 
-**Find events with comments:**
-```
-label:"__ts_comment"
-```
+To search for events with internal labels, use the **Tags filter** in the search dropdown:
+1. Click the search bar to open the dropdown
+2. Navigate to the **Tags** section
+3. Select the label you want to filter by (e.g., "⭐ All starred events")
 
-**Find events that are starred but don't have comments:**
-```
-label:"__ts_star" AND NOT label:"__ts_comment"
-```
-
-**Find events with a specific priority level:**
-```
-label:"__ts_priority_1"
-```
-
-**Find events using alternative timesketch_label syntax:**
-```
-timesketch_label.name:"__ts_star"
-```
+> **Note:** The Tags dropdown only shows labels that exist in your sketch. For example, "All starred events" only appears if you have starred at least one event. The `label:"__ts_star"` syntax is not currently supported in the search bar query string.
 
 ### Search operators
 
