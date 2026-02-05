@@ -889,22 +889,22 @@ class OpenSearchDataStore:
             METRICS["search_requests"].labels(type="count").inc()
             return count_result.get("count", 0)
 
-        if not return_fields:
-            # Suppress the lint error because opensearchpy adds parameters
-            # to the function with a decorator and this makes pylint sad.
-            # pylint: disable=unexpected-keyword-arg
-            return self.client.search(
-                body=query_dsl,
-                index=list(indices),
-                search_type=search_type,
-                scroll=scroll_timeout,
-                params={"ignore_unavailable": "true"},
-            )
-
-        # The argument " _source_include" changed to "_source_includes" in
-        # ES version 7. This check add support for both version 6 and 7 clients.
-        # pylint: disable=unexpected-keyword-arg
         try:
+            if not return_fields:
+                # Suppress the lint error because opensearchpy adds parameters
+                # to the function with a decorator and this makes pylint sad.
+                # pylint: disable=unexpected-keyword-arg
+                return self.client.search(
+                    body=query_dsl,
+                    index=list(indices),
+                    search_type=search_type,
+                    scroll=scroll_timeout,
+                    params={"ignore_unavailable": "true"},
+                )
+
+            # The argument " _source_include" changed to "_source_includes" in
+            # ES version 7. This check add support for both version 6 and 7 clients.
+            # pylint: disable=unexpected-keyword-arg
             if self.version.startswith("6"):
                 _search_result = self.client.search(
                     body=query_dsl,
@@ -923,6 +923,26 @@ class OpenSearchDataStore:
                     scroll=scroll_timeout,
                     params={"ignore_unavailable": "true"},
                 )
+        except ConnectionTimeout as e:
+            error_message = (
+                "The search timed out. This often happens if the query is too "
+                "expensive. Try to narrow down your search (e.g. shorter time range) "
+                "or reduce the number of timelines being searched."
+            )
+            if query_string.startswith("*"):
+                error_message += (
+                    " Also, avoid leading wildcards (e.g. *something) in your "
+                    "query as these are very expensive."
+                )
+            os_logger.error(
+                "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. Indices: [%s].",
+                current_user.username,
+                query_string,
+                sketch_id,
+                indices,
+            )
+            raise errors.DatastoreTimeoutError(error_message) from e
+
         except (RequestError, TransportError) as e:
             root_cause = e.info.get("error", {}).get("root_cause")
             if root_cause:

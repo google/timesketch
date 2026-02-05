@@ -81,11 +81,17 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+    <div v-if="searchError && !searchInProgress" class="ml-3">
+      <ts-search-error-card
+        :error-text="searchError"
+      ></ts-search-error-card>
+    </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
       <ts-explore-welcome-card></ts-explore-welcome-card>
     </div>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString" class="ml-3">
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError" class="ml-3">
       <ts-search-not-found-card
         :currentQueryString="currentQueryString"
         :filterChips="filterChips"
@@ -517,6 +523,7 @@ import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
 import TsExploreWelcomeCard from './ExploreWelcomeCard.vue'
 import TsSearchNotFoundCard from './SearchNotFoundCard.vue'
+import TsSearchErrorCard from './SearchErrorCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -549,6 +556,7 @@ export default {
     TsEventTags,
     TsExploreWelcomeCard,
     TsSearchNotFoundCard,
+    TsSearchErrorCard,
   },
   mixins: [EventMixin],
   props: {
@@ -640,6 +648,7 @@ export default {
       summaryCollapsed: false,
       showBanner: false,
       showExportLimitDialog: false,
+      searchError: '',
     }
   },
   computed: {
@@ -886,6 +895,7 @@ export default {
       this.searchInProgress = true
       this.selectedEvents = []
       this.eventList = emptyEventList()
+      this.searchError = ''
 
       if (resetPagination) {
         this.tableOptions.page = 1
@@ -956,6 +966,7 @@ export default {
           }
         })
         .catch((e) => {
+          this.searchInProgress = false
           let msg = 'Sorry, there was a problem fetching your search results. Error: "' + e.response.data.message + '"'
           if (
             e.response.data.message.includes('too_many_nested_clauses') ||
@@ -967,6 +978,7 @@ export default {
           } else {
             this.errorSnackBar(msg)
           }
+          this.searchError = msg
           console.error('Error message: ' + msg)
           console.error(e)
         })

@@ -59,3 +59,7 @@ class DatastoreConnectionError(Error):
 
 class DatastoreQueryError(Error):
     """Error with the datastore query."""
+
+
+class DatastoreTimeoutError(Error):
+    """Error with the datastore timeout."""
