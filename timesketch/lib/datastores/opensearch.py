@@ -829,7 +829,7 @@ class OpenSearchDataStore:
             ValueError: If there is a RequestError or TransportError from
                 OpenSearch during the search execution, indicating an issue
                 with the query or connection.
-            DatastoreTimeoutError: If quering OpenSearch times out.
+            DatastoreTimeoutError: If querying OpenSearch times out.
         """
         scroll_timeout = None
         if enable_scroll:
