@@ -934,7 +934,8 @@ class OpenSearchDataStore:
                     "query as these are very resource expensive."
                 )
             os_logger.error(
-                "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. Indices: [%s].",
+                "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. "
+                "Indices: [%s].",
                 current_user.username,
                 query_string,
                 sketch_id,
