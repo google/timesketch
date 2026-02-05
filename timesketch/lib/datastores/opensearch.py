@@ -925,15 +925,16 @@ class OpenSearchDataStore:
                     params={"ignore_unavailable": "true"},
                 )
         except ConnectionTimeout as e:
+            wildcard_warning = ""
+            if query_string.startswith("*"):
+                wildcard_warning = (
+                    " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in "
+                    "your search query as these are very resource expensive."
+                )
             error_message = (
                 "The search timed out. Try to search a specific field or narrow "
-                "down the time range."
+                f"down the time range.{wildcard_warning}"
             )
-            if query_string.startswith("*"):
-                error_message += (
-                    " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in your "
-                    "query as these are very resource expensive."
-                )
             os_logger.error(
                 "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. "
                 "Indices: [%s].",
