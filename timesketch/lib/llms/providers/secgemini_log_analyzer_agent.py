@@ -256,8 +256,16 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     specific_fields = {"_id": event.get("_id", "")}
                     source = event.get("_source", event)
 
+                    # Sec-Gemini cannot handle +0000 timezone offsets, convert to Z
                     for key in ["data_type", "datetime", "message", "timestamp_desc"]:
-                        specific_fields[key] = source.get(key, "")
+                        value = source.get(key, "")
+                        if (
+                            key == "datetime"
+                            and isinstance(value, str)
+                            and value.endswith("+0000")
+                        ):
+                            value = value.replace("+0000", "Z")
+                        specific_fields[key] = value
 
                     # Explicitly stringify the tag field for now
                     specific_fields["tag"] = json.dumps(source.get("tag", []))
