@@ -92,7 +92,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             "enrichment": "tag",
             "timestamp": "datetime",
         }
-        self.enable_logging = self.config.get("enable_logging", True)
+        self.enable_logging = self.config.get("enable_logging", False)
         self._events_sent = 0
         self._session = None
         self.session_id = None
@@ -256,8 +256,16 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     specific_fields = {"_id": event.get("_id", "")}
                     source = event.get("_source", event)
 
+                    # Sec-Gemini cannot handle +0000 timezone offsets, convert to +00:00
                     for key in ["data_type", "datetime", "message", "timestamp_desc"]:
-                        specific_fields[key] = source.get(key, "")
+                        value = source.get(key, "")
+                        if (
+                            key == "datetime"
+                            and isinstance(value, str)
+                            and value.endswith("+0000")
+                        ):
+                            value = value.replace("+0000", "+00:00")
+                        specific_fields[key] = value
 
                     # Explicitly stringify the tag field for now
                     specific_fields["tag"] = json.dumps(source.get("tag", []))
