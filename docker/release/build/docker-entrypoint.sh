@@ -6,6 +6,7 @@ NUM_WSGI_WORKERS="${NUM_WSGI_WORKERS:-4}"
 if [ "$1" = "timesketch-web" ]; then
   export TIMESKETCH_UI_MODE="ng"
   gunicorn --bind 0.0.0.0:5000 --log-file /var/log/timesketch/wsgi.log \
+           -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py \
            --error-logfile /var/log/timesketch/wsgi_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
            --workers ${NUM_WSGI_WORKERS} \
@@ -15,6 +16,7 @@ if [ "$1" = "timesketch-web" ]; then
 elif [ "$1" = "timesketch-web-legacy" ]; then
   export TIMESKETCH_UI_MODE="legacy"
   gunicorn --bind 0.0.0.0:5001 --log-file /var/log/timesketch/wsgi_legacy.log \
+           -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py \
            --error-logfile /var/log/timesketch/wsgi_legacy_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
            --workers ${NUM_WSGI_WORKERS} \
@@ -24,6 +26,7 @@ elif [ "$1" = "timesketch-web-legacy" ]; then
 elif [ "$1" = "timesketch-web-v3" ]; then
   export TIMESKETCH_UI_MODE="v3"
   gunicorn --bind 0.0.0.0:5002 --log-file /var/log/timesketch/wsgi_v3.log \
+           -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py \
            --error-logfile /var/log/timesketch/wsgi_v3_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
            --workers ${NUM_WSGI_WORKERS} \

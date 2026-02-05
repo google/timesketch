@@ -13,6 +13,7 @@
 # limitations under the License.
 """Entry point for the application."""
 
+import json
 import logging
 import os
 import sys
@@ -232,7 +233,7 @@ def create_app(
 
 
 def configure_logger():
-    """Configure the logger."""
+    """Configure the logger with optional Structured JSON logging."""
 
     class NoESFilter(logging.Filter):
         """Custom filter to filter out ES logs"""
@@ -241,15 +242,50 @@ def configure_logger():
             """Filter out records."""
             return not record.name.lower() == "opensearch"
 
-    logger_formatter = logging.Formatter(
-        "[%(asctime)s] %(name)s/%(levelname)s %(message)s"
-    )
-    logger_filter = NoESFilter()
-    logger_object = logging.getLogger("timesketch")
+    class JSONLogFormatter(logging.Formatter):
+        """Formats logs as JSON for Kubernetes/Cloud environments."""
+        def format(self, record):
+            level_name = record.levelname.upper()
+            std_level = "WARNING" if level_name == "WARN" else level_name
 
-    for handler in logger_object.parent.handlers:
-        handler.setFormatter(logger_formatter)
+            log_record = {
+                "message": record.getMessage(),
+                "severity": std_level,
+                "level": std_level,
+                "timestamp": self.formatTime(record, self.datefmt),
+                "logger": record.name,
+                "pid": record.process,
+                "module": record.module,
+            }
+
+            if record.exc_info:
+                formatted_trace = self.formatException(record.exc_info)
+                log_record["exc_info"] = formatted_trace
+                log_record["stack_trace"] = formatted_trace
+
+            return json.dumps(log_record)
+
+    logger_object = logging.getLogger("timesketch")
+    logger_filter = NoESFilter()
+
+    use_structured_logging = os.environ.get("ENABLE_STRUCTURED_LOGGING", "false").lower() == "true"
+
+    if use_structured_logging:
+        logger_object.parent.handlers = []
+
+        # Send everything to stdout
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(JSONLogFormatter(datefmt="%Y-%m-%dT%H:%M:%S%z"))
         handler.addFilter(logger_filter)
+        logger_object.parent.addHandler(handler)
+
+    else:
+        logger_formatter = logging.Formatter(
+            "[%(asctime)s] %(name)s/%(levelname)s %(message)s"
+        )
+        for handler in logger_object.parent.handlers:
+            handler.setFormatter(logger_formatter)
+            handler.addFilter(logger_filter)
 
 
 def create_celery_app():
