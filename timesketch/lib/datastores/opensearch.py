@@ -925,14 +925,13 @@ class OpenSearchDataStore:
                 )
         except ConnectionTimeout as e:
             error_message = (
-                "The search timed out. This often happens if the query is too "
-                "expensive. Try to narrow down your search (e.g. shorter time range) "
-                "or reduce the number of timelines being searched."
+                "The search timed out. Try to search a specific field or narrow "
+                " down the time range."
             )
             if query_string.startswith("*"):
                 error_message += (
-                    " Also, avoid leading wildcards (e.g. *something) in your "
-                    "query as these are very expensive."
+                    " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in your "
+                    "query as these are very resource expensive."
                 )
             os_logger.error(
                 "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. Indices: [%s].",

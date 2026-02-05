@@ -26,19 +26,17 @@ limitations under the License.
           <v-icon large left color="error">mdi-alert-circle-outline</v-icon>
           Search Failed
           <v-spacer></v-spacer>
-          <v-btn v-if="inDialog" icon @click="$emit('close-dialog')" title="Close dialog">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
         </v-card-title>
         <v-card-subtitle class="mt-1">
           <p>
-            {{ errorText }}
+            <b>{{ errorText }}</b>
           </p>
           <p>Suggestions:</p>
           <ul>
-            <li>Try different keywords.</li>
-            <li>Try more general keywords.</li>
-            <li>Try fewer keywords.</li>
+            <li>Avoid leading wildcards like <code>*searchterm*</code></li>
+            <li>Try searching a specific field like <code>message:*searchterm*</code></li>
+            <li>Escape <a href="https://docs.opensearch.org/latest/query-dsl/full-text/query-string/#reserved-characters" target="_blank">reserved characters</a> in your query.</li>
+            <li>Try a shorter time range.</li>
             <li>Try some of the search examples below.</li>
           </ul>
         </v-card-subtitle>
