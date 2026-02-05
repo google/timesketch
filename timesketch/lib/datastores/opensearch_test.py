@@ -47,11 +47,14 @@ class OpenSearchDataStoreTest(BaseTest):
             ds.search(sketch_id=1, indices=["test"], query_string="test")
 
         self.assertIn("The search timed out", str(cm.exception))
-        self.assertIn("Try to narrow down your search", str(cm.exception))
+        self.assertIn(
+            "Try to search a specific field or narrow down the time range",
+            str(cm.exception),
+        )
 
         # Test wildcard specific message
         with self.assertRaises(DatastoreTimeoutError) as cm:
             ds.search(sketch_id=1, indices=["test"], query_string="*test")
 
         self.assertIn("The search timed out", str(cm.exception))
-        self.assertIn("avoid leading wildcards", str(cm.exception))
+        self.assertIn("Avoid leading wildcards", str(cm.exception))

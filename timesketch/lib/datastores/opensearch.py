@@ -829,6 +829,7 @@ class OpenSearchDataStore:
             ValueError: If there is a RequestError or TransportError from
                 OpenSearch during the search execution, indicating an issue
                 with the query or connection.
+            DatastoreTimeoutError: If quering OpenSearch times out.
         """
         scroll_timeout = None
         if enable_scroll:
@@ -926,7 +927,7 @@ class OpenSearchDataStore:
         except ConnectionTimeout as e:
             error_message = (
                 "The search timed out. Try to search a specific field or narrow "
-                " down the time range."
+                "down the time range."
             )
             if query_string.startswith("*"):
                 error_message += (
