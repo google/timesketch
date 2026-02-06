@@ -39,8 +39,10 @@ from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
+from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
@@ -238,6 +240,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     timeline_ids=timeline_ids,
                     count=True,
                 )
+            except DatastoreTimeoutError as e:
+                abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
@@ -290,6 +294,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     enable_scroll=enable_scroll,
                     timeline_ids=timeline_ids,
                 )
+            except DatastoreTimeoutError as e:
+                abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
