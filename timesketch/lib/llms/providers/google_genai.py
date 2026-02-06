@@ -123,7 +123,6 @@ class GoogleGenAI(interface.LLMProvider):
         return response.text
 
 
-# Only register the provider if the required dependencies are installed.
 if has_required_deps:
     manager.LLMManager.register_provider(GoogleGenAI)
 
