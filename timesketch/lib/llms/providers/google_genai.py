@@ -20,7 +20,6 @@ from typing import Any, Optional
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
 
-# Check if the required dependencies are installed.
 has_required_deps = True
 try:
     from google import genai
