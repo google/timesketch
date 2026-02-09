@@ -2872,7 +2872,17 @@
 <p>If you click on the "More" Button in the Sketch Overview, you get the following three options.</p>
 <p><img alt="Sketch Overview more dialogue" src="/assets/images/SketchMore.png" /></p>
 <h3 id="delete">Delete</h3>
-<p>Delete the whole sketch. <em>Note:</em> this will not delete the Timelines.</p>
+<p>Deletes the sketch.</p>
+<ul>
+<li><strong>Soft Delete (Default):</strong> The sketch is marked as deleted in the database but all associated data (timelines, indices) remains intact. It is just not shown in the UI anymore.</li>
+<li><strong>Hard Delete (<code>force_delete</code>):</strong> Permanently removes the sketch and its associated data. This operation is restricted to administrators and not available via the UI and follows a safe order of operations to ensure no orphaned data is left behind:<ol>
+<li><strong>OpenSearch Indices:</strong> The raw event data is deleted from OpenSearch first.</li>
+<li><strong>Timelines:</strong> The timeline records are removed from the database.</li>
+<li><strong>Search Indices:</strong> The search index metadata is removed.</li>
+<li><strong>Sketch:</strong> Finally, the sketch itself is deleted.</li>
+</ol>
+</li>
+</ul>
 <h3 id="archive">Archive</h3>
 <p>Archiving a sketch is a way to preserve it in a archived state while freeing up system resources. When a sketch is archived:
 - It is hidden from the default list of sketches.
