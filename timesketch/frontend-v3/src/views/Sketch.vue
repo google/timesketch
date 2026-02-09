@@ -220,13 +220,13 @@ limitations under the License.
         :width="navigationDrawer.width"
       >
       <!-- TODO: content of left panel -->
-        <ts-investigation
+        <ts-investigation-item
           v-if="systemSettings.DFIQ_ENABLED || (systemSettings.LLM_FEATURES_AVAILABLE &&
             systemSettings.LLM_FEATURES_AVAILABLE.log_analyzer)"
           :icon-only="isMiniDrawer"
           @toggleDrawer="toggleDrawer()"
         >
-        </ts-investigation>
+        </ts-investigation-item>
         <!-- TODO: Replace with ts-search again once the explore/search view is feature complete in v3 -->
         <!-- <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search> -->
         <ts-v2-explore :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-v2-explore>
@@ -302,7 +302,7 @@ import TsShareCard from '../components/ShareCard.vue'
 import TsSearch from '../components/LeftPanel/Search.vue'
 import TsExampleLeftBar from '../components/LeftPanel/ExampleLeftBar.vue'
 import TsEventList from '@/components/Explore/EventList.vue'
-import TsInvestigation from '../components/LeftPanel/Investigation.vue'
+import TsInvestigationItem from '../components/LeftPanel/InvestigationItem.vue'
 import Notifications from '../components/Notifications.vue'
 import TsV2Explore from '../components/LeftPanel/v2Explore.vue';
 import TsSketchAccessDenied from '../components/SketchAccessDenied.vue';
@@ -317,7 +317,7 @@ export default {
     TsExampleLeftBar,
     TsShareCard,
     TsEventList,
-    TsInvestigation,
+    TsInvestigationItem,
     Notifications,
     TsV2Explore,
     TsSketchAccessDenied,
