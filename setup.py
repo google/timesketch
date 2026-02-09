@@ -51,8 +51,8 @@ def parse_requirements_from_file(path):
     """
     with open(path, "r", encoding="utf-8") as file_object:
         for line in file_object:
-            line = line.strip()
-            if not line or line.startswith("#"):
+            line = line.split("#", 1)[0].strip()
+            if not line:
                 continue
             yield line
 
