@@ -119,14 +119,19 @@ class GoogleGenAI(interface.LLMProvider):
 
 manager.LLMManager.register_provider(GoogleGenAI)
 
+
 # Register aliases for backward compatibility with old configuration names.
 class VertexAI(GoogleGenAI):
     """Alias for VertexAI."""
+
     NAME = "vertexai"
+
 
 class AIStudio(GoogleGenAI):
     """Alias for AI Studio."""
+
     NAME = "aistudio"
+
 
 manager.LLMManager.register_provider(VertexAI)
 manager.LLMManager.register_provider(AIStudio)
