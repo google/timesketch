@@ -845,8 +845,8 @@ level: high
         # request. If we use sketch.delete(), it sends a DELETE request.
         # We want force=true.
 
-        session = self.api.session
-        resource_url = f"{self.api._host_uri}/api/v1/sketches/{sketch.id}/?force=true"
+        session = self.admin_api.session
+        resource_url = f"{self.admin_api.api_root}/sketches/{sketch.id}/?force=true"
         response = session.delete(resource_url)
 
         self.assertions.assertEqual(response.status_code, 200)
@@ -885,9 +885,7 @@ level: high
 
         # 2. Add the SAME search index to Sketch B
         # We use a direct API request since add_timeline is deprecated in client
-        resource_url = (
-            f"{self.api._host_uri}/api/v1/sketches/{sketch_b.id}/timelines/"
-        )
+        resource_url = f"{self.api.api_root}/sketches/{sketch_b.id}/timelines/"
         data = {"timeline": search_index_obj.id}
         response = self.api.session.post(resource_url, json=data)
         self.assertions.assertEqual(response.status_code, 201)
