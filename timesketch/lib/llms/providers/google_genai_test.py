@@ -17,11 +17,9 @@ import unittest
 from unittest import mock
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.llms.providers.google_genai import GoogleGenAI
-from timesketch.lib.llms.providers.google_genai import has_required_deps
 
 
 # pylint: disable=protected-access
-@unittest.skipUnless(has_required_deps, "google-genai not installed")
 class TestGoogleGenAI(BaseTest):
     """Tests for the Google GenAI provider."""
 

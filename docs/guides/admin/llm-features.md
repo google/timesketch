@@ -15,7 +15,8 @@ the steps required to configure these features for Timesketch administrators.
 To use LLM features, specific Python libraries must be installed in the
 Timesketch container. Depending on your provider, you will need:
 
-*  **Google GenAI:** `google-genai` (Supports both Vertex AI and Gemini API)
+*  **Google GenAI:** `google-genai` (Comes preinstalled since v20260209 -
+                      Supports both Vertex AI and Gemini API)
 *  **Sec-Gemini:** `sec_gemini`
 
 There are two ways to install these dependencies:
@@ -29,7 +30,7 @@ ensures the libraries persist across container restarts and upgrades.
 
     ```
     docker build \
-      --build-arg EXTRA_PIP_PACKAGES="google-genai sec_gemini" \
+      --build-arg EXTRA_PIP_PACKAGES="sec_gemini" \
       -t timesketch:ai-enabled .
     ```
 
@@ -46,8 +47,8 @@ a running container.
 
 ```
 # For Google GenAI
-sudo docker exec timesketch-web pip install google-genai
-sudo docker exec timesketch-worker pip install google-genai
+sudo docker exec timesketch-web pip install sec_gemini
+sudo docker exec timesketch-worker pip install sec_gemini
 ```
 
 ## LLM Provider Configuration

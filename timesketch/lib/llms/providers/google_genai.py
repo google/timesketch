@@ -17,15 +17,10 @@ import json
 import logging
 from typing import Any, Optional
 
+from google import genai
+from google.genai import types
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
-
-has_required_deps = True
-try:
-    from google import genai
-    from google.genai import types
-except ImportError:
-    has_required_deps = False
 
 logger = logging.getLogger("timesketch.llm.providers.google_genai")
 
@@ -122,19 +117,16 @@ class GoogleGenAI(interface.LLMProvider):
         return response.text
 
 
-if has_required_deps:
-    manager.LLMManager.register_provider(GoogleGenAI)
+manager.LLMManager.register_provider(GoogleGenAI)
 
-    # Register aliases for backward compatibility with old configuration names.
-    class VertexAI(GoogleGenAI):
-        """Alias for VertexAI."""
+# Register aliases for backward compatibility with old configuration names.
+class VertexAI(GoogleGenAI):
+    """Alias for VertexAI."""
+    NAME = "vertexai"
 
-        NAME = "vertexai"
+class AIStudio(GoogleGenAI):
+    """Alias for AI Studio."""
+    NAME = "aistudio"
 
-    class AIStudio(GoogleGenAI):
-        """Alias for AI Studio."""
-
-        NAME = "aistudio"
-
-    manager.LLMManager.register_provider(VertexAI)
-    manager.LLMManager.register_provider(AIStudio)
+manager.LLMManager.register_provider(VertexAI)
+manager.LLMManager.register_provider(AIStudio)
