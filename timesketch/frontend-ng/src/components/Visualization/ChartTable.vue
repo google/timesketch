@@ -26,10 +26,10 @@ limitations under the License.
         :items="items"
         dense
       >
-        <template v-slot:header.field="{ header }">
+        <template v-slot:[`header.field`]="{ header }">
           {{ header.text }} 
         </template>
-        <template v-slot:item.field="{ item }">
+        <template v-slot:[`item.field`]="{ item }">
           <v-container
             class="pl-0"
             @mouseover="c_key = item.field"
@@ -75,7 +75,7 @@ limitations under the License.
             </v-btn>
           </v-container>
         </template>
-        <template v-slot:item.metric="{ item }">
+        <template v-slot:[`item.metric`]="{ item }">
           <v-container
             class="pl-0"
             @mouseover="c_key = item.field"
