@@ -42,7 +42,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.lib.aggregators import manager as aggregator_manager
 
-
 logger = logging.getLogger("timesketch.timeline_api")
 
 

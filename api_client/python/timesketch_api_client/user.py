@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 import logging
 
 from . import error
 from . import resource
-
 
 logger = logging.getLogger("timesketch_api.user")
 

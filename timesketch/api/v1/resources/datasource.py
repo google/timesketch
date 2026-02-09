@@ -32,7 +32,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
 
-
 logger = logging.getLogger("timesketch.datasource_api")
 
 

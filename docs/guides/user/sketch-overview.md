@@ -141,8 +141,13 @@ Unarchiving a sketch restores it to a fully active and writable state. This acti
 
 ### Export
 
-Export will export the following items:
+Export allows you to download sketch data. In the Web UI, this will export a
+comprehensive ZIP file containing:
 
-- events (starred, tagged, tagged_event_stats, comments, ...)
-- stories as html
-- views (as csv)
+- Events (starred, tagged, tagged_event_stats, comments, ...)
+- Stories as HTML
+- Views (as CSV)
+- Metadata
+
+This is equivalent to the `--use_sketch_export` option in the [CLI tool](cli-client.md#export-a-sketch).
+By default, the CLI tool exports just the events from the sketch.

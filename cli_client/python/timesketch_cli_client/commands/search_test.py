@@ -24,7 +24,6 @@ from .. import test_lib
 from .search import saved_searches_group
 from .search import search_group
 
-
 EXPECTED_OUTPUT = """query_string: test:"foobar"
 query_filter: {
   "size": 10000,

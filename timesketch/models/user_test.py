@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the user model."""
 
-
 from timesketch.lib.testlib import ModelBaseTest
 from timesketch.models.user import Group
 from timesketch.models.user import User

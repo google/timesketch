@@ -125,10 +125,12 @@ def create_sketch(
 ) -> None:
     """Creates a new sketch.
 
-    Creates a new Timesketch sketch with the specified name and optional description.
+    Creates a new Timesketch sketch with the specified name and optional
+    description.
 
     Args:
-        ctx (click.Context): The Click context object, containing the API client.
+        ctx (click.Context): The Click context object, containing the API
+            client.
         name (str): The name of the new sketch.
         description (Optional[str]): The description of the new sketch
             (defaults to the name if not provided).
@@ -148,25 +150,45 @@ def create_sketch(
 
 @sketch_group.command("export", help="Export a sketch")
 @click.option("--filename", required=True, help="Filename to export to.")
+@click.option(
+    "--stream", is_flag=True, help="Stream the download to avoid memory issues."
+)
+@click.option(
+    "--use_sketch_export",
+    is_flag=True,
+    help="Use the sketch export functionality instead of search.",
+)
 @click.pass_context
-def export_sketch(ctx: click.Context, filename: str) -> None:
+def export_sketch(
+    ctx: click.Context, filename: str, stream: bool, use_sketch_export: bool
+) -> None:
     """Export a sketch to a file.
-
-    Exports all events within the active sketch to a specified file.
+    By default, this command uses the search-based export, which fetches
+    all events from the sketch and saves them to a ZIP file containing
+    a CSV of the results and metadata.
+    If the `--use_sketch_export` flag is provided, it uses the full sketch
+    export functionality. This creates a comprehensive ZIP file that includes
+    not only all events but also stories (as HTML), aggregations, views,
+    and metadata associated with the sketch.
+    The `--stream` flag can be used with either method to download the file in
+    chunks, which is recommended for large exports to avoid memory issues.
     The export process can take a significant amount of time depending on the
     sketch size.
-
     Args:
         ctx (click.Context): The Click context object, containing the sketch.
         filename (str): The name of the file to export the sketch data to.
+        stream (bool): Whether to stream the download (recommended for large
+            exports to avoid memory issues).
+        use_sketch_export (bool): Whether to use the full sketch export
+            functionality instead of the default search-based event export.
 
     Raises:
-        click.exceptions.Exit: If a ValueError occurs during the export process.
+        click.exceptions.Exit: If an error occurs during the export process.
 
     Outputs:
         Text: Messages indicating the start, progress, and completion of the
             export process, including the time taken.
-        Error message: If a ValueError occurs during export.
+        Error message: If an error occurs during export.
     """
     sketch = ctx.obj.sketch
     click.echo("Executing export . . . ")
@@ -174,17 +196,16 @@ def export_sketch(ctx: click.Context, filename: str) -> None:
     # start counting the time the export took
     start_time = time.time()
     try:
-        search_obj = search.Search(sketch=sketch)
-
-        click.echo(f"Number of events in that sketch: {search_obj.expected_size}")
-
-        search_obj.to_file(filename)
-        # Using the sketch.export function could be an alternative here
-        # TODO: https://github.com/google/timesketch/issues/2344
+        if use_sketch_export:
+            sketch.export(filename, stream=stream)
+        else:
+            search_obj = search.Search(sketch=sketch)
+            click.echo(f"Number of events in that sketch: {search_obj.expected_size}")
+            search_obj.to_file(filename, stream=stream)
         end_time = time.time()
         click.echo(f"Export took {end_time - start_time} seconds")
         click.echo("Finish")
-    except ValueError as e:
+    except Exception as e:  # pylint: disable=broad-except
         click.echo(f"Error: {e}")
         ctx.exit(1)
 

@@ -40,7 +40,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
 
-
 logger = logging.getLogger("timesketch.api_upload")
 
 
@@ -97,7 +96,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if data_label in ("csv", "json", "jsonl"):
             data_label = "csv_jsonl"
 
-        indices = [t.searchindex for t in sketch.active_timelines]
+        indices = (
+            t.searchindex
+            for t in sketch.timelines
+            if t.get_status.status not in ("deleted", "archived")
+        )
         for index in indices:
             if index.has_label(data_label) and sketch.has_permission(
                 permission="write", user=current_user

@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
-
 import requests
 
 from flask import abort
@@ -317,15 +316,6 @@ def validate_api_token():
             )
 
     allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
-    # TODO: Remove that after a 6 months, this following check is to ensure
-    # compatibility of config file
-    if not allowed_users:
-        current_app.logger.warning(
-            "Warning, GOOGLE_OIDC_USER_WHITELIST has "
-            "been deprecated. Please update "
-            "timesketch.conf."
-        )
-        allowed_users = current_app.config.get("GOOGLE_OIDC_USER_WHITELIST", [])
 
     # Check if the authenticating user is on the allow list.
     if allowed_users:

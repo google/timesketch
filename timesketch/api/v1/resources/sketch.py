@@ -47,7 +47,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 
-
 logger = logging.getLogger("timesketch.sketch_api")
 
 
