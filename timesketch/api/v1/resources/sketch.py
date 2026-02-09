@@ -783,6 +783,11 @@ class SketchResource(resources.ResourceMixin, Resource):
             is_any_timeline_processing = any(
                 t.get_status.status == "processing" for t in sketch.timelines
             )
+            if is_any_timeline_processing:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Cannot delete sketch: one or more timelines are still processing.",
+                )
 
         sketch.set_status(status="deleted")
 
