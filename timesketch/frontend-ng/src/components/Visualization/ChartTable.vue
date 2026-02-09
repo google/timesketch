@@ -26,7 +26,7 @@ limitations under the License.
         :items="items"
         dense
       >
-        <template v-slot:header.field="{ header }">
+        <template v-slot:[`header.field`]="{ header }">
           {{ header.text }} 
         </template>
         <template v-slot:[`item.field`]="{ item }">
