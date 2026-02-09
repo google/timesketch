@@ -31,6 +31,25 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="showExportLimitDialog" width="500">
+      <v-card class="pa-4">
+        <h3 class="mb-4">Export limit reached</h3>
+        <p>
+          Downloading more than 10,000 events is not supported in the UI due to database limitations. Please use the
+          Timesketch CLI client to export larger datasets.
+        </p>
+        <p>
+          <a href="https://timesketch.org/guides/user/cli-client/#search" target="_blank" rel="noopener noreferrer">
+            Timesketch CLI Client Documentation
+          </a>
+        </p>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="showExportLimitDialog = false"> Close </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
       <v-card class="pa-4">
         <h3>Save Search</h3>
@@ -62,11 +81,17 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+    <div v-if="searchError && !searchInProgress" class="ml-3">
+      <ts-search-error-card
+        :error-text="searchError"
+      ></ts-search-error-card>
+    </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
       <ts-explore-welcome-card></ts-explore-welcome-card>
     </div>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString" class="ml-3">
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError" class="ml-3">
       <ts-search-not-found-card
         :currentQueryString="currentQueryString"
         :filterChips="filterChips"
@@ -498,6 +523,7 @@ import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
 import TsExploreWelcomeCard from './ExploreWelcomeCard.vue'
 import TsSearchNotFoundCard from './SearchNotFoundCard.vue'
+import TsSearchErrorCard from './SearchErrorCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -530,6 +556,7 @@ export default {
     TsEventTags,
     TsExploreWelcomeCard,
     TsSearchNotFoundCard,
+    TsSearchErrorCard,
   },
   mixins: [EventMixin],
   props: {
@@ -620,6 +647,8 @@ export default {
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
+      showExportLimitDialog: false,
+      searchError: '',
     }
   },
   computed: {
@@ -866,6 +895,7 @@ export default {
       this.searchInProgress = true
       this.selectedEvents = []
       this.eventList = emptyEventList()
+      this.searchError = ''
 
       if (resetPagination) {
         this.tableOptions.page = 1
@@ -936,6 +966,7 @@ export default {
           }
         })
         .catch((e) => {
+          this.searchInProgress = false
           let msg = 'Sorry, there was a problem fetching your search results. Error: "' + e.response.data.message + '"'
           if (
             e.response.data.message.includes('too_many_nested_clauses') ||
@@ -947,6 +978,7 @@ export default {
           } else {
             this.errorSnackBar(msg)
           }
+          this.searchError = msg
           console.error('Error message: ' + msg)
           console.error(e)
         })
@@ -970,6 +1002,10 @@ export default {
         })
     },
     exportSearchResult: function () {
+      if (this.totalHits > 10000) {
+        this.showExportLimitDialog = true
+        return
+      }
       this.exportDialog = true
       const now = new Date()
       const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'

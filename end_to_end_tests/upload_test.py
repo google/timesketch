@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests of Timesketch upload functionality."""
+
 import os
-import random
+import uuid
 import json
 
 from timesketch_api_client import search
@@ -36,7 +37,7 @@ class UploadTest(interface.BaseEndToEndTest):
     def test_normal_upload_json(self):
         """Test the upload of a json file with a few events."""
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_normal_upload_json {rand}")
         self.sketch = sketch
 
@@ -59,7 +60,7 @@ class UploadTest(interface.BaseEndToEndTest):
         number of events in the timeline is correct."""
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_large_upload_json {rand}")
         self.sketch = sketch
 
@@ -95,7 +96,7 @@ class UploadTest(interface.BaseEndToEndTest):
         """
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(
             name=f"test_upload_jsonl_mapping_exceeds_limit {rand}"
         )
@@ -115,11 +116,9 @@ class UploadTest(interface.BaseEndToEndTest):
                     "data_type": "test:jsonl",
                 }
                 for j in range(num_keys_per_line):
-                    key = f"field_name_{j}_{random.randint(0, 100000)}"
-                    while key in all_keys:  # Avoid duplicate keys
-                        key = f"field_name_{random.randint(0, 100000)}"
+                    key = f"field_name_{j}_{uuid.uuid4().hex}"
                     all_keys.add(key)
-                    line_data[key] = f"value_{j}_{random.randint(0, 10000)}"
+                    line_data[key] = f"value_{j}_{uuid.uuid4().hex}"
 
                 json.dump(line_data, file_object)
                 file_object.write("\n")
@@ -150,7 +149,7 @@ class UploadTest(interface.BaseEndToEndTest):
         number of events in the timeline is correct."""
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test__very_large_upload_json {rand}")
         self.sketch = sketch
 
@@ -196,7 +195,7 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 
@@ -240,7 +239,7 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 
@@ -289,7 +288,7 @@ class UploadTest(interface.BaseEndToEndTest):
         in a distant future. This test can reveal edge cases that might occur
         when tools produce a "fake" datetime value"""
 
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(
             name=f"datetime_out_of_normal_range_in_csv_{rand}"
         )
@@ -323,7 +322,7 @@ class UploadTest(interface.BaseEndToEndTest):
         """Test uploading a timeline with different precision of timestamps."""
 
         # create a new sketch
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"csv_different_timestamps_{rand}")
         self.sketch = sketch
 
@@ -389,7 +388,7 @@ class UploadTest(interface.BaseEndToEndTest):
     def test_plaso_import(self):
         """Test the upload of a plaso file with a few events."""
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_plaso_import_{rand}")
         self.sketch = sketch
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module holds utility functions for the version 1 of the API."""
+
 import logging
 import json
 import time
@@ -34,7 +35,6 @@ from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.models import db_session
 from timesketch.models.sketch import View
-
 
 logger = logging.getLogger("timesketch.api_utils")
 

@@ -99,7 +99,7 @@ export default {
     },
     copyEventUrlToClipboard() {
       try {
-        let eventUrl = window.location.origin + this.$route.path + '?q=_id:' + this.event._id
+        let eventUrl = window.location.origin + this.$route.path + '?q=_id:"' + this.event._id + '"'
         navigator.clipboard.writeText(eventUrl)
         this.infoSnackBar('Event URL copied to clipboard')
       } catch (error) {

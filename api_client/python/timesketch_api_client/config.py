@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API library for reading/parsing configs."""
+
 from typing import Any
 from typing import Dict
 from typing import List
@@ -30,7 +31,6 @@ from . import client
 from . import cli_input
 from . import credentials as ts_credentials
 from . import crypto
-
 
 logger = logging.getLogger("timesketch_api.config_assistance")
 

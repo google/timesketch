@@ -44,7 +44,6 @@ from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Sketch
 
-
 logger = logging.getLogger("timesketch.api.aggregation")
 
 

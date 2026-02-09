@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests of Timesketch upload functionality."""
-import random
+
+import uuid
 
 from . import interface
 from . import manager
@@ -26,7 +27,7 @@ class ImportPlasoTest(interface.BaseEndToEndTest):
     def test_plaso_import(self):
         """Test the upload of a plaso file with a few events."""
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_plaso_import_{rand}")
         self.sketch = sketch
 

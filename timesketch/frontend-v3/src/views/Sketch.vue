@@ -17,10 +17,13 @@ limitations under the License.
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
-    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
+    <!-- Access Denied state -->
+    <ts-sketch-access-denied v-if="sketchAccessDenied && !loadingSketch"></ts-sketch-access-denied>
+
+    <div v-if="sketch.id && !loadingSketch && !sketchAccessDenied" style="height: 70vh">
 
       <!-- Empty state -->
-      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" class="fill-height" fluid>
+      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived && !sketchAccessDenied" class="fill-height" fluid>
         <v-row align="center" justify="center" class="text-center">
           <v-sheet class="pa-4" style="background: transparent">
               <v-img src="/assets/empty-state.png" max-height="100" max-width="300"></v-img>
@@ -302,6 +305,7 @@ import TsEventList from '@/components/Explore/EventList.vue'
 import TsInvestigation from '../components/LeftPanel/Investigation.vue'
 import Notifications from '../components/Notifications.vue'
 import TsV2Explore from '../components/LeftPanel/v2Explore.vue';
+import TsSketchAccessDenied from '../components/SketchAccessDenied.vue';
 
 export default {
   props: ['sketchId'],
@@ -316,6 +320,7 @@ export default {
     TsInvestigation,
     Notifications,
     TsV2Explore,
+    TsSketchAccessDenied,
   },
   setup() {
     const theme = useTheme();
@@ -407,6 +412,9 @@ export default {
     },
     systemSettings() {
       return this.appStore.systemSettings
+    },
+    sketchAccessDenied() {
+      return this.appStore.sketchAccessDenied
     },
   },
   methods: {

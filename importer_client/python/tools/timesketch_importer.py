@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A simple frontend to the Timesketch data importer."""
+
 from __future__ import unicode_literals
 
 import argparse
@@ -32,7 +33,6 @@ from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
 from timesketch_import_client import importer
 from timesketch_import_client import version as importer_version
-
 
 logger = logging.getLogger("timesketch_importer.importer_frontend")
 
@@ -135,6 +135,10 @@ def upload_file(
         context = config_dict.get("context")
         if context:
             streamer.set_upload_context(context)
+
+        max_payload = config_dict.get("max_payload_size")
+        if max_payload:
+            streamer.set_max_payload_size(max_payload)
 
         streamer.add_file(file_path)
 
@@ -476,6 +480,20 @@ def main(args=None):
         ),
     )
 
+    config_group.add_argument(
+        "--max-payload-size",
+        "--max_payload_size",
+        action="store",
+        type=int,
+        default=importer.ImportStreamer.DEFAULT_MAX_PAYLOAD_SIZE,
+        dest="max_payload_size",
+        help=(
+            "The maximum size in bytes for a single HTTP upload request. "
+            "This should match the server's MAX_FORM_MEMORY_SIZE. "
+            "Defaults to 200MB."
+        ),
+    )
+
     options = argument_parser.parse_args(args)
 
     if options.show_version:
@@ -649,6 +667,7 @@ def main(args=None):
         "data_label": options.data_label,
         "context": context,
         "analyzer_names": options.analyzer_names,
+        "max_payload_size": options.max_payload_size,
     }
 
     logger.info("Uploading file.")

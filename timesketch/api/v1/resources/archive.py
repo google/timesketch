@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module holds archive API calls for version 1 of the Timesketch API."""
 
-
 import datetime
 import io
 import json
@@ -46,7 +45,6 @@ from timesketch.lib.stories import manager as story_export_manager
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
-
 
 logger = logging.getLogger("timesketch.api_archive")
 
@@ -84,13 +82,16 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         and the archival status of its associated timelines.
 
         Returns:
-            A flask.wrappers.Response object with a JSON payload.
+            A flask.wrappers.Response object containing a JSON payload
+            with archiving status and basic information for a given sketch.
             The JSON payload has a "meta" object containing:
-                - is_archived (bool): True if the sketch is archived, False otherwise.
+                - is_archived (bool): True if the sketch is archived, False
+                                    otherwise.
                 - sketch_id (int): The ID of the sketch.
                 - sketch_name (str): The name of the sketch.
-                - timelines (dict): A dictionary where keys are timeline index names
-                                    and values are booleans (True if archived).
+                - timelines (dict): A dictionary where keys are timeline index
+                                    names and values are booleans (True if
+                                    archived).
             And an empty "objects" list.
 
         Raises:
@@ -487,6 +488,10 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         Args:
             sketch (Sketch): Instance of timesketch.models.sketch.Sketch
+
+        Returns:
+            A flask.wrappers.Response object containing a JSON payload
+            confirming the archiving process has completed.
         """
         # 1. Pre flight checks
         if sketch.get_status.status == "archived":
@@ -559,7 +564,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     continue
 
                 # If a timeline is in another sketch, it must already be archived.
-                if timeline.get_status.status != "archived":
+                if timeline.get_status.status not in ("archived", "deleted"):
                     can_be_closed = False
                     logger.info(
                         "SearchIndex %s (ID: %s) will not be closed because "
@@ -660,22 +665,24 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
     def _unarchive_sketch(self, sketch: Sketch):
         """Unarchives a sketch, making it and its data active again.
 
-        This method follows a transactional approach to ensure data consistency.
-        It first attempts to open all necessary OpenSearch indices associated
-        with the sketch's archived timelines. If any index fails to open for a
-        critical reason (e.g., not found), the entire operation is aborted,
-        leaving the sketch in its archived state.
+        This method attempts to open all necessary OpenSearch indices
+        associated with the sketch's archived timelines.
 
-        If all indices are successfully opened (or confirmed to be already open),
-        the method proceeds to update the database, setting the status of the
-        sketch, its timelines, and the corresponding SearchIndex objects to 'ready'.
+        The status of a SearchIndex is determined by the availability of
+        its underlying OpenSearch index. If an index cannot be opened
+        (e.g., if it is missing), it is marked as 'fail' in the database.
+        Timelines associated with failed indices are also updated to a
+        'fail' status. All other healthy timelines and indices are
+        successfully opened and set to 'ready', and the sketch itself is
+        returned to a 'ready' status. This ensures that users can regain
+        access to the sketch even if some data is broken or missing.
 
         Args:
             sketch: An instance of timesketch.models.sketch.Sketch to unarchive.
 
         Returns:
-            An integer representing the HTTP status of the operation.
-            - HTTP_STATUS_CODE_OK if successful.
+            A flask.wrappers.Response object containing a JSON payload
+            confirming the unarchiving process has completed.
 
         Raises:
             HTTPException:
@@ -695,13 +702,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         errors_occurred = False
         error_details = []
 
-        # Check if any timeline is in a state that would prevents unarchiving.
-        # TODO enforce after 2026-01-01
-        # https://github.com/google/timesketch/issues/3518
-        statuses_preventing_unarchival = ["processing", "fail"]
+        # Check if any timeline is in a state that warrants a warning.
+        statuses_to_warn_about = ["processing", "fail"]
         for timeline in sketch.timelines:
             timeline_status = timeline.get_status.status
-            if timeline_status in statuses_preventing_unarchival:
+            if timeline_status in statuses_to_warn_about:
                 base_warning_msg = (
                     f"Unarchiving sketch {sketch.id}, but it contains timeline "
                     f" (ID: {timeline.id}) in a '{timeline_status}' "
@@ -721,18 +726,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
                 general_advice = " You can use 'tsctl find-inconsistent-archives' to find such sketches."  # pylint: disable=line-too-long
                 warning_msg = f"{base_warning_msg}{specific_advice}{general_advice}"
-                error_details.append(warning_msg)
-                errors_occurred = True
-
-        if errors_occurred:
-            logger.error(
-                "Unarchiving sketch %s failed because one or more indices could not "
-                "be opened. Errors: %s",
-                sketch.id,
-                "; ".join(error_details),
-            )
-            # TODO: enforce here: https://github.com/google/timesketch/issues/3518
-            # abort(...
+                logger.warning(warning_msg)
 
         # Identify all SearchIndex objects that need to be opened.
         search_indexes_to_open = {
@@ -773,10 +767,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         f"(DB ID: {search_index.id}). Error: {str(e)}."
                     )
             except opensearchpy.exceptions.NotFoundError:
-                errors_occurred = True
-                error_details.append(
-                    f"OpenSearch index '{search_index.index_name}' not found. "
-                    "Cannot unarchive."
+                logger.warning(
+                    "OpenSearch index '%s' not found. It might have been deleted.",
+                    search_index.index_name,
                 )
             except Exception as e:  # pylint: disable=broad-except
                 errors_occurred = True
@@ -800,23 +793,50 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             )
 
         # 4. If all indices are open, update the database statuses.
+        # The searchindex can be shared between a "ready" and "fail" timeline.
+        # Therefore the state of a searchindex is not tied to timeline states,
+        # but rather to the existence of the OS index.
         # Set all timelines in the sketch to ready.
         for timeline in sketch.timelines:
             if timeline.get_status.status != "archived":
                 continue
-            timeline.set_status(status="ready")
-            logger.info(
-                "Timeline '%s' status set to 'ready'.",
-                timeline.id,
-            )
+            # Only set timeline to ready if its index was successfully opened
+            # OR if the index was already ready (e.g. shared with another
+            # unarchived timeline)
+            if (
+                timeline.searchindex in successfully_opened_indexes
+                or timeline.searchindex.get_status.status == "ready"
+            ):
+                timeline.set_status(status="ready")
+                logger.info(
+                    "Timeline '%s' status set to 'ready'.",
+                    timeline.id,
+                )
+            else:
+                # If index wasn't opened (e.g. not found), set timeline to fail
+                timeline.set_status(status="fail")
+                logger.warning(
+                    "Timeline '%s' status set to 'fail' because index could "
+                    "not be opened.",
+                    timeline.id,
+                )
 
-        for search_index in successfully_opened_indexes:
-            search_index.set_status(status="ready")
-            logger.info(
-                "SearchIndex DB object %s (ID: %s) status updated to 'ready'.",
-                search_index.index_name,
-                search_index.id,
-            )
+        for search_index in search_indexes_to_open:
+            if search_index in successfully_opened_indexes:
+                search_index.set_status(status="ready")
+                logger.info(
+                    "SearchIndex DB object %s (ID: %s) status updated to 'ready'.",
+                    search_index.index_name,
+                    search_index.id,
+                )
+            else:
+                search_index.set_status(status="fail")
+                logger.warning(
+                    "SearchIndex DB object %s (ID: %s) status updated to "
+                    "'fail' because index could not be opened.",
+                    search_index.index_name,
+                    search_index.id,
+                )
 
         sketch.set_status(status="ready")
         logger.info("Sketch %s status set to 'ready'.", sketch.id)
