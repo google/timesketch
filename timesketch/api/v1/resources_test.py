@@ -2164,7 +2164,7 @@ class ExportStreamListResourceTest(BaseTest):
         self, mock_get_validated, mock_validate, mock_ds_cls
     ):
         """Test export when backend validation returns no indices."""
-        # disable=unused-argument
+        # pylint: disable=unused-argument
         self.login()
         mock_ds_cls.return_value = mock.Mock()
 
@@ -2272,8 +2272,6 @@ class UploadFileResourceTest(BaseTest):
         with open(file_path, "rb") as f:
             content = f.read()
 
-        print(f"Final content: {content}")
-
         # Verify content matches full file
         self.assertEqual(
             content,
@@ -2344,7 +2342,6 @@ class UploadFileResourceTest(BaseTest):
 
         # Verify file size
         final_size = os.path.getsize(file_path)
-        print(f"Final size: {final_size}")
 
         # Verify size matches single chunk (not doubled)
         self.assertEqual(

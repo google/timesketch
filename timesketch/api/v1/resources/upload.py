@@ -483,7 +483,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 with os.fdopen(fd, "rb+") as fh:
                     fh.seek(chunk_byte_offset)
                     fh.write(file_storage.read())
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.error("Error writing chunk to file: %s", e, exc_info=True)
                 os.close(fd)
                 raise
         except OSError as e:
