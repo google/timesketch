@@ -477,9 +477,14 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_path = utils.format_upload_path(upload_folder, uuid.uuid4().hex)
 
         try:
-            with open(file_path, "ab") as fh:
-                fh.seek(chunk_byte_offset)
-                fh.write(file_storage.read())
+            fd = os.open(file_path, os.O_RDWR | os.O_CREAT, 0o600)
+            try:
+                with os.fdopen(fd, "rb+") as fh:
+                    fh.seek(chunk_byte_offset)
+                    fh.write(file_storage.read())
+            except Exception: # pylint: disable=broad-exception-caught
+                os.close(fd)
+                raise
         except OSError as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
