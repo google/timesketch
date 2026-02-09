@@ -797,6 +797,25 @@ class SketchResource(resources.ResourceMixin, Resource):
             # Close indices to save resources
             for timeline in sketch.timelines:
                 searchindex = timeline.searchindex
+
+                # Check if this index is used in any other active sketch
+                is_shared = False
+                for other_timeline in searchindex.timelines:
+                    if other_timeline.sketch_id == sketch.id:
+                        continue
+                    if other_timeline.sketch.get_status.status != "deleted":
+                        is_shared = True
+                        break
+
+                if is_shared:
+                    logger.warning(
+                        "Search index %s is shared with another active sketch. "
+                        "Skipping index close for soft-deleted sketch %s.",
+                        searchindex.index_name,
+                        sketch.id,
+                    )
+                    continue
+
                 try:
                     self.datastore.client.indices.close(index=searchindex.index_name)
                 except Exception as e:  # pylint: disable=broad-except

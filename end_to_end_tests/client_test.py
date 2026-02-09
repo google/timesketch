@@ -19,6 +19,7 @@ import json
 import random
 import zipfile
 import os
+import requests
 import opensearchpy
 
 from timesketch_api_client import search
@@ -47,6 +48,29 @@ class ClientTest(interface.BaseEndToEndTest):
             ],
             http_compress=True,
         )
+
+    def check_opensearch_index_status(self, index_name):
+        """Helper to check the status of an OpenSearch index.
+
+        Returns:
+            String: "open", "close", or "not_found"
+        """
+        url = (
+            f"http://{interface.OPENSEARCH_HOST}:"
+            f"{interface.OPENSEARCH_PORT}/_cat/indices/"
+            f"{index_name}?format=json"
+        )
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 404:
+                return "not_found"
+            response.raise_for_status()
+            data = response.json()
+            if not data:
+                return "not_found"
+            return data[0].get("status")
+        except Exception:  # pylint: disable=broad-except
+            return "error"
 
     def test_client(self):
         """Client tests."""
@@ -111,6 +135,7 @@ class ClientTest(interface.BaseEndToEndTest):
     def test_sigmarule_create(self):
         """Create a Sigma rule in database"""
 
+        # fmt: off
         MOCK_SIGMA_RULE = f"""
 title: Suspicious Installation of bbbbbb
 id: {self.RULEID1}
@@ -132,6 +157,7 @@ falsepositives:
     - Unknown
 level: high
 """
+        # fmt: on
         rule = self.api.create_sigmarule(rule_yaml=MOCK_SIGMA_RULE)
         self.assertions.assertIsNotNone(rule)
 
@@ -148,7 +174,6 @@ level: high
         """Client Sigma object tests."""
         sketch = self.api.create_sketch(name="test_sigmarule_create_get")
         sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
-        # fmt: off
         rule = self.api.create_sigmarule(
             rule_yaml=f"""
 title: Suspicious Installation of eeeee
@@ -170,8 +195,8 @@ detection:
 falsepositives:
     - Unknown
 level: high
-""")
-        # fmt: on
+"""
+        )
         self.assertions.assertIsNotNone(rule)
 
         rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
@@ -778,6 +803,118 @@ level: high
                 self.assertions.assertEqual(
                     metadata.get("sketch_name"), self.sketch.name
                 )
+
+    def test_delete_sketch_with_shared_index(self):
+        """Test deleting a sketch where multiple timelines share the same index.
+
+        This test verifies that the 'InvalidRequestError' is resolved and the
+        sketch is successfully deleted even when multiple timelines in it
+        point to the same search index.
+        """
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test-sketch-deletion-shared_{rand}")
+
+        shared_index_name = f"shared_index_{rand}"
+
+        # 1. Import Timeline A
+        self.import_timeline(
+            "sigma_events.csv", sketch=sketch, index_name=shared_index_name
+        )
+
+        # 2. Import Timeline B sharing same index
+        # We use a different file to simulate a different datasource if needed,
+        # but the key is the index_name.
+        self.import_timeline(
+            "evtx_part.csv", sketch=sketch, index_name=shared_index_name
+        )
+
+        # Verify both timelines exist in the sketch
+        timelines = sketch.list_timelines()
+        self.assertions.assertEqual(len(timelines), 2)
+
+        # Verify index exists in OpenSearch
+        self.assertions.assertEqual(
+            self.check_opensearch_index_status(shared_index_name), "open"
+        )
+
+        # 3. Delete the sketch with force=true
+        # The Python API client's delete method might need to be checked if it supports force.
+        # Based on timesketch_api_client/sketch.py, it should.
+        # However, we can also use a direct request if needed.
+        sketch.delete()  # By default, the API client might not use force_delete.
+
+        # Let's check how to do a force delete with the API client or direct request.
+        # If we use sketch.delete(), it sends a DELETE request.
+        # We want force=true.
+
+        session = self.api.session
+        resource_url = f"{self.api.host_uri}/api/v1/sketches/{sketch.id}/?force=true"
+        response = session.delete(resource_url)
+
+        self.assertions.assertEqual(response.status_code, 200)
+
+        # 4. Verify the sketch is gone
+        deleted_sketch = self.api.get_sketch(sketch.id)
+        self.assertions.assertIsNone(deleted_sketch)
+
+        # 5. Verify the OpenSearch index is gone (since it was force deleted)
+        self.assertions.assertEqual(
+            self.check_opensearch_index_status(shared_index_name), "not_found"
+        )
+
+    def test_cross_sketch_shared_index_soft_delete(self):
+        """Test that soft-deleting a sketch doesn't close a shared search index.
+
+        Logic:
+        1. Create Sketch A and Sketch B.
+        2. Import a timeline into Sketch A, resulting in SearchIndex X.
+        3. Manually add SearchIndex X to Sketch B (simulating shared usage).
+        4. Verify SearchIndex X is 'open'.
+        5. Soft-delete Sketch A.
+        6. Verify SearchIndex X is STILL 'open' because Sketch B is still active.
+        """
+        rand = uuid.uuid4().hex
+        sketch_a = self.api.create_sketch(name=f"test-shared-index-A_{rand}")
+        sketch_b = self.api.create_sketch(name=f"test-shared-index-B_{rand}")
+
+        index_name = f"shared_cross_sketch_{rand}"
+
+        # 1. Import timeline into Sketch A
+        tl_a = self.import_timeline(
+            "sigma_events.csv", sketch=sketch_a, index_name=index_name
+        )
+        search_index_obj = tl_a.searchindex
+
+        # 2. Add the SAME search index to Sketch B
+        # Using the API client's add_timeline method (requires searchindex_id)
+        sketch_b.add_timeline(searchindex_id=search_index_obj.id)
+
+        # Verify index is open
+        self.assertions.assertEqual(
+            self.check_opensearch_index_status(index_name), "open"
+        )
+
+        # 3. Soft-delete Sketch A
+        sketch_a.delete()
+
+        # 4. Verify index remains OPEN because Sketch B still uses it
+        status = self.check_opensearch_index_status(index_name)
+        self.assertions.assertEqual(
+            status,
+            "open",
+            f"Index {index_name} was closed but should remain open (shared with Sketch B)",
+        )
+
+        # 5. Soft-delete Sketch B (the last one using it)
+        sketch_b.delete()
+
+        # 6. Verify index is now CLOSED (as no active sketches use it anymore)
+        status = self.check_opensearch_index_status(index_name)
+        self.assertions.assertEqual(
+            status,
+            "close",
+            f"Index {index_name} should be closed after all sketches are deleted",
+        )
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
