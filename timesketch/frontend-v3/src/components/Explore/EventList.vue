@@ -408,7 +408,7 @@ limitations under the License.
         </template>
 
         <!-- Actions field -->
-        <template v-slot:item.actions="{ item }">
+        <template v-slot:[`item.actions`]="{ item }">
           <span v-if="!disableStarring">
             <v-icon
               v-if="item._source.label.includes('__ts_star')"
@@ -444,7 +444,7 @@ limitations under the License.
         </template>
 
         <!-- Datetime field with action buttons -->
-        <template v-slot:item._source.timestamp="{ item }">
+        <template v-slot:[`item._source.timestamp`]="{ item }">
           <div
             v-bind:style="getTimelineColor(item)"
             class="datetime-table-cell"
@@ -505,7 +505,7 @@ limitations under the License.
         </template>
 
         <!-- Timeline name field -->
-        <template v-slot:item.timeline_name="{ item }">
+        <template v-slot:[`item.timeline_name`]="{ item }">
           <v-chip
             label
             style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em"
@@ -519,7 +519,7 @@ limitations under the License.
         </template>
 
         <!-- Comment field -->
-        <template v-slot:item._source.comment="{ item }">
+        <template v-slot:[`item._source.comment`]="{ item }">
           <div class="d-inline-block">
             <v-btn
               icon
