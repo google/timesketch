@@ -643,7 +643,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 db_session.delete(searchindex)
                 if searchindex_id:
                     processed_indices.add(searchindex_id)
-
         db_session.delete(sketch)
         db_session.commit()
 
@@ -752,6 +751,10 @@ class SketchResource(resources.ResourceMixin, Resource):
         if force_delete:
             logger.debug("User %s is force-deleting sketch %s", current_user, sketch_id)
             self._force_delete_sketch(sketch)
+
+        else:
+            # if force_delete is false, still commit changes to the db
+            db_session.commit()
 
         return HTTP_STATUS_CODE_OK
 
