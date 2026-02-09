@@ -638,6 +638,29 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
+    def get_sketches_by_name(self, sketch_name) -> list[sketch.Sketch]:
+        """Get a sketch by name.
+
+        Args:
+            sketch_name (str): The name of the sketch to find.
+
+        Raises:
+            KeyError: If no sketch with the specified name is found.
+
+        Returns:
+            list[sketch.Sketch]: A list of sketch objects.
+        """
+        sketches = [
+            sketch_obj
+            for sketch_obj in self.list_sketches()
+            if sketch_obj.name == sketch_name
+        ]
+
+        if not sketches:
+            raise KeyError(f"Sketch with name '{sketch_name}' not found.")
+
+        return sketches
+
     def get_aggregator_info(self, name="", as_pandas=False):
         """Returns information about available aggregators.
 
