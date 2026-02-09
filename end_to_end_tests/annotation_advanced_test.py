@@ -1,4 +1,4 @@
-# Copyright 2024 Google Inc. All rights reserved.
+# Copyright 2026 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 """End to end tests for advanced event annotation functionality."""
 
-import json
 import time
 import uuid
 
@@ -44,7 +43,9 @@ class AdvancedAnnotationTest(interface.BaseEndToEndTest):
         annotate by ID alone, which should trigger a 400 error requiring
         disambiguation.
         """
-        sketch = self.api.create_sketch(name="Index Disambiguation Test")
+        sketch = self.api.create_sketch(
+            name=f"Index Disambiguation Test {uuid.uuid4().hex}"
+        )
 
         # 1. Import same data into two different indices
         self.import_timeline("sigma_events.csv", index_name="index_1", sketch=sketch)
@@ -107,7 +108,7 @@ class AdvancedAnnotationTest(interface.BaseEndToEndTest):
         protected and cannot be applied as a simple label without being
         linked to an investigative conclusion.
         """
-        sketch = self.api.create_sketch(name="Fact Integrity Test")
+        sketch = self.api.create_sketch(name=f"Fact Integrity Test {uuid.uuid4().hex}")
         self.import_timeline("sigma_events.csv", sketch=sketch)
         event = self._get_event(sketch)
 
@@ -132,7 +133,9 @@ class AdvancedAnnotationTest(interface.BaseEndToEndTest):
         Verifies that the API validates the conclusion_id and ensures it
         exists before attempting to link an event to it.
         """
-        sketch = self.api.create_sketch(name="Conclusion Access Test")
+        sketch = self.api.create_sketch(
+            name=f"Conclusion Access Test {uuid.uuid4().hex}"
+        )
         self.import_timeline("sigma_events.csv", sketch=sketch)
         event = self._get_event(sketch)
 
@@ -165,7 +168,7 @@ class AdvancedAnnotationTest(interface.BaseEndToEndTest):
         sketch_b = self.api.create_sketch(name="Sketch B")
 
         # Create a search node in Sketch A
-        explore_results = sketch_a.explore(query_string="*", incognito=False)
+        explore_results = sketch_a.explore(query_string="*")
         node_id = explore_results["meta"]["search_node"]["id"]
 
         self.import_timeline("sigma_events.csv", sketch=sketch_b)
@@ -194,7 +197,7 @@ class AdvancedAnnotationTest(interface.BaseEndToEndTest):
         subsequently removed correctly, reflecting both in the SQL database
         and the datastore.
         """
-        sketch = self.api.create_sketch(name="Toggle Logic Test")
+        sketch = self.api.create_sketch(name=f"Toggle Logic Test {uuid.uuid4().hex}")
         self.import_timeline("sigma_events.csv", sketch=sketch)
         event = self._get_event(sketch)
         event_id = event["_id"]
@@ -244,7 +247,9 @@ class AdvancedAnnotationTest(interface.BaseEndToEndTest):
         hypothetical processing index (simulated by using an index name
         not yet marked as ready in the sketch).
         """
-        sketch = self.api.create_sketch(name="Processing Timeline Test")
+        sketch = self.api.create_sketch(
+            name=f"Processing Timeline Test {uuid.uuid4().hex}"
+        )
 
         # We need a timeline that is NOT ready.
         # Since import_timeline waits for ready, we can try to annotate
