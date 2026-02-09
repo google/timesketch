@@ -174,7 +174,8 @@ level: high
         """Client Sigma object tests."""
         sketch = self.api.create_sketch(name="test_sigmarule_create_get")
         sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
-        rule = self.api.create_sigmarule(rule_yaml=f"""
+        rule = self.api.create_sigmarule(
+            rule_yaml=f"""
 title: Suspicious Installation of eeeee
 id: {self.RULEID2}
 description: Detects suspicious installation of eeeee
@@ -194,7 +195,8 @@ detection:
 falsepositives:
     - Unknown
 level: high
-""")
+"""
+        )
         self.assertions.assertIsNotNone(rule)
 
         rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
@@ -836,13 +838,13 @@ level: high
         )
 
         # 3. Delete the sketch with force=true
-        # The Python API client's delete method might need to be checked if it supports force.
-        # Based on timesketch_api_client/sketch.py, it should.
+        # The Python API client's delete method might need to be checked if it
+        # supports force. Based on timesketch_api_client/sketch.py, it should.
         # However, we can also use a direct request if needed.
         sketch.delete()  # By default, the API client might not use force_delete.
 
-        # Let's check how to do a force delete with the API client or direct request.
-        # If we use sketch.delete(), it sends a DELETE request.
+        # Let's check how to do a force delete with the API client or direct
+        # request. If we use sketch.delete(), it sends a DELETE request.
         # We want force=true.
 
         session = self.api.session
@@ -884,8 +886,11 @@ level: high
         search_index_obj = tl_a.searchindex
 
         # 2. Add the SAME search index to Sketch B
-        # Using the API client's add_timeline method (requires searchindex_id)
-        sketch_b.add_timeline(searchindex_id=search_index_obj.id)
+        # We use a direct API request since add_timeline is deprecated in client
+        resource_url = f"{self.api.host_uri}/api/v1/sketches/{sketch_b.id}/timelines/"
+        data = {"timeline": search_index_obj.id}
+        response = self.api.session.post(resource_url, json=data)
+        self.assertions.assertEqual(response.status_code, 201)
 
         # Verify index is open
         self.assertions.assertEqual(
@@ -900,7 +905,8 @@ level: high
         self.assertions.assertEqual(
             status,
             "open",
-            f"Index {index_name} was closed but should remain open (shared with Sketch B)",
+            f"Index {index_name} was closed but should remain open "
+            "(shared with Sketch B)",
         )
 
         # 5. Soft-delete Sketch B (the last one using it)
@@ -911,7 +917,8 @@ level: high
         self.assertions.assertEqual(
             status,
             "close",
-            f"Index {index_name} should be closed after all sketches are deleted",
+            f"Index {index_name} should be closed after all sketches "
+            "are deleted",
         )
 
 
