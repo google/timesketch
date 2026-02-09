@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-container fluid>
     <!-- Right side menu -->
-    <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
+    <!-- Placeholder at the moment. Keeping it here for quick development later. -->
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
