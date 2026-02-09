@@ -280,10 +280,9 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     db_session.add(timeline)
     db_session.commit()
 
-    # Defensive check for orphaned timelines to prevent worker crashes.
     sketch_id = timeline.sketch.id if timeline.sketch else 0
 
-    logger.info(
+    logger.debug(
         "Status for timeline (ID: %d) in sketch (ID: %d) set to %s",
         timeline.id,
         sketch_id,
@@ -311,9 +310,10 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
             else:
                 # Show error message for attempts 0-4 only if debug is enabled
                 logger.debug(
-                    "Attempt %d to refresh index %s failed: %s",
+                    "Attempt %d to refresh index %s in sketch (ID: %d)failed: %s",
                     i + 1,
                     index_name,
+                    sketch_id,
                     str(e),
                 )
                 time.sleep(1)  # Wait a second before retrying
