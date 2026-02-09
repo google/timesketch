@@ -22,6 +22,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
+from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.dfiq import DFIQCatalog
@@ -731,6 +732,24 @@ class ExploreResourceTest(BaseTest):
         del response_json["meta"]["search_node"]["query_time"]
         self.assertDictEqual(response_json, self.expected_response)
         self.assert200(response)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_search_timeout(self):
+        """Test search timeout handling."""
+        self.login()
+        data = {"query": "test", "filter": {}}
+
+        # Mock the search method to raise DatastoreTimeoutError
+        with mock.patch.object(
+            MockDataStore, "search", side_effect=DatastoreTimeoutError("Timeout")
+        ):
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(data, ensure_ascii=False),
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_GATEWAY_TIMEOUT)
+            self.assertIn("Timeout", response.json["message"])
 
 
 class AggregationExploreResourceTest(BaseTest):
