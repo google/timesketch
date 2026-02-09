@@ -399,6 +399,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             HTTP_STATUS_CODE_NOT_FOUND: If the sketch is not found.
             HTTP_STATUS_CODE_FORBIDDEN: If the user does not have
                 write access to the sketch.
+            Exception: If an unexpected error occurs during file writing.
         """
         _filename, _extension = os.path.splitext(file_storage.filename)
         file_extension = _extension.lstrip(".")
@@ -482,7 +483,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 with os.fdopen(fd, "rb+") as fh:
                     fh.seek(chunk_byte_offset)
                     fh.write(file_storage.read())
-            except Exception: # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught
                 os.close(fd)
                 raise
         except OSError as e:
