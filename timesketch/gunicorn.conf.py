@@ -3,6 +3,7 @@ import logging
 import time
 import os
 
+
 class JSONFormatter(logging.Formatter):
     def format(self, record):
         level = record.levelname.upper()
@@ -10,12 +11,17 @@ class JSONFormatter(logging.Formatter):
         log_record = {
             "message": record.getMessage(),
             "severity": severity,
-            "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(record.created)),
+            "timestamp": time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ", time.gmtime(record.created)
+            ),
             "logger": record.name,
         }
         return json.dumps(log_record)
 
-USE_STRUCTURED_LOGGING = os.environ.get("ENABLE_STRUCTURED_LOGGING", "false").lower() == "true"
+
+USE_STRUCTURED_LOGGING = (
+    os.environ.get("ENABLE_STRUCTURED_LOGGING", "false").lower() == "true"
+)
 
 STRUCTURED_LOGGING_CONFIG = {
     "version": 1,

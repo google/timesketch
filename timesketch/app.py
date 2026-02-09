@@ -244,6 +244,7 @@ def configure_logger():
 
     class JSONLogFormatter(logging.Formatter):
         """Formats logs as JSON for Kubernetes/Cloud environments."""
+
         def format(self, record):
             level_name = record.levelname.upper()
             std_level = "WARNING" if level_name == "WARN" else level_name
@@ -268,7 +269,9 @@ def configure_logger():
     logger_object = logging.getLogger("timesketch")
     logger_filter = NoESFilter()
 
-    use_structured_logging = os.environ.get("ENABLE_STRUCTURED_LOGGING", "false").lower() == "true"
+    use_structured_logging = (
+        os.environ.get("ENABLE_STRUCTURED_LOGGING", "false").lower() == "true"
+    )
 
     if use_structured_logging:
         logger_object.parent.handlers = []
