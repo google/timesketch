@@ -846,7 +846,7 @@ level: high
         # We want force=true.
 
         session = self.api.session
-        resource_url = f"{self.api.host_uri}/api/v1/sketches/{sketch.id}/?force=true"
+        resource_url = f"{self.api._host_uri}/api/v1/sketches/{sketch.id}/?force=true"
         response = session.delete(resource_url)
 
         self.assertions.assertEqual(response.status_code, 200)
@@ -881,11 +881,13 @@ level: high
         tl_a = self.import_timeline(
             "sigma_events.csv", sketch=sketch_a, index_name=index_name
         )
-        search_index_obj = tl_a.searchindex
+        search_index_obj = tl_a.index
 
         # 2. Add the SAME search index to Sketch B
         # We use a direct API request since add_timeline is deprecated in client
-        resource_url = f"{self.api.host_uri}/api/v1/sketches/{sketch_b.id}/timelines/"
+        resource_url = (
+            f"{self.api._host_uri}/api/v1/sketches/{sketch_b.id}/timelines/"
+        )
         data = {"timeline": search_index_obj.id}
         response = self.api.session.post(resource_url, json=data)
         self.assertions.assertEqual(response.status_code, 201)
