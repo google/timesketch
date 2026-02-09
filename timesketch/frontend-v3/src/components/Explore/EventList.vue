@@ -30,11 +30,17 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+    <div v-if="searchError && !searchInProgress" class="ml-3">
+      <TsSearchErrorCard
+        :error-text="searchError"
+      ></TsSearchErrorCard>
+    </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
       <ExploreWelcomeCard></ExploreWelcomeCard>
     </div>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString">
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError">
       <SearchNotFoundCard
         :current-query-string="currentQueryString"
         :filter-chips="filterChips"
@@ -591,6 +597,7 @@ import TsEventTagMenu from "./EventTagMenu.vue";
 import TsEventTags from "./EventTags.vue";
 import TsEventActionMenu from "./EventActionMenu.vue";
 import TsEventTagDialog from "./EventTagDialog.vue";
+import TsSearchErrorCard from "./SearchErrorCard.vue";
 
 const defaultQueryFilter = () => {
   return {
@@ -622,6 +629,7 @@ export default {
     TsEventActionMenu,
     TsBarChart,
     TsEventTagDialog,
+    TsSearchErrorCard,
   },
   props: {
     queryRequest: {
@@ -730,6 +738,7 @@ export default {
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
+      searchError: '',
     }
   },
   computed: {
@@ -1036,6 +1045,7 @@ export default {
       this.searchInProgress = true
       this.selectedEventIds = []
       this.eventList = emptyEventList()
+      this.searchError = ''
 
       if (resetPagination) {
         this.currentPage = 1
@@ -1110,6 +1120,7 @@ export default {
         })
         .catch((e) => {
           console.log("Error fetching search results:", e)
+          this.searchInProgress = false
           let msg =
             'Sorry, there was a problem fetching your search results. Error: "' +
             e.response.data.message +
@@ -1124,6 +1135,7 @@ export default {
           } else {
             this.errorSnackBar(msg)
           }
+          this.searchError = msg
           console.error("Error message: " + msg)
           console.error(e)
         })
