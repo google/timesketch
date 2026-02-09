@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the Google GenAI provider."""
 
-import unittest
 from unittest import mock
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.llms.providers.google_genai import GoogleGenAI
