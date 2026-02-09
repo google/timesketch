@@ -809,30 +809,9 @@ class SketchResource(resources.ResourceMixin, Resource):
             db_session.commit()
             return HTTP_STATUS_CODE_OK
 
-        # now the real deletion
-        for timeline in sketch.timelines:
-            timeline.set_status(status="deleted")
-            searchindex = timeline.searchindex
-            # remove the opensearch index
-            index_name_to_delete = searchindex.index_name
-
-            try:
-                # Attempt to delete the OpenSearch index
-                self.datastore.client.indices.delete(index=index_name_to_delete)
-                logger.debug(
-                    "User: %s is going to delete OS index %s",
-                    current_user,
-                    index_name_to_delete,
-                  
-                )
-
         if force_delete:
             logger.debug("User %s is force-deleting sketch %s", current_user, sketch_id)
             self._force_delete_sketch(sketch)
-
-        else:
-            # if force_delete is false, still commit changes to the db
-            db_session.commit()
 
         return HTTP_STATUS_CODE_OK
 
