@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Interface for aggregators."""
+
 import datetime
 import logging
-
-from flask import current_app
 
 import opensearchpy
 import pandas
@@ -23,7 +22,6 @@ import pandas
 from timesketch.lib.charts import manager as chart_manager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
-
 
 logger = logging.getLogger("timesketch.aggregator_interface")
 
@@ -122,29 +120,61 @@ class AggregationResult:
         if not chart_class:
             raise RuntimeError(f"No such chart type: {chart_name:s}")
 
-        chart_data = self.to_dict(encoding=True)
-        chart_object = chart_class(
-            chart_data,
-            title=chart_title,
-            sketch_url=self._sketch_url,
-            field=self.field,
-            extra_query_url=self._extra_query_url,
-        )
+        try:
+            # We need to check if there is an encoding.
+            encoding = self.encoding
+            values_dataframe = self.to_pandas()
 
-        if color:
-            chart_object.set_color(color)
+            if not encoding:
+                logger.warning(
+                    "No encoding found for chart [%s] with title [%s]. "
+                    "Skipping chart generation.",
+                    chart_name,
+                    chart_title,
+                )
+                if as_html:
+                    return ""
+                if as_chart:
+                    return None
+                return {}
 
-        chart = chart_object.generate()
+            chart_data = {"values": values_dataframe, "encoding": encoding}
+            chart_object = chart_class(
+                chart_data,
+                title=chart_title,
+                sketch_url=self._sketch_url,
+                field=self.field,
+                extra_query_url=self._extra_query_url,
+            )
 
-        if interactive:
-            chart = chart.interactive()
+            if color:
+                chart_object.set_color(color)
 
-        if as_html:
-            return chart.to_html()
+            chart = chart_object.generate()
 
-        if as_chart:
-            return chart
-        return chart.to_dict()
+            if interactive:
+                chart = chart.interactive()
+
+            if as_html:
+                return chart.to_html()
+
+            if as_chart:
+                return chart
+            return chart.to_dict()
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(
+                "Unable to generate chart [%s] with title [%s]. The error was: %s",
+                chart_name,
+                chart_title,
+                e,
+                exc_info=True,
+            )
+            if as_html:
+                return ""
+            if as_chart:
+                return None
+            return {}
 
 
 class BaseAggregator:
@@ -178,24 +208,27 @@ class BaseAggregator:
         if not sketch_id and not indices:
             raise RuntimeError("Need at least sketch_id or index")
 
-        self.opensearch = OpenSearchDataStore(
-            host=current_app.config.get("OPENSEARCH_HOST"),
-            port=current_app.config.get("OPENSEARCH_PORT"),
-        )
+        self.opensearch = OpenSearchDataStore()
 
-        self._sketch_url = f"/sketch/{sketch_id:d}/explore"
+        if sketch_id:
+            self._sketch_url = f"/sketch/{sketch_id:d}/explore"
+            self.sketch = SQLSketch.get_by_id(sketch_id)
+        else:
+            self._sketch_url = ""
+            self.sketch = None
+
         self.field = ""
         self.indices = indices
-        self.sketch = SQLSketch.get_by_id(sketch_id)
         self.timeline_ids = None
 
-        active_timelines = self.sketch.active_timelines
-        if not self.indices:
-            self.indices = [t.searchindex.index_name for t in active_timelines]
+        if self.sketch:
+            active_timelines = self.sketch.active_timelines
+            if not self.indices:
+                self.indices = [t.searchindex.index_name for t in active_timelines]
 
-        if timeline_ids:
-            valid_ids = [t.id for t in active_timelines]
-            self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
+            if timeline_ids:
+                valid_ids = [t.id for t in active_timelines]
+                self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
 
     @property
     def chart_title(self):

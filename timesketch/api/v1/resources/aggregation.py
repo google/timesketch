@@ -14,9 +14,10 @@
 """Aggregation resources for version 1 of the Timesketch API."""
 
 import json
+import logging
 import time
 
-from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError, RequestError
 
 from flask import current_app
 from flask import jsonify
@@ -42,6 +43,8 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Sketch
+
+logger = logging.getLogger("timesketch.api.aggregation")
 
 
 class AggregationResource(resources.ResourceMixin, Resource):
@@ -191,11 +194,15 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
-            msg = (
-                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
-                f"sketch ID ({aggregation.sketch_id:d})"
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "sketch ID (%d - cannot delete)"
             )
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, aggregation.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                msg_template % (sketch.id, aggregation.sketch_id),
+            )
 
         db_session.delete(aggregation)
         db_session.commit()
@@ -403,11 +410,14 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
 
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
-            msg = (
-                f"The sketch ID ({sketch.id:d}) does not match with the aggregation "
-                f"group sketch ID ({group.sketch_id:d})"
+            msg_template = (
+                "The sketch ID (%d) does not match with the aggregation "
+                "group sketch ID (%d) - cannot delete"
             )
-            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+            logger.error(msg_template, sketch.id, group.sketch_id)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, msg_template % (sketch.id, group.sketch_id)
+            )
 
         if not sketch.has_permission(user=current_user, permission="write"):
             abort(
@@ -528,6 +538,39 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     f"Unable to run the aggregation, with error: {exc!s}",
                 )
+            except RequestError as exc:
+                indices_msg = ", ".join(indices)
+                if exc.error == "index_closed_exception":
+                    logger.error(
+                        "Unable to run aggregation on a closed index."
+                        "index: %s and parameters: %s",
+                        indices_msg,
+                        aggregator_parameters,
+                        exc_info=True,
+                        stack_info=True,
+                        extra={"request": request},
+                    )
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to run aggregation on a closed index."
+                        f"index: {indices_msg:s} and parameters:"
+                        f" {aggregator_parameters!s}",
+                    )
+                logger.error(
+                    "Unable to run aggregation, with error: %s, "
+                    "index: %s and parameters: %s",
+                    str(exc),
+                    indices_msg,
+                    aggregator_parameters,
+                    exc_info=True,
+                    stack_info=True,
+                    extra={"request": request},
+                )
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Unable to run the aggregation, with error: {exc!s} "
+                    f"index: {indices_msg:s} and parameters: {aggregator_parameters!s}",
+                )
             time_after = time.time()
 
             buckets = result_obj.to_dict()
@@ -562,10 +605,41 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     meta["vega_chart_title"] = chart_title
 
         elif aggregation_dsl:
-            # pylint: disable=unexpected-keyword-arg
-            result = self.datastore.client.search(
-                index=",".join(sketch_indices), body=aggregation_dsl, size=0
-            )
+            try:
+                # pylint: disable=unexpected-keyword-arg
+                result = self.datastore.client.search(
+                    index=",".join(sketch_indices), body=aggregation_dsl, size=0
+                )
+            except RequestError as e:
+                indices_msg = ",".join(sketch_indices)
+                if e.error == "index_closed_exception":
+                    logger.error(
+                        "Unable to run aggregation on a closed index. "
+                        "index: %s and dsl: %s",
+                        indices_msg,
+                        aggregation_dsl,
+                        exc_info=True,
+                        stack_info=True,
+                        extra={"request": request},
+                    )
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to run aggregation on a closed index.",
+                    )
+                logger.error(
+                    "Unable to run aggregation on an index with error: %s. "
+                    "index: %s and dsl: %s",
+                    str(e),
+                    indices_msg,
+                    aggregation_dsl,
+                    exc_info=True,
+                    stack_info=True,
+                    extra={"request": request},
+                )
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Unable to run the aggregation, with error: {e!s}",
+                )
 
             meta = {
                 "es_time": result.get("took", 0),

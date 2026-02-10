@@ -12,30 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API endpoint for interacting with LLM features."""
+
 import logging
 import multiprocessing
 import multiprocessing.managers
 import time
+from typing import Any
+from werkzeug.exceptions import HTTPException
+
 import prometheus_client
 from flask import request, abort, jsonify, Response
 from flask_login import login_required, current_user
 from flask_restful import Resource
+
 from timesketch.api.v1 import resources
 from timesketch.lib import definitions, utils
 from timesketch.lib.definitions import METRICS_NAMESPACE
-from timesketch.lib.llms.providers import manager as llm_manager
+from timesketch.lib.llms.providers import manager as llm_provider_manager
 from timesketch.lib.llms.features import manager as feature_manager
 from timesketch.models.sketch import Sketch
 
 logger = logging.getLogger("timesketch.api.llm")
 
+# List of error substrings that indicate operational issues (quotas, auth, etc.)
+# rather than system failures. These will be logged as warnings, not errors.
+_OPERATIONAL_ERROR_SUBSTRINGS = (
+    "429",
+    "Resource exhausted",
+    "Quota exceeded",
+    "Overloaded",
+    "401",
+    "Unauthenticated",
+    "invalid authentication credentials",
+    "Invalid private key",
+)
+
 
 class LLMResource(resources.ResourceMixin, Resource):
-    """Resource to interact with LLMs.
+    """Resource to interact with Large Language Models (LLMs).
 
-    This class provides an API endpoint for accessing and utilizing Large Language
-    Model features within Timesketch. It handles request validation, processing,
-    and response handling, while also monitoring performance metrics.
+    This resource handles requests for various LLM-powered features.
+    It validates requests, selects appropriate features/providers,
+    and delegates the actual processing to the feature implementations.
     """
 
     METRICS = {
@@ -63,33 +81,163 @@ class LLMResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, sketch_id: int) -> Response:
-        """Handles POST requests to the resource.
+        """Handles POST requests to execute LLM features.
 
-        Processes LLM requests, validates inputs, generates prompts,
-        executes LLM calls, and returns the processed results.
+        This method focuses on request validation, feature/provider selection,
+        and initiating the process. The actual processing logic is delegated
+        to the feature implementation.
 
         Args:
-            sketch_id: The ID of the sketch to process.
+            sketch_id: The ID of the sketch to operate on.
 
         Returns:
-            A Flask JSON response containing the processed LLM result.
+            A Flask Response object, typically JSON, summarizing the outcome.
 
         Raises:
-            HTTP exceptions for various error conditions.
+            HTTPException: If validation fails or an error occurs.
         """
         start_time = time.time()
         sketch = self._validate_sketch(sketch_id)
         form = self._validate_request_data()
-        feature = self._get_feature(form.get("feature"))
-        self._increment_request_metric(sketch_id, feature.NAME)
+        feature_instance = self._get_feature(form.get("feature"))
+        self._increment_request_metric(sketch_id, feature_instance.NAME)
         timeline_ids = self._validate_indices(sketch, form.get("filter", {}))
+
+        try:
+            llm_provider = llm_provider_manager.LLMManager.create_provider(
+                feature_name=feature_instance.NAME
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(
+                "Failed to get LLM provider for feature '%s' on sketch %s: %s",
+                feature_instance.NAME,
+                sketch_id,
+                e,
+                exc_info=True,
+            )
+            self.METRICS["llm_errors_total"].labels(
+                sketch_id=str(sketch_id),
+                feature=feature_instance.NAME,
+                error_type="provider_creation_error",
+            ).inc()
+            abort(
+                definitions.HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                f"Error initializing LLM provider: {str(e)}",
+            )
+
+        try:
+            # Check if feature handles its own execution (new workflow)
+            if hasattr(feature_instance, "execute") and callable(
+                getattr(feature_instance, "execute")
+            ):
+                logger.info(
+                    "Delegating execution to feature '%s' for sketch %s",
+                    feature_instance.NAME,
+                    sketch_id,
+                )
+                result = feature_instance.execute(
+                    sketch=sketch,
+                    form=form,
+                    timeline_ids=timeline_ids,
+                    llm_provider=llm_provider,
+                    timeout=self._LLM_TIMEOUT_WAIT_SECONDS,
+                )
+            else:
+                # Fallback to legacy non-streaming workflow for backward compatibility
+                logger.info(
+                    "Using legacy workflow for feature '%s' on sketch %s",
+                    feature_instance.NAME,
+                    sketch_id,
+                )
+                result = self._execute_legacy_workflow(
+                    feature_instance, sketch, form, timeline_ids, llm_provider
+                )
+
+            self._record_duration(sketch_id, feature_instance.NAME, start_time)
+            return jsonify(result)
+
+        except ValueError as e:
+            logger.error(
+                "ValueError during execution of '%s' on sketch %s: %s",
+                feature_instance.NAME,
+                sketch_id,
+                e,
+            )
+            self.METRICS["llm_errors_total"].labels(
+                sketch_id=str(sketch_id),
+                feature=feature_instance.NAME,
+                error_type="value_error",
+            ).inc()
+            abort(
+                definitions.HTTP_STATUS_CODE_BAD_REQUEST,
+                f"Unable to execute LLM feature ({feature_instance.NAME}): {str(e)}.",
+            )
+        except HTTPException as e:
+            logger.error(
+                "HTTPException during execution of '%s' on sketch %s: %s",
+                feature_instance.NAME,
+                sketch_id,
+                getattr(e, "description", str(e)),
+                exc_info=False,
+            )
+            self.METRICS["llm_errors_total"].labels(
+                sketch_id=str(sketch_id),
+                feature=feature_instance.NAME,
+                error_type="http_exception",
+            ).inc()
+            raise e
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(
+                "Unhandled exception during execution of '%s' on sketch %s: %s",
+                feature_instance.NAME,
+                sketch_id,
+                e,
+            )
+            self.METRICS["llm_errors_total"].labels(
+                sketch_id=str(sketch_id),
+                feature=feature_instance.NAME,
+                error_type="unhandled_exception",
+            ).inc()
+            abort(
+                definitions.HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                f"An unexpected error occurred: {str(e)}",
+            )
+
+    def _execute_legacy_workflow(
+        self,
+        feature: feature_manager.LLMFeatureInterface,
+        sketch: Sketch,
+        form: dict,
+        timeline_ids: list,
+        llm_provider: llm_provider_manager.LLMProvider,
+    ) -> dict:
+        """Executes the legacy non-streaming workflow for backward compatibility.
+
+        Args:
+            feature: The LLM feature instance.
+            sketch: The Sketch object.
+            form: The request form data.
+            timeline_ids: List of timeline DB IDs.
+            llm_provider: The instantiated LLM provider.
+
+        Returns:
+            The processed result dictionary.
+        """
+        # Generate prompt
         prompt = self._generate_prompt(feature, sketch, form, timeline_ids)
-        response = self._execute_llm_call(feature, prompt, sketch_id)
-        result = self._process_llm_response(
-            feature, response, sketch, form, timeline_ids
+        # Execute LLM call
+        llm_api_response = self._execute_llm_call(
+            feature, prompt, sketch.id, llm_provider
         )
-        self._record_duration(sketch_id, feature.NAME, start_time)
-        return jsonify(result)
+        # Process response
+        return feature.process_response(
+            llm_response=llm_api_response,
+            sketch=sketch,
+            sketch_id=sketch.id,
+            form=form,
+            timeline_ids=timeline_ids,
+            datastore=self.datastore,
+        )
 
     def _validate_sketch(self, sketch_id: int) -> Sketch:
         """Validates sketch existence and user permissions.
@@ -98,38 +246,46 @@ class LLMResource(resources.ResourceMixin, Resource):
             sketch_id: The ID of the sketch to validate.
 
         Returns:
-            The validated Sketch object.
+            The Sketch object if validation is successful.
 
         Raises:
-            HTTP 404: If the sketch doesn't exist.
-            HTTP 403: If the user doesn't have read access to the sketch.
+            HTTPException: With a 404 status if the sketch is not found, or a
+                403 status if the user lacks write permissions.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
+            logger.warning("Sketch not found with ID %s", sketch_id)
             abort(
                 definitions.HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID."
             )
-        if not sketch.has_permission(current_user, "read"):
+        if not sketch.has_permission(current_user, "write"):
+            logger.warning(
+                "User %s lacks write permission for sketch %s",
+                current_user.username,
+                sketch_id,
+            )
             abort(
                 definitions.HTTP_STATUS_CODE_FORBIDDEN,
-                "User does not have read access to the sketch.",
+                "User does not have sufficient access to modify the sketch.",
             )
         return sketch
 
     def _validate_request_data(self) -> dict:
-        """Validates the presence of request JSON data.
+        """Validates that the request contains JSON data.
 
         Returns:
-            The validated request data as a dictionary.
+            The JSON data from the request as a dictionary.
 
         Raises:
-            HTTP 400: If no JSON data is provided in the request.
+            HTTPException: With a 400 status if the request body does not
+                contain valid JSON.
         """
         form = request.json
         if not form:
+            logger.error("POST request is missing JSON data in the body")
             abort(
                 definitions.HTTP_STATUS_CODE_BAD_REQUEST,
-                "The POST request requires data",
+                "The POST request requires JSON data in the body.",
             )
         return form
 
@@ -151,12 +307,15 @@ class LLMResource(resources.ResourceMixin, Resource):
                 "The 'feature' parameter is required.",
             )
         try:
-            return feature_manager.FeatureManager.get_feature_instance(feature_name)
+            feature_instance = feature_manager.FeatureManager.get_feature_instance(
+                feature_name.lower()
+            )
         except KeyError:
             abort(
                 definitions.HTTP_STATUS_CODE_BAD_REQUEST,
                 f"Invalid LLM feature: {feature_name}",
             )
+        return feature_instance
 
     def _validate_indices(self, sketch: Sketch, query_filter: dict) -> list:
         """Extracts and validates timeline IDs from the query filter for a sketch.
@@ -190,69 +349,115 @@ class LLMResource(resources.ResourceMixin, Resource):
         form: dict,
         timeline_ids: list,
     ) -> str:
-        """Generates the LLM prompt based on the feature and request data.
+        """Generates a prompt string for the LLM based on the feature's logic.
+
+        This method delegates the prompt generation to the specific LLM feature
+        implementation. It passes necessary context such as the sketch, form data,
+        and relevant timeline IDs.
 
         Args:
-            feature: The LLM feature instance to use.
-            sketch: The Sketch object.
-            form: The request form data.
-            timeline_ids: A list of validated timeline IDs.
+            feature: An instance of LLMFeatureInterface that defines the prompt
+                generation logic.
+            sketch: The Timesketch sketch object.
+            form: A dictionary containing the request form data.
+            timeline_ids: A list of database IDs for the timelines relevant to
+                the request.
 
         Returns:
-            The generated prompt string for the LLM.
+            str: The generated prompt string.
 
         Raises:
-            HTTP 400: If prompt generation fails.
+            HTTPException: If a ValueError occurs during prompt generation,
+                indicating invalid input or an issue with the feature's logic.
         """
+        prompt_str = ""
         try:
-            return feature.generate_prompt(
+            prompt_str = feature.generate_prompt(
                 sketch, form=form, datastore=self.datastore, timeline_ids=timeline_ids
             )
         except ValueError as e:
+            logger.error(
+                "Error generating prompt for feature '%s' on sketch %s: %s",
+                feature.NAME,
+                sketch.id,
+                e,
+            )
             abort(definitions.HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+        return prompt_str
 
     def _execute_llm_call(
-        self, feature: feature_manager.LLMFeatureInterface, prompt: str, sketch_id: int
-    ) -> dict:
-        """Executes the LLM call with a timeout using multiprocessing.
+        self,
+        feature: feature_manager.LLMFeatureInterface,
+        prompt: str,
+        sketch_id: int,
+        llm_provider: llm_provider_manager.LLMProvider,
+    ) -> Any:
+        """Executes a non-streaming LLM call in a separate process with a timeout.
+
+        This method runs the LLM generation in a separate process to enforce a
+        timeout. It uses a multiprocessing manager to share the response back
+        from the child process. If the call exceeds the configured timeout, the
+        process is terminated. It also handles and logs errors that occur within
+        the LLM provider call.
 
         Args:
-            feature: The LLM feature instance to use.
-            prompt: The generated prompt to send to the LLM.
-            sketch_id: The ID of the sketch being processed.
+            feature: The LLM feature instance, used for logging and metrics.
+            prompt: The prompt string to send to the LLM provider.
+            sketch_id: The ID of the sketch, used for logging and metrics.
+            llm_provider: The instantiated LLM provider to use for the call.
 
         Returns:
-            The LLM response as a dictionary.
+            Any: The response from the LLM provider. The exact type depends on
+                the provider and feature.
 
         Raises:
-            HTTP 400: If the LLM call times out.
-            HTTP 500: If an error occurs during LLM processing.
+            HTTPException: If the LLM call times out (504 Gateway Timeout) or
+                if there is an error during the LLM API call (500 Internal
+                Server Error).
         """
-        with multiprocessing.Manager() as manager:
-            shared_response = manager.dict()
+        logger.info(
+            "Executing LLM call for feature '%s' on sketch %s via provider '%s'",
+            feature.NAME,
+            sketch_id,
+            llm_provider.NAME,
+        )
+        with multiprocessing.Manager() as manager_mp:
+            shared_response = manager_mp.dict()
             process = multiprocessing.Process(
                 target=self._get_content_with_timeout,
-                args=(feature, prompt, shared_response),
+                args=(feature, prompt, shared_response, llm_provider),
             )
             process.start()
             process.join(timeout=self._LLM_TIMEOUT_WAIT_SECONDS)
+
             if process.is_alive():
                 logger.warning(
-                    "LLM call timed out after %d seconds.",
+                    "LLM call for feature '%s' on sketch %s "
+                    "timed out after %s seconds",
+                    feature.NAME,
+                    sketch_id,
                     self._LLM_TIMEOUT_WAIT_SECONDS,
                 )
                 process.terminate()
                 process.join()
                 self.METRICS["llm_errors_total"].labels(
-                    sketch_id=str(sketch_id), feature=feature.NAME, error_type="timeout"
+                    sketch_id=str(sketch_id),
+                    feature=feature.NAME,
+                    error_type="llm_call_timeout",
                 ).inc()
                 abort(
-                    definitions.HTTP_STATUS_CODE_BAD_REQUEST,
-                    "LLM call timed out, please try again. "
-                    "If this issue persists, contact your administrator.",
+                    definitions.HTTP_STATUS_CODE_GATEWAY_TIMEOUT,
+                    "LLM call timed out. The operation took too long to complete.",
                 )
-            response = dict(shared_response)
-            if "error" in response:
+
+            if "error" in shared_response:
+                error_msg = shared_response["error"]
+                logger.error(
+                    "Error during LLM processing for feature '%s' on sketch %s: %s",
+                    feature.NAME,
+                    sketch_id,
+                    error_msg,
+                )
                 self.METRICS["llm_errors_total"].labels(
                     sketch_id=str(sketch_id),
                     feature=feature.NAME,
@@ -260,56 +465,20 @@ class LLMResource(resources.ResourceMixin, Resource):
                 ).inc()
                 abort(
                     definitions.HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                    f"Error during LLM processing: {response['error']}",
+                    f"Error during LLM processing: {error_msg}",
                 )
-            return response["response"]
 
-    def _process_llm_response(
-        self,
-        feature: feature_manager.LLMFeatureInterface,
-        response: dict,
-        sketch: Sketch,
-        form: dict,
-        timeline_ids: list,
-    ) -> dict:
-        """Processes the LLM response into the final result.
-
-        Args:
-            feature: The LLM feature instance used.
-            response: The raw LLM response.
-            sketch: The Sketch object.
-            form: The request form data.
-            timeline_ids: A list of validated timeline IDs.
-
-        Returns:
-            The processed LLM response as a dictionary.
-
-        Raises:
-            HTTP 400: If response processing fails.
-        """
-        try:
-            return feature.process_response(
-                llm_response=response,
-                form=form,
-                sketch_id=sketch.id,
-                datastore=self.datastore,
-                sketch=sketch,
-                timeline_ids=timeline_ids,
-            )
-        except ValueError as e:
-            self.METRICS["llm_errors_total"].labels(
-                sketch_id=str(sketch.id),
-                feature=feature.NAME,
-                error_type="response_processing",
-            ).inc()
-            abort(definitions.HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+            return shared_response.get("response")
 
     def _increment_request_metric(self, sketch_id: int, feature_name: str) -> None:
-        """Increments the request counter metric.
+        """Increments the Prometheus counter for total LLM requests.
+
+        This method is called at the beginning of a request to track the usage
+        of different LLM features per sketch.
 
         Args:
-            sketch_id: The ID of the sketch being processed.
-            feature_name: The name of the LLM feature being used.
+            sketch_id: The ID of the sketch for which the request is made.
+            feature_name: The name of the LLM feature being requested.
         """
         self.METRICS["llm_requests_total"].labels(
             sketch_id=str(sketch_id), feature=feature_name
@@ -318,12 +487,16 @@ class LLMResource(resources.ResourceMixin, Resource):
     def _record_duration(
         self, sketch_id: int, feature_name: str, start_time: float
     ) -> None:
-        """Records the duration of the request.
+        """Records the duration of the LLM request processing in a Prometheus summary.
+
+        This method calculates the time elapsed since the start_time and records
+        it in the `llm_duration_seconds` metric.
 
         Args:
-            sketch_id: The ID of the sketch being processed.
-            feature_name: The name of the LLM feature being used.
-            start_time: The timestamp when the request started.
+            sketch_id: The ID of the sketch for which the request was made.
+            feature_name: The name of the LLM feature that was executed.
+            start_time: The timestamp (from time.time()) when the request
+                processing started.
         """
         duration = time.time() - start_time
         self.METRICS["llm_duration_seconds"].labels(
@@ -335,23 +508,42 @@ class LLMResource(resources.ResourceMixin, Resource):
         feature: feature_manager.LLMFeatureInterface,
         prompt: str,
         shared_response: multiprocessing.managers.DictProxy,
+        llm_provider: llm_provider_manager.LLMProvider,
     ) -> None:
-        """Send a prompt to the LLM and get a response within a process.
+        """Runs the LLM generation in a separate process and stores the result.
 
-        This method is executed in a separate process to allow for timeout control.
+        This function is designed to be the target of a `multiprocessing.Process`
+        to allow for a timeout on the LLM call. It calls the provider's
+        `generate` method and places the result or an error message into the
+        shared dictionary.
 
         Args:
-            feature: The LLM feature instance to use.
-            prompt: The generated prompt to send to the LLM.
-            shared_response: A managed dictionary to store the response or error.
+            feature: The LLM feature instance, used for logging.
+            prompt: The prompt string to send to the LLM.
+            shared_response: A multiprocessing manager dictionary to store the
+                response or error.
+            llm_provider: The instantiated LLM provider to use for the call.
         """
         try:
-            llm = llm_manager.LLMManager.create_provider(feature_name=feature.NAME)
-            response_schema = (
-                feature.RESPONSE_SCHEMA if hasattr(feature, "RESPONSE_SCHEMA") else None
+            api_response = llm_provider.generate(
+                prompt, response_schema=feature.RESPONSE_SCHEMA
             )
-            response = llm.generate(prompt, response_schema=response_schema)
-            shared_response.update({"response": response})
+            shared_response.update({"response": api_response})
         except Exception as e:  # pylint: disable=broad-except
-            logger.error("Error in LLM call within process: %s", e, exc_info=True)
-            shared_response.update({"error": str(e)})
+            process_logger = logging.getLogger("timesketch.api.llm.subprocess")
+            error_str = str(e)
+
+            # Reduce log noise for expected operational errors
+            if any(x in error_str for x in _OPERATIONAL_ERROR_SUBSTRINGS):
+                process_logger.warning(
+                    "LLM operational error in subprocess for feature '%s': %s",
+                    feature.NAME,
+                    error_str,
+                )
+            else:
+                process_logger.error(
+                    "Error in LLM call for feature '%s': %s",
+                    feature.NAME,
+                    e,
+                )
+            shared_response.update({"error": error_str})

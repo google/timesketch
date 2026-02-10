@@ -13,18 +13,19 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
-
 import codecs
 import json
 
 from typing import Optional, Dict
 from flask_testing import TestCase
+from sqlalchemy import create_engine
+
 
 from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
-from timesketch.models import db_session
+from timesketch.models import db_session, BaseModel
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
@@ -63,6 +64,7 @@ class TestConfig:
     """Config for the test environment."""
 
     DEBUG = True
+    TESTING = True
     SECRET_KEY = "testing"
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     WTF_CSRF_ENABLED = False
@@ -225,7 +227,8 @@ class MockDataStore:
         "timed_out": False,
     }
 
-    def __init__(self, host, port):
+    # pylint: disable=unused-argument
+    def __init__(self, host=None, port=None, **kwargs):
         """Initialize the datastore.
         Args:
             host: Hostname or IP address to the datastore
@@ -441,18 +444,21 @@ class BaseTest(TestCase):
         db_session.add(model)
         db_session.commit()
 
-    def _create_user(self, username, set_password=False, set_admin=False):
+    def _create_user(
+        self, username, set_password=False, set_admin=False, password="test"
+    ):
         """Create a user in the database.
         Args:
             username: Username (string)
             set_password: Boolean value to decide if a password should be set
             set_admin: Boolean value to decide if the user should be an admin
+            password: Password (string) Defaults to 'test'
         Returns:
             A user (instance of timesketch.models.user.User)
         """
         user = User.get_or_create(username=username, name=username)
         if set_password:
-            user.set_password(plaintext="test", rounds=4)
+            user.set_password(plaintext=password, rounds=4)
         if set_admin:
             user.admin = True
         self._commit_to_database(user)
@@ -624,7 +630,7 @@ class BaseTest(TestCase):
         init_db()
 
         self.user1 = self._create_user(username="test1", set_password=True)
-        self.user2 = self._create_user(username="test2", set_password=False)
+        self.user2 = self._create_user(username="test2", set_password=True)
         self.useradmin = self._create_user(
             username="testadmin", set_password=True, set_admin=True
         )
@@ -681,11 +687,16 @@ class BaseTest(TestCase):
         db_session.remove()
         drop_all()
 
-    def login(self):
-        """Authenticate the test user."""
+    def login(self, username="test1", password="test"):
+        """Authenticate a user.
+
+        Args:
+            username: The username to login with.
+            password: The password for the user.
+        """
         self.client.post(
             "/login/",
-            data={"username": "test1", "password": "test"},
+            data={"username": username, "password": password},
             follow_redirects=True,
         )
 
@@ -718,6 +729,16 @@ class BaseTest(TestCase):
 
 class ModelBaseTest(BaseTest):
     """Base class for database model tests."""
+
+    def setUp(self):
+        super().setUp()  # Call parent setUp if it exists
+        # Configure an in-memory SQLite database for testing
+        self.engine = create_engine("sqlite:///:memory:")
+        # Bind the engine to the session
+        db_session.configure(bind=self.engine)
+        # Create all tables defined in BaseModel.metadata
+        BaseModel.metadata.create_all(self.engine)
+        self.db_session = db_session
 
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""

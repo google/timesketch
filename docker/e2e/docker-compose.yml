@@ -1,4 +1,3 @@
-version: "3"
 services:
   timesketch:
     environment:
@@ -12,11 +11,16 @@ services:
       - REDIS_PORT=6379
       - TIMESKETCH_USER=test
       - TIMESKETCH_PASSWORD=test
+      - TIMESKETCH_ADMIN_USER=admin
+      - TIMESKETCH_ADMIN_USER_PASSWORD=admin
+      - TIMESKETCH_USER2=test2
+      - TIMESKETCH_PASSWORD2=test2
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
       args:
-        - PLASO_PPA_TRACK=${PLASO_PPA_TRACK}
+          UBUNTU_VERSION: ${UBUNTU_VERSION:-24.04}
+          PLASO_PPA_TRACK: ${PLASO_PPA_TRACK:-stable}
     ports:
       - "127.0.0.1:80:80"
     links:
@@ -28,7 +32,7 @@ services:
       - ../../:/usr/local/src/timesketch/
 
   opensearch:
-    image: opensearchproject/opensearch:${OPENSEARCH_VERSION}
+    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-2.15.0}
     restart: always
     environment:
       - TAKE_FILE_OWNERSHIP=1
@@ -51,5 +55,5 @@ services:
     restart: always
 
   redis:
-    image: redis
+    image: redis:latest
     restart: always

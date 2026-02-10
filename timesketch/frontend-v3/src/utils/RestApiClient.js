@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from "axios";
-//import EventBus from '../event-bus.js'
+import EventBus from '../event-bus.js'
 
 const RestApiClient = axios.create({
   baseURL: "/api/v1",
@@ -175,14 +175,16 @@ export default {
     annotation,
     events,
     currentSearchNode,
-    remove = false
+    remove = false,
+    conclusionId = null
   ) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
-      current_search_node_id: currentSearchNode.id,
+      current_search_node_id: currentSearchNode?.id,
       remove: remove,
+      conclusion_id: conclusionId
     };
     return RestApiClient.post(
       "/sketches/" + sketchId + "/event/annotate/",
@@ -258,10 +260,11 @@ export default {
       "/sketches/" + sketchId + "/stories/" + storyId + "/"
     );
   },
-  createStory(title, content, sketchId) {
+  createStory(title, content, sketchId, labels = []) {
     let formData = {
       title: title,
       content: content,
+      labels: labels,
     };
     return RestApiClient.post("/sketches/" + sketchId + "/stories/", formData);
   },
@@ -270,6 +273,11 @@ export default {
       title: title,
       content: content,
     };
+
+    if (!storyId) {
+      return;
+    }
+
     return RestApiClient.post(
       "/sketches/" + sketchId + "/stories/" + storyId + "/",
       formData
@@ -429,13 +437,16 @@ export default {
   getAnalyzers(sketchId) {
     return RestApiClient.get("/sketches/" + sketchId + "/analyzer/");
   },
-  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false) {
+  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false, analyzerKwargs = null) {
     let formData = {
       timeline_ids: timelineIds,
       analyzer_names: analyzers,
       analyzer_force_run: forceRun,
-    };
-    return RestApiClient.post("/sketches/" + sketchId + "/analyzer/", formData);
+    }
+    if (analyzerKwargs) {
+      formData.analyzer_kwargs = analyzerKwargs;
+    }
+    return RestApiClient.post("/sketches/" + sketchId + "/analyzer/", formData)
   },
   getAnalyzerSession(sketchId, sessionId) {
     return RestApiClient.get(
@@ -582,17 +593,23 @@ export default {
   getFacetQuestions(sketchId, scenarioId, facetId) {
     return RestApiClient.get(
       "/sketches/" +
-        sketchId +
-        "/scenarios/" +
-        scenarioId +
-        "/facets/" +
-        facetId +
-        "/questions/"
+      sketchId +
+      "/scenarios/" +
+      scenarioId +
+      "/facets/" +
+      facetId +
+      "/questions/"
     );
   },
   getQuestion(sketchId, questionId) {
     return RestApiClient.get(
       "/sketches/" + sketchId + "/questions/" + questionId + "/"
+    );
+  },
+  updateQuestion(sketchId, questionId, formData) {
+    return RestApiClient.post(
+      "/sketches/" + sketchId + "/questions/" + questionId + "/",
+      formData
     );
   },
   createQuestion(sketchId, scenarioId, facetId, questionText, templateId) {
@@ -618,24 +635,24 @@ export default {
     let formData = { conclusionText: conclusionText };
     return RestApiClient.put(
       "/sketches/" +
-        sketchId +
-        "/questions/" +
-        questionId +
-        "/conclusions/" +
-        conclusionId +
-        "/",
+      sketchId +
+      "/questions/" +
+      questionId +
+      "/conclusions/" +
+      conclusionId +
+      "/",
       formData
     );
   },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
     return RestApiClient.delete(
       "/sketches/" +
-        sketchId +
-        "/questions/" +
-        questionId +
-        "/conclusions/" +
-        conclusionId +
-        "/"
+      sketchId +
+      "/questions/" +
+      questionId +
+      "/conclusions/" +
+      conclusionId +
+      "/"
     );
   },
   // Misc resources
@@ -675,7 +692,7 @@ export default {
   llmRequest(sketchId, featureName, formData) {
     formData = formData || {}
     formData.feature = featureName
-  
+
     return RestApiClient.post(`/sketches/${sketchId}/llm/`, formData)
   }
 };

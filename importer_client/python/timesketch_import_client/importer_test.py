@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Timesketch importer."""
+
 from __future__ import unicode_literals
 
 import json
@@ -31,6 +32,9 @@ class MockSketch(object):
         self.api = mock.Mock()
         self.api.api_root = "foo_root"
         self.id = 1
+        # Mock the session object specifically for upload verifications
+        self.api.session = mock.Mock()
+        self.api.session.post.return_value = mock.Mock(status_code=200, json=lambda: {})
 
 
 class MockStreamer(importer.ImportStreamer):
@@ -47,8 +51,10 @@ class MockStreamer(importer.ImportStreamer):
             columns.update(line.keys())
         return list(columns)
 
-    def _upload_data_buffer(self, end_stream, retry_count=0):
-        self.lines.extend(self._data_lines)
+    def _upload_data_buffer(self, end_stream, data_lines=None, retry_count=0):
+        # Determine lines to use
+        lines = data_lines if data_lines is not None else self._data_lines
+        self.lines.extend(lines)
 
     def _upload_data_frame(self, data_frame, end_stream, retry_count=0):
         self.lines.extend(json.loads(data_frame.to_json(orient="records")))
@@ -201,7 +207,7 @@ class TimesketchImporterTest(unittest.TestCase):
         self.assertIs("ille" in fixed_frame["vital_stats"].values, True)
         print(fixed_frame["datetime"].values)
         self.assertIs(
-            "2019-01-03T02:39:42+0000" in fixed_frame["datetime"].values, True
+            "2019-01-03T02:39:42.000000+0000" in fixed_frame["datetime"].values, True
         )
 
     def test_fix_data_frame_precision_datetime(self):
@@ -218,7 +224,7 @@ class TimesketchImporterTest(unittest.TestCase):
 
         print(fixed_frame["datetime"].values)
         self.assertIs(
-            "2024-07-24T10:57:02+0000" in fixed_frame["datetime"].values, True
+            "2024-07-24T10:57:02.877297+0000" in fixed_frame["datetime"].values, True
         )
 
     def test_fix_data_frame_precision_timestamp(self):
@@ -234,9 +240,21 @@ class TimesketchImporterTest(unittest.TestCase):
         self.assertIsNotNone(fixed_frame)
 
         self.assertIs(
-            "1985-01-21T10:57:02+0000" in fixed_frame["datetime"].values, True
+            "1985-01-21T10:57:02.250000+0000" in fixed_frame["datetime"].values, True
         )
         self.assertIs("1331698658276340" in fixed_frame["timestamp"].values, True)
+
+    def test_fix_data_frame_precision(self):
+        """Test fixing a data frame with a datetime that has microsecond precision."""
+        data_frame = pandas.DataFrame(
+            {
+                "datetime": ["2023-05-03T07:36:43.9116468Z"],
+                "message": ["test message"],
+            }
+        )
+        fixed_frame = self._importer._fix_data_frame(data_frame)
+        self.assertIsNotNone(fixed_frame)
+        self.assertIn(".911646", fixed_frame["datetime"].iloc[0])
 
     # pylint: enable=protected-access
     def _run_all_tests(self, columns, lines):
@@ -271,6 +289,101 @@ class TimesketchImporterTest(unittest.TestCase):
             ]
         )
         self.assertSetEqual(set(messages), message_correct)
+
+
+class TestUploadLogic(unittest.TestCase):
+    """Tests for the upload logic including chunking and recursion."""
+
+    def setUp(self):
+        self.importer = importer.ImportStreamer()
+        self.importer.set_sketch(MockSketch())
+        self.importer.set_timeline_name("test_timeline")
+
+        # Create dummy data
+        self.lines = []
+        for i in range(10):
+            self.lines.append(
+                {
+                    "message": "test message " + str(i),
+                    "datetime": "2024-01-01T00:00:00+00:00",
+                    "timestamp_desc": "test",
+                }
+            )
+        self.df = pandas.DataFrame(self.lines)
+
+    # pylint: disable=protected-access
+    def test_upload_data_frame_multipart(self):
+        """Test that data frame upload uses multipart/form-data logic."""
+        # Use the real _upload_data_frame method, not the MockStreamer one
+        self.importer._upload_data_frame(self.df, end_stream=True)
+
+        # Verify the session.post call
+        call_args = self.importer._sketch.api.session.post.call_args
+        self.assertIsNotNone(call_args)
+
+        kwargs = call_args[1]
+        self.assertIn("files", kwargs)
+        self.assertIn("data", kwargs)
+
+        # Verify 'events' is in files, not data
+        self.assertIn("events", kwargs["files"])
+        self.assertNotIn("events", kwargs["data"])
+
+        # Verify content of events
+        events_tuple = kwargs["files"]["events"]
+        self.assertEqual(events_tuple[0], None)  # Filename should be None
+        self.assertEqual(events_tuple[2], "application/json")  # Content type
+        self.assertIn("test message 0", events_tuple[1])  # Content
+
+    def test_upload_data_buffer_multipart(self):
+        """Test that data buffer upload uses multipart/form-data logic."""
+        self.importer._data_lines = self.lines
+        self.importer._upload_data_buffer(end_stream=True)
+
+        # Verify the session.post call
+        call_args = self.importer._sketch.api.session.post.call_args
+        self.assertIsNotNone(call_args)
+
+        kwargs = call_args[1]
+        self.assertIn("files", kwargs)
+        self.assertIn("events", kwargs["files"])
+
+        events_tuple = kwargs["files"]["events"]
+        self.assertIn("test message 9", events_tuple[1])
+
+    def test_dynamic_chunking_dataframe(self):
+        """Test that dataframe is split when exceeding safe payload limit."""
+        # Set a very small limit to force splitting
+        # Each row in self.lines is roughly 80-90 bytes in JSON
+        # Setting limit to 200 bytes should force splits
+        self.importer._safe_payload_limit = 200
+
+        # Reset the mock to track calls
+        self.importer._sketch.api.session.post.reset_mock()
+
+        self.importer._upload_data_frame(self.df, end_stream=True)
+
+        # Should be called multiple times due to splitting
+        # 10 rows -> approx 900 bytes total. Limit 200.
+        # Should split 10 -> 5, 5.
+        # 5 rows ~450 bytes -> still > 200. Split 5 -> 2, 3.
+        # 2 rows ~180 bytes -> OK.
+        # It will recursively call post multiple times.
+        self.assertGreater(self.importer._sketch.api.session.post.call_count, 1)
+
+    def test_dynamic_chunking_buffer(self):
+        """Test that list buffer is split when exceeding safe payload limit."""
+        self.importer._data_lines = self.lines
+        self.importer._safe_payload_limit = 200
+
+        self.importer._sketch.api.session.post.reset_mock()
+
+        self.importer._upload_data_buffer(end_stream=True)
+
+        # Should be called multiple times
+        self.assertGreater(self.importer._sketch.api.session.post.call_count, 1)
+
+    # pylint: enable=protected-access
 
 
 class RunAnalyzersTest(unittest.TestCase):

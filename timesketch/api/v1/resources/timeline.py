@@ -42,7 +42,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.lib.aggregators import manager as aggregator_manager
 
-
 logger = logging.getLogger("timesketch.timeline_api")
 
 
@@ -321,22 +320,37 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
         meta = {"lines_indexed": None}
         if timeline.get_status.status != "fail":
-            result = self.datastore.search(
-                sketch_id=timeline.searchindex.id,
-                query_string="*",
-                query_filter={
-                    "from": 0,
-                    "indices": [timeline.id],
-                    "order": "asc",
-                    "chips": [],
-                    "fields": [{"field": "message", "type": "text"}],
-                },
-                query_dsl=None,
-                indices=[timeline.searchindex.index_name],
-                timeline_ids=[timeline.id],
-                count=True,
-            )
-            meta["lines_indexed"] = result
+            try:
+                result = self.datastore.search(
+                    sketch_id=timeline.searchindex.id,
+                    query_string="*",
+                    query_filter={
+                        "from": 0,
+                        "indices": [timeline.id],
+                        "order": "asc",
+                        "chips": [],
+                        "fields": [{"field": "message", "type": "text"}],
+                    },
+                    query_dsl=None,
+                    indices=[timeline.searchindex.index_name],
+                    timeline_ids=[timeline.id],
+                    count=True,
+                )
+                meta["lines_indexed"] = result
+            except ValueError as e:
+                logger.error(
+                    "Unable to get indexed line count for sketch [%s], timeline [%s] "
+                    "on index [%s]. Error: %s",
+                    sketch_id,
+                    timeline_id,
+                    timeline.searchindex.index_name,
+                    e,
+                    exc_info=True,
+                )
+                abort(
+                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                    f"Error retrieving timeline data: {e}",
+                )
 
         return self.to_json(timeline, meta=meta)
 
@@ -467,31 +481,41 @@ class TimelineResource(resources.ResourceMixin, Resource):
         return HTTP_STATUS_CODE_OK
 
     @login_required
-    def delete(self, sketch_id: int, timeline_id: int):
-        """Deletes a timeline from a sketch. If the timeline's search index is not
-        used by any other timelines or in other sketches, the search index will
-        also be closed and archived.
+    def delete(self, sketch_id: int, timeline_id: int) -> int:
+        """Handles DELETE requests to remove a timeline from a sketch.
+
+        This method dissociates a timeline from a specific sketch. If the
+        underlying search index associated with the timeline is not in use by any
+        other active timelines (across any sketch), the index will be closed
+        and archived to free up resources.
+
+        The method performs the following checks:
+        1. Validates that the sketch and timeline exist.
+        2. Ensures the timeline belongs to the specified sketch.
+        3. Verifies that the current user has 'write' permission on the sketch.
+        4. Checks if the timeline has any labels that prevent deletion (as defined
+           in the `LABELS_TO_PREVENT_DELETION` configuration).
+        5. Considers the timeline's status (e.g., 'archived', 'fail', 'deleted')
+           when determining if its search index can be safely closed and archived.
 
         Args:
-            sketch_id: (int) Integer primary key for a sketch database model
-            timeline_id: (int) Integer primary key for a timeline database model
+            sketch_id (int): The unique identifier (primary key) of the sketch.
+            timeline_id (int): The unique identifier (primary key) of the
+                timeline to be deleted.
+
+        Returns:
+            int: The HTTP status code indicating the outcome of the operation.
+                - HTTP_STATUS_CODE_OK (200): If the timeline was successfully
+                  deleted (and potentially archived).
 
         Raises:
-            HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found.
-            HTTP_STATUS_CODE_FORBIDDEN: If the user does not have write
-                permission on the sketch or if the timeline has a label that
-                prevents deletion.
-            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If there is an error
-                closing the search index.
-        Returns:
-            HTTP_STATUS_CODE_OK: If the timeline is successfully deleted.
-        Behavior:
-            - Checks if the sketch and timeline exist.
-            - Verifies the user has write permission on the sketch.
-            - Prevents deletion if the timeline has a label in the
-              LABELS_TO_PREVENT_DELETION config.
-            - Closes and archives the search index if it's not used by other
-              timelines in other sketches.
+            HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found,
+                or if the timeline is not associated with the sketch.
+            HTTP_STATUS_CODE_FORBIDDEN: If the user lacks write permission for
+                the sketch, or if the timeline is protected from deletion by a
+                restricted label.
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If an unexpected error
+                occurs while attempting to close the search index in the datastore.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -561,7 +585,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             if timeline_.id != timeline_id:
                 # There are more than a single timeline using this index_name,
                 # we can't close it (unless this timeline is archived).
-                if timeline_.get_status.status != "archived":
+                if timeline_.get_status.status not in ("archived", "fail", "deleted"):
                     close_index = False
                     break
 

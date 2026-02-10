@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 from __future__ import unicode_literals
 
 import copy
 import os
 import json
+import time
 import logging
+from typing import Dict, Generator, List, Optional
 
 import pandas
+
+from requests.exceptions import RequestException
+
 
 from . import analyzer
 from . import aggregation
@@ -33,7 +39,6 @@ from . import searchtemplate
 from . import story
 from . import timeline
 from . import scenario as scenario_lib
-
 
 logger = logging.getLogger("timesketch_api.sketch")
 
@@ -64,7 +69,7 @@ class Sketch(resource.BaseResource):
         self.api = api
         self._archived = None
         self._sketch_name = sketch_name
-        super().__init__(api=api, resource_uri=f"sketches/{self.id}")
+        super().__init__(api=api, resource_uri=f"sketches/{self.id}/")
 
     @property
     def acl(self):
@@ -454,16 +459,55 @@ class Sketch(resource.BaseResource):
         story_dict = response_json.get("objects", [{}])[0]
         return story.Story(story_id=story_dict.get("id", 0), sketch=self, api=self.api)
 
-    def delete(self):
-        """Deletes the sketch."""
+    def delete(self, force_delete=False):
+        """Deletes the sketch from Timesketch.
+
+        This method allows for either a soft deletion or a hard deletion
+        of a sketch.
+
+        If the sketch is currently archived, it cannot be deleted directly. It must
+        first be unarchived before a delete operation can be performed.
+
+        Args:
+            force_delete (bool): If True, a hard delete is performed, which
+                permanently removes the sketch and all its associated data
+                (timelines, events, views, etc.) from the Timesketch database.
+                If False (default), the sketch is soft-deleted, typically by
+                marking it as deleted for admins to pick it up e.g. in a
+                cron job.
+
+        Returns:
+            bool: True if the sketch was successfully deleted (either soft or hard).
+
+        Raises:
+            RuntimeError:
+                - If the sketch is currently archived and `delete()` is called
+                without first unarchiving it.
+                - If the API call to delete the sketch fails for any other reason
+                (e.g., permission denied, network issues, invalid sketch ID,
+                or server-side errors). The error message will provide more
+                details on the specific failure.
+        """
         if self.is_archived():
             raise RuntimeError(
                 "Unable to delete an archived sketch, first unarchive then delete."
             )
 
         resource_url = "{0:s}/sketches/{1:d}/".format(self.api.api_root, self.id)
+        if force_delete:
+            resource_url += "?force=true"
         response = self.api.session.delete(resource_url)
-        return error.check_return_status(response, logger)
+        # Check the return status. If it's not a success (20x),
+        # error_message will raise a RuntimeError.
+        if not error.check_return_status(response, logger):
+            error.error_message(
+                response,
+                message=f"Failed to delete sketch {self.id}",
+                error=RuntimeError,
+            )
+        else:
+            return error.check_return_status(response, logger)
+        return True
 
     def add_to_acl(
         self,
@@ -1021,11 +1065,6 @@ class Sketch(resource.BaseResource):
             RuntimeError: if the query is missing needed values, or if the
                 sketch is archived.
         """
-        logger.warning(
-            "Using this function is discouraged, please consider using "
-            "the search.Search object instead, which is more flexible."
-        )
-
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError("You need to supply a query or view")
 
@@ -1404,12 +1443,15 @@ class Sketch(resource.BaseResource):
         response = self.api.session.get(resource_url_base + resource_url_params)
         return error.get_response_json(response, logger)
 
-    def label_events(self, events, label_name):
+    def label_events(self, events, label_name, remove=False, conclusion_id=None):
         """Labels one or more events with label_name.
 
         Args:
-            events: Array of JSON objects representing events.
-            label_name: String to label the event with.
+            events (json): Array of JSON objects representing events.
+            label_name (string): String to label the event with.
+            remove (bool): If true, the label will be removed instead of added.
+            conclusion_id (int): Optional. ID of a conclusion to link the
+                event to.
 
         Returns:
             Dictionary with query results.
@@ -1421,12 +1463,34 @@ class Sketch(resource.BaseResource):
             "annotation": label_name,
             "annotation_type": "label",
             "events": events,
+            "remove": remove,
         }
+        if conclusion_id:
+            form_data["conclusion_id"] = conclusion_id
+
         resource_url = "{0:s}/sketches/{1:d}/event/annotate/".format(
             self.api.api_root, self.id
         )
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
+
+    def link_event_to_conclusion(self, events, conclusion_id, unlink=False):
+        """Links one or more events to a conclusion as a fact.
+
+        Args:
+            events: Array of JSON objects representing events.
+            conclusion_id (int): ID of the conclusion to link the event to.
+            unlink (bool): If true, the link will be removed.
+
+        Returns:
+            Dictionary with query results.
+        """
+        return self.label_events(
+            events=events,
+            label_name="__ts_fact",
+            remove=unlink,
+            conclusion_id=conclusion_id,
+        )
 
     def untag_events(self, events, tags_to_remove: list):
         """Removes a list of tags from a list of events.
@@ -1619,7 +1683,7 @@ class Sketch(resource.BaseResource):
         if uuid:
             form_data["uuid"] = uuid
         elif dfiq_id:
-            form_data["template_id"] = dfiq_id
+            form_data["dfiq_id"] = dfiq_id
         else:  # name is provided
             scenario_templates = scenario_lib.getScenarioTemplateList(self.api)
             for template in scenario_templates:
@@ -1874,35 +1938,45 @@ class Sketch(resource.BaseResource):
         self._archived = not return_status
         return return_status
 
-    def export(self, file_path):
+    def export(self, file_path, stream=False):
         """Exports the content of the sketch to a ZIP file.
 
         Args:
             file_path (str): a file path where the ZIP file will be saved.
+            stream (bool): whether to stream the download.
 
         Raises:
             RuntimeError: if sketch cannot be exported.
         """
-        directory = os.path.dirname(file_path)
-        if not os.path.isdir(directory):
-            raise RuntimeError(
-                "The directory needs to exist, please create: "
-                "{0:s} first".format(directory)
-            )
+        # Expand ~ to home directory if present
+        file_path = os.path.expanduser(file_path)
 
+        # Ensure we have a .zip extension
         if not file_path.lower().endswith(".zip"):
             logger.warning("File does not end with a .zip, adding it.")
-            file_path = "{0:s}.zip".format(file_path)
+            file_path = f"{file_path}.zip"
+
+        directory = os.path.dirname(file_path) or "."
+        if not os.path.isdir(directory):
+            raise RuntimeError(
+                "The directory needs to exist and be a directory: "
+                f"{os.path.abspath(directory)} first"
+            )
+
+        if not os.access(directory, os.W_OK):
+            raise RuntimeError(
+                f"The directory is not writable: {os.path.abspath(directory)}"
+            )
 
         if os.path.isfile(file_path):
-            raise RuntimeError("File [{0:s}] already exists.".format(file_path))
+            raise RuntimeError(f"File [{file_path}] already exists.")
 
         form_data = {"action": "export"}
         resource_url = "{0:s}/sketches/{1:d}/archive/".format(
             self.api.api_root, self.id
         )
 
-        response = self.api.session.post(resource_url, json=form_data)
+        response = self.api.session.post(resource_url, json=form_data, stream=stream)
         status = error.check_return_status(response, logger)
         if not status:
             error.error_message(
@@ -1912,50 +1986,185 @@ class Sketch(resource.BaseResource):
             )
 
         with open(file_path, "wb") as fw:
-            fw.write(response.content)
+            if stream:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        fw.write(chunk)
+            else:
+                fw.write(response.content)
+
+    def export_events_stream(
+        self,
+        query_string: Optional[str] = None,
+        query_dsl: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        return_fields: Optional[List[str]] = None,
+    ) -> Generator[Dict, None, None]:
+        """Exports all events from the sketch matching the query.
+
+        This uses the high-performance sliced export API endpoint.
+
+        Args:
+            query_string (str): OpenSearch query string.
+            query_dsl (str): OpenSearch query DSL as JSON string.
+            query_filter (dict): Filter for the query as a dict.
+            return_fields (list): List of strings with fields to return.
+
+        Yields:
+            dict: A dictionary representing an event.
+        """
+        if return_fields is None:
+            return_fields = ["datetime", "message", "timestamp_desc"]
+
+        resource_url = f"{self.api.api_root}/sketches/{self.id}/exportstream/"
+
+        if not (query_string or query_filter or query_dsl):
+            query_string = "*"
+
+        if return_fields and isinstance(return_fields, list):
+            return_fields = ",".join(return_fields)
+
+        form_data = {
+            "query": query_string,
+            "filter": query_filter,
+            "dsl": query_dsl,
+            "fields": return_fields,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data, stream=True)
+
+        if not error.check_return_status(response, logger):
+            error.error_message(
+                response, message="Unable to export events", error=RuntimeError
+            )
+
+        for line in response.iter_lines():
+            if line:
+                try:
+                    yield json.loads(line.decode("utf-8"))
+                except json.JSONDecodeError:
+                    logger.warning("Received invalid JSON line during export")
+                    continue
 
     def create_timeline(self, searchindex_id: int, timeline_name: str):
         """Creates a Timeline in this Sketch
 
+        This method attempts to create a new timeline associated with this sketch
+        on the Timesketch server. It links the sketch to an existing SearchIndex
+        that contains the event data. It implements a retry mechanism with
+        exponential backoff if the initial request fails due to network issues,
+        API errors, or unexpected response formats.
+
         Args:
-            searchindex_id (int): id of the SearchIndex that (will) hold the data
-                for this timeline
+            searchindex_id (int): The ID of the SearchIndex that holds the data
+                for this timeline.
             timeline_name (str): The name of the timeline
 
-        Raises:
-            ValueError: If the Timeline object fails to create
-
         Returns:
-            Timeline object for the just created timeline
+            An instance of a Timeline object representing the newly created
+            timeline.
+
+        Raises:
+            RuntimeError: If the Timeline fails to create after all retries,
+                or if the API returns an unexpected response format.
+            requests.exceptions.RequestException: If a connection error persists
+                after all retries.
+            ValueError: If the API response cannot be JSON-decoded after all
+                retries
         """
+
         resource_url = f"{self.api.api_root}/sketches/{self.id}/timelines/"
         form_data = {"timeline": searchindex_id, "timeline_name": timeline_name}
-        response = self.api.session.post(resource_url, json=form_data)
+        last_exception = None
 
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response,
-                message="Error creating a timeline object",
-                error=ValueError,
-            )
+        for attempt in range(self.api.DEFAULT_RETRY_COUNT):
+            try:
+                response = self.api.session.post(resource_url, json=form_data)
+                # error.get_response_json raises RuntimeError for non-20x,
+                # ValueError for JSON decode issues.
+                response_dict = error.get_response_json(response, logger)
+                objects = response_dict.get("objects")
 
-        response_dict = error.get_response_json(response, logger)
-        objects = response_dict.get("objects")
-        if not objects:
-            raise ValueError(
-                "Unable to create a Timeline, try again or file an issue on GitHub."
-            )
+                if (
+                    objects
+                    and isinstance(objects, list)
+                    and len(objects) > 0
+                    and isinstance(objects[0], dict)
+                    and "id" in objects[0]
+                    and "name" in objects[0]
+                    and "searchindex" in objects[0]
+                    and isinstance(objects[0].get("searchindex"), dict)
+                    and "index_name" in objects[0].get("searchindex", {})
+                ):
+                    timeline_dict = objects[0]
+                    return timeline.Timeline(
+                        timeline_id=timeline_dict["id"],
+                        sketch_id=self.id,
+                        api=self.api,
+                        name=timeline_dict["name"],
+                        searchindex=timeline_dict["searchindex"]["index_name"],
+                    )
 
-        timeline_dict = objects[0]
+                log_message = (
+                    "API for timeline creation returned an unexpected 'objects' "
+                    "format or it was empty."
+                )
+                logger.warning(
+                    "[%d/%d] %s Response: %s. Retrying...",
+                    attempt + 1,
+                    self.api.DEFAULT_RETRY_COUNT,
+                    log_message,
+                    response_dict,
+                )
+                last_exception = RuntimeError(
+                    f"{log_message} Response: {response_dict!s}"
+                )
 
-        timeline_obj = timeline.Timeline(
-            timeline_id=timeline_dict["id"],
-            sketch_id=self.id,
-            api=self.api,
-            name=timeline_dict["name"],
-            searchindex=timeline_dict["searchindex"]["index_name"],
+            except RequestException as e:
+                logger.warning(
+                    "[%d/%d] Request error creating timeline '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.api.DEFAULT_RETRY_COUNT,
+                    timeline_name,
+                    e,
+                )
+                last_exception = e
+            except (ValueError, RuntimeError) as e:  # Covers JSON and non-20x errors
+                logger.warning(
+                    "[%d/%d] API/JSON error creating timeline '%s': %s. Retrying...",
+                    attempt + 1,
+                    self.api.DEFAULT_RETRY_COUNT,
+                    timeline_name,
+                    e,
+                )
+                last_exception = e
+
+            if attempt < self.api.DEFAULT_RETRY_COUNT - 1:
+                backoff_time = 0.5 * (2**attempt)  # Exponential backoff
+                logger.info(
+                    "Waiting %.1fs before next attempt to create timeline '%s'.",
+                    backoff_time,
+                    timeline_name,
+                )
+                time.sleep(backoff_time)
+            else:
+                # All attempts failed
+                error_message_detail = (
+                    f"All {self.api.DEFAULT_RETRY_COUNT} attempts to create "
+                    f"timeline '{timeline_name}' failed."
+                )
+                logger.error("%s Last error: %s", error_message_detail, last_exception)
+                if last_exception:
+                    raise RuntimeError(
+                        f"{error_message_detail} Last error: {last_exception!s}"
+                    ) from last_exception
+                raise RuntimeError(error_message_detail)
+
+        # Fallback, should ideally be unreachable.
+        raise RuntimeError(
+            f"Failed to create timeline '{timeline_name}' after all retries "
+            "(unexpected loop exit)."
         )
-        return timeline_obj
 
     def create_datasource(
         self, timeline_id: int, provider: str, context: str, data_label: str

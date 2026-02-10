@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 from __future__ import unicode_literals
 
 import json
@@ -34,7 +35,7 @@ def _get_message(response):
     """
     soup = bs4.BeautifulSoup(response.text, features="html.parser")
     if soup.p:
-        return soup.p.string
+        return soup.p.string  # pytype: disable=attribute-error
 
     if isinstance(response.text, bytes):
         response_text = response.text.decode("utf-8")
@@ -85,9 +86,13 @@ def get_response_json(response, logger):
     Raises:
         RuntimeError: if the API returns an HTTP error.
         ValueError: if the API response cannot be JSON decoded.
+        NotFoundError: if the API returns a 404 HTTP error.
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
+        if response.status_code == definitions.HTTP_STATUS_CODE_NOT_FOUND:
+            error_message(response, "Not Found", error=NotFoundError)
+
         error_message(
             response,
             message=("Failed to get a valid response json from Timesketch API"),
@@ -96,8 +101,14 @@ def get_response_json(response, logger):
     try:
         return response.json()
     except json.JSONDecodeError as e:
-        logger.warning("Unable to json decode the Timesketch API response!")
-        raise ValueError("Unable to json decode the Timesketch API response!") from e
+        response_text_snippet = response.text[:500]
+        logger.warning(
+            "Unable to JSON decode the Timesketch API response! "
+            "Response snippet: %s",
+            response_text_snippet,
+            exc_info=True,
+        )
+        raise ValueError("Unable to JSON decode the Timesketch API response.") from e
 
 
 def error_message(response, message=None, error=RuntimeError):
@@ -140,6 +151,10 @@ def check_return_status(response, logger):
 
 class Error(Exception):
     """Base error class."""
+
+
+class NotFoundError(Error):
+    """Raised when a resource is not found."""
 
 
 class UnableToRunAnalyzer(Error):

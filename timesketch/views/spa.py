@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements HTTP request handler."""
 
-
 from flask import Blueprint
 from flask import redirect
 from flask import render_template

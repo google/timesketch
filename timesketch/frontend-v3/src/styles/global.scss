@@ -1,0 +1,349 @@
+// Global styles for Timesketch
+
+// Remove the default transition on the main element
+.v-main {
+  transition: none !important;
+}
+
+html {
+  overflow-y: auto;
+}
+
+// Search History tree
+// Based on http://fractaledmind.com/articles/css-tree/
+.tree {
+  color: #333;
+  list-style: none;
+
+  &,
+  * {
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0.5vh;
+    padding-bottom: 0.5vh;
+
+    position: relative;
+    padding-left: 1vw;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      border-left: 1px solid #d4d4d4;
+    }
+    &:only-child::after {
+      border-left: 0;
+    }
+
+    &:last-of-type::after {
+      height: 50%;
+      top: 0;
+    }
+
+    &:first-of-type::after {
+      height: 50%;
+      bottom: 0;
+    }
+
+    &:not(:first-of-type):not(:last-of-type)::after {
+      height: 100%;
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 1vw;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+
+    &:not(:first-of-type):not(:last-of-type)::after {
+      height: 100%;
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 1vw;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+  }
+
+  span {
+    background-color: #dddddd;
+    text-align: center;
+    padding: 0.33em 0.66em;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 100px;
+  }
+
+  > li {
+    padding-left: 0;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+}
+
+// Add space between menu dropdown and activator
+.menu-with-gap {
+  margin-top: 10px;
+}
+
+.search-dropdown {
+  margin-top: 15px;
+}
+
+.light-font {
+  color: #333;
+}
+
+.dark-font {
+  color: #fff;
+}
+
+.light-hover:hover {
+  background-color: #f5f5f5;
+}
+
+.dark-hover:hover {
+  background-color: #303030;
+}
+
+.light-hover-on-highlight:hover {
+  background-color: #e6e6e6;
+}
+
+.dark-hover-on-highlight:hover {
+  background-color: #393838;
+}
+
+.light-highlight {
+  background-color: #f5f5f5;
+}
+
+.light-highlight-selected {
+  background-color: #e6e6e6;
+}
+
+.dark-highlight {
+  background-color: #303030;
+}
+
+.dark-highlight-selected {
+  background-color: #383838;
+}
+
+.light-info-card {
+  background-color: #e7f4fe;
+  color: #333;
+  border-radius: 6px;
+}
+
+.dark-info-card {
+  background-color: #131f29;
+  color: #fff;
+  border-radius: 6px;
+  border: 1px solid #174366;
+}
+
+.light-info-accordion {
+  background-color: #e7f4fe;
+  color: #333;
+}
+
+.dark-info-accordion {
+  background-color: #131f29;
+  color: #fff;
+}
+
+.timeline-name-ellipsis {
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.theme--dark.v-navigation-drawer {
+  background-color: #1e1e1e;
+}
+
+.theme--dark.v-data-table tbody tr:hover:not(.v-data-table__expanded__content) {
+  background: #303030 !important;
+}
+
+.v-card--link:before {
+  background: none;
+}
+
+.notransition {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
+}
+
+:root {
+  --theme-ai-color-black: #000000;
+  --theme-ai-color-white: #ffffff;
+
+  --theme-ai-color-gray-50: #f6f6f6;
+  --theme-ai-color-gray-100: #e7e7e7;
+  --theme-ai-color-gray-200: #d1d1d1;
+  --theme-ai-color-gray-300: #dadce0;
+  --theme-ai-color-gray-600: #5d5d5d;
+  --theme-ai-color-gray-700: #4f4f4f;
+  --theme-ai-color-gray-900: #3d3d3d;
+  --theme-ai-color-gray-950: #262626;
+
+  --theme-ai-color-ts-blue: #3874cb;
+  --theme-ai-color-blue-50: #f2f7fd;
+  --theme-ai-color-blue-100: #e3ecfb;
+  --theme-ai-color-blue-200: #c1daf6;
+  --theme-ai-color-blue-500: #257bd2;
+  --theme-ai-color-blue-600: #1867c0;
+  --theme-ai-color-blue-700: #134c91;
+  --theme-ai-color-blue-800: #144278;
+  --theme-ai-color-blue-900: #163864;
+
+  --theme-ai-color-red-50: #ffeff2;
+  --theme-ai-color-red-100: #ffdce2;
+  --theme-ai-color-red-300: #ff92a6;
+  --theme-ai-color-red-900: #940821;
+
+  --theme-ai-color-yellow-50: #fffbec;
+  --theme-ai-color-yellow-100: #fff6d3;
+  --theme-ai-color-yellow-300: #ffd96d;
+  --theme-ai-color-yellow-600: #fb8c00;
+  --theme-ai-color-yellow-900: #82430c;
+
+  --theme-ai-color-green-100: #e3f5e3;
+  --theme-ai-color-green-300: #9dd89f;
+  --theme-ai-color-green-500: #4caf50;
+  --theme-ai-color-green-900: #224525;
+}
+
+.ai-investigation-view {
+  .v-list-item-title {
+    color: var(--theme-ai-color-gray-950);
+  }
+}
+
+.ai-navitem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+
+  &.router-link-active {
+    background-color: var(--theme-ai-color-gray-50);
+  }
+}
+
+.ai-navitem__icon {
+  width: 55px;
+  height: 55px;
+  flex: 0 0 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-ai-color-gray-700);
+}
+
+.question-status-chip {
+  --v-chip-height: 26px !important;
+  color: inherit;
+  text-transform: capitalize;
+  font-size: 12px !important;
+  --v-activated-opacity: 0 !important;
+
+  .v-icon--size-default {
+    font-size: 16px !important;
+  }
+
+  &--verified {
+    background-color: var(--theme-ai-color-green-100);
+    color: var(--theme-ai-color-green-900);
+    border: 1px solid var(--theme-ai-color-green-300);
+  }
+
+  &--rejected {
+    background-color: var(--theme-ai-color-red-50);
+    color: var(--theme-ai-color-red-900);
+    border: 1px solid var(--theme-ai-color-red-300);
+  }
+
+  &--pending-review {
+    background-color: var(--theme-ai-color-yellow-100);
+    color: var(--theme-ai-color-yellow-900);
+    border: 1px solid var(--theme-ai-color-yellow-300);
+  }
+
+  &--new {
+    background-color: var(--theme-ai-color-blue-100);
+    color: var(--theme-ai-color-blue-900);
+    border: 1px solid var(--theme-ai-color-blue-300);
+  }
+
+  &--ai {
+    color: var(--theme-ai-color-gray-600);
+    border: 1px solid var(--theme-ai-color-gray-100);
+  }
+}
+
+.question-status-chip__group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+
+  &:not(:first-child) {
+    padding-left: 24px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 8px;
+      bottom: 0;
+      margin: auto;
+      width: 1px;
+      height: 26px;
+      background-color: var(--theme-ai-color-gray-100);
+    }
+  }
+}

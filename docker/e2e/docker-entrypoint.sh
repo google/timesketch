@@ -2,6 +2,37 @@
 
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
+  echo '**** Debugging information for e2e tests ****'
+  echo '** VENV Python version:'
+  /opt/venv/bin/python3 --version
+  echo '**'
+  echo '** VENV pip3 freeze:'
+  /opt/venv/bin/pip3 freeze
+  echo '**'
+  echo '** Python path:'
+  which python3
+  echo '**'
+  echo '*** System Python'
+  echo '** Python version:'
+  /usr/bin/python3 --version
+  echo '**'
+  echo '** pip3 list:'
+  /usr/bin/pip3 list --break-system-packages 2>/dev/null || /usr/bin/pip3 list
+  echo '**'
+  echo '** dpkg list for python3:'
+  dpkg -l | grep python3
+  echo '**'
+  echo '** Python path:'
+  which /usr/bin/python3
+  echo '**'
+  echo '** PATH:'
+  echo $PATH
+  echo '**'
+  echo '** PYTHONPATH:'
+  echo $PYTHONPATH
+  echo '**** End of debugging information ****'
+
+
   # Copy the mappings for plaso ingestion.
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/
@@ -10,7 +41,7 @@ if [ "$1" = 'timesketch' ]; then
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then
     OPENSSL_RAND=$( openssl rand -base64 32 )
     # Using the pound sign as a delimiter to avoid problems with / being output from openssl
-    sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$OPENSSL_RAND'\x27#' /etc/timesketch/timesketch.conf
+    sed -i 's#SECRET_KEY = "<KEY_GOES_HERE>"#SECRET_KEY = "'$OPENSSL_RAND'"#' /etc/timesketch/timesketch.conf
   fi
 
   # Set up the Postgres connection
@@ -28,8 +59,7 @@ if [ "$1" = 'timesketch' ]; then
 
   # Set up the OpenSearch connection
   if [ $OPENSEARCH_HOST ] && [ $OPENSEARCH_PORT ]; then
-    sed -i 's#OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_HOST'\x27#' /etc/timesketch/timesketch.conf
-    sed -i 's#OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' /etc/timesketch/timesketch.conf
+    sed -i 's#OPENSEARCH_HOSTS = \[{"host": "opensearch", "port": 9200}\]#OPENSEARCH_HOSTS = [{"host": "'$OPENSEARCH_HOST'", "port": '$OPENSEARCH_PORT'}]#' /etc/timesketch/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
     echo "Please pass values for the OPENSEARCH_HOST and OPENSEARCH_PORT environment variables"
@@ -38,8 +68,8 @@ if [ "$1" = 'timesketch' ]; then
   # Set up the Redis connection
   if [ $REDIS_ADDRESS ] && [ $REDIS_PORT ]; then
     sed -i 's#UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' /etc/timesketch/timesketch.conf
-    sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch/timesketch.conf
-    sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch/timesketch.conf
+    sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = "redis://'$REDIS_ADDRESS':'$REDIS_PORT'"#' /etc/timesketch/timesketch.conf
+    sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = "redis://'$REDIS_ADDRESS':'$REDIS_PORT'"#' /etc/timesketch/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
     echo "Please pass values for the REDIS_ADDRESS and REDIS_PORT environment variables"
@@ -61,6 +91,14 @@ if [ "$1" = 'timesketch' ]; then
   sleep 5
   tsctl create-user "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
   unset TIMESKETCH_PASSWORD
+  # create second user
+  tsctl create-user "$TIMESKETCH_USER2" --password "$TIMESKETCH_PASSWORD2"
+  unset TIMESKETCH_PASSWORD2
+
+  # Make admin user for e2e tests
+  sleep 2
+  tsctl create-user admin --password admin
+  tsctl make-admin admin
 
   cat <<EOF >> /etc/timesketch/data_finder.yaml
 test_data_finder:
@@ -70,10 +108,21 @@ test_data_finder:
 EOF
 
   # Run the Timesketch server (without SSL)
+  export TIMESKETCH_UI_MODE="ng"
   cd /tmp
-  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
-  gunicorn --reload -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
+  exec bash -c "celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
+  gunicorn --reload -b 0.0.0.0:80 \
+  --access-logfile - --error-logfile - --log-level info \
+  --timeout 120 \
+  --workers 2 \
+  --max-requests 100 --max-requests-jitter 10 \
+  --limit-request-line 8190 \
+  timesketch.wsgi:application"
 fi
+
+echo 'Debugging information for e2e tests'
+dpkg -s plaso-tools
+psort.py --version
 
 # Run a custom command on container start
 exec "$@"

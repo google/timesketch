@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Natural language to query (NL2Q) version 1."""
+
 import logging
 from typing import Any
 import pandas as pd

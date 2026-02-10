@@ -143,22 +143,24 @@ There are some ways to list sketches by adjusting the ```scope```.
 Following scopes are available:
 
 - recent: Get list of sketches that the user has actively searched in.
-- shared: Get sketches that can be accessed
+- user: Get sketches owned by the user.
+- shared: Get sketches shared with the user (but not owned by them).
 - admin: Get all sketches if the user is an admin
 - archived: get archived sketches
 - search: pass additional search query
+- all: Get all sketches the user has access to (owned and shared).
 
 ```
 ts_client.list_sketches(per_page=1000, scope='user', include_archived=True)
 ```
 
-Will return all sketches that are owned by the specified user.
+Will return all sketches that are owned by the user.
 
 ```
 ts_client.list_sketches(per_page=1000, scope='shared', include_archived=True)
 ```
 
-Will return all sketches that the account used to connect to the API has access to.
+Will return all sketches that are shared with the user (but not owned by them).
 
 ## Connecting to a Sketch
 
@@ -393,8 +395,14 @@ To get the results as:
 
 Or if you want to store the results as a file:
 
-```
+```python
 search_obj.to_file('/tmp/myresults.zip')
+```
+
+For large results, you can use the `stream` parameter to avoid loading the whole result into memory:
+
+```python
+search_obj.to_file('/tmp/myresults.zip', stream=True)
 ```
 
 (use the ZIP ending, since the resulting file will be a ZIP file with both the

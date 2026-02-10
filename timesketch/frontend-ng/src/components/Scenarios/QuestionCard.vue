@@ -41,16 +41,6 @@ limitations under the License.
             Select or create an investigative question
           </v-btn>
         </span>
-        <v-spacer></v-spacer>
-        <v-btn
-          v-if="activeQuestion.dfiq_identifier"
-          depressed
-          small
-          :href="getDfiqQuestionUrl(activeQuestion.dfiq_identifier)"
-          target="_blank"
-          rel="noreferrer"
-          ><v-icon small class="mr-1">mdi-open-in-new</v-icon>DFIQ {{ activeQuestion.dfiq_identifier }}
-        </v-btn>
       </v-toolbar>
 
       <v-card
@@ -195,8 +185,7 @@ limitations under the License.
                       ></ts-search-chip>
                     </div>
                   </div>
-
-                  <div class="mt-1" v-if="userSettings.generateQuery && systemSettings.LLM_PROVIDER">
+                  <div class="mt-1" v-if="isNl2qAvailable">
                     <div v-if="suggestedQueryLoading" class="pa-2 pl-4">
                       <v-skeleton-loader type="sentences" width="200"></v-skeleton-loader>
                     </div>
@@ -366,6 +355,13 @@ export default {
     userSettings() {
       return this.$store.state.settings
     },
+    isNl2qAvailable() {
+      return (
+        this.userSettings.generateQuery &&
+        this.systemSettings.LLM_FEATURES_AVAILABLE &&
+        this.systemSettings.LLM_FEATURES_AVAILABLE.nl2q
+      )
+    },
     matches() {
       if (!this.queryString) {
         return {
@@ -519,7 +515,7 @@ export default {
       this.suggestedQuery = {}
 
       // Set active tab
-     if (this.userSettings.generateQuery && this.systemSettings.LLM_PROVIDER) {
+     if (this.isNl2qAvailable) {
        if (this.activeQuestion.conclusions.length) {
          this.activeTab = 2
        } else {
@@ -550,9 +546,6 @@ export default {
         return
       }
       return DOMPurify.sanitize(marked(markdown))
-    },
-    getDfiqQuestionUrl(id) {
-      return 'https://dfiq.org/questions/' + id + '/'
     },
     onClickOutside(e) {
       if (e.target.id !== 'questionDropdownButton') {

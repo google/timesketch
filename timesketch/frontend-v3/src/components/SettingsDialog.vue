@@ -78,7 +78,7 @@ export default {
       ApiClient.saveUserSettings(this.settings)
         .then(() => this.appStore.updateUserSettings())
         .catch((error) => {
-          console.log(error)
+          console.error(error)
         })
     },
   },

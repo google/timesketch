@@ -13,7 +13,6 @@
 # limitations under the License.
 """Interface for analyzers."""
 
-
 import datetime
 import json
 import logging
@@ -47,7 +46,6 @@ from timesketch.models.sketch import Story as SQLStory
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
-
 
 logger = logging.getLogger("timesketch.analyzers")
 
@@ -946,10 +944,7 @@ class BaseAnalyzer:
         self.tagged_events = {}
         self.emoji_events = {}
 
-        self.datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        self.datastore = OpenSearchDataStore()
 
         # Add AnalyzerOutput instance and set all attributes that can be set
         # automatically
@@ -1178,9 +1173,12 @@ class BaseAnalyzer:
 
             if status == "fail":
                 logger.error(
-                    "Unable to run analyzer on a failed index ({:s})".format(
-                        searchindex.index_name
-                    )
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Unable to run on a failed index (%s)",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
+                    searchindex.index_name,
                 )
                 return "Failed"
 
@@ -1188,7 +1186,11 @@ class BaseAnalyzer:
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
                 logger.error(
-                    "Indexing has taken too long time, aborting run of analyzer"
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Indexing has taken too long time, aborting run of analyzer",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
                 )
                 return "Failed"
             # Refresh the searchindex object.
@@ -1202,6 +1204,13 @@ class BaseAnalyzer:
         except Exception:  # pylint: disable=broad-except
             analysis.set_status("ERROR")
             result = traceback.format_exc()
+            logger.error(
+                "Analyzer %s (ID:%d) in sketch (ID:%d): failed with error: %s",
+                self.name,
+                analysis_id,
+                self.sketch.id,
+                result,
+            )
 
         # Update database analysis object with result and status
         analysis.result = f"{result:s}"

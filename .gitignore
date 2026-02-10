@@ -11,9 +11,6 @@
 *.pyo
 **/.ipynb_checkpoints/
 
-# Ignore back-up files.
-*~
-
 # Specific auto-generated build files
 /.eggs
 /.tox
@@ -48,4 +45,12 @@ vagrant/*.log
 
 # Exclude .venv folder
 .venv/
+
+# Exclude Visual Studio Code files
 .vscode/*
+
+# Exclude JetBrains IDE files
+.idea/
+
+# Exclude debugging profiles
+profiles/

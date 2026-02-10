@@ -1,4 +1,13 @@
-version: "3.7"
+# Timesketch container dependencies
+x-timesketch-dependencies: &timesketch-dependencies
+  depends_on:
+    opensearch:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
 services:
   timesketch-web:
     container_name: timesketch-web
@@ -11,9 +20,9 @@ services:
       - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
+    <<: *timesketch-dependencies
 
-  # Temporary service while the V2 UI is in the testing phase.
-  # TODO: Remove when V2 is the default.
+  # [DEPRECATED] Add "--profile legacy-ui" to your docker compose command to use the legacy UI
   timesketch-web-legacy:
     container_name: timesketch-web-legacy
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
@@ -21,10 +30,29 @@ services:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
     restart: always
     command: timesketch-web-legacy
+    profiles:
+      - "legacy-ui"
     volumes:
-      - ./etc/timesketch:/etc/timesketch/
-      - ./upload:/usr/share/timesketch/upload/
-      - ./logs:/var/log/timesketch/
+      - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
+      - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
+    <<: *timesketch-dependencies
+
+  # [WIP] Add "--profile v3-ui" to your docker compose command to use the vue3 UI
+  timesketch-web-v3:
+    container_name: timesketch-web-v3
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
+    environment:
+      - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
+    restart: always
+    command: timesketch-web-v3
+    profiles:
+      - "v3-ui"
+    volumes:
+      - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
+      - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
+    <<: *timesketch-dependencies
 
   timesketch-worker:
     container_name: timesketch-worker
@@ -37,6 +65,7 @@ services:
       - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
       - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
+    <<: *timesketch-dependencies
 
   opensearch:
     container_name: opensearch
@@ -57,6 +86,11 @@ services:
         hard: 65536
     volumes:
       - ${OPENSEARCH_DATA_PATH}:/usr/share/opensearch/data/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   postgres:
     container_name: postgres
@@ -67,12 +101,22 @@ services:
     restart: always
     volumes:
       - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timesketch -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     container_name: redis
     image: redis:${REDIS_VERSION}
     command: "redis-server"
     restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   nginx:
     container_name: nginx
@@ -83,4 +127,8 @@ services:
       - ${NGINX_HTTPS_PORT}:443
     volumes:
       - ${NGINX_CONFIG_PATH}:/etc/nginx/nginx.conf
-
+    depends_on:
+      # Nginx should wait for the web backends to be started.
+      - timesketch-web
+      # - timesketch-web-legacy
+      # - timesketch-web-v3

@@ -27,7 +27,6 @@ from flask_restful import marshal
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
-
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
     level=logging.INFO,
@@ -201,6 +200,7 @@ class ResourceMixin:
         "user": fields.Nested(user_fields),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "labels": fields.List(fields.String(attribute="label")),
     }
 
     story_compact_fields = {
@@ -253,7 +253,7 @@ class ResourceMixin:
     }
 
     label_fields = {
-        "name": fields.String,
+        "name": fields.String(attribute="label"),
         "user": fields.Nested(user_fields),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
@@ -270,6 +270,13 @@ class ResourceMixin:
         "updated_at": fields.DateTime("iso8601"),
     }
 
+    event_fields = {
+        "id": fields.Integer,
+        "sketch_id": fields.Integer,
+        "document_id": fields.String,
+        "searchindex_name": fields.String(attribute="searchindex.index_name"),
+    }
+
     question_conclusion_fields = {
         "id": fields.Integer,
         "user": fields.Nested(user_fields),
@@ -277,6 +284,9 @@ class ResourceMixin:
         "automated": fields.Boolean,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "conclusion_events": fields.List(
+            fields.Nested(event_fields), attribute="events"
+        ),
     }
 
     question_fields = {
@@ -292,6 +302,8 @@ class ResourceMixin:
         "conclusions": fields.List(fields.Nested(question_conclusion_fields)),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "labels": fields.List(fields.Nested(label_fields)),
+        "status": fields.Nested(status_fields, attribute="get_status"),
     }
 
     facet_fields = {
@@ -356,6 +368,7 @@ class ResourceMixin:
         "group": group_fields,
         "sketch": sketch_fields,
         "story": story_fields,
+        "event": event_fields,
         "event_comment": comment_fields,
         "event_label": label_fields,
         "Investigativequestionapproach": approach_fields,
@@ -373,10 +386,7 @@ class ResourceMixin:
         Returns:
             Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
-        return OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        return OpenSearchDataStore()
 
     def to_json(
         self,

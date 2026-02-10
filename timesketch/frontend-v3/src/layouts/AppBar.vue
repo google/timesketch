@@ -20,12 +20,10 @@ limitations under the License.
     </v-app-bar-title>
     <template v-slot:prepend>
       <v-img
-        src="/timesketch-color.png"
-        width="30"
-        height="30"
+        src="/assets/timesketch-color.png"
+        width="25"
+        height="25"
         class="ml-4 mr-3"
-        style="cursor: pointer"
-        @click="navigate('/')"
       >
       </v-img>
     </template>

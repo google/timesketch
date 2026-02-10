@@ -19,9 +19,12 @@ limitations under the License.
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
-    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
+    <!-- Access Denied state -->
+    <ts-access-denied v-if="sketchAccessDenied && !loadingSketch"></ts-access-denied>
+
+    <div v-if="sketch.id && !loadingSketch && !sketchAccessDenied" style="height: 70vh">
       <!-- Empty state -->
-      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived" fill-height fluid>
+      <v-container v-if="!hasTimelines && !loadingSketch && !isArchived && !sketchAccessDenied" fill-height fluid>
         <v-row align="center" justify="center">
           <v-sheet class="pa-4" style="background: transparent">
             <center>
@@ -242,6 +245,15 @@ limitations under the License.
         hide-overlay
         :width="navigationDrawer.width"
       >
+        <ts-investigation
+          v-if="systemSettings.ENABLE_V3_INVESTIGATION_VIEW
+            && (systemSettings.DFIQ_ENABLED
+              || (systemSettings.LLM_FEATURES_AVAILABLE
+                && systemSettings.LLM_FEATURES_AVAILABLE.log_analyzer))"
+          :icon-only="isMiniDrawer"
+          @toggleDrawer="toggleDrawer()"
+        >
+        </ts-investigation>
         <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
         <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
         <ts-saved-searches
@@ -336,7 +348,7 @@ limitations under the License.
           <v-divider></v-divider>
           <v-expand-transition>
             <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
-              <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
+              <ts-event-list v-if="showTimelineView" :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
             </v-card-text>
           </v-expand-transition>
         </v-card>
@@ -368,6 +380,8 @@ import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 import TsQuestionCard from '../components/Scenarios/QuestionCard.vue'
 import TsSettingsDialog from '../components/SettingsDialog.vue'
+import TsInvestigation from '../components/LeftPanel/Investigation.vue'
+import TsAccessDenied from '../components/SketchAccessDenied.vue'
 
 export default {
   props: ['sketchId'],
@@ -390,6 +404,8 @@ export default {
     TsVisualizations,
     TsQuestionCard,
     TsSettingsDialog,
+    TsInvestigation,
+    TsAccessDenied,
   },
   data() {
     return {
@@ -482,6 +498,9 @@ export default {
     },
     systemSettings() {
       return this.$store.state.systemSettings
+    },
+    sketchAccessDenied() {
+      return this.$store.state.sketchAccessDenied
     },
   },
   methods: {

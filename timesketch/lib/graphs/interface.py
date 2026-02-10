@@ -16,11 +16,9 @@
 import hashlib
 
 from typing import Dict, List, Optional
-from flask import current_app
 import networkx as nx
 
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
-
 
 GRAPH_TYPES = {
     "Graph": nx.Graph,
@@ -228,10 +226,7 @@ class BaseGraphPlugin:
         Raises:
             KeyError if graph type specified is not supported.
         """
-        self.datastore = OpenSearchDataStore(
-            host=current_app.config["OPENSEARCH_HOST"],
-            port=current_app.config["OPENSEARCH_PORT"],
-        )
+        self.datastore = OpenSearchDataStore()
         if not GRAPH_TYPES.get(self.GRAPH_TYPE):
             raise KeyError(f"Graph type {self.GRAPH_TYPE} is not supported")
         self.graph = Graph(self.GRAPH_TYPE)

@@ -13,6 +13,9 @@
 # limitations under the License.
 """End to end tests of Timesketch aggregation functionality."""
 
+import os
+import shutil
+
 from timesketch_api_client import aggregation
 
 from . import interface
@@ -23,11 +26,26 @@ class AggregationTest(interface.BaseEndToEndTest):
     """End to end tests for aggregation functionality."""
 
     NAME = "aggregation_test"
+    TEST_PLASO_FILE = "evtx_20250918.plaso"
+    TEST_PLASO_FILE_NAME = f"{TEST_PLASO_FILE}_{NAME}.plaso"
+
+    def __init__(self):
+        super().__init__()
+        self.test_plaso_path = None
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline("evtx.plaso")
+        test_data_dir = "/usr/local/src/timesketch/end_to_end_tests/test_data"
+        source_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE)
+        self.test_plaso_path = os.path.join(test_data_dir, self.TEST_PLASO_FILE_NAME)
+        shutil.copy(source_path, self.test_plaso_path)
+
+        self.import_timeline(self.TEST_PLASO_FILE_NAME)
         self.import_timeline("evtx_part.csv")
+
+    def teardown(self):
+        """Remove the plaso test file."""
+        os.remove(self.test_plaso_path)
 
     def test_entire_set(self):
         """Test aggregating over the entire data set in the sketch."""

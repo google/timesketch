@@ -24,6 +24,7 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     searchHistory: {},
+    timeFilters: {},
     scenarios: [],
     hiddenScenarios: [],
     scenarioTemplates: [],
@@ -53,6 +54,7 @@ const defaultState = (currentUser) => {
     activeAnalyses: [],
     analyzerResults: [],
     enabledTimelines: [],
+    sketchAccessDenied: false,
   }
 }
 
@@ -160,6 +162,9 @@ export default new Vuex.Store({
     SET_ENABLED_TIMELINES(state, payload) {
       Vue.set(state, 'enabledTimelines', payload)
     },
+    SET_TIME_FILTERS(state, payload) {
+      Vue.set(state, 'timeFilters', payload)
+    },
     ADD_ENABLED_TIMELINES(state, payload) {
       const freshEnabledTimelines = [...state.enabledTimelines, ...payload]
       Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
@@ -189,9 +194,13 @@ export default new Vuex.Store({
     SET_USER_SETTINGS(state, payload) {
       Vue.set(state, 'settings', payload.objects[0] || {})
     },
+    SET_SKETCH_ACCESS_DENIED(state, payload) {
+      Vue.set(state, 'sketchAccessDenied', payload)
+    },
   },
   actions: {
     updateSketch(context, sketchId) {
+      context.commit('SET_SKETCH_ACCESS_DENIED', false)
       return ApiClient.getSketch(sketchId)
         .then((response) => {
           context.commit('SET_SKETCH', response.data)
@@ -199,7 +208,13 @@ export default new Vuex.Store({
           context.dispatch('updateTimelineTags', { sketchId: sketchId })
           context.dispatch('updateDataTypes', sketchId)
         })
-        .catch((e) => {})
+        .catch((e) => {
+          if (e.response && e.response.status === 403) {
+            context.commit('SET_SKETCH_ACCESS_DENIED', true)
+          } else {
+            console.error(e)
+          }
+        })
     },
     updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
@@ -207,7 +222,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     resetState(context) {
       context.commit('RESET_STATE')
@@ -223,7 +238,48 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
+    },
+    updateTimeFilters(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getSearchHistoryTree(sketchId)
+        .then((response) => {
+
+          const treeData = response.data.objects[0]
+          const timeFilters = []
+
+          function parseNode(node) {
+            if (!node || !node.query_filter) {
+              return
+            }
+            const qf = JSON.parse(node.query_filter)
+            if (qf.chips.length > 0) {
+              timeFilters.push(...(qf.chips.filter(c => c.type === 'datetime_range')))
+            }
+            for (let c of node.children) {
+              parseNode(c)
+            }
+          }
+
+          if (treeData) {
+            parseNode(treeData)
+          }
+
+          const deduped = []
+          const timeFiltersSet = new Set()
+          for (let tf of timeFilters) {
+            if (!timeFiltersSet.has(tf.value)) {
+              timeFiltersSet.add(tf.value)
+              deduped.push(tf)
+            }
+          }
+          deduped.reverse()
+
+          context.commit('SET_TIME_FILTERS', deduped)
+        })
+        .catch(console.error)
     },
     updateScenarios(context, sketchId) {
       if (!sketchId) {
@@ -233,17 +289,17 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SCENARIOS', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     updateScenarioTemplates(context, sketchId) {
       return ApiClient.getScenarioTemplates(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
-    updateEventLabels(context, {label: inputLabel, num}) {
-      if (!inputLabel || !num)  {
+    updateEventLabels(context, { label: inputLabel, num }) {
+      if (!inputLabel || !num) {
         return
       }
       let allLabels = context.state.meta.filter_labels
@@ -254,8 +310,14 @@ export default new Vuex.Store({
         allLabels.push({ label: inputLabel, count: num })
       }
       context.commit('SET_EVENT_LABELS', allLabels)
-  },
+    },
     updateTimelineTags(context, payload) {
+      // Don't fetch Tag data on archived sketches.
+      if (context.state.sketch.status[0].status === 'archived') {
+        context.commit('SET_TIMELINE_TAGS', [])
+        return
+      }
+
       const activeTimelines = context.state.sketch.active_timelines
       // Guard clause: If there are no active timelines (array is null, undefined,
       // or empty), there's nothing to process, so exit the function immediately.
@@ -268,7 +330,7 @@ export default new Vuex.Store({
       // function returns true for ALL elements in the array.
       const allTimelinesProcessing = activeTimelines.every(timeline => {
         if (!timeline || !timeline.status || timeline.status.length === 0) {
-            return false
+          return false
         }
         return timeline.status[0].status === 'processing';
       })
@@ -305,9 +367,15 @@ export default new Vuex.Store({
           }
           context.commit('SET_TIMELINE_TAGS', buckets)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     updateDataTypes(context, sketchId) {
+      // Don't fetch data types on archived sketches.
+      if (context.state.sketch.status[0].status === 'archived') {
+        context.commit('SET_DATA_TYPES', { objects: [{ field_bucket: { buckets: [] } }] })
+        return
+      }
+
       const activeTimelines = context.state.sketch.active_timelines
       // Guard clause: If there are no active timelines (array is null, undefined,
       // or empty), there's nothing to process, so exit the function immediately.
@@ -320,7 +388,7 @@ export default new Vuex.Store({
       // function returns true for ALL elements in the array.
       const allTimelinesProcessing = activeTimelines.every(timeline => {
         if (!timeline || !timeline.status || timeline.status.length === 0) {
-            return false
+          return false
         }
         return timeline.status[0].status === 'processing';
       })
@@ -347,21 +415,21 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_DATA_TYPES', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     updateSigmaList(context) {
       ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     updateSavedVisualizationList(context, sketchId) {
       ApiClient.getAggregations(sketchId)
         .then((response) => {
           context.commit('SET_VISUALIZATION_LIST', response.data.objects[0] || [])
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     setActiveContext(context, activeScenarioContext) {
       context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
@@ -382,14 +450,14 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_CONTEXT_LINKS', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     updateGraphPlugins(context) {
       ApiClient.getGraphPluginList()
         .then((response) => {
           context.commit('SET_GRAPH_PLUGINS', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { console.error(e) })
     },
     updateSavedGraphs(context, sketchId) {
       if (!sketchId) {

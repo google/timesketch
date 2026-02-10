@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests of Timesketch upload functionality."""
+
 import os
-import random
+import uuid
 import json
 
 from timesketch_api_client import search
@@ -28,24 +29,25 @@ class UploadTest(interface.BaseEndToEndTest):
 
     def test_invalid_index_name(self):
         """Test uploading a timeline with an invalid index name."""
-        with self.assertions.assertRaises(RuntimeError):
-            self.import_timeline("evtx.plaso", index_name="/invalid/index/name")
+        with self.assertions.assertRaises(ValueError):
+            self.import_timeline("sigma_events.csv", index_name="/invalid/index/name")
+
+    # TODO: write a test with a successful plaso upload
 
     def test_normal_upload_json(self):
         """Test the upload of a json file with a few events."""
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_normal_upload_json {rand}")
         self.sketch = sketch
 
         file_path = (
             "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
         )
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         events = sketch.explore("*", as_pandas=True)
@@ -58,7 +60,7 @@ class UploadTest(interface.BaseEndToEndTest):
         number of events in the timeline is correct."""
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_large_upload_json {rand}")
         self.sketch = sketch
 
@@ -69,13 +71,12 @@ class UploadTest(interface.BaseEndToEndTest):
                 string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
                 file_object.write(string)
 
-        self.import_timeline("/tmp/large.jsonl", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/large.jsonl", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -95,7 +96,7 @@ class UploadTest(interface.BaseEndToEndTest):
         """
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(
             name=f"test_upload_jsonl_mapping_exceeds_limit {rand}"
         )
@@ -115,17 +116,15 @@ class UploadTest(interface.BaseEndToEndTest):
                     "data_type": "test:jsonl",
                 }
                 for j in range(num_keys_per_line):
-                    key = f"field_name_{j}_{random.randint(0, 100000)}"
-                    while key in all_keys:  # Avoid duplicate keys
-                        key = f"field_name_{random.randint(0, 100000)}"
+                    key = f"field_name_{j}_{uuid.uuid4().hex}"
                     all_keys.add(key)
-                    line_data[key] = f"value_{j}_{random.randint(0, 10000)}"
+                    line_data[key] = f"value_{j}_{uuid.uuid4().hex}"
 
                 json.dump(line_data, file_object)
                 file_object.write("\n")
 
         try:
-            self.import_timeline(file_path, index_name=rand, sketch=sketch)
+            self.import_timeline(file_path, sketch=sketch)
         except RuntimeError:
             print(
                 "Timeline import failing is expected. Checking for the correct "
@@ -136,7 +135,6 @@ class UploadTest(interface.BaseEndToEndTest):
         timeline = sketch.list_timelines()[0]
         # check that timeline threw the correct error
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(
             timeline.data_sources[0]["status"][0]["status"], "fail"
         )
@@ -151,7 +149,7 @@ class UploadTest(interface.BaseEndToEndTest):
         number of events in the timeline is correct."""
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test__very_large_upload_json {rand}")
         self.sketch = sketch
 
@@ -162,13 +160,12 @@ class UploadTest(interface.BaseEndToEndTest):
                 string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
                 file_object.write(string)
 
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -198,7 +195,7 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 
@@ -217,13 +214,12 @@ class UploadTest(interface.BaseEndToEndTest):
                 )
                 file_object.write(string)
 
-        self.import_timeline("/tmp/large.csv", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/large.csv", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -243,7 +239,7 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 
@@ -262,13 +258,12 @@ class UploadTest(interface.BaseEndToEndTest):
                 )
                 file_object.write(string)
 
-        self.import_timeline("/tmp/verylarge.csv", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/verylarge.csv", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -293,17 +288,16 @@ class UploadTest(interface.BaseEndToEndTest):
         in a distant future. This test can reveal edge cases that might occur
         when tools produce a "fake" datetime value"""
 
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(
             name=f"datetime_out_of_normal_range_in_csv_{rand}"
         )
         self.sketch = sketch
         file_path = "/usr/local/src/timesketch/tests/test_events/validate_time_out_of_range.csv"  # pylint: disable=line-too-long
-        self.import_timeline(file_path, index_name=rand, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         # Search for the very old event
@@ -312,7 +306,7 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 1)
         self.assertions.assertEqual(
-            "1601-01-01" in str(search_obj.table["datetime"]), True
+            "1970-01-01" in str(search_obj.table["datetime"]), True
         )
 
         # Search for future event check if datetime value is in the result
@@ -328,7 +322,7 @@ class UploadTest(interface.BaseEndToEndTest):
         """Test uploading a timeline with different precision of timestamps."""
 
         # create a new sketch
-        rand = str(random.randint(0, 10000))
+        rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"csv_different_timestamps_{rand}")
         self.sketch = sketch
 
@@ -366,13 +360,12 @@ class UploadTest(interface.BaseEndToEndTest):
             )
             file_object.write(string)
 
-        self.import_timeline("/tmp/timestamptest.csv", index_name=rand, sketch=sketch)
+        self.import_timeline("/tmp/timestamptest.csv", sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -391,6 +384,25 @@ class UploadTest(interface.BaseEndToEndTest):
         # check number of events with no datetime
         events = sketch.explore("data_type:no_datetime", as_pandas=True)
         self.assertions.assertEqual(len(events), 1)
+
+    def test_plaso_import(self):
+        """Test the upload of a plaso file with a few events."""
+        # create a new sketch
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test_plaso_import_{rand}")
+        self.sketch = sketch
+
+        file_path = (
+            "/usr/local/src/timesketch/end_to_end_tests/test_data/evtx_20250918.plaso"
+        )
+        self.import_timeline(file_path, sketch=sketch)
+        timeline = sketch.list_timelines()[0]
+        # check that timeline was uploaded correctly
+        self.assertions.assertEqual(timeline.name, file_path)
+        self.assertions.assertEqual(timeline.index.status, "ready")
+
+        events = sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), 3205)
 
 
 manager.EndToEndTestManager.register_test(UploadTest)

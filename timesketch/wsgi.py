@@ -14,28 +14,26 @@
 # limitations under the License.
 """This module is for creating the app for a WSGI server.
 
-Example with Gunicorn:
-gunicorn -b 127.0.0.1:80 --log-file - --timeout 120 timesketch.wsgi:application
+It initializes a single instance of the Flask application based on the
+environment variable `TIMESKETCH_UI_MODE`.
 
-Example configuration for Apache with mod_wsgi (a2enmod mod_wsgi):
-<VirtualHost *:443>
-        ServerAdmin root@localhost
-        SSLEngine On
-        SSLCertificateFile    /etc/apache2/cert.crt
-        SSLCertificateKeyFile /etc/apache2/cert.key
-        WSGIScriptAlias / /path/to/this/file/wsgi.py
-</VirtualHost>
+Supported modes:
+- ng (default): Loads the default Vuetify 2 frontend (frontend-ng).
+- v3: Loads the new Vuetify 3 frontend (frontend-v3).
+- legacy: Loads the old Vuetify2 frontend.
+
+Example with Gunicorn:
+    # Run the NG UI
+    gunicorn -b 127.0.0.1:8000 --timeout 120 timesketch.wsgi:application
+
+    # Run the V3 UI
+    export TIMESKETCH_UI_MODE=v3
+    gunicorn -b 127.0.0.1:8000 --timeout 120 timesketch.wsgi:application
 """
 
-# If you installed Timesketch in a virtualenv you need to activate it.
-# This needs to be before any imports in order to import from the virtualenv.
-# activate_virtualenv = '/path/to/your/virtualenv/bin/activate_this.py'
-# execfile(activate_virtualenv, dict(__file__=activate_virtualenv))
 import os
 import logging
-
 from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
-
 from timesketch.app import configure_logger
 from timesketch.app import create_app
 from timesketch.models import db_session
@@ -43,24 +41,32 @@ from timesketch.models import db_session
 logger = logging.getLogger("timesketch.wsgi_server")
 
 configure_logger()
-application = create_app()
-application_legacy = create_app(legacy_ui=True)
+
+# Determine which UI to load based on environment variable
+ui_mode = os.environ.get("TIMESKETCH_UI_MODE", "ng")
+
+if ui_mode == "legacy":
+    application = create_app(legacy_ui=True)
+    logger.info("Starting Timesketch with Legacy UI")
+elif ui_mode == "v3":
+    application = create_app(v3_ui=True)
+    logger.info("Starting Timesketch with V3 UI")
+else:
+    application = create_app()
+    logger.info("Starting Timesketch with NG UI")
 
 # Setup metrics endpoint.
-if os.environ.get("prometheus_multiproc_dir"):
+if os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
     logger.info("Metrics server enabled")
     GunicornPrometheusMetrics(application, group_by="endpoint")
 
 
-# pylint: disable=unused-argument
 @application.teardown_appcontext
-def shutdown_session(exception=None):
-    """Remove the database session after every request or app shutdown."""
-    db_session.remove()
+def shutdown_session(_exception=None):
+    """Remove the database session after every request or app shutdown.
 
-
-# pylint: disable=unused-argument
-@application_legacy.teardown_appcontext
-def shutdown_session_legacy(exception=None):
-    """Remove the database session after every request or app shutdown."""
+    Args:
+        _exception: An exception that occurred during the request, if any.
+                    (Unused, but required by the Flask teardown signal).
+    """
     db_session.remove()

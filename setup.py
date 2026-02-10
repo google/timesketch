@@ -25,13 +25,10 @@ import glob
 import os
 import sys
 
-import pkg_resources
-
 from setuptools import find_packages
 from setuptools import setup
 
 from timesketch import version
-
 
 version_tuple = (sys.version_info[0], sys.version_info[1])
 if version_tuple < (3, 6):
@@ -52,14 +49,12 @@ def parse_requirements_from_file(path):
     Yields:
       str: package resource requirement.
     """
-    with open(path, "r") as file_object:
-        file_contents = file_object.read()
-    for req in pkg_resources.parse_requirements(file_contents):
-        try:
-            requirement = str(req.req)
-        except AttributeError:
-            requirement = str(req)
-        yield requirement
+    with open(path, "r", encoding="utf-8") as file_object:
+        for line in file_object:
+            line = line.split("#", 1)[0].strip()
+            if not line:
+                continue
+            yield line
 
 
 timesketch_description = (

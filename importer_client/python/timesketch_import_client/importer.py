@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch data importer."""
+
 from __future__ import unicode_literals
 
 import codecs
@@ -20,14 +21,12 @@ import json
 import logging
 import math
 import os
-import time
 import uuid
 
 import numpy
 import pandas
-
-from timesketch_api_client import timeline
 from timesketch_api_client import definitions
+from timesketch_api_client import timeline
 from timesketch_api_client.error import UnableToRunAnalyzer
 from timesketch_import_client import utils
 
@@ -65,6 +64,12 @@ def run_analyzers(analyzer_names=None, timeline_obj=None):
 
 class ImportStreamer(object):
     """Upload object used to stream results to Timesketch."""
+
+    # Timesketch default max form size is 200MB (209715200 bytes).
+    DEFAULT_MAX_PAYLOAD_SIZE = 209715200  # 200 Mb
+
+    # Reserve 1MB for HTTP headers, multipart boundaries, and JSON overhead.
+    PAYLOAD_SAFETY_BUFFER = 1 * 1024 * 1024
 
     # The number of entries before automatically flushing
     # the streamer.
@@ -108,6 +113,8 @@ class ImportStreamer(object):
         self._timestamp_desc = self.DEFAULT_TIMESTAMP_DESC
         self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
         self._threshold_filesize = self.DEFAULT_FILESIZE_THRESHOLD
+        self._max_payload_size = self.DEFAULT_MAX_PAYLOAD_SIZE
+        self._safe_payload_limit = self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER
 
     def _fix_dict(self, my_dict):
         """Adjusts a dict with so that it can be uploaded to Timesketch.
@@ -220,28 +227,53 @@ class ImportStreamer(object):
 
             if "timestamp" in data_frame:
                 data_frame["datetime"] = data_frame["timestamp"].dt.strftime(
-                    "%Y-%m-%dT%H:%M:%S%z"
+                    "%Y-%m-%dT%H:%M:%S.%f%z"
                 )
                 data_frame["timestamp"] = (
                     data_frame["timestamp"].astype(numpy.int64) / 1e9
                 )
         else:
             try:
-                # Use format='mixed' for robust parsing of varied datetime strings
+                # Attempt to parse with 'mixed' format for robust parsing
                 date = pandas.to_datetime(
                     data_frame["datetime"], utc=True, format="mixed"
                 )
+                data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+            except (ValueError, OverflowError) as e:
+                # Catch both ValueError (for malformed strings) and OverflowError
+                # (for out-of-range timestamps)
+                # If 'mixed' parsing fails, fall back to coercing errors to NaT
+                logger.info(
+                    "Mixed datetime parsing failed, falling back to 'coerce' "
+                    "to handle invalid values."
+                )
+                date = pandas.to_datetime(
+                    data_frame["datetime"], utc=True, errors="coerce"
+                )
+                # Identify and replace rows with invalid dates (converted to NaT)
+                invalid_mask = date.isna()
+                num_invalid = invalid_mask.sum()
+                if num_invalid > 0:
+                    logger.warning(
+                        "%d rows with invalid or out-of-range timestamps found. "
+                        "Setting their timestamp to epoch (1970-01-01 00:00:00).",
+                        num_invalid,
+                    )
+                    epoch_ts = pandas.Timestamp("1970-01-01", tz="UTC")
+                    date.fillna(epoch_ts, inplace=True)
+
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
-            except Exception:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
+                error_msg = f"An unexpected error occurred: {e}"
                 logger.error(
-                    "Unable to change datetime, is it correctly formatted?",
+                    error_msg,
                     exc_info=True,
                 )
 
         # TODO: Support labels in uploads/imports.
         if "label" in data_frame:
             del data_frame["label"]
-            logger.warning(
+            logger.info(
                 "Labels cannot be imported at this time. Therefore the "
                 "label column was dropped from the dataset."
             )
@@ -264,28 +296,77 @@ class ImportStreamer(object):
         self._count = 0
         self._data_lines = []
 
-    def _upload_data_buffer(self, end_stream, retry_count=0):
-        """Upload data to Timesketch.
+    def _upload_data_buffer(self, end_stream, data_lines=None, retry_count=0):
+        """Upload data buffer to Timesketch using multipart/form-data.
 
         Args:
-            end_stream (bool): boolean indicating whether this is the last chunk of
-                the stream.
+            end_stream (bool): boolean indicating whether this is the last chunk
+                of the stream.
+            data_lines (list): optional list of data lines to upload. If None,
+                uses self._data_lines.
             retry_count (int): optional int that is only set if this is a retry
                 of the upload.
+
+        Returns:
+            None: if the upload is successful or skipped.
 
         Raises:
             RuntimeError: If the data buffer is not successfully uploaded.
         """
-        if not self._data_lines:
+        # 1. Determine which data to use (Instance buffer or recursive argument)
+        if data_lines is None:
+            data_lines = self._data_lines
+
+        if not data_lines:
             return None
 
+        # 2. Serialize to check size
+        # We construct the JSON string here based on the local variable
+        events_string = "\n".join([json.dumps(x) for x in data_lines])
+        payload_size = len(events_string.encode("utf-8"))
+
+        # 3. Dynamic Splitting Logic
+        if payload_size > self._safe_payload_limit:
+            num_rows = len(data_lines)
+
+            if num_rows <= 1:
+                logger.warning(
+                    "Single dictionary entry (%d bytes) exceeds safe limit "
+                    "(%d bytes). Attempting upload anyway.",
+                    payload_size,
+                    self._safe_payload_limit,
+                )
+            else:
+                logger.info(
+                    "Buffer size (%d bytes) exceeds safe limit (%d bytes). "
+                    "Splitting %d entries.",
+                    payload_size,
+                    self._safe_payload_limit,
+                    num_rows,
+                )
+
+                mid_point = num_rows // 2
+                first_half = data_lines[:mid_point]
+                second_half = data_lines[mid_point:]
+
+                # Recursive Call 1: First half
+                self._upload_data_buffer(
+                    end_stream=False, data_lines=first_half, retry_count=0
+                )
+
+                # Recursive Call 2: Second half
+                self._upload_data_buffer(
+                    end_stream=end_stream, data_lines=second_half, retry_count=0
+                )
+                return None
+
+        # 4. Prepare Metadata fields
         data = {
             "name": self._timeline_name,
             "sketch_id": self._sketch.id,
             "enable_stream": not end_stream,
             "data_label": self._data_label,
             "provider": self._provider,
-            "events": "\n".join([json.dumps(x) for x in self._data_lines]),
         }
         if self._index:
             data["index_name"] = self._index
@@ -293,13 +374,15 @@ class ImportStreamer(object):
         if self._upload_context:
             data["context"] = self._upload_context
 
-        response = self._sketch.api.session.post(self._resource_url, data=data)
+        # 5. Prepare "Events" as a multipart/form-data field
+        # (None, data, content_type) -> Treated as form field, not file upload
+        files = {"events": (None, events_string, "application/json")}
 
-        # TODO: Investigate why the sleep is needed, fix the underlying issue
-        # and get rid of it here.
-        # To prevent unexpected errors with connection refusal adding a quick
-        # sleep.
-        time.sleep(2)
+        # 6. Send Request
+        response = self._sketch.api.session.post(
+            self._resource_url, data=data, files=files
+        )
+
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             if retry_count >= self.DEFAULT_RETRY_LIMIT:
                 raise RuntimeError(
@@ -320,7 +403,9 @@ class ImportStreamer(object):
             )
 
             return self._upload_data_buffer(
-                end_stream=end_stream, retry_count=retry_count + 1
+                end_stream=end_stream,
+                data_lines=data_lines,
+                retry_count=retry_count + 1,
             )
 
         self._chunk += 1
@@ -336,25 +421,65 @@ class ImportStreamer(object):
         return None
 
     def _upload_data_frame(self, data_frame, end_stream, retry_count=0):
-        """Upload data to Timesketch.
+        """Upload data to Timesketch using multipart/form-data.
 
         Args:
             data_frame (DataFrame): a pandas DataFrame with the content to upload.
-            end_stream (bool): boolean indicating whether this is the last chunk of
-                the stream.
+            end_stream (bool): boolean indicating whether this is the last chunk
+                of the stream.
             retry_count (int): optional int that is only set if this is a retry
                 of the upload.
+
+        Returns:
+            None: if the upload is successful.
 
         Raises:
             RuntimeError: If the dataframe is not successfully uploaded.
         """
+
+        # 1. Serialize
+        events_json = data_frame.to_json(orient="records", lines=True)
+
+        # 2. Check Size (Dynamic logic)
+        payload_size = len(events_json.encode("utf-8"))
+
+        if payload_size > self._safe_payload_limit:
+            num_rows = len(data_frame)
+
+            if num_rows <= 1:
+                logger.warning(
+                    "Single row (%d bytes) exceeds safe limit (%d bytes). "
+                    "Attempting upload anyway.",
+                    payload_size,
+                    self._safe_payload_limit,
+                )
+            else:
+                logger.info(
+                    "Payload size (%d bytes) exceeds safe limit (%d bytes). "
+                    "Splitting %d rows.",
+                    payload_size,
+                    self._safe_payload_limit,
+                    num_rows,
+                )
+
+                mid_point = num_rows // 2
+                first_half = data_frame.iloc[:mid_point]
+                second_half = data_frame.iloc[mid_point:]
+
+                # Recursive split
+                self._upload_data_frame(first_half, end_stream=False, retry_count=0)
+                self._upload_data_frame(
+                    second_half, end_stream=end_stream, retry_count=0
+                )
+                return None
+
+        # 3. Prepare Metadata fields
         data = {
             "name": self._timeline_name,
             "sketch_id": self._sketch.id,
             "enable_stream": not end_stream,
             "data_label": self._data_label,
             "provider": self._provider,
-            "events": data_frame.to_json(orient="records", lines=True),
         }
         if self._index:
             data["index_name"] = self._index
@@ -362,7 +487,19 @@ class ImportStreamer(object):
         if self._upload_context:
             data["context"] = self._upload_context
 
-        response = self._sketch.api.session.post(self._resource_url, data=data)
+        # 4. Prepare "Events" as a Multipart Field
+        # (None, data) tells requests to send this as a form field, not a file
+        # upload
+        # This ensures it ends up in request.form on the Flask backend
+        files = {"events": (None, events_json, "application/json")}
+
+        # 5. Send Request
+        # 'data' contains metadata fields, 'files' contains the events payload.
+        # Requests automatically sets Content-Type to multipart/form-data.
+        response = self._sketch.api.session.post(
+            self._resource_url, data=data, files=files
+        )
+
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             if retry_count >= self.DEFAULT_RETRY_LIMIT:
                 raise RuntimeError(
@@ -657,7 +794,9 @@ class ImportStreamer(object):
         self._ready()
 
         if not os.path.isfile(filepath):
-            raise TypeError("Entry object needs to be a file that exists.")
+            error_msg = f"File object {filepath} needs to be a file that exists."
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
         if not self._timeline_name:
             base_path = os.path.basename(filepath)
@@ -694,9 +833,12 @@ class ImportStreamer(object):
                         logger.error("Unable to decode line: {0!s}".format(e))
 
         else:
-            raise TypeError(
-                "File needs to have a file extension of: .csv, .jsonl or .plaso"
+            error_msg = (
+                f"File ({filepath}) needs to have a file extension"
+                "of: .csv, .jsonl or .plaso"
             )
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
     def add_json(self, json_entry, column_names=None):
         """Add an entry that is in a JSON format.
@@ -762,6 +904,7 @@ class ImportStreamer(object):
 
         if self._data_lines:
             self.flush(end_stream=True)
+            self._reset()
 
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
@@ -816,6 +959,25 @@ class ImportStreamer(object):
 
     def set_index_name(self, index):
         """Set the index name."""
+        if not isinstance(index, str):
+            raise ValueError(
+                f"Index name must be a string and not {index} {type(index)}."
+            )
+
+        # OpenSearch/Elasticsearch index name restrictions.
+        invalid_chars = r'\/*?"<>| ,#'
+        for char in invalid_chars:
+            if char in index:
+                raise ValueError(
+                    f"Index name '{index}' contains invalid character: '{char}'"
+                )
+
+        if index.startswith(("-", "_", "+")):
+            raise ValueError(f"Index name '{index}' cannot start with '-', '_', or '+'")
+
+        if any(char.isupper() for char in index):
+            raise ValueError(f"Index name '{index}' cannot contain uppercase letters.")
+
         self._index = index
 
     def set_provider(self, provider):
@@ -855,6 +1017,19 @@ class ImportStreamer(object):
     def set_timestamp_description(self, description):
         """Set the timestamp description field."""
         self._timestamp_desc = description
+
+    def set_max_payload_size(self, size_in_bytes: int) -> None:
+        """Set the maximum payload size allowed by the server.
+
+        Args:
+            size_in_bytes (int): The server limit (e.g. MAX_FORM_MEMORY_SIZE).
+        """
+        if size_in_bytes <= 0:
+            raise ValueError(f"Payload size must be positive, got {size_in_bytes}")
+        self._max_payload_size = size_in_bytes
+        self._safe_payload_limit = max(
+            (self._max_payload_size - self.PAYLOAD_SAFETY_BUFFER), 1048576
+        )
 
     @property
     def state(self):

@@ -59,14 +59,14 @@ if [ ! -z "$(docker ps | grep timesketch)" ]; then
 fi
 
 # Tweak for OpenSearch
-echo "* Setting vm.max_map_count for Elasticsearch"
+echo "* Setting vm.max_map_count for OpenSearch"
 sysctl -q -w vm.max_map_count=262144
 if [ -z "$(grep vm.max_map_count /etc/sysctl.conf)" ]; then
   echo "vm.max_map_count=262144" >> /etc/sysctl.conf
 fi
 
 # Create dirs
-mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload}
+mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload,etc/timesketch/llm_summarize,etc/timesketch/nl2q}
 # TODO: Switch to named volumes instead of host volumes.
 chown 1000 timesketch/data/opensearch
 
@@ -104,22 +104,25 @@ curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/tim
 curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
 curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
+curl -s $GITHUB_BASE_URL/data/llm_summarize/prompt.txt > timesketch/etc/timesketch/llm_summarize/prompt.txt
+curl -s $GITHUB_BASE_URL/data/nl2q/data_types.csv > timesketch/etc/timesketch/nl2q/data_types.csv
+curl -s $GITHUB_BASE_URL/data/nl2q/prompt_nl2q > timesketch/etc/timesketch/nl2q/prompt_nl2q
+curl -s $GITHUB_BASE_URL/data/nl2q/examples_nl2q > timesketch/etc/timesketch/nl2q/examples_nl2q
 echo "OK"
 
 # Create a minimal Timesketch config
 echo -n "* Edit configuration files.."
-sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$SECRET_KEY'\x27#' timesketch/etc/timesketch/timesketch.conf
+sed -i 's#SECRET_KEY = "<KEY_GOES_HERE>"#SECRET_KEY = "'$SECRET_KEY'"#' timesketch/etc/timesketch/timesketch.conf
 
-# Set up the Elastic connection
-sed -i 's#^OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_ADDRESS'\x27#' timesketch/etc/timesketch/timesketch.conf
-sed -i 's#^OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' timesketch/etc/timesketch/timesketch.conf
+# Set up the OpenSearch connection
+sed -i 's#OPENSEARCH_HOSTS = \[{"host": "opensearch", "port": 9200}\]#OPENSEARCH_HOSTS = [{"host": "'$OPENSEARCH_ADDRESS'", "port": '$OPENSEARCH_PORT'}]#' timesketch/etc/timesketch/timesketch.conf
 
 # Set up the Redis connection
 sed -i 's#^UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' timesketch/etc/timesketch/timesketch.conf
-sed -i 's#^UPLOAD_FOLDER = \x27/tmp\x27#UPLOAD_FOLDER = \x27/usr/share/timesketch/upload\x27#' timesketch/etc/timesketch/timesketch.conf
+sed -i 's#^UPLOAD_FOLDER = "/tmp"#UPLOAD_FOLDER = "/usr/share/timesketch/upload"#' timesketch/etc/timesketch/timesketch.conf
 
-sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' timesketch/etc/timesketch/timesketch.conf
-sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' timesketch/etc/timesketch/timesketch.conf
+sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = "redis://'$REDIS_ADDRESS':'$REDIS_PORT'"#' timesketch/etc/timesketch/timesketch.conf
+sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = "redis://'$REDIS_ADDRESS':'$REDIS_PORT'"#' timesketch/etc/timesketch/timesketch.conf
 
 # Set up the Postgres connection
 sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' timesketch/etc/timesketch/timesketch.conf
@@ -129,6 +132,8 @@ sed -i 's#^OPENSEARCH_MEM_USE_GB=#OPENSEARCH_MEM_USE_GB='$OPENSEARCH_MEM_USE_GB'
 
 ln -s ./config.env ./timesketch/.env
 echo "OK"
+
+echo
 echo "* Installation done."
 
 if [ -z $START_CONTAINER ]; then
@@ -137,7 +142,38 @@ fi
 
 if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
   cd timesketch
+  echo "* Starting Timesketch containers..."
   docker compose up -d
+  echo -n "* Waiting for Timesketch web interface to become healthy.."
+  TIMEOUT=300 # 5 minutes timeout
+  SECONDS=0
+  while true; do
+    # Suppress errors in case container is not yet created or health check not configured
+    HEALTH_STATUS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web 2>/dev/null || echo "checking")
+    if [ "$HEALTH_STATUS" = "healthy" ]; then
+      echo ".OK"
+      break
+    fi
+    if [ $SECONDS -gt $TIMEOUT ]; then
+      echo ".FAIL"
+      echo "ERROR: Timesketch web container did not become healthy after $TIMEOUT seconds."
+      echo "Please check the container logs: docker logs timesketch-web"
+      exit 1
+    fi
+    echo -n "."
+    sleep 5
+  done
+
+  echo
+  echo "Timesketch is now running!"
+  echo "You can typically access it by navigating to:"
+  echo "  http://<YOUR_SERVER_IP_OR_HOSTNAME>"
+  echo
+  echo "IMPORTANT: By default, Timesketch is running WITHOUT SSL/TLS encryption."
+  echo "For production use, it is CRITICAL to configure SSL/TLS for HTTPS access (https://<YOUR_SERVER_IP_OR_HOSTNAME>)."
+  echo "Please follow the SSL/TLS setup instructions here:"
+  echo "  https://timesketch.org/guides/admin/https/"
+  echo
 else
   echo
   echo "You have chosen not to start the containers,"
@@ -164,8 +200,8 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   read -p "Please provide a new username: " NEWUSERNAME
 
   if [ ! -z "$NEWUSERNAME" ] ;then
-    until [ "`docker inspect -f {{.State.Health.Status}} timesketch-web`"=="healthy" ]; do
-      sleep 1;
+    until [ "$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' timesketch-web)" = "healthy" ]; do
+        sleep 1;
     done;
 
     docker compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"

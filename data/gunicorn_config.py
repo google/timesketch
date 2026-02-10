@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Gunicorn configuration for metrics endpoint."""
+
 import os
 import glob
 import pathlib
@@ -20,7 +21,7 @@ from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
 METRICS_HTTP_HOST = os.environ.get("TIMESKETCH_METRICS_HOST", "0.0.0.0")
 METRICS_HTTP_PORT = os.environ.get("TIMESKETCH_METRICS_PORT", 8080)
-METRICS_DB_DIR = os.environ.get("prometheus_multiproc_dir", None)
+METRICS_DB_DIR = os.environ.get("PROMETHEUS_MULTIPROC_DIR", None)
 METRICS_ENABLED = METRICS_DB_DIR
 
 

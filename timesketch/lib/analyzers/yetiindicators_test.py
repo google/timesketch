@@ -9,25 +9,21 @@ from timesketch.lib.analyzers import yetiindicators
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
-
-MOCK_YETI_ENTITY_REQUEST = {
-    "entities": [
-        {
-            "type": "malware",
-            "name": "xmrig",
-            "description": "coin miner",
-            "created": "2024-02-16T12:10:48.670039Z",
-            "modified": "2024-02-16T12:10:48.670040Z",
-            "kill_chain_phases": [],
-            "aliases": [],
-            "family": "miner",
-            "id": "2152646",
-            "tags": {},
-            "root_type": "entity",
-        }
-    ],
-    "total": 1,
-}
+MOCK_YETI_ENTITIES = [
+    {
+        "type": "malware",
+        "name": "xmrig",
+        "description": "coin miner",
+        "created": "2024-02-16T12:10:48.670039Z",
+        "modified": "2024-02-16T12:10:48.670040Z",
+        "kill_chain_phases": [],
+        "aliases": [],
+        "family": "miner",
+        "id": "2152646",
+        "tags": [],
+        "root_type": "entity",
+    }
+]
 
 MOCK_YETI_NEIGHBORS_RESPONSE = {
     "vertices": {
@@ -110,64 +106,38 @@ class TestYetiIndicators(BaseTest):
         super().setUp()
         current_app.config["YETI_API_ROOT"] = "blah"
         current_app.config["YETI_API_KEY"] = "blah"
-        yetiindicators.NEIGHBOR_CACHE = {}
 
-    # Mock the OpenSearch datastore.
+    # Mock the OpenSearch datastore and the YetiApi
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators."
-        "YetiGraphAnalyzer._get_neighbors_request"
-    )
-    @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators."
-        "YetiGraphAnalyzer._get_entities_request"
-    )
-    def test_api_query(self, mock_get_entities, mock_get_neighbors):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_api_query(self, mock_yeti_api_class):
         """Tests that queries to the API are well-formed."""
+        mock_api = mock_yeti_api_class.return_value
+        mock_api.search_entities.return_value = MOCK_YETI_ENTITIES
+        mock_api.search_graph.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
+
         analyzer = YetiTestAnalyzer("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
-        mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
-        mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
-
         analyzer.run()
-        mock_get_entities.assert_any_call(
-            {
-                "query": {
-                    "name": "",
-                    "tags": ["tag1", "tag2"],
-                    "type": "investigation",
-                },
-                "count": 0,
-            }
+
+        mock_api.search_entities.assert_any_call(
+            entity_type="investigation", tags=["tag1", "tag2"], count=0
         )
-        mock_get_entities.assert_any_call(
-            {
-                "query": {
-                    "name": "",
-                    "tags": [],
-                    "type": "malware",
-                },
-                "count": 0,
-            }
+        mock_api.search_entities.assert_any_call(
+            entity_type="malware", tags=[], count=0
         )
 
-    # Mock the OpenSearch datastore.
+    # Mock the OpenSearch datastore and the YetiApi
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators."
-        "YetiGraphAnalyzer._get_neighbors_request"
-    )
-    @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators."
-        "YetiGraphAnalyzer._get_entities_request"
-    )
-    def test_indicator_match(self, mock_get_entities, mock_get_neighbors):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_indicator_match(self, mock_yeti_api_class):
         """Test that ES queries for indicators are correctly built."""
+        mock_api = mock_yeti_api_class.return_value
+        mock_api.search_entities.return_value = MOCK_YETI_ENTITIES
+        mock_api.search_graph.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
+
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
-        mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
-        mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
-
         analyzer.datastore.import_event("test_index", MATCHING_PATH_MESSAGE, "0")
 
         message = json.loads(analyzer.run())
@@ -178,40 +148,35 @@ class TestYetiIndicators(BaseTest):
                 "Entities found: xmrig:malware"
             ),
         )
-        mock_get_entities.assert_called()
-        mock_get_neighbors.assert_called()
+        mock_api.search_entities.assert_called()
+        mock_api.search_graph.assert_called()
         self.assertEqual(
-            sorted(analyzer.tagged_events["0"]["tags"]),
-            sorted(["malware", "xmrig"]),
+            sorted(analyzer.tagged_events["0"]["tags"]), sorted(["malware", "xmrig"])
         )
 
-    # Mock the OpenSearch datastore.
+    # Mock the OpenSearch datastore and the YetiApi
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators."
-        "YetiGraphAnalyzer._get_neighbors_request"
-    )
-    @mock.patch(
-        "timesketch.lib.analyzers.yetiindicators."
-        "YetiGraphAnalyzer._get_entities_request"
-    )
-    def test_indicator_nomatch(self, mock_get_entities, mock_get_neighbors):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_indicator_nomatch(self, mock_yeti_api_class):
         """Test that ES queries for indicators are correctly built."""
+        mock_api = mock_yeti_api_class.return_value
+        mock_api.search_entities.return_value = MOCK_YETI_ENTITIES
+        mock_api.search_graph.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
+
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
-        mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
-        mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
 
         message = json.loads(analyzer.run())
         self.assertEqual(
             message["result_summary"],
             "0/1 indicators were found in the timeline (0 failed)",
         )
-        mock_get_entities.assert_called()
-        mock_get_neighbors.asset_called()
+        mock_api.search_entities.assert_called()
+        mock_api.search_graph.assert_called()
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_slug(self):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_slug(self, _):
         """Tests that slugs are formed correctly."""
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         mock_event = mock.Mock()
@@ -219,7 +184,7 @@ class TestYetiIndicators(BaseTest):
         analyzer.mark_event(
             MOCK_YETI_NEIGHBORS_RESPONSE["vertices"]["indicators/2152802"],
             mock_event,
-            MOCK_YETI_ENTITY_REQUEST["entities"],
+            MOCK_YETI_ENTITIES,
         )
         mock_event.add_tags.assert_called_once()
         self.assertIn(
@@ -228,7 +193,8 @@ class TestYetiIndicators(BaseTest):
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_build_query_from_regexp(self):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_build_query_from_regexp(self, _):
         """Tests that that queries are correctly built from regex indicators."""
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_regexp(
@@ -278,7 +244,8 @@ class TestYetiIndicators(BaseTest):
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_build_query_from_sigma(self):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_build_query_from_sigma(self, _):
         """Tests that that queries are correctly built from sigma indicators."""
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         sigma_pattern = """id: asd
@@ -336,7 +303,8 @@ tags:
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_build_query_from_observable(self):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_build_query_from_observable(self, _):
         """Tests that that queries are correctly built from regex indicators."""
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         query = analyzer.build_query_from_observable(
@@ -347,16 +315,15 @@ tags:
                 "context": [],
                 "last_analysis": {},
                 "id": "46833442",
-                "tags": {
-                    "mimikatz": {
-                        "source": "observables/46833442",
-                        "target": "tags/46833460",
+                "tags": [
+                    {
+                        "name": "mimikatz",
                         "last_seen": "2024-04-18T08:42:11.370806Z",
                         "expires": "2024-05-18T08:42:11.370811Z",
                         "fresh": True,
-                        "id": "tagged/46833473",
+                        "id": None,
                     }
-                },
+                ],
                 "root_type": "observable",
             }
         )
@@ -375,10 +342,13 @@ tags:
         )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore")
-    def test_run_composite_aggregation(self, mock_datastore):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_run_composite_aggregation(
+        self, _, mock_opensearch_datastore
+    ):  # pylint: disable=invalid-name
         """Tests that the composite aggregation is correctly built."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
-        mock_datastore.return_value.search.return_value = {
+        mock_opensearch_datastore.return_value.search.return_value = {
             "aggregations": {
                 "my_composite_agg_test_index": {
                     "buckets": [{"key": {"sha256_hash": "testhash"}}],
@@ -390,35 +360,15 @@ tags:
         self.assertEqual(hashset, {"testhash"})
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_get_bloom_request(self):
-        """Tests that the bloom request is correctly built."""
-        analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
-
-        # pylint: disable=protected-access
-        analyzer._yeti_session = mock.Mock()
-        post_mock = mock.Mock()
-        post_mock.return_value.status_code = 200
-        analyzer._yeti_session.post = post_mock
-
-        analyzer._get_bloom_request({"testhash1"})
-        post_mock.assert_called_once_with(
-            "blah/bloom/search/raw",
-            data="testhash1",
-        )
-
-    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_bloomanalyzer_run(self):
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_bloomanalyzer_run(self, mock_yeti_api_class):
         """Tests the YetiBloomAnalyzer run function."""
-        analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
-
-        # pylint: disable=protected-access
-        analyzer._yeti_session = mock.Mock()
-        post_mock = mock.Mock()
-        post_mock.return_value.status_code = 200
-        analyzer._yeti_session.post = post_mock
-        analyzer._yeti_session.post.return_value.json.return_value = [
+        mock_api = mock_yeti_api_class.return_value
+        mock_api.search_bloom.return_value = [
             {"value": "testhash", "hits": ["hitsource1"]}
         ]
+
+        analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
 
         # pylint: disable=unused-argument
         def agg_mock(hashset, after_key=None):
@@ -427,7 +377,6 @@ tags:
             return hashset, None
 
         analyzer.run_composite_aggregation = agg_mock
-
         analyzer.datastore.import_event("test_index", MATCHING_BLOOM_HASH, "0")
 
         message = json.loads(analyzer.run())
@@ -438,4 +387,7 @@ tags:
                 "Bloom filter check completed. 1 hashes checked, 1 hits "
                 "found, 1 events tagged."
             ),
+        )
+        self.assertEqual(
+            message["platform_meta_data"]["created_tags"], ["bloom:hitsource1"]
         )

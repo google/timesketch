@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Timesketch API client"""
+
 from __future__ import unicode_literals
 
 import json
+
+auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
 
 
 def mock_session():
@@ -40,8 +43,16 @@ def mock_session():
 
         # pylint: disable=unused-argument
         @staticmethod
+        def mount(*args, **kwargs):
+            """Mock mount method."""
+            return
+
+        # pylint: disable=unused-argument
+        @staticmethod
         def get(*args, **kwargs):
             """Mock GET request handler."""
+            if args and args[0] == "http://127.0.0.1":
+                return mock_response(args[0], text_data=auth_text_data)
             return mock_response(*args, **kwargs)
 
         # pylint: disable=unused-argument
@@ -51,6 +62,15 @@ def mock_session():
             if self._post_done:
                 return mock_response(*args, empty=True)
             return mock_response(*args, **kwargs)
+
+        # pylint: disable=unused-argument
+        def request(self, method, *args, **kwargs):
+            """Mock request handler."""
+            if method.upper() == "GET":
+                return self.get(*args, **kwargs)
+            if method.upper() == "POST":
+                return self.post(*args, **kwargs)
+            return None
 
     return MockSession()
 
@@ -71,8 +91,6 @@ def mock_response(*args, **kwargs):
         def json(self):
             """Mock JSON response."""
             return self.json_data
-
-    auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
 
     archive_data = {
         "is_archived": False,
@@ -114,6 +132,26 @@ def mock_response(*args, **kwargs):
                     "created_at": "2023-03-09T08:52:10.595285",
                     "name": None,
                     "updated_at": "2023-03-09T08:52:10.623554",
+                    "user": {
+                        "active": True,
+                        "admin": True,
+                        "groups": [],
+                        "username": "testuser",
+                    },
+                }
+            ]
+        ],
+    }
+
+    annotate_event_data = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "comment": "test comment",
+                    "created_at": "2023-03-10T10:00:00.000000",
+                    "id": 2,
+                    "updated_at": "2023-03-10T10:00:00.000000",
                     "user": {
                         "active": True,
                         "admin": True,
@@ -641,6 +679,32 @@ def mock_response(*args, **kwargs):
 
     aggregation_group = {"meta": {"command": "list_groups"}, "objects": []}
 
+    mock_facet_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "name": "Test Facet",
+                    "display_name": "Test Facet",
+                    "description": "A facet for testing.",
+                }
+            ]
+        ],
+    }
+
+    mock_conclusion_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "conclusion": "This is a conclusion.",
+                }
+            ]
+        ],
+    }
+
     mock_sketch_scenario_response = {
         "meta": {},
         "objects": [
@@ -720,6 +784,24 @@ def mock_response(*args, **kwargs):
         ],
     }
 
+    mock_scenario_questions_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "approaches": [],
+                    "uuid": "abcdefg-b89c-123d-e45f-g6h7ijk8l910",
+                    "conclusions": [],
+                    "description": "Question for a scenario",
+                    "dfiq_identifier": "Q0002",
+                    "display_name": "Scenario Question?",
+                    "id": 2,
+                    "name": "Scenario Question?",
+                }
+            ]
+        ],
+    }
+
     mock_question_response = {
         "meta": {},
         "objects": [
@@ -767,11 +849,37 @@ def mock_response(*args, **kwargs):
         ]
     }
 
+    mock_facet_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "name": "Test Facet",
+                    "display_name": "Test Facet",
+                    "description": "A facet for testing.",
+                }
+            ]
+        ],
+    }
+
+    mock_conclusion_list_response = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "id": 1,
+                    "conclusion": "This is a conclusion.",
+                }
+            ]
+        ],
+    }
+
     # Register API endpoints to the correct mock response data for GET requests.
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
         "http://127.0.0.1/api/v1/sketches/": MockResponse(json_data=sketch_list_data),
-        "http://127.0.0.1/api/v1/sketches/1": MockResponse(json_data=sketch_data),
+        "http://127.0.0.1/api/v1/sketches/1/": MockResponse(json_data=sketch_data),
         "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long
             json_data=event_data_1
         ),
@@ -855,12 +963,24 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1/questions/1/": MockResponse(
             json_data=mock_question_response
         ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/facets/": MockResponse(
+            json_data=mock_facet_list_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/1/conclusions/": MockResponse(
+            json_data=mock_conclusion_list_response
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/questions/": MockResponse(
+            json_data=mock_scenario_questions_response
+        ),
     }
 
     # Register API endpoints to the correct mock response data for POST requests.
     post_url_router = {
         "http://127.0.0.1/api/v1/sketches/1/event/attributes/": MockResponse(
             json_data=add_event_attribute_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/event/annotate/": MockResponse(
+            json_data=annotate_event_data
         ),
         "http://127.0.0.1/api/v1/sketches/1/aggregation/explore/": MockResponse(
             json_data=aggregation_chart_data
@@ -873,6 +993,43 @@ def mock_response(*args, **kwargs):
         ),
         "http://127.0.0.1/api/v1/sketches/1/explore/": MockResponse(
             json_data=timeline_data
+        ),
+        # Mocks for updating resources
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/": MockResponse(
+            json_data={
+                "meta": {},
+                "objects": [
+                    {
+                        "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                        "description": "Scenario description!",
+                        "dfiq_identifier": "S0001",
+                        "display_name": "New Scenario Name",
+                        "id": 1,
+                        "name": "Test Scenario",
+                    }
+                ],
+            }
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/scenarios/1/status/": MockResponse(
+            json_data=mock_scenario_response, status_code=200
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/1/": MockResponse(
+            json_data={
+                "meta": {},
+                "objects": [
+                    {
+                        "uuid": "1234a567-b89c-123d-e45f-g6h7ijk8l910",
+                        "description": "Updated description.",
+                        "dfiq_identifier": "Q0001",
+                        "display_name": "Test Question?",
+                        "id": 1,
+                        "name": "Updated Question Name?",
+                    }
+                ],
+            }
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/questions/1/conclusions/": MockResponse(
+            json_data={"meta": {"new_conclusion_id": 2}}
         ),
     }
 

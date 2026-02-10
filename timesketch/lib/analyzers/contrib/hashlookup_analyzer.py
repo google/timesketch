@@ -9,7 +9,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib import emojis
 
-
 logger = logging.getLogger("timesketch.analyzers.hashlookup")
 
 
@@ -45,7 +44,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         hashlookup_url = current_app.config.get("HASHLOOKUP_URL")
 
         if not hashlookup_url:
-            logger.error("Hashlookup conf not found")
+            logger.debug("Hashlookup conf not found")
             return []
 
         matcher_kwargs = [{"hashlookup_url": hashlookup_url}]

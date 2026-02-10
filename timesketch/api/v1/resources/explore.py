@@ -16,6 +16,7 @@
 import datetime
 import io
 import json
+import logging
 import zipfile
 
 import prometheus_client
@@ -38,8 +39,10 @@ from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
+from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
@@ -58,6 +61,8 @@ METRICS = {
         namespace=METRICS_NAMESPACE,
     )
 }
+
+logger = logging.getLogger("timesketch.explore_api")
 
 
 class ExploreResource(resources.ResourceMixin, Resource):
@@ -235,6 +240,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     timeline_ids=timeline_ids,
                     count=True,
                 )
+            except DatastoreTimeoutError as e:
+                abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
@@ -287,6 +294,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     enable_scroll=enable_scroll,
                     timeline_ids=timeline_ids,
                 )
+            except DatastoreTimeoutError as e:
+                abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
@@ -330,11 +339,21 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         comments = {}
         if "comment" in return_fields:
-            events = Event.get_with_comments(sketch=sketch)
-            for event in events:
-                for comment in event.comments:
-                    comments.setdefault(event.document_id, [])
-                    comments[event.document_id].append(comment.comment)
+            try:
+                events_with_comments = Event.get_with_comments(sketch=sketch)
+                for event in events_with_comments:
+                    for comment in event.comments:
+                        comments.setdefault(event.document_id, [])
+                        comments[event.document_id].append(comment.comment)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error(
+                    "Failed to get comments for events in sketch ID [%s], "
+                    "but explore will "
+                    "proceed without them. Error: %s",
+                    sketch_id,
+                    e,
+                    exc_info=True,
+                )
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
@@ -350,6 +369,25 @@ class ExploreResource(resources.ResourceMixin, Resource):
             except KeyError:
                 pass
 
+        if "comment" in return_fields:
+            comments = {}
+            try:
+                events_with_comments = Event.get_with_comments(sketch=sketch)
+                for event in events_with_comments:
+                    for comment in event.comments:
+                        comments.setdefault(event.document_id, [])
+                        comments[event.document_id].append(comment.comment)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error(
+                    "Failed to get comments for events in sketch ID [%s], "
+                    "but explore will "
+                    "proceed without them. Error: %s",
+                    sketch_id,
+                    e,
+                    exc_info=True,
+                )
+
+        for event in result["hits"]["hits"]:
             if "comment" in return_fields:
                 event["_source"]["comment"] = comments.get(event["_id"], [])
 

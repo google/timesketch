@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client."""
+
 from __future__ import unicode_literals
+
 
 import os
 import logging
 import sys
+import time
 
 # pylint: disable=wrong-import-order
 import bs4
@@ -24,7 +27,9 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
-from urllib3.exceptions import InsecureRequestWarning
+from requests.adapters import HTTPAdapter
+from urllib3.exceptions import InsecureRequestWarning, MaxRetryError
+from urllib3.util.retry import Retry
 import webbrowser
 
 # pylint: disable-msg=import-error
@@ -41,17 +46,25 @@ from . import user
 from . import version
 from . import sigma
 
-
 logger = logging.getLogger("timesketch_api.client")
 
 
 class TimesketchApi:
     """Timesketch API object
 
-    Attributes:
-        api_root: The full URL to the server API endpoint.
-        session: Authenticated HTTP session.
-    """
+    This class provides a client for interacting with the Timesketch API.
+    It includes robust error handling and retry mechanisms using the
+    VerboseRetry class for network requests, with a configurable retry count.
+
+                    Attributes:
+
+                        api_root: The full URL to the server API endpoint.
+
+                        session: Authenticated HTTP session with retry logic configured.
+
+                        retry_count: The number of retries configured for the session.
+
+                        backoff_factor: The backoff factor used for retries."""
 
     DEFAULT_OAUTH_SCOPE = [
         "https://www.googleapis.com/auth/userinfo.email",
@@ -65,9 +78,11 @@ class TimesketchApi:
     DEFAULT_OAUTH_LOCALHOST_URL = "http://localhost"
     DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
-    # Default retry count for operations that attempt a retry.
-    DEFAULT_RETRY_COUNT = 5
+    # Default total attempts (initial request + retries) for operations.
+    # A value of 4 means 1 initial attempt + 4 retries = 5 total attempts.
+    DEFAULT_RETRY_COUNT = 4
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         host_uri,
@@ -78,6 +93,8 @@ class TimesketchApi:
         client_secret="",
         auth_mode="userpass",
         create_session=True,
+        retry_count=DEFAULT_RETRY_COUNT,
+        backoff_factor=0.5,
     ):
         """Initializes the TimesketchApi object.
 
@@ -94,6 +111,9 @@ class TimesketchApi:
             create_session: Boolean indicating whether the client object
                 should create a session object. If set to False the
                 function "set_session" needs to be called before proceeding.
+            retry_count: Number of retries for HTTP requests and internal API
+                request retries. Defaults to DEFAULT_RETRY_COUNT.
+            backoff_factor: The backoff factor to use for retries. Defaults to 0.5.
 
         Raises:
             ConnectionError: If the Timesketch server is unreachable.
@@ -104,19 +124,27 @@ class TimesketchApi:
         self.api_root = "{0:s}/api/v1".format(host_uri)
         self.credentials = None
         self._flow = None
+        if retry_count is None:
+            self._retry_count = self.DEFAULT_RETRY_COUNT
+        else:
+            self._retry_count = retry_count
+        self._backoff_factor = backoff_factor
 
         if not create_session:
+            # Session needs to be set manually later using set_session()
             self._session = None
             return
 
         try:
             self._session = self._create_session(
-                username,
-                password,
+                username=username,
+                password=password,
                 verify=verify,
                 client_id=client_id,
                 client_secret=client_secret,
                 auth_mode=auth_mode,
+                retry_count=self._retry_count,
+                backoff_factor=self._backoff_factor,
             )
         except ConnectionError as exc:
             raise ConnectionError("Timesketch server unreachable") from exc
@@ -199,6 +227,7 @@ class TimesketchApi:
     def _create_oauth_session(
         self,
         client_id="",
+        *,
         client_secret="",
         client_secrets_file=None,
         host="localhost",
@@ -317,7 +346,16 @@ class TimesketchApi:
         return session
 
     def _create_session(
-        self, username, password, verify, client_id, client_secret, auth_mode
+        self,
+        username,
+        password,
+        *,
+        verify,
+        client_id,
+        client_secret,
+        auth_mode,
+        retry_count,
+        backoff_factor,
     ):
         """Create authenticated HTTP session for server communication.
 
@@ -330,12 +368,16 @@ class TimesketchApi:
             auth_mode (str): The authentication mode to use. Supported values are
                 'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth
+            retry_count (int): Number of retries for HTTP requests.
+            backoff_factor (float): The backoff factor to use for retries.
 
         Returns:
             Instance of requests.Session.
         """
         if auth_mode == "oauth":
-            return self._create_oauth_session(client_id, client_secret)
+            return self._create_oauth_session(
+                client_id=client_id, client_secret=client_secret
+            )
 
         if auth_mode == "oauth_local":
             return self._create_oauth_session(
@@ -346,6 +388,17 @@ class TimesketchApi:
             )
 
         session = requests.Session()
+
+        # Configure retry logic
+        retry_strategy = VerboseRetry(
+            total=retry_count,
+            backoff_factor=backoff_factor,
+            status_forcelist=[500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "POST"],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
 
         # If using HTTP Basic auth, add the user/pass to the session
         if auth_mode == "http-basic":
@@ -364,106 +417,156 @@ class TimesketchApi:
 
         return session
 
-    def fetch_resource_data(self, resource_uri, params=None):
-        """Make a HTTP GET request.
+    def _send_request_with_retry(self, method, resource_uri, **kwargs):
+        """Makes an HTTP request with manual retries for application-level errors.
+
+        This is the core private helper for all API requests. It wraps the
+        session requests and adds a manual retry loop to handle cases where
+        the API returns a 200 OK status but with an empty or invalid JSON
+        payload.
+
+        For GET requests, you can still use the `fetch_resource_data`
+        which is just a wrapper for `_send_request_with_retry` with fixed
+        `GET`.
 
         Args:
-            resource_uri (str): The URI to the resource to be fetched.
-            params (dict): Dict of URL parameters to send in the GET request.
+            method (str): HTTP method (e.g., 'GET', 'POST').
+            resource_uri (str): The URI for the resource.
+            **kwargs: Keyword arguments passed to the request.
 
         Returns:
-            Dictionary with the response data.
+            dict: The JSON response data.
 
         Raises:
-            ValueError: If response could not be JSON-decoded after
-                DEFAULT_RETRY_COUNT attempts.
-            RuntimeError: If the API server returns an error or empty.
+            ValueError: If JSON decoding fails after all retries.
+            RuntimeError: If the response is falsy after all retries.
         """
-        resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
+        resource_url = f"{self.api_root}/{resource_uri}"
 
-        retry_count = 0
-        result = None
-        while True:
-            retry_count += 1
-            response = self.session.get(resource_url, params=params)
+        last_exception = None
+        for attempt in range(self._retry_count + 1):
             try:
+                response = self.session.request(method, resource_url, **kwargs)
                 result = error.get_response_json(response, logger)
                 if result:
                     return result
-            except RuntimeError as e:
-                if retry_count >= self.DEFAULT_RETRY_COUNT:
-                    raise RuntimeError(
-                        "Error for request '{0:s}' - '{1!s}'".format(resource_url, e)
-                    ) from e
 
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the response for request '{2:s}'"
-                    "failed. Trying again...".format(
-                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
-                    )
+                    "Received falsy response for %s %s, retrying (%d/%d)...",
+                    method.upper(),
+                    resource_url,
+                    attempt + 1,
+                    self._retry_count + 1,
                 )
+                time.sleep(self._backoff_factor * (2**attempt))
+
             except ValueError as e:
-                if retry_count >= self.DEFAULT_RETRY_COUNT:
-                    raise ValueError(
-                        "Error parsing response for request '{0:s}' - {1!s}".format(
-                            resource_url, e
-                        )
-                    ) from e
-
+                last_exception = e
                 logger.warning(
-                    "[{0:d}/{1:d}] Parsing the JSON response for request "
-                    "'{2:s}' failed. Trying again...".format(
-                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
-                    )
+                    "ValueError decoding JSON for %s %s, retrying (%d/%d)...",
+                    method.upper(),
+                    resource_url,
+                    attempt + 1,
+                    self._retry_count + 1,
                 )
+                time.sleep(self._backoff_factor * (2**attempt))
+                continue
 
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError(
-                    "Unable to fetch JSON resource data for request: '{0:s}'"
-                    " - Response: '{1!s}'".format(resource_url, result)
-                )
+        if last_exception:
+            raise ValueError(
+                f"Failed to decode JSON response from {resource_url} "
+                "after multiple retries."
+            ) from last_exception
+
+        error_msg = (
+            f"Unable to get valid JSON response for request: "
+            f"'{method.upper()} {resource_url}' - Received falsy response "
+            "after multiple retries."
+        )
+        raise RuntimeError(error_msg)
+
+    def fetch_resource_data(self, resource_uri, params=None):
+        """Makes an HTTP GET request to the specified resource URI.
+
+        This method is a convenience wrapper around `_send_request_with_retry`
+        for making GET requests. This provides a clear, descriptive interface
+        for fetching data and a single point of modification for all GET
+        requests, enhancing maintainability.
+
+        It uses a robust retry mechanism for both HTTP-level errors (e.g.,
+        5xx status codes) and application-level issues like invalid or empty
+        JSON responses.
+
+        Args:
+            resource_uri (str): The URI to the resource to be fetched.
+            params (dict, optional): A dictionary of URL parameters to send
+                in the GET request. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the JSON response data from the API.
+        """
+        return self._send_request_with_retry("GET", resource_uri, params=params)
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
 
+        This method attempts to create a new sketch on the Timesketch server.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
+
         Args:
-            name (str): Name of the sketch.
-            description (str): Description of the sketch.
+            name (str): Name of the sketch. Cannot be empty.
+            description (str): Optional description of the sketch. If not
+                provided, the sketch name will be used as the description.
 
         Returns:
-            Instance of a Sketch object.
+            Instance of a Sketch object representing the newly created sketch.
 
         Raises:
-            RuntimeError: If response does not contain an 'objects' key after
-                DEFAULT_RETRY_COUNT attempts.
-            ValueError: If name is empty
+            ValueError: If the provided sketch name is empty, or if the expected
+                'objects' structure with a sketch ID is not found in the API
+                response.
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            RuntimeError: If the API server returns an error (non-20x status code).
         """
         if not description:
             description = name
 
         if not name:
             raise ValueError("Sketch name cannot be empty")
+        resource_uri = "sketches/"
+        form_data = {"name": name, "description": description}
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
+        objects = response_dict.get("objects")
 
-        retry_count = 0
-        objects = None
-        while True:
-            resource_url = "{0:s}/sketches/".format(self.api_root)
-            form_data = {"name": name, "description": description}
-            response = self.session.post(resource_url, json=form_data)
-            response_dict = error.get_response_json(response, logger)
-            objects = response_dict.get("objects")
-            if objects:
-                break
-            retry_count += 1
+        if (
+            objects
+            and isinstance(objects, list)
+            and len(objects) > 0
+            and isinstance(objects[0], dict)
+            and "id" in objects[0]
+        ):
+            sketch_id = objects[0]["id"]
+            return self.get_sketch(sketch_id)
 
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError("Unable to create a new sketch.")
-
-        sketch_id = objects[0]["id"]
-        return self.get_sketch(sketch_id)
+        # If we reach here, it means get_response_json did not raise an error
+        # but returned an unexpected 'objects' format or it was empty.
+        error_message_detail = (
+            "API for sketch creation returned an unexpected 'objects' "
+            f"format or it was empty. Response: {response_dict}"
+        )
+        raise ValueError(error_message_detail)
 
     def create_user(self, username, password):
         """Create a new user.
+
+        This method attempts to create a new user on the Timesketch server.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
 
         Args:
             username (str): Name of the user
@@ -473,24 +576,21 @@ class TimesketchApi:
             True if user created successfully.
 
         Raises:
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
             RuntimeError: If response does not contain an 'objects' key after
-                DEFAULT_RETRY_COUNT attempts.
+                all retries.
         """
+        resource_uri = "users/"
+        form_data = {"username": username, "password": password}
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
+        objects = response_dict.get("objects")
 
-        retry_count = 0
-        objects = None
-        while True:
-            resource_url = "{0:s}/users/".format(self.api_root)
-            form_data = {"username": username, "password": password}
-            response = self.session.post(resource_url, json=form_data)
-            response_dict = error.get_response_json(response, logger)
-            objects = response_dict.get("objects")
-            if objects:
-                break
-            retry_count += 1
-
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError("Unable to create a new user.")
+        if not objects:
+            raise RuntimeError("Unable to create a new user.")
 
         return user.User(user_id=objects[0]["id"], api=self)
 
@@ -556,9 +656,9 @@ class TimesketchApi:
 
         if name:
             data = {"aggregator": name}
-            resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
-            response = self.session.post(resource_url, json=data)
-            response_json = error.get_response_json(response, logger)
+            response_json = self._send_request_with_retry(
+                "POST", resource_uri, json=data
+            )
         else:
             response_json = self.fetch_resource_data(resource_uri)
 
@@ -579,8 +679,7 @@ class TimesketchApi:
                     "name"
                 )
                 line_dict["field_{0:d}_description".format(field_index + 1)] = (
-                    field.get("description")
-                )
+                    field.get("description"))  # fmt: skip
             lines.append(line_dict)
 
         return pandas.DataFrame(lines)
@@ -593,10 +692,11 @@ class TimesketchApi:
             scope (str): What scope to get sketches as. Default to user.
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in
-                shared: Get sketches that can be accessed
+                shared: sketches shared with the user (but not owned by them)
                 admin: Get all sketches if the user is an admin
                 archived: get archived sketches
                 search: pass additional search query
+                all: all sketches the user has access to (owned and shared)
             include_archived (bool): If archived sketches should be returned.
 
         Yields:
@@ -641,38 +741,51 @@ class TimesketchApi:
 
     def create_searchindex(self, searchindex_name: str, opensearch_index_name: str):
         """Create a new SearchIndex.
+
+        This method attempts to create a new searchindex on the Timesketch server.
+        It relies on the configured session's retry strategy (VerboseRetry) to
+        handle transient network errors or server-side issues.
+
         Args:
             searchindex_name: Name for the searchindex.
             opensearch_index_name: The name of the index in opensearch.
+
         Returns:
             Instance of a SearchIndex object.
+
         Raises:
-            ValueError: If the SearchIndex fails to create.
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            ValueError: If the API response cannot be JSON-decoded.
         """
-        resource_url = f"{self.api_root}/searchindices/"
+        resource_uri = "searchindices/"
         form_data = {
             "searchindex_name": searchindex_name,
             "es_index_name": opensearch_index_name,
         }
-        response = self.session.post(resource_url, json=form_data)
-
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response,
-                message="Error creating searchindex",
-                error=ValueError,
-            )
-
-        response_dict = error.get_response_json(response, logger)
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
         objects = response_dict.get("objects")
-        if not objects:
-            raise ValueError(
-                "Unable to create a SearchIndex, try again or file an "
-                "issue on GitHub."
-            )
 
-        searchindex_id = objects[0].get("id")
-        return index.SearchIndex(searchindex_id, api=self)
+        if (
+            objects
+            and isinstance(objects, list)
+            and len(objects) > 0
+            and isinstance(objects[0], dict)
+            and "id" in objects[0]
+        ):
+            searchindex_id = objects[0]["id"]
+            return index.SearchIndex(searchindex_id, api=self)
+
+        # If we reach here, it means get_response_json did not raise an error
+        # but returned an unexpected 'objects' format or it was empty.
+        error_message_detail = (
+            "API for searchindex creation returned an unexpected 'objects' "
+            f"format or it was empty. Response: {response_dict}"
+        )
+        raise ValueError(error_message_detail)
 
     def check_celery_status(self, job_id=""):
         """Return information about outstanding celery tasks or a specific one.
@@ -768,27 +881,32 @@ class TimesketchApi:
         If no `rule_yaml` is found in the request, the method will fail as this
         is required to parse the rule.
 
+        This method relies on the configured session's retry strategy (VerboseRetry)
+        to handle transient network errors or server-side issues.
+
         Args:
             rule_yaml (str): YAML of the Sigma Rule.
 
         Returns:
             Instance of a Sigma object.
+
+        Raises:
+            urllib3.exceptions.MaxRetryError: If the maximum number of retries
+                is exceeded due to persistent server errors or connection issues.
+                The exception message will include the last server response body.
+            RuntimeError: If response does not contain an 'objects' key after
+                all retries.
         """
 
-        retry_count = 0
-        objects = None
-        while True:
-            resource_url = "{0:s}/sigmarules/".format(self.api_root)
-            form_data = {"rule_yaml": rule_yaml}
-            response = self.session.post(resource_url, json=form_data)
-            response_dict = error.get_response_json(response, logger)
-            objects = response_dict.get("objects")
-            if objects:
-                break
-            retry_count += 1
+        resource_uri = "sigmarules/"
+        form_data = {"rule_yaml": rule_yaml}
+        response_dict = self._send_request_with_retry(
+            "POST", resource_uri, json=form_data
+        )
+        objects = response_dict.get("objects")
 
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError("Unable to create a new Sigma Rule.")
+        if not objects:
+            raise RuntimeError("Unable to create a new Sigma Rule.")
 
         rule_uuid = objects[0]["rule_uuid"]
         return self.get_sigmarule(rule_uuid)
@@ -833,3 +951,55 @@ class TimesketchApi:
             logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
         return sigma_obj  # pytype: disable=name-error  # py310-upgrade
+
+
+class VerboseRetry(Retry):
+    """
+    A custom Retry class that includes the last response body in the
+    MaxRetryError reason.
+    """
+
+    def increment(self, *args, **kwargs):
+        """Increment the retry counter and potentially raise MaxRetryError.
+
+        This method is called by urllib3 before each retry attempt. It's overridden
+        here to add custom logging for 5xx errors and to enhance the final
+        MaxRetryError message with server response details and attempt count.
+        """
+        response = kwargs.get("response")
+        decoded_body = None
+        # Attempt to decode the response body once, if available.
+        # This avoids redundant decoding and handles potential errors gracefully.
+        if response and response.data:
+            try:
+                decoded_body = response.data.decode("utf-8", "ignore")
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.debug("Failed to decode response body: %s", e)
+
+        # Log a warning for each retry attempt that receives a status code
+        # from the configured status_forcelist (e.g., 500, 502, etc.).
+        # This provides real-time feedback on transient server issues.
+        if response and response.status in self.status_forcelist:
+            attempt_num = len(self.history) + 1
+            max_attempts = self.total + len(self.history) + 1
+            logger.warning(
+                "Error %d received (Attempt %d/%d): %s",
+                response.status,
+                attempt_num,
+                max_attempts,
+                decoded_body or "[No response body]",
+            )
+
+        try:
+            # Call the original increment method to handle the core retry logic.
+            return super().increment(*args, **kwargs)
+        except MaxRetryError as e:
+            # When MaxRetryError is raised, enhance its message with more context.
+            # This includes the number of attempts and the server's last response.
+            reason_str = repr(e.reason)
+            new_reason = f"{reason_str} | Attempts: {len(self.history)}"
+            if decoded_body:
+                new_reason += f" | Server Response: {decoded_body}"
+
+            # Re-raise the MaxRetryError with the enriched reason.
+            raise MaxRetryError(e.pool, e.url, reason=Exception(new_reason)) from e

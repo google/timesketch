@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Main entry point for running tests."""
+
 import subprocess
 
 
@@ -16,6 +17,7 @@ def run_python_tests():
             "timesketch/",
             "api_client/",
             "cli_client/",
+            "importer_client/",
         ]
     )
 

@@ -28,7 +28,7 @@ limitations under the License.
   </div>
   <div v-else>
     <div
-      :style="(tags && tags.length) || (labels && labels.length) ? 'cursor: pointer' : ''"
+      :style="(tags && tags.length) || (filteredLabels && filteredLabels.length) ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
@@ -37,13 +37,13 @@ limitations under the License.
 
       <span class="float-right" style="margin-right: 10px">
         <small
-          ><strong v-if="tags && labels">{{ tags.length + labels.length }}</strong></small
+          ><strong v-if="tags && filteredLabels">{{ tags.length + filteredLabels.length }}</strong></small
         >
       </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded && (tags.length || labels.length)">
+      <div v-show="expanded && (tags.length || filteredLabels.length)">
         <ts-tags-list></ts-tags-list>
       </div>
     </v-expand-transition>
@@ -76,8 +76,9 @@ export default {
     tags() {
       return this.$store.state.tags
     },
-    labels() {
-      return this.meta.filter_labels
+    filteredLabels() {
+      if (!this.meta.filter_labels) return []
+      return this.meta.filter_labels.filter((label) => !label.label.startsWith('__ts_fact'))
     },
   },
 }
