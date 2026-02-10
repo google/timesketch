@@ -19,6 +19,7 @@ from typing import Any, Optional
 
 from google import genai
 from google.genai import types
+from google.genai import errors
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
 
@@ -100,6 +101,10 @@ class GoogleGenAI(interface.LLMProvider):
                 contents=prompt,
                 config=generate_config,
             )
+        except errors.APIError as e:
+            error_msg = f"{e.code} {e.status}: {getattr(e, 'message', 'N/A')}"
+            logger.error("API error during content generation: %s", str(e))
+            raise ValueError(f"Error generating content: {error_msg}") from e
         except Exception as e:
             logger.error("Error generating content with Google GenAI: %s", e)
             raise ValueError(f"Error generating content: {e}") from e
