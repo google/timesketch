@@ -972,7 +972,9 @@ def info():
     try:
         db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
         if "postgresql" in db_uri:
-            version_row = db_session.execute(sqlalchemy.text("SELECT version();")).fetchone()
+            version_row = db_session.execute(
+                sqlalchemy.text("SELECT version();")
+            ).fetchone()
             print(f"Postgres version: {version_row[0]}")
         else:
             print("Database: Not using PostgreSQL")
