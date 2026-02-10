@@ -674,9 +674,6 @@ export default {
       const hasStarQuery = this.currentQueryString.includes('label:__ts_star')
       return hasStarChip || hasStarQuery
     },
-    filterChips: function () {
-      return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
-    },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count
       const uniqueEvents = this.eventList.meta.summary_unique_event_count

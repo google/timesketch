@@ -166,23 +166,22 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
 
         return export.query_results_to_dataframe(result, sketch)
 
-    def generate_prompt(self, sketch: Sketch, **kwargs: Any) -> str:
+    def generate_prompt(self, sketch: Sketch, form: dict = None, **kwargs: Any) -> str:
         """Generates the starred events report prompt based on events from a query.
         Args:
             sketch: The Sketch object containing events to analyze.
+            form: Form data containing query and filter information.
             **kwargs: Additional arguments including:
-                - form: Form data containing query and filter information.
                 - timeline_ids: List of timeline IDs to query.
         Returns:
             str: Generated prompt text with events to analyze.
         Raises:
             ValueError: If required parameters are missing or if no events are found.
         """
-        form = kwargs.get("form")
         timeline_ids = kwargs.get("timeline_ids")
 
         if not form:
-            raise ValueError("Missing 'form' data in kwargs")
+            raise ValueError("Missing 'form' data")
 
         query_filter = form.get("filter", {})
         query_string = form.get("query", "*") or "*"
@@ -223,14 +222,16 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
 
         return self._get_prompt_text(events_dict)
 
-    def process_response(self, llm_response: Any, **kwargs: Any) -> dict[str, Any]:
+    def process_response(
+        self, llm_response: Any, sketch: Sketch = None, form: dict = None, **kwargs: Any
+    ) -> dict[str, Any]:
         """Processes the LLM response and creates a Story in the sketch.
         Args:
             llm_response: The response from the LLM model, expected to be a dictionary.
+            sketch: The Sketch object.
+            form: Form data containing query and filter information.
             **kwargs: Additional arguments including:
                 - sketch_id: ID of the sketch being processed.
-                - sketch: The Sketch object.
-                - form: Form data containing query and filter information.
                 - timeline_ids: List of timeline IDs to query.
         Returns:
             Dictionary containing the processed response:
@@ -242,15 +243,13 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             ValueError: If required parameters are missing or if the LLM response
                       is not in the expected format.
         """
-        sketch = kwargs.get("sketch")
-        form = kwargs.get("form")
         timeline_ids = kwargs.get("timeline_ids")
 
         if not sketch:
-            raise ValueError("Missing 'sketch' in kwargs")
+            raise ValueError("Missing 'sketch'")
 
         if not form:
-            raise ValueError("Missing 'form' data in kwargs")
+            raise ValueError("Missing 'form' data")
 
         if not isinstance(llm_response, dict):
             raise ValueError("LLM response is expected to be a dictionary")
