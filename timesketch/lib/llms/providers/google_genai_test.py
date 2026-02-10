@@ -88,3 +88,28 @@ class TestGoogleGenAI(BaseTest):
         _, kwargs = mock_client.return_value.models.generate_content.call_args
         self.assertEqual(kwargs["config"].response_schema, schema)
         self.assertEqual(kwargs["config"].response_mime_type, "application/json")
+
+    @mock.patch("google.genai.Client")
+    def test_generate_error_concise(self, mock_client):
+        """Test that API errors are returned in a concise format."""
+
+        class MockAPIError(Exception):
+            def __init__(self, code, status, message):
+                self.code = code
+                self.status = status
+                self.message = message
+                super().__init__(f"{code} {status}")
+
+        mock_error = MockAPIError(429, "RESOURCE_EXHAUSTED", "Quota exceeded")
+        mock_client.return_value.models.generate_content.side_effect = mock_error
+
+        provider = GoogleGenAI(self.config_gemini)
+
+        with mock.patch("google.genai.errors.APIError", MockAPIError):
+            with self.assertRaises(ValueError) as cm:
+                provider.generate("Test prompt")
+
+            self.assertEqual(
+                str(cm.exception),
+                "Error generating content: 429 RESOURCE_EXHAUSTED: Quota exceeded",
+            )
