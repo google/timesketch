@@ -872,6 +872,7 @@ def info():
         os.path.join(timesketch_path, "..")
     )  # Project root directory
     git_dir = os.path.join(project_root, ".git")  # Path to the .git directory
+    timesketch_commit = "unknown"
     if os.path.isdir(git_dir):
         try:
             # Get the short commit hash
@@ -902,6 +903,7 @@ def info():
             # Not a git repo or git is not installed.
             pass
 
+    if timesketch_commit != "unknown":
         if timesketch_commit.endswith("-dirty"):
             timesketch_commit = timesketch_commit.replace("-dirty", "")
             print(f"Timesketch commit: {timesketch_commit} (dirty)")
