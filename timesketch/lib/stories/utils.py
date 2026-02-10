@@ -34,7 +34,7 @@ def create_story(sketch: Sketch, content: str, title: str = None) -> int:
         ValueError: If there's an error creating the story.
     """
     if title is None:
-        title = f"AI Generated Report - {time.strftime('%Y-%m-%d %H:%M')}"
+        title = f"Investigation Report - {time.strftime('%Y-%m-%d %H:%M')}"
     try:
         story = Story(title=title, sketch=sketch, user=sketch.user)
         content_blocks = [

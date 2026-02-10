@@ -1,5 +1,5 @@
 <!--
-Copyright 2025 Google Inc. All rights reserved.
+Copyright 2026 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -243,12 +243,12 @@ limitations under the License.
 
                 <v-btn 
                   icon 
-                  @click="generateForensicReport()" 
+                  @click="generateStarredEventsReport()" 
                   class="ml-2" 
                   :loading="isGeneratingReport"
                   v-if="isStarredEventsFilterActive">
                     <div class="ts-llm-icon-wrapper" v-if="!isGeneratingReport">
-                      <v-icon title="Generate forensic report with LLM from starred events">mdi-file-document-check</v-icon>
+                      <v-icon title="Generate report from starred events">mdi-file-document-check</v-icon>
                     </div>
                 </v-btn>
 
@@ -665,9 +665,17 @@ export default {
   },
   computed: {
     isStarredEventsFilterActive() {
-      return this.filterChips.some(chip => 
-        chip.type === 'label' && chip.value === '__ts_star'
-    )
+      if (!this.currentQueryFilter || !this.currentQueryFilter.chips) {
+        return false
+      }
+      const hasStarChip = this.currentQueryFilter.chips.some(
+        (chip) => chip.type === 'label' && chip.value === '__ts_star'
+      )
+      const hasStarQuery = this.currentQueryString.includes('label:__ts_star')
+      return hasStarChip || hasStarQuery
+    },
+    filterChips: function () {
+      return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
     },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count
@@ -1018,10 +1026,9 @@ export default {
           this.isSummaryLoading = false
         })
     },
-    generateForensicReport() {
+    generateStarredEventsReport() {
       if (this.totalHits > 1000) {
-        this.warningSnackBar('This feature is currently limited to a 1000 starred events, try setting a timerange filter. ' +
-        'This limit will be increased soon.', 10000);
+        this.warningSnackBar('This feature is currently limited to 1000 starred events, try setting a timerange filter.', 10000);
         return;
       }
 
@@ -1030,12 +1037,12 @@ export default {
         filter: this.currentQueryFilter
       };
       
-      ApiClient.llmRequest(this.sketch.id, 'llm_forensic_report', requestData)
+      ApiClient.llmRequest(this.sketch.id, 'llm_starred_events_report', requestData)
         .then((response) => {
           this.isGeneratingReport = false;
           if (response.data && response.data.story_id) {
             this.$store.dispatch('updateSketch', this.sketch.id);
-            this.successSnackBar('Forensic report generated! You can find it in the "Stories" section.');
+            this.successSnackBar('Report generated! You can find it in the "Stories" section.');
           } else {
             this.errorSnackBar('Error generating report. No story was created.');
           }

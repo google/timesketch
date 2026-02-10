@@ -1,4 +1,4 @@
-# Copyright 2025 Google Inc. All rights reserved.
+# Copyright 2026 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LLM Forensic Report feature."""
+"""LLM Starred Events Report feature."""
 import json
 import logging
 import time
@@ -20,7 +20,6 @@ from typing import Any, Optional
 import pandas as pd
 import prometheus_client
 from flask import current_app
-from opensearchpy import OpenSearch
 
 from timesketch.lib import utils
 from timesketch.api.v1 import export
@@ -28,42 +27,43 @@ from timesketch.models.sketch import Sketch
 from timesketch.lib.stories import utils as story_utils
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib.llms.features.interface import LLMFeatureInterface
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
-logger = logging.getLogger("timesketch.llm.forensic_report_feature")
+logger = logging.getLogger("timesketch.llm.starred_events_report_feature")
 
 METRICS = {
-    "llm_forensic_report_events_processed_total": prometheus_client.Counter(
-        "llm_forensic_report_events_processed_total",
-        "Total number of events processed for LLM forensic reports",
+    "llm_starred_events_report_events_processed_total": prometheus_client.Counter(
+        "llm_starred_events_report_events_processed_total",
+        "Total number of events processed for LLM starred events reports",
         ["sketch_id"],
         namespace=METRICS_NAMESPACE,
     ),
-    "llm_forensic_report_unique_events_total": prometheus_client.Counter(
-        "llm_forensic_report_unique_events_total",
-        "Total number of unique events sent to the LLM for forensic report generation",
+    "llm_starred_events_report_unique_events_total": prometheus_client.Counter(
+        "llm_starred_events_report_unique_events_total",
+        "Total number of unique events sent to the LLM for report generation",
         ["sketch_id"],
         namespace=METRICS_NAMESPACE,
     ),
-    "llm_forensic_report_stories_created_total": prometheus_client.Counter(
-        "llm_forensic_report_stories_created_total",
-        "Total number of forensic report stories created",
+    "llm_starred_events_report_stories_created_total": prometheus_client.Counter(
+        "llm_starred_events_report_stories_created_total",
+        "Total number of starred events report stories created",
         ["sketch_id"],
         namespace=METRICS_NAMESPACE,
     ),
 }
 
 
-class LLMForensicReportFeature(LLMFeatureInterface):
-    """LLM Forensic Report feature."""
+class LLMStarredEventsReportFeature(LLMFeatureInterface):
+    """LLM Starred Events Report feature."""
 
-    NAME = "llm_forensic_report"
-    PROMPT_CONFIG_KEY = "PROMPT_LLM_FORENSIC_REPORT"
+    NAME = "llm_starred_events_report"
+    PROMPT_CONFIG_KEY = "PROMPT_LLM_STARRED_EVENTS_REPORT"
     RESPONSE_SCHEMA = {
         "type": "object",
         "properties": {
             "summary": {
                 "type": "string",
-                "description": "Detailed forensic report summary of the events",
+                "description": "Detailed report summary of the events",
             }
         },
         "required": ["summary"],
@@ -84,13 +84,15 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         prompt_file_path = current_app.config.get(self.PROMPT_CONFIG_KEY)
         if not prompt_file_path:
             logger.error("%s config not set", self.PROMPT_CONFIG_KEY)
-            raise ValueError("LLM forensic report prompt path not configured.")
+            raise ValueError("LLM starred events report prompt path not configured.")
 
         try:
             with open(prompt_file_path, "r", encoding="utf-8") as file_handle:
                 prompt_template = file_handle.read()
         except FileNotFoundError as exc:
-            logger.error("Forensic report prompt file not found: %s", prompt_file_path)
+            logger.error(
+                "Starred events report prompt file not found: %s", prompt_file_path
+            )
             raise FileNotFoundError(
                 f"LLM Prompt file not found: {prompt_file_path}"
             ) from exc
@@ -101,7 +103,7 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         if "<EVENTS_JSON>" not in prompt_template:
             logger.error("Prompt template is missing the <EVENTS_JSON> placeholder")
             raise ValueError(
-                "LLM forensic report prompt template is missing the "
+                "LLM starred events report prompt template is missing the "
                 "required <EVENTS_JSON> placeholder."
             )
 
@@ -114,7 +116,6 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         query_string: str = "*",
         query_filter: Optional[dict] = None,
         id_list: Optional[list] = None,
-        datastore: Optional[OpenSearch] = None,
         timeline_ids: Optional[list] = None,
     ) -> pd.DataFrame:
         """Runs a timesketch query and returns results as a DataFrame.
@@ -123,15 +124,16 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             query_string: Search query string.
             query_filter: Dictionary with filter parameters.
             id_list: List of event IDs to retrieve.
-            datastore: OpenSearch instance for querying.
             timeline_ids: List of timeline IDs to query.
         Returns:
             pd.DataFrame: DataFrame containing query results.
         Raises:
-            ValueError: If datastore is not provided or no valid indices are found.
+            ValueError: If no valid indices are found.
         """
-        if datastore is None:
-            raise ValueError("Datastore must be provided.")
+        datastore = OpenSearchDataStore(
+            host=current_app.config.get("OPENSEARCH_HOSTS")[0]["host"],
+            port=current_app.config.get("OPENSEARCH_HOSTS")[0]["port"],
+        )
 
         if not query_filter:
             query_filter = {}
@@ -143,10 +145,10 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         all_timeline_ids = [t.id for t in sketch.timelines]
         indices = query_filter.get("indices", all_timeline_ids)
 
-        if "_all" in indices_from_filter:
-            indices_from_filter = all_timeline_ids
+        if "_all" in indices:
+            indices = all_timeline_ids
 
-        indices, timeline_ids = utils.get_validated_indices(indices_from_filter, sketch)
+        indices, timeline_ids = utils.get_validated_indices(indices, sketch)
 
         if not indices:
             raise ValueError(
@@ -165,12 +167,11 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         return export.query_results_to_dataframe(result, sketch)
 
     def generate_prompt(self, sketch: Sketch, **kwargs: Any) -> str:
-        """Generates the forensic report prompt based on events from a query.
+        """Generates the starred events report prompt based on events from a query.
         Args:
             sketch: The Sketch object containing events to analyze.
             **kwargs: Additional arguments including:
                 - form: Form data containing query and filter information.
-                - datastore: OpenSearch instance for querying.
                 - timeline_ids: List of timeline IDs to query.
         Returns:
             str: Generated prompt text with events to analyze.
@@ -178,7 +179,6 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             ValueError: If required parameters are missing or if no events are found.
         """
         form = kwargs.get("form")
-        datastore = kwargs.get("datastore")
         timeline_ids = kwargs.get("timeline_ids")
 
         if not form:
@@ -191,12 +191,11 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             sketch,
             query_string,
             query_filter,
-            datastore=datastore,
             timeline_ids=timeline_ids,
         )
 
         if events_df is None or events_df.empty:
-            return "No events to analyze for forensic report."
+            return "No events to analyze for starred events report."
 
         events_df["datetime_str"] = events_df["datetime"].astype(str)
         events_df["combined_key"] = events_df["datetime_str"] + events_df["message"]
@@ -211,16 +210,16 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         total_events_count = len(events_df)
         unique_events_count = len(unique_df)
 
-        METRICS["llm_forensic_report_events_processed_total"].labels(
+        METRICS["llm_starred_events_report_events_processed_total"].labels(
             sketch_id=str(sketch.id)
         ).inc(total_events_count)
 
-        METRICS["llm_forensic_report_unique_events_total"].labels(
+        METRICS["llm_starred_events_report_unique_events_total"].labels(
             sketch_id=str(sketch.id)
         ).inc(unique_events_count)
 
         if not events_dict:
-            return "No events to analyze for forensic report."
+            return "No events to analyze for starred events report."
 
         return self._get_prompt_text(events_dict)
 
@@ -232,11 +231,10 @@ class LLMForensicReportFeature(LLMFeatureInterface):
                 - sketch_id: ID of the sketch being processed.
                 - sketch: The Sketch object.
                 - form: Form data containing query and filter information.
-                - datastore: OpenSearch instance for querying.
                 - timeline_ids: List of timeline IDs to query.
         Returns:
             Dictionary containing the processed response:
-                - summary: The forensic report text
+                - summary: The report text
                 - summary_event_count: Total number of events analyzed
                 - summary_unique_event_count: Number of unique events analyzed
                 - story_id: ID of the created story
@@ -246,7 +244,6 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         """
         sketch = kwargs.get("sketch")
         form = kwargs.get("form")
-        datastore = kwargs.get("datastore")
         timeline_ids = kwargs.get("timeline_ids")
 
         if not sketch:
@@ -269,7 +266,6 @@ class LLMForensicReportFeature(LLMFeatureInterface):
             sketch,
             query_string,
             query_filter,
-            datastore=datastore,
             timeline_ids=timeline_ids,
         )
 
@@ -283,17 +279,17 @@ class LLMForensicReportFeature(LLMFeatureInterface):
         )
 
         try:
-            story_title = f"Forensic Report - {time.strftime('%Y-%m-%d %H:%M')}"
+            story_title = f"Starred Events Report - {time.strftime('%Y-%m-%d %H:%M')}"
             story_id = story_utils.create_story(
                 sketch=sketch, content=summary_text, title=story_title
             )
-            METRICS["llm_forensic_report_stories_created_total"].labels(
+            METRICS["llm_starred_events_report_stories_created_total"].labels(
                 sketch_id=str(sketch.id)
             ).inc()
         except Exception as e:
-            logger.error("Error creating story for forensic report: %s", e)
+            logger.error("Error creating story for starred events report: %s", e)
             raise ValueError(
-                f"Error creating story to save forensic report: {e}"
+                f"Error creating story to save starred events report: {e}"
             ) from e
 
         return {
