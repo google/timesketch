@@ -43,7 +43,6 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         """Tests _get_prompt_text method."""
         events_dict = [{"message": "Test event 1"}, {"message": "Test event 2"}]
         prompt = self.llm_feature._get_prompt_text(events_dict)
-
         self.assertEqual(prompt, f"Analyze these events: {json.dumps(events_dict)}")
 
     @mock.patch(
@@ -64,14 +63,12 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         current_app.config["PROMPT_LLM_STARRED_EVENTS_REPORT"] = (
             "/file_does_not_exist.txt"
         )
-
         with self.assertRaises(FileNotFoundError):
             self.llm_feature._get_prompt_text([])
 
     def test_get_prompt_text_missing_config(self):
         """Tests _get_prompt_text method with missing config."""
         del current_app.config["PROMPT_LLM_STARRED_EVENTS_REPORT"]
-
         with self.assertRaises(ValueError):
             self.llm_feature._get_prompt_text([])
 
@@ -83,10 +80,8 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         """Tests _run_timesketch_query method."""
         mock_get_indices.return_value = ["test_index"], [1]
         result_df = pd.DataFrame([{"message": "Test event"}])
-
         mock_datastore_instance = _mock_datastore_class.return_value
         mock_datastore_instance.search.return_value = {"mock": "result"}
-
         with mock.patch(
             "timesketch.api.v1.export.query_results_to_dataframe",
             return_value=result_df,
@@ -96,7 +91,6 @@ class TestLLMStarredEventsReportFeature(BaseTest):
                 query_string="test query",
                 query_filter={"filter": "test"},
             )
-
             self.assertEqual(len(df), 1)
             self.assertEqual(df.iloc[0]["message"], "Test event")
             mock_datastore_instance.search.assert_called_once()
@@ -111,7 +105,6 @@ class TestLLMStarredEventsReportFeature(BaseTest):
     ):
         """Tests _run_timesketch_query method with no valid indices."""
         mock_get_indices.return_value = [], []
-
         with self.assertRaises(ValueError):
             self.llm_feature._run_timesketch_query(self.sketch1)
 
@@ -134,12 +127,10 @@ class TestLLMStarredEventsReportFeature(BaseTest):
             ]
         )
         mock_get_prompt.return_value = "Test prompt"
-
         # Call the method
         prompt = self.llm_feature.generate_prompt(
             self.sketch1, form={"query": "test", "filter": {}}
         )
-
         # Verify the result
         self.assertEqual(prompt, "Test prompt")
         mock_run_query.assert_called_once()
@@ -155,11 +146,9 @@ class TestLLMStarredEventsReportFeature(BaseTest):
     def test_generate_prompt_no_events(self, mock_run_query):
         """Tests generate_prompt method with no events."""
         mock_run_query.return_value = pd.DataFrame()
-
         prompt = self.llm_feature.generate_prompt(
             self.sketch1, form={"query": "test", "filter": {}}
         )
-
         self.assertEqual(prompt, "No events to analyze for starred events report.")
 
     @mock.patch(
@@ -176,13 +165,11 @@ class TestLLMStarredEventsReportFeature(BaseTest):
             ]
         )
         mock_create_story.return_value = 123
-
         result = self.llm_feature.process_response(
             {"summary": "This is a test summary"},
             sketch=self.sketch1,
             form={"query": "test", "filter": {}},
         )
-
         self.assertEqual(result["summary"], "This is a test summary")
         self.assertEqual(result["summary_event_count"], 2)
         self.assertEqual(result["summary_unique_event_count"], 2)
