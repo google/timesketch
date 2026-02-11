@@ -968,7 +968,6 @@ def run_plaso(
         psort_path,
         "-o",
         "opensearch_ts",
-        file_path,
         "--server",
         opensearch_server,
         "--port",
@@ -1044,8 +1043,12 @@ def run_plaso(
     if plaso_formatters_file_path:
         cmd.extend(["--custom_formatter_definitions", plaso_formatters_file_path])
 
+    cmd.append("--")
+
+    cmd.append(file_path)
+
     if plaso_event_filter:
-        cmd.extend([plaso_event_filter])
+        cmd.append(plaso_event_filter)
 
     # Run psort.py
     try:
