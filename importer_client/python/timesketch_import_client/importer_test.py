@@ -390,7 +390,7 @@ class TestUploadLogic(unittest.TestCase):
         # Mock open()
         with mock.patch(
             "builtins.open", mock.mock_open(read_data=b"data")
-        ) as mock_file:
+        ):
             with mock.patch("os.path.getsize", return_value=100):
                 self.importer._upload_binary_file("/tmp/test.plaso")
 
@@ -411,7 +411,7 @@ class TestUploadLogic(unittest.TestCase):
         # Mock open()
         with mock.patch(
             "codecs.open", mock.mock_open(read_data='{"message": "test"}')
-        ) as mock_file:
+        ):
             with mock.patch("os.path.isfile", return_value=True):
                 self.importer.add_file("/tmp/test.jsonl")
 
