@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for v1 of the Timesketch API."""
 
+import io
 import json
 from unittest import mock
 
@@ -2175,3 +2176,58 @@ class ExportStreamListResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         # Verify we hit the specific abort for empty indices_for_pit
         self.assertIn("No valid search indices", response.json["message"])
+
+
+class UploadFileResourceTest(BaseTest):
+    """Test UploadFileResource."""
+
+    resource_url = "/api/v1/upload/"
+
+    @mock.patch("timesketch.lib.tasks.build_index_pipeline")
+    def test_upload_file_with_plaso_filter(self, mock_build_pipeline):
+        """Test uploading a file with a plaso filter."""
+        self.app.config["UPLOAD_ENABLED"] = True
+        self.login()
+        mock_build_pipeline.return_value = mock.MagicMock()
+
+        data = {
+            "name": "test_timeline",
+            "sketch_id": 1,
+            "plaso_event_filter": "parser is syslog",
+            "file": (io.BytesIO(b"test content"), "test.plaso"),
+            "total_file_size": 12,
+        }
+
+        response = self.client.post(
+            self.resource_url, data=data, content_type="multipart/form-data"
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # Verify that build_index_pipeline was called with the filter
+        _, kwargs = mock_build_pipeline.call_args
+        self.assertEqual(kwargs.get("plaso_event_filter"), "parser is syslog")
+
+    @mock.patch("timesketch.lib.tasks.build_index_pipeline")
+    def test_upload_file_without_plaso_filter(self, mock_build_pipeline):
+        """Test uploading a file without a plaso filter."""
+        self.app.config["UPLOAD_ENABLED"] = True
+        self.login()
+        mock_build_pipeline.return_value = mock.MagicMock()
+
+        data = {
+            "name": "test_timeline",
+            "sketch_id": 1,
+            "file": (io.BytesIO(b"test content"), "test.plaso"),
+            "total_file_size": 12,
+        }
+
+        response = self.client.post(
+            self.resource_url, data=data, content_type="multipart/form-data"
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # Verify that build_index_pipeline was called without the filter
+        _, kwargs = mock_build_pipeline.call_args
+        self.assertEqual(kwargs.get("plaso_event_filter"), "")

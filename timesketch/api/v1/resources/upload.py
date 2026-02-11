@@ -439,7 +439,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         chunk_total_chunks = form.get("chunk_total_chunks")
         if isinstance(chunk_total_chunks, str) and chunk_total_chunks.isdigit():
             chunk_total_chunks = int(chunk_total_chunks)
-        file_size = form.get("total_file_size")
+        file_size = form.get("total_file_size", 0)
         if isinstance(file_size, str) and file_size.isdigit():
             file_size = int(file_size)
         if file_size <= 0:
