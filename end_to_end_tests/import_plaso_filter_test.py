@@ -69,8 +69,8 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
                         raise RuntimeError(
                             f"Timeline failed processing: {timeline.status}"
                         )
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                print(f"An exception occurred while polling for timeline status: {e}")
             time.sleep(2)
 
         return timeline
