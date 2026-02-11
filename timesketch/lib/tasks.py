@@ -390,6 +390,7 @@ def build_index_pipeline(
     timeline_id: Optional[int] = None,
     headers_mapping: Optional[dict] = None,
     delimiter: str = ",",
+    plaso_event_filter: str = "",
 ):
     """Build a pipeline for index and analysis.
 
@@ -412,6 +413,7 @@ def build_index_pipeline(
                          (ii) source header we want to insert [key=source], and
                          (iii) def. value if we add a new column [key=default_value]
         delimiter: Delimiter to use. Default uses ","
+        plaso_event_filter: filter string for Plaso files.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -434,6 +436,16 @@ def build_index_pipeline(
             timeline_id,
             headers_mapping,
             delimiter,
+        )
+    elif file_extension == "plaso":
+        index_task = index_task_class.s(
+            file_path,
+            events,
+            timeline_name,
+            index_name,
+            file_extension,
+            timeline_id,
+            plaso_event_filter,
         )
     else:
         index_task = index_task_class.s(
@@ -780,6 +792,7 @@ def run_plaso(
     index_name: str,
     source_type: str,
     timeline_id: int,
+    plaso_event_filter: str = "",
 ):
     """Create a Celery task for processing Plaso storage file.
 
@@ -790,6 +803,7 @@ def run_plaso(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
+        plaso_event_filter: filter string for Plaso files.
 
     Raises:
         RuntimeError: If the function is called using events, plaso
@@ -1029,6 +1043,9 @@ def run_plaso(
     plaso_formatters_file_path = current_app.config.get("PLASO_FORMATTERS", "")
     if plaso_formatters_file_path:
         cmd.extend(["--custom_formatter_definitions", plaso_formatters_file_path])
+
+    if plaso_event_filter:
+        cmd.extend([plaso_event_filter])
 
     # Run psort.py
     try:
