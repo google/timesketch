@@ -1,0 +1,83 @@
+# Tiltfile for Timesketch Development
+
+# --- 1. Infrastructure ---
+docker_compose("docker/dev/docker-compose.yml")
+
+# Grouping for infrastructure
+# Note: Port forwards are automatically inherited from docker-compose.yml
+dc_resource("timesketch", labels=["infra"])
+dc_resource("opensearch", labels=["infra"])
+dc_resource("postgres", labels=["infra"])
+dc_resource("redis", labels=["infra"])
+dc_resource("prometheus", labels=["infra"])
+
+# --- 2. Managed Dev Processes ---
+backend_deps = [
+    "./timesketch",
+    "./data/timesketch.conf",
+    "./requirements.txt",
+    "./setup.py",
+]
+
+# Web Server
+local_resource(
+    "ts-web",
+    serve_cmd="docker exec -i timesketch-dev gunicorn --reload --bind 0.0.0.0:5000 timesketch.wsgi:application",
+    deps=backend_deps,
+    labels=["backend"],
+    links=["http://localhost:5000"],
+)
+
+# Celery Worker
+local_resource(
+    "ts-worker",
+    serve_cmd="docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
+    deps=backend_deps,
+    labels=["backend"],
+)
+
+# Frontend
+local_resource(
+    "ts-frontend-v3",
+    cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-v3",
+    serve_cmd="docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev",
+    deps=["./timesketch/frontend-v3/src", "./timesketch/frontend-v3/package.json"],
+    labels=["frontend"],
+    links=["http://localhost:5001"],
+)
+
+# --- 3. End-to-End (E2E) Testing ---
+local_resource(
+    "e2e-environment",
+    cmd="export PLASO_PPA_TRACK=stable && export OPENSEARCH_VERSION=2.15.0 && docker compose -f docker/e2e/docker-compose.yml up -d",
+    labels=["e2e"],
+    auto_init=False,
+)
+
+local_resource(
+    "run-e2e-tests",
+    cmd="docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py",
+    labels=["e2e"],
+    auto_init=False,
+    resource_deps=["e2e-environment"],
+)
+
+local_resource(
+    "stop-e2e",
+    cmd="docker compose -f docker/e2e/docker-compose.yml down --volumes",
+    labels=["e2e"],
+    auto_init=False,
+)
+
+# --- 4. Utilities ---
+local_resource(
+    "run-unit-tests",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev python3 run_tests.py",
+    auto_init=False,
+    labels=["tools"],
+)
+
+
+print("Timesketch environment ready in Tilt.")
+print("Web UI: http://localhost:5000")
+print("Vite Frontend: http://localhost:5001")
