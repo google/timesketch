@@ -1,3 +1,49 @@
+# Files to ignore by Docker when transfering context
+
 **/.git
 /docs/
 /notebooks/
+
+**/.DS_Store
+
+# Back-up files
+**/*~
+**/*.swp
+
+# Generic auto-generated build files
+**/*.pyc
+**/*.pyo
+**/.ipynb_checkpoints/
+
+# Specific auto-generated build files
+/.eggs
+/.tox
+**/__pycache__
+/api_client/python/build/
+/cli_client/python/build/
+/importer_client/python/build/
+**/dependencies/
+/*.egg-info
+
+# Ignore frontend build related files
+**/node_modules
+/timesketch/static/dist
+**/package-lock.json
+**/yarn.lock
+
+# Test files
+**/.coverage
+**/tests-coverage.txt
+
+# Exclude Vagrant runtime files
+/vagrant/.vagrant/
+/vagrant/*.log
+
+# Exclude .venv folder
+/.venv/
+
+# Exclude Visual Studio Code files
+/.vscode/*
+
+# Exclude JetBrains IDE files
+/.idea/

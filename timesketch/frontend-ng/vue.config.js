@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000/';
+
 module.exports = {
   lintOnSave: false,
   publicPath: process.env.NODE_ENV === 'development' ? '/' : '/dist/',
@@ -30,15 +32,15 @@ module.exports = {
     proxy: {
       '^/api': {
         autoRewrite: true,
-        target: 'http://localhost:5000/',
+        target: backendUrl,
       },
       '^/dist': {
         autoRewrite: true,
-        target: 'http://localhost:5000/',
+        target: backendUrl,
       },
       '^/login|logout': {
         autoRewrite: true,
-        target: 'http://localhost:5000/',
+        target: backendUrl,
       },
     },
   },
