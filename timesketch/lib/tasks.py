@@ -379,6 +379,7 @@ def _get_index_task_class(file_extension):
     return index_class
 
 
+# pylint: disable=too-many-arguments
 def build_index_pipeline(
     file_path: str = "",
     events: str = "",
