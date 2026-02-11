@@ -547,6 +547,8 @@ const defaultQueryFilter = () => {
   }
 }
 
+const STARRED_EVENTS_REPORT_LIMIT = 1000
+
 const emptyEventList = () => {
   return {
     meta: {
@@ -1024,8 +1026,8 @@ export default {
         })
     },
     generateStarredEventsReport() {
-      if (this.totalHits > 1000) {
-        this.warningSnackBar('This feature is currently limited to 1000 starred events, try setting a timerange filter.', 10000);
+      if (this.totalHits > STARRED_EVENTS_REPORT_LIMIT) {
+        this.warningSnackBar(`This feature is currently limited to ${STARRED_EVENTS_REPORT_LIMIT} starred events, try setting a timerange filter.`, 10000);
         return;
       }
 
@@ -1386,7 +1388,7 @@ th:first-child {
   border-color: hsla(0,0%,100%,.12) !important;
   background-image:
       linear-gradient(#1e1e1e, #1e1e1e), 
-      var(--llm-gradient);;
+      var(--llm-gradient);
   box-shadow: 0 2px 5px rgba(255, 255, 255, 0.08);
   display: block;
   margin-bottom: 20px;

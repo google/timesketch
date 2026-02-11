@@ -176,6 +176,35 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         self.assertEqual(result["story_id"], 123)
         mock_create_story.assert_called_once()
 
+    @mock.patch(
+        "timesketch.lib.llms.features.llm_starred_events_report."
+        "LLMStarredEventsReportFeature._run_timesketch_query"
+    )
+    @mock.patch("timesketch.lib.stories.utils.create_story")
+    def test_caching_behavior(self, mock_create_story, mock_run_query):
+        """Tests that the query is cached and not run twice."""
+        mock_run_query.return_value = pd.DataFrame(
+            [
+                {"message": "Test event 1", "datetime": "2023-01-01T00:00:00"},
+            ]
+        )
+        mock_create_story.return_value = 123
+
+        # Call generate_prompt (first query run)
+        self.llm_feature.generate_prompt(
+            self.sketch1, form={"query": "test", "filter": {}}
+        )
+
+        # Call process_response (should use cache)
+        self.llm_feature.process_response(
+            {"summary": "Test summary"},
+            sketch=self.sketch1,
+            form={"query": "test", "filter": {}},
+        )
+
+        # Verify query was only run once
+        self.assertEqual(mock_run_query.call_count, 1)
+
     def test_process_response_missing_params(self):
         """Tests process_response method with missing parameters."""
         with self.assertRaises(ValueError):

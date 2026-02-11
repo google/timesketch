@@ -70,6 +70,13 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
         "required": ["summary"],
     }
 
+    def __init__(self):
+        """Initialize the feature with default values for caching."""
+        super().__init__()
+        self._events_df = None
+        self._total_events_count = 0
+        self._unique_events_count = 0
+
     def _get_prompt_text(self, events_dict: list[dict[str, Any]]) -> str:
         """Reads the prompt template from file and injects events.
         Args:
@@ -179,24 +186,32 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             query_filter,
             timeline_ids=timeline_ids,
         )
+
         if events_df is None or events_df.empty:
             return "No events to analyze for starred events report."
+
+        self._events_df = events_df
+        self._total_events_count = len(events_df)
+
         events_df["datetime_str"] = events_df["datetime"].astype(str)
         events_df["combined_key"] = events_df["datetime_str"] + events_df["message"]
         unique_df = events_df.drop_duplicates(subset="combined_key", keep="first")
+        self._unique_events_count = len(unique_df)
+
         events_dict = (
             unique_df[["datetime_str", "message"]]
             .rename(columns={"datetime_str": "datetime"})
             .to_dict(orient="records")
         )
-        total_events_count = len(events_df)
-        unique_events_count = len(unique_df)
+
         METRICS["llm_starred_events_report_events_processed_total"].labels(
             sketch_id=str(sketch.id)
-        ).inc(total_events_count)
+        ).inc(self._total_events_count)
+
         METRICS["llm_starred_events_report_unique_events_total"].labels(
             sketch_id=str(sketch.id)
-        ).inc(unique_events_count)
+        ).inc(self._unique_events_count)
+
         if not events_dict:
             return "No events to analyze for starred events report."
         return self._get_prompt_text(events_dict)
@@ -232,21 +247,26 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
         summary_text = llm_response.get("summary")
         if summary_text is None:
             raise ValueError("LLM response missing 'summary' key")
-        query_filter = form.get("filter", {})
-        query_string = form.get("query", "*") or "*"
-        events_df = self._run_timesketch_query(
-            sketch,
-            query_string,
-            query_filter,
-            timeline_ids=timeline_ids,
-        )
-        total_events_count = len(events_df)
-        events_df["combined_key"] = (
-            events_df["datetime"].astype(str) + events_df["message"]
-        )
-        unique_events_count = len(
-            events_df.drop_duplicates(subset="combined_key", keep="first")
-        )
+
+        if self._events_df is None:
+            query_filter = form.get("filter", {})
+            query_string = form.get("query", "*") or "*"
+
+            events_df = self._run_timesketch_query(
+                sketch,
+                query_string,
+                query_filter,
+                timeline_ids=timeline_ids,
+            )
+            self._events_df = events_df
+            self._total_events_count = len(events_df)
+            events_df["combined_key"] = (
+                events_df["datetime"].astype(str) + events_df["message"]
+            )
+            self._unique_events_count = len(
+                events_df.drop_duplicates(subset="combined_key", keep="first")
+            )
+
         try:
             story_title = f"Starred Events Report - {time.strftime('%Y-%m-%d %H:%M')}"
             story_id = story_utils.create_story(
@@ -260,9 +280,10 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             raise ValueError(
                 f"Error creating story to save starred events report: {e}"
             ) from e
+
         return {
             "summary": summary_text,
-            "summary_event_count": total_events_count,
-            "summary_unique_event_count": unique_events_count,
+            "summary_event_count": self._total_events_count,
+            "summary_unique_event_count": self._unique_events_count,
             "story_id": story_id,
         }
