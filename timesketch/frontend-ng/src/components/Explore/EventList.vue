@@ -244,12 +244,9 @@ limitations under the License.
                 <v-btn 
                   icon 
                   @click="generateStarredEventsReport()" 
-                  class="ml-2" 
                   :loading="isGeneratingReport"
                   v-if="isStarredEventsFilterActive">
-                    <div class="ts-llm-icon-wrapper" v-if="!isGeneratingReport">
-                      <v-icon title="Generate report from starred events">mdi-file-document-check</v-icon>
-                    </div>
+                    <v-icon v-if="!isGeneratingReport" title="Generate report from starred events">mdi-file-star-four-points</v-icon>
                 </v-btn>
 
                 <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
@@ -1455,29 +1452,6 @@ th:first-child {
   color: grey;
   vertical-align: middle;
   display: inline-block;
-}
-.ts-llm-icon-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.ts-llm-icon-wrapper::after {
-  content: "";
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
-  border-radius: 50%;
-  background: var(--llm-gradient);
-  background-size: 300% 100%;
-  opacity: 0.2;
-  animation: borderBeamIridescent-subtle 6s linear infinite;
-  z-index: -1;
-}
-.v-btn:hover .ts-llm-icon-wrapper::after {
-  opacity: 0.4;
 }
 
 .actions button {
