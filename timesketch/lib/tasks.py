@@ -447,10 +447,6 @@ def build_index_pipeline(
             timeline_id,
             plaso_event_filter,
         )
-    else:
-        index_task = index_task_class.s(
-            file_path, events, timeline_name, index_name, file_extension, timeline_id
-        )
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly
