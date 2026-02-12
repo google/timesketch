@@ -2551,6 +2551,9 @@ of the tool.</p>
 <p>Other parameters suggested to be set are <code>sketch_id</code> (if it isn't provided a
 new sketch will be created) and <code>timeline_name</code> (otherwise a default name
 will be chosen).</p>
+<p>Additionally, for Plaso files, you can filter events during import using the
+<code>--plaso-event-filter</code> option, providing a standard Plaso filter string
+(e.g., <code>'data_type is "fs:stat"'</code>).</p>
 <p>For larger files the importer will split them up into pieces before uploading.</p>
 <h2 id="using-the-web-ui">Using the Web UI</h2>
 <p>Click the <code>+ timeline</code> button in the UI or click <code>manage</code> in the Timeline
