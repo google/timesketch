@@ -19,10 +19,13 @@ backend_deps = [
     "../setup.py",
 ]
 
+# Helper to refresh configuration with required environment variables
+refresh_config_cmd = "docker exec -e POSTGRES_USER=timesketch -e POSTGRES_PASSWORD=password -e POSTGRES_ADDRESS=postgres -e POSTGRES_PORT=5432 -e OPENSEARCH_HOST=opensearch -e OPENSEARCH_PORT=9200 -e REDIS_ADDRESS=redis -e REDIS_PORT=6379 timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config"
+
 # Web Server
 local_resource(
     "ts-web",
-    serve_cmd="docker exec timesketch-dev pkill -9 -f gunicorn || true && sleep 1 && docker exec timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config && docker exec -i timesketch-dev gunicorn --reload --bind 0.0.0.0:5000 timesketch.wsgi:application",
+    serve_cmd="docker exec timesketch-dev pkill -9 -f gunicorn || true && sleep 1 && " + refresh_config_cmd + " && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],
@@ -32,7 +35,7 @@ local_resource(
 # Celery Worker
 local_resource(
     "ts-worker",
-    serve_cmd="docker exec timesketch-dev pkill -9 -f celery || true && sleep 1 && docker exec timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
+    serve_cmd="docker exec timesketch-dev pkill -9 -f celery || true && sleep 1 && " + refresh_config_cmd + " && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],
