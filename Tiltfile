@@ -52,7 +52,7 @@ local_resource(
 # --- 3. End-to-End (E2E) Testing ---
 local_resource(
     "e2e-environment",
-    cmd="export PLASO_PPA_TRACK=stable && export OPENSEARCH_VERSION=2.15.0 && docker compose -f docker/e2e/docker-compose.yml up -d",
+    cmd="export PLASO_PPA_TRACK=stable && docker compose -f docker/e2e/docker-compose.yml up -d",
     labels=["e2e"],
     auto_init=False,
 )
