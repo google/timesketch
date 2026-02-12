@@ -383,6 +383,39 @@ class TestUploadLogic(unittest.TestCase):
         # Should be called multiple times
         self.assertGreater(self.importer._sketch.api.session.post.call_count, 1)
 
+    def test_upload_binary_file_with_filter(self):
+        """Test uploading a binary file with a filter."""
+        self.importer.set_plaso_event_filter("parser is syslog")
+
+        # Mock open()
+        with mock.patch("builtins.open", mock.mock_open(read_data=b"data")):
+            with mock.patch("os.path.getsize", return_value=100):
+                self.importer._upload_binary_file("/tmp/test.plaso")
+
+        # Verify the session.post call
+        call_args = self.importer._sketch.api.session.post.call_args
+        self.assertIsNotNone(call_args)
+
+        kwargs = call_args[1]
+        self.assertIn("data", kwargs)
+        self.assertIn("plaso_event_filter", kwargs["data"])
+        self.assertEqual(kwargs["data"]["plaso_event_filter"], "parser is syslog")
+
+    @mock.patch("timesketch_import_client.importer.logger")
+    def test_upload_non_plaso_file_with_filter_warning(self, mock_logger):
+        """Test that a warning is logged when using filter with non-plaso file."""
+        self.importer.set_plaso_event_filter("parser is syslog")
+
+        # Mock open()
+        with mock.patch("codecs.open", mock.mock_open(read_data='{"message": "test"}')):
+            with mock.patch("os.path.isfile", return_value=True):
+                self.importer.add_file("/tmp/test.jsonl")
+
+        mock_logger.warning.assert_called_with(
+            "Plaso event filter set, but file extension is not plaso. "
+            "The filter will be ignored."
+        )
+
     # pylint: enable=protected-access
 
 
