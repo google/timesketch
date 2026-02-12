@@ -200,6 +200,9 @@ with importer.ImportStreamer() as streamer:
   streamer.set_timeline_name('my_file_with_a_timeline')
   streamer.set_timestamp_description('some_description')
 
+  # Optional: Filter Plaso events
+  streamer.set_plaso_event_filter('data_type is "fs:stat"')
+
   streamer.add_file('/path_to_file/mydump.plaso')
 ```
 
