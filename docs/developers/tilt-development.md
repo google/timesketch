@@ -20,7 +20,7 @@ Ensure you have the following installed on your host machine:
 ### 2. Launching the Environment
 From the project root, simply run:
 ```bash
-tilt up
+tilt up -f contrib/Tiltfile
 ```
 
 ## How to use the Dashboard
@@ -48,7 +48,7 @@ The dashboard is organized into several rows:
 ## Configuration
 
 Tilt uses the configuration located in `data/timesketch.conf`. If you modify this file, Tilt will automatically restart the backend services to apply the new settings.
-To add items to the Dashboard, modify the `Tiltfile` in the project root.
+To add items to the Dashboard, modify the `contrib/Tiltfile`.
 
 ## Troubleshooting
 

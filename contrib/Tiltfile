@@ -1,7 +1,7 @@
 # Tiltfile for Timesketch Development
 
 # --- 1. Infrastructure ---
-docker_compose("docker/dev/docker-compose.yml")
+docker_compose("../docker/dev/docker-compose.yml")
 
 # Grouping for infrastructure
 # Note: Port forwards are automatically inherited from docker-compose.yml
@@ -13,10 +13,10 @@ dc_resource("prometheus", labels=["infra"])
 
 # --- 2. Managed Dev Processes ---
 backend_deps = [
-    "./timesketch",
-    "./data/timesketch.conf",
-    "./requirements.txt",
-    "./setup.py",
+    "../timesketch",
+    "../data/timesketch.conf",
+    "../requirements.txt",
+    "../setup.py",
 ]
 
 # Web Server
@@ -43,7 +43,7 @@ local_resource(
     "ts-frontend-v3",
     cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-v3",
     serve_cmd="docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev",
-    deps=["./timesketch/frontend-v3/src", "./timesketch/frontend-v3/package.json"],
+    deps=["../timesketch/frontend-v3/src", "../timesketch/frontend-v3/package.json"],
     ignore=["**/node_modules/**"],
     labels=["frontend"],
     links=["http://localhost:5001"],
@@ -52,14 +52,14 @@ local_resource(
 # --- 3. End-to-End (E2E) Testing ---
 local_resource(
     "e2e-environment",
-    cmd="export PLASO_PPA_TRACK=stable && docker compose -f docker/e2e/docker-compose.yml up -d",
+    cmd="export PLASO_PPA_TRACK=stable && docker compose -f ../docker/e2e/docker-compose.yml up -d",
     labels=["e2e"],
     auto_init=False,
 )
 
 local_resource(
     "run-e2e-tests",
-    cmd="docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py",
+    cmd="docker compose -f ../docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py",
     labels=["e2e"],
     auto_init=False,
     resource_deps=["e2e-environment"],
@@ -67,7 +67,7 @@ local_resource(
 
 local_resource(
     "stop-e2e",
-    cmd="docker compose -f docker/e2e/docker-compose.yml down --volumes",
+    cmd="docker compose -f ../docker/e2e/docker-compose.yml down --volumes",
     labels=["e2e"],
     auto_init=False,
 )
