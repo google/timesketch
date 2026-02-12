@@ -113,7 +113,7 @@ local_resource(
 
 local_resource(
     "build-api-cli",
-    cmd="docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev python3 setup.py install && docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev python3 setup.py install",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev pip3 install -e . && docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev pip3 install -e . && docker exec -i --workdir /usr/local/src/timesketch/importer_client/python timesketch-dev pip3 install -e .",
     auto_init=False,
     labels=["tools"],
 )

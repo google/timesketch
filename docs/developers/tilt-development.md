@@ -67,7 +67,7 @@ These tools are configured with `auto_init=False`, meaning they **do not run on 
 *   **run-pylint-all**: Runs Pylint against the entire project (backend and clients). Use this to check for global issues or perform project-wide cleanup.
 *   **run-black**: Runs the Black formatter in `--check` mode to verify code style.
 *   **run-black-fix**: Runs the Black formatter and **automatically applies** formatting changes to your code.
-*   **build-api-cli**: Re-installs the API and CLI clients inside the container. Use this if you have modified code in `api_client/` or `cli_client/` to ensure the container picks up your changes.
+*   **build-api-cli**: Installs the API, CLI, and Importer clients in **editable mode** (`-e`) inside the container. You only need to run this **once**. After that, any code changes you make in the client directories will be picked up by the container automatically.
 *   **run-frontend-v3-tests**: Runs the test suite for the new Vue 3 experimental frontend.
 
 ---
