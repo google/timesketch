@@ -34,8 +34,10 @@ import sys
 import time
 import uuid
 import json
+import traceback
+from typing import Any, Optional
 
-from timesketch_api_client import config
+from timesketch_api_client import client
 
 # --- CONFIGURATION ---
 # TODO: Update these values to match your Timesketch deployment.
@@ -54,16 +56,16 @@ SMOKE_TEST_TAG = "smoke_test_tag"
 class TimesketchSmokeTest:
     """A class to encapsulate the Timesketch smoke test."""
 
-    def __init__(self, host, user, password):
+    def __init__(self, host: str, user: str, password: str) -> None:
         """Initializes the smoke test class."""
-        self.api = config.get_client(
-            host=host, username=user, password=password, verify=False
+        self.api = client.TimesketchApi(
+            host_uri=host, username=user, password=password, verify=False
         )
-        self.sketch = None
-        self.csv_search_string = str(uuid.uuid4())
-        self.jsonl_search_string = str(uuid.uuid4())
+        self.sketch: Optional[Any] = None
+        self.csv_search_string: str = str(uuid.uuid4())
+        self.jsonl_search_string: str = str(uuid.uuid4())
 
-    def _create_sample_files(self):
+    def _create_sample_files(self) -> None:
         """Creates temporary CSV and JSONL files for testing."""
         print(f"[INFO] Creating sample data files: {CSV_FILENAME}, {JSONL_FILENAME}")
 
@@ -71,11 +73,11 @@ class TimesketchSmokeTest:
         with open(CSV_FILENAME, "w", encoding="utf-8") as f:
             f.write("timestamp,datetime,message,source_host\n")
             f.write(
-                f"1672531200,2023-01-01T00:00:00Z,\n"
-                f"Benign entry for context,workstation1\n"
+                "1672531200,2023-01-01T00:00:00Z,"
+                "Benign entry for context,workstation1\n"
             )
             f.write(
-                f"1672531261,2023-01-01T00:01:01Z,\n"
+                "1672531261,2023-01-01T00:01:01Z,"
                 f"A unique event to find {self.csv_search_string},workstation2\n"
             )
 
@@ -105,7 +107,7 @@ class TimesketchSmokeTest:
             )
         print("[SUCCESS] Sample data files created.")
 
-    def _wait_for_timeline(self, timeline, timeout=120):
+    def _wait_for_timeline(self, timeline: Any, timeout: int = 120) -> None:
         """
         Waits for a timeline's indexing to complete.
 
@@ -114,6 +116,7 @@ class TimesketchSmokeTest:
             timeout (int): Maximum seconds to wait.
 
         Raises:
+            RuntimeError: If the timeline failed to import.
             TimeoutError: If the timeline does not become ready in time.
         """
         for i in range(timeout):
@@ -134,7 +137,7 @@ class TimesketchSmokeTest:
             f"Timeline '{timeline.name}' did not become ready within {timeout}s."
         )
 
-    def run_tests(self):
+    def run_tests(self) -> None:
         """Runs the sequence of API tests."""
         self._create_sample_files()
 
@@ -161,10 +164,9 @@ class TimesketchSmokeTest:
 
         # 4. Search for an event
         print(f"[INFO] Searching for unique event: '{self.csv_search_string}'")
-        events_df = self.sketch.explore(query=f'"{self.csv_search_string}"')
+        events_df = self.sketch.explore(query_string=f'"{self.csv_search_string}"')
         assert len(events_df) == 1, f"Expected 1 event, found {len(events_df)}"
         event_id = events_df.index[0]
-        event_dict = events_df.iloc[0].to_dict()
         print(f"[SUCCESS] Found unique event (ID: {event_id})")
 
         # 5. Add a comment
@@ -172,7 +174,7 @@ class TimesketchSmokeTest:
         print(f"[INFO] Adding comment to event {event_id}: '{comment_text}'")
         self.sketch.add_comment(event_id, comment_text)
         # Verification
-        events_df_commented = self.sketch.explore(query=f'_id:"{event_id}"')
+        events_df_commented = self.sketch.explore(query_string=f'_id:"{event_id}"')
         comments = events_df_commented.iloc[0].to_dict().get("__ts_comment", "")
         assert comment_text in comments, "Comment not found on event"
         print("[SUCCESS] Comment added and verified.")
@@ -181,7 +183,7 @@ class TimesketchSmokeTest:
         print(f"[INFO] Adding tag '{SMOKE_TEST_TAG}' to event {event_id}")
         self.sketch.add_tags(event_ids=[event_id], tags=[SMOKE_TEST_TAG])
         # Verification
-        events_df_tagged = self.sketch.explore(query=f'_id:"{event_id}"')
+        events_df_tagged = self.sketch.explore(query_string=f'_id:"{event_id}"')
         tags = events_df_tagged.iloc[0].to_dict().get("tag", [])
         assert SMOKE_TEST_TAG in tags, "Tag not found on event"
         print("[SUCCESS] Tag added and verified.")
@@ -190,21 +192,21 @@ class TimesketchSmokeTest:
         print(f"[INFO] Removing tag '{SMOKE_TEST_TAG}' from event {event_id}")
         self.sketch.remove_tags(event_ids=[event_id], tags=[SMOKE_TEST_TAG])
         # Verification
-        events_df_untagged = self.sketch.explore(query=f'_id:"{event_id}"')
+        events_df_untagged = self.sketch.explore(query_string=f'_id:"{event_id}"')
         tags_after_removal = events_df_untagged.iloc[0].to_dict().get("tag", [])
         assert (
             SMOKE_TEST_TAG not in tags_after_removal
         ), "Tag was not removed from event"
         print("[SUCCESS] Tag removed and verified.")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleans up resources created during the test."""
         print("[INFO] --- Starting Cleanup ---")
         if self.sketch:
             try:
                 self.sketch.delete()
                 print(f"[INFO] Sketch '{self.sketch.name}' deleted.")
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 print(f"[ERROR] Failed to delete sketch: {e}", file=sys.stderr)
 
         for filename in [CSV_FILENAME, JSONL_FILENAME]:
@@ -214,7 +216,7 @@ class TimesketchSmokeTest:
         print("[INFO] --- Cleanup Complete ---")
 
 
-def main():
+def main() -> None:
     """Main function to run the smoke test."""
     print("--- Timesketch API Smoke Test ---")
     print(f"Host: {TS_HOST}")
@@ -225,9 +227,8 @@ def main():
     try:
         tester.run_tests()
         print("\n[SUCCESS] All smoke tests passed!")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"\n[ERROR] A test failed: {e}", file=sys.stderr)
-        import traceback
 
         traceback.print_exc()
         sys.exit(1)
