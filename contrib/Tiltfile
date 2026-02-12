@@ -22,7 +22,7 @@ backend_deps = [
 # Web Server
 local_resource(
     "ts-web",
-    serve_cmd="docker exec -i timesketch-dev gunicorn --reload --bind 0.0.0.0:5000 timesketch.wsgi:application",
+    serve_cmd="docker exec timesketch-dev pkill -f gunicorn || true && docker exec timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config && docker exec -i timesketch-dev gunicorn --reload --bind 0.0.0.0:5000 timesketch.wsgi:application",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],
@@ -32,7 +32,7 @@ local_resource(
 # Celery Worker
 local_resource(
     "ts-worker",
-    serve_cmd="docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
+    serve_cmd="docker exec timesketch-dev pkill -f celery || true && docker exec timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],

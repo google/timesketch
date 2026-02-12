@@ -1,13 +1,9 @@
 #!/bin/bash
 
-# Run the container the default way
-if [ "$1" = 'timesketch' ]; then
-
-  # Install Timesketch in editable mode from volume
-  pip3 install -e /usr/local/src/timesketch/
-
+# Function to setup and refresh configuration
+setup_config() {
   # Copy config files
-  mkdir /etc/timesketch
+  mkdir -p /etc/timesketch
   cp /usr/local/src/timesketch/data/timesketch.conf /etc/timesketch/
   cp /usr/local/src/timesketch/data/regex_features.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/winevt_features.yaml /etc/timesketch/
@@ -18,13 +14,15 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/data/ontology.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/data_finder.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
-  ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
-  ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
-  ln -s /usr/local/src/timesketch/data/dfiq /etc/timesketch/
-  ln -s /usr/local/src/timesketch/data/context_links.yaml /etc/timesketch/context_links.yaml
-  ln -s /usr/local/src/timesketch/data/plaso_formatters.yaml /etc/timesketch/plaso_formatters.yaml
-  ln -s /usr/local/src/timesketch/data/nl2q /etc/timesketch/
-  ln -s /usr/local/src/timesketch/data/llm_summarize /etc/timesketch/
+  
+  # Use -f to ignore error if link already exists
+  ln -sf /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
+  ln -sf /usr/local/src/timesketch/data/sigma /etc/timesketch/
+  ln -sf /usr/local/src/timesketch/data/dfiq /etc/timesketch/
+  ln -sf /usr/local/src/timesketch/data/context_links.yaml /etc/timesketch/context_links.yaml
+  ln -sf /usr/local/src/timesketch/data/plaso_formatters.yaml /etc/timesketch/plaso_formatters.yaml
+  ln -sf /usr/local/src/timesketch/data/nl2q /etc/timesketch/
+  ln -sf /usr/local/src/timesketch/data/llm_summarize /etc/timesketch/
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then
@@ -36,19 +34,12 @@ if [ "$1" = 'timesketch' ]; then
   # Set up the Postgres connection
   if [ $POSTGRES_USER ] && [ $POSTGRES_PASSWORD ] && [ $POSTGRES_ADDRESS ] && [ $POSTGRES_PORT ]; then
     sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' /etc/timesketch/timesketch.conf
-  else
-    # Log an error since we need the above-listed environment variables
-    echo "Please pass values for the POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_ADDRESS, and POSTGRES_PORT environment variables"
-    exit 1
   fi
 
   # Set up the OpenSearch connection
   if [ $OPENSEARCH_HOST ] && [ $OPENSEARCH_PORT ]; then
     sed -i 's#OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_HOST'\x27#' /etc/timesketch/timesketch.conf
     sed -i 's#OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' /etc/timesketch/timesketch.conf
-  else
-    # Log an error since we need the above-listed environment variables
-    echo "Please pass values for the ELASTIC_ADDRESS and ELASTIC_PORT environment variables"
   fi
 
   # Set up the Redis connection
@@ -56,9 +47,6 @@ if [ "$1" = 'timesketch' ]; then
     sed -i 's#UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' /etc/timesketch/timesketch.conf
     sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch/timesketch.conf
     sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch/timesketch.conf
-  else
-    # Log an error since we need the above-listed environment variables
-    echo "Please pass values for the REDIS_ADDRESS and REDIS_PORT environment variables"
   fi
 
   # Enable debug for the development server
@@ -71,6 +59,25 @@ if [ "$1" = 'timesketch' ]; then
 
   # Disable CSRF checks for the development server
   echo "WTF_CSRF_ENABLED = False" >> /etc/timesketch/timesketch.conf
+}
+
+# Run the container the default way
+if [ "$1" = 'timesketch' ]; then
+
+  # Install dependencies and Timesketch in editable mode from volume
+  echo "Installing Timesketch requirements..."
+  if ! pip3 install -r /usr/local/src/timesketch/requirements.txt; then
+    echo "Failed to install Timesketch requirements."
+    exit 1
+  fi
+
+  echo "Installing Timesketch in editable mode..."
+  if ! pip3 install -e /usr/local/src/timesketch/; then
+    echo "Failed to install Timesketch in editable mode."
+    exit 1
+  fi
+
+  setup_config
 
   # Add web user
   tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
@@ -78,15 +85,24 @@ if [ "$1" = 'timesketch' ]; then
   # Add Sigma rules
   git clone https://github.com/SigmaHQ/sigma /usr/local/src/sigma
   # for each line in sigma_rules.txt execute the command
-  for line in $(cat sigma_rules.txt); do
-    tsctl import-sigma-rules $line
-  done
+  SIGMA_RULES_FILE="/usr/local/src/timesketch/docker/dev/build/sigma_rules.txt"
+  if [ -f "$SIGMA_RULES_FILE" ]; then
+    for line in $(cat "$SIGMA_RULES_FILE"); do
+      tsctl import-sigma-rules $line
+    done
+  fi
 
   # Wrap up things
   echo "Timesketch development server is ready!"
 
   # Sleep forever to keep the container running
   sleep infinity
+fi
+
+# Allow Tilt to refresh configuration
+if [ "$1" = 'refresh-config' ]; then
+  setup_config
+  exit 0
 fi
 
 # Run a custom command on container start
