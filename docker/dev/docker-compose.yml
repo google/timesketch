@@ -27,6 +27,7 @@ services:
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
       - PROMETHEUS_MULTIPROC_DIR=/tmp/
+      # - ENABLE_STRUCTURED_LOGGING=true
     restart: always
     volumes:
       - ../../:/usr/local/src/timesketch/

@@ -14,7 +14,6 @@
 """LLM providers for Timesketch."""
 
 from timesketch.lib.llms.providers import ollama
-from timesketch.lib.llms.providers import vertexai
-from timesketch.lib.llms.providers import aistudio
+from timesketch.lib.llms.providers import google_genai
 from timesketch.lib.llms.providers import secgemini_log_analyzer_agent
 from timesketch.lib.llms.providers.contrib import azureai

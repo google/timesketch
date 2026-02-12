@@ -35,24 +35,24 @@ limitations under the License.
         <v-data-table :headers="headers" :items="intelligenceData"
           :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
           :items-per-page="40" selectable>
-          <template v-slot:item.search="{ item }">
+          <template v-slot:[`item.search`]="{ item }">
             <v-btn icon small @click="generateSearchQuery(item.ioc)">
               <v-icon title="Search this indicator" small>mdi-magnify</v-icon>
             </v-btn>
           </template>
 
-          <template v-slot:item.externalURI="{ item }">
+          <template v-slot:[`item.externalURI`]="{ item }">
             <v-icon title="Open link" v-if="item.externalURI" x-small>mdi-open-in-new</v-icon>
             <a style="text-decoration: none" v-if="getValidUrl(item.externalURI)" :href="getValidUrl(item.externalURI)"
               target="_blank">
               {{ getValidUrl(item.externalURI).host }}</a>
           </template>
 
-          <template v-slot:item.type="{ item }">
+          <template v-slot:[`item.type`]="{ item }">
             {{ getIocTypeMetadata(item).humanReadable }}
           </template>
 
-          <template v-slot:item.tags="{ item }">
+          <template v-slot:[`item.tags`]="{ item }">
             <v-chip-group>
               <v-chip small v-for="tag in augmentedTags(item.tags).sort((a, b) => b.weight - a.weight)"
                 :color="tag.color" :text-color="tag.textColor" :outlined="tag.style === 'outlined'" :key="tag.name"
@@ -62,7 +62,7 @@ limitations under the License.
             </v-chip-group>
           </template>
 
-          <template v-slot:item.actions="{ item }">
+          <template v-slot:[`item.actions`]="{ item }">
             <v-btn small icon @click="editIndicator(item.index)">
               <v-icon small title="Edit indicator">mdi-pencil</v-icon>
             </v-btn>
