@@ -65,6 +65,7 @@ These tools are configured with `auto_init=False`, meaning they **do not run on 
 *   **run-unit-tests**: Executes the Python backend unit tests via `run_tests.py`.
 *   **run-pylint**: Runs the project-specific Pylint check using `.pylintrc`.
 *   **run-black**: Runs the Black formatter in `--check` mode to verify code style.
+*   **run-black-fix**: Runs the Black formatter and **automatically applies** formatting changes to your code.
 *   **build-api-cli**: Re-installs the API and CLI clients inside the container. Use this if you have modified code in `api_client/` or `cli_client/` to ensure the container picks up your changes.
 *   **run-frontend-v3-tests**: Runs the test suite for the new Vue 3 experimental frontend.
 *   **activate-history**: Configures the container to save bash command history to your host's `private/` directory. This ensures your shell history persists even if the container is destroyed or rebuilt.

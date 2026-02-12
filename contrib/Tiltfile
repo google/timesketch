@@ -98,6 +98,13 @@ local_resource(
 )
 
 local_resource(
+    "run-black-fix",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black timesketch api_client cli_client importer_client",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
     "build-api-cli",
     cmd="docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev python3 setup.py install && docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev python3 setup.py install",
     auto_init=False,
