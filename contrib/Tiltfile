@@ -85,6 +85,13 @@ local_resource(
 
 local_resource(
     "run-pylint",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev bash -c 'git fetch -p origin master > /dev/null 2>&1 && FILES=$(git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \\.py$); if [ -n \"$FILES\" ]; then pylint --rcfile=.pylintrc $FILES; else echo \"No python files changed.\"; fi'",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-pylint-all",
     cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev pylint --rcfile=.pylintrc timesketch api_client cli_client importer_client",
     auto_init=False,
     labels=["tools"],
@@ -114,13 +121,6 @@ local_resource(
 local_resource(
     "run-frontend-v3-tests",
     cmd="docker exec -i timesketch-dev yarn --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 run test",
-    auto_init=False,
-    labels=["tools"],
-)
-
-local_resource(
-    "activate-history",
-    cmd="docker exec -i timesketch-dev /usr/local/src/timesketch/utils/tsdev.sh activate-history",
     auto_init=False,
     labels=["tools"],
 )
