@@ -106,6 +106,7 @@ class ImportStreamer(object):
         self._timeline_id = None
         self._timeline_name = None
         self._upload_context = ""
+        self._plaso_event_filter = None
 
         self._chunk = 1
 
@@ -562,6 +563,9 @@ class ImportStreamer(object):
         if self._upload_context:
             data["context"] = self._upload_context
 
+        if self._plaso_event_filter:
+            data["plaso_event_filter"] = self._plaso_event_filter
+
         if file_size <= self._threshold_filesize:
             with open(file_path, "rb") as fh:
                 file_dict = {"file": fh}
@@ -808,6 +812,12 @@ class ImportStreamer(object):
         if not self._data_label:
             self._data_label = file_ending
 
+        if self._plaso_event_filter and file_ending != "plaso":
+            logger.warning(
+                "Plaso event filter set, but file extension is not plaso. "
+                "The filter will be ignored."
+            )
+
         if file_ending == "csv":
             if self._csv_delimiter:
                 delimiter = self._csv_delimiter
@@ -987,6 +997,10 @@ class ImportStreamer(object):
     def set_upload_context(self, upload_context):
         """Set the upload context for the data import."""
         self._upload_context = upload_context
+
+    def set_plaso_event_filter(self, event_filter):
+        """Set the event filter for the Plaso file."""
+        self._plaso_event_filter = event_filter
 
     def generate_index_name(self):
         """Generates a new index name."""
