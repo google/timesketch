@@ -19,8 +19,8 @@ backend_deps = [
     "../setup.py",
 ]
 
-# Helper to refresh configuration with required environment variables
-refresh_config_cmd = "docker exec -e POSTGRES_USER=timesketch -e POSTGRES_PASSWORD=password -e POSTGRES_ADDRESS=postgres -e POSTGRES_PORT=5432 -e OPENSEARCH_HOST=opensearch -e OPENSEARCH_PORT=9200 -e REDIS_ADDRESS=redis -e REDIS_PORT=6379 timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config"
+# Helper to refresh configuration
+refresh_config_cmd = "docker exec timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config"
 
 # Web Server
 local_resource(
@@ -93,6 +93,27 @@ local_resource(
 local_resource(
     "run-black",
     cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black --check --diff timesketch api_client cli_client importer_client",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "build-api-cli",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev python3 setup.py install && docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev python3 setup.py install",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-frontend-v3-tests",
+    cmd="docker exec -i timesketch-dev yarn --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 run test",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "activate-history",
+    cmd="docker exec -i timesketch-dev /usr/local/src/timesketch/utils/tsdev.sh activate-history",
     auto_init=False,
     labels=["tools"],
 )

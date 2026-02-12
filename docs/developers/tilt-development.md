@@ -49,9 +49,9 @@ Then, you can visit `http://localhost:10350` in your local browser. You may also
 The dashboard is organized into several rows:
 
 ### Managed Services (Always Running)
-*   **ts-web**: The Timesketch Gunicorn API server. Automatically reloads on `.py` changes.
+*   **ts-web**: The Timesketch Gunicorn server. It serves both the **REST API** and the **stable frontend** (Vue 2 / `frontend-ng`). Automatically reloads on `.py` changes.
 *   **ts-worker**: The Celery worker for background tasks.
-*   **ts-frontend-v3**: The Vue 3 development server. Automatically reloads on UI changes.
+*   **ts-frontend-v3**: The Vue 3 development server. This is used for developing the **new experimental UI**. Automatically reloads on UI changes.
 *   **infra/**: Group containing OpenSearch, Postgres, Redis, and Prometheus.
 
 ### End-to-End Testing
@@ -60,9 +60,14 @@ The dashboard is organized into several rows:
 3.  Click **stop-e2e** when finished to tear down the environment and free up resources.
 
 ### Utilities
-*   **run-unit-tests**: Runs the Python unit tests using `run_tests.py`.
-*   **run-pylint**: Runs Pylint on the backend and client libraries.
-*   **run-black**: Runs Black (check mode) to verify code formatting.
+These tools are configured with `auto_init=False`, meaning they **do not run on startup**. They are manually triggered by clicking the "Play" button in the Tilt UI, keeping your initial environment launch fast.
+
+*   **run-unit-tests**: Executes the Python backend unit tests via `run_tests.py`.
+*   **run-pylint**: Runs the project-specific Pylint check using `.pylintrc`.
+*   **run-black**: Runs the Black formatter in `--check` mode to verify code style.
+*   **build-api-cli**: Re-installs the API and CLI clients inside the container. Use this if you have modified code in `api_client/` or `cli_client/` to ensure the container picks up your changes.
+*   **run-frontend-v3-tests**: Runs the test suite for the new Vue 3 experimental frontend.
+*   **activate-history**: Configures the container to save bash command history to your host's `private/` directory. This ensures your shell history persists even if the container is destroyed or rebuilt.
 
 ---
 
