@@ -24,6 +24,7 @@ local_resource(
     "ts-web",
     serve_cmd="docker exec -i timesketch-dev gunicorn --reload --bind 0.0.0.0:5000 timesketch.wsgi:application",
     deps=backend_deps,
+    ignore=["**/node_modules/**"],
     labels=["backend"],
     links=["http://localhost:5000"],
 )
@@ -33,6 +34,7 @@ local_resource(
     "ts-worker",
     serve_cmd="docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
     deps=backend_deps,
+    ignore=["**/node_modules/**"],
     labels=["backend"],
 )
 
@@ -42,6 +44,7 @@ local_resource(
     cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-v3",
     serve_cmd="docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev",
     deps=["./timesketch/frontend-v3/src", "./timesketch/frontend-v3/package.json"],
+    ignore=["**/node_modules/**"],
     labels=["frontend"],
     links=["http://localhost:5001"],
 )
@@ -73,6 +76,20 @@ local_resource(
 local_resource(
     "run-unit-tests",
     cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev python3 run_tests.py",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-pylint",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev pylint --rcfile=.pylintrc timesketch api_client cli_client importer_client",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-black",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black --check --diff timesketch api_client cli_client importer_client",
     auto_init=False,
     labels=["tools"],
 )

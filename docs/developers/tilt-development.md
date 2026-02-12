@@ -38,6 +38,11 @@ The dashboard is organized into several rows:
 2.  Click **run-e2e-tests** to execute the tests.
 3.  Click **stop-e2e** when finished to tear down the environment and free up resources.
 
+### Utilities
+*   **run-unit-tests**: Runs the Python unit tests using `run_tests.py`.
+*   **run-pylint**: Runs Pylint on the backend and client libraries.
+*   **run-black**: Runs Black (check mode) to verify code formatting.
+
 ---
 
 ## Configuration
