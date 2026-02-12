@@ -140,6 +140,8 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             event: a Timesketch sketch Event object.
             neighbors: a list of Yeti entities related to the indicator.
         """
+        tags = set()
+        msg = ""
         if indicator["root_type"] == "indicator":
             tags = {slugify(tag) for tag in indicator["relevant_tags"]}
             msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
@@ -179,6 +181,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         """
         intel_type = "other"
         match_in_sketch = None
+        uri = ""
 
         if indicator["type"] == "regex":
             if "compiled_regexp" not in indicator:
