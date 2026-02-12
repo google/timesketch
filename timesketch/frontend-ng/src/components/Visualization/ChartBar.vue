@@ -190,7 +190,7 @@ export default {
         return []
       }
       let series = {
-          name: this.fieldName,
+          name: _.escape(this.fieldName),
           data: this.chartSeries[this.metricName],
       }
       return [series]

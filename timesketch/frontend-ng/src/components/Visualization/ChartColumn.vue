@@ -194,7 +194,7 @@ export default {
       }
 
       let series = {
-          name: this.fieldName,
+          name: _.escape(this.fieldName),
           data: this.chartSeries[this.metricName],
       }
 
