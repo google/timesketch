@@ -76,6 +76,7 @@ class TestConfig:
     OPENSEARCH_VERIFY_CERTS = True
     LABELS_TO_PREVENT_DELETION = ["protected", "magic"]
     UPLOAD_ENABLED = False
+    UPLOAD_FOLDER = "/tmp"
     AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
