@@ -5,25 +5,23 @@ docker_compose("../docker/dev/docker-compose.yml")
 
 # Grouping for infrastructure
 # Note: Port forwards are automatically inherited from docker-compose.yml
-dc_resource("timesketch", labels=["container"])
-dc_resource("opensearch", labels=["container"])
-dc_resource("postgres", labels=["container"])
-dc_resource("redis", labels=["container"])
-dc_resource("prometheus", labels=["container"])
+dc_resource("timesketch", labels=["docker"])
+dc_resource("opensearch", labels=["docker"])
+dc_resource("postgres", labels=["docker"])
+dc_resource("redis", labels=["docker"])
+dc_resource("prometheus", labels=["docker"])
 
 # --- 2. Managed Dev Processes ---
 backend_deps = [
     "../timesketch",
     "../data/timesketch.conf",
     "../requirements.txt",
-    "../setup.py",
 ]
 
 # Files that require a full process restart/config refresh
 config_deps = [
     "../data/timesketch.conf",
     "../requirements.txt",
-    "../setup.py",
 ]
 
 # Helper to refresh configuration
@@ -32,8 +30,7 @@ refresh_config_cmd = "docker exec timesketch-dev /usr/local/src/timesketch/docke
 # Web Server
 local_resource(
     "ts-web",
-    serve_cmd="docker exec timesketch-dev pkill -9 -f gunicorn || true && sleep 1 && "
-    + refresh_config_cmd
+    serve_cmd=refresh_config_cmd
     + " && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
     deps=config_deps,
     ignore=["**/node_modules/**"],
@@ -44,8 +41,7 @@ local_resource(
 # Celery Worker
 local_resource(
     "ts-worker",
-    serve_cmd="docker exec timesketch-dev pkill -9 -f celery || true && sleep 1 && "
-    + refresh_config_cmd
+    serve_cmd=refresh_config_cmd
     + " && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
@@ -56,11 +52,23 @@ local_resource(
 local_resource(
     "ts-frontend-v3",
     cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-v3",
-    serve_cmd="docker exec timesketch-dev pkill -9 -f 'vite|node|yarn' || true && sleep 1 && docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev --port 5001 --host 0.0.0.0",
+    serve_cmd="docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev --port 5001 --host 0.0.0.0",
     deps=["../timesketch/frontend-v3/src", "../timesketch/frontend-v3/package.json"],
     ignore=["**/node_modules/**"],
     labels=["frontend"],
     links=["http://localhost:5001"],
+    auto_init=False,
+)
+
+local_resource(
+    "ts-frontend-ng",
+    cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-ng",
+    serve_cmd="docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve --port 5001 --host 0.0.0.0",
+    deps=["../timesketch/frontend-ng/src", "../timesketch/frontend-ng/package.json"],
+    ignore=["**/node_modules/**"],
+    labels=["frontend"],
+    links=["http://localhost:5001"],
+    auto_init=False,
 )
 
 # --- 3. End-to-End (E2E) Testing ---

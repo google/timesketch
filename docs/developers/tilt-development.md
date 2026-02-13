@@ -49,10 +49,23 @@ Then, you can visit `http://localhost:10350` in your local browser. You may also
 The dashboard is organized into several rows:
 
 ### Managed Services (Always Running)
-*   **ts-web**: The Timesketch Gunicorn server. It serves both the **REST API** and the **stable frontend** (Vue 2 / `frontend-ng`). Automatically reloads on `.py` changes.
+*   **ts-web**: The Timesketch Gunicorn server. It serves both the **REST API** and the **integrated stable frontend**. You can access the stable UI at `http://localhost:5000`.
 *   **ts-worker**: The Celery worker for background tasks.
-*   **ts-frontend-v3**: The Vue 3 development server. This is used for developing the **new experimental UI**. Automatically reloads on UI changes.
-*   **infra/**: Group containing OpenSearch, Postgres, Redis, and Prometheus.
+*   **docker/**: Group containing the Timesketch development container and background services (OpenSearch, Postgres, Redis, and Prometheus).
+
+### Frontend Development Servers (Optional)
+Tilt provides optional development servers on port 5001 for active UI work. These are separate from the stable UI available on port 5000.
+
+*   **ts-frontend-v3**: The Vue 3 development server (Experimental UI).
+*   **ts-frontend-ng**: The legacy Vue 2 development server.
+
+#### Running a Development Server
+By default, these servers are stopped to save resources. To use them:
+1.  Locate the **frontend** group in the Tilt dashboard.
+2.  Click **Start** on the desired frontend.
+3.  Access the UI at `http://localhost:5001`.
+
+**Note**: Both development servers share port `5001`. You must **Stop** one before starting the other.
 
 ### End-to-End Testing
 1.  Click **e2e-environment** to spin up the independent E2E Docker cluster.
@@ -82,5 +95,13 @@ To add items to the Dashboard or modify tracked dependencies, edit `contrib/Tilt
 ## Troubleshooting
 
 *   **Port 10350 in use**: Ensure no other Tilt processes are running (`killall tilt`).
-*   **Port 5001 in use**: The Vue 3 frontend is configured to strictly use port 5001 to match Docker's port mapping. If this port is in use, the service will fail to start. Ensure no other Vite processes or services are using port 5001. Run `docker exec -it timesketch-dev pkill -f vite` to clear any orphaned processes.
-*   **Port 5000 in use**: If the API fails to start because the address is in use, it means a background process (likely from a previous `docker-compose up`) is still holding the port. Run `docker exec -it timesketch-dev pkill -9 gunicorn` to clear it.
+*   **Port 5001/5000 in use (Orphaned Processes)**: If a service fails to start because a port is already in use, it often means an orphaned process from a previous run is still alive inside the container. 
+    *   **Manual Fix**: You can manually kill these processes:
+        *   API/Web: `docker exec -it timesketch-dev pkill -9 -f gunicorn`
+        *   Worker: `docker exec -it timesketch-dev pkill -9 -f celery`
+        *   Frontend: `docker exec -it timesketch-dev pkill -9 -f 'vite|node|yarn'`
+    *   **Permanent Workaround**: If you see this frequently, you can re-add a "kill" step to the `serve_cmd` in `contrib/Tiltfile`. For example:
+        ```python
+        serve_cmd="docker exec timesketch-dev pkill -9 -f gunicorn || true && " + refresh_config_cmd + " && docker exec -i ..."
+        ```
+*   **ModuleNotFoundError on startup**: This usually means the background installation hasn't finished yet. Tilt starts services immediately after the container is "Up", but the container's entrypoint script needs a few seconds to run `pip install`. Wait for the "Timesketch development server is ready!" message in the container logs and then trigger a reload in Tilt.
