@@ -16,7 +16,8 @@
 import logging
 from typing import List, Dict
 
-from timesketch.lib.analyzers import interface as base_interface
+from timesketch.lib import utils
+from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import manager
 
@@ -222,7 +223,7 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
         # config_file winevt.yaml is located within the timesketch/data directory.
         config_file = "winevt_features.yaml"
 
-        features_config = base_interface.get_yaml_config(config_file)
+        features_config = utils.get_yaml_config(config_file)
         if not features_config:
             logger.warning("No feature configuration data in %s", config_file)
             return []
