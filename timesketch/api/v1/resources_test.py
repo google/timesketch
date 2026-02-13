@@ -13,8 +13,16 @@
 # limitations under the License.
 """Tests for v1 of the Timesketch API."""
 
+import io
 import json
+import os
+import shutil
+import tempfile
+import uuid
 from unittest import mock
+
+from flask import current_app
+from flask import jsonify
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -2175,3 +2183,74 @@ class ExportStreamListResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         # Verify we hit the specific abort for empty indices_for_pit
         self.assertIn("No valid search indices", response.json["message"])
+
+
+class UploadFileResourceTest(BaseTest):
+    """Test UploadFileResource."""
+
+    def setUp(self):
+        super().setUp()
+        self.upload_folder = tempfile.mkdtemp()
+        self.old_upload_folder = current_app.config["UPLOAD_FOLDER"]
+        self.old_upload_enabled = current_app.config["UPLOAD_ENABLED"]
+        current_app.config["UPLOAD_FOLDER"] = self.upload_folder
+        current_app.config["UPLOAD_ENABLED"] = True
+
+    def tearDown(self):
+        shutil.rmtree(self.upload_folder)
+        current_app.config["UPLOAD_FOLDER"] = self.old_upload_folder
+        current_app.config["UPLOAD_ENABLED"] = self.old_upload_enabled
+        super().tearDown()
+
+    @mock.patch("timesketch.api.v1.resources.upload.UploadFileResource._upload_and_index")
+    def test_chunked_upload_out_of_order(self, mock_upload):
+        """Test that out-of-order chunks are written correctly."""
+        mock_upload.return_value = jsonify({"status": "ok"})
+        mock_upload.return_value.status_code = HTTP_STATUS_CODE_CREATED
+
+        self.login()
+
+        file_content = b"1234567890"
+        chunk1 = b"12345"
+        chunk2 = b"67890"
+        total_size = len(file_content)
+        chunk_index_name = uuid.uuid4().hex
+
+        # Upload chunk 2 first
+        data = {
+            "name": "test_chunked",
+            "chunk_index": 1,
+            "chunk_byte_offset": 5,
+            "chunk_total_chunks": 2,
+            "total_file_size": total_size,
+            "sketch_id": 1,
+            "file": (io.BytesIO(chunk2), "test_chunked.txt"),
+            "chunk_index_name": chunk_index_name,
+        }
+
+        response = self.client.post(
+            "/api/v1/upload/", data=data, content_type="multipart/form-data"
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # Upload chunk 1
+        data = {
+            "name": "test_chunked",
+            "chunk_index": 0,
+            "chunk_byte_offset": 0,
+            "chunk_total_chunks": 2,
+            "total_file_size": total_size,
+            "sketch_id": 1,
+            "file": (io.BytesIO(chunk1), "test_chunked.txt"),
+            "chunk_index_name": chunk_index_name,
+        }
+
+        response = self.client.post(
+            "/api/v1/upload/", data=data, content_type="multipart/form-data"
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        file_path = os.path.join(self.upload_folder, chunk_index_name)
+        with open(file_path, "rb") as f:
+            content = f.read()
+            self.assertEqual(content, file_content)

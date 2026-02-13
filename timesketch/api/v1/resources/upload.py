@@ -485,7 +485,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_path = utils.format_upload_path(upload_folder, uuid.uuid4().hex)
 
         try:
-            with open(file_path, "ab") as fh:
+            fd = os.open(file_path, os.O_RDWR | os.O_CREAT, 0o600)
+            with os.fdopen(fd, "rb+") as fh:
                 fh.seek(chunk_byte_offset)
                 fh.write(file_storage.read())
         except OSError as e:
