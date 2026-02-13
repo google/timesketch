@@ -43,6 +43,8 @@ services:
       - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
       - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "logger.level=WARN"
     ulimits:
       memlock:
         soft: -1
@@ -85,11 +87,12 @@ services:
   prometheus:
     container_name: prometheus
     image: prom/prometheus:v2.24.1
+    user: root
     volumes:
       - ./prometheus:/etc/prometheus
     ports:
       - 127.0.0.1:9090:9090
-    command: --config.file=/etc/prometheus/prometheus.yml
+    command: --config.file=/etc/prometheus/prometheus.yml --log.level=warn
 
   # notebook:
   #   container_name: notebook
