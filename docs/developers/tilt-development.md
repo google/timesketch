@@ -33,6 +33,11 @@ From the project root, simply run:
 tilt up -f contrib/Tiltfile
 ```
 
+#### Startup Synchronization
+When you start the environment for the first time (or after a fresh reset), the backend services (`ts-web`, `ts-worker`) and utilities will appear in a "Pending" or "Waiting" state for a few seconds. 
+
+This is intentional: Tilt uses a `wait_cmd` to ensure that the container's internal code installation (`pip install -e .`) has successfully finished before attempting to start Gunicorn or Celery. This prevents "Module not found" errors and ensures a stable startup.
+
 By default, Tilt will ask you how you want to interact with it:
 *   **Browser (Recommended)**: Opens the unified dashboard at `http://localhost:10350`.
 *   **Stream logs**: Shows logs directly in your terminal.

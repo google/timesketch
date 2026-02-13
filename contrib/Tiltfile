@@ -27,10 +27,15 @@ config_deps = [
 # Helper to refresh configuration
 refresh_config_cmd = "docker exec timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config"
 
+# Helper to wait for container initialization (package installation)
+wait_cmd = "until docker exec timesketch-dev pip show timesketch >/dev/null 2>&1; do sleep 1; done"
+
 # Web Server
 local_resource(
     "ts-web",
-    serve_cmd=refresh_config_cmd
+    serve_cmd=wait_cmd
+    + " && "
+    + refresh_config_cmd
     + " && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
     deps=config_deps,
     ignore=["**/node_modules/**"],
@@ -41,7 +46,9 @@ local_resource(
 # Celery Worker
 local_resource(
     "ts-worker",
-    serve_cmd=refresh_config_cmd
+    serve_cmd=wait_cmd
+    + " && "
+    + refresh_config_cmd
     + " && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
@@ -97,35 +104,35 @@ local_resource(
 # --- 4. Utilities ---
 local_resource(
     "run-unit-tests",
-    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev python3 run_tests.py",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev python3 run_tests.py",
     auto_init=False,
     labels=["tools"],
 )
 
 local_resource(
     "run-pylint",
-    cmd='docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev bash -c \'git fetch -p origin master > /dev/null 2>&1 && FILES=$(git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \\.py$); if [ -n "$FILES" ]; then pylint --rcfile=.pylintrc $FILES; else echo "No python files changed."; fi\'',
+    cmd=wait_cmd + ' && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev bash -c \'git fetch -p origin master > /dev/null 2>&1 && FILES=$(git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \\.py$); if [ -n "$FILES" ]; then pylint --rcfile=.pylintrc $FILES; else echo "No python files changed."; fi\'',
     auto_init=False,
     labels=["tools"],
 )
 
 local_resource(
     "run-pylint-all",
-    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev pylint --rcfile=.pylintrc timesketch api_client cli_client importer_client",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev pylint --rcfile=.pylintrc timesketch api_client cli_client importer_client",
     auto_init=False,
     labels=["tools"],
 )
 
 local_resource(
     "run-black",
-    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black --check --diff timesketch api_client cli_client importer_client",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black --check --diff timesketch api_client cli_client importer_client",
     auto_init=False,
     labels=["tools"],
 )
 
 local_resource(
     "run-black-fix",
-    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black timesketch api_client cli_client importer_client",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black timesketch api_client cli_client importer_client",
     auto_init=False,
     labels=["tools"],
 )
