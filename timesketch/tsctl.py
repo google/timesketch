@@ -872,6 +872,7 @@ def info():
         os.path.join(timesketch_path, "..")
     )  # Project root directory
     git_dir = os.path.join(project_root, ".git")  # Path to the .git directory
+    timesketch_commit = "unknown"
     if os.path.isdir(git_dir):
         try:
             # Get the short commit hash
@@ -902,6 +903,7 @@ def info():
             # Not a git repo or git is not installed.
             pass
 
+    if timesketch_commit != "unknown":
         if timesketch_commit.endswith("-dirty"):
             timesketch_commit = timesketch_commit.replace("-dirty", "")
             print(f"Timesketch commit: {timesketch_commit} (dirty)")
@@ -949,6 +951,35 @@ def info():
         print(f"pip version: {output} ")
     except FileNotFoundError:
         print("pip not installed")
+
+    # Get OpenSearch version
+    try:
+        es = OpenSearchDataStore()
+        print(f"OpenSearch version: {es.version}")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"OpenSearch: Not running or not configured ({e})")
+
+    # Get Redis version
+    try:
+        celery = create_celery_app()
+        redis_url = celery.conf.broker_url
+        redis_client = redis.from_url(redis_url)
+        print(f"Redis version: {redis_client.info()['redis_version']}")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Redis: Not running or not configured ({e})")
+
+    # Get Postgres version
+    try:
+        db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        if "postgresql" in db_uri:
+            version_row = db_session.execute(
+                sqlalchemy.text("SELECT version();")
+            ).fetchone()
+            print(f"Postgres version: {version_row[0]}")
+        else:
+            print("Database: Not using PostgreSQL")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Database: Error getting version ({e})")
 
 
 def print_table(table_data):
