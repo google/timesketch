@@ -5,10 +5,10 @@ Tilt is an orchestration tool that provides a faster and more integrated develop
 ## Why use Tilt?
 
 *   **Unified Dashboard**: See the status and logs of the API, Celery Worker, Vite Frontend, and all infrastructure (OpenSearch, Postgres, etc.) in a single UI at `http://localhost:10350`.
-*   **Live Updates**:
-    *   **Docker Volumes**: Handle the instant synchronization of files from your host to the container filesystem.
-    *   **Tilt Monitoring**: Tracks the `deps` defined in the `contrib/Tiltfile`. When a file changes, Tilt ensures the corresponding resource reflects that update in the dashboard logs.
-    *   **Automatic Restarts**: Backend services (Gunicorn/Celery) are configured to auto-reload when the filesystem changes. This includes:
+*   **Live Updates**: Tilt leverages Docker volumes (defined in `docker-compose.yml`) to provide an instant feedback loop:
+    *   **Synchronization**: Code changes on your host machine are instantly reflected inside the container via standard Docker bind-mounts.
+    *   **Intelligent Orchestration**: Tilt monitors the `deps` defined in the `contrib/Tiltfile`. When a file changes, Tilt ensures the corresponding resource reflects that update in the dashboard logs and triggers any necessary actions.
+    *   **Automatic Restarts**: Backend services (Gunicorn/Celery) are configured to auto-reload or restart when Tilt detects filesystem changes. This includes:
         *   **API Changes**: Modifying routes or views restarts the web server.
         *   **Background Tasks**: Modifying `timesketch/lib/tasks.py` or any file in `timesketch/lib/analyzers/` will cause Tilt to restart the Celery worker (`ts-worker`), ensuring new tasks use the updated logic.
         *   **Configuration**: If you modify core configuration files (like `timesketch.conf`), Tilt will proactively restart the managed processes to ensure the new settings are applied.

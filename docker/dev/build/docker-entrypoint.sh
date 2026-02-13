@@ -77,6 +77,24 @@ if [ "$1" = 'timesketch' ]; then
     exit 1
   fi
 
+  echo "Installing API Client in editable mode..."
+  if ! pip3 install -e /usr/local/src/timesketch/api_client/python; then
+    echo "Failed to install API Client in editable mode."
+    exit 1
+  fi
+
+  echo "Installing Importer Client in editable mode..."
+  if ! pip3 install -e /usr/local/src/timesketch/importer_client/python; then
+    echo "Failed to install Importer Client in editable mode."
+    exit 1
+  fi
+
+  echo "Installing CLI Client in editable mode..."
+  if ! pip3 install -e /usr/local/src/timesketch/cli_client/python; then
+    echo "Failed to install CLI Client in editable mode."
+    exit 1
+  fi
+
   setup_config
 
   # Add web user
@@ -89,7 +107,7 @@ if [ "$1" = 'timesketch' ]; then
   sleep infinity
 fi
 
-# Allow Tilt to refresh configuration
+# Allow tools like Tilt or tsdev.sh to refresh configuration
 if [ "$1" = 'refresh-config' ]; then
   setup_config
   exit 0

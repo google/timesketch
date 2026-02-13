@@ -50,9 +50,6 @@ RUN npm install --global yarn
 RUN python3 -m venv /opt/venv --system-site-packages
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install setuptools as it is required by setup.py
-RUN pip3 install --no-cache-dir setuptools
-
 # Install dependencies for Timesketch into the virtual environment
 COPY ./requirements.txt /timesketch-requirements.txt
 RUN pip3 install --no-cache-dir -r /timesketch-requirements.txt
