@@ -14,15 +14,20 @@ setup_config() {
   ln -sf /usr/local/src/timesketch/data/plaso_formatters.yaml /etc/timesketch/plaso_formatters.yaml
   ln -sf /usr/local/src/timesketch/data/nl2q /etc/timesketch/
   ln -sf /usr/local/src/timesketch/data/llm_summarize /etc/timesketch/
-  ln -sf /usr/local/src/timesketch/data/regex_features.yaml /etc/timesketch/regex_features.yaml
-  ln -sf /usr/local/src/timesketch/data/winevt_features.yaml /etc/timesketch/winevt_features.yaml
-  ln -sf /usr/local/src/timesketch/data/tags.yaml /etc/timesketch/tags.yaml
-  ln -sf /usr/local/src/timesketch/data/intelligence_tag_metadata.yaml /etc/timesketch/intelligence_tag_metadata.yaml
-  ln -sf /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/plaso.mappings
-  ln -sf /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/generic.mappings
-  ln -sf /usr/local/src/timesketch/data/ontology.yaml /etc/timesketch/ontology.yaml
-  ln -sf /usr/local/src/timesketch/data/data_finder.yaml /etc/timesketch/data_finder.yaml
-  ln -sf /usr/local/src/timesketch/data/bigquery_matcher.yaml /etc/timesketch/bigquery_matcher.yaml
+  CONFIG_FILES=(
+    "regex_features.yaml"
+    "winevt_features.yaml"
+    "tags.yaml"
+    "intelligence_tag_metadata.yaml"
+    "plaso.mappings"
+    "generic.mappings"
+    "ontology.yaml"
+    "data_finder.yaml"
+    "bigquery_matcher.yaml"
+  )
+  for f in "${CONFIG_FILES[@]}"; do
+    ln -sf "/usr/local/src/timesketch/data/$f" "/etc/timesketch/$f"
+  done
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   KEY_FILE="/usr/local/src/timesketch/.dev_secret_key"
