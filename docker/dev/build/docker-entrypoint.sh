@@ -82,16 +82,6 @@ if [ "$1" = 'timesketch' ]; then
   # Add web user
   tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
 
-  # Add Sigma rules
-  git clone https://github.com/SigmaHQ/sigma /usr/local/src/sigma
-  # for each line in sigma_rules.txt execute the command
-  SIGMA_RULES_FILE="/usr/local/src/timesketch/docker/dev/build/sigma_rules.txt"
-  if [ -f "$SIGMA_RULES_FILE" ]; then
-    for line in $(cat "$SIGMA_RULES_FILE"); do
-      tsctl import-sigma-rules $line
-    done
-  fi
-
   # Wrap up things
   echo "Timesketch development server is ready!"
 
