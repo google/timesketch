@@ -16,7 +16,6 @@
 import datetime
 import json
 import logging
-import os
 import random
 import time
 import traceback
@@ -32,7 +31,6 @@ import pandas
 from timesketch.api.v1 import utils as api_utils
 
 from timesketch.lib import definitions
-from timesketch.lib.utils import get_config_path, get_yaml_config
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
