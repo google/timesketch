@@ -16,10 +16,25 @@
 
 from __future__ import unicode_literals
 
+import os
+
 from setuptools import find_packages
 from setuptools import setup
 
-from timesketch_api_client import version
+
+def get_version():
+    """Extracts the version from timesketch_api_client/version.py.
+
+    This is done manually to avoid importing the module during installation,
+    which can lead to ModuleNotFoundError in isolated build environments.
+    """
+    version_file = os.path.join("timesketch_api_client", "version.py")
+    with open(version_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("__version__"):
+                return line.split("=")[1].strip().strip("\"'")
+    return "unknown"
+
 
 long_description = (
     "The Timesketch API client provides you with a set of Python libraries "
@@ -36,7 +51,7 @@ long_description = (
 
 setup(
     name="timesketch-api-client",
-    version=version.get_version(),
+    version=get_version(),
     description="Timesketch API client",
     long_description=long_description,
     license="Apache License, Version 2.0",
