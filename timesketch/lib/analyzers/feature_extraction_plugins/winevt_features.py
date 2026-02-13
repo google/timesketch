@@ -17,7 +17,6 @@ import logging
 from typing import List, Dict
 
 from timesketch.lib import utils
-from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import manager
 

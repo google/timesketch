@@ -5,7 +5,6 @@ import logging
 
 from timesketch.lib import emojis
 from timesketch.lib import utils as lib_utils
-from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import manager
 from timesketch.lib.analyzers import utils

@@ -18,14 +18,13 @@ import json
 
 from typing import Optional, Dict
 from flask_testing import TestCase
-from sqlalchemy import create_engine
 
 
 from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
-from timesketch.models import db_session, BaseModel
+from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
