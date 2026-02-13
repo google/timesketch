@@ -2202,7 +2202,9 @@ class UploadFileResourceTest(BaseTest):
         current_app.config["UPLOAD_ENABLED"] = self.old_upload_enabled
         super().tearDown()
 
-    @mock.patch("timesketch.api.v1.resources.upload.UploadFileResource._upload_and_index")
+    @mock.patch(
+        "timesketch.api.v1.resources.upload.UploadFileResource._upload_and_index"
+    )
     def test_chunked_upload_out_of_order(self, mock_upload):
         """Test that out-of-order chunks are written correctly."""
         mock_upload.return_value = jsonify({"status": "ok"})
