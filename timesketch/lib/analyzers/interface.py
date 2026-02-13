@@ -23,8 +23,6 @@ import traceback
 from typing import Dict, List, Optional
 
 
-import yaml
-
 import opensearchpy
 from flask import current_app
 from jsonschema import validate, ValidationError, SchemaError
@@ -34,6 +32,7 @@ import pandas
 from timesketch.api.v1 import utils as api_utils
 
 from timesketch.lib import definitions
+from timesketch.lib.utils import get_config_path, get_yaml_config
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
@@ -75,53 +74,6 @@ def _flush_datastore_decorator(func):
     return wrapper
 
 
-def get_config_path(file_name):
-    """Returns a path to a configuration file.
-
-    Args:
-        file_name: String that defines the config file name.
-
-    Returns:
-        The path to the configuration file or None if the file cannot be found.
-    """
-    path = os.path.join(os.path.sep, "etc", "timesketch", file_name)
-    if os.path.isfile(path):
-        return path
-
-    path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", file_name)
-    path = os.path.abspath(path)
-    if os.path.isfile(path):
-        return path
-
-    return None
-
-
-def get_yaml_config(file_name: str):
-    """Return a dict parsed from a YAML file within the config directory.
-
-    Args:
-        file_name: String that defines the config file name.
-
-    Returns:
-        A dict with the parsed YAML content from the config file or
-        an empty dict if the file is not found or YAML was unable
-        to parse it.
-    """
-    path = get_config_path(file_name)
-    if not path:
-        return {}
-
-    with open(path, "r", encoding="utf-8") as fh:
-        try:
-            return yaml.safe_load(fh)
-        except yaml.parser.ParserError as exception:
-            # pylint: disable=logging-format-interpolation
-            logger.warning(
-                ("Unable to read in YAML config file, " "with error: {!s}").format(
-                    exception
-                )
-            )
-            return {}
 
 
 class Event:

@@ -733,12 +733,6 @@ class ModelBaseTest(BaseTest):
 
     def setUp(self):
         super().setUp()  # Call parent setUp if it exists
-        # Configure an in-memory SQLite database for testing
-        self.engine = create_engine("sqlite:///:memory:")
-        # Bind the engine to the session
-        db_session.configure(bind=self.engine)
-        # Create all tables defined in BaseModel.metadata
-        BaseModel.metadata.create_all(self.engine)
         self.db_session = db_session
 
     def _test_db_object(self, expected_result=None, model_cls=None):
