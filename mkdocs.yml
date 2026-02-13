@@ -39,11 +39,13 @@ nav:
       - LLM Features: guides/admin/llm-features.md
       - Investigation View: guides/admin/investigation-view-setup.md
       - DFIQ Templates: guides/admin/load-dfiq.md
-      - Performance Monitoring: guides/admin/performance-monitoring.md
+      - Performance Monitoring: guides/admin/performance_monitoring.md
   - Developers:
       - Getting started: developers/getting-started.md
       - Frontend development: developers/frontend-development.md
       - Writing and running tests: developers/testing.md
+      - Development with Tilt: developers/tilt-development.md
+      - Local GitHub Actions (act): developers/local_github_actions_with_act.md
       - Interactive notebook: developers/notebook.md
       - API client:
           - Introduction: developers/api-client.md
