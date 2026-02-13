@@ -72,8 +72,6 @@ def _flush_datastore_decorator(func):
     return wrapper
 
 
-
-
 class Event:
     """Event object with helper methods.
 

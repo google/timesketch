@@ -781,5 +781,7 @@ def get_yaml_config(file_name: str):
         try:
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
-            logger.warning("Unable to read in YAML config file, with error: %s", exception)
+            logger.warning(
+                "Unable to read in YAML config file, with error: %s", exception
+            )
             return {}
