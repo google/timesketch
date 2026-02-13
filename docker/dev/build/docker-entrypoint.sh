@@ -52,7 +52,6 @@ setup_config() {
   fi
 
   # Set up the OpenSearch connection
-  # FIX: Changed OPENSEARCH_ADDRESS to OPENSEARCH_HOST to match the if-check and docker-compose
   if [ "$OPENSEARCH_HOST" ] && [ "$OPENSEARCH_PORT" ]; then
     sed -i 's#OPENSEARCH_HOSTS = \[{"host": "opensearch", "port": 9200}\]#OPENSEARCH_HOSTS = [{"host": "'$OPENSEARCH_HOST'", "port": '$OPENSEARCH_PORT'}]#' /etc/timesketch/timesketch.conf
   fi
@@ -92,7 +91,7 @@ if [ "$1" = 'timesketch' ]; then
   setup_config
 
   # Add web user
-  tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}" || true
+  tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
 
   # Wrap up things
   echo "Timesketch development server is ready!"
