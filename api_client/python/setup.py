@@ -21,7 +21,6 @@ from setuptools import setup
 
 from timesketch_api_client import version
 
-
 long_description = (
     "The Timesketch API client provides you with a set of Python libraries "
     "to connect to your Timesketch (https://github.com/google/timesketch) "

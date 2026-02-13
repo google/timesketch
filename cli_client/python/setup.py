@@ -19,7 +19,6 @@ from setuptools import setup
 
 from timesketch_cli_client import version
 
-
 setup(
     name="timesketch-cli-client",
     version=version.get_version(),

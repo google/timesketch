@@ -24,7 +24,6 @@ from setuptools import setup
 
 from timesketch_import_client import version
 
-
 setup(
     name="timesketch-import-client",
     version=version.get_version(),
