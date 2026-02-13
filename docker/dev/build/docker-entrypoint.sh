@@ -7,11 +7,8 @@ setup_config() {
   cp /usr/local/src/timesketch/data/timesketch.conf /etc/timesketch/
 
   # Use -f to ignore error if link already exists
-  ln -sf /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
   ln -sf /usr/local/src/timesketch/data/sigma /etc/timesketch/
   ln -sf /usr/local/src/timesketch/data/dfiq /etc/timesketch/
-  ln -sf /usr/local/src/timesketch/data/context_links.yaml /etc/timesketch/context_links.yaml
-  ln -sf /usr/local/src/timesketch/data/plaso_formatters.yaml /etc/timesketch/plaso_formatters.yaml
   ln -sf /usr/local/src/timesketch/data/nl2q /etc/timesketch/
   ln -sf /usr/local/src/timesketch/data/llm_summarize /etc/timesketch/
   CONFIG_FILES=(
@@ -24,12 +21,18 @@ setup_config() {
     "ontology.yaml"
     "data_finder.yaml"
     "bigquery_matcher.yaml"
+    "plaso_formatters.yaml"
+    "context_links.yaml"
+    "sigma_config.yaml"
   )
   for f in "${CONFIG_FILES[@]}"; do
     ln -sf "/usr/local/src/timesketch/data/$f" "/etc/timesketch/$f"
   done
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
+  # We generate a locally stored key on the first start that gets re-used for
+  # later sessions. If you need a new key, just delete the ".dev_secret_key"
+  # file in your project root dir and restart the container.
   KEY_FILE="/usr/local/src/timesketch/.dev_secret_key"
 
   if [ ! -f "$KEY_FILE" ]; then
