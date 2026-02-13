@@ -64,27 +64,13 @@ setup_config() {
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
 
-  echo "Installing Timesketch in editable mode..."
-  if ! pip3 install -e /usr/local/src/timesketch/; then
-    echo "Failed to install Timesketch in editable mode."
-    exit 1
-  fi
-
-  echo "Installing API Client in editable mode..."
-  if ! pip3 install -e /usr/local/src/timesketch/api_client/python; then
-    echo "Failed to install API Client in editable mode."
-    exit 1
-  fi
-
-  echo "Installing Importer Client in editable mode..."
-  if ! pip3 install -e /usr/local/src/timesketch/importer_client/python; then
-    echo "Failed to install Importer Client in editable mode."
-    exit 1
-  fi
-
-  echo "Installing CLI Client in editable mode..."
-  if ! pip3 install -e /usr/local/src/timesketch/cli_client/python; then
-    echo "Failed to install CLI Client in editable mode."
+  echo "Installing Timesketch and clients in editable mode..."
+  if ! pip3 install \
+    -e /usr/local/src/timesketch/ \
+    -e /usr/local/src/timesketch/api_client/python \
+    -e /usr/local/src/timesketch/importer_client/python \
+    -e /usr/local/src/timesketch/cli_client/python; then
+    echo "Failed to install Timesketch and/or clients in editable mode."
     exit 1
   fi
 
