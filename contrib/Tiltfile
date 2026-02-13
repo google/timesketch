@@ -5,15 +5,22 @@ docker_compose("../docker/dev/docker-compose.yml")
 
 # Grouping for infrastructure
 # Note: Port forwards are automatically inherited from docker-compose.yml
-dc_resource("timesketch", labels=["infra"])
-dc_resource("opensearch", labels=["infra"])
-dc_resource("postgres", labels=["infra"])
-dc_resource("redis", labels=["infra"])
-dc_resource("prometheus", labels=["infra"])
+dc_resource("timesketch", labels=["container"])
+dc_resource("opensearch", labels=["container"])
+dc_resource("postgres", labels=["container"])
+dc_resource("redis", labels=["container"])
+dc_resource("prometheus", labels=["container"])
 
 # --- 2. Managed Dev Processes ---
 backend_deps = [
     "../timesketch",
+    "../data/timesketch.conf",
+    "../requirements.txt",
+    "../setup.py",
+]
+
+# Files that require a full process restart/config refresh
+config_deps = [
     "../data/timesketch.conf",
     "../requirements.txt",
     "../setup.py",
@@ -25,8 +32,10 @@ refresh_config_cmd = "docker exec timesketch-dev /usr/local/src/timesketch/docke
 # Web Server
 local_resource(
     "ts-web",
-    serve_cmd="docker exec timesketch-dev pkill -9 -f gunicorn || true && sleep 1 && " + refresh_config_cmd + " && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
-    deps=backend_deps,
+    serve_cmd="docker exec timesketch-dev pkill -9 -f gunicorn || true && sleep 1 && "
+    + refresh_config_cmd
+    + " && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
+    deps=config_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],
     links=["http://localhost:5000"],
@@ -35,7 +44,9 @@ local_resource(
 # Celery Worker
 local_resource(
     "ts-worker",
-    serve_cmd="docker exec timesketch-dev pkill -9 -f celery || true && sleep 1 && " + refresh_config_cmd + " && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
+    serve_cmd="docker exec timesketch-dev pkill -9 -f celery || true && sleep 1 && "
+    + refresh_config_cmd
+    + " && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],
@@ -85,7 +96,7 @@ local_resource(
 
 local_resource(
     "run-pylint",
-    cmd="docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev bash -c 'git fetch -p origin master > /dev/null 2>&1 && FILES=$(git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \\.py$); if [ -n \"$FILES\" ]; then pylint --rcfile=.pylintrc $FILES; else echo \"No python files changed.\"; fi'",
+    cmd='docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev bash -c \'git fetch -p origin master > /dev/null 2>&1 && FILES=$(git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \\.py$); if [ -n "$FILES" ]; then pylint --rcfile=.pylintrc $FILES; else echo "No python files changed."; fi\'',
     auto_init=False,
     labels=["tools"],
 )

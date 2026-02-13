@@ -64,13 +64,6 @@ setup_config() {
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
 
-  # Install dependencies and Timesketch in editable mode from volume
-  echo "Installing Timesketch requirements..."
-  if ! pip3 install -r /usr/local/src/timesketch/requirements.txt; then
-    echo "Failed to install Timesketch requirements."
-    exit 1
-  fi
-
   echo "Installing Timesketch in editable mode..."
   if ! pip3 install -e /usr/local/src/timesketch/; then
     echo "Failed to install Timesketch in editable mode."

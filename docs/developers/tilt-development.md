@@ -8,10 +8,10 @@ Tilt is an orchestration tool that provides a faster and more integrated develop
 *   **Live Updates**: Tilt leverages Docker volumes (defined in `docker-compose.yml`) to provide an instant feedback loop:
     *   **Synchronization**: Code changes on your host machine are instantly reflected inside the container via standard Docker bind-mounts.
     *   **Intelligent Orchestration**: Tilt monitors the `deps` defined in the `contrib/Tiltfile`. When a file changes, Tilt ensures the corresponding resource reflects that update in the dashboard logs and triggers any necessary actions.
-    *   **Automatic Restarts**: Backend services (Gunicorn/Celery) are configured to auto-reload or restart when Tilt detects filesystem changes. This includes:
-        *   **API Changes**: Modifying routes or views restarts the web server.
+    *   **Automatic Restarts**: Backend services are configured to pick up changes with minimal latency:
+        *   **API Changes**: Modifying Python code in `timesketch/` triggers an **instant internal reload** within Gunicorn. You will see these logs in the `ts-web` resource without the process itself restarting in Tilt.
         *   **Background Tasks**: Modifying `timesketch/lib/tasks.py` or any file in `timesketch/lib/analyzers/` will cause Tilt to restart the Celery worker (`ts-worker`), ensuring new tasks use the updated logic.
-        *   **Configuration**: If you modify core configuration files (like `timesketch.conf`), Tilt will proactively restart the managed processes to ensure the new settings are applied.
+        *   **Configuration & Metadata**: If you modify core configuration files (like `timesketch.conf`), `requirements.txt`, or `setup.py`, Tilt will proactively refresh the container's environment and restart the managed processes to ensure new settings or dependencies are applied.
 *   **Isolated E2E Testing**: Spin up and run end-to-end tests with a single click.
     *   **Data Isolation**: These tests use curated datasets from `end_to_end_tests/test_data/` and are completely isolated from your development data to ensure reproducible results and prevent accidental data loss.
     *   **Code Installation**: Unlike the "Live Updates" environment, the E2E environment installs the code once during container creation. If you modify your code, you must stop the E2E environment and restart it for changes to take effect.

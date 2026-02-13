@@ -14,29 +14,15 @@
 # limitations under the License.
 """This is the setup file for the Timesketch CLI client."""
 
-import os
-
 from setuptools import find_packages
 from setuptools import setup
 
-
-def get_version():
-    """Extracts the version from timesketch_cli_client/version.py.
-
-    This is done manually to avoid importing the module during installation,
-    which can lead to ModuleNotFoundError in isolated build environments.
-    """
-    version_file = os.path.join("timesketch_cli_client", "version.py")
-    with open(version_file, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.startswith("__version__"):
-                return line.split("=")[1].strip().strip("\"'")
-    return "unknown"
+from timesketch_cli_client import version
 
 
 setup(
     name="timesketch-cli-client",
-    version=get_version(),
+    version=version.get_version(),
     description="Timesketch CLI client",
     license="Apache License, Version 2.0",
     url="http://www.timesketch.org/",
