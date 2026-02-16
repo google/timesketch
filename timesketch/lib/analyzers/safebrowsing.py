@@ -8,6 +8,7 @@ import requests
 from flask import current_app
 
 from timesketch.version import get_version as get_timesketch_version
+from timesketch.lib import utils
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -212,7 +213,7 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
         url_allowlisted = 0
 
         url_allowlist = set(
-            interface.get_yaml_config(
+            utils.get_yaml_config(
                 self._URL_ALLOW_LIST_CONFIG,
             ),
         )

@@ -67,7 +67,9 @@ class Nl2qFeature(LLMFeatureInterface):
             logger.error("No data types description file or the file is empty.")
             return ""
         df_short_data_types = pd.DataFrame(
-            df_data_types.groupby("data_type").apply(self._concatenate_values),
+            df_data_types.groupby("data_type").apply(
+                self._concatenate_values, include_groups=False
+            ),
             columns=["fields"],
         )
         df_short_data_types["data_type"] = df_short_data_types.index
@@ -109,7 +111,7 @@ class Nl2qFeature(LLMFeatureInterface):
         Returns:
             str: Formatted string with data type and its fields.
         """
-        return f'* "{group["data_type"].iloc[0]}" -> {self._generate_fields(group)}'
+        return f'* "{group.name}" -> {self._generate_fields(group)}'
 
     def _build_prompt(self, question: str, sketch: Sketch) -> str:
         """Builds the prompt for NL2Q.
