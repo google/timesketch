@@ -592,6 +592,18 @@ class SketchResource(resources.ResourceMixin, Resource):
                     db_session.delete(timeline)
                 continue
 
+            # Check if this index is used in any other active sketch
+            if searchindex.is_shared(exclude_sketch_id=sketch.id):
+                logger.warning(
+                    "Search index %s is shared with another active sketch. "
+                    "Skipping index and SearchIndex deletion for sketch %s.",
+                    searchindex.index_name,
+                    sketch.id,
+                )
+                if inspect(timeline).persistent:
+                    db_session.delete(timeline)
+                continue
+
             # If the searchindex has already been processed (e.g. shared by
             # another timeline), we just delete the timeline and continue.
             searchindex_id = getattr(searchindex, "id", None)
@@ -742,15 +754,23 @@ class SketchResource(resources.ResourceMixin, Resource):
             else:
                 logger.debug("Force delete not present, will keep the OS data.")
 
-        sketch = Sketch.get_with_acl(sketch_id, include_deleted=force_delete)
+        if current_user.admin:
+            # For admins, we use get_by_id which includes soft-deleted sketches.
+            # This is necessary so admins can perform a hard delete (force)
+            # on a sketch that has already been soft-deleted.
+            sketch = Sketch.get_by_id(sketch_id)
+        else:
+            sketch = Sketch.get_with_acl(sketch_id, include_deleted=force_delete)
+
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         if not sketch.has_permission(current_user, "delete"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "User does not have sufficient access rights to delete a sketch.",
-            )
+            if not current_user.admin:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"User does not have sufficient access rights to delete sketch {sketch_id}.",
+                )
 
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
@@ -765,11 +785,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to delete a sketch that is already archived.",
             )
-
-        # Allow triggering force delete via URL parameter
-        if not force_delete and request.args.get("force"):
-            force_delete = True
-            logger.debug("Force delete detected from URL parameter.")
 
         # Permissions and state checks for force deletion
         if force_delete:
@@ -799,15 +814,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 searchindex = timeline.searchindex
 
                 # Check if this index is used in any other active sketch
-                is_shared = False
-                for other_timeline in searchindex.timelines:
-                    if other_timeline.sketch_id == sketch.id:
-                        continue
-                    if other_timeline.sketch.get_status.status != "deleted":
-                        is_shared = True
-                        break
-
-                if is_shared:
+                if searchindex.is_shared(exclude_sketch_id=sketch.id):
                     logger.warning(
                         "Search index %s is shared with another active sketch. "
                         "Skipping index close for soft-deleted sketch %s.",

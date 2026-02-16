@@ -1144,6 +1144,138 @@ def sketch_info(sketch_id: int):
     print_table(status_table)
 
 
+@cli.command(name="delete-sketch")
+@click.argument("sketch_id", type=int)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Permanently delete the sketch and all its associated data from both the database and OpenSearch.",
+)
+def delete_sketch(sketch_id: int, force: bool):
+    """Delete a sketch.
+
+    By default, this performs a soft delete: the sketch is marked as 'deleted'
+    in the database, and its associated OpenSearch indices are closed (if they
+    are not shared with other active sketches).
+
+    If the --force flag is used, a hard delete is performed: the sketch, its
+    timelines, and its associated search indices (if not shared) are permanently
+    removed from the database, and the corresponding OpenSearch indices are
+    permanently deleted. This action is irreversible.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        click.echo("Sketch does not exist.")
+        return
+
+    # 1. Safety checks
+    not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
+    for label in not_delete_labels:
+        if sketch.has_label(label):
+            click.echo(f"Error: Sketches with label [{label}] cannot be deleted.")
+            return
+
+    # Check if any timeline is still processing
+    is_any_timeline_processing = any(
+        t.get_status.status == "processing" for t in sketch.timelines
+    )
+    if is_any_timeline_processing:
+        click.echo(
+            "Error: Cannot delete sketch: one or more timelines are still processing."
+        )
+        return
+
+    if force:
+        confirmation_msg = (
+            f"Are you sure you want to PERMANENTLY delete sketch {sketch_id} "
+            f"({sketch.name})? This will delete OpenSearch indices and "
+            "cannot be undone!"
+        )
+    else:
+        confirmation_msg = (
+            f"Are you sure you want to soft-delete sketch {sketch_id} ({sketch.name})?"
+        )
+
+    if not click.confirm(confirmation_msg):
+        click.echo("Aborted.")
+        return
+
+    datastore = OpenSearchDataStore()
+
+    if force:
+        # Hard delete logic (mirrors _force_delete_sketch in sketch.py)
+        timelines = list(sketch.timelines)
+        processed_indices = set()
+        for timeline in timelines:
+            searchindex = timeline.searchindex
+            if not searchindex:
+                db_session.delete(timeline)
+                continue
+
+            searchindex_id = searchindex.id
+            if searchindex_id in processed_indices:
+                db_session.delete(timeline)
+                continue
+
+            # Check if this index is used in any other active sketch
+            if searchindex.is_shared(exclude_sketch_id=sketch.id):
+                click.echo(
+                    f"Search index {searchindex.index_name} is shared. "
+                    "Skipping deletion."
+                )
+                db_session.delete(timeline)
+                continue
+
+            # remove the opensearch index
+            index_name_to_delete = searchindex.index_name
+            if index_name_to_delete:
+                try:
+                    datastore.client.indices.delete(
+                        index=index_name_to_delete, ignore=[404]
+                    )
+                    click.echo(f"Deleted OpenSearch index: {index_name_to_delete}")
+                except Exception as e:  # pylint: disable=broad-except
+                    click.echo(
+                        f"Error deleting OpenSearch index {index_name_to_delete}: {e}"
+                    )
+
+            db_session.delete(timeline)
+            db_session.delete(searchindex)
+            processed_indices.add(searchindex_id)
+
+        db_session.delete(sketch)
+        db_session.commit()
+        click.echo(f"Sketch {sketch_id} permanently deleted.")
+    else:
+        # Soft delete logic (mirrors delete() in sketch.py)
+        sketch.set_status(status="deleted")
+        for timeline in sketch.timelines:
+            searchindex = timeline.searchindex
+            if not searchindex:
+                continue
+
+            # Check if this index is used in any other active sketch
+            if searchindex.is_shared(exclude_sketch_id=sketch.id):
+                click.echo(
+                    f"Search index {searchindex.index_name} is shared. Skipping close."
+                )
+                continue
+
+            try:
+                datastore.client.indices.close(
+                    index=searchindex.index_name, ignore=[404]
+                )
+                click.echo(f"Closed OpenSearch index: {searchindex.index_name}")
+            except Exception as e:  # pylint: disable=broad-except
+                click.echo(
+                    f"Error closing OpenSearch index {searchindex.index_name}: {e}"
+                )
+
+        db_session.add(sketch)
+        db_session.commit()
+        click.echo(f"Sketch {sketch_id} soft-deleted.")
+
+
 def _query_db_label_stats(sketch_id: int) -> list:
     """Query the relational database for label statistics."""
     print("\n[+] Querying Relational Database for 'timesketch_label'...")
@@ -3882,3 +4014,42 @@ def sync_groups_from_json(filepath, dry_run):
             db_session.rollback()
     else:
         click.echo("[DRY-RUN] No changes committed.")
+
+
+@cli.command(name="db-watchdog")
+@click.option(
+    "--log-file",
+    default="/tmp/timesketch_db_modifications.log",
+    help="Path to the log file to watch.",
+)
+def db_watchdog(log_file):
+    """Watch database changes in real-time.
+
+    This command tails the database modification log file.
+
+    IMPORTANT: For this to work, the Timesketch server/workers must be running
+    with the environment variable TIMESKETCH_DB_WATCHDOG_LOG set to the same path.
+
+    Example:
+      export TIMESKETCH_DB_WATCHDOG_LOG=/tmp/timesketch_db_modifications.log
+      tsctl db-watchdog
+    """
+    if not os.path.exists(log_file):
+        # Create the file if it doesn't exist so tail doesn't complain
+        try:
+            with open(log_file, "a", encoding="utf-8"):
+                os.utime(log_file, None)
+        except OSError as e:
+            click.echo(f"Error creating log file: {e}")
+            return
+
+    click.echo(f"Watching database changes in {log_file}...")
+    click.echo(
+        "Make sure TIMESKETCH_DB_WATCHDOG_LOG is set in your server environment."
+    )
+
+    try:
+        # Use tail -f to follow the file
+        subprocess.run(["tail", "-f", log_file], check=False)
+    except KeyboardInterrupt:
+        click.echo("\nStopping watchdog.")

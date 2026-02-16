@@ -262,5 +262,120 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # 5. Verify the OpenSearch index is gone (since it was force deleted)
         self.check_opensearch_index_status(shared_index_name, "deleted")
 
+    def test_cross_sketch_shared_index_deletion_safety(self):
+        """Test that deleting a sketch doesn't close/delete an index shared
+        with another sketch.
+
+        Logic:
+        1. Create Sketch A and Sketch B.
+        2. Import a timeline (Index 1) into Sketch A.
+        3. Add the same Index 1 to Sketch B.
+        4. Verify that Index 1 is 'open' in OpenSearch.
+        5. Soft-delete Sketch A using tsctl.
+        6. Verify Index 1 is STILL 'open' (because it's shared with Sketch B).
+        7. Hard-delete Sketch A using tsctl.
+        8. Verify Index 1 is STILL 'open' (because it's shared with Sketch B).
+        9. Soft-delete Sketch B using tsctl (it's the last one).
+        10. Verify Index 1 is now 'close'.
+        11. Hard-delete Sketch B using tsctl.
+        12. Verify Index 1 is now 'deleted'.
+        """
+        rand = uuid.uuid4().hex
+        sketch_a = self.api.create_sketch(name=f"sketch_a_{rand}")
+        sketch_b = self.api.create_sketch(name=f"sketch_b_{rand}")
+
+        shared_index_name = f"cross_sketch_shared_{rand}"
+
+        # 1. Import Timeline into Sketch A
+        tl_a = self.import_timeline(
+            "sigma_events.csv", sketch=sketch_a, index_name=shared_index_name
+        )
+        searchindex_id = tl_a.index.id
+
+        # 2. Add the same index to Sketch B
+        tl_b = sketch_b.add_timeline(searchindex_id=searchindex_id)
+
+        self.assertions.assertEqual(tl_a.index.index_name, tl_b.index.index_name)
+        self.check_opensearch_index_status(shared_index_name, "open")
+
+        # 3. Soft-delete Sketch A using tsctl
+        # We use subprocess here to run the actual tsctl command
+        subprocess.run(
+            ["tsctl", "delete-sketch", str(sketch_a.id)], input=b"y\n", check=True
+        )
+
+        # 4. Verify Index is STILL OPEN (shared with B)
+        self.check_opensearch_index_status(shared_index_name, "open")
+
+        # 5. Hard-delete Sketch A using tsctl
+        subprocess.run(
+            ["tsctl", "delete-sketch", str(sketch_a.id), "--force"],
+            input=b"y\n",
+            check=True,
+        )
+
+        # 6. Verify Index is STILL OPEN (shared with B)
+        self.check_opensearch_index_status(shared_index_name, "open")
+
+        # 7. Soft-delete Sketch B using tsctl (last one)
+        subprocess.run(
+            ["tsctl", "delete-sketch", str(sketch_b.id)], input=b"y\n", check=True
+        )
+
+        # 8. Verify Index is NOW CLOSED
+        self.check_opensearch_index_status(shared_index_name, "close")
+
+        # 9. Hard-delete Sketch B using tsctl
+        subprocess.run(
+            ["tsctl", "delete-sketch", str(sketch_b.id), "--force"],
+            input=b"y\n",
+            check=True,
+        )
+
+        # 10. Verify Index is NOW DELETED
+        self.check_opensearch_index_status(shared_index_name, "deleted")
+
+    def test_admin_delete_non_owned_sketch(self):
+        """Test that an admin can delete a sketch they don't own.
+
+        This verifies the administrative permission override.
+        """
+        rand = uuid.uuid4().hex
+        # Create a sketch with the regular user
+        sketch = self.api.create_sketch(name=f"non-owned-sketch_{rand}")
+
+        # Try to delete it with the admin API
+        # (This previously failed with 403 because admin wasn't in the ACL)
+        sketch_id = sketch.id
+        admin_sketch = self.admin_api.get_sketch(sketch_id)
+
+        # Soft delete
+        admin_sketch.delete()
+
+        # Verify it is deleted (404 when trying to load data)
+        with self.assertions.assertRaises(error.NotFoundError):
+            admin_sketch.lazyload_data(refresh_cache=True)
+
+    def test_delete_sketch_with_protected_label(self):
+        """Test that a sketch with a protected label cannot be deleted."""
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"protected-sketch_{rand}")
+
+        # Use the "protected" label which is in LABELS_TO_PREVENT_DELETION
+        sketch.add_label("protected")
+
+        # Attempt to delete (soft delete)
+        with self.assertions.assertRaises(error.ForbiddenError):
+            sketch.delete()
+
+        # Attempt to force delete as admin
+        admin_sketch = self.admin_api.get_sketch(sketch.id)
+        with self.assertions.assertRaises(error.ForbiddenError):
+            admin_sketch.delete(force_delete=True)
+
+        # Verify sketch still exists and is not deleted
+        _ = sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(sketch.status, "ready")
+
 
 manager.EndToEndTestManager.register_test(TimelineDeletionTest)

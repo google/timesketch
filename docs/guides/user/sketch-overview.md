@@ -76,12 +76,12 @@ Deleting a sketch removes it from your list of active sketches. There are two ty
 1.  **Soft Delete (Default):**
     *   The sketch is marked as **'deleted'** in the database.
     *   It is hidden from the main sketch list.
-    *   **Crucially**, Timesketch attempts to **close all associated OpenSearch indices** to free up memory and resources on the cluster.
+    *   **Crucially**, Timesketch attempts to **close all associated OpenSearch indices** to free up memory and resources on the cluster. **Note:** Indices are only closed if they are not shared with other active (non-deleted) sketches. This check is performed system-wide across all users to ensure data integrity.
     *   This action is reversible by an administrator (via database intervention) if needed, as the data is not permanently destroyed.
 
 2.  **Hard Delete (Force Delete):**
     *   This permanently removes the sketch, all its timelines, and all associated metadata from the database.
-    *   It also **permanently deletes** the underlying OpenSearch indices.
+    *   It also **permanently deletes** the underlying OpenSearch indices. **Note:** As with soft deletion, indices are only deleted if they are not shared with other active sketches in the system.
     *   **Admin Only:** Only administrators can perform a hard delete, and they can do so even on sketches that have already been soft-deleted.
     *   *Note:* You cannot delete a sketch that is currently **'archived'**. You must unarchive it first.
 
@@ -90,7 +90,7 @@ Deleting a sketch removes it from your list of active sketches. There are two ty
 Archiving a sketch is a way to preserve it in a archived state while freeing up system resources. When a sketch is archived:
 - It is hidden from the default list of sketches.
 - All its timelines are marked as archived.
-- The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster.
+- The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster. **Note:** This check is performed system-wide across all users to ensure data integrity.
 - You cannot explore data, run analyzers, or make other modifications to an archived sketch.
 - The sketch can be unarchived at any time to restore full functionality.
 

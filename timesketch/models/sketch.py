@@ -293,6 +293,43 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, Bas
     )
     events = relationship("Event", backref="searchindex", lazy="dynamic")
 
+    def is_shared(self, exclude_sketch_id: Optional[int] = None) -> bool:
+        """Checks if the underlying OpenSearch index is shared with other sketches.
+
+        This method identifies all `SearchIndex` objects that share the same
+        `index_name` and then iterates through all associated timelines across
+        the entire system. It determines if the index is "shared" by checking
+        if any of those timelines belong to a sketch that is not marked as
+        deleted (excluding the optionally provided `exclude_sketch_id`).
+
+        This check is performed at the system level, bypassing access control
+        layers, to ensure data integrity. This prevents indices from being closed
+        or deleted if they are still required by other sketches, even if the
+        current user does not have permission to view those other sketches.
+
+        Args:
+            exclude_sketch_id: Optional sketch ID to exclude from the check.
+                Typically, this is the ID of the sketch currently being deleted
+                or archived.
+
+        Returns:
+            True if the index is associated with at least one other non-deleted
+            sketch; False otherwise.
+        """
+        # Find all SearchIndex objects with the same index_name to be extra safe
+        # in case there are duplicate SearchIndex records pointing to the same
+        # physical OpenSearch index.
+        search_indices = SearchIndex.query.filter_by(index_name=self.index_name).all()
+        for index in search_indices:
+            for timeline in index.timelines:
+                if exclude_sketch_id and timeline.sketch_id == exclude_sketch_id:
+                    continue
+                if not timeline.sketch:
+                    continue
+                if timeline.sketch.get_status.status != "deleted":
+                    return True
+        return False
+
 
 class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the View model."""
