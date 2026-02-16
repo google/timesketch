@@ -169,7 +169,9 @@ class SketchListResource(resources.ResourceMixin, Resource):
         if include_archived:
             base_filter = base_filter_with_archived
         else:
-            base_filter = base_filter.filter(not_(Sketch.status.any(status="archived")))
+            base_filter = base_filter.filter(
+                not_(Sketch.status.any(status="archived"))
+            )  # pylint: disable=line-too-long
 
         if scope == "recent":
             # Get list of sketches that the user has actively searched in.
@@ -654,7 +656,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                         )
 
                 except NotFoundError:
-                    # This can happen if the index was already deleted or never existed.
+                    # This can happen if the index was already deleted or never
+                    # existed.
                     e_msg = (
                         f"OpenSearch index {index_name_to_delete} was not found "
                         f"during deletion attempt. It might have been deleted "
@@ -769,7 +772,10 @@ class SketchResource(resources.ResourceMixin, Resource):
             if not current_user.admin:
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    f"User does not have sufficient access rights to delete sketch {sketch_id}.",
+                    (
+                        f"User does not have sufficient access rights to delete "
+                        f"sketch {sketch_id}."
+                    ),
                 )
 
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
@@ -801,7 +807,10 @@ class SketchResource(resources.ResourceMixin, Resource):
             if is_any_timeline_processing:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Cannot delete sketch: one or more timelines are still processing.",
+                    (
+                        "Cannot delete sketch: one or more timelines are still "
+                        "processing."
+                    ),
                 )
 
         sketch.set_status(status="deleted")

@@ -577,6 +577,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 )
 
         # Check if this searchindex is used in other sketches.
+        close_index = True
         searchindex = timeline.searchindex
         if searchindex.is_shared(exclude_sketch_id=sketch.id):
             close_index = False

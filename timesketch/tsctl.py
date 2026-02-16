@@ -1149,7 +1149,10 @@ def sketch_info(sketch_id: int):
 @click.option(
     "--force",
     is_flag=True,
-    help="Permanently delete the sketch and all its associated data from both the database and OpenSearch.",
+    help=(
+        "Permanently delete the sketch and all its associated data from "
+        "both the database and OpenSearch."
+    ),
 )
 def delete_sketch(sketch_id: int, force: bool):
     """Delete a sketch.

@@ -352,9 +352,11 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # Soft delete
         admin_sketch.delete()
 
-        # Verify it is deleted (404 when trying to load data)
-        with self.assertions.assertRaises(error.NotFoundError):
-            admin_sketch.lazyload_data(refresh_cache=True)
+        # Verify it is deleted.
+        # Note: Administrators can still fetch metadata for soft-deleted
+        # sketches, so we check the status instead of expecting a 404.
+        admin_sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(admin_sketch.status, "deleted")
 
     def test_delete_sketch_with_protected_label(self):
         """Test that a sketch with a protected label cannot be deleted."""
@@ -362,7 +364,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"protected-sketch_{rand}")
 
         # Use the "protected" label which is in LABELS_TO_PREVENT_DELETION
-        sketch.add_label("protected")
+        sketch.add_sketch_label("protected")
 
         # Attempt to delete (soft delete)
         with self.assertions.assertRaises(error.ForbiddenError):
