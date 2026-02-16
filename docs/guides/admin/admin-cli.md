@@ -357,30 +357,6 @@ id status created_at                 user_id
 ...
 ```
 
-#### `delete-sketch`
-
-Deletes a sketch from the database.
-
-By default, this performs a soft delete: the sketch is marked as 'deleted' in the database, and its associated OpenSearch indices are closed (if they are not shared with other active sketches).
-
-If the `--force` flag is used, a hard delete is performed: the sketch, its timelines, and its associated search indices (if not shared) are permanently removed from the database, and the corresponding OpenSearch indices are permanently deleted. This action is irreversible.
-
-**Arguments:**
-*   `SKETCH_ID`: The ID of the sketch to delete.
-
-**Options:**
-*   `--force`: Performs a hard delete, permanently removing all data.
-
-**Example (soft delete):**
-```shell
-tsctl delete-sketch 1
-```
-
-**Example (hard delete):**
-```shell
-tsctl delete-sketch 1 --force
-```
-
 #### `event-details`
 
 Display all data for a specific event.
