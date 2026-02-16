@@ -449,6 +449,10 @@ def build_index_pipeline(
             timeline_id,
             plaso_event_filter,
         )
+    else:
+        # This should have been caught by _get_index_task_class. But adding this
+        # here again to make the linter happy.
+        raise KeyError(f"No task that supports {file_extension:s}")
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly

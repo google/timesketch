@@ -4,7 +4,7 @@ import logging
 
 
 from timesketch.lib import emojis
-from timesketch.lib.analyzers import interface as base_interface
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.analyzers.feature_extraction_plugins import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import manager
 from timesketch.lib.analyzers import utils
@@ -309,10 +309,10 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
         Returns:
             List of features to search for.
         """
-        features_config = base_interface.get_yaml_config("regex_features.yaml")
+        features_config = lib_utils.get_yaml_config("regex_features.yaml")
         if not features_config:
             # Backwards compatibility with old config name:
-            features_config = base_interface.get_yaml_config("features.yaml")
+            features_config = lib_utils.get_yaml_config("features.yaml")
             if not features_config:
                 return (
                     "Unable to parse the 'regex_features.yaml' or "
