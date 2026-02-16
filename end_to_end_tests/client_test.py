@@ -174,8 +174,13 @@ level: high
         """Client Sigma object tests."""
         sketch = self.api.create_sketch(name="test_sigmarule_create_get")
         sketch.add_event("event message", "2021-01-01T00:00:00", "timestamp_desc")
+<<<<<<< 2026-01-06_find_soft_deleted_sketches
         rule = self.api.create_sigmarule(
             rule_yaml=f"""
+=======
+
+        rule_yaml = f"""
+>>>>>>> master
 title: Suspicious Installation of eeeee
 id: {self.RULEID2}
 description: Detects suspicious installation of eeeee
@@ -196,7 +201,11 @@ falsepositives:
     - Unknown
 level: high
 """
+<<<<<<< 2026-01-06_find_soft_deleted_sketches
         )
+=======
+        rule = self.api.create_sigmarule(rule_yaml=rule_yaml)
+>>>>>>> master
         self.assertions.assertIsNotNone(rule)
 
         rule = self.api.get_sigmarule(rule_uuid=self.RULEID2)
@@ -710,25 +719,35 @@ level: high
 
         # 2. Call the export method on the sketch object.
         export_file_path = "/tmp/export.zip"
-        self.sketch.export(export_file_path)
+        if os.path.exists(export_file_path):
+            os.remove(export_file_path)
 
-        # 3. Verify the contents of the returned zip file.
-        self.assertions.assertTrue(
-            zipfile.is_zipfile(export_file_path), "Exported file is not a valid zip."
-        )
+        try:
+            self.sketch.export(export_file_path)
 
-        with zipfile.ZipFile(export_file_path, "r") as zipf:
-            # Check for expected files in the archive
-            self.assertions.assertIn("METADATA", zipf.namelist())
-            self.assertions.assertIn("events/starred_events.csv", zipf.namelist())
+            # 3. Verify the contents of the returned zip file.
+            self.assertions.assertTrue(
+                zipfile.is_zipfile(export_file_path),
+                "Exported file is not a valid zip.",
+            )
 
-            # Check the content of the metadata file
-            with zipf.open("METADATA") as meta_file:
-                metadata = json.loads(meta_file.read().decode("utf-8"))
-                self.assertions.assertEqual(metadata.get("sketch_id"), self.sketch.id)
-                self.assertions.assertEqual(
-                    metadata.get("sketch_name"), self.sketch.name
-                )
+            with zipfile.ZipFile(export_file_path, "r") as zipf:
+                # Check for expected files in the archive
+                self.assertions.assertIn("METADATA", zipf.namelist())
+                self.assertions.assertIn("events/starred_events.csv", zipf.namelist())
+
+                # Check the content of the metadata file
+                with zipf.open("METADATA") as meta_file:
+                    metadata = json.loads(meta_file.read().decode("utf-8"))
+                    self.assertions.assertEqual(
+                        metadata.get("sketch_id"), self.sketch.id
+                    )
+                    self.assertions.assertEqual(
+                        metadata.get("sketch_name"), self.sketch.name
+                    )
+        finally:
+            if os.path.exists(export_file_path):
+                os.remove(export_file_path)
 
     def test_delete_sketch_with_shared_index(self):
         """Test deleting a sketch where multiple timelines share the same index.
