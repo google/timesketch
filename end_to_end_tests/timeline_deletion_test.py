@@ -304,9 +304,10 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
             admin_sketch.delete(force_delete=True)
         self.assertions.assertIn("[403]", str(context.exception))
 
-        # Verify sketch still exists and is not deleted
+        # Verify sketch still exists and is not deleted.
+        # Since it's a new sketch without timelines, the status is 'new'.
         _ = sketch.lazyload_data(refresh_cache=True)
-        self.assertions.assertEqual(sketch.status, "ready")
+        self.assertions.assertEqual(sketch.status, "new")
 
 
 manager.EndToEndTestManager.register_test(TimelineDeletionTest)
