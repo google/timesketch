@@ -928,8 +928,9 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 f"Error while searching for event [{event_id}] to determine its index.",
             )
-        if isinstance(result, dict):
-            hits = result.get("hits", {}).get("hits", [])
+        hits = (
+            result.get("hits", {}).get("hits", []) if isinstance(result, dict) else []
+        )
 
         if not hits:
             logger.error(

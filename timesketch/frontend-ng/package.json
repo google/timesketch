@@ -15,7 +15,7 @@
   "dependencies": {
     "@mdi/font": "^7.1.96",
     "@popperjs/core": "^2.4.0",
-    "apexcharts": "^4.0.0",
+    "apexcharts": "^5.3.6",
     "axios": "^1.12.0",
     "cytoscape": "^3.24.0",
     "cytoscape-dagre": "^2.5.0",
@@ -28,7 +28,7 @@
     "v-calendar": "2.4.1",
     "vega": "^6.2.0",
     "vega-embed": "^7.1.0",
-    "vega-lite": "6.4.1",
+    "vega-lite": "^6.4.2",
     "vue": "^2.6.12",
     "vue-apexcharts": "^1.7.0",
     "vue-dragscroll": "^3.0.0",
@@ -57,6 +57,6 @@
     "vite": "^5.4.21",
     "vitest": "~1.6.1",
     "vue-template-compiler": "^2.6.12",
-    "webpack": "^5.102.1"
+    "webpack": "^5.104.1"
   }
 }
