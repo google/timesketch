@@ -293,7 +293,7 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         searchindex_id = tl_a.index.id
 
         # 2. Add the same index to Sketch B
-        tl_b = sketch_b.add_timeline(searchindex_id=searchindex_id)
+        tl_b = sketch_b.create_timeline(searchindex_id, "shared_timeline")
 
         self.assertions.assertEqual(tl_a.index.index_name, tl_b.index.index_name)
         self.check_opensearch_index_status(shared_index_name, "open")
