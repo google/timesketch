@@ -294,13 +294,15 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         sketch.add_sketch_label("protected")
 
         # Attempt to delete (soft delete)
-        with self.assertions.assertRaises(error.ForbiddenError):
+        with self.assertions.assertRaises(RuntimeError) as context:
             sketch.delete()
+        self.assertions.assertIn("[403]", str(context.exception))
 
         # Attempt to force delete as admin
         admin_sketch = self.admin_api.get_sketch(sketch.id)
-        with self.assertions.assertRaises(error.ForbiddenError):
+        with self.assertions.assertRaises(RuntimeError) as context:
             admin_sketch.delete(force_delete=True)
+        self.assertions.assertIn("[403]", str(context.exception))
 
         # Verify sketch still exists and is not deleted
         _ = sketch.lazyload_data(refresh_cache=True)
