@@ -133,7 +133,6 @@ limitations under the License.
               outlined
               dense
               clearable
-              multiple
               show-size
               truncate-length="15"
               id="datafile"
@@ -399,13 +398,23 @@ export default {
       let defaultValue = null
       if (lastElementSelected === 'Create New Header') {
         sources = null
+        let canceled = false
         do {
           defaultValue = prompt('Insert the default value for this header')
+          if (defaultValue === null) {
+            canceled = true
+            break
+          }
           if (defaultValue.includes(this.CSVDelimiter)) {
             alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
             defaultValue = null
           }
         } while (!defaultValue)
+
+        if (canceled) {
+          this.mandatoryHeaders[i].columnsSelected = []
+          return
+        }
       } else {
         sources = this.mandatoryHeaders[i].columnsSelected
       }
@@ -527,49 +536,86 @@ export default {
       }
       this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name)
     },
-    extractCSVHeader: function () {
-      let reader = new FileReader()
-      let file = document.getElementById('datafile').files[0]
-
-      // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
-      // Done to prevent JS reading a large CSV file (GBs)
-      let vueJS = this
-      reader.readAsText(file.slice(0, 10000))
-      reader.onloadend = function (e) {
-        if (e.target.readyState === FileReader.DONE) {
-          /* 3a. Extract the headers from the CSV */
-          let data = e.target.result
-          vueJS.headersString = data.split('\n')[0].replaceAll('"', '').trim()
-          vueJS.valuesString = data.split('\n').slice(1, vueJS.staticNumberRows + 1)
-          vueJS.validateFile()
+    // Extracts headers and preview rows from a CSV file.
+    // Refactored to use readLines for robustness against very long lines.
+    extractCSVHeader: async function () {
+      let file = this.form.file
+      if (!file) return
+      try {
+        // Read enough lines for the header + the preview rows
+        const lines = await this.readLines(file, this.staticNumberRows + 1)
+        if (lines.length > 0) {
+          this.headersString = lines[0].replaceAll('"', '').trim()
+          this.valuesString = lines.slice(1, this.staticNumberRows + 1)
+          this.validateFile()
         }
+      } catch (e) {
+        console.error('Error reading CSV header:', e)
       }
     },
-    extractJSONLHeader: function () {
-      let reader = new FileReader()
-      let file = document.getElementById('datafile').files[0]
-      let vueJS = this
-      reader.readAsText(file.slice(0, 10000))
-      reader.onloadend = function (e) {
-        if (e.target.readyState === FileReader.DONE) {
-          /* 3a. Extract the headers from the CSV */
-          let data = e.target.result
-          let rows = data.split('\n').filter((jsonlLine) => jsonlLine !== '')
-          let i = Math.min(vueJS.staticNumberRows, rows.length)
+    // Extracts headers (keys) and preview rows from a JSONL file.
+    // This previously failed if a single JSONL line exceeded 10KB.
+    extractJSONLHeader: async function () {
+      let file = this.form.file
+      if (!file) return
+      try {
+        // Read the first few lines of the JSONL file
+        const lines = await this.readLines(file, this.staticNumberRows)
+        if (lines.length > 0) {
+          let firstLine = lines[0]
           try {
-            vueJS.headersString = JSON.parse(rows[0])
-            vueJS.valuesString = rows.slice(0, i).map((x) => JSON.parse(x))
-            vueJS.validateFile()
+            this.headersString = JSON.parse(firstLine)
+            this.valuesString = lines.map((x) => JSON.parse(x))
+            this.validateFile()
           } catch (objError) {
             let error = objError.message
             error += '. Your first lines of JSON: '
-            error += rows[0]
+            error += firstLine
             error += '. Be sure to upload a JSON file in a JSONL format.'
-            vueJS.title = 'Cannot parse the JSON file'
-            vueJS.error.push(error)
+            this.title = 'Cannot parse the JSON file'
+            this.error.push(error)
+          }
+        }
+      } catch (e) {
+        console.error('Error reading JSONL header:', e)
+      }
+    },
+    // Robustly reads a specific number of lines from a file using a buffered approach.
+    // This avoids loading the whole file or an arbitrary small slice that might
+    // cut through a line.
+    readLines: async function (file, maxLines) {
+      const CHUNK_SIZE = 100 * 1024 // 100KB chunks to keep the browser responsive
+      const MAX_SCAN_SIZE = 10 * 1024 * 1024 // Limit scan to 10MB to avoid freezing on massive lines
+      let offset = 0
+      let buffer = ''
+      let lines = []
+
+      while (lines.length < maxLines && offset < file.size && offset < MAX_SCAN_SIZE) {
+        const slice = file.slice(offset, offset + CHUNK_SIZE)
+        // blob.text() is used for cleaner async reading
+        const text = await slice.text()
+        buffer += text
+        offset += CHUNK_SIZE
+
+        const parts = buffer.split('\n')
+        // Important: The last element of the split is likely a partial line.
+        // We pop it and keep it in the buffer for the next iteration.
+        buffer = parts.pop()
+        for (const part of parts) {
+          const trimmedPart = part.trim()
+          if (trimmedPart) {
+            lines.push(trimmedPart)
+            if (lines.length >= maxLines) break
           }
         }
       }
+
+      // If we finished reading and still have content in the buffer, it's the last line.
+      if (lines.length < maxLines && buffer.trim()) {
+        lines.push(buffer.trim())
+      }
+
+      return lines
     },
   },
 }
