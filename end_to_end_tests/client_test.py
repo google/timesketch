@@ -793,7 +793,7 @@ level: high
         # The API client's get_sketch() always returns a Sketch object,
         # but loading data for it will fail with a 404 error if it's deleted.
         deleted_sketch = self.api.get_sketch(sketch.id)
-        with self.assertions.assertRaises(error.NotFoundError):
+        with self.assertions.assertRaises(NotFoundError):
             deleted_sketch.lazyload_data(refresh_cache=True)
 
         # 5. Verify the OpenSearch index is gone (since it was force deleted)
