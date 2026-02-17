@@ -22,7 +22,17 @@ MOCK_YETI_ENTITIES = [
         "id": "2152646",
         "tags": [],
         "root_type": "entity",
-    }
+    },
+    {
+        "type": "investigation",
+        "name": "Noisy investigation",
+        "description": "Noisy investigation.",
+        "created": "2024-02-16T12:10:48.670039Z",
+        "modified": "2024-02-16T12:10:48.670040Z",
+        "id": "2152647",
+        "tags": ["tag1", "tag2", "timesketch:muted"],
+        "root_type": "entity",
+    },
 ]
 
 MOCK_YETI_NEIGHBORS_RESPONSE = {
@@ -42,7 +52,23 @@ MOCK_YETI_NEIGHBORS_RESPONSE = {
             "relevant_tags": ["xmrig", "malware"],
             "id": "2152802",
             "root_type": "indicator",
-        }
+        },
+        "indicators/2152803": {
+            "name": "indicator from noisy investigation",
+            "type": "regex",
+            "description": "Random description",
+            "created": "2024-02-16T12:12:14.564723Z",
+            "modified": "2024-02-16T12:12:14.564729Z",
+            "valid_from": "2024-02-16T12:12:14.564730Z",
+            "valid_until": "2024-03-17T12:12:14.564758Z",
+            "pattern": "/bin/bash",
+            "location": "filesystem",
+            "diamond": "victim",
+            "kill_chain_phases": [],
+            "relevant_tags": ["xmrig", "malware"],
+            "id": "2152802",
+            "root_type": "indicator",
+        },
     },
     "paths": [
         [
@@ -54,7 +80,16 @@ MOCK_YETI_NEIGHBORS_RESPONSE = {
                 "created": "2024-02-16T12:28:52.731740Z",
                 "modified": "2024-02-16T12:28:52.731747Z",
                 "id": "2153330",
-            }
+            },
+            {
+                "source": "entities/2152647",
+                "target": "indicators/2152803",
+                "type": "uses",
+                "description": "",
+                "created": "2024-02-16T12:28:52.731740Z",
+                "modified": "2024-02-16T12:28:52.731747Z",
+                "id": "2153331",
+            },
         ]
     ],
     "total": 1,
@@ -84,6 +119,19 @@ MATCHING_BLOOM_HASH = {
     "datetime": "2014-09-16T19:23:40+00:00",
     "sha256_hash": "testhash",
     "message": "testhash",
+}
+
+FALSE_POSITIVE_PATH_MESSAGE = {
+    "__ts_timeline_id": 1,
+    "es_index": "",
+    "es_id": "",
+    "label": "",
+    "timestamp": 1410895419859714,
+    "timestamp_desc": "",
+    "datetime": "2014-09-16T19:23:40+00:00",
+    "source_short": "",
+    "source_long": "",
+    "message": "/bin/bash",
 }
 
 
@@ -165,6 +213,27 @@ class TestYetiIndicators(BaseTest):
 
         analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
+
+        message = json.loads(analyzer.run())
+        self.assertEqual(
+            message["result_summary"],
+            "0/1 indicators were found in the timeline (0 failed)",
+        )
+        mock_api.search_entities.assert_called()
+        mock_api.search_graph.assert_called()
+
+    # Mock the OpenSearch datastore and the YetiApi
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
+    def test_nomatch_muted_indicator(self, mock_yeti_api_class):
+        """Test that ES queries for indicators are correctly built."""
+        mock_api = mock_yeti_api_class.return_value
+        mock_api.search_entities.return_value = MOCK_YETI_ENTITIES
+        mock_api.search_graph.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
+
+        analyzer = yetiindicators.YetiBadnessIndicators("test_index", 1, 123)
+        analyzer.datastore.client = mock.Mock()
+        analyzer.datastore.import_event("test_index", FALSE_POSITIVE_PATH_MESSAGE, "0")
 
         message = json.loads(analyzer.run())
         self.assertEqual(
@@ -343,9 +412,7 @@ tags:
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore")
     @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
-    def test_run_composite_aggregation(
-        self, _, mock_opensearch_datastore
-    ):  # pylint: disable=invalid-name
+    def test_run_composite_aggregation(self, _, mock_opensearch_datastore):  # pylint: disable=invalid-name
         """Tests that the composite aggregation is correctly built."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
         mock_opensearch_datastore.return_value.search.return_value = {
