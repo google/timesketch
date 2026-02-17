@@ -412,7 +412,9 @@ tags:
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore")
     @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
-    def test_run_composite_aggregation(self, _, mock_opensearch_datastore):  # pylint: disable=invalid-name
+    def test_run_composite_aggregation(
+        self, _, mock_opensearch_datastore
+    ):  # pylint: disable=invalid-name
         """Tests that the composite aggregation is correctly built."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
         mock_opensearch_datastore.return_value.search.return_value = {
