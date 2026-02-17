@@ -193,7 +193,7 @@ export default {
       fileMetaData: {},
       error: [],
       percentCompleted: 0,
-      uploadedFiles: [],
+      uploadedFiles: null,
 
       CSVDelimiter: ',',
       infoMessage: '',
@@ -437,7 +437,7 @@ export default {
       this.infoMessage = ''
       this.headersString = ''
       this.valuesString = []
-      this.uploadedFiles = []
+      this.uploadedFiles = null
       this.title = 'Upload Plaso/JSONL/CSV file'
       this.error = []
       this.percentCompleted = 0
@@ -508,22 +508,22 @@ export default {
       }
       return this.error.length === 0
     },
-    setFile: function (fileList) {
+    setFile: function (file) {
       /* 1. Initialize the variables */
 
-      if (!fileList[0]) {
+      if (!file) {
         return
       }
       const bytesToMegaBytes = (bytes) => bytes / 1024 ** 2
       this.fileMetaData = {
-        Name: fileList[0].name,
-        Size: bytesToMegaBytes(fileList[0].size) + ' MB',
+        Name: file.name,
+        Size: bytesToMegaBytes(file.size).toFixed(2) + ' MB',
       }
-      let fileName = fileList[0].name
+      let fileName = file.name
       this.headersMapping = []
       this.headersString = ''
       this.valuesString = []
-      this.form.file = fileList[0]
+      this.form.file = file
       this.form.name = fileName.split('.').slice(0, -1).join('.')
       this.fileName = fileName
       /* 3. Manage CSV missing headers */
@@ -551,6 +551,7 @@ export default {
         }
       } catch (e) {
         console.error('Error reading CSV header:', e)
+        this.error.push(`Failed to read CSV file: ${e.message}`)
       }
     },
     // Extracts headers (keys) and preview rows from a JSONL file.
@@ -578,6 +579,7 @@ export default {
         }
       } catch (e) {
         console.error('Error reading JSONL header:', e)
+        this.error.push(`Failed to read JSONL file: ${e.message}`)
       }
     },
     // Robustly reads a specific number of lines from a file using a buffered approach.
