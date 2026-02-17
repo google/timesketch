@@ -517,7 +517,14 @@ class TimelineResource(resources.ResourceMixin, Resource):
             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR: If an unexpected error
                 occurs while attempting to close the search index in the datastore.
         """
-        sketch = Sketch.get_with_acl(sketch_id)
+        if current_user.admin:
+            # For admins, we use get_by_id which includes soft-deleted sketches.
+            # This is necessary so admins can perform a delete on a timeline
+            # in a sketch that has already been soft-deleted.
+            sketch = Sketch.get_by_id(sketch_id)
+        else:
+            sketch = Sketch.get_with_acl(sketch_id)
+
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -552,10 +559,14 @@ class TimelineResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch.has_permission(user=current_user, permission="write"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "The user does not have write permission on the sketch.",
-            )
+            if not current_user.admin:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    (
+                        f"User does not have write permission on sketch {sketch_id} "
+                        f"to remove timeline {timeline_id}."
+                    ),
+                )
 
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
@@ -568,24 +579,19 @@ class TimelineResource(resources.ResourceMixin, Resource):
         # Check if this searchindex is used in other sketches.
         close_index = True
         searchindex = timeline.searchindex
-        index_name = searchindex.index_name
-        search_indices = SearchIndex.query.filter_by(index_name=index_name).all()
-        timelines = []
-        for index in search_indices:
-            timelines.extend(index.timelines)
-
-        for timeline_ in timelines:
-            if timeline_.sketch is None:
-                continue
-
-            if timeline_.sketch.id != sketch.id:
-                close_index = False
-                break
-
-            if timeline_.id != timeline_id:
-                # There are more than a single timeline using this index_name,
-                # we can't close it (unless this timeline is archived).
-                if timeline_.get_status.status not in ("archived", "fail", "deleted"):
+        if searchindex.is_shared(exclude_sketch_id=sketch.id):
+            close_index = False
+        else:
+            # If not shared with other sketches, we still need to check if there
+            # are other timelines in the SAME sketch using this index.
+            # (e.g. if the user added the same index twice to the same sketch)
+            other_timelines_in_sketch = [
+                t
+                for t in searchindex.timelines
+                if t.sketch_id == sketch.id and t.id != timeline_id
+            ]
+            for t in other_timelines_in_sketch:
+                if t.get_status.status not in ("archived", "fail", "deleted"):
                     close_index = False
                     break
 

@@ -3882,3 +3882,42 @@ def sync_groups_from_json(filepath, dry_run):
             db_session.rollback()
     else:
         click.echo("[DRY-RUN] No changes committed.")
+
+
+@cli.command(name="db-watchdog")
+@click.option(
+    "--log-file",
+    default="/tmp/timesketch_db_modifications.log",
+    help="Path to the log file to watch.",
+)
+def db_watchdog(log_file):
+    """Watch database changes in real-time.
+
+    This command tails the database modification log file.
+
+    IMPORTANT: For this to work, the Timesketch server/workers must be running
+    with the environment variable TIMESKETCH_DB_WATCHDOG_LOG set to the same path.
+
+    Example:
+      export TIMESKETCH_DB_WATCHDOG_LOG=/tmp/timesketch_db_modifications.log
+      tsctl db-watchdog
+    """
+    if not os.path.exists(log_file):
+        # Create the file if it doesn't exist so tail doesn't complain
+        try:
+            with open(log_file, "a", encoding="utf-8"):
+                os.utime(log_file, None)
+        except OSError as e:
+            click.echo(f"Error creating log file: {e}")
+            return
+
+    click.echo(f"Watching database changes in {log_file}...")
+    click.echo(
+        "Make sure TIMESKETCH_DB_WATCHDOG_LOG is set in your server environment."
+    )
+
+    try:
+        # Use tail -f to follow the file
+        subprocess.run(["tail", "-f", log_file], check=False)
+    except KeyboardInterrupt:
+        click.echo("\nStopping watchdog.")

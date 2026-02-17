@@ -184,18 +184,26 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
     @login_required
     def delete(self, searchindex_id):
         """Handles DELETE request to the resource."""
-        searchindex = SearchIndex.get_with_acl(searchindex_id)
+        if current_user.admin:
+            # For admins, we use get_by_id which includes deleted search indices.
+            # This is necessary so admins can perform a delete on an index
+            # that has already been soft-deleted.
+            searchindex = SearchIndex.get_by_id(searchindex_id)
+        else:
+            searchindex = SearchIndex.get_with_acl(searchindex_id)
+
         if not searchindex:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No searchindex found with this ID.")
 
         if not searchindex.has_permission(current_user, "delete"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                (
-                    "User does not have sufficient access rights to "
-                    "delete the search index."
-                ),
-            )
+            if not current_user.admin:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    (
+                        f"User does not have sufficient access rights to "
+                        f"delete search index {searchindex_id}."
+                    ),
+                )
 
         if searchindex.get_status.status == "deleted":
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Search index already deleted.")
