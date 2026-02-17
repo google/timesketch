@@ -30,7 +30,7 @@ MOCK_YETI_ENTITIES = [
         "created": "2024-02-16T12:10:48.670039Z",
         "modified": "2024-02-16T12:10:48.670040Z",
         "id": "2152647",
-        "tags": ["tag1", "tag2", "timesketch:muted"],
+        "tags": ["tag1", "tag2"],
         "root_type": "entity",
     },
 ]
@@ -68,6 +68,7 @@ MOCK_YETI_NEIGHBORS_RESPONSE = {
             "relevant_tags": ["xmrig", "malware"],
             "id": "2152802",
             "root_type": "indicator",
+            "tags": ["timesketch:muted"],
         },
     },
     "paths": [
@@ -412,9 +413,7 @@ tags:
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore")
     @mock.patch("timesketch.lib.analyzers.yetiindicators.YetiApi")
-    def test_run_composite_aggregation(
-        self, _, mock_opensearch_datastore
-    ):  # pylint: disable=invalid-name
+    def test_run_composite_aggregation(self, _, mock_opensearch_datastore):  # pylint: disable=invalid-name
         """Tests that the composite aggregation is correctly built."""
         analyzer = yetiindicators.YetiBloomChecker("test_index", 1, 123)
         mock_opensearch_datastore.return_value.search.return_value = {
