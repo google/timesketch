@@ -15,6 +15,7 @@ services:
       redis:
         condition: service_healthy
     environment:
+      - PYTHONUNBUFFERED=1
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
