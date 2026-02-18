@@ -112,15 +112,23 @@ def get_response_json(response, logger):
 
 
 def error_message(response, message=None, error=RuntimeError):
-    """Raise an error using error message extracted from response."""
+    """Raise an error using error message extracted from response.
+
+    Args:
+        response (requests.Response): a response object from a HTTP request.
+        message (str): Optional message to prepend to the error string.
+        error (Exception): The exception class to raise. Defaults to RuntimeError.
+
+    Raises:
+        error: The exception specified by the error argument.
+    """
     if not message:
-        message = "Unknown error, with error: "
+        message = "Unknown error"
     text = _get_message(response)
 
     raise error(
-        "{0:s}, with error [{1:d}] {2:s} {3:s}".format(
-            message, response.status_code, _get_reason(response), text
-        )
+        f"{message}, with error [{response.status_code}] "
+        f"{_get_reason(response)} {text} ({response.url})"
     )
 
 
