@@ -379,6 +379,7 @@ def _get_index_task_class(file_extension):
     return index_class
 
 
+# pylint: disable=too-many-arguments
 def build_index_pipeline(
     file_path: str = "",
     events: str = "",
@@ -390,6 +391,7 @@ def build_index_pipeline(
     timeline_id: Optional[int] = None,
     headers_mapping: Optional[dict] = None,
     delimiter: str = ",",
+    plaso_event_filter: str = "",
 ):
     """Build a pipeline for index and analysis.
 
@@ -412,6 +414,7 @@ def build_index_pipeline(
                          (ii) source header we want to insert [key=source], and
                          (iii) def. value if we add a new column [key=default_value]
         delimiter: Delimiter to use. Default uses ","
+        plaso_event_filter: filter string for Plaso files.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -435,10 +438,20 @@ def build_index_pipeline(
             headers_mapping,
             delimiter,
         )
-    else:
+    elif file_extension == "plaso":
         index_task = index_task_class.s(
-            file_path, events, timeline_name, index_name, file_extension, timeline_id
+            file_path,
+            events,
+            timeline_name,
+            index_name,
+            file_extension,
+            timeline_id,
+            plaso_event_filter,
         )
+    else:
+        # This should have been caught by _get_index_task_class. But adding this
+        # here again to make the linter happy.
+        raise KeyError(f"No task that supports {file_extension:s}")
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly
@@ -780,6 +793,7 @@ def run_plaso(
     index_name: str,
     source_type: str,
     timeline_id: int,
+    plaso_event_filter: str = "",
 ):
     """Create a Celery task for processing Plaso storage file.
 
@@ -790,6 +804,7 @@ def run_plaso(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
+        plaso_event_filter: filter string for Plaso files.
 
     Raises:
         RuntimeError: If the function is called using events, plaso
@@ -954,7 +969,6 @@ def run_plaso(
         psort_path,
         "-o",
         "opensearch_ts",
-        file_path,
         "--server",
         opensearch_server,
         "--port",
@@ -1029,6 +1043,13 @@ def run_plaso(
     plaso_formatters_file_path = current_app.config.get("PLASO_FORMATTERS", "")
     if plaso_formatters_file_path:
         cmd.extend(["--custom_formatter_definitions", plaso_formatters_file_path])
+
+    cmd.append("--")
+
+    cmd.append(file_path)
+
+    if plaso_event_filter:
+        cmd.append(plaso_event_filter)
 
     # Run psort.py
     try:

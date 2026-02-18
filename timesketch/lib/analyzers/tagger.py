@@ -4,6 +4,7 @@ from collections.abc import Iterable  # pylint: disable no-name-in-module
 import logging
 
 from timesketch.lib import emojis
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
@@ -50,7 +51,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         Returns:
             List of searches to tag results for.
         """
-        tags_config = interface.get_yaml_config("tags.yaml")
+        tags_config = lib_utils.get_yaml_config("tags.yaml")
         if not tags_config:
             return "Unable to parse the tags config file."
 

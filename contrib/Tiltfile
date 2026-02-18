@@ -1,0 +1,157 @@
+# Tiltfile for Timesketch Development
+
+# --- 1. Infrastructure ---
+docker_compose("../docker/dev/docker-compose.yml")
+
+# Grouping for infrastructure
+# Note: Port forwards are automatically inherited from docker-compose.yml
+dc_resource("timesketch", labels=["docker"])
+dc_resource("opensearch", labels=["docker"])
+dc_resource("postgres", labels=["docker"])
+dc_resource("redis", labels=["docker"])
+dc_resource("prometheus", labels=["docker"])
+
+# --- 2. Managed Dev Processes ---
+backend_deps = [
+    "../timesketch",
+    "../data/timesketch.conf",
+    "../requirements.txt",
+]
+
+# Files that require a full process restart/config refresh
+config_deps = [
+    "../data/timesketch.conf",
+    "../requirements.txt",
+]
+
+# Helper to refresh configuration
+refresh_config_cmd = "docker exec timesketch-dev /usr/local/src/timesketch/docker/dev/build/docker-entrypoint.sh refresh-config"
+
+# Helper to wait for container initialization (package installation)
+wait_cmd = "until docker exec timesketch-dev pip show timesketch >/dev/null 2>&1; do sleep 1; done"
+
+# Web Server
+local_resource(
+    "ts-web",
+    serve_cmd=wait_cmd
+    + " && "
+    + refresh_config_cmd
+    + " && docker exec -i timesketch-dev bash -c 'pkill -f gunicorn || true' && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
+    deps=config_deps,
+    ignore=["**/node_modules/**"],
+    labels=["backend"],
+    links=["http://localhost:5000"],
+)
+
+# Celery Worker
+local_resource(
+    "ts-worker",
+    serve_cmd=wait_cmd
+    + " && "
+    + refresh_config_cmd
+    + " && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
+    deps=backend_deps,
+    ignore=["**/node_modules/**"],
+    labels=["backend"],
+)
+
+# Frontend
+local_resource(
+    "ts-frontend-v3",
+    cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-v3",
+    serve_cmd="docker exec -i timesketch-dev bash -c 'pkill -f \"node|yarn\" || true' && docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev --port 5001 --host 0.0.0.0",
+    deps=["../timesketch/frontend-v3/src", "../timesketch/frontend-v3/package.json"],
+    ignore=["**/node_modules/**"],
+    labels=["frontend"],
+    links=["http://localhost:5001"],
+    auto_init=False,
+)
+
+local_resource(
+    "ts-frontend-ng",
+    cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-ng",
+    serve_cmd="docker exec -i timesketch-dev bash -c 'pkill -f \"node|yarn\" || true' && docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve --port 5001 --host 0.0.0.0",
+    deps=["../timesketch/frontend-ng/src", "../timesketch/frontend-ng/package.json"],
+    ignore=["**/node_modules/**"],
+    labels=["frontend"],
+    links=["http://localhost:5001"],
+    auto_init=False,
+)
+
+# --- 3. End-to-End (E2E) Testing ---
+local_resource(
+    "e2e-environment",
+    cmd="export PLASO_PPA_TRACK=stable && docker compose -f ../docker/e2e/docker-compose.yml up -d",
+    labels=["e2e"],
+    auto_init=False,
+)
+
+local_resource(
+    "run-e2e-tests",
+    cmd="docker compose -f ../docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py",
+    labels=["e2e"],
+    auto_init=False,
+    resource_deps=["e2e-environment"],
+)
+
+local_resource(
+    "stop-e2e",
+    cmd="docker compose -f ../docker/e2e/docker-compose.yml down --volumes",
+    labels=["e2e"],
+    auto_init=False,
+)
+
+# --- 4. Utilities ---
+local_resource(
+    "run-unit-tests",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev python3 run_tests.py",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-pylint",
+    cmd=wait_cmd + ' && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev bash -c \'git fetch -p origin master > /dev/null 2>&1 && FILES=$(git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \\.py$); if [ -n "$FILES" ]; then pylint --rcfile=.pylintrc $FILES; else echo "No python files changed."; fi\'',
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-pylint-all",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev pylint --rcfile=.pylintrc timesketch api_client cli_client importer_client",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-black",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black --check --diff timesketch api_client cli_client importer_client",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-black-fix",
+    cmd=wait_cmd + " && docker exec -i --workdir /usr/local/src/timesketch/ timesketch-dev black timesketch api_client cli_client importer_client",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "build-api-cli",
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev pip3 install -e . && docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev pip3 install -e . && docker exec -i --workdir /usr/local/src/timesketch/importer_client/python timesketch-dev pip3 install -e .",
+    auto_init=False,
+    labels=["tools"],
+)
+
+local_resource(
+    "run-frontend-v3-tests",
+    cmd="docker exec -i timesketch-dev yarn --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 run test",
+    auto_init=False,
+    labels=["tools"],
+)
+
+
+print("Timesketch environment ready in Tilt.")
+print("Web UI: http://localhost:5000")
+print("Vite Frontend: http://localhost:5001")

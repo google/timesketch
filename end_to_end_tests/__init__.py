@@ -24,6 +24,7 @@ from . import data_finder_test
 from . import event_test
 from . import exportstream_test
 from . import import_plaso_test
+from . import import_plaso_filter_test
 from . import query_test
 from . import timeline_deletion_test
 from . import tsctl_test
