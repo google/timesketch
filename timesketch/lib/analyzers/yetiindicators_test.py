@@ -22,17 +22,7 @@ MOCK_YETI_ENTITIES = [
         "id": "2152646",
         "tags": [],
         "root_type": "entity",
-    },
-    {
-        "type": "investigation",
-        "name": "Noisy investigation",
-        "description": "Noisy investigation.",
-        "created": "2024-02-16T12:10:48.670039Z",
-        "modified": "2024-02-16T12:10:48.670040Z",
-        "id": "2152647",
-        "tags": ["tag1", "tag2"],
-        "root_type": "entity",
-    },
+    }
 ]
 
 MOCK_YETI_NEIGHBORS_RESPONSE = {
@@ -54,21 +44,21 @@ MOCK_YETI_NEIGHBORS_RESPONSE = {
             "root_type": "indicator",
         },
         "indicators/2152803": {
-            "name": "indicator from noisy investigation",
+            "name": "noisy indicator",
             "type": "regex",
             "description": "Random description",
             "created": "2024-02-16T12:12:14.564723Z",
             "modified": "2024-02-16T12:12:14.564729Z",
             "valid_from": "2024-02-16T12:12:14.564730Z",
             "valid_until": "2024-03-17T12:12:14.564758Z",
-            "pattern": "/bin/bash",
+            "pattern": "ba",
             "location": "filesystem",
             "diamond": "victim",
             "kill_chain_phases": [],
-            "relevant_tags": ["xmrig", "malware"],
-            "id": "2152802",
+            "relevant_tags": ["noise"],
+            "id": "2152803",
             "root_type": "indicator",
-            "tags": ["timesketch:muted"],
+            "tags": ["timesketch:mute"],
         },
     },
     "paths": [
@@ -83,7 +73,7 @@ MOCK_YETI_NEIGHBORS_RESPONSE = {
                 "id": "2153330",
             },
             {
-                "source": "entities/2152647",
+                "source": "entities/2152646",
                 "target": "indicators/2152803",
                 "type": "uses",
                 "description": "",
@@ -239,7 +229,10 @@ class TestYetiIndicators(BaseTest):
         message = json.loads(analyzer.run())
         self.assertEqual(
             message["result_summary"],
-            "0/1 indicators were found in the timeline (0 failed)",
+            (
+                "1 events matched 1/1 indicators (0 failed).\n\n"
+                "Entities found: xmrig:malware"
+            ),
         )
         mock_api.search_entities.assert_called()
         mock_api.search_graph.assert_called()
