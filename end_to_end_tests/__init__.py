@@ -18,6 +18,7 @@
 # https://github.com/google/timesketch/issues/3546
 # from . import agg_test
 # from . import graph_test
+from . import upload_test
 from . import cli_client_e2e_test
 from . import client_test
 from . import data_finder_test
@@ -28,5 +29,5 @@ from . import import_plaso_filter_test
 from . import query_test
 from . import timeline_deletion_test
 from . import tsctl_test
-from . import upload_test
+
 from . import export_sketch_test
