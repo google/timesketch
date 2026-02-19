@@ -16,6 +16,12 @@
 import sys
 import os
 
+# Ensure the latest source code is used by adding the project root to sys.path
+# This must happen before importing end_to_end_tests
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import time
 from collections import Counter
 
@@ -62,13 +68,21 @@ if __name__ == "__main__":
             import inspect
 
             file_path = inspect.getfile(cls)
-            print(f"Debug: name={name}, file_path={file_path}")
             mtime = 0
 
             if git_root:
                 import subprocess
 
                 try:
+                    # Map virtualenv paths back to the git root if needed
+                    if not file_path.startswith(git_root):
+                        filename = os.path.basename(file_path)
+                        source_path = os.path.join(
+                            git_root, "end_to_end_tests", filename
+                        )
+                        if os.path.exists(source_path):
+                            file_path = source_path
+
                     rel_path = os.path.relpath(file_path, git_root)
                     cmd = ["git", "log", "-1", "--format=%at", "--", rel_path]
                     res = subprocess.run(

@@ -87,6 +87,18 @@ class EndToEndTestManager(object):
                     # Try to get the latest commit timestamp from git first.
                     if git_root:
                         try:
+                            # If the file is imported from a virtualenv (outside git root),
+                            # try to find the corresponding source file in the git root.
+                            if not file_path.startswith(git_root):
+                                filename = os.path.basename(file_path)
+                                # Search specifically in the end_to_end_tests folder
+                                # of the repository.
+                                source_path = os.path.join(
+                                    git_root, "end_to_end_tests", filename
+                                )
+                                if os.path.exists(source_path):
+                                    file_path = source_path
+
                             rel_path = os.path.relpath(file_path, git_root)
                             res = subprocess.run(
                                 ["git", "log", "-1", "--format=%at", "--", rel_path],
