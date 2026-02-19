@@ -78,7 +78,7 @@ class AuthApiViewTest(BaseTest):
         mock_discovery.return_value = {"issuer": "https://accounts.google.com"}
 
         # Mock requests.post
-        def side_effect(**kwargs):
+        def side_effect(*_, **kwargs):
             data = kwargs.get("data", {})
             if "access_token" in data:
                 return mock.Mock(
@@ -116,6 +116,11 @@ class AuthApiViewTest(BaseTest):
             "/login/api_callback/?id_token=test_id_token", headers=headers
         )
 
+        with mock.patch.object(self.app.logger, "warning") as mock_warning:
+            response = self.client.get(
+                "/login/api_callback/?id_token=test_id_token", headers=headers
+            )
+            mock_warning.assert_called()
         # We expect 200 because scope mismatch is now relaxed
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertIn(b"Authenticated", response.data)
