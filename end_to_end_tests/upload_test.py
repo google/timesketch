@@ -448,16 +448,22 @@ class UploadTest(interface.BaseEndToEndTest):
             self.assertions.assertEqual(timeline.index.status, "ready")
 
             # Verify the event is searchable by message
-            events = sketch.explore(f'message:"{unique_message}"', as_pandas=True)
+            events = sketch.explore(
+                f'message:"{unique_message}"', as_pandas=True, fields=["*"]
+            )
             self.assertions.assertEqual(len(events), 1)
+            self.assertions.assertIn("LargeField", events.columns)
             self.assertions.assertEqual(events.iloc[0]["LargeField"], large_field_value)
 
             # Verify the event is searchable by the large field itself (partially)
             # Search for the first 20 characters of the large field using a wildcard
             # because the large field is not tokenized (single contiguous string).
             snippet = large_field_value[:20]
-            events_large = sketch.explore(f"LargeField:{snippet}*", as_pandas=True)
+            events_large = sketch.explore(
+                f"LargeField:{snippet}*", as_pandas=True, fields=["*"]
+            )
             self.assertions.assertEqual(len(events_large), 1)
+            self.assertions.assertIn("LargeField", events_large.columns)
             self.assertions.assertEqual(
                 events_large.iloc[0]["LargeField"], large_field_value
             )
@@ -510,21 +516,27 @@ class UploadTest(interface.BaseEndToEndTest):
             self.import_timeline(file_path, sketch=sketch)
 
             # Verification: Both should be found by their message
-            events = sketch.explore("data_type:test_length", as_pandas=True)
+            events = sketch.explore(
+                "data_type:test_length", as_pandas=True, fields=["*"]
+            )
             self.assertions.assertEqual(len(events), 2)
 
             # Verification: Under limit should be searchable by exact value
             # Note: We use wildcard because the default 'text' analyzer might
             # still tokenise if there were spaces, but here it's one token.
-            res_under = sketch.explore(f'TestField:"{under_limit_val}"', as_pandas=True)
+            res_under = sketch.explore(
+                f'TestField:"{under_limit_val}"', as_pandas=True, fields=["*"]
+            )
             self.assertions.assertEqual(len(res_under), 1)
+            self.assertions.assertIn("TestField", res_under.columns)
 
             # Verification: Over limit should be searchable by wildcard
             # (search against 'text' field)
             res_over_wildcard = sketch.explore(
-                f"TestField:{over_limit_val[:100]}*", as_pandas=True
+                f"TestField:{over_limit_val[:100]}*", as_pandas=True, fields=["*"]
             )
             self.assertions.assertEqual(len(res_over_wildcard), 1)
+            self.assertions.assertIn("TestField", res_over_wildcard.columns)
             self.assertions.assertEqual(
                 res_over_wildcard.iloc[0]["message"], over_limit_msg
             )
@@ -555,8 +567,9 @@ class UploadTest(interface.BaseEndToEndTest):
 
             self.import_timeline(file_path, sketch=sketch)
 
-            events = sketch.explore(f'message:"{msg}"', as_pandas=True)
+            events = sketch.explore(f'message:"{msg}"', as_pandas=True, fields=["*"])
             self.assertions.assertEqual(len(events), 1)
+            self.assertions.assertIn("BigBlob", events.columns)
             self.assertions.assertEqual(len(events.iloc[0]["BigBlob"]), 100000)
 
 
