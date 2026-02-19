@@ -48,4 +48,4 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add dist
           git commit -m "chore: Update frontend-ng build [skip ci]" || echo "No changes to commit"
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:${GITHUB_REF_NAME}
