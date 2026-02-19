@@ -31,19 +31,24 @@ if __name__ == "__main__":
 
     print("--- Registered Test Classes ---")
 
-    # Mark the directory as safe for git (same logic as manager)
+    # Find the git root (same logic as manager)
+    git_root = None
     try:
-        # Get the project root (2 levels up from end_to_end_tests/tools/run_in_container.py)
-        project_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        import subprocess
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        while current_dir != os.path.dirname(current_dir):
+            if os.path.exists(os.path.join(current_dir, ".git")):
+                git_root = current_dir
+                break
+            current_dir = os.path.dirname(current_dir)
 
-        subprocess.run(
-            ["git", "config", "--global", "--add", "safe.directory", project_root],
-            capture_output=True,
-            check=False,
-        )
+        if git_root:
+            import subprocess
+
+            subprocess.run(
+                ["git", "config", "--global", "--add", "safe.directory", git_root],
+                capture_output=True,
+                check=False,
+            )
     except Exception:  # pylint: disable=broad-except
         pass
 
@@ -53,23 +58,27 @@ if __name__ == "__main__":
             import inspect
 
             file_path = inspect.getfile(cls)
-            # Use the same logic as the manager to show the time
-            import subprocess
-
             mtime = 0
-            try:
-                rel_path = os.path.relpath(file_path, project_root)
-                res = subprocess.run(
-                    ["git", "log", "-1", "--format=%at", "--", rel_path],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                    cwd=project_root,
-                )
-                if res.returncode == 0 and res.stdout.strip():
-                    mtime = int(res.stdout.strip())
-            except Exception:  # pylint: disable=broad-except
-                pass
+
+            if git_root:
+                import subprocess
+
+                try:
+                    rel_path = os.path.relpath(file_path, git_root)
+                    res = subprocess.run(
+                        ["git", "log", "-1", "--format=%at", "--", rel_path],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                        cwd=git_root,
+                    )
+                    if res.returncode == 0 and res.stdout.strip():
+                        mtime = int(res.stdout.strip())
+                    elif res.returncode != 0:
+                        print(f"Debug: Git failed for {name}: {res.stderr.strip()}")
+                except Exception:  # pylint: disable=broad-except
+                    pass
+
             if not mtime:
                 mtime = os.path.getmtime(file_path)
 

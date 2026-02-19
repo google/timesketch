@@ -49,55 +49,55 @@ class EndToEndTestManager(object):
             tests.append((test_name, test_class))
 
         if sort_by_mtime:
-            # Mark the directory as safe for git, otherwise git might refuse to
-            # work on it because of dubious ownership (common in docker).
+            # Find the git root by looking for .git folder starting from this file
             try:
-                # Get the project root (2 levels up from end_to_end_tests/manager.py)
-                project_root = os.path.dirname(
-                    os.path.dirname(os.path.abspath(__file__))
-                )
-                subprocess.run(
-                    [
-                        "git",
-                        "config",
-                        "--global",
-                        "--add",
-                        "safe.directory",
-                        project_root,
-                    ],
-                    capture_output=True,
-                    check=False,
-                )
+                git_root = None
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                while current_dir != os.path.dirname(current_dir):
+                    if os.path.exists(os.path.join(current_dir, ".git")):
+                        git_root = current_dir
+                        break
+                    current_dir = os.path.dirname(current_dir)
+
+                if git_root:
+                    # Mark the directory as safe for git
+                    subprocess.run(
+                        [
+                            "git",
+                            "config",
+                            "--global",
+                            "--add",
+                            "safe.directory",
+                            git_root,
+                        ],
+                        capture_output=True,
+                        check=False,
+                    )
+
             except Exception:  # pylint: disable=broad-except
-                pass
+                git_root = None
 
             # Sort by modification time of the file where the class is defined.
-            # Most recent first.
             def get_mtime(test_item):
                 _, test_class = test_item
                 try:
                     file_path = inspect.getfile(test_class)
 
                     # Try to get the latest commit timestamp from git first.
-                    # This is more reliable in CI environments where file mtime
-                    # is often the checkout time.
-                    try:
-                        # --format=%at gives the author date as a UNIX timestamp.
-                        # -1 ensures we only get the latest commit for this file.
-                        # We use the project root as the working directory and
-                        # pass the relative path to git.
-                        rel_path = os.path.relpath(file_path, project_root)
-                        res = subprocess.run(
-                            ["git", "log", "-1", "--format=%at", "--", rel_path],
-                            capture_output=True,
-                            text=True,
-                            check=False,
-                            cwd=project_root,
-                        )
-                        if res.returncode == 0 and res.stdout.strip():
-                            return int(res.stdout.strip())
-                    except (subprocess.SubprocessError, ValueError, OSError):
-                        pass
+                    if git_root:
+                        try:
+                            rel_path = os.path.relpath(file_path, git_root)
+                            res = subprocess.run(
+                                ["git", "log", "-1", "--format=%at", "--", rel_path],
+                                capture_output=True,
+                                text=True,
+                                check=False,
+                                cwd=git_root,
+                            )
+                            if res.returncode == 0 and res.stdout.strip():
+                                return int(res.stdout.strip())
+                        except (subprocess.SubprocessError, ValueError, OSError):
+                            pass
 
                     return os.path.getmtime(file_path)
                 except (TypeError, OSError):
