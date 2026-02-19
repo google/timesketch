@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
     # Mark the directory as safe for git (same logic as manager)
     try:
+        # Get the project root (2 levels up from end_to_end_tests/tools/run_in_container.py)
         project_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
@@ -57,12 +58,13 @@ if __name__ == "__main__":
 
             mtime = 0
             try:
+                rel_path = os.path.relpath(file_path, project_root)
                 res = subprocess.run(
-                    ["git", "log", "-1", "--format=%at", "--", file_path],
+                    ["git", "log", "-1", "--format=%at", "--", rel_path],
                     capture_output=True,
                     text=True,
                     check=False,
-                    cwd=os.path.dirname(file_path),
+                    cwd=project_root,
                 )
                 if res.returncode == 0 and res.stdout.strip():
                     mtime = int(res.stdout.strip())

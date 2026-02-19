@@ -52,9 +52,9 @@ class EndToEndTestManager(object):
             # Mark the directory as safe for git, otherwise git might refuse to
             # work on it because of dubious ownership (common in docker).
             try:
-                # Get the project root (3 levels up from end_to_end_tests/manager.py)
+                # Get the project root (2 levels up from end_to_end_tests/manager.py)
                 project_root = os.path.dirname(
-                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    os.path.dirname(os.path.abspath(__file__))
                 )
                 subprocess.run(
                     [
@@ -84,14 +84,15 @@ class EndToEndTestManager(object):
                     try:
                         # --format=%at gives the author date as a UNIX timestamp.
                         # -1 ensures we only get the latest commit for this file.
-                        # We use the directory of the file as the working directory
-                        # to ensure git can find the repository.
+                        # We use the project root as the working directory and
+                        # pass the relative path to git.
+                        rel_path = os.path.relpath(file_path, project_root)
                         res = subprocess.run(
-                            ["git", "log", "-1", "--format=%at", "--", file_path],
+                            ["git", "log", "-1", "--format=%at", "--", rel_path],
                             capture_output=True,
                             text=True,
                             check=False,
-                            cwd=os.path.dirname(file_path),
+                            cwd=project_root,
                         )
                         if res.returncode == 0 and res.stdout.strip():
                             return int(res.stdout.strip())
