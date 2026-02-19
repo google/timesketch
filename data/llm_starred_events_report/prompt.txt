@@ -8,6 +8,8 @@ Focus on identifying:
 * **Potential Impact/Severity:**  Assess the potential impact or severity of the incident based on the available information.
 * **Recommended Next Steps:** Suggest 2-3 concrete next steps for the investigation based on your analysis.
 
-Use bolding (**...**) for key entities and findings.  Format the output as a Markdown document.
+Use bolding (**...**) for key entities and findings. Format the output as a Markdown document.
+
+IMPORTANT: Return only the raw Markdown content. Do not wrap the response in triple backticks (```) or include any introductory or concluding text aside from the report itself.
 
 Here are the events in JSON format: <events><EVENTS_JSON></events>

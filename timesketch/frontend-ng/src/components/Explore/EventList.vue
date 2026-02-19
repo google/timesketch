@@ -245,7 +245,7 @@ limitations under the License.
                   icon 
                   @click="generateStarredEventsReport()" 
                   :loading="isGeneratingReport"
-                  v-if="isStarredEventsFilterActive">
+                  v-if="isStarredEventsFilterActive && (systemSettings.LLM_FEATURES_AVAILABLE && (systemSettings.LLM_FEATURES_AVAILABLE.llm_starred_events_report || systemSettings.LLM_FEATURES_AVAILABLE.default))">
                     <v-icon v-if="!isGeneratingReport" title="Generate report from starred events">mdi-file-star-four-points</v-icon>
                 </v-btn>
 
@@ -720,6 +720,9 @@ export default {
     },
     userSettings() {
       return this.$store.state.settings
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
     },
     headers() {
       let baseHeaders = [

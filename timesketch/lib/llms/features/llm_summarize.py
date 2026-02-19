@@ -21,7 +21,6 @@ import prometheus_client
 from flask import current_app
 from timesketch.lib import utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
-from timesketch.api.v1 import export
 from timesketch.models.sketch import Sketch
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib.llms.features.interface import LLMFeatureInterface
@@ -117,10 +116,10 @@ class LLMSummarizeFeature(LLMFeatureInterface):
         Returns:
             pd.DataFrame: DataFrame containing query results.
         Raises:
-            ValueError: If datastore is not provided or no valid indices are found.
+            ValueError: If no valid indices are found.
         """
         if datastore is None:
-            raise ValueError("Datastore must be provided.")
+            datastore = OpenSearchDataStore()
         if not query_filter:
             query_filter = {}
         if id_list:
@@ -143,24 +142,27 @@ class LLMSummarizeFeature(LLMFeatureInterface):
             indices=indices,
             timeline_ids=timeline_ids,
         )
-        return export.query_results_to_dataframe(result, sketch)
+        return utils.query_results_to_dataframe(result, sketch)
 
-    def generate_prompt(self, sketch: Sketch, **kwargs: Any) -> str:
+    def generate_prompt(
+        self,
+        sketch: Sketch,
+        datastore: Optional[OpenSearchDataStore] = None,
+        timeline_ids: Optional[list] = None,
+        **kwargs: Any,
+    ) -> str:
         """Generates the summarization prompt based on events from a query.
         Args:
             sketch: The Sketch object containing events to summarize.
-            **kwargs: Additional arguments including:
-                - form: Form data containing query and filter information.
-                - datastore: OpenSearchDataStore instance for querying.
-                - timeline_ids: List of timeline IDs to query.
+            datastore: OpenSearchDataStore instance for querying.
+            timeline_ids: List of timeline IDs to query.
+            **kwargs: Additional arguments including 'form'.
         Returns:
             str: Generated prompt text with events to summarize.
         Raises:
             ValueError: If required parameters are missing or if no events are found.
         """
         form = kwargs.get("form")
-        datastore = kwargs.get("datastore")
-        timeline_ids = kwargs.get("timeline_ids")
         if not form:
             raise ValueError("Missing 'form' data in kwargs")
         query_filter = form.get("filter", {})

@@ -23,7 +23,6 @@ import prometheus_client
 from flask import current_app
 
 from timesketch.lib import utils
-from timesketch.api.v1 import export
 from timesketch.models.sketch import Sketch
 from timesketch.lib.stories import utils as story_utils
 from timesketch.lib.definitions import METRICS_NAMESPACE
@@ -31,6 +30,8 @@ from timesketch.lib.llms.features.interface import LLMFeatureInterface
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 logger = logging.getLogger("timesketch.llm.starred_events_report_feature")
+
+STARRED_EVENTS_REPORT_LIMIT = 1000
 
 METRICS = {
     "llm_starred_events_report_events_processed_total": prometheus_client.Counter(
@@ -59,16 +60,7 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
 
     NAME = "llm_starred_events_report"
     PROMPT_CONFIG_KEY = "PROMPT_LLM_STARRED_EVENTS_REPORT"
-    RESPONSE_SCHEMA = {
-        "type": "object",
-        "properties": {
-            "summary": {
-                "type": "string",
-                "description": "Detailed report summary of the events",
-            }
-        },
-        "required": ["summary"],
-    }
+    RESPONSE_SCHEMA = None
 
     def __init__(self):
         """Initialize the feature with default values for caching."""
@@ -121,6 +113,7 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
         query_string: str = "*",
         query_filter: Optional[dict] = None,
         id_list: Optional[list] = None,
+        datastore: Optional[OpenSearchDataStore] = None,
         timeline_ids: Optional[list] = None,
     ) -> pd.DataFrame:
         """Runs a timesketch query and returns results as a DataFrame.
@@ -129,16 +122,15 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             query_string: Search query string.
             query_filter: Dictionary with filter parameters.
             id_list: List of event IDs to retrieve.
+            datastore: OpenSearchDataStore instance for querying.
             timeline_ids: List of timeline IDs to query.
         Returns:
             pd.DataFrame: DataFrame containing query results.
         Raises:
             ValueError: If no valid indices are found.
         """
-        datastore = OpenSearchDataStore(
-            host=current_app.config.get("OPENSEARCH_HOSTS")[0]["host"],
-            port=current_app.config.get("OPENSEARCH_HOSTS")[0]["port"],
-        )
+        if datastore is None:
+            datastore = OpenSearchDataStore()
         if not query_filter:
             query_filter = {}
         if id_list:
@@ -161,29 +153,62 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             indices=indices,
             timeline_ids=timeline_ids,
         )
-        return export.query_results_to_dataframe(result, sketch)
+        return utils.query_results_to_dataframe(result, sketch)
 
-    def generate_prompt(self, sketch: Sketch, form: dict = None, **kwargs: Any) -> str:
+    def generate_prompt(
+        self,
+        sketch: Sketch,
+        form: dict = None,
+        datastore: Optional[OpenSearchDataStore] = None,
+        timeline_ids: Optional[list] = None,
+        **kwargs: Any,
+    ) -> str:
         """Generates the starred events report prompt based on events from a query.
         Args:
             sketch: The Sketch object containing events to analyze.
             form: Form data containing query and filter information.
-            **kwargs: Additional arguments including:
-                - timeline_ids: List of timeline IDs to query.
+            datastore: OpenSearchDataStore instance for querying.
+            timeline_ids: List of timeline IDs to query.
+            **kwargs: Additional arguments.
         Returns:
             str: Generated prompt text with events to analyze.
         Raises:
             ValueError: If required parameters are missing or if no events are found.
         """
-        timeline_ids = kwargs.get("timeline_ids")
         if not form:
             raise ValueError("Missing 'form' data")
         query_filter = form.get("filter", {})
         query_string = form.get("query", "*") or "*"
+
+        if datastore is None:
+            datastore = OpenSearchDataStore()
+
+        all_timeline_ids = [t.id for t in sketch.timelines]
+        indices = query_filter.get("indices", all_timeline_ids)
+        if "_all" in indices:
+            indices = all_timeline_ids
+        indices, timeline_ids = utils.get_validated_indices(indices, sketch)
+
+        event_count = datastore.search(
+            sketch_id=sketch.id,
+            query_string=query_string,
+            query_filter=query_filter,
+            indices=indices,
+            timeline_ids=timeline_ids,
+            count=True,
+        )
+
+        if event_count > STARRED_EVENTS_REPORT_LIMIT:
+            raise ValueError(
+                f"Too many events ({event_count}) to generate a report. "
+                f"The limit is {STARRED_EVENTS_REPORT_LIMIT}."
+            )
+
         events_df = self._run_timesketch_query(
             sketch,
             query_string,
             query_filter,
+            datastore=datastore,
             timeline_ids=timeline_ids,
         )
 
@@ -217,16 +242,22 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
         return self._get_prompt_text(events_dict)
 
     def process_response(
-        self, llm_response: Any, sketch: Sketch = None, form: dict = None, **kwargs: Any
+        self,
+        llm_response: Any,
+        sketch: Sketch = None,
+        form: dict = None,
+        datastore: Optional[OpenSearchDataStore] = None,
+        timeline_ids: Optional[list] = None,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """Processes the LLM response and creates a Story in the sketch.
         Args:
-            llm_response: The response from the LLM model, expected to be a dictionary.
+            llm_response: The response from the LLM model.
             sketch: The Sketch object.
             form: Form data containing query and filter information.
-            **kwargs: Additional arguments including:
-                - sketch_id: ID of the sketch being processed.
-                - timeline_ids: List of timeline IDs to query.
+            datastore: OpenSearchDataStore instance for querying.
+            timeline_ids: List of timeline IDs to query.
+            **kwargs: Additional arguments.
         Returns:
             Dictionary containing the processed response:
                 - summary: The report text
@@ -237,16 +268,24 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             ValueError: If required parameters are missing or if the LLM response
                       is not in the expected format.
         """
-        timeline_ids = kwargs.get("timeline_ids")
         if not sketch:
             raise ValueError("Missing 'sketch'")
         if not form:
             raise ValueError("Missing 'form' data")
-        if not isinstance(llm_response, dict):
-            raise ValueError("LLM response is expected to be a dictionary")
-        summary_text = llm_response.get("summary")
-        if summary_text is None:
-            raise ValueError("LLM response missing 'summary' key")
+        if not isinstance(llm_response, str):
+            raise ValueError("LLM response is expected to be a string")
+
+        summary_text = llm_response.strip()
+        # Remove markdown markers if present
+        if summary_text.startswith("```"):
+            first_newline = summary_text.find("\n")
+            if first_newline != -1:
+                summary_text = summary_text[first_newline:].strip()
+            else:
+                summary_text = summary_text[3:].strip()
+
+            if summary_text.endswith("```"):
+                summary_text = summary_text[:-3].strip()
 
         if self._events_df is None:
             query_filter = form.get("filter", {})
@@ -256,6 +295,7 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
                 sketch,
                 query_string,
                 query_filter,
+                datastore=datastore,
                 timeline_ids=timeline_ids,
             )
             self._events_df = events_df

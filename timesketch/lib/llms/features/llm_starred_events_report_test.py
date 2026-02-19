@@ -18,6 +18,7 @@ from unittest import mock
 import pandas as pd
 from flask import current_app
 from timesketch.lib.testlib import BaseTest
+from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.llms.features.llm_starred_events_report import (
     LLMStarredEventsReportFeature,
 )
@@ -34,7 +35,7 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         current_app.config["PROMPT_LLM_STARRED_EVENTS_REPORT"] = (
             "./data/llm_starred_events_report/prompt.txt"
         )
-        current_app.config["OPENSEARCH_HOSTS"] = [{"host": "localhost", "port": 9200}]
+        self.datastore = MockDataStore("noserver", 4711)
 
     @mock.patch(
         "builtins.open", mock.mock_open(read_data="Analyze these events: <EVENTS_JSON>")
@@ -73,40 +74,36 @@ class TestLLMStarredEventsReportFeature(BaseTest):
             self.llm_feature._get_prompt_text([])
 
     @mock.patch("timesketch.lib.utils.get_validated_indices")
-    @mock.patch(
-        "timesketch.lib.llms.features.llm_starred_events_report.OpenSearchDataStore"
-    )
-    def test_run_timesketch_query(self, _mock_datastore_class, mock_get_indices):
+    def test_run_timesketch_query(self, mock_get_indices):
         """Tests _run_timesketch_query method."""
         mock_get_indices.return_value = ["test_index"], [1]
         result_df = pd.DataFrame([{"message": "Test event"}])
-        mock_datastore_instance = _mock_datastore_class.return_value
-        mock_datastore_instance.search.return_value = {"mock": "result"}
-        with mock.patch(
-            "timesketch.api.v1.export.query_results_to_dataframe",
-            return_value=result_df,
-        ) as mock_export:
-            df = self.llm_feature._run_timesketch_query(
-                self.sketch1,
-                query_string="test query",
-                query_filter={"filter": "test"},
-            )
-            self.assertEqual(len(df), 1)
-            self.assertEqual(df.iloc[0]["message"], "Test event")
-            mock_datastore_instance.search.assert_called_once()
-            mock_export.assert_called_once()
+        with mock.patch.object(
+            self.datastore, "search", return_value={"mock": "result"}
+        ) as mock_search:
+            with mock.patch(
+                "timesketch.lib.utils.query_results_to_dataframe",
+                return_value=result_df,
+            ) as mock_export:
+                df = self.llm_feature._run_timesketch_query(
+                    self.sketch1,
+                    query_string="test query",
+                    query_filter={"filter": "test"},
+                    datastore=self.datastore,
+                )
+                self.assertEqual(len(df), 1)
+                self.assertEqual(df.iloc[0]["message"], "Test event")
+                mock_search.assert_called_once()
+                mock_export.assert_called_once()
 
     @mock.patch("timesketch.lib.utils.get_validated_indices")
-    @mock.patch(
-        "timesketch.lib.llms.features.llm_starred_events_report.OpenSearchDataStore"
-    )
-    def test_run_timesketch_query_no_indices(
-        self, _mock_datastore_class, mock_get_indices
-    ):
+    def test_run_timesketch_query_no_indices(self, mock_get_indices):
         """Tests _run_timesketch_query method with no valid indices."""
         mock_get_indices.return_value = [], []
         with self.assertRaises(ValueError):
-            self.llm_feature._run_timesketch_query(self.sketch1)
+            self.llm_feature._run_timesketch_query(
+                self.sketch1, datastore=self.datastore
+            )
 
     @mock.patch(
         "timesketch.lib.llms.features.llm_starred_events_report."
@@ -119,25 +116,28 @@ class TestLLMStarredEventsReportFeature(BaseTest):
     def test_generate_prompt(self, mock_get_prompt, mock_run_query):
         """Tests generate_prompt method."""
         # Set up mocks
-        mock_run_query.return_value = pd.DataFrame(
-            [
-                {"message": "Test event 1", "datetime": "2023-01-01T00:00:00"},
-                {"message": "Test event 2", "datetime": "2023-01-01T00:00:01"},
-                {"message": "Test event 1", "datetime": "2023-01-01T00:00:00"},
-            ]
-        )
-        mock_get_prompt.return_value = "Test prompt"
-        # Call the method
-        prompt = self.llm_feature.generate_prompt(
-            self.sketch1, form={"query": "test", "filter": {}}
-        )
-        # Verify the result
-        self.assertEqual(prompt, "Test prompt")
-        mock_run_query.assert_called_once()
-        called_events = mock_get_prompt.call_args[0][0]
-        self.assertEqual(len(called_events), 2)
-        self.assertEqual(called_events[0]["message"], "Test event 1")
-        self.assertEqual(called_events[1]["message"], "Test event 2")
+        with mock.patch.object(self.datastore, "search", return_value=10):
+            mock_run_query.return_value = pd.DataFrame(
+                [
+                    {"message": "Test event 1", "datetime": "2023-01-01T00:00:00"},
+                    {"message": "Test event 2", "datetime": "2023-01-01T00:00:01"},
+                    {"message": "Test event 1", "datetime": "2023-01-01T00:00:00"},
+                ]
+            )
+            mock_get_prompt.return_value = "Test prompt"
+            # Call the method
+            prompt = self.llm_feature.generate_prompt(
+                self.sketch1,
+                form={"query": "test", "filter": {}},
+                datastore=self.datastore,
+            )
+            # Verify the result
+            self.assertEqual(prompt, "Test prompt")
+            mock_run_query.assert_called_once()
+            called_events = mock_get_prompt.call_args[0][0]
+            self.assertEqual(len(called_events), 2)
+            self.assertEqual(called_events[0]["message"], "Test event 1")
+            self.assertEqual(called_events[1]["message"], "Test event 2")
 
     @mock.patch(
         "timesketch.lib.llms.features.llm_starred_events_report."
@@ -145,11 +145,14 @@ class TestLLMStarredEventsReportFeature(BaseTest):
     )
     def test_generate_prompt_no_events(self, mock_run_query):
         """Tests generate_prompt method with no events."""
-        mock_run_query.return_value = pd.DataFrame()
-        prompt = self.llm_feature.generate_prompt(
-            self.sketch1, form={"query": "test", "filter": {}}
-        )
-        self.assertEqual(prompt, "No events to analyze for starred events report.")
+        with mock.patch.object(self.datastore, "search", return_value=0):
+            mock_run_query.return_value = pd.DataFrame()
+            prompt = self.llm_feature.generate_prompt(
+                self.sketch1,
+                form={"query": "test", "filter": {}},
+                datastore=self.datastore,
+            )
+            self.assertEqual(prompt, "No events to analyze for starred events report.")
 
     @mock.patch(
         "timesketch.lib.llms.features.llm_starred_events_report."
@@ -166,9 +169,10 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         )
         mock_create_story.return_value = 123
         result = self.llm_feature.process_response(
-            {"summary": "This is a test summary"},
+            "This is a test summary",
             sketch=self.sketch1,
             form={"query": "test", "filter": {}},
+            datastore=self.datastore,
         )
         self.assertEqual(result["summary"], "This is a test summary")
         self.assertEqual(result["summary_event_count"], 2)
@@ -183,27 +187,31 @@ class TestLLMStarredEventsReportFeature(BaseTest):
     @mock.patch("timesketch.lib.stories.utils.create_story")
     def test_caching_behavior(self, mock_create_story, mock_run_query):
         """Tests that the query is cached and not run twice."""
-        mock_run_query.return_value = pd.DataFrame(
-            [
-                {"message": "Test event 1", "datetime": "2023-01-01T00:00:00"},
-            ]
-        )
-        mock_create_story.return_value = 123
+        with mock.patch.object(self.datastore, "search", return_value=1):
+            mock_run_query.return_value = pd.DataFrame(
+                [
+                    {"message": "Test event 1", "datetime": "2023-01-01T00:00:00"},
+                ]
+            )
+            mock_create_story.return_value = 123
 
-        # Call generate_prompt (first query run)
-        self.llm_feature.generate_prompt(
-            self.sketch1, form={"query": "test", "filter": {}}
-        )
+            # Call generate_prompt (first query run)
+            self.llm_feature.generate_prompt(
+                self.sketch1,
+                form={"query": "test", "filter": {}},
+                datastore=self.datastore,
+            )
 
-        # Call process_response (should use cache)
-        self.llm_feature.process_response(
-            {"summary": "Test summary"},
-            sketch=self.sketch1,
-            form={"query": "test", "filter": {}},
-        )
+            # Call process_response (should use cache)
+            self.llm_feature.process_response(
+                "Test summary",
+                sketch=self.sketch1,
+                form={"query": "test", "filter": {}},
+                datastore=self.datastore,
+            )
 
-        # Verify query was only run once
-        self.assertEqual(mock_run_query.call_count, 1)
+            # Verify query was only run once
+            self.assertEqual(mock_run_query.call_count, 1)
 
     def test_process_response_missing_params(self):
         """Tests process_response method with missing parameters."""
@@ -214,13 +222,7 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         """Tests process_response method with invalid response format."""
         with self.assertRaises(ValueError):
             self.llm_feature.process_response(
-                "Not a dict",
-                sketch=self.sketch1,
-                form={"query": "test", "filter": {}},
-            )
-        with self.assertRaises(ValueError):
-            self.llm_feature.process_response(
-                {"not_summary": "Test"},
+                123,
                 sketch=self.sketch1,
                 form={"query": "test", "filter": {}},
             )

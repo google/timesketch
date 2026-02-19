@@ -1,4 +1,4 @@
-# Copyright 2025 Google Inc. All rights reserved.
+# Copyright 2026 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 import json
 import logging
 import time
+
+from flask_login import current_user
+
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch, Story
 
@@ -37,7 +40,10 @@ def create_story(sketch: Sketch, content: str, title: str = None) -> int:
     if title is None:
         title = f"Investigation Report - {time.strftime('%Y-%m-%d %H:%M')}"
     try:
-        story = Story(title=title, sketch=sketch, user=sketch.user)
+        user = sketch.user
+        if current_user.is_authenticated:
+            user = current_user
+        story = Story(title=title, sketch=sketch, user=user)
         content_blocks = [
             {
                 "componentName": "",
