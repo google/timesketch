@@ -28,14 +28,14 @@ if __name__ == "__main__":
     # which ones run
 
     print("--- Registered Test Classes ---")
-    for name, _ in manager.get_tests():
+    for name, _ in manager.get_tests(sort_by_mtime=True):
         print(f"- {name}")
     print("-------------------------------")
 
     # Sleep to make sure all containers are operational
     time.sleep(30)  # seconds
 
-    for name, cls in manager.get_tests():
+    for name, cls in manager.get_tests(sort_by_mtime=True):
         test_class = cls()
         # Prepare the test environment.
         test_class.setup()

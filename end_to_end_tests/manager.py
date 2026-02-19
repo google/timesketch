@@ -14,6 +14,10 @@
 """This file contains a class for managing end to end tests."""
 
 
+import inspect
+import os
+
+
 class EndToEndTestManager(object):
     """The test manager."""
 
@@ -21,17 +25,43 @@ class EndToEndTestManager(object):
     _exclude_registry = set()
 
     @classmethod
-    def get_tests(cls):
-        """Retrieves the registered tests.
+    def get_tests(cls, sort_by_mtime=False):
+        """Retrieves all registered end-to-end test classes.
+
+        This method yields test classes that have been registered using the
+        `register_test` method, excluding any that were marked for exclusion.
+
+        Args:
+            sort_by_mtime (bool): Optional. If True, tests are sorted by the
+                modification time of the source file where the test class is
+                defined, with the most recently modified tests yielded first.
+                Defaults to False.
 
         Yields:
-            tuple: containing:
-                unicode: the uniquely identifying name of the test
-                type: the test class.
+            tuple: A pair containing:
+                str: The uniquely identifying name of the test.
+                type: The test class (subclass of BaseEndToEndTest).
         """
+        tests = []
         for test_name, test_class in iter(cls._class_registry.items()):
             if test_name in cls._exclude_registry:
                 continue
+            tests.append((test_name, test_class))
+
+        if sort_by_mtime:
+            # Sort by modification time of the file where the class is defined.
+            # Most recent first.
+            def get_mtime(test_item):
+                _, test_class = test_item
+                try:
+                    file_path = inspect.getfile(test_class)
+                    return os.path.getmtime(file_path)
+                except (TypeError, OSError):
+                    return 0
+
+            tests.sort(key=get_mtime, reverse=True)
+
+        for test_name, test_class in tests:
             yield test_name, test_class
 
     @classmethod
@@ -39,10 +69,10 @@ class EndToEndTestManager(object):
         """Retrieves a class object of a specific test.
 
         Args:
-            test_name (unicode): name of the test to retrieve.
+            test_name (str): name of the test to retrieve.
 
         Returns:
-            Instance of Test class object.
+            type: The test class class object.
 
         Raises:
             KeyError: if the test is not registered.
@@ -56,13 +86,13 @@ class EndToEndTestManager(object):
 
     @classmethod
     def register_test(cls, test_class, exclude_from_list=False):
-        """Registers an test class.
+        """Registers a test class.
 
         The test classes are identified by their lower case name.
 
         Args:
             test_class (type): the test class to register.
-            exclude_from_list (boolean): if set to True then the test
+            exclude_from_list (bool): if set to True then the test
                 gets registered but will not be included in the
                 get_tests function. Defaults to False.
 
