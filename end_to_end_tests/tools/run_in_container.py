@@ -14,6 +14,8 @@
 """Script to run all end to end tests."""
 
 import sys
+import os
+
 import time
 from collections import Counter
 
@@ -28,8 +30,35 @@ if __name__ == "__main__":
     # which ones run
 
     print("--- Registered Test Classes ---")
-    for name, _ in manager.get_tests(sort_by_mtime=True):
-        print(f"- {name}")
+    for name, cls in manager.get_tests(sort_by_mtime=True):
+        try:
+            from datetime import datetime
+            import inspect
+
+            file_path = inspect.getfile(cls)
+            # Use the same logic as the manager to show the time
+            import subprocess
+
+            mtime = 0
+            try:
+                res = subprocess.run(
+                    ["git", "log", "-1", "--format=%at", "--", file_path],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    cwd=os.path.dirname(file_path),
+                )
+                if res.returncode == 0 and res.stdout.strip():
+                    mtime = int(res.stdout.strip())
+            except:
+                pass
+            if not mtime:
+                mtime = os.path.getmtime(file_path)
+
+            time_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+            print(f"- {name} (last modified: {time_str})")
+        except:
+            print(f"- {name}")
     print("-------------------------------")
 
     # Sleep to make sure all containers are operational

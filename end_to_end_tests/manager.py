@@ -16,6 +16,7 @@
 
 import inspect
 import os
+import subprocess
 
 
 class EndToEndTestManager(object):
@@ -55,6 +56,27 @@ class EndToEndTestManager(object):
                 _, test_class = test_item
                 try:
                     file_path = inspect.getfile(test_class)
+
+                    # Try to get the latest commit timestamp from git first.
+                    # This is more reliable in CI environments where file mtime
+                    # is often the checkout time.
+                    try:
+                        # --format=%at gives the author date as a UNIX timestamp.
+                        # -1 ensures we only get the latest commit for this file.
+                        # We use the directory of the file as the working directory
+                        # to ensure git can find the repository.
+                        res = subprocess.run(
+                            ["git", "log", "-1", "--format=%at", "--", file_path],
+                            capture_output=True,
+                            text=True,
+                            check=False,
+                            cwd=os.path.dirname(file_path),
+                        )
+                        if res.returncode == 0 and res.stdout.strip():
+                            return int(res.stdout.strip())
+                    except (subprocess.SubprocessError, ValueError, OSError):
+                        pass
+
                     return os.path.getmtime(file_path)
                 except (TypeError, OSError):
                     return 0
