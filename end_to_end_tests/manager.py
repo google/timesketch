@@ -73,7 +73,6 @@ class EndToEndTestManager(object):
                         capture_output=True,
                         check=False,
                     )
-                    print(f"DEBUG: Found git root at {git_root}")
 
             except Exception:  # pylint: disable=broad-except
                 git_root = None
@@ -87,8 +86,9 @@ class EndToEndTestManager(object):
                     # Try to get the latest commit timestamp from git first.
                     if git_root:
                         try:
-                            # If the file is imported from a virtualenv (outside git root),
-                            # try to find the corresponding source file in the git root.
+                            # If the file is imported from a virtualenv (outside git
+                            # root), try to find the corresponding source file in the
+                            # git root.
                             if not file_path.startswith(git_root):
                                 filename = os.path.basename(file_path)
                                 # Search specifically in the end_to_end_tests folder

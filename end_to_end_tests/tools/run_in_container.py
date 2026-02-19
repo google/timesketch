@@ -51,9 +51,6 @@ if __name__ == "__main__":
             import subprocess
             import shutil
 
-            git_path = shutil.which("git")
-            print(f"Debug: git_root={git_root}, git_path={git_path}")
-
             subprocess.run(
                 ["git", "config", "--global", "--add", "safe.directory", git_root],
                 capture_output=True,
@@ -94,13 +91,11 @@ if __name__ == "__main__":
                     )
                     if res.returncode == 0 and res.stdout.strip():
                         mtime = int(res.stdout.strip())
-                    elif res.returncode != 0:
-                        print(
-                            f"Debug: Git failed for {name} ({rel_path}): {res.stderr.strip()}"
-                        )
-                        print(f"Debug: Command was: {' '.join(cmd)}")
                 except Exception as e:  # pylint: disable=broad-except
-                    print(f"Debug: Exception for {name}: {str(e)}")
+                    print(
+                        f"Warning: Could not get Git mtime for {name}. "
+                        f"Error: {e}. Falling back to filesystem mtime."
+                    )
                     pass
 
             if not mtime:
