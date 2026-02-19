@@ -286,11 +286,20 @@ def validate_api_token():
         )
 
     read_scopes = bearer_token_json.get("scope", "").split()
-    if not set(read_scopes) == set(SCOPES):
+    if not set(SCOPES).issubset(set(read_scopes)):
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Client scopes differ from what they should be (email, openid, "
             "profile) = {} VS {}".format(SCOPES, read_scopes),
+        )
+
+    if set(read_scopes) != set(SCOPES):
+        current_app.logger.warning(
+            "Client scopes differ from what they should be for user [%s]: "
+            "server-[%s] VS token-[%s]",
+            token_json.get("email"),
+            SCOPES,
+            read_scopes,
         )
 
     validated_email = token_json.get("email")
