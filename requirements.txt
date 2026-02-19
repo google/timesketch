@@ -12,18 +12,18 @@ flask_migrate==4.0.4
 flask_restful==0.3.10
 flask_sqlalchemy==3.0.3
 flask_wtf==1.2.1
-google-auth==2.32.0
-google_auth_oauthlib==0.4.1
+google-auth==2.48.0
+google_auth_oauthlib==1.2.4
 google-genai
 gunicorn==23.0.0
 numpy==1.26.4
-oauthlib==3.1.0
+oauthlib==3.3.1
 pandas==2.2.3
 PyJWT==2.4.0
 python_dateutil==2.9.0
 PyYAML==6.0.1
 redis==4.4.4
-requests==2.32.4
+requests==2.32.5
 setuptools>=67.0.0
 sigmatools==0.19.1 ; python_version > '3.4'
 six==1.17.0
