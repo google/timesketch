@@ -36,6 +36,8 @@ wsl -d docker-desktop sysctl -w vm.max_map_count=262144
 [void](New-Item -ItemType Directory -Name timesketch\etc\timesketch)
 [void](New-Item -ItemType Directory -Name timesketch\etc\timesketch\sigma)
 [void](New-Item -ItemType Directory -Name timesketch\etc\timesketch\sigma\rules)
+[void](New-Item -ItemType Directory -Name timesketch\etc\timesketch\llm_summarize)
+[void](New-Item -ItemType Directory -Name timesketch\etc\timesketch\llm_starred_events_report)
 [void](New-Item -ItemType Directory -Name timesketch\upload)
 
 # function to get Cryptographically random alphanumeric characters
@@ -87,6 +89,8 @@ Write-Host "* Fetching configuration files.."
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml).Content | out-file timesketch\etc\timesketch\intelligence_tag_metadata.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_config.yaml).Content | out-file timesketch\etc\timesketch\sigma_config.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml).Content | out-file timesketch\etc\timesketch\sigma\rules\lnx_susp_zmap.yml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/llm_summarize/prompt.txt).Content | out-file timesketch\etc\timesketch\llm_summarize\prompt.txt -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/llm_starred_events_report/prompt.txt).Content | out-file timesketch\etc\timesketch\llm_starred_events_report\prompt.txt -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/contrib/nginx.conf).Content | out-file timesketch\etc\nginx.conf -encoding UTF8NoBOM
 Write-Host "OK"
 
