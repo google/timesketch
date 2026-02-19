@@ -14,6 +14,7 @@
 """End to end tests of Timesketch upload functionality."""
 
 import os
+import tempfile
 import uuid
 import json
 import random
@@ -159,8 +160,8 @@ class UploadTest(interface.BaseEndToEndTest):
 
         with open(file_path, "w", encoding="utf-8") as file_object:
             for i in range(74251):
-                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
-                file_object.write(string)
+                line_string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
+                file_object.write(line_string)
 
         self.import_timeline(file_path, sketch=sketch)
         os.remove(file_path)
@@ -416,45 +417,50 @@ class UploadTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"test_large_field_upload {rand}")
         self.sketch = sketch
 
-        file_path = "/tmp/large_field.jsonl"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "large_field.jsonl")
 
-        # Generate 38,000 random hex characters to exceed 32KB OpenSearch limit
-        large_field_value = "".join(random.choices(string.hexdigits.lower(), k=38000))
-        unique_message = f"Large event check {rand}"
+            # Generate 38,000 random hex characters to exceed 32KB OpenSearch limit
+            large_field_value = "".join(
+                random.choices(string.hexdigits.lower(), k=38000)
+            )
+            unique_message = f"Large event check {rand}"
 
-        with open(file_path, "w", encoding="utf-8") as file_object:
-            line_data = {
-                "datetime": "2026-02-18T13:37:00+00:00",
-                "timestamp": 1771421820000000,
-                "timestamp_desc": "Time Logged",
-                "message": unique_message,
-                "data_type": "test:large_field",
-                "LargeField": large_field_value,
-                "id": f"test-uuid-{rand}",
-            }
-            file_object.write(json.dumps(line_data) + "\n")
+            with open(file_path, "w", encoding="utf-8") as file_object:
+                line_data = {
+                    "datetime": "2026-02-18T13:37:00+00:00",
+                    "timestamp": 1771421820000000,
+                    "timestamp_desc": "Time Logged",
+                    "message": unique_message,
+                    "data_type": "test:large_field",
+                    "LargeField": large_field_value,
+                    "id": f"test-uuid-{rand}",
+                }
+                file_object.write(json.dumps(line_data) + "\n")
 
-        # Import the timeline
-        self.import_timeline(file_path, sketch=sketch)
-        os.remove(file_path)
+            # Import the timeline
+            print(f"Importing timeline from: {file_path}")
+            self.import_timeline(file_path, sketch=sketch)
 
-        timeline = sketch.list_timelines()[0]
+            timeline = sketch.list_timelines()[0]
 
-        # Check that timeline was uploaded correctly and is ready
-        self.assertions.assertEqual(timeline.index.status, "ready")
+            # Check that timeline was uploaded correctly and is ready
+            self.assertions.assertEqual(timeline.index.status, "ready")
 
-        # Verify the event is searchable by message
-        events = sketch.explore(f'message:"{unique_message}"', as_pandas=True)
-        self.assertions.assertEqual(len(events), 1)
+            # Verify the event is searchable by message
+            events = sketch.explore(f'message:"{unique_message}"', as_pandas=True)
+            self.assertions.assertEqual(len(events), 1)
+            self.assertions.assertEqual(events.iloc[0]["LargeField"], large_field_value)
 
-        # Verify the event is searchable by the large field itself (partially)
-        # Search for the first 20 characters of the large field
-        snippet = large_field_value[:20]
-        events_large = sketch.explore(f'LargeField:"{snippet}"', as_pandas=True)
-        self.assertions.assertEqual(len(events_large), 1)
-        self.assertions.assertEqual(
-            events_large.iloc[0]["LargeField"], large_field_value
-        )
+            # Verify the event is searchable by the large field itself (partially)
+            # Search for the first 20 characters of the large field using a wildcard
+            # because the large field is not tokenized (single contiguous string).
+            snippet = large_field_value[:20]
+            events_large = sketch.explore(f"LargeField:{snippet}*", as_pandas=True)
+            self.assertions.assertEqual(len(events_large), 1)
+            self.assertions.assertEqual(
+                events_large.iloc[0]["LargeField"], large_field_value
+            )
 
 
 manager.EndToEndTestManager.register_test(UploadTest)
