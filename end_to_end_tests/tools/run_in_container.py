@@ -31,12 +31,10 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# This satisfies the linter while allowing us to maintain the sys.path
-# modification required to ensure the E2E runner always uses the latest source
-# code from the repository rather than a potentially stale pre-installed package.
-from end_to_end_tests import (
-    manager as test_manager,
-)  # pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position
+from end_to_end_tests import manager as test_manager
+
+# pylint: enable=wrong-import-position
 
 manager = test_manager.EndToEndTestManager()
 counter = Counter()
