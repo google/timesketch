@@ -71,8 +71,8 @@ class UploadTest(interface.BaseEndToEndTest):
 
         with open(file_path, "w", encoding="utf-8") as file_object:
             for i in range(4123):
-                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
-                file_object.write(string)
+                line_string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
+                file_object.write(line_string)
 
         self.import_timeline("/tmp/large.jsonl", sketch=sketch)
         os.remove(file_path)
@@ -211,11 +211,11 @@ class UploadTest(interface.BaseEndToEndTest):
 
             for i in range(3251):
                 # write a line with random values for message
-                string = (
+                line_string = (
                     f'"CSV Count: {i} {rand}","123456789",'
                     '"2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
                 )
-                file_object.write(string)
+                file_object.write(line_string)
 
         self.import_timeline("/tmp/large.csv", sketch=sketch)
         os.remove(file_path)
@@ -255,11 +255,11 @@ class UploadTest(interface.BaseEndToEndTest):
 
             for i in range(73251):
                 # write a line with random values for message
-                string = (
+                line_string = (
                     f'"CSV Count: {i} {rand}","123456789",'
                     '"2015-07-24T19:01:01+00:00","Write time","73kcsv"\n'
                 )
-                file_object.write(string)
+                file_object.write(line_string)
 
         self.import_timeline("/tmp/verylarge.csv", sketch=sketch)
         os.remove(file_path)
@@ -335,33 +335,33 @@ class UploadTest(interface.BaseEndToEndTest):
             file_object.write(
                 '"message","timestamp","datetime","timestamp_desc","data_type"\n'
             )
-            string = (
+            line_string = (
                 '"total precision","123456789",'
                 '"2024-07-24T10:57:02.877297Z","Write time","timestamptest"\n'
             )
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = (
                 '"ISO8601","1331698658276340",'
                 '"2015-07-24T19:01:01+00:00","Write time","timestamptest"\n'
             )
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = (
                 '"Wrong epoch","123456",'
                 '"2015-07-24 19:01:01","Write time","timestamptest fail"\n'
             )
-            file_object.write(string)
-            string = '"no_datetime","123456","","Write time","no_datetime"\n'
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = '"no_datetime","123456","","Write time","no_datetime"\n'
+            file_object.write(line_string)
+            line_string = (
                 '"Notimestamp","",'
                 '"2015-07-24 19:01:01","Write time","no_timestamp"\n'
             )
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = (
                 '"Accurate_timestamp","1331712840499027",'
                 '"2015-07-24 19:01:01","Write time","Accurate_timestamp"\n'
             )
-            file_object.write(string)
+            file_object.write(line_string)
 
         self.import_timeline("/tmp/timestamptest.csv", sketch=sketch)
         os.remove(file_path)
