@@ -43,6 +43,10 @@ if __name__ == "__main__":
 
         if git_root:
             import subprocess
+            import shutil
+
+            git_path = shutil.which("git")
+            print(f"Debug: git_root={git_root}, git_path={git_path}")
 
             subprocess.run(
                 ["git", "config", "--global", "--add", "safe.directory", git_root],
@@ -58,6 +62,7 @@ if __name__ == "__main__":
             import inspect
 
             file_path = inspect.getfile(cls)
+            print(f"Debug: name={name}, file_path={file_path}")
             mtime = 0
 
             if git_root:
@@ -65,8 +70,9 @@ if __name__ == "__main__":
 
                 try:
                     rel_path = os.path.relpath(file_path, git_root)
+                    cmd = ["git", "log", "-1", "--format=%at", "--", rel_path]
                     res = subprocess.run(
-                        ["git", "log", "-1", "--format=%at", "--", rel_path],
+                        cmd,
                         capture_output=True,
                         text=True,
                         check=False,
@@ -75,8 +81,12 @@ if __name__ == "__main__":
                     if res.returncode == 0 and res.stdout.strip():
                         mtime = int(res.stdout.strip())
                     elif res.returncode != 0:
-                        print(f"Debug: Git failed for {name}: {res.stderr.strip()}")
-                except Exception:  # pylint: disable=broad-except
+                        print(
+                            f"Debug: Git failed for {name} ({rel_path}): {res.stderr.strip()}"
+                        )
+                        print(f"Debug: Command was: {' '.join(cmd)}")
+                except Exception as e:  # pylint: disable=broad-except
+                    print(f"Debug: Exception for {name}: {str(e)}")
                     pass
 
             if not mtime:

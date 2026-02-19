@@ -73,6 +73,7 @@ class EndToEndTestManager(object):
                         capture_output=True,
                         check=False,
                     )
+                    print(f"DEBUG: Found git root at {git_root}")
 
             except Exception:  # pylint: disable=broad-except
                 git_root = None
