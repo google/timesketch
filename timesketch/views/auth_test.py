@@ -68,9 +68,7 @@ class AuthApiViewTest(BaseTest):
     @mock.patch("timesketch.views.auth.requests.post")
     @mock.patch("timesketch.views.auth.get_oauth2_discovery_document")
     @mock.patch("timesketch.views.auth.validate_jwt")
-    def test_validate_api_token_scope_superset(
-        self, mock_validate_jwt, mock_discovery, mock_post
-    ):
+    def test_validate_api_token_scope_superset(self, _, mock_discovery, mock_post):
         """Test validate_api_token with superset of scopes."""
         # Setup config
         self.app.config["GOOGLE_OIDC_CLIENT_ID"] = "test_client_id"
@@ -80,14 +78,19 @@ class AuthApiViewTest(BaseTest):
         mock_discovery.return_value = {"issuer": "https://accounts.google.com"}
 
         # Mock requests.post
-        def side_effect(*args, **kwargs):
+        def side_effect(**kwargs):
             data = kwargs.get("data", {})
             if "access_token" in data:
                 return mock.Mock(
                     status_code=200,
                     json=lambda: {
-                        # This includes extra scopes (short forms) causing the failure previously
-                        "scope": "email profile openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
+                        # This includes extra scopes (short forms) that caused
+                        # the failure previously.
+                        "scope": (
+                            "email profile openid "
+                            "https://www.googleapis.com/auth/userinfo.profile "
+                            "https://www.googleapis.com/auth/userinfo.email"
+                        ),
                         "azp": "test_client_id",
                         "email": "test@example.com",
                     },
