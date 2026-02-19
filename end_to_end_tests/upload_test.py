@@ -462,5 +462,102 @@ class UploadTest(interface.BaseEndToEndTest):
                 events_large.iloc[0]["LargeField"], large_field_value
             )
 
+    def test_field_length_limit_searchability(self):
+        """Test different field lengths to verify searchability.
+        Case 1: Under limit (32,760 chars) - Should be fully searchable.
+        Case 2: Over limit (32,770 chars) - Should be searchable via text but
+                not via exact keyword match if keyword is ignored.
+        """
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test_field_length_search {rand}")
+        self.sketch = sketch
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "length_test.jsonl")
+
+            # 1. Just under the 32,766 limit
+            under_limit_val = "A" * 32760
+            under_limit_msg = f"Under limit {rand}"
+
+            # 2. Just over the 32,766 limit
+            over_limit_val = "B" * 32770
+            over_limit_msg = f"Over limit {rand}"
+
+            with open(file_path, "w", encoding="utf-8") as file_object:
+                file_object.write(
+                    json.dumps(
+                        {
+                            "datetime": "2026-02-19T10:00:00+00:00",
+                            "message": under_limit_msg,
+                            "data_type": "test_length",
+                            "TestField": under_limit_val,
+                        }
+                    )
+                    + "\n"
+                )
+                file_object.write(
+                    json.dumps(
+                        {
+                            "datetime": "2026-02-19T10:01:00+00:00",
+                            "message": over_limit_msg,
+                            "data_type": "test_length",
+                            "TestField": over_limit_val,
+                        }
+                    )
+                    + "\n"
+                )
+
+            self.import_timeline(file_path, sketch=sketch)
+
+            # Verification: Both should be found by their message
+            events = sketch.explore("data_type:test_length", as_pandas=True)
+            self.assertions.assertEqual(len(events), 2)
+
+            # Verification: Under limit should be searchable by exact value
+            # Note: We use wildcard because the default 'text' analyzer might
+            # still tokenise if there were spaces, but here it's one token.
+            res_under = sketch.explore(f'TestField:"{under_limit_val}"', as_pandas=True)
+            self.assertions.assertEqual(len(res_under), 1)
+
+            # Verification: Over limit should be searchable by wildcard
+            # (search against 'text' field)
+            res_over_wildcard = sketch.explore(
+                f"TestField:{over_limit_val[:100]}*", as_pandas=True
+            )
+            self.assertions.assertEqual(len(res_over_wildcard), 1)
+            self.assertions.assertEqual(
+                res_over_wildcard.iloc[0]["message"], over_limit_msg
+            )
+
+    def test_extreme_field_length_upload(self):
+        """Test uploading a very large field (100KB) to verify system stability."""
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test_extreme_field {rand}")
+        self.sketch = sketch
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "extreme_field.jsonl")
+            large_val = "X" * 100000
+            msg = f"Extreme event {rand}"
+
+            with open(file_path, "w", encoding="utf-8") as file_object:
+                file_object.write(
+                    json.dumps(
+                        {
+                            "datetime": "2026-02-19T11:00:00+00:00",
+                            "message": msg,
+                            "data_type": "test:extreme",
+                            "BigBlob": large_val,
+                        }
+                    )
+                    + "\n"
+                )
+
+            self.import_timeline(file_path, sketch=sketch)
+
+            events = sketch.explore(f'message:"{msg}"', as_pandas=True)
+            self.assertions.assertEqual(len(events), 1)
+            self.assertions.assertEqual(len(events.iloc[0]["BigBlob"]), 100000)
+
 
 manager.EndToEndTestManager.register_test(UploadTest)
