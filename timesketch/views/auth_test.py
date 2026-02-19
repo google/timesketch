@@ -68,7 +68,9 @@ class AuthApiViewTest(BaseTest):
     @mock.patch("timesketch.views.auth.requests.post")
     @mock.patch("timesketch.views.auth.get_oauth2_discovery_document")
     @mock.patch("timesketch.views.auth.validate_jwt")
-    def test_validate_api_token_scope_superset(self, mock_validate_jwt, mock_discovery, mock_post):
+    def test_validate_api_token_scope_superset(
+        self, mock_validate_jwt, mock_discovery, mock_post
+    ):
         """Test validate_api_token with superset of scopes."""
         # Setup config
         self.app.config["GOOGLE_OIDC_CLIENT_ID"] = "test_client_id"
@@ -87,29 +89,29 @@ class AuthApiViewTest(BaseTest):
                         # This includes extra scopes (short forms) causing the failure previously
                         "scope": "email profile openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
                         "azp": "test_client_id",
-                        "email": "test@example.com"
-                    }
+                        "email": "test@example.com",
+                    },
                 )
             if "id_token" in data:
-                 return mock.Mock(
+                return mock.Mock(
                     status_code=200,
                     json=lambda: {
                         "email_verified": True,
                         "azp": "test_client_id",
                         "email": "test@example.com",
-                        "aud": "test_client_id"
-                    }
+                        "aud": "test_client_id",
+                    },
                 )
             return mock.Mock(status_code=400)
 
         mock_post.side_effect = side_effect
 
         # Headers and Args
-        headers = {
-            "Authorization": "Bearer test_access_token"
-        }
+        headers = {"Authorization": "Bearer test_access_token"}
 
-        response = self.client.get("/login/api_callback/?id_token=test_id_token", headers=headers)
+        response = self.client.get(
+            "/login/api_callback/?id_token=test_id_token", headers=headers
+        )
 
         # We expect 200 because scope mismatch is now relaxed
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)

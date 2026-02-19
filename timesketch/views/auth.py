@@ -302,7 +302,6 @@ def validate_api_token():
             read_scopes,
         )
 
-
     validated_email = token_json.get("email")
 
     # Check if the authenticating user is part of the allowed domains.
