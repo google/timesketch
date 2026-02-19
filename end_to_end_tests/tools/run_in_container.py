@@ -30,6 +30,22 @@ if __name__ == "__main__":
     # which ones run
 
     print("--- Registered Test Classes ---")
+
+    # Mark the directory as safe for git (same logic as manager)
+    try:
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        import subprocess
+
+        subprocess.run(
+            ["git", "config", "--global", "--add", "safe.directory", project_root],
+            capture_output=True,
+            check=False,
+        )
+    except Exception:  # pylint: disable=broad-except
+        pass
+
     for name, cls in manager.get_tests(sort_by_mtime=True):
         try:
             from datetime import datetime
@@ -50,14 +66,14 @@ if __name__ == "__main__":
                 )
                 if res.returncode == 0 and res.stdout.strip():
                     mtime = int(res.stdout.strip())
-            except:
+            except Exception:  # pylint: disable=broad-except
                 pass
             if not mtime:
                 mtime = os.path.getmtime(file_path)
 
             time_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
             print(f"- {name} (last modified: {time_str})")
-        except:
+        except Exception:  # pylint: disable=broad-except
             print(f"- {name}")
     print("-------------------------------")
 

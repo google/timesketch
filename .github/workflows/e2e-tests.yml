@@ -18,6 +18,8 @@ jobs:
         os: [ubuntu-24.04]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d --build
         env:
@@ -38,6 +40,8 @@ jobs:
         os: [ubuntu-24.04]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d --build
         env:

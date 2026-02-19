@@ -13,7 +13,6 @@
 # limitations under the License.
 """This file contains a class for managing end to end tests."""
 
-
 import inspect
 import os
 import subprocess
@@ -50,6 +49,28 @@ class EndToEndTestManager(object):
             tests.append((test_name, test_class))
 
         if sort_by_mtime:
+            # Mark the directory as safe for git, otherwise git might refuse to
+            # work on it because of dubious ownership (common in docker).
+            try:
+                # Get the project root (3 levels up from end_to_end_tests/manager.py)
+                project_root = os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+                subprocess.run(
+                    [
+                        "git",
+                        "config",
+                        "--global",
+                        "--add",
+                        "safe.directory",
+                        project_root,
+                    ],
+                    capture_output=True,
+                    check=False,
+                )
+            except Exception:  # pylint: disable=broad-except
+                pass
+
             # Sort by modification time of the file where the class is defined.
             # Most recent first.
             def get_mtime(test_item):
