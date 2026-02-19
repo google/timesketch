@@ -14,8 +14,11 @@
 """This file contains a class for managing end to end tests."""
 
 import inspect
+import logging
 import os
 import subprocess
+
+logger = logging.getLogger("timesketch.e2e_manager")
 
 
 class EndToEndTestManager(object):
@@ -23,6 +26,85 @@ class EndToEndTestManager(object):
 
     _class_registry = {}
     _exclude_registry = set()
+
+    @classmethod
+    def get_git_root(cls):
+        """Finds the git repository root.
+
+        Returns:
+            str: The path to the git root, or None if not found.
+        """
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            while current_dir != os.path.dirname(current_dir):
+                if os.path.exists(os.path.join(current_dir, ".git")):
+                    return current_dir
+                current_dir = os.path.dirname(current_dir)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.debug("Error while searching for git root: %s", str(e))
+        return None
+
+    @classmethod
+    def get_last_modified(cls, test_class, git_root=None):
+        """Determines the last modified time of a test class.
+
+        It first tries to get the timestamp from git history, and falls back to
+        the filesystem modification time.
+
+        Args:
+            test_class (type): The test class to check.
+            git_root (str): Optional. The git repository root.
+
+        Returns:
+            int: The UNIX timestamp of the last modification.
+        """
+        try:
+            file_path = inspect.getfile(test_class)
+
+            if git_root:
+                # If the file is imported from a virtualenv (outside git root),
+                # try to find the corresponding source file in the git root.
+                if not file_path.startswith(git_root):
+                    filename = os.path.basename(file_path)
+                    source_path = os.path.join(git_root, "end_to_end_tests", filename)
+                    if os.path.exists(source_path):
+                        file_path = source_path
+
+                try:
+                    # Use -c safe.directory to avoid global config changes and
+                    # bypass dubious ownership checks in docker/CI.
+                    rel_path = os.path.relpath(file_path, git_root)
+                    res = subprocess.run(
+                        [
+                            "git",
+                            "-c",
+                            f"safe.directory={git_root}",
+                            "log",
+                            "-1",
+                            "--format=%at",
+                            "--",
+                            rel_path,
+                        ],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                        cwd=git_root,
+                    )
+                    if res.returncode == 0 and res.stdout.strip():
+                        return int(res.stdout.strip())
+                except (subprocess.SubprocessError, ValueError, OSError) as e:
+                    logger.debug(
+                        "Git log failed for %s: %s", test_class.__name__, str(e)
+                    )
+
+            return int(os.path.getmtime(file_path))
+        except (TypeError, OSError) as e:
+            logger.warning(
+                "Could not determine last modified time for %s: %s",
+                test_class.__name__,
+                str(e),
+            )
+            return 0
 
     @classmethod
     def get_tests(cls, sort_by_mtime=False):
@@ -49,74 +131,11 @@ class EndToEndTestManager(object):
             tests.append((test_name, test_class))
 
         if sort_by_mtime:
-            # Find the git root by looking for .git folder starting from this file
-            try:
-                git_root = None
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                while current_dir != os.path.dirname(current_dir):
-                    if os.path.exists(os.path.join(current_dir, ".git")):
-                        git_root = current_dir
-                        break
-                    current_dir = os.path.dirname(current_dir)
-
-                if git_root:
-                    # Mark the directory as safe for git
-                    subprocess.run(
-                        [
-                            "git",
-                            "config",
-                            "--global",
-                            "--add",
-                            "safe.directory",
-                            git_root,
-                        ],
-                        capture_output=True,
-                        check=False,
-                    )
-
-            except Exception:  # pylint: disable=broad-except
-                git_root = None
-
-            # Sort by modification time of the file where the class is defined.
-            def get_mtime(test_item):
-                _, test_class = test_item
-                try:
-                    file_path = inspect.getfile(test_class)
-
-                    # Try to get the latest commit timestamp from git first.
-                    if git_root:
-                        try:
-                            # If the file is imported from a virtualenv (outside git
-                            # root), try to find the corresponding source file in the
-                            # git root.
-                            if not file_path.startswith(git_root):
-                                filename = os.path.basename(file_path)
-                                # Search specifically in the end_to_end_tests folder
-                                # of the repository.
-                                source_path = os.path.join(
-                                    git_root, "end_to_end_tests", filename
-                                )
-                                if os.path.exists(source_path):
-                                    file_path = source_path
-
-                            rel_path = os.path.relpath(file_path, git_root)
-                            res = subprocess.run(
-                                ["git", "log", "-1", "--format=%at", "--", rel_path],
-                                capture_output=True,
-                                text=True,
-                                check=False,
-                                cwd=git_root,
-                            )
-                            if res.returncode == 0 and res.stdout.strip():
-                                return int(res.stdout.strip())
-                        except (subprocess.SubprocessError, ValueError, OSError):
-                            pass
-
-                    return os.path.getmtime(file_path)
-                except (TypeError, OSError):
-                    return 0
-
-            tests.sort(key=get_mtime, reverse=True)
+            git_root = cls.get_git_root()
+            tests.sort(
+                key=lambda x: cls.get_last_modified(x[1], git_root=git_root),
+                reverse=True,
+            )
 
         for test_name, test_class in tests:
             yield test_name, test_class
