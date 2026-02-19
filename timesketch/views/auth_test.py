@@ -112,10 +112,6 @@ class AuthApiViewTest(BaseTest):
         # Headers and Args
         headers = {"Authorization": "Bearer test_access_token"}
 
-        response = self.client.get(
-            "/login/api_callback/?id_token=test_id_token", headers=headers
-        )
-
         with mock.patch.object(self.app.logger, "warning") as mock_warning:
             response = self.client.get(
                 "/login/api_callback/?id_token=test_id_token", headers=headers
