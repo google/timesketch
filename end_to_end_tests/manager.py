@@ -71,14 +71,10 @@ class EndToEndTestManager(object):
                         file_path = source_path
 
                 try:
-                    # Use -c safe.directory to avoid global config changes and
-                    # bypass dubious ownership checks in docker/CI.
                     rel_path = os.path.relpath(file_path, git_root)
                     res = subprocess.run(
                         [
                             "git",
-                            "-c",
-                            f"safe.directory={git_root}",
                             "log",
                             "-1",
                             "--format=%at",
@@ -100,7 +96,8 @@ class EndToEndTestManager(object):
             return int(os.path.getmtime(file_path))
         except (TypeError, OSError) as e:
             logger.warning(
-                "Could not determine last modified time for %s: %s",
+                "Could not determine last modified time for %s: %s. "
+                "Falling back to epoch (0).",
                 test_class.__name__,
                 str(e),
             )

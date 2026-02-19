@@ -27,7 +27,9 @@ jobs:
           OPENSEARCH_VERSION: 2.15.0
           PLASO_PPA_TRACK: stable
       - name: Run e2e tests
-        run: docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+        run: |
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
@@ -49,7 +51,9 @@ jobs:
           OPENSEARCH_VERSION: 2.15.0
           PLASO_PPA_TRACK: staging
       - name: Run e2e tests
-        run: docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+        run: |
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
