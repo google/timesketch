@@ -13,10 +13,12 @@
 # limitations under the License.
 """Tests for the auth views."""
 
+from unittest import mock
 from flask import current_app
 from flask_login import current_user
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.testlib import BaseTest
 
 
@@ -58,3 +60,63 @@ class AuthViewTest(BaseTest):
         self.login()
         response = self.client.get("/logout/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+
+class AuthApiViewTest(BaseTest):
+    """Test the auth API view."""
+
+    @mock.patch("timesketch.views.auth.requests.post")
+    @mock.patch("timesketch.views.auth.get_oauth2_discovery_document")
+    @mock.patch("timesketch.views.auth.validate_jwt")
+    def test_validate_api_token_scope_superset(self, _, mock_discovery, mock_post):
+        """Test validate_api_token with superset of scopes."""
+        # Setup config
+        self.app.config["GOOGLE_OIDC_CLIENT_ID"] = "test_client_id"
+        self.app.config["GOOGLE_OIDC_API_CLIENT_ID"] = "test_api_client_id"
+
+        # Mock responses
+        mock_discovery.return_value = {"issuer": "https://accounts.google.com"}
+
+        # Mock requests.post
+        def side_effect(*_, **kwargs):
+            data = kwargs.get("data", {})
+            if "access_token" in data:
+                return mock.Mock(
+                    status_code=200,
+                    json=lambda: {
+                        # This includes extra scopes (short forms) that caused
+                        # the failure previously.
+                        "scope": (
+                            "email profile openid "
+                            "https://www.googleapis.com/auth/userinfo.profile "
+                            "https://www.googleapis.com/auth/userinfo.email"
+                        ),
+                        "azp": "test_client_id",
+                        "email": "test@example.com",
+                    },
+                )
+            if "id_token" in data:
+                return mock.Mock(
+                    status_code=200,
+                    json=lambda: {
+                        "email_verified": True,
+                        "azp": "test_client_id",
+                        "email": "test@example.com",
+                        "aud": "test_client_id",
+                    },
+                )
+            return mock.Mock(status_code=400)
+
+        mock_post.side_effect = side_effect
+
+        # Headers and Args
+        headers = {"Authorization": "Bearer test_access_token"}
+
+        with mock.patch.object(self.app.logger, "warning") as mock_warning:
+            response = self.client.get(
+                "/login/api_callback/?id_token=test_id_token", headers=headers
+            )
+            mock_warning.assert_called()
+        # We expect 200 because scope mismatch is now relaxed
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn(b"Authenticated", response.data)
