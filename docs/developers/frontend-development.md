@@ -158,11 +158,3 @@ Use the Vuetify `<v-tooltip>` component **only** when:
 </v-tooltip>
 ```
 
-### Quick Reference
-
-| Scenario | Recommended Approach |
-|---|---|
-| Icon buttons, simple labels | `title` attribute |
-| Dynamic or conditional content | `<v-tooltip>` component |
-| Complex / multi-line content | `<v-tooltip>` component |
-| Standard HTML elements | `title` attribute |
