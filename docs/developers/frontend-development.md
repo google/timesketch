@@ -118,3 +118,43 @@ dev credentials, and you should be redirected to the main Timesketch page. All c
 be instantly picked up.
 
 If you already have a yarn process running with the "old" frontend, it might not work.
+## Tooltip Usage Guidelines
+
+Timesketch follows a consistent approach to tooltips across the UI to ensure
+a uniform user experience. This section defines when and how to use tooltips
+in the frontend.
+
+### Default Behavior — Use the `title` Attribute
+
+The preferred and default way to show a tooltip is to use the **browser's
+native `title` attribute** on any HTML element. This requires no extra
+dependencies and works natively in all browsers.
+
+**Always use this approach first:**
+```html
+<!-- Preferred: native browser tooltip -->
+<v-btn icon title="Delete event">
+  <v-icon>mdi-delete</v-icon>
+</v-btn>
+```
+
+### When to Use Vuetify `<v-tooltip>`
+
+Use the Vuetify `<v-tooltip>` component **only** when:
+
+- A `title` attribute is not technically possible on the element
+- The tooltip content is **dynamic or conditional**
+- The tooltip requires **complex or multi-line content**
+
+**Example:**
+```html
+<v-tooltip bottom>
+  <template v-slot:activator="{ on, attrs }">
+    <v-btn icon v-bind="attrs" v-on="on">
+      <v-icon>mdi-information</v-icon>
+    </v-btn>
+  </template>
+  <span>This event was flagged by an analyzer</span>
+</v-tooltip>
+```
+
