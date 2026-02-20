@@ -13,11 +13,28 @@
 # limitations under the License.
 """Script to run all end to end tests."""
 
+import logging
+import os
 import sys
 import time
 from collections import Counter
+from datetime import datetime
 
+# Configure logging
+LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
+
+# Ensure the latest source code is used by adding the project root to sys.path
+# This must happen before importing end_to_end_tests
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# pylint: disable=wrong-import-position
 from end_to_end_tests import manager as test_manager
+
+# pylint: enable=wrong-import-position
 
 manager = test_manager.EndToEndTestManager()
 counter = Counter()
@@ -28,14 +45,19 @@ if __name__ == "__main__":
     # which ones run
 
     print("--- Registered Test Classes ---")
-    for name, _ in manager.get_tests():
-        print(f"- {name}")
+
+    git_root = manager.get_git_root()
+    for name, cls in manager.get_tests(sort_by_mtime=True):
+        mtime = manager.get_last_modified(cls, git_root=git_root)
+        time_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+        print(f"- {name} (last modified: {time_str})")
+
     print("-------------------------------")
 
     # Sleep to make sure all containers are operational
     time.sleep(30)  # seconds
 
-    for name, cls in manager.get_tests():
+    for name, cls in manager.get_tests(sort_by_mtime=True):
         test_class = cls()
         # Prepare the test environment.
         test_class.setup()
