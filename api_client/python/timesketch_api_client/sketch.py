@@ -20,6 +20,7 @@ import os
 import json
 import time
 import logging
+import warnings
 from typing import Dict, Generator, List, Optional
 
 import pandas
@@ -1348,15 +1349,21 @@ class Sketch(resource.BaseResource):
         Returns:
           A stored aggregation object or None if not stored.
         """
-        if self.is_archived():
-            raise RuntimeError("Unable to store an aggregator on an archived sketch.")
-
-        # TODO: Deprecate this function.
+        warnings.warn(
+            "store_aggregation() is deprecated, please use "
+            "Aggregation.save() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        
         logger.warning(
-            "This function is about to be deprecated, please use the "
-            "`.save()` function of an aggregation object instead"
+            "This function is deprecated, please use the "
+            "`.save()` function of an aggregation object instead."
         )
 
+        if self.is_archived():
+            raise RuntimeError("Unable to store an aggregator on an archived sketch.")
+  
         aggregator_obj = self.run_aggregator(aggregator_name, aggregator_parameters)
         aggregator_obj.name = name
         aggregator_obj.description = description
