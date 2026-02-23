@@ -1355,7 +1355,7 @@ class Sketch(resource.BaseResource):
             DeprecationWarning,
             stacklevel=2,
         )
-        
+
         logger.warning(
             "This function is deprecated, please use the "
             "`.save()` function of an aggregation object instead."
@@ -1363,7 +1363,7 @@ class Sketch(resource.BaseResource):
 
         if self.is_archived():
             raise RuntimeError("Unable to store an aggregator on an archived sketch.")
-  
+
         aggregator_obj = self.run_aggregator(aggregator_name, aggregator_parameters)
         aggregator_obj.name = name
         aggregator_obj.description = description
