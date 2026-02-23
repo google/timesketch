@@ -262,5 +262,52 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # 5. Verify the OpenSearch index is gone (since it was force deleted)
         self.check_opensearch_index_status(shared_index_name, "deleted")
 
+    def test_admin_delete_non_owned_sketch(self):
+        """Test that an admin can delete a sketch they don't own.
+
+        This verifies the administrative permission override.
+        """
+        rand = uuid.uuid4().hex
+        # Create a sketch with the regular user
+        sketch = self.api.create_sketch(name=f"non-owned-sketch_{rand}")
+
+        # Try to delete it with the admin API
+        # (This previously failed with 403 because admin wasn't in the ACL)
+        sketch_id = sketch.id
+        admin_sketch = self.admin_api.get_sketch(sketch_id)
+
+        # Soft delete
+        admin_sketch.delete()
+
+        # Verify it is deleted.
+        # Note: Administrators can still fetch metadata for soft-deleted
+        # sketches, so we check the status instead of expecting a 404.
+        admin_sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(admin_sketch.status, "deleted")
+
+    def test_delete_sketch_with_protected_label(self):
+        """Test that a sketch with a protected label cannot be deleted."""
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"protected-sketch_{rand}")
+
+        # Use the "protected" label which is in LABELS_TO_PREVENT_DELETION
+        sketch.add_sketch_label("protected")
+
+        # Attempt to delete (soft delete)
+        with self.assertions.assertRaises(RuntimeError) as context:
+            sketch.delete()
+        self.assertions.assertIn("[403]", str(context.exception))
+
+        # Attempt to force delete as admin
+        admin_sketch = self.admin_api.get_sketch(sketch.id)
+        with self.assertions.assertRaises(RuntimeError) as context:
+            admin_sketch.delete(force_delete=True)
+        self.assertions.assertIn("[403]", str(context.exception))
+
+        # Verify sketch still exists and is not deleted.
+        # Since it's a new sketch without timelines, the status is 'new'.
+        _ = sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(sketch.status, "new")
+
 
 manager.EndToEndTestManager.register_test(TimelineDeletionTest)

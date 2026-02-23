@@ -82,6 +82,13 @@ class SketchListResource(resources.ResourceMixin, Resource):
             default=False,
             location="args",
         )
+        self.parser.add_argument(
+            "include_deleted",
+            type=inputs.boolean,
+            required=False,
+            default=False,
+            location="args",
+        )
 
     @login_required
     def get(self):
@@ -120,21 +127,32 @@ class SketchListResource(resources.ResourceMixin, Resource):
         per_page = args.get("per_page")
         search_query = args.get("search_query")
         include_archived = args.get("include_archived")
+        include_deleted = args.get("include_deleted")
 
         if current_user.admin and scope == "admin":
             sketch_query = Sketch.query
         else:
             sketch_query = Sketch.all_with_acl()
 
-        base_filter = sketch_query.filter(
-            not_(Sketch.Status.status == "deleted"),
-            not_(Sketch.Status.status == "archived"),
-            Sketch.Status.parent,
-        ).order_by(Sketch.updated_at.desc())
+        if include_deleted and current_user.admin:
+            base_filter = sketch_query.filter(
+                not_(Sketch.Status.status == "archived"),
+                Sketch.Status.parent,
+            ).order_by(Sketch.updated_at.desc())
 
-        base_filter_with_archived = sketch_query.filter(
-            not_(Sketch.Status.status == "deleted"), Sketch.Status.parent
-        ).order_by(Sketch.updated_at.desc())
+            base_filter_with_archived = sketch_query.filter(
+                Sketch.Status.parent
+            ).order_by(Sketch.updated_at.desc())
+        else:
+            base_filter = sketch_query.filter(
+                not_(Sketch.Status.status == "deleted"),
+                not_(Sketch.Status.status == "archived"),
+                Sketch.Status.parent,
+            ).order_by(Sketch.updated_at.desc())
+
+            base_filter_with_archived = sketch_query.filter(
+                not_(Sketch.Status.status == "deleted"), Sketch.Status.parent
+            ).order_by(Sketch.updated_at.desc())
 
         filtered_sketches = None
         sketches = []
@@ -151,7 +169,9 @@ class SketchListResource(resources.ResourceMixin, Resource):
         if include_archived:
             base_filter = base_filter_with_archived
         else:
-            base_filter = base_filter.filter(not_(Sketch.status.any(status="archived")))
+            base_filter = base_filter.filter(
+                not_(Sketch.status.any(status="archived"))
+            )  # pylint: disable=line-too-long
 
         if scope == "recent":
             # Get list of sketches that the user has actively searched in.
@@ -292,13 +312,14 @@ class SketchResource(resources.ResourceMixin, Resource):
     def _get_sketch_for_admin(sketch: Sketch):
         """Returns a limited sketch view for administrators.
 
-        An administrator needs to get information about all sketches
-        that are stored on the backend. However that view should be
-        limited for sketches that user does not have explicit read
-        or other permissions as well. In those cases the returned
-        sketch only contains information about the name, description,
-        etc but not any information about the data, nor any access
-        to the underlying data of the sketch.
+        Administrators may need to access information about any sketch on the
+        system. This method provides a limited view for sketches where the
+        administrator does not have explicit read permissions, or for sketches
+        that are archived or soft-deleted (where associated OpenSearch indices
+        may be closed or unavailable).
+
+        The limited view includes basic metadata like name and description
+        but excludes access to the underlying timeline data.
 
         Args:
             sketch: (object) a sketch object (instance of models.Sketch)
@@ -309,6 +330,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         """
         if sketch.get_status.status == "archived":
             status = "archived"
+        elif sketch.get_status.status == "deleted":
+            status = "deleted"
         else:
             status = "admin_view"
 
@@ -351,6 +374,15 @@ class SketchResource(resources.ResourceMixin, Resource):
         if current_user.admin:
             if not sketch.has_permission(current_user, "read"):
                 return self._get_sketch_for_admin(sketch)
+
+        # If the sketch is soft-deleted, we return a minimal response only for admins.
+        # This is because the OpenSearch indices are closed when a sketch
+        # is soft-deleted, and attempting to load full details (mappings,
+        # counts, etc) would result in a 500 error from OpenSearch.
+        if sketch.get_status.status == "deleted":
+            if not current_user.admin:
+                abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+            return self._get_sketch_for_admin(sketch)
 
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
@@ -562,6 +594,18 @@ class SketchResource(resources.ResourceMixin, Resource):
                     db_session.delete(timeline)
                 continue
 
+            # Check if this index is used in any other active sketch
+            if searchindex.is_shared(exclude_sketch_id=sketch.id):
+                logger.warning(
+                    "Search index %s is shared with another active sketch. "
+                    "Skipping index and SearchIndex deletion for sketch %s.",
+                    searchindex.index_name,
+                    sketch.id,
+                )
+                if inspect(timeline).persistent:
+                    db_session.delete(timeline)
+                continue
+
             # If the searchindex has already been processed (e.g. shared by
             # another timeline), we just delete the timeline and continue.
             searchindex_id = getattr(searchindex, "id", None)
@@ -612,7 +656,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                         )
 
                 except NotFoundError:
-                    # This can happen if the index was already deleted or never existed.
+                    # This can happen if the index was already deleted or never
+                    # existed.
                     e_msg = (
                         f"OpenSearch index {index_name_to_delete} was not found "
                         f"during deletion attempt. It might have been deleted "
@@ -650,11 +695,16 @@ class SketchResource(resources.ResourceMixin, Resource):
     def delete(self, sketch_id: int, force_delete: bool = False):
         """Handles DELETE request to the resource.
 
-        This method supports both a 'soft' and a 'hard' (force) delete.
+        By default (force_delete=False), this method marks the sketch as 'deleted'
+        in the database and attempts to close all associated OpenSearch indices
+        to free up cluster resources. This is a soft delete.
 
-        Soft delete (default): Marks the sketch as 'deleted'. This is often used
-            to hide the sketch from general users while allowing administrators
-            to review or permanently remove it later.
+        If force_delete is set to True (either via the parameter or the 'force'
+        URL query parameter), the sketch, its timelines, associated search indices,
+        and all related data in the database and OpenSearch will be permanently
+        removed. This is a hard delete and is irreversible. Administrators can
+        use this to permanently remove sketches that have already been
+        soft-deleted.
 
         Hard delete (force): Permanently removes the sketch and all its
             associated data (timelines, search indices, and OpenSearch data).
@@ -672,8 +722,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         4. Mark the Sketch itself for deletion.
         5. Commit the transaction to the database.
 
-        Requires 'delete' permission on the sketch and the
-            user must be an administrator for force_delete.
+        Requires 'delete' permission on the sketch and the user must be an
+        administrator for force deletion.
 
         Args:
             sketch_id (int): The ID of the sketch to delete.
@@ -683,30 +733,50 @@ class SketchResource(resources.ResourceMixin, Resource):
                 Can also be triggered by setting the 'force' URL query parameter.
 
         Returns:
-            int: HTTP_STATUS_CODE_OK (200) if the operation is successful (even
-                 for a soft delete where data is only marked).
+            int: HTTP_STATUS_CODE_OK (200) if the operation is successful.
 
         Raises:
             HTTP_STATUS_CODE_NOT_FOUND (404): If no sketch is found with the
-                given ID.
+                given ID, or if the sketch is soft-deleted and the request
+                is not a force delete by an admin.
             HTTP_STATUS_CODE_FORBIDDEN (403): If the user does not have 'delete'
                 permission on the sketch, or if the sketch has a label
-                preventing deletion, or if the user is not an admin.
+                preventing deletion, or if the user is not an admin when
+                attempting a force delete.
             HTTP_STATUS_CODE_BAD_REQUEST (400): If there's an issue during the
                 deletion process e.g. the sketch being archived,
                 or if timelines are still processing.
             HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR (500): If there's an unrecoverable
                 error during OpenSearch index deletion.
         """
-        sketch = Sketch.get_with_acl(sketch_id)
+        if not force_delete:
+            url_force_delete = request.args.get("force")
+            if url_force_delete is not None:
+                force_delete = True  # If the 'force' URL parameter exists, set to True
+                logger.debug("Force delete detected from URL parameter.")
+            else:
+                logger.debug("Force delete not present, will keep the OS data.")
+
+        if current_user.admin:
+            # For admins, we use get_by_id which includes soft-deleted sketches.
+            # This is necessary so admins can perform a hard delete (force)
+            # on a sketch that has already been soft-deleted.
+            sketch = Sketch.get_by_id(sketch_id)
+        else:
+            sketch = Sketch.get_with_acl(sketch_id, include_deleted=force_delete)
+
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         if not sketch.has_permission(current_user, "delete"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "User does not have sufficient access rights to delete a sketch.",
-            )
+            if not current_user.admin:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    (
+                        f"User does not have sufficient access rights to delete "
+                        f"sketch {sketch_id}."
+                    ),
+                )
 
         not_delete_labels = current_app.config.get("LABELS_TO_PREVENT_DELETION", [])
         for label in not_delete_labels:
@@ -721,11 +791,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to delete a sketch that is already archived.",
             )
-
-        # Allow triggering force delete via URL parameter
-        if not force_delete and request.args.get("force"):
-            force_delete = True
-            logger.debug("Force delete detected from URL parameter.")
 
         # Permissions and state checks for force deletion
         if force_delete:
@@ -742,19 +807,46 @@ class SketchResource(resources.ResourceMixin, Resource):
             if is_any_timeline_processing:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Cannot delete sketch: one or more timelines are still processing.",
+                    (
+                        "Cannot delete sketch: one or more timelines are still "
+                        "processing."
+                    ),
                 )
 
-        # Soft delete is always performed, even as a first step of force delete
         sketch.set_status(status="deleted")
+
+        # Default behaviour for historical reasons: exit with 200 without
+        # deleting
+        if not force_delete:
+            # Close indices to save resources
+            for timeline in sketch.timelines:
+                searchindex = timeline.searchindex
+
+                # Check if this index is used in any other active sketch
+                if searchindex.is_shared(exclude_sketch_id=sketch.id):
+                    logger.warning(
+                        "Search index %s is shared with another active sketch. "
+                        "Skipping index close for soft-deleted sketch %s.",
+                        searchindex.index_name,
+                        sketch.id,
+                    )
+                    continue
+
+                try:
+                    self.datastore.client.indices.close(index=searchindex.index_name)
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.warning(
+                        "Failed to close index %s for soft-deleted sketch %s: %s",
+                        searchindex.index_name,
+                        sketch.id,
+                        e,
+                    )
+            db_session.commit()
+            return HTTP_STATUS_CODE_OK
 
         if force_delete:
             logger.debug("User %s is force-deleting sketch %s", current_user, sketch_id)
             self._force_delete_sketch(sketch)
-
-        else:
-            # if force_delete is false, still commit changes to the db
-            db_session.commit()
 
         return HTTP_STATUS_CODE_OK
 
