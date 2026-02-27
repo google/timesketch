@@ -307,7 +307,7 @@ limitations under the License.
                   Star all
                 </v-btn>
                 <v-btn x-small outlined @click="unstarAll()">
-                  <v-icon left color="amber">mdi-star</v-icon>
+                  <v-icon left>mdi-star-outline</v-icon>
                   Unstar all
                 </v-btn>
 
