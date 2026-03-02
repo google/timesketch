@@ -327,9 +327,13 @@ limitations under the License.
               </div>
               <div v-else class="actions">
                 <small class="mr-2">Actions:</small>
-                <v-btn x-small outlined @click="toggleMultipleStars()">
+                <v-btn x-small outlined @click="starAll()">
                   <v-icon left color="amber">mdi-star</v-icon>
-                  Toggle star
+                  Star all
+                </v-btn>
+                <v-btn x-small outlined @click="unstarAll()">
+                  <v-icon left>mdi-star-outline</v-icon>
+                  Unstar all
                 </v-btn>
 
                 <v-menu v-model="showEventTagMenu" offset-x :close-on-content-click="false">
@@ -1114,20 +1118,34 @@ export default {
           console.error(e)
         })
     },
-    toggleMultipleStars: function () {
-      let netStarCountChange = 0
+    starAll: function () {
+      const toUpdate = [];
+      this.selectedEvents.forEach((event) => {
+        if (!event._source.label.includes('__ts_star')) {
+          event._source.label.push('__ts_star')
+          toUpdate.push(event);
+        }
+      })
+      if (toUpdate.length === 0) return;
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
+        .then((response) => {
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: toUpdate.length })
+          this.selectedEvents = []
+        })
+        .catch((e) => {})
+    },
+    unstarAll: function () {
+      const toUpdate = [];
       this.selectedEvents.forEach((event) => {
         if (event._source.label.includes('__ts_star')) {
           event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
-          netStarCountChange--
-        } else {
-          event._source.label.push('__ts_star')
-          netStarCountChange++
+          toUpdate.push(event);
         }
       })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
+      if (toUpdate.length === 0) return;
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
         .then((response) => {
-          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: netStarCountChange })
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: -toUpdate.length })
           this.selectedEvents = []
         })
         .catch((e) => {})
