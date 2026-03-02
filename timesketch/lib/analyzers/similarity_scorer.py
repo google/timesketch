@@ -13,7 +13,6 @@
 # limitations under the License.
 """Calculate similarity scores based on the Jaccard distance between events."""
 
-
 from timesketch.lib import similarity
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager

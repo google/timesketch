@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for Cloud IAP."""
 
-
 import time
 from unittest import mock
 import jwt
@@ -26,7 +25,6 @@ from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import get_public_key_for_jwt
 from timesketch.lib.google_auth import JwtValidationError
 from timesketch.lib.google_auth import JwtKeyError
-
 
 # openssl ecparam -genkey -name prime256v1 -noout -out ec_private.pem
 MOCK_EC_PRIVATE_KEY = """

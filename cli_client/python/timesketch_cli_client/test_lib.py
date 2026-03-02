@@ -19,7 +19,6 @@ from timesketch_api_client import client
 
 from .cli import TimesketchCli
 
-
 TEST_CONFIG = """
 [timesketch]
 host_uri = http://127.0.0.1

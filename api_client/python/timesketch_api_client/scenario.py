@@ -13,13 +13,11 @@
 # limitations under the License.
 """Timesketch API client library for working with scenarios."""
 
-
 import logging
 from typing import Dict, List, Any, Optional
 
 from . import error
 from . import resource
-
 
 logger = logging.getLogger("timesketch_api.scenario")
 
@@ -111,7 +109,7 @@ class Scenario(resource.BaseResource):
             Scenario name as string.
         """
         self.lazyload_data()
-        return self._name
+        return str(self._name)
 
     @property
     def display_name(self) -> str:
@@ -121,7 +119,7 @@ class Scenario(resource.BaseResource):
             Scenario display name as string.
         """
         self.lazyload_data()
-        return self._display_name
+        return str(self._display_name)
 
     def set_display_name(self, display_name: str) -> None:
         """Sets the display name of the scenario.
@@ -174,7 +172,7 @@ class Scenario(resource.BaseResource):
             dfiq identifier as string.
         """
         self.lazyload_data()
-        return self._dfiq_identifier
+        return str(self._dfiq_identifier)
 
     @property
     def description(self) -> str:
@@ -184,7 +182,7 @@ class Scenario(resource.BaseResource):
             Description as string.
         """
         self.lazyload_data()
-        return self._description
+        return str(self._description)
 
     def to_dict(self) -> Dict[str, Any]:
         """Returns a dict representation of the scenario."""
@@ -325,7 +323,7 @@ class Question(resource.BaseResource):
             Question name as string.
         """
         self.lazyload_data()
-        return self._name
+        return str(self._name)
 
     def set_name(self, name: str) -> None:
         """Sets the name of the question.
@@ -342,7 +340,7 @@ class Question(resource.BaseResource):
     def display_name(self) -> str:
         """Property that returns the question display name."""
         self.lazyload_data()
-        return self._display_name
+        return str(self._display_name)
 
     def set_display_name(self, display_name: str) -> None:
         """Sets the display name of the question.
@@ -427,7 +425,7 @@ class Question(resource.BaseResource):
             Question DFIQ identifier as string.
         """
         self.lazyload_data()
-        return self._dfiq_identifier
+        return str(self._dfiq_identifier)
 
     @property
     def description(self) -> str:
@@ -437,7 +435,7 @@ class Question(resource.BaseResource):
             Question description as string.
         """
         self.lazyload_data()
-        return self._description
+        return str(self._description)
 
     def set_description(self, description: str) -> None:
         """Sets the description of the question.

@@ -16,7 +16,6 @@ Based on the example code from the public Google IAP documentation:
 https://cloud.google.com/iap/docs/signed-headers-howto
 """
 
-
 import time
 import json
 import hashlib

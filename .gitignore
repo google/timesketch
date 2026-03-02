@@ -54,3 +54,6 @@ vagrant/*.log
 
 # Exclude debugging profiles
 profiles/
+
+# Ignore local dev key
+.dev_secret_key

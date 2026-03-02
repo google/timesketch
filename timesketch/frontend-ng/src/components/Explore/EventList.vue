@@ -31,6 +31,25 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="showExportLimitDialog" width="500">
+      <v-card class="pa-4">
+        <h3 class="mb-4">Export limit reached</h3>
+        <p>
+          Downloading more than 10,000 events is not supported in the UI due to database limitations. Please use the
+          Timesketch CLI client to export larger datasets.
+        </p>
+        <p>
+          <a href="https://timesketch.org/guides/user/cli-client/#search" target="_blank" rel="noopener noreferrer">
+            Timesketch CLI Client Documentation
+          </a>
+        </p>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="showExportLimitDialog = false"> Close </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
       <v-card class="pa-4">
         <h3>Save Search</h3>
@@ -62,11 +81,17 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+    <div v-if="searchError && !searchInProgress" class="ml-3">
+      <ts-search-error-card
+        :error-text="searchError"
+      ></ts-search-error-card>
+    </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
       <ts-explore-welcome-card></ts-explore-welcome-card>
     </div>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString" class="ml-3">
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError" class="ml-3">
       <ts-search-not-found-card
         :currentQueryString="currentQueryString"
         :filterChips="filterChips"
@@ -357,7 +382,7 @@ limitations under the License.
           </template>
 
           <!-- Event details -->
-          <template v-slot:expanded-item="{ headers, item }">
+          <template v-slot:[expandedItemSlot]="{ headers, item }">
             <td :colspan="headers.length">
               <!-- Details -->
               <v-container v-if="item.showDetails" fluid class="mt-4">
@@ -385,7 +410,7 @@ limitations under the License.
           </template>
 
           <!-- Actions field -->
-          <template v-slot:item.actions="{ item }">
+          <template v-slot:[itemActionsSlot]="{ item }">
             <v-btn small icon @click="toggleStar(item)">
               <v-icon title="Toggle star status" v-if="item._source.label.includes('__ts_star')" color="amber"
                 >mdi-star</v-icon
@@ -401,10 +426,15 @@ limitations under the License.
           </template>
 
           <!-- Datetime field with action buttons -->
-          <template v-slot:item._source.timestamp="{ item }">
-            <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-              {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-            </div>
+          <template v-slot:[itemTimestampSlot]="{ item }">
+            <v-tooltip right open-delay="700">
+              <template v-slot:activator="{ on, attrs }">
+                <div v-bind="attrs" v-on="on" v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
+                  {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+                </div>
+              </template>
+              <span>{{ getTimeline(item).name }}</span>
+            </v-tooltip>
           </template>
 
           <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -448,7 +478,7 @@ limitations under the License.
           </template>
 
           <!-- Timeline name field -->
-          <template v-slot:item.timeline_name="{ item }">
+          <template v-slot:[itemTimelineNameSlot]="{ item }">
             <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em">
               <span class="timeline-name-ellipsis" style="width: 130px; text-align: center">{{
                 getTimeline(item).name
@@ -456,7 +486,7 @@ limitations under the License.
           </template>
 
           <!-- Comment field -->
-          <template v-slot:item._source.comment="{ item }">
+          <template v-slot:[itemCommentSlot]="{ item }">
             <div class="d-inline-block">
               <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
                 <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
@@ -487,6 +517,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient.js'
 import EventBus from '../../event-bus.js'
+import EventMixin from '../../mixins/EventMixin'
 
 import TsBarChart from './BarChart.vue'
 import TsEventDetail from './EventDetail.vue'
@@ -496,6 +527,7 @@ import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
 import TsExploreWelcomeCard from './ExploreWelcomeCard.vue'
 import TsSearchNotFoundCard from './SearchNotFoundCard.vue'
+import TsSearchErrorCard from './SearchErrorCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -528,7 +560,9 @@ export default {
     TsEventTags,
     TsExploreWelcomeCard,
     TsSearchNotFoundCard,
+    TsSearchErrorCard,
   },
+  mixins: [EventMixin],
   props: {
     queryRequest: {
       type: Object,
@@ -565,6 +599,11 @@ export default {
   },
   data() {
     return {
+      expandedItemSlot: 'expanded-item',
+      itemActionsSlot: 'item.actions',
+      itemTimestampSlot: 'item._source.timestamp',
+      itemTimelineNameSlot: 'item.timeline_name',
+      itemCommentSlot: 'item._source.comment',
       showEventTagMenu: false,
       columnHeaders: [
         {
@@ -605,13 +644,15 @@ export default {
         showTags: true,
         showEmojis: true,
         showMillis: false,
-        showTimelineName: true,
+        showTimelineName: localStorage.getItem('showTimelineName') === 'true',
       },
       showHistogram: false,
       branchParent: null,
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
+      showExportLimitDialog: false,
+      searchError: '',
     }
   },
   computed: {
@@ -796,16 +837,6 @@ export default {
         }
       })
     },
-    getTimeline: function (event) {
-      let isLegacy = this.meta.indices_metadata[event._index].is_legacy
-      let timeline
-      if (isLegacy) {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === event._index)
-      } else {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === event._source.__ts_timeline_id)
-      }
-      return timeline
-    },
     getTimelineColor(event) {
       let timeline = this.getTimeline(event)
       let backgroundColor = timeline.color
@@ -868,6 +899,7 @@ export default {
       this.searchInProgress = true
       this.selectedEvents = []
       this.eventList = emptyEventList()
+      this.searchError = ''
 
       if (resetPagination) {
         this.tableOptions.page = 1
@@ -938,6 +970,7 @@ export default {
           }
         })
         .catch((e) => {
+          this.searchInProgress = false
           let msg = 'Sorry, there was a problem fetching your search results. Error: "' + e.response.data.message + '"'
           if (
             e.response.data.message.includes('too_many_nested_clauses') ||
@@ -949,6 +982,7 @@ export default {
           } else {
             this.errorSnackBar(msg)
           }
+          this.searchError = msg
           console.error('Error message: ' + msg)
           console.error(e)
         })
@@ -972,6 +1006,10 @@ export default {
         })
     },
     exportSearchResult: function () {
+      if (this.totalHits > 10000) {
+        this.showExportLimitDialog = true
+        return
+      }
       this.exportDialog = true
       const now = new Date()
       const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'
@@ -1174,6 +1212,9 @@ export default {
       handler() {
         this.updateShowBanner()
       },
+    },
+    'displayOptions.showTimelineName': function (val) {
+      localStorage.setItem('showTimelineName', String(val))
     },
   },
   created() {

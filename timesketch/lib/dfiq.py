@@ -521,7 +521,7 @@ class DFIQCatalog:
                     if parent_uuid:
                         graph.add_edge(parent_uuid, component_uuid)
                     else:
-                        logger.warning(
+                        logger.debug(
                             "Could not find parent UUID for DFIQ ID '%s' "
                             "referenced by '%s' ('%s'). Skipping edge.",
                             parent_id,

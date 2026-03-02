@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 import datetime
 import getpass
 import json
@@ -23,7 +24,6 @@ import pandas
 
 from . import error
 from . import resource
-
 
 logger = logging.getLogger("timesketch_api.aggregation")
 

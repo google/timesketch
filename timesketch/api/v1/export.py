@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module holds methods and classes to export events."""
 
-
 import io
 import json
 import logging
@@ -22,7 +21,6 @@ import pandas as pd
 
 from timesketch.api.v1 import utils
 from timesketch.lib.stories import api_fetcher as story_api_fetcher
-
 
 logger = logging.getLogger("timesketch.api_exporter")
 

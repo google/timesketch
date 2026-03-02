@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for analysis interface."""
 
-
 import json
 
 from timesketch.lib.testlib import BaseTest

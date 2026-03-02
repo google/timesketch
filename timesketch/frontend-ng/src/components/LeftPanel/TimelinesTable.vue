@@ -83,7 +83,7 @@ limitations under the License.
           disable-sort
           :search="search"
         >
-          <template v-slot:item.name="{ item }">
+          <template v-slot:[`item.name`]="{ item }">
             <ts-timeline-component
               class="mb-1 mt-1"
               :key="item.id + item.name"

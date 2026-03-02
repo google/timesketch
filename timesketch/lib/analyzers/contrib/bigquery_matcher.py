@@ -4,6 +4,7 @@ import itertools
 import logging
 
 from timesketch.lib import emojis
+from timesketch.lib import utils
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -46,7 +47,7 @@ class BigQueryMatcherPlugin(interface.BaseAnalyzer):
         Returns:
             List of matchers.
         """
-        bq_config = interface.get_yaml_config("bigquery_matcher.yaml")
+        bq_config = utils.get_yaml_config("bigquery_matcher.yaml")
         if not bq_config:
             logger.debug("BigQuery Matcher configuration file not found or empty.")
             return []

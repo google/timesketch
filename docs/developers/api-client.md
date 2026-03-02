@@ -395,8 +395,14 @@ To get the results as:
 
 Or if you want to store the results as a file:
 
-```
+```python
 search_obj.to_file('/tmp/myresults.zip')
+```
+
+For large results, you can use the `stream` parameter to avoid loading the whole result into memory:
+
+```python
+search_obj.to_file('/tmp/myresults.zip', stream=True)
 ```
 
 (use the ZIP ending, since the resulting file will be a ZIP file with both the

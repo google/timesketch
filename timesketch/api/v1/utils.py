@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module holds utility functions for the version 1 of the API."""
+
 import logging
 import json
 import time
@@ -34,7 +35,6 @@ from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.models import db_session
 from timesketch.models.sketch import View
-
 
 logger = logging.getLogger("timesketch.api_utils")
 
@@ -324,8 +324,8 @@ def is_valid_index_name(index_name):
     Returns:
         A boolean indicating whether the index name is valid or not.
     """
-    regex = re.compile(r"[0-9a-f]{32}", re.I)
-    match = regex.match(index_name)
+    regex = re.compile(r"[0-9a-f]{32}$", re.I)
+    match = regex.fullmatch(index_name)
     return bool(match)
 
 

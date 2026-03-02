@@ -66,6 +66,7 @@ class BaseEndToEndTest(object):
         self.assertions = unittest.TestCase()
         self._counter = collections.Counter()
         self._imported_files = []
+        self._imported_sketch_timelines = set()
 
     def import_timeline(self, filename, index_name=None, sketch=None):
         """Import a Plaso, CSV or JSONL file.
@@ -81,8 +82,10 @@ class BaseEndToEndTest(object):
         """
         if not sketch:
             sketch = self.sketch
-        if filename in self._imported_files:
-            return
+
+        if (sketch.id, filename) in self._imported_sketch_timelines:
+            return False
+
         file_path = os.path.join(TEST_DATA_DIR, filename)
         if not index_name:
             index_name = uuid.uuid4().hex
@@ -95,7 +98,7 @@ class BaseEndToEndTest(object):
             streamer.add_file(file_path)
             timeline = streamer.timeline
             if not timeline:
-                print("Error creating timeline, please try again.")
+                print("Info: Timeline object not yet created by streamer.")
 
         # Poll the timeline status and wait for the timeline to be ready
         max_time_seconds = 600  # Timeout after 10min
@@ -104,22 +107,32 @@ class BaseEndToEndTest(object):
         retry_count = 0
         while True:
             if retry_count >= max_retries:
-                raise TimeoutError
+                raise RuntimeError(
+                    f"Timeout: Timeline for {filename} (Sketch {sketch.id}) "
+                    "did not become ready within 10 minutes."
+                )
 
             try:
                 if not timeline:
-                    print("Error no timeline yet, trying to get the new one")
+                    print(f"Waiting for timeline object for {filename}...")
                     timeline = streamer.timeline
-                _ = timeline.lazyload_data(refresh_cache=True)
-                status = timeline.status
+
+                if timeline:
+                    _ = timeline.lazyload_data(refresh_cache=True)
+                    status = timeline.status
+                else:
+                    # Object not yet created by the asynchronous streamer
+                    retry_count += 1
+                    time.sleep(sleep_time_seconds)
+                    continue
+
             except AttributeError:
-                # The timeline is not ready yet, so we need to wait
+                # The timeline object exists but is not fully initialized yet
                 retry_count += 1
                 time.sleep(sleep_time_seconds)
                 continue
             except OSError as e:
                 # This can happen if the file is not found or permissions are wrong.
-                # It's better to raise a more specific error here.
                 raise RuntimeError(
                     f"Unable to import timeline {timeline.index.id}"
                     f" sketch: {sketch.id}, got an OS Error for importing "
@@ -134,9 +147,8 @@ class BaseEndToEndTest(object):
             if status == "fail" or timeline.index.status == "fail":
                 if retry_count > 3:
                     raise RuntimeError(
-                        f"Unable to import {filename}"
-                        f" into timeline {timeline.index.id}"
-                        f" part of sketch: {sketch.id}."
+                        f"Failed to import {filename} into sketch {sketch.id}. "
+                        "Timeline or Index status is 'fail'."
                     )
 
             if status == "ready" and timeline.index.status == "ready":
@@ -144,10 +156,19 @@ class BaseEndToEndTest(object):
             retry_count += 1
             time.sleep(sleep_time_seconds)
 
+        # Final safety check
+        if not timeline:
+            raise RuntimeError(
+                f"Critical Error: import_timeline finished for {filename} "
+                "but no timeline object was ever created."
+            )
+
         # Adding in one more sleep for good measure (preventing flaky tests).
         time.sleep(sleep_time_seconds)
 
+        self._imported_sketch_timelines.add((sketch.id, filename))
         self._imported_files.append(filename)
+        return timeline
 
     def import_directly_to_opensearch(self, filename, index_name):
         """Import a CSV file directly into OpenSearch.

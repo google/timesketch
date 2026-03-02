@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch data importer."""
+
 from __future__ import unicode_literals
 
 import logging
 import os
 
 from timesketch_import_client import data as data_config
-
 
 logger = logging.getLogger("timesketch_importer.ts_import_helper")
 

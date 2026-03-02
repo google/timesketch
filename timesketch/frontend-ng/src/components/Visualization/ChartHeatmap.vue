@@ -24,10 +24,11 @@
     </apexchart>
   </div>
 </template>
-   
+
 <script>
 import Apexchart from 'vue-apexcharts';
 import EventBus from '../../event-bus.js';
+import _ from 'lodash'
 
 export default {
   props: {
@@ -39,69 +40,69 @@ export default {
       type: String,
       default: 'unknown metric',
     },
-    'chartSeries': { 
-      type: Object, 
-      default: function() { 
-        return {} 
-      }, 
+    'chartSeries': {
+      type: Object,
+      default: function() {
+        return {}
+      },
     },
-    'chartLabels': { 
-      type: Array, 
-      default: function() { 
-        return [] 
-      }, 
+    'chartLabels': {
+      type: Array,
+      default: function() {
+        return []
+      },
     },
     'chartType': {
       type: String,
       default: undefined,
     },
-    'chartTitle': { 
-      type: String, 
-      default: undefined, 
+    'chartTitle': {
+      type: String,
+      default: undefined,
     },
     'isTimeSeries': {
       type: Boolean,
       default: false,
     },
-    'showDataLabels': { 
-      type: Boolean, 
-      default: true, 
+    'showDataLabels': {
+      type: Boolean,
+      default: true,
     },
-    'showTooltips': { 
-      type: Boolean, 
-      default: true, 
+    'showTooltips': {
+      type: Boolean,
+      default: true,
     },
-    'showXLabels': { 
-      type: Boolean, 
-      default: true, 
+    'showXLabels': {
+      type: Boolean,
+      default: true,
     },
-    'showYLabels': { 
-      type: Boolean, 
-      default: true, 
+    'showYLabels': {
+      type: Boolean,
+      default: true,
     },
-    'xTitle': { 
-      type: String, 
+    'xTitle': {
+      type: String,
       default: undefined,
     },
-    'xType': { 
-      type: String, 
-      default: 'category', 
+    'xType': {
+      type: String,
+      default: 'category',
     },
-    'yTitle': { 
-      type: String, 
-      default: undefined, 
+    'yTitle': {
+      type: String,
+      default: undefined,
     },
-    'height': { 
-      type: Number, 
-      default: 250, 
+    'height': {
+      type: Number,
+      default: 250,
     },
-    'width': { 
-      type: Number, 
-      default: 400, 
+    'width': {
+      type: Number,
+      default: 400,
     },
   },
-  components: { 
-    Apexchart 
+  components: {
+    Apexchart
   },
   data: function() {
     return {
@@ -124,7 +125,7 @@ export default {
                 enabled: true,
                 delay: 50,
               },
-              
+
             },
             events: {
               dataPointSelection: (event, chartContext, config) => {
@@ -140,7 +141,7 @@ export default {
             height: this.height,
               width: this.width,
           },
-          labels: this.chartLabels,
+          labels: this.chartLabels.map(label => _.escape(label)),
           dataLabels: {
             enabled: this.showDataLabels,
           },
@@ -186,7 +187,7 @@ export default {
         }
       },
       set(newValue) {
-        
+
       }
     },
     series() {
@@ -195,7 +196,7 @@ export default {
       }
 
       let series = {
-          name: this.fieldName,
+          name: _.escape(this.fieldName),
           data: this.chartSeries[this.metricName],
       }
 
@@ -234,7 +235,7 @@ export default {
         let end = (dataPointIndex + 1 < this.chartLabels.length) ? this.chartLabels[dataPointIndex + 1] : ''
 
         if (end === "") {
-          // exit early on last bucket 
+          // exit early on last bucket
           return
         }
         eventData.chip = {
@@ -247,7 +248,7 @@ export default {
       } else {
         eventData.chip = {
           field: this.fieldName,
-          value: config.w.config.labels[dataPointIndex],
+          value: this.chartLabels[dataPointIndex],
           type: 'term',
           operator: 'must',
           active: true,

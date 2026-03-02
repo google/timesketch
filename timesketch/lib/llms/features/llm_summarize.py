@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """LLM Summarization feature."""
+
 import json
 import logging
 from typing import Any, Optional

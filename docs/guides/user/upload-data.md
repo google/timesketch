@@ -61,6 +61,10 @@ Other parameters suggested to be set are `sketch_id` (if it isn't provided a
 new sketch will be created) and `timeline_name` (otherwise a default name
 will be chosen).
 
+Additionally, for Plaso files, you can filter events during import using the
+`--plaso-event-filter` option, providing a standard Plaso filter string
+(e.g., `'data_type is "fs:stat"'`).
+
 For larger files the importer will split them up into pieces before uploading.
 
 ## Using the Web UI

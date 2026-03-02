@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """User and Group resources for version 1 of the Timesketch API."""
+
 import json
 import logging
 
@@ -32,7 +33,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.models.user import UserProfile
 from timesketch.models.user import Group
-
 
 logger = logging.getLogger("timesketch.user_api")
 

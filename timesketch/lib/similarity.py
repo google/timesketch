@@ -13,13 +13,11 @@
 # limitations under the License.
 """Similarity scorer."""
 
-
 import re
 from typing import Optional
 
 from datasketch.minhash import MinHash
 from datasketch.lsh import MinHashLSH
-
 
 # Parameters for Jaccard and Minhash calculations.
 DEFAULT_DELIMITERS = [" ", "-", "/"]

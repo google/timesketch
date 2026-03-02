@@ -13,7 +13,6 @@
 # limitations under the License.
 """Barcharts."""
 
-
 import altair as alt
 
 from timesketch.lib.charts import manager

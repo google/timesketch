@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for analysis manager."""
 
-
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.analyzers import manager
 

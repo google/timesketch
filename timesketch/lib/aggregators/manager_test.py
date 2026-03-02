@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for aggregator manager."""
 
-
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.aggregators import manager
 

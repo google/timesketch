@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API crypto storage library for OAUTH client."""
+
 from __future__ import unicode_literals
 
 import base64
@@ -26,7 +27,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from . import credentials
-
 
 logger = logging.getLogger("timesketch_api.crypto_client")
 

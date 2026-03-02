@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch data import configuration."""
+
 from __future__ import unicode_literals
 
 import codecs
@@ -19,7 +20,6 @@ import logging
 import os
 
 import yaml
-
 
 logger = logging.getLogger("timesketch_importer.config_loader")
 

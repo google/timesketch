@@ -13,7 +13,6 @@
 # limitations under the License.
 """Term aggregations."""
 
-
 from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
