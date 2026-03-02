@@ -1126,7 +1126,7 @@ export default {
           toUpdate.push(event);
         }
       })
-      if (toUpdate.length == 0) return;
+      if (toUpdate.length === 0) return;
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
         .then((response) => {
           this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: toUpdate.length })
@@ -1142,7 +1142,7 @@ export default {
           toUpdate.push(event);
         }
       })
-      if (toUpdate.length == 0) return;
+      if (toUpdate.length === 0) return;
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
         .then((response) => {
           this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: -toUpdate.length })
