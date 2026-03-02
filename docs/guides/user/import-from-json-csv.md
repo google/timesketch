@@ -55,14 +55,17 @@ Similar to a CSV file, you can upload the JSONL file even if it does not have th
 
 ## Handling Large String Fields
 
-OpenSearch has a hard limit of **32,766 bytes** for "keyword" fields. Keyword fields are used for exact matching, sorting, and aggregations (charts).
+OpenSearch has a hard limit of **32766 bytes** for "keyword" fields. Keyword fields are used for exact matching, sorting, aggregations (charts) and regex searches.
 
 If an imported file contains a field that exceeds this limit (e.g., a very long feature vector or a massive blob of text), OpenSearch would normally reject the entire event with a `max_bytes_length_exceeded_exception`.
 
-Timesketch handles this by using a `dynamic_template` with an `ignore_above: 256` setting. This means:
-*   Fields longer than 256 characters are still indexed as **text** (and are therefore searchable).
+Timesketch handles this by using a `dynamic_template` with an `ignore_above: 32766` setting. This means:
+*   Fields larger than 32766 bytes are still indexed as **text** type (and are therefore searchable).
 *   However, the **keyword** sub-field is not created for those specific long values.
-*   **Impact:** You can search for the content of these large fields, but you cannot use them in aggregations (charts) or sort by them if they exceed the limit.
+*   **Impact:**
+    *   You can search for the content of these large fields based on the **text** type.
+    *   You cannot use them in aggregations (charts) or sort by them if they exceed the limit.
+    *   You cannot search the keyword specific field type anymore (e.g. `message.keyword:/.*<regex>.*/`)
 
 ## Upload the file to Timesketch
 
