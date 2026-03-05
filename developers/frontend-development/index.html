@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
     
     
       
@@ -1477,6 +1477,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tooltip-usage-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tooltip Usage Guidelines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tooltip Usage Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-behavior-use-the-title-attribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Behavior — Use the title Attribute
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use-vuetify-v-tooltip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use Vuetify &lt;v-tooltip&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2533,6 +2572,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tooltip-usage-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tooltip Usage Guidelines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tooltip Usage Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-behavior-use-the-title-attribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Behavior — Use the title Attribute
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use-vuetify-v-tooltip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use Vuetify &lt;v-tooltip&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2637,6 +2715,39 @@ $ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesk
 dev credentials, and you should be redirected to the main Timesketch page. All code changes in <code>.vue</code> files will
 be instantly picked up.</p>
 <p>If you already have a yarn process running with the "old" frontend, it might not work.</p>
+<h2 id="tooltip-usage-guidelines">Tooltip Usage Guidelines</h2>
+<p>Timesketch follows a consistent approach to tooltips across the UI to ensure
+a uniform user experience. This section defines when and how to use tooltips
+in the frontend.</p>
+<h3 id="default-behavior-use-the-title-attribute">Default Behavior — Use the <code>title</code> Attribute</h3>
+<p>The preferred and default way to show a tooltip is to use the <strong>browser's
+native <code>title</code> attribute</strong> on any HTML element. This requires no extra
+dependencies and works natively in all browsers.</p>
+<p><strong>Always use this approach first:</strong></p>
+<pre><code class="language-html">&lt;!-- Preferred: native browser tooltip --&gt;
+&lt;v-btn icon title=&quot;Delete event&quot;&gt;
+  &lt;v-icon&gt;mdi-delete&lt;/v-icon&gt;
+&lt;/v-btn&gt;
+</code></pre>
+<p><img alt="Native browser title tooltip" src="/assets/images/tooltip-native-title.png" /></p>
+<h3 id="when-to-use-vuetify-v-tooltip">When to Use Vuetify <code>&lt;v-tooltip&gt;</code></h3>
+<p>Use the Vuetify <code>&lt;v-tooltip&gt;</code> component <strong>only</strong> when:</p>
+<ul>
+<li>A <code>title</code> attribute is not technically possible on the element</li>
+<li>The tooltip content is <strong>dynamic or conditional</strong></li>
+<li>The tooltip requires <strong>complex or multi-line content</strong></li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-html">&lt;v-tooltip bottom&gt;
+  &lt;template v-slot:activator=&quot;{ on, attrs }&quot;&gt;
+    &lt;v-btn icon v-bind=&quot;attrs&quot; v-on=&quot;on&quot;&gt;
+      &lt;v-icon&gt;mdi-information&lt;/v-icon&gt;
+    &lt;/v-btn&gt;
+  &lt;/template&gt;
+  &lt;span&gt;This event was flagged by an analyzer&lt;/span&gt;
+&lt;/v-tooltip&gt;
+</code></pre>
+<p><img alt="Vuetify tooltip example" src="/assets/images/tooltip-vuetify-example.png" /></p>
 
 
 
