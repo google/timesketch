@@ -104,7 +104,14 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
                 "LLM starred events report prompt template is missing the "
                 "required <EVENTS_JSON> placeholder."
             )
-        prompt_text = prompt_template.replace("<EVENTS_JSON>", json.dumps(events_dict))
+        if "<LEN_EVENTS_JSON>" not in prompt_template:
+            logger.error("Prompt template is missing the <LEN_EVENTS_JSON> placeholder")
+            raise ValueError(
+                "LLM starred events report prompt template is missing the "
+                "required <LEN_EVENTS_JSON> placeholder."
+            )
+        prompt_text = prompt_template.replace("<LEN_EVENTS_JSON>", str(len(events_dict)))
+        prompt_text = prompt_text.replace("<EVENTS_JSON>", json.dumps(events_dict))
         return prompt_text
 
     def _run_timesketch_query(
@@ -189,10 +196,15 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             indices = all_timeline_ids
         indices, timeline_ids = utils.get_validated_indices(indices, sketch)
 
+        # The count API does not support pagination parameters.
+        count_filter = query_filter.copy()
+        count_filter.pop("size", None)
+        count_filter.pop("from", None)
+
         event_count = datastore.search(
             sketch_id=sketch.id,
             query_string=query_string,
-            query_filter=query_filter,
+            query_filter=count_filter,
             indices=indices,
             timeline_ids=timeline_ids,
             count=True,
@@ -204,10 +216,12 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
                 f"The limit is {STARRED_EVENTS_REPORT_LIMIT}."
             )
 
+        count_filter["size"] = STARRED_EVENTS_REPORT_LIMIT
+
         events_df = self._run_timesketch_query(
             sketch,
             query_string,
-            query_filter,
+            count_filter,
             datastore=datastore,
             timeline_ids=timeline_ids,
         )
@@ -291,10 +305,14 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
             query_filter = form.get("filter", {})
             query_string = form.get("query", "*") or "*"
 
+            search_filter = query_filter.copy()
+            search_filter.pop("from", None)
+            search_filter["size"] = STARRED_EVENTS_REPORT_LIMIT
+
             events_df = self._run_timesketch_query(
                 sketch,
                 query_string,
-                query_filter,
+                search_filter,
                 datastore=datastore,
                 timeline_ids=timeline_ids,
             )
