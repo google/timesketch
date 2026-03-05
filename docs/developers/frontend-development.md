@@ -142,9 +142,9 @@ dependencies and works natively in all browsers.
 
 Use the Vuetify `<v-tooltip>` component **only** when:
 
-- A `title` attribute is not technically possible on the element
-- The tooltip content is **dynamic or conditional**
-- The tooltip requires **complex or multi-line content**
+* A `title` attribute is not technically possible on the element
+* The tooltip content is **dynamic or conditional**
+* The tooltip requires **complex or multi-line content**
 
 **Example:**
 ```html
