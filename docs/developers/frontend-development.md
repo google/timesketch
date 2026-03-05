@@ -137,7 +137,9 @@ dependencies and works natively in all browsers.
   <v-icon>mdi-delete</v-icon>
 </v-btn>
 ```
+
 ![Native browser title tooltip](/assets/images/tooltip-native-title.png)
+
 ### When to Use Vuetify `<v-tooltip>`
 
 Use the Vuetify `<v-tooltip>` component **only** when:
