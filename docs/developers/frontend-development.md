@@ -149,6 +149,7 @@ Use the Vuetify `<v-tooltip>` component **only** when:
 * The tooltip content is **dynamic or conditional**
 * The tooltip requires **complex or multi-line content**
 
+
 **Example:**
 ```html
 <v-tooltip bottom>
