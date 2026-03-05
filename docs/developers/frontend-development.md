@@ -131,6 +131,7 @@ native `title` attribute** on any HTML element. This requires no extra
 dependencies and works natively in all browsers.
 
 **Always use this approach first:**
+
 ```html
 <!-- Preferred: native browser tooltip -->
 <v-btn icon title="Delete event">
