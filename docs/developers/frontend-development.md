@@ -161,4 +161,5 @@ Use the Vuetify `<v-tooltip>` component **only** when:
   <span>This event was flagged by an analyzer</span>
 </v-tooltip>
 ```
+
 ![Native browser title tooltip](/assets/images/tooltip-vuetify-example.png)
