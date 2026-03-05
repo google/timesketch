@@ -38,13 +38,19 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         self.datastore = MockDataStore("noserver", 4711)
 
     @mock.patch(
-        "builtins.open", mock.mock_open(read_data="Analyze these events: <EVENTS_JSON>")
+        "builtins.open",
+        mock.mock_open(
+            read_data="Analyze these <LEN_EVENTS_JSON> events: <EVENTS_JSON>"
+        ),
     )
     def test_get_prompt_text(self):
         """Tests _get_prompt_text method."""
         events_dict = [{"message": "Test event 1"}, {"message": "Test event 2"}]
         prompt = self.llm_feature._get_prompt_text(events_dict)
-        self.assertEqual(prompt, f"Analyze these events: {json.dumps(events_dict)}")
+        self.assertEqual(
+            prompt,
+            f"Analyze these {len(events_dict)} events: {json.dumps(events_dict)}",
+        )
 
     @mock.patch(
         "builtins.open",

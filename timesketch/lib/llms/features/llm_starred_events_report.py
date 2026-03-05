@@ -110,7 +110,9 @@ class LLMStarredEventsReportFeature(LLMFeatureInterface):
                 "LLM starred events report prompt template is missing the "
                 "required <LEN_EVENTS_JSON> placeholder."
             )
-        prompt_text = prompt_template.replace("<LEN_EVENTS_JSON>", str(len(events_dict)))
+        prompt_text = prompt_template.replace(
+            "<LEN_EVENTS_JSON>", str(len(events_dict))
+        )
         prompt_text = prompt_text.replace("<EVENTS_JSON>", json.dumps(events_dict))
         return prompt_text
 
