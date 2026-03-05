@@ -118,6 +118,7 @@ dev credentials, and you should be redirected to the main Timesketch page. All c
 be instantly picked up.
 
 If you already have a yarn process running with the "old" frontend, it might not work.
+
 ## Tooltip Usage Guidelines
 
 Timesketch follows a consistent approach to tooltips across the UI to ensure
