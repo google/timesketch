@@ -162,4 +162,4 @@ Use the Vuetify `<v-tooltip>` component **only** when:
 </v-tooltip>
 ```
 
-![Native browser title tooltip](/assets/images/tooltip-vuetify-example.png)
+![Vuetify tooltip example](/assets/images/tooltip-vuetify-example.png)
