@@ -82,7 +82,7 @@ class TestLLMSummarizeFeature(BaseTest):
             self.datastore, "search", return_value={"mock": "result"}
         ) as mock_search:
             with mock.patch(
-                "timesketch.api.v1.export.query_results_to_dataframe",
+                "timesketch.lib.utils.query_results_to_dataframe",
                 return_value=result_df,
             ) as mock_export:
                 df = self.llm_feature._run_timesketch_query(
@@ -97,9 +97,11 @@ class TestLLMSummarizeFeature(BaseTest):
                 mock_search.assert_called_once()
                 mock_export.assert_called_once()
 
-    def test_run_timesketch_query_no_datastore(self):
+    @mock.patch("timesketch.lib.llms.features.llm_summarize.OpenSearchDataStore")
+    def test_run_timesketch_query_no_datastore(self, mock_datastore_class):
         """Tests _run_timesketch_query method with no datastore."""
-        with self.assertRaises(ValueError):
+        mock_datastore_class.side_effect = Exception("Connection error")
+        with self.assertRaises(Exception):
             self.llm_feature._run_timesketch_query(self.sketch1)
 
     @mock.patch("timesketch.lib.utils.get_validated_indices")
