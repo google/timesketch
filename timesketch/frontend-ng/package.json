@@ -11,7 +11,8 @@
   },
   "resolutions": {
     "qs": "6.14.1",
-    "serialize-javascript": "^7.0.3"
+    "serialize-javascript": "^7.0.3",
+    "minimatch": "^9.0.7"
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",
