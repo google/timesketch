@@ -1893,6 +1893,17 @@
     estree-walker "^2.0.2"
     source-map-js "^1.2.1"
 
+"@vue/compiler-core@3.5.29":
+  version "3.5.29"
+  resolved "https://registry.yarnpkg.com/@vue/compiler-core/-/compiler-core-3.5.29.tgz#3fb70630c62a2e715eeddc3c2a48f46aa4507adc"
+  integrity sha512-cuzPhD8fwRHk8IGfmYaR4eEe4cAyJEL66Ove/WZL7yWNL134nqLddSLwNRIsFlnnW1kK+p8Ck3viFnC0chXCXw==
+  dependencies:
+    "@babel/parser" "^7.29.0"
+    "@vue/shared" "3.5.29"
+    entities "^7.0.1"
+    estree-walker "^2.0.2"
+    source-map-js "^1.2.1"
+
 "@vue/compiler-dom@3.5.28":
   version "3.5.28"
   resolved "https://registry.yarnpkg.com/@vue/compiler-dom/-/compiler-dom-3.5.28.tgz#4e27b885898f4799d95305dfc56d14c2dcf8e5ba"
@@ -1900,6 +1911,14 @@
   dependencies:
     "@vue/compiler-core" "3.5.28"
     "@vue/shared" "3.5.28"
+
+"@vue/compiler-dom@3.5.29":
+  version "3.5.29"
+  resolved "https://registry.yarnpkg.com/@vue/compiler-dom/-/compiler-dom-3.5.29.tgz#055cf5492005249591c7fb45868a874468e4ffb3"
+  integrity sha512-n0G5o7R3uBVmVxjTIYcz7ovr8sy7QObFG8OQJ3xGCDNhbG60biP/P5KnyY8NLd81OuT1WJflG7N4KWYHaeeaIg==
+  dependencies:
+    "@vue/compiler-core" "3.5.29"
+    "@vue/shared" "3.5.29"
 
 "@vue/compiler-sfc@2.7.16":
   version "2.7.16"
@@ -1935,6 +1954,14 @@
     "@vue/compiler-dom" "3.5.28"
     "@vue/shared" "3.5.28"
 
+"@vue/compiler-ssr@3.5.29":
+  version "3.5.29"
+  resolved "https://registry.yarnpkg.com/@vue/compiler-ssr/-/compiler-ssr-3.5.29.tgz#83ac28c860271bd1c9822d135ac78c388403f949"
+  integrity sha512-Y/ARJZE6fpjzL5GH/phJmsFwx3g6t2KmHKHx5q+MLl2kencADKIrhH5MLF6HHpRMmlRAYBRSvv347Mepf1zVNw==
+  dependencies:
+    "@vue/compiler-dom" "3.5.29"
+    "@vue/shared" "3.5.29"
+
 "@vue/component-compiler-utils@^3.1.0", "@vue/component-compiler-utils@^3.3.0":
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/@vue/component-compiler-utils/-/component-compiler-utils-3.3.0.tgz#f9f5fb53464b0c37b2c8d2f3fbfe44df60f61dc9"
@@ -1962,10 +1989,23 @@
     eslint-plugin-promise "^4.0.1"
     eslint-plugin-standard "^4.0.0"
 
+"@vue/server-renderer@^3.5.29":
+  version "3.5.29"
+  resolved "https://registry.yarnpkg.com/@vue/server-renderer/-/server-renderer-3.5.29.tgz#9cbcbf676b2976fbb8171d5de79501894ba84cad"
+  integrity sha512-G/1k6WK5MusLlbxSE2YTcqAAezS+VuwHhOvLx2KnQU7G2zCH6KIb+5Wyt6UjMq7a3qPzNEjJXs1hvAxDclQH+g==
+  dependencies:
+    "@vue/compiler-ssr" "3.5.29"
+    "@vue/shared" "3.5.29"
+
 "@vue/shared@3.5.28", "@vue/shared@^3.5.18":
   version "3.5.28"
   resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.5.28.tgz#ed9b6785e9452621ad3ab2f2775e9cba494a9ef4"
   integrity sha512-cfWa1fCGBxrvaHRhvV3Is0MgmrbSCxYTXCSCau2I0a1Xw1N1pHAvkWCiXPRAqjvToILvguNyEwjevUqAuBQWvQ==
+
+"@vue/shared@3.5.29":
+  version "3.5.29"
+  resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.5.29.tgz#0fe0d7637b05599d56ca58d83a77c637a1774110"
+  integrity sha512-w7SR0A5zyRByL9XUkCfdLs7t9XOHUyJ67qPGQjOou3p6GvBeBW+AVjUUmlxtZ4PIYaRvE+1LmK44O4uajlZwcg==
 
 "@vue/test-utils@^2.4.6":
   version "2.4.6"
