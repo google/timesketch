@@ -13,7 +13,6 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
-
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy.query import Query
@@ -39,6 +38,9 @@ def configure_engine(url, engine_options):
     # These needs to be global because of the way Flask works.
     # pylint: disable=global-statement,global-variable-not-assigned
     # TODO: Can we wrap this in a class?
+    # Ensure pool_pre_ping is enabled by default.
+    if "pool_pre_ping" not in engine_options:
+        engine_options["pool_pre_ping"] = True
     global engine, session_maker, db_session
     engine = create_engine(url, future=True, **engine_options)
     # Configure the session

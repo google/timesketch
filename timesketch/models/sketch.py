@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements the models for the Timesketch core system."""
 
-
 import json
 import logging
 from typing import Optional, Union
@@ -43,7 +42,6 @@ from timesketch.models.annotations import StatusMixin
 from timesketch.models.annotations import GenericAttributeMixin
 from timesketch.lib.utils import random_color
 from timesketch.models import db_session
-
 
 logger = logging.getLogger("timesketch.sketch")
 

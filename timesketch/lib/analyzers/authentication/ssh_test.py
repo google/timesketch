@@ -142,8 +142,7 @@ def _create_analyzer_output_json() -> str:
     output.result_priority = "HIGH"
     output.result_status = "SUCCESS"
     output.result_summary = "1 brute force from 192.168.40.25"
-    output.result_markdown = textwrap.dedent(
-        """
+    output.result_markdown = textwrap.dedent("""
         ### Brute Force Analyzer
 
         ### Brute Force Summary for 192.168.40.25
@@ -157,8 +156,7 @@ def _create_analyzer_output_json() -> str:
         - First successful login as admin
 
         #### Top Usernames
-        - admin: 202"""
-    )
+        - admin: 202""")
     output.platform_meta_data["created_tags"] = ["ssh_bruteforce"]
 
     return str(output)
@@ -182,10 +180,8 @@ def _create_no_bruteforce_analyzer_output_json() -> str:
     output.result_priority = "NOTE"
     output.result_status = "SUCCESS"
     output.result_summary = "No bruteforce activity"
-    output.result_markdown = textwrap.dedent(
-        """
+    output.result_markdown = textwrap.dedent("""
         ### Brute Force Analyzer
-        Brute force not detected"""
-    )
+        Brute force not detected""")
 
     return str(output)

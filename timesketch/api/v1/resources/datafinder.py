@@ -27,7 +27,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models.sketch import Sketch
 
-
 logger = logging.getLogger("timesketch.data_api")
 
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API sigma library."""
+
 from __future__ import unicode_literals
 
 import logging

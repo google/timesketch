@@ -14,17 +14,16 @@
 # limitations under the License.
 """Tests for tsctl command-line tool."""
 
-import os
-import zipfile
 import json
-import csv
+import os
+
 from click.testing import CliRunner
 from timesketch.tsctl import cli
 from . import interface
 from . import manager
 
 
-class TestTsctl(interface.BaseEndToEndTest):  # Or inherit from BaseTest if applicable
+class TestTsctl(interface.BaseEndToEndTest):
     """Tests for tsctl commands."""
 
     NAME = "tsctl_test"
@@ -33,6 +32,13 @@ class TestTsctl(interface.BaseEndToEndTest):  # Or inherit from BaseTest if appl
         """Initialize the test class and the runner."""
         super().__init__()
         self.runner = CliRunner()
+
+    def _create_group_sync_file(self, content):
+        """Helper to create a temporary group sync file."""
+        file_path = "groups.json"
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(content, f)
+        return file_path
 
     def test_version_command(self):
         """Tests the 'tsctl version' command."""
@@ -62,47 +68,83 @@ class TestTsctl(interface.BaseEndToEndTest):  # Or inherit from BaseTest if appl
         # Check for the status indicator (active: True/False)
         self.assertions.assertIn("active: True)", result.output)
 
-    def test_export_sketch_command(self):
-        """Tests the 'tsctl export-sketch' command."""
-        # Ensure the default sketch for the test has some data
-        # Using 'sigma_events.csv' which is known to have 4 events + header
-        self.import_timeline("sigma_events.csv")
+    def test_sync_group_memberships_file_not_found(self):
+        """Tests sync-groups-from-json with a non-existent file."""
+        result = self.runner.invoke(cli, ["sync-groups-from-json", "nonexistent.json"])
+        self.assertions.assertNotEqual(result.exit_code, 0)
+        self.assertions.assertIn("Error: File not found", result.output)
 
-        sketch_id = self.sketch.id
-        sketch_name = self.sketch.name
-        output_filename = f"test_sketch_{sketch_id}_export.zip"
+    def test_sync_group_memberships_invalid_json(self):
+        """Tests sync-groups-from-json with an invalid JSON file."""
+        file_path = "invalid.json"
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write("{'invalid_json':}")
+            result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
+            self.assertions.assertNotEqual(result.exit_code, 0)
+            self.assertions.assertIn("Error: Invalid JSON file", result.output)
+        finally:
+            os.remove(file_path)
 
-        # Invoke 'tsctl export-sketch <sketch_id> --filename <output_filename>'
-        result = self.runner.invoke(
-            cli, ["export-sketch", str(sketch_id), "--filename", output_filename]
-        )
+    def test_sync_groups_dry_run(self):
+        """Tests sync-groups-from-json with --dry-run."""
+        group_data = {"new_group": ["user1", "user2"]}
+        file_path = self._create_group_sync_file(group_data)
 
-        # Assertions for command execution
+        try:
+            result = self.runner.invoke(
+                cli, ["sync-groups-from-json", file_path, "--dry-run"]
+            )
+            self.assertions.assertEqual(
+                result.exit_code, 0, f"CLI Error: {result.output}"
+            )
+            self.assertions.assertIn("[DRY-RUN]", result.output)
+            self.assertions.assertIn("Would create group new_group", result.output)
+            self.assertions.assertIn("Would create user 'user1'", result.output)
+            self.assertions.assertIn("No changes committed", result.output)
+        finally:
+            os.remove(file_path)
+
+    def test_sync_groups_full_run(self):
+        """Tests the full sync-groups-from-json command."""
+        # 1. Initial setup: Create a new group with one user
+        group_data = {"test_sync_group": ["user_a"]}
+        file_path = self._create_group_sync_file(group_data)
+        result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
         self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
-        self.assertions.assertTrue(
-            os.path.exists(output_filename), f"Export file {output_filename} not found"
+        self.assertions.assertIn("Creating new group: 'test_sync_group'", result.output)
+        self.assertions.assertIn("Creating new user: 'user_a'", result.output)
+        self.assertions.assertIn(
+            "Adding user 'user_a' to group 'test_sync_group'", result.output
         )
+        self.assertions.assertIn("Sync complete", result.output)
 
-        # Assertions for zip file content
-        with zipfile.ZipFile(output_filename, "r") as zipf:
-            self.assertions.assertIn("metadata.json", zipf.namelist())
-            self.assertions.assertIn("events.csv", zipf.namelist())
+        # 2. Update: Add a user, remove a user
+        group_data = {"test_sync_group": ["user_b"]}
+        file_path = self._create_group_sync_file(group_data)
+        result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
+        self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
+        self.assertions.assertIn("Creating new user: 'user_b'", result.output)
+        self.assertions.assertIn(
+            "Adding user 'user_b' to group 'test_sync_group'", result.output
+        )
+        self.assertions.assertIn(
+            "Removing user 'user_a' from group 'test_sync_group'", result.output
+        )
+        self.assertions.assertIn("Sync complete", result.output)
 
-            with zipf.open("metadata.json") as meta_file:
-                metadata = json.load(meta_file)
-                self.assertions.assertEqual(metadata.get("sketch_id"), sketch_id)
-                self.assertions.assertEqual(metadata.get("name"), sketch_name)
+        # 3. Cleanup: Check ignored groups
+        self.runner.invoke(cli, ["create-group", "unmanaged_group"])
+        group_data = {"test_sync_group": []}
+        file_path = self._create_group_sync_file(group_data)
+        result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
+        self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
+        self.assertions.assertIn(
+            "Removing user 'user_b' from group 'test_sync_group'", result.output
+        )
+        self.assertions.assertIn("unmanaged_group", result.output)
 
-            with zipf.open("events.csv") as events_file:
-                # Read CSV content (decode bytes to string for csv.reader)
-                csv_content = events_file.read().decode("utf-8")
-                reader = csv.reader(csv_content.splitlines())
-                rows = list(reader)
-                self.assertions.assertEqual(len(rows), 5)  # 1 header + 4 events
-
-        # Clean up
-        if os.path.exists(output_filename):
-            os.remove(output_filename)
+        os.remove(file_path)
 
 
 manager.EndToEndTestManager.register_test(TestTsctl)

@@ -30,11 +30,17 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+    <div v-if="searchError && !searchInProgress" class="ml-3">
+      <TsSearchErrorCard
+        :error-text="searchError"
+      ></TsSearchErrorCard>
+    </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
       <ExploreWelcomeCard></ExploreWelcomeCard>
     </div>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString">
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError">
       <SearchNotFoundCard
         :current-query-string="currentQueryString"
         :filter-chips="filterChips"
@@ -412,7 +418,7 @@ limitations under the License.
         </template>
 
         <!-- Actions field -->
-        <template v-slot:item.actions="{ item }">
+        <template v-slot:[`item.actions`]="{ item }">
           <span v-if="!disableStarring">
             <v-icon
               v-if="item._source.label.includes('__ts_star')"
@@ -448,7 +454,7 @@ limitations under the License.
         </template>
 
         <!-- Datetime field with action buttons -->
-        <template v-slot:item._source.timestamp="{ item }">
+        <template v-slot:[`item._source.timestamp`]="{ item }">
           <div
             v-bind:style="getTimelineColor(item)"
             class="datetime-table-cell"
@@ -509,7 +515,7 @@ limitations under the License.
         </template>
 
         <!-- Timeline name field -->
-        <template v-slot:item.timeline_name="{ item }">
+        <template v-slot:[`item.timeline_name`]="{ item }">
           <v-chip
             label
             style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em"
@@ -523,7 +529,7 @@ limitations under the License.
         </template>
 
         <!-- Comment field -->
-        <template v-slot:item._source.comment="{ item }">
+        <template v-slot:[`item._source.comment`]="{ item }">
           <div class="d-inline-block">
             <v-btn
               icon
@@ -595,6 +601,7 @@ import TsEventTagMenu from "./EventTagMenu.vue";
 import TsEventTags from "./EventTags.vue";
 import TsEventActionMenu from "./EventActionMenu.vue";
 import TsEventTagDialog from "./EventTagDialog.vue";
+import TsSearchErrorCard from "./SearchErrorCard.vue";
 
 const defaultQueryFilter = () => {
   return {
@@ -626,6 +633,7 @@ export default {
     TsEventActionMenu,
     TsBarChart,
     TsEventTagDialog,
+    TsSearchErrorCard,
   },
   props: {
     queryRequest: {
@@ -734,6 +742,7 @@ export default {
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
+      searchError: '',
     }
   },
   computed: {
@@ -1040,6 +1049,7 @@ export default {
       this.searchInProgress = true
       this.selectedEventIds = []
       this.eventList = emptyEventList()
+      this.searchError = ''
 
       if (resetPagination) {
         this.currentPage = 1
@@ -1114,6 +1124,7 @@ export default {
         })
         .catch((e) => {
           console.log("Error fetching search results:", e)
+          this.searchInProgress = false
           let msg =
             'Sorry, there was a problem fetching your search results. Error: "' +
             e.response.data.message +
@@ -1128,6 +1139,7 @@ export default {
           } else {
             this.errorSnackBar(msg)
           }
+          this.searchError = msg
           console.error("Error message: " + msg)
           console.error(e)
         })

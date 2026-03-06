@@ -29,7 +29,14 @@ limitations under the License.
         multiple
         return-object
         closable-chips
-      ></v-autocomplete>
+      >
+        <template v-slot:item="{ props, item }">
+          <v-list-item
+            v-bind="props"
+            :prepend-icon="item.raw.type === 'user' ? 'mdi-account' : 'mdi-account-group-outline'"
+          ></v-list-item>
+        </template>
+      </v-autocomplete>
       <br />
       People with access
       <v-list>

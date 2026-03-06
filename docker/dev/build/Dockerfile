@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Fix for broken PPA dependency in Ubuntu 24.04: Plaso needs the 'events'
 # library for its opensearch output module.
-RUN pip3 install --break-system-packages events
+RUN pip3 install --no-cache-dir --break-system-packages events
 
 # Install NodeJS for frontend development
 RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
@@ -52,11 +52,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install dependencies for Timesketch into the virtual environment
 COPY ./requirements.txt /timesketch-requirements.txt
-RUN pip3 install -r /timesketch-requirements.txt
+RUN pip3 install --no-cache-dir -r /timesketch-requirements.txt
 
 # Install test dependencies for Timesketch into the virtual environment
 COPY ./test_requirements.txt /timesketch-test-requirements.txt
-RUN pip3 install -r /timesketch-test-requirements.txt
+RUN pip3 install --no-cache-dir -r /timesketch-test-requirements.txt
 
 # Copy the entrypoint script into the container
 COPY ./docker/dev/build/docker-entrypoint.sh /

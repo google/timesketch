@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SearchIndex resources for version 1 of the Timesketch API."""
+
 import logging
 
 import opensearchpy
@@ -31,7 +32,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
-
 
 logger = logging.getLogger("timesketch.index_api")
 

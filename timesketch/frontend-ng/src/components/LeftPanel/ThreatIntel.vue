@@ -90,7 +90,7 @@ limitations under the License.
                 :items="intelligenceData"
                 :items-per-page="10"
               >
-                <template v-slot:item.ioc="{ item }">
+                <template v-slot:[`item.ioc`]="{ item }">
                   <span :title="item.ioc">
                     <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
                       {{ item.ioc }}
@@ -98,18 +98,18 @@ limitations under the License.
                   </span>
                 </template>
 
-                <template v-slot:item.type="{ item }">
+                <template v-slot:[`item.type`]="{ item }">
                   <small>{{ item.type }}</small>
                 </template>
 
-                <template v-slot:item.actions="{ item }">
+                <template v-slot:[`item.actions`]="{ item }">
                   <v-btn icon small @click="generateSearchQuery(item.ioc)">
                     <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
               <v-data-table v-else dense :headers="indicatorHeaders" :items="intelligenceData" hide-default-footer>
-                <template v-slot:item.ioc="{ item }">
+                <template v-slot:[`item.ioc`]="{ item }">
                   <span :title="item.ioc">
                     <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
                       {{ item.ioc }}
@@ -117,11 +117,11 @@ limitations under the License.
                   </span>
                 </template>
 
-                <template v-slot:item.type="{ item }">
+                <template v-slot:[`item.type`]="{ item }">
                   <small>{{ item.type }}</small>
                 </template>
 
-                <template v-slot:item.actions="{ item }">
+                <template v-slot:[`item.actions`]="{ item }">
                   <v-btn icon small @click="generateSearchQuery(item.ioc)">
                     <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
@@ -130,16 +130,16 @@ limitations under the License.
             </v-tab-item>
             <v-tab-item :transition="false">
               <v-data-table dense :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
-                <template v-slot:item.tag="{ item }">
+                <template v-slot:[`item.tag`]="{ item }">
                   <v-chip x-small @click="searchForIOC(item)">{{ item.tag.name }}</v-chip>
                 </template>
-                <template v-slot:item.iocs="{ item }">
+                <template v-slot:[`item.iocs`]="{ item }">
                   <small :title="item.iocs">{{ item.iocs.length }}</small>
                 </template>
-                <template v-slot:item.weight="{ item }">
+                <template v-slot:[`item.weight`]="{ item }">
                   <small>{{ item.tag.weight }}</small>
                 </template>
-                <template v-slot:item.actions="{ item }">
+                <template v-slot:[`item.actions`]="{ item }">
                   <v-btn icon small @click="searchForIOC(item)">
                     <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
@@ -224,7 +224,7 @@ export default {
       this.tagInfo = {}
       for (var ioc of this.intelligenceData) {
         for (var tag of ioc.tags) {
-          // deal with the case when tag is an object that is alread enriched.
+          // deal with the case when tag is an object that is already enriched.
           var tagKey = null
           if (typeof tag === 'object') {
             tagKey = tag.name

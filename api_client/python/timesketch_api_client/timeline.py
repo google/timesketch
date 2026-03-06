@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 from __future__ import unicode_literals
 
 import json
@@ -21,7 +22,6 @@ from . import analyzer
 from . import error
 from . import index
 from . import resource
-
 
 logger = logging.getLogger("timesketch_api.timeline")
 

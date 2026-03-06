@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 from __future__ import unicode_literals
 
 import copy
@@ -19,6 +20,7 @@ import os
 import json
 import time
 import logging
+from typing import Dict, Generator, List, Optional
 
 import pandas
 
@@ -37,7 +39,6 @@ from . import searchtemplate
 from . import story
 from . import timeline
 from . import scenario as scenario_lib
-
 
 logger = logging.getLogger("timesketch_api.sketch")
 
@@ -68,7 +69,7 @@ class Sketch(resource.BaseResource):
         self.api = api
         self._archived = None
         self._sketch_name = sketch_name
-        super().__init__(api=api, resource_uri=f"sketches/{self.id}")
+        super().__init__(api=api, resource_uri=f"sketches/{self.id}/")
 
     @property
     def acl(self):
@@ -1937,35 +1938,45 @@ class Sketch(resource.BaseResource):
         self._archived = not return_status
         return return_status
 
-    def export(self, file_path):
+    def export(self, file_path, stream=False):
         """Exports the content of the sketch to a ZIP file.
 
         Args:
             file_path (str): a file path where the ZIP file will be saved.
+            stream (bool): whether to stream the download.
 
         Raises:
             RuntimeError: if sketch cannot be exported.
         """
-        directory = os.path.dirname(file_path)
-        if not os.path.isdir(directory):
-            raise RuntimeError(
-                "The directory needs to exist, please create: "
-                "{0:s} first".format(directory)
-            )
+        # Expand ~ to home directory if present
+        file_path = os.path.expanduser(file_path)
 
+        # Ensure we have a .zip extension
         if not file_path.lower().endswith(".zip"):
             logger.warning("File does not end with a .zip, adding it.")
-            file_path = "{0:s}.zip".format(file_path)
+            file_path = f"{file_path}.zip"
+
+        directory = os.path.dirname(file_path) or "."
+        if not os.path.isdir(directory):
+            raise RuntimeError(
+                "The directory needs to exist and be a directory: "
+                f"{os.path.abspath(directory)} first"
+            )
+
+        if not os.access(directory, os.W_OK):
+            raise RuntimeError(
+                f"The directory is not writable: {os.path.abspath(directory)}"
+            )
 
         if os.path.isfile(file_path):
-            raise RuntimeError("File [{0:s}] already exists.".format(file_path))
+            raise RuntimeError(f"File [{file_path}] already exists.")
 
         form_data = {"action": "export"}
         resource_url = "{0:s}/sketches/{1:d}/archive/".format(
             self.api.api_root, self.id
         )
 
-        response = self.api.session.post(resource_url, json=form_data)
+        response = self.api.session.post(resource_url, json=form_data, stream=stream)
         status = error.check_return_status(response, logger)
         if not status:
             error.error_message(
@@ -1975,7 +1986,65 @@ class Sketch(resource.BaseResource):
             )
 
         with open(file_path, "wb") as fw:
-            fw.write(response.content)
+            if stream:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        fw.write(chunk)
+            else:
+                fw.write(response.content)
+
+    def export_events_stream(
+        self,
+        query_string: Optional[str] = None,
+        query_dsl: Optional[str] = None,
+        query_filter: Optional[Dict] = None,
+        return_fields: Optional[List[str]] = None,
+    ) -> Generator[Dict, None, None]:
+        """Exports all events from the sketch matching the query.
+
+        This uses the high-performance sliced export API endpoint.
+
+        Args:
+            query_string (str): OpenSearch query string.
+            query_dsl (str): OpenSearch query DSL as JSON string.
+            query_filter (dict): Filter for the query as a dict.
+            return_fields (list): List of strings with fields to return.
+
+        Yields:
+            dict: A dictionary representing an event.
+        """
+        if return_fields is None:
+            return_fields = ["datetime", "message", "timestamp_desc"]
+
+        resource_url = f"{self.api.api_root}/sketches/{self.id}/exportstream/"
+
+        if not (query_string or query_filter or query_dsl):
+            query_string = "*"
+
+        if return_fields and isinstance(return_fields, list):
+            return_fields = ",".join(return_fields)
+
+        form_data = {
+            "query": query_string,
+            "filter": query_filter,
+            "dsl": query_dsl,
+            "fields": return_fields,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data, stream=True)
+
+        if not error.check_return_status(response, logger):
+            error.error_message(
+                response, message="Unable to export events", error=RuntimeError
+            )
+
+        for line in response.iter_lines():
+            if line:
+                try:
+                    yield json.loads(line.decode("utf-8"))
+                except json.JSONDecodeError:
+                    logger.warning("Received invalid JSON line during export")
+                    continue
 
     def create_timeline(self, searchindex_id: int, timeline_name: str):
         """Creates a Timeline in this Sketch

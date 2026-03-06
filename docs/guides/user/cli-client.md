@@ -23,7 +23,7 @@ pip3 install timesketch-cli-client
 ## Basic usage
 
 The command line program is called `timesketch`. To see the help menu you can
-invoke without ay parameters alternatively issue `timesketch --help`.
+invoke without any parameters alternatively issue `timesketch --help`.
 
 ```
 $ timesketch
@@ -42,11 +42,11 @@ Usage: timesketch [OPTIONS] COMMAND [ARGS]...
   For detailed help on each command, run  <command> --help
 
 Options:
-  --version         Show the version and exit.
-  --sketch INTEGER  Sketch to work in.
+  --version             Show the version and exit.
+  --sketch INTEGER      Sketch to work in.
   --output-format TEXT  Set output format [json, text, tabular, csv]
                         (overrides global setting).
-  -h, --help        Show this message and exit.
+  -h, --help            Show this message and exit.
 
 Commands:
   analyze         Analyze timelines.
@@ -99,7 +99,14 @@ subcommand has the following features:
 $ timesketch search --help
 Usage: timesketch search [OPTIONS]
 
-  Search and explore.
+  Searches and explores events within a Timesketch sketch.
+
+  Executes a search query against a Timesketch sketch, applying various
+  filters and formatting the output.
+  Supports queries using OpenSearch query string syntax, date/time filtering,
+  label filtering, and saved searches.
+  The output can be formatted as text, CSV, JSON, JSONL, or tabular,
+  depending on the context's 'output_format' setting.
 
 Options:
   -q, --query TEXT        Search query in OpenSearch query string format
@@ -112,6 +119,7 @@ Options:
   --limit INTEGER         Limit amount of events to show (default: 40)
   --saved-search INTEGER  Query and filter from saved search
   --describe              Show the query and filter then exit
+  --show-internal-columns Show all columns including Timesketch internal ones
   -h, --help              Show this message and exit.
 
 ```
@@ -134,6 +142,24 @@ This example returns the field name `domain` and then do a simple sort and uniq.
 
 ```
 timesketch search -q "foobar" --return-fields domain | sort | uniq
+```
+
+## Saved Searches
+
+### List saved searches
+
+To list all saved searches in the sketch:
+
+```bash
+timesketch saved-searches list
+```
+
+### Describe a saved search
+
+To see the details of a saved search:
+
+```bash
+timesketch saved-searches describe <SEARCH_ID>
 ```
 
 ## Sketch
@@ -196,17 +222,74 @@ timesketch --output-format json sketch describe
               ...
 ```
 
+### Create a sketch
+
+To create a new sketch:
+
+```bash
+timesketch sketch create --name "My New Sketch" --description "Analysis of incident X"
+```
+
+### Export a sketch
+
+Running `sketch export` will export events from the sketch to a ZIP file.
+
+By default, this command uses the search-based export, which fetches
+all events from the sketch and saves them to a ZIP file containing
+a CSV of the results and metadata.
+
+If the `--use_sketch_export` flag is provided, it uses the full sketch
+export functionality. This creates a comprehensive ZIP file that includes
+not only all events but also stories (as HTML), aggregations, views,
+and metadata associated with the sketch.
+
+The filename can be just a name (e.g. `my_export.zip` which saves to the
+current directory) or a full path.
+
+```bash
+timesketch sketch export --filename my_export.zip
+```
+
+Options:
+- `--stream`: Stream the download. This is useful for large exports to avoid memory issues. Can be used with either export method.
+- `--use_sketch_export`: Use the full sketch export functionality (same as Web UI export) instead of just exporting events.
+
+Example of a full, streamed export:
+```bash
+timesketch sketch export --filename my_large_export.zip --use_sketch_export --stream
+```
+
+### Archive Sketch
+
+Running `sketch archive` will set the archive flag to the sketch.
+
+### Unarchive a sketch
+
+Running `sketch unarchive` will set the archive flag to the sketch.
+
+### Delete a sketch
+
+Running `sketch delete` will delete the sketch. By default it is a dry-run. Use `--force_delete` to execute.
+
+```bash
+timesketch sketch delete
+# Dry run output...
+
+timesketch sketch delete --force_delete
+# Actually deletes the sketch
+```
+
 ### Get attributes
 
 Attributes can be to long to show in `sketch describe` which is why there is a
 separate command for it:
 
-```timesketch sketch attributes```
+```timesketch sketch attributes list```
 
 Will give back something like this:
 
 ```bash
-timesketch --output-format text sketch attributes
+timesketch --output-format text sketch attributes list
 Name: intelligence: Ontology: intelligence Value: {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}
 Name: ticket_id: Ontology: 12345 Value: text
 Name: ticket_id2: Ontology: 12345 Value: text
@@ -216,7 +299,7 @@ Name: ticket_id3: Ontology: 12345 Value: text
 Or as JSON
 
 ```bash
-timesketch --output-format json sketch attributes
+timesketch --output-format json sketch attributes list
 {
     "intelligence": {
         "ontology": "intelligence",
@@ -261,46 +344,34 @@ timesketch --output-format json sketch attributes
 To add an attribute to a sketch
 
 ```bash
-timesketch sketch add_attribute
+timesketch sketch attributes add
 ```
 
 For example:
 
 ```bash
-timesketch sketch add_attribute --name ticket_id3 --ontology text --value 12345
+timesketch sketch attributes add --name ticket_id3 --ontology text --value 12345
 Attribute added:
 Name: ticket_id3
 Ontology: text
 Value: 12345
 ```
 
-To verify, run `timesketch sketch attributes`.
+To verify, run `timesketch sketch attributes list`.
 
 ### Remove an attribute
 
 To remove an attribute from a sketch
 
 ```bash
-timesketch sketch remove_attribute
+timesketch sketch attributes remove
 ```
-
-### Archive Sketch
-
-Running `sketch archive` will set the archive flag to the sketch.
-
-### Unarchive a sketch
-
-Running `sketch unarchive` will set the archive flag to the sketch.
-
-### Export a sketch
-
-Running `sketch export` will export the complete Sketch to a file.
 
 ### Labels
 
 #### list_labels
 
-Running `sketch list_labels` will give you a list of all labels of a sketch.
+Running `sketch list_label` will give you a list of all labels of a sketch.
 
 Example:
 ```bash
@@ -328,6 +399,41 @@ timesketch --sketch 14 --output-format json sketch remove_label --label=foobar
 Label removed
 ```
 
+### Stories
+
+#### create-story
+
+Running `sketch create-story --title "My new story"` will create a new story in the sketch.
+
+Example:
+```bash
+timesketch --sketch 14 create-story --title="My new story"
+Story created: My new story
+```
+
+#### list-stories
+
+Running `sketch list-stories` will give you a list of all stories of a sketch.
+
+Example:
+```bash
+timesketch --sketch 14 --output-format json sketch list-stories
+[
+    {
+        "id": 1,
+        "title": "My new story"
+    }
+]
+```
+
+### Export only with annotations
+
+You can export events that have comments, stars, or labels using `sketch export-only-with-annotations`.
+
+```bash
+timesketch sketch export-only-with-annotations --filename annotated.csv
+```
+
 ## Intelligence
 
 Intelligence is always sketch specific. The same can be achieved using 
@@ -337,7 +443,7 @@ to be provided in the correct format.
 Running `timesketch intelligence list` will show the intelligence added to a 
 sketch (if sketch id is set in the config file)
 
-The putput format can also be changed as follows
+The output format can also be changed as follows
 
 ```bash
 timesketch --sketch 2 --output-format text intelligence list --columns ioc,externalURI,tags,type
@@ -361,7 +467,7 @@ aaaa.com,foobar.de,"foo,aaaa",hostname
 Adding an indicator works as following
 
 ```bash
-timesketch --sketch 2 intelligence add --ioc 8.8.4.4 --type ipv4 --tags foo,bar,ext
+timesketch --sketch 2 intelligence add --ioc 8.8.4.4 --ioc-type ipv4 --tags foo,bar,ext
 ```
 
 ### Removing all of Intelligence
@@ -372,8 +478,6 @@ To remove all intelligence indicators, run:
 timesketch --sketch 2 --output-format text sketch attributes remove --name intelligence --ontology intelligence
 Attribute removed: Name: intelligence Ontology: intelligence
 ```
-
-## Run analyzers
 
 ## Analyzers
 
@@ -427,7 +531,7 @@ windowsbruteforceanalyser	Windows Login Brute Force Analyzer	False
 Run a specific analyzer. In this example the `domain` analyzer on timeline 1:
 
 ```
-timesketch analyze --analyzer domain --timeline 1
+timesketch analyze run --analyzer domain --timeline 1
 Running analyzer [domain] on [timeline 1]:
 ..
 Results
@@ -437,7 +541,7 @@ Results
 ### List analyzer results
 
 It might be useful to see the results of an analyzer for a specific timeline.
-That can be done with `timesketch analyzer results`.
+That can be done with `timesketch analyze results`.
 
 It can show only the analyzer results directly:
 
@@ -456,28 +560,7 @@ Results for analyzer [account_finder] on [sigma_events]:
 Dependent: DONE - None - Feature extraction [gmail_accounts] extracted 0 features.
 Dependent: DONE - None - Feature extraction [github_accounts] extracted 0 features.
 Dependent: DONE - None - Feature extraction [linkedin_accounts] extracted 0 features.
-Dependent: DONE - None - Feature extraction [rdp_ts_ipv4_addresses] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_client_ipv4_addresses] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_client_ipv4_addresses_2] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_host_ipv4_addresses] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_client_password_ipv4_addresses] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_disconnected_username] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_disconnected_ip_address] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_disconnected_port] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_failed_ip_address] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_failed_port] extracted 0 features.
-Dependent: DONE - None - Feature extraction [ssh_failed_method] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_subject_username] extracted 0 features.
-Dependent: DONE - None - Feature extraction [email_addresses] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_domain] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_logon_id] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_logon_type] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_logon_process_name] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_workstation_name] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_process_id] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_process_name] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_ip_address] extracted 0 features.
-Dependent: DONE - None - Feature extraction [win_login_port] extracted 0 features.
+...
 SUCCESS - NOTE - Account finder was unable to extract any accounts.
 Dependent: DONE - None - Feature extraction [rdp_rds_ipv4_addresses] extracted 0 features.
 Dependent: DONE - None - Feature extraction [ssh_failed_username] extracted 0 features.
@@ -531,6 +614,14 @@ It can also be called with a output format `json` like following.
 timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" 
 {'meta': {}, 'objects': [{'color': 'F37991', 'created_at': '2023-03-08T12:46:24.472587', 'datasources': [], 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 19, 'label_string': '', 'name': 'Manual events', 'searchindex': {'created_at': '2023-03-08T12:46:24.047640', 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 9, 'index_name': '49a318b0ba17867fd71b50903774a0c8', 'label_string': '', 'name': 'Manual events', 'status': [{'created_at': '2023-03-17T09:35:03.202520', 'id': 87, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.202520'}], 'updated_at': '2023-03-08T12:46:24.047640', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}, 'status': [{'created_at': '2023-03-17T09:35:03.233973', 'id': 79, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.233973'}], 'updated_at': '2023-03-08T12:46:24.472587', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}]}
 Event added to sketch: timefocus test
+```
+
+### Annotate an event
+
+You can add tags and comments to an event.
+
+```bash
+timesketch events annotate --timeline-id <ID> --event-id <ID> --tag "tag1,tag2" --comment "Something interesting"
 ```
 
 ### Remove tag(s)
@@ -645,4 +736,30 @@ Datasources:
 	Original filename: win7-x86.plaso
 	File on disk: /tmp/4c3c1c5c351b4db285453bff0ecad51e
 	Error:
+```
+
+## Sigma
+
+### List Sigma Rules
+
+To list all sigma rules:
+
+```bash
+timesketch sigma list
+```
+
+### Describe Sigma Rule
+
+To describe a specific sigma rule:
+
+```bash
+timesketch sigma describe --rule-uuid <UUID>
+```
+
+## Import
+
+To import a timeline:
+
+```bash
+timesketch import --name "My Timeline" /path/to/file.plaso
 ```

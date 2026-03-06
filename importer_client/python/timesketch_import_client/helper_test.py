@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Timesketch importer."""
+
 from __future__ import unicode_literals
 
 import unittest
 import tempfile
 
 from . import helper
-
 
 MOCK_CONFIG = """
 foobar:

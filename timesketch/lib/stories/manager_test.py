@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for story export manager."""
 
-
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.stories import manager
 

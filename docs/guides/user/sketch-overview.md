@@ -71,7 +71,14 @@ If you click on the "More" Button in the Sketch Overview, you get the following 
 
 ### Delete
 
-Delete the whole sketch. *Note:* this will not delete the Timelines.
+Deletes the sketch.
+
+*   **Soft Delete (Default):** The sketch is marked as deleted in the database but all associated data (timelines, indices) remains intact. It is just not shown in the UI anymore.
+*   **Hard Delete (`force_delete`):** Permanently removes the sketch and its associated data. This operation is restricted to administrators and not available via the UI and follows a safe order of operations to ensure no orphaned data is left behind:
+    1.  **OpenSearch Indices:** The raw event data is deleted from OpenSearch first.
+    2.  **Timelines:** The timeline records are removed from the database.
+    3.  **Search Indices:** The search index metadata is removed.
+    4.  **Sketch:** Finally, the sketch itself is deleted.
 
 ### Archive
 
@@ -141,8 +148,13 @@ Unarchiving a sketch restores it to a fully active and writable state. This acti
 
 ### Export
 
-Export will export the following items:
+Export allows you to download sketch data. In the Web UI, this will export a
+comprehensive ZIP file containing:
 
-- events (starred, tagged, tagged_event_stats, comments, ...)
-- stories as html
-- views (as csv)
+- Events (starred, tagged, tagged_event_stats, comments, ...)
+- Stories as HTML
+- Views (as CSV)
+- Metadata
+
+This is equivalent to the `--use_sketch_export` option in the [CLI tool](cli-client.md#export-a-sketch).
+By default, the CLI tool exports just the events from the sketch.

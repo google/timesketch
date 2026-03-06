@@ -26,6 +26,8 @@ import csv
 import datetime
 import traceback
 from typing import Optional
+import secrets
+import string
 import yaml
 import redis
 
@@ -289,6 +291,13 @@ def grant_group(group_name, sketch_id, read_only):
     print(f"Group {group_name} added to the sketch {sketch.id} ({sketch.name})")
 
 
+@cli.command(name="help")
+@click.pass_context
+def help_command(ctx: click.Context):
+    """Show this message and exit."""
+    print(ctx.parent.get_help())
+
+
 @cli.command(name="version")
 def get_version():
     """Return the version information of Timesketch."""
@@ -426,11 +435,9 @@ def list_sketches(
             if indices_to_check_in_os:
                 try:
                     # Check the actual status of these indices in OpenSearch
-                    # pylint: disable=unexpected-keyword-arg
                     indices_status = datastore.client.indices.get(
-                        index=list(indices_to_check_in_os), features="settings"
+                        index=list(indices_to_check_in_os)
                     )
-                    # pylint: enable=unexpected-keyword-arg
                     for index_name, status_info in indices_status.items():
                         is_closed = (
                             status_info.get("settings", {})
@@ -525,6 +532,51 @@ def create_group(group_name):
     db_session.add(group)
     db_session.commit()
     print(f"Group created: {group_name}")
+
+
+@cli.command(name="delete-group")
+@click.argument("group_name")
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force delete even if group is used in sketches.",
+)
+def delete_group(group_name: str, force: bool):
+    """Deletes a group from the database.
+
+    If the group is associated with any sketches, a warning message will be displayed,
+    and the deletion will be aborted unless the '--force' flag is used.
+
+    Args:
+        group_name (str): The name of the group to delete.
+        force (bool): If True, force deletes the group even if it's used in sketches.
+    """
+    group = Group.query.filter_by(name=group_name).first()
+    if not group:
+        print("No such group.")
+        return
+
+    # Check if group is used in any sketches
+    sketches = (
+        Sketch.query.join(Sketch.AccessControlEntry)
+        .filter(Sketch.AccessControlEntry.group_id == group.id)
+        .all()
+    )
+
+    if sketches:
+        print(f"Group '{group_name}' is used in the following sketches:")
+        for sketch in sketches:
+            print(f"  - {sketch.id}: {sketch.name}")
+
+        if not force:
+            print("\nError: Cannot delete group because it is used in sketches.")
+            print("Use --force to delete the group.")
+            return
+
+    if click.confirm(f"Are you sure you want to delete the group {group_name}?"):
+        db_session.delete(group)
+        db_session.commit()
+        print(f"Group {group_name} deleted.")
 
 
 @cli.command(name="list-group-members")
@@ -820,6 +872,7 @@ def info():
         os.path.join(timesketch_path, "..")
     )  # Project root directory
     git_dir = os.path.join(project_root, ".git")  # Path to the .git directory
+    timesketch_commit = "unknown"
     if os.path.isdir(git_dir):
         try:
             # Get the short commit hash
@@ -850,6 +903,7 @@ def info():
             # Not a git repo or git is not installed.
             pass
 
+    if timesketch_commit != "unknown":
         if timesketch_commit.endswith("-dirty"):
             timesketch_commit = timesketch_commit.replace("-dirty", "")
             print(f"Timesketch commit: {timesketch_commit} (dirty)")
@@ -897,6 +951,35 @@ def info():
         print(f"pip version: {output} ")
     except FileNotFoundError:
         print("pip not installed")
+
+    # Get OpenSearch version
+    try:
+        es = OpenSearchDataStore()
+        print(f"OpenSearch version: {es.version}")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"OpenSearch: Not running or not configured ({e})")
+
+    # Get Redis version
+    try:
+        celery = create_celery_app()
+        redis_url = celery.conf.broker_url
+        redis_client = redis.from_url(redis_url)
+        print(f"Redis version: {redis_client.info()['redis_version']}")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Redis: Not running or not configured ({e})")
+
+    # Get Postgres version
+    try:
+        db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        if "postgresql" in db_uri:
+            version_row = db_session.execute(
+                sqlalchemy.text("SELECT version();")
+            ).fetchone()
+            print(f"Postgres version: {version_row[0]}")
+        else:
+            print("Database: Not using PostgreSQL")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Database: Error getting version ({e})")
 
 
 def print_table(table_data):
@@ -948,35 +1031,63 @@ def sketch_info(sketch_id: int):
 
     print(f"Sketch {sketch_id} Name: ({sketch.name})")
 
-    # define the table data
-    table_data = [
+    # Timelines table
+    print("\nTimelines:")
+    timeline_table_data = [
         [
-            "searchindex_id",
-            "index_name",
-            "created_at",
-            "user_id",
-            "description",
-            "status",
-            "timeline_name",
-            "timeline_id",
+            "ID",
+            "Name",
+            "Search Index ID",
+            "Index Name",
+            "Created At",
+            "User ID",
+            "Description",
+            "Status",
         ],
     ]
     for t in sketch.timelines:
-        table_data.append(
+        timeline_table_data.append(
             [
+                t.id,
+                t.name,
                 t.searchindex_id,
                 t.searchindex.index_name,
                 t.created_at,
                 t.user_id,
                 t.description,
                 t.status[-1].status,
-                t.name,
-                t.id,
             ]
         )
-    print_table(table_data)
+    print_table(timeline_table_data)
 
-    print(f"Created by: {sketch.user.username}")
+    # Data sources per timeline
+    print("\nData Sources per Timeline:")
+    for t in sketch.timelines:
+        print(f"\nTimeline: {t.name} (ID: {t.id})")
+        if t.datasources:
+            ds_table_data = [
+                [
+                    "ID",
+                    "File Path",
+                    "Status",
+                    "Error Message",
+                ],
+            ]
+            for ds in t.datasources:
+                error_message = ds.error_message or "N/A"
+                ds_table_data.append(
+                    [
+                        ds.id,
+                        ds.file_on_disk,
+                        (ds.status[-1].status if ds.status else "N/A"),
+                        error_message,
+                    ]
+                )
+            print_table(ds_table_data)
+        else:
+            print("  No data sources found for this timeline.")
+
+    print(f"\nCreated by: {sketch.user.username}")
     all_permissions = sketch.get_all_permissions()
 
     print("Shared with:")
@@ -1950,6 +2061,269 @@ def analyzer_stats(
         print(df)
 
 
+def _get_analysis_id_from_task(task: dict) -> Optional[int]:
+    """Extracts the analysis ID from a Celery task dictionary.
+
+    Args:
+        task: A dictionary representing a Celery task.
+
+    Returns:
+        The analysis ID as an integer if found, otherwise None.
+    """
+    analysis_id = None
+    task_kwargs = task.get("kwargs", {})
+    task_args = task.get("args", [])
+
+    if task_kwargs.get("analysis_id") is not None:
+        analysis_id = task_kwargs["analysis_id"]
+    elif len(task_args) >= 3 and task_args[2] is not None:
+        analysis_id = task_args[2]
+
+    if analysis_id is not None:
+        try:
+            return int(analysis_id)
+        except (ValueError, TypeError):
+            pass
+    return None
+
+
+@cli.command(name="list-analyzer-runs")
+@click.argument("sketch_id", type=int)
+@click.option(
+    "--show-all",
+    is_flag=True,
+    default=False,
+    help="Show all analyzer runs, including completed and failed ones.",
+)
+def list_analyzer_runs(sketch_id: int, show_all: bool) -> None:
+    """List analyzer runs for a specific sketch.
+
+    By default, only PENDING runs are shown. Use --show-all to see all runs.
+
+    Args:
+        sketch_id: The ID of the sketch to list runs for.
+        show_all: If true, show all analyzer runs, including completed and
+            failed ones.
+    """
+    sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        print(f"Sketch {sketch_id} not found.")
+        return
+
+    print("Inspecting Celery workers for active tasks...")
+    celery_app = create_celery_app()
+    inspector = celery_app.control.inspect()
+    running_analyses = {}
+
+    try:
+        # Helper to process task lists
+        def _process_tasks(tasks_by_worker, state_label):
+            if not tasks_by_worker:
+                return
+            for worker, tasks in tasks_by_worker.items():
+                for task in tasks:
+                    analysis_id = _get_analysis_id_from_task(task)
+                    if analysis_id is not None:
+                        status_string = (
+                            f"{state_label} ({worker})"  # pylint: disable=line-too-long
+                        )
+                        running_analyses[analysis_id] = status_string
+
+        _process_tasks(inspector.active(), "Active")
+        _process_tasks(inspector.reserved(), "Reserved")
+        _process_tasks(inspector.scheduled(), "Scheduled")
+
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Warning: Could not inspect Celery tasks: {e}")
+
+    print(f"Analyzer runs for sketch {sketch.id} ({sketch.name}):")
+    if not show_all:
+        print("(Showing only PENDING runs. Use --show-all to see everything)")
+
+    table_data = [
+        [
+            "ID",
+            "Analyzer",
+            "Timeline ID",
+            "Status",
+            "Celery Status",
+            "Created At",
+            "Updated At",
+        ]
+    ]
+
+    # Build the base query for Analysis objects related to the sketch
+    analysis_query = Analysis.query.filter_by(sketch=sketch)
+
+    # If --show-all is not used, filter for PENDING status
+    if not show_all:
+        analysis_query = analysis_query.join(Analysis.status).filter(
+            Analysis.Status.status == "PENDING"
+        )
+
+    # Fetch and sort the results for consistent output
+    analysis_runs = analysis_query.order_by(Analysis.id.asc()).all()
+
+    for analysis in analysis_runs:
+        status = analysis.get_status.status
+
+        celery_status = ""
+        if status == "PENDING":
+            celery_status = running_analyses.get(analysis.id, "Pending (no worker)")
+        else:
+            celery_status = "N/A"
+
+        table_data.append(
+            [
+                analysis.id,
+                analysis.analyzer_name,
+                analysis.timeline_id,
+                status,
+                celery_status,
+                analysis.created_at,
+                analysis.updated_at,
+            ]
+        )
+
+    print_table(table_data)
+
+
+def _find_and_revoke_task(analysis_id, celery_app, inspector):
+    """Finds and revokes a Celery task for a given analysis ID.
+
+    Args:
+        analysis_id (int): The ID of the analysis run.
+        celery_app (Celery): The Celery application instance.
+        inspector (Celery.control.inspect): The Celery inspector instance.
+
+    Returns:
+        bool: True if a task was found and revoked, False otherwise.
+    """
+    search_targets = [
+        (inspector.active(), True, "active"),
+        (inspector.reserved(), False, "reserved"),
+        (inspector.scheduled(), False, "scheduled"),
+    ]
+
+    print("Searching Celery tasks (active, reserved, scheduled)...")
+
+    for tasks_dict, is_active, state_name in search_targets:
+        if not tasks_dict:
+            continue
+
+        for worker_name, tasks in tasks_dict.items():
+            for task in tasks:
+                celery_analysis_id = _get_analysis_id_from_task(task)
+
+                if celery_analysis_id == analysis_id:
+                    task_id = task["id"]
+                    print(
+                        f"Found {state_name} task {task_id} on worker {worker_name} "
+                        f"for analysis {analysis_id}."
+                    )
+                    print(f"Revoking task (terminate={is_active})...")
+                    celery_app.control.revoke(task_id, terminate=is_active)
+                    print("Task revoked.")
+                    return True
+    return False
+
+
+@cli.command(name="manage-analyzer-run")
+@click.argument("analysis_ids")
+@click.option(
+    "--status",
+    required=False,
+    type=click.Choice(["ERROR", "DONE", "STARTED"], case_sensitive=False),
+    help="Set the status of the analysis.",
+)
+@click.option(
+    "--kill",
+    is_flag=True,
+    default=False,
+    help="Attempt to find and revoke (kill) the active or queued Celery task for this analysis.",  # pylint: disable=line-too-long
+)
+def manage_analyzer_run(analysis_ids, status, kill):
+    """Manage a specific analyzer run or multiple runs.
+    Allows setting the status of analysis runs and/or killing the associated
+    Celery tasks if they are currently active or queued.
+    """
+    analysis_id_list = []
+    for an_id_str in analysis_ids.split(","):
+        try:
+            analysis_id_list.append(int(an_id_str.strip()))
+        except ValueError:
+            print(f"Invalid analysis ID: {an_id_str}. Skipping.")
+            continue
+    if not analysis_id_list:
+        print("No valid analysis IDs provided.")
+        return
+
+    for analysis_id in analysis_id_list:
+        analysis = Analysis.get_by_id(analysis_id)
+        if not analysis:
+            print(f"Analysis with ID {analysis_id} not found. Skipping.")
+            continue
+
+        print(
+            f"Processing Analysis {analysis.id} ({analysis.analyzer_name}) "
+            f"on Timeline {analysis.timeline_id}"
+        )
+
+        print(f"Current Status: {analysis.get_status.status}")
+
+        if kill:
+            celery_app = create_celery_app()
+            inspector = celery_app.control.inspect()
+
+            task_found = _find_and_revoke_task(analysis.id, celery_app, inspector)
+
+            if task_found:
+                if not status:
+                    print("Setting analysis status to 'ERROR' due to kill.")
+                    status = "ERROR"
+            else:
+                print(
+                    f"No active, reserved, or scheduled Celery task found for "
+                    f"analysis {analysis.id}."
+                )
+                if not status:
+                    print(
+                        "Task not found in queue. To force the DB status to ERROR, "
+                        "run this command again with --status ERROR."
+                    )
+
+        if status:
+            old_result = analysis.result or ""
+            current_utc_timestamp = datetime.datetime.now(
+                datetime.timezone.utc
+            ).isoformat()
+            status_message = (
+                f"(Status manually set to {status} via tsctl on "
+                f"{current_utc_timestamp})"
+            )
+
+            try:
+                result_dict = json.loads(old_result)
+                if isinstance(result_dict, dict):
+                    result_dict.setdefault("status_updates", []).append(status_message)
+                    new_result = json.dumps(result_dict)
+                else:
+                    new_result = f"{old_result}\n{status_message}"
+            except json.JSONDecodeError:
+                new_result = f"{old_result}\n{status_message}"
+
+            analysis.result = new_result
+            analysis.set_status(status)
+            analysis.updated_at = datetime.datetime.now(datetime.timezone.utc)
+            db_session.add(analysis)
+            db_session.commit()
+            print(f"Analysis {analysis.id} status updated to: {status}")
+
+        print(
+            "\n"
+        )  # Add a newline for better separation between processing multiple analyses
+
+
 @cli.command(name="celery-tasks-redis")
 def celery_tasks_redis():
     """Check and display the status of all Celery tasks stored in Redis.
@@ -2809,18 +3183,24 @@ def check_opensearch_links():
         print("No search indices found in the database.")
         return
 
-    # Collect all index names from the database for a single bulk check.
+    # Collect all index names from the database.
     db_index_names = {s.index_name for s in search_indices}
+    db_index_names_list = list(db_index_names)
+    existing_os_index_names = set()
+
+    # Chunk size to avoid "too_long_http_line_exception"
+    chunk_size = 50
 
     try:
-        # Get all existing indices from OpenSearch in a single API call.
-        # ignore_unavailable=True is a valid argument
-        # pylint: disable-next=unexpected-keyword-arg
-        existing_indices_info = datastore.client.indices.get(
-            index=list(db_index_names),
-            ignore_unavailable=True,
-        )
-        existing_os_index_names = set(existing_indices_info.keys())
+        for i in range(0, len(db_index_names_list), chunk_size):
+            chunk = db_index_names_list[i : i + chunk_size]
+            # Get existing indices from OpenSearch for this chunk.
+            # pylint: disable-next=unexpected-keyword-arg
+            existing_indices_info = datastore.client.indices.get(
+                index=chunk,
+                ignore_unavailable=True,
+            )
+            existing_os_index_names.update(existing_indices_info.keys())
 
         # Determine which indices are in the DB but not in OpenSearch.
         missing_index_names = db_index_names - existing_os_index_names
@@ -3358,3 +3738,147 @@ def import_db(filepath, yes):
                 sqlalchemy.text("SET session_replication_role = 'origin'")
             )
         click.echo("Database import finished.")
+
+
+@cli.command(name="sync-groups-from-json")
+@click.argument("filepath")
+@click.option(
+    "--dry-run", is_flag=True, help="Calculate changes/logs without committing."
+)
+def sync_groups_from_json(filepath, dry_run):
+    """Synchronize user groups from a JSON file.
+
+    The JSON file should be a dictionary where keys are group names and values
+    are lists of usernames (email addresses).
+
+    The script will:
+    1. Create groups that don't exist.
+    2. Create users that don't exist (with a random password).
+    3. Add users to groups defined in the JSON.
+    4. Remove users from groups if they are NOT in the JSON list for that group.
+       (User accounts are NOT deleted and keep access to Sketches they own or
+       dirtectly shared with the user)
+    5. Log all actions.
+
+    Groups existing in the database but NOT in the JSON file will be ignored
+    (not deleted), but a warning will be logged.
+    """
+    if not os.path.isfile(filepath):
+        raise click.ClickException(f"File not found: {filepath}")
+
+    try:
+        with open(filepath, "r", encoding="utf-8") as fh:
+            group_mapping = json.load(fh)
+    except json.JSONDecodeError as e:
+        raise click.ClickException(f"Invalid JSON file: {e}")
+
+    if not isinstance(group_mapping, dict):
+        raise click.ClickException("JSON root must be a dictionary.")
+
+    click.echo("Pre-fetching existing users and groups...")
+    # Pre-fetch existing data to prevent N+1 queries
+    existing_users = {u.username: u for u in User.query.all()}
+    existing_groups = {g.name: g for g in Group.query.all()}
+
+    processed_groups = set()
+
+    # Helper to generate random password for new users
+    def generate_random_password(length=16):
+        alphabet = string.ascii_letters + string.digits + string.punctuation
+        return "".join(secrets.choice(alphabet) for i in range(length))
+
+    for group_name, desired_members in group_mapping.items():
+        processed_groups.add(group_name)
+
+        # 1. Get or Create Group
+        group = existing_groups.get(group_name)
+        if not group:
+            click.echo(f"Creating new group: '{group_name}'")
+            if not dry_run:
+                group = Group(name=group_name, display_name=group_name)
+                db_session.add(group)
+                # We need to flush to get an ID and allow relationships to work
+                db_session.flush()
+                existing_groups[group_name] = group
+            else:
+                click.echo(
+                    f"[DRY-RUN] Would create group {group_name} and add "
+                    f"{len(desired_members)} users."
+                )
+
+        # 2. Create missing users
+        # If dry-run and group doesn't exist, we can't inspect members,
+        # but we know we would create all desired members if they don't exist.
+        if group:
+            current_member_usernames = {u.username for u in group.users}
+        else:
+            current_member_usernames = set()
+
+        desired_member_set = set(desired_members)
+
+        # Identify users that need to be created first
+        for username in desired_member_set:
+            if username not in existing_users:
+                click.echo(f"Creating new user: '{username}'")
+                if not dry_run:
+                    new_user = User(username=username, name=username, active=True)
+                    # Set a random password so the account is valid
+                    random_pw = generate_random_password()
+                    new_user.set_password(random_pw)
+                    db_session.add(new_user)
+                    db_session.flush()  # Flush to make available for relationship
+                    existing_users[username] = new_user
+                    click.echo(f"User '{username}' created with random password.")
+                else:
+                    click.echo(f"[DRY-RUN] Would create user '{username}'")
+
+        # 3. Sync Membership (Add/Remove)
+        users_to_add = desired_member_set - current_member_usernames
+        users_to_remove = current_member_usernames - desired_member_set
+
+        # Additions
+        for username in users_to_add:
+            user_obj = existing_users.get(username)
+            # user_obj exists if not dry_run, or if it existed before this run
+            if user_obj and not dry_run:
+                click.echo(f"Adding user '{username}' to group '{group_name}'")
+                group.users.append(user_obj)
+            elif dry_run:
+                click.echo(
+                    f"[DRY-RUN] Would add user '{username}' to group '{group_name}'"
+                )
+
+        # Removals
+        for username in users_to_remove:
+            user_obj = existing_users.get(username)
+            if user_obj and not dry_run:
+                click.echo(f"Removing user '{username}' from group '{group_name}'")
+                group.users.remove(user_obj)
+            elif dry_run:
+                click.echo(
+                    f"[DRY-RUN] Would remove user '{username}' from group "
+                    f"'{group_name}'"
+                )
+
+    # 4. Warn about unmanaged groups
+    all_db_group_names = set(existing_groups.keys())
+    unmanaged_groups = all_db_group_names - processed_groups
+
+    if unmanaged_groups:
+        click.echo(
+            "The following groups exist in the DB but were not in the sync file"
+            " (skipped):"
+        )
+        for g in unmanaged_groups:
+            click.echo(f" -> {g}")
+
+    if not dry_run:
+        click.echo("Committing changes to database...")
+        try:
+            db_session.commit()
+            click.echo("Sync complete.")
+        except Exception as e:  # pylint: disable=broad-except
+            click.echo(f"Error: Failed to commit changes: {e}")
+            db_session.rollback()
+    else:
+        click.echo("[DRY-RUN] No changes committed.")

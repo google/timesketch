@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SecGemini Log Analyzer LLM provider for Timesketch."""
+
 import json
 import logging
 import os
 import asyncio
+import inspect
 import pathlib
 import tempfile
 from datetime import datetime
@@ -68,18 +70,29 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         if self.server_url:
             os.environ["SEC_GEMINI_LOGS_PROCESSOR_API_URL"] = self.server_url
 
+        self.base_url = self.config.get("base_url")
+        self.wss_url = self.config.get("wss_url")
+        self.agents_config = self.config.get("agents_config", {})
+
         try:
-            self.sg_client = SecGemini(api_key=self.api_key)
+            if self.base_url and self.wss_url:
+                self.sg_client = SecGemini(
+                    base_url=self.base_url,
+                    base_websockets_url=self.wss_url,
+                    api_key=self.api_key,
+                )
+            else:
+                self.sg_client = SecGemini(api_key=self.api_key)
         except Exception as e:
             raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
 
-        self.model = self.config.get("model", "sec-gemini-experimental")
+        self.model = self.config.get("model", "logs_analysis_agent-1.1")
         self.custom_fields_mapping = {
             "id": "_id",
             "enrichment": "tag",
             "timestamp": "datetime",
         }
-        self.enable_logging = self.config.get("enable_logging", True)
+        self.enable_logging = self.config.get("enable_logging", False)
         self._events_sent = 0
         self._session = None
         self.session_id = None
@@ -101,9 +114,22 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Yields:
             str: The content chunks of the streamed response from the agent.
         """
-        self._session = self.sg_client.create_session(
-            model=self.model, enable_logging=self.enable_logging
-        )
+        session_params = {
+            "model": self.model,
+            "enable_logging": self.enable_logging,
+        }
+
+        # Check if the installed sec-gemini library supports agents_config
+        sig = inspect.signature(self.sg_client.create_session)
+        if "agents_config" in sig.parameters:
+            session_params["agents_config"] = self.agents_config
+        else:
+            raise ValueError(
+                "The installed version of 'sec_gemini' does not support the "
+                "'agents_config' parameter. Please upgrade the library to a "
+                "version > 1.1.5 to use the log analyzer feature."
+            )
+        self._session = self.sg_client.create_session(**session_params)
         self.session_id = self._session.id
         # TODO: Could we check if the API key has logging enabled and if not ERR
         logger.info("Started new SecGemini session: '%s'", self._session.id)
@@ -172,10 +198,17 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
                 if (
                     response.message_type == MessageType.RESULT
-                    and response.actor == "summarization_agent"
+                    and response.actor == "chat_summarization_agent"
                 ):
-                    content_chunk = response.content
-                    yield content_chunk
+                    content = response.content
+                    json_str = None
+                    if "```json" in content:
+                        json_str = content.split("```json")[1].split("```")[0].strip()
+
+                    if json_str:
+                        yield json_str
+                        # force termination to avoid back2back runs
+                        break
         finally:
             if debug_log_file:
                 debug_log_file.close()
@@ -184,7 +217,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
     def generate_stream_from_logs(
         self,
         log_events_generator: Iterable[Dict[str, Any]],
-        prompt: str = "Analyze the attached logs for any signs of a compromise.",
+        prompt: str = None,
     ) -> Generator[str, None, None]:
         """Analyzes a stream of log events using the SecGemini log analysis agent.
 
@@ -206,6 +239,12 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Yields:
             str: Chunks of the raw JSON string response from the LLM provider.
         """
+        if not prompt:
+            prompt = current_app.config.get(
+                "LLM_LOG_ANALYZER_DEFAULT_PROMPT",
+                "Perform a forensics investigation on the provided logs.",
+            )
+
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
         ) as tmpfile:
@@ -217,8 +256,16 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     specific_fields = {"_id": event.get("_id", "")}
                     source = event.get("_source", event)
 
+                    # Sec-Gemini cannot handle +0000 timezone offsets, convert to +00:00
                     for key in ["data_type", "datetime", "message", "timestamp_desc"]:
-                        specific_fields[key] = source.get(key, "")
+                        value = source.get(key, "")
+                        if (
+                            key == "datetime"
+                            and isinstance(value, str)
+                            and value.endswith("+0000")
+                        ):
+                            value = value.replace("+0000", "+00:00")
+                        specific_fields[key] = value
 
                     # Explicitly stringify the tag field for now
                     specific_fields["tag"] = json.dumps(source.get("tag", []))

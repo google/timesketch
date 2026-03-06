@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Ontology for attributes as well as related functions."""
+
 import json
 
-from timesketch.lib.analyzers import interface
+from timesketch.lib import utils
 
 
 def ontology():
     """Return a dict with the ontology definitions."""
-    return interface.get_yaml_config("ontology.yaml")
+    return utils.get_yaml_config("ontology.yaml")
 
 
 class OntologyInterface:

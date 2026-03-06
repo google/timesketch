@@ -200,6 +200,25 @@ Creates a new group.
 tsctl create-group analysts
 ```
 
+#### `delete-group`
+
+Deletes a group from the database. If the group is associated with any sketches, a warning message will be displayed, and the deletion will be aborted unless the `--force` flag is used.
+
+**Arguments:**
+*   `GROUP_NAME`: The name of the group to delete.
+
+**Options:**
+*   `--force`: Force deletes the group even if it's used in sketches.
+
+**Example:**
+```shell
+tsctl delete-group analysts
+```
+**Example (force delete):**
+```shell
+tsctl delete-group my-shared-group --force
+```
+
 #### `list-group-members`
 
 Lists all members of a group.
@@ -228,6 +247,49 @@ tsctl add-group-member analysts --username john
 tsctl remove-group-member analysts --username john
 ```
 
+#### `sync-groups-from-json`
+
+Synchronizes user group memberships from a JSON file. This command will create,
+add, and remove users from groups to match the state defined in the JSON file.
+
+**Arguments:**
+*   `FILEPATH`: Path to a JSON file containing the group membership definition.
+
+**Options:**
+*   `--dry-run`: If set, the command will print the changes it would make without
+    actually modifying the database.
+
+**JSON File Format:**
+
+The JSON file must be a dictionary where each key is a group name and the value
+is a list of usernames to be in that group.
+
+**Example JSON (`/tmp/groups.json`):**
+```json
+{
+    "analysts": ["user1@timesketch.org", "user2@timesketch.org"],
+    "incident-responders": ["user2@timesketch.org", "user3@timesketch.org"]
+}
+```
+
+**Behavior:**
+*   **Groups**: Creates groups if they don't exist. Groups in the database but
+    not in the JSON file are ignored.
+*   **Users**: Creates users if they don't exist (with a random password).
+*   **Membership**:
+    *   Adds users to groups to match the JSON file.
+    *   Removes users from groups if they are in the database but not in the
+        corresponding list in the JSON file.
+
+**Example Usage:**
+```shell
+# Perform a dry run to see what changes would be made
+tsctl sync-groups-from-json /tmp/groups.json --dry-run
+
+# Apply the changes to the database
+tsctl sync-groups-from-json /tmp/groups.json
+```
+
 ---
 
 ## Sketch Management
@@ -238,6 +300,7 @@ Lists sketches in the database.
 
 **Options:**
 *   `--archived`: Show only archived sketches.
+*   `--archived-with-open-indexes`: Show archived sketches that have at least one searchindex with status 'new', 'ready', 'processing', 'fail', 'archived' or 'timeout'. Mutually exclusive with --archived.
 *   `--include-deleted`: Include sketches marked as deleted.
 
 **Example:**
@@ -249,7 +312,7 @@ tsctl list-sketches
 
 #### `sketch-info`
 
-Displays detailed information about a specific sketch, including timelines, sharing status, labels, and status history.
+Displays detailed information about a specific sketch. This includes a summary of all timelines, a list of data sources for each timeline, sharing status, labels, and a history of status changes.
 
 **Arguments:**
 *   `SKETCH_ID`: The ID of the sketch.
@@ -257,10 +320,55 @@ Displays detailed information about a specific sketch, including timelines, shar
 **Example:**
 ```shell
 tsctl sketch-info 1
-Sketch 1 Name: (aaa)
-searchindex_id index_name                       created_at                 user_id description             status timeline_name           timeline_id
-1              3e062029b52f4e1a8a103488b99bc2b3 2025-03-18 14:49:52.402364 1       my_file_with_a_timeline ready  my_file_with_a_timeline 2
+Sketch 1 Name: (New Sketch From Importer CLI)
+
+Timelines:
+ID Name              Search Index ID Index Name                       Created At                 User ID Description   Status
+36 3173_web          27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:43:24.489482 1       3173          ready
+38 new_cli           27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 15:46:11.607402 1       new_cli       ready
+37 import_client_old 27              b857825d9c024bb2bdefe8f98c9519d8 2025-11-07 14:53:04.528269 1       import_client ready
+
+Data Sources per Timeline:
+
+Timeline: 3173_web (ID: 36)
+ID File Path                             Status Error Message
+37 /tmp/0bed74e6918f4262a5a72ce319123b5f ready  N/A
+
+Timeline: new_cli (ID: 38)
+ID File Path Status Error Message
+39           ready  N/A
+
+Timeline: import_client_old (ID: 37)
+ID File Path Status Error Message
+38           ready  N/A
+
+Created by: dev
+Shared with:
+	Users: (user_id, username, access_level)
+	No users shared with.
+	Groups (0): (group_name, access_level)
+	No groups shared with.
+Sketch Status: new
+Sketch is public: False
+Sketch Labels: ([],)
+Status:
+id status created_at                 user_id
+65 new    2025-11-07 14:42:18.813488 None
 ...
+```
+
+#### `event-details`
+
+Display all data for a specific event.
+
+**Options:**
+*   `--sketch-id INTEGER`: (Required) The ID of the sketch.
+*   `--event-id TEXT`: (Required) The ID of the event.
+*   `--searchindex-id TEXT`: The OpenSearch index name for the event.
+
+**Example:**
+```bash
+tsctl event-details --sketch-id 1 --event-id 12345
 ```
 
 #### `grant-user`
@@ -310,8 +418,9 @@ Exports a sketch to a zip archive, including all metadata and event data.
 *   `SKETCH_ID`: The ID of the sketch to export.
 
 **Options:**
-*   `--filename / -f`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
+*   `--filename`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
 *   `--output-format`: Format for event data ('csv' or 'jsonl'). Default: 'csv'.
+*   `--default-fields`: Export only the default set of event fields. If not specified, all fields are exported.
 
 **Example:**
 ```bash
@@ -521,6 +630,29 @@ Validates the syntax of a context links YAML configuration file.
 tsctl validate-context-links-conf data/context_links.yaml
 ```
 
+#### `check-db-orphaned-data`
+
+Checks for various types of orphaned data in the database.
+
+**Options:**
+*   `--verbose-checks`: Show output for all checks, even those that find no orphans.
+
+**Example:**
+```bash
+tsctl check-db-orphaned-data --verbose-checks
+```
+
+#### `find-inconsistent-archives`
+
+Finds sketches that are in an inconsistent archival state.
+
+An inconsistent state is defined as a sketch that has been marked as 'archived', but still contains one or more timelines that are not also archived.
+
+**Example:**
+```bash
+tsctl find-inconsistent-archives
+```
+
 #### `analyzer-stats`
 
 Displays statistics about past analyzer runs.
@@ -529,12 +661,58 @@ Displays statistics about past analyzer runs.
 *   `ANALYZER_NAME`: (Optional) The name of the analyzer to filter by.
 
 **Options:**
+*   `--timeline_id INTEGER`: Timeline ID if the analyzer results should be filtered by timeline.
 *   `--scope [many_hits|long_runtime|recent]`: Sorts the results.
+*   `--result_text_search TEXT`: Search in result text. E.g. for a specific rule_id.
 *   `--limit INTEGER`: Limits the number of results.
+*   `--export_csv TEXT`: Export the results to a CSV file.
 
 **Example:**
 ```shell
 tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
+```
+
+---
+
+## Analyzer Management
+
+#### `list-analyzer-runs`
+
+Lists the analyzer runs for a specific sketch. By default, only runs with a `PENDING` status are shown.
+
+**Arguments:**
+*   `SKETCH_ID`: The ID of the sketch to list runs for.
+
+**Options:**
+*   `--show-all`: Show all analyzer runs, regardless of their status (e.g., DONE, ERROR, REVOKED).
+
+**Example:**
+```bash
+tsctl list-analyzer-runs 1
+tsctl list-analyzer-runs 1 --show-all
+```
+
+#### `manage-analyzer-run`
+
+Manages specific analyzer runs, allowing you to change their status or revoke associated Celery tasks.
+
+**Arguments:**
+*   `ANALYSIS_IDS`: A comma-separated list of analysis run IDs to manage (e.g., `123,456,789`).
+
+**Options:**
+*   `--status [ERROR|DONE|STARTED]`: Manually set the status of the analysis run(s). This will also update the result field with an audit note.
+*   `--kill`: Attempt to find and revoke (kill) the active or queued Celery task associated with this analysis. If no status is provided, it defaults to `ERROR`.
+
+**Examples:**
+```bash
+# Set status to ERROR for a single analysis
+tsctl manage-analyzer-run 123 --status ERROR
+
+# Kill multiple tasks (sets status to ERROR for each)
+tsctl manage-analyzer-run 123,456,789 --kill
+
+# Set status to DONE for multiple analyses
+tsctl manage-analyzer-run 123,456 --status DONE
 ```
 
 ---

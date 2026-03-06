@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API analyzer result object."""
+
 from __future__ import unicode_literals
 
 import datetime
@@ -20,7 +21,6 @@ import logging
 
 from . import error
 from . import resource
-
 
 logger = logging.getLogger("timesketch_api.analyzer")
 

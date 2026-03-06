@@ -41,13 +41,23 @@ RestApiClient.interceptors.response.use(
     return response
   },
   function (error) {
-    if (error.response.status === 500) {
+    const status = error.response ? error.response.status : null
+    const url = error.config && error.config.url ? error.config.url : ''
+    const message = error.response && error.response.data ? (error.response.data.message || error.response.data) : 'Unknown error'
+
+    // This prevents experimental/auxiliary AI features from looking like critical system failures.
+    if (url.includes('/llm/')) {
+      EventBus.$emit('warningSnackBar', message)
+      return Promise.reject(error)
+    }
+
+    if (status === 500) {
       EventBus.$emit(
         'errorSnackBar',
         'Server side error. Please contact your server administrator for troubleshooting.'
       )
     } else {
-      EventBus.$emit('errorSnackBar', error.response.data.message)
+      EventBus.$emit('errorSnackBar', message)
     }
     return Promise.reject(error)
   }
@@ -111,7 +121,7 @@ export default {
   getSketchTimelineAnalysis(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },
-  getTimelineFields(sketchId, timelineId){
+  getTimelineFields(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/fields/')
   },
   saveSketchTimeline(sketchId, timelineId, name, description, color) {

@@ -13,18 +13,14 @@
 # limitations under the License.
 """Interface for analyzers."""
 
-
 import datetime
 import json
 import logging
-import os
 import random
 import time
 import traceback
 from typing import Dict, List, Optional
 
-
-import yaml
 
 import opensearchpy
 from flask import current_app
@@ -47,7 +43,6 @@ from timesketch.models.sketch import Story as SQLStory
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
-
 
 logger = logging.getLogger("timesketch.analyzers")
 
@@ -75,55 +70,6 @@ def _flush_datastore_decorator(func):
         return func_return
 
     return wrapper
-
-
-def get_config_path(file_name):
-    """Returns a path to a configuration file.
-
-    Args:
-        file_name: String that defines the config file name.
-
-    Returns:
-        The path to the configuration file or None if the file cannot be found.
-    """
-    path = os.path.join(os.path.sep, "etc", "timesketch", file_name)
-    if os.path.isfile(path):
-        return path
-
-    path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", file_name)
-    path = os.path.abspath(path)
-    if os.path.isfile(path):
-        return path
-
-    return None
-
-
-def get_yaml_config(file_name: str):
-    """Return a dict parsed from a YAML file within the config directory.
-
-    Args:
-        file_name: String that defines the config file name.
-
-    Returns:
-        A dict with the parsed YAML content from the config file or
-        an empty dict if the file is not found or YAML was unable
-        to parse it.
-    """
-    path = get_config_path(file_name)
-    if not path:
-        return {}
-
-    with open(path, "r", encoding="utf-8") as fh:
-        try:
-            return yaml.safe_load(fh)
-        except yaml.parser.ParserError as exception:
-            # pylint: disable=logging-format-interpolation
-            logger.warning(
-                ("Unable to read in YAML config file, " "with error: {!s}").format(
-                    exception
-                )
-            )
-            return {}
 
 
 class Event:
@@ -1175,9 +1121,12 @@ class BaseAnalyzer:
 
             if status == "fail":
                 logger.error(
-                    "Unable to run analyzer on a failed index ({:s})".format(
-                        searchindex.index_name
-                    )
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Unable to run on a failed index (%s)",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
+                    searchindex.index_name,
                 )
                 return "Failed"
 
@@ -1185,7 +1134,11 @@ class BaseAnalyzer:
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
                 logger.error(
-                    "Indexing has taken too long time, aborting run of analyzer"
+                    "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                    "Indexing has taken too long time, aborting run of analyzer",
+                    self.name,
+                    analysis_id,
+                    self.sketch.id,
                 )
                 return "Failed"
             # Refresh the searchindex object.
@@ -1199,6 +1152,13 @@ class BaseAnalyzer:
         except Exception:  # pylint: disable=broad-except
             analysis.set_status("ERROR")
             result = traceback.format_exc()
+            logger.error(
+                "Analyzer %s (ID:%d) in sketch (ID:%d): failed with error: %s",
+                self.name,
+                analysis_id,
+                self.sketch.id,
+                result,
+            )
 
         # Update database analysis object with result and status
         analysis.result = f"{result:s}"

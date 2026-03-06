@@ -50,10 +50,16 @@ class LLMAnalyzerService {
      * @param {function} onComplete - Callback function to execute when analysis is complete.
      * @param {function} onUpdate - Callback function to execute on each poll that finds the analyzer is still active.
      */
-    async startAnalysis(onComplete, onUpdate) {
+    async startAnalysis(onComplete, onUpdate, customPrompt) {
         if (!this.sketchId) {
             console.error("Sketch ID is missing.");
             return;
+        }
+
+        let analyzerKwargs = null;
+        if (customPrompt) {
+            analyzerKwargs = {};
+            analyzerKwargs[ANALYZER_NAME] = { prompt: customPrompt };
         }
 
         const timelineIds = this.store.sketch.timelines.map(tl => tl.id);
@@ -74,7 +80,7 @@ class LLMAnalyzerService {
 
         try {
             // The analyzer only needs one timeline ID to run against the whole sketch.
-            await RestApiClient.runAnalyzers(this.sketchId, [timelineIds[0]], [ANALYZER_NAME], true);
+            await RestApiClient.runAnalyzers(this.sketchId, [timelineIds[0]], [ANALYZER_NAME], true, analyzerKwargs);
             this._startPolling(onComplete, onUpdate);
         } catch (error) {
             this.store.setNotification({

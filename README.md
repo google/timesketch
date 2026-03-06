@@ -1,7 +1,4 @@
 # Timesketch
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google/timesketch/blob/master/notebooks/colab-timesketch-demo.ipynb)
-[![Open In Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/google/timesketch/master?urlpath=%2Flab)
-
 [![Version](https://img.shields.io/pypi/v/timesketch?label=timesketch&style=plastic)](https://pypi.python.org/pypi/timesketch)
 [![Version API](https://img.shields.io/pypi/v/timesketch_api_client?label=api_client&style=plastic)](https://pypi.python.org/pypi/timesketch_api_client)
 [![Version Import](https://img.shields.io/pypi/v/timesketch_import_client?label=import_client&style=plastic)](https://pypi.python.org/pypi/timesketch_import_client)

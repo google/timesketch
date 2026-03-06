@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the sketch models."""
 
-
 import json
 
 from timesketch.models.sketch import Sketch

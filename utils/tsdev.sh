@@ -114,7 +114,7 @@ case "$1" in
 		$s docker exec --interactive --tty $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend test
 		;;
 	web)
-		$s docker exec --interactive --tty $CONTAINER_ID gunicorn --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application
+		$s docker exec --interactive --tty $CONTAINER_ID gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application
 		;;
   	postgres)
 		$s docker exec --interactive --tty postgres bash -c "psql -U timesketch -d timesketch"

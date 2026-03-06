@@ -80,6 +80,7 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 - Which Plaso version was used to create the Plaso file?
 - Is the issue for both web upload and `import_client`?
 - If you open a Github Issue, please indicate the Plaso version used to generate the file.
+- **Note:** By default, `psort` execution logs are logged. If you need to debug a specific crash, see the [Plaso / Psort](#plaso-psort) section below.
 
 Try to run the following in the Docker container after the file was uploaded (but not successfully imported):
 
@@ -142,6 +143,25 @@ docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks inspect query_task 
 ```
 
 Where $TASKID is the id that was shown in the previous step.
+
+### Plaso / Psort
+
+By default, the `psort` process (used to process Plaso files) writes execution
+logs to `/var/log/timesketch/psort/` which should be mapped to the host.
+
+If this is not set it will be logged to `/dev/null` to prevent cluttering the disk.
+
+You can configure the path in the `timesketch.conf`:
+
+```
+# Directory to store Plaso (psort) log files.
+# If this is set, psort will write execution logs here.
+# If this is NOT set, logs will be discarded to /dev/null.
+PLASO_LOG_FOLDER = '/var/log/timesketch/psort/'
+```
+
+**Note:** Psort logs can be large. If you enable this, ensure you have log
+          rotation configured on the target directory.
 
 ### OpenSearch
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the annotation models."""
 
-
 from timesketch.lib.testlib import BaseTest
 
 

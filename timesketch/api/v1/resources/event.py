@@ -53,7 +53,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchHistory
 
-
 logger = logging.getLogger("timesketch.event_api")
 
 
@@ -887,7 +886,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         sketch: Sketch,
         event_id: str,
     ) -> str:
-        """Get's the search index name associated with the event.
+        """Gets the search index name associated with the event.
 
         This function queries the datastore to find the specific search index
         that an event belongs to within the context of a given sketch. It's
@@ -929,8 +928,9 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 f"Error while searching for event [{event_id}] to determine its index.",
             )
-        if isinstance(result, dict):
-            hits = result.get("hits", {}).get("hits", [])
+        hits = (
+            result.get("hits", {}).get("hits", []) if isinstance(result, dict) else []
+        )
 
         if not hits:
             logger.error(

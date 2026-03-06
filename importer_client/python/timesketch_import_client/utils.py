@@ -19,7 +19,6 @@ import string
 import six
 import dateutil.parser
 
-
 # When there is no defined format message string a default one is used
 # that is generated using the available columns or keys in the dataset.
 # This constant defines what columns or keys should be skipped while

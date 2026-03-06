@@ -19,7 +19,6 @@ from . import error
 from . import resource
 from . import search
 
-
 logger = logging.getLogger("timesketch_api.searchtemplate")
 
 
