@@ -1031,12 +1031,15 @@ def sketch_info(sketch_id: int):
 
     print(f"Sketch {sketch_id} Name: ({sketch.name})")
 
+    datastore = OpenSearchDataStore()
+
     # Timelines table
     print("\nTimelines:")
     timeline_table_data = [
         [
             "ID",
             "Name",
+            "Events",
             "Search Index ID",
             "Index Name",
             "Created At",
@@ -1045,13 +1048,22 @@ def sketch_info(sketch_id: int):
             "Status",
         ],
     ]
+    unique_indices = set()
     for t in sketch.timelines:
+        index_name = t.searchindex.index_name
+        unique_indices.add(index_name)
+        try:
+            events_count, _ = datastore.count([index_name])
+        except Exception:  # pylint: disable=broad-except
+            events_count = 0
+
         timeline_table_data.append(
             [
                 t.id,
                 t.name,
+                f"{events_count:,}",
                 t.searchindex_id,
-                t.searchindex.index_name,
+                index_name,
                 t.created_at,
                 t.user_id,
                 t.description,
@@ -1059,6 +1071,13 @@ def sketch_info(sketch_id: int):
             ]
         )
     print_table(timeline_table_data)
+
+    # Total events in sketch
+    try:
+        total_events, _ = datastore.count(list(unique_indices))
+    except Exception:  # pylint: disable=broad-except
+        total_events = 0
+    print(f"\nTotal events in sketch: {total_events:,}")
 
     # Data sources per timeline
     print("\nData Sources per Timeline:")
@@ -2680,7 +2699,8 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
 
     # Comments
     # Fetch Event DB objects that are part of the sketch and have comments.
-    events_with_comments_list = Event.get_with_comments(sketch=sketch).all()
+    results = Event.get_with_comments(sketch=sketch)
+    events_with_comments_list = results.all() if hasattr(results, "all") else results
 
     if events_with_comments_list:
         print(f"  Processing comments for {len(events_with_comments_list)} event(s)...")

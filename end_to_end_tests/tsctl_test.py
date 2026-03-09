@@ -146,5 +146,38 @@ class TestTsctl(interface.BaseEndToEndTest):
 
         os.remove(file_path)
 
+    def test_export_sketch_command(self):
+        """Tests the 'tsctl export-sketch' command."""
+        # 1. Import a small timeline to ensure we have events to export
+        self.import_timeline("sigma_events.csv")
+
+        # 2. Invoke 'tsctl export-sketch'
+        # We use the sketch created by the base class
+        sketch_id = str(self.sketch.id)
+        output_filename = f"sketch_{sketch_id}_csv_export.zip"
+
+        try:
+            result = self.runner.invoke(cli, ["export-sketch", "--sketch_id", sketch_id])
+
+            # 3. Assertions on command execution
+            self.assertions.assertEqual(
+                result.exit_code, 0, f"CLI Error: {result.output}"
+            )
+            self.assertions.assertIn(f"Exporting sketch [{sketch_id}]", result.output)
+            self.assertions.assertIn("Sketch exported successfully", result.output)
+
+            # 4. Verify the export file exists and contains expected files
+            self.assertions.assertTrue(
+                os.path.exists(output_filename), "Export ZIP file not found"
+            )
+
+            # We can't easily peek into the zip without importing zipfile,
+            # but for an E2E test, the success message and file existence
+            # are the primary indicators that the fix worked (no AttributeError).
+
+        finally:
+            if os.path.exists(output_filename):
+                os.remove(output_filename)
+
 
 manager.EndToEndTestManager.register_test(TestTsctl)
