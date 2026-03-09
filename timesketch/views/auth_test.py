@@ -100,6 +100,7 @@ class AuthViewTest(BaseTest):
         # We can also check current_user
         self.assertEqual(current_user.username, "test1")
 
+
 class AuthApiViewTest(BaseTest):
     """Test the auth API view."""
 

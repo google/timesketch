@@ -339,7 +339,9 @@ class TimesketchApi:
         response = session.get(login_callback_url, params=params)
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             error.error_message(
-                response, message="Unable to authenticate", error=error.AuthenticationError
+                response,
+                message="Unable to authenticate",
+                error=error.AuthenticationError,
             )
 
         self._set_csrf_token(session)
