@@ -67,7 +67,7 @@ def is_safe_redirect_url(url):
     """
     if not url or not isinstance(url, str):
         return False
-    if url.startswith("//"):
+    if url.startswith("//") or url.startswith("/\\"):
         return False
     return url.startswith("/")
 
@@ -102,15 +102,14 @@ def login():
 
         if not requested_username or requested_username not in allowed_users:
             if "application/json" in request.headers.get("Accept", ""):
-                if requested_username:
-                    return (
-                        jsonify(
-                            {
-                                "message": "Password login not allowed for this user.",
-                            }
-                        ),
-                        HTTP_STATUS_CODE_UNAUTHORIZED,
-                    )
+                return (
+                    jsonify(
+                        {
+                            "message": "Password login not allowed for this user.",
+                        }
+                    ),
+                    HTTP_STATUS_CODE_UNAUTHORIZED,
+                )
             hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
             # Save the next URL parameter in the session for redirect after login.
             session["next"] = next_url
