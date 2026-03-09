@@ -61,6 +61,17 @@ SCOPES = [
 ]
 
 
+def is_safe_redirect_url(url):
+    """Validate that the URL is safe to redirect to.
+    A URL is considered safe if it is a relative URL.
+    """
+    if not url or not isinstance(url, str):
+        return False
+    if url.startswith("//"):
+        return False
+    return url.startswith("/")
+
+
 @auth_views.route("/login/", methods=["GET", "POST"])
 def login():
     """Handler for the login page view.
@@ -78,6 +89,10 @@ def login():
         Redirect if authentication is successful or template with context
         otherwise.
     """
+    next_url = request.args.get("next")
+    if not is_safe_redirect_url(next_url):
+        next_url = "/"
+
     # Google OpenID Connect authentication.
     if current_app.config.get("GOOGLE_OIDC_ENABLED", False):
         allowed_users = set(current_app.config.get("LOCAL_AUTH_ALLOWED_USERS", []))
@@ -85,19 +100,20 @@ def login():
         if request.method == "POST":
             requested_username = request.form.get("username")
 
-        if requested_username and requested_username not in allowed_users:
+        if not requested_username or requested_username not in allowed_users:
             if "application/json" in request.headers.get("Accept", ""):
-                return (
-                    jsonify(
-                        {
-                            "message": "Password login not allowed for this user.",
-                        }
-                    ),
-                    HTTP_STATUS_CODE_UNAUTHORIZED,
-                )
+                if requested_username:
+                    return (
+                        jsonify(
+                            {
+                                "message": "Password login not allowed for this user.",
+                            }
+                        ),
+                        HTTP_STATUS_CODE_UNAUTHORIZED,
+                    )
             hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
             # Save the next URL parameter in the session for redirect after login.
-            session["next"] = request.args.get("next", "/")
+            session["next"] = next_url
             return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
@@ -176,7 +192,7 @@ def login():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get("next") or "/")
+        return redirect(next_url)
 
     return render_template("login.html", form=form)
 
@@ -434,6 +450,9 @@ def google_openid_connect():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(session.get("next", "/"))
+        next_url = session.get("next")
+        if not is_safe_redirect_url(next_url):
+            next_url = "/"
+        return redirect(next_url)
 
     return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")
