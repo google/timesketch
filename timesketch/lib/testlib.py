@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
-import codecs
 import json
 
 from typing import Optional, Dict
@@ -21,7 +20,6 @@ from flask_testing import TestCase
 
 
 from timesketch.app import create_app
-from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
