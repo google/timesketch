@@ -20,6 +20,7 @@ from requests.exceptions import ConnectionError as RequestConnectionError
 
 # pylint: disable=import-error
 from timesketch_api_client import config as timesketch_config
+from timesketch_api_client.error import AuthenticationError
 
 # pylint: enable=import-error
 
@@ -72,6 +73,9 @@ class TimesketchCli(object):
                     raise RequestConnectionError
             except RequestConnectionError:
                 click.echo("ERROR: Cannot connect to the Timesketch server.")
+                sys.exit(1)
+            except AuthenticationError as e:
+                click.echo(f"ERROR: {e}")
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()

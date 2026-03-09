@@ -167,3 +167,7 @@ class NotFoundError(Error):
 
 class UnableToRunAnalyzer(Error):
     """Raised when unable to run an analyzer."""
+
+
+class AuthenticationError(Error):
+    """Raised when authentication fails."""

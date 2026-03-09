@@ -20,7 +20,7 @@ import sys
 from typing import Optional, Union
 
 
-from flask import Flask
+from flask import Flask, redirect, request, url_for
 from celery import Celery
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -191,6 +191,13 @@ def create_app(
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = "user_views.login"
+
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        """Handler for unauthorized requests."""
+        if request.path.startswith("/api/v1/"):
+            return ({"message": "Unauthorized"}, 401)
+        return redirect(url_for("user_views.login"))
 
     # This is used by the flask_login extension.
     # pylint: disable=unused-variable

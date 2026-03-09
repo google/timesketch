@@ -23,6 +23,7 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+from flask import jsonify
 
 from oauthlib import oauth2
 
@@ -84,7 +85,16 @@ def login():
         if request.method == "POST":
             requested_username = request.form.get("username")
 
-        if requested_username not in allowed_users:
+        if requested_username and requested_username not in allowed_users:
+            if "application/json" in request.headers.get("Accept", ""):
+                return (
+                    jsonify(
+                        {
+                            "message": "Password login not allowed for this user.",
+                        }
+                    ),
+                    HTTP_STATUS_CODE_UNAUTHORIZED,
+                )
             hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
             # Save the next URL parameter in the session for redirect after login.
             session["next"] = request.args.get("next", "/")
