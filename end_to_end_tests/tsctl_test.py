@@ -157,7 +157,7 @@ class TestTsctl(interface.BaseEndToEndTest):
         output_filename = f"sketch_{sketch_id}_csv_export.zip"
 
         try:
-            result = self.runner.invoke(cli, ["export-sketch", "--sketch_id", sketch_id])
+            result = self.runner.invoke(cli, ["export-sketch", sketch_id])
 
             # 3. Assertions on command execution
             self.assertions.assertEqual(
