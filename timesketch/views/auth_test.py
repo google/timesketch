@@ -61,6 +61,44 @@ class AuthViewTest(BaseTest):
         response = self.client.get("/logout/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
+    def test_login_view_oidc_enabled(self):
+        """Test the login view handler with OIDC enabled."""
+        current_app.config["GOOGLE_OIDC_ENABLED"] = True
+        response = self.client.get("/login/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertTrue(response.location.startswith("https://accounts.google.com"))
+
+    def test_login_view_oidc_bypass(self):
+        """Test the login view handler with OIDC enabled and allowed user."""
+        current_app.config["GOOGLE_OIDC_ENABLED"] = True
+        current_app.config["LOCAL_AUTH_ALLOWED_USERS"] = ["test1"]
+
+        # Test regular user gets redirected
+        response = self.client.get("/login/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+        # Test allowed user gets login page
+        response = self.client.get("/login/?username=test1")
+        self.assert200(response)
+
+        # Test other user gets redirected
+        response = self.client.get("/login/?username=other")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+        # Test allowed user can post credentials
+        response = self.client.post(
+            "/login/",
+            data={"username": "test1", "password": "test"},
+            follow_redirects=True,
+        )
+        self.assert200(response)
+        # Check if logged in (user_views.login redirects to next or / on success)
+        # But BaseTest.login() does follow_redirects.
+        # Here I did follow_redirects=True.
+        # If login successful, it redirects to / (or next).
+        # And we assert 200 (which is the result of / or wherever it landed).
+        # We can also check current_user
+        self.assertEqual(current_user.username, "test1")
 
 class AuthApiViewTest(BaseTest):
     """Test the auth API view."""
