@@ -113,3 +113,36 @@ class TimesketchApiRetryTest(unittest.TestCase):
             mock_session_instance = mock_session.return_value
             mock_session_instance.mount.assert_any_call("http://", mock_adapter)
             mock_session_instance.mount.assert_any_call("https://", mock_adapter)
+
+    @mock.patch("requests.Session")
+    def test_authentication_failure(self, mock_session):
+        """Test that AuthenticationError is raised on auth failure."""
+        mock_get_response = mock.Mock()
+        mock_get_response.status_code = 200
+        mock_get_response.text = (
+            '<input id="csrf_token" name="csrf_token" value="test">'
+        )
+
+        mock_post_response = mock.Mock()
+        mock_post_response.status_code = 200
+        mock_session.return_value.post.return_value = mock_post_response
+
+        mock_version_response = mock.Mock()
+        mock_version_response.status_code = 401
+        mock_version_response.reason = "Unauthorized"
+        mock_version_response.json.return_value = {"message": "Auth failed"}
+
+        mock_session.return_value.get.side_effect = [
+            mock_get_response,
+            mock_version_response,
+        ]
+
+        mock_adapter = mock.MagicMock()
+        with mock.patch(
+            "timesketch_api_client.client.HTTPAdapter", return_value=mock_adapter
+        ), self.assertRaises(client.error.AuthenticationError) as e:
+            client.TimesketchApi(
+                host_uri="http://testhost", username="testuser", password="testpassword"
+            )
+
+        self.assertIn("Authentication failed: Auth failed", str(e.exception))
