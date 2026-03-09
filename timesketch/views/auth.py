@@ -101,7 +101,7 @@ def login():
             requested_username = request.form.get("username")
 
         if not requested_username or requested_username not in allowed_users:
-            if "application/json" in request.headers.get("Accept", ""):
+            if request.accept_mimetypes.accept_json:
                 return (
                     jsonify(
                         {
