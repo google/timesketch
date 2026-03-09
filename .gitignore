@@ -16,8 +16,14 @@
 /.tox
 /__pycache__
 api_client/python/build/
+api_client/python/dist/
 cli_client/python/build/
+cli_client/python/dist/
 importer_client/python/build/
+importer_client/python/dist/
+build/lib/
+/dist/
+notebooks/dist/
 /dependencies/
 *.egg-info
 
