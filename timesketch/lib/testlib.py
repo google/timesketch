@@ -719,12 +719,10 @@ class BaseTest(TestCase):
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        if isinstance(response.data, bytes):
-            response_data = codecs.decode(response.data, "utf-8")
-        else:
-            response_data = response.data
-        self.assertIn("/login/", response_data)
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("message", response.json)
+        self.assertEqual(response.json["message"], "Unauthorized")
 
 
 class ModelBaseTest(BaseTest):

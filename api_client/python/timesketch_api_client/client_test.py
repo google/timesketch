@@ -86,8 +86,14 @@ class TimesketchApiRetryTest(unittest.TestCase):
         """Test that the session is configured with retry logic."""
         # Mock the response from the server.
         mock_response = mock.Mock()
+        mock_response.status_code = 200
         mock_response.text = '<input id="csrf_token" name="csrf_token" value="test">'
+        mock_response.json.return_value = {"meta": {"version": "test"}}
         mock_session.return_value.get.return_value = mock_response
+
+        mock_post_response = mock.Mock()
+        mock_post_response.status_code = 200
+        mock_session.return_value.post.return_value = mock_post_response
 
         mock_adapter = mock.MagicMock()
         with mock.patch(
