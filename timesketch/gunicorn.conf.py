@@ -56,7 +56,12 @@ def get_debug_status():
     try:
         config = runpy.run_path(config_path)
         return config.get("DEBUG", False)
-    except Exception:  # pylint: disable=broad-exception-caught
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logging.warning(
+            "Failed to read DEBUG status from config (%s): %s. Defaulting to False.",
+            config_path,
+            e,
+        )
         return False
 
 
