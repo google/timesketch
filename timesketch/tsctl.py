@@ -1055,7 +1055,10 @@ def sketch_info(sketch_id: int):
         try:
             events_count, _ = datastore.count([index_name])
         except Exception as e:  # pylint: disable=broad-except
-            click.echo(f"Warning: Could not get event count for index '{index_name}': {e}", err=True)
+            click.echo(
+                f"Warning: Could not get event count for index '{index_name}': {e}",
+                err=True,
+            )
             events_count = 0
 
         timeline_table_data.append(
@@ -1077,7 +1080,9 @@ def sketch_info(sketch_id: int):
     try:
         total_events, _ = datastore.count(list(unique_indices))
     except Exception as e:  # pylint: disable=broad-except
-        click.echo(f"Warning: Could not retrieve total event count for sketch: {e}", err=True)
+        click.echo(
+            f"Warning: Could not retrieve total event count for sketch: {e}", err=True
+        )
         total_events = 0
     print(f"\nTotal events in sketch: {total_events:,}")
 
