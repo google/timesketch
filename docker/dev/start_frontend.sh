@@ -9,6 +9,6 @@ docker exec -d $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel in
 docker compose exec timesketch yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend
 docker compose exec -d timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend build --mode development --watch
 docker exec -it $CONTAINER_ID sh -c "cd /usr/local/src/timesketch/timesketch/frontend; npm install >> /dev/null; yarn install >> /dev/null"
-docker exec -d $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
+docker exec -d $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py timesketch.wsgi:application
 docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve
 
