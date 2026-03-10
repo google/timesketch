@@ -85,6 +85,11 @@ def login():
         or next_url.startswith("//")
         or next_url.startswith("/\\")
     ):
+        current_app.logger.warning(
+            "Invalid next_url in login attempt: %s (from IP: %s)",
+            next_url,
+            request.remote_addr,
+        )
         next_url = "/"
 
     oauth_enabled = current_app.config.get("GOOGLE_OIDC_ENABLED", False)
@@ -100,6 +105,11 @@ def login():
             username = request.form.get("username")
 
             if username not in bypass_allowlist:
+                current_app.logger.warning(
+                    "Unauthorized local login attempt for user: [%s] (OAuth "
+                    "enabled, not in allowlist)",
+                    username,
+                )
                 abort(
                     HTTP_STATUS_CODE_UNAUTHORIZED,
                     "Local authentication is disabled for this user. Please use"

@@ -61,6 +61,20 @@ class AuthViewTest(BaseTest):
         response = self.client.get("/logout/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
+    @mock.patch("flask.current_app.logger")
+    def test_login_invalid_next_url(self, mock_logger):
+        """Test the login view handler with an invalid next_url."""
+        invalid_next_urls = [
+            "//evil.com",
+            "/\\evil.com",
+            "http://evil.com",
+        ]
+        for url in invalid_next_urls:
+            response = self.client.get(f"/login/?next={url}")
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+            mock_logger.warning.assert_called()
+            mock_logger.warning.reset_mock()
+
 
 class AuthApiViewTest(BaseTest):
     """Test the auth API view."""
