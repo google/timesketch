@@ -1063,7 +1063,8 @@ def sketch_info(sketch_id: int):
         unique_indices.add(index_name)
         try:
             events_count, _ = datastore.count([index_name])
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"WARNING: Unable to get event count for index {index_name}: {e}")
             events_count = 0
 
         timeline_table_data.append(
