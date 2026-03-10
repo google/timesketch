@@ -3265,17 +3265,42 @@ def export_sketch(
                     )
 
                     if output_format == "csv":
-                        header = data_handle.readline()
-                        if header:
-                            f_out.write(header)
-                            event_hash_obj.update(header.encode("utf-8"))
+                        # We use the csv module to accurately count rows even if fields
+                        # contain newlines (which pandas.to_csv properly quotes).
+                        import csv
 
-                    for line in data_handle:
-                        f_out.write(line)
-                        event_hash_obj.update(line.encode("utf-8"))
-                        actual_row_count += 1
-                        if actual_row_count % 10000 == 0:
-                            bar.update(10000)
+                        # The data_handle is typically a StringIO or similar.
+                        if hasattr(data_handle, "seek"):
+                            data_handle.seek(0)
+
+                        csv_reader = csv.reader(data_handle)
+                        # Skip header for the hashing loop but write it once
+                        header = next(csv_reader, None)
+                        if header:
+                            header_line = ",".join(f'"{h}"' for h in header) + "\n"
+                            f_out.write(header_line)
+                            event_hash_obj.update(header_line.encode("utf-8"))
+
+                        for row in csv_reader:
+                            # Re-construct the line for writing/hashing.
+                            # We want to maintain original CSV integrity.
+                            line_io = io.StringIO()
+                            csv.writer(line_io).writerow(row)
+                            line = line_io.getvalue()
+
+                            f_out.write(line)
+                            event_hash_obj.update(line.encode("utf-8"))
+                            actual_row_count += 1
+                            if actual_row_count % 10000 == 0:
+                                bar.update(10000)
+                    else:
+                        # For JSONL or other formats, line-by-line is safe
+                        for line in data_handle:
+                            f_out.write(line)
+                            event_hash_obj.update(line.encode("utf-8"))
+                            actual_row_count += 1
+                            if actual_row_count % 10000 == 0:
+                                bar.update(10000)
 
                 bar.update(actual_row_count % 10000)
 
@@ -4184,13 +4209,6 @@ def sync_groups_from_json(filepath, dry_run):
         for g in unmanaged_groups:
             click.echo(f" -> {g}")
 
-    if not dry_run:
-        click.echo("Committing changes to database...")
-        try:
-            db_session.commit()
-            click.echo("Sync complete.")
-        except Exception as e:  # pylint: disable=broad-except
-            click.echo(f"Error: Failed to commit changes: {e}")
-            db_session.rollback()
     else:
         click.echo("[DRY-RUN] No changes committed.")
+

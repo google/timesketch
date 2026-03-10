@@ -430,13 +430,47 @@ Exports a sketch to a zip archive, including all metadata and event data.
 The generated ZIP file includes:
 *   `metadata.json`: Comprehensive sketch and timeline metadata.
 *   `events.{csv|jsonl}`: The exported event data.
-*   `manifest.txt`: A forensic manifest containing SHA256 hashes of all files in the archive.
+*   `manifest.txt`: A manifest containing SHA256 hashes of all files in the archive.
 *   `mappings/`: JSON files containing the OpenSearch index mappings for each timeline.
 *   `stories/`: Sketch stories exported as individual Markdown files.
 
-**Example:**
-```bash
-tsctl export-sketch 1 --method direct --filename "incident_preservation.zip"
+**Example Output:**
+```text
+Starting DIRECT export of Sketch [1] "Investigation Alpha" to sketch_1_jsonl_export.zip...
+
+WARNING: There is currently no native method to re-import this exported archive back into Timesketch.
+
+Gathering metadata...
+  Processing 2 timeline(s)...
+  Processing 1 story(ies)...
+  Processing comments for 12 event(s)...
+  Processing analysis sessions...
+  Calculating exact event count...
+  Total events expected: 150,000
+  Streaming events to events.jsonl...
+  Export Progress  [####################################]  150000/150000  100%
+  Collecting index mappings...
+  Exporting stories to Markdown...
+  Performing random spot check...
+  SUCCESS: All 5 sampled events found in export.
+  Finalizing manifest and hashing files...
+  Creating compressed archive...
+Sketch exported successfully to sketch_1_jsonl_export.zip
+```
+
+**Sample Manifest (`manifest.txt`):**
+```text
+Timesketch Export Manifest
+==================================
+Sketch ID: 1 | Name: Investigation Alpha
+Date: 2026-03-10T14:30:00.000000+00:00
+Method: direct | Events: 150000
+
+File Hashes (SHA256):
+a1b2c3d4...  events.jsonl
+e5f6g7h8...  metadata.json
+i9j0k1l2...  mappings/index_1.json
+m3n4o5p6...  stories/story_1_summary.md
 ```
 
 #### `sketch-label-stats`

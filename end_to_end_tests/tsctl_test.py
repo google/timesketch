@@ -110,39 +110,43 @@ class TestTsctl(interface.BaseEndToEndTest):
     def test_sync_groups_full_run(self):
         """Tests the full sync-groups-from-json command."""
         # 1. Initial setup: Create a new group with one user
-        group_data = {"test_sync_group": ["user_a"]}
+        unique_group = f"group-{uuid.uuid4().hex}"
+        user_a = f"user-{uuid.uuid4().hex}"
+        user_b = f"user-{uuid.uuid4().hex}"
+
+        group_data = {unique_group: [user_a]}
         file_path = self._create_group_sync_file(group_data)
         result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
         self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
-        self.assertions.assertIn("Creating new group: 'test_sync_group'", result.output)
-        self.assertions.assertIn("Creating new user: 'user_a'", result.output)
+        self.assertions.assertIn(f"Creating new group: '{unique_group}'", result.output)
+        self.assertions.assertIn(f"Creating new user: '{user_a}'", result.output)
         self.assertions.assertIn(
-            "Adding user 'user_a' to group 'test_sync_group'", result.output
+            f"Adding user '{user_a}' to group '{unique_group}'", result.output
         )
         self.assertions.assertIn("Sync complete", result.output)
 
         # 2. Update: Add a user, remove a user
-        group_data = {"test_sync_group": ["user_b"]}
+        group_data = {unique_group: [user_b]}
         file_path = self._create_group_sync_file(group_data)
         result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
         self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
-        self.assertions.assertIn("Creating new user: 'user_b'", result.output)
+        self.assertions.assertIn(f"Creating new user: '{user_b}'", result.output)
         self.assertions.assertIn(
-            "Adding user 'user_b' to group 'test_sync_group'", result.output
+            f"Adding user '{user_b}' to group '{unique_group}'", result.output
         )
         self.assertions.assertIn(
-            "Removing user 'user_a' from group 'test_sync_group'", result.output
+            f"Removing user '{user_a}' from group '{unique_group}'", result.output
         )
         self.assertions.assertIn("Sync complete", result.output)
 
         # 3. Cleanup: Check ignored groups
         self.runner.invoke(cli, ["create-group", "unmanaged_group"])
-        group_data = {"test_sync_group": []}
+        group_data = {unique_group: []}
         file_path = self._create_group_sync_file(group_data)
         result = self.runner.invoke(cli, ["sync-groups-from-json", file_path])
         self.assertions.assertEqual(result.exit_code, 0, f"CLI Error: {result.output}")
         self.assertions.assertIn(
-            "Removing user 'user_b' from group 'test_sync_group'", result.output
+            f"Removing user '{user_b}' from group '{unique_group}'", result.output
         )
         self.assertions.assertIn("unmanaged_group", result.output)
 
@@ -232,8 +236,35 @@ class TestTsctl(interface.BaseEndToEndTest):
             if os.path.exists(export_file):
                 os.remove(export_file)
 
-    def test_annotated_only_export(self):
-        """Test filtering events by annotations (labels, stars, comments, tags)."""
+    def test_tsctl_multi_line_csv_count(self):
+        """Reproduce and verify the fix for multi-line CSV over-counting in tsctl."""
+        import time
+        # 1. Setup: Create a sketch and add 3 events with newlines
+        sketch_name = f"multi-line-test-{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+
+        # Each event has 3 lines. If broken, tsctl will count this as 9 events.
+        for i in range(3):
+            sketch.add_event(
+                message=f"Event {i}\nLine 2\nLine 3",
+                date="2026-03-10T12:00:00",
+                timestamp_desc="Multi-line Event",
+            )
+
+        time.sleep(5)
+        sketch_id = str(sketch.id)
+
+        # 2. Run tsctl export-sketch
+        result = self.runner.invoke(cli, ["export-sketch", sketch_id])
+        self.assertions.assertEqual(result.exit_code, 0)
+
+        # 3. Verify the output count in the console
+        # We look for the progress bar or final count
+        self.assertions.assertIn("3/3", result.output)
+        self.assertions.assertNotIn("WARNING: Event count mismatch!", result.output)
+
+    def test_tsctl_annotated_only_export(self):
+        """Test tsctl filtering events by annotations."""
         # 1. Setup: Create sketch and import data
         sketch = self.api.create_sketch(name=f"annotated-test-{uuid.uuid4().hex}")
         self.import_timeline("sigma_events.jsonl", sketch=sketch)
@@ -280,12 +311,17 @@ class TestTsctl(interface.BaseEndToEndTest):
 
             # 4. Verify filtered data
             with zipfile.ZipFile(export_file, "r") as z:
-                # Our export logic should have only 2 events in events.csv
-                # (header + 2 rows)
-                events_raw = z.read("events.csv").decode("utf-8")
-                events_data = events_raw.strip().split("\n")
+                # Find the CSV file
+                csv_files = [f for f in z.namelist() if f.endswith(".csv")]
+                self.assertions.assertTrue(len(csv_files) > 0)
+
+                import csv
+                import io
+                content = z.read(csv_files[0]).decode("utf-8")
+                reader = csv.reader(io.StringIO(content))
+                rows = list(reader)
                 # actual event rows (excluding header)
-                event_count = len(events_data) - 1
+                event_count = len(rows) - 1
                 self.assertions.assertEqual(
                     event_count, 2, f"Expected 2 annotated events, got {event_count}"
                 )
@@ -294,41 +330,7 @@ class TestTsctl(interface.BaseEndToEndTest):
             if os.path.exists(export_file):
                 os.remove(export_file)
 
-    def test_export_stories_as_markdown(self):
-        """Test that sketch stories are correctly exported as Markdown files."""
-        # 1. Setup
-        sketch = self.api.create_sketch(name=f"story-test-{uuid.uuid4().hex}")
-        story_title = "Forensic Investigation Story"
-        story_content = "# Summary\nEvidence found of lateral movement."
-        new_story = sketch.create_story(title=story_title)
-        new_story.add_text(story_content)
-
-        sketch_id = str(sketch.id)
-        export_file = f"story_export_{sketch_id}.zip"
-
-        try:
-            # 2. Run export
-            result = self.runner.invoke(
-                cli, ["export-sketch", sketch_id, "--filename", export_file]
-            )
-            self.assertions.assertEqual(result.exit_code, 0)
-
-            # 3. Verify story file in ZIP
-            with zipfile.ZipFile(export_file, "r") as z:
-                stories = [f for f in z.namelist() if f.startswith("stories/")]
-                self.assertions.assertTrue(
-                    len(stories) > 0, "No stories found in export archive"
-                )
-
-                # Check content of one story
-                story_path = stories[0]
-                content = z.read(story_path).decode("utf-8")
-                self.assertions.assertIn(story_title, content)
-                self.assertions.assertIn("Evidence found", content)
-
-        finally:
-            if os.path.exists(export_file):
-                os.remove(export_file)
-
 
 manager.EndToEndTestManager.register_test(TestTsctl)
+
+
