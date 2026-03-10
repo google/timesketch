@@ -121,6 +121,53 @@ def get_sha256(file_path: str) -> str:
     return sha256_hash.hexdigest()
 
 
+def _get_random_event_ids(datastore, indices, query_dsl, count=5):
+    """Retrieve random event IDs from OpenSearch based on a query."""
+    random_query = {
+        "query": {
+            "function_score": {
+                "query": query_dsl.get("query", {"match_all": {}}),
+                "random_score": {},
+                "boost_mode": "replace",
+            }
+        },
+        "size": count,
+        "_source": False,
+    }
+    try:
+        res = datastore.client.search(index=indices, body=random_query)
+        return [hit["_id"] for hit in res["hits"]["hits"]]
+    except Exception:  # pylint: disable=broad-except
+        return []
+
+
+def _spot_check_file(file_path, event_ids):
+    """Verify that a list of event IDs exist in a file."""
+    if not event_ids:
+        return {}
+
+    results = {eid: False for eid in event_ids}
+    remaining = set(event_ids)
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                # We check for the ID as a substring. In JSONL and CSV,
+                # the ID will be present.
+                to_remove = set()
+                for eid in remaining:
+                    if eid in line:
+                        results[eid] = True
+                        to_remove.add(eid)
+                remaining -= to_remove
+                if not remaining:
+                    break
+    except Exception:  # pylint: disable=broad-except
+        pass
+
+    return results
+
+
 def configure_opensearch_logger():
     """Configure the opensearch-py logger for tsctl."""
     opensearch_logger = logging.getLogger("opensearch")
@@ -2683,7 +2730,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         "created_by": sketch.user.username if sketch.user else None,
         "is_public": bool(sketch.is_public),
         "labels": [label.label for label in sketch.labels],
-        "all_permissions": sketch.get_all_permissions(),
+        "acls": sketch.get_all_permissions(),
         "timelines": [],
         "views": [],
         "stories": [],
@@ -2717,10 +2764,12 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
     # Stories
     stories = list(sketch.stories)
     if stories:
-        print(f"  Processing {len(stories)} story/stories...")
+        print(f"  Processing {len(stories)} story(ies)...")
         for story in stories:
             marshalled_story = marshal(story, schemas["story"])
             metadata["stories"].append(marshalled_story)
+    else:
+        print("  No stories found for this sketch.")
 
     # Aggregations
     aggregations = list(sketch.aggregations)
@@ -2937,6 +2986,12 @@ def _fetch_and_prepare_event_data(
     default=False,
     help="Export only events that have annotations (labels, stars, comments).",
 )
+@click.option(
+    "--include-legacy",
+    is_flag=True,
+    default=False,
+    help="Include legacy events (missing __ts_timeline_id). Use with caution as it may cause data leakage in shared-index environments.",
+)
 def export_sketch(
     sketch_id: int,
     output_format: str,
@@ -2944,6 +2999,7 @@ def export_sketch(
     filename: str,
     default_fields: bool,
     annotated_only: bool,
+    include_legacy: bool,
 ):
     """Exports a Timesketch sketch to a forensic-grade zip archive.
 
@@ -2956,6 +3012,42 @@ def export_sketch(
     if not sketch:
         print(f"ERROR: Sketch with ID {sketch_id} not found.")
         return
+
+    active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
+    active_tids = [t.id for t in sketch.active_timelines]
+
+    if method == "direct":
+        # Check for shared indices to warn about potential data leakage
+        shared_indices = []
+        for index_name in active_indices:
+            # A shared index exists if more than one SearchIndex entry in the DB
+            # points to the same OpenSearch index name.
+            if SearchIndex.query.filter_by(index_name=index_name).count() > 1:
+                shared_indices.append(index_name)
+
+        if shared_indices:
+            click.echo(
+                click.style(
+                    "\nSECURITY WARNING: The following indices are shared with other sketches: "
+                    f"{', '.join(shared_indices)}.\n"
+                    "Direct export of legacy events (missing __ts_timeline_id) may "
+                    "cause cross-sketch data leakage.\n",
+                    fg="red",
+                    bold=True,
+                ),
+                err=True,
+            )
+
+        if include_legacy:
+            click.echo(
+                click.style(
+                    "LEGACY EXPORT ENABLED: Including events missing __ts_timeline_id. "
+                    "Use with extreme caution.\n",
+                    fg="yellow",
+                    bold=True,
+                ),
+                err=True,
+            )
 
     if method == "direct" and output_format == "csv":
         print("  Note: 'direct' method only supports JSONL. Switching format...")
@@ -2993,10 +3085,7 @@ def export_sketch(
 
     try:
         datastore = OpenSearchDataStore()
-        active_indices = list(
-            {t.searchindex.index_name for t in sketch.active_timelines}
-        )
-        active_tids = [t.id for t in sketch.active_timelines]
+        # active_indices and active_tids are already defined above
 
         # 2. Gather Metadata
         metadata = _get_sketch_metadata(sketch)
@@ -3032,12 +3121,19 @@ def export_sketch(
         # 3. Precise Count
         print("  Calculating exact event count...")
         total_expected = 0
+        legacy_count = 0
+        verification_query_dsl = None
+
+        # Count modern events
         for tid in active_tids:
             query_dsl = {
                 "query": {"bool": {"must": [{"term": {"__ts_timeline_id": tid}}]}}
             }
             if annotation_filter:
                 query_dsl["query"]["bool"]["must"].append(annotation_filter)
+
+            if not verification_query_dsl:
+                verification_query_dsl = query_dsl
 
             count = datastore.search(
                 sketch_id=sketch.id,
@@ -3046,6 +3142,62 @@ def export_sketch(
                 count=True,
             )
             total_expected += count
+
+        # Count legacy events for the direct method
+        if method == "direct":
+            legacy_query = {
+                "query": {
+                    "bool": {
+                        "must_not": [{"exists": {"field": "__ts_timeline_id"}}]
+                    }
+                }
+            }
+            if annotation_filter:
+                legacy_query["query"]["bool"]["must"] = [annotation_filter]
+
+            for index_name in active_indices:
+                try:
+                    c_res = datastore.client.count(index=index_name, body=legacy_query)
+                    legacy_count += c_res.get("count", 0)
+                except Exception:  # pylint: disable=broad-except
+                    pass
+
+        if include_legacy:
+            total_expected += legacy_count
+            # Update verification query to include legacy events if requested
+            if verification_query_dsl:
+                should_clause = verification_query_dsl["query"]["bool"]["must"][0]
+                verification_query_dsl["query"]["bool"]["must"] = [
+                    {
+                        "bool": {
+                            "should": [
+                                should_clause,
+                                {
+                                    "bool": {
+                                        "must_not": {
+                                            "exists": {"field": "__ts_timeline_id"}
+                                        }
+                                    }
+                                },
+                            ]
+                        }
+                    }
+                ]
+                if annotation_filter:
+                    verification_query_dsl["query"]["bool"]["must"].append(
+                        annotation_filter
+                    )
+
+        elif legacy_count > 0:
+            click.echo(
+                click.style(
+                    f"\nNOTE: Found {legacy_count:,} legacy events (missing __ts_timeline_id). "
+                    "These will be SKIPPED. Use --include-legacy to include them.\n",
+                    fg="cyan",
+                ),
+                err=True,
+            )
+
         print(f"  Total events expected: {total_expected:,}")
 
         # 4. Stream Events & Hash simultaneously
@@ -3065,12 +3217,18 @@ def export_sketch(
                 if method == "direct":
                     should_clauses = [
                         {"terms": {"__ts_timeline_id": active_tids}},
-                        {
-                            "bool": {
-                                "must_not": {"exists": {"field": "__ts_timeline_id"}}
-                            }
-                        },
                     ]
+                    if include_legacy:
+                        should_clauses.append(
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "exists": {"field": "__ts_timeline_id"}
+                                    }
+                                }
+                            }
+                        )
+
                     query = {
                         "query": {
                             "bool": {"must": [{"bool": {"should": should_clauses}}]}
@@ -3082,7 +3240,10 @@ def export_sketch(
                     for hit in helpers.scan(
                         datastore.client, query=query, index=active_indices
                     ):
-                        line = json.dumps(hit["_source"]) + "\n"
+                        event_data = hit["_source"]
+                        event_data["_id"] = hit["_id"]
+                        event_data["_index"] = hit["_index"]
+                        line = json.dumps(event_data) + "\n"
                         f_out.write(line)
                         event_hash_obj.update(line.encode("utf-8"))
                         actual_row_count += 1
@@ -3159,6 +3320,32 @@ def export_sketch(
                 err=True,
             )
 
+        # 7.5 Spot Check Random Events
+        if actual_row_count > 0 and verification_query_dsl:
+            print("  Performing random spot check...")
+            sample_ids = _get_random_event_ids(
+                datastore, active_indices, verification_query_dsl, count=5
+            )
+            if sample_ids:
+                check_results = _spot_check_file(tmp_event_file, sample_ids)
+                success_count = sum(check_results.values())
+                if success_count == len(sample_ids):
+                    print(
+                        f"  SUCCESS: All {len(sample_ids)} sampled events found in export."
+                    )
+                else:
+                    click.echo(
+                        click.style(
+                            f"\nWARNING: Spot check failed! Only {success_count}/{len(sample_ids)} "
+                            "sampled events were found in the exported file.",
+                            fg="red",
+                            bold=True,
+                        ),
+                        err=True,
+                    )
+            else:
+                print("  WARNING: Could not retrieve sample events for spot check.")
+
         # 8. Generate Manifest
         print("  Finalizing manifest and hashing files...")
         manifest_path = os.path.join(tmp_dir, "manifest.txt")
@@ -3212,6 +3399,79 @@ def export_sketch(
     finally:
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
+
+
+@cli.command(name="audit-legacy-events")
+@click.option(
+    "--all-indices",
+    is_flag=True,
+    help="Audit all indices in OpenSearch, not just those in the database.",
+)
+def audit_legacy_events(all_indices: bool):
+    """Audit the OpenSearch cluster for events missing the __ts_timeline_id field.
+
+    Events without this field are considered 'legacy' and can cause data leakage
+    in multi-sketch environments when using the 'direct' export method or
+    other low-level scanning tools.
+
+    This command identifies which indices contain such events and provides
+    a count for each, helping administrators decide if they need to re-index
+    older data.
+    """
+    print("Auditing OpenSearch for legacy events (missing __ts_timeline_id)...")
+    datastore = OpenSearchDataStore()
+
+    if all_indices:
+        indices = list(datastore.client.indices.get_alias().keys())
+        # Filter out system indices
+        indices = [i for i in indices if not i.startswith(".")]
+    else:
+        indices = list({si.index_name for si in SearchIndex.query.all()})
+
+    if not indices:
+        print("No indices found to audit.")
+        return
+
+    legacy_report = []
+    total_legacy_count = 0
+
+    with click.progressbar(indices, label="  Auditing Indices") as bar:
+        for index_name in bar:
+            query = {
+                "query": {
+                    "bool": {
+                        "must_not": [{"exists": {"field": "__ts_timeline_id"}}]
+                    }
+                }
+            }
+            try:
+                count_res = datastore.client.count(index=index_name, body=query)
+                count = count_res.get("count", 0)
+                if count > 0:
+                    legacy_report.append((index_name, count))
+                    total_legacy_count += count
+            except Exception as e:
+                print(f"\n    WARNING: Failed to audit index {index_name}: {e}")
+
+    if not legacy_report:
+        print("\nSUCCESS: No legacy events (missing __ts_timeline_id) found.")
+        return
+
+    print(f"\nFound {len(legacy_report)} index(es) with legacy events:")
+    print("-" * 60)
+    print(f"{'Index Name':<45} | {'Legacy Count':>10}")
+    print("-" * 60)
+    for index_name, count in sorted(legacy_report, key=lambda x: x[1], reverse=True):
+        print(f"{index_name:<45} | {count:>12,}")
+    print("-" * 60)
+    print(f"{'TOTAL':<45} | {total_legacy_count:>12,}")
+    print("-" * 60)
+
+    print("\nRecommendation:")
+    print("  Legacy events lack a __ts_timeline_id, which can cause data leakage")
+    print("  in multi-sketch environments sharing an index.")
+    print("  To resolve this, consider re-indexing this data to include the")
+    print("  correct timeline association.")
 
 
 @cli.command(name="check-opensearch-links")

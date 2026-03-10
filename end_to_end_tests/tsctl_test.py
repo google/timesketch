@@ -240,7 +240,7 @@ class TestTsctl(interface.BaseEndToEndTest):
 
         # 2. Annotate some events
         # We'll use the API to star one event and comment on another
-        search_res = sketch.explore(query="*", size=10)
+        search_res = sketch.explore(query_string="*", max_entries=10)
         events = search_res["hits"]["hits"]
         self.assertions.assertTrue(
             len(events) >= 2, "Not enough events to test annotations"
@@ -280,8 +280,10 @@ class TestTsctl(interface.BaseEndToEndTest):
 
             # 4. Verify filtered data
             with zipfile.ZipFile(export_file, "r") as z:
-                # Our export logic should have only 2 events in events.csv (header + 2 rows)
-                events_data = z.read("events.csv").decode("utf-8").strip().split("\n")
+                # Our export logic should have only 2 events in events.csv
+                # (header + 2 rows)
+                events_raw = z.read("events.csv").decode("utf-8")
+                events_data = events_raw.strip().split("\n")
                 # actual event rows (excluding header)
                 event_count = len(events_data) - 1
                 self.assertions.assertEqual(
