@@ -65,9 +65,9 @@ class AuthViewTest(BaseTest):
     def test_login_invalid_next_url(self, mock_logger):
         """Test the login view handler with an invalid next_url."""
         invalid_next_urls = [
-            "//evil.com",
-            "/\\evil.com",
-            "http://evil.com",
+            "//example.com",
+            "/\\example.com",
+            "http://example.com",
         ]
         for url in invalid_next_urls:
             response = self.client.get(f"/login/?next={url}")
