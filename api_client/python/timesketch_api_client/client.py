@@ -198,16 +198,26 @@ class TimesketchApi:
         """
         # Do a POST to the login handler to set up the session cookies
         data = {"username": username, "password": password}
-        session.post("{0:s}/login/".format(self._host_uri), data=data)
+        response = session.post("{0:s}/login/".format(self._host_uri), data=data)
 
-    def _set_csrf_token(self, session):
+        if response.status_code == definitions.HTTP_STATUS_CODE_UNAUTHORIZED:
+            error.error_message(
+                response, message="Authentication rejected", error=RuntimeError
+            )
+
+    def _set_csrf_token(self, session, bypass_oauth=False):
         """Retrieve CSRF token from the server and append to HTTP headers.
 
         Args:
             session: Instance of requests.Session.
         """
         # Scrape the CSRF token from the response
-        response = session.get(self._host_uri)
+        if bypass_oauth:
+            auth_url = f"{self._host_uri.rstrip("/")}/login/?local_auth=1"
+        else:
+            auth_url = self._host_uri
+
+        response = session.get(auth_url)
         soup = bs4.BeautifulSoup(response.text, features="html.parser")
 
         tag = soup.find(id="csrf_token")
@@ -411,9 +421,12 @@ class TimesketchApi:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # Get and set CSRF token and authenticate the session if appropriate.
-        self._set_csrf_token(session)
+
         if auth_mode == "userpass":
+            self._set_csrf_token(session, bypass_oauth=True)
             self._authenticate_session(session, username, password)
+        else:
+            self._set_csrf_token(session)
 
         return session
 
