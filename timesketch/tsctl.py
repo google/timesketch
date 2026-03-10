@@ -1085,7 +1085,8 @@ def sketch_info(sketch_id: int):
     # Total events in sketch
     try:
         total_events, _ = datastore.count(list(unique_indices))
-    except Exception:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"WARNING: Unable to get total event count for sketch: {e}")
         total_events = 0
     print(f"\nTotal events in sketch: {total_events:,}")
 
