@@ -36,6 +36,7 @@ from timesketch import version
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -223,7 +224,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             indices=self.sketch_indices,
         )
 
-        return export.query_results_to_dataframe(result, sketch)
+        return lib_utils.query_results_to_dataframe(result, sketch)
 
     def _export_events_with_comments(self, sketch, zip_file):
         """Export all events that have comments and store in a ZIP file."""
@@ -416,7 +417,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         scroll_id = result.get("_scroll_id", "")
         if scroll_id:
-            data_frame = export.query_results_to_dataframe(result, sketch)
+            data_frame = lib_utils.query_results_to_dataframe(result, sketch)
 
             total_count = result.get("hits", {}).get("total", {}).get("value", 0)
 
@@ -432,7 +433,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 # pylint: disable=unexpected-keyword-arg
                 result = self.datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
                 event_count += len(result["hits"]["hits"])
-                add_frame = export.query_results_to_dataframe(result, sketch)
+                add_frame = lib_utils.query_results_to_dataframe(result, sketch)
                 if add_frame.shape[0]:
                     data_frame = pd.concat([data_frame, add_frame], sort=False)
                 else:

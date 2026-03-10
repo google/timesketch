@@ -36,7 +36,7 @@ local_resource(
     serve_cmd=wait_cmd
     + " && "
     + refresh_config_cmd
-    + " && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
+    + " && docker exec -i timesketch-dev bash -c 'pkill -f \"[g]unicorn\" || true' && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
     deps=config_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],
@@ -49,7 +49,7 @@ local_resource(
     serve_cmd=wait_cmd
     + " && "
     + refresh_config_cmd
-    + " && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
+    + " && docker exec -i timesketch-dev bash -c 'pkill -f \"[c]elery\" || true' && docker exec -i timesketch-dev celery --app timesketch.lib.tasks worker --loglevel=info",
     deps=backend_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],
@@ -59,7 +59,7 @@ local_resource(
 local_resource(
     "ts-frontend-v3",
     cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-v3",
-    serve_cmd="docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev --port 5001 --host 0.0.0.0",
+    serve_cmd="docker exec -i timesketch-dev bash -c 'pkill -f \"[n]ode|[y]arn\" || true' && docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-v3 dev --port 5001 --host 0.0.0.0",
     deps=["../timesketch/frontend-v3/src", "../timesketch/frontend-v3/package.json"],
     ignore=["**/node_modules/**"],
     labels=["frontend"],
@@ -70,7 +70,7 @@ local_resource(
 local_resource(
     "ts-frontend-ng",
     cmd="docker exec -i timesketch-dev yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend-ng",
-    serve_cmd="docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve --port 5001 --host 0.0.0.0",
+    serve_cmd="docker exec -i timesketch-dev bash -c 'pkill -f \"[n]ode|[y]arn\" || true' && docker exec -i timesketch-dev yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve --port 5001 --host 0.0.0.0",
     deps=["../timesketch/frontend-ng/src", "../timesketch/frontend-ng/package.json"],
     ignore=["**/node_modules/**"],
     labels=["frontend"],
