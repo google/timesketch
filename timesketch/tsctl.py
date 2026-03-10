@@ -2852,70 +2852,41 @@ def _fetch_and_prepare_event_data(
     datastore: OpenSearchDataStore,
     return_fields: list,
     output_format: str = "csv",
+    query_dsl: Optional[Dict] = None,
 ) -> Tuple[Union[str, "pd.DataFrame"], int, Dict]:
-    """Fetches all event data for a sketch and determines its format.
-    This function queries the datastore for all events associated with the
-    active timelines of the given sketch. It requests the data ideally in
-    JSONL format using the `api_export.query_to_filehandle` utility.
+    """Fetches all event data for a sketch using the API method.
+
+    This is a helper for the 'api' export method. It calls the standard
+    Timesketch API export utility.
+
     Args:
-        sketch: The timesketch.models.sketch.Sketch object whose events
-                are to be fetched.
-        datastore: An initialized
-                    timesketch.lib.datastores.opensearch.OpenSearchDataStore
-                    instance used for querying.
-        return_fields: A list of field names to include in the fetched events.
-        output_format: The format to request (csv or jsonl).
+        sketch: The Sketch database model.
+        datastore: OpenSearchDataStore instance.
+        return_fields: List of fields to return.
+        output_format: Requested format (csv or jsonl).
+        query_dsl: Optional OpenSearch DSL to filter the export. This allows
+            for complex filtering (e.g. by labels, stars, or comments) that
+            the standard query string cannot express.
+
     Returns:
-        A tuple containing:
-            - data_handle: The streaming file handle.
-            - total_event_count (int): The expected total count.
-            - timeline_expected_counts (dict): Per-timeline expected counts.
-    Raises:
-        ValueError: If no active timelines or valid indices are found for the
-                    sketch, preventing event fetching.
+        A tuple containing (data_handle, 0, {})
     """
     query_string = "*"
+    if query_dsl:
+        query_string = ""
+
     query_filter = {
         "indices": "_all",
         "size": 10000,
     }
-    query_dsl = None
 
     active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
     active_timeline_ids = [t.id for t in sketch.active_timelines]
 
     if not active_indices:
-        raise ValueError(
-            "ERROR: No active timelines (and thus no indices) found for this sketch."
-        )
-
-    print("Get number of events for this sketch...")
-    timeline_expected_counts = {}
-    total_event_count = 0
-    try:
-        with click.progressbar(
-            sketch.active_timelines,
-            label="  Counting events per timeline",
-            show_pos=True,
-        ) as bar:
-            for t in bar:
-                count = datastore.search(
-                    sketch_id=sketch.id,
-                    indices=[t.searchindex.index_name],
-                    query_dsl={"query": {"term": {"__ts_timeline_id": t.id}}},
-                    count=True,
-                )
-                timeline_expected_counts[t.id] = count
-                total_event_count += count
-        print(f"  Total events expected: {total_event_count:,}")
-    except Exception as count_error:  # pylint: disable=broad-except
-        total_event_count = 0
-        print(f"  WARNING: Could not get total event count: {count_error}")
-
-    print("  Requesting event data...")
+        raise ValueError("No active timelines found for this sketch.")
 
     # Check if the currently loaded api_export supports output_format
-    # there might be a follow up PR to add csv to it.
     sig = inspect.signature(api_export.query_to_filehandle)
     if "output_format" in sig.parameters:
         event_file_handle = api_export.query_to_filehandle(
@@ -2934,7 +2905,7 @@ def _fetch_and_prepare_event_data(
             raise ValueError(
                 f"The currently loaded API export method only supports CSV, "
                 f"but '{output_format}' was requested. Please use --method=direct "
-                f"for high-speed JSONL export"
+                f"for high-speed JSONL export."
             )
         event_file_handle = api_export.query_to_filehandle(
             query_string=query_string,
@@ -2946,7 +2917,7 @@ def _fetch_and_prepare_event_data(
             datastore=datastore,
             return_fields=return_fields,
         )
-    return event_file_handle, total_event_count, timeline_expected_counts
+    return event_file_handle, 0, {}
 
 
 @cli.command(name="export-sketch")
@@ -3143,60 +3114,66 @@ def export_sketch(
             )
             total_expected += count
 
-        # Count legacy events for the direct method
-        if method == "direct":
-            legacy_query = {
-                "query": {
-                    "bool": {
-                        "must_not": [{"exists": {"field": "__ts_timeline_id"}}]
-                    }
+        # Count legacy events (missing __ts_timeline_id)
+        # We check this for both methods now, because even the API method
+        # will return these events.
+        legacy_query = {
+            "query": {
+                "bool": {
+                    "must_not": [{"exists": {"field": "__ts_timeline_id"}}]
                 }
             }
-            if annotation_filter:
-                legacy_query["query"]["bool"]["must"] = [annotation_filter]
+        }
+        if annotation_filter:
+            legacy_query["query"]["bool"]["must"] = [annotation_filter]
 
-            for index_name in active_indices:
-                try:
-                    c_res = datastore.client.count(index=index_name, body=legacy_query)
-                    legacy_count += c_res.get("count", 0)
-                except Exception:  # pylint: disable=broad-except
-                    pass
+        for index_name in active_indices:
+            try:
+                c_res = datastore.client.count(index=index_name, body=legacy_query)
+                legacy_count += c_res.get("count", 0)
+            except Exception:  # pylint: disable=broad-except
+                pass
 
-        if include_legacy:
+        if method == "direct":
+            if include_legacy:
+                total_expected += legacy_count
+            elif legacy_count > 0:
+                click.echo(
+                    click.style(
+                        f"\nNOTE: Found {legacy_count:,} legacy events (missing __ts_timeline_id). "
+                        "These will be SKIPPED. Use --include-legacy to include them.\n",
+                        fg="cyan",
+                    ),
+                    err=True,
+                )
+        else:
+            # The API method ALWAYS returns legacy events if they are in the index,
+            # so we must include them in our expected count for accuracy.
             total_expected += legacy_count
-            # Update verification query to include legacy events if requested
-            if verification_query_dsl:
-                should_clause = verification_query_dsl["query"]["bool"]["must"][0]
-                verification_query_dsl["query"]["bool"]["must"] = [
-                    {
-                        "bool": {
-                            "should": [
-                                should_clause,
-                                {
-                                    "bool": {
-                                        "must_not": {
-                                            "exists": {"field": "__ts_timeline_id"}
+            if legacy_count > 0:
+                 if verification_query_dsl:
+                    # Update verification query to include legacy events for API method
+                    should_clause = verification_query_dsl["query"]["bool"]["must"][0]
+                    verification_query_dsl["query"]["bool"]["must"] = [
+                        {
+                            "bool": {
+                                "should": [
+                                    should_clause,
+                                    {
+                                        "bool": {
+                                            "must_not": {
+                                                "exists": {"field": "__ts_timeline_id"}
+                                            }
                                         }
-                                    }
-                                },
-                            ]
+                                    },
+                                ]
+                            }
                         }
-                    }
-                ]
-                if annotation_filter:
-                    verification_query_dsl["query"]["bool"]["must"].append(
-                        annotation_filter
-                    )
-
-        elif legacy_count > 0:
-            click.echo(
-                click.style(
-                    f"\nNOTE: Found {legacy_count:,} legacy events (missing __ts_timeline_id). "
-                    "These will be SKIPPED. Use --include-legacy to include them.\n",
-                    fg="cyan",
-                ),
-                err=True,
-            )
+                    ]
+                    if annotation_filter:
+                        verification_query_dsl["query"]["bool"]["must"].append(
+                            annotation_filter
+                        )
 
         print(f"  Total events expected: {total_expected:,}")
 
@@ -3262,6 +3239,7 @@ def export_sketch(
                         datastore=datastore,
                         return_fields=fields,
                         output_format=output_format,
+                        query_dsl=api_query_dsl,
                     )
 
                     if output_format == "csv":
@@ -3464,9 +3442,7 @@ def audit_legacy_events(all_indices: bool):
         for index_name in bar:
             query = {
                 "query": {
-                    "bool": {
-                        "must_not": [{"exists": {"field": "__ts_timeline_id"}}]
-                    }
+                    "bool": {"must_not": [{"exists": {"field": "__ts_timeline_id"}}]}
                 }
             }
             try:
@@ -4209,6 +4185,13 @@ def sync_groups_from_json(filepath, dry_run):
         for g in unmanaged_groups:
             click.echo(f" -> {g}")
 
+    if not dry_run:
+        click.echo("Committing changes to database...")
+        try:
+            db_session.commit()
+            click.echo("Sync complete.")
+        except Exception as e:  # pylint: disable=broad-except
+            click.echo(f"Error: Failed to commit changes: {e}")
+            db_session.rollback()
     else:
         click.echo("[DRY-RUN] No changes committed.")
-
