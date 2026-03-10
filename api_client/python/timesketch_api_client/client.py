@@ -198,7 +198,7 @@ class TimesketchApi:
         """
         # Do a POST to the login handler to set up the session cookies
         data = {"username": username, "password": password}
-        response = session.post("{0:s}/login/".format(self._host_uri), data=data)
+        response = session.post(f"{self._host_uri.rstrip('/')}/login/", data=data)
 
         if response.status_code == definitions.HTTP_STATUS_CODE_UNAUTHORIZED:
             error.error_message(
