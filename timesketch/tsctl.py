@@ -13,6 +13,7 @@
 # limitations under the License.
 """CLI management tool."""
 
+import inspect
 import os
 import pathlib
 import json
@@ -2845,17 +2846,39 @@ def _fetch_and_prepare_event_data(
         print(f"  WARNING: Could not get total event count: {count_error}")
 
     print("  Requesting event data...")
-    event_file_handle = api_export.query_to_filehandle(
-        query_string=query_string,
-        query_filter=query_filter,
-        query_dsl=query_dsl,
-        indices=active_indices,
-        timeline_ids=active_timeline_ids,
-        sketch=sketch,
-        datastore=datastore,
-        return_fields=return_fields,
-        output_format=output_format,
-    )
+
+    # Check if the currently loaded api_export supports output_format
+    # there might be a follow up PR to add csv to it.
+    sig = inspect.signature(api_export.query_to_filehandle)
+    if "output_format" in sig.parameters:
+        event_file_handle = api_export.query_to_filehandle(
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            indices=active_indices,
+            timeline_ids=active_timeline_ids,
+            sketch=sketch,
+            datastore=datastore,
+            return_fields=return_fields,
+            output_format=output_format,
+        )
+    else:
+        if output_format.lower() != "csv":
+            raise ValueError(
+                f"The currently loaded API export method only supports CSV, "
+                f"but '{output_format}' was requested. Please use --method=direct "
+                f"for high-speed JSONL export"
+            )
+        event_file_handle = api_export.query_to_filehandle(
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            indices=active_indices,
+            timeline_ids=active_timeline_ids,
+            sketch=sketch,
+            datastore=datastore,
+            return_fields=return_fields,
+        )
     return event_file_handle, total_event_count, timeline_expected_counts
 
 
