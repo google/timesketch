@@ -18,7 +18,6 @@ import json
 import os
 import uuid
 import zipfile
-import hashlib
 
 from click.testing import CliRunner
 from timesketch.tsctl import cli
@@ -42,14 +41,6 @@ class TestTsctl(interface.BaseEndToEndTest):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(content, f)
         return file_path
-
-    def _get_sha256(self, file_path):
-        """Helper to calculate SHA256 of a file."""
-        h = hashlib.sha256()
-        with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                h.update(chunk)
-        return h.hexdigest()
 
     def test_version_command(self):
         """Tests the 'tsctl version' command."""
@@ -259,9 +250,9 @@ class TestTsctl(interface.BaseEndToEndTest):
         event2 = events[1]
 
         # Star event1
-        sketch.add_event_label(event1["_id"], event1["_index"], "__ts_star")
+        sketch.label_events([event1], "__ts_star")
         # Comment on event2
-        sketch.add_event_comment(
+        sketch.comment_event(
             event2["_id"], event2["_index"], "Forensic E2E Test Comment"
         )
 
@@ -307,7 +298,8 @@ class TestTsctl(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"story-test-{uuid.uuid4().hex}")
         story_title = "Forensic Investigation Story"
         story_content = "# Summary\nEvidence found of lateral movement."
-        sketch.add_story(title=story_title, content=story_content)
+        new_story = sketch.create_story(title=story_title)
+        new_story.add_text(story_content)
 
         sketch_id = str(sketch.id)
         export_file = f"story_export_{sketch_id}.zip"

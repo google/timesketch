@@ -412,19 +412,31 @@ tsctl grant-group incident-responders --sketch_id 456 --read-only
 Exports a sketch to a zip archive, including all metadata and event data.
 
 !!! warning "Archive and Re-import"
-    This export is primarily for data archival or external analysis. Re-importing this archive into Timesketch is not natively supported.
+    This export is primarily for forensic data archival, preservation, or external analysis. Re-importing this archive into Timesketch is not natively supported.
 
 **Arguments:**
 *   `SKETCH_ID`: The ID of the sketch to export.
 
 **Options:**
+*   `--method [api|direct]`: Export method:
+    *   `api`: (Default) Standard export using the API. Supports CSV and JSONL (depending on system version).
+    *   `direct`: High-speed export that scans OpenSearch directly. Best for large datasets. Currently only supports JSONL.
 *   `--filename`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
-*   `--output-format`: Format for event data ('csv' or 'jsonl'). Default: 'csv'.
+*   `--output-format [csv|jsonl]`: Format for event data. Default: 'csv'. Note that `direct` method defaults to `jsonl`.
 *   `--default-fields`: Export only the default set of event fields. If not specified, all fields are exported.
+*   `--annotated-only`: Export only events that have annotations (labels, stars, comments, or tags).
+
+**Archive Content:**
+The generated ZIP file includes:
+*   `metadata.json`: Comprehensive sketch and timeline metadata.
+*   `events.{csv|jsonl}`: The exported event data.
+*   `manifest.txt`: A forensic manifest containing SHA256 hashes of all files in the archive.
+*   `mappings/`: JSON files containing the OpenSearch index mappings for each timeline.
+*   `stories/`: Sketch stories exported as individual Markdown files.
 
 **Example:**
 ```bash
-tsctl export-sketch 1 --filename "project_x_export.zip"
+tsctl export-sketch 1 --method direct --filename "incident_preservation.zip"
 ```
 
 #### `sketch-label-stats`

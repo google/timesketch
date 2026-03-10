@@ -105,6 +105,22 @@ DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE = (
 )
 
 
+def get_sha256(file_path: str) -> str:
+    """Calculate SHA256 of a file.
+
+    Args:
+        file_path (str): Path to the file.
+
+    Returns:
+        str: SHA256 hash of the file.
+    """
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
+
+
 def configure_opensearch_logger():
     """Configure the opensearch-py logger for tsctl."""
     opensearch_logger = logging.getLogger("opensearch")
@@ -2884,25 +2900,6 @@ def _fetch_and_prepare_event_data(
     return event_file_handle, total_event_count, timeline_expected_counts
 
 
-# Helper function to convert event data
-def _convert_event_data(
-    input_content: str,
-    is_likely_jsonl: bool,
-    output_format: str,
-    return_fields: Optional[List[str]] = None,
-) -> bytes:
-    """(Deprecated) Internal helper for non-streaming conversion."""
-    pass
-
-
-# Helper function to create the zip archive
-def _create_export_archive(
-    filename: str, metadata: dict, event_data_bytes: bytes, event_filename: str
-):
-    """(Deprecated) Internal helper for non-streaming ZIP creation."""
-    pass
-
-
 @cli.command(name="export-sketch")
 @click.argument("sketch_id", type=int)
 @click.option(
@@ -3166,15 +3163,8 @@ def export_sketch(
         print("  Finalizing manifest and hashing files...")
         manifest_path = os.path.join(tmp_dir, "manifest.txt")
 
-        def get_sha256(path):
-            h = hashlib.sha256()
-            with open(path, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
-                    h.update(chunk)
-            return h.hexdigest()
-
         with open(manifest_path, "w", encoding="utf-8") as f_man:
-            f_man.write(f"Timesketch Forensic Export Manifest\n")
+            f_man.write(f"Timesketch Export Manifest\n")
             f_man.write(f"==================================\n")
             f_man.write(f"Sketch ID: {sketch.id} | Name: {sketch.name}\n")
             f_man.write(
