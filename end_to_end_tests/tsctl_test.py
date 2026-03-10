@@ -47,15 +47,13 @@ class TestTsctl(interface.BaseEndToEndTest):
     def _wait_for_events(self, sketch, expected_count):
         """Wait for events to be indexed."""
         for _ in range(30):
-            res = sketch.explore(
-                query_string="*", max_entries=expected_count, as_pandas=True
-            )
+            res = sketch.explore(query_string="*", max_entries=expected_count, as_pandas=True)
             if isinstance(res, list):
-                res = res[0]
-
+                 res = res[0]
+            
             if isinstance(res, pd.DataFrame):
-                if len(res) >= expected_count:
-                    return True
+                 if len(res) >= expected_count:
+                     return True
             time.sleep(2)
         return False
 
@@ -175,9 +173,10 @@ class TestTsctl(interface.BaseEndToEndTest):
         self.import_timeline("sigma_events.csv")
 
         # 2. Invoke 'tsctl export-sketch'
-        # We use the sketch created by the base class
         sketch_id = str(self.sketch.id)
         output_filename = f"sketch_{sketch_id}_csv_export.zip"
+        if os.path.exists(output_filename):
+            os.remove(output_filename)
 
         try:
             result = self.runner.invoke(cli, ["export-sketch", sketch_id])
@@ -191,7 +190,7 @@ class TestTsctl(interface.BaseEndToEndTest):
             )
             self.assertions.assertIn("Sketch exported successfully", result.output)
 
-            # 4. Verify the export file exists and contains expected files
+            # 4. Verify the export file exists
             self.assertions.assertTrue(
                 os.path.exists(output_filename), "Export ZIP file not found"
             )
@@ -209,6 +208,8 @@ class TestTsctl(interface.BaseEndToEndTest):
 
         sketch_id = str(sketch.id)
         export_file = f"forensic_direct_{sketch_id}.zip"
+        if os.path.exists(export_file):
+            os.remove(export_file)
 
         try:
             # 2. Run export-sketch with --method direct
@@ -270,29 +271,36 @@ class TestTsctl(interface.BaseEndToEndTest):
         self.assertions.assertTrue(self._wait_for_events(sketch, 3))
 
         sketch_id = str(sketch.id)
+        export_file = f"multi_line_{sketch_id}.zip"
+        if os.path.exists(export_file):
+            os.remove(export_file)
 
-        # 2. Run tsctl export-sketch
-        result = self.runner.invoke(cli, ["export-sketch", sketch_id])
-        self.assertions.assertEqual(result.exit_code, 0)
+        try:
+            # 2. Run tsctl export-sketch
+            result = self.runner.invoke(cli, ["export-sketch", sketch_id, "--filename", export_file])
+            self.assertions.assertEqual(result.exit_code, 0)
 
-        # 3. Verify the output count in the console
-        self.assertions.assertIn("3/3", result.output)
-        self.assertions.assertNotIn("WARNING: Event count mismatch!", result.output)
+            # 3. Verify the output count in the console
+            self.assertions.assertIn("Verification: 3 events exported", result.output)
+            self.assertions.assertNotIn("WARNING: Event count mismatch!", result.output)
+        finally:
+            if os.path.exists(export_file):
+                os.remove(export_file)
 
     def test_tsctl_annotated_only_export(self):
         """Test tsctl filtering events by annotations."""
         # 1. Setup: Create sketch and import data
         sketch = self.api.create_sketch(name=f"annotated-test-{uuid.uuid4().hex}")
         self.import_timeline("sigma_events.jsonl", sketch=sketch)
-
+        
         # Wait for import
         self.assertions.assertTrue(self._wait_for_events(sketch, 1))
 
         # 2. Annotate some events
         df = sketch.explore(query_string="*", max_entries=10, as_pandas=True)
         if isinstance(df, list):
-            df = df[0]
-
+             df = df[0]
+        
         self.assertions.assertTrue(len(df) >= 2)
 
         # Star first event
@@ -310,6 +318,8 @@ class TestTsctl(interface.BaseEndToEndTest):
 
         sketch_id = str(sketch.id)
         export_file = f"annotated_only_{sketch_id}.zip"
+        if os.path.exists(export_file):
+            os.remove(export_file)
 
         try:
             # 3. Run export-sketch with --annotated-only
@@ -326,7 +336,6 @@ class TestTsctl(interface.BaseEndToEndTest):
             self.assertions.assertEqual(
                 result.exit_code, 0, f"CLI Error: {result.output}"
             )
-            # The refactored code prints processing status
             self.assertions.assertIn(
                 "Processing comments for 2 event(s)...", result.output
             )
@@ -338,7 +347,6 @@ class TestTsctl(interface.BaseEndToEndTest):
 
                 import csv
                 import io
-
                 content = z.read(csv_files[0]).decode("utf-8")
                 reader = csv.reader(io.StringIO(content))
                 rows = list(reader)
@@ -355,33 +363,24 @@ class TestTsctl(interface.BaseEndToEndTest):
     def test_tsctl_export_api_jsonl(self):
         """Test API-based export using JSONL format."""
         sketch = self.api.create_sketch(name=f"api-jsonl-{uuid.uuid4().hex}")
-        sketch.add_event(
-            message="JSONL API Test", date="2026-03-10T12:00:00", timestamp_desc="Test"
-        )
-
+        sketch.add_event(message="JSONL API Test", date="2026-03-10T12:00:00", timestamp_desc="Test")
+        
         # Wait for indexing
         self.assertions.assertTrue(self._wait_for_events(sketch, 1))
-
+        
         sketch_id = str(sketch.id)
         export_file = f"api_jsonl_{sketch_id}.zip"
+        if os.path.exists(export_file):
+            os.remove(export_file)
 
         try:
             result = self.runner.invoke(
-                cli,
-                [
-                    "export-sketch",
-                    sketch_id,
-                    "--method",
-                    "api",
-                    "--output-format",
-                    "jsonl",
-                    "--filename",
-                    export_file,
-                ],
+                cli, 
+                ["export-sketch", sketch_id, "--method", "api", "--output-format", "jsonl", "--filename", export_file]
             )
             self.assertions.assertEqual(result.exit_code, 0)
             self.assertions.assertIn("Starting API export", result.output)
-
+            
             with zipfile.ZipFile(export_file, "r") as z:
                 self.assertions.assertIn("events.jsonl", z.namelist())
                 content = z.read("events.jsonl").decode("utf-8").strip().split("\n")
@@ -395,39 +394,33 @@ class TestTsctl(interface.BaseEndToEndTest):
         # 1. Setup: Create sketch and import data, but don't annotate anything
         sketch = self.api.create_sketch(name=f"no-annotations-{uuid.uuid4().hex}")
         self.import_timeline("sigma_events.jsonl", sketch=sketch)
-
+        
         # Wait for import
         self.assertions.assertTrue(self._wait_for_events(sketch, 1))
-
+        
         sketch_id = str(sketch.id)
         export_file = f"empty_annotated_{sketch_id}.zip"
+        if os.path.exists(export_file):
+            os.remove(export_file)
 
         try:
             # 2. Run export-sketch with --annotated-only
             result = self.runner.invoke(
-                cli,
-                [
-                    "export-sketch",
-                    sketch_id,
-                    "--annotated-only",
-                    "--filename",
-                    export_file,
-                ],
+                cli, 
+                ["export-sketch", sketch_id, "--annotated-only", "--filename", export_file]
             )
             self.assertions.assertEqual(result.exit_code, 0)
             self.assertions.assertIn("Total events expected: 0", result.output)
-
+            
             # 3. Verify filtered data (should only have header)
             with zipfile.ZipFile(export_file, "r") as z:
                 csv_files = [f for f in z.namelist() if f.endswith(".csv")]
                 self.assertions.assertTrue(len(csv_files) > 0)
-
+                
                 content = z.read(csv_files[0]).decode("utf-8").strip().split("\n")
                 # Only header should exist
                 event_count = len(content) - 1
-                self.assertions.assertEqual(
-                    event_count, 0, f"Expected 0 events, got {event_count}"
-                )
+                self.assertions.assertEqual(event_count, 0, f"Expected 0 events, got {event_count}")
         finally:
             if os.path.exists(export_file):
                 os.remove(export_file)

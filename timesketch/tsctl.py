@@ -3242,43 +3242,50 @@ def export_sketch(
                         query_dsl=api_query_dsl,
                     )
 
-                    if output_format == "csv":
-                        # We use the csv module to accurately count rows even if fields
-                        # contain newlines (which pandas.to_csv properly quotes).
-                        import csv
-
-                        # The data_handle is typically a StringIO or similar.
-                        if hasattr(data_handle, "seek"):
-                            data_handle.seek(0)
-
-                        csv_reader = csv.reader(data_handle)
-                        # Skip header for the hashing loop but write it once
-                        header = next(csv_reader, None)
-                        if header:
-                            header_line = ",".join(f'"{h}"' for h in header) + "\n"
-                            f_out.write(header_line)
-                            event_hash_obj.update(header_line.encode("utf-8"))
-
-                        for row in csv_reader:
-                            # Re-construct the line for writing/hashing.
-                            # We want to maintain original CSV integrity.
-                            line_io = io.StringIO()
-                            csv.writer(line_io).writerow(row)
-                            line = line_io.getvalue()
-
-                            f_out.write(line)
-                            event_hash_obj.update(line.encode("utf-8"))
-                            actual_row_count += 1
-                            if actual_row_count % 10000 == 0:
-                                bar.update(10000)
+                    # The data_handle can be a StringIO (string stream) or a pd.DataFrame
+                    if isinstance(data_handle, pd.DataFrame):
+                         if output_format == "csv":
+                              data_handle.to_csv(f_out, index=False)
+                         else:
+                              data_handle.to_json(f_out, orient="records", lines=True)
+                         actual_row_count = len(data_handle)
                     else:
-                        # For JSONL or other formats, line-by-line is safe
-                        for line in data_handle:
-                            f_out.write(line)
-                            event_hash_obj.update(line.encode("utf-8"))
-                            actual_row_count += 1
-                            if actual_row_count % 10000 == 0:
-                                bar.update(10000)
+                        if output_format == "csv":
+                            # We use the csv module to accurately count rows even if fields
+                            # contain newlines (which pandas.to_csv properly quotes).
+                            import csv
+
+                            # The data_handle is typically a StringIO or similar.
+                            if hasattr(data_handle, "seek"):
+                                data_handle.seek(0)
+
+                            csv_reader = csv.reader(data_handle)
+                            # Skip header for the hashing loop but write it once
+                            header = next(csv_reader, None)
+                            if header:
+                                header_line = ",".join(f'"{h}"' for h in header) + "\n"
+                                f_out.write(header_line)
+                                event_hash_obj.update(header_line.encode("utf-8"))
+
+                            for row in csv_reader:
+                                # Re-construct the line for writing/hashing.
+                                line_io = io.StringIO()
+                                csv.writer(line_io).writerow(row)
+                                line = line_io.getvalue()
+
+                                f_out.write(line)
+                                event_hash_obj.update(line.encode("utf-8"))
+                                actual_row_count += 1
+                                if actual_row_count % 10000 == 0:
+                                    bar.update(10000)
+                        else:
+                            # For JSONL or other formats, line-by-line is safe
+                            for line in data_handle:
+                                f_out.write(line)
+                                event_hash_obj.update(line.encode("utf-8"))
+                                actual_row_count += 1
+                                if actual_row_count % 10000 == 0:
+                                    bar.update(10000)
 
                 bar.update(actual_row_count % 10000)
 
@@ -3322,6 +3329,8 @@ def export_sketch(
                 ),
                 err=True,
             )
+        else:
+            print(f"  Verification: {actual_row_count} events exported as expected.")
 
         # 7.5 Spot Check Random Events
         if actual_row_count > 0 and verification_query_dsl:
