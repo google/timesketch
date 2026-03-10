@@ -2847,6 +2847,173 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
 
 
 # Helper function to fetch and prepare event data
+def _calculate_export_counts(
+    sketch: Sketch,
+    datastore: OpenSearchDataStore,
+    active_indices: List[str],
+    active_tids: List[int],
+    method: str,
+    include_legacy: bool,
+    annotation_filter: Optional[Dict],
+) -> Tuple[int, int, Optional[Dict]]:
+    """Calculates expected event counts for the export.
+
+    Args:
+        sketch: The Sketch database model.
+        datastore: OpenSearchDataStore instance.
+        active_indices: List of index names.
+        active_tids: List of timeline IDs.
+        method: Export method (direct or api).
+        include_legacy: Whether to include events missing __ts_timeline_id.
+        annotation_filter: Optional OpenSearch DSL for annotations.
+
+    Returns:
+        A tuple containing:
+            - total_expected (int): Total number of events to be exported.
+            - legacy_count (int): Number of legacy events detected.
+            - verification_query_dsl (dict): Query DSL to use for spot checks.
+    """
+    total_expected = 0
+    legacy_count = 0
+    verification_query_dsl = None
+
+    # Count modern events
+    for tid in active_tids:
+        query_dsl = {"query": {"bool": {"must": [{"term": {"__ts_timeline_id": tid}}]}}}
+        if annotation_filter:
+            query_dsl["query"]["bool"]["must"].append(annotation_filter)
+
+        if not verification_query_dsl:
+            verification_query_dsl = query_dsl
+
+        count = datastore.search(
+            sketch_id=sketch.id,
+            indices=active_indices,
+            query_dsl=query_dsl,
+            count=True,
+        )
+        total_expected += count
+
+    # Count legacy events (missing __ts_timeline_id)
+    legacy_query = {
+        "query": {"bool": {"must_not": [{"exists": {"field": "__ts_timeline_id"}}]}}
+    }
+    if annotation_filter:
+        legacy_query["query"]["bool"]["must"] = [annotation_filter]
+
+    for index_name in active_indices:
+        try:
+            c_res = datastore.client.count(index=index_name, body=legacy_query)
+            legacy_count += c_res.get("count", 0)
+        except Exception:  # pylint: disable=broad-except
+            pass
+
+    if method == "direct":
+        if include_legacy:
+            total_expected += legacy_count
+        elif legacy_count > 0:
+            click.echo(
+                click.style(
+                    f"\nNOTE: Found {legacy_count:,} legacy events (missing __ts_timeline_id). "
+                    "These will be SKIPPED. Use --include-legacy to include them.\n",
+                    fg="cyan",
+                ),
+                err=True,
+            )
+    else:
+        # API method always returns legacy events if present
+        total_expected += legacy_count
+        if legacy_count > 0 and verification_query_dsl:
+            should_clause = verification_query_dsl["query"]["bool"]["must"][0]
+            verification_query_dsl["query"]["bool"]["must"] = [
+                {
+                    "bool": {
+                        "should": [
+                            should_clause,
+                            {
+                                "bool": {
+                                    "must_not": {"exists": {"field": "__ts_timeline_id"}}
+                                }
+                            },
+                        ]
+                    }
+                }
+            ]
+            if annotation_filter:
+                verification_query_dsl["query"]["bool"]["must"].append(annotation_filter)
+
+    return total_expected, legacy_count, verification_query_dsl
+
+
+def _export_index_mappings(
+    datastore: OpenSearchDataStore, active_indices: List[str], target_dir: str
+):
+    """Collect index mappings and save as JSON files."""
+    mappings_dir = os.path.join(target_dir, "mappings")
+    os.makedirs(mappings_dir, exist_ok=True)
+    for index_name in active_indices:
+        try:
+            mapping = datastore.client.indices.get_mapping(index=index_name)
+            with open(os.path.join(mappings_dir, f"{index_name}.json"), "w") as f_map:
+                json.dump(mapping, f_map, indent=2)
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"    WARNING: Mapping failed for {index_name}: {e}")
+
+
+def _export_stories_to_markdown(sketch: Sketch, target_dir: str):
+    """Export sketch stories as individual Markdown files."""
+    stories_dir = os.path.join(target_dir, "stories")
+    os.makedirs(stories_dir, exist_ok=True)
+    for story in sketch.stories:
+        s_name = f"story_{story.id}_{re.sub(r'[^a-zA-Z0-9]', '_', story.title)}.md"
+        with open(os.path.join(stories_dir, s_name), "w") as f_story:
+            f_story.write(f"# {story.title}\n\n")
+            f_story.write(
+                f"**Author:** {story.user.username if story.user else 'System'}\n"
+            )
+            f_story.write(f"**Created:** {story.created_at.isoformat()}\n\n")
+            f_story.write(story.content)
+
+
+def _generate_forensic_manifest(
+    sketch: Sketch,
+    method: str,
+    event_count: int,
+    event_filename: str,
+    event_hash: str,
+    tmp_dir: str,
+):
+    """Generate manifest.txt with SHA256 hashes for the export archive."""
+    manifest_path = os.path.join(tmp_dir, "manifest.txt")
+    with open(manifest_path, "w", encoding="utf-8") as f_man:
+        f_man.write("Timesketch Export Manifest\n")
+        f_man.write("==================================\n")
+        f_man.write(f"Sketch ID: {sketch.id} | Name: {sketch.name}\n")
+        f_man.write(f"Date: {datetime.datetime.now(datetime.timezone.utc).isoformat()}\n")
+        f_man.write(f"Method: {method} | Events: {event_count}\n\n")
+        f_man.write("File Hashes (SHA256):\n")
+        f_man.write(f"{event_hash}  {event_filename}\n")
+        for root, _, files in os.walk(tmp_dir):
+            for f in files:
+                if f in [event_filename, "manifest.txt", "export.zip"]:
+                    continue
+                abs_p = os.path.join(root, f)
+                rel_p = os.path.relpath(abs_p, tmp_dir)
+                f_man.write(f"{get_sha256(abs_p)}  {rel_p}\n")
+
+
+def _bundle_export_zip(tmp_dir: str, output_zip_path: str):
+    """Bundle all files in tmp_dir into a single ZIP archive."""
+    with zipfile.ZipFile(output_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(tmp_dir):
+            for f in files:
+                if f == "export.zip":
+                    continue
+                abs_p = os.path.join(root, f)
+                rel_p = os.path.relpath(abs_p, tmp_dir)
+                zipf.write(abs_p, rel_p)
+
+
 def _fetch_and_prepare_event_data(
     sketch: Sketch,
     datastore: OpenSearchDataStore,
@@ -2991,8 +3158,6 @@ def export_sketch(
         # Check for shared indices to warn about potential data leakage
         shared_indices = []
         for index_name in active_indices:
-            # A shared index exists if more than one SearchIndex entry in the DB
-            # points to the same OpenSearch index name.
             if SearchIndex.query.filter_by(index_name=index_name).count() > 1:
                 shared_indices.append(index_name)
 
@@ -3056,8 +3221,6 @@ def export_sketch(
 
     try:
         datastore = OpenSearchDataStore()
-        # active_indices and active_tids are already defined above
-
         # 2. Gather Metadata
         metadata = _get_sketch_metadata(sketch)
 
@@ -3091,90 +3254,15 @@ def export_sketch(
 
         # 3. Precise Count
         print("  Calculating exact event count...")
-        total_expected = 0
-        legacy_count = 0
-        verification_query_dsl = None
-
-        # Count modern events
-        for tid in active_tids:
-            query_dsl = {
-                "query": {"bool": {"must": [{"term": {"__ts_timeline_id": tid}}]}}
-            }
-            if annotation_filter:
-                query_dsl["query"]["bool"]["must"].append(annotation_filter)
-
-            if not verification_query_dsl:
-                verification_query_dsl = query_dsl
-
-            count = datastore.search(
-                sketch_id=sketch.id,
-                indices=active_indices,
-                query_dsl=query_dsl,
-                count=True,
-            )
-            total_expected += count
-
-        # Count legacy events (missing __ts_timeline_id)
-        # We check this for both methods now, because even the API method
-        # will return these events.
-        legacy_query = {
-            "query": {
-                "bool": {
-                    "must_not": [{"exists": {"field": "__ts_timeline_id"}}]
-                }
-            }
-        }
-        if annotation_filter:
-            legacy_query["query"]["bool"]["must"] = [annotation_filter]
-
-        for index_name in active_indices:
-            try:
-                c_res = datastore.client.count(index=index_name, body=legacy_query)
-                legacy_count += c_res.get("count", 0)
-            except Exception:  # pylint: disable=broad-except
-                pass
-
-        if method == "direct":
-            if include_legacy:
-                total_expected += legacy_count
-            elif legacy_count > 0:
-                click.echo(
-                    click.style(
-                        f"\nNOTE: Found {legacy_count:,} legacy events (missing __ts_timeline_id). "
-                        "These will be SKIPPED. Use --include-legacy to include them.\n",
-                        fg="cyan",
-                    ),
-                    err=True,
-                )
-        else:
-            # The API method ALWAYS returns legacy events if they are in the index,
-            # so we must include them in our expected count for accuracy.
-            total_expected += legacy_count
-            if legacy_count > 0:
-                 if verification_query_dsl:
-                    # Update verification query to include legacy events for API method
-                    should_clause = verification_query_dsl["query"]["bool"]["must"][0]
-                    verification_query_dsl["query"]["bool"]["must"] = [
-                        {
-                            "bool": {
-                                "should": [
-                                    should_clause,
-                                    {
-                                        "bool": {
-                                            "must_not": {
-                                                "exists": {"field": "__ts_timeline_id"}
-                                            }
-                                        }
-                                    },
-                                ]
-                            }
-                        }
-                    ]
-                    if annotation_filter:
-                        verification_query_dsl["query"]["bool"]["must"].append(
-                            annotation_filter
-                        )
-
+        total_expected, legacy_count, verification_query_dsl = _calculate_export_counts(
+            sketch,
+            datastore,
+            active_indices,
+            active_tids,
+            method,
+            include_legacy,
+            annotation_filter,
+        )
         print(f"  Total events expected: {total_expected:,}")
 
         # 4. Stream Events & Hash simultaneously
@@ -3192,16 +3280,12 @@ def export_sketch(
             ) as bar:
 
                 if method == "direct":
-                    should_clauses = [
-                        {"terms": {"__ts_timeline_id": active_tids}},
-                    ]
+                    should_clauses = [{"terms": {"__ts_timeline_id": active_tids}}]
                     if include_legacy:
                         should_clauses.append(
                             {
                                 "bool": {
-                                    "must_not": {
-                                        "exists": {"field": "__ts_timeline_id"}
-                                    }
+                                    "must_not": {"exists": {"field": "__ts_timeline_id"}}
                                 }
                             }
                         )
@@ -3242,44 +3326,35 @@ def export_sketch(
                         query_dsl=api_query_dsl,
                     )
 
-                    # The data_handle can be a StringIO (string stream) or a pd.DataFrame
+                    # Handle both string streams and DataFrames
                     if isinstance(data_handle, pd.DataFrame):
-                         if output_format == "csv":
-                              data_handle.to_csv(f_out, index=False)
-                         else:
-                              data_handle.to_json(f_out, orient="records", lines=True)
-                         actual_row_count = len(data_handle)
+                        if output_format == "csv":
+                            data_handle.to_csv(f_out, index=False)
+                        else:
+                            data_handle.to_json(f_out, orient="records", lines=True)
+                        actual_row_count = len(data_handle)
                     else:
                         if output_format == "csv":
-                            # We use the csv module to accurately count rows even if fields
-                            # contain newlines (which pandas.to_csv properly quotes).
                             import csv
 
-                            # The data_handle is typically a StringIO or similar.
                             if hasattr(data_handle, "seek"):
                                 data_handle.seek(0)
-
                             csv_reader = csv.reader(data_handle)
-                            # Skip header for the hashing loop but write it once
                             header = next(csv_reader, None)
                             if header:
                                 header_line = ",".join(f'"{h}"' for h in header) + "\n"
                                 f_out.write(header_line)
                                 event_hash_obj.update(header_line.encode("utf-8"))
-
                             for row in csv_reader:
-                                # Re-construct the line for writing/hashing.
                                 line_io = io.StringIO()
                                 csv.writer(line_io).writerow(row)
                                 line = line_io.getvalue()
-
                                 f_out.write(line)
                                 event_hash_obj.update(line.encode("utf-8"))
                                 actual_row_count += 1
                                 if actual_row_count % 10000 == 0:
                                     bar.update(10000)
                         else:
-                            # For JSONL or other formats, line-by-line is safe
                             for line in data_handle:
                                 f_out.write(line)
                                 event_hash_obj.update(line.encode("utf-8"))
@@ -3293,31 +3368,11 @@ def export_sketch(
 
         # 5. Index Mappings
         print("  Collecting index mappings...")
-        mappings_dir = os.path.join(tmp_dir, "mappings")
-        os.makedirs(mappings_dir, exist_ok=True)
-        for index_name in active_indices:
-            try:
-                mapping = datastore.client.indices.get_mapping(index=index_name)
-                with open(
-                    os.path.join(mappings_dir, f"{index_name}.json"), "w"
-                ) as f_map:
-                    json.dump(mapping, f_map, indent=2)
-            except Exception as e:
-                print(f"    WARNING: Mapping failed for {index_name}: {e}")
+        _export_index_mappings(datastore, active_indices, tmp_dir)
 
         # 6. Stories as Markdown
         print("  Exporting stories to Markdown...")
-        stories_dir = os.path.join(tmp_dir, "stories")
-        os.makedirs(stories_dir, exist_ok=True)
-        for story in sketch.stories:
-            s_name = f"story_{story.id}_{re.sub(r'[^a-zA-Z0-9]', '_', story.title)}.md"
-            with open(os.path.join(stories_dir, s_name), "w") as f_story:
-                f_story.write(f"# {story.title}\n\n")
-                f_story.write(
-                    f"**Author:** {story.user.username if story.user else 'System'}\n"
-                )
-                f_story.write(f"**Created:** {story.created_at.isoformat()}\n\n")
-                f_story.write(story.content)
+        _export_stories_to_markdown(sketch, tmp_dir)
 
         # 7. Verification
         if actual_row_count != total_expected:
@@ -3358,54 +3413,27 @@ def export_sketch(
             else:
                 print("  WARNING: Could not retrieve sample events for spot check.")
 
-        # 8. Generate Manifest
+        # 8. Save Metadata and Bundle
         print("  Finalizing manifest and hashing files...")
-        manifest_path = os.path.join(tmp_dir, "manifest.txt")
+        with open(
+            os.path.join(tmp_dir, DEFAULT_EXPORT_METADATA_FILENAME),
+            "w",
+            encoding="utf-8",
+        ) as f_meta:
+            json.dump(metadata, f_meta, indent=2)
 
-        with open(manifest_path, "w", encoding="utf-8") as f_man:
-            f_man.write(f"Timesketch Export Manifest\n")
-            f_man.write(f"==================================\n")
-            f_man.write(f"Sketch ID: {sketch.id} | Name: {sketch.name}\n")
-            f_man.write(
-                f"Date: {datetime.datetime.now(datetime.timezone.utc).isoformat()}\n"
-            )
-            f_man.write(f"Method: {method} | Events: {actual_row_count}\n\n")
-            f_man.write(f"File Hashes (SHA256):\n")
-            f_man.write(f"{event_hash}  {event_filename}\n")
-            for root, _, files in os.walk(tmp_dir):
-                for f in files:
-                    if f in [event_filename, "manifest.txt", "export.zip"]:
-                        continue
-                    abs_p = os.path.join(root, f)
-                    rel_p = os.path.relpath(abs_p, tmp_dir)
-                    f_man.write(f"{get_sha256(abs_p)}  {rel_p}\n")
+        _generate_forensic_manifest(
+            sketch, method, actual_row_count, event_filename, event_hash, tmp_dir
+        )
 
-        # 9. Create ZIP
         print("  Creating compressed archive...")
-        with zipfile.ZipFile(tmp_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-            zipf.writestr(
-                DEFAULT_EXPORT_METADATA_FILENAME,
-                json.dumps(metadata, indent=2, ensure_ascii=False).encode("utf-8"),
-            )
-            zipf.write(manifest_path, arcname="manifest.txt")
-            zipf.write(tmp_event_file, arcname=event_filename)
-            for root, _, files in os.walk(tmp_dir):
-                for f in files:
-                    if f in [
-                        "export.zip",
-                        "manifest.txt",
-                        DEFAULT_EXPORT_METADATA_FILENAME,
-                        event_filename,
-                    ]:
-                        continue
-                    abs_p = os.path.join(root, f)
-                    zipf.write(abs_p, arcname=os.path.relpath(abs_p, tmp_dir))
+        _bundle_export_zip(tmp_dir, tmp_zip_path)
 
         # 10. Atomic Move to Destination
         os.replace(tmp_zip_path, filename)
         print(f"Sketch exported successfully to {filename}")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"ERROR during export: {e}")
         print(traceback.format_exc())
     finally:
