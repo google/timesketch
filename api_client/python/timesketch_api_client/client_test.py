@@ -89,6 +89,12 @@ class TimesketchApiRetryTest(unittest.TestCase):
         mock_response.text = '<input id="csrf_token" name="csrf_token" value="test">'
         mock_session.return_value.get.return_value = mock_response
 
+        # Mock the POST response for authentication
+        mock_post_response = mock.Mock()
+        mock_post_response.status_code = 200
+        mock_post_response.url = "http://testhost/"
+        mock_session.return_value.post.return_value = mock_post_response
+
         mock_adapter = mock.MagicMock()
         with mock.patch(
             "timesketch_api_client.client.HTTPAdapter", return_value=mock_adapter

@@ -205,15 +205,20 @@ class TimesketchApi:
                 response, message="Authentication rejected", error=RuntimeError
             )
 
+        # Catch silent local login failures (e.g., wrong password).
+        if response.url.split("?")[0].rstrip("/").endswith("/login"):
+            raise RuntimeError("Authentication failed: Invalid username or password.")
+
     def _set_csrf_token(self, session, bypass_oauth=False):
         """Retrieve CSRF token from the server and append to HTTP headers.
 
         Args:
-            session: Instance of requests.Session.
+            session (requests.Session): Instance of requests.Session.
+            bypass_oauth (bool): Whether to bypass OAuth.
         """
         # Scrape the CSRF token from the response
         if bypass_oauth:
-            auth_url = f"{self._host_uri.rstrip("/")}/login/?local_auth=1"
+            auth_url = f"{self._host_uri.rstrip('/')}/login/?local_auth=1"
         else:
             auth_url = self._host_uri
 

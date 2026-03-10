@@ -92,7 +92,8 @@ def login():
             if username not in bypass_allowlist:
                 abort(
                     HTTP_STATUS_CODE_UNAUTHORIZED,
-                    f"Local authentication is disabled for this user. Please use OAuth.",
+                    "Local authentication is disabled for this user. Please use"
+                    " OAuth.",
                 )
 
         # If the user is on the allowlist (or if OAuth is disabled globally),
@@ -180,6 +181,10 @@ def login():
             db_session.add(user)
             db_session.add(group)
             db_session.commit()
+
+    # Log the user in and setup the session.
+    if current_user.is_authenticated:
+        return redirect(request.args.get("next") or "/")
 
     return render_template("login.html", form=form)
 
