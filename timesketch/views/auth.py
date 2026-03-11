@@ -77,12 +77,64 @@ def login():
         Redirect if authentication is successful or template with context
         otherwise.
     """
+
+    # Strict validation: A safe relative URL MUST start with a single '/'
+    next_url = request.args.get("next", "/")
+    if (
+        not next_url.startswith("/")
+        or next_url.startswith("//")
+        or next_url.startswith("/\\")
+    ):
+        current_app.logger.warning(
+            "Invalid next_url in login attempt: %s (from IP: %s)",
+            next_url,
+            request.remote_addr,
+        )
+        next_url = "/"
+
+    oauth_enabled = current_app.config.get("GOOGLE_OIDC_ENABLED", False)
+
+    # Check for API/Local UserPass POST payload
+    form = UsernamePasswordForm()
+    if request.method == "POST":
+        # If OAuth is enabled, strictly enforce the allowlist
+        if oauth_enabled:
+            bypass_allowlist = set(
+                current_app.config.get("LOCAL_AUTH_ALLOWED_USERS", [])
+            )
+            username = request.form.get("username")
+
+            if username not in bypass_allowlist:
+                current_app.logger.warning(
+                    "Unauthorized local login attempt for user: [%s] (OAuth "
+                    "enabled, not in allowlist)",
+                    username,
+                )
+                abort(
+                    HTTP_STATUS_CODE_UNAUTHORIZED,
+                    "Local authentication is disabled for this user. Please use"
+                    " OAuth.",
+                )
+
+        # If the user is on the allowlist (or if OAuth is disabled globally),
+        # process local login
+        if form.validate_on_submit():
+            user = User.query.filter_by(username=form.username.data).first()
+            if user and user.check_password(plaintext=form.password.data):
+                login_user(user)
+                if current_user.is_authenticated:
+                    return redirect(next_url)
+
     # Google OpenID Connect authentication.
-    if current_app.config.get("GOOGLE_OIDC_ENABLED", False):
-        hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
-        # Save the next URL parameter in the session for redirect after login.
-        session["next"] = request.args.get("next", "/")
-        return redirect(get_oauth2_authorize_url(hosted_domain))
+    if oauth_enabled:
+        # Check if the client explicitly requested the local login form
+        explicit_local_auth = request.args.get("local_auth") == "1"
+
+        if not explicit_local_auth:
+            hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
+            # Save the next URL parameter in the session for redirect after login.
+            session["next"] = next_url
+            return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
     if current_app.config.get("GOOGLE_IAP_ENABLED", False):
@@ -150,17 +202,9 @@ def login():
             db_session.add(group)
             db_session.commit()
 
-    # Login form POST
-    form = UsernamePasswordForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user:
-            if user.check_password(plaintext=form.password.data):
-                login_user(user)
-
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get("next") or "/")
+        return redirect(next_url)
 
     return render_template("login.html", form=form)
 
