@@ -423,6 +423,7 @@ def build_index_pipeline(
     if not (file_path or events):
         raise RuntimeError("Unable to upload data, missing either a file or events.")
     index_task_class = _get_index_task_class(file_extension)
+    index_task = None
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
