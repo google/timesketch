@@ -93,11 +93,12 @@ class ExportSketchTest(interface.BaseEndToEndTest):
         integrity_file_path = os.path.join(interface.TEST_DATA_DIR, integrity_file_name)
         with open(integrity_file_path, "w", encoding="utf-8") as f:
             for i in range(target_count):
-                f.write(
-                    '{"message": "Event ' + str(i) + '", '
-                    '"datetime": "2026-03-10T12:00:00", '
-                    '"timestamp_desc": "Test Event"}\n'
-                )
+                event_data = {
+                    "message": f"Event {i}",
+                    "datetime": "2026-03-10T12:00:00",
+                    "timestamp_desc": "Test Event",
+                }
+                f.write(json.dumps(event_data) + "\n")
 
         try:
             print(f"  Importing {target_count} events into sketch {sketch.id}...")
