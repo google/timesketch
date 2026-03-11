@@ -281,5 +281,40 @@ class ArchiveTest(interface.BaseEndToEndTest):
         sketch.unarchive()
         self.assertions.assertEqual(sketch.status, "ready")
 
+    def test_deleted_sketch_access(self):
+        """Test that deleted sketches are not accessible via ACL for normal users.
+
+        This test verifies that:
+        1. An admin can still retrieve a deleted sketch.
+        2. A normal user (even with read access) cannot retrieve a deleted sketch.
+        """
+        # 1. Setup: Create a sketch as admin
+        sketch_name = f"test-deleted-access_{uuid.uuid4().hex}"
+        sketch = self.admin_api.create_sketch(name=sketch_name)
+        sketch_id = sketch.id
+
+        # 2. Grant read access to a normal user
+        # Note: self.api is typically a normal user in E2E tests
+        normal_username = self.api.current_user.username
+        sketch.add_to_acl(user_list=[normal_username], permissions=["read"])
+
+        # 3. Delete the sketch
+        sketch.delete()
+
+        # 4. Verify Admin access (should work)
+        admin_sketch = self.admin_api.get_sketch(sketch_id)
+        self.assertions.assertEqual(admin_sketch.id, sketch_id)
+        self.assertions.assertEqual(admin_sketch.status, "deleted")
+
+        # 5. Verify Normal User access (should 404)
+        try:
+            normal_sketch = self.api.get_sketch(sketch_id)
+            # Accessing a property triggers lazy loading and thus the API call
+            _ = normal_sketch.status
+            self.assertions.fail("Normal user should not be able to see deleted sketch")
+        except RuntimeError as e:
+            # The API client raises RuntimeError for non-200 responses
+            self.assertions.assertIn("404", str(e))
+
 
 manager.EndToEndTestManager.register_test(ArchiveTest)

@@ -763,7 +763,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             # on a sketch that has already been soft-deleted.
             sketch = Sketch.get_by_id(sketch_id)
         else:
-            sketch = Sketch.get_with_acl(sketch_id, include_deleted=force_delete)
+            sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
