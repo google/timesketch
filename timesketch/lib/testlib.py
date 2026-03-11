@@ -602,6 +602,7 @@ class BaseTest(TestCase):
             name=name, query_string=name, query_filter=json.dumps({}), user=user
         )
         self._commit_to_database(searchtemplate)
+        searchtemplate.grant_permission(permission="read", user=user)
         return searchtemplate
 
     def _create_sigma(self, user, rule_yaml, rule_uuid, title, description):
