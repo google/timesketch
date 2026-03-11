@@ -750,9 +750,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                 error during OpenSearch index deletion.
         """
         if not force_delete:
-            url_force_delete = request.args.get("force")
-            if url_force_delete is not None:
-                force_delete = True  # If the 'force' URL parameter exists, set to True
+            force_delete = request.args.get("force", default=False, type=inputs.boolean)
+            if force_delete:
                 logger.debug("Force delete detected from URL parameter.")
             else:
                 logger.debug("Force delete not present, will keep the OS data.")
