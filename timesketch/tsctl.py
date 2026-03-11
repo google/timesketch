@@ -2953,7 +2953,7 @@ def _calculate_export_counts(
         try:
             c_res = datastore.client.count(index=index_name, body=legacy_query)
             legacy_count += c_res.get("count", 0)
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             pass
 
     if method == "direct":
