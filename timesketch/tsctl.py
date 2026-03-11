@@ -207,7 +207,7 @@ def _spot_check_file(file_path, event_ids):
                 remaining -= to_remove
                 if not remaining:
                     break
-    except Exception:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         pass
 
     return results
