@@ -121,6 +121,54 @@ def get_sha256(file_path: str) -> str:
     return sha256_hash.hexdigest()
 
 
+def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> List[str]:
+    """Filter a list of indices and return only those that are open.
+
+    Args:
+        datastore: OpenSearchDataStore instance.
+        indices: List of index names to check.
+
+    Returns:
+        List of index names that are confirmed to be open.
+    """
+    open_indices = []
+    if not indices:
+        return open_indices
+
+    # Use a chunked approach to avoid long URLs if there are many indices
+    chunk_size = 100
+    for i in range(0, len(indices), chunk_size):
+        chunk = indices[i : i + chunk_size]
+        try:
+            # indices.get returns settings which include the status
+            res = datastore.client.indices.get(index=chunk)
+            for index_name in chunk:
+                status = (
+                    res.get(index_name, {})
+                    .get("settings", {})
+                    .get("index", {})
+                    .get("status")
+                )
+                if status != "close":
+                    open_indices.append(index_name)
+        except Exception:  # pylint: disable=broad-except
+            # If a chunk fails, we fall back to checking one by one
+            for index_name in chunk:
+                try:
+                    res = datastore.client.indices.get(index=index_name)
+                    status = (
+                        res.get(index_name, {})
+                        .get("settings", {})
+                        .get("index", {})
+                        .get("status")
+                    )
+                    if status != "close":
+                        open_indices.append(index_name)
+                except Exception:  # pylint: disable=broad-except
+                    continue
+    return open_indices
+
+
 def _get_random_event_ids(datastore, indices, query_dsl, count=5):
     """Retrieve random event IDs from OpenSearch based on a query."""
     random_query = {
@@ -2877,6 +2925,13 @@ def _calculate_export_counts(
     legacy_count = 0
     verification_query_dsl = None
 
+    # Filter out closed indices to avoid errors
+    open_indices = _get_open_indices(datastore, active_indices)
+
+    if not open_indices:
+        print("    Note: No open indices to count.")
+        return 0, 0, None
+
     # Count modern events
     for tid in active_tids:
         query_dsl = {"query": {"bool": {"must": [{"term": {"__ts_timeline_id": tid}}]}}}
@@ -2888,7 +2943,7 @@ def _calculate_export_counts(
 
         count = datastore.search(
             sketch_id=sketch.id,
-            indices=active_indices,
+            indices=open_indices,
             query_dsl=query_dsl,
             count=True,
         )
@@ -2901,7 +2956,7 @@ def _calculate_export_counts(
     if annotation_filter:
         legacy_query["query"]["bool"]["must"] = [annotation_filter]
 
-    for index_name in active_indices:
+    for index_name in open_indices:
         try:
             c_res = datastore.client.count(index=index_name, body=legacy_query)
             legacy_count += c_res.get("count", 0)
@@ -2951,7 +3006,12 @@ def _export_index_mappings(
     """Collect index mappings and save as JSON files."""
     mappings_dir = os.path.join(target_dir, "mappings")
     os.makedirs(mappings_dir, exist_ok=True)
+    open_indices = _get_open_indices(datastore, active_indices)
+
     for index_name in active_indices:
+        if index_name not in open_indices:
+            print(f"    Note: Index {index_name} is closed, skipping mapping.")
+            continue
         try:
             mapping = datastore.client.indices.get_mapping(index=index_name)
             with open(os.path.join(mappings_dir, f"{index_name}.json"), "w") as f_map:
@@ -3050,8 +3110,14 @@ def _fetch_and_prepare_event_data(
     active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
     active_timeline_ids = [t.id for t in sketch.active_timelines]
 
-    if not active_indices:
-        raise ValueError("No active timelines found for this sketch.")
+    # Filter out closed indices to avoid errors
+    open_indices = _get_open_indices(datastore, active_indices)
+    open_timeline_ids = [
+        t.id for t in sketch.active_timelines if t.searchindex.index_name in open_indices
+    ]
+
+    if not open_indices:
+        raise ValueError("No open indices found for this sketch.")
 
     # Check if the currently loaded api_export supports output_format
     sig = inspect.signature(api_export.query_to_filehandle)
@@ -3060,8 +3126,8 @@ def _fetch_and_prepare_event_data(
             query_string=query_string,
             query_filter=query_filter,
             query_dsl=query_dsl,
-            indices=active_indices,
-            timeline_ids=active_timeline_ids,
+            indices=open_indices,
+            timeline_ids=open_timeline_ids,
             sketch=sketch,
             datastore=datastore,
             return_fields=return_fields,
@@ -3078,8 +3144,8 @@ def _fetch_and_prepare_event_data(
             query_string=query_string,
             query_filter=query_filter,
             query_dsl=query_dsl,
-            indices=active_indices,
-            timeline_ids=active_timeline_ids,
+            indices=open_indices,
+            timeline_ids=open_timeline_ids,
             sketch=sketch,
             datastore=datastore,
             return_fields=return_fields,
@@ -3151,8 +3217,16 @@ def export_sketch(
         print(f"ERROR: Sketch with ID {sketch_id} not found.")
         return
 
+    if sketch.get_status.status == "archived":
+        print(f"ERROR: Sketch {sketch_id} is archived. Please unarchive it before exporting.")
+        return
+
     active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
     active_tids = [t.id for t in sketch.active_timelines]
+
+    # Filter out closed indices to avoid errors
+    datastore = OpenSearchDataStore()
+    open_indices = _get_open_indices(datastore, active_indices)
 
     if method == "direct":
         # Check for shared indices to warn about potential data leakage
@@ -3254,15 +3328,23 @@ def export_sketch(
 
         # 3. Precise Count
         print("  Calculating exact event count...")
-        total_expected, legacy_count, verification_query_dsl = _calculate_export_counts(
-            sketch,
-            datastore,
-            active_indices,
-            active_tids,
-            method,
-            include_legacy,
-            annotation_filter,
-        )
+        total_expected = 0
+        legacy_count = 0
+        verification_query_dsl = None
+
+        if open_indices:
+            total_expected, legacy_count, verification_query_dsl = _calculate_export_counts(
+                sketch,
+                datastore,
+                active_indices,
+                active_tids,
+                method,
+                include_legacy,
+                annotation_filter,
+            )
+        else:
+            print("    Note: No open indices to count.")
+
         print(f"  Total events expected: {total_expected:,}")
 
         # 4. Stream Events & Hash simultaneously
@@ -3280,87 +3362,95 @@ def export_sketch(
             ) as bar:
 
                 if method == "direct":
-                    should_clauses = [{"terms": {"__ts_timeline_id": active_tids}}]
-                    if include_legacy:
-                        should_clauses.append(
-                            {
-                                "bool": {
-                                    "must_not": {"exists": {"field": "__ts_timeline_id"}}
+                    if open_indices:
+                        should_clauses = [{"terms": {"__ts_timeline_id": active_tids}}]
+                        if include_legacy:
+                            should_clauses.append(
+                                {
+                                    "bool": {
+                                        "must_not": {"exists": {"field": "__ts_timeline_id"}}
+                                    }
                                 }
+                            )
+
+                        query = {
+                            "query": {
+                                "bool": {"must": [{"bool": {"should": should_clauses}}]}
                             }
-                        )
-
-                    query = {
-                        "query": {
-                            "bool": {"must": [{"bool": {"should": should_clauses}}]}
                         }
-                    }
-                    if annotation_filter:
-                        query["query"]["bool"]["must"].append(annotation_filter)
+                        if annotation_filter:
+                            query["query"]["bool"]["must"].append(annotation_filter)
 
-                    for hit in helpers.scan(
-                        datastore.client, query=query, index=active_indices
-                    ):
-                        event_data = hit["_source"]
-                        event_data["_id"] = hit["_id"]
-                        event_data["_index"] = hit["_index"]
-                        line = json.dumps(event_data) + "\n"
-                        f_out.write(line)
-                        event_hash_obj.update(line.encode("utf-8"))
-                        actual_row_count += 1
-                        if actual_row_count % 10000 == 0:
-                            bar.update(10000)
+                        for hit in helpers.scan(
+                            datastore.client, query=query, index=open_indices
+                        ):
+                            event_data = hit["_source"]
+                            event_data["_id"] = hit["_id"]
+                            event_data["_index"] = hit["_index"]
+                            line = json.dumps(event_data) + "\n"
+                            f_out.write(line)
+                            event_hash_obj.update(line.encode("utf-8"))
+                            actual_row_count += 1
+                            if actual_row_count % 10000 == 0:
+                                bar.update(10000)
+                    else:
+                        print("    Note: No open indices to stream events from.")
                 else:
-                    fields = DEFAULT_SOURCE_FIELDS if default_fields else None
-                    api_query_dsl = None
-                    if annotated_only:
-                        api_query_dsl = {
-                            "query": {"bool": {"must": [annotation_filter]}}
-                        }
+                    if open_indices:
+                        fields = DEFAULT_SOURCE_FIELDS if default_fields else None
+                        api_query_dsl = None
+                        if annotated_only:
+                            api_query_dsl = {
+                                "query": {"bool": {"must": [annotation_filter]}}
+                            }
 
-                    data_handle, _, _ = _fetch_and_prepare_event_data(
-                        sketch=sketch,
-                        datastore=datastore,
-                        return_fields=fields,
-                        output_format=output_format,
-                        query_dsl=api_query_dsl,
-                    )
+                        data_handle, _, _ = _fetch_and_prepare_event_data(
+                            sketch=sketch,
+                            datastore=datastore,
+                            return_fields=fields,
+                            output_format=output_format,
+                            query_dsl=api_query_dsl,
+                        )
+                    else:
+                        print("    Note: No open indices to stream events from.")
+                        data_handle = None
 
                     # Handle both string streams and DataFrames
-                    if isinstance(data_handle, pd.DataFrame):
-                        if output_format == "csv":
-                            data_handle.to_csv(f_out, index=False)
+                    if data_handle is not None:
+                        if isinstance(data_handle, pd.DataFrame):
+                            if output_format == "csv":
+                                data_handle.to_csv(f_out, index=False)
+                            else:
+                                data_handle.to_json(f_out, orient="records", lines=True)
+                            actual_row_count = len(data_handle)
                         else:
-                            data_handle.to_json(f_out, orient="records", lines=True)
-                        actual_row_count = len(data_handle)
-                    else:
-                        if output_format == "csv":
-                            import csv
+                            if output_format == "csv":
+                                import csv
 
-                            if hasattr(data_handle, "seek"):
-                                data_handle.seek(0)
-                            csv_reader = csv.reader(data_handle)
-                            header = next(csv_reader, None)
-                            if header:
-                                header_line = ",".join(f'"{h}"' for h in header) + "\n"
-                                f_out.write(header_line)
-                                event_hash_obj.update(header_line.encode("utf-8"))
-                            for row in csv_reader:
-                                line_io = io.StringIO()
-                                csv.writer(line_io).writerow(row)
-                                line = line_io.getvalue()
-                                f_out.write(line)
-                                event_hash_obj.update(line.encode("utf-8"))
-                                actual_row_count += 1
-                                if actual_row_count % 10000 == 0:
-                                    bar.update(10000)
-                        else:
-                            for line in data_handle:
-                                f_out.write(line)
-                                event_hash_obj.update(line.encode("utf-8"))
-                                actual_row_count += 1
-                                if actual_row_count % 10000 == 0:
-                                    bar.update(10000)
+                                if hasattr(data_handle, "seek"):
+                                    data_handle.seek(0)
+                                csv_reader = csv.reader(data_handle)
+                                header = next(csv_reader, None)
+                                if header:
+                                    header_line = ",".join(f'"{h}"' for h in header) + "\n"
+                                    f_out.write(header_line)
+                                    event_hash_obj.update(header_line.encode("utf-8"))
+                                for row in csv_reader:
+                                    line_io = io.StringIO()
+                                    csv.writer(line_io).writerow(row)
+                                    line = line_io.getvalue()
+                                    f_out.write(line)
+                                    event_hash_obj.update(line.encode("utf-8"))
+                                    actual_row_count += 1
+                                    if actual_row_count % 10000 == 0:
+                                        bar.update(10000)
+                            else:
+                                for line in data_handle:
+                                    f_out.write(line)
+                                    event_hash_obj.update(line.encode("utf-8"))
+                                    actual_row_count += 1
+                                    if actual_row_count % 10000 == 0:
+                                        bar.update(10000)
 
                 bar.update(actual_row_count % 10000)
 
