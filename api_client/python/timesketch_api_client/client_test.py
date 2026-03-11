@@ -89,6 +89,12 @@ class TimesketchApiRetryTest(unittest.TestCase):
         mock_response.text = '<input id="csrf_token" name="csrf_token" value="test">'
         mock_session.return_value.get.return_value = mock_response
 
+        # Mock the POST response for authentication
+        mock_post_response = mock.Mock()
+        mock_post_response.status_code = 200
+        mock_post_response.url = "http://testhost/"
+        mock_session.return_value.post.return_value = mock_post_response
+
         mock_adapter = mock.MagicMock()
         with mock.patch(
             "timesketch_api_client.client.HTTPAdapter", return_value=mock_adapter
@@ -107,3 +113,31 @@ class TimesketchApiRetryTest(unittest.TestCase):
             mock_session_instance = mock_session.return_value
             mock_session_instance.mount.assert_any_call("http://", mock_adapter)
             mock_session_instance.mount.assert_any_call("https://", mock_adapter)
+
+    @mock.patch("requests.Session")
+    def test_authenticate_session_fail(self, mock_session):
+        """Test that _authenticate_session raises RuntimeError on login failure."""
+        # Mock the GET response for CSRF token
+        mock_get_response = mock.Mock()
+        mock_get_response.text = (
+            '<input id="csrf_token" name="csrf_token" value="test">'
+        )
+        mock_session.return_value.get.return_value = mock_get_response
+
+        # Mock the POST response for authentication to simulate failure
+        # (redirect back to /login).
+        mock_post_response = mock.Mock()
+        mock_post_response.status_code = 200
+        mock_post_response.url = "http://testhost/login"
+        mock_session.return_value.post.return_value = mock_post_response
+
+        with self.assertRaises(RuntimeError) as context:
+            client.TimesketchApi(
+                host_uri="http://testhost", username="testuser", password="testpassword"
+            )
+
+        self.assertEqual(
+            str(context.exception),
+            "Unable to connect to server, error: Authentication failed: "
+            "Invalid username or password.",
+        )
