@@ -40,10 +40,7 @@ import redis
 import sqlalchemy
 import click
 
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
+import pandas as pd
 from flask_restful import marshal
 from flask import current_app
 from flask.cli import FlaskGroup
@@ -2138,10 +2135,6 @@ def analyzer_stats(
         # analysis filter by analyzer_name
         analysis_history = Analysis.query.filter_by(analyzer_name=analyzer_name).all()
 
-    if pd is None:
-        print("ERROR: Pandas is not installed. This command requires pandas.")
-        return
-
     df = pd.DataFrame()
     for analysis in analysis_history:
         # extract number of hits from result to a int so it could be sorted
@@ -2987,7 +2980,9 @@ def _calculate_export_counts(
                             should_clause,
                             {
                                 "bool": {
-                                    "must_not": {"exists": {"field": "__ts_timeline_id"}}
+                                    "must_not": {
+                                        "exists": {"field": "__ts_timeline_id"}
+                                    }
                                 }
                             },
                         ]
@@ -2995,7 +2990,9 @@ def _calculate_export_counts(
                 }
             ]
             if annotation_filter:
-                verification_query_dsl["query"]["bool"]["must"].append(annotation_filter)
+                verification_query_dsl["query"]["bool"]["must"].append(
+                    annotation_filter
+                )
 
     return total_expected, legacy_count, verification_query_dsl
 
@@ -3049,7 +3046,9 @@ def _generate_forensic_manifest(
         f_man.write("Timesketch Export Manifest\n")
         f_man.write("==================================\n")
         f_man.write(f"Sketch ID: {sketch.id} | Name: {sketch.name}\n")
-        f_man.write(f"Date: {datetime.datetime.now(datetime.timezone.utc).isoformat()}\n")
+        f_man.write(
+            f"Date: {datetime.datetime.now(datetime.timezone.utc).isoformat()}\n"
+        )
         f_man.write(f"Method: {method} | Events: {event_count}\n\n")
         f_man.write("File Hashes (SHA256):\n")
         f_man.write(f"{event_hash}  {event_filename}\n")
@@ -3113,7 +3112,9 @@ def _fetch_and_prepare_event_data(
     # Filter out closed indices to avoid errors
     open_indices = _get_open_indices(datastore, active_indices)
     open_timeline_ids = [
-        t.id for t in sketch.active_timelines if t.searchindex.index_name in open_indices
+        t.id
+        for t in sketch.active_timelines
+        if t.searchindex.index_name in open_indices
     ]
 
     if not open_indices:
@@ -3218,7 +3219,9 @@ def export_sketch(
         return
 
     if sketch.get_status.status == "archived":
-        print(f"ERROR: Sketch {sketch_id} is archived. Please unarchive it before exporting.")
+        print(
+            f"ERROR: Sketch {sketch_id} is archived. Please unarchive it before exporting."
+        )
         return
 
     active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
@@ -3333,14 +3336,16 @@ def export_sketch(
         verification_query_dsl = None
 
         if open_indices:
-            total_expected, legacy_count, verification_query_dsl = _calculate_export_counts(
-                sketch,
-                datastore,
-                active_indices,
-                active_tids,
-                method,
-                include_legacy,
-                annotation_filter,
+            total_expected, legacy_count, verification_query_dsl = (
+                _calculate_export_counts(
+                    sketch,
+                    datastore,
+                    active_indices,
+                    active_tids,
+                    method,
+                    include_legacy,
+                    annotation_filter,
+                )
             )
         else:
             print("    Note: No open indices to count.")
@@ -3368,7 +3373,9 @@ def export_sketch(
                             should_clauses.append(
                                 {
                                     "bool": {
-                                        "must_not": {"exists": {"field": "__ts_timeline_id"}}
+                                        "must_not": {
+                                            "exists": {"field": "__ts_timeline_id"}
+                                        }
                                     }
                                 }
                             )
@@ -3432,7 +3439,9 @@ def export_sketch(
                                 csv_reader = csv.reader(data_handle)
                                 header = next(csv_reader, None)
                                 if header:
-                                    header_line = ",".join(f'"{h}"' for h in header) + "\n"
+                                    header_line = (
+                                        ",".join(f'"{h}"' for h in header) + "\n"
+                                    )
                                     f_out.write(header_line)
                                     event_hash_obj.update(header_line.encode("utf-8"))
                                 for row in csv_reader:
@@ -3529,77 +3538,6 @@ def export_sketch(
     finally:
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
-
-
-@cli.command(name="audit-legacy-events")
-@click.option(
-    "--all-indices",
-    is_flag=True,
-    help="Audit all indices in OpenSearch, not just those in the database.",
-)
-def audit_legacy_events(all_indices: bool):
-    """Audit the OpenSearch cluster for events missing the __ts_timeline_id field.
-
-    Events without this field are considered 'legacy' and can cause data leakage
-    in multi-sketch environments when using the 'direct' export method or
-    other low-level scanning tools.
-
-    This command identifies which indices contain such events and provides
-    a count for each, helping administrators decide if they need to re-index
-    older data.
-    """
-    print("Auditing OpenSearch for legacy events (missing __ts_timeline_id)...")
-    datastore = OpenSearchDataStore()
-
-    if all_indices:
-        indices = list(datastore.client.indices.get_alias().keys())
-        # Filter out system indices
-        indices = [i for i in indices if not i.startswith(".")]
-    else:
-        indices = list({si.index_name for si in SearchIndex.query.all()})
-
-    if not indices:
-        print("No indices found to audit.")
-        return
-
-    legacy_report = []
-    total_legacy_count = 0
-
-    with click.progressbar(indices, label="  Auditing Indices") as bar:
-        for index_name in bar:
-            query = {
-                "query": {
-                    "bool": {"must_not": [{"exists": {"field": "__ts_timeline_id"}}]}
-                }
-            }
-            try:
-                count_res = datastore.client.count(index=index_name, body=query)
-                count = count_res.get("count", 0)
-                if count > 0:
-                    legacy_report.append((index_name, count))
-                    total_legacy_count += count
-            except Exception as e:
-                print(f"\n    WARNING: Failed to audit index {index_name}: {e}")
-
-    if not legacy_report:
-        print("\nSUCCESS: No legacy events (missing __ts_timeline_id) found.")
-        return
-
-    print(f"\nFound {len(legacy_report)} index(es) with legacy events:")
-    print("-" * 60)
-    print(f"{'Index Name':<45} | {'Legacy Count':>10}")
-    print("-" * 60)
-    for index_name, count in sorted(legacy_report, key=lambda x: x[1], reverse=True):
-        print(f"{index_name:<45} | {count:>12,}")
-    print("-" * 60)
-    print(f"{'TOTAL':<45} | {total_legacy_count:>12,}")
-    print("-" * 60)
-
-    print("\nRecommendation:")
-    print("  Legacy events lack a __ts_timeline_id, which can cause data leakage")
-    print("  in multi-sketch environments sharing an index.")
-    print("  To resolve this, consider re-indexing this data to include the")
-    print("  correct timeline association.")
 
 
 @cli.command(name="check-opensearch-links")
@@ -4019,9 +3957,6 @@ def find_inconsistent_archives():
 )
 def export_db(filepath):
     """Export the database to a zip file."""
-    if pd is None:
-        print("ERROR: Pandas is not installed. This command requires pandas.")
-        return
     click.echo(f"Exporting database to {filepath}...")
     engine = db_session.get_bind()
     with engine.connect() as connection:
@@ -4047,9 +3982,6 @@ def export_db(filepath):
 @click.option("--yes", is_flag=True, help="Skip confirmation.")
 def import_db(filepath, yes):
     """Import the database from a zip file. This will delete existing data."""
-    if pd is None:
-        print("ERROR: Pandas is not installed. This command requires pandas.")
-        return
     if not yes:
         click.confirm(
             "This will drop the current database and import data from the "
