@@ -1204,55 +1204,25 @@ class OpenSearchDataStore:
         # Filter out invalid indices
         indices = [i for i in indices if self._is_valid_opensearch_index_name(i)]
 
-        # Create a new list for valid indices
-        valid_indices = []
-        for index_name in indices:
-            # Check if the index exists before attempting to get stats
-            try:
-                res = self.client.indices.get(index=index_name)
-                # Check if index is open
-                if (
-                    res.get(index_name, {})
-                    .get("settings", {})
-                    .get("index", {})
-                    .get("status")
-                    == "close"
-                ):
-                    os_logger.debug("Index '%s' is closed. Skipping count.", index_name)
-                    continue
-                valid_indices.append(index_name)
-            except NotFoundError:
-                os_logger.warning("Index '%s' not found. Skipping...", index_name)
-            except Exception as e:  # pylint: disable=broad-except
-                os_logger.error(
-                    "An error occurred while checking index '%s': %s",
-                    index_name,
-                    e,
-                )
-                continue
-
-        # Now, attempt to get stats for the valid indices
-        if not valid_indices:
-            return 0, 0
-
+        # Now, attempt to get stats for the indices
         try:
-            es_stats = self.client.indices.stats(
-                index=valid_indices, metric="docs, store"
-            )
+            es_stats = self.client.indices.stats(index=indices, metric="docs, store")
 
         except NotFoundError as e:
             os_logger.error(
                 "Unable to count indices (index not found). Attempted indices: %s. Error: %s",  # pylint: disable=line-too-long
-                ", ".join(valid_indices),
+                ", ".join(indices),
                 e,
+                exc_info=True,
             )
             return 0, 0
 
         except RequestError as e:
             os_logger.error(
                 "Unable to count indices (request error) %s. Error: %s",  # pylint: disable=line-too-long
-                ", ".join(valid_indices),
+                ", ".join(indices),
                 e,
+                exc_info=True,
             )
             return 0, 0
 
