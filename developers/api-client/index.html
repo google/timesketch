@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -3068,12 +3068,13 @@ for the file can be passed on to the config class using:</p>
 </code></pre>
 <p>If the token file does not exist, it will be generated and encrypted using the supplied password.</p>
 <h3 id="directly-passing-username-password">Directly passing username / password</h3>
-<p>Another option to create a connection to the Timesketch server is by creating an <code>TimesketchApi</code> object and passing `</p>
+<p>Another option to create a connection to the Timesketch server is by creating an
+<code>TimesketchApi</code> object and passing the username and password directly:</p>
 <pre><code class="language-python">from timesketch_api_client import client as timesketch_client
 client = timesketch_client.TimesketchApi(host_uri='https://demo.timesketch.org', username='demo', password='demo')
 </code></pre>
 <blockquote>
-<p>Careful with storing credentials in code that you intend to publish or make available to others. </p>
+<p>Careful with storing credentials in code that you intend to publish or make available to others.</p>
 </blockquote>
 <h2 id="client-config">Client Config</h2>
 <p>In order to make it simpler to connect to the API client a config file
@@ -3120,6 +3121,12 @@ token_file_path = /home/myselfandirene/.timesketch.dev.token
 <p>Each of the additional sections needs to define a separate token file using the
 <code>token_file_path</code>, otherwise the config will attempt to read the default token
 file.</p>
+<p><strong>Note on Service Accounts and OAuth:</strong> Even if the Timesketch server is globally
+configured to use OAuth (<code>auth_mode = oauth</code>), service accounts and automated
+scripts can still be configured to use <code>auth_mode = userpass</code> in their <code>.timesketchrc</code>
+file. This requires the Timesketch administrator to add the service account's
+username to the <code>LOCAL_AUTH_ALLOWED_USERS</code> list in the server's <code>timesketch.conf</code>
+configuration file.</p>
 <h2 id="using-the-timesketch-client">Using the Timesketch Client</h2>
 <p>The TS client only has limited functionality, such as to list open indices, what sketches the user has access to as well as to fetch sketches, indices, etc.
 The client object also contains functions to check for OAUTH token status and refresh it, if needed.</p>
