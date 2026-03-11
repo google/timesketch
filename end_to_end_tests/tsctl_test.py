@@ -351,8 +351,6 @@ class TestTsctl(interface.BaseEndToEndTest):
                 csv_files = [f for f in z.namelist() if f.endswith(".csv")]
                 self.assertions.assertTrue(len(csv_files) > 0)
 
-                import io
-
                 content = z.read(csv_files[0]).decode("utf-8")
                 reader = csv.reader(io.StringIO(content))
                 rows = list(reader)
