@@ -166,15 +166,7 @@ def query_to_filehandle(
         return query_results_to_filehandle(result, sketch, output_format=output_format)
 
     total_count = result.get("hits", {}).get("total", {}).get("value", 0)
-    try:
-        total_count = int(total_count)
-    except (ValueError, TypeError):
-        total_count = 0
-
-    # Optimization: Collect DataFrames in a list and concat once at the end.
-    # Repeated pd.concat() inside the loop is extremely inefficient O(N^2)
-    # as it re-allocates memory for the entire dataset each time.
-    frames = [lib_utils.query_results_to_dataframe(result, sketch)]
+    data_frame = lib_utils.query_results_to_dataframe(result, sketch)
     event_count = len(result["hits"]["hits"])
 
     while event_count < total_count:
@@ -186,18 +178,10 @@ def query_to_filehandle(
 
         add_frame = lib_utils.query_results_to_dataframe(result, sketch)
         if add_frame.shape[0]:
-            frames.append(add_frame)
+            data_frame = pd.concat([data_frame, add_frame], sort=False)
             event_count += len(hits)
         else:
             break
-
-    data_frame = pd.concat(frames, sort=False)
-
-    # Ensure we return exactly the number of events reported by OpenSearch.
-    # Scrolling often returns the full final batch (e.g. 10k), which can
-    # lead to more events than requested if not capped.
-    if data_frame.shape[0] > total_count:
-        data_frame = data_frame.head(total_count)
 
     fh = io.StringIO()
     if output_format.lower() == "jsonl":

@@ -89,10 +89,9 @@ class ExportSketchTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=sketch_name)
 
         target_count = 20000
-        # Create file on the fly inside TEST_DATA_DIR
-        integrity_file_name = f"integrity_check_{uuid.uuid4().hex}.jsonl"
-        integrity_file_path = os.path.join(interface.TEST_DATA_DIR, integrity_file_name)
-        with open(integrity_file_path, "w", encoding="utf-8") as f:
+        # Create file on the fly
+        integrity_file = f"integrity_check_{uuid.uuid4().hex}.jsonl"
+        with open(integrity_file, "w", encoding="utf-8") as f:
             for i in range(target_count):
                 f.write(
                     '{"message": "Event ' + str(i) + '", '
@@ -102,7 +101,7 @@ class ExportSketchTest(interface.BaseEndToEndTest):
 
         try:
             print(f"  Importing {target_count} events into sketch {sketch.id}...")
-            self.import_timeline(integrity_file_name, sketch=sketch)
+            self.import_timeline(integrity_file, sketch=sketch)
 
             # 2. Export via API
             export_file = f"integrity_{uuid.uuid4().hex}.zip"
@@ -134,8 +133,8 @@ class ExportSketchTest(interface.BaseEndToEndTest):
                 if os.path.exists(export_file):
                     os.remove(export_file)
         finally:
-            if os.path.exists(integrity_file_path):
-                os.remove(integrity_file_path)
+            if os.path.exists(integrity_file):
+                os.remove(integrity_file)
 
 
 manager.EndToEndTestManager.register_test(ExportSketchTest)
