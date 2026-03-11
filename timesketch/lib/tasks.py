@@ -1020,8 +1020,6 @@ def run_plaso(
         cmd.extend(["--opensearch_user", opensearch_username])
 
     opensearch_password = current_app.config.get("OPENSEARCH_PASSWORD", "")
-    if opensearch_password:
-        cmd.extend(["--opensearch_password", opensearch_password])
 
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
@@ -1053,8 +1051,17 @@ def run_plaso(
 
     # Run psort.py
     try:
+        # Prepare the environment for the subprocess. We pass the OpenSearch
+        # password via an environment variable to avoid exposing it in the
+        # process list.
+        subprocess_env = os.environ.copy()
+        if opensearch_password:
+            subprocess_env["PLASO_OPENSEARCH_PASSWORD"] = opensearch_password
+
         logger.info("Plaso cmd line: %s start", cmd)
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
+        subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT, encoding="utf-8", env=subprocess_env
+        )
         logger.info("Plaso cmd line: %s finish", cmd)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
