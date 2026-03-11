@@ -316,19 +316,21 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, Bas
             True if the index is associated with at least one other non-deleted
             sketch; False otherwise.
         """
-        # Find all SearchIndex objects with the same index_name to be extra safe
-        # in case there are duplicate SearchIndex records pointing to the same
-        # physical OpenSearch index.
-        search_indices = SearchIndex.query.filter_by(index_name=self.index_name).all()
-        for index in search_indices:
-            for timeline in index.timelines:
-                if exclude_sketch_id and timeline.sketch_id == exclude_sketch_id:
-                    continue
-                if not timeline.sketch:
-                    continue
-                if timeline.sketch.get_status.status != "deleted":
-                    return True
-        return False
+        # Use a single joined query to find other non-deleted sketches
+        # that share the same index name.
+        query = (
+            db_session.query(Timeline.id)
+            .join(SearchIndex)
+            .join(Sketch, Timeline.sketch)
+            .join(Sketch.Status, Sketch.status)
+            .filter(SearchIndex.index_name == self.index_name)
+            .filter(Sketch.Status.status != "deleted")
+        )
+
+        if exclude_sketch_id:
+            query = query.filter(Sketch.id != exclude_sketch_id)
+
+        return query.first() is not None
 
 
 class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):

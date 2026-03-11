@@ -206,7 +206,8 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 )
 
         if searchindex.get_status.status == "deleted":
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Search index already deleted.")
+            if not current_user.admin:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, "Search index already deleted.")
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [
