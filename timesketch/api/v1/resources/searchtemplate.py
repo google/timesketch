@@ -14,6 +14,8 @@
 """SearchTemplate resources for version 1 of the Timesketch API."""
 
 import json
+import jinja2
+import jinja2.sandbox
 
 from flask import abort
 from flask import request
@@ -21,8 +23,6 @@ from flask import jsonify
 from flask_restful import Resource
 from flask_login import current_user
 from flask_login import login_required
-
-import jinja2
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
@@ -50,7 +50,7 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         Returns:
             Search template in JSON (instance of flask.wrappers.Response)
         """
-        searchtemplate = SearchTemplate.get_by_id(searchtemplate_id)
+        searchtemplate = SearchTemplate.get_with_acl(searchtemplate_id)
 
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
@@ -67,9 +67,12 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         Returns:
             HTTP status 200 if successful, otherwise error messages.
         """
-        searchtemplate = SearchTemplate.get_by_id(searchtemplate_id)
+        searchtemplate = SearchTemplate.get_with_acl(searchtemplate_id)
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
+
+        if not searchtemplate.has_permission(user=current_user, permission="delete"):
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "User does not have delete permission.")
 
         saved_searches = View.query.filter_by(searchtemplate=searchtemplate)
         for saved_search in saved_searches:
@@ -102,15 +105,22 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
             Parsed and sanitized search query string.
         """
         form = request.json or {}
-        searchtemplate = SearchTemplate.get_by_id(searchtemplate_id)
+        searchtemplate = SearchTemplate.get_with_acl(searchtemplate_id)
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
 
+        # Basic resource exhaustion protection
+        if len(searchtemplate.query_string) > 10000:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Search template query string too long")
+
         try:
-            template = jinja2.Template(searchtemplate.query_string)
+            env = jinja2.sandbox.SandboxedEnvironment()
+            template = env.from_string(searchtemplate.query_string)
             query_string = template.render(form)
         except jinja2.exceptions.TemplateSyntaxError as e:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Search template syntax error: {e}")
+        except jinja2.exceptions.SecurityError as e:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, f"Search template security error: {e}")
 
         escaped_query_string = utils.escape_query_string(query_string)
         return jsonify(
@@ -128,7 +138,7 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         Returns:
             View in JSON (instance of flask.wrappers.Response)
         """
-        templates = SearchTemplate.query.all()
+        templates = SearchTemplate.all_with_acl().all()
         meta = {"collection": []}
         for template in templates:
             saved_searches = View.query.filter_by(searchtemplate=template)
