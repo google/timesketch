@@ -182,7 +182,7 @@ def _get_random_event_ids(datastore, indices, query_dsl, count=5):
     try:
         res = datastore.client.search(index=indices, body=random_query)
         return [hit["_id"] for hit in res["hits"]["hits"]]
-    except Exception:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         return []
 
 
