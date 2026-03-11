@@ -647,6 +647,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Delete">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#administrative-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administrative Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protection-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protection Labels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -2632,6 +2660,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Delete">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#administrative-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administrative Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protection-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protection Labels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -2823,22 +2879,36 @@
 <p>If you click on the "More" Button in the Sketch Overview, you get the following three options.</p>
 <p><img alt="Sketch Overview more dialogue" src="/assets/images/SketchMore.png" /></p>
 <h3 id="delete">Delete</h3>
-<p>Deletes the sketch.</p>
+<p>Deleting a sketch removes it from your list of active sketches. There are two types of deletion:</p>
+<ol>
+<li>
+<p><strong>Soft Delete (Default):</strong></p>
 <ul>
-<li><strong>Soft Delete (Default):</strong> The sketch is marked as deleted in the database but all associated data (timelines, indices) remains intact. It is just not shown in the UI anymore.</li>
-<li><strong>Hard Delete (<code>force_delete</code>):</strong> Permanently removes the sketch and its associated data. This operation is restricted to administrators and not available via the UI and follows a safe order of operations to ensure no orphaned data is left behind:<ol>
-<li><strong>OpenSearch Indices:</strong> The raw event data is deleted from OpenSearch first.</li>
-<li><strong>Timelines:</strong> The timeline records are removed from the database.</li>
-<li><strong>Search Indices:</strong> The search index metadata is removed.</li>
-<li><strong>Sketch:</strong> Finally, the sketch itself is deleted.</li>
-</ol>
-</li>
+<li>The sketch is marked as <strong>'deleted'</strong> in the database.</li>
+<li>It is hidden from the main sketch list.</li>
+<li><strong>Crucially</strong>, Timesketch attempts to <strong>close all associated OpenSearch indices</strong> to free up memory and resources on the cluster. <strong>Note:</strong> Indices are only closed if they are not shared with other active (non-deleted) sketches. This check is performed system-wide across all users to ensure data integrity.</li>
+<li>This action is reversible by an administrator (via database intervention) if needed, as the data is not permanently destroyed.</li>
 </ul>
+</li>
+<li>
+<p><strong>Hard Delete (Force Delete):</strong></p>
+<ul>
+<li>This permanently removes the sketch, all its timelines, and all associated metadata from the database.</li>
+<li>It also <strong>permanently deletes</strong> the underlying OpenSearch indices. <strong>Note:</strong> As with soft deletion, indices are only deleted if they are not shared with other active sketches in the system.</li>
+<li><strong>Admin Only:</strong> Only administrators can perform a hard delete, and they can do so even on sketches that have already been soft-deleted.</li>
+<li><em>Note:</em> You cannot delete a sketch that is currently <strong>'archived'</strong>. You must unarchive it first.</li>
+</ul>
+</li>
+</ol>
+<h4 id="administrative-overrides">Administrative Overrides</h4>
+<p>Administrators have the ability to delete <strong>any sketch in the system</strong>, regardless of whether they are explicitly listed in the sketch's access control list (ACL). This allows for system-wide cleanup and management.</p>
+<h4 id="protection-labels">Protection Labels</h4>
+<p>Certain labels can be configured to prevent a sketch from being deleted. By default, any sketch with the label <strong><code>protected</code></strong> or <strong><code>preserved</code></strong> cannot be deleted (either soft or hard) by any user, including administrators. To delete such a sketch, the label must first be removed.</p>
 <h3 id="archive">Archive</h3>
 <p>Archiving a sketch is a way to preserve it in a archived state while freeing up system resources. When a sketch is archived:
 - It is hidden from the default list of sketches.
 - All its timelines are marked as archived.
-- The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster.
+- The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster. <strong>Note:</strong> This check is performed system-wide across all users to ensure data integrity.
 - You cannot explore data, run analyzers, or make other modifications to an archived sketch.
 - The sketch can be unarchived at any time to restore full functionality.</p>
 <h4 id="when-a-sketch-can-be-archived">When a sketch can be archived:</h4>
@@ -2889,14 +2959,22 @@
 <ul>
 <li>Timesketch attempts to <strong>reopen all associated OpenSearch indices</strong> that were previously closed (archived).</li>
 <li>If an OpenSearch index is already open, it's considered a success.</li>
-<li>If all necessary OpenSearch indices are successfully opened (or were already open), the sketch's status is updated to <strong>'ready'</strong>.</li>
-<li>All timelines within that sketch that were <strong>'archived'</strong> have their status set back to <strong>'ready'</strong>.</li>
-<li>The corresponding SearchIndex database objects also have their status updated to <strong>'ready'</strong>.</li>
+<li><strong>Missing or Failed Indices:</strong> If an index cannot be found (e.g., deleted) or fails to open:<ul>
+<li>The system logs a warning but <strong>does not abort</strong> the unarchive process.</li>
+<li>The affected <strong>timeline</strong> and its <strong>search index</strong> in the database are set to a <strong>'fail'</strong> state. This allows you to identify which parts of the sketch are broken.</li>
+</ul>
+</li>
+<li>For all successfully opened indices:<ul>
+<li>The corresponding <strong>timeline</strong> status is set back to <strong>'ready'</strong>.</li>
+<li>The corresponding <strong>SearchIndex</strong> database object status is updated to <strong>'ready'</strong>.</li>
+</ul>
+</li>
+<li>The sketch's status is updated to <strong>'ready'</strong>, allowing you to access it and manage any failed timelines.</li>
 </ul>
 <h4 id="when-a-sketch-cannot-be-unarchived-and-why">When a sketch cannot be unarchived (and why):</h4>
 <ul>
 <li>If the sketch is not currently 'archived' (e.g., it's already <strong>'ready'</strong> or <strong>'deleted'</strong>), the operation will be aborted.</li>
-<li>If there's a critical error opening an OpenSearch index (e.g., the index is genuinely missing or a network error occurs), the entire unarchival process will be aborted, and the sketch will remain in its <strong>'archived'</strong> state.</li>
+<li>Critical errors unrelated to specific indices (e.g., database connection failures) may still abort the process.</li>
 </ul>
 <h3 id="export">Export</h3>
 <p>Export allows you to download sketch data. In the Web UI, this will export a
