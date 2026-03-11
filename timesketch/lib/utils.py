@@ -83,6 +83,42 @@ def _parse_tag_field(row):
     return [row]
 
 
+def query_results_to_dataframe(result, sketch):
+    """Returns a data frame from a OpenSearch query result dict.
+
+    Args:
+        result (dict): a dict that contains the response from a
+            OpenSearch datastore search.
+        sketch (timesketch.models.sketch.Sketch): a sketch object.
+
+    Returns:
+        pd.DataFrame: a pandas DataFrame with the results from
+            the query.
+    """
+    lines = []
+    for event in result["hits"]["hits"]:
+        line = event["_source"]
+        line.setdefault("label", [])
+        line["_id"] = event["_id"]
+        line["_index"] = event["_index"]
+        if "tag" in line:
+            if isinstance(line["tag"], (list, tuple)):
+                line["tag"] = ",".join(line["tag"])
+        try:
+            for label in line["timesketch_label"]:
+                if sketch.id != label["sketch_id"]:
+                    continue
+                line["label"].append(label["name"])
+            del line["timesketch_label"]
+        except KeyError:
+            pass
+
+        lines.append(line)
+    data_frame = pandas.DataFrame(lines)
+    del lines
+    return data_frame
+
+
 def _scrub_special_tags(dict_obj):
     """Remove OpenSearch specific fields from a dict."""
     for field in FIELDS_TO_REMOVE:
