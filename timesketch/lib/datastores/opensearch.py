@@ -1204,7 +1204,28 @@ class OpenSearchDataStore:
         # Filter out invalid indices
         indices = [i for i in indices if self._is_valid_opensearch_index_name(i)]
 
-        # Now, attempt to get stats for the indices
+        # Create a new list for valid indices
+        valid_indices = []
+        for index_name in indices:
+            # Check if the index exists before attempting to get stats
+            try:
+                if self.client.indices.exists(index=index_name):
+                    valid_indices.append(index_name)
+                else:
+                    os_logger.warning("Index '%s' not found. Skipping...", index_name)
+            except Exception as e:  # pylint: disable=broad-except
+                os_logger.error(
+                    "An error occurred while checking index '%s': %s",
+                    index_name,
+                    e,
+                    exc_info=True,
+                )
+                continue
+
+        # Now, attempt to get stats for the valid indices
+        if not valid_indices:
+            return 0, 0
+
         try:
             es_stats = self.client.indices.stats(index=indices, metric="docs, store")
 
