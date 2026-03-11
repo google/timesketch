@@ -29,13 +29,13 @@ import traceback
 import tempfile
 import shutil
 import hashlib
-from opensearchpy import helpers
-from typing import Optional, Union, List, Tuple, Dict
 import secrets
 import string
+from typing import Optional, Union, List, Tuple, Dict
 import yaml
 import redis
 
+from opensearchpy import helpers
 
 import sqlalchemy
 import click
@@ -55,7 +55,6 @@ from celery.result import AsyncResult
 from timesketch.api.v1 import export as api_export
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1 import utils as api_utils
-from timesketch.lib import utils as lib_utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
@@ -3195,7 +3194,10 @@ def _fetch_and_prepare_event_data(
     "--include-legacy",
     is_flag=True,
     default=False,
-    help="Include legacy events (missing __ts_timeline_id). Use with caution as it may cause data leakage in shared-index environments.",
+    help=(
+        "Include legacy events (missing __ts_timeline_id). Use with caution "
+        "as it may cause data leakage in shared-index environments."
+    ),
 )
 def export_sketch(
     sketch_id: int,
@@ -3476,7 +3478,8 @@ def export_sketch(
         if actual_row_count != total_expected:
             click.echo(
                 click.style(
-                    f"\nWARNING: Event count mismatch! Expected: {total_expected}, Exported: {actual_row_count}",
+                    f"\nWARNING: Event count mismatch! Expected: {total_expected}, "
+                    f"Exported: {actual_row_count}",
                     fg="red",
                     bold=True,
                 ),
