@@ -3432,7 +3432,6 @@ def export_sketch(
                             actual_row_count = len(data_handle)
                         else:
                             if output_format == "csv":
-                                import csv
 
                                 if hasattr(data_handle, "seek"):
                                     data_handle.seek(0)
