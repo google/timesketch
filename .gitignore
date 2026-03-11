@@ -17,8 +17,6 @@
 /__pycache__
 **/build/
 **/dist/
-build/lib/
-/dist/
 /dependencies/
 *.egg-info
 
