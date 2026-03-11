@@ -3882,5 +3882,3 @@ def sync_groups_from_json(filepath, dry_run):
             db_session.rollback()
     else:
         click.echo("[DRY-RUN] No changes committed.")
-
-
