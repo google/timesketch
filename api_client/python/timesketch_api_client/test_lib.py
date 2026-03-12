@@ -23,14 +23,12 @@ auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
 def mock_session():
     """Mock HTTP requests session."""
 
-    class MockHeaders:
+    class MockHeaders(dict):
         """Mock requests HTTP headers."""
 
-        # pylint: disable=unused-argument
-        @staticmethod
-        def update(*args, **kwargs):
+        def update(self, *args, **kwargs):
             """Mock header update method."""
-            return
+            super().update(*args, **kwargs)
 
     class MockSession:
         """Mock HTTP requests session."""
