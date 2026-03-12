@@ -192,13 +192,19 @@ class TimesketchApi:
         """Post username/password to authenticate the HTTP session.
 
         Args:
-            session: Instance of requests.Session.
-            username: User username.
-            password: User password.
+            session (requests.Session): Instance of requests.Session.
+            username (str): User username.
+            password (str): User password.
         """
         # Do a POST to the login handler to set up the session cookies
-        data = {"username": username, "password": password}
-        response = session.post(f"{self._host_uri.rstrip('/')}/login/", data=data)
+        data = {
+            "username": username,
+            "password": password,
+            "csrf_token": session.headers.get("x-csrftoken"),
+        }
+        response = session.post(
+            f"{self._host_uri.rstrip('/')}/login/?local_auth=1", data=data
+        )
 
         if response.status_code == definitions.HTTP_STATUS_CODE_UNAUTHORIZED:
             error.error_message(
