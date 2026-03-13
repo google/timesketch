@@ -53,6 +53,7 @@ setup(
             "xlrd",
             "timesketch-api-client",
             "pyyaml",
+            "watchdog",
         ]
     ),
 )
