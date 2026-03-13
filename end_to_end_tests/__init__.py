@@ -21,6 +21,7 @@
 from . import upload_test
 from . import cli_client_e2e_test
 from . import client_test
+from . import annotation_advanced_test
 from . import data_finder_test
 from . import event_test
 from . import exportstream_test
