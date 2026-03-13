@@ -13,6 +13,7 @@
 # limitations under the License.
 """CLI management tool."""
 
+import inspect
 import os
 import pathlib
 import json
@@ -25,15 +26,20 @@ import subprocess
 import csv
 import datetime
 import traceback
-from typing import Optional
+import tempfile
+import shutil
+import hashlib
 import secrets
 import string
+from typing import Optional, Union, List, Tuple, Dict
 import yaml
 import redis
 
+from opensearchpy import helpers
 
 import sqlalchemy
 import click
+
 import pandas as pd
 from flask_restful import marshal
 from flask import current_app
@@ -49,7 +55,6 @@ from celery.result import AsyncResult
 from timesketch.api.v1 import export as api_export
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1 import utils as api_utils
-from timesketch.lib import utils as lib_utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
@@ -94,6 +99,117 @@ DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE = "events.{output_format}"
 DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE = (
     "sketch_{sketch_id}_{output_format}_export.zip"
 )
+
+
+def get_sha256(file_path: str) -> str:
+    """Calculate SHA256 of a file.
+
+    Args:
+        file_path (str): Path to the file.
+
+    Returns:
+        str: SHA256 hash of the file.
+    """
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
+
+
+def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> List[str]:
+    """Filter a list of indices and return only those that are open.
+
+    Args:
+        datastore: OpenSearchDataStore instance.
+        indices: List of index names to check.
+
+    Returns:
+        List of index names that are confirmed to be open.
+    """
+    open_indices = []
+    if not indices:
+        return open_indices
+
+    # Use a chunked approach to avoid long URLs if there are many indices
+    chunk_size = 100
+    for i in range(0, len(indices), chunk_size):
+        chunk = indices[i : i + chunk_size]
+        try:
+            # indices.get returns settings which include the status
+            res = datastore.client.indices.get(index=chunk)
+            for index_name in chunk:
+                status = (
+                    res.get(index_name, {})
+                    .get("settings", {})
+                    .get("index", {})
+                    .get("status")
+                )
+                if status != "close":
+                    open_indices.append(index_name)
+        except Exception as e:  # pylint: disable=broad-except
+            # If a chunk fails, we fall back to checking one by one
+            for index_name in chunk:
+                try:
+                    res = datastore.client.indices.get(index=index_name)
+                    status = (
+                        res.get(index_name, {})
+                        .get("settings", {})
+                        .get("index", {})
+                        .get("status")
+                    )
+                    if status != "close":
+                        open_indices.append(index_name)
+                except Exception as e:  # pylint: disable=broad-except
+                    continue
+    return open_indices
+
+
+def _get_random_event_ids(datastore, indices, query_dsl, count=5):
+    """Retrieve random event IDs from OpenSearch based on a query."""
+    random_query = {
+        "query": {
+            "function_score": {
+                "query": query_dsl.get("query", {"match_all": {}}),
+                "random_score": {},
+                "boost_mode": "replace",
+            }
+        },
+        "size": count,
+        "_source": False,
+    }
+    try:
+        res = datastore.client.search(index=indices, body=random_query)
+        return [hit["_id"] for hit in res["hits"]["hits"]]
+    except Exception as e:  # pylint: disable=broad-except
+        return []
+
+
+def _spot_check_file(file_path, event_ids):
+    """Verify that a list of event IDs exist in a file."""
+    if not event_ids:
+        return {}
+
+    results = {eid: False for eid in event_ids}
+    remaining = set(event_ids)
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                # We check for the ID as a substring. In JSONL and CSV,
+                # the ID will be present.
+                to_remove = set()
+                for eid in remaining:
+                    if eid in line:
+                        results[eid] = True
+                        to_remove.add(eid)
+                remaining -= to_remove
+                if not remaining:
+                    break
+    except Exception as e:  # pylint: disable=broad-except
+        pass
+
+    return results
 
 
 def configure_opensearch_logger():
@@ -1031,12 +1147,15 @@ def sketch_info(sketch_id: int):
 
     print(f"Sketch {sketch_id} Name: ({sketch.name})")
 
+    datastore = OpenSearchDataStore()
+
     # Timelines table
     print("\nTimelines:")
     timeline_table_data = [
         [
             "ID",
             "Name",
+            "Events",
             "Search Index ID",
             "Index Name",
             "Created At",
@@ -1045,13 +1164,23 @@ def sketch_info(sketch_id: int):
             "Status",
         ],
     ]
+    unique_indices = set()
     for t in sketch.timelines:
+        index_name = t.searchindex.index_name
+        unique_indices.add(index_name)
+        try:
+            events_count, _ = datastore.count([index_name])
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"WARNING: Unable to get event count for index {index_name}: {e}")
+            events_count = 0
+
         timeline_table_data.append(
             [
                 t.id,
                 t.name,
+                f"{events_count:,}",
                 t.searchindex_id,
-                t.searchindex.index_name,
+                index_name,
                 t.created_at,
                 t.user_id,
                 t.description,
@@ -1059,6 +1188,14 @@ def sketch_info(sketch_id: int):
             ]
         )
     print_table(timeline_table_data)
+
+    # Total events in sketch
+    try:
+        total_events, _ = datastore.count(list(unique_indices))
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"WARNING: Unable to get total event count for sketch: {e}")
+        total_events = 0
+    print(f"\nTotal events in sketch: {total_events:,}")
 
     # Data sources per timeline
     print("\nData Sources per Timeline:")
@@ -2633,7 +2770,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         "created_by": sketch.user.username if sketch.user else None,
         "is_public": bool(sketch.is_public),
         "labels": [label.label for label in sketch.labels],
-        "all_permissions": sketch.get_all_permissions(),
+        "acls": sketch.get_all_permissions(),
         "timelines": [],
         "views": [],
         "stories": [],
@@ -2649,38 +2786,59 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
     }
 
     # Timelines
-    for timeline in sketch.timelines:
-        marshalled_timeline = marshal(timeline, schemas["timeline"])
-        metadata["timelines"].append(marshalled_timeline)
+    timelines = list(sketch.timelines)
+    if timelines:
+        print(f"  Processing {len(timelines)} timeline(s)...")
+        for timeline in timelines:
+            marshalled_timeline = marshal(timeline, schemas["timeline"])
+            metadata["timelines"].append(marshalled_timeline)
 
     # Views
-    for view in sketch.get_named_views:
-        marshalled_view = marshal(view, schemas["view"])
-        metadata["views"].append(marshalled_view)
+    named_views = sketch.get_named_views
+    if named_views:
+        print(f"  Processing {len(named_views)} saved view(s)...")
+        for view in named_views:
+            marshalled_view = marshal(view, schemas["view"])
+            metadata["views"].append(marshalled_view)
 
     # Stories
-    for story in sketch.stories:
-        marshalled_story = marshal(story, schemas["story"])
-        metadata["stories"].append(marshalled_story)
+    stories = list(sketch.stories)
+    if stories:
+        print(f"  Processing {len(stories)} story(ies)...")
+        for story in stories:
+            marshalled_story = marshal(story, schemas["story"])
+            metadata["stories"].append(marshalled_story)
+    else:
+        print("  No stories found for this sketch.")
 
     # Aggregations
-    for agg in sketch.aggregations:
-        marshalled_agg = marshal(agg, schemas["aggregation"])
-        metadata["aggregations"].append(marshalled_agg)
+    aggregations = list(sketch.aggregations)
+    if aggregations:
+        print(f"  Processing {len(aggregations)} aggregation(s)...")
+        for agg in aggregations:
+            marshalled_agg = marshal(agg, schemas["aggregation"])
+            metadata["aggregations"].append(marshalled_agg)
 
     # Aggregation Groups
-    for group in sketch.aggregationgroups:
-        marshalled_group = marshal(group, schemas["aggregationgroup"])
-        metadata["aggregation_groups"].append(marshalled_group)
+    aggregation_groups = list(sketch.aggregationgroups)
+    if aggregation_groups:
+        print(f"  Processing {len(aggregation_groups)} aggregation group(s)...")
+        for group in aggregation_groups:
+            marshalled_group = marshal(group, schemas["aggregationgroup"])
+            metadata["aggregation_groups"].append(marshalled_group)
 
     # Graphs
-    for graph in sketch.graphs:
-        marshalled_graph = marshal(graph, schemas["graph"])
-        metadata["graphs"].append(marshalled_graph)
+    graphs = list(sketch.graphs)
+    if graphs:
+        print(f"  Processing {len(graphs)} saved graph(s)...")
+        for graph in graphs:
+            marshalled_graph = marshal(graph, schemas["graph"])
+            metadata["graphs"].append(marshalled_graph)
 
     # Comments
     # Fetch Event DB objects that are part of the sketch and have comments.
-    events_with_comments_list = Event.get_with_comments(sketch=sketch).all()
+    results = Event.get_with_comments(sketch=sketch)
+    events_with_comments_list = results.all() if hasattr(results, "all") else results
 
     if events_with_comments_list:
         print(f"  Processing comments for {len(events_with_comments_list)} event(s)...")
@@ -2705,10 +2863,7 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         print("  No events with comments found for this sketch.")
 
     # Analysis Sessions (and their analyses)
-    # Assuming AnalysisSession has a 'sketch' backref or can be queried via sketch
-    # A more robust query might be needed if direct sketch_id isn't on AnalysisSession
-    # For example, joining through Analysis and Timeline if sessions are per timeline.
-    # This example assumes a direct or easily derivable link.
+    print("  Processing analysis sessions...")
     analysis_sessions = (
         AnalysisSession.query.join(Analysis)
         .join(Timeline)
@@ -2722,336 +2877,282 @@ def _get_sketch_metadata(sketch: Sketch) -> dict:
         )
 
     # DFIQ Scenarios (and their nested facets, questions, etc.)
-    for scenario in sketch.scenarios:
-        metadata["scenarios"].append(marshal(scenario, schemas["scenario"]))
+    scenarios = list(sketch.scenarios)
+    if scenarios:
+        print(f"  Processing {len(scenarios)} DFIQ scenario(s)...")
+        for scenario in scenarios:
+            metadata["scenarios"].append(marshal(scenario, schemas["scenario"]))
 
     return metadata
 
 
 # Helper function to fetch and prepare event data
-def _fetch_and_prepare_event_data(
-    sketch: Sketch, datastore: OpenSearchDataStore, return_fields: list
-) -> tuple[str, bool]:
-    """Fetches all event data for a sketch and determines its format.
-    This function queries the datastore for all events associated with the
-    active timelines of the given sketch. It requests the data ideally in
-    JSONL format using the `api_export.query_to_filehandle` utility.
-    After fetching, it reads the entire content, ensures it's a string (decoding
-    from UTF-8 if necessary), and attempts to detect if the content is
-    JSONL by checking if it starts with '{' and if the first line can be
-    successfully parsed as JSON. This detection helps downstream functions
-    handle potential format discrepancies (e.g., if the API returned CSV
-    instead of the requested JSONL).
+def _calculate_export_counts(
+    sketch: Sketch,
+    datastore: OpenSearchDataStore,
+    active_indices: List[str],
+    active_tids: List[int],
+    method: str,
+    include_legacy: bool,
+    annotation_filter: Optional[Dict],
+) -> Tuple[int, int, Optional[Dict]]:
+    """Calculates expected event counts for the export.
+
     Args:
-        sketch: The timesketch.models.sketch.Sketch object whose events
-                are to be fetched.
-        datastore: An initialized
-                    timesketch.lib.datastores.opensearch.OpenSearchDataStore
-                    instance used for querying.
-        return_fields: A list of field names to include in the fetched events.
+        sketch: The Sketch database model.
+        datastore: OpenSearchDataStore instance.
+        active_indices: List of index names.
+        active_tids: List of timeline IDs.
+        method: Export method (direct or api).
+        include_legacy: Whether to include events missing __ts_timeline_id.
+        annotation_filter: Optional OpenSearch DSL for annotations.
+
     Returns:
         A tuple containing:
-            - input_content (str): The fetched event data as a single string,
-                                   stripped of leading/trailing whitespace.
-                                   Will be an empty string if fetching fails or
-                                   no data is returned.
-            - is_likely_jsonl (bool): True if the fetched content starts with '{'
-                                      and the first line parses as JSON,
-                                      False otherwise.
-    Raises:
-        ValueError: If no active timelines or valid indices are found for the
-                    sketch, preventing event fetching.
-        # Note: Other exceptions from the datastore interaction or file reading
-        # are caught and logged, resulting in an empty string return value.
+            - total_expected (int): Total number of events to be exported.
+            - legacy_count (int): Number of legacy events detected.
+            - verification_query_dsl (dict): Query DSL to use for spot checks.
+    """
+    total_expected = 0
+    legacy_count = 0
+    verification_query_dsl = None
+
+    # Filter out closed indices to avoid errors
+    open_indices = _get_open_indices(datastore, active_indices)
+
+    if not open_indices:
+        print("    Note: No open indices to count.")
+        return 0, 0, None
+
+    # Count modern events
+    for tid in active_tids:
+        query_dsl = {"query": {"bool": {"must": [{"term": {"__ts_timeline_id": tid}}]}}}
+        if annotation_filter:
+            query_dsl["query"]["bool"]["must"].append(annotation_filter)
+
+        if not verification_query_dsl:
+            verification_query_dsl = query_dsl
+
+        count = datastore.search(
+            sketch_id=sketch.id,
+            indices=open_indices,
+            query_dsl=query_dsl,
+            count=True,
+        )
+        total_expected += count
+
+    # Count legacy events (missing __ts_timeline_id)
+    legacy_query = {
+        "query": {"bool": {"must_not": [{"exists": {"field": "__ts_timeline_id"}}]}}
+    }
+    if annotation_filter:
+        legacy_query["query"]["bool"]["must"] = [annotation_filter]
+
+    for index_name in open_indices:
+        try:
+            c_res = datastore.client.count(index=index_name, body=legacy_query)
+            legacy_count += c_res.get("count", 0)
+        except Exception as e:  # pylint: disable=broad-except
+            pass
+
+    if method == "direct":
+        if include_legacy:
+            total_expected += legacy_count
+        elif legacy_count > 0:
+            click.echo(
+                click.style(
+                    f"\nNOTE: Found {legacy_count:,} legacy events (missing __ts_timeline_id). "
+                    "These will be SKIPPED. Use --include-legacy to include them.\n",
+                    fg="cyan",
+                ),
+                err=True,
+            )
+    else:
+        # API method always returns legacy events if present
+        total_expected += legacy_count
+        if legacy_count > 0 and verification_query_dsl:
+            should_clause = verification_query_dsl["query"]["bool"]["must"][0]
+            verification_query_dsl["query"]["bool"]["must"] = [
+                {
+                    "bool": {
+                        "should": [
+                            should_clause,
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "exists": {"field": "__ts_timeline_id"}
+                                    }
+                                }
+                            },
+                        ]
+                    }
+                }
+            ]
+            if annotation_filter:
+                verification_query_dsl["query"]["bool"]["must"].append(
+                    annotation_filter
+                )
+
+    return total_expected, legacy_count, verification_query_dsl
+
+
+def _export_index_mappings(
+    datastore: OpenSearchDataStore, active_indices: List[str], target_dir: str
+):
+    """Collect index mappings and save as JSON files."""
+    mappings_dir = os.path.join(target_dir, "mappings")
+    os.makedirs(mappings_dir, exist_ok=True)
+    open_indices = _get_open_indices(datastore, active_indices)
+
+    for index_name in active_indices:
+        if index_name not in open_indices:
+            print(f"    Note: Index {index_name} is closed, skipping mapping.")
+            continue
+        try:
+            mapping = datastore.client.indices.get_mapping(index=index_name)
+            with open(os.path.join(mappings_dir, f"{index_name}.json"), "w") as f_map:
+                json.dump(mapping, f_map, indent=2)
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"    WARNING: Mapping failed for {index_name}: {e}")
+
+
+def _export_stories_to_markdown(sketch: Sketch, target_dir: str):
+    """Export sketch stories as individual Markdown files."""
+    stories_dir = os.path.join(target_dir, "stories")
+    os.makedirs(stories_dir, exist_ok=True)
+    for story in sketch.stories:
+        s_name = f"story_{story.id}_{re.sub(r'[^a-zA-Z0-9]', '_', story.title)}.md"
+        with open(os.path.join(stories_dir, s_name), "w") as f_story:
+            f_story.write(f"# {story.title}\n\n")
+            f_story.write(
+                f"**Author:** {story.user.username if story.user else 'System'}\n"
+            )
+            f_story.write(f"**Created:** {story.created_at.isoformat()}\n\n")
+            f_story.write(story.content)
+
+
+def _generate_forensic_manifest(
+    sketch: Sketch,
+    method: str,
+    event_count: int,
+    event_filename: str,
+    event_hash: str,
+    tmp_dir: str,
+):
+    """Generate manifest.txt with SHA256 hashes for the export archive."""
+    manifest_path = os.path.join(tmp_dir, "manifest.txt")
+    with open(manifest_path, "w", encoding="utf-8") as f_man:
+        f_man.write("Timesketch Export Manifest\n")
+        f_man.write("==================================\n")
+        f_man.write(f"Sketch ID: {sketch.id} | Name: {sketch.name}\n")
+        f_man.write(
+            f"Date: {datetime.datetime.now(datetime.timezone.utc).isoformat()}\n"
+        )
+        f_man.write(f"Method: {method} | Events: {event_count}\n\n")
+        f_man.write("File Hashes (SHA256):\n")
+        f_man.write(f"{event_hash}  {event_filename}\n")
+        for root, _, files in os.walk(tmp_dir):
+            for f in files:
+                if f in [event_filename, "manifest.txt", "export.zip"]:
+                    continue
+                abs_p = os.path.join(root, f)
+                rel_p = os.path.relpath(abs_p, tmp_dir)
+                f_man.write(f"{get_sha256(abs_p)}  {rel_p}\n")
+
+
+def _bundle_export_zip(tmp_dir: str, output_zip_path: str):
+    """Bundle all files in tmp_dir into a single ZIP archive."""
+    with zipfile.ZipFile(output_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(tmp_dir):
+            for f in files:
+                if f == "export.zip":
+                    continue
+                abs_p = os.path.join(root, f)
+                rel_p = os.path.relpath(abs_p, tmp_dir)
+                zipf.write(abs_p, rel_p)
+
+
+def _fetch_and_prepare_event_data(
+    sketch: Sketch,
+    datastore: OpenSearchDataStore,
+    return_fields: list,
+    output_format: str = "csv",
+    query_dsl: Optional[Dict] = None,
+) -> Tuple[Union[str, "pd.DataFrame"], int, Dict]:
+    """Fetches all event data for a sketch using the API method.
+
+    This is a helper for the 'api' export method. It calls the standard
+    Timesketch API export utility.
+
+    Args:
+        sketch: The Sketch database model.
+        datastore: OpenSearchDataStore instance.
+        return_fields: List of fields to return.
+        output_format: Requested format (csv or jsonl).
+        query_dsl: Optional OpenSearch DSL to filter the export. This allows
+            for complex filtering (e.g. by labels, stars, or comments) that
+            the standard query string cannot express.
+
+    Returns:
+        A tuple containing (data_handle, 0, {})
     """
     query_string = "*"
+    if query_dsl:
+        query_string = ""
+
     query_filter = {
         "indices": "_all",
-        "size": 10000,  # Use default size, export handles scrolling
+        "size": 10000,
     }
-    query_dsl = None
-
-    indices, _ = lib_utils.get_validated_indices("_all", sketch)
-    if not indices:
-        indices = [t.searchindex.index_name for t in sketch.active_timelines]
-        if not indices:
-            raise ValueError(
-                "ERROR: No active timelines (and thus no indices) found"
-                "for this sketch."
-            )
 
     active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
-    if not active_indices:
-        raise ValueError(
-            "ERROR: No active timelines (and thus no indices) found for this sketch."
+    active_timeline_ids = [t.id for t in sketch.active_timelines]
+
+    # Filter out closed indices to avoid errors
+    open_indices = _get_open_indices(datastore, active_indices)
+    open_timeline_ids = [
+        t.id
+        for t in sketch.active_timelines
+        if t.searchindex.index_name in open_indices
+    ]
+
+    if not open_indices:
+        raise ValueError("No open indices found for this sketch.")
+
+    # Check if the currently loaded api_export supports output_format
+    sig = inspect.signature(api_export.query_to_filehandle)
+    if "output_format" in sig.parameters:
+        event_file_handle = api_export.query_to_filehandle(
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            indices=open_indices,
+            timeline_ids=open_timeline_ids,
+            sketch=sketch,
+            datastore=datastore,
+            return_fields=return_fields,
+            output_format=output_format,
         )
-
-    print("Get number of events for this sketch...")
-    try:
-        total_event_count, _ = datastore.count(active_indices)
-        print(f"  Total events in active timelines: {total_event_count:,}")
-    except Exception as count_error:  # pylint: disable=broad-except
-        total_event_count = 0
-        print(f"  WARNING: Could not get total event count: {count_error}")
-
-    print("  Requesting event data (preferring JSONL)...")
-    # TODO: Use PIT, search_after and slicing to improve performance
-    event_file_handle = api_export.query_to_filehandle(
-        query_string=query_string,
-        query_filter=query_filter,
-        query_dsl=query_dsl,
-        indices=indices,
-        sketch=sketch,
-        datastore=datastore,
-        return_fields=return_fields,
-    )
-    event_file_handle.seek(0)
-
-    try:
-        # TODO(jaegeral): A streaming approach (reading, converting, and writing
-        #  to the zip archive line-by-line or in chunks) would be more
-        # memory-efficient but also significantly more complex to implement
-        content_str = event_file_handle.read()
-        if not isinstance(content_str, str):
-            content_str = content_str.decode("utf-8", errors="replace")
-    except Exception as read_err:  # pylint: disable=broad-except
-        print(f"  ERROR reading event data stream: {read_err}")
-        content_str = ""
-
-    input_content = content_str.strip()
-    is_likely_jsonl = False
-    if input_content and input_content.startswith("{"):
-        try:
-            first_line = input_content.split("\n", 1)[0]
-            json.loads(first_line)
-            is_likely_jsonl = True
-            print("  Detected JSONL format in response.")
-        except Exception:  # pylint: disable=broad-except
-            is_likely_jsonl = False
-            print("  Detected non-JSONL format in response (assuming CSV).")
-    elif input_content:
-        print("  Detected non-JSONL format in response (assuming CSV).")
     else:
-        print("  WARNING: Received empty content from export function.")
-
-    return input_content, is_likely_jsonl
-
-
-# Helper function to convert event data
-def _convert_event_data(
-    input_content: str,
-    is_likely_jsonl: bool,
-    output_format: str,
-    return_fields: list,
-) -> bytes:
-    """Converts fetched event data between JSONL and CSV formats.
-    This function takes the raw event data string, determines the necessary
-    conversion based on the detected input format (`is_likely_jsonl`) and the
-    desired `output_format`, and performs the conversion.
-    - If the input is JSONL and the output is CSV, it parses each JSON line,
-      extracts relevant fields, and writes to a CSV structure. List values are
-      represented as `[value1, value2]` (e.g., `["foo", "bar"]`) and empty lists
-      (e.g., an empty "tag" field) as `[]`.
-    - If the input is CSV and the output is JSONL, it reads the CSV, attempts
-      basic type inference (int, float, bool) for values, and writes each row
-      as a JSON line. It also attempts to sniff the CSV dialect.
-    - If the input and output formats match, it returns the input content
-      encoded directly.
-    Warnings are printed for skipped lines or conversion issues. Errors during
-    critical conversion steps (like parsing the first line for CSV headers or
-    major CSV/JSONL conversion failures) will raise exceptions.
-    Args:
-        input_content: The fetched event data as a single string, stripped of
-                       leading/trailing whitespace.
-        is_likely_jsonl: Boolean flag indicating if the `input_content` is
-                         detected as JSONL format.
-        output_format: The target format for the event data ('csv' or 'jsonl').
-        return_fields: A list of field names expected in the output. Primarily
-                       used to determine headers when converting JSONL to CSV
-                       if the `return_fields` option was specified for the export.
-    Returns:
-        A bytes object containing the event data in the specified `output_format`,
-        encoded in UTF-8. Returns empty bytes if `input_content` is empty.
-    Raises:
-        ValueError: If no valid JSON lines are found when converting JSONL to CSV.
-        json.JSONDecodeError: If parsing the first JSON line for CSV headers fails.
-        Exception: Propagates exceptions from underlying CSV/JSON processing or
-                   other unexpected errors during conversion.
-    """
-    event_data_bytes = b""
-
-    if not input_content:
-        print(f"  WARNING: No event data returned to format as {output_format}.")
-        return event_data_bytes
-
-    if output_format == "csv":
-        if is_likely_jsonl:
-            print("  Input is JSONL, converting to CSV...")
-            jsonl_data = input_content.split("\n")
-            output_csv = io.StringIO()
-            try:
-                first_valid_line_index = -1
-                for i, line in enumerate(jsonl_data):
-                    if line.strip():
-                        first_valid_line_index = i
-                        break
-
-                if first_valid_line_index == -1:
-                    raise ValueError("No valid JSON lines found for CSV conversion.")
-
-                first_event = json.loads(jsonl_data[first_valid_line_index])
-
-                if return_fields:
-                    fieldnames = [f for f in return_fields if f in first_event]
-                    if not fieldnames:
-                        print(
-                            "  WARNING: return_fields did not match event keys,"
-                            " using all keys."
-                        )
-                        fieldnames = sorted(first_event.keys())
-                else:
-                    fieldnames = sorted(first_event.keys())
-
-                writer = csv.DictWriter(
-                    output_csv, fieldnames=fieldnames, extrasaction="ignore"
-                )
-                writer.writeheader()
-
-                for line in jsonl_data:
-                    line = line.strip()
-                    if line:
-                        try:
-                            event_dict = json.loads(line)
-                            csv_row = {}
-                            for key in fieldnames:
-                                value = event_dict.get(key)
-                                if isinstance(value, list):
-                                    csv_row[key] = f"[{', '.join(map(str, value))}]"
-                                elif value is None:
-                                    csv_row[key] = ""
-                                else:
-                                    csv_row[key] = str(value)
-                            writer.writerow(csv_row)
-                        except json.JSONDecodeError:
-                            print(
-                                "  WARNING: Skipping invalid JSON line: "
-                                f"{line[:100]}..."
-                            )
-                        except Exception as row_err:  # pylint: disable=broad-except
-                            print(
-                                f"  WARNING: Error processing row: {row_err} "
-                                f"- Line: {line[:100]}..."
-                            )
-
-                event_data_bytes = output_csv.getvalue().encode("utf-8")
-
-            except json.JSONDecodeError as first_line_error:
-                print(
-                    "  ERROR parsing first JSON line for CSV headers: "
-                    f"{first_line_error}"
-                )
-                message = (
-                    f"  Content of first line:"
-                    f"{jsonl_data[first_valid_line_index][:200]}..."
-                )
-                print(message)
-                print(traceback.format_exc())
-                raise  # Re-raise to stop execution
-            except Exception as conversion_error:  # pylint: disable=broad-except
-                message = f"  ERROR converting JSONL to CSV: {conversion_error}"
-                print(message)
-                print(traceback.format_exc())
-                raise  # Re-raise to stop execution
-        else:
-            print("  Input is not JSONL, using as CSV...")
-            event_data_bytes = input_content.encode("utf-8")
-
-    elif output_format == "jsonl":
-        if is_likely_jsonl:
-            print("  Input is JSONL, using as is...")
-            event_data_bytes = input_content.encode("utf-8")
-        else:
-            print("  Input is not JSONL, converting CSV to JSONL...")
-            try:
-                csv_input = io.StringIO(input_content)
-                try:
-                    dialect = csv.Sniffer().sniff(csv_input.read(1024))
-                    csv_input.seek(0)
-                    reader = csv.DictReader(csv_input, dialect=dialect)
-                    message = (
-                        f"    Detected CSV dialect: delimiter='{dialect.delimiter}'"
-                    )
-                    print(message)
-                except csv.Error:
-                    print("    Could not detect CSV dialect, assuming comma delimiter.")
-                    csv_input.seek(0)
-                    reader = csv.DictReader(csv_input)
-
-                output_jsonl = io.StringIO()
-                count = 0
-                for row in reader:
-                    processed_row = {}
-                    for key, value in row.items():
-                        try:
-                            processed_row[key] = int(value)
-                            continue
-                        except (ValueError, TypeError):
-                            pass
-                        try:
-                            processed_row[key] = float(value)
-                            continue
-                        except (ValueError, TypeError):
-                            pass
-                        if isinstance(value, str):
-                            if value.lower() == "true":
-                                processed_row[key] = True
-                                continue
-                            if value.lower() == "false":
-                                processed_row[key] = False
-                                continue
-                        processed_row[key] = value
-
-                    output_jsonl.write(json.dumps(processed_row) + "\n")
-                    count += 1
-
-                event_data_bytes = output_jsonl.getvalue().encode("utf-8")
-                print(f"    Successfully converted {count} CSV rows to JSONL.")
-
-            except Exception as conversion_error:  # pylint: disable=broad-except
-                print(f"  ERROR converting CSV to JSONL: {conversion_error}")
-                print(traceback.format_exc())
-                raise  # Re-raise to stop execution
-
-    return event_data_bytes
-
-
-# Helper function to create the zip archive
-# TODO(jaegeral): https://github.com/google/timesketch/issues/3415
-def _create_export_archive(
-    filename: str, metadata: dict, event_data_bytes: bytes, event_filename: str
-):
-    """Creates the zip archive with metadata and event data."""
-    print("Creating zip archive...")
-    try:
-        with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as zipf:
-            metadata_bytes = json.dumps(metadata, indent=2, ensure_ascii=False).encode(
-                "utf-8"
+        if output_format.lower() != "csv":
+            raise ValueError(
+                f"The currently loaded API export method only supports CSV, "
+                f"but '{output_format}' was requested. Please use --method=direct "
+                f"for high-speed JSONL export."
             )
-            zipf.writestr(DEFAULT_EXPORT_METADATA_FILENAME, metadata_bytes)
+        event_file_handle = api_export.query_to_filehandle(
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            indices=open_indices,
+            timeline_ids=open_timeline_ids,
+            sketch=sketch,
+            datastore=datastore,
+            return_fields=return_fields,
+        )
+    return event_file_handle, 0, {}
 
-            if event_data_bytes:
-                zipf.writestr(event_filename, event_data_bytes)
-            else:
-                print("  WARNING: No event data was generated to include in the zip.")
 
-        print(f"Sketch exported successfully to {filename}")
-
-    except Exception as zip_error:  # pylint: disable=broad-except
-        print(f"ERROR creating zip file: {zip_error}")
-        print(traceback.format_exc())
-
-
-# --- Main CLI command using the helper functions ---
 @cli.command(name="export-sketch")
 @click.argument("sketch_id", type=int)
 @click.option(
@@ -3059,6 +3160,12 @@ def _create_export_archive(
     type=click.Choice(["csv", "jsonl"], case_sensitive=False),
     default="csv",
     help="Format for event data export (csv or jsonl). Default: csv",
+)
+@click.option(
+    "--method",
+    type=click.Choice(["api", "direct"], case_sensitive=False),
+    default="api",
+    help="Export method: 'api' (standard) or 'direct' (high-speed OpenSearch scan).",
 )
 @click.option(
     "--filename",
@@ -3071,47 +3178,108 @@ def _create_export_archive(
 @click.option(
     "--default-fields",
     is_flag=True,
-    default=False,  # Default is now False, meaning all fields are exported by default
+    default=False,
     help=(
         "Export only the default set of event fields. "
         "If not specified, all fields are exported."
     ),
 )
+@click.option(
+    "--annotated-only",
+    is_flag=True,
+    default=False,
+    help="Export only events that have annotations (labels, stars, comments).",
+)
+@click.option(
+    "--include-legacy",
+    is_flag=True,
+    default=False,
+    help=(
+        "Include legacy events (missing __ts_timeline_id). Use with caution "
+        "as it may cause data leakage in shared-index environments."
+    ),
+)
 def export_sketch(
-    sketch_id: int, output_format: str, filename: str, default_fields: bool
+    sketch_id: int,
+    output_format: str,
+    method: str,
+    filename: str,
+    default_fields: bool,
+    annotated_only: bool,
+    include_legacy: bool,
 ):
-    """Exports a Timesketch sketch to a zip archive.
+    """Exports a Timesketch sketch to a forensic-grade zip archive.
 
     The archive includes sketch metadata (as 'metadata.json') and all associated
-    events, formatted as specified (CSV or JSONL). By default, only a predefined
-    set of common fields are exported. Use the --default-fields flag to export
-    only the default set of fields.
-    Progress messages are printed to the console
-    during the export process.
-
-    **WARNING:** Re-importing this archive into Timesketch is not natively
-    supported. This export is primarily for data archival, external analysis,
-    or manual migration.
-
-    Note: When running this command within a container (e.g., Docker),
-    the output zip file is written inside the container's filesystem.
-    Ensure you write to a mounted volume or copy the file out of the
-    container afterwards.
+    events, formatted as specified (CSV or JSONL). By default, all event fields
+    are exported. Use the --default-fields flag to export only a predefined
+    set of common fields.
     """
-    sketch = sketch = Sketch.get_by_id(sketch_id)
+    sketch = Sketch.get_by_id(sketch_id)
     if not sketch:
         print(f"ERROR: Sketch with ID {sketch_id} not found.")
         return
 
-    if not filename:
-        filename = DEFAULT_EXPORT_ARCHIVE_FILENAME_TEMPLATE.format(
-            sketch_id=sketch_id, output_format=output_format
+    if sketch.get_status.status == "archived":
+        print(
+            f"ERROR: Sketch {sketch_id} is archived. Please unarchive it before exporting."
         )
+        return
 
+    active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
+    active_tids = [t.id for t in sketch.active_timelines]
+
+    # Filter out closed indices to avoid errors
+    datastore = OpenSearchDataStore()
+    open_indices = _get_open_indices(datastore, active_indices)
+
+    if method == "direct":
+        # Check for shared indices to warn about potential data leakage
+        shared_indices = []
+        for index_name in active_indices:
+            if SearchIndex.query.filter_by(index_name=index_name).count() > 1:
+                shared_indices.append(index_name)
+
+        if shared_indices:
+            click.echo(
+                click.style(
+                    "\nSECURITY WARNING: The following indices are shared with other sketches: "
+                    f"{', '.join(shared_indices)}.\n"
+                    "Direct export of legacy events (missing __ts_timeline_id) may "
+                    "cause cross-sketch data leakage.\n",
+                    fg="red",
+                    bold=True,
+                ),
+                err=True,
+            )
+
+        if include_legacy:
+            click.echo(
+                click.style(
+                    "LEGACY EXPORT ENABLED: Including events missing __ts_timeline_id. "
+                    "Use with extreme caution.\n",
+                    fg="yellow",
+                    bold=True,
+                ),
+                err=True,
+            )
+
+    if method == "direct" and output_format == "csv":
+        print("  Note: 'direct' method only supports JSONL. Switching format...")
+        output_format = "jsonl"
+
+    if not filename:
+        suffix = "_annotated" if annotated_only else ""
+        filename = f"sketch_{sketch_id}_{output_format}{suffix}_export.zip"
     if not filename.lower().endswith(".zip"):
         filename += ".zip"
+    if os.path.exists(filename):
+        print(f"ERROR: File '{filename}' already exists.")
+        return
 
-    print(f'Exporting sketch [{sketch_id}] "{sketch.name}" to {filename}...')
+    print(
+        f'Starting {method.upper()} export of Sketch [{sketch_id}] "{sketch.name}" to {filename}...'
+    )
 
     # --- Add prominent warning to console output ---
     click.echo(
@@ -3121,49 +3289,257 @@ def export_sketch(
             fg="yellow",
             bold=True,
         ),
-        err=True,  # Print to stderr to make it more noticeable
+        err=True,
     )
-    # --- End warning ---
+
+    # 1. Setup Temporary Workspace
+    tmp_dir = tempfile.mkdtemp(prefix=f"ts_export_{sketch_id}_")
+    tmp_zip_path = os.path.join(tmp_dir, "export.zip")
+    event_filename = f"events.{output_format}"
+    tmp_event_file = os.path.join(tmp_dir, event_filename)
 
     try:
-        # 1. Gather Metadata
+        datastore = OpenSearchDataStore()
+        # 2. Gather Metadata
         metadata = _get_sketch_metadata(sketch)
 
-        # 2. Fetch and Prepare Event Data
-        # Get datastore instance
-        datastore = OpenSearchDataStore()
+        # Build annotation filter if requested
+        annotation_filter = None
+        if annotated_only:
+            annotation_filter = {
+                "bool": {
+                    "should": [
+                        {
+                            "nested": {
+                                "path": "timesketch_label",
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "term": {
+                                                    "timesketch_label.sketch_id": sketch.id
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                            }
+                        },
+                        {"exists": {"field": "tag"}},
+                    ],
+                    "minimum_should_match": 1,
+                }
+            }
 
-        if default_fields:
-            print(
-                f"  Exporting default fields only: {', '.join(DEFAULT_SOURCE_FIELDS)}"
+        # 3. Precise Count
+        print("  Calculating exact event count...")
+        total_expected = 0
+        legacy_count = 0
+        verification_query_dsl = None
+
+        if open_indices:
+            total_expected, legacy_count, verification_query_dsl = (
+                _calculate_export_counts(
+                    sketch,
+                    datastore,
+                    active_indices,
+                    active_tids,
+                    method,
+                    include_legacy,
+                    annotation_filter,
+                )
             )
-            return_fields_to_fetch = DEFAULT_SOURCE_FIELDS
         else:
-            print("  Exporting all event fields.")
-            return_fields_to_fetch = None  # Pass None to get all fields
+            print("    Note: No open indices to count.")
 
-        input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
-            sketch, datastore, return_fields_to_fetch
+        print(f"  Total events expected: {total_expected:,}")
+
+        # 4. Stream Events & Hash simultaneously
+        print(f"  Streaming events to {event_filename}...")
+        event_hash_obj = hashlib.sha256()
+        actual_row_count = 0
+
+        with open(tmp_event_file, "w", encoding="utf-8") as f_out:
+            with click.progressbar(
+                length=total_expected,
+                label="  Export Progress",
+                show_pos=True,
+                show_percent=True,
+                show_eta=True,
+            ) as bar:
+
+                if method == "direct":
+                    if open_indices:
+                        should_clauses = [{"terms": {"__ts_timeline_id": active_tids}}]
+                        if include_legacy:
+                            should_clauses.append(
+                                {
+                                    "bool": {
+                                        "must_not": {
+                                            "exists": {"field": "__ts_timeline_id"}
+                                        }
+                                    }
+                                }
+                            )
+
+                        query = {
+                            "query": {
+                                "bool": {"must": [{"bool": {"should": should_clauses}}]}
+                            }
+                        }
+                        if annotation_filter:
+                            query["query"]["bool"]["must"].append(annotation_filter)
+
+                        for hit in helpers.scan(
+                            datastore.client, query=query, index=open_indices
+                        ):
+                            event_data = hit["_source"]
+                            event_data["_id"] = hit["_id"]
+                            event_data["_index"] = hit["_index"]
+                            line = json.dumps(event_data) + "\n"
+                            f_out.write(line)
+                            event_hash_obj.update(line.encode("utf-8"))
+                            actual_row_count += 1
+                            if actual_row_count % 10000 == 0:
+                                bar.update(10000)
+                    else:
+                        print("    Note: No open indices to stream events from.")
+                else:
+                    if open_indices:
+                        fields = DEFAULT_SOURCE_FIELDS if default_fields else None
+                        api_query_dsl = None
+                        if annotated_only:
+                            api_query_dsl = {
+                                "query": {"bool": {"must": [annotation_filter]}}
+                            }
+
+                        data_handle, _, _ = _fetch_and_prepare_event_data(
+                            sketch=sketch,
+                            datastore=datastore,
+                            return_fields=fields,
+                            output_format=output_format,
+                            query_dsl=api_query_dsl,
+                        )
+                    else:
+                        print("    Note: No open indices to stream events from.")
+                        data_handle = None
+
+                    # Handle both string streams and DataFrames
+                    if data_handle is not None:
+                        if isinstance(data_handle, pd.DataFrame):
+                            if output_format == "csv":
+                                data_handle.to_csv(f_out, index=False)
+                            else:
+                                data_handle.to_json(f_out, orient="records", lines=True)
+                            actual_row_count = len(data_handle)
+                        else:
+                            if output_format == "csv":
+
+                                if hasattr(data_handle, "seek"):
+                                    data_handle.seek(0)
+                                csv_reader = csv.reader(data_handle)
+                                header = next(csv_reader, None)
+                                if header:
+                                    header_line = (
+                                        ",".join(f'"{h}"' for h in header) + "\n"
+                                    )
+                                    f_out.write(header_line)
+                                    event_hash_obj.update(header_line.encode("utf-8"))
+                                for row in csv_reader:
+                                    line_io = io.StringIO()
+                                    csv.writer(line_io).writerow(row)
+                                    line = line_io.getvalue()
+                                    f_out.write(line)
+                                    event_hash_obj.update(line.encode("utf-8"))
+                                    actual_row_count += 1
+                                    if actual_row_count % 10000 == 0:
+                                        bar.update(10000)
+                            else:
+                                for line in data_handle:
+                                    f_out.write(line)
+                                    event_hash_obj.update(line.encode("utf-8"))
+                                    actual_row_count += 1
+                                    if actual_row_count % 10000 == 0:
+                                        bar.update(10000)
+
+                bar.update(actual_row_count % 10000)
+
+        event_hash = event_hash_obj.hexdigest()
+
+        # 5. Index Mappings
+        print("  Collecting index mappings...")
+        _export_index_mappings(datastore, active_indices, tmp_dir)
+
+        # 6. Stories as Markdown
+        print("  Exporting stories to Markdown...")
+        _export_stories_to_markdown(sketch, tmp_dir)
+
+        # 7. Verification
+        if actual_row_count != total_expected:
+            click.echo(
+                click.style(
+                    f"\nWARNING: Event count mismatch! Expected: {total_expected}, "
+                    f"Exported: {actual_row_count}",
+                    fg="red",
+                    bold=True,
+                ),
+                err=True,
+            )
+        else:
+            print(f"  Verification: {actual_row_count} events exported as expected.")
+
+        # 7.5 Spot Check Random Events
+        if actual_row_count > 0 and verification_query_dsl:
+            print("  Performing random spot check...")
+            sample_ids = _get_random_event_ids(
+                datastore, active_indices, verification_query_dsl, count=5
+            )
+            if sample_ids:
+                check_results = _spot_check_file(tmp_event_file, sample_ids)
+                success_count = sum(check_results.values())
+                if success_count == len(sample_ids):
+                    print(
+                        f"  SUCCESS: All {len(sample_ids)} sampled events found in export."
+                    )
+                else:
+                    click.echo(
+                        click.style(
+                            f"\nWARNING: Spot check failed! Only {success_count}/{len(sample_ids)} "
+                            "sampled events were found in the exported file.",
+                            fg="red",
+                            bold=True,
+                        ),
+                        err=True,
+                    )
+            else:
+                print("  WARNING: Could not retrieve sample events for spot check.")
+
+        # 8. Save Metadata and Bundle
+        print("  Finalizing manifest and hashing files...")
+        with open(
+            os.path.join(tmp_dir, DEFAULT_EXPORT_METADATA_FILENAME),
+            "w",
+            encoding="utf-8",
+        ) as f_meta:
+            json.dump(metadata, f_meta, indent=2)
+
+        _generate_forensic_manifest(
+            sketch, method, actual_row_count, event_filename, event_hash, tmp_dir
         )
 
-        # 3. Convert Event Data
-        event_data_bytes = _convert_event_data(
-            input_content, is_likely_jsonl, output_format, return_fields_to_fetch
-        )
-        event_filename = DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE.format(
-            output_format=output_format
-        )
+        print("  Creating compressed archive...")
+        _bundle_export_zip(tmp_dir, tmp_zip_path)
 
-        # 4. Create Zip Archive
-        _create_export_archive(filename, metadata, event_data_bytes, event_filename)
+        # 10. Atomic Move to Destination
+        os.replace(tmp_zip_path, filename)
+        print(f"Sketch exported successfully to {filename}")
 
-    except ValueError as ve:  # Catch specific errors raised by helpers
-        print(f"ERROR: {ve}")
-        return
     except Exception as e:  # pylint: disable=broad-except
-        print(f"An unexpected error occurred during export: {e}")
+        print(f"ERROR during export: {e}")
         print(traceback.format_exc())
-        return
+    finally:
+        if os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir)
 
 
 @cli.command(name="check-opensearch-links")
@@ -3214,7 +3590,6 @@ def check_opensearch_links():
 
         # Create a map for quick lookup of original DB objects.
         search_indices_map = {s.index_name: s for s in search_indices}
-
         for index_name in sorted(list(missing_index_names)):
             search_index = search_indices_map.get(index_name)
             print(
@@ -3335,7 +3710,6 @@ def check_db_orphaned_data(verbose_checks: bool):
                         f"non-existent {ParentModelClass.__name__} ID={parent_id} "
                         f"via {fk_attr_name}"
                     )
-
                     orphaned_count += 1
                     found_orphans_overall = True
 

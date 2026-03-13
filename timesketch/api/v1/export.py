@@ -119,6 +119,7 @@ def query_to_filehandle(
     indices=None,
     timeline_ids=None,
     return_fields=None,
+    output_format="csv",
 ):
     """Query the datastore and return back a file object with the results.
 
@@ -136,9 +137,10 @@ def query_to_filehandle(
         timeline_ids (list): Optional list of IDs of Timeline objects that
             should be queried as part of the search.
         return_fields (list): List of fields to return
+        output_format (str): The format to return (csv or jsonl).
 
     Returns:
-        file-like object in a CSV format with the results.
+        file-like object in the requested format with the results.
     """
     # Ignoring the size limits to reduce the amount of queries
     # needed to get all the data.
@@ -161,57 +163,52 @@ def query_to_filehandle(
 
     scroll_id = result.get("_scroll_id", "")
     if not scroll_id:
-        return query_results_to_filehandle(result, sketch)
-
-    data_frame = lib_utils.query_results_to_dataframe(result, sketch)
+        return query_results_to_filehandle(result, sketch, output_format=output_format)
 
     total_count = result.get("hits", {}).get("total", {}).get("value", 0)
-
-    if isinstance(total_count, str):
-        try:
-            total_count = int(total_count, 10)
-        except ValueError:
-            total_count = 0
-
+    data_frame = lib_utils.query_results_to_dataframe(result, sketch)
     event_count = len(result["hits"]["hits"])
 
     while event_count < total_count:
         # pylint: disable=unexpected-keyword-arg
         result = datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
-        event_count += len(result["hits"]["hits"])
+        hits = result["hits"]["hits"]
+        if not hits:
+            break
+
         add_frame = lib_utils.query_results_to_dataframe(result, sketch)
         if add_frame.shape[0]:
             data_frame = pd.concat([data_frame, add_frame], sort=False)
+            event_count += len(hits)
         else:
-            logger.warning(
-                "Data Frame returned from a search operation was "
-                "empty, count %d out of %d total. Query is: "
-                '"%s"',
-                event_count,
-                total_count,
-                query_string or query_dsl,
-            )
+            break
 
     fh = io.StringIO()
-    data_frame.to_csv(fh, index=False)
+    if output_format.lower() == "jsonl":
+        data_frame.to_json(fh, orient="records", lines=True)
+    else:
+        data_frame.to_csv(fh, index=False)
     fh.seek(0)
     return fh
 
 
-def query_results_to_filehandle(result, sketch):
+def query_results_to_filehandle(result, sketch, output_format="csv"):
     """Returns a data frame from a OpenSearch query result dict.
 
     Args:
         result (dict): a dict that contains the response from a
             OpenSearch datastore search.
         sketch (timesketch.models.sketch.Sketch): a sketch object.
+        output_format (str): The format to return (csv or jsonl).
 
     Returns:
-        pd.DataFrame: a pandas DataFrame with the results from
-            the query.
+        file-like object in the requested format with the results.
     """
     fh = io.StringIO()
     data_frame = lib_utils.query_results_to_dataframe(result, sketch)
-    data_frame.to_csv(fh, index=False)
+    if output_format.lower() == "jsonl":
+        data_frame.to_json(fh, orient="records", lines=True)
+    else:
+        data_frame.to_csv(fh, index=False)
     fh.seek(0)
     return fh
