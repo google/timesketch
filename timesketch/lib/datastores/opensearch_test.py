@@ -81,14 +81,9 @@ class OpenSearchDataStoreTest(BaseTest):
         mock_es_instance.bulk.assert_not_called()
 
         # Add another event that pushes it over 200 bytes
-        event2 = {"message": "a" * 150}  # This will definitely push it over
+        event2 = {"message": "a" * 150}
         ds.import_event("test_index", event2)
 
-        # The first event should have been flushed before adding the second one
-        # Because we used "flush-before-add" logic.
-        # However, the second event then finishes its add and triggers its OWN flush
-        # because IT is now in the queue and exceeds the 200 byte limit alone.
-        # So bulk is called twice: once for event1, once for event2.
         self.assertEqual(mock_es_instance.bulk.call_count, 2)
         self.assertEqual(len(ds.import_events), 0)
 
@@ -107,17 +102,15 @@ class OpenSearchDataStoreTest(BaseTest):
 
         # First call to bulk raises 413, subsequent calls succeed
         def bulk_side_effect(body, **_kwargs):
-            if len(body) > 4:  # More than 2 events (4 items)
+            if len(body) > 4:
                 raise TransportError(413, "Request Entity Too Large", "")
             return {"errors": False, "items": []}
 
         mock_es_instance.bulk.side_effect = bulk_side_effect
 
-        # Add 4 events (8 items)
         for i in range(4):
             ds.import_event("test_index", {"msg": i})
 
-        # Force flush
         results = ds.flush_queued_events()
 
         # Should have called bulk multiple times due to halving
@@ -144,10 +137,8 @@ class OpenSearchDataStoreTest(BaseTest):
         # Always raise 413
         mock_es_instance.bulk.side_effect = TransportError(413, "Too Large", "")
 
-        # Add one event
         ds.import_event("test_index", {"msg": "too big"})
 
-        # Flush
         results = ds.flush_queued_events()
 
         # Should have called bulk once and identified it as single event too large
