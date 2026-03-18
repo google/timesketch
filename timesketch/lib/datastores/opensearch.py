@@ -115,6 +115,7 @@ class OpenSearchDataStore:
     DEFAULT_STREAM_LIMIT = 5000  # Max events to return when streaming results
 
     DEFAULT_FLUSH_RETRY_LIMIT = 3  # Max retries for flushing the queue.
+    DEFAULT_FLUSH_BYTE_SIZE = 52428800
     DEFAULT_EVENT_IMPORT_TIMEOUT = 180  # Timeout value in seconds for importing events.
 
     DEFAULT_INDEX_WAIT_TIMEOUT = 10  # Seconds to wait for an index to become ready
@@ -281,7 +282,7 @@ class OpenSearchDataStore:
         )
         # Size limit in bytes for queued events before a flush is forced.
         self.flush_byte_size = current_app.config.get(
-            "OPENSEARCH_FLUSH_BYTE_SIZE", 52428800
+            "OPENSEARCH_FLUSH_BYTE_SIZE", self.DEFAULT_FLUSH_BYTE_SIZE
         )
         self.import_counter = Counter()
         self.import_events = []
