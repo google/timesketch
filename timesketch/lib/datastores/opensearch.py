@@ -279,8 +279,13 @@ class OpenSearchDataStore:
         self.flush_interval = current_app.config.get(
             "OPENSEARCH_FLUSH_INTERVAL", self.DEFAULT_FLUSH_INTERVAL
         )
+        # Size limit in bytes for queued events before a flush is forced.
+        self.flush_byte_size = current_app.config.get(
+            "OPENSEARCH_FLUSH_BYTE_SIZE", 52428800
+        )
         self.import_counter = Counter()
         self.import_events = []
+        self.import_events_size = 0
         self.version = self.client.info().get("version").get("number")
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
@@ -1437,20 +1442,40 @@ class OpenSearchDataStore:
             if timeline_id:
                 event["__ts_timeline_id"] = timeline_id
 
+            # Estimate event byte size to avoid hitting OpenSearch HTTP limits.
+            estimated_size = len(str(header).encode("utf-8")) + len(
+                str(event).encode("utf-8")
+            )
+
+            # Proactive flush: If adding this event would exceed the byte limit,
+            # flush the existing queue first.
+            if self.import_events and (
+                self.import_events_size + estimated_size >= self.flush_byte_size
+            ):
+                _ = self.flush_queued_events()
+                self.import_events = []
+                self.import_events_size = 0
+
             self.import_events.append(header)
             self.import_events.append(event)
             self.import_counter["events"] += 1
+            self.import_events_size += estimated_size
 
             if not flush_interval:
                 flush_interval = self.flush_interval
 
-            if self.import_counter["events"] % int(flush_interval) == 0:
+            if (
+                self.import_counter["events"] % int(flush_interval) == 0
+                or self.import_events_size >= self.flush_byte_size
+            ):
                 _ = self.flush_queued_events()
                 self.import_events = []
+                self.import_events_size = 0
         else:
             # Import the remaining events in the queue.
             if self.import_events:
                 _ = self.flush_queued_events()
+                self.import_events_size = 0
 
         return self.import_counter["events"]
 
@@ -1478,6 +1503,72 @@ class OpenSearchDataStore:
                 body=self.import_events, timeout=self._request_timeout
             )
         except (ConnectionTimeout, socket.timeout):
+            if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
+                os_logger.error(
+                    "Unable to add events, reached recount max.", exc_info=True
+                )
+                return {}
+
+            os_logger.error(
+                "Unable to add events (retry {:d}/{:d})".format(
+                    retry_count, self.DEFAULT_FLUSH_RETRY_LIMIT
+                )
+            )
+            return self.flush_queued_events(retry_count + 1)
+        except TransportError as e:
+            if e.status_code == 413:
+                if len(self.import_events) > 2:
+                    os_logger.warning(
+                        "Payload too large (HTTP 413). Splitting batch of "
+                        "%d events and retrying.",
+                        len(self.import_events) // 2,
+                    )
+                    # Split in half, ensuring we cut at an even index to keep
+                    # header/event paired.
+                    midpoint = (len(self.import_events) // 4) * 2
+                    first_half = self.import_events[:midpoint]
+                    second_half = self.import_events[midpoint:]
+
+                    self.import_events = first_half
+                    self.import_events_size = 0
+                    res1 = self.flush_queued_events(retry_count)
+
+                    self.import_events = second_half
+                    self.import_events_size = 0
+                    res2 = self.flush_queued_events(retry_count)
+
+                    return_dict["errors_in_upload"] = res1.get(
+                        "errors_in_upload", False
+                    ) or res2.get("errors_in_upload", False)
+                    return_dict["error_container"] = self._error_container
+                    return return_dict
+
+                # Single event is too large for OpenSearch
+                index_name = "N/A"
+                if self.import_events:
+                    header = self.import_events[0]
+                    index_name = header.get("index", header.get("update", {})).get(
+                        "_index", "N/A"
+                    )
+
+                error_msg = (
+                    "A single event exceeds OpenSearch's maximum request size "
+                    f"limit and will be skipped. Index: {index_name}"
+                )
+                os_logger.error(error_msg)
+
+                _ = self._error_container.setdefault(
+                    index_name, {"errors": [], "types": Counter(), "details": Counter()}
+                )
+                self._error_container[index_name]["errors"].append(error_msg)
+                self._error_container[index_name]["types"]["RequestEntityTooLarge"] += 1
+                self._error_container[index_name]["details"]["SingleEventTooLarge"] += 1
+
+                return_dict["errors_in_upload"] = True
+                return_dict["error_container"] = self._error_container
+                self.import_events = []
+                return return_dict
+
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
                 os_logger.error(
                     "Unable to add events, reached recount max.", exc_info=True
