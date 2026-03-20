@@ -1505,10 +1505,16 @@ class OpenSearchDataStore:
             )
         except (ConnectionTimeout, socket.timeout):
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
-                os_logger.error(
-                    "Unable to add events, reached recount max.", exc_info=True
+                error_msg = "Unable to add events, reached recount max."
+                os_logger.error(error_msg, exc_info=True)
+                return_dict["errors_in_upload"] = True
+                _ = self._error_container.setdefault(
+                    "N/A", {"errors": [], "types": Counter(), "details": Counter()}
                 )
-                return {}
+                self._error_container["N/A"]["errors"].append(error_msg)
+                self._error_container["N/A"]["types"]["MaxRetriesReached"] += 1
+                return_dict["error_container"] = self._error_container
+                return return_dict
 
             os_logger.error(
                 "Unable to add events (retry {:d}/{:d})".format(
@@ -1571,10 +1577,16 @@ class OpenSearchDataStore:
                 return return_dict
 
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
-                os_logger.error(
-                    "Unable to add events, reached recount max.", exc_info=True
+                error_msg = "Unable to add events, reached recount max."
+                os_logger.error(error_msg, exc_info=True)
+                return_dict["errors_in_upload"] = True
+                _ = self._error_container.setdefault(
+                    "N/A", {"errors": [], "types": Counter(), "details": Counter()}
                 )
-                return {}
+                self._error_container["N/A"]["errors"].append(error_msg)
+                self._error_container["N/A"]["types"]["MaxRetriesReached"] += 1
+                return_dict["error_container"] = self._error_container
+                return return_dict
 
             os_logger.error(
                 "Unable to add events (retry {:d}/{:d})".format(
