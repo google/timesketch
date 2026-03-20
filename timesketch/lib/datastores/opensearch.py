@@ -1401,17 +1401,20 @@ class OpenSearchDataStore:
         event_id: Optional[str] = None,
         flush_interval: Optional[int] = None,
         timeline_id: Optional[int] = None,
-    ):
+    ) -> int:
         """Add event to OpenSearch.
 
         Args:
-            index_name: Name of the index in OpenSearch
-            event: Event dictionary
-            event_id: Event OpenSearch ID
-            flush_interval: Number of events to queue up before indexing
+            index_name: Name of the index in OpenSearch.
+            event: Event dictionary.
+            event_id: Event OpenSearch ID.
+            flush_interval: Number of events to queue up before indexing.
             timeline_id: Optional ID number of a Timeline object this event
                 belongs to. If supplied an additional field will be added to
                 the store indicating the timeline this belongs to.
+
+        Returns:
+            The total number of events processed so far in the current session.
         """
         if event:
             for k, v in event.items():
@@ -1480,15 +1483,20 @@ class OpenSearchDataStore:
 
         return self.import_counter["events"]
 
-    def _handle_payload_too_large(self, retry_count: int) -> dict:
+    def _handle_payload_too_large(self, retry_count: int) -> Dict[str, Any]:
         """Handles HTTP 413 Payload Too Large errors by splitting the batch.
+
+        This method implements a reactive batch halving strategy. If a batch
+        is too large, it is split into two halves which are then processed
+        recursively. If a single event is still too large, it is skipped and
+        recorded in the error container.
 
         Args:
             retry_count: Current retry iteration.
 
         Returns:
-            dict: The result of the flushed chunks, or error details if a single
-                  event caused the limit to be exceeded.
+            A dictionary containing the combined results of the flushed chunks,
+            including 'errors_in_upload' and 'error_container'.
         """
         return_dict = {
             "number_of_events": len(self.import_events) / 2,
@@ -1547,15 +1555,19 @@ class OpenSearchDataStore:
         self.import_events = []
         return return_dict
 
-    def flush_queued_events(self, retry_count=0):
-        """Flush all queued events.
+    def flush_queued_events(self, retry_count: int = 0) -> Dict[str, Any]:
+        """Flush all queued events to OpenSearch.
+
+        This method uses the bulk API to index or update all currently queued
+        events. It includes retry logic for timeouts and specific handling for
+        payload size issues.
+
+        Args:
+            retry_count: Current retry iteration.
 
         Returns:
-            dict: A dict object that contains the number of events
-                that were sent to OpenSearch as well as information
-                on whether there were any errors, and what the
-                details of these errors if any.
-            retry_count: optional int indicating whether this is a retry.
+            A dictionary containing the number of events sent, the total
+            number of events processed, and any error information.
         """
         if not self.import_events:
             return {}
