@@ -34,6 +34,7 @@ jobs:
         run: |
           pip install pipenv
           pipenv install -d
+          pipenv run pip install -r requirements.txt
           pipenv run pip install -r test_requirements.txt
           pipenv run pip install -e ./api_client/python
           pipenv run pip install -e ./importer_client/python
