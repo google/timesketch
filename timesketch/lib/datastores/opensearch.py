@@ -1480,6 +1480,73 @@ class OpenSearchDataStore:
 
         return self.import_counter["events"]
 
+    def _handle_payload_too_large(self, retry_count: int) -> dict:
+        """Handles HTTP 413 Payload Too Large errors by splitting the batch.
+
+        Args:
+            retry_count: Current retry iteration.
+
+        Returns:
+            dict: The result of the flushed chunks, or error details if a single
+                  event caused the limit to be exceeded.
+        """
+        return_dict = {
+            "number_of_events": len(self.import_events) / 2,
+            "total_events": self.import_counter["events"],
+        }
+
+        if len(self.import_events) > 2:
+            os_logger.warning(
+                "Payload too large (HTTP 413). Splitting batch of "
+                "%d events and retrying.",
+                len(self.import_events) // 2,
+            )
+            # Split in half, ensuring we cut at an even index to keep
+            # header/event paired.
+            midpoint = (len(self.import_events) // 4) * 2
+            first_half = self.import_events[:midpoint]
+            second_half = self.import_events[midpoint:]
+
+            self.import_events = first_half
+            self.import_events_size = 0
+            res1 = self.flush_queued_events(retry_count)
+
+            self.import_events = second_half
+            self.import_events_size = 0
+            res2 = self.flush_queued_events(retry_count)
+
+            return_dict["errors_in_upload"] = res1.get(
+                "errors_in_upload", False
+            ) or res2.get("errors_in_upload", False)
+            return_dict["error_container"] = self._error_container
+            return return_dict
+
+        # Single event is too large for OpenSearch
+        index_name = "N/A"
+        if self.import_events:
+            header = self.import_events[0]
+            index_name = header.get("index", header.get("update", {})).get(
+                "_index", "N/A"
+            )
+
+        error_msg = (
+            "A single event exceeds OpenSearch's maximum request size "
+            f"limit and will be skipped. Index: {index_name}"
+        )
+        os_logger.error(error_msg)
+
+        _ = self._error_container.setdefault(
+            index_name, {"errors": [], "types": Counter(), "details": Counter()}
+        )
+        self._error_container[index_name]["errors"].append(error_msg)
+        self._error_container[index_name]["types"]["RequestEntityTooLarge"] += 1
+        self._error_container[index_name]["details"]["SingleEventTooLarge"] += 1
+
+        return_dict["errors_in_upload"] = True
+        return_dict["error_container"] = self._error_container
+        self.import_events = []
+        return return_dict
+
     def flush_queued_events(self, retry_count=0):
         """Flush all queued events.
 
@@ -1524,57 +1591,7 @@ class OpenSearchDataStore:
             return self.flush_queued_events(retry_count + 1)
         except TransportError as e:
             if e.status_code == 413:
-                if len(self.import_events) > 2:
-                    os_logger.warning(
-                        "Payload too large (HTTP 413). Splitting batch of "
-                        "%d events and retrying.",
-                        len(self.import_events) // 2,
-                    )
-                    # Split in half, ensuring we cut at an even index to keep
-                    # header/event paired.
-                    midpoint = (len(self.import_events) // 4) * 2
-                    first_half = self.import_events[:midpoint]
-                    second_half = self.import_events[midpoint:]
-
-                    self.import_events = first_half
-                    self.import_events_size = 0
-                    res1 = self.flush_queued_events(retry_count)
-
-                    self.import_events = second_half
-                    self.import_events_size = 0
-                    res2 = self.flush_queued_events(retry_count)
-
-                    return_dict["errors_in_upload"] = res1.get(
-                        "errors_in_upload", False
-                    ) or res2.get("errors_in_upload", False)
-                    return_dict["error_container"] = self._error_container
-                    return return_dict
-
-                # Single event is too large for OpenSearch
-                index_name = "N/A"
-                if self.import_events:
-                    header = self.import_events[0]
-                    index_name = header.get("index", header.get("update", {})).get(
-                        "_index", "N/A"
-                    )
-
-                error_msg = (
-                    "A single event exceeds OpenSearch's maximum request size "
-                    f"limit and will be skipped. Index: {index_name}"
-                )
-                os_logger.error(error_msg)
-
-                _ = self._error_container.setdefault(
-                    index_name, {"errors": [], "types": Counter(), "details": Counter()}
-                )
-                self._error_container[index_name]["errors"].append(error_msg)
-                self._error_container[index_name]["types"]["RequestEntityTooLarge"] += 1
-                self._error_container[index_name]["details"]["SingleEventTooLarge"] += 1
-
-                return_dict["errors_in_upload"] = True
-                return_dict["error_container"] = self._error_container
-                self.import_events = []
-                return return_dict
+                return self._handle_payload_too_large(retry_count)
 
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
                 error_msg = "Unable to add events, reached recount max."
