@@ -67,7 +67,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-${{ matrix.node-version }}-
       - name: Install dependencies
-        run: yarn add eslint@5.16.0
+        run: yarn install --frozen-lockfile
       - name: Run eslint
         run: |
           git config pull.rebase false && git fetch -p origin master
