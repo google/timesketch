@@ -115,6 +115,7 @@ class OpenSearchDataStore:
     DEFAULT_STREAM_LIMIT = 5000  # Max events to return when streaming results
 
     DEFAULT_FLUSH_RETRY_LIMIT = 3  # Max retries for flushing the queue.
+    DEFAULT_FLUSH_BYTE_SIZE = 52428800
     DEFAULT_EVENT_IMPORT_TIMEOUT = 180  # Timeout value in seconds for importing events.
 
     DEFAULT_INDEX_WAIT_TIMEOUT = 10  # Seconds to wait for an index to become ready
@@ -279,8 +280,13 @@ class OpenSearchDataStore:
         self.flush_interval = current_app.config.get(
             "OPENSEARCH_FLUSH_INTERVAL", self.DEFAULT_FLUSH_INTERVAL
         )
+        # Size limit in bytes for queued events before a flush is forced.
+        self.flush_byte_size = current_app.config.get(
+            "OPENSEARCH_FLUSH_BYTE_SIZE", self.DEFAULT_FLUSH_BYTE_SIZE
+        )
         self.import_counter = Counter()
         self.import_events = []
+        self.import_events_size = 0
         self.version = self.client.info().get("version").get("number")
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
@@ -1395,17 +1401,20 @@ class OpenSearchDataStore:
         event_id: Optional[str] = None,
         flush_interval: Optional[int] = None,
         timeline_id: Optional[int] = None,
-    ):
+    ) -> int:
         """Add event to OpenSearch.
 
         Args:
-            index_name: Name of the index in OpenSearch
-            event: Event dictionary
-            event_id: Event OpenSearch ID
-            flush_interval: Number of events to queue up before indexing
+            index_name: Name of the index in OpenSearch.
+            event: Event dictionary.
+            event_id: Event OpenSearch ID.
+            flush_interval: Number of events to queue up before indexing.
             timeline_id: Optional ID number of a Timeline object this event
                 belongs to. If supplied an additional field will be added to
                 the store indicating the timeline this belongs to.
+
+        Returns:
+            The total number of events processed so far in the current session.
         """
         if event:
             for k, v in event.items():
@@ -1437,32 +1446,128 @@ class OpenSearchDataStore:
             if timeline_id:
                 event["__ts_timeline_id"] = timeline_id
 
+            # Estimate event byte size to avoid hitting OpenSearch HTTP limits.
+            estimated_size = len(str(header).encode("utf-8")) + len(
+                str(event).encode("utf-8")
+            )
+
+            # Proactive flush: If adding this event would exceed the byte limit,
+            # flush the existing queue first.
+            if self.import_events and (
+                self.import_events_size + estimated_size >= self.flush_byte_size
+            ):
+                _ = self.flush_queued_events()
+                self.import_events = []
+                self.import_events_size = 0
+
             self.import_events.append(header)
             self.import_events.append(event)
             self.import_counter["events"] += 1
+            self.import_events_size += estimated_size
 
             if not flush_interval:
                 flush_interval = self.flush_interval
 
-            if self.import_counter["events"] % int(flush_interval) == 0:
+            if (
+                self.import_counter["events"] % int(flush_interval) == 0
+                or self.import_events_size >= self.flush_byte_size
+            ):
                 _ = self.flush_queued_events()
                 self.import_events = []
+                self.import_events_size = 0
         else:
             # Import the remaining events in the queue.
             if self.import_events:
                 _ = self.flush_queued_events()
+                self.import_events_size = 0
 
         return self.import_counter["events"]
 
-    def flush_queued_events(self, retry_count=0):
-        """Flush all queued events.
+    def _handle_payload_too_large(self, retry_count: int) -> Dict[str, Any]:
+        """Handles HTTP 413 Payload Too Large errors by splitting the batch.
+
+        This method implements a reactive batch halving strategy. If a batch
+        is too large, it is split into two halves which are then processed
+        recursively. If a single event is still too large, it is skipped and
+        recorded in the error container.
+
+        Args:
+            retry_count: Current retry iteration.
 
         Returns:
-            dict: A dict object that contains the number of events
-                that were sent to OpenSearch as well as information
-                on whether there were any errors, and what the
-                details of these errors if any.
-            retry_count: optional int indicating whether this is a retry.
+            A dictionary containing the combined results of the flushed chunks,
+            including 'errors_in_upload' and 'error_container'.
+        """
+        return_dict = {
+            "number_of_events": len(self.import_events) / 2,
+            "total_events": self.import_counter["events"],
+        }
+
+        if len(self.import_events) > 2:
+            os_logger.warning(
+                "Payload too large (HTTP 413). Splitting batch of "
+                "%d events and retrying.",
+                len(self.import_events) // 2,
+            )
+            # Split in half, ensuring we cut at an even index to keep
+            # header/event paired.
+            midpoint = (len(self.import_events) // 4) * 2
+            first_half = self.import_events[:midpoint]
+            second_half = self.import_events[midpoint:]
+
+            self.import_events = first_half
+            self.import_events_size = 0
+            res1 = self.flush_queued_events(retry_count)
+
+            self.import_events = second_half
+            self.import_events_size = 0
+            res2 = self.flush_queued_events(retry_count)
+
+            return_dict["errors_in_upload"] = res1.get(
+                "errors_in_upload", False
+            ) or res2.get("errors_in_upload", False)
+            return_dict["error_container"] = self._error_container
+            return return_dict
+
+        # Single event is too large for OpenSearch
+        index_name = "N/A"
+        if self.import_events:
+            header = self.import_events[0]
+            index_name = header.get("index", header.get("update", {})).get(
+                "_index", "N/A"
+            )
+
+        error_msg = (
+            "A single event exceeds OpenSearch's maximum request size "
+            f"limit and will be skipped. Index: {index_name}"
+        )
+        os_logger.error(error_msg)
+
+        _ = self._error_container.setdefault(
+            index_name, {"errors": [], "types": Counter(), "details": Counter()}
+        )
+        self._error_container[index_name]["errors"].append(error_msg)
+        self._error_container[index_name]["types"]["RequestEntityTooLarge"] += 1
+        self._error_container[index_name]["details"]["SingleEventTooLarge"] += 1
+
+        return_dict["errors_in_upload"] = True
+        return_dict["error_container"] = self._error_container
+        self.import_events = []
+        return return_dict
+
+    def flush_queued_events(self, retry_count: int = 0) -> Dict[str, Any]:
+        """Flush all queued events to OpenSearch.
+
+        This method uses the bulk API to index or update all currently queued
+        events. It includes retry logic for timeouts and specific handling for
+        payload size issues.
+
+        Args:
+            retry_count: Current retry iteration.
+
+        Returns:
+            A dictionary containing the number of events sent, the total
+            number of events processed, and any error information.
         """
         if not self.import_events:
             return {}
@@ -1479,10 +1584,38 @@ class OpenSearchDataStore:
             )
         except (ConnectionTimeout, socket.timeout):
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
-                os_logger.error(
-                    "Unable to add events, reached recount max.", exc_info=True
+                error_msg = "Unable to add events, reached recount max."
+                os_logger.error(error_msg, exc_info=True)
+                return_dict["errors_in_upload"] = True
+                _ = self._error_container.setdefault(
+                    "N/A", {"errors": [], "types": Counter(), "details": Counter()}
                 )
-                return {}
+                self._error_container["N/A"]["errors"].append(error_msg)
+                self._error_container["N/A"]["types"]["MaxRetriesReached"] += 1
+                return_dict["error_container"] = self._error_container
+                return return_dict
+
+            os_logger.error(
+                "Unable to add events (retry {:d}/{:d})".format(
+                    retry_count, self.DEFAULT_FLUSH_RETRY_LIMIT
+                )
+            )
+            return self.flush_queued_events(retry_count + 1)
+        except TransportError as e:
+            if e.status_code == 413:
+                return self._handle_payload_too_large(retry_count)
+
+            if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
+                error_msg = "Unable to add events, reached recount max."
+                os_logger.error(error_msg, exc_info=True)
+                return_dict["errors_in_upload"] = True
+                _ = self._error_container.setdefault(
+                    "N/A", {"errors": [], "types": Counter(), "details": Counter()}
+                )
+                self._error_container["N/A"]["errors"].append(error_msg)
+                self._error_container["N/A"]["types"]["MaxRetriesReached"] += 1
+                return_dict["error_container"] = self._error_container
+                return return_dict
 
             os_logger.error(
                 "Unable to add events (retry {:d}/{:d})".format(
