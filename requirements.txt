@@ -17,6 +17,7 @@ google_auth_oauthlib==1.2.4
 google-genai
 gunicorn==23.0.0
 numpy==1.26.4
+scipy>=1.10.0
 oauthlib==3.3.1
 pandas==2.2.3
 PyJWT==2.4.0
