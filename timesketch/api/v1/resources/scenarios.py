@@ -917,9 +917,21 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch",
+            )
+
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        if question.scenario and question.scenario.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "Question does not belong to this sketch",
+            )
 
         conclusions = InvestigativeQuestionConclusion.query.filter_by(
             investigativequestion=question
@@ -948,6 +960,12 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        if question.scenario and question.scenario.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "Question does not belong to this sketch",
+            )
 
         form = request.json
         if not form:
