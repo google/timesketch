@@ -3107,6 +3107,8 @@ def _export_stories_to_markdown(sketch: Sketch, target_dir: str) -> None:
         story_path = os.path.join(stories_dir, s_name)
 
         story_content = story.content or ""
+        author = story.user.username if story.user else "System"
+
         # Handle newer block-based stories (JSON) vs legacy (raw Markdown)
         if story_content.startswith("["):
             try:
@@ -3118,15 +3120,36 @@ def _export_stories_to_markdown(sketch: Sketch, target_dir: str) -> None:
                     story_content = exporter.export_story()
             except (json.JSONDecodeError, TypeError, ValueError) as e:
                 click.echo(
-                    f"  Warning: Failed to parse block-based story {story.id}: {e!s}. "
-                    "Exporting raw content.",
+                    f"  Warning: Failed to parse block-based story {story.id}: "
+                    f"{e!s}. Exporting raw content.",
                     err=True,
                 )
+
+        # Save raw content as JSON for archival safety
+        raw_name = f"story_{story.id}_{safe_title}.json"
+        raw_path = os.path.join(stories_dir, raw_name)
+        try:
+            with open(raw_path, "w", encoding="utf-8") as f_raw:
+                # We save a simple dict with metadata and raw content
+                json.dump(
+                    {
+                        "id": story.id,
+                        "title": story.title,
+                        "author": author,
+                        "created_at": story.created_at.isoformat(),
+                        "content": story.content,
+                    },
+                    f_raw,
+                    indent=2,
+                )
+        except (IOError, OSError) as e:
+            click.echo(
+                f"  Warning: Failed to export raw story {story.id}: {e!s}", err=True
+            )
 
         try:
             with open(story_path, "w", encoding="utf-8") as f_story:
                 f_story.write(f"# {story.title}\n\n")
-                author = story.user.username if story.user else "System"
                 f_story.write(f"**Author:** {author}\n")
                 f_story.write(f"**Created:** {story.created_at.isoformat()}\n\n")
                 f_story.write(story_content)
