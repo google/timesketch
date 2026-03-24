@@ -56,6 +56,8 @@ from timesketch.api.v1 import export as api_export
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1 import utils as api_utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+from timesketch.lib.stories import markdown as markdown_story_exporter
+from timesketch.lib.stories import api_fetcher as story_api_fetcher
 
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 
@@ -3055,10 +3057,21 @@ def _calculate_export_counts(
 
 def _export_index_mappings(
     datastore: OpenSearchDataStore, active_indices: List[str], target_dir: str
-):
-    """Collect index mappings and save as JSON files."""
+) -> None:
+    """Collect index mappings and save as JSON files.
+
+    Args:
+        datastore: OpenSearchDataStore instance.
+        active_indices: List of index names to fetch mappings for.
+        target_dir: Base directory for export files.
+    """
     mappings_dir = os.path.join(target_dir, "mappings")
-    os.makedirs(mappings_dir, exist_ok=True)
+    try:
+        os.makedirs(mappings_dir, exist_ok=True)
+    except OSError as e:
+        click.echo(f"  Warning: Could not create mappings directory: {e!s}", err=True)
+        return
+
     open_indices = _get_open_indices(datastore, active_indices)
 
     for index_name in active_indices:
@@ -3067,10 +3080,13 @@ def _export_index_mappings(
             continue
         try:
             mapping = datastore.client.indices.get_mapping(index=index_name)
-            with open(os.path.join(mappings_dir, f"{index_name}.json"), "w") as f_map:
+            m_path = os.path.join(mappings_dir, f"{index_name}.json")
+            with open(m_path, "w", encoding="utf-8") as f_map:
                 json.dump(mapping, f_map, indent=2)
+        except (IOError, OSError) as e:
+            click.echo(f"    WARNING: Failed to save mapping for {index_name}: {e!s}")
         except Exception as e:  # pylint: disable=broad-except
-            print(f"    WARNING: Mapping failed for {index_name}: {e}")
+            click.echo(f"    WARNING: Mapping retrieval failed for {index_name}: {e!s}")
 
 
 def _export_stories_to_markdown(sketch: Sketch, target_dir: str) -> None:
@@ -3093,13 +3109,30 @@ def _export_stories_to_markdown(sketch: Sketch, target_dir: str) -> None:
         s_name = f"story_{story.id}_{safe_title}.md"
         story_path = os.path.join(stories_dir, s_name)
 
+        story_content = story.content or ""
+        # Handle newer block-based stories (JSON) vs legacy (raw Markdown)
+        if story_content.startswith("["):
+            try:
+                data_fetcher = story_api_fetcher.ApiDataFetcher()
+                data_fetcher.set_sketch_id(sketch.id)
+                with markdown_story_exporter.MarkdownStoryExporter() as exporter:
+                    exporter.set_data_fetcher(data_fetcher)
+                    exporter.from_string(story_content)
+                    story_content = exporter.export_story()
+            except (json.JSONDecodeError, TypeError, ValueError) as e:
+                click.echo(
+                    f"  Warning: Failed to parse block-based story {story.id}: {e!s}. "
+                    "Exporting raw content.",
+                    err=True,
+                )
+
         try:
             with open(story_path, "w", encoding="utf-8") as f_story:
                 f_story.write(f"# {story.title}\n\n")
                 author = story.user.username if story.user else "System"
                 f_story.write(f"**Author:** {author}\n")
                 f_story.write(f"**Created:** {story.created_at.isoformat()}\n\n")
-                f_story.write(story.content or "")
+                f_story.write(story_content)
         except (IOError, OSError) as e:
             click.echo(
                 f"  Warning: Failed to export story {story.id} to {story_path}: {e!s}",
@@ -3315,7 +3348,7 @@ def export_sketch(
     default_fields: bool,
     annotated_only: bool,
     include_legacy: bool,
-):
+) -> None:
     """Exports a Timesketch sketch to a forensic-grade zip archive.
 
     The archive includes sketch metadata (as 'metadata.json') and all associated
