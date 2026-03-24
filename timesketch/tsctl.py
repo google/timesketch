@@ -174,8 +174,23 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
     return open_indices
 
 
-def _get_random_event_ids(datastore, indices, query_dsl, count=5):
-    """Retrieve random event IDs from OpenSearch based on a query."""
+def _get_random_event_ids(
+    datastore: OpenSearchDataStore,
+    indices: List[str],
+    query_dsl: Dict,
+    count: int = 5,
+) -> List[str]:
+    """Retrieve random event IDs from OpenSearch based on a query.
+
+    Args:
+        datastore: OpenSearchDataStore instance.
+        indices: List of index names to search.
+        query_dsl: The OpenSearch query DSL to filter the selection.
+        count: The number of random event IDs to retrieve.
+
+    Returns:
+        A list of event IDs found in OpenSearch.
+    """
     random_query = {
         "query": {
             "function_score": {
@@ -191,6 +206,7 @@ def _get_random_event_ids(datastore, indices, query_dsl, count=5):
         res = datastore.client.search(index=indices, body=random_query)
         return [hit["_id"] for hit in res["hits"]["hits"]]
     except Exception as e:  # pylint: disable=broad-except
+        logger.error("Error retrieving random event IDs: %s", str(e))
         return []
 
 
@@ -244,9 +260,11 @@ def _spot_check_file(file_path: str, event_ids: List[str]) -> Dict[str, bool]:
     return results
 
 
+opensearch_logger = logging.getLogger("opensearch")
+
+
 def configure_opensearch_logger():
     """Configure the opensearch-py logger for tsctl."""
-    opensearch_logger = logging.getLogger("opensearch")
     # Set level to INFO to see more request/response logs
     opensearch_logger.setLevel(logging.WARNING)
     # Remove any default handlers to prevent duplicate or unwanted formatting
