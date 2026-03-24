@@ -3073,19 +3073,38 @@ def _export_index_mappings(
             print(f"    WARNING: Mapping failed for {index_name}: {e}")
 
 
-def _export_stories_to_markdown(sketch: Sketch, target_dir: str):
-    """Export sketch stories as individual Markdown files."""
+def _export_stories_to_markdown(sketch: Sketch, target_dir: str) -> None:
+    """Export sketch stories as individual Markdown files.
+
+    Args:
+        sketch: The Sketch database model.
+        target_dir: The base directory where the stories should be saved.
+    """
     stories_dir = os.path.join(target_dir, "stories")
-    os.makedirs(stories_dir, exist_ok=True)
+    try:
+        os.makedirs(stories_dir, exist_ok=True)
+    except OSError as e:
+        click.echo(f"  Warning: Could not create stories directory: {e!s}", err=True)
+        return
+
     for story in sketch.stories:
-        s_name = f"story_{story.id}_{re.sub(r'[^a-zA-Z0-9]', '_', story.title)}.md"
-        with open(os.path.join(stories_dir, s_name), "w") as f_story:
-            f_story.write(f"# {story.title}\n\n")
-            f_story.write(
-                f"**Author:** {story.user.username if story.user else 'System'}\n"
+        # Generate a safe filename from the story title
+        safe_title = re.sub(r"[^a-zA-Z0-9]", "_", story.title)
+        s_name = f"story_{story.id}_{safe_title}.md"
+        story_path = os.path.join(stories_dir, s_name)
+
+        try:
+            with open(story_path, "w", encoding="utf-8") as f_story:
+                f_story.write(f"# {story.title}\n\n")
+                author = story.user.username if story.user else "System"
+                f_story.write(f"**Author:** {author}\n")
+                f_story.write(f"**Created:** {story.created_at.isoformat()}\n\n")
+                f_story.write(story.content or "")
+        except (IOError, OSError) as e:
+            click.echo(
+                f"  Warning: Failed to export story {story.id} to {story_path}: {e!s}",
+                err=True,
             )
-            f_story.write(f"**Created:** {story.created_at.isoformat()}\n\n")
-            f_story.write(story.content)
 
 
 def _generate_forensic_manifest(
@@ -3095,38 +3114,70 @@ def _generate_forensic_manifest(
     event_filename: str,
     event_hash: str,
     tmp_dir: str,
-):
-    """Generate manifest.txt with SHA256 hashes for the export archive."""
+) -> None:
+    """Generate manifest.txt with SHA256 hashes for the export archive.
+
+    Args:
+        sketch: The Sketch database model.
+        method: The export method used (direct or api).
+        event_count: Number of events exported.
+        event_filename: Name of the event data file.
+        event_hash: SHA256 hash of the event data file.
+        tmp_dir: Directory containing all export files.
+    """
     manifest_path = os.path.join(tmp_dir, "manifest.txt")
-    with open(manifest_path, "w", encoding="utf-8") as f_man:
-        f_man.write("Timesketch Export Manifest\n")
-        f_man.write("==================================\n")
-        f_man.write(f"Sketch ID: {sketch.id} | Name: {sketch.name}\n")
-        f_man.write(
-            f"Date: {datetime.datetime.now(datetime.timezone.utc).isoformat()}\n"
-        )
-        f_man.write(f"Method: {method} | Events: {event_count}\n\n")
-        f_man.write("File Hashes (SHA256):\n")
-        f_man.write(f"{event_hash}  {event_filename}\n")
-        for root, _, files in os.walk(tmp_dir):
-            for f in files:
-                if f in [event_filename, "manifest.txt", "export.zip"]:
-                    continue
-                abs_p = os.path.join(root, f)
-                rel_p = os.path.relpath(abs_p, tmp_dir)
-                f_man.write(f"{get_sha256(abs_p)}  {rel_p}\n")
+    try:
+        with open(manifest_path, "w", encoding="utf-8") as f_man:
+            f_man.write("Timesketch Export Manifest\n")
+            f_man.write("==================================\n")
+            f_man.write(f"Sketch ID: {sketch.id} | Name: {sketch.name}\n")
+            timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            f_man.write(f"Date: {timestamp}\n")
+            f_man.write(f"Method: {method} | Events: {event_count}\n\n")
+            f_man.write("File Hashes (SHA256):\n")
+            f_man.write(f"{event_hash}  {event_filename}\n")
+
+            for root, _, files in os.walk(tmp_dir):
+                for f in files:
+                    if f in [event_filename, "manifest.txt", "export.zip"]:
+                        continue
+                    abs_p = os.path.join(root, f)
+                    rel_p = os.path.relpath(abs_p, tmp_dir)
+                    try:
+                        f_man.write(f"{get_sha256(abs_p)}  {rel_p}\n")
+                    except Exception as e:  # pylint: disable=broad-except
+                        click.echo(
+                            f"  Warning: Could not hash file {rel_p}: {e!s}", err=True
+                        )
+    except (IOError, OSError) as e:
+        click.echo(f"  Warning: Failed to create manifest: {e!s}", err=True)
 
 
-def _bundle_export_zip(tmp_dir: str, output_zip_path: str):
-    """Bundle all files in tmp_dir into a single ZIP archive."""
-    with zipfile.ZipFile(output_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for root, _, files in os.walk(tmp_dir):
-            for f in files:
-                if f == "export.zip":
-                    continue
-                abs_p = os.path.join(root, f)
-                rel_p = os.path.relpath(abs_p, tmp_dir)
-                zipf.write(abs_p, rel_p)
+def _bundle_export_zip(tmp_dir: str, output_zip_path: str) -> None:
+    """Bundle all files in tmp_dir into a single ZIP archive.
+
+    Args:
+        tmp_dir: Directory containing all files to be bundled.
+        output_zip_path: Path where the resulting ZIP file should be saved.
+    """
+    try:
+        with zipfile.ZipFile(output_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(tmp_dir):
+                for f in files:
+                    # Avoid adding the output zip itself to the archive
+                    if f == "export.zip" or f == os.path.basename(output_zip_path):
+                        continue
+                    abs_p = os.path.join(root, f)
+                    rel_p = os.path.relpath(abs_p, tmp_dir)
+                    try:
+                        zipf.write(abs_p, rel_p)
+                    except (IOError, OSError) as e:
+                        click.echo(
+                            f"  Warning: Could not add {rel_p} to ZIP: {e!s}", err=True
+                        )
+    except (IOError, OSError, zipfile.BadZipFile) as e:
+        click.echo(f"  Error: Failed to create ZIP archive: {e!s}", err=True)
+        raise click.Abort() from e
 
 
 def _fetch_and_prepare_event_data(
