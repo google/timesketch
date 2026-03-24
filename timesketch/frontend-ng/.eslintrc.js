@@ -22,9 +22,21 @@ module.exports = {
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    'vue/multi-word-component-names': 'off',
+    'vue/no-mutating-props': 'off',
+    'vue/no-unused-vars': 'off',
+    'vue/no-v-text-v-html-on-component': 'off',
+    'array-callback-return': 'off',
+    'no-unreachable-loop': 'off',
+    'no-prototype-builtins': 'off',
+    'no-empty': 'off',
+    'no-var': 'off',
+    'no-dupe-keys': 'off',
+    'prefer-const': 'off'
   },
   parserOptions: {
-    parser: 'babel-eslint',
+    parser: '@babel/eslint-parser',
+    requireConfigFile: false,
   },
     "overrides": [
       {
