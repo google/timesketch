@@ -215,8 +215,19 @@ def _spot_check_file(file_path, event_ids):
                 remaining -= to_remove
                 if not remaining:
                     break
+    except (FileNotFoundError, PermissionError) as e:
+        click.echo(
+            f"  Warning: Could not open {file_path} for verification: {e!s}", err=True
+        )
+    except UnicodeDecodeError as e:
+        click.echo(
+            f"  Warning: Decoding error while reading {file_path}: {e!s}", err=True
+        )
     except Exception as e:  # pylint: disable=broad-except
-        pass
+        click.echo(
+            f"  Warning: Unexpected error during verification of {file_path}: {e!s}",
+            err=True,
+        )
 
     return results
 
