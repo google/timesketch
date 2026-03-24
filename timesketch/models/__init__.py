@@ -21,8 +21,6 @@ from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import func
 from sqlalchemy import Integer
-from sqlalchemy.orm import scoped_session, sessionmaker, as_declarative
-from sqlalchemy.ext.declarative import declared_attr
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
