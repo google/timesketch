@@ -3357,13 +3357,117 @@ def export_sketch(
             sketch, datastore, return_fields_to_fetch
         )
 
-        # 3. Convert Event Data
-        event_data_bytes = _convert_event_data(
-            input_content, is_likely_jsonl, output_format, return_fields_to_fetch
-        )
-        event_filename = DEFAULT_EXPORT_EVENTS_FILENAME_TEMPLATE.format(
-            output_format=output_format
-        )
+        # 4. Stream Events & Hash simultaneously
+        print(f"  Streaming events to {event_filename}...")
+        event_hash_obj = hashlib.sha256()
+        actual_row_count = 0
+
+        with open(tmp_event_file, "w", encoding="utf-8") as f_out:
+            with click.progressbar(
+                length=total_expected,
+                label="  Export Progress",
+                show_pos=True,
+                show_percent=True,
+                show_eta=True,
+            ) as bar:
+
+                if method == "direct":
+                    if open_indices:
+                        should_clauses = [{"terms": {"__ts_timeline_id": active_tids}}]
+                        if include_legacy:
+                            should_clauses.append(
+                                {
+                                    "bool": {
+                                        "must_not": {
+                                            "exists": {"field": "__ts_timeline_id"}
+                                        }
+                                    }
+                                }
+                            )
+
+                        query = {
+                            "query": {
+                                "bool": {"must": [{"bool": {"should": should_clauses}}]}
+                            }
+                        }
+                        if annotation_filter:
+                            query["query"]["bool"]["must"].append(annotation_filter)
+
+                        for hit in helpers.scan(
+                            datastore.client, query=query, index=open_indices
+                        ):
+                            event_data = hit["_source"]
+                            event_data["_id"] = hit["_id"]
+                            event_data["_index"] = hit["_index"]
+                            line = json.dumps(event_data) + "\n"
+                            f_out.write(line)
+                            event_hash_obj.update(line.encode("utf-8"))
+                            actual_row_count += 1
+                            if actual_row_count % 10000 == 0:
+                                bar.update(10000)
+                    else:
+                        print("    Note: No open indices to stream events from.")
+                else:
+                    if open_indices:
+                        fields = DEFAULT_SOURCE_FIELDS if default_fields else None
+                        api_query_dsl = None
+                        if annotated_only:
+                            api_query_dsl = {
+                                "query": {"bool": {"must": [annotation_filter]}}
+                            }
+
+                        data_handle, _, _ = _fetch_and_prepare_event_data(
+                            sketch=sketch,
+                            datastore=datastore,
+                            return_fields=fields,
+                            output_format=output_format,
+                            query_dsl=api_query_dsl,
+                        )
+                    else:
+                        print("    Note: No open indices to stream events from.")
+                        data_handle = None
+
+                    # Handle both string streams and DataFrames
+                    if data_handle is not None:
+                        if isinstance(data_handle, pd.DataFrame):
+                            if output_format == "csv":
+                                data_handle.to_csv(f_out, index=False)
+                            else:
+                                data_handle.to_json(f_out, orient="records", lines=True)
+                            actual_row_count = len(data_handle)
+                        else:
+                            if output_format == "csv":
+
+                                if hasattr(data_handle, "seek"):
+                                    data_handle.seek(0)
+                                csv_reader = csv.reader(data_handle)
+                                header = next(csv_reader, None)
+                                if header:
+                                    line_io = io.StringIO()
+                                    csv.writer(line_io).writerow(header)
+                                    header_line = line_io.getvalue()
+                                    f_out.write(header_line)
+                                    event_hash_obj.update(header_line.encode("utf-8"))
+                                for row in csv_reader:
+                                    line_io = io.StringIO()
+                                    csv.writer(line_io).writerow(row)
+                                    line = line_io.getvalue()
+                                    f_out.write(line)
+                                    event_hash_obj.update(line.encode("utf-8"))
+                                    actual_row_count += 1
+                                    if actual_row_count % 10000 == 0:
+                                        bar.update(10000)
+                            else:
+                                for line in data_handle:
+                                    f_out.write(line)
+                                    event_hash_obj.update(line.encode("utf-8"))
+                                    actual_row_count += 1
+                                    if actual_row_count % 10000 == 0:
+                                        bar.update(10000)
+
+                bar.update(actual_row_count % 10000)
+
+        event_hash = event_hash_obj.hexdigest()
 
         # 5. Index Mappings
         print("  Collecting index mappings...")
