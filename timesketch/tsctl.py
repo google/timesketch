@@ -145,7 +145,7 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
                     .get("index", {})
                     .get("status")
                 )
-                if status != "close":
+                if status == "open":
                     open_indices.append(index_name)
         except Exception as e:  # pylint: disable=broad-except
             logger.warning(
@@ -162,7 +162,7 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
                         .get("index", {})
                         .get("status")
                     )
-                    if status != "close":
+                    if status == "open":
                         open_indices.append(index_name)
                 except Exception as e_inner:  # pylint: disable=broad-except
                     logger.debug(
