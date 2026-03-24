@@ -3144,7 +3144,8 @@ def _export_stories_to_markdown(sketch: Sketch, target_dir: str) -> None:
                 )
         except (IOError, OSError) as e:
             click.echo(
-                f"  Warning: Failed to export raw story {story.id}: {e!s}", err=True
+                f"  Warning: Failed to export raw story {story.id}: {e!s}",
+                err=True,
             )
 
         try:
