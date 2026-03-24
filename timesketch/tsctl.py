@@ -3011,7 +3011,6 @@ def _calculate_export_counts(
                 index_name,
                 str(e),
             )
-            pass
 
     if method == "direct":
         if include_legacy:
@@ -3019,8 +3018,9 @@ def _calculate_export_counts(
         elif legacy_count > 0:
             click.echo(
                 click.style(
-                    f"\nNOTE: Found {legacy_count:,} legacy events (missing __ts_timeline_id). "
-                    "These will be SKIPPED. Use --include-legacy to include them.\n",
+                    f"\nNOTE: Found {legacy_count:,} legacy events "
+                    "(missing __ts_timeline_id). These will be SKIPPED. "
+                    "Use --include-legacy to include them.\n",
                     fg="cyan",
                 ),
                 err=True,
@@ -3246,7 +3246,6 @@ def _fetch_and_prepare_event_data(
     }
 
     active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
-    active_timeline_ids = [t.id for t in sketch.active_timelines]
 
     # Filter out closed indices to avoid errors
     open_indices = _get_open_indices(datastore, active_indices)
@@ -3374,7 +3373,9 @@ def export_sketch(
         print(f"ERROR: No open indices found for sketch {sketch_id}.")
         if active_indices:
             print(f"  Total indices in sketch: {', '.join(active_indices)}")
-            print("  Note: All indices appear to be CLOSED or MISSING in OpenSearch.")
+            print(
+                "  Note: All indices appear to be CLOSED or MISSING in OpenSearch."
+            )
         else:
             print("  Note: This sketch has no timelines associated with it.")
         return
@@ -3389,8 +3390,8 @@ def export_sketch(
         if shared_indices:
             click.echo(
                 click.style(
-                    "\nSECURITY WARNING: The following indices are shared with other sketches: "
-                    f"{', '.join(shared_indices)}.\n"
+                    "\nSECURITY WARNING: The following indices are shared "
+                    f"with other sketches: {', '.join(shared_indices)}.\n"
                     "Direct export of legacy events (missing __ts_timeline_id) may "
                     "cause cross-sketch data leakage.\n",
                     fg="red",
@@ -3402,8 +3403,8 @@ def export_sketch(
         if include_legacy:
             click.echo(
                 click.style(
-                    "LEGACY EXPORT ENABLED: Including events missing __ts_timeline_id. "
-                    "Use with extreme caution.\n",
+                    "LEGACY EXPORT ENABLED: Including events missing "
+                    "__ts_timeline_id. Use with extreme caution.\n",
                     fg="yellow",
                     bold=True,
                 ),
@@ -3424,7 +3425,8 @@ def export_sketch(
         return
 
     print(
-        f'Starting {method.upper()} export of Sketch [{sketch_id}] "{sketch.name}" to {filename}...'
+        f'Starting {method.upper()} export of Sketch [{sketch_id}] '
+        f'"{sketch.name}" to {filename}...'
     )
 
     # --- Add prominent warning to console output ---
@@ -3482,6 +3484,7 @@ def export_sketch(
         total_expected = 0
         legacy_count = 0
         verification_query_dsl = None
+        return_fields_to_fetch = DEFAULT_SOURCE_FIELDS if default_fields else None
 
         if open_indices:
             total_expected, legacy_count, verification_query_dsl = (
@@ -3499,7 +3502,7 @@ def export_sketch(
             print("  Exporting all event fields.")
             return_fields_to_fetch = None  # Pass None to get all fields
 
-        input_content, _, _ = _fetch_and_prepare_event_data(
+        data_handle, _, _ = _fetch_and_prepare_event_data(
             sketch, datastore, return_fields_to_fetch
         )
 
@@ -3515,7 +3518,7 @@ def export_sketch(
                 show_pos=True,
                 show_percent=True,
                 show_eta=True,
-            ) as bar:
+            ) as progress_bar:
 
                 if method == "direct":
                     if open_indices:
@@ -3550,7 +3553,7 @@ def export_sketch(
                             event_hash_obj.update(line.encode("utf-8"))
                             actual_row_count += 1
                             if actual_row_count % 10000 == 0:
-                                bar.update(10000)
+                                progress_bar.update(10000)
                     else:
                         print("    Note: No open indices to stream events from.")
                 else:
@@ -3579,7 +3582,9 @@ def export_sketch(
                             if output_format == "csv":
                                 data_handle.to_csv(f_out, index=False)
                             else:
-                                data_handle.to_json(f_out, orient="records", lines=True)
+                                data_handle.to_json(
+                                    f_out, orient="records", lines=True
+                                )
                             actual_row_count = len(data_handle)
                         else:
                             # If it's a file-like object (e.g. io.StringIO), stream it directly
@@ -3592,9 +3597,9 @@ def export_sketch(
                                 # Estimate row count by lines for progress bar
                                 actual_row_count += 1
                                 if actual_row_count % 10000 == 0:
-                                    bar.update(10000)
+                                    progress_bar.update(10000)
 
-                bar.update(actual_row_count % 10000)
+                progress_bar.update(actual_row_count % 10000)
 
         event_hash = event_hash_obj.hexdigest()
 
@@ -3669,6 +3674,7 @@ def export_sketch(
     except Exception as e:  # pylint: disable=broad-except
         print(f"ERROR during export: {e}")
         print(traceback.format_exc())
+        sys.exit(1)
     finally:
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
