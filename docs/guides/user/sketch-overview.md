@@ -71,21 +71,32 @@ If you click on the "More" Button in the Sketch Overview, you get the following 
 
 ### Delete
 
-Deletes the sketch.
+Deleting a sketch removes it from your list of active sketches. There are two types of deletion:
 
-*   **Soft Delete (Default):** The sketch is marked as deleted in the database but all associated data (timelines, indices) remains intact. It is just not shown in the UI anymore.
-*   **Hard Delete (`force_delete`):** Permanently removes the sketch and its associated data. This operation is restricted to administrators and not available via the UI and follows a safe order of operations to ensure no orphaned data is left behind:
-    1.  **OpenSearch Indices:** The raw event data is deleted from OpenSearch first.
-    2.  **Timelines:** The timeline records are removed from the database.
-    3.  **Search Indices:** The search index metadata is removed.
-    4.  **Sketch:** Finally, the sketch itself is deleted.
+1.  **Soft Delete (Default):**
+    *   The sketch is marked as **'deleted'** in the database.
+    *   It is hidden from the main sketch list.
+    *   **Crucially**, Timesketch attempts to **close all associated OpenSearch indices** to free up memory and resources on the cluster. **Note:** Indices are only closed if they are not shared with other active (non-deleted) sketches. This check is performed system-wide across all users to ensure data integrity.
+    *   This action is reversible by an administrator (via database intervention) if needed, as the data is not permanently destroyed.
+
+2.  **Hard Delete (Force Delete):**
+    *   This permanently removes the sketch, all its timelines, and all associated metadata from the database.
+    *   It also **permanently deletes** the underlying OpenSearch indices. **Note:** As with soft deletion, indices are only deleted if they are not shared with other active sketches in the system.
+    *   **Admin Only:** Only administrators can perform a hard delete, and they can do so even on sketches that have already been soft-deleted.
+    *   *Note:* You cannot delete a sketch that is currently **'archived'**. You must unarchive it first.
+
+#### Administrative Overrides
+Administrators have the ability to delete **any sketch in the system**, regardless of whether they are explicitly listed in the sketch's access control list (ACL). This allows for system-wide cleanup and management.
+
+#### Protection Labels
+Certain labels can be configured to prevent a sketch from being deleted. By default, any sketch with the label **`protected`** or **`preserved`** cannot be deleted (either soft or hard) by any user, including administrators. To delete such a sketch, the label must first be removed.
 
 ### Archive
 
 Archiving a sketch is a way to preserve it in a archived state while freeing up system resources. When a sketch is archived:
 - It is hidden from the default list of sketches.
 - All its timelines are marked as archived.
-- The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster.
+- The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster. **Note:** This check is performed system-wide across all users to ensure data integrity.
 - You cannot explore data, run analyzers, or make other modifications to an archived sketch.
 - The sketch can be unarchived at any time to restore full functionality.
 
@@ -137,14 +148,18 @@ Unarchiving a sketch restores it to a fully active and writable state. This acti
 
 * Timesketch attempts to **reopen all associated OpenSearch indices** that were previously closed (archived).
 * If an OpenSearch index is already open, it's considered a success.
-* If all necessary OpenSearch indices are successfully opened (or were already open), the sketch's status is updated to **'ready'**.
-* All timelines within that sketch that were **'archived'** have their status set back to **'ready'**.
-* The corresponding SearchIndex database objects also have their status updated to **'ready'**.
+* **Missing or Failed Indices:** If an index cannot be found (e.g., deleted) or fails to open:
+    * The system logs a warning but **does not abort** the unarchive process.
+    * The affected **timeline** and its **search index** in the database are set to a **'fail'** state. This allows you to identify which parts of the sketch are broken.
+* For all successfully opened indices:
+    * The corresponding **timeline** status is set back to **'ready'**.
+    * The corresponding **SearchIndex** database object status is updated to **'ready'**.
+* The sketch's status is updated to **'ready'**, allowing you to access it and manage any failed timelines.
 
 #### When a sketch cannot be unarchived (and why):
 
 * If the sketch is not currently 'archived' (e.g., it's already **'ready'** or **'deleted'**), the operation will be aborted.
-* If there's a critical error opening an OpenSearch index (e.g., the index is genuinely missing or a network error occurs), the entire unarchival process will be aborted, and the sketch will remain in its **'archived'** state.
+* Critical errors unrelated to specific indices (e.g., database connection failures) may still abort the process.
 
 ### Export
 
