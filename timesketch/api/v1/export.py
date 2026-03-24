@@ -174,6 +174,15 @@ def query_to_filehandle(
         result = datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
         hits = result["hits"]["hits"]
         if not hits:
+            # We break here to avoid an infinite loop if OpenSearch returns
+            # no more hits, even if we haven't reached the total_count yet.
+            # This can happen if the scroll session expires or if there's
+            # a mismatch in the reported total count.
+            logger.debug(
+                "Sketch %d: Scroll returned no hits, breaking loop. "
+                "Fetched %d of %d expected events.",
+                sketch.id, event_count, total_count
+            )
             break
 
         add_frame = lib_utils.query_results_to_dataframe(result, sketch)
