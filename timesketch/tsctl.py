@@ -3577,34 +3577,17 @@ def export_sketch(
                                 data_handle.to_json(f_out, orient="records", lines=True)
                             actual_row_count = len(data_handle)
                         else:
-                            if output_format == "csv":
+                            # If it's a file-like object (e.g. io.StringIO), stream it directly
+                            if hasattr(data_handle, "seek"):
+                                data_handle.seek(0)
 
-                                if hasattr(data_handle, "seek"):
-                                    data_handle.seek(0)
-                                csv_reader = csv.reader(data_handle)
-                                header = next(csv_reader, None)
-                                if header:
-                                    line_io = io.StringIO()
-                                    csv.writer(line_io).writerow(header)
-                                    header_line = line_io.getvalue()
-                                    f_out.write(header_line)
-                                    event_hash_obj.update(header_line.encode("utf-8"))
-                                for row in csv_reader:
-                                    line_io = io.StringIO()
-                                    csv.writer(line_io).writerow(row)
-                                    line = line_io.getvalue()
-                                    f_out.write(line)
-                                    event_hash_obj.update(line.encode("utf-8"))
-                                    actual_row_count += 1
-                                    if actual_row_count % 10000 == 0:
-                                        bar.update(10000)
-                            else:
-                                for line in data_handle:
-                                    f_out.write(line)
-                                    event_hash_obj.update(line.encode("utf-8"))
-                                    actual_row_count += 1
-                                    if actual_row_count % 10000 == 0:
-                                        bar.update(10000)
+                            for line in data_handle:
+                                f_out.write(line)
+                                event_hash_obj.update(line.encode("utf-8"))
+                                # Estimate row count by lines for progress bar
+                                actual_row_count += 1
+                                if actual_row_count % 10000 == 0:
+                                    bar.update(10000)
 
                 bar.update(actual_row_count % 10000)
 
