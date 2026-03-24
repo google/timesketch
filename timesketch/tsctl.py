@@ -194,8 +194,20 @@ def _get_random_event_ids(datastore, indices, query_dsl, count=5):
         return []
 
 
-def _spot_check_file(file_path, event_ids):
-    """Verify that a list of event IDs exist in a file."""
+def _spot_check_file(file_path: str, event_ids: List[str]) -> Dict[str, bool]:
+    """Verify that a list of event IDs exist in a file.
+
+    This is a lightweight verification step that reads the file line-by-line
+    to confirm that the requested event IDs were actually written to the
+    exported file. It stops as soon as all IDs are found.
+
+    Args:
+        file_path: Path to the file to check.
+        event_ids: List of OpenSearch event IDs to search for.
+
+    Returns:
+        A dictionary mapping each event ID to a boolean indicating if it was found.
+    """
     if not event_ids:
         return {}
 
