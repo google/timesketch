@@ -261,6 +261,7 @@ def _spot_check_file(file_path: str, event_ids: List[str]) -> Dict[str, bool]:
 
 
 opensearch_logger = logging.getLogger("opensearch")
+logger = logging.getLogger("timesketch.tsctl")
 
 
 def configure_opensearch_logger():
@@ -3003,6 +3004,12 @@ def _calculate_export_counts(
             c_res = datastore.client.count(index=index_name, body=legacy_query)
             legacy_count += c_res.get("count", 0)
         except Exception as e:  # pylint: disable=broad-except
+            logger.warning(
+                "Could not count events for index %s: %s. "
+                "This might lead to a mismatch in the total event count.",
+                index_name,
+                str(e),
+            )
             pass
 
     if method == "direct":
