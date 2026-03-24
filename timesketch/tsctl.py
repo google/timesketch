@@ -20,10 +20,8 @@ import json
 import re
 import logging
 import time
-import io
 import zipfile
 import subprocess
-import csv
 import datetime
 import traceback
 import tempfile
@@ -3623,7 +3621,9 @@ def export_sketch(
                 err=True,
             )
         else:
-            print(f"  Verification: {actual_row_count} events exported as expected.")
+            print(
+                f"  Verification: {actual_row_count} events exported as expected."
+            )
 
         # 7.5 Spot Check Random Events
         if actual_row_count > 0 and verification_query_dsl:
@@ -3636,7 +3636,8 @@ def export_sketch(
                 success_count = sum(check_results.values())
                 if success_count == len(sample_ids):
                     print(
-                        f"  SUCCESS: All {len(sample_ids)} sampled events found in export."
+                        f"  SUCCESS: All {len(sample_ids)} sampled events "
+                        "found in export."
                     )
                 else:
                     click.echo(
