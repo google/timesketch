@@ -3480,12 +3480,11 @@ def export_sketch(
         # 3. Precise Count
         print("  Calculating exact event count...")
         total_expected = 0
-        legacy_count = 0
         verification_query_dsl = None
         return_fields_to_fetch = DEFAULT_SOURCE_FIELDS if default_fields else None
 
         if open_indices:
-            total_expected, legacy_count, verification_query_dsl = (
+            total_expected, _, verification_query_dsl = (
                 _calculate_export_counts(
                     sketch,
                     datastore,
