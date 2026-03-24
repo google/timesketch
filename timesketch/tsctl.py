@@ -138,33 +138,31 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
     for i in range(0, len(indices), chunk_size):
         chunk = indices[i : i + chunk_size]
         try:
-            # indices.get returns settings which include the status
-            res = datastore.client.indices.get(index=chunk)
+            # cluster.state returns the state of the indices (open/close)
+            # in the 'metadata' section.
+            res = datastore.client.cluster.state(
+                metric="metadata", index=chunk
+            )
+            metadata = res.get("metadata", {}).get("indices", {})
             for index_name in chunk:
-                status = (
-                    res.get(index_name, {})
-                    .get("settings", {})
-                    .get("index", {})
-                    .get("status")
-                )
-                if status == "open":
+                state = metadata.get(index_name, {}).get("state")
+                if state == "open":
                     open_indices.append(index_name)
         except Exception as e:  # pylint: disable=broad-except
             logger.warning(
-                "Chunked index check failed, falling back to one-by-one check: %s",
+                "Chunked index state check failed, falling back to one-by-one: %s",
                 str(e),
             )
             # If a chunk fails, we fall back to checking one by one
             for index_name in chunk:
                 try:
-                    res = datastore.client.indices.get(index=index_name)
-                    status = (
-                        res.get(index_name, {})
-                        .get("settings", {})
-                        .get("index", {})
-                        .get("status")
+                    res = datastore.client.cluster.state(
+                        metric="metadata", index=index_name
                     )
-                    if status == "open":
+                    state = res.get("metadata", {}).get("indices", {}).get(
+                        index_name, {}
+                    ).get("state")
+                    if state == "open":
                         open_indices.append(index_name)
                 except Exception as e_inner:  # pylint: disable=broad-except
                     logger.debug(
@@ -3257,9 +3255,6 @@ def _fetch_and_prepare_event_data(
         if t.searchindex.index_name in open_indices
     ]
 
-    if not open_indices:
-        raise ValueError("No open indices found for this sketch.")
-
     # Check if the currently loaded api_export supports output_format
     sig = inspect.signature(api_export.query_to_filehandle)
     if "output_format" in sig.parameters:
@@ -3373,6 +3368,15 @@ def export_sketch(
     # Filter out closed indices to avoid errors
     datastore = OpenSearchDataStore()
     open_indices = _get_open_indices(datastore, active_indices)
+
+    if not open_indices:
+        print(f"ERROR: No open indices found for sketch {sketch_id}.")
+        if active_indices:
+            print(f"  Total indices in sketch: {', '.join(active_indices)}")
+            print("  Note: All indices appear to be CLOSED or MISSING in OpenSearch.")
+        else:
+            print("  Note: This sketch has no timelines associated with it.")
+        return
 
     if method == "direct":
         # Check for shared indices to warn about potential data leakage
@@ -3494,7 +3498,7 @@ def export_sketch(
             print("  Exporting all event fields.")
             return_fields_to_fetch = None  # Pass None to get all fields
 
-        input_content, is_likely_jsonl = _fetch_and_prepare_event_data(
+        input_content, _, _ = _fetch_and_prepare_event_data(
             sketch, datastore, return_fields_to_fetch
         )
 
