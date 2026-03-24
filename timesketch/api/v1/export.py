@@ -181,7 +181,9 @@ def query_to_filehandle(
             logger.debug(
                 "Sketch %d: Scroll returned no hits, breaking loop. "
                 "Fetched %d of %d expected events.",
-                sketch.id, event_count, total_count
+                sketch.id,
+                event_count,
+                total_count,
             )
             break
 

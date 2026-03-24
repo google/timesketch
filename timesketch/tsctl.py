@@ -140,9 +140,7 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
         try:
             # cluster.state returns the state of the indices (open/close)
             # in the 'metadata' section.
-            res = datastore.client.cluster.state(
-                metric="metadata", index=chunk
-            )
+            res = datastore.client.cluster.state(metric="metadata", index=chunk)
             metadata = res.get("metadata", {}).get("indices", {})
             for index_name in chunk:
                 state = metadata.get(index_name, {}).get("state")
@@ -159,9 +157,12 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
                     res = datastore.client.cluster.state(
                         metric="metadata", index=index_name
                     )
-                    state = res.get("metadata", {}).get("indices", {}).get(
-                        index_name, {}
-                    ).get("state")
+                    state = (
+                        res.get("metadata", {})
+                        .get("indices", {})
+                        .get(index_name, {})
+                        .get("state")
+                    )
                     if state == "open":
                         open_indices.append(index_name)
                 except Exception as e_inner:  # pylint: disable=broad-except
