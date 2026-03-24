@@ -3395,9 +3395,7 @@ def export_sketch(
         print(f"ERROR: No open indices found for sketch {sketch_id}.")
         if active_indices:
             print(f"  Total indices in sketch: {', '.join(active_indices)}")
-            print(
-                "  Note: All indices appear to be CLOSED or MISSING in OpenSearch."
-            )
+            print("  Note: All indices appear to be CLOSED or MISSING in OpenSearch.")
         else:
             print("  Note: This sketch has no timelines associated with it.")
         return
@@ -3447,7 +3445,7 @@ def export_sketch(
         return
 
     print(
-        f'Starting {method.upper()} export of Sketch [{sketch_id}] '
+        f"Starting {method.upper()} export of Sketch [{sketch_id}] "
         f'"{sketch.name}" to {filename}...'
     )
 
@@ -3508,16 +3506,14 @@ def export_sketch(
         return_fields_to_fetch = DEFAULT_SOURCE_FIELDS if default_fields else None
 
         if open_indices:
-            total_expected, _, verification_query_dsl = (
-                _calculate_export_counts(
-                    sketch,
-                    datastore,
-                    active_indices,
-                    active_tids,
-                    method,
-                    include_legacy,
-                    annotation_filter,
-                )
+            total_expected, _, verification_query_dsl = _calculate_export_counts(
+                sketch,
+                datastore,
+                active_indices,
+                active_tids,
+                method,
+                include_legacy,
+                annotation_filter,
             )
         else:
             print("  Exporting all event fields.")
@@ -3603,9 +3599,7 @@ def export_sketch(
                             if output_format == "csv":
                                 data_handle.to_csv(f_out, index=False)
                             else:
-                                data_handle.to_json(
-                                    f_out, orient="records", lines=True
-                                )
+                                data_handle.to_json(f_out, orient="records", lines=True)
                             actual_row_count = len(data_handle)
                         else:
                             # If it's a file-like object (e.g. io.StringIO), stream it directly
@@ -3648,9 +3642,7 @@ def export_sketch(
                 err=True,
             )
         else:
-            print(
-                f"  Verification: {actual_row_count} events exported as expected."
-            )
+            print(f"  Verification: {actual_row_count} events exported as expected.")
 
         # 7.5 Spot Check Random Events
         if actual_row_count > 0 and verification_query_dsl:
