@@ -190,7 +190,18 @@ def query_to_filehandle(
             data_frame = pd.concat([data_frame, add_frame], sort=False)
             event_count += len(hits)
         else:
-            break
+            logger.warning(
+                "Sketch %d: Data Frame returned from a search operation was "
+                "empty, count %d out of %d total. Query is: "
+                '"%s"',
+                sketch.id,
+                event_count,
+                total_count,
+                query_string or query_dsl,
+            )
+            # Increment event_count to avoid infinite loop
+            event_count += len(hits)
+            continue
 
     fh = io.StringIO()
     if output_format.lower() == "jsonl":
