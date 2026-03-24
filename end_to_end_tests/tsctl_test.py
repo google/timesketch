@@ -449,4 +449,81 @@ class TestTsctl(interface.BaseEndToEndTest):
                 os.remove(export_file)
 
 
+    def test_tsctl_story_export(self):
+        """Test that stories are exported in both Markdown and JSON formats."""
+        sketch = self.api.create_sketch(name=f"story-export-{uuid.uuid4().hex}")
+        sketch_id = str(sketch.id)
+
+        # 1. Create a legacy-style Markdown story
+        legacy_story = sketch.create_story("Legacy Markdown Story")
+        legacy_story.update(content="# Markdown Title\n\nThis is raw markdown.")
+
+        # 2. Create a block-based JSON story
+        # The content should be a JSON list of blocks
+        block_content = json.dumps(
+            [
+                {"component": "Text", "content": {"text": "Block based story content"}},
+                {"component": "Divider", "content": {}},
+            ]
+        )
+        block_story = sketch.create_story("Block Based Story")
+        block_story.update(content=block_content)
+
+        export_file = f"story_export_{sketch_id}.zip"
+        if os.path.exists(export_file):
+            os.remove(export_file)
+
+        try:
+            # 3. Run export-sketch
+            # We don't necessarily need timelines for story export to work
+            result = self.runner.invoke(
+                cli, ["export-sketch", sketch_id, "--filename", export_file]
+            )
+            self.assertions.assertEqual(
+                result.exit_code, 0, f"CLI Error: {result.output}"
+            )
+            self.assertions.assertIn("Exporting stories to Markdown...", result.output)
+
+            # 4. Verify ZIP content
+            with zipfile.ZipFile(export_file, "r") as z:
+                file_list = z.namelist()
+
+                # Check for legacy story files
+                # Filenames use re.sub(r"[^a-zA-Z0-9]", "_", title)
+                self.assertions.assertIn(
+                    f"stories/story_{legacy_story.id}_Legacy_Markdown_Story.md",
+                    file_list,
+                )
+                self.assertions.assertIn(
+                    f"stories/story_{legacy_story.id}_Legacy_Markdown_Story.json",
+                    file_list,
+                )
+
+                # Check for block-based story files
+                self.assertions.assertIn(
+                    f"stories/story_{block_story.id}_Block_Based_Story.md", file_list
+                )
+                self.assertions.assertIn(
+                    f"stories/story_{block_story.id}_Block_Based_Story.json", file_list
+                )
+
+                # Verify Markdown content for the block-based story
+                # (Exporter should have converted JSON blocks to MD)
+                md_content = z.read(
+                    f"stories/story_{block_story.id}_Block_Based_Story.md"
+                ).decode("utf-8")
+                self.assertions.assertIn("Block based story content", md_content)
+                self.assertions.assertIn("---", md_content)  # Divider
+
+                # Verify JSON content for archival safety
+                json_content = json.loads(
+                    z.read(f"stories/story_{block_story.id}_Block_Based_Story.json")
+                )
+                self.assertions.assertEqual(json_content["content"], block_content)
+
+        finally:
+            if os.path.exists(export_file):
+                os.remove(export_file)
+
+
 manager.EndToEndTestManager.register_test(TestTsctl)
