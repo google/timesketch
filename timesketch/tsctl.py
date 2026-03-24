@@ -148,6 +148,10 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
                 if status != "close":
                     open_indices.append(index_name)
         except Exception as e:  # pylint: disable=broad-except
+            logger.warning(
+                "Chunked index check failed, falling back to one-by-one check: %s",
+                str(e),
+            )
             # If a chunk fails, we fall back to checking one by one
             for index_name in chunk:
                 try:
@@ -160,7 +164,12 @@ def _get_open_indices(datastore: OpenSearchDataStore, indices: List[str]) -> Lis
                     )
                     if status != "close":
                         open_indices.append(index_name)
-                except Exception as e:  # pylint: disable=broad-except
+                except Exception as e_inner:  # pylint: disable=broad-except
+                    logger.debug(
+                        "One-by-one index check failed for %s: %s",
+                        index_name,
+                        str(e_inner),
+                    )
                     continue
     return open_indices
 
