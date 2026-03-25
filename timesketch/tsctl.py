@@ -3705,8 +3705,10 @@ def export_sketch(
         print("  Creating compressed archive...")
         _bundle_export_zip(tmp_dir, tmp_zip_path)
 
-        # 10. Atomic Move to Destination
-        os.replace(tmp_zip_path, filename)
+        # 10. Move to Destination
+        # Using shutil.move instead of os.replace to handle cross-device
+        # moves (e.g. from /tmp to a mounted volume).
+        shutil.move(tmp_zip_path, filename)
         print(f"Sketch exported successfully to {filename}")
 
     except Exception as e:  # pylint: disable=broad-except
