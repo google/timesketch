@@ -460,7 +460,23 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
         events_by_index = self._parse_request(request)
         info_dict["chunks_per_index"] = {index: [] for index in list(events_by_index)}
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
+        indices = [
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() in allowed_statuses
+        ]
+
         for index, events in events_by_index.items():
+            if index not in indices:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Search index ID ({index!s}) does not belong to the sketch",
+                )
+
             chunks = []
             for i in range(0, len(events), self.EVENT_CHUNK_SIZE):
                 chunks.append(events[i : i + self.EVENT_CHUNK_SIZE])
@@ -647,7 +663,23 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             tag_dict["number_of_indices"] = len(event_df["_index"].unique())
             time_tag_gathering_start = time.time()
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
+        indices = [
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() in allowed_statuses
+        ]
+
         for _index in event_df["_index"].unique():
+            if _index not in indices:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Search index ID ({_index!s}) does not belong to the sketch",
+                )
+
             index_slice = event_df[event_df["_index"] == _index]
             index_size = index_slice.shape[0]
 
@@ -1549,6 +1581,16 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
 
         datastore = self.datastore
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
+        indices = [
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() in allowed_statuses
+        ]
+
         for _event in events:
             # every event entry can have a dedicated searchindex_id or searchindex_name
             searchindex_id = _event.get("searchindex_id", None)
@@ -1579,6 +1621,12 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to query event on a closed search index.",
+                )
+
+            if searchindex.index_name not in indices:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Search index ID ({searchindex.index_name!s}) does not belong to the sketch",
                 )
 
             result = self.datastore.get_event(searchindex.index_name, _event.get("_id"))

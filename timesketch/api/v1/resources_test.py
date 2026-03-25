@@ -880,13 +880,13 @@ class EventAddAttributeResourceTest(BaseTest):
                 {
                     "_id": "1",
                     "_type": "_doc",
-                    "_index": "1",
+                    "_index": self.searchindex.index_name,
                     "attributes": attrs,
                 },
                 {
                     "_id": "2",
                     "_type": "_doc",
-                    "_index": "1",
+                    "_index": self.searchindex.index_name,
                     "attributes": attrs,
                 },
             ]
@@ -895,7 +895,7 @@ class EventAddAttributeResourceTest(BaseTest):
         expected_response = {
             "meta": {
                 "attributes_added": 2,
-                "chunks_per_index": {"1": 1},
+                "chunks_per_index": {self.searchindex.index_name: 1},
                 "error_count": 0,
                 "last_10_errors": [],
                 "events_modified": 2,
@@ -1028,14 +1028,14 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     }
                 ]
                 * 1000
             },
         )
-        self.assertEqual({"1": 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual({self.searchindex.index_name: 1}, response.json["meta"]["chunks_per_index"])
 
         # Two chunks when event count is chunk size + 1.
         response = self.client.post(
@@ -1045,16 +1045,23 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     }
                 ]
                 * 1001
             },
         )
-        self.assertEqual({"1": 2}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual({self.searchindex.index_name: 2}, response.json["meta"]["chunks_per_index"])
 
         # Chunk per index with multiple indexes.
+        self.timeline2 = self._create_timeline(
+            name="Timeline 2",
+            sketch=self.sketch1,
+            searchindex=self.searchindex2,
+            user=self.user1,
+        )
+
         response = self.client.post(
             self.resource_url,
             json={
@@ -1062,19 +1069,19 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     },
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "2",
+                        "_index": self.searchindex2.index_name,
                         "attributes": attrs,
                     },
                 ]
             },
         )
-        self.assertEqual({"1": 1, "2": 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual({self.searchindex.index_name: 1, self.searchindex2.index_name: 1}, response.json["meta"]["chunks_per_index"])
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_existing_attributes(self):
@@ -1088,7 +1095,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "exists", "attr_value": "yes"}],
                     }
                 ]
@@ -1111,7 +1118,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "_invalid", "attr_value": "yes"}],
                     }
                 ]
@@ -1134,7 +1141,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "message", "attr_value": "yes"}],
                     }
                 ]
