@@ -1159,6 +1159,96 @@ class EventAddAttributeResourceTest(BaseTest):
             response.json["meta"]["last_10_errors"],
         )
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_attributes_forbidden(self):
+        """Test that adding attributes to an index that does not belong to the
+        sketch returns 403 Forbidden.
+        """
+        self.login()
+
+        # searchindex2 is NOT associated with sketch 1 by default.
+        events = {
+            "events": [
+                {
+                    "_id": "1",
+                    "_type": "_doc",
+                    "_index": self.searchindex2.index_name,
+                    "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
+                }
+            ]
+        }
+
+        response = self.client.post(self.resource_url, json=events)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
+
+
+class EventTaggingResourceTest(BaseTest):
+    """Test EventTaggingResource."""
+
+    resource_url = "/api/v1/sketches/1/event/tagging/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_tagging(self):
+        """Test tagging events."""
+        self.login()
+
+        data = {
+            "tag_string": '["foo", "bar"]',
+            "events": [{"_id": "1", "_index": self.searchindex.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+        self.assertEqual(response.json["meta"]["tags_applied"], 2)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_tagging_forbidden(self):
+        """Test that tagging an event in an index that does not belong to the
+        sketch returns 403 Forbidden.
+        """
+        self.login()
+
+        data = {
+            "tag_string": '["foo"]',
+            "events": [{"_id": "1", "_index": self.searchindex2.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
+
+
+class EventUnTagResourceTest(BaseTest):
+    """Test EventUnTagResource."""
+
+    resource_url = "/api/v1/sketches/1/event/untag/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_untagging(self):
+        """Test untagging events."""
+        self.login()
+
+        data = {
+            "tags_to_remove": ["foo"],
+            "events": [{"_id": "1", "_index": self.searchindex.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_untagging_forbidden(self):
+        """Test that untagging an event in an index that does not belong to the
+        sketch returns 403 Forbidden.
+        """
+        self.login()
+
+        data = {
+            "tags_to_remove": ["foo"],
+            "events": [{"_id": "1", "_index": self.searchindex2.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
+
 
 class EventAnnotationResourceTest(BaseTest):
     """Test EventAnnotationResource."""
