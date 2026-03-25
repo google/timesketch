@@ -1161,8 +1161,9 @@ class EventAddAttributeResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_attributes_forbidden(self):
-        """Test that adding attributes to an index that does not belong to the
-        sketch returns 403 Forbidden.
+        """Test that adding attributes to an event in an index that does not
+        belong to the sketch returns a 403 Forbidden error. This is a security
+        check to prevent modifying events in unauthorized indices.
         """
         self.login()
 
@@ -1190,7 +1191,9 @@ class EventTaggingResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_tagging(self):
-        """Test tagging events."""
+        """Test that tagging an event with a valid request succeeds with an
+        HTTP 200 OK response and the correct number of tags applied.
+        """
         self.login()
 
         data = {
@@ -1203,8 +1206,8 @@ class EventTaggingResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_tagging_forbidden(self):
-        """Test that tagging an event in an index that does not belong to the
-        sketch returns 403 Forbidden.
+        """Test that attempting to tag an event in an index not associated with
+        the current sketch returns a 403 Forbidden error.
         """
         self.login()
 
