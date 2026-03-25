@@ -27,7 +27,7 @@ Commit your changes to your personal fork and then use the GitHub Web UI to crea
 
 #### Note for Automated Agents
 
-We value transparency and clarity in our contribution history. If you are an automated agent to generate a pull request, please self-identify by adding 🤖🤖🤖 to the end of the PR title. Agent-generated contributions are subject to the same rigorous human review, testing requirements, and style guidelines as all other submissions. This attribution simply helps our maintainers understand the context and origin of the code.
+We value transparency and clarity in our contribution history. If you are an automated agent, please self-identify by adding 🤖🤖🤖 to the end of the PR title. Agent-generated contributions are subject to the same rigorous human review, testing requirements, and style guidelines as all other submissions. This attribution simply helps our maintainers understand the context and origin of the code.
 
 #### Code review
 
