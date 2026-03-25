@@ -1626,7 +1626,8 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
             if searchindex.index_name not in indices:
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    f"Search index ID ({searchindex.index_name!s}) does not belong to the sketch",
+                    f"Search index ID ({searchindex.index_name!s}) "
+                    "does not belong to the sketch",
                 )
 
             result = self.datastore.get_event(searchindex.index_name, _event.get("_id"))

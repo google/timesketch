@@ -1035,7 +1035,9 @@ class EventAddAttributeResourceTest(BaseTest):
                 * 1000
             },
         )
-        self.assertEqual({self.searchindex.index_name: 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 1}, response.json["meta"]["chunks_per_index"]
+        )
 
         # Two chunks when event count is chunk size + 1.
         response = self.client.post(
@@ -1052,10 +1054,12 @@ class EventAddAttributeResourceTest(BaseTest):
                 * 1001
             },
         )
-        self.assertEqual({self.searchindex.index_name: 2}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 2}, response.json["meta"]["chunks_per_index"]
+        )
 
         # Chunk per index with multiple indexes.
-        self.timeline2 = self._create_timeline(
+        self._create_timeline(
             name="Timeline 2",
             sketch=self.sketch1,
             searchindex=self.searchindex2,
@@ -1081,7 +1085,10 @@ class EventAddAttributeResourceTest(BaseTest):
                 ]
             },
         )
-        self.assertEqual({self.searchindex.index_name: 1, self.searchindex2.index_name: 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 1, self.searchindex2.index_name: 1},
+            response.json["meta"]["chunks_per_index"],
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_existing_attributes(self):
