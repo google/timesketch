@@ -37,7 +37,7 @@ from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
-from timesketch.models.user import User
+from timesketch.models.user import User, Group
 from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1.resources import upload
@@ -142,6 +142,46 @@ class SketchListResourceTest(BaseTest):
         names = {s["name"] for s in response.json["objects"]}
         expected_names = {sketch_name_by_user1, sketch_name_by_user2}
         self.assertSetEqual(names, expected_names)
+
+    def test_sketch_list_no_duplicates(self):
+        """Test that users in multiple shared groups don't see duplicate counts."""
+        # 1. Use user2
+        user = self.user2
+        
+        # 2. Create two groups and add the user to both
+        group1 = Group(name="repro_group1", display_name="repro_group1")
+        group2 = Group(name="repro_group2", display_name="repro_group2")
+        db_session.add(group1)
+        db_session.add(group2)
+        db_session.commit()
+        
+        user.groups.append(group1)
+        user.groups.append(group2)
+        db_session.add(user)
+        db_session.commit()
+        
+        # 3. Create a sketch owned by user1
+        sketch = self._create_sketch(name="Repro Sketch", user=self.user1)
+        
+        # 4. Share the sketch with both groups
+        sketch.grant_permission(permission="read", group=group1)
+        sketch.grant_permission(permission="read", group=group2)
+        db_session.add(sketch)
+        db_session.commit()
+        
+        # 5. Login as test2
+        self.login(username="test2", password="test")
+        
+        # 6. Call the /api/v1/sketches/ endpoint
+        response = self.client.get(self.resource_url, query_string={"scope": "all"})
+        
+        # 7. Check total_items
+        total_items = response.json["meta"]["total_items"]
+        objects = response.json["objects"]
+        objects_count = len(objects)
+        
+        self.assertEqual(objects_count, 1, "Expected exactly 1 sketch in objects list")
+        self.assertEqual(total_items, 1, "Expected total_items to be exactly 1")
 
     def test_sketch_list_user_scope(self):
         """Authenticated request to get a list of the user's own sketches."""
