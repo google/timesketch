@@ -303,11 +303,11 @@ class EventResource(resources.ResourceMixin, Resource):
             "SEARCH_PROCESSING_TIMELINES", False
         ):
             allowed_statuses.append("processing")
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() in allowed_statuses
-        ]
+        }
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
@@ -464,11 +464,11 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
         if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
             allowed_statuses.append("processing")
 
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() in allowed_statuses
-        ]
+        }
 
         for index, events in events_by_index.items():
             if index not in indices:
@@ -667,11 +667,11 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
             allowed_statuses.append("processing")
 
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() in allowed_statuses
-        ]
+        }
 
         for _index in event_df["_index"].unique():
             if _index not in indices:
@@ -1034,11 +1034,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
             allowed_statuses.append("processing")
 
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() in allowed_statuses
-        ]
+        }
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
 
@@ -1184,11 +1184,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         updated_annotations = []
         sketch = self._get_sketch(sketch_id)
 
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() == "ready"
-        ]
+        }
 
         # Retrieving events list submitted in the request
         events = form.events.raw_data
@@ -1585,11 +1585,11 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
         if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
             allowed_statuses.append("processing")
 
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() in allowed_statuses
-        ]
+        }
 
         for _event in events:
             # every event entry can have a dedicated searchindex_id or searchindex_name
