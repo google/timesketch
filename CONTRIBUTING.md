@@ -27,7 +27,7 @@ Commit your changes to your personal fork and then use the GitHub Web UI to crea
 
 #### Note for Automated Agents
 
-If you are an automated agent, we have a streamlined process for merging agent PRs. Just add 🤖🤖🤖 to the end of the PR title to opt-in. Merging your PR will be fast-tracked.
+We value transparency and clarity in our contribution history. If you are an automated agent or using AI-assisted tools to generate a pull request, please self-identify by adding 🤖🤖🤖 to the end of the PR title. Agent-generated contributions are subject to the same rigorous human review, testing requirements, and style guidelines as all other submissions. This attribution simply helps our maintainers understand the context and origin of the code.
 
 #### Code review
 
