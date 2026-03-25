@@ -419,12 +419,13 @@ Exports a sketch to a zip archive, including all metadata and event data.
 
 **Options:**
 *   `--method [api|direct]`: Export method:
-    *   `api`: (Default) Standard export using the API. Supports CSV and JSONL (depending on system version).
-    *   `direct`: High-speed export that scans OpenSearch directly. Best for large datasets. Currently only supports JSONL.
+    *   `api`: (Default) Standard export using the API. Supports both CSV and JSONL formats.
+    *   `direct`: High-speed export that scans OpenSearch directly. Best for large datasets. **Only supports JSONL**; if CSV is requested, it will automatically switch to JSONL.
 *   `--filename`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
-*   `--output-format [csv|jsonl]`: Format for event data. Default: 'csv'. Note that `direct` method defaults to `jsonl`.
+*   `--output-format [csv|jsonl]`: Format for event data. Default: 'csv'. Note that `direct` method will always use `jsonl`.
 *   `--default-fields`: Export only the default set of event fields. If not specified, all fields are exported.
 *   `--annotated-only`: Export only events that have annotations (labels, stars, comments, or tags).
+*   `--include-legacy`: Include legacy events that are missing the `__ts_timeline_id` field. Use with caution in shared-index environments to avoid potential data leakage from other sketches.
 
 **Archive Content:**
 The generated ZIP file includes:
