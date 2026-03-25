@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -4041,15 +4041,59 @@ tsctl grant-group incident-responders --sketch_id 456 --read-only
 <h4 id="export-sketch"><code>export-sketch</code></h4>
 <p>Exports a sketch to a zip archive, including all metadata and event data.</p>
 <p>!!! warning "Archive and Re-import"
-    This export is primarily for data archival or external analysis. Re-importing this archive into Timesketch is not natively supported.</p>
+    This export is primarily for forensic data archival, preservation, or external analysis. Re-importing this archive into Timesketch is not natively supported.</p>
 <p><strong>Arguments:</strong>
 *   <code>SKETCH_ID</code>: The ID of the sketch to export.</p>
 <p><strong>Options:</strong>
+*   <code>--method [api|direct]</code>: Export method:
+    *   <code>api</code>: (Default) Standard export using the API. Supports both CSV and JSONL formats.
+    *   <code>direct</code>: High-speed export that scans OpenSearch directly. Best for large datasets. <strong>Only supports JSONL</strong>; if CSV is requested, it will automatically switch to JSONL.
 *   <code>--filename</code>: The name for the output zip file. Default: <code>sketch_{sketch_id}_{output_format}_export.zip</code>
-*   <code>--output-format</code>: Format for event data ('csv' or 'jsonl'). Default: 'csv'.
-*   <code>--default-fields</code>: Export only the default set of event fields. If not specified, all fields are exported.</p>
-<p><strong>Example:</strong></p>
-<pre><code class="language-bash">tsctl export-sketch 1 --filename &quot;project_x_export.zip&quot;
+*   <code>--output-format [csv|jsonl]</code>: Format for event data. Default: 'csv'. Note that <code>direct</code> method will always use <code>jsonl</code>.
+*   <code>--default-fields</code>: Export only the default set of event fields. If not specified, all fields are exported.
+*   <code>--annotated-only</code>: Export only events that have annotations (labels, stars, comments, or tags).
+*   <code>--include-legacy</code>: Include legacy events that are missing the <code>__ts_timeline_id</code> field. Use with caution in shared-index environments to avoid potential data leakage from other sketches.</p>
+<p><strong>Archive Content:</strong>
+The generated ZIP file includes:
+*   <code>metadata.json</code>: Comprehensive sketch and timeline metadata.
+*   <code>events.{csv|jsonl}</code>: The exported event data.
+*   <code>manifest.txt</code>: A manifest containing SHA256 hashes of all files in the archive.
+*   <code>mappings/</code>: JSON files containing the OpenSearch index mappings for each timeline.
+*   <code>stories/</code>: Sketch stories exported as individual Markdown files.</p>
+<p><strong>Example Output:</strong></p>
+<pre><code class="language-text">Starting DIRECT export of Sketch [1] &quot;Investigation Alpha&quot; to sketch_1_jsonl_export.zip...
+
+WARNING: There is currently no native method to re-import this exported archive back into Timesketch.
+
+Gathering metadata...
+  Processing 2 timeline(s)...
+  Processing 1 story(ies)...
+  Processing comments for 12 event(s)...
+  Processing analysis sessions...
+  Calculating exact event count...
+  Total events expected: 150,000
+  Streaming events to events.jsonl...
+  Export Progress  [####################################]  150000/150000  100%
+  Collecting index mappings...
+  Exporting stories to Markdown...
+  Performing random spot check...
+  SUCCESS: All 5 sampled events found in export.
+  Finalizing manifest and hashing files...
+  Creating compressed archive...
+Sketch exported successfully to sketch_1_jsonl_export.zip
+</code></pre>
+<p><strong>Sample Manifest (<code>manifest.txt</code>):</strong></p>
+<pre><code class="language-text">Timesketch Export Manifest
+==================================
+Sketch ID: 1 | Name: Investigation Alpha
+Date: 2026-03-10T14:30:00.000000+00:00
+Method: direct | Events: 150000
+
+File Hashes (SHA256):
+a1b2c3d4...  events.jsonl
+e5f6g7h8...  metadata.json
+i9j0k1l2...  mappings/index_1.json
+m3n4o5p6...  stories/story_1_summary.md
 </code></pre>
 <h4 id="sketch-label-stats"><code>sketch-label-stats</code></h4>
 <p>Provides detailed statistics on label and tag usage within a sketch, querying both the database and OpenSearch.</p>
