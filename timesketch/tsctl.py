@@ -3272,9 +3272,7 @@ def _fetch_and_prepare_event_data(
         "size": 10000,
     }
 
-    active_indices = list(
-        {t.searchindex.index_name for t in sketch.active_timelines}
-    )
+    active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
 
     # Filter out closed indices to avoid errors
     open_indices = _get_open_indices(datastore, active_indices)
@@ -3392,9 +3390,7 @@ def export_sketch(
         )
         return
 
-    active_indices = list(
-        {t.searchindex.index_name for t in sketch.active_timelines}
-    )
+    active_indices = list({t.searchindex.index_name for t in sketch.active_timelines})
     active_tids = [t.id for t in sketch.active_timelines]
 
     # Filter out closed indices to avoid errors
