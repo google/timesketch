@@ -516,7 +516,9 @@ class TestTsctl(interface.BaseEndToEndTest):
                     z.read(f"stories/story_{block_story.id}_Block_Based_Story.json")
                 )
                 # content is a stringified list of blocks
-                self.assertions.assertIn("Block based story content", json_content["content"])
+                self.assertions.assertIn(
+                    "Block based story content", json_content["content"]
+                )
 
         finally:
             if os.path.exists(export_file):
