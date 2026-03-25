@@ -451,6 +451,11 @@ class TestTsctl(interface.BaseEndToEndTest):
     def test_tsctl_story_export(self):
         """Test that stories are exported in both Markdown and JSON formats."""
         sketch = self.api.create_sketch(name=f"story-export-{uuid.uuid4().hex}")
+        self.import_timeline("sigma_events.jsonl", sketch=sketch)
+
+        # Wait for import
+        self.assertions.assertTrue(self._wait_for_events(sketch, 1))
+
         sketch_id = str(sketch.id)
 
         # 1. Create a legacy-style Markdown story
