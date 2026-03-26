@@ -290,13 +290,18 @@ def get_public_key_for_jwt(encoded_jwt: str, url: str):
         url: URL where keys can be fetched.
 
     Raises:
-        JwTKeyError if keys cannot be fetched.
+        JwtKeyError: if keys cannot be fetched.
+        JwtValidationError: if the JWT token cannot be parsed.
 
     Returns:
         Key as string.
     """
     # Get the Key ID from the JWT header.
-    key_id = jwt.get_unverified_header(encoded_jwt).get("kid")
+    try:
+        key_id = jwt.get_unverified_header(encoded_jwt).get("kid")
+    except jwt.exceptions.InvalidTokenError as e:
+        raise JwtValidationError(f"Invalid JWT header: {e}") from e
+
     if not key_id:
         raise JwtKeyError("Missing key ID field in token header")
     key_cache = get_public_key_for_jwt.key_cache
