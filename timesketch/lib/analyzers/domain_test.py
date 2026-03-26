@@ -36,23 +36,21 @@ class TestDomainPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_domain_analyzer_no_events(self):
         """Test that the analyzer handles an empty event stream gracefully."""
-        analyzer = domain.DomainSketchPlugin("test", 1)
+        analyzer = domain.DomainSketchPlugin("test", 1, timeline_id=1)
         analyzer.datastore.client = mock.Mock()
 
-        # No events in the store: run() should return early with a NOTE summary.
         result = analyzer.run()
         self.assertIn("No domains to analyze.", result)
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_domain_extracted_from_url(self):
         """Test that domains are extracted from the url field when domain is absent."""
-        analyzer = domain.DomainSketchPlugin("test", 1)
+        analyzer = domain.DomainSketchPlugin("test", 1, timeline_id=1)
         analyzer.datastore.client = mock.Mock()
 
-        # Inject a single event that carries a url but no domain field.
-        event_id = "url_event_0"
-        analyzer.datastore.event_store[event_id] = {
-            "_id": event_id,
+        # MockDataStore.search_stream iterates with str(i) keys.
+        analyzer.datastore.event_store["0"] = {
+            "_id": "0",
             "_index": "test",
             "_source": {
                 "__ts_timeline_id": 1,
@@ -62,21 +60,20 @@ class TestDomainPlugin(BaseTest):
         }
 
         result = analyzer.run()
-        # example.com should have been recognised and counted as a domain.
         self.assertIn("1 domains discovered", result)
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_rare_domain_tagged(self):
         """Test that domains appearing infrequently are counted in the result."""
-        analyzer = domain.DomainSketchPlugin("test", 1)
+        analyzer = domain.DomainSketchPlugin("test", 1, timeline_id=1)
         analyzer.datastore.client = mock.Mock()
 
         # Populate the datastore: one common domain (many hits) and one
         # rare domain (a single hit so it falls below the 20th percentile).
+        # Keys must be sequential str(i) for MockDataStore.search_stream.
         for i in range(10):
-            eid = "common_{:d}".format(i)
-            analyzer.datastore.event_store[eid] = {
-                "_id": eid,
+            analyzer.datastore.event_store[str(i)] = {
+                "_id": str(i),
                 "_index": "test",
                 "_source": {
                     "__ts_timeline_id": 1,
@@ -85,9 +82,8 @@ class TestDomainPlugin(BaseTest):
                 },
             }
 
-        rare_eid = "rare_0"
-        analyzer.datastore.event_store[rare_eid] = {
-            "_id": rare_eid,
+        analyzer.datastore.event_store["10"] = {
+            "_id": "10",
             "_index": "test",
             "_source": {
                 "__ts_timeline_id": 1,
@@ -97,18 +93,17 @@ class TestDomainPlugin(BaseTest):
         }
 
         result = analyzer.run()
-        # Both the common and the rare domain should be present in the summary.
         self.assertIn("2 domains discovered", result)
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_cdn_domain_tagged(self):
         """Test that events whose domain is a known CDN are reported."""
-        analyzer = domain.DomainSketchPlugin("test", 1)
+        analyzer = domain.DomainSketchPlugin("test", 1, timeline_id=1)
         analyzer.datastore.client = mock.Mock()
 
-        cdn_eid = "cdn_0"
-        analyzer.datastore.event_store[cdn_eid] = {
-            "_id": cdn_eid,
+        # Keys must be sequential str(i) for MockDataStore.search_stream.
+        analyzer.datastore.event_store["0"] = {
+            "_id": "0",
             "_index": "test",
             "_source": {
                 "__ts_timeline_id": 1,

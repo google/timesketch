@@ -197,6 +197,8 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         if aggregate:
             self.assertIsInstance(aggregate, bool)
 
+    # Mock the OpenSearch datastore.
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_analyzer_properties(self):
         """Test getters and setters of FeatureExtractionSketchPlugin."""
         analyzer = FeatureExtractionSketchPlugin("test_index", 1, 1)
@@ -208,6 +210,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         self.assertEqual(analyzer.feature_name, "test_feature")
         self.assertEqual(analyzer.feature_config, {"test": "config"})
 
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_run_empty_plugin_name(self):
         """Test analyzer run method with empty plugin name."""
         analyzer = FeatureExtractionSketchPlugin("test_index", 1, 1)
@@ -215,6 +218,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         result = analyzer.run()
         self.assertEqual(result, "Feature extraction plugin name is empty")
 
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_run_unregistered_plugin(self):
         """Test analyzer run method with an unregistered plugin."""
         analyzer = FeatureExtractionSketchPlugin("test_index", 1, 1)
