@@ -485,8 +485,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         else:
             file_path = utils.format_upload_path(upload_folder, uuid.uuid4().hex)
 
+        file_permission = current_app.config.get("UPLOAD_FILE_PERMISSION", 0o600)
+
         try:
-            fd = os.open(file_path, os.O_RDWR | os.O_CREAT, 0o600)
+            fd = os.open(file_path, os.O_RDWR | os.O_CREAT, file_permission)
             try:
                 with os.fdopen(fd, "rb+") as fh:
                     fh.seek(chunk_byte_offset)
