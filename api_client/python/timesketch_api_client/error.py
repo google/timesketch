@@ -33,14 +33,20 @@ def _get_message(response):
         str: a string with the message field extracted from the
             response.text.
     """
-    soup = bs4.BeautifulSoup(response.text, features="html.parser")
+    if response is None:
+        return "n/a"
+    response_text_raw = getattr(response, "text", None)
+    if response_text_raw is None:
+        return "n/a"
+
+    soup = bs4.BeautifulSoup(response_text_raw, features="html.parser")
     if soup.p:
         return soup.p.string  # pytype: disable=attribute-error
 
-    if isinstance(response.text, bytes):
-        response_text = response.text.decode("utf-8")
+    if isinstance(response_text_raw, bytes):
+        response_text = response_text_raw.decode("utf-8")
     else:
-        response_text = response.text
+        response_text = response_text_raw
 
     try:
         response_dict = json.loads(response_text)
@@ -64,7 +70,9 @@ def _get_reason(response):
         str: a string with the reason field extracted from the
             response.reason.
     """
-    reason = response.reason
+    if response is None:
+        return "n/a"
+    reason = getattr(response, "reason", "n/a")
     if isinstance(reason, bytes):
         return reason.decode("utf-8")
 
@@ -125,10 +133,12 @@ def error_message(response, message=None, error=RuntimeError):
     if not message:
         message = "Unknown error"
     text = _get_message(response)
+    request = getattr(response, "request", None)
+    url = getattr(response, "url", getattr(request, "url", "n/a") if request else "n/a")
 
     raise error(
-        f"{message}, with error [{response.status_code}] "
-        f"{_get_reason(response)} {text} ({response.url})"
+        f"{message}, with error [{getattr(response, 'status_code', 'n/a')}] "
+        f"{_get_reason(response)} {text} ({url})"
     )
 
 
