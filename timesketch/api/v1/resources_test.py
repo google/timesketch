@@ -2513,7 +2513,6 @@ class UploadFileResourceTest(BaseTest):
         file_path = os.path.join(self.upload_folder, chunk_index_name)
         mock_format_upload_path.return_value = file_path
 
-
         called_with_args = {}
 
         # Need to keep a reference to avoid GC closing the file
