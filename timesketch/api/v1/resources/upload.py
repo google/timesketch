@@ -449,8 +449,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         data_label = form.get("data_label", "")
 
+        file_permission = current_app.config.get("UPLOAD_FILE_PERMISSION", 0o640)
+        if isinstance(file_permission, str):
+            file_permission = int(file_permission, 8)
+
         if chunk_total_chunks is None:
             file_storage.save(file_path)
+            os.chmod(file_path, file_permission)
             return self._upload_and_index(
                 file_path=file_path,
                 file_extension=file_extension,
@@ -484,8 +489,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_path = utils.format_upload_path(upload_folder, chunk_index_name)
         else:
             file_path = utils.format_upload_path(upload_folder, uuid.uuid4().hex)
-
-        file_permission = current_app.config.get("UPLOAD_FILE_PERMISSION", 0o600)
 
         try:
             fd = os.open(file_path, os.O_RDWR | os.O_CREAT, file_permission)
