@@ -56,7 +56,7 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-vue": "^9.23.0",
-    "happy-dom": "^20.0.2",
+    "happy-dom": "^20.8.8",
     "sass": "1.77.6",
     "sass-loader": "^10.1.1",
     "vite": "^5.4.21",
