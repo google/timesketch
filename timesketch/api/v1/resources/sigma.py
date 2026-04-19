@@ -200,6 +200,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         Returns:
             HTTP_STATUS_CODE_NOT_FOUND if rule not found.
+            HTTP_STATUS_CODE_FORBIDDEN if the user is not the owner or admin.
             HTTP_STATUS_CODE_OK if rule deleted.
         """
         rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
@@ -210,6 +211,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 error_msg,
+            )
+
+        if rule.user_id != current_user.id and not current_user.admin:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "You do not have permission to delete this Sigma rule.",
             )
 
         db_session.delete(rule)
@@ -263,6 +270,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             error_msg = f"Sigma rule with UUID: {rule_uuid!s} not found"
             logger.error(error_msg)
             abort(HTTP_STATUS_CODE_NOT_FOUND, error_msg)
+
+        if sigma_rule_from_db.user_id != current_user.id and not current_user.admin:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "You do not have permission to modify this Sigma rule.",
+            )
 
         sigma_rule_from_db.rule_yaml = rule_yaml
         sigma_rule_from_db.title = parsed_rule.get("title")
