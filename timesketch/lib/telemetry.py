@@ -27,6 +27,7 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
     HAS_OTEL = True
 except ImportError:
     HAS_OTEL = False

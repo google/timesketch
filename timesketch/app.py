@@ -270,7 +270,9 @@ def configure_logger():
             if trace:
                 span_context = trace.get_current_span().get_span_context()
                 if span_context.is_valid:
-                    log_record["trace_id"] = trace.format_trace_id(span_context.trace_id)
+                    log_record["trace_id"] = trace.format_trace_id(
+                        span_context.trace_id
+                    )
                     log_record["span_id"] = trace.format_span_id(span_context.span_id)
 
             if record.exc_info:
