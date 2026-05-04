@@ -96,8 +96,6 @@ def setup_telemetry(service_name: str):
         )
         trace_exporter = http_exporter.OTLPSpanExporter(endpoint=endpoint)
     elif otel_mode == "otlp-cloud-trace":
-        # Direct OTLP to GCP Cloud Trace
-        # See: go/ct:writing-spans-from-borg-1p-howto
         endpoint = "https://telemetry.googleapis.com"
         trace_exporter = grpc_exporter.OTLPSpanExporter(
             endpoint=endpoint, insecure=False
