@@ -17,16 +17,19 @@ import json
 import logging
 import os
 
-from opentelemetry import trace
-from opentelemetry.trace.span import INVALID_SPAN
-
-from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
-from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+try:
+    from opentelemetry import trace
+    from opentelemetry.trace.span import INVALID_SPAN
+    from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
+    from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
+    from opentelemetry.instrumentation.celery import CeleryInstrumentor
+    from opentelemetry.instrumentation.flask import FlaskInstrumentor
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    HAS_OTEL = True
+except ImportError:
+    HAS_OTEL = False
 
 from timesketch.version import get_version
 
@@ -42,6 +45,8 @@ def is_enabled() -> bool:
     Returns:
         bool: True if telemetry is enabled, False otherwise.
     """
+    if not HAS_OTEL:
+        return False
     otel_mode = os.environ.get("TIMESKETCH_OTEL_MODE", "").lower()
     return otel_mode.startswith("otlp-")
 
@@ -56,7 +61,8 @@ def setup_telemetry(service_name: str):
         - 'otlp-grpc': Exports to an OTLP collector via gRPC.
           Uses `TIMESKETCH_OTLP_GRPC_ENDPOINT` (default: localhost:4317).
         - 'otlp-http': Exports to an OTLP collector via HTTP.
-          Uses `TIMESKETCH_OTLP_HTTP_ENDPOINT` (default: http://localhost:4318/v1/traces).
+          Uses `TIMESKETCH_OTLP_HTTP_ENDPOINT`
+          (default: http://localhost:4318/v1/traces).
         - 'otlp-cloud-trace': Exports directly to Google Cloud Trace using
           native OTLP/gRPC. Points to telemetry.googleapis.com.
 
@@ -97,9 +103,10 @@ def setup_telemetry(service_name: str):
         )
     else:
         logger.error(
-            f"Unsupported OTEL tracing mode {otel_mode}. "
-            "Valid values for TIMESKETCH_OTEL_MODE are:"
-            " 'otlp-grpc', 'otlp-http', 'otlp-cloud-trace'"
+            "Unsupported OTEL tracing mode %s. "
+            "Valid values for TIMESKETCH_OTEL_MODE are: "
+            "'otlp-grpc', 'otlp-http', 'otlp-cloud-trace'",
+            otel_mode,
         )
         return
 
