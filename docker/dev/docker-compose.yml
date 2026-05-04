@@ -29,9 +29,10 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - PROMETHEUS_MULTIPROC_DIR=/tmp/
       - ENABLE_STRUCTURED_LOGGING=true
-      - TIMESKETCH_OTEL_MODE=otlp-grpc
-      - TIMESKETCH_OTLP_GRPC_ENDPOINT=otel-collector:4317
-      - TIMESKETCH_OTLP_INSECURE=true
+      # Telemetry settings (Uncomment to enable locally)
+      # - TIMESKETCH_OTEL_MODE=otlp-grpc
+      # - TIMESKETCH_OTLP_GRPC_ENDPOINT=otel-collector:4317
+      # - TIMESKETCH_OTLP_INSECURE=true
     restart: always
     volumes:
       - ../../:/usr/local/src/timesketch/
@@ -98,27 +99,6 @@ services:
       - 127.0.0.1:9090:9090
     command: --config.file=/etc/prometheus/prometheus.yml --log.level=warn
 
-  otel-collector:
-    container_name: otel-collector
-    image: otel/opentelemetry-collector:0.100.0
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    ports:
-      - "127.0.0.1:4317:4317"
-      - "127.0.0.1:4318:4318"
-    depends_on:
-      - jaeger
-
-  jaeger:
-    container_name: jaeger
-    image: jaegertracing/all-in-one:latest
-    restart: always
-    ports:
-      - "127.0.0.1:16686:16686"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-
   # notebook:
   #   container_name: notebook
   #   image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
@@ -130,3 +110,7 @@ services:
   #   volumes:
   #     - ../../:/usr/local/src/timesketch/:ro
   #     - /tmp/:/usr/local/src/picadata/
+
+networks:
+  default:
+    name: timesketch-network
