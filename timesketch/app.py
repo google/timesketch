@@ -30,7 +30,10 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
 
-from opentelemetry import trace
+try:
+    from opentelemetry import trace
+except ImportError:
+    trace = None
 from timesketch.lib import telemetry
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
@@ -264,10 +267,11 @@ def configure_logger():
                 "module": record.module,
             }
 
-            span_context = trace.get_current_span().get_span_context()
-            if span_context.is_valid:
-                log_record["trace_id"] = trace.format_trace_id(span_context.trace_id)
-                log_record["span_id"] = trace.format_span_id(span_context.span_id)
+            if trace:
+                span_context = trace.get_current_span().get_span_context()
+                if span_context.is_valid:
+                    log_record["trace_id"] = trace.format_trace_id(span_context.trace_id)
+                    log_record["span_id"] = trace.format_span_id(span_context.span_id)
 
             if record.exc_info:
                 formatted_trace = self.formatException(record.exc_info)

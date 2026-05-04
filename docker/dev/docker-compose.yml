@@ -35,7 +35,6 @@ services:
     restart: always
     volumes:
       - ../../:/usr/local/src/timesketch/
-      - ./build/docker-entrypoint.sh:/docker-entrypoint.sh
 
   opensearch:
     container_name: opensearch
@@ -119,3 +118,15 @@ services:
       - "127.0.0.1:16686:16686"
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+
+  # notebook:
+  #   container_name: notebook
+  #   image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
+  #   ports:
+  #     - 127.0.0.1:8844:8844
+  #   restart: on-failure
+  #   links:
+  #     - opensearch
+  #   volumes:
+  #     - ../../:/usr/local/src/timesketch/:ro
+  #     - /tmp/:/usr/local/src/picadata/
