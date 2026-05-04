@@ -273,7 +273,9 @@ def configure_logger():
                     log_record["trace_id"] = trace.format_trace_id(
                         span_context.trace_id
                     )
-                    log_record["span_id"] = trace.format_span_id(span_context.span_id)
+                    log_record["span_id"] = trace.format_span_id(
+                        span_context.span_id
+                    )
 
             if record.exc_info:
                 formatted_trace = self.formatException(record.exc_info)
