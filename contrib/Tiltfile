@@ -10,6 +10,8 @@ dc_resource("opensearch", labels=["docker"])
 dc_resource("postgres", labels=["docker"])
 dc_resource("redis", labels=["docker"])
 dc_resource("prometheus", labels=["docker"])
+dc_resource("otel-collector", labels=["docker"])
+dc_resource("jaeger", labels=["docker"], links=["http://localhost:16686/jaeger"])
 
 # --- 2. Managed Dev Processes ---
 backend_deps = [
