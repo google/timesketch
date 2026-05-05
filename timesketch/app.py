@@ -30,10 +30,6 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
 
-try:
-    from opentelemetry import trace
-except ImportError:
-    trace = None
 from timesketch.lib import telemetry
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
