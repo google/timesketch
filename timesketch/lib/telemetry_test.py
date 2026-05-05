@@ -74,4 +74,3 @@ class TestTelemetry(BaseTest):
         self.assertIn("api_token", redacted_keys)
         self.assertIn("custom_field (value)", redacted_keys)
         self.assertNotIn("user.name", redacted_keys)
-
