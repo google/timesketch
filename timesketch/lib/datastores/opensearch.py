@@ -803,7 +803,8 @@ class OpenSearchDataStore:
         Args:
             sketch_id: The ID of the sketch the search is performed within. Used
                 for building label filters.
-            indices: A list of OpenSearch index names to query.
+            indices: A list of OpenSearch index names (or a single index name
+                string) to query.
             query_string: The query string to search for (e.g., "hostname:evil.com").
                 Defaults to an empty string.
             query_filter: An optional dictionary containing filters to apply to
@@ -837,6 +838,9 @@ class OpenSearchDataStore:
                 with the query or connection.
             DatastoreTimeoutError: If querying OpenSearch times out.
         """
+        if isinstance(indices, str):
+            indices = [indices]
+
         scroll_timeout = None
         if enable_scroll:
             scroll_timeout = "1m"  # Default to 1 minute scroll timeout
@@ -1195,7 +1199,8 @@ class OpenSearchDataStore:
         total size on disk for the provided list of indices.
 
         Args:
-            indices (list[str]): A list of OpenSearch index names to count.
+            indices: A list of OpenSearch index names (or a single index name
+                string) to count.
 
         Returns:
             tuple[int, int]: A tuple containing two integers:
@@ -1204,6 +1209,9 @@ class OpenSearchDataStore:
             Returns (0, 0) if the indices are not found or if there is a
             request error.
         """
+        if isinstance(indices, str):
+            indices = [indices]
+
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
