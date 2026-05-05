@@ -75,7 +75,8 @@ def setup_telemetry(service_name: str):
         - 'otlp-grpc': Exports to an OTLP collector via gRPC.
           Uses `TIMESKETCH_OTLP_GRPC_ENDPOINT` (default: localhost:4317).
         - 'otlp-http': Exports to an OTLP collector via HTTP.
-          Uses `TIMESKETCH_OTLP_HTTP_ENDPOINT` (default: http://localhost:4318/v1/traces).
+          Uses `TIMESKETCH_OTLP_HTTP_ENDPOINT`
+          (default: http://localhost:4318/v1/traces).
 
     Args:
         service_name (str): The name of the service to identify traces in the backend.
