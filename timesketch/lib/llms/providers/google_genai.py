@@ -86,7 +86,7 @@ class GoogleGenAI(interface.LLMProvider):
         with tracer.start_as_current_span("llm.google_genai.generate") as span:
             span.set_attribute("llm.provider", self.NAME)
             span.set_attribute("llm.model", self._model_name)
-            span.set_attribute("llm.prompt", prompt)
+            span.set_attribute("llm.prompt_length", len(prompt))
 
             config_params = {
                 "temperature": self.config.get("temperature"),
@@ -109,10 +109,9 @@ class GoogleGenAI(interface.LLMProvider):
                 )
                 span.set_status(telemetry.get_status_code("OK"))
                 if response.text:
-                    span.set_attribute("llm.response", response.text)
+                    span.set_attribute("llm.response_length", len(response.text))
 
             except errors.APIError as e:
-                span.record_exception(e)
                 error_msg = f"{e.code} {e.status}: {getattr(e, 'message', 'N/A')}"
                 logger.error("API error during content generation: %s", str(e))
                 raise ValueError(f"Error generating content: {error_msg}") from e

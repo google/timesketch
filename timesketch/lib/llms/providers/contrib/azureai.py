@@ -50,7 +50,7 @@ class AzureAI(interface.LLMProvider):
         with tracer.start_as_current_span("llm.azureai.generate") as span:
             span.set_attribute("llm.provider", self.NAME)
             span.set_attribute("llm.model", self.model)
-            span.set_attribute("llm.prompt", prompt)
+            span.set_attribute("llm.prompt_length", len(prompt))
 
             url = (
                 f"{self.endpoint}/openai/deployments/{self.model}/chat/completions?"
@@ -73,11 +73,10 @@ class AzureAI(interface.LLMProvider):
                 )
                 response.raise_for_status()
                 response_data = response.json()["choices"][0]["message"]["content"]
-                span.set_attribute("llm.response", response_data)
+                span.set_attribute("llm.response_length", len(response_data))
                 span.set_status(telemetry.get_status_code("OK"))
 
             except (KeyError, IndexError, requests.RequestException) as e:
-                span.record_exception(e)
                 raise ValueError(
                     f"Error generating text with Azure API: {e}"
                 ) from e

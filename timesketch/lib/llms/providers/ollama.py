@@ -94,7 +94,7 @@ class Ollama(interface.LLMProvider):
         with tracer.start_as_current_span("llm.ollama.generate") as span:
             span.set_attribute("llm.provider", self.NAME)
             span.set_attribute("llm.model", self.config.get("model"))
-            span.set_attribute("llm.prompt", prompt)
+            span.set_attribute("llm.prompt_length", len(prompt))
 
             request_body = {
                 "messages": [{"role": "user", "content": prompt}],
@@ -120,7 +120,7 @@ class Ollama(interface.LLMProvider):
 
                 response_data = response.json()
                 text_response = response_data.get("message", {}).get("content", "").strip()
-                span.set_attribute("llm.response", text_response)
+                span.set_attribute("llm.response_length", len(text_response))
                 span.set_status(telemetry.get_status_code("OK"))
 
                 if response_schema:
