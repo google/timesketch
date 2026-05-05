@@ -118,7 +118,6 @@ try:
                     span._attributes[key] = "[REDACTED]"
                     continue
 
-
                 # 3. Targeted PII redaction (redact within the string)
                 if key in EXEMPT_PII_ATTRIBUTES:
                     continue

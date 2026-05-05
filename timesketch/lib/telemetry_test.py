@@ -33,25 +33,27 @@ class TestTelemetry(BaseTest):
         # Setup an in-memory exporter and the scrubber
         exporter = InMemorySpanExporter()
         scrubber = telemetry.SensitiveDataScrubber()
-        
+
         provider = TracerProvider()
         # The scrubber must run BEFORE the exporter
         provider.add_span_processor(scrubber)
         provider.add_span_processor(SimpleSpanProcessor(exporter))
-        
+
         tracer = provider.get_tracer(__name__)
 
         with tracer.start_as_current_span("test-redaction") as span:
             # 1. Test Credential Key Redaction
             span.set_attribute("password", "supersecret")
             span.set_attribute("api_token", "12345-token")
-            
+
             # 2. Test Keyword in Value Redaction
             span.set_attribute("custom_field", "this is a secret value")
-            
+
             # 3. Test PII (Email) Redaction in string
-            span.set_attribute("db.statement", "SELECT * FROM users WHERE email = 'victim@gmail.com'")
-            
+            span.set_attribute(
+                "db.statement", "SELECT * FROM users WHERE email = 'victim@gmail.com'"
+            )
+
             # 4. Test Analyst Identity Exemption
             span.set_attribute("user.name", "analyst@google.com")
             span.set_attribute("user.id", 123)
@@ -66,17 +68,16 @@ class TestTelemetry(BaseTest):
         self.assertEqual(attrs["password"], "[REDACTED]")
         self.assertEqual(attrs["api_token"], "[REDACTED]")
         self.assertEqual(attrs["custom_field"], "[REDACTED]")
-        
+
         # Verify targeted redaction (PII is stripped but query structure remains)
         self.assertEqual(
-            attrs["db.statement"], 
-            "SELECT * FROM users WHERE email = '[REDACTED_PII]'"
+            attrs["db.statement"], "SELECT * FROM users WHERE email = '[REDACTED_PII]'"
         )
-        
+
         # Verify analyst identity is NOT redacted
         self.assertEqual(attrs["user.name"], "analyst@google.com")
         self.assertEqual(attrs["user.id"], 123)
-        
+
         # Verify audit trail
         redacted_keys = attrs["otel.redacted_keys"]
         self.assertIn("password", redacted_keys)
