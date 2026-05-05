@@ -8,18 +8,22 @@ This document provides a comprehensive guide for developers, admins, and users o
 Timesketch uses OpenTelemetry to provide distributed tracing across its web (Flask) and worker (Celery) components. This enables deep observability into request life cycles and background task performance.
 
 ### Key Benefits
-*   **Distributed Tracing:** Track a single request from an external tool (like `dftimewolf`) through the API and into background analyzers.
-*   **Log Correlation:** Trace IDs and Span IDs are automatically injected into structured JSON logs, allowing you to jump from a log line directly to a trace waterfall in tools like GCP Cloud Trace or Jaeger.
+*   **Distributed Tracing:** Track a single request from an external tool (like `dftimewolf`) through the API, into background analyzers, and down to the database/OpenSearch layer.
+*   **Log Correlation:** Trace IDs and Span IDs are automatically injected into application logs, allowing you to jump from a log line directly to a trace waterfall in tools like GCP Cloud Trace or Jaeger.
+*   **Data Layer Visibility:** Deep tracing into OpenSearch queries and PostgreSQL database operations.
+*   **Analyst Attribution:** Every trace is linked to the authenticated user who performed the action.
 *   **Standardized Protocol:** Uses the industry-standard OpenTelemetry Protocol (OTLP).
 
 ---
 
 ## 2. Architecture
-The instrumentation is centralized in a dedicated module: `timesketch/lib/telemetry.py`.
+The instrumentation is centralized in `timesketch/lib/telemetry.py`.
 
-*   **Flask Instrumentation:** Automatically captures spans for all HTTP requests, including route patterns and status codes.
-*   **Celery Instrumentation:** Captures spans for both task dispatching (producer) and execution (worker), maintaining the trace context across process boundaries.
-*   **Async Exporting:** Spans are exported asynchronously using a `BatchSpanProcessor` to ensure minimal impact on application performance.
+*   **Flask:** Captures all HTTP requests, status codes, and analyst identity.
+*   **Celery:** Maintains trace context across background tasks (analyzers, data imports).
+*   **OpenSearch:** Manual instrumentation captures search query structure (`db.statement`), targeted indices, and internal processing time (`took_ms`).
+*   **SQLAlchemy (Postgres):** Automatically captures SQL statements and database connection health.
+*   **Async Exporting:** Uses `BatchSpanProcessor` for zero-impact on application performance.
 
 ---
 
@@ -33,6 +37,7 @@ Telemetry is controlled entirely via environment variables.
 | `TIMESKETCH_OTLP_HTTP_ENDPOINT` | OTLP collector endpoint (HTTP). | `http://jaeger:4318/v1/traces` |
 | `TIMESKETCH_OTLP_INSECURE` | Use insecure (non-TLS) connection. | `true` (default for dev) |
 | `TIMESKETCH_ENV` | Environment identifier. | `production`, `development` |
+| `ENABLE_STRUCTURED_LOGGING` | Enable JSON logging with trace context. | `true`, `false` |
 
 ### Supported Modes:
 1.  **`otlp-grpc`:** Best for local collectors (e.g., OTel Collector or Jaeger).
@@ -41,7 +46,16 @@ Telemetry is controlled entirely via environment variables.
 
 ---
 
-## 4. Local Development & Testing
+## 4. Developer Workflow Enhancements
+Phase 2 introduced several features to make telemetry easier to access without always needing the Jaeger UI:
+
+### 1. Log Correlation (Terminal)
+Even if you are not using JSON logging, standard Timesketch logs now include the Trace ID in brackets. This allows you to immediately identify which trace corresponds to a specific log entry.
+**Example:** `[2026-05-05 10:20:00] timesketch.api/INFO [trace_id=a3327ae1...] User dev triggered search`
+
+---
+
+## 5. Local Development & Testing
 
 ### Option A: Using Docker Compose
 1. **Start the Core Environment:**
@@ -74,7 +88,7 @@ The Tilt dashboard will show `otel-collector` and `jaeger` resources, including 
 
 ---
 
-## 5. Visualization Options
+## 6. Visualization Options
 
 The local environment provides two ways to see your traces. You can switch between them by changing the `TIMESKETCH_OTLP_GRPC_ENDPOINT`.
 
@@ -91,7 +105,7 @@ The local environment provides two ways to see your traces. You can switch betwe
 
 ---
 
-## 6. Triggering Activity & Verification
+## 7. Triggering Activity & Verification
 Generate some traffic to verify the setup:
 ```bash
 # Trigger a Flask Trace (API Call)
@@ -102,14 +116,14 @@ docker exec timesketch-dev celery -A timesketch.lib.tasks call timesketch.lib.ta
 ```
 
 **Check Application Logs:**
-Verify that `trace_id` and `span_id` appear in the JSON output:
+Verify that `trace_id` appears in the output:
 ```bash
 docker logs timesketch-dev | grep trace_id
 ```
 
 ---
 
-## 7. Secure Private Access (GCP)
+## 8. Secure Private Access (GCP)
 If you are running Timesketch on a private GCE VM without an external IP, you can "proxy in" securely using **Identity-Aware Proxy (IAP) Tunneling**.
 
 ### Accessing the Web Interfaces
@@ -145,7 +159,7 @@ gcloud compute start-iap-tunnel timesketch-otel-lab 5000 \
 
 ---
 
-## 8. Deployment Guide (GCP)
+## 9. Deployment Guide (GCP)
 To enable production tracing in GCP:
 1.  Set `TIMESKETCH_OTEL_MODE=otlp-default-gce`.
 2.  Ensure the service account running Timesketch has the `roles/cloudtrace.agent` role.
@@ -153,40 +167,22 @@ To enable production tracing in GCP:
 
 ---
 
-## 9. Telemetry Privacy & Redaction
-Timesketch is designed with a "Privacy-First" telemetry architecture. A global scrubber intercepts all spans to ensure no sensitive data (PII, usernames, tokens) is exported.
+## 10. Telemetry Privacy & Redaction
+Timesketch is designed with a "Privacy-First" telemetry architecture. A global scrubber intercepts all spans to ensure no sensitive data (victim PII, passwords, tokens) is exported.
 
 ### How it Works
-1.  **Strict Allow-list:** Only attribute keys explicitly permitted in the `DEFAULT_ALLOWED_ATTRIBUTES` list are exported. All other attributes are deleted.
-2.  **Value Redaction:** If a string value contains keywords like `password`, `secret`, or `token`, it is replaced with `[REDACTED]`.
-3.  **Header Filtering:** Sensitive HTTP headers (e.g., `Cookie`, `Authorization`) are redacted at the instrumentor level.
-
-### Identifying Redacted Data
-When the scrubber removes an attribute, it adds the key name to a special field on the span: **`otel.redacted_keys`**. 
-If you are missing data in your traces, check this field in your telemetry backend (Jaeger/Cloud Trace) to see if it was blocked by the scrubber.
-
-### How to Allow Additional Attributes
-If you identify a non-sensitive attribute in the `otel.redacted_keys` list that you need for debugging, you can "unblock" it using an environment variable without changing the code.
-
-**Variable:** `TIMESKETCH_OTEL_ALLOWED_ATTRIBUTES`
-**Format:** Comma-separated list of attribute keys.
-
-**Example (Docker Compose):**
-```yaml
-environment:
-  - TIMESKETCH_OTEL_ALLOWED_ATTRIBUTES=my.custom.field,another.useful.key
-```
-
-### Best Practices
-*   **Never** allow attributes known to contain PII or credentials.
-*   **Always** prefix custom attributes with a namespace (e.g., `sketch.`, `analyzer.`).
-*   **Check the Logs:** The scrubber logs a warning when it redacts a value based on heuristics.
+1.  **Credential Redaction:** If an attribute key contains keywords like `password` or `token`, the entire value is replaced with `[REDACTED]`.
+2.  **Targeted PII Redaction (Regex):** All string attributes (including SQL/OpenSearch queries) are scanned for PII patterns. Currently, **email addresses** are identified and replaced with `[REDACTED_PII]` within the string, preserving the overall query structure for debugging.
+3.  **Analyst Attribution:** Authenticated user IDs and usernames are **exempt** from redaction. This allows you to see which investigator triggered a slow search or an error.
+4.  **Audit Trail:** Redacted keys are added to the **`otel.redacted_keys`** list on each span for transparency.
 
 ### Automated Coverage
 Most common operations are already covered by auto-instrumentation:
-*   **Web API:** All Flask routes, status codes, and HTTP methods.
-*   **Background Tasks:** All Celery task dispatching and executions.
-*   **Analyzers:** All analyzers automatically report `sketch_id`, `analyzer_name`, `timeline_id`, and execution status via the `BaseAnalyzer` interface.
+*   **Web API:** Routes, status codes, and `user.name`.
+*   **Databases (SQL):** SQL statements (scrubbed) and Postgres connection events.
+*   **OpenSearch:** Query strings (scrubbed), indices, and latency.
+*   **Background Tasks:** Celery task dispatching and executions.
+*   **Analyzers:** `sketch_id`, `analyzer_name`, and execution status.
 
 ### Adding Custom Attributes & Events
 If you need to record specific domain metadata (e.g., number of matches found, search query used) from within your code, use the helpers in `timesketch.lib.telemetry`.
