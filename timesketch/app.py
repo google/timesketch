@@ -270,10 +270,17 @@ def configure_logger():
             if trace:
                 span_context = trace.get_current_span().get_span_context()
                 if span_context.is_valid:
-                    t_id = span_context.trace_id
-                    s_id = span_context.span_id
-                    log_record["trace_id"] = trace.format_trace_id(t_id)
-                    log_record["span_id"] = trace.format_span_id(s_id)
+                    t_id = trace.format_trace_id(span_context.trace_id)
+                    s_id = trace.format_span_id(span_context.span_id)
+                    log_record["trace_id"] = t_id
+                    log_record["span_id"] = s_id
+                    # GCP specific correlation fields
+                    project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+                    if project_id:
+                        log_record["logging.googleapis.com/trace"] = (
+                            f"projects/{project_id}/traces/{t_id}"
+                        )
+                        log_record["logging.googleapis.com/spanId"] = s_id
 
             if record.exc_info:
                 formatted_trace = self.formatException(record.exc_info)

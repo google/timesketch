@@ -18,8 +18,14 @@ import logging
 import os
 
 try:
+    from google.auth import compute_engine
+    from google.auth import exceptions as auth_exceptions
+    from google.auth import transport
+    from google.cloud.trace_v2 import TraceServiceClient
+
     from opentelemetry import trace
     from opentelemetry.trace.span import INVALID_SPAN
+    from opentelemetry.exporter import cloud_trace
     from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
     from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
@@ -37,11 +43,20 @@ from timesketch.version import get_version
 logger = logging.getLogger("timesketch.telemetry")
 
 
+def _get_gcp_project_id():
+    """Returns the GCP Project ID as a string."""
+    auth_request = transport.requests.Request()
+    try:
+        # pylint: disable=protected-access
+        project_id = compute_engine._metadata.get_project_id(auth_request)
+        return project_id
+    except auth_exceptions.TransportError as e:
+        logger.error("Could not get project_id from GCE metadata server: %s", str(e))
+    return None
+
+
 def is_enabled() -> bool:
     """Returns whether OpenTelemetry instrumentation is enabled.
-
-    Telemetry is considered enabled if the `TIMESKETCH_OTEL_MODE` environment
-    variable is set to a value starting with 'otlp-'.
 
     Returns:
         bool: True if telemetry is enabled, False otherwise.
@@ -53,19 +68,14 @@ def is_enabled() -> bool:
 
 
 def setup_telemetry(service_name: str):
-    """Configures the OpenTelemetry SDK and trace exporter.
-
-    This function initializes the global TracerProvider and configures a span
-    processor with the exporter selected via `TIMESKETCH_OTEL_MODE`.
+    """Configures the OpenTelemetry trace exporter.
 
     Supported modes:
+        - 'otlp-default-gce': Exports to Google Cloud Trace API from a GCE instance.
         - 'otlp-grpc': Exports to an OTLP collector via gRPC.
           Uses `TIMESKETCH_OTLP_GRPC_ENDPOINT` (default: localhost:4317).
         - 'otlp-http': Exports to an OTLP collector via HTTP.
-          Uses `TIMESKETCH_OTLP_HTTP_ENDPOINT`
-          (default: http://localhost:4318/v1/traces).
-        - 'otlp-cloud-trace': Exports directly to Google Cloud Trace using
-          native OTLP/gRPC. Points to telemetry.googleapis.com.
+          Uses `TIMESKETCH_OTLP_HTTP_ENDPOINT` (default: http://localhost:4318/v1/traces).
 
     Args:
         service_name (str): The name of the service to identify traces in the backend.
@@ -95,16 +105,21 @@ def setup_telemetry(service_name: str):
             "TIMESKETCH_OTLP_HTTP_ENDPOINT", "http://localhost:4318/v1/traces"
         )
         trace_exporter = http_exporter.OTLPSpanExporter(endpoint=endpoint)
-    elif otel_mode == "otlp-cloud-trace":
-        endpoint = "https://telemetry.googleapis.com"
-        trace_exporter = grpc_exporter.OTLPSpanExporter(
-            endpoint=endpoint, insecure=False
+    elif otel_mode == "otlp-default-gce":
+        # Explicitly pass credentials from the GKE Metadata Server
+        # This ignores GOOGLE_APPLICATION_CREDENTIALS
+        credentials = compute_engine.Credentials()
+        trace_client = TraceServiceClient(credentials=credentials)
+        trace_exporter = cloud_trace.CloudTraceSpanExporter(
+            project_id=_get_gcp_project_id(),
+            resource_regex=r"service.*",
+            client=trace_client,
         )
     else:
         logger.error(
             "Unsupported OTEL tracing mode %s. "
             "Valid values for TIMESKETCH_OTEL_MODE are: "
-            "'otlp-grpc', 'otlp-http', 'otlp-cloud-trace'",
+            "'otlp-grpc', 'otlp-http', 'otlp-default-gce'",
             otel_mode,
         )
         return
@@ -118,9 +133,6 @@ def setup_telemetry(service_name: str):
 def instrument_celery_app(celery_app, **kwargs):
     """Instruments a Celery application instance.
 
-    This enables automatic capturing of spans for task dispatching (producer)
-    and task execution (worker).
-
     Args:
         celery_app (celery.app.Celery): The Celery application to instrument.
         **kwargs: Additional arguments passed to CeleryInstrumentor().instrument().
@@ -132,8 +144,6 @@ def instrument_celery_app(celery_app, **kwargs):
 
 def instrument_flask_app(app, **kwargs):
     """Instruments a Flask application instance.
-
-    This enables automatic capturing of spans for all incoming HTTP requests.
 
     Args:
         app (flask.Flask): The Flask application to instrument.
@@ -163,10 +173,9 @@ def add_attribute_to_current_span(name: str, value: object):
 
     Simple types (str, bool, int, float) are stored as-is. Complex objects
     are automatically serialized to JSON strings.
-
     Args:
         name (str): The key name for the attribute.
-        value (object): The value to store.
+        value (object): The value to store. Needs to be JSON serializable.
     """
     if not is_enabled():
         return
