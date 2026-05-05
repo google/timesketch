@@ -38,6 +38,7 @@ from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
+from timesketch.lib import telemetry
 from timesketch.models.user import Group, User
 
 
@@ -332,12 +333,20 @@ class AccessControlMixin:
             user has the permission or None if the user do not have the
             permission.
         """
-        public_ace = self.is_public
-        if public_ace and permission == "read":
-            return public_ace
-        if isinstance(permission, bytes):
-            permission = codecs.decode(permission, "utf-8")
-        return self._get_ace(permission=permission, user=user)
+        tracer = telemetry.get_tracer(__name__)
+        with tracer.start_as_current_span("acl.has_permission") as span:
+            span.set_attribute("acl.permission", str(permission))
+            if hasattr(user, "username"):
+                span.set_attribute("acl.user", user.username)
+            if hasattr(self, "id"):
+                span.set_attribute("acl.resource_id", self.id)
+
+            public_ace = self.is_public
+            if public_ace and permission == "read":
+                return public_ace
+            if isinstance(permission, bytes):
+                permission = codecs.decode(permission, "utf-8")
+            return self._get_ace(permission=permission, user=user)
 
     def grant_permission(self, permission, user=None, group=None):
         """Grant permission to a user or group  with the specific permission.

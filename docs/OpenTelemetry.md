@@ -153,7 +153,34 @@ To enable production tracing in GCP:
 
 ---
 
-## 8. Information for Developers
+## 9. Telemetry Privacy & Redaction
+Timesketch is designed with a "Privacy-First" telemetry architecture. A global scrubber intercepts all spans to ensure no sensitive data (PII, usernames, tokens) is exported.
+
+### How it Works
+1.  **Strict Allow-list:** Only attribute keys explicitly permitted in the `DEFAULT_ALLOWED_ATTRIBUTES` list are exported. All other attributes are deleted.
+2.  **Value Redaction:** If a string value contains keywords like `password`, `secret`, or `token`, it is replaced with `[REDACTED]`.
+3.  **Header Filtering:** Sensitive HTTP headers (e.g., `Cookie`, `Authorization`) are redacted at the instrumentor level.
+
+### Identifying Redacted Data
+When the scrubber removes an attribute, it adds the key name to a special field on the span: **`otel.redacted_keys`**. 
+If you are missing data in your traces, check this field in your telemetry backend (Jaeger/Cloud Trace) to see if it was blocked by the scrubber.
+
+### How to Allow Additional Attributes
+If you identify a non-sensitive attribute in the `otel.redacted_keys` list that you need for debugging, you can "unblock" it using an environment variable without changing the code.
+
+**Variable:** `TIMESKETCH_OTEL_ALLOWED_ATTRIBUTES`
+**Format:** Comma-separated list of attribute keys.
+
+**Example (Docker Compose):**
+```yaml
+environment:
+  - TIMESKETCH_OTEL_ALLOWED_ATTRIBUTES=my.custom.field,another.useful.key
+```
+
+### Best Practices
+*   **Never** allow attributes known to contain PII or credentials.
+*   **Always** prefix custom attributes with a namespace (e.g., `sketch.`, `analyzer.`).
+*   **Check the Logs:** The scrubber logs a warning when it redacts a value based on heuristics.
 
 ### Automated Coverage
 Most common operations are already covered by auto-instrumentation:

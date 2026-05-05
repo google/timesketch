@@ -17,6 +17,7 @@ from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy.query import Query
 from sqlalchemy import create_engine
+from timesketch.lib import telemetry
 from sqlalchemy.orm import scoped_session, sessionmaker, as_declarative
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column
@@ -43,6 +44,7 @@ def configure_engine(url, engine_options):
         engine_options["pool_pre_ping"] = True
     global engine, session_maker, db_session
     engine = create_engine(url, future=True, **engine_options)
+    telemetry.instrument_sqlalchemy(engine)
     # Configure the session
     session_maker.configure(
         autocommit=False, autoflush=False, bind=engine, query_cls=Query
