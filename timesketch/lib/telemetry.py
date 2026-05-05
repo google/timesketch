@@ -67,12 +67,6 @@ try:
         "credential",
     ]
 
-    # Patterns for PII that should be redacted within values
-    PII_PATTERNS = [
-        # Email addresses
-        re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
-    ]
-
     # Attributes that are explicitly exempt from PII redaction (e.g. analyst identity)
     EXEMPT_PII_ATTRIBUTES = {"user.name", "user.id", "timesketch.user_id"}
 
@@ -117,19 +111,6 @@ try:
                     # pylint: disable=protected-access
                     span._attributes[key] = "[REDACTED]"
                     continue
-
-                # 3. Targeted PII redaction (redact within the string)
-                if key in EXEMPT_PII_ATTRIBUTES:
-                    continue
-
-                original_value = value
-                for pattern in PII_PATTERNS:
-                    value = pattern.sub("[REDACTED_PII]", value)
-
-                if value != original_value:
-                    redacted_keys.append(f"{key} (PII)")
-                    # pylint: disable=protected-access
-                    span._attributes[key] = value
 
             if redacted_keys:
                 # pylint: disable=protected-access

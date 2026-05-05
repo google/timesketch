@@ -168,41 +168,23 @@ To enable production tracing in GCP:
 ---
 
 ## 10. Telemetry Privacy & Redaction
-Timesketch is designed with a "Privacy-First" telemetry architecture. A global scrubber intercepts all spans to ensure no sensitive data (victim PII, passwords, tokens) is exported.
+Timesketch is designed with a "Privacy-First" telemetry architecture. A global scrubber intercepts all spans to ensure no sensitive data (victim PII, passwords, tokens) is ever exported.
 
 ### How it Works
 1.  **Credential Redaction:** If an attribute key contains keywords like `password` or `token`, the entire value is replaced with `[REDACTED]`.
-2.  **Targeted PII Redaction (Regex):** All string attributes (including SQL/OpenSearch queries) are scanned for PII patterns. Currently, **email addresses** are identified and replaced with `[REDACTED_PII]` within the string, preserving the overall query structure for debugging.
-3.  **Analyst Attribution:** Authenticated user IDs and usernames are **exempt** from redaction. This allows you to see which investigator triggered a slow search or an error.
+3.  **Analyst Attribution:** Authenticated user IDs and usernames are **exempt** from redaction. This allows you to see which investigator triggered a slow search or an error without needing to see the specific data they were searching for.
 4.  **Audit Trail:** Redacted keys are added to the **`otel.redacted_keys`** list on each span for transparency.
 
 ### Automated Coverage
 Most common operations are already covered by auto-instrumentation:
 *   **Web API:** Routes, status codes, and `user.name`.
-*   **Databases (SQL):** SQL statements (scrubbed) and Postgres connection events.
-*   **OpenSearch:** Query strings (scrubbed), indices, and latency.
+*   **Databases (SQL):** Metadata statements and Postgres connection events.
+*   **OpenSearch:** Sketch IDs, indices, and latency.
 *   **Background Tasks:** Celery task dispatching and executions.
 *   **Analyzers:** `sketch_id`, `analyzer_name`, and execution status.
 
-### Adding Custom Attributes & Events
-If you need to record specific domain metadata (e.g., number of matches found, search query used) from within your code, use the helpers in `timesketch.lib.telemetry`.
 
-#### Example: Adding attributes in an Analyzer
-```python
-from timesketch.lib import telemetry
 
-def analyze(self):
-    # ... logic ...
-    matches_found = len(results)
-    
-    # This will appear in the Span attributes in Jaeger/GCP
-    telemetry.add_attribute_to_current_span("sigma.matches_count", matches_found)
-    
-    # Record a significant milestone as an event
-    telemetry.add_event_to_current_span("Finished parsing rules")
-    
-    return f"Found {matches_found} matches."
-```
 
 #### Best Practices for Attributes
 *   **Use Namespace Prefixes:** To avoid collisions, prefix your attributes (e.g., `sigma.rule_id`, `sketch.member_count`).

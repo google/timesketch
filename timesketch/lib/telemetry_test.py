@@ -49,12 +49,7 @@ class TestTelemetry(BaseTest):
             # 2. Test Keyword in Value Redaction
             span.set_attribute("custom_field", "this is a secret value")
 
-            # 3. Test PII (Email) Redaction in string
-            span.set_attribute(
-                "db.statement", "SELECT * FROM users WHERE email = 'victim@gmail.com'"
-            )
-
-            # 4. Test Analyst Identity Exemption
+            # 3. Test Analyst Identity Exemption
             span.set_attribute("user.name", "analyst@google.com")
             span.set_attribute("user.id", 123)
 
@@ -69,11 +64,6 @@ class TestTelemetry(BaseTest):
         self.assertEqual(attrs["api_token"], "[REDACTED]")
         self.assertEqual(attrs["custom_field"], "[REDACTED]")
 
-        # Verify targeted redaction (PII is stripped but query structure remains)
-        self.assertEqual(
-            attrs["db.statement"], "SELECT * FROM users WHERE email = '[REDACTED_PII]'"
-        )
-
         # Verify analyst identity is NOT redacted
         self.assertEqual(attrs["user.name"], "analyst@google.com")
         self.assertEqual(attrs["user.id"], 123)
@@ -83,5 +73,5 @@ class TestTelemetry(BaseTest):
         self.assertIn("password", redacted_keys)
         self.assertIn("api_token", redacted_keys)
         self.assertIn("custom_field (value)", redacted_keys)
-        self.assertIn("db.statement (PII)", redacted_keys)
         self.assertNotIn("user.name", redacted_keys)
+
