@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for OpenTelemetry capabilities."""
 
-from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -41,6 +40,7 @@ class TestTelemetry(BaseTest):
 
         tracer = provider.get_tracer(__name__)
 
+        # pylint: disable=not-context-manager
         with tracer.start_as_current_span("test-redaction") as span:
             # 1. Test Credential Key Redaction
             span.set_attribute("password", "supersecret")
