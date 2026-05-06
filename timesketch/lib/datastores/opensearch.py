@@ -839,17 +839,15 @@ class OpenSearchDataStore:
                 with the query or connection.
             DatastoreTimeoutError: If querying OpenSearch times out.
         """
+        if isinstance(indices, str):
+            indices = [indices]
+
         tracer = telemetry.get_tracer(__name__)
         with tracer.start_as_current_span("opensearch.search") as span:
             span.set_attribute("db.system", "opensearch")
             span.set_attribute("db.operation", "search")
             span.set_attribute("sketch_id", sketch_id)
             span.set_attribute("db.opensearch.indices", indices)
-
-            if query_string:
-                span.set_attribute("db.statement", query_string)
-            elif query_dsl:
-                span.set_attribute("db.opensearch.query_dsl", json.dumps(query_dsl))
 
             scroll_timeout = None
             if enable_scroll:
