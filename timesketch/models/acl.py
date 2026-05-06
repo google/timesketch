@@ -325,8 +325,8 @@ class AccessControlMixin:
         """Check if the user has a specific permission.
 
         Args:
-            user: A user (Instance of timesketch.models.user.User)
-            permission: Permission as string (read, write or delete)
+            user (User): A user (Instance of timesketch.models.user.User)
+            permission (str): Permission as string (read, write or delete)
 
         Returns:
             An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
@@ -352,9 +352,9 @@ class AccessControlMixin:
         """Grant permission to a user or group  with the specific permission.
 
         Args:
-            permission: Permission as string (read, write or delete)
-            user: A user (Instance of timesketch.models.user.User)
-            group: A group (Instance of timesketch.models.user.Group)
+            permission (str): Permission as string (read, write or delete)
+            user (User): A user (Instance of timesketch.models.user.User)
+            group (Group): A group (Instance of timesketch.models.user.Group)
         """
         # Grant permission to a group.
         if group and not self._get_ace(permission, group=group):
@@ -373,9 +373,9 @@ class AccessControlMixin:
         """Revoke permission for user/group on the object.
 
         Args:
-            permission: Permission as string (read, write or delete)
-            user: A user (Instance of timesketch.models.user.User)
-            group: A group (Instance of timesketch.models.user.Group)
+            permission (str): Permission as string (read, write or delete)
+            user (User): A user (Instance of timesketch.models.user.User)
+            group (Group): A group (Instance of timesketch.models.user.Group)
         """
         # Revoke permission for a group.
         if group:
