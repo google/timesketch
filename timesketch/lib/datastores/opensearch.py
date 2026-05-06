@@ -27,8 +27,10 @@ from uuid import uuid4
 from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
+from flask import abort
+from flask import current_app
+from flask_login import current_user
 from opensearchpy import OpenSearch
-from timesketch.lib import telemetry
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
@@ -37,14 +39,12 @@ from opensearchpy.exceptions import TransportError
 # pylint: disable=redefined-builtin
 from opensearchpy.exceptions import ConnectionError
 
-from flask import abort
-from flask import current_app
-from flask_login import current_user
 import prometheus_client
 
+from timesketch.lib import errors
+from timesketch.lib import telemetry
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
-from timesketch.lib import errors
 
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
@@ -918,8 +918,7 @@ class OpenSearchDataStore:
                 if not return_fields:
                     # Suppress the lint error because opensearchpy adds parameters
                     # to the function with a decorator and this makes pylint sad.
-                    # pylint: disable=unexpected-keyword-arg
-                    _search_result = self.client.search(
+                    _search_result = self.client.search(  # pylint: disable=unexpected-keyword-arg
                         body=query_dsl,
                         index=list(indices),
                         search_type=search_type,
@@ -927,10 +926,9 @@ class OpenSearchDataStore:
                         params={"ignore_unavailable": "true"},
                     )
                 elif self.version.startswith("6"):
-                    # The argument " _source_include" changed to "_source_includes" in
-                    # ES version 7. This check add support for both version 6 and 7 clients.
-                    # pylint: disable=unexpected-keyword-arg
-                    _search_result = self.client.search(
+                    # The argument "_source_include" changed to "_source_includes"
+                    # in ES version 7. This check add support for both.
+                    _search_result = self.client.search(  # pylint: disable=unexpected-keyword-arg
                         body=query_dsl,
                         index=list(indices),
                         search_type=search_type,
@@ -939,8 +937,7 @@ class OpenSearchDataStore:
                         params={"ignore_unavailable": "true"},
                     )
                 else:
-                    # pylint: disable=unexpected-keyword-arg
-                    _search_result = self.client.search(
+                    _search_result = self.client.search(  # pylint: disable=unexpected-keyword-arg
                         body=query_dsl,
                         index=list(indices),
                         search_type=search_type,
