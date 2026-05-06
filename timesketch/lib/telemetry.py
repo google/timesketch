@@ -13,10 +13,10 @@
 # limitations under the License.
 """Module providing OpenTelemetry capability to Timesketch."""
 
+import atexit
 import json
 import logging
 import os
-import re
 
 try:
     from google.auth import compute_engine
@@ -116,12 +116,12 @@ try:
                 # pylint: disable=protected-access
                 span._attributes["otel.redacted_keys"] = redacted_keys
 
-    def flask_request_hook(span, environ):
+    def flask_request_hook(span, _environ):
         """Hook to add user context to Flask spans.
 
         Args:
             span (opentelemetry.trace.Span): The span representing the request.
-            environ (dict): The WSGI environment.
+            _environ (dict): The WSGI environment.
         """
         if not HAS_FLASK_LOGIN:
             return
@@ -213,6 +213,7 @@ def setup_telemetry(service_name: str):
     Args:
         service_name (str): The name of the service to identify traces in the backend.
     """
+    # pylint: disable=global-statement
     global _TRACER_PROVIDER
 
     if not is_enabled():
@@ -270,8 +271,6 @@ def setup_telemetry(service_name: str):
     trace.set_tracer_provider(_TRACER_PROVIDER)
 
     # Ensure traces are flushed on shutdown
-    import atexit
-
     atexit.register(_TRACER_PROVIDER.shutdown)
 
 

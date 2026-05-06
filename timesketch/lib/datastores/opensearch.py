@@ -918,32 +918,38 @@ class OpenSearchDataStore:
                 if not return_fields:
                     # Suppress the lint error because opensearchpy adds parameters
                     # to the function with a decorator and this makes pylint sad.
-                    _search_result = self.client.search(  # pylint: disable=unexpected-keyword-arg
-                        body=query_dsl,
-                        index=list(indices),
-                        search_type=search_type,
-                        scroll=scroll_timeout,
-                        params={"ignore_unavailable": "true"},
+                    _search_result = (
+                        self.client.search(  # pylint: disable=unexpected-keyword-arg
+                            body=query_dsl,
+                            index=list(indices),
+                            search_type=search_type,
+                            scroll=scroll_timeout,
+                            params={"ignore_unavailable": "true"},
+                        )
                     )
                 elif self.version.startswith("6"):
                     # The argument "_source_include" changed to "_source_includes"
                     # in ES version 7. This check add support for both.
-                    _search_result = self.client.search(  # pylint: disable=unexpected-keyword-arg
-                        body=query_dsl,
-                        index=list(indices),
-                        search_type=search_type,
-                        _source_include=return_fields,
-                        scroll=scroll_timeout,
-                        params={"ignore_unavailable": "true"},
+                    _search_result = (
+                        self.client.search(  # pylint: disable=unexpected-keyword-arg
+                            body=query_dsl,
+                            index=list(indices),
+                            search_type=search_type,
+                            _source_include=return_fields,
+                            scroll=scroll_timeout,
+                            params={"ignore_unavailable": "true"},
+                        )
                     )
                 else:
-                    _search_result = self.client.search(  # pylint: disable=unexpected-keyword-arg
-                        body=query_dsl,
-                        index=list(indices),
-                        search_type=search_type,
-                        _source_includes=return_fields,
-                        scroll=scroll_timeout,
-                        params={"ignore_unavailable": "true"},
+                    _search_result = (
+                        self.client.search(  # pylint: disable=unexpected-keyword-arg
+                            body=query_dsl,
+                            index=list(indices),
+                            search_type=search_type,
+                            _source_includes=return_fields,
+                            scroll=scroll_timeout,
+                            params={"ignore_unavailable": "true"},
+                        )
                     )
 
                 span.set_status(telemetry.get_status_code("OK"))
