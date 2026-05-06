@@ -7,13 +7,6 @@ This document provides a comprehensive guide for developers, admins, and users o
 ## 1. Overview
 Timesketch uses OpenTelemetry to provide distributed tracing across its web (Flask) and worker (Celery) components. This enables deep observability into request life cycles and background task performance.
 
-### Key Benefits
-*   **Distributed Tracing:** Track a single request from an external tool (like `dftimewolf`) through the API, into background analyzers, and down to the database/OpenSearch layer.
-*   **Log Correlation:** Trace IDs and Span IDs are automatically injected into application logs, allowing you to jump from a log line directly to a trace waterfall in tools like GCP Cloud Trace or Jaeger.
-*   **Data Layer Visibility:** Deep tracing into OpenSearch queries and PostgreSQL database operations.
-*   **Analyst Attribution:** Every trace is linked to the authenticated user who performed the action.
-*   **Standardized Protocol:** Uses the industry-standard OpenTelemetry Protocol (OTLP).
-
 ---
 
 ## 2. Architecture
@@ -46,16 +39,7 @@ Telemetry is controlled entirely via environment variables.
 
 ---
 
-## 4. Developer Workflow Enhancements
-Phase 2 introduced several features to make telemetry easier to access without always needing the Jaeger UI:
-
-### 1. Log Correlation (Terminal)
-Even if you are not using JSON logging, standard Timesketch logs now include the Trace ID in brackets. This allows you to immediately identify which trace corresponds to a specific log entry.
-**Example:** `[2026-05-05 10:20:00] timesketch.api/INFO [trace_id=a3327ae1...] User dev triggered search`
-
----
-
-## 5. Local Development & Testing
+## 4. Local Development & Testing
 
 ### Option A: Using Docker Compose
 1. **Start the Core Environment:**
@@ -164,29 +148,3 @@ To enable production tracing in GCP:
 1.  Set `TIMESKETCH_OTEL_MODE=otlp-default-gce`.
 2.  Ensure the service account running Timesketch has the `roles/cloudtrace.agent` role.
 3.  View your traces in the [GCP Trace Explorer](https://console.cloud.google.com/traces/explorer).
-
----
-
-## 10. Telemetry Privacy & Redaction
-Timesketch is designed with a "Privacy-First" telemetry architecture. A global scrubber intercepts all spans to ensure no sensitive data (victim PII, passwords, tokens) is ever exported.
-
-### How it Works
-1.  **Credential Redaction:** If an attribute key contains keywords like `password` or `token`, the entire value is replaced with `[REDACTED]`.
-3.  **Analyst Attribution:** Authenticated user IDs and usernames are **exempt** from redaction. This allows you to see which investigator triggered a slow search or an error without needing to see the specific data they were searching for.
-4.  **Audit Trail:** Redacted keys are added to the **`otel.redacted_keys`** list on each span for transparency.
-
-### Automated Coverage
-Most common operations are already covered by auto-instrumentation:
-*   **Web API:** Routes, status codes, and `user.name`.
-*   **Databases (SQL):** Metadata statements and Postgres connection events.
-*   **OpenSearch:** Sketch IDs, indices, and latency.
-*   **Background Tasks:** Celery task dispatching and executions.
-*   **Analyzers:** `sketch_id`, `analyzer_name`, and execution status.
-
-
-
-
-#### Best Practices for Attributes
-*   **Use Namespace Prefixes:** To avoid collisions, prefix your attributes (e.g., `sigma.rule_id`, `sketch.member_count`).
-*   **Data Types:** Simple types (strings, ints, bools, floats) are stored natively. Complex objects (dicts, lists) are automatically serialized to JSON.
-*   **Avoid PII:** Never record sensitive user data or authentication tokens in span attributes.
