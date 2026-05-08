@@ -34,6 +34,7 @@ from flask_login import current_user
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import telemetry
 from timesketch.lib import utils
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
@@ -458,6 +459,11 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         if not search_node:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to save search")
+
+        # Link the search ID to the telemetry trace
+        telemetry.add_attribute_to_current_span(
+            "timesketch.search_id", search_node.id
+        )
 
         search_node = search_node.build_tree(search_node, {}, recurse=False)
 
