@@ -29,8 +29,6 @@ Telemetry is controlled entirely via environment variables.
 | `TIMESKETCH_OTLP_GRPC_ENDPOINT` | OTLP collector endpoint (gRPC). | `jaeger:4317` |
 | `TIMESKETCH_OTLP_HTTP_ENDPOINT` | OTLP collector endpoint (HTTP). | `http://jaeger:4318/v1/traces` |
 | `TIMESKETCH_OTLP_INSECURE` | Use insecure (non-TLS) connection. | `true` (default for dev) |
-| `TIMESKETCH_ENV` | Environment identifier. | `production`, `development` |
-| `ENABLE_STRUCTURED_LOGGING` | Enable JSON logging with trace context. | `true`, `false` |
 
 ### Supported Modes:
 1.  **`otlp-grpc`:** Best for local collectors (e.g., OTel Collector or Jaeger).

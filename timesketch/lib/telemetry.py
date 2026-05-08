@@ -33,138 +33,180 @@ try:
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider, SpanProcessor, StatusCode
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.trace.export import (
+        BatchSpanProcessor,
+        ConsoleSpanExporter,
+        SimpleSpanProcessor,
+    )
 
     HAS_OTEL = True
 
-    # --- Optional Instrumentors ---
-    try:
-        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-
-        HAS_SQLALCHEMY_OTEL = True
-    except ImportError:
-        HAS_SQLALCHEMY_OTEL = False
-
-    # --- Identity & Context ---
-    try:
-        from flask_login import current_user
-
-        HAS_FLASK_LOGIN = True
-    except ImportError:
-        HAS_FLASK_LOGIN = False
-
-    # --- Privacy & Security ---
-
-    # Keywords that indicate an attribute name or value might be sensitive.
-    SENSITIVE_KEYWORDS = [
-        "password",
-        "token",
-        "secret",
-        "key",
-        "session",
-        "cookie",
-        "auth",
-        "credential",
-    ]
-
-    # Attributes that are explicitly exempt from PII redaction (e.g. analyst identity)
-    EXEMPT_PII_ATTRIBUTES = {"user.name", "user.id", "timesketch.user_id"}
-
-    class SensitiveDataScrubber(SpanProcessor):
-        """SpanProcessor that redacts sensitive attributes from spans."""
-
-        def on_start(self, span, parent_context=None):
-            """No-op on span start."""
-
-        def on_end(self, span):
-            """Redact attributes when a span ends."""
-            if not span.attributes:
-                return
-
-            redacted_keys = []
-            # Create a copy of keys to avoid modification during iteration
-            for key in list(span.attributes.keys()):
-                # Protect our own audit info
-                if key == "otel.redacted_keys":
-                    continue
-
-                value = span.attributes[key]
-                if not isinstance(value, str):
-                    continue
-
-                lower_key = key.lower()
-                is_credential_key = any(
-                    keyword in lower_key for keyword in SENSITIVE_KEYWORDS
-                )
-
-                # 1. If it's a credential key, redact the whole thing
-                if is_credential_key:
-                    redacted_keys.append(key)
-                    # pylint: disable=protected-access
-                    span._attributes[key] = "[REDACTED]"
-                    continue
-
-                # 2. Check for sensitive keywords in the value
-                lower_val = value.lower()
-                if any(keyword in lower_val for keyword in SENSITIVE_KEYWORDS):
-                    redacted_keys.append(f"{key} (value)")
-                    # pylint: disable=protected-access
-                    span._attributes[key] = "[REDACTED]"
-                    continue
-
-            if redacted_keys:
-                # pylint: disable=protected-access
-                span._attributes["otel.redacted_keys"] = redacted_keys
-
-    def flask_request_hook(span, _environ):
-        """Hook to add user context to Flask spans.
-
-        Args:
-            span (opentelemetry.trace.Span): The span representing the request.
-            _environ (dict): The WSGI environment.
-        """
-        if not HAS_FLASK_LOGIN:
-            return
-
-        try:
-            # We check if we are in a request context and if current_user is valid
-            if current_user and hasattr(current_user, "is_authenticated"):
-                if current_user.is_authenticated:
-                    span.set_attribute("user.id", current_user.id)
-                    span.set_attribute("user.name", current_user.username)
-                    span.set_attribute("timesketch.user_id", current_user.id)
-        except Exception:  # pylint: disable=broad-except
-            # Best effort - if we are not in a context where current_user is
-            # available (e.g. some early middleware), we just skip.
-            pass
-
-    class TraceLogFilter(logging.Filter):
-        """Logging filter that adds trace ID and span ID to log records.
-
-        This filter acts as a bridge between OpenTelemetry and the standard
-        Python logging system. It extracts the current trace_id and span_id
-        from the OpenTelemetry context and injects them into the log record.
-
-        This allows log formatters (e.g. in timesketch/app.py) to use
-        '%(trace_id)s' and '%(span_id)s' in their format strings without
-        raising a KeyError, even if no trace is currently active.
-        """
-
-        def filter(self, record):
-            if not HAS_OTEL:
-                return True
-
-            span_context = trace.get_current_span().get_span_context()
-            if span_context.is_valid:
-                record.trace_id = trace.format_trace_id(span_context.trace_id)
-                record.span_id = trace.format_span_id(span_context.span_id)
-            else:
-                record.trace_id = "0" * 32
-                record.span_id = "0" * 16
-            return True
-
 except ImportError:
     HAS_OTEL = False
+    INVALID_SPAN = None
+
+
+class NoOpSpan:
+    """A span that does nothing."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        pass
+
+    def set_attribute(self, *_args):
+        pass
+
+    def set_status(self, *_args):
+        pass
+
+    def add_event(self, *_args):
+        pass
+
+    def record_exception(self, *_args):
+        pass
+
+
+class NoOpTracer:
+    """A tracer that returns NoOpSpans."""
+
+    def start_as_current_span(self, *_args, **_kwargs):
+        """Starts a NoOpSpan."""
+        return NoOpSpan()
+
+
+_NOOP_TRACER = NoOpTracer()
+
+
+# --- Optional Instrumentors ---
+try:
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
+    HAS_SQLALCHEMY_OTEL = True
+except ImportError:
+    HAS_SQLALCHEMY_OTEL = False
+
+# --- Identity & Context ---
+try:
+    from flask_login import current_user
+
+    HAS_FLASK_LOGIN = True
+except ImportError:
+    HAS_FLASK_LOGIN = False
+
+# --- Privacy & Security ---
+
+# Keywords that indicate an attribute name or value might be sensitive.
+SENSITIVE_KEYWORDS = [
+    "password",
+    "token",
+    "secret",
+    "key",
+    "session",
+    "cookie",
+    "auth",
+    "credential",
+]
+
+# Attributes that are explicitly exempt from PII redaction (e.g. analyst identity)
+EXEMPT_PII_ATTRIBUTES = {"user.name", "user.id", "timesketch.user_id"}
+
+
+class SensitiveDataScrubber(SpanProcessor):
+    """SpanProcessor that redacts sensitive attributes from spans."""
+
+    def on_start(self, span, parent_context=None):
+        """No-op on span start."""
+
+    def on_end(self, span):
+        """Redact attributes when a span ends."""
+        if not span.attributes:
+            return
+
+        redacted_keys = []
+        # Create a copy of keys to avoid modification during iteration
+        for key in list(span.attributes.keys()):
+            # Protect our own audit info
+            if key == "otel.redacted_keys":
+                continue
+
+            value = span.attributes[key]
+            if not isinstance(value, str):
+                continue
+
+            lower_key = key.lower()
+            is_credential_key = any(
+                keyword in lower_key for keyword in SENSITIVE_KEYWORDS
+            )
+
+            # 1. If it's a credential key, redact the whole thing
+            if is_credential_key:
+                redacted_keys.append(key)
+                # pylint: disable=protected-access
+                span._attributes[key] = "[REDACTED]"
+                continue
+
+            # 2. Check for sensitive keywords in the value
+            lower_val = value.lower()
+            if any(keyword in lower_val for keyword in SENSITIVE_KEYWORDS):
+                redacted_keys.append(f"{key} (value)")
+                # pylint: disable=protected-access
+                span._attributes[key] = "[REDACTED]"
+                continue
+
+        if redacted_keys:
+            # pylint: disable=protected-access
+            span._attributes["otel.redacted_keys"] = redacted_keys
+
+
+def flask_request_hook(span, _environ):
+    """Hook to add user context to Flask spans.
+
+    Args:
+        span (opentelemetry.trace.Span): The span representing the request.
+        _environ (dict): The WSGI environment.
+    """
+    if not HAS_FLASK_LOGIN:
+        return
+
+    try:
+        # We check if we are in a request context and if current_user is valid
+        if current_user and hasattr(current_user, "is_authenticated"):
+            if current_user.is_authenticated:
+                span.set_attribute("user.id", current_user.id)
+                span.set_attribute("user.name", current_user.username)
+                span.set_attribute("timesketch.user_id", current_user.id)
+    except Exception:  # pylint: disable=broad-except
+        # Best effort - if we are not in a context where current_user is
+        # available (e.g. some early middleware), we just skip.
+        pass
+
+
+class TraceLogFilter(logging.Filter):
+    """Logging filter that adds trace ID and span ID to log records.
+
+    This filter acts as a bridge between OpenTelemetry and the standard
+    Python logging system. It extracts the current trace_id and span_id
+    from the OpenTelemetry context and injects them into the log record.
+
+    This allows log formatters (e.g. in timesketch/app.py) to use
+    '%(trace_id)s' and '%(span_id)s' in their format strings without
+    raising a KeyError, even if no trace is currently active.
+    """
+
+    def filter(self, record):
+        if not HAS_OTEL:
+            return True
+
+        span_context = trace.get_current_span().get_span_context()
+        if span_context.is_valid:
+            record.trace_id = trace.format_trace_id(span_context.trace_id)
+            record.span_id = trace.format_span_id(span_context.span_id)
+        else:
+            record.trace_id = "0" * 32
+            record.span_id = "0" * 16
+        return True
 
 
 from timesketch.version import get_version
@@ -209,6 +251,8 @@ def setup_telemetry(service_name: str):
         - 'otlp-http': Exports to an OTLP collector via HTTP.
           Uses `TIMESKETCH_OTLP_HTTP_ENDPOINT`
           (default: http://localhost:4318/v1/traces).
+        - 'otlp-console': Prints spans directly to stdout (useful for local
+          debugging and zero-infrastructure E2E testing).
 
     Args:
         service_name (str): The name of the service to identify traces in the backend.
@@ -232,6 +276,7 @@ def setup_telemetry(service_name: str):
 
     otel_mode = os.environ.get("TIMESKETCH_OTEL_MODE", "").lower()
     trace_exporter = None
+    use_batch_processor = True
 
     if otel_mode == "otlp-grpc":
         endpoint = os.environ.get("TIMESKETCH_OTLP_GRPC_ENDPOINT", "localhost:4317")
@@ -254,11 +299,14 @@ def setup_telemetry(service_name: str):
             resource_regex=r"service.*",
             client=trace_client,
         )
+    elif otel_mode == "otlp-console":
+        trace_exporter = ConsoleSpanExporter()
+        use_batch_processor = False
     else:
         logger.error(
             "Unsupported OTEL tracing mode %s. "
             "Valid values for TIMESKETCH_OTEL_MODE are: "
-            "'otlp-grpc', 'otlp-http', 'otlp-default-gce'",
+            "'otlp-grpc', 'otlp-http', 'otlp-default-gce', 'otlp-console'",
             otel_mode,
         )
         return
@@ -267,7 +315,12 @@ def setup_telemetry(service_name: str):
     _TRACER_PROVIDER = TracerProvider(resource=resource)
     # Add the scrubber first to ensure it processes spans before they are batched
     _TRACER_PROVIDER.add_span_processor(SensitiveDataScrubber())
-    _TRACER_PROVIDER.add_span_processor(BatchSpanProcessor(trace_exporter))
+
+    if use_batch_processor:
+        _TRACER_PROVIDER.add_span_processor(BatchSpanProcessor(trace_exporter))
+    else:
+        _TRACER_PROVIDER.add_span_processor(SimpleSpanProcessor(trace_exporter))
+
     trace.set_tracer_provider(_TRACER_PROVIDER)
 
     # Ensure traces are flushed on shutdown
@@ -312,6 +365,8 @@ def get_tracer(name: str):
     Returns:
         opentelemetry.trace.Tracer: A tracer instance.
     """
+    if not HAS_OTEL:
+        return _NOOP_TRACER
     return trace.get_tracer(name)
 
 
