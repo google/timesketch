@@ -415,7 +415,7 @@ class StatusMixin:
         session.commit()
 
     @property
-    def get_status(self):
+    def get_status(self) -> Status:
         """Returns the current status of the object.
 
         If no status is set, it defaults to creating a 'new' status record.
