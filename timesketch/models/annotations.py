@@ -432,7 +432,7 @@ class StatusMixin:
 
         if len(self.status) > 1:
             self._log_duplicate_status_warning()
-            # Return the latest status based on its primary key ID
+            return max(self.status, key=lambda x: (x.id is None, x.id or 0))
             return max(self.status, key=lambda x: x.id)
 
         return self.status[0]
