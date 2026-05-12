@@ -378,7 +378,7 @@ class StatusMixin:
                 if sketch_id_val is not None:
                     log_details = f"ID: [{self_id}], Sketch ID: [{sketch_id_val}]"
 
-            logging.warning(
+            logger.warning(
                 "More than one status available for object [%s] (%s)",
                 object_type_name,
                 log_details,
