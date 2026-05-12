@@ -364,9 +364,8 @@ class StatusMixin:
 
         Although status is a many-to-many relationship, this method ensures
         that the parent object has exactly one status record at any given time.
-        It uses database-level locking (SELECT FOR UPDATE) and direct SQL
-        deletion/insertion to prevent race conditions when multiple concurrent
-        workers update the same object.
+        It uses database-level locking (SELECT FOR UPDATE) to prevent race
+        conditions when multiple concurrent workers update the same object.
 
         Args:
             status: Name of the status (e.g. 'ready', 'processing', 'fail').
@@ -377,13 +376,13 @@ class StatusMixin:
         # concurrently.
         session.query(type(self)).filter_by(id=self.id).with_for_update().first()
 
-        # Direct deletion of existing statuses instead of list manipulation.
-        session.query(self.Status).filter_by(parent_id=self.id).delete()
-
-        # Add the new status entry directly.
-        new_status_obj = self.Status(user=None, status=status)
-        new_status_obj.parent_id = self.id
-        session.add(new_status_obj)
+        # We use the relationship list so that SQLAlchemy keeps the object
+        # in sync with the session. The with_for_update() above ensures
+        # this is atomic.
+        self.status = []
+        self.status.append(self.Status(user=None, status=status))
+        session.add(self)
+        session.commit()
 
     @property
     def get_status(self):

@@ -83,7 +83,8 @@ class StatusRaceTest(interface.BaseEndToEndTest):
         ready_count = len(ready_rows)
 
         print(
-            f"DEBUG: Found {ready_count} ready status entries for searchindex {searchindex_id}"
+            f"DEBUG: Found {ready_count} ready status entries for "
+            f"searchindex {searchindex_id}"
         )
 
         # In a race condition, ready_count might be > 1 without the fix.
