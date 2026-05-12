@@ -28,7 +28,11 @@ services:
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
       - PROMETHEUS_MULTIPROC_DIR=/tmp/
-      # - ENABLE_STRUCTURED_LOGGING=true
+      - ENABLE_STRUCTURED_LOGGING=true
+      # Telemetry settings (Uncomment to enable locally)
+      # - TIMESKETCH_OTEL_MODE=otlp-grpc
+      # - TIMESKETCH_OTLP_GRPC_ENDPOINT=otel-collector:4317
+      # - TIMESKETCH_OTLP_INSECURE=true
     restart: always
     volumes:
       - ../../:/usr/local/src/timesketch/
@@ -106,3 +110,7 @@ services:
   #   volumes:
   #     - ../../:/usr/local/src/timesketch/:ro
   #     - /tmp/:/usr/local/src/picadata/
+
+networks:
+  default:
+    name: timesketch-network

@@ -35,7 +35,6 @@ setup_config() {
   # later sessions. If you need a new key, just delete the ".dev_secret_key"
   # file in your project root dir and restart the container.
   KEY_FILE="/usr/local/src/timesketch/.dev_secret_key"
-
   if [ ! -f "$KEY_FILE" ]; then
     echo "Generating new persistent development secret key..."
     openssl rand -base64 32 > "$KEY_FILE"
@@ -91,8 +90,8 @@ if [ "$1" = 'timesketch' ]; then
 
   setup_config
 
-  # Add web user
-  tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
+  # Add web user - don't fail the whole script if this fails
+  tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}" || echo "Warning: Failed to create user."
 
   # Wrap up things
   echo "Timesketch development server is ready!"

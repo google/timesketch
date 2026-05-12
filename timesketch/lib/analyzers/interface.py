@@ -31,6 +31,7 @@ import pandas
 from timesketch.api.v1 import utils as api_utils
 
 from timesketch.lib import definitions
+from timesketch.lib import telemetry
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
@@ -1147,9 +1148,17 @@ class BaseAnalyzer:
         # Run the analyzer. Broad Exception catch to catch any error and store
         # the error in the DB for display in the UI.
         try:
+            telemetry.add_attribute_to_current_span("sketch_id", self.sketch.id)
+            telemetry.add_attribute_to_current_span("analyzer_name", self.name)
+            telemetry.add_attribute_to_current_span("timeline_id", self.timeline_id)
+            telemetry.add_event_to_current_span(f"Starting analyzer: {self.name}")
+
             result = self.run()
             analysis.set_status("DONE")
-        except Exception:  # pylint: disable=broad-except
+
+            telemetry.add_attribute_to_current_span("status", "success")
+            telemetry.add_event_to_current_span(f"Analyzer {self.name} completed")
+        except Exception as e:  # pylint: disable=broad-except
             analysis.set_status("ERROR")
             result = traceback.format_exc()
             logger.error(
@@ -1159,6 +1168,9 @@ class BaseAnalyzer:
                 self.sketch.id,
                 result,
             )
+            telemetry.add_attribute_to_current_span("status", "error")
+            telemetry.add_attribute_to_current_span("error_message", str(e))
+            telemetry.add_event_to_current_span(f"Analyzer {self.name} failed")
 
         # Update database analysis object with result and status
         analysis.result = f"{result:s}"
