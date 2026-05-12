@@ -384,7 +384,6 @@ class StatusMixin:
         new_status_obj = self.Status(user=None, status=status)
         new_status_obj.parent_id = self.id
         session.add(new_status_obj)
-        session.commit()
 
     @property
     def get_status(self):
