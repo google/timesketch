@@ -27,6 +27,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import subqueryload
+from sqlalchemy.orm import object_session
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
@@ -358,18 +359,32 @@ class StatusMixin:
         )
         return relationship(self.Status, cascade="all, delete-orphan")
 
-    def set_status(self, status):
-        """
-        Set status on object. Although this is a many-to-many relationship
-        this makes sure that the parent object only has one status set.
+    def set_status(self, status: str) -> None:
+        """Sets the status of the object.
+
+        Although status is a many-to-many relationship, this method ensures
+        that the parent object has exactly one status record at any given time.
+        It uses database-level locking (SELECT FOR UPDATE) and direct SQL
+        deletion/insertion to prevent race conditions when multiple concurrent
+        workers update the same object.
 
         Args:
-            status: Name of the status
+            status: Name of the status (e.g. 'ready', 'processing', 'fail').
         """
-        self.status = []  # replace the list with an empty list.
-        self.status.append(self.Status(user=None, status=status))
-        db_session.add(self)
-        db_session.commit()
+        session = object_session(self) or db_session
+        # Use with_for_update to lock the row in the database. This prevents
+        # race conditions where multiple workers try to set the status
+        # concurrently.
+        session.query(type(self)).filter_by(id=self.id).with_for_update().first()
+
+        # Direct deletion of existing statuses instead of list manipulation.
+        session.query(self.Status).filter_by(parent_id=self.id).delete()
+
+        # Add the new status entry directly.
+        new_status_obj = self.Status(user=None, status=status)
+        new_status_obj.parent_id = self.id
+        session.add(new_status_obj)
+        session.commit()
 
     @property
     def get_status(self):
