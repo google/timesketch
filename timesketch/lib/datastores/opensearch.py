@@ -27,6 +27,9 @@ from uuid import uuid4
 from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
+from flask import abort
+from flask import current_app
+from flask_login import current_user
 from opensearchpy import OpenSearch
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
@@ -36,14 +39,12 @@ from opensearchpy.exceptions import TransportError
 # pylint: disable=redefined-builtin
 from opensearchpy.exceptions import ConnectionError
 
-from flask import abort
-from flask import current_app
-from flask_login import current_user
 import prometheus_client
 
+from timesketch.lib import errors
+from timesketch.lib import telemetry
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
-from timesketch.lib import errors
 
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
@@ -841,151 +842,176 @@ class OpenSearchDataStore:
         if isinstance(indices, str):
             indices = [indices]
 
-        scroll_timeout = None
-        if enable_scroll:
-            scroll_timeout = "1m"  # Default to 1 minute scroll timeout
+        tracer = telemetry.get_tracer(__name__)
+        with tracer.start_as_current_span("opensearch.search") as span:
+            span.set_attribute("db.system", "opensearch")
+            span.set_attribute("db.operation", "search")
+            span.set_attribute("sketch_id", sketch_id)
+            span.set_attribute("db.opensearch.indices", indices)
 
-        # Exit early if we have no indices to query
-        if not indices:
-            return {"hits": {"hits": [], "total": 0}, "took": 0}
+            scroll_timeout = None
+            if enable_scroll:
+                scroll_timeout = "1m"  # Default to 1 minute scroll timeout
+                span.set_attribute("db.opensearch.enable_scroll", True)
 
-        # Make sure that the list of index names is uniq.
-        indices = list(set(indices))
+            # Exit early if we have no indices to query
+            if not indices:
+                return {"hits": {"hits": [], "total": 0}, "took": 0}
 
-        if query_filter is None:
-            query_filter = {}
+            # Make sure that the list of index names is uniq.
+            indices = list(set(indices))
 
-        # Check if we have specific events to fetch and get indices.
-        if query_filter.get("events", None):
-            indices = {
-                event["index"]
-                for event in query_filter["events"]
-                if event["index"] in indices
-            }
+            if query_filter is None:
+                query_filter = {}
 
-        query_dsl = self.build_query(
-            sketch_id=sketch_id,
-            query_string=query_string,
-            query_filter=query_filter,
-            query_dsl=query_dsl,
-            aggregations=aggregations,
-            timeline_ids=timeline_ids,
-        )
+            # Check if we have specific events to fetch and get indices.
+            if query_filter.get("events", None):
+                indices = {
+                    event["index"]
+                    for event in query_filter["events"]
+                    if event["index"] in indices
+                }
 
-        # Default search type for OpenSearch is query_then_fetch.
-        search_type = "query_then_fetch"
+            query_dsl = self.build_query(
+                sketch_id=sketch_id,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                aggregations=aggregations,
+                timeline_ids=timeline_ids,
+            )
 
-        # Only return how many documents matches the query.
-        if count:
-            if "sort" in query_dsl:
-                del query_dsl["sort"]
+            # Default search type for OpenSearch is query_then_fetch.
+            search_type = "query_then_fetch"
+
+            # Only return how many documents matches the query.
+            if count:
+                if "sort" in query_dsl:
+                    del query_dsl["sort"]
+                try:
+                    count_result = self.client.count(
+                        body=query_dsl,
+                        index=list(indices),
+                        params={"ignore_unavailable": "true"},
+                    )
+                    span.set_status(telemetry.get_status_code("OK"))
+                except TransportError as e:
+                    span.record_exception(e)
+                    span.set_status(
+                        telemetry.get_status_code("ERROR"), description=str(e)
+                    )
+                    os_logger.error(
+                        "Unable to count for sketch [%s] on indices [%s] - Error: %s",
+                        sketch_id,
+                        ",".join(indices),
+                        e,
+                        exc_info=True,
+                    )
+                    os_logger.debug(
+                        "Query DSL for count error: %s", json.dumps(query_dsl, indent=2)
+                    )
+                    return 0
+                METRICS["search_requests"].labels(type="count").inc()
+                return count_result.get("count", 0)
+
             try:
-                count_result = self.client.count(
-                    body=query_dsl,
-                    index=list(indices),
-                    params={"ignore_unavailable": "true"},
-                )
-            except TransportError as e:
-                os_logger.error(
-                    "Unable to count for sketch [%s] on indices [%s] - Error: %s",
-                    sketch_id,
-                    ",".join(indices),
-                    e,
-                    exc_info=True,
-                )
-                os_logger.debug(
-                    "Query DSL for count error: %s", json.dumps(query_dsl, indent=2)
-                )
-                return 0
-            METRICS["search_requests"].labels(type="count").inc()
-            return count_result.get("count", 0)
-
-        try:
-            if not return_fields:
-                # Suppress the lint error because opensearchpy adds parameters
-                # to the function with a decorator and this makes pylint sad.
-                # pylint: disable=unexpected-keyword-arg
-                return self.client.search(
-                    body=query_dsl,
-                    index=list(indices),
-                    search_type=search_type,
-                    scroll=scroll_timeout,
-                    params={"ignore_unavailable": "true"},
-                )
-
-            # The argument " _source_include" changed to "_source_includes" in
-            # ES version 7. This check add support for both version 6 and 7 clients.
-            # pylint: disable=unexpected-keyword-arg
-            if self.version.startswith("6"):
-                _search_result = self.client.search(
-                    body=query_dsl,
-                    index=list(indices),
-                    search_type=search_type,
-                    _source_include=return_fields,
-                    scroll=scroll_timeout,
-                    params={"ignore_unavailable": "true"},
-                )
-            else:
-                _search_result = self.client.search(
-                    body=query_dsl,
-                    index=list(indices),
-                    search_type=search_type,
-                    _source_includes=return_fields,
-                    scroll=scroll_timeout,
-                    params={"ignore_unavailable": "true"},
-                )
-        except ConnectionTimeout as e:
-            wildcard_warning = ""
-            if query_string.startswith("*"):
-                wildcard_warning = (
-                    " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in "
-                    "your search query as these are very resource expensive."
-                )
-            error_message = (
-                "The search timed out. Try to search a specific field or narrow "
-                f"down the time range.{wildcard_warning}"
-            )
-            os_logger.error(
-                "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. "
-                "Indices: [%s].",
-                current_user.username,
-                query_string,
-                sketch_id,
-                indices,
-            )
-            raise errors.DatastoreTimeoutError(error_message) from e
-
-        except (RequestError, TransportError) as e:
-            root_cause = e.info.get("error", {}).get("root_cause")
-            if root_cause:
-                error_items = []
-                for cause in root_cause:
-                    error_items.append(
-                        "[{:s}] {:s}".format(
-                            cause.get("type", ""), cause.get("reason", "")
+                if not return_fields:
+                    # Suppress the lint error because opensearchpy adds parameters
+                    # to the function with a decorator and this makes pylint sad.
+                    _search_result = (
+                        self.client.search(  # pylint: disable=unexpected-keyword-arg
+                            body=query_dsl,
+                            index=list(indices),
+                            search_type=search_type,
+                            scroll=scroll_timeout,
+                            params={"ignore_unavailable": "true"},
                         )
                     )
-                cause = ", ".join(error_items)
-            else:
-                cause = str(e)
+                elif self.version.startswith("6"):
+                    # The argument "_source_include" changed to "_source_includes"
+                    # in ES version 7. This check add support for both.
+                    _search_result = (
+                        self.client.search(  # pylint: disable=unexpected-keyword-arg
+                            body=query_dsl,
+                            index=list(indices),
+                            search_type=search_type,
+                            _source_include=return_fields,
+                            scroll=scroll_timeout,
+                            params={"ignore_unavailable": "true"},
+                        )
+                    )
+                else:
+                    _search_result = (
+                        self.client.search(  # pylint: disable=unexpected-keyword-arg
+                            body=query_dsl,
+                            index=list(indices),
+                            search_type=search_type,
+                            _source_includes=return_fields,
+                            scroll=scroll_timeout,
+                            params={"ignore_unavailable": "true"},
+                        )
+                    )
 
-            os_logger.error(
-                "Unable to run search query for user [%s]. Error: %s. "
-                "Sketch ID: [%s]. Indices: [%s].",
-                current_user.username,
-                cause,
-                sketch_id,
-                indices,
-                exc_info=True,
-            )
-            user_friendly_message = (
-                f"There was an issue with your search query: {cause}. "
-                "Please review your query syntax and try again."
-            )
-            raise ValueError(user_friendly_message) from e
+                span.set_status(telemetry.get_status_code("OK"))
+                took_ms = _search_result.get("took", 0)
+                span.set_attribute("db.opensearch.took_ms", took_ms)
 
-        METRICS["search_requests"].labels(type="single").inc()
-        return _search_result
+            except ConnectionTimeout as e:
+                span.record_exception(e)
+                span.set_status(telemetry.get_status_code("ERROR"), description=str(e))
+                wildcard_warning = ""
+                if query_string.startswith("*"):
+                    wildcard_warning = (
+                        " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in "
+                        "your search query as these are very resource expensive."
+                    )
+                error_message = (
+                    "The search timed out. Try to search a specific field or narrow "
+                    f"down the time range.{wildcard_warning}"
+                )
+                os_logger.error(
+                    "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. "
+                    "Indices: [%s].",
+                    current_user.username,
+                    query_string,
+                    sketch_id,
+                    indices,
+                )
+                raise errors.DatastoreTimeoutError(error_message) from e
+
+            except (RequestError, TransportError) as e:
+                span.record_exception(e)
+                span.set_status(telemetry.get_status_code("ERROR"), description=str(e))
+                root_cause = e.info.get("error", {}).get("root_cause")
+                if root_cause:
+                    error_items = []
+                    for cause in root_cause:
+                        error_items.append(
+                            "[{:s}] {:s}".format(
+                                cause.get("type", ""), cause.get("reason", "")
+                            )
+                        )
+                    cause = ", ".join(error_items)
+                else:
+                    cause = str(e)
+
+                os_logger.error(
+                    "Unable to run search query for user [%s]. Error: %s. "
+                    "Sketch ID: [%s]. Indices: [%s].",
+                    current_user.username,
+                    cause,
+                    sketch_id,
+                    indices,
+                    exc_info=True,
+                )
+                user_friendly_message = (
+                    f"There was an issue with your search query: {cause}. "
+                    "Please review your query syntax and try again."
+                )
+                raise ValueError(user_friendly_message) from e
+
+            METRICS["search_requests"].labels(type="single").inc()
+            return _search_result
 
     # pylint: disable=too-many-arguments
 

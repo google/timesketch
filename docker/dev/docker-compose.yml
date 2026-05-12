@@ -28,7 +28,7 @@ services:
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
       - PROMETHEUS_MULTIPROC_DIR=/tmp/
-      - ENABLE_STRUCTURED_LOGGING=true
+      # - ENABLE_STRUCTURED_LOGGING=true
       # Telemetry settings (Uncomment to enable locally)
       # - TIMESKETCH_OTEL_MODE=otlp-grpc
       # - TIMESKETCH_OTLP_GRPC_ENDPOINT=otel-collector:4317

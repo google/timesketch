@@ -4,6 +4,7 @@ import json
 from typing import Optional, Any, Union
 import requests
 from timesketch.lib.llms.providers import interface, manager
+from timesketch.lib import telemetry
 
 # Default configuration values
 DEFAULT_API_VERSION = "2024-02-15-preview"
@@ -45,45 +46,55 @@ class AzureAI(interface.LLMProvider):
         self, prompt: str, response_schema: Optional[dict] = None
     ) -> Union[dict, str]:
 
-        url = (
-            f"{self.endpoint}/openai/deployments/{self.model}/chat/completions?"
-            f"api-version={self.api_version}"
-        )
-        headers = {"Content-Type": "application/json", "api-key": self.api_key}
-        data = {
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": self.config.get(
-                "max_output_tokens", interface.DEFAULT_MAX_OUTPUT_TOKENS
-            ),
-            "temperature": self.config.get(
-                "temperature", interface.DEFAULT_TEMPERATURE
-            ),
-            "top_p": self.config.get("top_p", interface.DEFAULT_TOP_P),
-        }
-        try:
-            response = requests.post(
-                url, headers=headers, json=data, timeout=self.timeout
+        tracer = telemetry.get_tracer(__name__)
+        with tracer.start_as_current_span("llm.azureai.generate") as span:
+            span.set_attribute("llm.provider", self.NAME)
+            span.set_attribute("llm.model", self.model)
+            span.set_attribute("llm.prompt_length", len(prompt))
+
+            url = (
+                f"{self.endpoint}/openai/deployments/{self.model}/chat/completions?"
+                f"api-version={self.api_version}"
             )
-            response.raise_for_status()
-            response_data = response.json()["choices"][0]["message"]["content"]
-        except (KeyError, IndexError) as e:
-            raise ValueError(
-                f"Unexpected response structure from Azure API: {response.json()}"
-            ) from e
-
-        if isinstance(response_schema, dict):
+            headers = {"Content-Type": "application/json", "api-key": self.api_key}
+            data = {
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": self.config.get(
+                    "max_output_tokens", interface.DEFAULT_MAX_OUTPUT_TOKENS
+                ),
+                "temperature": self.config.get(
+                    "temperature", interface.DEFAULT_TEMPERATURE
+                ),
+                "top_p": self.config.get("top_p", interface.DEFAULT_TOP_P),
+            }
             try:
-                props = response_schema.get("properties")
-                if props and isinstance(props, dict):
-                    key = next(iter(props.keys()), "")
-                    formatted_data = json.dumps({key: response_data})
-                    return json.loads(formatted_data)
-            except json.JSONDecodeError as error:
-                raise ValueError(
-                    f"Error JSON parsing text: {formatted_data}: {error}"
-                ) from error
+                response = requests.post(
+                    url, headers=headers, json=data, timeout=self.timeout
+                )
+                response.raise_for_status()
+                response_data = response.json()["choices"][0]["message"]["content"]
+                span.set_attribute("llm.response_length", len(response_data))
+                span.set_status(telemetry.get_status_code("OK"))
 
-        return response_data
+            except (KeyError, IndexError, requests.RequestException) as e:
+                raise ValueError(
+                    f"Error generating text with Azure API: {e}"
+                ) from e
+
+            if isinstance(response_schema, dict):
+                try:
+                    props = response_schema.get("properties")
+                    if props and isinstance(props, dict):
+                        key = next(iter(props.keys()), "")
+                        formatted_data = json.dumps({key: response_data})
+                        return json.loads(formatted_data)
+                except json.JSONDecodeError as error:
+                    span.record_exception(error)
+                    raise ValueError(
+                        f"Error JSON parsing text: {formatted_data}: {error}"
+                    ) from error
+
+            return response_data
 
 
 manager.LLMManager.register_provider(AzureAI)

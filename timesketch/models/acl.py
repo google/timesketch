@@ -38,6 +38,7 @@ from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
+from timesketch.lib import telemetry
 from timesketch.models.user import Group, User
 
 
@@ -324,28 +325,36 @@ class AccessControlMixin:
         """Check if the user has a specific permission.
 
         Args:
-            user: A user (Instance of timesketch.models.user.User)
-            permission: Permission as string (read, write or delete)
+            user (User): A user (Instance of timesketch.models.user.User)
+            permission (str): Permission as string (read, write or delete)
 
         Returns:
             An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
             user has the permission or None if the user do not have the
             permission.
         """
-        public_ace = self.is_public
-        if public_ace and permission == "read":
-            return public_ace
-        if isinstance(permission, bytes):
-            permission = codecs.decode(permission, "utf-8")
-        return self._get_ace(permission=permission, user=user)
+        tracer = telemetry.get_tracer(__name__)
+        with tracer.start_as_current_span("acl.has_permission") as span:
+            span.set_attribute("acl.permission", str(permission))
+            if hasattr(user, "username"):
+                span.set_attribute("acl.user", user.username)
+            if hasattr(self, "id"):
+                span.set_attribute("acl.resource_id", self.id)
+
+            public_ace = self.is_public
+            if public_ace and permission == "read":
+                return public_ace
+            if isinstance(permission, bytes):
+                permission = codecs.decode(permission, "utf-8")
+            return self._get_ace(permission=permission, user=user)
 
     def grant_permission(self, permission, user=None, group=None):
         """Grant permission to a user or group  with the specific permission.
 
         Args:
-            permission: Permission as string (read, write or delete)
-            user: A user (Instance of timesketch.models.user.User)
-            group: A group (Instance of timesketch.models.user.Group)
+            permission (str): Permission as string (read, write or delete)
+            user (User): A user (Instance of timesketch.models.user.User)
+            group (Group): A group (Instance of timesketch.models.user.Group)
         """
         # Grant permission to a group.
         if group and not self._get_ace(permission, group=group):
@@ -364,9 +373,9 @@ class AccessControlMixin:
         """Revoke permission for user/group on the object.
 
         Args:
-            permission: Permission as string (read, write or delete)
-            user: A user (Instance of timesketch.models.user.User)
-            group: A group (Instance of timesketch.models.user.Group)
+            permission (str): Permission as string (read, write or delete)
+            user (User): A user (Instance of timesketch.models.user.User)
+            group (Group): A group (Instance of timesketch.models.user.Group)
         """
         # Revoke permission for a group.
         if group:

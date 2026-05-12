@@ -30,10 +30,6 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
 
-try:
-    from opentelemetry import trace
-except ImportError:
-    trace = None
 from timesketch.lib import telemetry
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
@@ -267,20 +263,17 @@ def configure_logger():
                 "module": record.module,
             }
 
-            if trace:
-                span_context = trace.get_current_span().get_span_context()
-                if span_context.is_valid:
-                    t_id = trace.format_trace_id(span_context.trace_id)
-                    s_id = trace.format_span_id(span_context.span_id)
-                    log_record["trace_id"] = t_id
-                    log_record["span_id"] = s_id
-                    # GCP specific correlation fields
-                    project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-                    if project_id:
-                        log_record["logging.googleapis.com/trace"] = (
-                            f"projects/{project_id}/traces/{t_id}"
-                        )
-                        log_record["logging.googleapis.com/spanId"] = s_id
+            # Add trace correlation if TraceLogFilter has run
+            if hasattr(record, "trace_id"):
+                log_record["trace_id"] = record.trace_id
+                log_record["span_id"] = record.span_id
+                # GCP specific correlation fields
+                project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+                if project_id:
+                    log_record["logging.googleapis.com/trace"] = (
+                        f"projects/{project_id}/traces/{record.trace_id}"
+                    )
+                    log_record["logging.googleapis.com/spanId"] = record.span_id
 
             if record.exc_info:
                 formatted_trace = self.formatException(record.exc_info)
@@ -290,6 +283,7 @@ def configure_logger():
 
     logger_object = logging.getLogger("timesketch")
     logger_filter = NoESFilter()
+    trace_filter = telemetry.TraceLogFilter()
 
     use_structured_logging = (
         os.environ.get("ENABLE_STRUCTURED_LOGGING", "false").lower() == "true"
@@ -299,6 +293,7 @@ def configure_logger():
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(JSONLogFormatter(datefmt="%Y-%m-%dT%H:%M:%S%z"))
         handler.addFilter(logger_filter)
+        handler.addFilter(trace_filter)
 
         root = logging.getLogger()
         for h in root.handlers[:]:
@@ -310,11 +305,12 @@ def configure_logger():
 
     else:
         logger_formatter = logging.Formatter(
-            "[%(asctime)s] %(name)s/%(levelname)s %(message)s"
+            "[%(asctime)s] %(name)s/%(levelname)s [trace_id=%(trace_id)s] %(message)s"
         )
         for handler in logger_object.parent.handlers:
             handler.setFormatter(logger_formatter)
             handler.addFilter(logger_filter)
+            handler.addFilter(trace_filter)
 
 
 def create_celery_app():

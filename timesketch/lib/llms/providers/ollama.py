@@ -19,6 +19,7 @@ import requests
 
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
+from timesketch.lib import telemetry
 
 
 class Ollama(interface.LLMProvider):
@@ -89,38 +90,54 @@ class Ollama(interface.LLMProvider):
         Raises:
             ValueError: If the request fails or JSON parsing fails.
         """
-        request_body = {
-            "messages": [{"role": "user", "content": prompt}],
-            "model": self.config.get("model"),
-            "stream": self.config.get("stream"),
-            "options": {
-                "temperature": self.config.get("temperature"),
-                "num_predict": self.config.get("max_output_tokens"),
-                "top_p": self.config.get("top_p"),
-                "top_k": self.config.get("top_k"),
-            },
-        }
+        tracer = telemetry.get_tracer(__name__)
+        with tracer.start_as_current_span("llm.ollama.generate") as span:
+            span.set_attribute("llm.provider", self.NAME)
+            span.set_attribute("llm.model", self.config.get("model"))
+            span.set_attribute("llm.prompt_length", len(prompt))
 
-        if response_schema:
-            request_body["format"] = response_schema
+            request_body = {
+                "messages": [{"role": "user", "content": prompt}],
+                "model": self.config.get("model"),
+                "stream": self.config.get("stream"),
+                "options": {
+                    "temperature": self.config.get("temperature"),
+                    "num_predict": self.config.get("max_output_tokens"),
+                    "top_p": self.config.get("top_p"),
+                    "top_k": self.config.get("top_k"),
+                },
+            }
 
-        response = self._post(json.dumps(request_body))
+            if response_schema:
+                request_body["format"] = response_schema
 
-        if response.status_code != 200:
-            raise ValueError(f"Error generating text: {response.text}")
-
-        response_data = response.json()
-        text_response = response_data.get("message", {}).get("content", "").strip()
-
-        if response_schema:
             try:
-                return json.loads(text_response)
-            except json.JSONDecodeError as error:
-                raise ValueError(
-                    f"Error JSON parsing text: {text_response}: {error}"
-                ) from error
+                response = self._post(json.dumps(request_body))
 
-        return text_response
+                if response.status_code != 200:
+                    span.set_status(telemetry.get_status_code("ERROR"))
+                    raise ValueError(f"Error generating text: {response.text}")
+
+                response_data = response.json()
+                text_response = response_data.get("message", {}).get("content", "").strip()
+                span.set_attribute("llm.response_length", len(text_response))
+                span.set_status(telemetry.get_status_code("OK"))
+
+                if response_schema:
+                    try:
+                        return json.loads(text_response)
+                    except json.JSONDecodeError as error:
+                        span.record_exception(error)
+                        raise ValueError(
+                            f"Error JSON parsing text: {text_response}: {error}"
+                        ) from error
+
+                return text_response
+            except Exception as e:
+                span.record_exception(e)
+                if not isinstance(e, ValueError):
+                    raise ValueError(f"Error generating text: {e}") from e
+                raise
 
 
 manager.LLMManager.register_provider(Ollama)

@@ -82,42 +82,53 @@ class GoogleGenAI(interface.LLMProvider):
             The generated text as a string (or parsed data if
                 response_schema is provided).
         """
-        config_params = {
-            "temperature": self.config.get("temperature"),
-            "top_k": self.config.get("top_k"),
-            "top_p": self.config.get("top_p"),
-            "max_output_tokens": self.config.get("max_output_tokens"),
-        }
+        tracer = telemetry.get_tracer(__name__)
+        with tracer.start_as_current_span("llm.google_genai.generate") as span:
+            span.set_attribute("llm.provider", self.NAME)
+            span.set_attribute("llm.model", self._model_name)
+            span.set_attribute("llm.prompt_length", len(prompt))
 
-        if response_schema:
-            config_params["response_mime_type"] = "application/json"
-            config_params["response_schema"] = response_schema
+            config_params = {
+                "temperature": self.config.get("temperature"),
+                "top_k": self.config.get("top_k"),
+                "top_p": self.config.get("top_p"),
+                "max_output_tokens": self.config.get("max_output_tokens"),
+            }
 
-        generate_config = types.GenerateContentConfig(**config_params)
+            if response_schema:
+                config_params["response_mime_type"] = "application/json"
+                config_params["response_schema"] = response_schema
 
-        try:
-            response = self.client.models.generate_content(
-                model=self._model_name,
-                contents=prompt,
-                config=generate_config,
-            )
-        except errors.APIError as e:
-            error_msg = f"{e.code} {e.status}: {getattr(e, 'message', 'N/A')}"
-            logger.error("API error during content generation: %s", str(e))
-            raise ValueError(f"Error generating content: {error_msg}") from e
-        except Exception as e:
-            logger.error("Error generating content with Google GenAI: %s", e)
-            raise ValueError(f"Error generating content: {e}") from e
+            generate_config = types.GenerateContentConfig(**config_params)
 
-        if response_schema:
             try:
-                if hasattr(response, "parsed") and response.parsed is not None:
-                    return response.parsed
-                return json.loads(response.text)
-            except Exception as error:
-                raise ValueError(
-                    f"Error JSON parsing text: {response.text}: {error}"
-                ) from error
+                response = self.client.models.generate_content(
+                    model=self._model_name,
+                    contents=prompt,
+                    config=generate_config,
+                )
+                span.set_status(telemetry.get_status_code("OK"))
+                if response.text:
+                    span.set_attribute("llm.response_length", len(response.text))
+
+            except errors.APIError as e:
+                error_msg = f"{e.code} {e.status}: {getattr(e, 'message', 'N/A')}"
+                logger.error("API error during content generation: %s", str(e))
+                raise ValueError(f"Error generating content: {error_msg}") from e
+            except Exception as e:
+                span.record_exception(e)
+                logger.error("Error generating content with Google GenAI: %s", e)
+                raise ValueError(f"Error generating content: {e}") from e
+
+            if response_schema:
+                try:
+                    if hasattr(response, "parsed") and response.parsed is not None:
+                        return response.parsed
+                    return json.loads(response.text)
+                except Exception as error:
+                    raise ValueError(
+                        f"Error JSON parsing text: {response.text}: {error}"
+                    ) from error
 
         return response.text
 
