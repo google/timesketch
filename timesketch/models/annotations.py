@@ -424,7 +424,8 @@ class StatusMixin:
         latest one (based on its ID).
 
         Returns:
-            The current status record (instance of timesketch.models.annotations.Status).
+            The current status record (instance of
+            timesketch.models.annotations.Status).
         """
         if not self.status:
             self.status.append(self.Status(user=None, status="new"))
