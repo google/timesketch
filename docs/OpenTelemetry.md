@@ -52,7 +52,7 @@ Telemetry is controlled entirely via environment variables.
    ```
 
 2. **Start the Telemetry Stack (Optional):**
-   To enable the telemetry services (OTel Collector and Jaeger), use the 
+   To enable the telemetry services (OTel Collector and Jaeger v2), use the
    `telemetry` profile:
    ```bash
    docker-compose --profile telemetry up -d

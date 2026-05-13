@@ -114,6 +114,7 @@ services:
   otel-collector:
     container_name: otel-collector
     image: otel/opentelemetry-collector:0.100.0
+    user: "0"
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ../../data/otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -127,12 +128,15 @@ services:
 
   jaeger:
     container_name: jaeger
-    image: jaegertracing/all-in-one:1.76.0
+    image: jaegertracing/jaeger:2.0.0
     restart: always
+    command: #security settings to enable otel from outside
+      - "--set"
+      - "receivers.otlp.protocols.grpc.endpoint=0.0.0.0:4317"
+      - "--set"
+      - "receivers.otlp.protocols.http.endpoint=0.0.0.0:4318"
     ports:
       - "127.0.0.1:16686:16686"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
     profiles:
       - telemetry
 
