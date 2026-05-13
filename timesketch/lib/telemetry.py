@@ -17,6 +17,7 @@ import json
 import logging
 import os
 
+# --- OpenTelemetry Imports (Guarded) ---
 try:
     from google.auth import compute_engine
     from google.auth import exceptions as auth_exceptions
@@ -24,6 +25,7 @@ try:
     from google.cloud.trace_v2 import TraceServiceClient
 
     from opentelemetry import trace
+    from opentelemetry.trace import StatusCode
     from opentelemetry.trace.span import INVALID_SPAN
     from opentelemetry.exporter import cloud_trace
     from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
@@ -31,16 +33,37 @@ try:
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
     from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace import TracerProvider, StatusCode
+    from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
     HAS_OTEL = True
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     HAS_OTEL = False
+    trace = None
+    StatusCode = None
+    INVALID_SPAN = None
 
 from timesketch.version import get_version
 
 logger = logging.getLogger("timesketch.telemetry")
+
+
+def safe_telemetry_call(func):
+    """Decorator to ensure telemetry calls never crash the application.
+
+    This makes telemetry 'best-effort'. If a telemetry operation fails
+    (e.g. due to serialization errors), it logs a warning and allows
+     the primary business logic to continue.
+    """
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning("Telemetry operation %s failed: %s", func.__name__, e)
+            return None
+
+    return wrapper
 
 
 def _get_gcp_project_id():
@@ -155,6 +178,7 @@ def instrument_flask_app(app, **kwargs):
     FlaskInstrumentor().instrument_app(app, **kwargs)
 
 
+@safe_telemetry_call
 def set_status_on_current_span(status_name: str, description: str = None):
     """Sets the status on the currently active span.
 
@@ -171,13 +195,14 @@ def set_status_on_current_span(status_name: str, description: str = None):
         otel_span.set_status(code, description)
 
 
+@safe_telemetry_call
 def add_event_to_current_span(event: str):
     """Adds a named event (annotation) to the currently active span.
 
     Args:
         event (str): The name or message of the event to record.
     """
-    if not is_enabled():
+    if not is_enabled() or not HAS_OTEL:
         return
 
     otel_span = trace.get_current_span()
@@ -185,6 +210,7 @@ def add_event_to_current_span(event: str):
         otel_span.add_event(event)
 
 
+@safe_telemetry_call
 def add_attribute_to_current_span(name: str, value: object):
     """Adds a key-value attribute (tag) to the currently active span.
 
@@ -194,7 +220,7 @@ def add_attribute_to_current_span(name: str, value: object):
         name (str): The key name for the attribute.
         value (object): The value to store. Needs to be JSON serializable.
     """
-    if not is_enabled():
+    if not is_enabled() or not HAS_OTEL:
         return
 
     otel_span = trace.get_current_span()
