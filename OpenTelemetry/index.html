@@ -2670,9 +2670,10 @@
 </li>
 <li>
 <p><strong>Start the Telemetry Stack (Optional):</strong>
-   Spin up the dedicated telemetry services (OTel Collector and Jaeger):
+   To enable the telemetry services (OTel Collector and Jaeger v2), use the
+   <code>telemetry</code> profile:
    <code>bash
-   docker-compose -f docker-compose-telemetry.yml up -d</code></p>
+   docker-compose --profile telemetry up -d</code></p>
 </li>
 </ol>
 <p><strong>Note on Dependencies:</strong>
