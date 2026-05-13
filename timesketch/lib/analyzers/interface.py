@@ -1157,6 +1157,7 @@ class BaseAnalyzer:
             analysis.set_status("DONE")
 
             telemetry.add_attribute_to_current_span("status", "success")
+            telemetry.set_status_on_current_span("OK")
             telemetry.add_event_to_current_span(f"Analyzer {self.name} completed")
         except Exception as e:  # pylint: disable=broad-except
             analysis.set_status("ERROR")
@@ -1170,6 +1171,7 @@ class BaseAnalyzer:
             )
             telemetry.add_attribute_to_current_span("status", "error")
             telemetry.add_attribute_to_current_span("error_message", str(e))
+            telemetry.set_status_on_current_span("ERROR", description=str(e))
             telemetry.add_event_to_current_span(f"Analyzer {self.name} failed")
 
         # Update database analysis object with result and status
