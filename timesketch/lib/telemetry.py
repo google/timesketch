@@ -155,6 +155,22 @@ def instrument_flask_app(app, **kwargs):
     FlaskInstrumentor().instrument_app(app, **kwargs)
 
 
+def set_status_on_current_span(status_name: str, description: str = None):
+    """Sets the status on the currently active span.
+
+    Args:
+        status_name (str): The name of the status code (e.g. 'OK', 'ERROR').
+        description (str): Optional description of the status.
+    """
+    if not is_enabled() or not HAS_OTEL:
+        return
+
+    otel_span = trace.get_current_span()
+    if otel_span != INVALID_SPAN:
+        code = getattr(StatusCode, status_name.upper(), StatusCode.UNSET)
+        otel_span.set_status(code, description)
+
+
 def add_event_to_current_span(event: str):
     """Adds a named event (annotation) to the currently active span.
 
@@ -187,33 +203,3 @@ def add_attribute_to_current_span(name: str, value: object):
             otel_span.set_attribute(name, value)
         else:
             otel_span.set_attribute(name, json.dumps(value))
-
-def get_status_code(name: str):
-    """Returns an OpenTelemetry status code.
-
-    Args:
-        name (str): The name of the status code (e.g. 'OK', 'ERROR').
-
-    Returns:
-        opentelemetry.trace.StatusCode: A status code instance or None.
-    """
-    if not HAS_OTEL:
-        return None
-    return getattr(StatusCode, name.upper(), StatusCode.UNSET)
-
-
-def set_status_on_current_span(status_code: str, description: str = None):
-    """Sets the status on the currently active span.
-
-    Args:
-        status_code (str): The status code ('OK' or 'ERROR').
-        description (str): Optional description of the status.
-    """
-    if not is_enabled() or not HAS_OTEL:
-        return
-
-    otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
-        code = get_status_code(status_code)
-        if code is not None:
-            otel_span.set_status(code, description)
