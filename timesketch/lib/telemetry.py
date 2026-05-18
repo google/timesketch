@@ -186,7 +186,7 @@ def set_status_on_current_span(status_name: str, description: str = None):
         status_name (str): The name of the status code (e.g. 'OK', 'ERROR').
         description (str): Optional description of the status.
     """
-    if not is_enabled() or not HAS_OTEL:
+    if not is_enabled():
         return
 
     otel_span = trace.get_current_span()
