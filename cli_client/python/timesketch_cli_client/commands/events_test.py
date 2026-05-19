@@ -54,8 +54,8 @@ class EventsTest(unittest.TestCase):
             ["annotate", "--event-id", "1", "--tag", "test", "1"],
             obj=self.ctx,
         )
-        assert "Missing option" in result.output
-        assert "--timeline-id" in result.output
+        assert result.exit_code == 2
+        assert "Missing option '--timeline-id'" in result.output
 
     def test_add_event_comment_vs_comments(self):
         """Test to add a comment to an event but using comment instead of comments"""
