@@ -3,7 +3,7 @@
 FROM log2timeline/plaso:latest
 
 ARG PLASO_PPA_TRACK=stable
-ARG UBUNTU_VERSION=24.04
+ARG UBUNTU_VERSION=26.04
 
 # Switch to root to perform updates and installs
 USER root
