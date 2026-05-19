@@ -54,4 +54,5 @@ class SigmaTest(unittest.TestCase):
             obj=self.ctx,
         )
         assert 2 is result.exit_code
-        assert "Error: Missing option '--rule-uuid'." in result.output
+        assert "Missing option" in result.output
+        assert "--rule-uuid" in result.output
