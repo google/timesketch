@@ -1,7 +1,8 @@
 # Tiltfile for Timesketch Development
 
 # --- 1. Infrastructure ---
-docker_compose("../docker/dev/docker-compose.yml")
+# Enable the 'telemetry' profile to include OTel Collector and Jaeger
+docker_compose("../docker/dev/docker-compose.yml", profiles=["telemetry"])
 
 # Grouping for infrastructure
 # Note: Port forwards are automatically inherited from docker-compose.yml
@@ -11,7 +12,7 @@ dc_resource("postgres", labels=["docker"])
 dc_resource("redis", labels=["docker"])
 dc_resource("prometheus", labels=["docker"])
 dc_resource("otel-collector", labels=["docker"])
-dc_resource("jaeger", labels=["docker"], links=["http://localhost:16686/jaeger"])
+dc_resource("jaeger", labels=["docker"], links=["http://localhost:16686"])
 
 # --- 2. Managed Dev Processes ---
 backend_deps = [
