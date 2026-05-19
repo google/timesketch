@@ -1,9 +1,11 @@
 # We use the official Plaso image as our base cache.
-# This corresponds to Plaso Stable (20260119).
-FROM log2timeline/plaso:20260119
+# This corresponds to Plaso Stable.
+ARG PLASO_VERSION=20260119
+FROM log2timeline/plaso:${PLASO_VERSION}
 
 ARG PLASO_PPA_TRACK=stable
 ARG UBUNTU_VERSION=24.04
+ARG PLASO_VERSION
 
 # Switch to root to perform updates and installs
 USER root
@@ -81,11 +83,27 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install Timesketch
 ADD . /tmp/timesketch
 
-# Install dependencies first (better caching)
-RUN pip3 install --no-cache-dir -r /tmp/timesketch/requirements.txt
+# -----------------------------------------------------------------------------
+# BUILD CONFIGURATION SUMMARY
+# -----------------------------------------------------------------------------
+RUN echo "==========================================================" && \
+    echo "BUILD CONFIGURATION:" && \
+    echo "  - Plaso Base Image: log2timeline/plaso:${PLASO_VERSION}" && \
+    echo "  - Plaso PPA Track:  $PLASO_PPA_TRACK" && \
+    echo "  - Target Ubuntu:    $UBUNTU_VERSION" && \
+    echo "  - Python Version:   $(python3 --version)" && \
+    echo "==========================================================" && \
+    echo "REQUIREMENTS.TXT CONTENT:" && \
+    cat /tmp/timesketch/requirements.txt && \
+    echo "=========================================================="
 
-# Install Timesketch and clients in one go for atomic dependency resolution
-RUN pip3 install --no-cache-dir \
+# 1. Install dependencies from requirements.txt
+RUN echo "Installing Python dependencies from requirements.txt..." && \
+    pip3 install --no-cache-dir -r /tmp/timesketch/requirements.txt
+
+# 2. Install Timesketch and clients
+RUN echo "Installing Timesketch and client packages..." && \
+    pip3 install --no-cache-dir \
     /tmp/timesketch \
     /tmp/timesketch/api_client/python \
     /tmp/timesketch/importer_client/python \
