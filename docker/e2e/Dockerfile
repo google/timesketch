@@ -30,7 +30,6 @@ RUN \
     echo "Stable track detected. Keeping base image PPA."; \
     fi && \
     # 2. UPDATE & INSTALL COMMON TOOLS
-    # This runs a single update for either the Stable or Staging repos
     apt-get update && apt-get install -y --no-install-recommends \
     git \
     gpg-agent \
@@ -39,6 +38,8 @@ RUN \
     python3-setuptools \
     python3-venv \
     python3-wheel \
+    python3-dev \
+    build-essential \
     tzdata \
     wget \
     && \
@@ -55,15 +56,15 @@ RUN \
 # -----------------------------------------------------------------------------
 
 # 1. Fix for Ubuntu 24.04 (Noble) missing 'events' dependency for Plaso
-# This is required for both Stable and Staging on 24.04
-RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
-    echo "Applying 'events' library fix for Ubuntu 24.04..."; \
+# This is required for both Stable and Staging on 26.04
+RUN if [ "$UBUNTU_VERSION" = "26.04" ]; then \
+    echo "Applying 'events' library fix for Ubuntu 26.04..."; \
     pip3 install --no-cache-dir --break-system-packages events; \
     fi
 
 # 2. Fix for Staging Track (Opensearch-py version mismatch)
 # Staging often requires a newer or specific opensearch-py version not yet in apt
-RUN if [ "$PLASO_PPA_TRACK" = "staging" ] && [ "$UBUNTU_VERSION" = "24.04" ]; then \
+RUN if [ "$PLASO_PPA_TRACK" = "staging" ] && [ "$UBUNTU_VERSION" = "26.04" ]; then \
     echo "Plaso staging on 24.04 detected, installing opensearch-py==3.0.0"; \
     pip3 install --no-cache-dir --break-system-packages opensearch-py==3.0.0; \
     fi
