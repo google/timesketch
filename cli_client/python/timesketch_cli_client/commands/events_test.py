@@ -83,8 +83,8 @@ class EventsTest(unittest.TestCase):
         """Test to add an event to a sketch with an error."""
         runner = CliRunner()
         result = runner.invoke(events_group, ["add"], obj=self.ctx)
-        assert "Missing option" in result.output
-        assert "--message" in result.output
+        assert result.exit_code == 2
+        assert "Missing option '--message'" in result.output
 
     def test_add_event(self):
         """Test to add an event to a sketch."""
