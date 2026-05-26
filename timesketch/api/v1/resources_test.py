@@ -253,6 +253,8 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(len(response.json["objects"][0]["timelines"]), 1)
         self.assertEqual(response.json["objects"][0]["name"], "Test 1")
         self.assertIsInstance(response.json["meta"]["emojis"], dict)
+        self.assertIn("supports_wildcard", response.json["meta"])
+        self.assertFalse(response.json["meta"]["supports_wildcard"])
         self.assert200(response)
 
     def test_sketch_acl(self):
@@ -2614,3 +2616,58 @@ class UploadFileResourceTest(BaseTest):
             5,
             "File size mismatch: retry should overwrite, not append",
         )
+
+
+class UserSettingsResourceTest(BaseTest):
+    """Test UserSettingsResource."""
+
+    resource_url = "/api/v1/users/me/settings/"
+
+    def test_get_settings_fallback_default(self):
+        """Test GET settings gets default config value when empty."""
+        self.login()
+
+        # Mock configuration setting to check fallback behavior
+        self.app.config["OPENSEARCH_WILDCARD_DEFAULT"] = True
+
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        self.assertEqual(len(response.json["objects"]), 1)
+
+        # Assert setting dynamically loads our default mock config value
+        self.assertTrue(response.json["objects"][0]["supportsWildcardByDefault"])
+
+    def test_get_settings_user_preference(self):
+        """Test GET settings returns saved user preference over default config."""
+        self.login()
+        self.app.config["OPENSEARCH_WILDCARD_DEFAULT"] = False
+
+        # Save custom settings first via POST
+        data = {"settings": {"supportsWildcardByDefault": True}}
+        post_response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assert200(post_response)
+
+        # Assert saved preference is successfully returned
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        self.assertTrue(response.json["objects"][0]["supportsWildcardByDefault"])
+
+    def test_post_settings_update(self):
+        """Test POST settings saves and returns updated user settings."""
+        self.login()
+        data = {
+            "settings": {"supportsWildcardByDefault": True, "customSetting": "test"}
+        }
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertTrue(response.json["objects"][0]["supportsWildcardByDefault"])
+        self.assertEqual(response.json["objects"][0]["customSetting"], "test")

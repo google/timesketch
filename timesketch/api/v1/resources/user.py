@@ -162,15 +162,20 @@ class LoggedInUserResource(resources.ResourceMixin, Resource):
 class UserSettingsResource(resources.ResourceMixin, Resource):
     """Settings for the logged in user."""
 
-    @login_required
-    def get(self):
-        """Get profile for the logged in user.
+    def _format_settings(self, settings):
+        """Format settings with global defaults and overrides applied.
+
+        Args:
+            settings: Dictionary containing raw user settings.
 
         Returns:
-            User profile as json
+            Dictionary containing formatted user settings.
         """
-        profile = UserProfile.get_or_create(user=current_user)
-        settings = json.loads(profile.settings)
+        settings.setdefault(
+            "supportsWildcardByDefault",
+            current_app.config.get("OPENSEARCH_WILDCARD_DEFAULT", False),
+        )
+        settings.setdefault("showProcessingTimelineEvents", False)
 
         # If the value of SEARCH_PROCESSING_TIMELINES changes to false while the user
         # had the option enabled, it remains enabled without functioning.
@@ -179,7 +184,20 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
         # consistency.
         if not current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
             settings["showProcessingTimelineEvents"] = False
-        schema = {"objects": [settings], "meta": {}}
+
+        return settings
+
+    @login_required
+    def get(self):
+        """Get profile for the logged in user.
+
+        Returns:
+          User profile as json
+        """
+        profile = UserProfile.get_or_create(user=current_user)
+        settings = json.loads(profile.settings)
+        formatted_settings = self._format_settings(settings)
+        schema = {"objects": [formatted_settings], "meta": {}}
         return jsonify(schema)
 
     @login_required
@@ -199,6 +217,11 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
 
         db_session.add(profile)
         db_session.commit()
+
+        # Return consistent formatted settings back to the client
+        formatted_settings = self._format_settings(settings)
+        schema = {"objects": [formatted_settings], "meta": {}}
+        return jsonify(schema)
 
 
 class CollaboratorResource(resources.ResourceMixin, Resource):

@@ -3,7 +3,9 @@
     "application": {
       "type": "text",
       "fields": {
-        "keyword": {"type": "keyword"}}
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "timesketch_label": {
       "type": "nested"
@@ -13,75 +15,129 @@
     },
     "data": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "doc_type": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "event_type": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "exit_status": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "facility": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "file_reference": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "file_size": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "flags": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "identifier": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "message_status": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "message_type": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "offset": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "sequence_number": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "severity": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "source_port": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "user_identifier": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "version": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     },
     "http_response_bytes": {
       "type": "text",
-      "fields": {"keyword": {"type": "keyword"}}
+      "fields": {
+        "keyword": {"type": "keyword"},
+        "wildcard": {"type": "wildcard"}
+      }
     }
   }
 }
