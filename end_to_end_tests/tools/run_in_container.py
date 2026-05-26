@@ -77,7 +77,7 @@ if __name__ == "__main__":
     print("--------------------------------")
 
     # Poll target server socket up to a safe maximum duration of 120 seconds
-    start_time = time.time()
+    start_time = time.monotonic()
     print(f"Waiting for Timesketch server to become active on {host}:{port}...")
     server_is_active = False
 
