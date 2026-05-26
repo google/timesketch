@@ -821,13 +821,20 @@ class ExploreWildcardResourceTest(BaseTest):
     def test_archived_sketch(self):
         """Authenticated request to query an archived sketch."""
         self.login()
-        sketch = Sketch.get_by_id(1)
+        
+        # Create a dedicated sketch for this test to prevent test pollution
+        sketch = self._create_sketch(
+            name="archived_test_sketch",
+            user=self.user1,
+            acl=True
+        )
         sketch.set_status("archived")
         db_session.commit()
 
         data = {"query": "test", "fields": "message"}
+        resource_url = f"/api/v1/sketches/{sketch.id}/explore_wildcard/"
         response = self.client.post(
-            self.resource_url,
+            resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
