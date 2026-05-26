@@ -976,9 +976,7 @@ class ExploreWildcardResourceTest(BaseTest):
                                 "properties": {
                                     "some_field": {
                                         "type": "text",
-                                        "fields": {
-                                            "wildcard": {"type": "wildcard"}
-                                        }
+                                        "fields": {"wildcard": {"type": "wildcard"}},
                                     }
                                 }
                             }
@@ -988,6 +986,7 @@ class ExploreWildcardResourceTest(BaseTest):
             }
 
         from timesketch.lib.testlib import MockOpenSearchIndices
+
         original_get_mapping = MockOpenSearchIndices.get_mapping
         try:
             MockOpenSearchIndices.get_mapping = mock.MagicMock(
@@ -1078,6 +1077,7 @@ class ExploreWildcardResourceTest(BaseTest):
 
         # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
         from timesketch.lib.testlib import MockOpenSearchIndices
+
         original_get_mapping = MockOpenSearchIndices.get_mapping
         try:
             MockOpenSearchIndices.get_mapping = mock.MagicMock(

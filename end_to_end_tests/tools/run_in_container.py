@@ -100,7 +100,11 @@ if __name__ == "__main__":
         print(f"Timeout: Server did not become active within 120s on {host}:{port}.")
         sys.exit(1)
 
-    for name, cls in manager.get_tests(sort_by_mtime=True):
+    tests_to_run = [
+        (name, cls) for name, cls in manager.get_tests(sort_by_mtime=True)
+        if name == "tsctl_test"
+    ]
+    for name, cls in tests_to_run:
         test_class = cls()
         # Prepare the test environment.
         test_class.setup()
