@@ -34,7 +34,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: always
+    restart: "no"
     volumes:
       - ../../:/usr/local/src/timesketch/
 
@@ -56,7 +56,7 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
       interval: 10s
-      timeout: 10s
+      timeout: 60s
       retries: 5
 
   postgres:
