@@ -966,8 +966,21 @@ def run_plaso(
     except KeyError:
         psort_path = "psort.py"
 
-    cmd = [
-        psort_path,
+    import shutil
+    import sys
+    resolved_psort_path = shutil.which(psort_path) or psort_path
+
+    if resolved_psort_path.endswith(".py"):
+        cmd = [
+            sys.executable,
+            resolved_psort_path,
+        ]
+    else:
+        cmd = [
+            resolved_psort_path,
+        ]
+
+    cmd.extend([
         "-o",
         "opensearch_ts",
         "--server",
@@ -978,7 +991,7 @@ def run_plaso(
         "none",
         "--index_name",
         index_name,
-    ]
+    ])
 
     log_file_path = "/dev/null"
     log_dir = current_app.config.get("PLASO_LOG_FOLDER")

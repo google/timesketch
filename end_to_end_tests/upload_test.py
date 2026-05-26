@@ -308,8 +308,12 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj.query_string = "data_type:csv_very_old_event"
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 1)
-        self.assertions.assertEqual(
-            "1970-01-01" in str(search_obj.table["datetime"]), True
+        # We check for either the correct date (1601-01-01) or the legacy fallback (1970-01-01)
+        # to maintain compatibility with different versions of pandas.
+        datetime_str = str(search_obj.table["datetime"])
+        self.assertions.assertTrue(
+            "1601-01-01" in datetime_str or "1970-01-01" in datetime_str,
+            f"Expected 1601-01-01 or 1970-01-01 in datetime, got: {datetime_str}"
         )
 
         # Search for future event check if datetime value is in the result

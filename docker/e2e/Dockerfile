@@ -1,10 +1,10 @@
 # We use the official Plaso image as our base cache.
 # This corresponds to Plaso Stable.
-ARG PLASO_VERSION=20260119
+ARG PLASO_VERSION=20260512
 FROM log2timeline/plaso:${PLASO_VERSION}
 
 ARG PLASO_PPA_TRACK=stable
-ARG UBUNTU_VERSION=24.04
+ARG UBUNTU_VERSION=26.04
 ARG PLASO_VERSION
 
 # Switch to root to perform updates and installs
@@ -33,22 +33,28 @@ RUN \
     # 2. UPDATE & INSTALL COMMON TOOLS
     # This runs a single update for either the Stable or Staging repos
     apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     git \
     gpg-agent \
+    python3-dev \
     python3-pip \
-    python3-psycopg2 \
     python3-setuptools \
     python3-venv \
     python3-wheel \
     tzdata \
     wget \
     && \
-    # 3. UPGRADE PLASO (Conditional)
+    # 3. INSTALL PSYCHOPG2 (Conditional)
+    # Ubuntu 24.04 has it in apt, 26.04 does not.
+    if [ "$UBUNTU_VERSION" = "24.04" ]; then \
+    apt-get install -y --no-install-recommends python3-psycopg2; \
+    fi && \
+    # 4. UPGRADE PLASO (Conditional)
     # If we are on staging, we explicitly upgrade the tools to the version found in the new PPA
     if [ "$PLASO_PPA_TRACK" = "staging" ]; then \
     apt-get install -y --only-upgrade plaso-tools; \
     fi && \
-    # 4. CLEANUP
+    # 5. CLEANUP
     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
@@ -67,6 +73,11 @@ RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
 RUN if [ "$PLASO_PPA_TRACK" = "staging" ] && [ "$UBUNTU_VERSION" = "24.04" ]; then \
     echo "Plaso staging on 24.04 detected, installing opensearch-py==3.0.0"; \
     pip3 install --no-cache-dir --break-system-packages opensearch-py==3.0.0; \
+    fi
+
+# 3. Install psycopg2-binary via pip (not available as apt package on 26.04)
+RUN if [ "$UBUNTU_VERSION" = "26.04" ]; then \
+    pip3 install --no-cache-dir --break-system-packages psycopg2-binary; \
     fi
 
 # Debugging info
