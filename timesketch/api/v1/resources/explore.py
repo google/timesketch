@@ -734,4 +734,3 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         }
         schema = {"meta": meta, "objects": []}
         return jsonify(schema)
-

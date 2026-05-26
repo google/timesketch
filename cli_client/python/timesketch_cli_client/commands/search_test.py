@@ -130,10 +130,7 @@ class SearchTest(unittest.TestCase):
     @mock.patch("timesketch_api_client.sketch.Sketch.explore_wildcard")
     def test_search_wildcard(self, mock_explore_wildcard):
         """Test the 'search-wildcard' command."""
-        mock_explore_wildcard.return_value = {
-            "meta": {},
-            "objects": []
-        }
+        mock_explore_wildcard.return_value = {"meta": {}, "objects": []}
 
         runner = CliRunner()
         result = runner.invoke(

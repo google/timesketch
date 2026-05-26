@@ -235,26 +235,22 @@ class SketchTest(unittest.TestCase):
         """Test explore_wildcard method."""
         mock_response = mock.Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "meta": {},
-            "objects": []
-        }
+        mock_response.json.return_value = {"meta": {}, "objects": []}
 
         with mock.patch.object(
             self.api_client.session, "post", return_value=mock_response
         ) as mock_post:
             response = self.sketch.explore_wildcard(
-                query_string="*evil*",
-                fields="message",
-                limit=10
+                query_string="*evil*", fields="message", limit=10
             )
             self.assertEqual(response["objects"], [])
-            
+
             mock_post.assert_called_once()
             call_args = mock_post.call_args
-            expected_url = f"http://127.0.0.1/api/v1/sketches/{self.sketch.id}/explore_wildcard/"
+            expected_url = (
+                f"http://127.0.0.1/api/v1/sketches/{self.sketch.id}/explore_wildcard/"
+            )
             self.assertEqual(call_args.args[0], expected_url)
             self.assertEqual(call_args.kwargs["json"]["query"], "*evil*")
             self.assertEqual(call_args.kwargs["json"]["fields"], "message")
             self.assertEqual(call_args.kwargs["json"]["filter"]["size"], 10)
-

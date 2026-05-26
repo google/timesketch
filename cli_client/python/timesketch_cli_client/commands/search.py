@@ -416,4 +416,3 @@ def search_wildcard(ctx: click.Context, query: str, fields: str, limit: int) -> 
     # models, we should adapt the Click search-wildcard command to use the unified
     # format_output utility to provide clean, aligned tabular/CSV presentation layouts.
     click.echo(json.dumps(results.get("objects", []), indent=2))
-

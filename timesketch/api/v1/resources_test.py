@@ -832,7 +832,9 @@ class ExploreWildcardResourceTest(BaseTest):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
-        self.assertIn("Unable to query on an archived sketch.", response.json["message"])
+        self.assertIn(
+            "Unable to query on an archived sketch.", response.json["message"]
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_non_existent_sketch(self):
@@ -887,7 +889,6 @@ class ExploreWildcardResourceTest(BaseTest):
         self.assert200(response)
         fields_list = response.json["meta"]["fields_list"]
         self.assertEqual(fields_list, ["message"])
-
 
 
 class AggregationExploreResourceTest(BaseTest):
