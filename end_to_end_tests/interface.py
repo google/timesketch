@@ -31,7 +31,7 @@ from timesketch_import_client import importer
 
 # Default values based on Docker config.
 TEST_DATA_DIR = "/usr/local/src/timesketch/end_to_end_tests/test_data"
-HOST_URI = os.environ.get("TIMESKETCH_SERVER_URL", "http://127.0.0.1:5000")
+HOST_URI = os.environ.get("TIMESKETCH_SERVER_URL", "http://127.0.0.1")
 OPENSEARCH_HOST = "opensearch"
 OPENSEARCH_PORT = 9200
 OPENSEARCH_MAPPINGS_FILE = "/etc/timesketch/plaso.mappings"

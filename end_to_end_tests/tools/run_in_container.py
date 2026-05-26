@@ -58,10 +58,22 @@ if __name__ == "__main__":
     from urllib.parse import urlparse
 
     # Dynamically resolve target host and port from configuration settings
-    server_url = os.environ.get("TIMESKETCH_SERVER_URL", "http://127.0.0.1:5000")
+    server_url = os.environ.get("TIMESKETCH_SERVER_URL", "http://127.0.0.1")
     parsed = urlparse(server_url)
     host = parsed.hostname or "127.0.0.1"
     port = parsed.port or (80 if parsed.scheme == "http" else 443)
+
+    # Print dynamic diagnostics variables for GitHub Actions debugging
+    print("--- wait-for-it Diagnostics ---")
+    print(f"TIMESKETCH_SERVER_URL: {os.environ.get('TIMESKETCH_SERVER_URL')}")
+    print(f"Parsed Hostname: {host}")
+    print(f"Parsed Port: {port}")
+    try:
+        resolved_ip = socket.gethostbyname(host)
+        print(f"DNS Resolution: {host} -> {resolved_ip}")
+    except socket.gaierror as e:
+        print(f"DNS Resolution FAILED for {host}: {e}")
+    print("--------------------------------")
 
     # Poll target server socket up to a safe maximum duration of 120 seconds
     start_time = time.time()
@@ -74,8 +86,12 @@ if __name__ == "__main__":
                 print("Timesketch server is active! Starting E2E tests...")
                 server_is_active = True
                 break
-        except (OSError, ConnectionRefusedError):
+        except (OSError, ConnectionRefusedError) as exc:
             elapsed = time.time() - start_time
+            print(
+                f"[{elapsed:.1f}s] Connection to {host}:{port} failed: {exc!r}. "
+                "Retrying in 2 seconds..."
+            )
             if elapsed >= 120:
                 break
             time.sleep(2)
