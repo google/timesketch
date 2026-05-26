@@ -167,10 +167,16 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
         """Get profile for the logged in user.
 
         Returns:
-            User profile as json
+          User profile as json
         """
         profile = UserProfile.get_or_create(user=current_user)
         settings = json.loads(profile.settings)
+
+        # If supportsWildcardByDefault is not set by the user, get default from config
+        if "supportsWildcardByDefault" not in settings:
+            settings["supportsWildcardByDefault"] = current_app.config.get(
+                "OPENSEARCH_WILDCARD_DEFAULT", False
+            )
 
         # If the value of SEARCH_PROCESSING_TIMELINES changes to false while the user
         # had the option enabled, it remains enabled without functioning.
@@ -199,6 +205,10 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
 
         db_session.add(profile)
         db_session.commit()
+
+        # Return updated settings back to the client
+        schema = {"objects": [settings], "meta": {}}
+        return jsonify(schema)
 
 
 class CollaboratorResource(resources.ResourceMixin, Resource):

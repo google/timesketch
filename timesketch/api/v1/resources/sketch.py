@@ -488,6 +488,29 @@ class SketchResource(resources.ResourceMixin, Resource):
         # Make the list of dicts unique
         mappings = {v["field"]: v for v in mappings}.values()
 
+        # Check if any field mapping or multi-field sub-field contains 'wildcard' type
+        supports_wildcard = False
+        for index_name, value in mappings_settings.items():
+            properties = value["mappings"].get("properties")
+            if not properties:
+                properties = next(iter(value["mappings"].values())).get(
+                    "properties", {}
+                )
+
+            for field, value_dict in properties.items():
+                if value_dict.get("type") == "wildcard":
+                    supports_wildcard = True
+                    break
+                fields_dict = value_dict.get("fields", {})
+                if any(
+                    sub_field.get("type") == "wildcard"
+                    for sub_field in fields_dict.values()
+                ):
+                    supports_wildcard = True
+                    break
+            if supports_wildcard:
+                break
+
         views = []
         for view in sketch.get_named_views:
             if not view.user:
@@ -552,6 +575,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 if sketch_indices
                 else []
             ),
+            "supports_wildcard": supports_wildcard,
         }
         return self.to_json(sketch, meta=meta)
 

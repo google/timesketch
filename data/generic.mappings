@@ -10,6 +10,9 @@
             "keyword": {
               "type": "keyword",
               "ignore_above": 32766
+            },
+            "wildcard": {
+              "type": "wildcard"
             }
           }
         }

@@ -32,7 +32,7 @@ services:
       - ../../:/usr/local/src/timesketch/
 
   opensearch:
-    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-2.15.0}
+    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-2.19.5}
     restart: always
     environment:
       - TAKE_FILE_OWNERSHIP=1
