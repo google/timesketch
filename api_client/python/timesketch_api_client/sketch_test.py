@@ -240,9 +240,7 @@ class SketchTest(unittest.TestCase):
         with mock.patch.object(
             self.api_client.session, "post", return_value=mock_response
         ) as mock_post:
-            response = self.sketch.explore_wildcard(
-                query_string="*evil*", limit=10
-            )
+            response = self.sketch.explore_wildcard(query_string="*evil*", limit=10)
             self.assertEqual(response["objects"], [])
 
             mock_post.assert_called_once()
@@ -263,9 +261,7 @@ class SketchTest(unittest.TestCase):
         with mock.patch.object(
             self.api_client.session, "post", return_value=mock_response
         ) as mock_post:
-            response = self.sketch.explore_wildcard(
-                query_string="*evil*", limit=0
-            )
+            response = self.sketch.explore_wildcard(query_string="*evil*", limit=0)
             self.assertEqual(response["objects"], [])
 
             mock_post.assert_called_once()
