@@ -735,7 +735,8 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             wildcard_query = query_string
 
         logger.info(
-            "ExploreWildcardResource: Sketch ID: %d, Query: %r, Extracted Fields: %r, Extracted Wildcard Query: %r",
+            "ExploreWildcardResource: Sketch ID: %d, Query: %r, "
+            "Extracted Fields: %r, Extracted Wildcard Query: %r",
             sketch_id,
             query_string,
             fields_list,
