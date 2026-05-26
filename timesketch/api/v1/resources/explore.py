@@ -665,7 +665,8 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         Input JSON parameters (request body):
             query (str): Raw wildcard search expression (e.g. '*evil_term*').
             fields (str): Comma-separated list of targeted fields (default: 'message').
-            filter (dict): Optional dictionary representing search filters (e.g. size/limit).
+            filter (dict): Optional dictionary representing search filters
+                (e.g. size/limit).
 
         Returns:
             A Flask Response (JSON format) containing the skeleton search response,
@@ -673,7 +674,8 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
 
         Raises:
             HTTPStatus.NOT_FOUND (404): If the sketch cannot be found.
-            HTTPStatus.FORBIDDEN (403): If current user lacks read permissions on sketch.
+            HTTPStatus.FORBIDDEN (403): If current user lacks read
+                permissions on sketch.
             HTTPStatus.BAD_REQUEST (400): If the sketch is currently archived.
         """
         sketch = Sketch.get_with_acl(sketch_id)
@@ -691,12 +693,29 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST, "Unable to query on an archived sketch."
             )
 
-        # TODO: In the actual search execution phase (Iteration 2), we should define a
-        # custom forms.ExploreWildcardForm class. This sanitizes parameters from dynamic
-        # JSON request injections, checks for safe query string bounds (like minimum safe
-        # search terms lengths), and standardizes format exceptions.
-        # For this first skeleton iteration, we just accept the query and fields parameters
-        # but do not build the raw OpenSearch search query yet.
+        # Resolve active search indices in the sketch
+        all_timeline_ids = [t.id for t in sketch.timelines]
+        indices, _ = get_validated_indices(all_timeline_ids, sketch)
+        indices = utils.validate_indices(indices, self.datastore)
+        if not indices:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "No active timelines with valid search indices found in this sketch.",
+            )
+
+        # TODO: In the actual search execution phase (Iteration 2), we should verify
+        # that the target fields in these indices support non-tokenized exact
+        # wildcard matching (i.e. they are mapped as 'keyword' type or possess a
+        # '.keyword' multi-field). If none of the requested fields are suitable
+        # for exact wildcard matching, we should raise a 400 Bad Request error.
+
+        # TODO: In the actual search execution phase (Iteration 2), we should
+        # define a custom forms.ExploreWildcardForm class. This sanitizes
+        # parameters from dynamic JSON request injections, checks for safe query
+        # string bounds (like minimum safe search terms lengths), and
+        # standardizes format exceptions. For this first skeleton iteration, we
+        # just accept the query and fields parameters but do not build the raw
+        # OpenSearch search query yet.
         request_data = request.json or {}
         query_string = request_data.get("query", "")
 
