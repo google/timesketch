@@ -23,6 +23,7 @@ from timesketch_api_client import test_lib as api_test_lib
 from .. import test_lib
 from .search import saved_searches_group
 from .search import search_group
+from .search import search_wildcard
 
 EXPECTED_OUTPUT = """query_string: test:"foobar"
 query_filter: {
@@ -125,3 +126,25 @@ class SearchTest(unittest.TestCase):
         self.assertIn("event1 1234567890123 2023-01-01T00:00:00", normalized_output)
         self.assertIn("event2 4567890123456 2023-01-02T00:00:00", normalized_output)
         mock_search_instance.to_pandas.assert_called_once()
+
+    @mock.patch("timesketch_api_client.sketch.Sketch.explore_wildcard")
+    def test_search_wildcard(self, mock_explore_wildcard):
+        """Test the 'search-wildcard' command."""
+        mock_explore_wildcard.return_value = {
+            "meta": {},
+            "objects": []
+        }
+
+        runner = CliRunner()
+        result = runner.invoke(
+            search_wildcard,
+            ["--query", "*evil*", "--fields", "message,xml_string", "--limit", "10"],
+            obj=self.ctx,
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("[]", result.output)
+        mock_explore_wildcard.assert_called_once_with(
+            query_string="*evil*",
+            fields="message,xml_string",
+            limit=10,
+        )

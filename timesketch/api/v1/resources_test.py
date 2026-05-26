@@ -796,6 +796,100 @@ class ExploreResourceTest(BaseTest):
             self.assertIn("Timeout", response.json["message"])
 
 
+class ExploreWildcardResourceTest(BaseTest):
+    """Test ExploreWildcardResource."""
+
+    resource_url = "/api/v1/sketches/1/explore_wildcard/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_search_skeleton(self):
+        """Authenticated request to query the skeleton datastore."""
+        self.login()
+        data = {"query": "test", "fields": "message"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        response_json = response.json
+        self.assertIn("meta", response_json)
+        self.assertIn("objects", response_json)
+        self.assertEqual(response_json["objects"], [])
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_archived_sketch(self):
+        """Authenticated request to query an archived sketch."""
+        self.login()
+        sketch = Sketch.get_by_id(1)
+        sketch.set_status("archived")
+        db_session.commit()
+
+        data = {"query": "test", "fields": "message"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn("Unable to query on an archived sketch.", response.json["message"])
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_non_existent_sketch(self):
+        """Authenticated request to query a non-existent sketch."""
+        self.login()
+        data = {"query": "test", "fields": "message"}
+        response = self.client.post(
+            "/api/v1/sketches/999/explore_wildcard/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert404(response)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_fields_parsing_string(self):
+        """Test that fields passed as a comma-separated string are parsed correctly."""
+        self.login()
+        data = {"query": "test", "fields": "message, xml_string"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        fields_list = response.json["meta"]["fields_list"]
+        self.assertEqual(fields_list, ["message", "xml_string"])
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_fields_parsing_list(self):
+        """Test that fields passed as a list of strings are parsed correctly."""
+        self.login()
+        data = {"query": "test", "fields": ["message", "xml_string"]}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        fields_list = response.json["meta"]["fields_list"]
+        self.assertEqual(fields_list, ["message", "xml_string"])
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_fields_parsing_default(self):
+        """Test that fields parameter defaults to ['message'] if not specified."""
+        self.login()
+        data = {"query": "test"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        fields_list = response.json["meta"]["fields_list"]
+        self.assertEqual(fields_list, ["message"])
+
+
+
 class AggregationExploreResourceTest(BaseTest):
     """Test AggregationExploreResource."""
 

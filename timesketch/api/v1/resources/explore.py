@@ -643,3 +643,88 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         }
 
         return jsonify(schema)
+
+
+class ExploreWildcardResource(resources.ResourceMixin, Resource):
+    """Explore resources for running wildcard queries on the datastore.
+
+    This API endpoint allows exact-match wildcard searching on targeted document
+    fields (e.g. message, xml_string), bypassing standard Lucene string query
+    parser tokenization.
+    """
+
+    @login_required
+    def post(self, sketch_id: int):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/sketches/:sketch_id/explore_wildcard/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+
+        Input JSON parameters (request body):
+            query (str): Raw wildcard search expression (e.g. '*evil_term*').
+            fields (str): Comma-separated list of targeted fields (default: 'message').
+            filter (dict): Optional dictionary representing search filters (e.g. size/limit).
+
+        Returns:
+            A Flask Response (JSON format) containing the skeleton search response,
+            including an empty hits list.
+
+        Raises:
+            HTTPStatus.NOT_FOUND (404): If the sketch cannot be found.
+            HTTPStatus.FORBIDDEN (403): If current user lacks read permissions on sketch.
+            HTTPStatus.BAD_REQUEST (400): If the sketch is currently archived.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        if sketch.get_status.status == "archived":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, "Unable to query on an archived sketch."
+            )
+
+        # TODO: In the actual search execution phase (Iteration 2), we should define a
+        # custom forms.ExploreWildcardForm class. This sanitizes parameters from dynamic
+        # JSON request injections, checks for safe query string bounds (like minimum safe
+        # search terms lengths), and standardizes format exceptions.
+        # For this first skeleton iteration, we just accept the query and fields parameters
+        # but do not build the raw OpenSearch search query yet.
+        request_data = request.json or {}
+        query_string = request_data.get("query", "")
+
+        fields_raw = request_data.get("fields", "message")
+        if isinstance(fields_raw, str):
+            fields_list = [f.strip() for f in fields_raw.split(",") if f.strip()]
+        elif isinstance(fields_raw, list):
+            fields_list = [str(f).strip() for f in fields_raw if str(f).strip()]
+        else:
+            fields_list = ["message"]
+
+        if not fields_list:
+            fields_list = ["message"]
+
+        # Return a valid standard skeleton search JSON structure
+        meta = {
+            "fields_list": fields_list,
+            "es_time": 0,
+            "es_total_count": 0,
+            "es_total_count_complete": 0,
+            "timeline_colors": {},
+            "timeline_names": {},
+            "count_per_index": {},
+            "count_per_timeline": {},
+            "count_over_time": {"data": {}, "interval": ""},
+            "scroll_id": "",
+            "search_node": None,
+        }
+        schema = {"meta": meta, "objects": []}
+        return jsonify(schema)
+
