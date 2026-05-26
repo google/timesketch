@@ -1110,12 +1110,15 @@ class Sketch(resource.BaseResource):
         """Explore the sketch with raw wildcard queries (Skeleton endpoint).
 
         Args:
-            query_string: String representation of the raw wildcard query (e.g. '*evil*').
-            fields: Comma-separated list or single field target to search (default: 'message').
+            query_string: String representation of the raw wildcard query
+                (e.g. '*evil*').
+            fields: Comma-separated list or single field target to search
+                (default: 'message').
             limit: Optional integer representing maximum entries to return.
 
         Returns:
-            A dictionary containing the parsed search result schema (metadata and objects).
+            A dictionary containing the parsed search result schema
+            (metadata and objects).
 
         Raises:
             RuntimeError: If the sketch is currently archived.
