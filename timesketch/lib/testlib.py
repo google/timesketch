@@ -259,6 +259,12 @@ class MockDataStore:
         # Dictionary containing event dictionaries.
         self.event_store = {}
 
+    def verify_wildcard_mappings(self, indices, fields_list):
+        """Mock wildcard mapping helper. Delegates to Gunicorn's real logic!"""
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+        return OpenSearchDataStore.verify_wildcard_mappings(self, indices, fields_list)
+
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
         """Mock a search query.

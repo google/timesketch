@@ -653,96 +653,7 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
     parser tokenization.
     """
 
-    def _verify_wildcard_mappings(
-        self, indices: list[str], fields_list: list[str]
-    ) -> dict[str, str]:
-        """Verifies that all targeted fields possess active wildcard mappings.
 
-        Args:
-            indices (list): List of active index names to search.
-            fields_list (list): List of targeted user field names.
-
-        Returns:
-            dict: A mapping from target field name to the exact subfield path to
-                query (e.g. {"message": "message.wildcard"}).
-
-        Raises:
-            ValueError: If a targeted field lacks a wildcard field type mapping.
-        """
-        try:
-            # Retrieve complete mappings for all target timeline indices
-            mappings = self.datastore.client.indices.get_mapping(index=indices)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            raise ValueError(f"Unable to retrieve datastore mappings: {e}") from e
-
-        field_paths = {}
-
-        for target_field in fields_list:
-            supported_in_all_indices = True
-            exact_subfield_path = None
-
-            for index_name in indices:
-                # Safely navigate to properties tree
-                properties = (
-                    mappings.get(index_name, {})
-                    .get("mappings", {})
-                    .get("properties", {})
-                )
-                # Support dot-notated nested/object fields traversal
-                field_parts = target_field.split(".")
-                current_properties = properties
-                field_def = None
-
-                for i, part in enumerate(field_parts):
-                    field_def = current_properties.get(part)
-                    if not field_def:
-                        break
-
-                    # If not the last segment, navigate to nested properties
-                    if i < len(field_parts) - 1:
-                        current_properties = field_def.get("properties", {})
-                        if not current_properties:
-                            field_def = None
-                            break
-
-                if not field_def:
-                    supported_in_all_indices = False
-                    break
-
-                # Case A: The field itself is of type 'wildcard'
-                if field_def.get("type") == "wildcard":
-                    current_path = target_field
-                else:
-                    # Case B: Field has subfield of type 'wildcard' (standard suffix)
-                    subfields = field_def.get("fields", {})
-                    wildcard_subfield_key = None
-                    for key, sub_def in subfields.items():
-                        if sub_def.get("type") == "wildcard":
-                            wildcard_subfield_key = key
-                            break
-
-                    if wildcard_subfield_key:
-                        current_path = f"{target_field}.{wildcard_subfield_key}"
-                    else:
-                        supported_in_all_indices = False
-                        break
-
-                if exact_subfield_path is None:
-                    exact_subfield_path = current_path
-                elif exact_subfield_path != current_path:
-                    supported_in_all_indices = False
-                    break
-
-            if not supported_in_all_indices or not exact_subfield_path:
-                raise ValueError(
-                    f"Field '{target_field}' does not support exact wildcard "
-                    f"searches. Ensure it is mapped with a 'wildcard' field "
-                    f"type suffix (e.g. '.wildcard')."
-                )
-
-            field_paths[target_field] = exact_subfield_path
-
-        return field_paths
 
     @login_required
     def post(self, sketch_id: int):
@@ -827,7 +738,9 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
 
         # Verify targeted fields possess active wildcard type mappings
         try:
-            field_paths = self._verify_wildcard_mappings(indices, fields_list)
+            field_paths = self.datastore.verify_wildcard_mappings(
+                indices, fields_list
+            )
         except ValueError as e:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
@@ -893,60 +806,6 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         except ValueError as e:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
-        # Extract comparison flag
-        compare = request_data.get("compare", False)
-        comparison_data = None
-
-        if compare:
-            standard_ids = []
-            standard_took = 0
-            standard_total_hits = 0
-            standard_error = None
-
-            try:
-                # Execute baseline standard inverted search
-                standard_results = self.datastore.search(
-                    sketch_id=sketch_id,
-                    query_string=query_string,
-                    indices=indices,
-                    query_filter={"size": limit},
-                )
-                standard_ids = [hit["_id"] for hit in standard_results["hits"]["hits"]]
-                standard_took = standard_results["took"]
-                standard_total_hits = standard_results["hits"]["total"]
-                if isinstance(standard_total_hits, dict):
-                    standard_total_hits = standard_total_hits.get("value", 0)
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                logger.warning("Comparison standard search execution failed: %s", e)
-                standard_error = str(e)
-
-            # Compute set-differencing arrays between event document collections
-            wildcard_ids = [hit["_id"] for hit in result["hits"]["hits"]]
-            only_in_wildcard = list(set(wildcard_ids) - set(standard_ids))
-            only_in_standard = list(set(standard_ids) - set(wildcard_ids))
-
-            wildcard_total_hits = result["hits"]["total"]
-            if isinstance(wildcard_total_hits, dict):
-                wildcard_total_hits = wildcard_total_hits.get("value", 0)
-
-            comparison_data = {
-                "standard_search": {
-                    "took_ms": standard_took,
-                    "total_hits": standard_total_hits,
-                    "event_ids": standard_ids,
-                    "error": standard_error,
-                },
-                "wildcard_search": {
-                    "took_ms": result["took"],
-                    "total_hits": wildcard_total_hits,
-                    "event_ids": wildcard_ids,
-                },
-                "diff": {
-                    "only_in_wildcard": only_in_wildcard,
-                    "only_in_standard": only_in_standard,
-                },
-            }
-
         # Build timeline colors and names reference maps
         tl_colors = {}
         tl_names = {}
@@ -987,7 +846,6 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             "count_over_time": {"data": {}, "interval": ""},
             "scroll_id": result.get("_scroll_id", ""),
             "search_node": None,
-            "comparison": comparison_data,
         }
         schema = {"meta": meta, "objects": result["hits"]["hits"]}
         return jsonify(schema)
