@@ -398,7 +398,8 @@ def search_wildcard(ctx: click.Context, query: str, fields: str, limit: int) -> 
     Args:
         ctx: Click Context object holding global settings and active sketch.
         query: The raw wildcard search pattern string (e.g. '*evil*').
-        fields: A comma-separated string of the document fields to perform the pattern search on.
+        fields: A comma-separated string of the document fields to perform the
+            pattern search on.
         limit: Max integer limit of matching event hits to return.
     """
     sketch = ctx.obj.sketch
@@ -408,7 +409,7 @@ def search_wildcard(ctx: click.Context, query: str, fields: str, limit: int) -> 
             fields=fields,
             limit=limit,
         )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         click.echo(f"Error executing wildcard search: {e}", err=True)
         sys.exit(1)
 
