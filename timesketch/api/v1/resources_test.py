@@ -821,12 +821,10 @@ class ExploreWildcardResourceTest(BaseTest):
     def test_archived_sketch(self):
         """Authenticated request to query an archived sketch."""
         self.login()
-        
+
         # Create a dedicated sketch for this test to prevent test pollution
         sketch = self._create_sketch(
-            name="archived_test_sketch",
-            user=self.user1,
-            acl=True
+            name="archived_test_sketch", user=self.user1, acl=True
         )
         sketch.set_status("archived")
         db_session.commit()
