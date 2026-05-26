@@ -381,8 +381,13 @@ def describe_saved_search(ctx: click.Context, search_id: int):
     default=40,
     help="Limit amount of events to show (default: 40)",
 )
+@click.option(
+    "--compare",
+    is_flag=True,
+    help="Compare results with standard inverted index search.",
+)
 @click.pass_context
-def search_wildcard(ctx: click.Context, query: str, limit: int) -> None:
+def search_wildcard(ctx: click.Context, query: str, limit: int, compare: bool) -> None:
     """Explore a Timesketch sketch with raw wildcard queries (Skeleton endpoint).
 
     This CLI command issues a raw POST query request to the backend database
@@ -394,12 +399,14 @@ def search_wildcard(ctx: click.Context, query: str, limit: int) -> None:
         query: The raw wildcard search pattern string (e.g. '*evil*' or
             'message:*evil*').
         limit: Max integer limit of matching event hits to return.
+        compare: Boolean flag to request comparative search metrics.
     """
     sketch = ctx.obj.sketch
     try:
         results = sketch.explore_wildcard(
             query_string=query,
             limit=limit,
+            compare=compare,
         )
     except Exception as e:  # pylint: disable=broad-exception-caught
         click.echo(f"Error executing wildcard search: {e}", err=True)
@@ -408,4 +415,8 @@ def search_wildcard(ctx: click.Context, query: str, limit: int) -> None:
     # TODO: Once the API client supports returning Pandas DataFrames or Search
     # models, we should adapt the Click search-wildcard command to use the unified
     # format_output utility to provide clean, aligned tabular/CSV presentation layouts.
+    if compare:
+        click.echo("--- Comparison Diagnostics ---")
+        click.echo(json.dumps(results.get("meta", {}).get("comparison", {}), indent=2))
+        click.echo("------------------------------")
     click.echo(json.dumps(results.get("objects", []), indent=2))

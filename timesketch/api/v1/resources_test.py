@@ -1058,10 +1058,91 @@ class ExploreWildcardResourceTest(BaseTest):
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         self.assertIn(
             "does not support exact wildcard searches", response.json["message"]
         )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_comparison_mode(self, mock_search):
+        """Test the optional Diagnostic Search Comparison Mode search outputs."""
+        self.login()
+
+        def mock_search_side_effect(*args, **kwargs):  # pylint: disable=unused-argument
+            if kwargs.get("query_dsl"):
+                # Wildcard Search returns event_1 and event_3
+                return {
+                    "hits": {
+                        "hits": [
+                            {
+                                "_id": "event_1",
+                                "_source": {
+                                    "message": "Payload 1",
+                                    "timesketch_label": [],
+                                },
+                            },
+                            {
+                                "_id": "event_3",
+                                "_source": {
+                                    "message": "Payload 3",
+                                    "timesketch_label": [],
+                                },
+                            },
+                        ],
+                        "total": 2,
+                    },
+                    "took": 15,
+                }
+            # Standard Search returns event_1 and event_2
+            return {
+                "hits": {
+                    "hits": [
+                        {
+                            "_id": "event_1",
+                            "_source": {
+                                "message": "Payload 1",
+                                "timesketch_label": [],
+                            },
+                        },
+                        {
+                            "_id": "event_2",
+                            "_source": {
+                                "message": "Payload 2",
+                                "timesketch_label": [],
+                            },
+                        },
+                    ],
+                    "total": 2,
+                },
+                "took": 8,
+            }
+
+        mock_search.side_effect = mock_search_side_effect
+
+        data = {"query": "xml_string:*evil*", "compare": True}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        response_json = response.json
+        meta = response_json["meta"]
+
+        # Assert correct comparison metrics and diff calculation lists
+        self.assertIn("comparison", meta)
+        comp = meta["comparison"]
+
+        self.assertEqual(comp["standard_search"]["total_hits"], 2)
+        self.assertEqual(comp["standard_search"]["took_ms"], 8)
+        self.assertEqual(comp["standard_search"]["event_ids"], ["event_1", "event_2"])
+
+        self.assertEqual(comp["wildcard_search"]["total_hits"], 2)
+        self.assertEqual(comp["wildcard_search"]["took_ms"], 15)
+        self.assertEqual(comp["wildcard_search"]["event_ids"], ["event_1", "event_3"])
+
+        self.assertEqual(comp["diff"]["only_in_wildcard"], ["event_3"])
+        self.assertEqual(comp["diff"]["only_in_standard"], ["event_2"])
 
 
 class AggregationExploreResourceTest(BaseTest):

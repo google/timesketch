@@ -670,7 +670,7 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         try:
             # Retrieve complete mappings for all target timeline indices
             mappings = self.datastore.client.indices.get_mapping(index=indices)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             raise ValueError(f"Unable to retrieve datastore mappings: {e}") from e
 
         field_paths = {}

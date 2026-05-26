@@ -1105,6 +1105,7 @@ class Sketch(resource.BaseResource):
         self,
         query_string: str,
         limit: Optional[int] = None,
+        compare: bool = False,
     ) -> Dict[str, Union[Dict, List]]:
         """Explore the sketch with raw wildcard queries (Skeleton endpoint).
 
@@ -1112,6 +1113,8 @@ class Sketch(resource.BaseResource):
             query_string: String representation of the raw wildcard query
                 (e.g. '*evil*' or 'message:*evil*').
             limit: Optional integer representing maximum entries to return.
+            compare: Optional boolean. If True, requests a diagnostic comparison
+                diff with standard inverted search returns.
 
         Returns:
             A dictionary containing the parsed search result schema
@@ -1128,6 +1131,7 @@ class Sketch(resource.BaseResource):
         resource_url = f"{self.api.api_root}/sketches/{self.id}/explore_wildcard/"
         form_data = {
             "query": query_string,
+            "compare": compare,
         }
         if limit is not None:
             form_data["filter"] = {"size": limit}
