@@ -724,9 +724,7 @@ def show_mappings(sketch_id: int):
 
         # Retrieve mappings from OpenSearch
         try:
-            mappings_data = datastore.client.indices.get_mapping(
-                index=si.index_name
-            )
+            mappings_data = datastore.client.indices.get_mapping(index=si.index_name)
             properties = (
                 mappings_data.get(si.index_name, {})
                 .get("mappings", {})
@@ -748,14 +746,11 @@ def show_mappings(sketch_id: int):
                 if subfields:
                     subfields_list = []
                     for key, sub_def in subfields.items():
-                        subfields_list.append(
-                            f".{key} (type: {sub_def.get('type')})"
-                        )
+                        subfields_list.append(f".{key} (type: {sub_def.get('type')})")
                     subfields_str = f" | Subfields: {', '.join(subfields_list)}"
 
                 print(
-                    f"    - {field_name:<20} | Type: {field_type:<8}"
-                    f"{subfields_str}"
+                    f"    - {field_name:<20} | Type: {field_type:<8}" f"{subfields_str}"
                 )
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"  Error: Failed to retrieve mapping for this index: {e}")

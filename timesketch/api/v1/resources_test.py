@@ -959,6 +959,82 @@ class ExploreWildcardResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_inconsistent_mappings(self, mock_search):
+        """Test that query aborts when target paths are inconsistent across indices."""
+        self.login()
+
+        # Create two timelines with different physical indices for this sketch
+        sketch = Sketch.get_by_id(1)
+        searchindex_1 = SearchIndex(
+            name="test_idx1",
+            index_name="test_idx1",
+            description="test index 1",
+            user=self.user1,
+        )
+        timeline_1 = Timeline(
+            name="timeline 1",
+            description="timeline 1 desc",
+            sketch=sketch,
+            searchindex=searchindex_1,
+            user=self.user1,
+        )
+        searchindex_2 = SearchIndex(
+            name="test_idx2",
+            index_name="test_idx2",
+            description="test index 2",
+            user=self.user1,
+        )
+        timeline_2 = Timeline(
+            name="timeline 2",
+            description="timeline 2 desc",
+            sketch=sketch,
+            searchindex=searchindex_2,
+            user=self.user1,
+        )
+        db_session.add_all([searchindex_1, timeline_1, searchindex_2, timeline_2])
+        db_session.commit()
+
+        # Override get_mapping dynamic returns to yield inconsistent subfield paths!
+        def custom_get_mapping(*args, **kwargs):
+            return {
+                "test_idx1": {
+                    "mappings": {"properties": {"message": {"type": "wildcard"}}}
+                },
+                "test_idx2": {
+                    "mappings": {
+                        "properties": {
+                            "message": {
+                                "type": "text",
+                                "fields": {"wildcard": {"type": "wildcard"}},
+                            }
+                        }
+                    }
+                },
+            }
+
+        # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
+        from timesketch.lib.testlib import MockOpenSearchIndices
+        MockOpenSearchIndices.get_mapping = mock.MagicMock(
+            side_effect=custom_get_mapping
+        )
+
+        # Execute query: Should abort with 400 Bad Request since target paths mismatch!
+        data = {"query": "*evil*"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertStatus(response, HTTP_STATUS_CODE_BAD_REQUEST)
+        response_json = response.json
+        self.assertIn("message", response_json)
+        self.assertIn(
+            "does not support exact wildcard searches",
+            response_json["message"],
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
     def test_query_parsing_negative_limit(self, mock_search):
         """Test that a negative limit is safely floored at 0."""
         self.login()

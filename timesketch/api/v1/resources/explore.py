@@ -695,20 +695,25 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
 
                 # Case A: The field itself is of type 'wildcard'
                 if field_def.get("type") == "wildcard":
-                    exact_subfield_path = target_field
-                    continue
+                    current_path = target_field
+                else:
+                    # Case B: Field has subfield of type 'wildcard' (standard suffix)
+                    subfields = field_def.get("fields", {})
+                    wildcard_subfield_key = None
+                    for key, sub_def in subfields.items():
+                        if sub_def.get("type") == "wildcard":
+                            wildcard_subfield_key = key
+                            break
 
-                # Case B: Field has subfield of type 'wildcard' (standard suffix)
-                subfields = field_def.get("fields", {})
-                wildcard_subfield_key = None
-                for key, sub_def in subfields.items():
-                    if sub_def.get("type") == "wildcard":
-                        wildcard_subfield_key = key
+                    if wildcard_subfield_key:
+                        current_path = f"{target_field}.{wildcard_subfield_key}"
+                    else:
+                        supported_in_all_indices = False
                         break
 
-                if wildcard_subfield_key:
-                    exact_subfield_path = f"{target_field}.{wildcard_subfield_key}"
-                else:
+                if exact_subfield_path is None:
+                    exact_subfield_path = current_path
+                elif exact_subfield_path != current_path:
                     supported_in_all_indices = False
                     break
 

@@ -175,21 +175,10 @@ class MockOpenSearchIndices:
             indices = ["test"]
 
         properties = {
-            "message": {
-                "type": "text",
-                "fields": {
-                    "wildcard": {
-                        "type": "wildcard"
-                    }
-                }
-            },
+            "message": {"type": "text", "fields": {"wildcard": {"type": "wildcard"}}},
             "xml_string": {
                 "type": "text",
-                "fields": {
-                    "wildcard": {
-                        "type": "wildcard"
-                    }
-                }
+                "fields": {"wildcard": {"type": "wildcard"}},
             },
         }
         return {idx: {"mappings": {"properties": properties}} for idx in indices}
