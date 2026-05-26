@@ -663,8 +663,8 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model.
 
         Input JSON parameters (request body):
-            query (str): Raw wildcard search expression (e.g. '*evil_term*').
-            fields (str): Comma-separated list of targeted fields (default: 'message').
+            query (str): Raw wildcard search expression (e.g. '*evil_term*' or
+                'message:*evil*').
             filter (dict): Optional dictionary representing search filters
                 (e.g. size/limit).
 
@@ -703,11 +703,12 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                 "No active timelines with valid search indices found in this sketch.",
             )
 
-        # TODO: In the actual search execution phase (Iteration 2), we should verify
-        # that the target fields in these indices support non-tokenized exact
-        # wildcard matching (i.e. they are mapped as 'keyword' type or possess a
-        # '.keyword' multi-field). If none of the requested fields are suitable
-        # for exact wildcard matching, we should raise a 400 Bad Request error.
+        # TODO: In the actual search execution phase (Iteration 2), we must verify
+        # that the target fields in these indices possess a specific '.wildcard'
+        # subfield of type 'wildcard'. We want to work ONLY with the 'wildcard'
+        # field type (not 'keyword' or standard 'text' types) to ensure high-performance
+        # leading wildcard matching. If no suitable 'wildcard' type mappings are
+        # present, we should raise a 400 Bad Request error.
 
         # TODO: In the actual search execution phase (Iteration 2), we should
         # define a custom forms.ExploreWildcardForm class. This sanitizes
@@ -717,29 +718,34 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         # just accept the query and fields parameters but do not build the raw
         # OpenSearch search query yet.
         request_data = request.json or {}
-        query_string = request_data.get("query", "")
+        query_string = request_data.get("query", "").strip()
+        if not query_string:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "A non-empty 'query' parameter is required.",
+            )
 
-        fields_raw = request_data.get("fields", "message")
-        if isinstance(fields_raw, str):
-            fields_list = [f.strip() for f in fields_raw.split(",") if f.strip()]
-        elif isinstance(fields_raw, list):
-            fields_list = [str(f).strip() for f in fields_raw if str(f).strip()]
+        # Parse query prefix pattern (e.g. field_name:search_pattern)
+        if ":" in query_string:
+            field_prefix, search_pattern = query_string.split(":", 1)
+            fields_list = [field_prefix.strip()]
+            wildcard_query = search_pattern.strip()
         else:
             fields_list = ["message"]
-
-        if not fields_list:
-            fields_list = ["message"]
+            wildcard_query = query_string
 
         logger.info(
-            "ExploreWildcardResource: Sketch ID: %d, Wildcard Query: %r, Fields: %r",
+            "ExploreWildcardResource: Sketch ID: %d, Query: %r, Extracted Fields: %r, Extracted Wildcard Query: %r",
             sketch_id,
             query_string,
             fields_list,
+            wildcard_query,
         )
 
         # Return a valid standard skeleton search JSON structure
         meta = {
             "fields_list": fields_list,
+            "wildcard_query": wildcard_query,
             "es_time": 0,
             "es_total_count": 0,
             "es_total_count_complete": 0,
