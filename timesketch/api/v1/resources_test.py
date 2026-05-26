@@ -959,6 +959,27 @@ class ExploreWildcardResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_negative_limit(self, mock_search):
+        """Test that a negative limit is safely floored at 0."""
+        self.login()
+        mock_search.return_value = {
+            "hits": {"hits": [], "total": 0},
+            "took": 5,
+        }
+
+        data = {"query": "*evil*", "filter": {"size": -10}}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        mock_search.assert_called_once()
+        call_kwargs = mock_search.call_args[1]
+        self.assertEqual(call_kwargs["query_dsl"]["size"], 0)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
     def test_query_parsing_multiple_colons(self, mock_search):
         """Test that query splits correctly when multiple colons are present."""
         self.login()

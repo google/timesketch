@@ -653,7 +653,9 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
     parser tokenization.
     """
 
-    def _verify_wildcard_mappings(self, indices, fields_list):
+    def _verify_wildcard_mappings(
+        self, indices: list[str], fields_list: list[str]
+    ) -> dict[str, str]:
         """Verifies that all targeted fields possess active wildcard mappings.
 
         Args:
@@ -823,7 +825,7 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         limit = request_data.get("filter", {}).get("size")
         if limit is not None:
             try:
-                limit = int(limit)
+                limit = max(0, int(limit))
             except (ValueError, TypeError):
                 limit = 40
         else:
