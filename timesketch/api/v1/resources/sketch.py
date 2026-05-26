@@ -491,19 +491,29 @@ class SketchResource(resources.ResourceMixin, Resource):
         # Check if any field mapping or multi-field sub-field contains 'wildcard' type
         supports_wildcard = False
         for index_name, value in mappings_settings.items():
-            properties = value["mappings"].get("properties")
-            if not properties:
-                properties = next(iter(value["mappings"].values())).get(
+            if not isinstance(value, dict):
+                continue
+            mappings_dict = value.get("mappings", {})
+            if not isinstance(mappings_dict, dict):
+                continue
+            properties = mappings_dict.get("properties")
+            if not isinstance(properties, dict):
+                properties = next(iter(mappings_dict.values()), {}).get(
                     "properties", {}
                 )
 
+            if not isinstance(properties, dict):
+                continue
+
             for field, value_dict in properties.items():
+                if not isinstance(value_dict, dict):
+                    continue
                 if value_dict.get("type") == "wildcard":
                     supports_wildcard = True
                     break
                 fields_dict = value_dict.get("fields", {})
-                if any(
-                    sub_field.get("type") == "wildcard"
+                if isinstance(fields_dict, dict) and any(
+                    isinstance(sub_field, dict) and sub_field.get("type") == "wildcard"
                     for sub_field in fields_dict.values()
                 ):
                     supports_wildcard = True
