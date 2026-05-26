@@ -54,8 +54,35 @@ if __name__ == "__main__":
 
     print("-------------------------------")
 
-    # Sleep to make sure all containers are operational
-    time.sleep(30)  # seconds
+    import socket
+    from urllib.parse import urlparse
+
+    # Dynamically resolve target host and port from configuration settings
+    server_url = os.environ.get("TIMESKETCH_SERVER_URL", "http://127.0.0.1:5000")
+    parsed = urlparse(server_url)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or (80 if parsed.scheme == "http" else 443)
+
+    # Poll target server socket up to a safe maximum duration of 120 seconds
+    start_time = time.time()
+    print(f"Waiting for Timesketch server to become active on {host}:{port}...")
+    server_is_active = False
+
+    while True:
+        try:
+            with socket.create_connection((host, port), timeout=2):
+                print("Timesketch server is active! Starting E2E tests...")
+                server_is_active = True
+                break
+        except (OSError, ConnectionRefusedError):
+            elapsed = time.time() - start_time
+            if elapsed >= 120:
+                break
+            time.sleep(2)
+
+    if not server_is_active:
+        print(f"Timeout: Server did not become active within 120s on {host}:{port}.")
+        sys.exit(1)
 
     for name, cls in manager.get_tests(sort_by_mtime=True):
         test_class = cls()
