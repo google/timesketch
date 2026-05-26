@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 server_is_active = True
                 break
         except (OSError, ConnectionRefusedError) as exc:
-            elapsed = time.time() - start_time
+            elapsed = time.monotonic() - start_time
             print(
                 f"[{elapsed:.1f}s] Connection to {host}:{port} failed: {exc!r}. "
                 "Retrying in 2 seconds..."
