@@ -653,6 +653,74 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
     parser tokenization.
     """
 
+    def _verify_wildcard_mappings(self, indices, fields_list):
+        """Verifies that all targeted fields possess active wildcard mappings.
+
+        Args:
+            indices (list): List of active index names to search.
+            fields_list (list): List of targeted user field names.
+
+        Returns:
+            dict: A mapping from target field name to the exact subfield path to
+                query (e.g. {"message": "message.wildcard"}).
+
+        Raises:
+            ValueError: If a targeted field lacks a wildcard field type mapping.
+        """
+        try:
+            # Retrieve complete mappings for all target timeline indices
+            mappings = self.datastore.client.indices.get_mapping(index=indices)
+        except Exception as e:
+            raise ValueError(f"Unable to retrieve datastore mappings: {e}") from e
+
+        field_paths = {}
+
+        for target_field in fields_list:
+            supported_in_all_indices = True
+            exact_subfield_path = None
+
+            for index_name in indices:
+                # Safely navigate to properties tree
+                properties = (
+                    mappings.get(index_name, {})
+                    .get("mappings", {})
+                    .get("properties", {})
+                )
+                field_def = properties.get(target_field)
+                if not field_def:
+                    supported_in_all_indices = False
+                    break
+
+                # Case A: The field itself is of type 'wildcard'
+                if field_def.get("type") == "wildcard":
+                    exact_subfield_path = target_field
+                    continue
+
+                # Case B: Field has subfield of type 'wildcard' (standard suffix)
+                subfields = field_def.get("fields", {})
+                wildcard_subfield_key = None
+                for key, sub_def in subfields.items():
+                    if sub_def.get("type") == "wildcard":
+                        wildcard_subfield_key = key
+                        break
+
+                if wildcard_subfield_key:
+                    exact_subfield_path = f"{target_field}.{wildcard_subfield_key}"
+                else:
+                    supported_in_all_indices = False
+                    break
+
+            if not supported_in_all_indices or not exact_subfield_path:
+                raise ValueError(
+                    f"Field '{target_field}' does not support exact wildcard "
+                    f"searches. Ensure it is mapped with a 'wildcard' field "
+                    f"type suffix (e.g. '.wildcard')."
+                )
+
+            field_paths[target_field] = exact_subfield_path
+
+        return field_paths
+
     @login_required
     def post(self, sketch_id: int):
         """Handles POST request to the resource.
@@ -734,29 +802,169 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             fields_list = ["message"]
             wildcard_query = query_string
 
+        # Verify targeted fields possess active wildcard type mappings
+        try:
+            field_paths = self._verify_wildcard_mappings(indices, fields_list)
+        except ValueError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
         logger.info(
             "ExploreWildcardResource: Sketch ID: %d, Query: %r, "
-            "Extracted Fields: %r, Extracted Wildcard Query: %r",
+            "Extracted Fields: %r, Extracted Wildcard Query: %r, "
+            "Resolved Paths: %r",
             sketch_id,
             query_string,
             fields_list,
             wildcard_query,
+            field_paths,
         )
 
-        # Return a valid standard skeleton search JSON structure
+        # Extract limit parameter safely from filter settings
+        limit = request_data.get("filter", {}).get("size")
+        if limit is not None:
+            try:
+                limit = int(limit)
+            except (ValueError, TypeError):
+                limit = 40
+        else:
+            limit = 40
+
+        # Construct raw OpenSearch search query payload targeting the .wildcard subfield
+        query_dsl = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "bool": {
+                                "should": [
+                                    {
+                                        "wildcard": {
+                                            exact_path: {
+                                                "value": wildcard_query,
+                                                "case_insensitive": True,
+                                            }
+                                        }
+                                    }
+                                    for exact_path in field_paths.values()
+                                ],
+                                "minimum_should_match": 1,
+                            }
+                        }
+                    ],
+                    "filter": [],
+                }
+            },
+            "size": min(limit, 10000) if limit is not None else 40,
+            "sort": [{"datetime": {"order": "asc"}}],
+        }
+
+        # Execute search query payload against datastore OpenSearch client
+        try:
+            result = self.datastore.search(
+                sketch_id=sketch_id,
+                query_dsl=query_dsl,
+                indices=indices,
+            )
+        except DatastoreTimeoutError as e:
+            abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
+        except ValueError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+        # Extract comparison flag
+        compare = request_data.get("compare", False)
+        comparison_data = None
+
+        if compare:
+            standard_ids = []
+            standard_took = 0
+            standard_total_hits = 0
+            standard_error = None
+
+            try:
+                # Execute baseline standard inverted search
+                standard_results = self.datastore.search(
+                    sketch_id=sketch_id,
+                    query_string=query_string,
+                    indices=indices,
+                    query_filter={"size": limit},
+                )
+                standard_ids = [hit["_id"] for hit in standard_results["hits"]["hits"]]
+                standard_took = standard_results["took"]
+                standard_total_hits = standard_results["hits"]["total"]
+                if isinstance(standard_total_hits, dict):
+                    standard_total_hits = standard_total_hits.get("value", 0)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.warning("Comparison standard search execution failed: %s", e)
+                standard_error = str(e)
+
+            # Compute set-differencing arrays between event document collections
+            wildcard_ids = [hit["_id"] for hit in result["hits"]["hits"]]
+            only_in_wildcard = list(set(wildcard_ids) - set(standard_ids))
+            only_in_standard = list(set(standard_ids) - set(wildcard_ids))
+
+            wildcard_total_hits = result["hits"]["total"]
+            if isinstance(wildcard_total_hits, dict):
+                wildcard_total_hits = wildcard_total_hits.get("value", 0)
+
+            comparison_data = {
+                "standard_search": {
+                    "took_ms": standard_took,
+                    "total_hits": standard_total_hits,
+                    "event_ids": standard_ids,
+                    "error": standard_error,
+                },
+                "wildcard_search": {
+                    "took_ms": result["took"],
+                    "total_hits": wildcard_total_hits,
+                    "event_ids": wildcard_ids,
+                },
+                "diff": {
+                    "only_in_wildcard": only_in_wildcard,
+                    "only_in_standard": only_in_standard,
+                },
+            }
+
+        # Build timeline colors and names reference maps
+        tl_colors = {}
+        tl_names = {}
+        for timeline in sketch.timelines:
+            tl_colors[timeline.searchindex.index_name] = timeline.color
+            tl_names[timeline.searchindex.index_name] = timeline.name
+
+        # Parse timesketch labels for response hits
+        for event in result["hits"]["hits"]:
+            event["selected"] = False
+            event["_source"]["label"] = []
+            try:
+                for label in event["_source"]["timesketch_label"]:
+                    if sketch.id != label["sketch_id"]:
+                        continue
+                    event["_source"]["label"].append(label["name"])
+                del event["_source"]["timesketch_label"]
+            except KeyError:
+                pass
+
+        # Resolve total hits count
+        es_total_count = result["hits"]["total"]
+        if isinstance(es_total_count, dict):
+            es_total_count = es_total_count.get("value", 0)
+
+        # Return standard search JSON structure with real database results
         meta = {
             "fields_list": fields_list,
             "wildcard_query": wildcard_query,
-            "es_time": 0,
-            "es_total_count": 0,
-            "es_total_count_complete": 0,
-            "timeline_colors": {},
-            "timeline_names": {},
+            "field_paths": field_paths,
+            "es_time": result["took"],
+            "es_total_count": es_total_count,
+            "es_total_count_complete": es_total_count,
+            "timeline_colors": tl_colors,
+            "timeline_names": tl_names,
             "count_per_index": {},
             "count_per_timeline": {},
             "count_over_time": {"data": {}, "interval": ""},
-            "scroll_id": "",
+            "scroll_id": result.get("_scroll_id", ""),
             "search_node": None,
+            "comparison": comparison_data,
         }
-        schema = {"meta": meta, "objects": []}
+        schema = {"meta": meta, "objects": result["hits"]["hits"]}
         return jsonify(schema)

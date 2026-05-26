@@ -161,10 +161,27 @@ class MockOpenSearchClient:
 
 
 class MockOpenSearchIndices:
+    """Mock implementation of OpenSearch indices client for unit testing."""
+
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
-        return {}
+        index_param = kwargs.get("index", "test")
+        if isinstance(index_param, str):
+            indices = [index_param]
+        elif isinstance(index_param, list):
+            indices = index_param
+        else:
+            indices = ["test"]
+
+        properties = {
+            "message": {"type": "text", "fields": {"wildcard": {"type": "wildcard"}}},
+            "xml_string": {
+                "type": "text",
+                "fields": {"wildcard": {"type": "wildcard"}},
+            },
+        }
+        return {idx: {"mappings": {"properties": properties}} for idx in indices}
 
     def stats(self, *args, **kwargs):
         return {"indices": {}}

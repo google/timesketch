@@ -817,7 +817,11 @@ class ExploreWildcardResourceTest(BaseTest):
         response_json = response.json
         self.assertIn("meta", response_json)
         self.assertIn("objects", response_json)
-        self.assertEqual(response_json["objects"], [])
+        self.assertEqual(len(response_json["objects"]), 1)
+        self.assertEqual(response_json["objects"][0]["_id"], "test")
+        self.assertEqual(
+            response_json["objects"][0]["_source"]["message"], "Test event"
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_archived_sketch(self):
@@ -856,9 +860,28 @@ class ExploreWildcardResourceTest(BaseTest):
         self.assert404(response)
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_query_parsing_with_prefix(self):
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_with_prefix(self, mock_search):
         """Test that query strings with a field prefix are parsed correctly."""
         self.login()
+
+        # Configure search return value to prevent mock exceptions
+        mock_search.return_value = {
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "event_1",
+                        "_source": {
+                            "message": "Found evil payload",
+                            "timesketch_label": [],
+                        },
+                    }
+                ],
+                "total": 1,
+            },
+            "took": 10,
+        }
+
         data = {"query": "xml_string:*evil*"}
         response = self.client.post(
             self.resource_url,
@@ -866,14 +889,52 @@ class ExploreWildcardResourceTest(BaseTest):
             content_type="application/json",
         )
         self.assert200(response)
-        meta = response.json["meta"]
+        response_json = response.json
+        meta = response_json["meta"]
         self.assertEqual(meta["fields_list"], ["xml_string"])
         self.assertEqual(meta["wildcard_query"], "*evil*")
+        self.assertEqual(meta["field_paths"], {"xml_string": "xml_string.wildcard"})
+        self.assertEqual(len(response_json["objects"]), 1)
+        self.assertEqual(response_json["objects"][0]["_id"], "event_1")
+
+        # Verify query builder construction payload parameters
+        mock_search.assert_called_once()
+        call_kwargs = mock_search.call_args[1]
+        self.assertEqual(call_kwargs["sketch_id"], 1)
+        query_dsl = call_kwargs["query_dsl"]
+        self.assertIsNotNone(query_dsl)
+
+        should_clauses = query_dsl["query"]["bool"]["must"][0]["bool"]["should"]
+        self.assertEqual(len(should_clauses), 1)
+        self.assertEqual(
+            should_clauses[0]["wildcard"]["xml_string.wildcard"]["value"], "*evil*"
+        )
+        self.assertEqual(
+            should_clauses[0]["wildcard"]["xml_string.wildcard"]["case_insensitive"],
+            True,
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_query_parsing_without_prefix(self):
-        """Test that query strings without a field prefix get a default field list."""
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_without_prefix(self, mock_search):
+        """Test that query strings without a prefix use default field paths."""
         self.login()
+        mock_search.return_value = {
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "event_2",
+                        "_source": {
+                            "message": "Generic message",
+                            "timesketch_label": [],
+                        },
+                    }
+                ],
+                "total": 1,
+            },
+            "took": 10,
+        }
+
         data = {"query": "*evil*"}
         response = self.client.post(
             self.resource_url,
@@ -881,14 +942,42 @@ class ExploreWildcardResourceTest(BaseTest):
             content_type="application/json",
         )
         self.assert200(response)
-        meta = response.json["meta"]
+        response_json = response.json
+        meta = response_json["meta"]
         self.assertEqual(meta["fields_list"], ["message"])
         self.assertEqual(meta["wildcard_query"], "*evil*")
+        self.assertEqual(meta["field_paths"], {"message": "message.wildcard"})
+
+        # Verify default path query construction DSL
+        mock_search.assert_called_once()
+        call_kwargs = mock_search.call_args[1]
+        query_dsl = call_kwargs["query_dsl"]
+        should_clauses = query_dsl["query"]["bool"]["must"][0]["bool"]["should"]
+        self.assertEqual(
+            should_clauses[0]["wildcard"]["message.wildcard"]["value"], "*evil*"
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_query_parsing_multiple_colons(self):
-        """Test that query splits on the first colon when multiple are present."""
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_multiple_colons(self, mock_search):
+        """Test that query splits correctly when multiple colons are present."""
         self.login()
+        mock_search.return_value = {
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "event_3",
+                        "_source": {
+                            "message": "Multi colon message",
+                            "timesketch_label": [],
+                        },
+                    }
+                ],
+                "total": 1,
+            },
+            "took": 10,
+        }
+
         data = {"query": "xml_string:<xml>*:*</xml>"}
         response = self.client.post(
             self.resource_url,
@@ -896,9 +985,21 @@ class ExploreWildcardResourceTest(BaseTest):
             content_type="application/json",
         )
         self.assert200(response)
-        meta = response.json["meta"]
+        response_json = response.json
+        meta = response_json["meta"]
         self.assertEqual(meta["fields_list"], ["xml_string"])
         self.assertEqual(meta["wildcard_query"], "<xml>*:*</xml>")
+        self.assertEqual(meta["field_paths"], {"xml_string": "xml_string.wildcard"})
+
+        # Verify complex query prefix split values target subfield paths
+        mock_search.assert_called_once()
+        call_kwargs = mock_search.call_args[1]
+        query_dsl = call_kwargs["query_dsl"]
+        should_clauses = query_dsl["query"]["bool"]["must"][0]["bool"]["should"]
+        self.assertEqual(
+            should_clauses[0]["wildcard"]["xml_string.wildcard"]["value"],
+            "<xml>*:*</xml>",
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_query_parsing_empty_query(self):
@@ -913,6 +1014,53 @@ class ExploreWildcardResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         self.assertIn(
             "A non-empty 'query' parameter is required.", response.json["message"]
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockOpenSearchIndices.get_mapping")
+    def test_query_parsing_unsupported_mapping(self, mock_get_mapping):
+        """Test that query returns 400 if field has no wildcard mapping."""
+        self.login()
+        mock_get_mapping.return_value = {
+            "test_index": {
+                "mappings": {
+                    "properties": {
+                        "xml_string": {
+                            "type": "text",
+                            "fields": {"keyword": {"type": "keyword"}},
+                        }
+                    }
+                }
+            }
+        }
+        data = {"query": "xml_string:*evil*"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn(
+            "does not support exact wildcard searches", response.json["message"]
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockOpenSearchIndices.get_mapping")
+    def test_query_parsing_missing_field(self, mock_get_mapping):
+        """Test that query returns 400 if the targeted field is missing."""
+        self.login()
+        mock_get_mapping.return_value = {
+            "test_index": {"mappings": {"properties": {"message": {"type": "text"}}}}
+        }
+        data = {"query": "xml_string:*evil*"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn(
+            "does not support exact wildcard searches", response.json["message"]
         )
 
 
