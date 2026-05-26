@@ -959,6 +959,70 @@ class ExploreWildcardResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_nested_field(self, mock_search):
+        """Test that dot-notation nested paths are traversed correctly."""
+        self.login()
+        mock_search.return_value = {
+            "hits": {"hits": [], "total": 0},
+            "took": 5,
+        }
+
+        def custom_get_mapping(*args, **kwargs):
+            return {
+                "test": {
+                    "mappings": {
+                        "properties": {
+                            "json_metadata": {
+                                "properties": {
+                                    "some_field": {
+                                        "type": "text",
+                                        "fields": {
+                                            "wildcard": {"type": "wildcard"}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        from timesketch.lib.testlib import MockOpenSearchIndices
+        original_get_mapping = MockOpenSearchIndices.get_mapping
+        try:
+            MockOpenSearchIndices.get_mapping = mock.MagicMock(
+                side_effect=custom_get_mapping
+            )
+            data = {"query": "json_metadata.some_field:*evil*"}
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(data, ensure_ascii=False),
+                content_type="application/json",
+            )
+            self.assert200(response)
+            response_json = response.json
+            meta = response_json["meta"]
+            self.assertEqual(meta["fields_list"], ["json_metadata.some_field"])
+            self.assertEqual(
+                meta["field_paths"],
+                {"json_metadata.some_field": "json_metadata.some_field.wildcard"},
+            )
+
+            mock_search.assert_called_once()
+            call_kwargs = mock_search.call_args[1]
+            query_dsl = call_kwargs["query_dsl"]
+            should_clauses = query_dsl["query"]["bool"]["must"][0]["bool"]["should"]
+            self.assertEqual(
+                should_clauses[0]["wildcard"]["json_metadata.some_field.wildcard"][
+                    "value"
+                ],
+                "*evil*",
+            )
+        finally:
+            MockOpenSearchIndices.get_mapping = original_get_mapping
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
     def test_query_parsing_inconsistent_mappings(self, mock_search):
         """Test that query aborts when target paths are inconsistent across indices."""
         self.login()

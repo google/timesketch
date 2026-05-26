@@ -688,7 +688,23 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                     .get("mappings", {})
                     .get("properties", {})
                 )
-                field_def = properties.get(target_field)
+                # Support dot-notated nested/object fields traversal
+                field_parts = target_field.split(".")
+                current_properties = properties
+                field_def = None
+
+                for i, part in enumerate(field_parts):
+                    field_def = current_properties.get(part)
+                    if not field_def:
+                        break
+
+                    # If not the last segment, navigate to nested properties
+                    if i < len(field_parts) - 1:
+                        current_properties = field_def.get("properties", {})
+                        if not current_properties:
+                            field_def = None
+                            break
+
                 if not field_def:
                     supported_in_all_indices = False
                     break
