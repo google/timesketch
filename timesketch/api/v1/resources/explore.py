@@ -653,8 +653,6 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
     parser tokenization.
     """
 
-
-
     @login_required
     def post(self, sketch_id: int):
         """Handles POST request to the resource.
@@ -738,9 +736,7 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
 
         # Verify targeted fields possess active wildcard type mappings
         try:
-            field_paths = self.datastore.verify_wildcard_mappings(
-                indices, fields_list
-            )
+            field_paths = self.datastore.verify_wildcard_mappings(indices, fields_list)
         except ValueError as e:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 

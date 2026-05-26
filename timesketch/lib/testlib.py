@@ -263,6 +263,7 @@ class MockDataStore:
         """Mock wildcard mapping helper. Delegates to Gunicorn's real logic!"""
         # pylint: disable=import-outside-toplevel
         from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+
         return OpenSearchDataStore.verify_wildcard_mappings(self, indices, fields_list)
 
     # pylint: disable=arguments-differ,unused-argument

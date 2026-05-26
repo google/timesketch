@@ -1231,8 +1231,6 @@ class ExploreWildcardResourceTest(BaseTest):
         )
 
 
-
-
 class AggregationExploreResourceTest(BaseTest):
     """Test AggregationExploreResource."""
 

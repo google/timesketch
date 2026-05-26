@@ -778,6 +778,7 @@ class OpenSearchDataStore:
             }
 
         return query_dsl
+
     def verify_wildcard_mappings(
         self, indices: list[str], fields_list: list[str]
     ) -> dict[str, str]:
@@ -798,9 +799,7 @@ class OpenSearchDataStore:
             # Query active datastore mapping properties trees from OpenSearch client
             mappings = self.client.indices.get_mapping(index=indices)
         except Exception as e:
-            raise ValueError(
-                f"Failed to query index mappings metadata: {e}"
-            ) from e
+            raise ValueError(f"Failed to query index mappings metadata: {e}") from e
 
         field_paths = {}
 
@@ -881,6 +880,7 @@ class OpenSearchDataStore:
             field_paths[target_field] = exact_subfield_path
 
         return field_paths
+
     # pylint: disable=too-many-arguments
     def search(
         self,
