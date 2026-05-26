@@ -87,10 +87,10 @@ if __name__ == "__main__":
                 print("Timesketch server is active! Starting E2E tests...")
                 server_is_active = True
                 break
-        except (OSError, ConnectionRefusedError) as exc:
+        except OSError as e:
             elapsed = time.monotonic() - start_time
             print(
-                f"[{elapsed:.1f}s] Connection to {host}:{port} failed: {exc!r}. "
+                f"[{elapsed:.1f}s] Connection to {host}:{port} failed: {e!r}. "
                 "Retrying in 2 seconds..."
             )
             if elapsed >= 120:
