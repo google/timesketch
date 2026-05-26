@@ -46,6 +46,7 @@ services:
       - discovery.type=single-node
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
       - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+      - "search.query.max_query_string_length=50000"
     ulimits:
       memlock:
         soft: -1
