@@ -406,17 +406,59 @@ def search_wildcard(ctx: click.Context, query: str, limit: int, compare: bool) -
         results = sketch.explore_wildcard(
             query_string=query,
             limit=limit,
-            compare=compare,
         )
     except Exception as e:  # pylint: disable=broad-exception-caught
         click.echo(f"Error executing wildcard search: {e}", err=True)
         sys.exit(1)
 
-    # TODO: Once the API client supports returning Pandas DataFrames or Search
-    # models, we should adapt the Click search-wildcard command to use the unified
-    # format_output utility to provide clean, aligned tabular/CSV presentation layouts.
+    # If the comparison flag is set, run standard search and calculate differences
     if compare:
+        standard_ids = []
+        standard_took = 0
+        standard_total_hits = 0
+        standard_error = None
+
+        try:
+            standard_results = sketch.explore(
+                query_string=query,
+                max_entries=limit,
+                as_pandas=False,
+            )
+            standard_ids = [hit["_id"] for hit in standard_results.get("objects", [])]
+            standard_took = standard_results.get("meta", {}).get("es_time", 0)
+            standard_total_hits = standard_results.get("meta", {}).get(
+                "es_total_count", 0
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            standard_error = str(e)
+
+        # Calculate set differences
+        wildcard_ids = [hit["_id"] for hit in results.get("objects", [])]
+        only_in_wildcard = list(set(wildcard_ids) - set(standard_ids))
+        only_in_standard = list(set(standard_ids) - set(wildcard_ids))
+
+        wildcard_total_hits = results.get("meta", {}).get("es_total_count", 0)
+
+        comparison_data = {
+            "standard_search": {
+                "took_ms": standard_took,
+                "total_hits": standard_total_hits,
+                "event_ids": standard_ids,
+                "error": standard_error,
+            },
+            "wildcard_search": {
+                "took_ms": results.get("meta", {}).get("es_time", 0),
+                "total_hits": wildcard_total_hits,
+                "event_ids": wildcard_ids,
+            },
+            "diff": {
+                "only_in_wildcard": only_in_wildcard,
+                "only_in_standard": only_in_standard,
+            },
+        }
+
         click.echo("--- Comparison Diagnostics ---")
-        click.echo(json.dumps(results.get("meta", {}).get("comparison", {}), indent=2))
+        click.echo(json.dumps(comparison_data, indent=2))
         click.echo("------------------------------")
+
     click.echo(json.dumps(results.get("objects", []), indent=2))

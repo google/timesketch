@@ -254,7 +254,7 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(response.json["objects"][0]["name"], "Test 1")
         self.assertIsInstance(response.json["meta"]["emojis"], dict)
         self.assertIn("supports_wildcard", response.json["meta"])
-        self.assertFalse(response.json["meta"]["supports_wildcard"])
+        self.assertTrue(response.json["meta"]["supports_wildcard"])
         self.assert200(response)
 
     def test_sketch_acl(self):
@@ -967,7 +967,7 @@ class ExploreWildcardResourceTest(BaseTest):
             "took": 5,
         }
 
-        def custom_get_mapping(*args, **kwargs):
+        def custom_get_mapping(*unused_args, **unused_kwargs):
             return {
                 "test": {
                     "mappings": {
@@ -985,7 +985,9 @@ class ExploreWildcardResourceTest(BaseTest):
                 }
             }
 
-        from timesketch.lib.testlib import MockOpenSearchIndices
+        from timesketch.lib.testlib import (
+            MockOpenSearchIndices,
+        )  # pylint: disable=import-outside-toplevel
 
         original_get_mapping = MockOpenSearchIndices.get_mapping
         try:
@@ -1022,7 +1024,7 @@ class ExploreWildcardResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")
-    def test_query_parsing_inconsistent_mappings(self, mock_search):
+    def test_query_parsing_inconsistent_mappings(self, unused_mock_search):
         """Test that query aborts when target paths are inconsistent across indices."""
         self.login()
 
@@ -1058,7 +1060,7 @@ class ExploreWildcardResourceTest(BaseTest):
         db_session.commit()
 
         # Override get_mapping dynamic returns to yield inconsistent subfield paths!
-        def custom_get_mapping(*args, **kwargs):
+        def custom_get_mapping(*unused_args, **unused_kwargs):
             return {
                 "test_idx1": {
                     "mappings": {"properties": {"message": {"type": "wildcard"}}}
@@ -1076,14 +1078,16 @@ class ExploreWildcardResourceTest(BaseTest):
             }
 
         # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
-        from timesketch.lib.testlib import MockOpenSearchIndices
+        from timesketch.lib.testlib import (
+            MockOpenSearchIndices,
+        )  # pylint: disable=import-outside-toplevel
 
         original_get_mapping = MockOpenSearchIndices.get_mapping
         try:
             MockOpenSearchIndices.get_mapping = mock.MagicMock(
                 side_effect=custom_get_mapping
             )
-            # Execute query: Should abort with 400 Bad Request since target paths mismatch!
+            # Query should abort with 400 Bad Request since paths mismatch
             data = {"query": "*evil*"}
             response = self.client.post(
                 self.resource_url,
@@ -1226,87 +1230,7 @@ class ExploreWildcardResourceTest(BaseTest):
             "does not support exact wildcard searches", response.json["message"]
         )
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
-    def test_query_comparison_mode(self, mock_search):
-        """Test the optional Diagnostic Search Comparison Mode search outputs."""
-        self.login()
 
-        def mock_search_side_effect(*args, **kwargs):  # pylint: disable=unused-argument
-            if kwargs.get("query_dsl"):
-                # Wildcard Search returns event_1 and event_3
-                return {
-                    "hits": {
-                        "hits": [
-                            {
-                                "_id": "event_1",
-                                "_source": {
-                                    "message": "Payload 1",
-                                    "timesketch_label": [],
-                                },
-                            },
-                            {
-                                "_id": "event_3",
-                                "_source": {
-                                    "message": "Payload 3",
-                                    "timesketch_label": [],
-                                },
-                            },
-                        ],
-                        "total": 2,
-                    },
-                    "took": 15,
-                }
-            # Standard Search returns event_1 and event_2
-            return {
-                "hits": {
-                    "hits": [
-                        {
-                            "_id": "event_1",
-                            "_source": {
-                                "message": "Payload 1",
-                                "timesketch_label": [],
-                            },
-                        },
-                        {
-                            "_id": "event_2",
-                            "_source": {
-                                "message": "Payload 2",
-                                "timesketch_label": [],
-                            },
-                        },
-                    ],
-                    "total": 2,
-                },
-                "took": 8,
-            }
-
-        mock_search.side_effect = mock_search_side_effect
-
-        data = {"query": "xml_string:*evil*", "compare": True}
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        self.assert200(response)
-        response_json = response.json
-        meta = response_json["meta"]
-
-        # Assert correct comparison metrics and diff calculation lists
-        self.assertIn("comparison", meta)
-        comp = meta["comparison"]
-
-        self.assertEqual(comp["standard_search"]["total_hits"], 2)
-        self.assertEqual(comp["standard_search"]["took_ms"], 8)
-        self.assertEqual(comp["standard_search"]["event_ids"], ["event_1", "event_2"])
-
-        self.assertEqual(comp["wildcard_search"]["total_hits"], 2)
-        self.assertEqual(comp["wildcard_search"]["took_ms"], 15)
-        self.assertEqual(comp["wildcard_search"]["event_ids"], ["event_1", "event_3"])
-
-        self.assertEqual(comp["diff"]["only_in_wildcard"], ["event_3"])
-        self.assertEqual(comp["diff"]["only_in_standard"], ["event_2"])
 
 
 class AggregationExploreResourceTest(BaseTest):

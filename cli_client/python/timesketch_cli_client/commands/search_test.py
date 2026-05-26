@@ -127,10 +127,12 @@ class SearchTest(unittest.TestCase):
         self.assertIn("event2 4567890123456 2023-01-02T00:00:00", normalized_output)
         mock_search_instance.to_pandas.assert_called_once()
 
+    @mock.patch("timesketch_api_client.sketch.Sketch.explore")
     @mock.patch("timesketch_api_client.sketch.Sketch.explore_wildcard")
-    def test_search_wildcard(self, mock_explore_wildcard):
+    def test_search_wildcard(self, mock_explore_wildcard, mock_explore):
         """Test the 'search-wildcard' command."""
         mock_explore_wildcard.return_value = {"meta": {}, "objects": []}
+        mock_explore.return_value = {"meta": {}, "objects": []}
 
         runner = CliRunner()
         result = runner.invoke(
@@ -140,8 +142,13 @@ class SearchTest(unittest.TestCase):
         )
         self.assertEqual(result.exit_code, 0)
         self.assertIn("[]", result.output)
+        self.assertIn("--- Comparison Diagnostics ---", result.output)
         mock_explore_wildcard.assert_called_once_with(
             query_string="*evil*",
             limit=10,
-            compare=True,
+        )
+        mock_explore.assert_called_once_with(
+            query_string="*evil*",
+            max_entries=10,
+            as_pandas=False,
         )
