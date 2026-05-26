@@ -135,13 +135,12 @@ class SearchTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(
             search_wildcard,
-            ["--query", "*evil*", "--fields", "message,xml_string", "--limit", "10"],
+            ["--query", "*evil*", "--limit", "10"],
             obj=self.ctx,
         )
         self.assertEqual(result.exit_code, 0)
         self.assertIn("[]", result.output)
         mock_explore_wildcard.assert_called_once_with(
             query_string="*evil*",
-            fields="message,xml_string",
             limit=10,
         )

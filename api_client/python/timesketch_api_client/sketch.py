@@ -1104,16 +1104,13 @@ class Sketch(resource.BaseResource):
     def explore_wildcard(
         self,
         query_string: str,
-        fields: Union[str, List[str]] = "message",
         limit: Optional[int] = None,
     ) -> Dict[str, Union[Dict, List]]:
         """Explore the sketch with raw wildcard queries (Skeleton endpoint).
 
         Args:
             query_string: String representation of the raw wildcard query
-                (e.g. '*evil*').
-            fields: Comma-separated list or single field target to search
-                (default: 'message').
+                (e.g. '*evil*' or 'message:*evil*').
             limit: Optional integer representing maximum entries to return.
 
         Returns:
@@ -1131,9 +1128,8 @@ class Sketch(resource.BaseResource):
         resource_url = f"{self.api.api_root}/sketches/{self.id}/explore_wildcard/"
         form_data = {
             "query": query_string,
-            "fields": fields,
         }
-        if limit:
+        if limit is not None:
             form_data["filter"] = {"size": limit}
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)

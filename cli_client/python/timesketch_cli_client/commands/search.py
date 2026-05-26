@@ -373,13 +373,7 @@ def describe_saved_search(ctx: click.Context, search_id: int):
     "--query",
     "-q",
     required=True,
-    help="Search query in raw wildcard format (e.g. *evil*)",
-)
-@click.option(
-    "--fields",
-    "-f",
-    default="message",
-    help="Comma-separated string of fields to match (default: message)",
+    help="Search query in raw wildcard format (e.g. *evil* or message:*evil*)",
 )
 @click.option(
     "--limit",
@@ -388,7 +382,7 @@ def describe_saved_search(ctx: click.Context, search_id: int):
     help="Limit amount of events to show (default: 40)",
 )
 @click.pass_context
-def search_wildcard(ctx: click.Context, query: str, fields: str, limit: int) -> None:
+def search_wildcard(ctx: click.Context, query: str, limit: int) -> None:
     """Explore a Timesketch sketch with raw wildcard queries (Skeleton endpoint).
 
     This CLI command issues a raw POST query request to the backend database
@@ -397,16 +391,14 @@ def search_wildcard(ctx: click.Context, query: str, fields: str, limit: int) -> 
 
     Args:
         ctx: Click Context object holding global settings and active sketch.
-        query: The raw wildcard search pattern string (e.g. '*evil*').
-        fields: A comma-separated string of the document fields to perform the
-            pattern search on.
+        query: The raw wildcard search pattern string (e.g. '*evil*' or
+            'message:*evil*').
         limit: Max integer limit of matching event hits to return.
     """
     sketch = ctx.obj.sketch
     try:
         results = sketch.explore_wildcard(
             query_string=query,
-            fields=fields,
             limit=limit,
         )
     except Exception as e:  # pylint: disable=broad-exception-caught
