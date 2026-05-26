@@ -711,6 +711,13 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         if not fields_list:
             fields_list = ["message"]
 
+        logger.info(
+            "ExploreWildcardResource: Sketch ID: %d, Wildcard Query: %r, Fields: %r",
+            sketch_id,
+            query_string,
+            fields_list,
+        )
+
         # Return a valid standard skeleton search JSON structure
         meta = {
             "fields_list": fields_list,
