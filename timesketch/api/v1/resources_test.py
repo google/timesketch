@@ -1014,24 +1014,27 @@ class ExploreWildcardResourceTest(BaseTest):
 
         # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
         from timesketch.lib.testlib import MockOpenSearchIndices
-        MockOpenSearchIndices.get_mapping = mock.MagicMock(
-            side_effect=custom_get_mapping
-        )
-
-        # Execute query: Should abort with 400 Bad Request since target paths mismatch!
-        data = {"query": "*evil*"}
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        self.assertStatus(response, HTTP_STATUS_CODE_BAD_REQUEST)
-        response_json = response.json
-        self.assertIn("message", response_json)
-        self.assertIn(
-            "does not support exact wildcard searches",
-            response_json["message"],
-        )
+        original_get_mapping = MockOpenSearchIndices.get_mapping
+        try:
+            MockOpenSearchIndices.get_mapping = mock.MagicMock(
+                side_effect=custom_get_mapping
+            )
+            # Execute query: Should abort with 400 Bad Request since target paths mismatch!
+            data = {"query": "*evil*"}
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(data, ensure_ascii=False),
+                content_type="application/json",
+            )
+            self.assertStatus(response, HTTP_STATUS_CODE_BAD_REQUEST)
+            response_json = response.json
+            self.assertIn("message", response_json)
+            self.assertIn(
+                "does not support exact wildcard searches",
+                response_json["message"],
+            )
+        finally:
+            MockOpenSearchIndices.get_mapping = original_get_mapping
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")
