@@ -796,6 +796,124 @@ class ExploreResourceTest(BaseTest):
             self.assertIn("Timeout", response.json["message"])
 
 
+class ExploreWildcardResourceTest(BaseTest):
+    """Test ExploreWildcardResource."""
+
+    resource_url = "/api/v1/sketches/1/explore_wildcard/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_search_skeleton(self):
+        """Authenticated request to query the skeleton datastore."""
+        self.login()
+        data = {"query": "test"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        response_json = response.json
+        self.assertIn("meta", response_json)
+        self.assertIn("objects", response_json)
+        self.assertEqual(response_json["objects"], [])
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_archived_sketch(self):
+        """Authenticated request to query an archived sketch."""
+        self.login()
+
+        # Create a dedicated sketch for this test to prevent test pollution
+        sketch = self._create_sketch(
+            name="archived_test_sketch", user=self.user1, acl=True
+        )
+        sketch.set_status("archived")
+        db_session.commit()
+
+        data = {"query": "test"}
+        resource_url = f"/api/v1/sketches/{sketch.id}/explore_wildcard/"
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn(
+            "Unable to query on an archived sketch.", response.json["message"]
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_non_existent_sketch(self):
+        """Authenticated request to query a non-existent sketch."""
+        self.login()
+        data = {"query": "test"}
+        response = self.client.post(
+            "/api/v1/sketches/999/explore_wildcard/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert404(response)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_query_parsing_with_prefix(self):
+        """Test that query strings with a field prefix are parsed correctly."""
+        self.login()
+        data = {"query": "xml_string:*evil*"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        meta = response.json["meta"]
+        self.assertEqual(meta["fields_list"], ["xml_string"])
+        self.assertEqual(meta["wildcard_query"], "*evil*")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_query_parsing_without_prefix(self):
+        """Test that query strings without a field prefix get a default field list."""
+        self.login()
+        data = {"query": "*evil*"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        meta = response.json["meta"]
+        self.assertEqual(meta["fields_list"], ["message"])
+        self.assertEqual(meta["wildcard_query"], "*evil*")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_query_parsing_multiple_colons(self):
+        """Test that query splits on the first colon when multiple are present."""
+        self.login()
+        data = {"query": "xml_string:<xml>*:*</xml>"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        meta = response.json["meta"]
+        self.assertEqual(meta["fields_list"], ["xml_string"])
+        self.assertEqual(meta["wildcard_query"], "<xml>*:*</xml>")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_query_parsing_empty_query(self):
+        """Test that empty or missing query string raises a Bad Request error."""
+        self.login()
+        data = {"query": "   "}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn(
+            "A non-empty 'query' parameter is required.", response.json["message"]
+        )
+
+
 class AggregationExploreResourceTest(BaseTest):
     """Test AggregationExploreResource."""
 

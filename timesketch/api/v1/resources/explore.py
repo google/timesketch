@@ -643,3 +643,120 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         }
 
         return jsonify(schema)
+
+
+class ExploreWildcardResource(resources.ResourceMixin, Resource):
+    """Explore resources for running wildcard queries on the datastore.
+
+    This API endpoint allows exact-match wildcard searching on targeted document
+    fields (e.g. message, xml_string), bypassing standard Lucene string query
+    parser tokenization.
+    """
+
+    @login_required
+    def post(self, sketch_id: int):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/sketches/:sketch_id/explore_wildcard/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+
+        Input JSON parameters (request body):
+            query (str): Raw wildcard search expression (e.g. '*evil_term*' or
+                'message:*evil*').
+            filter (dict): Optional dictionary representing search filters
+                (e.g. size/limit).
+
+        Returns:
+            A Flask Response (JSON format) containing the skeleton search response,
+            including an empty hits list.
+
+        Raises:
+            HTTPStatus.NOT_FOUND (404): If the sketch cannot be found.
+            HTTPStatus.FORBIDDEN (403): If current user lacks read
+                permissions on sketch.
+            HTTPStatus.BAD_REQUEST (400): If the sketch is currently archived.
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        if sketch.get_status.status == "archived":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, "Unable to query on an archived sketch."
+            )
+
+        # Resolve active search indices in the sketch
+        all_timeline_ids = [t.id for t in sketch.timelines]
+        indices, _ = get_validated_indices(all_timeline_ids, sketch)
+        indices = utils.validate_indices(indices, self.datastore)
+        if not indices:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "No active timelines with valid search indices found in this sketch.",
+            )
+
+        # TODO: In the actual search execution phase (Iteration 2), we must verify
+        # that the target fields in these indices possess a specific '.wildcard'
+        # subfield of type 'wildcard'. We want to work ONLY with the 'wildcard'
+        # field type (not 'keyword' or standard 'text' types) to ensure high-performance
+        # leading wildcard matching. If no suitable 'wildcard' type mappings are
+        # present, we should raise a 400 Bad Request error.
+
+        # TODO: In the actual search execution phase (Iteration 2), we should
+        # define a custom forms.ExploreWildcardForm class. This sanitizes
+        # parameters from dynamic JSON request injections, checks for safe query
+        # string bounds (like minimum safe search terms lengths), and
+        # standardizes format exceptions. For this first skeleton iteration, we
+        # just accept the query and fields parameters but do not build the raw
+        # OpenSearch search query yet.
+        request_data = request.json or {}
+        query_string = request_data.get("query", "").strip()
+        if not query_string:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "A non-empty 'query' parameter is required.",
+            )
+
+        # Parse query prefix pattern (e.g. field_name:search_pattern)
+        if ":" in query_string:
+            field_prefix, search_pattern = query_string.split(":", 1)
+            fields_list = [field_prefix.strip()]
+            wildcard_query = search_pattern.strip()
+        else:
+            fields_list = ["message"]
+            wildcard_query = query_string
+
+        logger.info(
+            "ExploreWildcardResource: Sketch ID: %d, Query: %r, "
+            "Extracted Fields: %r, Extracted Wildcard Query: %r",
+            sketch_id,
+            query_string,
+            fields_list,
+            wildcard_query,
+        )
+
+        # Return a valid standard skeleton search JSON structure
+        meta = {
+            "fields_list": fields_list,
+            "wildcard_query": wildcard_query,
+            "es_time": 0,
+            "es_total_count": 0,
+            "es_total_count_complete": 0,
+            "timeline_colors": {},
+            "timeline_names": {},
+            "count_per_index": {},
+            "count_per_timeline": {},
+            "count_over_time": {"data": {}, "interval": ""},
+            "scroll_id": "",
+            "search_node": None,
+        }
+        schema = {"meta": meta, "objects": []}
+        return jsonify(schema)
