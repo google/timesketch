@@ -1105,6 +1105,147 @@ class ExploreWildcardResourceTest(BaseTest):
             )
         finally:
             MockOpenSearchIndices.get_mapping = original_get_mapping
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_corrupt_subfields_mapping(self, unused_mock_search):
+        """Test that query aborts safely when subfields mapping is not a dict."""
+        self.login()
+
+        def custom_get_mapping(*unused_args, **unused_kwargs):
+            return {
+                "test": {
+                    "mappings": {
+                        "properties": {
+                            "message": {
+                                "type": "text",
+                                "fields": ["not_a_dictionary_but_a_list"],
+                            }
+                        }
+                    }
+                }
+            }
+
+        # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.testlib import MockOpenSearchIndices
+        # pylint: enable=import-outside-toplevel
+
+        original_get_mapping = MockOpenSearchIndices.get_mapping
+        try:
+            MockOpenSearchIndices.get_mapping = mock.MagicMock(
+                side_effect=custom_get_mapping
+            )
+            data = {"query": "*evil*"}
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(data, ensure_ascii=False),
+                content_type="application/json",
+            )
+            self.assertStatus(response, HTTP_STATUS_CODE_BAD_REQUEST)
+            response_json = response.json
+            self.assertIn("message", response_json)
+            self.assertIn(
+                "does not support exact wildcard searches",
+                response_json["message"],
+            )
+        finally:
+            MockOpenSearchIndices.get_mapping = original_get_mapping
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_malformed_nested_mapping(self, unused_mock_search):
+        """Test that query aborts safely when flat field is queried as nested."""
+        self.login()
+
+        def custom_get_mapping(*unused_args, **unused_kwargs):
+            return {
+                "test": {
+                    "mappings": {
+                        "properties": {
+                            "message": {
+                                "type": "text",
+                                "fields": {"keyword": {"type": "keyword"}},
+                            }
+                        }
+                    }
+                }
+            }
+
+        # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.testlib import MockOpenSearchIndices
+        # pylint: enable=import-outside-toplevel
+
+        original_get_mapping = MockOpenSearchIndices.get_mapping
+        try:
+            MockOpenSearchIndices.get_mapping = mock.MagicMock(
+                side_effect=custom_get_mapping
+            )
+            data = {"query": "message.subfield:*evil*"}
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(data, ensure_ascii=False),
+                content_type="application/json",
+            )
+            self.assertStatus(response, HTTP_STATUS_CODE_BAD_REQUEST)
+            response_json = response.json
+            self.assertIn("message", response_json)
+            self.assertIn(
+                "does not support exact wildcard searches",
+                response_json["message"],
+            )
+        finally:
+            MockOpenSearchIndices.get_mapping = original_get_mapping
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_legacy_document_type_mapping(self, mock_search):
+        """Test that index mappings nested under a primary type are safely parsed."""
+        self.login()
+        mock_search.return_value = {
+            "hits": {"hits": [], "total": 0},
+            "took": 5,
+        }
+
+        def custom_get_mapping(*unused_args, **unused_kwargs):
+            return {
+                "test": {
+                    "mappings": {
+                        "_doc": {
+                            "properties": {
+                                "message": {
+                                    "type": "text",
+                                    "fields": {"wildcard": {"type": "wildcard"}},
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.testlib import MockOpenSearchIndices
+        # pylint: enable=import-outside-toplevel
+
+        original_get_mapping = MockOpenSearchIndices.get_mapping
+        try:
+            MockOpenSearchIndices.get_mapping = mock.MagicMock(
+                side_effect=custom_get_mapping
+            )
+            data = {"query": "*evil*"}
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(data, ensure_ascii=False),
+                content_type="application/json",
+            )
+            self.assert200(response)
+            response_json = response.json
+            meta = response_json["meta"]
+            self.assertEqual(meta["field_paths"], {"message": "message.wildcard"})
+        finally:
+            MockOpenSearchIndices.get_mapping = original_get_mapping
+
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")

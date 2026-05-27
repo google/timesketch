@@ -505,8 +505,8 @@ def get_version():
     # Dynamically fetch OpenSearch server/cluster version
     try:
         datastore = OpenSearchDataStore()
-        info = datastore.client.info()
-        opensearch_version = info.get("version", {}).get("number", "Unknown")
+        client_info = datastore.client.info()
+        opensearch_version = client_info.get("version", {}).get("number", "Unknown")
         print(f"OpenSearch version: {opensearch_version}")
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"OpenSearch version: Unreachable (Error: {e})")
@@ -728,9 +728,20 @@ def show_mappings(sketch_id: int):
             properties = (
                 mappings_data.get(si.index_name, {})
                 .get("mappings", {})
-                .get("properties", {})
+                .get("properties")
             )
-            if not properties:
+            if not isinstance(properties, dict):
+                # Handle properties nested under primary document type key
+                properties = next(
+                    iter(
+                        mappings_data.get(si.index_name, {})
+                        .get("mappings", {})
+                        .values()
+                    ),
+                    {},
+                ).get("properties")
+
+            if not isinstance(properties, dict) or not properties:
                 print("  (No mapping properties found inside this index)")
                 print("-" * 60)
                 continue

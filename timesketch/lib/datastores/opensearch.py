@@ -812,14 +812,14 @@ class OpenSearchDataStore:
                 properties = (
                     mappings.get(index_name, {})
                     .get("mappings", {})
-                    .get("properties", {})
+                    .get("properties")
                 )
                 if not isinstance(properties, dict):
                     # Handle properties nested under primary document type key
                     properties = next(
                         iter(mappings.get(index_name, {}).get("mappings", {}).values()),
                         {},
-                    ).get("properties", {})
+                    ).get("properties")
 
                 if not isinstance(properties, dict):
                     supported_in_all_indices = False
@@ -831,14 +831,19 @@ class OpenSearchDataStore:
                 field_def = None
 
                 for i, part in enumerate(field_parts):
+                    if not isinstance(current_properties, dict):
+                        field_def = None
+                        break
+
                     field_def = current_properties.get(part)
-                    if not field_def:
+                    if not isinstance(field_def, dict):
+                        field_def = None
                         break
 
                     # If not the last segment, navigate to nested properties
                     if i < len(field_parts) - 1:
                         current_properties = field_def.get("properties", {})
-                        if not current_properties:
+                        if not isinstance(current_properties, dict):
                             field_def = None
                             break
 
@@ -853,10 +858,14 @@ class OpenSearchDataStore:
                     # Case B: Field has subfield of type 'wildcard' (standard suffix)
                     subfields = field_def.get("fields", {})
                     wildcard_subfield_key = None
-                    for key, sub_def in subfields.items():
-                        if sub_def.get("type") == "wildcard":
-                            wildcard_subfield_key = key
-                            break
+                    if isinstance(subfields, dict):
+                        for key, sub_def in subfields.items():
+                            if (
+                                isinstance(sub_def, dict)
+                                and sub_def.get("type") == "wildcard"
+                            ):
+                                wildcard_subfield_key = key
+                                break
 
                     if wildcard_subfield_key:
                         current_path = f"{target_field}.{wildcard_subfield_key}"
