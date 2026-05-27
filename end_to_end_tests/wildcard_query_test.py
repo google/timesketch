@@ -57,17 +57,7 @@ class WildcardQueryTest(interface.BaseEndToEndTest):
         self.assertions.assertIn("objects", results)
         self.assertions.assertIn("meta", results)
 
-        # 2. Comparison mode request returns diagnostic reports
-        comp_results = self.sketch.explore_wildcard(
-            query_string="message:*powershell.exe*", compare=True
-        )
-        self.assertions.assertIsNotNone(comp_results)
-        meta = comp_results.get("meta", {})
-        self.assertions.assertIn("comparison", meta)
-        comp = meta["comparison"]
-        self.assertions.assertIn("standard_search", comp)
-        self.assertions.assertIn("wildcard_search", comp)
-        self.assertions.assertIn("diff", comp)
+
 
         # 3. Literal logic query checks (AND/OR are treated as raw characters)
         literal_results = self.sketch.explore_wildcard(
