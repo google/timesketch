@@ -801,6 +801,11 @@ class OpenSearchDataStore:
         except Exception as e:
             raise ValueError(f"Failed to query index mappings metadata: {e}") from e
 
+        if not isinstance(mappings, dict):
+            raise ValueError(
+                "OpenSearch client returned an invalid mappings response format."
+            )
+
         field_paths = {}
 
         for target_field in fields_list:

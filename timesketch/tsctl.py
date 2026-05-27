@@ -725,6 +725,14 @@ def show_mappings(sketch_id: int):
         # Retrieve mappings from OpenSearch
         try:
             mappings_data = datastore.client.indices.get_mapping(index=si.index_name)
+            if not isinstance(mappings_data, dict):
+                print(
+                    "  Error: OpenSearch client returned an invalid mappings "
+                    "response format."
+                )
+                print("-" * 60)
+                continue
+
             properties = (
                 mappings_data.get(si.index_name, {})
                 .get("mappings", {})
@@ -750,19 +758,22 @@ def show_mappings(sketch_id: int):
             # Sort properties keys for clean listing
             for field_name in sorted(properties.keys()):
                 field_def = properties[field_name]
+                if not isinstance(field_def, dict):
+                    continue
                 field_type = field_def.get("type", "unknown")
                 subfields = field_def.get("fields", {})
 
                 subfields_str = ""
-                if subfields:
+                if isinstance(subfields, dict) and subfields:
                     subfields_list = []
                     for key, sub_def in subfields.items():
-                        subfields_list.append(f".{key} (type: {sub_def.get('type')})")
+                        if isinstance(sub_def, dict):
+                            subfields_list.append(
+                                f".{key} (type: {sub_def.get('type')})"
+                            )
                     subfields_str = f" | Subfields: {', '.join(subfields_list)}"
 
-                print(
-                    f"    - {field_name:<20} | Type: {field_type:<8}" f"{subfields_str}"
-                )
+                print(f"    - {field_name:<20} | Type: {field_type:<8}{subfields_str}")
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"  Error: Failed to retrieve mapping for this index: {e}")
 

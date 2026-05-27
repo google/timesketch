@@ -809,18 +809,31 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             tl_colors[timeline.searchindex.index_name] = timeline.color
             tl_names[timeline.searchindex.index_name] = timeline.name
 
-        # Parse timesketch labels for response hits
-        for event in result["hits"]["hits"]:
-            event["selected"] = False
-            event["_source"]["label"] = []
-            try:
-                for label in event["_source"]["timesketch_label"]:
-                    if sketch.id != label["sketch_id"]:
-                        continue
-                    event["_source"]["label"].append(label["name"])
-                del event["_source"]["timesketch_label"]
-            except KeyError:
-                pass
+        # Parse timesketch labels for response hits safely
+        if isinstance(result, dict):
+            hits_dict = result.get("hits")
+            if isinstance(hits_dict, dict):
+                hits_list = hits_dict.get("hits")
+                if isinstance(hits_list, list):
+                    for event in hits_list:
+                        if not isinstance(event, dict):
+                            continue
+                        event["selected"] = False
+
+                        _source = event.get("_source")
+                        if isinstance(_source, dict):
+                            _source["label"] = []
+                            timesketch_label = _source.get("timesketch_label")
+                            if isinstance(timesketch_label, list):
+                                for label in timesketch_label:
+                                    if isinstance(label, dict):
+                                        if sketch.id != label.get("sketch_id"):
+                                            continue
+                                        _source["label"].append(label.get("name"))
+                                try:
+                                    del _source["timesketch_label"]
+                                except KeyError:
+                                    pass
 
         # Resolve total hits count
         es_total_count = result["hits"]["total"]

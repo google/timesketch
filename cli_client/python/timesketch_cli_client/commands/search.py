@@ -411,6 +411,9 @@ def search_wildcard(ctx: click.Context, query: str, limit: int, compare: bool) -
         click.echo(f"Error executing wildcard search: {e}", err=True)
         sys.exit(1)
 
+    if not isinstance(results, dict):
+        results = {}
+
     # If the comparison flag is set, run standard search and calculate differences
     if compare:
         standard_ids = []
