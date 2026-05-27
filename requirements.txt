@@ -3,8 +3,7 @@ altair==4.1.0
 celery==5.4.0
 cryptography==46.0.5
 datasketch==1.6.5
-dfir-unfurl>=20260405 ; python_version >= '3.11'
-dfir-unfurl==20240627 ; python_version < '3.11'
+dfir-unfurl>=20260405
 opensearch-py==2.8.0
 opentelemetry-api>=1.42.1
 opentelemetry-sdk>=1.42.1
