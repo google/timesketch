@@ -19,7 +19,9 @@ import io
 import json
 import logging
 import os
+import shutil
 import subprocess
+import sys
 import time
 import traceback
 import uuid
@@ -965,9 +967,6 @@ def run_plaso(
         psort_path = current_app.config["PSORT_PATH"]
     except KeyError:
         psort_path = "psort.py"
-
-    import shutil
-    import sys
     resolved_psort_path = shutil.which(psort_path) or psort_path
 
     if resolved_psort_path.endswith(".py"):
@@ -980,18 +979,20 @@ def run_plaso(
             resolved_psort_path,
         ]
 
-    cmd.extend([
-        "-o",
-        "opensearch_ts",
-        "--server",
-        opensearch_server,
-        "--port",
-        str(opensearch_port),
-        "--status_view",
-        "none",
-        "--index_name",
-        index_name,
-    ])
+    cmd.extend(
+        [
+            "-o",
+            "opensearch_ts",
+            "--server",
+            opensearch_server,
+            "--port",
+            str(opensearch_port),
+            "--status_view",
+            "none",
+            "--index_name",
+            index_name,
+        ]
+    )
 
     log_file_path = "/dev/null"
     log_dir = current_app.config.get("PLASO_LOG_FOLDER")
