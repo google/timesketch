@@ -987,6 +987,7 @@ class ExploreWildcardResourceTest(BaseTest):
 
         # pylint: disable=import-outside-toplevel
         from timesketch.lib.testlib import MockOpenSearchIndices
+
         # pylint: enable=import-outside-toplevel
 
         original_get_mapping = MockOpenSearchIndices.get_mapping
@@ -1080,6 +1081,7 @@ class ExploreWildcardResourceTest(BaseTest):
         # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
         # pylint: disable=import-outside-toplevel
         from timesketch.lib.testlib import MockOpenSearchIndices
+
         # pylint: enable=import-outside-toplevel
 
         original_get_mapping = MockOpenSearchIndices.get_mapping
