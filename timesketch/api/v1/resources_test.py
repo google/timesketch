@@ -1105,6 +1105,7 @@ class ExploreWildcardResourceTest(BaseTest):
             )
         finally:
             MockOpenSearchIndices.get_mapping = original_get_mapping
+
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")
     def test_query_parsing_corrupt_subfields_mapping(self, unused_mock_search):
@@ -1128,6 +1129,7 @@ class ExploreWildcardResourceTest(BaseTest):
         # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
         # pylint: disable=import-outside-toplevel
         from timesketch.lib.testlib import MockOpenSearchIndices
+
         # pylint: enable=import-outside-toplevel
 
         original_get_mapping = MockOpenSearchIndices.get_mapping
@@ -1174,6 +1176,7 @@ class ExploreWildcardResourceTest(BaseTest):
         # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
         # pylint: disable=import-outside-toplevel
         from timesketch.lib.testlib import MockOpenSearchIndices
+
         # pylint: enable=import-outside-toplevel
 
         original_get_mapping = MockOpenSearchIndices.get_mapping
@@ -1226,6 +1229,7 @@ class ExploreWildcardResourceTest(BaseTest):
         # Bind side-effect mock dynamically at the MockOpenSearchIndices class level
         # pylint: disable=import-outside-toplevel
         from timesketch.lib.testlib import MockOpenSearchIndices
+
         # pylint: enable=import-outside-toplevel
 
         original_get_mapping = MockOpenSearchIndices.get_mapping
@@ -1245,7 +1249,6 @@ class ExploreWildcardResourceTest(BaseTest):
             self.assertEqual(meta["field_paths"], {"message": "message.wildcard"})
         finally:
             MockOpenSearchIndices.get_mapping = original_get_mapping
-
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     @mock.patch("timesketch.lib.testlib.MockDataStore.search")

@@ -810,9 +810,7 @@ class OpenSearchDataStore:
             for index_name in indices:
                 # Safely navigate to properties tree
                 properties = (
-                    mappings.get(index_name, {})
-                    .get("mappings", {})
-                    .get("properties")
+                    mappings.get(index_name, {}).get("mappings", {}).get("properties")
                 )
                 if not isinstance(properties, dict):
                     # Handle properties nested under primary document type key
