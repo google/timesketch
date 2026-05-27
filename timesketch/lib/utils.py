@@ -440,6 +440,16 @@ def read_and_validate_csv(
                         )
                     )
 
+                # Vectorized calculation of microsecond epoch timestamp
+                # on the entire chunk We safely convert the datetime column to
+                # int64 nanoseconds and divide by 1000
+                chunk["timestamp"] = (
+                    pandas.to_datetime(chunk["datetime"], utc=True)
+                    .dt.tz_localize(None)
+                    .astype("datetime64[us]")
+                    .astype("int64")
+                )
+
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
@@ -465,12 +475,7 @@ def read_and_validate_csv(
                 # Ensure the timestamp is consistent with the datetime object,
                 # in microsecond epoch format. This overwrites any existing
                 # timestamp to prevent inconsistencies.
-                row_dict["timestamp"] = int(
-                    pandas.Timestamp(row_dict["datetime"])
-                    .to_datetime64()
-                    .astype("datetime64[us]")
-                    .view("i8")
-                )
+                row_dict["timestamp"] = int(row_dict["timestamp"])
                 yield row_dict
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = f"Unable to read file, with error: {e!s}"
