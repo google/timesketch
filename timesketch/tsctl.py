@@ -732,7 +732,7 @@ def show_mappings(sketch_id: int):
 
     if not isinstance(mappings_data, dict):
         print(
-            "Error: OpenSearch client returned an invalid mappings " "response format."
+            "Error: OpenSearch client returned an invalid mappings response format."
         )
         return
 
