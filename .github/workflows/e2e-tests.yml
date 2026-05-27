@@ -9,13 +9,9 @@ on:
       - '*.md'
 
 jobs:
-  # Ubuntu 26.04
   PyPi-plaso-stable-opensearch-v2-ubuntu2604:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ubuntu-26.04]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
@@ -35,11 +31,8 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
   PyPi-plaso-staging-opensearch-v2-ubuntu2604:
     continue-on-error: true
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ubuntu-26.04]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
