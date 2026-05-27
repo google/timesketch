@@ -420,6 +420,12 @@ def read_and_validate_csv(
                     chunk["datetime"] = pandas.to_datetime(
                         chunk["datetime"], format="mixed", errors="coerce", utc=True
                     )
+                    # Drop dates that are extremely out of range (e.g. placeholder years like 1234 or 1601)
+                    chunk.loc[
+                        (chunk["datetime"].dt.year < 1700)
+                        | (chunk["datetime"].dt.year > 9999),
+                        "datetime",
+                    ] = pandas.NaT
                 num_chunk_rows = chunk.shape[0]
 
                 chunk.dropna(subset=["datetime"], inplace=True)
@@ -451,14 +457,19 @@ def read_and_validate_csv(
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
 
-                # Remove all NAN values from the pandas.Series.
-                row.dropna(inplace=True)
+                # Remove all NAN values and convert to dict to avoid strict pandas Series dtype constraints.
+                row_dict = row.dropna().to_dict()
 
                 # Ensure the timestamp is consistent with the datetime object,
                 # in microsecond epoch format. This overwrites any existing
                 # timestamp to prevent inconsistencies.
-                row["timestamp"] = int(pandas.Timestamp(row["datetime"]).value / 1000)
-                yield row.to_dict()
+                row_dict["timestamp"] = int(
+                    pandas.Timestamp(row_dict["datetime"])
+                    .to_datetime64()
+                    .astype("datetime64[us]")
+                    .view("i8")
+                )
+                yield row_dict
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = f"Unable to read file, with error: {e!s}"
         logger.error(error_string)
