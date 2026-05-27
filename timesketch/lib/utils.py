@@ -420,7 +420,8 @@ def read_and_validate_csv(
                     chunk["datetime"] = pandas.to_datetime(
                         chunk["datetime"], format="mixed", errors="coerce", utc=True
                     )
-                    # Drop dates that are extremely out of range (e.g. placeholder years like 1234 or 1601)
+                    # Drop dates that are extremely out of range
+                    # (e.g. placeholder years like 1234 or 1601)
                     chunk.loc[
                         (chunk["datetime"].dt.year < 1700)
                         | (chunk["datetime"].dt.year > 9999),
@@ -457,7 +458,8 @@ def read_and_validate_csv(
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
 
-                # Remove all NAN values and convert to dict to avoid strict pandas Series dtype constraints.
+                # Remove all NAN values and convert to dict to avoid
+                # strict pandas Series dtype constraints.
                 row_dict = row.dropna().to_dict()
 
                 # Ensure the timestamp is consistent with the datetime object,
