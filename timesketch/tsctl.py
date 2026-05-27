@@ -715,6 +715,27 @@ def show_mappings(sketch_id: int):
         print(f"Error: Unable to initialize datastore client: {e}")
         return
 
+    # Collect all unique physical index names from timelines list
+    unique_indices = {
+        t.searchindex.index_name for t in sketch.timelines if t.searchindex
+    }
+    if not unique_indices:
+        print(f"Sketch {sketch_id} '{sketch.name}' has no physical search indices.")
+        return
+
+    # Retrieve all mappings in a single batch request
+    try:
+        mappings_data = datastore.client.indices.get_mapping(index=list(unique_indices))
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Error: Failed to retrieve mapping metadata: {e}")
+        return
+
+    if not isinstance(mappings_data, dict):
+        print(
+            "Error: OpenSearch client returned an invalid mappings " "response format."
+        )
+        return
+
     for timeline in sketch.timelines:
         if not timeline.searchindex:
             continue
@@ -722,60 +743,40 @@ def show_mappings(sketch_id: int):
         print(f"Timeline: '{timeline.name}' (ID: {timeline.id})")
         print(f"SearchIndex DB: '{si.name}' | Physical Index: '{si.index_name}'")
 
-        # Retrieve mappings from OpenSearch
-        try:
-            mappings_data = datastore.client.indices.get_mapping(index=si.index_name)
-            if not isinstance(mappings_data, dict):
-                print(
-                    "  Error: OpenSearch client returned an invalid mappings "
-                    "response format."
-                )
-                print("-" * 60)
+        # Safely extract specific index properties from pre-cached memory
+        properties = (
+            mappings_data.get(si.index_name, {}).get("mappings", {}).get("properties")
+        )
+        if not isinstance(properties, dict):
+            # Handle properties nested under primary document type key
+            properties = next(
+                iter(mappings_data.get(si.index_name, {}).get("mappings", {}).values()),
+                {},
+            ).get("properties")
+
+        if not isinstance(properties, dict) or not properties:
+            print("  (No mapping properties found inside this index)")
+            print("-" * 60)
+            continue
+
+        print("  Active Field Mappings properties tree:")
+        # Sort properties keys for clean listing
+        for field_name in sorted(properties.keys()):
+            field_def = properties[field_name]
+            if not isinstance(field_def, dict):
                 continue
+            field_type = field_def.get("type", "unknown")
+            subfields = field_def.get("fields", {})
 
-            properties = (
-                mappings_data.get(si.index_name, {})
-                .get("mappings", {})
-                .get("properties")
-            )
-            if not isinstance(properties, dict):
-                # Handle properties nested under primary document type key
-                properties = next(
-                    iter(
-                        mappings_data.get(si.index_name, {})
-                        .get("mappings", {})
-                        .values()
-                    ),
-                    {},
-                ).get("properties")
+            subfields_str = ""
+            if isinstance(subfields, dict) and subfields:
+                subfields_list = []
+                for key, sub_def in subfields.items():
+                    if isinstance(sub_def, dict):
+                        subfields_list.append(f".{key} (type: {sub_def.get('type')})")
+                subfields_str = f" | Subfields: {', '.join(subfields_list)}"
 
-            if not isinstance(properties, dict) or not properties:
-                print("  (No mapping properties found inside this index)")
-                print("-" * 60)
-                continue
-
-            print("  Active Field Mappings properties tree:")
-            # Sort properties keys for clean listing
-            for field_name in sorted(properties.keys()):
-                field_def = properties[field_name]
-                if not isinstance(field_def, dict):
-                    continue
-                field_type = field_def.get("type", "unknown")
-                subfields = field_def.get("fields", {})
-
-                subfields_str = ""
-                if isinstance(subfields, dict) and subfields:
-                    subfields_list = []
-                    for key, sub_def in subfields.items():
-                        if isinstance(sub_def, dict):
-                            subfields_list.append(
-                                f".{key} (type: {sub_def.get('type')})"
-                            )
-                    subfields_str = f" | Subfields: {', '.join(subfields_list)}"
-
-                print(f"    - {field_name:<20} | Type: {field_type:<8}{subfields_str}")
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            print(f"  Error: Failed to retrieve mapping for this index: {e}")
+            print(f"    - {field_name:<20} | Type: {field_type:<8}{subfields_str}")
 
         print("-" * 60)
 

@@ -786,7 +786,7 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                     "filter": [],
                 }
             },
-            "size": min(limit, 10000) if limit is not None else 40,
+            "size": min(limit, 10000),
             "sort": [{"datetime": {"order": "asc"}}],
         }
 
@@ -830,22 +830,38 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                                         if sketch.id != label.get("sketch_id"):
                                             continue
                                         _source["label"].append(label.get("name"))
-                                try:
-                                    del _source["timesketch_label"]
-                                except KeyError:
-                                    pass
+                                _source.pop("timesketch_label", None)
 
-        # Resolve total hits count
-        es_total_count = result["hits"]["total"]
-        if isinstance(es_total_count, dict):
-            es_total_count = es_total_count.get("value", 0)
+        # Resolve total hits count safely
+        es_total_count = 0
+        es_time = 0
+        objects_list = []
+        scroll_id = ""
+
+        if isinstance(result, dict):
+            es_time = result.get("took", 0)
+            scroll_id = result.get("_scroll_id", "")
+            hits_dict = result.get("hits")
+            if isinstance(hits_dict, dict):
+                objects_list = hits_dict.get("hits", [])
+                total_hits = hits_dict.get("total", 0)
+                if isinstance(total_hits, dict):
+                    es_total_count = total_hits.get("value", 0)
+                else:
+                    try:
+                        es_total_count = int(total_hits)
+                    except (ValueError, TypeError):
+                        es_total_count = 0
+
+        if not isinstance(objects_list, list):
+            objects_list = []
 
         # Return standard search JSON structure with real database results
         meta = {
             "fields_list": fields_list,
             "wildcard_query": wildcard_query,
             "field_paths": field_paths,
-            "es_time": result["took"],
+            "es_time": es_time,
             "es_total_count": es_total_count,
             "es_total_count_complete": es_total_count,
             "timeline_colors": tl_colors,
@@ -853,8 +869,8 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             "count_per_index": {},
             "count_per_timeline": {},
             "count_over_time": {"data": {}, "interval": ""},
-            "scroll_id": result.get("_scroll_id", ""),
+            "scroll_id": scroll_id,
             "search_node": None,
         }
-        schema = {"meta": meta, "objects": result["hits"]["hits"]}
+        schema = {"meta": meta, "objects": objects_list}
         return jsonify(schema)
