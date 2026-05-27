@@ -16,16 +16,11 @@
 import json
 import logging
 import os
+from typing import Optional, List
 
 try:
-    from google.auth import compute_engine
-    from google.auth import exceptions as auth_exceptions
-    from google.auth import transport
-    from google.cloud.trace_v2 import TraceServiceClient
-
     from opentelemetry import trace
     from opentelemetry.trace.span import INVALID_SPAN
-    from opentelemetry.exporter import cloud_trace
     from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
     from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
@@ -33,10 +28,21 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
     HAS_OTEL = True
 except ImportError:
     HAS_OTEL = False
+
+HAS_GCP_TRACE = False
+if HAS_OTEL:
+    try:
+        from google.auth import compute_engine
+        from google.auth import exceptions as auth_exceptions
+        from google.auth import transport
+        from google.cloud.trace_v2 import TraceServiceClient
+        from opentelemetry.exporter import cloud_trace
+        HAS_GCP_TRACE = True
+    except ImportError:
+        HAS_GCP_TRACE = False
 
 from timesketch.version import get_version
 
@@ -107,6 +113,9 @@ def setup_telemetry(service_name: str):
         )
         trace_exporter = http_exporter.OTLPSpanExporter(endpoint=endpoint)
     elif otel_mode == "otlp-default-gce":
+        if not HAS_GCP_TRACE:
+            logger.error("GCP trace libraries are not installed. Cannot use 'otlp-default-gce'.")
+            return
         # Explicitly pass credentials from the GKE Metadata Server
         # This ignores GOOGLE_APPLICATION_CREDENTIALS
         credentials = compute_engine.Credentials()
@@ -170,14 +179,7 @@ def add_event_to_current_span(event: str):
 
 
 def add_attribute_to_current_span(name: str, value: object):
-    """Adds a key-value attribute (tag) to the currently active span.
-
-    Simple types (str, bool, int, float) are stored as-is. Complex objects
-    are automatically serialized to JSON strings.
-    Args:
-        name (str): The key name for the attribute.
-        value (object): The value to store. Needs to be JSON serializable.
-    """
+    """Adds a key-value attribute (tag) to the currently active span."""
     if not is_enabled():
         return
 
@@ -187,3 +189,35 @@ def add_attribute_to_current_span(name: str, value: object):
             otel_span.set_attribute(name, value)
         else:
             otel_span.set_attribute(name, json.dumps(value))
+
+
+def add_wildcard_query_metrics(query_string: Optional[str], fields_targeted: Optional[List[str]]):
+    """Extracts and records detailed structural query pattern metrics under debug log levels only!"""
+    if not logger.isEnabledFor(logging.DEBUG) or not query_string:
+        return
+
+    query_char_length = len(query_string)
+    fields_targeted_count = len(fields_targeted) if fields_targeted else 0
+    wildcard_symbols_count = query_string.count("*") + query_string.count("?")
+
+    has_leading_wildcard = query_string.startswith("*") or query_string.startswith("?")
+    has_trailing_wildcard = query_string.endswith("*") or query_string.endswith("?")
+    
+    stripped = query_string.strip("*?")
+    has_midpoint_wildcard = "*" in stripped or "?" in stripped
+
+    boolean_operators_count = (
+        query_string.upper().count(" AND ")
+        + query_string.upper().count(" OR ")
+        + query_string.upper().count(" NOT ")
+    )
+    nested_clauses_count = query_string.count("(")
+
+    add_attribute_to_current_span("wildcard_search.query_char_length", query_char_length)
+    add_attribute_to_current_span("wildcard_search.fields_targeted_count", fields_targeted_count)
+    add_attribute_to_current_span("wildcard_search.has_leading_wildcard", has_leading_wildcard)
+    add_attribute_to_current_span("wildcard_search.has_trailing_wildcard", has_trailing_wildcard)
+    add_attribute_to_current_span("wildcard_search.has_midpoint_wildcard", has_midpoint_wildcard)
+    add_attribute_to_current_span("wildcard_search.wildcard_symbols_count", wildcard_symbols_count)
+    add_attribute_to_current_span("wildcard_search.boolean_operators_count", boolean_operators_count)
+    add_attribute_to_current_span("wildcard_search.nested_clauses_count", nested_clauses_count)

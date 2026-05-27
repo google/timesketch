@@ -37,6 +37,10 @@ from timesketch.lib import forms
 from timesketch.lib import utils
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
+from timesketch.lib.telemetry import (
+    add_attribute_to_current_span,
+    add_wildcard_query_metrics,
+)
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
@@ -678,6 +682,19 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                 permissions on sketch.
             HTTPStatus.BAD_REQUEST (400): If the sketch is currently archived.
         """
+        query_string = ""
+        fields_list = []
+        wildcard_query = ""
+        limit = 40
+        indices = []
+        es_total_count = 0
+        es_time = 0
+        objects_list = []
+
+        # Initialize telemetry pointers incrementally at the very start!
+        add_attribute_to_current_span("wildcard_search.user_id", current_user.id if current_user else None)
+        add_attribute_to_current_span("wildcard_search.sketch_id", sketch_id)
+
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -702,6 +719,8 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "No active timelines with valid search indices found in this sketch.",
             )
+
+        add_attribute_to_current_span("wildcard_search.physical_indices_count", len(indices))
 
         # TODO: In the actual search execution phase (Iteration 2), we must verify
         # that the target fields in these indices possess a specific '.wildcard'
@@ -734,11 +753,13 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             fields_list = ["message"]
             wildcard_query = query_string
 
+        # Record clean query pattern parameters under debug modes cleanly!
+        add_wildcard_query_metrics(query_string, fields_list)
+
         # Verify targeted fields possess active wildcard type mappings
         try:
             field_paths = self.datastore.verify_wildcard_mappings(indices, fields_list)
-        except ValueError as e:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+        except ValueError as e:            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
         logger.info(
             "ExploreWildcardResource: Sketch ID: %d, Query: %r, "
@@ -861,6 +882,39 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                     except (ValueError, TypeError):
                         es_total_count = 0
 
+        add_attribute_to_current_span("wildcard_search.execution_took_ms", es_time)
+        add_attribute_to_current_span("wildcard_search.total_events_hits_count", es_total_count)
+
+        # Record Search History entry programmatically to link metrics safely!
+        try:
+            new_search = SearchHistory(user=current_user, sketch=sketch)
+            new_search.query_string = query_string
+            new_search.query_filter = json.dumps(
+                {"fields": fields_list, "size": limit},
+                ensure_ascii=False,
+            )
+            new_search.query_result_count = es_total_count
+            new_search.query_time = es_time
+            
+            # Symmetrical parents tree linkage
+            previous_search = (
+                SearchHistory.query.filter_by(user=current_user, sketch=sketch)
+                .order_by(SearchHistory.id.desc())
+                .first()
+            )
+            if previous_search:
+                new_search.parent = previous_search
+                
+            db_session.add(new_search)
+            db_session.commit()
+            
+            # Record Search History ID reference safely in telemetry context!
+            add_attribute_to_current_span("wildcard_search.search_history_id", new_search.id)
+        except Exception as history_error:  # pylint: disable=broad-except
+            logger.warning(
+                "Failed to save search history record: %s",
+                str(history_error),
+            )
         # Return standard search JSON structure with real database results
         meta = {
             "fields_list": fields_list,
@@ -879,3 +933,4 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         }
         schema = {"meta": meta, "objects": objects_list}
         return jsonify(schema)
+
