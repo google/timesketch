@@ -161,10 +161,36 @@ class MockOpenSearchClient:
 
 
 class MockOpenSearchIndices:
+    """Mock implementation of OpenSearch indices client for unit testing."""
+
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
-        return {}
+        index_param = kwargs.get("index", "test")
+        if isinstance(index_param, str):
+            indices = [index_param]
+        elif isinstance(index_param, list):
+            indices = index_param
+        else:
+            indices = ["test"]
+
+        properties = {
+            "message": {
+                "type": "text",
+                "fields": {
+                    "keyword": {"type": "keyword"},
+                    "wildcard": {"type": "wildcard"},
+                },
+            },
+            "xml_string": {
+                "type": "text",
+                "fields": {
+                    "keyword": {"type": "keyword"},
+                    "wildcard": {"type": "wildcard"},
+                },
+            },
+        }
+        return {idx: {"mappings": {"properties": properties}} for idx in indices}
 
     def stats(self, *args, **kwargs):
         return {"indices": {}}
@@ -241,6 +267,13 @@ class MockDataStore:
         self.port = port
         # Dictionary containing event dictionaries.
         self.event_store = {}
+
+    def verify_wildcard_mappings(self, indices, fields_list):
+        """Mock wildcard mapping helper. Delegates to Gunicorn's real logic!"""
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+
+        return OpenSearchDataStore.verify_wildcard_mappings(self, indices, fields_list)
 
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):

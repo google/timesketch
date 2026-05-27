@@ -734,29 +734,148 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             fields_list = ["message"]
             wildcard_query = query_string
 
+        # Verify targeted fields possess active wildcard type mappings
+        try:
+            field_paths = self.datastore.verify_wildcard_mappings(indices, fields_list)
+        except ValueError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
         logger.info(
             "ExploreWildcardResource: Sketch ID: %d, Query: %r, "
-            "Extracted Fields: %r, Extracted Wildcard Query: %r",
+            "Extracted Fields: %r, Extracted Wildcard Query: %r, "
+            "Resolved Paths: %r",
             sketch_id,
             query_string,
             fields_list,
             wildcard_query,
+            field_paths,
         )
 
-        # Return a valid standard skeleton search JSON structure
+        # Extract limit parameter safely from filter settings
+        filter_dict = request_data.get("filter")
+        limit = None
+        if isinstance(filter_dict, dict):
+            limit = filter_dict.get("size")
+
+        if limit is not None:
+            try:
+                limit = max(0, int(limit))
+            except (ValueError, TypeError):
+                limit = 40
+        else:
+            limit = 40
+
+        # Construct raw OpenSearch search query payload targeting the .wildcard subfield
+        query_dsl = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "bool": {
+                                "should": [
+                                    {
+                                        "wildcard": {
+                                            exact_path: {
+                                                "value": wildcard_query,
+                                                "case_insensitive": True,
+                                            }
+                                        }
+                                    }
+                                    for exact_path in field_paths.values()
+                                ],
+                                "minimum_should_match": 1,
+                            }
+                        }
+                    ],
+                    "filter": [],
+                }
+            },
+            "size": min(limit, 10000),
+            "sort": [{"datetime": {"order": "asc"}}],
+        }
+
+        # Execute search query payload against datastore OpenSearch client
+        try:
+            result = self.datastore.search(
+                sketch_id=sketch_id,
+                query_dsl=query_dsl,
+                indices=indices,
+            )
+        except DatastoreTimeoutError as e:
+            abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
+        except ValueError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+        # Build timeline colors and names reference maps
+        tl_colors = {}
+        tl_names = {}
+        for timeline in sketch.timelines:
+            if timeline.searchindex:
+                tl_colors[timeline.searchindex.index_name] = timeline.color
+                tl_names[timeline.searchindex.index_name] = timeline.name
+
+        # Parse timesketch labels for response hits safely
+        if isinstance(result, dict):
+            hits_dict = result.get("hits")
+            if isinstance(hits_dict, dict):
+                hits_list = hits_dict.get("hits")
+                if isinstance(hits_list, list):
+                    for event in hits_list:
+                        if not isinstance(event, dict):
+                            continue
+                        event["selected"] = False
+
+                        _source = event.get("_source")
+                        if isinstance(_source, dict):
+                            _source["label"] = []
+                            timesketch_label = _source.get("timesketch_label")
+                            if isinstance(timesketch_label, list):
+                                for label in timesketch_label:
+                                    if isinstance(label, dict):
+                                        if sketch.id != label.get("sketch_id"):
+                                            continue
+                                        _source["label"].append(label.get("name"))
+                                _source.pop("timesketch_label", None)
+
+        # Resolve total hits count safely
+        es_total_count = 0
+        es_time = 0
+        objects_list = []
+        scroll_id = ""
+
+        if isinstance(result, dict):
+            es_time = result.get("took", 0)
+            scroll_id = result.get("_scroll_id", "")
+            hits_dict = result.get("hits")
+            if isinstance(hits_dict, dict):
+                temp_objects = hits_dict.get("hits")
+                if isinstance(temp_objects, list):
+                    objects_list = temp_objects
+
+                total_hits = hits_dict.get("total", 0)
+                if isinstance(total_hits, dict):
+                    es_total_count = total_hits.get("value", 0)
+                else:
+                    try:
+                        es_total_count = int(total_hits)
+                    except (ValueError, TypeError):
+                        es_total_count = 0
+
+        # Return standard search JSON structure with real database results
         meta = {
             "fields_list": fields_list,
             "wildcard_query": wildcard_query,
-            "es_time": 0,
-            "es_total_count": 0,
-            "es_total_count_complete": 0,
-            "timeline_colors": {},
-            "timeline_names": {},
+            "field_paths": field_paths,
+            "es_time": es_time,
+            "es_total_count": es_total_count,
+            "es_total_count_complete": es_total_count,
+            "timeline_colors": tl_colors,
+            "timeline_names": tl_names,
             "count_per_index": {},
             "count_per_timeline": {},
             "count_over_time": {"data": {}, "interval": ""},
-            "scroll_id": "",
+            "scroll_id": scroll_id,
             "search_node": None,
         }
-        schema = {"meta": meta, "objects": []}
+        schema = {"meta": meta, "objects": objects_list}
         return jsonify(schema)

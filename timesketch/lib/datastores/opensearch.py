@@ -779,6 +779,120 @@ class OpenSearchDataStore:
 
         return query_dsl
 
+    def verify_wildcard_mappings(
+        self, indices: list[str], fields_list: list[str]
+    ) -> dict[str, str]:
+        """Verifies that all targeted fields possess active wildcard mappings.
+
+        Args:
+            indices (list): List of active index names to search.
+            fields_list (list): List of targeted user field names.
+
+        Returns:
+            dict: A mapping from target field name to the exact subfield path to
+                query (e.g. {"message": "message.wildcard"}).
+
+        Raises:
+            ValueError: If a targeted field lacks a wildcard field type mapping.
+        """
+        try:
+            # Query active datastore mapping properties trees from OpenSearch client
+            mappings = self.client.indices.get_mapping(index=indices)
+        except Exception as e:
+            raise ValueError(f"Failed to query index mappings metadata: {e}") from e
+
+        if not isinstance(mappings, dict):
+            raise ValueError(
+                "OpenSearch client returned an invalid mappings response format."
+            )
+
+        field_paths = {}
+
+        for target_field in fields_list:
+            supported_in_all_indices = True
+            exact_subfield_path = None
+
+            for index_name in indices:
+                # Safely navigate to properties tree
+                properties = (
+                    mappings.get(index_name, {}).get("mappings", {}).get("properties")
+                )
+                if not isinstance(properties, dict):
+                    # Handle properties nested under primary document type key
+                    properties = next(
+                        iter(mappings.get(index_name, {}).get("mappings", {}).values()),
+                        {},
+                    ).get("properties")
+
+                if not isinstance(properties, dict):
+                    supported_in_all_indices = False
+                    break
+
+                # Support dot-notated nested/object fields traversal
+                field_parts = target_field.split(".")
+                current_properties = properties
+                field_def = None
+
+                for i, part in enumerate(field_parts):
+                    if not isinstance(current_properties, dict):
+                        field_def = None
+                        break
+
+                    field_def = current_properties.get(part)
+                    if not isinstance(field_def, dict):
+                        field_def = None
+                        break
+
+                    # If not the last segment, navigate to nested properties
+                    if i < len(field_parts) - 1:
+                        current_properties = field_def.get("properties", {})
+                        if not isinstance(current_properties, dict):
+                            field_def = None
+                            break
+
+                if not field_def:
+                    supported_in_all_indices = False
+                    break
+
+                # Case A: The field itself is of type 'wildcard'
+                if field_def.get("type") == "wildcard":
+                    current_path = target_field
+                else:
+                    # Case B: Field has subfield of type 'wildcard' (standard suffix)
+                    subfields = field_def.get("fields", {})
+                    wildcard_subfield_key = None
+                    if isinstance(subfields, dict):
+                        for key, sub_def in subfields.items():
+                            if (
+                                isinstance(sub_def, dict)
+                                and sub_def.get("type") == "wildcard"
+                            ):
+                                wildcard_subfield_key = key
+                                break
+
+                    if wildcard_subfield_key:
+                        current_path = f"{target_field}.{wildcard_subfield_key}"
+                    else:
+                        supported_in_all_indices = False
+                        break
+
+                if exact_subfield_path is None:
+                    exact_subfield_path = current_path
+                elif exact_subfield_path != current_path:
+                    supported_in_all_indices = False
+                    break
+
+            if not supported_in_all_indices or not exact_subfield_path:
+                raise ValueError(
+                    f"Field '{target_field}' does not support exact wildcard "
+                    "searches. Ensure it is mapped with a 'wildcard' field "
+                    "type suffix (e.g. '.wildcard')."
+                )
+
+            field_paths[target_field] = exact_subfield_path
+
+        return field_paths
+
     # pylint: disable=too-many-arguments
     def search(
         self,

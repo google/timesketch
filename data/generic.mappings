@@ -25,6 +25,6 @@
     },
     "timesketch_label": {
       "type": "nested"
-     }
+    }
   }
 }
