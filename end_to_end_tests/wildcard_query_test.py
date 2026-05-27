@@ -50,14 +50,10 @@ class WildcardQueryTest(interface.BaseEndToEndTest):
     def test_api_wildcard_search(self):
         """Test exact-match wildcard API client searches."""
         # 1. Standard raw exact search target
-        results = self.sketch.explore_wildcard(
-            query_string="message:*powershell.exe*"
-        )
+        results = self.sketch.explore_wildcard(query_string="message:*powershell.exe*")
         self.assertions.assertIsNotNone(results)
         self.assertions.assertIn("objects", results)
         self.assertions.assertIn("meta", results)
-
-
 
         # 3. Literal logic query checks (AND/OR are treated as raw characters)
         literal_results = self.sketch.explore_wildcard(
