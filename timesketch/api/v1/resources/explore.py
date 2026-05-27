@@ -752,7 +752,11 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         )
 
         # Extract limit parameter safely from filter settings
-        limit = request_data.get("filter", {}).get("size")
+        filter_dict = request_data.get("filter")
+        limit = None
+        if isinstance(filter_dict, dict):
+            limit = filter_dict.get("size")
+
         if limit is not None:
             try:
                 limit = max(0, int(limit))
@@ -806,8 +810,9 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         tl_colors = {}
         tl_names = {}
         for timeline in sketch.timelines:
-            tl_colors[timeline.searchindex.index_name] = timeline.color
-            tl_names[timeline.searchindex.index_name] = timeline.name
+            if timeline.searchindex:
+                tl_colors[timeline.searchindex.index_name] = timeline.color
+                tl_names[timeline.searchindex.index_name] = timeline.name
 
         # Parse timesketch labels for response hits safely
         if isinstance(result, dict):
@@ -843,7 +848,10 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             scroll_id = result.get("_scroll_id", "")
             hits_dict = result.get("hits")
             if isinstance(hits_dict, dict):
-                objects_list = hits_dict.get("hits", [])
+                temp_objects = hits_dict.get("hits")
+                if isinstance(temp_objects, list):
+                    objects_list = temp_objects
+
                 total_hits = hits_dict.get("total", 0)
                 if isinstance(total_hits, dict):
                     es_total_count = total_hits.get("value", 0)
@@ -852,9 +860,6 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                         es_total_count = int(total_hits)
                     except (ValueError, TypeError):
                         es_total_count = 0
-
-        if not isinstance(objects_list, list):
-            objects_list = []
 
         # Return standard search JSON structure with real database results
         meta = {

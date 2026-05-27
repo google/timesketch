@@ -731,9 +731,7 @@ def show_mappings(sketch_id: int):
         return
 
     if not isinstance(mappings_data, dict):
-        print(
-            "Error: OpenSearch client returned an invalid mappings response format."
-        )
+        print("Error: OpenSearch client returned an invalid mappings response format.")
         return
 
     for timeline in sketch.timelines:
@@ -773,7 +771,8 @@ def show_mappings(sketch_id: int):
                 subfields_list = []
                 for key, sub_def in subfields.items():
                     if isinstance(sub_def, dict):
-                        subfields_list.append(f".{key} (type: {sub_def.get('type')})")
+                        sub_type = sub_def.get("type", "unknown")
+                        subfields_list.append(f".{key} (type: {sub_type})")
                 subfields_str = f" | Subfields: {', '.join(subfields_list)}"
 
             print(f"    - {field_name:<20} | Type: {field_type:<8}{subfields_str}")

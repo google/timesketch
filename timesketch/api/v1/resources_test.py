@@ -1376,6 +1376,27 @@ class ExploreWildcardResourceTest(BaseTest):
             "does not support exact wildcard searches", response.json["message"]
         )
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_query_parsing_malformed_filter(self, mock_search):
+        """Test that a non-dict filter is safely ignored and defaults to 40."""
+        self.login()
+        mock_search.return_value = {
+            "hits": {"hits": [], "total": 0},
+            "took": 5,
+        }
+
+        data = {"query": "*evil*", "filter": ["not_a_dictionary"]}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        mock_search.assert_called_once()
+        call_kwargs = mock_search.call_args[1]
+        self.assertEqual(call_kwargs["query_dsl"]["size"], 40)
+
 
 class AggregationExploreResourceTest(BaseTest):
     """Test AggregationExploreResource."""
