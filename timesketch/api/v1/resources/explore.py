@@ -692,7 +692,9 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         objects_list = []
 
         # Initialize telemetry pointers incrementally at the very start!
-        add_attribute_to_current_span("wildcard_search.user_id", current_user.id if current_user else None)
+        add_attribute_to_current_span(
+            "wildcard_search.user_id", current_user.id if current_user else None
+        )
         add_attribute_to_current_span("wildcard_search.sketch_id", sketch_id)
 
         sketch = Sketch.get_with_acl(sketch_id)
@@ -720,7 +722,9 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                 "No active timelines with valid search indices found in this sketch.",
             )
 
-        add_attribute_to_current_span("wildcard_search.physical_indices_count", len(indices))
+        add_attribute_to_current_span(
+            "wildcard_search.physical_indices_count", len(indices)
+        )
 
         # TODO: In the actual search execution phase (Iteration 2), we must verify
         # that the target fields in these indices possess a specific '.wildcard'
@@ -759,7 +763,8 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         # Verify targeted fields possess active wildcard type mappings
         try:
             field_paths = self.datastore.verify_wildcard_mappings(indices, fields_list)
-        except ValueError as e:            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+        except ValueError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
         logger.info(
             "ExploreWildcardResource: Sketch ID: %d, Query: %r, "
@@ -883,7 +888,9 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
                         es_total_count = 0
 
         add_attribute_to_current_span("wildcard_search.execution_took_ms", es_time)
-        add_attribute_to_current_span("wildcard_search.total_events_hits_count", es_total_count)
+        add_attribute_to_current_span(
+            "wildcard_search.total_events_hits_count", es_total_count
+        )
 
         # Record Search History entry programmatically to link metrics safely!
         try:
@@ -895,7 +902,7 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             )
             new_search.query_result_count = es_total_count
             new_search.query_time = es_time
-            
+
             # Symmetrical parents tree linkage
             previous_search = (
                 SearchHistory.query.filter_by(user=current_user, sketch=sketch)
@@ -904,12 +911,14 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
             )
             if previous_search:
                 new_search.parent = previous_search
-                
+
             db_session.add(new_search)
             db_session.commit()
-            
+
             # Record Search History ID reference safely in telemetry context!
-            add_attribute_to_current_span("wildcard_search.search_history_id", new_search.id)
+            add_attribute_to_current_span(
+                "wildcard_search.search_history_id", new_search.id
+            )
         except Exception as history_error:  # pylint: disable=broad-except
             logger.warning(
                 "Failed to save search history record: %s",
@@ -933,4 +942,3 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         }
         schema = {"meta": meta, "objects": objects_list}
         return jsonify(schema)
-

@@ -28,6 +28,7 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
     HAS_OTEL = True
 except ImportError:
     HAS_OTEL = False
@@ -40,6 +41,7 @@ if HAS_OTEL:
         from google.auth import transport
         from google.cloud.trace_v2 import TraceServiceClient
         from opentelemetry.exporter import cloud_trace
+
         HAS_GCP_TRACE = True
     except ImportError:
         HAS_GCP_TRACE = False
@@ -114,7 +116,9 @@ def setup_telemetry(service_name: str):
         trace_exporter = http_exporter.OTLPSpanExporter(endpoint=endpoint)
     elif otel_mode == "otlp-default-gce":
         if not HAS_GCP_TRACE:
-            logger.error("GCP trace libraries are not installed. Cannot use 'otlp-default-gce'.")
+            logger.error(
+                "GCP trace libraries are not installed. Cannot use 'otlp-default-gce'."
+            )
             return
         # Explicitly pass credentials from the GKE Metadata Server
         # This ignores GOOGLE_APPLICATION_CREDENTIALS
@@ -191,7 +195,9 @@ def add_attribute_to_current_span(name: str, value: object):
             otel_span.set_attribute(name, json.dumps(value))
 
 
-def add_wildcard_query_metrics(query_string: Optional[str], fields_targeted: Optional[List[str]]):
+def add_wildcard_query_metrics(
+    query_string: Optional[str], fields_targeted: Optional[List[str]]
+):
     """Extracts and records detailed structural query pattern metrics under debug log levels only!"""
     if not logger.isEnabledFor(logging.DEBUG) or not query_string:
         return
@@ -202,7 +208,7 @@ def add_wildcard_query_metrics(query_string: Optional[str], fields_targeted: Opt
 
     has_leading_wildcard = query_string.startswith("*") or query_string.startswith("?")
     has_trailing_wildcard = query_string.endswith("*") or query_string.endswith("?")
-    
+
     stripped = query_string.strip("*?")
     has_midpoint_wildcard = "*" in stripped or "?" in stripped
 
@@ -213,11 +219,27 @@ def add_wildcard_query_metrics(query_string: Optional[str], fields_targeted: Opt
     )
     nested_clauses_count = query_string.count("(")
 
-    add_attribute_to_current_span("wildcard_search.query_char_length", query_char_length)
-    add_attribute_to_current_span("wildcard_search.fields_targeted_count", fields_targeted_count)
-    add_attribute_to_current_span("wildcard_search.has_leading_wildcard", has_leading_wildcard)
-    add_attribute_to_current_span("wildcard_search.has_trailing_wildcard", has_trailing_wildcard)
-    add_attribute_to_current_span("wildcard_search.has_midpoint_wildcard", has_midpoint_wildcard)
-    add_attribute_to_current_span("wildcard_search.wildcard_symbols_count", wildcard_symbols_count)
-    add_attribute_to_current_span("wildcard_search.boolean_operators_count", boolean_operators_count)
-    add_attribute_to_current_span("wildcard_search.nested_clauses_count", nested_clauses_count)
+    add_attribute_to_current_span(
+        "wildcard_search.query_char_length", query_char_length
+    )
+    add_attribute_to_current_span(
+        "wildcard_search.fields_targeted_count", fields_targeted_count
+    )
+    add_attribute_to_current_span(
+        "wildcard_search.has_leading_wildcard", has_leading_wildcard
+    )
+    add_attribute_to_current_span(
+        "wildcard_search.has_trailing_wildcard", has_trailing_wildcard
+    )
+    add_attribute_to_current_span(
+        "wildcard_search.has_midpoint_wildcard", has_midpoint_wildcard
+    )
+    add_attribute_to_current_span(
+        "wildcard_search.wildcard_symbols_count", wildcard_symbols_count
+    )
+    add_attribute_to_current_span(
+        "wildcard_search.boolean_operators_count", boolean_operators_count
+    )
+    add_attribute_to_current_span(
+        "wildcard_search.nested_clauses_count", nested_clauses_count
+    )
