@@ -791,11 +791,14 @@ class OpenSearchDataStore:
         return query_dsl
 
     # What is the correct placement in this file for those two functions?
-    def get_wildcard_fields(self, indices: list[str]) -> list[str]:
+    def get_wildcard_fields(
+        self, indices: list[str], mappings: Optional[dict] = None
+    ) -> list[str]:
         """Gets a list of all fields mapped to a wildcard subfield.
 
         Args:
             indices (list): List of active index names to inspect.
+            mappings (dict): Optional pre-fetched OpenSearch mappings.
 
         Returns:
             list: A list of field names (e.g. ['message']) that support
@@ -804,13 +807,14 @@ class OpenSearchDataStore:
         if not indices:
             return []
 
-        try:
-            mappings = self.client.indices.get_mapping(index=indices)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            os_logger.warning(
-                "Failed to query index mappings in get_wildcard_fields: %s", e
-            )
-            return []
+        if mappings is None:
+            try:
+                mappings = self.client.indices.get_mapping(index=indices)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                os_logger.warning(
+                    "Failed to query index mappings in get_wildcard_fields: %s", e
+                )
+                return []
 
         if not isinstance(mappings, dict):
             return []

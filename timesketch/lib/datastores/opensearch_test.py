@@ -195,6 +195,12 @@ class OpenSearchDataStoreTest(BaseTest):
         fields = ds.get_wildcard_fields(["idx_1"])
         self.assertCountEqual(fields, ["msg", "xml", "nested_obj.sub_field"])
 
+        # Test with pre-fetched mappings (should not call mock_es.indices.get_mapping)
+        mock_es.indices.get_mapping.reset_mock()
+        fields_prefetched = ds.get_wildcard_fields(["idx_1"], mappings=mock_mappings)
+        self.assertCountEqual(fields_prefetched, ["msg", "xml", "nested_obj.sub_field"])
+        mock_es.indices.get_mapping.assert_not_called()
+
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_global_search(self, mock_client):
         """Test global wildcard query dsl generation."""

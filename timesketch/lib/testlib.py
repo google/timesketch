@@ -275,6 +275,13 @@ class MockDataStore:
 
         return OpenSearchDataStore.verify_wildcard_mappings(self, indices, fields_list)
 
+    def get_wildcard_fields(self, indices, mappings=None):
+        """Mock get_wildcard_fields. Delegates to real logic!"""
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+
+        return OpenSearchDataStore.get_wildcard_fields(self, indices, mappings=mappings)
+
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
         """Mock a search query.
