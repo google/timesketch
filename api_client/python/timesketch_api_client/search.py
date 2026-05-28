@@ -456,11 +456,10 @@ class Search(resource.SketchResource):
 
     def _extract_chips(self, query_filter):
         """Extract chips from a query_filter."""
+        self._chips = []
         chips = query_filter.get("chips", [])
         if not chips:
             return
-
-        self._chips = []
 
         for chip_dict in chips:
             chip_type = chip_dict.get("type")
