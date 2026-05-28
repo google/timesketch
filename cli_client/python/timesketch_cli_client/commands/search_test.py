@@ -31,7 +31,8 @@ query_filter: {
   "terminate_after": 10000,
   "indices": "_all",
   "order": "asc",
-  "chips": []
+  "chips": [],
+  "search_wildcard_fields": false
 }
 """
 
