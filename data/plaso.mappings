@@ -122,13 +122,6 @@
                 "wildcard": {"type": "wildcard"}
             }
         },
-        "sequence_number": {
-            "type": "text",
-            "fields": {
-                "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"}
-            }
-        },
         "severity": {
             "type": "text",
             "fields": {
