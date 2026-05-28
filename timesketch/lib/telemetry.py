@@ -54,7 +54,6 @@ if HAS_OTEL:
         HAS_GCP_TRACE = False
 
 
-
 logger = logging.getLogger("timesketch.telemetry")
 
 
@@ -133,6 +132,7 @@ def setup_telemetry(service_name: str):
         trace_client = TraceServiceClient(credentials=credentials)
         # pylint: disable=import-outside-toplevel,no-name-in-module
         from opentelemetry.exporter import cloud_trace
+
         trace_exporter = cloud_trace.CloudTraceSpanExporter(
             project_id=_get_gcp_project_id(),
             resource_regex=r"service.*",
