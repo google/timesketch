@@ -1019,6 +1019,7 @@ class Sketch(resource.BaseResource):
         logger.error(message)
         raise RuntimeError(message)
 
+    # pylint: disable=too-many-arguments
     def explore(
         self,
         query_string=None,
@@ -1030,6 +1031,7 @@ class Sketch(resource.BaseResource):
         max_entries=None,
         file_name="",
         as_object=False,
+        search_wildcard_fields=False,
     ):
         """Explore the sketch.
 
@@ -1055,6 +1057,8 @@ class Sketch(resource.BaseResource):
             as_object (bool): Optional bool that determines whether the
                 function will return a search object back instead of raw
                 results.
+            search_wildcard_fields (bool): Optional bool, if set to True compiles
+                the search query using native wildcard fields mapping.
 
         Returns:
             Dictionary with query results, a pandas DataFrame if as_pandas
@@ -1083,6 +1087,11 @@ class Sketch(resource.BaseResource):
             search_obj.from_saved(view.id)
 
         else:
+            if not query_filter:
+                query_filter = {}
+            if isinstance(query_filter, dict):
+                query_filter["search_wildcard_fields"] = search_wildcard_fields
+
             search_obj.from_manual(
                 query_string=query_string,
                 query_dsl=query_dsl,
@@ -1106,7 +1115,10 @@ class Sketch(resource.BaseResource):
         query_string: str,
         limit: Optional[int] = None,
     ) -> Dict[str, Union[Dict, List]]:
-        """Explore the sketch with raw wildcard queries (Skeleton endpoint).
+        """Explore the sketch with raw wildcard queries (Deprecated).
+
+        This method is maintained for backward-compatibility. Newer scripts should
+        use explore(query_string, search_wildcard_fields=True) instead.
 
         Args:
             query_string: String representation of the raw wildcard query
@@ -1114,14 +1126,8 @@ class Sketch(resource.BaseResource):
             limit: Optional integer representing maximum entries to return.
 
         Returns:
-            A dictionary containing the parsed search result schema
-            (metadata and objects).
-
-        Raises:
-            RuntimeError: If the sketch is currently archived.
+            A dictionary containing the parsed search result schema.
         """
-        # TODO: Align explore_wildcard signature and behavior with standard explore()
-        # by supporting as_pandas=False, as_object=False, and dynamic return types.
         if self.is_archived():
             raise RuntimeError("Unable to query an archived sketch.")
 

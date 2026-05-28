@@ -204,6 +204,9 @@ class ExploreForm(BaseForm):
     )
     scroll_id = StringField("Scroll ID", default="")
     file_name = StringField("Export to File")
+    search_wildcard_fields = BooleanField(
+        "Search wildcard fields", false_values={False, "false", ""}, default=False
+    )
 
 
 class GraphExploreForm(BaseForm):

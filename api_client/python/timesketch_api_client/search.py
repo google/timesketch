@@ -452,6 +452,7 @@ class Search(resource.SketchResource):
         self._searchtemplate = ""
         self._total_elastic_size = 0
         self._updated_at = ""
+        self._search_wildcard_fields = False
 
     def _extract_chips(self, query_filter):
         """Extract chips from a query_filter."""
@@ -918,11 +919,13 @@ class Search(resource.SketchResource):
                 "indices": self.indices,
                 "order": "asc",
                 "chips": [],
+                "search_wildcard_fields": self.search_wildcard_fields,
             }
 
         query_filter = self._query_filter
         query_filter["chips"] = [x.chip for x in self._chips]
         query_filter["indices"] = self.indices
+        query_filter["search_wildcard_fields"] = self.search_wildcard_fields
         return query_filter
 
     @query_filter.setter
@@ -937,7 +940,24 @@ class Search(resource.SketchResource):
         if not isinstance(query_filter, dict):
             raise ValueError("Query filter needs to be a dict.")
         self._query_filter = query_filter
+        self._search_wildcard_fields = bool(
+            query_filter.get("search_wildcard_fields", False)
+        )
         self._extract_chips(query_filter)
+        self.commit()
+
+    @property
+    def search_wildcard_fields(self):
+        """Return whether wildcard fields search mode is enabled."""
+        return self._search_wildcard_fields
+
+    @search_wildcard_fields.setter
+    def search_wildcard_fields(self, enabled):
+        """Enable or disable wildcard fields search mode."""
+        self._search_wildcard_fields = bool(enabled)
+        # Sync to query_filter dictionary immediately on change
+        _ = self.query_filter
+        self._query_filter["search_wildcard_fields"] = self._search_wildcard_fields
         self.commit()
 
     @property
