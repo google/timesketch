@@ -460,6 +460,8 @@ class Search(resource.SketchResource):
         if not chips:
             return
 
+        self._chips = []
+
         for chip_dict in chips:
             chip_type = chip_dict.get("type")
             if not chip_type:
@@ -488,7 +490,7 @@ class Search(resource.SketchResource):
             elif operator == "must_not":
                 chip.set_exclude()
 
-            self.add_chip(chip)
+            self._chips.append(chip)
 
     def _execute_query(self, file_name="", count=False, stream=False):
         """Execute a search request and store the results.

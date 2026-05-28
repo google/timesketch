@@ -210,8 +210,8 @@ class OpenSearchDataStoreTest(BaseTest):
         wildcard_fields = {"msg", "xml"}
 
         # 1. Simple global term
-        query_dsl = ds._build_wildcard_query_dsl("*evil*", wildcard_fields)
-        must_clauses = query_dsl["query"]["bool"]["must"]
+        bool_query = ds._build_wildcard_query_dsl("*evil*", wildcard_fields)
+        must_clauses = bool_query["must"]
         self.assertEqual(len(must_clauses), 1)
         self.assertEqual(must_clauses[0]["multi_match"]["query"], "*evil*")
         self.assertEqual(must_clauses[0]["multi_match"]["fields"], ["*.wildcard"])
@@ -225,15 +225,15 @@ class OpenSearchDataStoreTest(BaseTest):
         wildcard_fields = {"msg", "xml"}
 
         # Targeted field mapped to wildcard
-        query_dsl = ds._build_wildcard_query_dsl("msg:*evil*", wildcard_fields)
-        must_clauses = query_dsl["query"]["bool"]["must"]
+        bool_query = ds._build_wildcard_query_dsl("msg:*evil*", wildcard_fields)
+        must_clauses = bool_query["must"]
         self.assertEqual(len(must_clauses), 1)
         self.assertEqual(must_clauses[0]["wildcard"]["msg.wildcard"]["value"], "*evil*")
         self.assertTrue(must_clauses[0]["wildcard"]["msg.wildcard"]["case_insensitive"])
 
         # Targeted field NOT mapped to wildcard -> parsed as global multi_match instead
-        query_dsl = ds._build_wildcard_query_dsl("unknown:*evil*", wildcard_fields)
-        must_clauses = query_dsl["query"]["bool"]["must"]
+        bool_query = ds._build_wildcard_query_dsl("unknown:*evil*", wildcard_fields)
+        must_clauses = bool_query["must"]
         self.assertEqual(len(must_clauses), 1)
         self.assertEqual(must_clauses[0]["multi_match"]["query"], "unknown:*evil*")
 
@@ -247,9 +247,7 @@ class OpenSearchDataStoreTest(BaseTest):
 
         # Query: msg:*evil* NOT xml:*test* OR *backdoor*
         query = "msg:*evil* NOT xml:*test* OR *backdoor*"
-        query_dsl = ds._build_wildcard_query_dsl(query, wildcard_fields)
-
-        bool_query = query_dsl["query"]["bool"]
+        bool_query = ds._build_wildcard_query_dsl(query, wildcard_fields)
 
         # Assert must clause (implicit AND routing for msg:*evil*)
         self.assertEqual(len(bool_query["must"]), 1)

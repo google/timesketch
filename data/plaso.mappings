@@ -8,9 +8,9 @@
                     "type": "text",
                     "fields": {
                         "keyword": {"type": "keyword", "ignore_above": 256},
-                        "wildcard": {"type": "wildcard"},
-                    },
-                },
+                        "wildcard": {"type": "wildcard"}
+                    }
+                }
             }
         }
     ],
@@ -19,15 +19,15 @@
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "application": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "timesketch_label": {"type": "nested"},
         "datetime": {"type": "date"},
@@ -35,127 +35,134 @@
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "doc_type": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "event_type": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "exit_status": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "facility": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "file_reference": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "file_size": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "flags": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "identifier": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "message_status": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "message_type": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "offset": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "sequence_number": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
+        },
+        "sequence_number": {
+            "type": "text",
+            "fields": {
+                "keyword": {"type": "keyword", "ignore_above": 256},
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "severity": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "source_port": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "user_identifier": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "version": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
+                "wildcard": {"type": "wildcard"}
+            }
         },
         "http_response_bytes": {
             "type": "text",
             "fields": {
                 "keyword": {"type": "keyword", "ignore_above": 256},
-                "wildcard": {"type": "wildcard"},
-            },
-        },
-    },
+                "wildcard": {"type": "wildcard"}
+            }
+        }
+    }
 }

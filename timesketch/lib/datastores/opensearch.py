@@ -657,9 +657,10 @@ class OpenSearchDataStore:
 
         if query_string:
             if search_wildcard_fields:
-                query_dsl = self._build_wildcard_query_dsl(
+                wildcard_bool = self._build_wildcard_query_dsl(
                     query_string, wildcard_fields or set()
                 )
+                query_dsl["query"]["bool"]["must"].append({"bool": wildcard_bool})
             else:
                 query_dsl["query"]["bool"]["must"].append(
                     {"query_string": {"query": query_string, "default_operator": "AND"}}
@@ -721,9 +722,9 @@ class OpenSearchDataStore:
                         continue
                     datetime_ranges["bool"]["should"].append(range_filter(start, end))
 
-            label_filter = self._build_labels_query(sketch_id, labels)
-            must_filters.append(label_filter)
-            must_filters.append(datetime_ranges)
+                label_filter = self._build_labels_query(sketch_id, labels)
+                must_filters.append(label_filter)
+                must_filters.append(datetime_ranges)
 
         # Pagination
         if query_filter.get("from", None):
@@ -898,7 +899,7 @@ class OpenSearchDataStore:
                 does not support wildcard matching.
         """
         if not raw_query_string:
-            return {}
+            return {"must": [], "must_not": [], "filter": []}
 
         if not wildcard_fields:
             raise ValueError(
@@ -961,7 +962,7 @@ class OpenSearchDataStore:
             # Reset to default AND after processing a term
             current_operator = "must"
 
-        return {"query": {"bool": bool_query}}
+        return bool_query
 
     # pylint: disable=too-many-arguments
     def search(

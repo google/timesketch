@@ -8,15 +8,14 @@
                     "type": "text",
                     "fields": {
                         "keyword": {"type": "keyword", "ignore_above": 256},
-                        "wildcard": {"type": "wildcard"},
-                    },
-                },
+                        "wildcard": {"type": "wildcard"}
+                    }
+                }
             }
         }
     ],
     "properties": {
         "datetime": {"type": "date"},
-        "timesketch_label": {"type": "nested"},
-    },
-    "timesketch_label": {"type": "nested"},
+        "timesketch_label": {"type": "nested"}
+    }
 }
