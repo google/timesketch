@@ -246,21 +246,25 @@ class OpenSearchDataStoreTest(BaseTest):
         wildcard_fields = {"msg", "xml"}
 
         # Query: msg:*evil* NOT xml:*test* OR *backdoor*
+        # Evaluated as: (msg:*evil* AND (NOT xml:*test*)) OR *backdoor*
         query = "msg:*evil* NOT xml:*test* OR *backdoor*"
         bool_query = ds._build_wildcard_query_dsl(query, wildcard_fields)
 
-        # Assert must clause (implicit AND routing for msg:*evil*)
-        self.assertEqual(len(bool_query["must"]), 1)
-        self.assertEqual(
-            bool_query["must"][0]["wildcard"]["msg.wildcard"]["value"], "*evil*"
-        )
-
-        # Assert must_not clause (NOT routing for xml:*test*)
         self.assertEqual(len(bool_query["must_not"]), 1)
         self.assertEqual(
             bool_query["must_not"][0]["wildcard"]["xml.wildcard"]["value"], "*test*"
         )
 
-        # Assert should clause (OR routing for *backdoor*)
-        self.assertEqual(len(bool_query["should"]), 1)
-        self.assertEqual(bool_query["should"][0]["multi_match"]["query"], "*backdoor*")
+        # Check that we have a nested should block in must for the OR operator
+        self.assertEqual(len(bool_query["must"]), 1)
+        nested_or = bool_query["must"][0]
+        self.assertEqual(nested_or["bool"]["minimum_should_match"], 1)
+        self.assertEqual(len(nested_or["bool"]["should"]), 2)
+
+        self.assertEqual(
+            nested_or["bool"]["should"][0]["wildcard"]["msg.wildcard"]["value"],
+            "*evil*",
+        )
+        self.assertEqual(
+            nested_or["bool"]["should"][1]["multi_match"]["query"], "*backdoor*"
+        )

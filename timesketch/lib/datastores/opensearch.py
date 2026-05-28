@@ -919,8 +919,6 @@ class OpenSearchDataStore:
                 current_operator = "must"
                 continue
             if token == "OR":
-                if "should" not in bool_query:
-                    bool_query["should"] = []
                 current_operator = "should"
                 continue
             if token == "NOT":
@@ -956,8 +954,32 @@ class OpenSearchDataStore:
                 }
 
             if dsl_node:
-                # Append the node to the active boolean operator list
-                bool_query[current_operator].append(dsl_node)
+                if current_operator == "should":
+                    if bool_query["must"]:
+                        left_operand = bool_query["must"].pop()
+                        # Check if the left operand is already a nested should
+                        # block we can extend
+                        if (
+                            isinstance(left_operand, dict)
+                            and "bool" in left_operand
+                            and "should" in left_operand["bool"]
+                            and left_operand["bool"].get("minimum_should_match") == 1
+                        ):
+                            left_operand["bool"]["should"].append(dsl_node)
+                            bool_query["must"].append(left_operand)
+                        else:
+                            nested_or = {
+                                "bool": {
+                                    "should": [left_operand, dsl_node],
+                                    "minimum_should_match": 1,
+                                }
+                            }
+                            bool_query["must"].append(nested_or)
+                    else:
+                        # Symmetrical fallback if OR is first token
+                        bool_query["must"].append(dsl_node)
+                else:
+                    bool_query[current_operator].append(dsl_node)
 
             # Reset to default AND after processing a term
             current_operator = "must"
