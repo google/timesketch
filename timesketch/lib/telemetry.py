@@ -18,6 +18,14 @@ import logging
 import os
 from typing import Optional, List
 
+from timesketch.version import get_version
+
+# Initialize optional Google/GCP variables to None to resolve E0606 warning
+compute_engine = None
+auth_exceptions = None
+transport = None
+TraceServiceClient = None
+
 try:
     from opentelemetry import trace
     from opentelemetry.trace.span import INVALID_SPAN
@@ -40,13 +48,12 @@ if HAS_OTEL:
         from google.auth import exceptions as auth_exceptions
         from google.auth import transport
         from google.cloud.trace_v2 import TraceServiceClient
-        from opentelemetry.exporter import cloud_trace
 
         HAS_GCP_TRACE = True
     except ImportError:
         HAS_GCP_TRACE = False
 
-from timesketch.version import get_version
+
 
 logger = logging.getLogger("timesketch.telemetry")
 
@@ -124,6 +131,8 @@ def setup_telemetry(service_name: str):
         # This ignores GOOGLE_APPLICATION_CREDENTIALS
         credentials = compute_engine.Credentials()
         trace_client = TraceServiceClient(credentials=credentials)
+        # pylint: disable=import-outside-toplevel,no-name-in-module
+        from opentelemetry.exporter import cloud_trace
         trace_exporter = cloud_trace.CloudTraceSpanExporter(
             project_id=_get_gcp_project_id(),
             resource_regex=r"service.*",
@@ -183,7 +192,17 @@ def add_event_to_current_span(event: str):
 
 
 def add_attribute_to_current_span(name: str, value: object):
-    """Adds a key-value attribute (tag) to the currently active span."""
+    """Adds a key-value attribute (tag) to the active OpenTelemetry span.
+
+    If OpenTelemetry is disabled or there is no active recording span, this
+    function returns early. Primitive types (str, bool, int, float) are stored
+    as-is. Complex objects are automatically serialized to JSON strings before
+    being added to the span to guarantee valid storage compatibility.
+
+    Args:
+        name: The key name for the span attribute (e.g. 'search.sketch_id').
+        value: The value to record. Complex objects must be JSON serializable.
+    """
     if not is_enabled():
         return
 
@@ -198,7 +217,10 @@ def add_attribute_to_current_span(name: str, value: object):
 def add_wildcard_query_metrics(
     query_string: Optional[str], fields_targeted: Optional[List[str]]
 ):
-    """Extracts and records detailed structural query pattern metrics under debug log levels only!"""
+    """Extracts and records detailed structural query pattern metrics.
+
+    Only records metrics under active debug log levels.
+    """
     if not logger.isEnabledFor(logging.DEBUG) or not query_string:
         return
 
