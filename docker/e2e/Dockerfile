@@ -44,41 +44,20 @@ RUN \
     tzdata \
     wget \
     && \
-    # 3. INSTALL PSYCHOPG2 (Conditional)
-    # Ubuntu 24.04 has it in apt, 26.04 does not.
-    if [ "$UBUNTU_VERSION" = "24.04" ]; then \
-    apt-get install -y --no-install-recommends python3-psycopg2; \
-    fi && \
-    # 4. UPGRADE PLASO (Conditional)
+    # 3. UPGRADE PLASO (Conditional)
     # If we are on staging, we explicitly upgrade the tools to the version found in the new PPA
     if [ "$PLASO_PPA_TRACK" = "staging" ]; then \
     apt-get install -y --only-upgrade plaso-tools; \
     fi && \
-    # 5. CLEANUP
+    # 4. CLEANUP
     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # PYTHON / OPENSEARCH FIXES
 # -----------------------------------------------------------------------------
 
-# 1. Fix for Ubuntu 24.04 (Noble) missing 'events' dependency for Plaso
-# This is required for both Stable and Staging on 24.04
-RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
-    echo "Applying 'events' library fix for Ubuntu 24.04..."; \
-    pip3 install --no-cache-dir --break-system-packages events; \
-    fi
-
-# 2. Fix for Staging Track (Opensearch-py version mismatch)
-# Staging often requires a newer or specific opensearch-py version not yet in apt
-RUN if [ "$PLASO_PPA_TRACK" = "staging" ] && [ "$UBUNTU_VERSION" = "24.04" ]; then \
-    echo "Plaso staging on 24.04 detected, installing opensearch-py==3.0.0"; \
-    pip3 install --no-cache-dir --break-system-packages opensearch-py==3.0.0; \
-    fi
-
-# 3. Install psycopg2-binary via pip (not available as apt package on 26.04)
-RUN if [ "$UBUNTU_VERSION" = "26.04" ]; then \
-    pip3 install --no-cache-dir --break-system-packages psycopg2-binary; \
-    fi
+# Install psycopg2-binary via pip (not available as apt package on 26.04)
+RUN pip3 install --no-cache-dir --break-system-packages psycopg2-binary
 
 # Debugging info
 RUN psort.py --version
