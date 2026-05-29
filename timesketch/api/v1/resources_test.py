@@ -1964,6 +1964,7 @@ class SystemSettingsResourceTest(BaseTest):
             "ENABLE_V3_INVESTIGATION_VIEW": False,
             "LLM_FEATURES_AVAILABLE": {"default": False},
             "LOG_ANALYZER_DEFAULT_PROMPT": "another prompt",
+            "OPENSEARCH_WILDCARD_DEFAULT": False,
         }
 
         self.assertDictEqual(response.json, expected_response)
@@ -2619,7 +2620,7 @@ class UserSettingsResourceTest(BaseTest):
         self.assertEqual(len(response.json["objects"]), 1)
 
         # Assert setting dynamically loads our default mock config value
-        self.assertTrue(response.json["objects"][0]["supportsWildcardByDefault"])
+        self.assertEqual(response.json["objects"][0]["defaultSearchMethod"], "wildcard")
 
     def test_get_settings_user_preference(self):
         """Test GET settings returns saved user preference over default config."""
@@ -2627,7 +2628,7 @@ class UserSettingsResourceTest(BaseTest):
         self.app.config["OPENSEARCH_WILDCARD_DEFAULT"] = False
 
         # Save custom settings first via POST
-        data = {"settings": {"supportsWildcardByDefault": True}}
+        data = {"settings": {"defaultSearchMethod": "classic"}}
         post_response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -2638,13 +2639,13 @@ class UserSettingsResourceTest(BaseTest):
         # Assert saved preference is successfully returned
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assertTrue(response.json["objects"][0]["supportsWildcardByDefault"])
+        self.assertEqual(response.json["objects"][0]["defaultSearchMethod"], "classic")
 
     def test_post_settings_update(self):
         """Test POST settings saves and returns updated user settings."""
         self.login()
         data = {
-            "settings": {"supportsWildcardByDefault": True, "customSetting": "test"}
+            "settings": {"defaultSearchMethod": "classic", "customSetting": "test"}
         }
         response = self.client.post(
             self.resource_url,
@@ -2653,5 +2654,5 @@ class UserSettingsResourceTest(BaseTest):
         )
         self.assert200(response)
         self.assertEqual(len(response.json["objects"]), 1)
-        self.assertTrue(response.json["objects"][0]["supportsWildcardByDefault"])
+        self.assertEqual(response.json["objects"][0]["defaultSearchMethod"], "classic")
         self.assertEqual(response.json["objects"][0]["customSetting"], "test")

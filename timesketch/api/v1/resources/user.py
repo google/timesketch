@@ -171,9 +171,10 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
         Returns:
             Dictionary containing formatted user settings.
         """
+        default_method = "wildcard" if current_app.config.get("OPENSEARCH_WILDCARD_DEFAULT", False) else "classic"
         settings.setdefault(
-            "supportsWildcardByDefault",
-            current_app.config.get("OPENSEARCH_WILDCARD_DEFAULT", False),
+            "defaultSearchMethod",
+            default_method,
         )
         settings.setdefault("showProcessingTimelineEvents", False)
 
