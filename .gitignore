@@ -56,3 +56,4 @@ profiles/
 
 # Ignore local dev key
 .dev_secret_key
+tmp/
