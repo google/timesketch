@@ -20,7 +20,8 @@ limitations under the License.
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-card class="d-flex align-start mb-1" outlined>
+      <v-card class="d-flex align-start mb-1 overflow-hidden" outlined>
+        <ts-search-mode-toggle></ts-search-mode-toggle>
         <v-sheet class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
         </v-sheet>
@@ -306,6 +307,7 @@ import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsSearchHelpCard from '../components/Explore/SearchHelpCard.vue'
+import TsSearchModeToggle from '../components/Explore/SearchModeToggle.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -332,6 +334,7 @@ export default {
     TsAddManualEvent,
     TsEventList,
     TsSearchHelpCard,
+    TsSearchModeToggle,
   },
   props: ['sketchId'],
   data() {
