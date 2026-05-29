@@ -23,125 +23,219 @@ limitations under the License.
       <v-row no-gutters>
         <v-col style="min-width: 250px; flex-basis: 25%">
           <div class="pa-2">
-            <v-simple-table>
-              <template v-slot:default>
-                <thead>
-                  <tr>
-                    <th class="text-left">Description</th>
-                    <th class="text-left">Example Query</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Search for all events</td>
-                    <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('*')">
-                        <code>*</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Search a word in the message field</td>
-                    <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('message:error')">
-                        <code>message:"error"</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Search filenames ending with <code>.exe</code></td>
-                    <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('filename:*.exe')">
-                        <code>filename:*.exe</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      Search on the
-                      <a href="https://docs.opensearch.org/docs/2.19/field-types/supported-field-types/keyword/"
-                        >keyword field type</a
-                      ><br />(exact matches & substring search)
-                    </td>
-                    <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('filename.keyword:malicious.exe')">
-                        <code>filename.keyword:malicious.exe</code> </a
-                      ><br />
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('message.keyword:*System32*')">
-                        <code>message.keyword:*System32*</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Search using regex (between <code>//</code>)</td>
-                    <td>
-                      <a
-                        href="#"
-                        @click.prevent="emitSetQueryAndFilter('url.keyword:/.*\\/sketch\\/[1-100]\\/.*/')"
-                      >
-                        <code>url.keyword:/.*\/sketch\/[1-100]\/.*/</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Combine searches with AND, OR, NOT</td>
-                    <td>
-                      <a
-                        href="#"
-                        @click.prevent="emitSetQueryAndFilter('event_identifier:(4624 OR 4625) AND LogonType:3')"
-                      >
-                        <code>event_identifier:(4624 OR 4625) AND NOT LogonType:3</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Search events that have an url field</td>
-                    <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('_exists_:url')"> <code>_exists_:url</code> </a
-                      ><br />
-                      <a href="#" @click.prevent="emitSetQueryAndFilter('url:*')">
-                        <code>url:*</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Search for a range of numbers</td>
-                    <td>
-                      <a
-                        href="#"
-                        @click.prevent="
-                          emitSetQueryAndFilter('http_status_code:[200 TO 204] AND bytes_transferred:>10000')
-                        "
-                      >
-                        <code>status_code:[200 TO 204] AND transferred:>10000</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Filter by a specific date/time range (UTC)</td>
-                    <td>
-                      <a
-                        href="#"
-                        @click.prevent="emitSetQueryAndFilter(`datetime:[${firstOfCurrentMonth} TO ${nowDateTimeUTC}]`)"
-                      >
-                        <code>datetime:[{{ firstOfCurrentMonth }} TO {{ nowDateTimeUTC }}]</code>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Filter for events before or after a date (UTC)</td>
-                      <td>
-                      <a href="#" @click.prevent="emitSetQueryAndFilter(`datetime:[${firstOfCurrentMonth} TO *]`)">
-                        <code>datetime:[{{ firstOfCurrentMonth }} TO *]</code> </a
-                      ><br />
-                      <a href="#" @click.prevent="emitSetQueryAndFilter(`datetime:[* TO ${firstOfCurrentMonth}]`)">
-                        <code>datetime:[* TO {{ firstOfCurrentMonth }}]</code>
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </template>
-            </v-simple-table>
+            <v-tabs v-model="activeTab" color="primary" grow>
+              <v-tab>Query String</v-tab>
+              <v-tab :disabled="!isWildcardSupported" :title="!isWildcardSupported ? 'This sketch does not support wildcard searches' : ''">Wildcard</v-tab>
+            </v-tabs>
+
+            <v-tabs-items v-model="activeTab">
+              <v-tab-item>
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">Description</th>
+                        <th class="text-left">Example Query</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Search for all events</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('*')">
+                            <code>*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search a substring in the message field</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('message:error')">
+                            <code>message:"error"</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search filenames ending with <code>.exe</code></td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('filename:*.exe')">
+                            <code>filename:*.exe</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Search on the
+                          <a href="https://docs.opensearch.org/docs/2.19/field-types/supported-field-types/keyword/"
+                            >keyword field type</a
+                          ><br />(exact matches & substring search)
+                        </td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('filename.keyword:malicious.exe')">
+                            <code>filename.keyword:malicious.exe</code> </a
+                          ><br />
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('message.keyword:*System32*')">
+                            <code>message.keyword:*System32*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search using regex (between <code>//</code>)</td>
+                        <td>
+                          <a
+                            href="#"
+                            @click.prevent="emitSetQueryAndFilter('url.keyword:/.*\\/sketch\\/[1-100]\\/.*/')"
+                          >
+                            <code>url.keyword:/.*\/sketch\/[1-100]\/.*/</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Combine searches with AND, OR, NOT</td>
+                        <td>
+                          <a
+                            href="#"
+                            @click.prevent="emitSetQueryAndFilter('event_identifier:(4624 OR 4625) AND LogonType:3')"
+                          >
+                            <code>event_identifier:(4624 OR 4625) AND NOT LogonType:3</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search events that have an url field</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('_exists_:url')"> <code>_exists_:url</code> </a
+                          ><br />
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('url:*')">
+                            <code>url:*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search for a range of numbers</td>
+                        <td>
+                          <a
+                            href="#"
+                            @click.prevent="
+                              emitSetQueryAndFilter('http_status_code:[200 TO 204] AND bytes_transferred:>10000')
+                            "
+                          >
+                            <code>status_code:[200 TO 204] AND transferred:>10000</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Filter by a specific date/time range (UTC)</td>
+                        <td>
+                          <a
+                            href="#"
+                            @click.prevent="emitSetQueryAndFilter(`datetime:[${firstOfCurrentMonth} TO ${nowDateTimeUTC}]`)"
+                          >
+                            <code>datetime:[{{ firstOfCurrentMonth }} TO {{ nowDateTimeUTC }}]</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Filter for events before or after a date (UTC)</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter(`datetime:[${firstOfCurrentMonth} TO *]`)">
+                            <code>datetime:[{{ firstOfCurrentMonth }} TO *]</code> </a
+                          ><br />
+                          <a href="#" @click.prevent="emitSetQueryAndFilter(`datetime:[* TO ${firstOfCurrentMonth}]`)">
+                            <code>datetime:[* TO {{ firstOfCurrentMonth }}]</code>
+                          </a>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+              </v-tab-item>
+
+              <v-tab-item>
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">Description</th>
+                        <th class="text-left">Example Query</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Search for all events</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('*')">
+                            <code>*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search for a substring in any string type field (case-sensitive)</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('*evil*')">
+                            <code>*evil*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search a substring in the message field (case-insensitive)</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('message:*evil*')">
+                            <code>message:*evil*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search for values ending with a suffix</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('filename:*.exe')">
+                            <code>filename:*.exe</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search for values starting with a prefix</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('filename:/home/*')">
+                            <code>filename:/home/*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search using a single-character wildcard (<code>?</code>)</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('file_type:?ZIP')">
+                            <code>file_type:?ZIP</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Combine terms with logical operators (implicit AND)</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('*evil* *good*')">
+                            <code>*evil* *good*</code>
+                          </a><br />
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('*evil* AND NOT *good*')">
+                            <code>*evil* AND NOT *good*</code>
+                          </a><br />
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('*evil* OR *good*')">
+                            <code>*evil* OR *good*</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Search an exact term (no need to escape special characters)</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('url:http://google.com/')">
+                            <code>url:"http://google.com/"</code>
+                          </a>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+              </v-tab-item>
+            </v-tabs-items>
           </div>
         </v-col>
 
@@ -204,11 +298,28 @@ export default {
       type: Boolean,
       default: false,
     },
+    searchMode: {
+      type: String,
+      default: 'query_string',
+    },
   },
   components: {
     TsTagsList,
     TsDataTypesList,
     TsSavedSearchesList,
+  },
+  data() {
+    return {
+      activeTab: this.searchMode === 'wildcard' ? 1 : 0,
+    }
+  },
+  watch: {
+    searchMode: {
+      immediate: true,
+      handler(newVal) {
+        this.activeTab = newVal === 'wildcard' ? 1 : 0
+      }
+    }
   },
   computed: {
     firstOfCurrentMonth() {
@@ -220,6 +331,9 @@ export default {
     nowDateTimeUTC() {
       const now = new Date()
       return now.toISOString().slice(0, 19)
+    },
+    isWildcardSupported() {
+      return !!this.$store.state.meta.supports_wildcard
     },
   },
   methods: {
@@ -234,4 +348,8 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.v-tab--disabled {
+  pointer-events: auto;
+}
+</style>

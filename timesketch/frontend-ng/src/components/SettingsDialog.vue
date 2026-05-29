@@ -31,6 +31,23 @@ limitations under the License.
         </v-list-item-content>
       </v-list-item>
 
+      <!-- Setting: Default Search Method Toggle -->
+      <v-list-item>
+        <v-list-item-action>
+          <v-switch
+            v-model="settings.defaultSearchMethod"
+            true-value="wildcard"
+            false-value="query_string"
+            color="primary"
+            @change="saveSettings()"
+          ></v-switch>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>Use Wildcard Search by default</v-list-item-title>
+          <v-list-item-subtitle>Enable to default to Wildcard search mode, or disable for Classic Query String mode</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
+
       <!-- AI Powered Features Main Setting -->
       <v-list-item>
         <v-list-item-action>
@@ -131,6 +148,7 @@ const DEFAULT_SETTINGS = {
   eventSummarization: false,
   generateQuery: false,
   showProcessingTimelineEvents: false,
+  defaultSearchMethod: 'query_string',
 }
 export default {
   data() {
@@ -141,6 +159,7 @@ export default {
         eventSummarization: false,
         generateQuery: false,
         showProcessingTimelineEvents: false,
+        defaultSearchMethod: 'query_string',
       },
     }
   },
@@ -186,8 +205,18 @@ export default {
     },
   },
   mounted() {
+    // Determine default search method dynamically based on system settings
+    let defaultSearchMethod = 'query_string'
+    if (this.systemSettings && this.systemSettings.OPENSEARCH_WILDCARD_DEFAULT) {
+      defaultSearchMethod = 'wildcard'
+    }
+
     // Set default settings if no user settings are defined.
-    this.settings = { ...DEFAULT_SETTINGS, ...this.userSettings };
+    this.settings = {
+      ...DEFAULT_SETTINGS,
+      defaultSearchMethod: defaultSearchMethod,
+      ...this.userSettings
+    };
     this.saveSettings();
   },
 }

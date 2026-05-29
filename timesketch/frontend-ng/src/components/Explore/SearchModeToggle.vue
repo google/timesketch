@@ -9,13 +9,13 @@
         v-bind="attrs"
         v-on="on"
         height="54"
-        min-width="0"
+        width="60"
         class="px-2 rounded-0 grey--text"
         :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
         :title="!isWildcardSupported ? 'This sketch does not support wildcard searches' : selectedTitle"
         :style="!isWildcardSupported ? 'cursor: default; opacity: 0.8;' : ''"
       >
-        {{ selectedValue }}
+        {{ displayValue }}
 
         <v-icon v-if="isWildcardSupported" small class="ml-1">
           mdi-chevron-down
@@ -23,13 +23,18 @@
       </v-btn>
     </template>
 
-    <v-list>
+    <v-list two-line style="width: 360px;">
       <v-list-item
         v-for="item in menuItems"
         :key="item.value"
         @click="selectItem(item)"
       >
-        <v-list-item-title>{{ item.title }}</v-list-item-title>
+        <v-list-item-content>
+          <v-list-item-title class="font-weight-bold">{{ item.title }}</v-list-item-title>
+          <v-list-item-subtitle class="text-wrap mt-1 text--secondary" style="font-size: 0.8rem; line-height: 1.2;">
+            {{ item.subtitle }}
+          </v-list-item-subtitle>
+        </v-list-item-content>
       </v-list-item>
     </v-list>
   </v-menu>
@@ -40,14 +45,22 @@ export default {
   props: {
     value: {
       type: String,
-      default: 'QS'
+      default: 'query_string'
     }
   },
   data() {
     return {
       menuItems: [
-        { title: 'Query String', value: 'QS' },
-        { title: 'Wildcard', value: 'WC' }
+        {
+          title: 'Query String',
+          subtitle: 'Standard Lucene query_string searching using tokenized and keyword type fields.',
+          value: 'query_string'
+        },
+        {
+          title: 'Wildcard',
+          subtitle: 'Exact-match substring searching on string type fields only. Use * or ? for wildcards.',
+          value: 'wildcard'
+        }
       ],
       selectedValue: this.value,
     }
@@ -62,6 +75,15 @@ export default {
     selectedTitle() {
       const item = this.menuItems.find(i => i.value === this.selectedValue)
       return item ? item.title : ''
+    },
+    displayValue() {
+      if (this.selectedValue === 'query_string') {
+        return 'QS'
+      }
+      if (this.selectedValue === 'wildcard') {
+        return 'WC'
+      }
+      return this.selectedValue
     }
   },
   watch: {
@@ -71,9 +93,9 @@ export default {
     isWildcardSupported: {
       immediate: true,
       handler(supported) {
-        if (!supported && this.selectedValue !== 'QS') {
-          this.selectedValue = 'QS';
-          this.$emit('input', 'QS');
+        if (!supported && this.selectedValue !== 'query_string') {
+          this.selectedValue = 'query_string';
+          this.$emit('input', 'query_string');
         }
       }
     }

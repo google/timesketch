@@ -174,7 +174,7 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
         default_method = (
             "wildcard"
             if current_app.config.get("OPENSEARCH_WILDCARD_DEFAULT", False)
-            else "classic"
+            else "query_string"
         )
         settings.setdefault(
             "defaultSearchMethod",

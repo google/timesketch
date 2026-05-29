@@ -88,7 +88,7 @@ limitations under the License.
     </div>
 
     <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
-      <ts-explore-welcome-card></ts-explore-welcome-card>
+      <ts-explore-welcome-card :search-mode="searchMode"></ts-explore-welcome-card>
     </div>
 
     <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError" class="ml-3">
@@ -605,6 +605,10 @@ export default {
     highlightEvent: {
       type: Object,
       default: () => {},
+    },
+    searchMode: {
+      type: String,
+      default: 'query_string',
     },
   },
   data() {
