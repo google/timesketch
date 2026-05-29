@@ -2644,9 +2644,7 @@ class UserSettingsResourceTest(BaseTest):
     def test_post_settings_update(self):
         """Test POST settings saves and returns updated user settings."""
         self.login()
-        data = {
-            "settings": {"defaultSearchMethod": "classic", "customSetting": "test"}
-        }
+        data = {"settings": {"defaultSearchMethod": "classic", "customSetting": "test"}}
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),

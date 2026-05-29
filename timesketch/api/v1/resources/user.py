@@ -166,12 +166,16 @@ class UserSettingsResource(resources.ResourceMixin, Resource):
         """Format settings with global defaults and overrides applied.
 
         Args:
-            settings: Dictionary containing raw user settings.
+            settings (dict): Dictionary containing raw user settings.
 
         Returns:
             Dictionary containing formatted user settings.
         """
-        default_method = "wildcard" if current_app.config.get("OPENSEARCH_WILDCARD_DEFAULT", False) else "classic"
+        default_method = (
+            "wildcard"
+            if current_app.config.get("OPENSEARCH_WILDCARD_DEFAULT", False)
+            else "classic"
+        )
         settings.setdefault(
             "defaultSearchMethod",
             default_method,
