@@ -495,7 +495,7 @@ export default {
     search: function (resetPagination = true, incognito = false, parent = false) {
       let queryRequest = {}
       queryRequest['queryString'] = this.currentQueryString
-      this.currentQueryFilter['search_wildcard_fields'] = (this.searchMode === 'wildcard')
+      this.currentQueryFilter['use_wildcard_fields'] = (this.searchMode === 'wildcard')
       queryRequest['queryFilter'] = this.currentQueryFilter
       queryRequest['resetPagination'] = resetPagination
       queryRequest['incognito'] = incognito
