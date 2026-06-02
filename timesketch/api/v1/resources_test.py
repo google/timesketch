@@ -733,7 +733,7 @@ class ExploreResourceTest(BaseTest):
                 "labels": [],
                 "parent": None,
                 "query_dsl": None,
-                "query_filter": '{"search_wildcard_fields": false}',
+                "query_filter": '{"use_wildcard_fields": false}',
                 "query_result_count": 0,
                 "query_string": "test",
                 "scenario": None,
@@ -894,10 +894,10 @@ class ExploreWildcardResourceTest(BaseTest):
         self.assertEqual(len(response_json["objects"]), 1)
         self.assertEqual(response_json["objects"][0]["_id"], "event_1")
 
-        # Assert explore logic is called with search_wildcard_fields=True
+        # Assert explore logic is called with use_wildcard_fields=True
         mock_search.assert_called_once()
         call_kwargs = mock_search.call_args[1]
-        self.assertTrue(call_kwargs.get("search_wildcard_fields"))
+        self.assertTrue(call_kwargs.get("use_wildcard_fields"))
 
 
 class AggregationExploreResourceTest(BaseTest):

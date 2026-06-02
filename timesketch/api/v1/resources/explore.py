@@ -167,11 +167,11 @@ class ExploreResource(resources.ResourceMixin, Resource):
             query_filter = {}
 
         # Extract parameter checking WTForms with fallback to query_filter
-        search_wildcard_fields = bool(
-            form.search_wildcard_fields.data
-            or query_filter.get("search_wildcard_fields", False)
+        use_wildcard_fields = bool(
+            form.use_wildcard_fields.data
+            or query_filter.get("use_wildcard_fields", False)
         )
-        query_filter["search_wildcard_fields"] = search_wildcard_fields
+        query_filter["use_wildcard_fields"] = use_wildcard_fields
 
         all_timeline_ids = [t.id for t in sketch.timelines]
         indices = query_filter.get("indices", all_timeline_ids)
@@ -246,7 +246,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     indices=indices,
                     timeline_ids=timeline_ids,
                     count=True,
-                    search_wildcard_fields=search_wildcard_fields,
+                    use_wildcard_fields=use_wildcard_fields,
                 )
             except DatastoreTimeoutError as e:
                 abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
@@ -301,7 +301,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     return_fields=return_fields,
                     enable_scroll=enable_scroll,
                     timeline_ids=timeline_ids,
-                    search_wildcard_fields=search_wildcard_fields,
+                    use_wildcard_fields=use_wildcard_fields,
                 )
             except DatastoreTimeoutError as e:
                 abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
@@ -674,16 +674,16 @@ class ExploreWildcardResource(resources.ResourceMixin, Resource):
         Returns:
             JSON with list of matched events.
         """
-        # Inject search_wildcard_fields = True parameters safely in the Flask request
+        # Inject use_wildcard_fields = True parameters safely in the Flask request
         if not request.json:
             request.json = {}
 
-        request.json["search_wildcard_fields"] = True
+        request.json["use_wildcard_fields"] = True
 
         # If a query_filter dictionary was passed, sync flag there too
         query_filter = request.json.get("filter", {})
         if isinstance(query_filter, dict):
-            query_filter["search_wildcard_fields"] = True
+            query_filter["use_wildcard_fields"] = True
             request.json["filter"] = query_filter
 
         # Delegate to ExploreResource for execution and response
