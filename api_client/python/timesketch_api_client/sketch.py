@@ -1031,7 +1031,7 @@ class Sketch(resource.BaseResource):
         max_entries=None,
         file_name="",
         as_object=False,
-        search_wildcard_fields=False,
+        use_wildcard_fields: bool = False,
     ):
         """Explore the sketch.
 
@@ -1057,7 +1057,7 @@ class Sketch(resource.BaseResource):
             as_object (bool): Optional bool that determines whether the
                 function will return a search object back instead of raw
                 results.
-            search_wildcard_fields (bool): Optional bool, if set to True compiles
+            use_wildcard_fields (bool): Optional bool, if set to True compiles
                 the search query using native wildcard fields mapping.
 
         Returns:
@@ -1090,7 +1090,7 @@ class Sketch(resource.BaseResource):
             if not query_filter:
                 query_filter = {}
             if isinstance(query_filter, dict):
-                query_filter["search_wildcard_fields"] = search_wildcard_fields
+                query_filter["use_wildcard_fields"] = use_wildcard_fields
 
             search_obj.from_manual(
                 query_string=query_string,
@@ -1118,7 +1118,8 @@ class Sketch(resource.BaseResource):
         """Explore the sketch with raw wildcard queries (Deprecated).
 
         This method is maintained for backward-compatibility. Newer scripts should
-        use explore(query_string, search_wildcard_fields=True) instead.
+        use explore(query_string, use_wildcard_fields=True) instead.
+        TODO: (issue#3820) Refactor / Remove this method
 
         Args:
             query_string: String representation of the raw wildcard query

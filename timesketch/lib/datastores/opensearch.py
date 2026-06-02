@@ -583,7 +583,7 @@ class OpenSearchDataStore:
         query_dsl: Optional[Dict] = None,
         aggregations: Optional[Dict] = None,
         timeline_ids: Optional[list] = None,
-        search_wildcard_fields: bool = False,
+        use_wildcard_fields: bool = False,
         wildcard_fields: Optional[set] = None,
     ):
         """Build OpenSearch DSL query.
@@ -596,7 +596,7 @@ class OpenSearchDataStore:
             aggregations: Dict of OpenSearch aggregations
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
-            search_wildcard_fields: If True, compiles the query string strictly into
+            use_wildcard_fields: If True, compiles the query string strictly into
                 case-insensitive native wildcard queries.
             wildcard_fields: Optional set of active field names mapped with a
                 wildcard type.
@@ -656,7 +656,7 @@ class OpenSearchDataStore:
                     query_string = ""
 
         if query_string:
-            if search_wildcard_fields:
+            if use_wildcard_fields:
                 wildcard_bool = self._build_wildcard_query_dsl(
                     query_string, wildcard_fields or set()
                 )
@@ -999,7 +999,7 @@ class OpenSearchDataStore:
         return_fields: Optional[list] = None,
         enable_scroll: bool = False,
         timeline_ids: Optional[list] = None,
-        search_wildcard_fields: bool = False,
+        use_wildcard_fields: bool = False,
     ) -> Union[Dict, int]:
         """Executes a search query against OpenSearch indices.
 
@@ -1033,7 +1033,7 @@ class OpenSearchDataStore:
                 retrieving large result sets. Defaults to False.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
-            search_wildcard_fields: If True, compiles the query_string strictly into
+            use_wildcard_fields: If True, compiles the query_string strictly into
                 case-insensitive native wildcard queries. Defaults to False.
 
         Returns:
@@ -1076,7 +1076,7 @@ class OpenSearchDataStore:
             }
 
         wildcard_fields = None
-        if search_wildcard_fields:
+        if use_wildcard_fields:
             wildcard_fields = set(self.get_wildcard_fields(list(indices)))
             if not wildcard_fields:
                 raise ValueError(
@@ -1091,7 +1091,7 @@ class OpenSearchDataStore:
             query_dsl=query_dsl,
             aggregations=aggregations,
             timeline_ids=timeline_ids,
-            search_wildcard_fields=search_wildcard_fields,
+            use_wildcard_fields=use_wildcard_fields,
             wildcard_fields=wildcard_fields,
         )
 

@@ -32,7 +32,7 @@ query_filter: {
   "indices": "_all",
   "order": "asc",
   "chips": [],
-  "search_wildcard_fields": false
+  "use_wildcard_fields": false
 }
 """
 
