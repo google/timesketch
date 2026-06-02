@@ -376,6 +376,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
             )
             ctx.exit(1)
 
+
 @sketch_group.command("create-story", help="Create a new story")
 @click.option("--title", required=True, help="Title of the story.")
 @click.pass_context
