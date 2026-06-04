@@ -137,14 +137,8 @@ class AggregationResource(resources.ResourceMixin, Resource):
         if aggregation.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                f"The sketch ID ({aggregation.sketch_id:d}) does not match with "
-                f"the defined sketch in the aggregation ({sketch.id:d})",
-            )
-
-        if not sketch.has_permission(user=current_user, permission="write"):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "The user does not have write permission on the sketch.",
+                f"The sketch ID ({sketch.id:d}) does not match with "
+                f"the defined sketch in the aggregation ({aggregation.sketch_id:d})",
             )
 
         aggregation.name = form.get("name", "")
