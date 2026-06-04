@@ -1459,6 +1459,16 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 f"sketch ID ({timeline.sketch.id:d})",
             )
 
+        # Check that the supplied search index belongs to the validated timeline
+        # (and therefore to this sketch) to prevent relabeling events on an
+        # arbitrary search index.
+        if timeline.searchindex_id != searchindex.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The search index ID ({searchindex.id:d}) does not match with "
+                f"the timeline search index ID ({timeline.searchindex_id:d})",
+            )
+
         query_dsl = {
             "script": {
                 "source": (

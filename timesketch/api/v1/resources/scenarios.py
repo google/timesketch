@@ -920,6 +920,13 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+        # Check that this question belongs to the sketch
+        if question.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The sketch ID ({question.sketch_id:d}) does not match with "
+                f"the defined sketch in the question ({sketch.id:d})",
+            )
 
         conclusions = InvestigativeQuestionConclusion.query.filter_by(
             investigativequestion=question
@@ -948,6 +955,13 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+        # Check that this question belongs to the sketch
+        if question.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The sketch ID ({question.sketch_id:d}) does not match with "
+                f"the defined sketch in the question ({sketch.id:d})",
+            )
 
         form = request.json
         if not form:
@@ -983,6 +997,7 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
 class QuestionConclusionResource(resources.ResourceMixin, Resource):
     """Resource for investigative question conclusion."""
 
+    @login_required
     def put(self, sketch_id, question_id, conclusion_id):
         """Handles PUT request to the resource.
 
@@ -1003,6 +1018,13 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+        # Check that this question belongs to the sketch
+        if question.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The sketch ID ({question.sketch_id:d}) does not match with "
+                f"the defined sketch in the question ({sketch.id:d})",
+            )
 
         conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
@@ -1041,6 +1063,13 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+        # Check that this question belongs to the sketch
+        if question.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The sketch ID ({question.sketch_id:d}) does not match with "
+                f"the defined sketch in the question ({sketch.id:d})",
+            )
 
         conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
