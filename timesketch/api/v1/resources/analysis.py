@@ -76,7 +76,8 @@ class AnalysisResource(resources.ResourceMixin, Resource):
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
-        # Reject a timeline that belongs to a different sketch (cf. AggregationResource).
+        # Reject a timeline that belongs to a different sketch
+        # (cf. AggregationResource).
         if timeline.sketch_id != sketch.id:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
