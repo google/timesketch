@@ -857,6 +857,8 @@ def import_search_templates(path):
                     for tag in tags:
                         searchtemplate.add_label(tag)
 
+                searchtemplate.grant_permission(permission="read")
+
                 db_session.add(searchtemplate)
                 db_session.commit()
 

@@ -708,6 +708,44 @@ class SearchTemplateResourceTest(BaseTest):
         response = self.client.get("/api/v1/searchtemplates/2/")
         self.assert404(response)
 
+    def test_imported_searchtemplate_resource(self):
+        """Imported search templates are visible through the API."""
+        from timesketch.tsctl import cli
+
+        template_dir = tempfile.mkdtemp()
+        template_path = os.path.join(template_dir, "template.yaml")
+        try:
+            with open(template_path, "w", encoding="utf-8") as file_handle:
+                file_handle.write(
+                    """
+id: "1f48d67e-18e9-4f03-9ec4-44678a95d85a"
+short_name: "failed_logons"
+display_name: "Failed Logon Attempts"
+description: "Detects failed logon attempts"
+query_string: "event_id: 4625"
+query_filter:
+  chips: []
+query_dsl: {}
+tags:
+  - "authentication"
+"""
+                )
+
+            result = self.app.test_cli_runner().invoke(
+                cli, ["import-search-templates", template_dir]
+            )
+            self.assertEqual(result.exit_code, 0)
+
+            self.login()
+            response = self.client.get("/api/v1/searchtemplates/")
+            self.assert200(response)
+            template_names = [
+                template["name"] for template in response.json["objects"][0]
+            ]
+            self.assertIn("Failed Logon Attempts", template_names)
+        finally:
+            shutil.rmtree(template_dir)
+
 
 class ExploreResourceTest(BaseTest):
     """Test ExploreResource."""
