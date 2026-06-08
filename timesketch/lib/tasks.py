@@ -594,13 +594,16 @@ def build_sketch_analysis_pipeline(
         if isinstance(additional_kwargs, dict):
             additional_kwargs = [additional_kwargs]
 
-        kwargs_list = []
-        for _kwargs in additional_kwargs:
-            combined_kwargs = {**base_kwargs, **_kwargs}
-            kwargs_list.append(combined_kwargs)
+        kwargs_list = list(additional_kwargs) if additional_kwargs else []
+
+        if base_kwargs:
+            if isinstance(base_kwargs, list):
+                kwargs_list.extend(base_kwargs)
+            else:
+                kwargs_list.append(base_kwargs)
 
         if not kwargs_list:
-            kwargs_list = [base_kwargs]
+            kwargs_list = [{}]
 
         # Create a hash of the analyzer arguments to compare with later analyzer
         # executions if the analyzer arguments / config changed.
