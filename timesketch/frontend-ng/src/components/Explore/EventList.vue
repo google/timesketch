@@ -88,7 +88,7 @@ limitations under the License.
     </div>
 
     <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
-      <ts-explore-welcome-card></ts-explore-welcome-card>
+      <ts-explore-welcome-card :search-mode="searchMode"></ts-explore-welcome-card>
     </div>
 
     <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError" class="ml-3">
@@ -606,6 +606,10 @@ export default {
       type: Object,
       default: () => {},
     },
+    searchMode: {
+      type: String,
+      default: 'query_string',
+    },
   },
   data() {
     return {
@@ -812,11 +816,11 @@ export default {
       let index = this.expandedRows.findIndex((x) => x._id === row._id)
       if (this.expandedRows.some((event) => event._id === row._id)) {
         if (row.showDetails) {
-          row['showDetails'] = false
+          row.showDetails = false
           this.expandedRows.splice(index, 1)
           this.$set(row, 'showComments', false)
         } else {
-          row['showDetails'] = true
+          row.showDetails = true
           this.expandedRows.splice(index, 1)
           this.expandedRows.push(row)
           return
@@ -827,7 +831,7 @@ export default {
           this.expandedRows.push(row)
         }
       } else {
-        row['showDetails'] = true
+        row.showDetails = true
         this.expandedRows.push(row)
       }
     },
@@ -856,7 +860,7 @@ export default {
         }
         let deltaDays = Math.floor(delta / 60 / 60 / 24)
         if (deltaDays > 0) {
-          prevEvent['deltaDays'] = deltaDays
+          prevEvent.deltaDays = deltaDays
           this.expandedRows.push(prevEvent)
         }
       })
@@ -949,11 +953,11 @@ export default {
 
       // Search history
       if (incognito) {
-        formData['incognito'] = true
+        formData.incognito = true
       }
 
       if (parent) {
-        formData['parent'] = parent
+        formData.parent = parent
       }
 
       if (parent && incognito) {
@@ -961,15 +965,15 @@ export default {
       }
 
       if (this.branchParent) {
-        formData['parent'] = this.branchParent
+        formData.parent = this.branchParent
       }
 
       // Get DFIQ context
-      formData['scenario'] = this.activeContext.scenarioId
-      formData['facet'] = this.activeContext.facetId
-      formData['question'] = this.activeContext.questionId
+      formData.scenario = this.activeContext.scenarioId
+      formData.facet = this.activeContext.facetId
+      formData.question = this.activeContext.questionId
 
-      formData['include_processing_timelines'] = this.settings.showProcessingTimelineEvents
+      formData.include_processing_timelines = this.settings.showProcessingTimelineEvents
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {
@@ -1243,9 +1247,9 @@ export default {
         this.currentQueryString = newQueryRequest.queryString || ''
         this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
         this.currentQueryDsl = newQueryRequest.queryDsl || null
-        let resetPagination = newQueryRequest['resetPagination'] || false
-        let incognito = newQueryRequest['incognito'] || false
-        let parent = newQueryRequest['parent'] || false
+        let resetPagination = newQueryRequest.resetPagination || false
+        let incognito = newQueryRequest.incognito || false
+        let parent = newQueryRequest.parent || false
         // Set additional fields. This is used when loading filter from a saved search.
         if (this.currentQueryFilter.fields) {
           this.selectedFields = this.currentQueryFilter.fields

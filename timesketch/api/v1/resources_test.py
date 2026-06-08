@@ -2628,7 +2628,7 @@ class UserSettingsResourceTest(BaseTest):
         self.app.config["OPENSEARCH_WILDCARD_DEFAULT"] = False
 
         # Save custom settings first via POST
-        data = {"settings": {"defaultSearchMethod": "classic"}}
+        data = {"settings": {"defaultSearchMethod": "query_string"}}
         post_response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -2639,12 +2639,16 @@ class UserSettingsResourceTest(BaseTest):
         # Assert saved preference is successfully returned
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assertEqual(response.json["objects"][0]["defaultSearchMethod"], "classic")
+        self.assertEqual(
+            response.json["objects"][0]["defaultSearchMethod"], "query_string"
+        )
 
     def test_post_settings_update(self):
         """Test POST settings saves and returns updated user settings."""
         self.login()
-        data = {"settings": {"defaultSearchMethod": "classic", "customSetting": "test"}}
+        data = {
+            "settings": {"defaultSearchMethod": "query_string", "customSetting": "test"}
+        }
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -2652,5 +2656,7 @@ class UserSettingsResourceTest(BaseTest):
         )
         self.assert200(response)
         self.assertEqual(len(response.json["objects"]), 1)
-        self.assertEqual(response.json["objects"][0]["defaultSearchMethod"], "classic")
+        self.assertEqual(
+            response.json["objects"][0]["defaultSearchMethod"], "query_string"
+        )
         self.assertEqual(response.json["objects"][0]["customSetting"], "test")
