@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for OpenSearch datastore."""
 
+# pylint: disable=protected-access
+
 from unittest import mock
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import TransportError
@@ -151,4 +153,118 @@ class OpenSearchDataStoreTest(BaseTest):
         )
         self.assertEqual(
             error_container["test_index"]["details"]["SingleEventTooLarge"], 1
+        )
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_get_wildcard_fields(self, mock_client):
+        """Test get_wildcard_fields mapping parser logic."""
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        mock_es = mock_client.return_value
+        ds.client = mock_es
+
+        mock_mappings = {
+            "idx_1": {
+                "mappings": {
+                    "properties": {
+                        "msg": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {"type": "keyword"},
+                                "wildcard": {"type": "wildcard"},
+                            },
+                        },
+                        "xml": {"type": "wildcard"},
+                        "nested_obj": {
+                            "properties": {
+                                "sub_field": {
+                                    "type": "text",
+                                    "fields": {"wildcard": {"type": "wildcard"}},
+                                }
+                            }
+                        },
+                        "non_wildcard": {
+                            "type": "text",
+                            "fields": {"keyword": {"type": "keyword"}},
+                        },
+                    }
+                }
+            }
+        }
+        mock_es.indices.get_mapping.return_value = mock_mappings
+
+        fields = ds.get_wildcard_fields(["idx_1"])
+        self.assertCountEqual(fields, ["msg", "xml", "nested_obj.sub_field"])
+
+        # Test with pre-fetched mappings (should not call mock_es.indices.get_mapping)
+        mock_es.indices.get_mapping.reset_mock()
+        fields_prefetched = ds.get_wildcard_fields(["idx_1"], mappings=mock_mappings)
+        self.assertCountEqual(fields_prefetched, ["msg", "xml", "nested_obj.sub_field"])
+        mock_es.indices.get_mapping.assert_not_called()
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_build_wildcard_query_dsl_global_search(self, mock_client):
+        """Test global wildcard query dsl generation."""
+        mock_es = mock_client.return_value
+        mock_es.info.return_value = {"version": {"number": "7.0.0"}}
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        wildcard_fields = {"msg", "xml"}
+
+        # 1. Simple global term
+        bool_query = ds._build_wildcard_query_dsl("*evil*", wildcard_fields)
+        must_clauses = bool_query["must"]
+        self.assertEqual(len(must_clauses), 1)
+        self.assertEqual(must_clauses[0]["multi_match"]["query"], "*evil*")
+        self.assertEqual(must_clauses[0]["multi_match"]["fields"], ["*.wildcard"])
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_build_wildcard_query_dsl_field_search(self, mock_client):
+        """Test field specific wildcard query dsl generation."""
+        mock_es = mock_client.return_value
+        mock_es.info.return_value = {"version": {"number": "7.0.0"}}
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        wildcard_fields = {"msg", "xml"}
+
+        # Targeted field mapped to wildcard
+        bool_query = ds._build_wildcard_query_dsl("msg:*evil*", wildcard_fields)
+        must_clauses = bool_query["must"]
+        self.assertEqual(len(must_clauses), 1)
+        self.assertEqual(must_clauses[0]["wildcard"]["msg.wildcard"]["value"], "*evil*")
+        self.assertTrue(must_clauses[0]["wildcard"]["msg.wildcard"]["case_insensitive"])
+
+        # Targeted field NOT mapped to wildcard -> parsed as global multi_match instead
+        bool_query = ds._build_wildcard_query_dsl("unknown:*evil*", wildcard_fields)
+        must_clauses = bool_query["must"]
+        self.assertEqual(len(must_clauses), 1)
+        self.assertEqual(must_clauses[0]["multi_match"]["query"], "unknown:*evil*")
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_build_wildcard_query_dsl_operators(self, mock_client):
+        """Test wildcard query dsl boolean logical operators routing."""
+        mock_es = mock_client.return_value
+        mock_es.info.return_value = {"version": {"number": "7.0.0"}}
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        wildcard_fields = {"msg", "xml"}
+
+        # Query: msg:*evil* NOT xml:*test* OR *backdoor*
+        # Evaluated as: (msg:*evil* AND (NOT xml:*test*)) OR *backdoor*
+        query = "msg:*evil* NOT xml:*test* OR *backdoor*"
+        bool_query = ds._build_wildcard_query_dsl(query, wildcard_fields)
+
+        self.assertEqual(len(bool_query["must_not"]), 1)
+        self.assertEqual(
+            bool_query["must_not"][0]["wildcard"]["xml.wildcard"]["value"], "*test*"
+        )
+
+        # Check that we have a nested should block in must for the OR operator
+        self.assertEqual(len(bool_query["must"]), 1)
+        nested_or = bool_query["must"][0]
+        self.assertEqual(nested_or["bool"]["minimum_should_match"], 1)
+        self.assertEqual(len(nested_or["bool"]["should"]), 2)
+
+        self.assertEqual(
+            nested_or["bool"]["should"][0]["wildcard"]["msg.wildcard"]["value"],
+            "*evil*",
+        )
+        self.assertEqual(
+            nested_or["bool"]["should"][1]["multi_match"]["query"], "*backdoor*"
         )
