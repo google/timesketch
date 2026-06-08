@@ -38,6 +38,7 @@ limitations under the License.
               solo
               class="pa-2"
               id="tsSearchInput"
+              autocomplete="off"
               @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
@@ -422,12 +423,16 @@ export default {
         this.triggerScrollTo()
       }
     },
-    setQueryAndFilter: function (searchEvent) {
+    setQueryAndFilter: async function (searchEvent) {
       if (this.$route.name !== 'Explore') {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
       if (searchEvent.queryString) {
         this.currentQueryString = searchEvent.queryString
+      }
+
+      if (!this.currentQueryString && searchEvent.chip) {
+        this.currentQueryString = '*'
       }
 
       // Preserve user defined filter instead of resetting, if it exist.
@@ -456,16 +461,22 @@ export default {
         } else {
           this.search()
         }
+      } else {
+        // Refocus the search input so the user can continue typing
+        await this.$nextTick()
+        if (this.$refs.searchInput) {
+          this.$refs.searchInput.focus()
+        }
       }
     },
 
     search: function (resetPagination = true, incognito = false, parent = false) {
       let queryRequest = {}
-      queryRequest['queryString'] = this.currentQueryString
-      queryRequest['queryFilter'] = this.currentQueryFilter
-      queryRequest['resetPagination'] = resetPagination
-      queryRequest['incognito'] = incognito
-      queryRequest['parent'] = parent
+      queryRequest.queryString = this.currentQueryString
+      queryRequest.queryFilter = this.currentQueryFilter
+      queryRequest.resetPagination = resetPagination
+      queryRequest.incognito = incognito
+      queryRequest.parent = parent
       this.activeQueryRequest = queryRequest
       this.showSearchDropdown = false
     },
