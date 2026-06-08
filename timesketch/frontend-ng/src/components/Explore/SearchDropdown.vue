@@ -120,7 +120,7 @@ limitations under the License.
 
       <v-col v-if="(all.labels && all.labels.length) || (all.tags && all.tags.length)" cols="12" sm="6" md="4" lg="3" xl="2">
         <h5 class="mb-2">Tags</h5>
-        <ts-tags-list :search-query="matches === all ? '' : activeToken"></ts-tags-list>
+        <ts-tags-list :search-query="activeToken"></ts-tags-list>
       </v-col>
     </v-row>
   </v-card>
@@ -160,11 +160,11 @@ export default {
     },
     all() {
       return {
-        fields: this.meta.mappings || [],
+        fields: (this.meta && this.meta.mappings) || [],
         tags: this.tags || [],
         labels: this.filteredMetaLabels || [],
         dataTypes: this.dataTypes || [],
-        savedSearches: this.meta.views || [],
+        savedSearches: (this.meta && this.meta.views) || [],
         timeFilters: this.timeFilters || []
       }
     },
@@ -212,7 +212,7 @@ export default {
         return this.all
       }
 
-      const mappings = this.meta.mappings || []
+      const mappings = (this.meta && this.meta.mappings) || []
       matches.fields = mappings.filter((field) =>
         field.field.toLowerCase().includes(this.activeToken.toLowerCase())
       )
@@ -229,14 +229,11 @@ export default {
         dataType.data_type.toLowerCase().includes(this.activeToken.toLowerCase())
       )
 
-      const views = this.meta.views || []
+      const views = (this.meta && this.meta.views) || []
       matches.savedSearches = views.filter((savedSearch) =>
         savedSearch.name.toLowerCase().includes(this.activeToken.toLowerCase())
       )
-
-      if (!Object.values(matches).filter((arr) => arr.length).length) {
-        return this.all
-      }
+      matches.timeFilters = this.timeFilters || []
 
       return matches
     },
@@ -244,7 +241,7 @@ export default {
   methods: {
     searchForDataType(dataType) {
       let eventData = {}
-      const parts = this.queryString.split(/\s+/)
+      const parts = (this.queryString || '').split(/\s+/)
       parts.pop() // Remove the partial token
       parts.push('data_type:' + '"' + dataType + '"')
       eventData.doSearch = true
@@ -253,7 +250,7 @@ export default {
     },
     searchForField(field) {
       let eventData = {}
-      const parts = this.queryString.split(/\s+/)
+      const parts = (this.queryString || '').split(/\s+/)
       parts.pop() // Remove the partial token
       parts.push(field + ':') // Add the completed field suggestion
       eventData.doSearch = false
