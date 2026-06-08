@@ -379,6 +379,22 @@ class TestGoogleCloudIAP(BaseTest):
             IAP_VALID_AUDIENCE,
         )
 
+    def test_crit_header_raises_jwt_validation_error(self):
+        """Test to validate a JWT with an unknown critical header."""
+        header = create_default_header(IAP_JWT_ALGORITHM, "iap_1234")
+        header["crit"] = ["x-custom-policy"]
+        header["x-custom-policy"] = "require-mfa"
+        test_jwt = create_mock_jwt(
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+            header=header,
+        )
+        with self.assertRaises(JwtValidationError):
+            get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
+
 
 @mock.patch(
     "timesketch.lib.google_auth._fetch_public_keys", mock_fetch_oidc_public_keys

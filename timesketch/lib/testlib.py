@@ -97,7 +97,7 @@ class MockOpenSearchClient:
         self.indices = MockOpenSearchIndices()
 
     def search(
-        self, index, body, size=0, search_type=None
+        self, index, body, size=0, search_type=None, **kwargs
     ):  # pylint: disable=unused-argument
         """Mock a client search.
 
@@ -178,6 +178,8 @@ class MockOpenSearchIndices:
 
 class MockDataStore:
     """A mock implementation of a Datastore."""
+
+    DEFAULT_FLUSH_INTERVAL = 1000
 
     event_dict = {
         "_index": [],

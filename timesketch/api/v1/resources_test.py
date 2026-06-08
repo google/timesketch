@@ -37,7 +37,7 @@ from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
-from timesketch.models.user import User
+from timesketch.models.user import User, Group
 from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1.resources import upload
@@ -142,6 +142,46 @@ class SketchListResourceTest(BaseTest):
         names = {s["name"] for s in response.json["objects"]}
         expected_names = {sketch_name_by_user1, sketch_name_by_user2}
         self.assertSetEqual(names, expected_names)
+
+    def test_sketch_list_no_duplicates(self):
+        """Test that users in multiple shared groups don't see duplicate counts."""
+        # 1. Use user2
+        user = self.user2
+
+        # 2. Create two groups and add the user to both
+        group1 = Group(name="repro_group1", display_name="repro_group1")
+        group2 = Group(name="repro_group2", display_name="repro_group2")
+        db_session.add(group1)
+        db_session.add(group2)
+        db_session.commit()
+
+        user.groups.append(group1)
+        user.groups.append(group2)
+        db_session.add(user)
+        db_session.commit()
+
+        # 3. Create a sketch owned by user1
+        sketch = self._create_sketch(name="Repro Sketch", user=self.user1)
+
+        # 4. Share the sketch with both groups
+        sketch.grant_permission(permission="read", group=group1)
+        sketch.grant_permission(permission="read", group=group2)
+        db_session.add(sketch)
+        db_session.commit()
+
+        # 5. Login as test2
+        self.login(username="test2", password="test")
+
+        # 6. Call the /api/v1/sketches/ endpoint
+        response = self.client.get(self.resource_url, query_string={"scope": "all"})
+
+        # 7. Check total_items
+        total_items = response.json["meta"]["total_items"]
+        objects = response.json["objects"]
+        objects_count = len(objects)
+
+        self.assertEqual(objects_count, 1, "Expected exactly 1 sketch in objects list")
+        self.assertEqual(total_items, 1, "Expected total_items to be exactly 1")
 
     def test_sketch_list_user_scope(self):
         """Authenticated request to get a list of the user's own sketches."""
@@ -840,13 +880,13 @@ class EventAddAttributeResourceTest(BaseTest):
                 {
                     "_id": "1",
                     "_type": "_doc",
-                    "_index": "1",
+                    "_index": self.searchindex.index_name,
                     "attributes": attrs,
                 },
                 {
                     "_id": "2",
                     "_type": "_doc",
-                    "_index": "1",
+                    "_index": self.searchindex.index_name,
                     "attributes": attrs,
                 },
             ]
@@ -855,7 +895,7 @@ class EventAddAttributeResourceTest(BaseTest):
         expected_response = {
             "meta": {
                 "attributes_added": 2,
-                "chunks_per_index": {"1": 1},
+                "chunks_per_index": {self.searchindex.index_name: 1},
                 "error_count": 0,
                 "last_10_errors": [],
                 "events_modified": 2,
@@ -988,14 +1028,16 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     }
                 ]
                 * 1000
             },
         )
-        self.assertEqual({"1": 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 1}, response.json["meta"]["chunks_per_index"]
+        )
 
         # Two chunks when event count is chunk size + 1.
         response = self.client.post(
@@ -1005,16 +1047,25 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     }
                 ]
                 * 1001
             },
         )
-        self.assertEqual({"1": 2}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 2}, response.json["meta"]["chunks_per_index"]
+        )
 
         # Chunk per index with multiple indexes.
+        self._create_timeline(
+            name="Timeline 2",
+            sketch=self.sketch1,
+            searchindex=self.searchindex2,
+            user=self.user1,
+        )
+
         response = self.client.post(
             self.resource_url,
             json={
@@ -1022,19 +1073,22 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     },
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "2",
+                        "_index": self.searchindex2.index_name,
                         "attributes": attrs,
                     },
                 ]
             },
         )
-        self.assertEqual({"1": 1, "2": 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 1, self.searchindex2.index_name: 1},
+            response.json["meta"]["chunks_per_index"],
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_existing_attributes(self):
@@ -1048,7 +1102,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "exists", "attr_value": "yes"}],
                     }
                 ]
@@ -1071,7 +1125,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "_invalid", "attr_value": "yes"}],
                     }
                 ]
@@ -1094,7 +1148,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "message", "attr_value": "yes"}],
                     }
                 ]
@@ -1104,6 +1158,99 @@ class EventAddAttributeResourceTest(BaseTest):
             "Cannot add 'message' for event_id '1', name not allowed.",
             response.json["meta"]["last_10_errors"],
         )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_attributes_forbidden(self):
+        """Test that adding attributes to an event in an index that does not
+        belong to the sketch returns a 403 Forbidden error. This is a security
+        check to prevent modifying events in unauthorized indices.
+        """
+        self.login()
+
+        # searchindex2 is NOT associated with sketch 1 by default.
+        events = {
+            "events": [
+                {
+                    "_id": "1",
+                    "_type": "_doc",
+                    "_index": self.searchindex2.index_name,
+                    "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
+                }
+            ]
+        }
+
+        response = self.client.post(self.resource_url, json=events)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
+
+
+class EventTaggingResourceTest(BaseTest):
+    """Test EventTaggingResource."""
+
+    resource_url = "/api/v1/sketches/1/event/tagging/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_tagging(self):
+        """Test that tagging an event with a valid request succeeds with an
+        HTTP 200 OK response and the correct number of tags applied.
+        """
+        self.login()
+
+        data = {
+            "tag_string": '["foo", "bar"]',
+            "events": [{"_id": "1", "_index": self.searchindex.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+        self.assertEqual(response.json["meta"]["tags_applied"], 2)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_tagging_forbidden(self):
+        """Test that attempting to tag an event in an index not associated with
+        the current sketch returns a 403 Forbidden error.
+        """
+        self.login()
+
+        data = {
+            "tag_string": '["foo"]',
+            "events": [{"_id": "1", "_index": self.searchindex2.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
+
+
+class EventUnTagResourceTest(BaseTest):
+    """Test EventUnTagResource."""
+
+    resource_url = "/api/v1/sketches/1/event/untag/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_untagging(self):
+        """Test untagging events."""
+        self.login()
+
+        data = {
+            "tags_to_remove": ["foo"],
+            "events": [{"_id": "1", "_index": self.searchindex.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_untagging_forbidden(self):
+        """Test that untagging an event in an index that does not belong to the
+        sketch returns 403 Forbidden.
+        """
+        self.login()
+
+        data = {
+            "tags_to_remove": ["foo"],
+            "events": [{"_id": "1", "_index": self.searchindex2.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
 
 
 class EventAnnotationResourceTest(BaseTest):
