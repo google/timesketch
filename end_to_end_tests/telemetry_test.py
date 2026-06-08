@@ -53,7 +53,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
         self.assertGreater(
             len(traces),
             0,
-            "No telemetry traces were found in Jaeger for service 'timesketch'"
+            "No telemetry traces were found in Jaeger for service 'timesketch'",
         )
         print("Telemetry infrastructure E2E connectivity verified successfully!")
 
