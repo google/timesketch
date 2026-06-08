@@ -19,7 +19,7 @@ services:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
       args:
-          UBUNTU_VERSION: ${UBUNTU_VERSION:-24.04}
+          UBUNTU_VERSION: ${UBUNTU_VERSION:-26.04}
           PLASO_PPA_TRACK: ${PLASO_PPA_TRACK:-stable}
     ports:
       - "127.0.0.1:80:80"
@@ -45,7 +45,7 @@ services:
       - TAKE_FILE_OWNERSHIP=1
       - discovery.type=single-node
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+      - "DISABLE_SECURITY_PLUGIN=true"
       - "search.query.max_query_string_length=50000"
     ulimits:
       memlock:
