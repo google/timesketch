@@ -186,6 +186,17 @@ limitations under the License.
                         </td>
                       </tr>
                       <tr>
+                        <td>Search a phrase containing spaces (must be wrapped in quotes)</td>
+                        <td>
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('\&quot;*count: 1*\&quot;')">
+                            <code>"*count: 1*"</code> </a
+                          ><br />
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('message:\&quot;*count: 1*\&quot;')">
+                            <code>message:"*count: 1*"</code>
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
                         <td>Search for values ending with a suffix</td>
                         <td>
                           <a href="#" @click.prevent="emitSetQueryAndFilter('filename:*.exe')">

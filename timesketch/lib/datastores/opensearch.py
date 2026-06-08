@@ -909,7 +909,7 @@ class OpenSearchDataStore:
             field, value = token.split(":", 1)
             if field in wildcard_fields:
                 is_field_search = True
-                clean_value = value.strip('"').strip("'").replace(" ", "?")
+                clean_value = value.strip('"').strip("'")
                 dsl_node = {
                     "wildcard": {
                         f"{field}.wildcard": {
@@ -923,7 +923,7 @@ class OpenSearchDataStore:
 
         # 2. Global search across *.wildcard fields
         if not is_field_search:
-            clean_value = token.strip('"').strip("'").replace(" ", "?")
+            clean_value = token.strip('"').strip("'")
             dsl_node = {
                 "multi_match": {
                     "query": clean_value,
