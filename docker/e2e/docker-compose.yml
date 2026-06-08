@@ -19,7 +19,7 @@ services:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
       args:
-          UBUNTU_VERSION: ${UBUNTU_VERSION:-24.04}
+          UBUNTU_VERSION: ${UBUNTU_VERSION:-26.04}
           PLASO_PPA_TRACK: ${PLASO_PPA_TRACK:-stable}
     ports:
       - "127.0.0.1:80:80"
@@ -32,13 +32,14 @@ services:
       - ../../:/usr/local/src/timesketch/
 
   opensearch:
-    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-2.15.0}
+    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-2.19.5}
     restart: always
     environment:
       - TAKE_FILE_OWNERSHIP=1
       - discovery.type=single-node
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - "search.query.max_query_string_length=50000"
     ulimits:
       memlock:
         soft: -1
