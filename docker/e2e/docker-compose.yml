@@ -15,6 +15,8 @@ services:
       - TIMESKETCH_ADMIN_USER_PASSWORD=admin
       - TIMESKETCH_USER2=test2
       - TIMESKETCH_PASSWORD2=test2
+      - TIMESKETCH_OTEL_MODE=otlp-grpc
+      - TIMESKETCH_OTLP_GRPC_ENDPOINT=otel-collector:4317
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
@@ -58,3 +60,30 @@ services:
   redis:
     image: redis:latest
     restart: always
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.100.0
+    user: "0"
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../../data/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "127.0.0.1:4319:4317"
+      - "127.0.0.1:4320:4318"
+    depends_on:
+      - jaeger
+    profiles:
+      - telemetry
+
+  jaeger:
+    image: jaegertracing/jaeger:2.17.0
+    restart: always
+    command:
+      - "--set"
+      - "receivers.otlp.protocols.grpc.endpoint=0.0.0.0:4317"
+      - "--set"
+      - "receivers.otlp.protocols.http.endpoint=0.0.0.0:4318"
+    ports:
+      - "127.0.0.1:16687:16686"
+    profiles:
+      - telemetry
