@@ -50,7 +50,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
         # 5. Assert that at least one trace has been received by Jaeger
         traces = traces_data.get("data", [])
-        self.assertGreater(
+        self.assertions.assertGreater(
             len(traces),
             0,
             "No telemetry traces were found in Jaeger for service 'timesketch'",
