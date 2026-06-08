@@ -14,6 +14,7 @@
 """End-to-end test for OpenTelemetry connectivity and tracing."""
 
 import time
+
 import requests
 
 from end_to_end_tests import interface
