@@ -15,8 +15,9 @@ services:
       - TIMESKETCH_ADMIN_USER_PASSWORD=admin
       - TIMESKETCH_USER2=test2
       - TIMESKETCH_PASSWORD2=test2
-      - TIMESKETCH_OTEL_MODE=otlp-grpc
-      - TIMESKETCH_OTLP_GRPC_ENDPOINT=otel-collector:4317
+      # To enable telemetry, set TIMESKETCH_OTEL_MODE=otlp-grpc when running E2E tests with '--profile telemetry'
+      - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
+      - TIMESKETCH_OTLP_GRPC_ENDPOINT=${TIMESKETCH_OTLP_GRPC_ENDPOINT:-otel-collector:4317}
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
