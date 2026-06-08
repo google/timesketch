@@ -494,12 +494,12 @@ export default {
 
     search: function (resetPagination = true, incognito = false, parent = false) {
       let queryRequest = {}
-      queryRequest['queryString'] = this.currentQueryString
-      this.currentQueryFilter['use_wildcard_fields'] = (this.searchMode === 'wildcard')
-      queryRequest['queryFilter'] = this.currentQueryFilter
-      queryRequest['resetPagination'] = resetPagination
-      queryRequest['incognito'] = incognito
-      queryRequest['parent'] = parent
+      queryRequest.queryString = this.currentQueryString
+      this.currentQueryFilter.use_wildcard_fields = (this.searchMode === 'wildcard')
+      queryRequest.queryFilter = this.currentQueryFilter
+      queryRequest.resetPagination = resetPagination
+      queryRequest.incognito = incognito
+      queryRequest.parent = parent
       this.activeQueryRequest = queryRequest
       this.showSearchDropdown = false
     },

@@ -214,7 +214,7 @@ export default {
     // Set default settings if no user settings are defined.
     this.settings = {
       ...DEFAULT_SETTINGS,
-      defaultSearchMethod: defaultSearchMethod,
+      defaultSearchMethod,
       ...this.userSettings
     };
     this.saveSettings();
