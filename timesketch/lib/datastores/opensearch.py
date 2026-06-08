@@ -802,7 +802,6 @@ class OpenSearchDataStore:
 
         return query_dsl
 
-    # What is the correct placement in this file for those two functions?
     def get_wildcard_fields(
         self, indices: list[str], mappings: Optional[dict] = None
     ) -> list[str]:
@@ -883,33 +882,88 @@ class OpenSearchDataStore:
 
         return list(wildcard_fields) if wildcard_fields else []
 
+    def _compile_term_to_dsl(self, token: str, wildcard_fields: set) -> dict:
+        """Compiles a single search token into a native OpenSearch query node.
+
+        This method parses a single token. If the token contains a colon ':'
+        and the left-hand side is a recognized wildcard-capable field, it is
+        compiled into a field-specific 'wildcard' query targeting the field's
+        '.wildcard' subfield. Otherwise, the token is compiled into a
+        'multi_match' query that searches across all '*.wildcard' subfields.
+
+        Args:
+            token: The raw search token string (e.g. 'message:*evil*' or
+                '*backdoor*').
+            wildcard_fields: A set of mapped field names that support wildcard
+                matching.
+
+        Returns:
+            A dictionary representing the OpenSearch query node (e.g.
+            a 'wildcard' or 'multi_match' query block).
+        """
+        is_field_search = False
+        dsl_node = None
+
+        # 1. Field-specific search (e.g., message:*example*)
+        if ":" in token and not token.startswith('"'):
+            field, value = token.split(":", 1)
+            if field in wildcard_fields:
+                is_field_search = True
+                clean_value = value.strip('"').strip("'").replace(" ", "?")
+                dsl_node = {
+                    "wildcard": {
+                        f"{field}.wildcard": {
+                            "value": clean_value,
+                            "case_insensitive": True,
+                        }
+                    }
+                }
+            else:
+                raise ValueError(f"Field '{field}' does not support wildcard search.")
+
+        # 2. Global search across *.wildcard fields
+        if not is_field_search:
+            clean_value = token.strip('"').strip("'").replace(" ", "?")
+            dsl_node = {
+                "multi_match": {
+                    "query": clean_value,
+                    "fields": ["*.wildcard"],
+                    "type": "most_fields",
+                }
+            }
+        return dsl_node
+
     def _build_wildcard_query_dsl(
         self, raw_query_string: str, wildcard_fields: set
     ) -> dict:
         """Compiles a raw search query string into a native OpenSearch bool query.
 
-        It tokenizes by whitespace (respecting quotes) and parses basic boolean
-        logical operators (AND, OR, NOT) to direct clauses into the must, should,
-        or must_not arrays. Targeted fields (e.g. message:*rustdesk*) are
-        validated against mapped wildcard fields and compiled to case-insensitive
-        wildcard queries. Global search tokens are compiled using '*.wildcard' to
-        hit all wildcard-capable subfields.
+        This method tokenizes the input query string, inserts implicit 'AND'
+        operators, and uses the Shunting-Yard algorithm to parse the boolean logic
+        while strictly respecting standard operator precedence (NOT > AND > OR)
+        and parenthetical groupings '()'.
+
+        The resulting postfix queue is then compiled into a nested OpenSearch
+        'bool' query tree, utilizing optimizations to flatten adjacent identical
+        logical blocks (like nested 'must' or 'should' clauses).
 
         Args:
-            raw_query_string: String representing the raw user query (e.g.,
-                "*rustdesk* AND message:*test*").
-            wildcard_fields: Set of mapped field names that possess an active
-                '.wildcard' subfield suffix.
+            raw_query_string: The raw query string entered by the user (e.g.
+                'msg:*evil* NOT xml:*test* OR *backdoor*').
+            wildcard_fields: A set of mapped field names that support wildcard
+                matching.
 
         Returns:
-            A dict representing the OpenSearch search query DSL (e.g.
-            {"query": {"bool": ...}}).
+            A dictionary representing the compiled OpenSearch search query DSL
+            with 'must', 'must_not', and/or 'should' arrays.
 
         Raises:
-            ValueError: If no wildcard mappings exist or if a queried field
-                does not support wildcard matching.
+            ValueError: If no wildcard mappings exist, if there is a mismatched
+                parenthesis, or if the query contains unbalanced operands and
+                operators.
         """
         if not raw_query_string:
+
             return {"must": [], "must_not": [], "filter": []}
 
         if not wildcard_fields:
@@ -917,85 +971,138 @@ class OpenSearchDataStore:
                 "No wildcard-capable fields are mapped in the selected timelines."
             )
 
-        # Simple tokenizer: splits by space, keeps text inside quotes "" intact
-        token_pattern = re.compile(r'(?:[^\s"]+|"[^"]*")+')
+        # 1. Tokenize: Splits by space and parentheses, keeping quotes intact.
+        token_pattern = re.compile(r'\(|\)|(?:[^\s"()]+|"[^"]*")+')
         tokens = token_pattern.findall(raw_query_string)
 
-        bool_query = {"must": [], "must_not": [], "filter": []}
-        current_operator = "must"  # Default implicit operator is AND
+        # 2. Insert Implicit ANDs (e.g., "A B" -> "A AND B", "A NOT B" -> "A AND NOT B")
+        def is_operand_like_left(t):
+            return t not in ("AND", "OR", "NOT", "(")
 
-        for token in tokens:
-            # Handle Boolean Operators case-sensitively
-            if token == "AND":
-                current_operator = "must"
-                continue
-            if token == "OR":
-                current_operator = "should"
-                continue
+        def is_operand_like_right(t):
+            return t not in ("AND", "OR", ")")
+
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if i > 0:
+                prev = processed_tokens[-1]
+                if is_operand_like_left(prev) and is_operand_like_right(token):
+                    processed_tokens.append("AND")
+            processed_tokens.append(token)
+
+        # 3. Shunting-Yard Algorithm: Convert Infix to Postfix (RPN)
+        precedence = {"NOT": 3, "AND": 2, "OR": 1}
+        output_queue = []
+        operator_stack = []
+
+        for token in processed_tokens:
+            if token in precedence:
+                while (
+                    operator_stack
+                    and operator_stack[-1] in precedence
+                    and precedence[operator_stack[-1]] >= precedence[token]
+                ):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            elif token == "(":
+                operator_stack.append(token)
+            elif token == ")":
+                while operator_stack and operator_stack[-1] != "(":
+                    output_queue.append(operator_stack.pop())
+                if operator_stack and operator_stack[-1] == "(":
+                    operator_stack.pop()
+                else:
+                    raise ValueError("Mismatched parentheses in query.")
+            else:
+                output_queue.append(token)
+
+        while operator_stack:
+            op = operator_stack.pop()
+            if op in ("(", ")"):
+                raise ValueError("Mismatched parentheses in query.")
+            output_queue.append(op)
+
+        # 4. RPN Evaluator: Build OpenSearch DSL Tree from Postfix Queue
+        dsl_stack = []
+
+        for token in output_queue:
             if token == "NOT":
-                current_operator = "must_not"
-                continue
+                if not dsl_stack:
+                    raise ValueError("Invalid query: NOT operator missing operand.")
+                operand = dsl_stack.pop()
+                dsl_node = {"bool": {"must_not": [operand]}}
+                dsl_stack.append(dsl_node)
 
-            # 1. Field-specific search (e.g., message:*example*)
-            is_field_search = False
-            dsl_node = None
-            if ":" in token and not token.startswith('"'):
-                field, value = token.split(":", 1)
-                if field in wildcard_fields:
-                    is_field_search = True
-                    clean_value = value.strip('"').strip("'").replace(" ", "?")
-                    dsl_node = {
-                        "wildcard": {
-                            f"{field}.wildcard": {
-                                "value": clean_value,
-                                "case_insensitive": True,
-                            }
+            elif token == "AND":
+                if len(dsl_stack) < 2:
+                    raise ValueError("Invalid query: AND operator missing operands.")
+                right = dsl_stack.pop()
+                left = dsl_stack.pop()
+
+                # Flatten nested must clauses to keep the DSL clean
+                must_clauses = []
+                for op in (left, right):
+                    if (
+                        isinstance(op, dict)
+                        and "bool" in op
+                        and "must" in op["bool"]
+                        and len(op["bool"]) == 1
+                    ):
+                        must_clauses.extend(op["bool"]["must"])
+                    else:
+                        must_clauses.append(op)
+
+                dsl_stack.append({"bool": {"must": must_clauses}})
+
+            elif token == "OR":
+                if len(dsl_stack) < 2:
+                    raise ValueError("Invalid query: OR operator missing operands.")
+                right = dsl_stack.pop()
+                left = dsl_stack.pop()
+
+                # Flatten nested should clauses to keep the DSL clean
+                should_clauses = []
+                for op in (left, right):
+                    if (
+                        isinstance(op, dict)
+                        and "bool" in op
+                        and "should" in op["bool"]
+                        and op["bool"].get("minimum_should_match") == 1
+                        and len(op["bool"]) <= 2
+                    ):
+                        should_clauses.extend(op["bool"]["should"])
+                    else:
+                        should_clauses.append(op)
+
+                dsl_stack.append(
+                    {
+                        "bool": {
+                            "should": should_clauses,
+                            "minimum_should_match": 1,
                         }
                     }
+                )
 
-            # 2. Global search across *.wildcard fields
-            if not is_field_search:
-                clean_value = token.strip('"').strip("'").replace(" ", "?")
-                dsl_node = {
-                    "multi_match": {
-                        "query": clean_value,
-                        "fields": ["*.wildcard"],
-                        "type": "most_fields",
-                    }
-                }
+            else:
+                dsl_stack.append(self._compile_term_to_dsl(token, wildcard_fields))
 
-            if dsl_node:
-                if current_operator == "should":
-                    if bool_query["must"]:
-                        left_operand = bool_query["must"].pop()
-                        # Check if the left operand is already a nested should
-                        # block we can extend
-                        if (
-                            isinstance(left_operand, dict)
-                            and "bool" in left_operand
-                            and "should" in left_operand["bool"]
-                            and left_operand["bool"].get("minimum_should_match") == 1
-                        ):
-                            left_operand["bool"]["should"].append(dsl_node)
-                            bool_query["must"].append(left_operand)
-                        else:
-                            nested_or = {
-                                "bool": {
-                                    "should": [left_operand, dsl_node],
-                                    "minimum_should_match": 1,
-                                }
-                            }
-                            bool_query["must"].append(nested_or)
-                    else:
-                        # Symmetrical fallback if OR is first token
-                        bool_query["must"].append(dsl_node)
-                else:
-                    bool_query[current_operator].append(dsl_node)
+        if len(dsl_stack) != 1:
+            raise ValueError("Invalid query: unbalanced operands and operators.")
 
-            # Reset to default AND after processing a term
-            current_operator = "must"
+        # Ensure the top-level node is formatted with must/must_not/filter arrays
+        # to match the rest of the Timesketch codebase's expectations
+        final_node = dsl_stack[0]
+        if isinstance(final_node, dict) and "bool" in final_node:
+            bool_content = final_node["bool"]
+            return {
+                "must": bool_content.get("must", []),
+                "must_not": bool_content.get("must_not", []),
+                "should": bool_content.get("should", []),
+                "filter": bool_content.get("filter", []),
+                "minimum_should_match": bool_content.get("minimum_should_match"),
+            }
 
-        return bool_query
+        return {"must": [final_node], "must_not": [], "filter": []}
 
     # pylint: disable=too-many-arguments
     def search(

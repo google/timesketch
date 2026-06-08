@@ -232,11 +232,14 @@ class OpenSearchDataStoreTest(BaseTest):
         self.assertEqual(must_clauses[0]["wildcard"]["msg.wildcard"]["value"], "*evil*")
         self.assertTrue(must_clauses[0]["wildcard"]["msg.wildcard"]["case_insensitive"])
 
-        # Targeted field NOT mapped to wildcard -> parsed as global multi_match instead
-        bool_query = ds._build_wildcard_query_dsl("unknown:*evil*", wildcard_fields)
-        must_clauses = bool_query["must"]
-        self.assertEqual(len(must_clauses), 1)
-        self.assertEqual(must_clauses[0]["multi_match"]["query"], "unknown:*evil*")
+        # Targeted field NOT mapped to wildcard -> raises ValueError
+        with self.assertRaises(ValueError) as cm:
+            ds._build_wildcard_query_dsl("unknown:*evil*", wildcard_fields)
+
+        self.assertIn(
+            "Field 'unknown' does not support wildcard search",
+            str(cm.exception),
+        )
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_operators(self, mock_client):
@@ -247,27 +250,84 @@ class OpenSearchDataStoreTest(BaseTest):
         wildcard_fields = {"msg", "xml"}
 
         # Query: msg:*evil* NOT xml:*test* OR *backdoor*
-        # Evaluated as: (msg:*evil* AND (NOT xml:*test*)) OR *backdoor*
+        # Correctly evaluated as: (msg:*evil* AND (NOT xml:*test*)) OR *backdoor*
         query = "msg:*evil* NOT xml:*test* OR *backdoor*"
         bool_query = ds._build_wildcard_query_dsl(query, wildcard_fields)
 
-        self.assertEqual(len(bool_query["must_not"]), 1)
-        self.assertEqual(
-            bool_query["must_not"][0]["wildcard"]["xml.wildcard"]["value"], "*test*"
-        )
+        # The top-level query must be an OR (should)
+        self.assertEqual(len(bool_query["should"]), 2)
+        self.assertEqual(bool_query["minimum_should_match"], 1)
 
-        # Check that we have a nested should block in must for the OR operator
-        self.assertEqual(len(bool_query["must"]), 1)
-        nested_or = bool_query["must"][0]
-        self.assertEqual(nested_or["bool"]["minimum_should_match"], 1)
-        self.assertEqual(len(nested_or["bool"]["should"]), 2)
+        # Left branch of OR: msg:*evil* AND NOT xml:*test*
+        left_and = bool_query["should"][0]
+        self.assertEqual(len(left_and["bool"]["must"]), 2)
 
         self.assertEqual(
-            nested_or["bool"]["should"][0]["wildcard"]["msg.wildcard"]["value"],
+            left_and["bool"]["must"][0]["wildcard"]["msg.wildcard"]["value"],
             "*evil*",
         )
+
+        # NOT xml:*test*
+        not_test = left_and["bool"]["must"][1]
         self.assertEqual(
-            nested_or["bool"]["should"][1]["multi_match"]["query"], "*backdoor*"
+            not_test["bool"]["must_not"][0]["wildcard"]["xml.wildcard"]["value"],
+            "*test*",
+        )
+
+        # Right branch of OR: *backdoor*
+        right_or = bool_query["should"][1]
+        self.assertEqual(right_or["multi_match"]["query"], "*backdoor*")
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_build_wildcard_query_dsl_parentheses(self, mock_client):
+        """Test wildcard query dsl parenthetical grouping routing."""
+        mock_es = mock_client.return_value
+        mock_es.info.return_value = {"version": {"number": "7.0.0"}}
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        wildcard_fields = {"msg", "xml"}
+
+        # Query: msg:*evil* (xml:*test* OR *backdoor*)
+        # Evaluated as: msg:*evil* AND (xml:*test* OR *backdoor*)
+        query = "msg:*evil* (xml:*test* OR *backdoor*)"
+        bool_query = ds._build_wildcard_query_dsl(query, wildcard_fields)
+
+        # Top-level should be a must (AND)
+        self.assertEqual(len(bool_query["must"]), 2)
+
+        # Left operand: msg:*evil*
+        self.assertEqual(
+            bool_query["must"][0]["wildcard"]["msg.wildcard"]["value"],
+            "*evil*",
+        )
+
+        # Right operand: (xml:*test* OR *backdoor*)
+        right_or = bool_query["must"][1]
+        self.assertEqual(len(right_or["bool"]["should"]), 2)
+        self.assertEqual(right_or["bool"]["minimum_should_match"], 1)
+        self.assertEqual(
+            right_or["bool"]["should"][0]["wildcard"]["xml.wildcard"]["value"],
+            "*test*",
+        )
+        self.assertEqual(
+            right_or["bool"]["should"][1]["multi_match"]["query"],
+            "*backdoor*",
+        )
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_build_wildcard_query_dsl_invalid_field(self, mock_client):
+        """Test that querying an unsupported wildcard field raises ValueError."""
+        mock_es = mock_client.return_value
+        mock_es.info.return_value = {"version": {"number": "7.0.0"}}
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        wildcard_fields = {"msg", "xml"}
+
+        query = "invalid_field:*evil*"
+        with self.assertRaises(ValueError) as cm:
+            ds._build_wildcard_query_dsl(query, wildcard_fields)
+
+        self.assertIn(
+            "Field 'invalid_field' does not support wildcard search",
+            str(cm.exception),
         )
 
     @mock.patch("timesketch.lib.datastores.opensearch.current_app")
