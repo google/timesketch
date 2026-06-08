@@ -560,7 +560,7 @@ export default {
         order: 'asc',
         chips: [startChip],
       }
-      let queryRequest = { queryString: '*', queryFilter: queryFilter }
+      let queryRequest = { queryString: '*', queryFilter }
       return queryRequest
     },
     updateContextQuery(duration) {

@@ -84,6 +84,7 @@ limitations under the License.
     <div v-if="searchError && !searchInProgress" class="ml-3">
       <ts-search-error-card
         :error-text="searchError"
+        :search-mode="searchMode"
       ></ts-search-error-card>
     </div>
 

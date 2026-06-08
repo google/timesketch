@@ -203,7 +203,7 @@ export default {
     document.title = 'Timesketch'
     ApiClient.getScenarioTemplates()
       .then((response) => {
-        this.scenarioTemplates = response.data['objects']
+        this.scenarioTemplates = response.data.objects
       })
       .catch((e) => {})
   },
