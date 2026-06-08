@@ -131,7 +131,7 @@ limitations under the License.
 
       <!-- Settings dialog -->
       <v-dialog v-model="showSettingsDialog" width="700px">
-        <ts-settings-dialog></ts-settings-dialog>
+        <ts-settings-dialog v-if="showSettingsDialog"></ts-settings-dialog>
       </v-dialog>
 
     </v-main>

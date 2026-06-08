@@ -333,6 +333,9 @@ export default {
       return now.toISOString().slice(0, 19)
     },
     isWildcardSupported() {
+      if (!this.$store.state.meta) {
+        return false
+      }
       return !!this.$store.state.meta.supports_wildcard
     },
   },

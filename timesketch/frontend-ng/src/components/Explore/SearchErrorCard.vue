@@ -31,6 +31,7 @@ limitations under the License.
           <p>
             <b>{{ errorText }}</b>
           </p>
+          <!-- TODO: Update these suggestions dynamically based on the active search mode (e.g. wildcard search vs QS search). -->
           <p>Suggestions:</p>
           <ul>
             <li>Avoid leading wildcards like <code>*searchterm*</code></li>
