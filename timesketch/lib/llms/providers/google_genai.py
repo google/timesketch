@@ -112,6 +112,8 @@ class GoogleGenAI(interface.LLMProvider):
                     span.set_attribute("llm.response_length", len(response.text))
 
             except errors.APIError as e:
+                span.record_exception(e)
+                span.set_status(telemetry.get_status_code("ERROR"), description=str(e))
                 error_msg = f"{e.code} {e.status}: {getattr(e, 'message', 'N/A')}"
                 logger.error("API error during content generation: %s", str(e))
                 raise ValueError(f"Error generating content: {error_msg}") from e
