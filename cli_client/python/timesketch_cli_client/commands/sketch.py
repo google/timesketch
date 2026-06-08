@@ -374,7 +374,6 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
             click.echo(
                 f"Failed to delete sketch {sketch.id} '{sketch.name}'. Error: {e}"
             )
-            return
 
 
 @sketch_group.command("create-story", help="Create a new story")
