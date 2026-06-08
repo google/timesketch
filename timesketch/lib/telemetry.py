@@ -151,6 +151,8 @@ try:
         """
 
         def filter(self, record):
+            record.trace_id = "0" * 32
+            record.span_id = "0" * 16
             if not HAS_OTEL:
                 return True
 
@@ -158,9 +160,6 @@ try:
             if span_context.is_valid:
                 record.trace_id = trace.format_trace_id(span_context.trace_id)
                 record.span_id = trace.format_span_id(span_context.span_id)
-            else:
-                record.trace_id = "0" * 32
-                record.span_id = "0" * 16
             return True
 
 except ImportError:
