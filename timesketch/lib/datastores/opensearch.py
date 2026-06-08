@@ -27,6 +27,7 @@ from uuid import uuid4
 from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
+from packaging import version
 from opensearchpy import OpenSearch
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
@@ -288,6 +289,16 @@ class OpenSearchDataStore:
         self.import_events = []
         self.import_events_size = 0
         self.version = self.client.info().get("version").get("number")
+
+        # Verify minimum OpenSearch version support (>= 2.19.5)
+        # Skip check if we are running unit tests
+        if isinstance(self.version, str) and not current_app.config.get("TESTING"):
+            if version.parse(self.version) < version.parse("2.19.5"):
+                raise errors.UnsupportedDatastoreVersionError(
+                    f"Connected OpenSearch version {self.version} is not supported. "
+                    f"Timesketch requires OpenSearch version >= 2.19.5."
+                )
+
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
         )

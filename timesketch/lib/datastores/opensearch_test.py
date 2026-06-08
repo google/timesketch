@@ -22,6 +22,7 @@ from opensearchpy.exceptions import TransportError
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.errors import DatastoreTimeoutError
+from timesketch.lib.errors import UnsupportedDatastoreVersionError
 
 
 class OpenSearchDataStoreTest(BaseTest):
@@ -268,3 +269,31 @@ class OpenSearchDataStoreTest(BaseTest):
         self.assertEqual(
             nested_or["bool"]["should"][1]["multi_match"]["query"], "*backdoor*"
         )
+
+    @mock.patch("timesketch.lib.datastores.opensearch.current_app")
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_unsupported_version(self, mock_client, mock_app):
+        """Test that initializing OpenSearchDataStore raises error on
+        unsupported version."""
+        mock_app.config = {"TESTING": False}
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.info.return_value = {"version": {"number": "2.15.0"}}
+
+        with self.assertRaises(UnsupportedDatastoreVersionError) as cm:
+
+            OpenSearchDataStore(host="127.0.0.1", port=9200)
+
+        self.assertIn(
+            "Connected OpenSearch version 2.15.0 is not supported", str(cm.exception)
+        )
+
+    @mock.patch("timesketch.lib.datastores.opensearch.current_app")
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_supported_version(self, mock_client, mock_app):
+        """Test that initializing OpenSearchDataStore succeeds on supported version."""
+        mock_app.config = {"TESTING": False}
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.info.return_value = {"version": {"number": "2.19.5"}}
+
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        self.assertEqual(ds.version, "2.19.5")

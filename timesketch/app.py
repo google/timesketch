@@ -152,28 +152,6 @@ def create_app(
     )
     db = init_db()
 
-    # Verify minimum OpenSearch version support (>= 2.19.5)
-    if not app.config.get("TESTING"):
-        try:
-            # Import here to avoid circular dependency during initial import phase
-            # pylint: disable=import-outside-toplevel
-            from timesketch.lib.datastores.opensearch import OpenSearchDataStore
-            from packaging import version
-
-            with app.app_context():
-                datastore_client = OpenSearchDataStore()
-                server_version_str = datastore_client.version
-                if version.parse(server_version_str) < version.parse("2.19.5"):
-                    sys.stderr.write(
-                        f"ERROR: Connected OpenSearch version "
-                        f"{server_version_str} is not supported. Timesketch "
-                        f"requires OpenSearch version >= 2.19.5.\n"
-                    )
-                    sys.exit(1)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            # Log the error but do not abort if datastore is unavailable
-            sys.stderr.write(f"WARNING: OpenSearch version check failed: {e}\n")
-
     # Alembic migration support:
     # http://alembic.zzzcomputing.com/en/latest/
     migrate = Migrate()
