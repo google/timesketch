@@ -52,8 +52,6 @@ def get_config_parameter(ctx: click.Context, name: str) -> None:
         ctx.exit(1)
 
 
-
-
 @set_group.command("sketch")
 @click.argument("sketch_id")
 @click.pass_context
@@ -72,8 +70,6 @@ def set_sketch(ctx: click.Context, sketch_id: str) -> None:
     else:
         ctx.obj.config_assistant.set_config("sketch", "")
     ctx.obj.config_assistant.save_config()
-
-
 
 
 def _set_output_format(ctx: click.Context, output_format: str) -> None:

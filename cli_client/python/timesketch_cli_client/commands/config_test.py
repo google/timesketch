@@ -77,7 +77,6 @@ class ConfigTest(unittest.TestCase):
         self.assertNotEqual(result.exit_code, 0)
         self.assertIn("Sketch ID must be an integer", result.output)
 
-
     @mock.patch("requests.Session", api_test_lib.mock_session)
     def test_get_sketch(self):
         """Test the 'config get sketch' command."""
@@ -121,5 +120,3 @@ class ConfigTest(unittest.TestCase):
         result = runner.invoke(config_group, ["get", "output"], obj=ctx)
         self.assertNotEqual(result.exit_code, 0)
         self.assertIn("No such configuration parameter: output_format", result.output)
-
-
