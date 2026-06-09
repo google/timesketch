@@ -205,5 +205,5 @@ class SearchTest(unittest.TestCase):
             parsed = json.loads(result.output)
             self.assertEqual(len(parsed), 2)
             self.assertEqual(parsed[0]["message"], "event1")
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
             self.fail("Output was not valid JSON")
