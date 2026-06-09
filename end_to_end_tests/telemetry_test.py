@@ -13,6 +13,7 @@
 # limitations under the License.
 """End-to-end test for OpenTelemetry connectivity and tracing."""
 
+import os
 import time
 
 import requests
@@ -28,29 +29,35 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
     def test_telemetry_connectivity(self):
         """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
-        # 1. Check if Jaeger API is reachable. If not, skip gracefully.
+        # 1. Check if Jaeger API is reachable.
         jaeger_api_url = "http://jaeger:16686/api"
         try:
             response = requests.get(f"{jaeger_api_url}/services", timeout=5)
             response.raise_for_status()
-        except requests.exceptions.RequestException:
-            print("Jaeger is not reachable. Telemetry profile is not active. Skipping.")
-            return
+        except requests.exceptions.RequestException as e:
+            self.assertions.fail(
+                f"Jaeger is not reachable at {jaeger_api_url}: {e}"
+            )
 
         # 2. Trigger a simple API request to generate some telemetry
         self.api.list_sketches()
 
-        # 3. Wait for the asynchronously buffered spans to flush to the collector
-        time.sleep(5)
-
-        # 4. Query Jaeger's REST API for traces of the default 'timesketch' service
+        # 3. Poll Jaeger API until a trace is received or timeout (30 seconds) is hit
         query_url = f"{jaeger_api_url}/traces?service=timesketch"
-        response = requests.get(query_url, timeout=5)
-        response.raise_for_status()
-        traces_data = response.json()
+        traces = []
+        for _ in range(30):
+            try:
+                response = requests.get(query_url, timeout=5)
+                response.raise_for_status()
+                traces_data = response.json()
+                traces = traces_data.get("data", [])
+                if traces:
+                    break
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(1)
 
-        # 5. Assert that at least one trace has been received by Jaeger
-        traces = traces_data.get("data", [])
+        # 4. Assert that at least one trace has been received by Jaeger
         self.assertions.assertGreater(
             len(traces),
             0,
@@ -59,4 +66,5 @@ class TelemetryTest(interface.BaseEndToEndTest):
         print("Telemetry infrastructure E2E connectivity verified successfully!")
 
 
-manager.EndToEndTestManager.register_test(TelemetryTest)
+if os.environ.get("TIMESKETCH_OTEL_MODE", "").lower().startswith("otlp-"):
+    manager.EndToEndTestManager.register_test(TelemetryTest)
