@@ -30,21 +30,53 @@ def set_group():
     """Set configuration parameters."""
 
 
+@config_group.command("get")
+@click.argument("name")
+@click.pass_context
+def get_config_parameter(ctx: click.Context, name: str) -> None:
+    """Get the value of a configuration parameter.
+
+    Args:
+        ctx: Click CLI context object.
+        name: Name of the configuration parameter to get.
+    """
+    try:
+        # Normalize name for output format settings
+        if name in ("output", "output-format"):
+            name = "output_format"
+
+        value = ctx.obj.config_assistant.get_config(name)
+        click.echo(value)
+    except KeyError:
+        click.echo(f"No such configuration parameter: {name}")
+        ctx.exit(1)
+
+
+
+
 @set_group.command("sketch")
 @click.argument("sketch_id")
 @click.pass_context
-def set_sketch(ctx, sketch_id):
+def set_sketch(ctx: click.Context, sketch_id: str) -> None:
     """Set the active sketch.
 
     Args:
         ctx: Click CLI context object.
         sketch_id: ID of the sketch to save to config.
     """
-    ctx.obj.config_assistant.set_config("sketch", sketch_id)
+    if sketch_id:
+        if not sketch_id.isdigit():
+            click.echo("Error: Sketch ID must be an integer.")
+            sys.exit(1)
+        ctx.obj.config_assistant.set_config("sketch", int(sketch_id))
+    else:
+        ctx.obj.config_assistant.set_config("sketch", "")
     ctx.obj.config_assistant.save_config()
 
 
-def _set_output_format(ctx, output_format):
+
+
+def _set_output_format(ctx: click.Context, output_format: str) -> None:
     """Sets the default output format in the configuration.
 
     Args:
@@ -63,7 +95,7 @@ def _set_output_format(ctx, output_format):
 @set_group.command("output")
 @click.argument("output_format")
 @click.pass_context
-def set_output_format(ctx, output_format):
+def set_output_format(ctx: click.Context, output_format: str) -> None:
     """Set the output format.
 
     Args:
@@ -76,7 +108,7 @@ def set_output_format(ctx, output_format):
 @set_group.command("output-format")
 @click.argument("output_format")
 @click.pass_context
-def set_output_format_alias(ctx, output_format):
+def set_output_format_alias(ctx: click.Context, output_format: str) -> None:
     """Set the output format.
 
     Args:

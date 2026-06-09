@@ -90,6 +90,20 @@ For backward compatibility, setting the format using `output` is also supported:
 timesketch config set output csv
 ```
 
+#### Viewing configuration values
+
+You can retrieve the currently configured values using the `get` command:
+
+```
+timesketch config get sketch
+```
+
+Or for the output format (both `output` and `output-format` are supported as aliases to fetch the setting):
+
+```
+timesketch config get output-format
+```
+
 The output format can also be set in CLI with the following flag:
 
 ```
