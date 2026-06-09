@@ -30,7 +30,14 @@ services:
       - opensearch
       - postgres
       - redis
-    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
     volumes:
       - ../../:/usr/local/src/timesketch/
 
@@ -50,6 +57,11 @@ services:
       nofile:
         soft: 65536
         hard: 65536
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
+      interval: 10s
+      timeout: 60s
+      retries: 5
 
   postgres:
     image: postgres
@@ -57,11 +69,20 @@ services:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timesketch -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:latest
     restart: always
-
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   otel-collector:
     image: otel/opentelemetry-collector:0.100.0
     user: "0"
@@ -75,7 +96,6 @@ services:
       - jaeger
     profiles:
       - telemetry
-
   jaeger:
     image: jaegertracing/jaeger:2.17.0
     restart: always

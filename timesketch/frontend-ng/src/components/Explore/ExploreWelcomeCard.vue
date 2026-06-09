@@ -19,6 +19,7 @@ limitations under the License.
     :show-tags="showTags"
     :show-data-types="showDataTypes"
     :show-saved-searches="showSavedSearches"
+    :search-mode="searchMode"
   >
     <template v-slot:header>
       <div class="pa-4 pb-0">
@@ -46,6 +47,10 @@ export default {
     inDialog: {
       type: Boolean,
       default: false,
+    },
+    searchMode: {
+      type: String,
+      default: 'query_string',
     },
   },
   components: {
