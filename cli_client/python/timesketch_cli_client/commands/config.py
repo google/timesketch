@@ -44,11 +44,8 @@ def set_sketch(ctx, sketch_id):
     ctx.obj.config_assistant.save_config()
 
 
-@set_group.command("output")
-@click.argument("output_format")
-@click.pass_context
-def set_output_format(ctx, output_format):
-    """Set the output format.
+def _set_output_format(ctx, output_format):
+    """Sets the default output format in the configuration.
 
     Args:
         ctx: Click CLI context object.
@@ -61,3 +58,30 @@ def set_output_format(ctx, output_format):
 
     ctx.obj.config_assistant.set_config("output_format", output_format)
     ctx.obj.config_assistant.save_config()
+
+
+@set_group.command("output")
+@click.argument("output_format")
+@click.pass_context
+def set_output_format(ctx, output_format):
+    """Set the output format.
+
+    Args:
+        ctx: Click CLI context object.
+        output_format: Format to use for output text.
+    """
+    _set_output_format(ctx, output_format)
+
+
+@set_group.command("output-format")
+@click.argument("output_format")
+@click.pass_context
+def set_output_format_alias(ctx, output_format):
+    """Set the output format.
+
+    Args:
+        ctx: Click CLI context object.
+        output_format: Format to use for output text.
+    """
+    _set_output_format(ctx, output_format)
+

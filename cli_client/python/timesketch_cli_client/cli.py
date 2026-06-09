@@ -121,13 +121,13 @@ class TimesketchCli(object):
         """
         if self.output_format_from_flag:
             output_format = self.output_format_from_flag
-            self.config_assistant.set_config("output", output_format)
+            self.config_assistant.set_config("output_format", output_format)
             self.config_assistant.save_config()
             return output_format
         try:
-            output_format = self.config_assistant.get_config("output")
+            output_format = self.config_assistant.get_config("output_format")
         except KeyError:  # in case value does not exist in the config file
-            self.config_assistant.set_config("output", DEFAULT_OUTPUT_FORMAT)
+            self.config_assistant.set_config("output_format", DEFAULT_OUTPUT_FORMAT)
             self.config_assistant.save_config()
             output_format = DEFAULT_OUTPUT_FORMAT
         return output_format
