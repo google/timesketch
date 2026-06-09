@@ -49,6 +49,9 @@ class SystemSettingsResource(Resource):
                 "LLM_LOG_ANALYZER_DEFAULT_PROMPT",
                 "Perform a forensics investigation on the provided logs.",
             ),
+            "OPENSEARCH_WILDCARD_DEFAULT": current_app.config.get(
+                "OPENSEARCH_WILDCARD_DEFAULT", False
+            ),
         }
 
         return jsonify(result)

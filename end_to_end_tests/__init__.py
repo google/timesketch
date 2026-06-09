@@ -31,4 +31,5 @@ from . import timeline_deletion_test
 from . import tsctl_test
 
 from . import export_sketch_test
+from . import wildcard_query_test
 from . import status_race_test
