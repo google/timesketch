@@ -175,7 +175,7 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
                 f.write(
                     "[timesketch]\n"
                     "host_uri = http://127.0.0.1:80\n"
-                    "username = admin\n"
+                    "username = test\n"
                     "auth_mode = userpass\n"
                     "verify = False\n"
                 )
@@ -186,7 +186,7 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             # Run sketch list first, overriding output format to text, and providing the password.
             # This logs in, caches the token, and lists the sketches.
             result = self.runner.invoke(
-                cli, ["--output-format", "text", "sketch", "list"], input="admin\n"
+                cli, ["--output-format", "text", "sketch", "list"], input="test\n"
             )
             self.assertions.assertEqual(
                 result.exit_code,
