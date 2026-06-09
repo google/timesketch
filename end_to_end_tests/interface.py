@@ -289,12 +289,16 @@ class BaseEndToEndTest(object):
         for test_name, test_func in self._get_test_methods():
             self._counter["tests"] += 1
             print("Running test: {0:s} ...".format(test_name), end="", flush=True)
+            start_time = time.monotonic()
             try:
                 test_func()
             except Exception:  # pylint: disable=broad-except
+                duration = time.monotonic() - start_time
+                print("[FAILED] ({0:.2f}s)".format(duration))
                 # TODO: Change to logging module instead of prints
                 print(traceback.format_exc())
                 self._counter["errors"] += 1
                 continue
-            print("[OK]")
+            duration = time.monotonic() - start_time
+            print("[OK] ({0:.2f}s)".format(duration))
         return self._counter
