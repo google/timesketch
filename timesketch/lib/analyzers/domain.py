@@ -21,7 +21,7 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
         "domains as well as mark known CDNs"
     )
 
-    DEPENDENCIES = frozenset()
+    DEPENDENCIES = frozenset(["feature_extraction"])
 
     def run(self):
         """Entry point for the analyzer.

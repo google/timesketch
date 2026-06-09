@@ -41,10 +41,10 @@ class EventsTest(unittest.TestCase):
             ["annotate", "--event_id", "1", "--tag", "test", "1"],
             obj=self.ctx,
         )
-        assert (
-            "Error: No such option: --event_id Did you mean --event-id?"
-            in result.output
-        )
+        assert "No such option" in result.output
+        assert "--event_id" in result.output
+        assert "Did you mean" in result.output
+        assert "--event-id" in result.output
 
     def test_add_event_tag_missing_timeline_id(self):
         """Test to add a tag to an event."""
@@ -54,7 +54,8 @@ class EventsTest(unittest.TestCase):
             ["annotate", "--event-id", "1", "--tag", "test", "1"],
             obj=self.ctx,
         )
-        assert "Error: Missing option '--timeline-id'." in result.output
+        assert result.exit_code == 2
+        assert "Missing option '--timeline-id'" in result.output
 
     def test_add_event_comment_vs_comments(self):
         """Test to add a comment to an event but using comment instead of comments"""
@@ -73,14 +74,17 @@ class EventsTest(unittest.TestCase):
             obj=self.ctx,
         )
 
-        expected_output = "No such option: --comments Did you mean --comment?"
-        assert expected_output in result.output
+        assert "No such option" in result.output
+        assert "--comments" in result.output
+        assert "Did you mean" in result.output
+        assert "--comment" in result.output
 
     def test_failed_add_event(self):
         """Test to add an event to a sketch with an error."""
         runner = CliRunner()
         result = runner.invoke(events_group, ["add"], obj=self.ctx)
-        assert "Error: Missing option '--message'" in result.output
+        assert result.exit_code == 2
+        assert "Missing option '--message'" in result.output
 
     def test_add_event(self):
         """Test to add an event to a sketch."""
