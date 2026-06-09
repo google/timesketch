@@ -76,9 +76,15 @@ From now on, every invocation of the command will use the sketch you configured.
 
 #### Output format
 
-You can set the default output format. Choose between `CSV, Tabular and Plain text` output.
+You can set the default output format. Choose between `json, text, tabular, csv` output.
 
 Example:
+
+```
+timesketch config set output-format csv
+```
+
+For backward compatibility, setting the format using `output` is also supported:
 
 ```
 timesketch config set output csv
