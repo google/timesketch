@@ -183,18 +183,18 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             # Import the main cli entrypoint
             from timesketch_cli_client.cli import cli
 
-            # Test setting output format to text first so sketch list succeeds
-            result = self.runner.invoke(cli, ["config", "set", "output-format", "text"])
-            self.assertions.assertEqual(result.exit_code, 0)
-
-            # Test login and list sketch (first time prompts for password)
-            result = self.runner.invoke(cli, ["sketch", "list"], input="admin\n")
+            # Run sketch list first, overriding output format to text, and providing the password.
+            # This logs in, caches the token, and lists the sketches.
+            result = self.runner.invoke(
+                cli, ["--output-format", "text", "sketch", "list"], input="admin\n"
+            )
             self.assertions.assertEqual(
                 result.exit_code,
                 0,
                 f"CLI command failed. Output: {result.output}",
             )
             self.assertions.assertIn("cli_client_e2e_test", result.output)
+
 
             # Test config set output-format json
             result = self.runner.invoke(cli, ["config", "set", "output-format", "json"])
