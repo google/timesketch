@@ -12,7 +12,7 @@
         <link rel="prev" href="../upgrade/">
       
       
-        <link rel="next" href="../troubleshooting/">
+        <link rel="next" href="../index-mappings/">
       
       
         
@@ -1165,6 +1165,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index-mappings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index Mappings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2579,6 +2607,8 @@ Therefore a design <a href="change">https://github.com/google/timesketch/issues/
 <p>With a decent OpenSearch deployment you can have hundreds of millions events across many many investigations without issues.</p>
 <p><a href="https://edward-cernera.medium.com/deploy-a-multi-node-elasticsearch-instance-with-docker-compose-ef63625f246e">This article</a> will give you a good start to scale the OpenSearch cluster. Be careful to not expose your Cluster to systems other then the Timesketch node(s).</p>
 <p>The config and credentials to the OpenSearch cluster are stored in https://github.com/google/timesketch/blob/master/data/timesketch.conf. If those values are changed, the Timesketch Instance needs to be restarted.</p>
+<p>For details on how to tune field mappings and handle schema-level limitations
+(like <code>ignore_above</code>), refer to the <a href="/guides/admin/index-mappings/">Index Mappings</a> guide.</p>
 <h3 id="celery-workers">Celery workers</h3>
 <p>If Celery workers take to long to process, more resources for the host running the workers might a be a first step to eliminate that bottleneck.</p>
 <h3 id="multi-node-setup">Multi node setup</h3>
