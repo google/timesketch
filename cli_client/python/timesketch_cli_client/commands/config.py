@@ -65,7 +65,7 @@ def set_sketch(ctx: click.Context, sketch_id: str) -> None:
     if sketch_id:
         if not sketch_id.isdigit():
             click.echo("Error: Sketch ID must be an integer.")
-            sys.exit(1)
+            ctx.exit(1)
         ctx.obj.config_assistant.set_config("sketch", int(sketch_id))
     else:
         ctx.obj.config_assistant.set_config("sketch", "")
