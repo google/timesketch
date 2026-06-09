@@ -1,5 +1,6 @@
 services:
   timesketch:
+    image: e2e-timesketch:latest
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
