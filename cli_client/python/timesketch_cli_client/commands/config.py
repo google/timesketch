@@ -84,4 +84,3 @@ def set_output_format_alias(ctx, output_format):
         output_format: Format to use for output text.
     """
     _set_output_format(ctx, output_format)
-

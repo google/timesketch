@@ -200,10 +200,10 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         # If the output format is json, the result output should be valid JSON
         import json
+
         try:
             parsed = json.loads(result.output)
             self.assertEqual(len(parsed), 2)
             self.assertEqual(parsed[0]["message"], "event1")
         except json.JSONDecodeError:
             self.fail("Output was not valid JSON")
-

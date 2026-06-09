@@ -43,7 +43,9 @@ class ConfigTest(unittest.TestCase):
     def test_set_output_format(self):
         """Test the 'config set output-format' command."""
         runner = CliRunner()
-        result = runner.invoke(config_group, ["set", "output-format", "csv"], obj=self.ctx)
+        result = runner.invoke(
+            config_group, ["set", "output-format", "csv"], obj=self.ctx
+        )
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(self.ctx.config_assistant.get_config("output_format"), "csv")
 
@@ -51,6 +53,8 @@ class ConfigTest(unittest.TestCase):
     def test_set_output_invalid(self):
         """Test the 'config set output' command with invalid format."""
         runner = CliRunner()
-        result = runner.invoke(config_group, ["set", "output", "invalid_format"], obj=self.ctx)
+        result = runner.invoke(
+            config_group, ["set", "output", "invalid_format"], obj=self.ctx
+        )
         self.assertNotEqual(result.exit_code, 0)
         self.assertIn("Unsupported format", result.output)

@@ -93,4 +93,3 @@ def get_cli_context_json_output():
         return TimesketchCli(
             api_client=api_client, sketch_from_flag=1, conf_file=fw.name
         )
-
