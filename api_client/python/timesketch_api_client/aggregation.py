@@ -84,8 +84,7 @@ class Aggregation(resource.SketchResource):
             for key, value in iter(entry.items()):
                 if not isinstance(value, dict):
                     continue
-                for bucket in self._get_aggregation_buckets(value, name=key):
-                    yield bucket
+                yield from self._get_aggregation_buckets(value, name=key)
 
     def _run_aggregator(
         self, aggregator_name, parameters, search_id=None, chart_type=None

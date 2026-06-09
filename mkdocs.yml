@@ -33,6 +33,7 @@ nav:
       - Install: guides/admin/install.md
       - Upgrade: guides/admin/upgrade.md
       - Scaling and limits: guides/admin/scaling-and-limits.md
+      - Index Mappings: guides/admin/index-mappings.md
       - Troubleshooting: guides/admin/troubleshooting.md
       - Admin CLI: guides/admin/admin-cli.md
       - Context Links: guides/admin/context-links.md

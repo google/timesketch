@@ -502,6 +502,15 @@ def get_version():
 
     print(f"Timesketch version: {version_string}")
 
+    # Dynamically fetch OpenSearch server/cluster version
+    try:
+        datastore = OpenSearchDataStore()
+        client_info = datastore.client.info()
+        opensearch_version = client_info.get("version", {}).get("number", "Unknown")
+        print(f"OpenSearch version: {opensearch_version}")
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"OpenSearch version: Unreachable (Error: {e})")
+
 
 @cli.command(name="drop-db")
 def drop_db():
@@ -675,6 +684,100 @@ def list_sketches(
     print(f"{output_type}:")
     for sketch in sketches_to_display:
         print(f"{sketch.id} '{sketch.name}' (status: {sketch.get_status.status})")
+
+
+@cli.command(name="show-mappings")
+@click.option(
+    "--sketch-id",
+    "-s",
+    type=int,
+    required=True,
+    help="Sketch ID to show mappings for.",
+)
+def show_mappings(sketch_id: int):
+    """Show OpenSearch index mappings for all timelines in a sketch."""
+    sketch = Sketch.get_by_id(sketch_id)
+    if not sketch:
+        print(f"Error: Sketch {sketch_id} does not exist.")
+        return
+
+    if not sketch.timelines:
+        print(f"Sketch {sketch_id} '{sketch.name}' has no active timelines.")
+        return
+
+    print(f"Sketch ID: {sketch.id} | Name: '{sketch.name}'")
+    print("-" * 60)
+
+    # Initialize OpenSearch datastore client
+    try:
+        datastore = OpenSearchDataStore()
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Error: Unable to initialize datastore client: {e}")
+        return
+
+    # Collect all unique physical index names from timelines list
+    unique_indices = {
+        t.searchindex.index_name for t in sketch.timelines if t.searchindex
+    }
+    if not unique_indices:
+        print(f"Sketch {sketch_id} '{sketch.name}' has no physical search indices.")
+        return
+
+    # Retrieve all mappings in a single batch request
+    try:
+        mappings_data = datastore.client.indices.get_mapping(index=list(unique_indices))
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Error: Failed to retrieve mapping metadata: {e}")
+        return
+
+    if not isinstance(mappings_data, dict):
+        print("Error: OpenSearch client returned an invalid mappings response format.")
+        return
+
+    for timeline in sketch.timelines:
+        if not timeline.searchindex:
+            continue
+        si = timeline.searchindex
+        print(f"Timeline: '{timeline.name}' (ID: {timeline.id})")
+        print(f"SearchIndex DB: '{si.name}' | Physical Index: '{si.index_name}'")
+
+        # Safely extract specific index properties from pre-cached memory
+        properties = (
+            mappings_data.get(si.index_name, {}).get("mappings", {}).get("properties")
+        )
+        if not isinstance(properties, dict):
+            # Handle properties nested under primary document type key
+            properties = next(
+                iter(mappings_data.get(si.index_name, {}).get("mappings", {}).values()),
+                {},
+            ).get("properties")
+
+        if not isinstance(properties, dict) or not properties:
+            print("  (No mapping properties found inside this index)")
+            print("-" * 60)
+            continue
+
+        print("  Active Field Mappings properties tree:")
+        # Sort properties keys for clean listing
+        for field_name in sorted(properties.keys()):
+            field_def = properties[field_name]
+            if not isinstance(field_def, dict):
+                continue
+            field_type = field_def.get("type", "unknown")
+            subfields = field_def.get("fields", {})
+
+            subfields_str = ""
+            if isinstance(subfields, dict) and subfields:
+                subfields_list = []
+                for key, sub_def in subfields.items():
+                    if isinstance(sub_def, dict):
+                        sub_type = sub_def.get("type", "unknown")
+                        subfields_list.append(f".{key} (type: {sub_type})")
+                subfields_str = f" | Subfields: {', '.join(subfields_list)}"
+
+            print(f"    - {field_name:<20} | Type: {field_type:<8}{subfields_str}")
+
+        print("-" * 60)
 
 
 @cli.command(name="list-groups")
