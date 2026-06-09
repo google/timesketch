@@ -15,32 +15,65 @@ limitations under the License.
 -->
 <template>
   <v-card outlined min-height="550" style="overflow: hidden">
-    <v-row>
-      <v-col v-if="matches.savedSearches.length" cols="3">
-        <h5 class="mt-3 ml-4">Saved searches</h5>
+    <v-row class="pa-4">
+      <v-col v-if="all.fields && all.fields.length" cols="12" sm="6" md="4" lg="3" xl="2">
+        <h5 class="mb-2">Fields</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
-          <v-list-item
-            v-for="savedSearch in matches.savedSearches"
-            :key="savedSearch.id"
-            v-on:click="$emit('setActiveView', savedSearch)"
-            style="font-size: 0.9em"
-          >
-            <v-list-item-content>
-              {{ savedSearch.name }}
+          <template v-if="matches.fields && matches.fields.length">
+            <v-list-item
+              v-for="field in matches.fields"
+              :key="field.field"
+              v-on:click="searchForField(field.field)"
+              style="font-size: 0.9em"
+            >
+              <v-list-item-content>
+                <span>
+                  {{ field.field }}
+                  <span class="text--secondary font-weight-light" style="font-size: 0.8em">
+                    ({{ field.type }})
+                  </span>
+                </span>
+              </v-list-item-content>
+            </v-list-item>
+          </template>
+          <v-list-item v-else>
+            <v-list-item-content class="text--secondary font-italic font-weight-light">
+              No matching fields
             </v-list-item-content>
           </v-list-item>
         </v-list>
       </v-col>
-      <v-divider vertical></v-divider>
 
-      <v-col v-if="matches.timeFilters.length" cols="3">
-      <h5 class="mt-3 ml-4">Last time filters</h5>
+      <v-col v-if="all.savedSearches && all.savedSearches.length" cols="12" sm="6" md="4" lg="3" xl="2">
+        <h5 class="mb-2">Saved searches</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
-          <template
-            v-for="timeFilter in matches.timeFilters.slice(0, MAX_TIMELINE_ELEMENTS)"
-          >
+          <template v-if="matches.savedSearches && matches.savedSearches.length">
+            <v-list-item
+              v-for="savedSearch in matches.savedSearches"
+              :key="savedSearch.id"
+              v-on:click="$emit('setActiveView', savedSearch)"
+              style="font-size: 0.9em"
+            >
+              <v-list-item-content>
+                {{ savedSearch.name }}
+              </v-list-item-content>
+            </v-list-item>
+          </template>
+          <v-list-item v-else>
+            <v-list-item-content class="text--secondary font-italic font-weight-light">
+              No matching saved searches
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-col>
+
+      <v-col v-if="all.timeFilters && all.timeFilters.length" cols="12" sm="6" md="4" lg="3" xl="2">
+        <h5 class="mb-2">Last time filters</h5>
+        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
+          <template v-if="matches.timeFilters && matches.timeFilters.length">
             <v-list-item
               style="font-size: 0.9em"
+              v-for="timeFilter in matches.timeFilters.slice(0, MAX_TIMELINE_ELEMENTS)"
               :key="timeFilter.value"
               v-on:click="setTimeFilter(timeFilter)"
             >
@@ -49,35 +82,45 @@ limitations under the License.
               </v-list-item-content>
             </v-list-item>
           </template>
-        </v-list>
-      </v-col>
-      <v-divider vertical></v-divider>
-
-      <v-col cols="3">
-        <h5 class="mt-3 ml-4">Data types</h5>
-        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
-          <v-list-item
-            v-for="dataType in matches.dataTypes"
-            :key="dataType.data_type"
-            v-on:click="searchForDataType(dataType.data_type)"
-            style="font-size: 0.9em"
-          >
-            <v-list-item-content>
-              <span
-                >{{ dataType.data_type }}
-                <span class="font-weight-bold" style="font-size: 0.8em"
-                  >({{ dataType.count | compactNumber }})</span
-                ></span
-              >
+          <v-list-item v-else>
+            <v-list-item-content class="text--secondary font-italic font-weight-light">
+              No matching time filters
             </v-list-item-content>
           </v-list-item>
         </v-list>
       </v-col>
-      <v-divider vertical></v-divider>
 
-      <v-col v-if="matches.labels.length || matches.tags.length" cols="3">
-        <h5 class="mt-3 ml-5">Tags</h5>
-        <ts-tags-list></ts-tags-list>
+      <v-col v-if="all.dataTypes && all.dataTypes.length" cols="12" sm="6" md="4" lg="3" xl="2">
+        <h5 class="mb-2">Data types</h5>
+        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
+          <template v-if="matches.dataTypes && matches.dataTypes.length">
+            <v-list-item
+              v-for="dataType in matches.dataTypes"
+              :key="dataType.data_type"
+              v-on:click="searchForDataType(dataType.data_type)"
+              style="font-size: 0.9em"
+            >
+              <v-list-item-content>
+                <span
+                  >{{ dataType.data_type }}
+                  <span class="font-weight-bold" style="font-size: 0.8em"
+                    >({{ dataType.count | compactNumber }})</span
+                  ></span
+                >
+              </v-list-item-content>
+            </v-list-item>
+          </template>
+          <v-list-item v-else>
+            <v-list-item-content class="text--secondary font-italic font-weight-light">
+              No matching data types
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-col>
+
+      <v-col v-if="(all.labels && all.labels.length) || (all.tags && all.tags.length)" cols="12" sm="6" md="4" lg="3" xl="2">
+        <h5 class="mb-2">Tags</h5>
+        <ts-tags-list :search-query="activeToken"></ts-tags-list>
       </v-col>
     </v-row>
   </v-card>
@@ -90,7 +133,7 @@ export default {
   components: {
     TsTagsList,
   },
-  props: ['selectedLabels', 'queryString'],
+  props: ['selectedLabels', 'queryString', 'searchMode'],
   computed: {
     sketch() {
       return this.$store.state.sketch
@@ -108,18 +151,28 @@ export default {
       return this.$store.state.dataTypes
     },
     filteredMetaLabels() {
+      if (!this.meta || !this.meta.filter_labels) {
+        return []
+      }
       return this.meta.filter_labels.filter(
         (label) => !label.label.startsWith('__ts_fact')
       );
     },
+    filteredFields() {
+      const fields = (this.meta && this.meta.mappings) || []
+      if (this.searchMode === 'wildcard') {
+        return fields.filter(({ type }) => type === 'text')
+      }
+      return fields
+    },
     all() {
       return {
-        fields: this.meta.mappings,
-        tags: this.tags,
-        labels: this.filteredMetaLabels,
-        dataTypes: this.dataTypes,
-        savedSearches: this.meta.views,
-        timeFilters: this.timeFilters
+        fields: this.filteredFields,
+        tags: this.tags || [],
+        labels: this.filteredMetaLabels || [],
+        dataTypes: this.dataTypes || [],
+        savedSearches: (this.meta && this.meta.views) || [],
+        timeFilters: this.timeFilters || []
       }
     },
     timeFilters() {
@@ -128,52 +181,85 @@ export default {
     scrollbarTheme() {
       return this.$vuetify.theme.dark ? 'dark' : 'light'
     },
+    activeToken() {
+      if (!this.queryString) {
+        return ''
+      }
+
+      // Disable autocomplete if the user is typing inside an open quote
+      const quoteCount = (this.queryString.match(/"/g) || []).length
+      if (quoteCount % 2 !== 0) {
+        return ''
+      }
+
+      const parts = this.queryString.split(/\s+/)
+      if (!parts.length) {
+        return ''
+      }
+      const lastToken = parts[parts.length - 1]
+
+      // If the last token contains a colon, we are typing a field value (e.g. 'field:val' or 'field:')
+      // We don't want to autocomplete field names/tags in this state.
+      if (lastToken.includes(':')) {
+        return ''
+      }
+
+      // If the last token is a boolean operator, reset to show all suggestions.
+      const upperToken = lastToken.toUpperCase()
+      if (upperToken === 'AND' || upperToken === 'OR' || upperToken === 'NOT') {
+        return ''
+      }
+
+      return lastToken
+    },
     matches() {
       let matches = {}
 
-      if (!this.queryString) {
+      if (!this.activeToken) {
         return this.all
       }
 
-      matches.fields = this.meta.mappings.filter((field) =>
-        field.field.toLowerCase().includes(this.queryString.toLowerCase())
-      )
-      matches.tags = this.tags.filter((tag) => tag.tag.toLowerCase().includes(this.queryString.toLowerCase()))
-      matches.labels = this.filteredMetaLabels.filter((label) =>
-        label.label.toLowerCase().includes(this.queryString.toLowerCase())
-      )
-      matches.dataTypes = this.dataTypes.filter((dataType) =>
-        dataType.data_type.toLowerCase().includes(this.queryString.toLowerCase())
-      )
-      matches.savedSearches = this.meta.views.filter((savedSearch) =>
-        savedSearch.name.toLowerCase().includes(this.queryString.toLowerCase())
-      )
+      matches.fields = this.filteredFields.filter(({ field }) => this.containsActiveToken(field))
 
-      if (!Object.values(matches).filter((arr) => arr.length).length) {
-        return this.all
-      }
+      const tags = this.tags || []
+      matches.tags = tags.filter(({ tag }) => this.containsActiveToken(tag))
+
+      const labels = this.filteredMetaLabels || []
+      matches.labels = labels.filter(({ label }) => this.containsActiveToken(label))
+
+      const dataTypes = this.dataTypes || []
+      matches.dataTypes = dataTypes.filter(({ data_type: dataType }) => this.containsActiveToken(dataType))
+
+      const views = (this.meta && this.meta.views) || []
+      matches.savedSearches = views.filter(({ name }) => this.containsActiveToken(name))
+      matches.timeFilters = this.timeFilters || []
 
       return matches
     },
   },
   methods: {
+    containsActiveToken(str) {
+      if (!str) {
+        return false
+      }
+      return str.toLowerCase().includes(this.activeToken.toLowerCase())
+    },
     searchForDataType(dataType) {
       let eventData = {}
+      const parts = (this.queryString || '').split(/\s+/)
+      parts.pop() // Remove the partial token
+      parts.push(`data_type:"${dataType}"`)
       eventData.doSearch = true
-      eventData.queryString = 'data_type:' + '"' + dataType + '"'
+      eventData.queryString = parts.join(' ')
       this.$emit('setQueryAndFilter', eventData)
     },
     searchForField(field) {
       let eventData = {}
-      let separator = ''
-      if (this.queryString !== '') {
-        separator = this.queryString + ' '
-      }
-      if (!this.queryString.includes(' ')) {
-        separator = ''
-      }
+      const parts = (this.queryString || '').split(/\s+/)
+      parts.pop() // Remove the partial token
+      parts.push(field + ':') // Add the completed field suggestion
       eventData.doSearch = false
-      eventData.queryString = separator + field + ':'
+      eventData.queryString = parts.join(' ')
       this.$emit('setQueryAndFilter', eventData)
     },
     setTimeFilter(timeFilter) {
