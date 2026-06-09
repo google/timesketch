@@ -195,7 +195,6 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             )
             self.assertions.assertIn("cli_client_e2e_test", result.output)
 
-
             # Test config set output-format json
             result = self.runner.invoke(cli, ["config", "set", "output-format", "json"])
             self.assertions.assertEqual(result.exit_code, 0)
@@ -214,7 +213,6 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             self.assertions.assertEqual(result.exit_code, 0)
             self.assertions.assertEqual(result.output.strip(), "42")
 
-
         finally:
             if os.path.exists(rc_path):
                 os.remove(rc_path)
@@ -225,7 +223,6 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
                 os.remove(token_path)
             if token_existed:
                 os.rename(f"{token_path}.bak", token_path)
-
 
 
 # Register the new test class with the test manager
