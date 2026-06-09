@@ -133,7 +133,7 @@ export default {
   components: {
     TsTagsList,
   },
-  props: ['selectedLabels', 'queryString'],
+  props: ['selectedLabels', 'queryString', 'searchMode'],
   computed: {
     sketch() {
       return this.$store.state.sketch
@@ -158,9 +158,16 @@ export default {
         (label) => !label.label.startsWith('__ts_fact')
       );
     },
+    filteredFields() {
+      const fields = (this.meta && this.meta.mappings) || []
+      if (this.searchMode === 'wildcard') {
+        return fields.filter(({ type }) => type === 'text')
+      }
+      return fields
+    },
     all() {
       return {
-        fields: (this.meta && this.meta.mappings) || [],
+        fields: this.filteredFields,
         tags: this.tags || [],
         labels: this.filteredMetaLabels || [],
         dataTypes: this.dataTypes || [],
@@ -212,8 +219,7 @@ export default {
         return this.all
       }
 
-      const mappings = (this.meta && this.meta.mappings) || []
-      matches.fields = mappings.filter(({ field }) => this.containsActiveToken(field))
+      matches.fields = this.filteredFields.filter(({ field }) => this.containsActiveToken(field))
 
       const tags = this.tags || []
       matches.tags = tags.filter(({ tag }) => this.containsActiveToken(tag))
@@ -222,7 +228,7 @@ export default {
       matches.labels = labels.filter(({ label }) => this.containsActiveToken(label))
 
       const dataTypes = this.dataTypes || []
-      matches.dataTypes = dataTypes.filter(({ data_type }) => this.containsActiveToken(data_type))
+      matches.dataTypes = dataTypes.filter(({ data_type: dataType }) => this.containsActiveToken(dataType))
 
       const views = (this.meta && this.meta.views) || []
       matches.savedSearches = views.filter(({ name }) => this.containsActiveToken(name))

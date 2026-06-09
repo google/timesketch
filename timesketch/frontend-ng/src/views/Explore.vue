@@ -20,7 +20,7 @@ limitations under the License.
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-card class="d-flex align-start mb-1 overflow-hidden" outlined>
+      <v-card class="d-flex align-start mb-1" outlined>
         <ts-search-mode-toggle v-model="searchMode"></ts-search-mode-toggle>
         <v-sheet class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
@@ -57,6 +57,7 @@ limitations under the License.
             v-click-outside="onClickOutside"
             :selected-labels="selectedLabels"
             :query-string="currentQueryString"
+            :search-mode="searchMode"
             @setActiveView="searchView"
             @addChip="addChip"
             @updateLabelChips="updateLabelChips()"
