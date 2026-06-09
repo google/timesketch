@@ -48,7 +48,7 @@ def get_config_parameter(ctx: click.Context, name: str) -> None:
         value = ctx.obj.config_assistant.get_config(name)
         click.echo(value)
     except KeyError as e:
-        click.echo(f"No such configuration parameter: {name}")
+        click.echo(f"No such configuration parameter: {name} (error: {e})")
         ctx.exit(1)
 
 

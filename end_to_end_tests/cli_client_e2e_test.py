@@ -156,6 +156,77 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             )
             self.assertions.assertTrue(os.path.exists(filename_full))
 
+    def test_cli_integration(self):
+        """Tests the full CLI tool integration against the E2E server."""
+        home_path = os.path.expanduser("~")
+        rc_path = os.path.join(home_path, ".timesketchrc")
+        token_path = os.path.join(home_path, ".timesketch.token")
+
+        rc_existed = os.path.exists(rc_path)
+        if rc_existed:
+            os.rename(rc_path, f"{rc_path}.bak")
+
+        token_existed = os.path.exists(token_path)
+        if token_existed:
+            os.rename(token_path, f"{token_path}.bak")
+
+        try:
+            with open(rc_path, "w") as f:
+                f.write(
+                    "[timesketch]\n"
+                    "host_uri = http://127.0.0.1:80\n"
+                    "username = admin\n"
+                    "auth_mode = userpass\n"
+                    "verify = False\n"
+                )
+
+            # Import the main cli entrypoint
+            from timesketch_cli_client.cli import cli
+
+            # Test setting output format to text first so sketch list succeeds
+            result = self.runner.invoke(cli, ["config", "set", "output-format", "text"])
+            self.assertions.assertEqual(result.exit_code, 0)
+
+            # Test login and list sketch (first time prompts for password)
+            result = self.runner.invoke(cli, ["sketch", "list"], input="admin\n")
+            self.assertions.assertEqual(
+                result.exit_code,
+                0,
+                f"CLI command failed. Output: {result.output}",
+            )
+            self.assertions.assertIn("cli_client_e2e_test", result.output)
+
+            # Test config set output-format json
+            result = self.runner.invoke(cli, ["config", "set", "output-format", "json"])
+            self.assertions.assertEqual(result.exit_code, 0)
+
+            # Test config get output-format
+            result = self.runner.invoke(cli, ["config", "get", "output-format"])
+            self.assertions.assertEqual(result.exit_code, 0)
+            self.assertions.assertEqual(result.output.strip(), "json")
+
+            # Test config set sketch
+            result = self.runner.invoke(cli, ["config", "set", "sketch", "42"])
+            self.assertions.assertEqual(result.exit_code, 0)
+
+            # Test config get sketch
+            result = self.runner.invoke(cli, ["config", "get", "sketch"])
+            self.assertions.assertEqual(result.exit_code, 0)
+            self.assertions.assertEqual(result.output.strip(), "42")
+
+
+        finally:
+            if os.path.exists(rc_path):
+                os.remove(rc_path)
+            if rc_existed:
+                os.rename(f"{rc_path}.bak", rc_path)
+
+            if os.path.exists(token_path):
+                os.remove(token_path)
+            if token_existed:
+                os.rename(f"{token_path}.bak", token_path)
+
+
 
 # Register the new test class with the test manager
 manager.EndToEndTestManager.register_test(CliClientE2ETest)

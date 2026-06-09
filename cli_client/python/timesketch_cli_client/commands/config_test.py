@@ -89,12 +89,15 @@ class ConfigTest(unittest.TestCase):
     def test_get_sketch_missing(self):
         """Test 'config get sketch' when sketch is missing in config."""
         ctx = test_lib.get_cli_context_no_output()
-        # Remove sketch from config dict to simulate it missing
-        del ctx.config_assistant._config["sketch"]
         runner = CliRunner()
-        result = runner.invoke(config_group, ["get", "sketch"], obj=ctx)
+        with mock.patch.object(
+            ctx.config_assistant, "get_config", side_effect=KeyError("sketch")
+        ):
+            result = runner.invoke(config_group, ["get", "sketch"], obj=ctx)
         self.assertNotEqual(result.exit_code, 0)
-        self.assertIn("No such configuration parameter: sketch", result.output)
+        self.assertIn(
+            "No such configuration parameter: sketch (error: 'sketch')", result.output
+        )
 
     @mock.patch("requests.Session", api_test_lib.mock_session)
     def test_get_output(self):
@@ -119,4 +122,7 @@ class ConfigTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(config_group, ["get", "output"], obj=ctx)
         self.assertNotEqual(result.exit_code, 0)
-        self.assertIn("No such configuration parameter: output_format", result.output)
+        self.assertIn(
+            "No such configuration parameter: output_format (error: 'output_format')",
+            result.output,
+        )
