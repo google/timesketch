@@ -213,37 +213,36 @@ export default {
       }
 
       const mappings = (this.meta && this.meta.mappings) || []
-      matches.fields = mappings.filter((field) =>
-        field.field.toLowerCase().includes(this.activeToken.toLowerCase())
-      )
+      matches.fields = mappings.filter(({ field }) => this.containsActiveToken(field))
+
       const tags = this.tags || []
-      matches.tags = tags.filter((tag) => tag.tag.toLowerCase().includes(this.activeToken.toLowerCase()))
+      matches.tags = tags.filter(({ tag }) => this.containsActiveToken(tag))
 
       const labels = this.filteredMetaLabels || []
-      matches.labels = labels.filter((label) =>
-        label.label.toLowerCase().includes(this.activeToken.toLowerCase())
-      )
+      matches.labels = labels.filter(({ label }) => this.containsActiveToken(label))
 
       const dataTypes = this.dataTypes || []
-      matches.dataTypes = dataTypes.filter((dataType) =>
-        dataType.data_type.toLowerCase().includes(this.activeToken.toLowerCase())
-      )
+      matches.dataTypes = dataTypes.filter(({ data_type }) => this.containsActiveToken(data_type))
 
       const views = (this.meta && this.meta.views) || []
-      matches.savedSearches = views.filter((savedSearch) =>
-        savedSearch.name.toLowerCase().includes(this.activeToken.toLowerCase())
-      )
+      matches.savedSearches = views.filter(({ name }) => this.containsActiveToken(name))
       matches.timeFilters = this.timeFilters || []
 
       return matches
     },
   },
   methods: {
+    containsActiveToken(str) {
+      if (!str) {
+        return false
+      }
+      return str.toLowerCase().includes(this.activeToken.toLowerCase())
+    },
     searchForDataType(dataType) {
       let eventData = {}
       const parts = (this.queryString || '').split(/\s+/)
       parts.pop() // Remove the partial token
-      parts.push('data_type:' + '"' + dataType + '"')
+      parts.push(`data_type:"${dataType}"`)
       eventData.doSearch = true
       eventData.queryString = parts.join(' ')
       this.$emit('setQueryAndFilter', eventData)
