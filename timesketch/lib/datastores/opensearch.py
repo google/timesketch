@@ -27,6 +27,7 @@ from uuid import uuid4
 from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
+from packaging import version
 from opensearchpy import OpenSearch
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
@@ -288,6 +289,16 @@ class OpenSearchDataStore:
         self.import_events = []
         self.import_events_size = 0
         self.version = self.client.info().get("version").get("number")
+
+        # Verify minimum OpenSearch version support (>= 2.19.5)
+        # Skip check if we are running unit tests
+        if isinstance(self.version, str) and not current_app.config.get("TESTING"):
+            if version.parse(self.version) < version.parse("2.19.5"):
+                raise errors.UnsupportedDatastoreVersionError(
+                    f"Connected OpenSearch version {self.version} is not supported. "
+                    f"Timesketch requires OpenSearch version >= 2.19.5."
+                )
+
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
         )
@@ -583,6 +594,8 @@ class OpenSearchDataStore:
         query_dsl: Optional[Dict] = None,
         aggregations: Optional[Dict] = None,
         timeline_ids: Optional[list] = None,
+        use_wildcard_fields: bool = False,
+        wildcard_fields: Optional[set] = None,
     ):
         """Build OpenSearch DSL query.
 
@@ -594,6 +607,10 @@ class OpenSearchDataStore:
             aggregations: Dict of OpenSearch aggregations
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
+            use_wildcard_fields: If True, compiles the query string strictly into
+                case-insensitive native wildcard queries.
+            wildcard_fields: Optional set of active field names mapped with a
+                wildcard type.
 
         Returns:
             OpenSearch DSL query as a dictionary
@@ -650,9 +667,15 @@ class OpenSearchDataStore:
                     query_string = ""
 
         if query_string:
-            query_dsl["query"]["bool"]["must"].append(
-                {"query_string": {"query": query_string, "default_operator": "AND"}}
-            )
+            if use_wildcard_fields:
+                wildcard_bool = self._build_wildcard_query_dsl(
+                    query_string, wildcard_fields or set()
+                )
+                query_dsl["query"]["bool"]["must"].append({"bool": wildcard_bool})
+            else:
+                query_dsl["query"]["bool"]["must"].append(
+                    {"query_string": {"query": query_string, "default_operator": "AND"}}
+                )
 
         if special_char_query:
             query_dsl["query"]["bool"]["must"].append(special_char_query)
@@ -710,9 +733,9 @@ class OpenSearchDataStore:
                         continue
                     datetime_ranges["bool"]["should"].append(range_filter(start, end))
 
-            label_filter = self._build_labels_query(sketch_id, labels)
-            must_filters.append(label_filter)
-            must_filters.append(datetime_ranges)
+                label_filter = self._build_labels_query(sketch_id, labels)
+                must_filters.append(label_filter)
+                must_filters.append(datetime_ranges)
 
         # Pagination
         if query_filter.get("from", None):
@@ -779,6 +802,308 @@ class OpenSearchDataStore:
 
         return query_dsl
 
+    def get_wildcard_fields(
+        self, indices: list[str], mappings: Optional[dict] = None
+    ) -> list[str]:
+        """Gets a list of all fields mapped to a wildcard subfield.
+
+        Args:
+            indices (list): List of active index names to inspect.
+            mappings (dict): Optional pre-fetched OpenSearch mappings.
+
+        Returns:
+            list: A list of field names (e.g. ['message']) that support
+                wildcard searches.
+        """
+        if not indices:
+            return []
+
+        if mappings is None:
+            try:
+                mappings = self.client.indices.get_mapping(index=indices)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                os_logger.warning(
+                    "Failed to query index mappings in get_wildcard_fields: %s", e
+                )
+                return []
+
+        if not isinstance(mappings, dict):
+            return []
+
+        def recurse_properties(props, fields_set, prefix=""):
+            for key, val in props.items():
+                if not isinstance(val, dict):
+                    continue
+                field_name = f"{prefix}{key}"
+                # Direct wildcard type check
+                if val.get("type") == "wildcard":
+                    fields_set.add(field_name)
+                    continue
+                # Check subfields
+                subfields = val.get("fields", {})
+                if isinstance(subfields, dict):
+                    for sub_val in subfields.values():
+                        if (
+                            isinstance(sub_val, dict)
+                            and sub_val.get("type") == "wildcard"
+                        ):
+                            fields_set.add(field_name)
+                            break
+                # Recurse nested objects
+                nested_props = val.get("properties")
+                if isinstance(nested_props, dict):
+                    recurse_properties(
+                        nested_props, fields_set, prefix=f"{field_name}."
+                    )
+
+        # Extract field mapping properties across indices
+        wildcard_fields = None
+
+        for index_name in indices:
+            properties = (
+                mappings.get(index_name, {}).get("mappings", {}).get("properties")
+            )
+            if not isinstance(properties, dict):
+                properties = next(
+                    iter(mappings.get(index_name, {}).get("mappings", {}).values()),
+                    {},
+                ).get("properties")
+
+            if not isinstance(properties, dict):
+                continue
+
+            current_wildcard_fields = set()
+            recurse_properties(properties, current_wildcard_fields)
+
+            if wildcard_fields is None:
+                wildcard_fields = current_wildcard_fields
+            else:
+                wildcard_fields.update(current_wildcard_fields)
+
+        return list(wildcard_fields) if wildcard_fields else []
+
+    def _compile_term_to_dsl(self, token: str, wildcard_fields: set) -> dict:
+        """Compiles a single search token into a native OpenSearch query node.
+
+        This method parses a single token. If the token contains a colon ':'
+        and the left-hand side is a recognized wildcard-capable field, it is
+        compiled into a field-specific 'wildcard' query targeting the field's
+        '.wildcard' subfield. Otherwise, the token is compiled into a
+        'multi_match' query that searches across all '*.wildcard' subfields.
+
+        Args:
+            token: The raw search token string (e.g. 'message:*evil*' or
+                '*backdoor*').
+            wildcard_fields: A set of mapped field names that support wildcard
+                matching.
+
+        Returns:
+            A dictionary representing the OpenSearch query node (e.g.
+            a 'wildcard' or 'multi_match' query block).
+        """
+        is_field_search = False
+        dsl_node = None
+
+        # 1. Field-specific search (e.g., message:*example*)
+        if ":" in token and not token.startswith('"'):
+            field, value = token.split(":", 1)
+            if field in wildcard_fields:
+                is_field_search = True
+                clean_value = value.strip('"').strip("'")
+                dsl_node = {
+                    "wildcard": {
+                        f"{field}.wildcard": {
+                            "value": clean_value,
+                            "case_insensitive": True,
+                        }
+                    }
+                }
+            else:
+                raise ValueError(f"Field '{field}' does not support wildcard search.")
+
+        # 2. Global search across *.wildcard fields
+        if not is_field_search:
+            clean_value = token.strip('"').strip("'")
+            dsl_node = {
+                "multi_match": {
+                    "query": clean_value,
+                    "fields": ["*.wildcard"],
+                    "type": "most_fields",
+                }
+            }
+        return dsl_node
+
+    def _build_wildcard_query_dsl(
+        self, raw_query_string: str, wildcard_fields: set
+    ) -> dict:
+        """Compiles a raw search query string into a native OpenSearch bool query.
+
+        This method tokenizes the input query string, inserts implicit 'AND'
+        operators, and uses the Shunting-Yard algorithm to parse the boolean logic
+        while strictly respecting standard operator precedence (NOT > AND > OR)
+        and parenthetical groupings '()'.
+
+        The resulting postfix queue is then compiled into a nested OpenSearch
+        'bool' query tree, utilizing optimizations to flatten adjacent identical
+        logical blocks (like nested 'must' or 'should' clauses).
+
+        Args:
+            raw_query_string: The raw query string entered by the user (e.g.
+                'msg:*evil* NOT xml:*test* OR *backdoor*').
+            wildcard_fields: A set of mapped field names that support wildcard
+                matching.
+
+        Returns:
+            A dictionary representing the compiled OpenSearch search query DSL
+            with 'must', 'must_not', and/or 'should' arrays.
+
+        Raises:
+            ValueError: If no wildcard mappings exist, if there is a mismatched
+                parenthesis, or if the query contains unbalanced operands and
+                operators.
+        """
+        if not raw_query_string:
+
+            return {"must": [], "must_not": [], "filter": []}
+
+        if not wildcard_fields:
+            raise ValueError(
+                "No wildcard-capable fields are mapped in the selected timelines."
+            )
+
+        # 1. Tokenize: Splits by space and parentheses, keeping quotes intact.
+        token_pattern = re.compile(r'\(|\)|(?:[^\s"()]+|"[^"]*")+')
+        tokens = token_pattern.findall(raw_query_string)
+
+        # 2. Insert Implicit ANDs (e.g., "A B" -> "A AND B", "A NOT B" -> "A AND NOT B")
+        def is_operand_like_left(t):
+            return t not in ("AND", "OR", "NOT", "(")
+
+        def is_operand_like_right(t):
+            return t not in ("AND", "OR", ")")
+
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if i > 0:
+                prev = processed_tokens[-1]
+                if is_operand_like_left(prev) and is_operand_like_right(token):
+                    processed_tokens.append("AND")
+            processed_tokens.append(token)
+
+        # 3. Shunting-Yard Algorithm: Convert Infix to Postfix (RPN)
+        precedence = {"NOT": 3, "AND": 2, "OR": 1}
+        output_queue = []
+        operator_stack = []
+
+        for token in processed_tokens:
+            if token in precedence:
+                while (
+                    operator_stack
+                    and operator_stack[-1] in precedence
+                    and precedence[operator_stack[-1]] >= precedence[token]
+                ):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            elif token == "(":
+                operator_stack.append(token)
+            elif token == ")":
+                while operator_stack and operator_stack[-1] != "(":
+                    output_queue.append(operator_stack.pop())
+                if operator_stack and operator_stack[-1] == "(":
+                    operator_stack.pop()
+                else:
+                    raise ValueError("Mismatched parentheses in query.")
+            else:
+                output_queue.append(token)
+
+        while operator_stack:
+            op = operator_stack.pop()
+            if op in ("(", ")"):
+                raise ValueError("Mismatched parentheses in query.")
+            output_queue.append(op)
+
+        # 4. RPN Evaluator: Build OpenSearch DSL Tree from Postfix Queue
+        dsl_stack = []
+
+        for token in output_queue:
+            if token == "NOT":
+                if not dsl_stack:
+                    raise ValueError("Invalid query: NOT operator missing operand.")
+                operand = dsl_stack.pop()
+                dsl_node = {"bool": {"must_not": [operand]}}
+                dsl_stack.append(dsl_node)
+
+            elif token == "AND":
+                if len(dsl_stack) < 2:
+                    raise ValueError("Invalid query: AND operator missing operands.")
+                right = dsl_stack.pop()
+                left = dsl_stack.pop()
+
+                # Flatten nested must clauses to keep the DSL clean
+                must_clauses = []
+                for op in (left, right):
+                    if (
+                        isinstance(op, dict)
+                        and "bool" in op
+                        and "must" in op["bool"]
+                        and len(op["bool"]) == 1
+                    ):
+                        must_clauses.extend(op["bool"]["must"])
+                    else:
+                        must_clauses.append(op)
+
+                dsl_stack.append({"bool": {"must": must_clauses}})
+
+            elif token == "OR":
+                if len(dsl_stack) < 2:
+                    raise ValueError("Invalid query: OR operator missing operands.")
+                right = dsl_stack.pop()
+                left = dsl_stack.pop()
+
+                # Flatten nested should clauses to keep the DSL clean
+                should_clauses = []
+                for op in (left, right):
+                    if (
+                        isinstance(op, dict)
+                        and "bool" in op
+                        and "should" in op["bool"]
+                        and op["bool"].get("minimum_should_match") == 1
+                        and len(op["bool"]) <= 2
+                    ):
+                        should_clauses.extend(op["bool"]["should"])
+                    else:
+                        should_clauses.append(op)
+
+                dsl_stack.append(
+                    {
+                        "bool": {
+                            "should": should_clauses,
+                            "minimum_should_match": 1,
+                        }
+                    }
+                )
+
+            else:
+                dsl_stack.append(self._compile_term_to_dsl(token, wildcard_fields))
+
+        if len(dsl_stack) != 1:
+            raise ValueError("Invalid query: unbalanced operands and operators.")
+
+        # Ensure the top-level node is formatted with must/must_not/filter arrays
+        # to match the rest of the Timesketch codebase's expectations
+        final_node = dsl_stack[0]
+        if isinstance(final_node, dict) and "bool" in final_node:
+            bool_content = final_node["bool"]
+            return {
+                "must": bool_content.get("must", []),
+                "must_not": bool_content.get("must_not", []),
+                "should": bool_content.get("should", []),
+                "filter": bool_content.get("filter", []),
+                "minimum_should_match": bool_content.get("minimum_should_match"),
+            }
+
+        return {"must": [final_node], "must_not": [], "filter": []}
+
     # pylint: disable=too-many-arguments
     def search(
         self,
@@ -792,6 +1117,7 @@ class OpenSearchDataStore:
         return_fields: Optional[list] = None,
         enable_scroll: bool = False,
         timeline_ids: Optional[list] = None,
+        use_wildcard_fields: bool = False,
     ) -> Union[Dict, int]:
         """Executes a search query against OpenSearch indices.
 
@@ -825,6 +1151,8 @@ class OpenSearchDataStore:
                 retrieving large result sets. Defaults to False.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
+            use_wildcard_fields: If True, compiles the query_string strictly into
+                case-insensitive native wildcard queries. Defaults to False.
 
         Returns:
             A dictionary containing the raw response from the OpenSearch search
@@ -835,7 +1163,9 @@ class OpenSearchDataStore:
         Raises:
             ValueError: If there is a RequestError or TransportError from
                 OpenSearch during the search execution, indicating an issue
-                with the query or connection.
+                with the query or connection. Also raised if wildcard search
+                mode is requested but the indices lack wildcard mappings,
+                or if the query targets a non-wildcard field.
             DatastoreTimeoutError: If querying OpenSearch times out.
         """
         if isinstance(indices, str):
@@ -863,6 +1193,15 @@ class OpenSearchDataStore:
                 if event["index"] in indices
             }
 
+        wildcard_fields = None
+        if use_wildcard_fields:
+            wildcard_fields = set(self.get_wildcard_fields(list(indices)))
+            if not wildcard_fields:
+                raise ValueError(
+                    "The selected timelines do not support wildcard search mode. "
+                    "Please use the classic search for this sketch!"
+                )
+
         query_dsl = self.build_query(
             sketch_id=sketch_id,
             query_string=query_string,
@@ -870,6 +1209,8 @@ class OpenSearchDataStore:
             query_dsl=query_dsl,
             aggregations=aggregations,
             timeline_ids=timeline_ids,
+            use_wildcard_fields=use_wildcard_fields,
+            wildcard_fields=wildcard_fields,
         )
 
         # Default search type for OpenSearch is query_then_fetch.

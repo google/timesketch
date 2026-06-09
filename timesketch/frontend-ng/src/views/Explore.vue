@@ -20,7 +20,8 @@ limitations under the License.
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-card class="d-flex align-start mb-1" outlined>
+      <v-card class="d-flex align-start mb-1 overflow-hidden" outlined>
+        <ts-search-mode-toggle v-model="searchMode"></ts-search-mode-toggle>
         <v-sheet class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
         </v-sheet>
@@ -285,6 +286,7 @@ limitations under the License.
     <v-card flat class="mt-5 mx-3" color="transparent">
       <ts-event-list
         :query-request="activeQueryRequest"
+        :search-mode="searchMode"
         @countPerIndex="updateCountPerIndex($event)"
         @countPerTimeline="updateCountPerTimeline($event)"
       ></ts-event-list>
@@ -307,6 +309,7 @@ import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsSearchHelpCard from '../components/Explore/SearchHelpCard.vue'
+import TsSearchModeToggle from '../components/Explore/SearchModeToggle.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -333,6 +336,7 @@ export default {
     TsAddManualEvent,
     TsEventList,
     TsSearchHelpCard,
+    TsSearchModeToggle,
   },
   props: ['sketchId'],
   data() {
@@ -367,6 +371,7 @@ export default {
         { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
       ],
       showTimelines: true,
+      localSearchMode: null,
     }
   },
   computed: {
@@ -400,6 +405,34 @@ export default {
       return timelines.sort(function (a, b) {
         return a.name.localeCompare(b.name)
       })
+    },
+    userSettings() {
+      return this.$store.state.settings
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
+    },
+    searchMode: {
+      get() {
+        if (this.localSearchMode !== null) {
+          return this.localSearchMode
+        }
+        if (this.meta && this.meta.supports_wildcard) {
+          if (this.userSettings && this.userSettings.defaultSearchMethod) {
+            return this.userSettings.defaultSearchMethod
+          }
+          if (this.systemSettings && this.systemSettings.OPENSEARCH_WILDCARD_DEFAULT) {
+            return 'wildcard'
+          }
+        }
+        return 'query_string'
+      },
+      set(value) {
+        this.localSearchMode = value
+        if (this.currentQueryString) {
+          this.search()
+        }
+      }
     },
   },
   watch: {
@@ -473,6 +506,8 @@ export default {
     search: function (resetPagination = true, incognito = false, parent = false) {
       let queryRequest = {}
       queryRequest.queryString = this.currentQueryString
+      this.currentQueryFilter.use_wildcard_fields = (this.searchMode === 'wildcard')
+
       queryRequest.queryFilter = this.currentQueryFilter
       queryRequest.resetPagination = resetPagination
       queryRequest.incognito = incognito
