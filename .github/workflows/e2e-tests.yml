@@ -30,6 +30,13 @@ jobs:
           build-args: |
             UBUNTU_VERSION=26.04
             PLASO_PPA_TRACK=stable
+      - name: Cache Docker images
+        uses: actions/cache@v4
+        with:
+          path: /var/lib/docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('docker/e2e/docker-compose.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
@@ -63,6 +70,13 @@ jobs:
           build-args: |
             UBUNTU_VERSION=26.04
             PLASO_PPA_TRACK=staging
+      - name: Cache Docker images
+        uses: actions/cache@v4
+        with:
+          path: /var/lib/docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('docker/e2e/docker-compose.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
