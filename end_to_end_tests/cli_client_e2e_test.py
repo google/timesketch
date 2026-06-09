@@ -18,6 +18,7 @@ import uuid
 from click.testing import CliRunner
 
 from timesketch_cli_client.commands.sketch import sketch_group
+from timesketch_cli_client.cli import cli
 
 from . import interface
 from . import manager
@@ -171,7 +172,7 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             os.rename(token_path, f"{token_path}.bak")
 
         try:
-            with open(rc_path, "w") as f:
+            with open(rc_path, "w", encoding="utf-8") as f:
                 f.write(
                     "[timesketch]\n"
                     "host_uri = http://127.0.0.1:80\n"
@@ -180,11 +181,9 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
                     "verify = False\n"
                 )
 
-            # Import the main cli entrypoint
-            from timesketch_cli_client.cli import cli
-
-            # Run sketch list first, overriding output format to text, and providing the password.
-            # This logs in, caches the token, and lists the sketches.
+            # Run sketch list first, overriding output format to text, and
+            # providing the password. This logs in, caches the token, and
+            # lists the sketches.
             result = self.runner.invoke(
                 cli, ["--output-format", "text", "sketch", "list"], input="test\n"
             )
