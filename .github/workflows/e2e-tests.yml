@@ -11,6 +11,9 @@ on:
       - 'timesketch/frontend-ng/**'
       - 'timesketch/frontend-v3/**'
 
+permissions:
+  contents: read
+
 jobs:
   PyPi-plaso-stable-opensearch-v2-ubuntu2604:
     runs-on: ubuntu-latest
