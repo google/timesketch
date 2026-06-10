@@ -93,32 +93,37 @@ class TelemetryTest(interface.BaseEndToEndTest):
         )
         traces = []
         last_error = None
+        found_took_ms = False
         for _ in range(30):
             try:
                 response = requests.get(query_url, timeout=5)
                 response.raise_for_status()
                 traces_data = response.json()
                 traces = traces_data.get("data", [])
-                if traces:
+
+                # Check if we found the took_ms tag in any span
+                for trace in traces:
+                    for span in trace.get("spans", []):
+                        tags = {
+                            t.get("key"): t.get("value") for t in span.get("tags", [])
+                        }
+                        if "db.opensearch.took_ms" in tags:
+                            found_took_ms = True
+                            break
+                    if found_took_ms:
+                        break
+
+                if found_took_ms:
                     break
             except requests.exceptions.RequestException as e:
                 last_error = e
             time.sleep(1)
 
-        # 3. Assert trace exists
+        # 3. Assert trace exists and has the attribute
         error_msg = "No opensearch.search telemetry traces found in Jaeger"
         if last_error and not traces:
             error_msg += f" (Last connection error: {last_error})"
         self.assertions.assertGreater(len(traces), 0, error_msg)
-
-        # 4. Verify specific attributes exist in the spans
-        found_took_ms = False
-        for trace in traces:
-            for span in trace.get("spans", []):
-                tags = {t.get("key"): t.get("value") for t in span.get("tags", [])}
-                if "db.opensearch.took_ms" in tags:
-                    found_took_ms = True
-                    break
 
         self.assertions.assertTrue(
             found_took_ms, "Expected db.opensearch.took_ms tag in OpenSearch spans."
