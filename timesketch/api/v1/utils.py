@@ -358,8 +358,12 @@ def format_upload_path(upload_path, index_name):
 
     full_path = (base_path / index_name_path).resolve()
 
-    # Ensure the resolved path is still within the base path
-    if not full_path.as_posix().startswith(base_path.as_posix()):
-        raise ValueError("Path traversal detected: path is outside upload folder")
+    # Ensure the resolved path is a true subpath of the base path
+    try:
+        full_path.relative_to(base_path)
+    except ValueError as e:
+        raise ValueError(
+            "Path traversal detected: path is outside upload folder"
+        ) from e
 
     return full_path.as_posix()
