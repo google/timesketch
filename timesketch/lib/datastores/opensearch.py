@@ -45,6 +45,7 @@ import prometheus_client
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib import errors
+from timesketch.lib import telemetry
 
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
@@ -1105,6 +1106,7 @@ class OpenSearchDataStore:
         return {"must": [final_node], "must_not": [], "filter": []}
 
     # pylint: disable=too-many-arguments
+    @telemetry.instrument_search
     def search(
         self,
         sketch_id: int,
