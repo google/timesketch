@@ -60,7 +60,7 @@ def set_sketch(ctx: click.Context, sketch_id: str) -> None:
 
     Args:
         ctx: Click CLI context object.
-        sketch_id: ID of the sketch to save to config.
+        sketch_id: ID of the sketch to save to config (pass an empty string to clear).
     """
     if sketch_id:
         if not sketch_id.isdigit():
