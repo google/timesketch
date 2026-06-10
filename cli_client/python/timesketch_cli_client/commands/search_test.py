@@ -14,6 +14,7 @@
 """Tests for search command."""
 
 import unittest
+import json
 import mock
 import pandas as pd
 
@@ -153,3 +154,55 @@ class SearchTest(unittest.TestCase):
             max_entries=10,
             as_pandas=False,
         )
+
+    @mock.patch("requests.Session", api_test_lib.mock_session)
+    @mock.patch("timesketch_cli_client.commands.search.search.Search")
+    def test_search_with_no_output_format_in_config(self, MockSearchClient):
+        """Test the 'search' command when no output format is specified in config."""
+        mock_search_instance = MockSearchClient.return_value
+        mock_df = pd.DataFrame(
+            {
+                "message": ["event1", "event2"],
+                "timestamp": [1234567890123, 4567890123456],
+                "datetime": ["2023-01-01T00:00:00", "2023-01-02T00:00:00"],
+            }
+        )
+        mock_search_instance.to_pandas.return_value = mock_df
+        mock_search_instance.return_fields = "message,timestamp,datetime"
+
+        ctx = test_lib.get_cli_context_no_output()
+        runner = CliRunner()
+        result = runner.invoke(search_group, ["--query", "some query"], obj=ctx)
+
+        self.assertEqual(result.exit_code, 0)
+        # By default, it should fallback to DEFAULT_OUTPUT_FORMAT (tabular)
+        self.assertIn("message", result.output)
+        self.assertIn("| event1", result.output)
+
+    @mock.patch("requests.Session", api_test_lib.mock_session)
+    @mock.patch("timesketch_cli_client.commands.search.search.Search")
+    def test_search_with_configured_json_output_format(self, MockSearchClient):
+        """Test search command uses output format configured in config file."""
+        mock_search_instance = MockSearchClient.return_value
+        mock_df = pd.DataFrame(
+            {
+                "message": ["event1", "event2"],
+                "timestamp": [1234567890123, 4567890123456],
+                "datetime": ["2023-01-01T00:00:00", "2023-01-02T00:00:00"],
+            }
+        )
+        mock_search_instance.to_pandas.return_value = mock_df
+        mock_search_instance.return_fields = "message,timestamp,datetime"
+
+        ctx = test_lib.get_cli_context_json_output()
+        runner = CliRunner()
+        result = runner.invoke(search_group, ["--query", "some query"], obj=ctx)
+
+        self.assertEqual(result.exit_code, 0)
+        # If the output format is json, the result output should be valid JSON
+        try:
+            parsed = json.loads(result.output)
+            self.assertEqual(len(parsed), 2)
+            self.assertEqual(parsed[0]["message"], "event1")
+        except json.JSONDecodeError as e:
+            self.fail(f"Output was not valid JSON: {e}")
