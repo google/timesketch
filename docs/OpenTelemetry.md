@@ -7,19 +7,16 @@ This document provides a comprehensive guide for developers, admins, and users o
 ## 1. Overview
 Timesketch uses OpenTelemetry to provide distributed tracing across its web (Flask) and worker (Celery) components. This enables deep observability into request life cycles and background task performance.
 
-### Key Benefits
-*   **Distributed Tracing:** Track a single request from an external tool (like `dftimewolf`) through the API and into background analyzers.
-*   **Log Correlation:** Trace IDs and Span IDs are automatically injected into structured JSON logs, allowing you to jump from a log line directly to a trace waterfall in tools like GCP Cloud Trace or Jaeger.
-*   **Standardized Protocol:** Uses the industry-standard OpenTelemetry Protocol (OTLP).
-
 ---
 
 ## 2. Architecture
-The instrumentation is centralized in a dedicated module: `timesketch/lib/telemetry.py`.
+The instrumentation is centralized in `timesketch/lib/telemetry.py`.
 
-*   **Flask Instrumentation:** Automatically captures spans for all HTTP requests, including route patterns and status codes.
-*   **Celery Instrumentation:** Captures spans for both task dispatching (producer) and execution (worker), maintaining the trace context across process boundaries.
-*   **Async Exporting:** Spans are exported asynchronously using a `BatchSpanProcessor` to ensure minimal impact on application performance.
+*   **Flask:** Captures all HTTP requests, status codes, and analyst identity.
+*   **Celery:** Maintains trace context across background tasks (analyzers, data imports).
+*   **OpenSearch:** Manual instrumentation captures search query structure (`db.statement`), targeted indices, and internal processing time (`took_ms`).
+*   **SQLAlchemy (Postgres):** Automatically captures SQL statements and database connection health.
+*   **Async Exporting:** Uses `BatchSpanProcessor` for zero-impact on application performance.
 
 ---
 
@@ -32,7 +29,6 @@ Telemetry is controlled entirely via environment variables.
 | `TIMESKETCH_OTLP_GRPC_ENDPOINT` | OTLP collector endpoint (gRPC). | `jaeger:4317` |
 | `TIMESKETCH_OTLP_HTTP_ENDPOINT` | OTLP collector endpoint (HTTP). | `http://jaeger:4318/v1/traces` |
 | `TIMESKETCH_OTLP_INSECURE` | Use insecure (non-TLS) connection. | `true` (default for dev) |
-| `TIMESKETCH_ENV` | Environment identifier. | `production`, `development` |
 
 ### Supported Modes:
 1.  **`otlp-grpc`:** Best for local collectors (e.g., OTel Collector or Jaeger).
@@ -75,7 +71,7 @@ The Tilt dashboard will show `otel-collector` and `jaeger` resources, including 
 
 ---
 
-## 5. Visualization Options
+## 6. Visualization Options
 
 The local environment provides two ways to see your traces. You can switch between them by changing the `TIMESKETCH_OTLP_GRPC_ENDPOINT`.
 
@@ -92,7 +88,7 @@ The local environment provides two ways to see your traces. You can switch betwe
 
 ---
 
-## 6. Triggering Activity & Verification
+## 7. Triggering Activity & Verification
 Generate some traffic to verify the setup:
 ```bash
 # Trigger a Flask Trace (API Call)
@@ -103,14 +99,14 @@ docker exec timesketch-dev celery -A timesketch.lib.tasks call timesketch.lib.ta
 ```
 
 **Check Application Logs:**
-Verify that `trace_id` and `span_id` appear in the JSON output:
+Verify that `trace_id` appears in the output:
 ```bash
 docker logs timesketch-dev | grep trace_id
 ```
 
 ---
 
-## 7. Secure Private Access (GCP)
+## 8. Secure Private Access (GCP)
 If you are running Timesketch on a private GCE VM without an external IP, you can "proxy in" securely using **Identity-Aware Proxy (IAP) Tunneling**.
 
 ### Accessing the Web Interfaces
@@ -146,43 +142,8 @@ gcloud compute start-iap-tunnel timesketch-otel-lab 5000 \
 
 ---
 
-## 8. Deployment Guide (GCP)
+## 9. Deployment Guide (GCP)
 To enable production tracing in GCP:
 1.  Set `TIMESKETCH_OTEL_MODE=otlp-default-gce`.
 2.  Ensure the service account running Timesketch has the `roles/cloudtrace.agent` role.
 3.  View your traces in the [GCP Trace Explorer](https://console.cloud.google.com/traces/explorer).
-
----
-
-## 8. Information for Developers
-
-### Automated Coverage
-Most common operations are already covered by auto-instrumentation:
-*   **Web API:** All Flask routes, status codes, and HTTP methods.
-*   **Background Tasks:** All Celery task dispatching and executions.
-*   **Analyzers:** All analyzers automatically report `sketch_id`, `analyzer_name`, `timeline_id`, and execution status via the `BaseAnalyzer` interface.
-
-### Adding Custom Attributes & Events
-If you need to record specific domain metadata (e.g., number of matches found, search query used) from within your code, use the helpers in `timesketch.lib.telemetry`.
-
-#### Example: Adding attributes in an Analyzer
-```python
-from timesketch.lib import telemetry
-
-def analyze(self):
-    # ... logic ...
-    matches_found = len(results)
-    
-    # This will appear in the Span attributes in Jaeger/GCP
-    telemetry.add_attribute_to_current_span("sigma.matches_count", matches_found)
-    
-    # Record a significant milestone as an event
-    telemetry.add_event_to_current_span("Finished parsing rules")
-    
-    return f"Found {matches_found} matches."
-```
-
-#### Best Practices for Attributes
-*   **Use Namespace Prefixes:** To avoid collisions, prefix your attributes (e.g., `sigma.rule_id`, `sketch.member_count`).
-*   **Data Types:** Simple types (strings, ints, bools, floats) are stored natively. Complex objects (dicts, lists) are automatically serialized to JSON.
-*   **Avoid PII:** Never record sensitive user data or authentication tokens in span attributes.
