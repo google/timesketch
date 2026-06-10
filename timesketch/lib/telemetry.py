@@ -49,11 +49,13 @@ from timesketch.version import get_version
 
 logger = logging.getLogger("timesketch.telemetry")
 
+
 def instrument_search(func):
     """Decorator to instrument OpenSearch search calls.
-    
+
     If OpenTelemetry is not installed, it safely runs the function without spans.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if not HAS_OTEL:
@@ -71,6 +73,7 @@ def instrument_search(func):
             if isinstance(result, dict) and "took" in result:
                 span.set_attribute("db.opensearch.took_ms", result.get("took", 0))
             return result
+
     return wrapper
 
 
