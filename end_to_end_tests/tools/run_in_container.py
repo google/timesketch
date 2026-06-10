@@ -112,7 +112,8 @@ if __name__ == "__main__":
         missing_tests = [t for t in test_filters if t not in [n for n, _ in all_tests]]
         if missing_tests:
             print(
-                f"Error: The following requested tests do not exist: {', '.join(missing_tests)}"
+                "Error: The following requested tests do not exist: "
+                f"{', '.join(missing_tests)}"
             )
             print("Available test classes:")
             for name, _ in all_tests:
