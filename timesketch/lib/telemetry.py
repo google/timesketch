@@ -53,9 +53,23 @@ logger = logging.getLogger("timesketch.telemetry")
 
 
 def instrument_search(func):
-    """Decorator to instrument OpenSearch search calls.
+    """Decorator to instrument OpenSearch search calls with OpenTelemetry.
 
-    If OpenTelemetry is not installed, it safely runs the function without spans.
+    This decorator wraps OpenSearch search methods to automatically create
+    telemetry spans ("opensearch.search") for each query. It extracts useful
+    context from the query, such as the `sketch_id`, and records it as an
+    attribute (`timesketch.sketch_id`) to help correlate backend performance
+    with specific user sketches.
+
+    Additionally, if the OpenSearch client returns a dictionary containing a
+    "took" field, the decorator captures this value and adds it to the span
+    under the attribute `db.opensearch.took_ms`.
+
+    If the query fails and raises an exception, the exception is recorded
+    on the span and the span's status is set to ERROR.
+
+    If OpenTelemetry is not installed or enabled via `TIMESKETCH_OTEL_MODE`,
+    this decorator acts as a no-op and safely runs the function without spans.
     """
 
     @functools.wraps(func)
