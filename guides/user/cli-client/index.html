@@ -690,6 +690,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#viewing-configuration-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing configuration values
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3089,6 +3100,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#viewing-configuration-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing configuration values
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3754,9 +3776,19 @@ with the <code>--sketch</code> flag on all invocations, or you can configure it 
 </code></pre>
 <p>From now on, every invocation of the command will use the sketch you configured.</p>
 <h4 id="output-format">Output format</h4>
-<p>You can set the default output format. Choose between <code>CSV, Tabular and Plain text</code> output.</p>
+<p>You can set the default output format. Choose between <code>json, text, tabular, csv</code> output.</p>
 <p>Example:</p>
+<pre><code>timesketch config set output-format csv
+</code></pre>
+<p>For backward compatibility, setting the format using <code>output</code> is also supported:</p>
 <pre><code>timesketch config set output csv
+</code></pre>
+<h4 id="viewing-configuration-values">Viewing configuration values</h4>
+<p>You can retrieve the currently configured values using the <code>get</code> command:</p>
+<pre><code>timesketch config get sketch
+</code></pre>
+<p>Or for the output format (both <code>output</code> and <code>output-format</code> are supported as aliases to fetch the setting):</p>
+<pre><code>timesketch config get output-format
 </code></pre>
 <p>The output format can also be set in CLI with the following flag:</p>
 <pre><code>timesketch --output-format text [YOURCOMMAND]
