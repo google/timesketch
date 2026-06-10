@@ -18,7 +18,8 @@
     "node-forge": "1.4.0",
     "@babel/plugin-transform-modules-systemjs": "7.29.7",
     "shell-quote": "1.8.4",
-    "uuid": "11.1.1"
+    "uuid": "11.1.1",
+    "postcss": "^8.5.15"
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",
