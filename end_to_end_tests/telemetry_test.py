@@ -35,9 +35,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
             response = requests.get(f"{jaeger_api_url}/services", timeout=5)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            self.assertions.fail(
-                f"Jaeger is not reachable at {jaeger_api_url}: {e}"
-            )
+            self.assertions.fail(f"Jaeger is not reachable at {jaeger_api_url}: {e}")
 
         # 2. Trigger a simple API request to generate some telemetry
         self.api.list_sketches()

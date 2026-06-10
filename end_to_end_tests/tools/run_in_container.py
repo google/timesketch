@@ -107,9 +107,7 @@ if __name__ == "__main__":
         # Support running a subset of tests by passing a single test class name
         # or a comma-separated list of names (e.g., 'client_test,query_test').
         test_filters = [t.strip() for t in sys.argv[1].split(",")]
-        filtered_tests = [
-            (n, c) for n, c in all_tests if n in test_filters
-        ]
+        filtered_tests = [(n, c) for n, c in all_tests if n in test_filters]
 
         if not filtered_tests:
             print(f"Error: No registered tests matched the filter: {sys.argv[1]}")
