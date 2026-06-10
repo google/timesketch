@@ -27,10 +27,14 @@ spa_views = Blueprint("spa_views", __name__)
 @login_required
 # pylint: disable=unused-argument
 def redirect_view(sketch_id, view_id):
-    """Redirect old (deprecated) view URLs to scheme.
+    """Redirect old (deprecated) view URLs to the new SPA explore view.
+
+    This handles legacy URLs like /sketch/<id>/explore/view/<id>/ and
+    redirects them to the new scheme /sketch/<id>/explore?view=<id>
+    using Flask's url_for to ensure safe internal redirection.
 
     Returns:
-        Redirect to new URL scheme.
+        Redirect to the new URL scheme.
     """
     return redirect(
         url_for(

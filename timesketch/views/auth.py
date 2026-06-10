@@ -13,6 +13,7 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
+from typing import Optional
 from urllib.parse import urlparse
 
 import requests
@@ -62,7 +63,7 @@ SCOPES = [
 ]
 
 
-def is_safe_url(target):
+def is_safe_url(target: Optional[str]) -> bool:
     """Check if a redirect target is safe (relative and internal).
 
     Args:

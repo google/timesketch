@@ -75,6 +75,7 @@ class AuthViewTest(BaseTest):
             "/\x0b/example.com",
             "/\x0c/example.com",
             "javascript:alert(1)",
+            "file:///etc/passwd",
         ]
         for url in invalid_next_urls:
             response = self.client.get(f"/login/?next={url}")
