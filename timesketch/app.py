@@ -30,6 +30,12 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
 
+try:
+    from opentelemetry import trace
+except ImportError:
+    trace = None
+from timesketch.lib import telemetry
+
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
@@ -68,6 +74,8 @@ def create_app(
         static_folder = "frontend-ng/dist"
 
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+    telemetry.setup_telemetry("timesketch")
+    telemetry.instrument_flask_app(app)
 
     # Apply ProxyFix middleware to handle proxy headers for HTTPS redirects
     # This ensures Flask generates HTTPS URLs when behind a reverse proxy.
@@ -259,6 +267,21 @@ def configure_logger():
                 "module": record.module,
             }
 
+            if trace:
+                span_context = trace.get_current_span().get_span_context()
+                if span_context.is_valid:
+                    t_id = trace.format_trace_id(span_context.trace_id)
+                    s_id = trace.format_span_id(span_context.span_id)
+                    log_record["trace_id"] = t_id
+                    log_record["span_id"] = s_id
+                    # GCP specific correlation fields
+                    project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+                    if project_id:
+                        log_record["logging.googleapis.com/trace"] = (
+                            f"projects/{project_id}/traces/{t_id}"
+                        )
+                        log_record["logging.googleapis.com/spanId"] = s_id
+
             if record.exc_info:
                 formatted_trace = self.formatException(record.exc_info)
                 log_record["stack_trace"] = formatted_trace
@@ -299,6 +322,7 @@ def create_celery_app():
     app = create_app()
     celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
     celery.conf.update(app.config)
+    telemetry.instrument_celery_app(celery)
     TaskBase = celery.Task
 
     class ContextTask(TaskBase):

@@ -166,6 +166,13 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if not query_filter:
             query_filter = {}
 
+        # Extract parameter checking WTForms with fallback to query_filter
+        use_wildcard_fields = bool(
+            form.use_wildcard_fields.data
+            or query_filter.get("use_wildcard_fields", False)
+        )
+        query_filter["use_wildcard_fields"] = use_wildcard_fields
+
         all_timeline_ids = [t.id for t in sketch.timelines]
         indices = query_filter.get("indices", all_timeline_ids)
 
@@ -239,6 +246,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     indices=indices,
                     timeline_ids=timeline_ids,
                     count=True,
+                    use_wildcard_fields=use_wildcard_fields,
                 )
             except DatastoreTimeoutError as e:
                 abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
@@ -293,6 +301,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     return_fields=return_fields,
                     enable_scroll=enable_scroll,
                     timeline_ids=timeline_ids,
+                    use_wildcard_fields=use_wildcard_fields,
                 )
             except DatastoreTimeoutError as e:
                 abort(HTTP_STATUS_CODE_GATEWAY_TIMEOUT, str(e))
@@ -643,3 +652,40 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         }
 
         return jsonify(schema)
+
+
+class ExploreWildcardResource(resources.ResourceMixin, Resource):
+    """Explore resources for running wildcard queries on the datastore.
+
+    This API endpoint allows exact-match substring searching on targeted document
+    fields (e.g. message, xml_string), using wildcard field types, bypassing
+    standard Lucene string query parser tokenization.
+    """
+
+    @login_required
+    def post(self, sketch_id: int):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/sketches/:sketch_id/explore_wildcard/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+
+        Returns:
+            JSON with list of matched events.
+        """
+        # Inject use_wildcard_fields = True parameters safely in the Flask request
+        if not request.json:
+            request.json = {}
+
+        request.json["use_wildcard_fields"] = True
+
+        # If a query_filter dictionary was passed, sync flag there too
+        query_filter = request.json.get("filter", {})
+        if isinstance(query_filter, dict):
+            query_filter["use_wildcard_fields"] = True
+            request.json["filter"] = query_filter
+
+        # Delegate to ExploreResource for execution and response
+        explore_resource = ExploreResource()
+        return explore_resource.post(sketch_id)
