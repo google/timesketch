@@ -2602,11 +2602,12 @@ class UploadFileResourceTest(BaseTest):
             "File size mismatch: retry should overwrite, not append",
         )
 
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
     @mock.patch("timesketch.api.v1.resources.upload.os.open")
     @mock.patch("timesketch.api.v1.resources.upload.current_app")
     @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
     def test_upload_file_permission(
-        self, mock_format_upload_path, mock_current_app, mock_os_open
+        self, mock_format_upload_path, mock_current_app, mock_os_open, mock_os_chmod
     ):
         """Test that uploaded files use the configured file permission."""
         # Set config to a different permission (644 instead of default 640)
@@ -2664,6 +2665,8 @@ class UploadFileResourceTest(BaseTest):
         self.assertEqual(
             called_with_args["args"], (file_path, os.O_RDWR | os.O_CREAT, 0o644)
         )
+        # Verify that os.chmod was called with 0o644 at the end of the upload
+        mock_os_chmod.assert_called_once_with(file_path, 0o644)
 
     @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
     @mock.patch("timesketch.api.v1.resources.upload.current_app")
@@ -2746,6 +2749,7 @@ class UploadFileResourceTest(BaseTest):
 
         # Verify that os.chmod was called with the default 0o640
         mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
 
 class UserSettingsResourceTest(BaseTest):
     """Test UserSettingsResource."""
