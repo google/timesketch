@@ -24,6 +24,8 @@ from sqlalchemy import DateTime
 from sqlalchemy import func
 from sqlalchemy import Integer
 
+from timesketch.lib.telemetry import instrument_sqlalchemy_engine
+
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
@@ -43,6 +45,7 @@ def configure_engine(url, engine_options):
         engine_options["pool_pre_ping"] = True
     global engine, session_maker, db_session
     engine = create_engine(url, future=True, **engine_options)
+    instrument_sqlalchemy_engine(engine)
     # Configure the session
     session_maker.configure(
         autocommit=False, autoflush=False, bind=engine, query_cls=Query

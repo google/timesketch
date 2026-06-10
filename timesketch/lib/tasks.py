@@ -40,6 +40,7 @@ from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
 from timesketch.lib import datafinder
 from timesketch.lib import errors
+from timesketch.lib.telemetry import instrument_sqlalchemy_engine
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.dfiq_plugins.manager import DFIQAnalyzerManager
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
@@ -201,6 +202,7 @@ def init_worker(**kwargs):
     if "pool_pre_ping" not in engine_options:
         engine_options["pool_pre_ping"] = True
     engine = create_engine(url, future=True, **engine_options)
+    instrument_sqlalchemy_engine(engine)
     db_session.configure(bind=engine)
 
 

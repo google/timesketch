@@ -32,6 +32,7 @@ try:
     from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -176,6 +177,20 @@ def instrument_flask_app(app, **kwargs):
     if not is_enabled():
         return
     FlaskInstrumentor().instrument_app(app, **kwargs)
+
+
+def instrument_sqlalchemy_engine(engine=None, **kwargs):
+    """Instruments a SQLAlchemy engine instance.
+
+    Args:
+        engine (sqlalchemy.engine.Engine): The SQLAlchemy engine (ignored in favor of global instrumentation).
+        **kwargs: Additional arguments passed to SQLAlchemyInstrumentor().instrument().
+    """
+    if not is_enabled():
+        return
+    instrumentor = SQLAlchemyInstrumentor()
+    if not instrumentor.is_instrumented_by_opentelemetry:
+        instrumentor.instrument(**kwargs)
 
 
 @safe_telemetry_call
