@@ -54,7 +54,7 @@ cd /opt
 #### Run deployment script
 
 ```shell
-sudo ./deploy_timesketch.sh  
+sudo ./deploy_timesketch.sh
 ```
 
 ### 3. Start the system
@@ -155,6 +155,11 @@ Congratulations, your Timesketch system is operational and ready to use.
 ### Set up users
 
 After system is set up, look at [here](/guides/admin/admin-cli/) to add users.
+
+### Next Steps
+
+For advanced configuration and performance tuning of your OpenSearch indices,
+see the [Index Mappings](/guides/admin/index-mappings/) guide.
 
 # Timesketch K8s Installation
 
