@@ -8,6 +8,9 @@ on:
       - '.gitignore'
       - 'README.md'
 
+permissions:
+  contents: read
+
 jobs:
   # Backend tests (Python/Flask)
   Python:
