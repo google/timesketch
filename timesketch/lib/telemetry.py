@@ -14,6 +14,7 @@
 """Module providing OpenTelemetry capability to Timesketch."""
 
 import json
+import functools
 import logging
 import os
 
@@ -26,7 +27,6 @@ try:
 
     from opentelemetry import trace
     from opentelemetry.trace import StatusCode
-    from opentelemetry.trace.span import INVALID_SPAN
     from opentelemetry.exporter import cloud_trace
     from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
     from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
@@ -37,15 +37,35 @@ try:
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
     HAS_OTEL = True
-except (ImportError, ModuleNotFoundError):
+except (ImportError, ModuleNotFoundError) as e:
     HAS_OTEL = False
     trace = None
-    StatusCode = None
-    INVALID_SPAN = None
+    logger = logging.getLogger("timesketch.telemetry")
+    logger.warning(
+        "OpenTelemetry is not installed. Some features may crash. Error: %s", e
+    )
 
 from timesketch.version import get_version
 
 logger = logging.getLogger("timesketch.telemetry")
+
+def instrument_search(func):
+    """Decorator to instrument OpenSearch search calls.
+    
+    If OpenTelemetry is not installed, it safely runs the function without spans.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not HAS_OTEL:
+            return func(*args, **kwargs)
+
+        tracer = trace.get_tracer("timesketch.lib.datastores.opensearch")
+        with tracer.start_as_current_span("opensearch.search") as span:
+            result = func(*args, **kwargs)
+            if isinstance(result, dict) and "took" in result:
+                span.set_attribute("db.opensearch.took_ms", result.get("took", 0))
+            return result
+    return wrapper
 
 
 def safe_telemetry_call(func):

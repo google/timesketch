@@ -27,6 +27,10 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
     NAME = "telemetry_test"
 
+    def setup(self):
+        """Import a test timeline to ensure search works."""
+        self.import_timeline("evtx_direct.csv")
+
     def test_telemetry_connectivity(self):
         """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
         # 1. Check if Jaeger API is reachable.
@@ -76,6 +80,46 @@ class TelemetryTest(interface.BaseEndToEndTest):
         )
         print("Telemetry infrastructure E2E connectivity verified successfully!")
 
+
+    def test_opensearch_telemetry(self):
+        """Verify that OpenSearch telemetry spans are exported."""
+        jaeger_api_url = "http://jaeger:16686/api"
+        
+        # 1. Trigger a search to generate OpenSearch telemetry
+        self.sketch.explore("hello_opensearch_telemetry")
+        
+        # 2. Poll Jaeger API for opensearch.search spans
+        query_url = f"{jaeger_api_url}/traces?service=timesketch&operation=opensearch.search"
+        traces = []
+        last_error = None
+        for _ in range(30):
+            try:
+                response = requests.get(query_url, timeout=5)
+                response.raise_for_status()
+                traces_data = response.json()
+                traces = traces_data.get("data", [])
+                if traces:
+                    break
+            except requests.exceptions.RequestException as e:
+                last_error = e
+            time.sleep(1)
+
+        # 3. Assert trace exists
+        error_msg = "No opensearch.search telemetry traces found in Jaeger"
+        if last_error and not traces:
+            error_msg += f" (Last connection error: {last_error})"
+        self.assertions.assertGreater(len(traces), 0, error_msg)
+
+        # 4. Verify specific attributes exist in the spans
+        found_took_ms = False
+        for trace in traces:
+            for span in trace.get("spans", []):
+                tags = {t.get("key"): t.get("value") for t in span.get("tags", [])}
+                if "db.opensearch.took_ms" in tags:
+                    found_took_ms = True
+                    break
+        
+        self.assertions.assertTrue(found_took_ms, "Expected db.opensearch.took_ms tag in OpenSearch spans.")
 
 if os.environ.get("TIMESKETCH_OTEL_MODE", "").lower().startswith("otlp-"):
     manager.EndToEndTestManager.register_test(TelemetryTest)
