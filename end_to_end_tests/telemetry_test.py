@@ -80,16 +80,17 @@ class TelemetryTest(interface.BaseEndToEndTest):
         )
         print("Telemetry infrastructure E2E connectivity verified successfully!")
 
-
     def test_opensearch_telemetry(self):
         """Verify that OpenSearch telemetry spans are exported."""
         jaeger_api_url = "http://jaeger:16686/api"
-        
+
         # 1. Trigger a search to generate OpenSearch telemetry
         self.sketch.explore("hello_opensearch_telemetry")
-        
+
         # 2. Poll Jaeger API for opensearch.search spans
-        query_url = f"{jaeger_api_url}/traces?service=timesketch&operation=opensearch.search"
+        query_url = (
+            f"{jaeger_api_url}/traces?service=timesketch&operation=opensearch.search"
+        )
         traces = []
         last_error = None
         for _ in range(30):
@@ -118,8 +119,11 @@ class TelemetryTest(interface.BaseEndToEndTest):
                 if "db.opensearch.took_ms" in tags:
                     found_took_ms = True
                     break
-        
-        self.assertions.assertTrue(found_took_ms, "Expected db.opensearch.took_ms tag in OpenSearch spans.")
+
+        self.assertions.assertTrue(
+            found_took_ms, "Expected db.opensearch.took_ms tag in OpenSearch spans."
+        )
+
 
 if os.environ.get("TIMESKETCH_OTEL_MODE", "").lower().startswith("otlp-"):
     manager.EndToEndTestManager.register_test(TelemetryTest)
