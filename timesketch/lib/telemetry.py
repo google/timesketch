@@ -61,6 +61,12 @@ def instrument_search(func):
 
         tracer = trace.get_tracer("timesketch.lib.datastores.opensearch")
         with tracer.start_as_current_span("opensearch.search") as span:
+            sketch_id = kwargs.get("sketch_id")
+            if sketch_id is None and len(args) > 1:
+                sketch_id = args[1]
+            if sketch_id is not None:
+                span.set_attribute("timesketch.sketch_id", sketch_id)
+
             result = func(*args, **kwargs)
             if isinstance(result, dict) and "took" in result:
                 span.set_attribute("db.opensearch.took_ms", result.get("took", 0))
