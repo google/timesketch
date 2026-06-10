@@ -61,6 +61,9 @@ With a decent OpenSearch deployment you can have hundreds of millions events acr
 
 The config and credentials to the OpenSearch cluster are stored in https://github.com/google/timesketch/blob/master/data/timesketch.conf. If those values are changed, the Timesketch Instance needs to be restarted.
 
+For details on how to tune field mappings and handle schema-level limitations
+(like `ignore_above`), refer to the [Index Mappings](/guides/admin/index-mappings/) guide.
+
 ### Celery workers
 
 If Celery workers take to long to process, more resources for the host running the workers might a be a first step to eliminate that bottleneck.

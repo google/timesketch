@@ -164,6 +164,7 @@ def cli(ctx, sketch, output):
 cli.add_command(config.config_group)
 cli.add_command(timelines.timelines_group)
 cli.add_command(search.search_group)
+cli.add_command(search.search_wildcard)
 cli.add_command(search.saved_searches_group)
 cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
