@@ -88,11 +88,13 @@ class ConfigAssistant:
         ),
         "client_id": "OAUTH Client identification.",
         "client_secret": "The OAUTH client secret",
+        "token_file_path": "Path to the token file",
     }
 
     def __init__(self):
         """Initialize the configuration assistant."""
         self._config = {}
+        self.config_file_path = ""
 
     @property
     def parameters(self) -> List[Text]:
@@ -246,13 +248,17 @@ class ConfigAssistant:
                 ).format(config_file_path)
                 logger.error(error_msg)
                 raise IOError(error_msg)
+            self.config_file_path = config_file_path
         else:
             home_path = os.path.expanduser("~")
             config_file_path = os.path.join(home_path, self.RC_FILENAME)
+            self.config_file_path = config_file_path
 
         if not os.path.isfile(config_file_path):
-            with open(config_file_path, "a", encoding="utf-8") as fw:
-                fw.close()
+            # Create the config file with restricted permissions (0o600)
+            # since it can contain sensitive keys or tokens.
+            fd = os.open(config_file_path, os.O_CREAT | os.O_WRONLY, 0o600)
+            os.close(fd)
 
         config = configparser.ConfigParser()
         try:
@@ -334,14 +340,16 @@ class ConfigAssistant:
                 file.
         """
         if not file_path:
+            file_path = getattr(self, "config_file_path", "")
+        if not file_path:
             home_path = os.path.expanduser("~")
             file_path = os.path.join(home_path, self.RC_FILENAME)
 
         config = configparser.ConfigParser()
 
         if not os.path.isfile(file_path):
-            with open(file_path, "a", encoding="utf-8") as fw:
-                fw.close()
+            fd = os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o600)
+            os.close(fd)
 
         # Read in other sections in the config file as well.
         try:
@@ -366,10 +374,18 @@ class ConfigAssistant:
             "client_secret": self._config.get("client_secret", ""),
             "auth_mode": auth_mode,
         }
+        # To maintain backwards compatibility with the legacy 'output' key,
+        # we migrate it to the new 'output_format' key if it exists.
+        output_format = self._config.get("output_format")
+        if not output_format:
+            output_format = self._config.get("output", "tabular")
+
         config["cli"] = {
             "sketch": self._config.get("sketch", ""),
-            "output_format": self._config.get("output_format", "tabular"),
+            "output_format": output_format,
         }
+        if not token_file_path:
+            token_file_path = self._config.get("token_file_path", "")
         if token_file_path:
             config[section]["token_file_path"] = token_file_path
 
@@ -381,6 +397,7 @@ class ConfigAssistant:
 
         with open(file_path, "w", encoding="utf-8") as fw:
             config.write(fw)
+        os.chmod(file_path, 0o600)
 
     def set_config(self, name: Text, value: Any):
         """Sets a given config item with a value.
