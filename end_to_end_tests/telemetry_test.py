@@ -39,7 +39,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
             except requests.exceptions.RequestException as e:
                 last_error = e
                 time.sleep(1)
-        
+
         self.assertions.fail(
             f"Jaeger is not reachable at {jaeger_api_url}: {last_error}"
         )
@@ -111,7 +111,9 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         tags = {
                             t.get("key"): t.get("value") for t in span.get("tags", [])
                         }
-                        if "db.opensearch.took_ms" in tags and str(tags.get("timesketch.sketch_id")) == str(self.sketch.id):
+                        if "db.opensearch.took_ms" in tags and str(
+                            tags.get("timesketch.sketch_id")
+                        ) == str(self.sketch.id):
                             found_took_ms = True
                             break
                     if found_took_ms:

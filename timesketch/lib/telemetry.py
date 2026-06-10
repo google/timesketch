@@ -42,9 +42,7 @@ except (ImportError, ModuleNotFoundError) as e:
     trace = None
     StatusCode = None
     logger = logging.getLogger("timesketch.telemetry")
-    logger.info(
-        "OpenTelemetry is not installed. Error: %s", e
-    )
+    logger.info("OpenTelemetry is not installed. Error: %s", e)
 
 from timesketch.version import get_version
 
