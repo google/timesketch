@@ -40,6 +40,8 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     HAS_OTEL = False
     trace = None
+    StatusCode = None
+    INVALID_SPAN = None
     logger = logging.getLogger("timesketch.telemetry")
     logger.warning(
         "OpenTelemetry is not installed. Some features may crash. Error: %s", e
@@ -58,7 +60,7 @@ def instrument_search(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if not HAS_OTEL:
+        if not is_enabled():
             return func(*args, **kwargs)
 
         tracer = trace.get_tracer("timesketch.lib.datastores.opensearch")
@@ -69,10 +71,15 @@ def instrument_search(func):
             if sketch_id is not None:
                 span.set_attribute("timesketch.sketch_id", sketch_id)
 
-            result = func(*args, **kwargs)
-            if isinstance(result, dict) and "took" in result:
-                span.set_attribute("db.opensearch.took_ms", result.get("took", 0))
-            return result
+            try:
+                result = func(*args, **kwargs)
+                if isinstance(result, dict) and "took" in result:
+                    span.set_attribute("db.opensearch.took_ms", result.get("took", 0))
+                return result
+            except Exception as e:
+                span.set_status(StatusCode.ERROR, str(e))
+                span.record_exception(e)
+                raise
 
     return wrapper
 
@@ -134,6 +141,10 @@ def setup_telemetry(service_name: str):
         service_name (str): The name of the service to identify traces in the backend.
     """
     if not is_enabled():
+        return
+
+    # Prevent overriding if already set (e.g. by Flask auto-reloader)
+    if isinstance(trace.get_tracer_provider(), TracerProvider):
         return
 
     resource = Resource(
@@ -219,7 +230,7 @@ def set_status_on_current_span(status_name: str, description: str = None):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         code = getattr(StatusCode, status_name.upper(), StatusCode.UNSET)
         otel_span.set_status(code, description)
 
@@ -235,7 +246,7 @@ def add_event_to_current_span(event: str):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         otel_span.add_event(event)
 
 
@@ -253,7 +264,7 @@ def add_attribute_to_current_span(name: str, value: object):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         if isinstance(value, (str, bool, int, float)):
             otel_span.set_attribute(name, value)
         else:
