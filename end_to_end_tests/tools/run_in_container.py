@@ -106,11 +106,14 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         # Support running a subset of tests by passing a single test class name
         # or a comma-separated list of names (e.g., 'client_test,query_test').
-        test_filters = [t.strip() for t in sys.argv[1].split(",")]
+        test_filters = [t.strip().lower() for t in sys.argv[1].split(",")]
         filtered_tests = [(n, c) for n, c in all_tests if n in test_filters]
 
-        if not filtered_tests:
-            print(f"Error: No registered tests matched the filter: {sys.argv[1]}")
+        missing_tests = [t for t in test_filters if t not in [n for n, _ in all_tests]]
+        if missing_tests:
+            print(
+                f"Error: The following requested tests do not exist: {', '.join(missing_tests)}"
+            )
             print("Available test classes:")
             for name, _ in all_tests:
                 print(f"  - {name}")

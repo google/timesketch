@@ -31,11 +31,19 @@ class TelemetryTest(interface.BaseEndToEndTest):
         """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
         # 1. Check if Jaeger API is reachable.
         jaeger_api_url = "http://jaeger:16686/api"
-        try:
-            response = requests.get(f"{jaeger_api_url}/services", timeout=5)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            self.assertions.fail(f"Jaeger is not reachable at {jaeger_api_url}: {e}")
+        last_error = None
+        for _ in range(30):
+            try:
+                response = requests.get(f"{jaeger_api_url}/services", timeout=5)
+                response.raise_for_status()
+                break
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                time.sleep(1)
+        else:
+            self.assertions.fail(
+                f"Jaeger is not reachable at {jaeger_api_url}: {last_error}"
+            )
 
         # 2. Trigger a simple API request to generate some telemetry
         self.api.list_sketches()
@@ -43,6 +51,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
         # 3. Poll Jaeger API until a trace is received or timeout (30 seconds) is hit
         query_url = f"{jaeger_api_url}/traces?service=timesketch"
         traces = []
+        last_error = None
         for _ in range(30):
             try:
                 response = requests.get(query_url, timeout=5)
@@ -51,15 +60,19 @@ class TelemetryTest(interface.BaseEndToEndTest):
                 traces = traces_data.get("data", [])
                 if traces:
                     break
-            except requests.exceptions.RequestException:
-                pass
+            except requests.exceptions.RequestException as e:
+                last_error = e
             time.sleep(1)
 
         # 4. Assert that at least one trace has been received by Jaeger
+        error_msg = "No telemetry traces were found in Jaeger for service 'timesketch'"
+        if last_error and not traces:
+            error_msg += f" (Last connection error: {last_error})"
+
         self.assertions.assertGreater(
             len(traces),
             0,
-            "No telemetry traces were found in Jaeger for service 'timesketch'",
+            error_msg,
         )
         print("Telemetry infrastructure E2E connectivity verified successfully!")
 
