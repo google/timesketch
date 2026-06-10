@@ -178,7 +178,9 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             # providing the password. This logs in, caches the token, and
             # lists the sketches.
             result = self.runner.invoke(
-                cli, ["--config", rc_path, "--output-format", "text", "sketch", "list"], input="test\n"
+                cli,
+                ["--config", rc_path, "--output-format", "text", "sketch", "list"],
+                input="test\n",
             )
             self.assertions.assertEqual(
                 result.exit_code,
@@ -188,20 +190,28 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             self.assertions.assertIn("cli_client_e2e_test", result.output)
 
             # Test config set output-format json
-            result = self.runner.invoke(cli, ["--config", rc_path, "config", "set", "output-format", "json"])
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "set", "output-format", "json"]
+            )
             self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
 
             # Test config get output-format
-            result = self.runner.invoke(cli, ["--config", rc_path, "config", "get", "output-format"])
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "get", "output-format"]
+            )
             self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
             self.assertions.assertEqual(result.output.strip(), "json")
 
             # Test config set sketch
-            result = self.runner.invoke(cli, ["--config", rc_path, "config", "set", "sketch", "42"])
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "set", "sketch", "42"]
+            )
             self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
 
             # Test config get sketch
-            result = self.runner.invoke(cli, ["--config", rc_path, "config", "get", "sketch"])
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "get", "sketch"]
+            )
             self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
             self.assertions.assertEqual(result.output.strip(), "42")
 
