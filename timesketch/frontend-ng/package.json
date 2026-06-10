@@ -12,7 +12,11 @@
   "resolutions": {
     "qs": "6.14.1",
     "serialize-javascript": "^7.0.3",
-    "minimatch": "^9.0.7"
+    "minimatch": "^9.0.7",
+    "fast-uri": "3.1.2",
+    "js-cookie": "3.0.8",
+    "node-forge": "1.4.0",
+    "@babel/plugin-transform-modules-systemjs": "7.29.7"
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",
