@@ -14,7 +14,7 @@
     "axios": "^1.16.0",
     "core-js": "^3.37.1",
     "cytoscape": "^3.32.0",
-    "cytoscape-dagre": "^2.5.0",
+    "cytoscape-dagre": "^3.0.0",
     "cytoscape-spread": "^3.0.0",
     "dayjs": "^1.11.13",
     "dompurify": "^3.3.2",
@@ -37,7 +37,7 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.4.0",
-    "eslint-plugin-vue": "^9.27.0",
+    "eslint-plugin-vue": "^10.9.2",
     "pinia": "^2.1.7",
     "sass": "1.77.6",
     "unplugin-auto-import": "^21.0.0",
@@ -48,5 +48,8 @@
     "vite-plugin-vue-layouts": "^0.11.0",
     "vite-plugin-vuetify": "^2.0.3",
     "vue-router": "^4.4.0"
+  },
+  "resolutions": {
+    "lodash": "^4.18.1"
   }
 }
