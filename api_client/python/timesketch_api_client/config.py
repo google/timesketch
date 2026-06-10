@@ -246,9 +246,11 @@ class ConfigAssistant:
                 ).format(config_file_path)
                 logger.error(error_msg)
                 raise IOError(error_msg)
+            self.config_file_path = config_file_path
         else:
             home_path = os.path.expanduser("~")
             config_file_path = os.path.join(home_path, self.RC_FILENAME)
+            self.config_file_path = config_file_path
 
         if not os.path.isfile(config_file_path):
             with open(config_file_path, "a", encoding="utf-8") as fw:
@@ -334,6 +336,8 @@ class ConfigAssistant:
                 file.
         """
         if not file_path:
+            file_path = getattr(self, "config_file_path", "")
+        if not file_path:
             home_path = os.path.expanduser("~")
             file_path = os.path.join(home_path, self.RC_FILENAME)
 
@@ -370,6 +374,8 @@ class ConfigAssistant:
             "sketch": self._config.get("sketch", ""),
             "output_format": self._config.get("output_format", "tabular"),
         }
+        if not token_file_path:
+            token_file_path = self._config.get("token_file_path", "")
         if token_file_path:
             config[section]["token_file_path"] = token_file_path
 

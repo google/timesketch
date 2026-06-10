@@ -14,6 +14,7 @@
 """End to end tests for Timesketch CLI client commands."""
 
 import os
+import tempfile
 import uuid
 from click.testing import CliRunner
 
@@ -159,19 +160,10 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
 
     def test_cli_integration(self):
         """Tests the full CLI tool integration against the E2E server."""
-        home_path = os.path.expanduser("~")
-        rc_path = os.path.join(home_path, ".timesketchrc")
-        token_path = os.path.join(home_path, ".timesketch.token")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            rc_path = os.path.join(temp_dir, ".timesketchrc")
+            token_path = os.path.join(temp_dir, ".timesketch.token")
 
-        rc_existed = os.path.exists(rc_path)
-        if rc_existed:
-            os.rename(rc_path, f"{rc_path}.bak")
-
-        token_existed = os.path.exists(token_path)
-        if token_existed:
-            os.rename(token_path, f"{token_path}.bak")
-
-        try:
             with open(rc_path, "w", encoding="utf-8") as f:
                 f.write(
                     "[timesketch]\n"
@@ -179,13 +171,14 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
                     "username = test\n"
                     "auth_mode = userpass\n"
                     "verify = False\n"
+                    f"token_file_path = {token_path}\n"
                 )
 
             # Run sketch list first, overriding output format to text, and
             # providing the password. This logs in, caches the token, and
             # lists the sketches.
             result = self.runner.invoke(
-                cli, ["--output-format", "text", "sketch", "list"], input="test\n"
+                cli, ["--config", rc_path, "--output-format", "text", "sketch", "list"], input="test\n"
             )
             self.assertions.assertEqual(
                 result.exit_code,
@@ -195,33 +188,22 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             self.assertions.assertIn("cli_client_e2e_test", result.output)
 
             # Test config set output-format json
-            result = self.runner.invoke(cli, ["config", "set", "output-format", "json"])
-            self.assertions.assertEqual(result.exit_code, 0)
+            result = self.runner.invoke(cli, ["--config", rc_path, "config", "set", "output-format", "json"])
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
 
             # Test config get output-format
-            result = self.runner.invoke(cli, ["config", "get", "output-format"])
-            self.assertions.assertEqual(result.exit_code, 0)
+            result = self.runner.invoke(cli, ["--config", rc_path, "config", "get", "output-format"])
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
             self.assertions.assertEqual(result.output.strip(), "json")
 
             # Test config set sketch
-            result = self.runner.invoke(cli, ["config", "set", "sketch", "42"])
-            self.assertions.assertEqual(result.exit_code, 0)
+            result = self.runner.invoke(cli, ["--config", rc_path, "config", "set", "sketch", "42"])
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
 
             # Test config get sketch
-            result = self.runner.invoke(cli, ["config", "get", "sketch"])
-            self.assertions.assertEqual(result.exit_code, 0)
+            result = self.runner.invoke(cli, ["--config", rc_path, "config", "get", "sketch"])
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
             self.assertions.assertEqual(result.output.strip(), "42")
-
-        finally:
-            if os.path.exists(rc_path):
-                os.remove(rc_path)
-            if rc_existed:
-                os.rename(f"{rc_path}.bak", rc_path)
-
-            if os.path.exists(token_path):
-                os.remove(token_path)
-            if token_existed:
-                os.rename(f"{token_path}.bak", token_path)
 
 
 # Register the new test class with the test manager
