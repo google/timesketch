@@ -13,6 +13,7 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
+import logging
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -52,6 +53,8 @@ from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
 
+logger = logging.getLogger("timesketch.views.auth")
+
 # Register flask blueprint
 auth_views = Blueprint("user_views", __name__)
 
@@ -74,20 +77,43 @@ def is_safe_url(target: Optional[str]) -> bool:
     """
     if not target:
         return False
-    # Remove control characters that browsers might strip
-    sanitized_target = "".join(c for c in target if c not in "\t\r\n\x0b\x0c")
+
+    # Reject control characters that browsers might strip
+    if any(c in target for c in "\t\r\n\x0b\x0c"):
+        logger.warning(
+            "URL redirect blocked: contains control characters. Target: [%r]", target
+        )
+        return False
+
     # Replace backslashes with forward slashes to emulate browser behavior
-    sanitized_target = sanitized_target.replace("\\", "/")
+    sanitized_target = target.replace("\\", "/")
+
     # Must start with a single '/' and not '//'
     if not sanitized_target.startswith("/") or sanitized_target.startswith("//"):
+        logger.warning(
+            "URL redirect blocked: not relative or is protocol-relative. Target: [%r]",
+            target,
+        )
         return False
+
     try:
         parsed = urlparse(sanitized_target)
-    except ValueError:
+    except ValueError as e:
+        logger.warning(
+            "URL redirect blocked: urlparse failed. Error: %s. Target: [%r]", e, target
+        )
         return False
+
     # Ensure it doesn't have a scheme or netloc
     if parsed.scheme or parsed.netloc:
+        logger.warning(
+            "URL redirect blocked: contains scheme (%s) or host (%s). Target: [%r]",
+            parsed.scheme,
+            parsed.netloc,
+            target,
+        )
         return False
+
     return True
 
 
