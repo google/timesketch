@@ -14,10 +14,12 @@
 """End to end tests for Timesketch CLI client commands."""
 
 import os
+import tempfile
 import uuid
 from click.testing import CliRunner
 
 from timesketch_cli_client.commands.sketch import sketch_group
+from timesketch_cli_client.cli import cli
 
 from . import interface
 from . import manager
@@ -155,6 +157,63 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
                 result_full.exit_code, 0, f"Output: {result_full.output}"
             )
             self.assertions.assertTrue(os.path.exists(filename_full))
+
+    def test_cli_integration(self):
+        """Tests the full CLI tool integration against the E2E server."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            rc_path = os.path.join(temp_dir, ".timesketchrc")
+            token_path = os.path.join(temp_dir, ".timesketch.token")
+
+            with open(rc_path, "w", encoding="utf-8") as f:
+                f.write(
+                    "[timesketch]\n"
+                    "host_uri = http://127.0.0.1:80\n"
+                    "username = test\n"
+                    "auth_mode = userpass\n"
+                    "verify = False\n"
+                    f"token_file_path = {token_path}\n"
+                )
+
+            # Run sketch list first, overriding output format to text, and
+            # providing the password. This logs in, caches the token, and
+            # lists the sketches.
+            result = self.runner.invoke(
+                cli,
+                ["--config", rc_path, "--output-format", "text", "sketch", "list"],
+                input="test\n",
+            )
+            self.assertions.assertEqual(
+                result.exit_code,
+                0,
+                f"CLI command failed. Output: {result.output}",
+            )
+            self.assertions.assertIn("cli_client_e2e_test", result.output)
+
+            # Test config set output-format json
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "set", "output-format", "json"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+
+            # Test config get output-format
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "get", "output-format"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+            self.assertions.assertEqual(result.output.strip(), "json")
+
+            # Test config set sketch
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "set", "sketch", "42"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+
+            # Test config get sketch
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "get", "sketch"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+            self.assertions.assertEqual(result.output.strip(), "42")
 
 
 # Register the new test class with the test manager
