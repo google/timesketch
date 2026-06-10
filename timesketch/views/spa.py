@@ -16,6 +16,7 @@
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
+from flask import url_for
 from flask_login import login_required
 
 # Register flask blueprint
@@ -31,7 +32,13 @@ def redirect_view(sketch_id, view_id):
     Returns:
         Redirect to new URL scheme.
     """
-    return redirect(f"/sketch/{sketch_id:d}/explore?view={view_id:d}")
+    return redirect(
+        url_for(
+            "spa_views.overview",
+            path=f"sketch/{sketch_id:d}/explore",
+            view=view_id,
+        )
+    )
 
 
 @spa_views.route("/", defaults={"path": ""})
