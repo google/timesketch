@@ -27,27 +27,31 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
     NAME = "telemetry_test"
 
-    def setup(self):
-        """Import a test timeline to ensure search works."""
-        self.import_timeline("evtx_direct.csv")
-
-    def test_telemetry_connectivity(self):
-        """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
-        # 1. Check if Jaeger API is reachable.
+    def _wait_for_jaeger(self):
+        """Wait for Jaeger API to become reachable."""
         jaeger_api_url = "http://jaeger:16686/api"
         last_error = None
         for _ in range(30):
             try:
                 response = requests.get(f"{jaeger_api_url}/services", timeout=5)
                 response.raise_for_status()
-                break
+                return
             except requests.exceptions.RequestException as e:
                 last_error = e
                 time.sleep(1)
-        else:
-            self.assertions.fail(
-                f"Jaeger is not reachable at {jaeger_api_url}: {last_error}"
-            )
+        
+        self.assertions.fail(
+            f"Jaeger is not reachable at {jaeger_api_url}: {last_error}"
+        )
+
+    def setup(self):
+        """Import a test timeline to ensure search works."""
+        self._wait_for_jaeger()
+        self.import_timeline("evtx_direct.csv")
+
+    def test_telemetry_connectivity(self):
+        """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
+        jaeger_api_url = "http://jaeger:16686/api"
 
         # 2. Trigger a simple API request to generate some telemetry
         self.api.list_sketches()
@@ -107,7 +111,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         tags = {
                             t.get("key"): t.get("value") for t in span.get("tags", [])
                         }
-                        if "db.opensearch.took_ms" in tags:
+                        if "db.opensearch.took_ms" in tags and str(tags.get("timesketch.sketch_id")) == str(self.sketch.id):
                             found_took_ms = True
                             break
                     if found_took_ms:
