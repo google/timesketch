@@ -11,12 +11,15 @@
   },
   "resolutions": {
     "qs": "6.14.1",
-    "serialize-javascript": "^7.0.3",
+    "serialize-javascript": "^7.0.5",
     "minimatch": "^9.0.7",
     "fast-uri": "3.1.2",
     "js-cookie": "3.0.8",
     "node-forge": "1.4.0",
-    "@babel/plugin-transform-modules-systemjs": "7.29.7"
+    "@babel/plugin-transform-modules-systemjs": "7.29.7",
+    "shell-quote": "1.8.4",
+    "uuid": "11.1.1",
+    "postcss": "^8.5.15"
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",

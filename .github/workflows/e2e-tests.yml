@@ -53,3 +53,24 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
+  PyPi-plaso-stable-opensearch-v2-ubuntu2604-telemetry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Set up infrastructure with docker compose (telemetry enabled)
+        run: docker compose -f docker/e2e/docker-compose.yml --profile telemetry up -d --build
+        env:
+          UBUNTU_VERSION: 26.04
+          OPENSEARCH_VERSION: 2.19.5
+          PLASO_PPA_TRACK: stable
+          TIMESKETCH_OTEL_MODE: otlp-grpc
+      - name: Run e2e tests
+        run: |
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py telemetry_test
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
