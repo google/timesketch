@@ -51,6 +51,9 @@
   },
   "resolutions": {
     "lodash": "^4.18.1",
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "**/anymatch/picomatch": "^2.3.2",
+    "**/micromatch/picomatch": "^2.3.2",
+    "**/readdirp/picomatch": "^2.3.2"
   }
 }
