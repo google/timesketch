@@ -470,9 +470,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to save search")
 
         # Link the search ID to the telemetry trace
-        telemetry.add_attribute_to_current_span(
-            "timesketch.search_id", search_node.id
-        )
+        telemetry.add_attribute_to_current_span("timesketch.search_id", search_node.id)
 
         search_node = search_node.build_tree(search_node, {}, recurse=False)
 
