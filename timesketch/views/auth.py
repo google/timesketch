@@ -13,6 +13,8 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
+from urllib.parse import urlparse
+
 import requests
 
 from flask import abort
@@ -60,6 +62,34 @@ SCOPES = [
 ]
 
 
+def is_safe_url(target):
+    """Check if a redirect target is safe (relative and internal).
+
+    Args:
+        target (str): The URL string to validate.
+
+    Returns:
+        bool: True if the URL is safe, False otherwise.
+    """
+    if not target:
+        return False
+    # Remove control characters that browsers might strip
+    sanitized_target = "".join(c for c in target if c not in "\t\r\n\x0b\x0c")
+    # Replace backslashes with forward slashes to emulate browser behavior
+    sanitized_target = sanitized_target.replace("\\", "/")
+    # Must start with a single '/' and not '//'
+    if not sanitized_target.startswith("/") or sanitized_target.startswith("//"):
+        return False
+    try:
+        parsed = urlparse(sanitized_target)
+    except ValueError:
+        return False
+    # Ensure it doesn't have a scheme or netloc
+    if parsed.scheme or parsed.netloc:
+        return False
+    return True
+
+
 @auth_views.route("/login/", methods=["GET", "POST"])
 def login():
     """Handler for the login page view.
@@ -80,11 +110,7 @@ def login():
 
     # Strict validation: A safe relative URL MUST start with a single '/'
     next_url = request.args.get("next", "/")
-    if (
-        not next_url.startswith("/")
-        or next_url.startswith("//")
-        or next_url.startswith("/\\")
-    ):
+    if not is_safe_url(next_url):
         current_app.logger.warning(
             "Invalid next_url in login attempt: %s (from IP: %s)",
             next_url,
@@ -462,6 +488,9 @@ def google_openid_connect():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(session.get("next", "/"))
+        next_url = session.get("next", "/")
+        if not is_safe_url(next_url):
+            next_url = "/"
+        return redirect(next_url)
 
     return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")

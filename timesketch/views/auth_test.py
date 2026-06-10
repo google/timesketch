@@ -68,12 +68,33 @@ class AuthViewTest(BaseTest):
             "//example.com",
             "/\\example.com",
             "http://example.com",
+            "///example.com",
+            "/\t/example.com",
+            "/\n/example.com",
+            "/\r/example.com",
+            "/\x0b/example.com",
+            "/\x0c/example.com",
+            "javascript:alert(1)",
         ]
         for url in invalid_next_urls:
             response = self.client.get(f"/login/?next={url}")
             self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
             mock_logger.warning.assert_called()
             mock_logger.warning.reset_mock()
+
+    def test_login_authenticated_invalid_next_url(self):
+        """Test authenticated user redirect to '/' if 'next' is unsafe."""
+        self.login()
+        response = self.client.get("/login/?next=//example.com")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertTrue(response.headers.get("Location").endswith("/"))
+
+    def test_login_authenticated_valid_next_url(self):
+        """Test authenticated user redirect to safe 'next' URL."""
+        self.login()
+        response = self.client.get("/login/?next=/sketch/1/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertTrue(response.headers.get("Location").endswith("/sketch/1/"))
 
 
 class AuthApiViewTest(BaseTest):
