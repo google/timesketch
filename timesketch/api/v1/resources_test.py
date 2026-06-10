@@ -2661,9 +2661,9 @@ class UploadFileResourceTest(BaseTest):
                 chunk_index_name=chunk_index_name,
             )
 
-        # Verify that os.open was called with 0o644
+        # Verify that os.open was called with 0o600 (kept private during upload)
         self.assertEqual(
-            called_with_args["args"], (file_path, os.O_RDWR | os.O_CREAT, 0o644)
+            called_with_args["args"], (file_path, os.O_RDWR | os.O_CREAT, 0o600)
         )
         # Verify that os.chmod was called with 0o644 at the end of the upload
         mock_os_chmod.assert_called_once_with(file_path, 0o644)
@@ -2789,6 +2789,135 @@ class UploadFileResourceTest(BaseTest):
             )
 
         # Verify that os.chmod was called with the default 0o640 (fallback)
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_string_0o_prefix(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that string permissions with 0o prefix are correctly parsed."""
+        self.app.config["UPLOAD_FILE_PERMISSION"] = "0o644"
+        mock_current_app.config = self.app.config
+
+        filename = "00000000000000000000000000000007"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_string_0o.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_string_0o",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        # Verify that os.chmod was called with 0o644
+        mock_os_chmod.assert_called_once_with(file_path, 0o644)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_invalid_type_fallback(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that invalid types (like float or None) fall back to 0o640."""
+        # Test float
+        self.app.config["UPLOAD_FILE_PERMISSION"] = 640.0
+        mock_current_app.config = self.app.config
+
+        filename = "00000000000000000000000000000008"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_float_fallback.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_float",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+        # Test None
+        mock_os_chmod.reset_mock()
+        self.app.config["UPLOAD_FILE_PERMISSION"] = None
+        mock_current_app.config = self.app.config
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_bool_fallback(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that boolean values fall back to default 0o640."""
+        self.app.config["UPLOAD_FILE_PERMISSION"] = True
+        mock_current_app.config = self.app.config
+
+        filename = "00000000000000000000000000000009"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_bool_fallback.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_bool",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
         mock_os_chmod.assert_called_once_with(file_path, 0o640)
 
 

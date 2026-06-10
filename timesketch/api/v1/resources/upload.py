@@ -450,29 +450,41 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         data_label = form.get("data_label", "")
 
-        file_permission = current_app.config.get("UPLOAD_FILE_PERMISSION", 0o640)
-        if isinstance(file_permission, str):
+        file_permission_config = current_app.config.get("UPLOAD_FILE_PERMISSION", 0o640)
+        file_permission = 0o640
+
+        if isinstance(file_permission_config, str):
             try:
-                file_permission = int(file_permission, 8)
+                file_permission = int(file_permission_config, 8)
             except ValueError:
                 logger.warning(
                     "Invalid UPLOAD_FILE_PERMISSION string '%s', "
                     "falling back to default 0o640",
-                    file_permission,
+                    file_permission_config,
                 )
                 file_permission = 0o640
-        elif isinstance(file_permission, int):
-            if file_permission < 0 or file_permission > 511:  # 0o777
-                logger.warning(
-                    "UPLOAD_FILE_PERMISSION is set to %d (octal %s), "
-                    "which is out of range. Falling back to default 0o640. "
-                    "If you intended to use octal, make sure to prefix it "
-                    "with '0o' in the config file (e.g., 0o640) or use a "
-                    "string (e.g., '0640').",
-                    file_permission,
-                    oct(file_permission),
-                )
-                file_permission = 0o640
+        elif isinstance(file_permission_config, int) and not isinstance(
+            file_permission_config, bool
+        ):
+            file_permission = file_permission_config
+        else:
+            logger.warning(
+                "UPLOAD_FILE_PERMISSION is of invalid type %s, "
+                "falling back to default 0o640",
+                type(file_permission_config),
+            )
+
+        if file_permission < 0 or file_permission > 511:  # 0o777
+            logger.warning(
+                "UPLOAD_FILE_PERMISSION is set to %d (octal %s), "
+                "which is out of range. Falling back to default 0o640. "
+                "If you intended to use octal, make sure to prefix it "
+                "with '0o' in the config file (e.g., 0o640) or use a "
+                "string (e.g., '0640').",
+                file_permission,
+                oct(file_permission),
+            )
+            file_permission = 0o640
 
         if chunk_total_chunks is None:
             file_storage.save(file_path)
@@ -519,7 +531,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_path = utils.format_upload_path(upload_folder, uuid.uuid4().hex)
 
         try:
-            fd = os.open(file_path, os.O_RDWR | os.O_CREAT, file_permission)
+            # Keep the file private (0o600) while uploading chunks.
+            # Configured permissions are applied once the upload completes.
+            fd = os.open(file_path, os.O_RDWR | os.O_CREAT, 0o600)
             try:
                 with os.fdopen(fd, "rb+") as fh:
                     fh.seek(chunk_byte_offset)
