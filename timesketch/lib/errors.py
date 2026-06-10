@@ -63,3 +63,7 @@ class DatastoreQueryError(Error):
 
 class DatastoreTimeoutError(Error):
     """Error with the datastore timeout."""
+
+
+class UnsupportedDatastoreVersionError(Error):
+    """Raised when the connected datastore version is not supported."""
