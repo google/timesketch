@@ -462,18 +462,28 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 )
                 file_permission = 0o640
         elif isinstance(file_permission, int):
-            if file_permission > 511:  # 0o777
+            if file_permission < 0 or file_permission > 511:  # 0o777
                 logger.warning(
-                    "UPLOAD_FILE_PERMISSION is set to %d (octal %s). "
-                    "If you intended to use octal, make sure to prefix it with '0o' "
-                    "in the config file (e.g., 0o640) or use a string (e.g., '0640').",
+                    "UPLOAD_FILE_PERMISSION is set to %d (octal %s), "
+                    "which is out of range. Falling back to default 0o640. "
+                    "If you intended to use octal, make sure to prefix it "
+                    "with '0o' in the config file (e.g., 0o640) or use a "
+                    "string (e.g., '0640').",
                     file_permission,
                     oct(file_permission),
                 )
+                file_permission = 0o640
 
         if chunk_total_chunks is None:
             file_storage.save(file_path)
-            os.chmod(file_path, file_permission)
+            try:
+                os.chmod(file_path, file_permission)
+            except OSError as e:
+                logger.error("Failed to set permissions on %s: %s", file_path, e)
+                abort(
+                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                    f"Unable to set file permissions: {e!s}",
+                )
             return self._upload_and_index(
                 file_path=file_path,
                 file_extension=file_extension,

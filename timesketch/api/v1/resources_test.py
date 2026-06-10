@@ -2750,6 +2750,47 @@ class UploadFileResourceTest(BaseTest):
         # Verify that os.chmod was called with the default 0o640
         mock_os_chmod.assert_called_once_with(file_path, 0o640)
 
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_invalid_decimal_fallback(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that invalid decimal permissions fall back to default (0o640)."""
+        # Set config to a decimal integer that is a common mistake
+        # (640 instead of 0o640)
+        self.app.config["UPLOAD_FILE_PERMISSION"] = 640
+        mock_current_app.config = self.app.config
+
+        # Setup mock behavior
+        filename = "00000000000000000000000000000006"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_fallback.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_fallback",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        # Verify that os.chmod was called with the default 0o640 (fallback)
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
 
 class UserSettingsResourceTest(BaseTest):
     """Test UserSettingsResource."""
