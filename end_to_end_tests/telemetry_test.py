@@ -85,7 +85,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
         # 2. Poll Jaeger API until a trace with SQLAlchemy spans is received
         jaeger_api_url = "http://jaeger:16686/api"
         query_url = f"{jaeger_api_url}/traces?service=timesketch"
-        
+
         found_db_system = False
         found_db_statement = False
 
@@ -98,8 +98,17 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
                 for trace in traces:
                     for span in trace.get("spans", []):
-                        tags = {tag["key"]: tag["value"] for tag in span.get("tags", [])}
-                        if tags.get("db.system") in ["postgresql", "sqlite", "mysql", "mariadb", "oracle", "mssql"]:
+                        tags = {
+                            tag["key"]: tag["value"] for tag in span.get("tags", [])
+                        }
+                        if tags.get("db.system") in [
+                            "postgresql",
+                            "sqlite",
+                            "mysql",
+                            "mariadb",
+                            "oracle",
+                            "mssql",
+                        ]:
                             found_db_system = True
                             if "db.statement" in tags:
                                 found_db_statement = True
@@ -114,7 +123,8 @@ class TelemetryTest(interface.BaseEndToEndTest):
             found_db_system, "No SQLAlchemy spans (db.system) found in Jaeger."
         )
         self.assertions.assertFalse(
-            found_db_statement, "Expected db.statement to be redacted in SQLAlchemy spans."
+            found_db_statement,
+            "Expected db.statement to be redacted in SQLAlchemy spans.",
         )
 
     def test_celery_telemetry_upload(self):
@@ -122,13 +132,15 @@ class TelemetryTest(interface.BaseEndToEndTest):
         # 1. Trigger an upload which runs a Celery task
         rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_telemetry_upload_{rand}")
-        file_path = "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
+        file_path = (
+            "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
+        )
         self.import_timeline(file_path, sketch=sketch)
 
         # 2. Poll Jaeger API to ensure traces were recorded
         jaeger_api_url = "http://jaeger:16686/api"
         query_url = f"{jaeger_api_url}/traces?service=timesketch"
-        
+
         found_db_system = False
         for _ in range(30):
             try:
@@ -139,7 +151,9 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
                 for trace in traces:
                     for span in trace.get("spans", []):
-                        tags = {tag["key"]: tag["value"] for tag in span.get("tags", [])}
+                        tags = {
+                            tag["key"]: tag["value"] for tag in span.get("tags", [])
+                        }
                         if tags.get("db.system") in ["postgresql", "sqlite"]:
                             found_db_system = True
 
@@ -150,7 +164,8 @@ class TelemetryTest(interface.BaseEndToEndTest):
             time.sleep(1)
 
         self.assertions.assertTrue(
-            found_db_system, "No DB telemetry traces found in Jaeger after uploading a file."
+            found_db_system,
+            "No DB telemetry traces found in Jaeger after uploading a file.",
         )
 
 

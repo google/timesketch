@@ -179,11 +179,12 @@ def instrument_flask_app(app, **kwargs):
     FlaskInstrumentor().instrument_app(app, **kwargs)
 
 
-def instrument_sqlalchemy_engine(engine=None, **kwargs):
+def instrument_sqlalchemy_engine(engine=None, **kwargs):  # pylint: disable=unused-argument
     """Instruments a SQLAlchemy engine instance.
 
     Args:
-        engine (sqlalchemy.engine.Engine): The SQLAlchemy engine (ignored in favor of global instrumentation).
+        engine (sqlalchemy.engine.Engine): The SQLAlchemy engine (ignored in favor
+            of global instrumentation).
         **kwargs: Additional arguments passed to SQLAlchemyInstrumentor().instrument().
     """
     if not is_enabled():
