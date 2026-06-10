@@ -230,7 +230,9 @@ def instrument_flask_app(app, **kwargs):
     FlaskInstrumentor().instrument_app(app, **kwargs)
 
 
-def instrument_sqlalchemy_engine(engine=None, **kwargs):  # pylint: disable=unused-argument
+def instrument_sqlalchemy_engine(
+    engine=None, **kwargs
+):  # pylint: disable=unused-argument
     """Instruments a SQLAlchemy engine instance.
 
     Args:
