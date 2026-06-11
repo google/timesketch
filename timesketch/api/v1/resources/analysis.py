@@ -166,20 +166,6 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
 
         analysis_session = AnalysisSession.get_by_id(session_id)
 
-        # Check that the analyzer session exists
-        if not analysis_session:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                "No analyzer session found with this ID.",
-            )
-        # Check that this analyzer session belongs to the sketch
-        if analysis_session.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                f"The sketch ID ({analysis_session.sketch_id:d}) does not match "
-                f"with the defined sketch in the analyzer session ({sketch.id:d})",
-            )
-
         return self.to_json(analysis_session)
 
 
