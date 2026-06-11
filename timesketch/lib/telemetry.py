@@ -255,9 +255,6 @@ def instrument_flask_app(app, **kwargs):
     FlaskInstrumentor().instrument_app(app, **kwargs)
 
 
-
-
-
 @safe_telemetry_call
 def set_status_on_current_span(status_name: str, description: str = None):
     """Sets the status on the currently active span.

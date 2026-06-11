@@ -25,7 +25,6 @@ from sqlalchemy import func
 from sqlalchemy import Integer
 
 
-
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
