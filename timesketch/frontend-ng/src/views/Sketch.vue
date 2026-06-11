@@ -58,7 +58,7 @@ limitations under the License.
 
       <!-- Settings dialog -->
       <v-dialog v-model="showSettingsDialog" width="700px">
-        <ts-settings-dialog></ts-settings-dialog>
+        <ts-settings-dialog v-if="showSettingsDialog"></ts-settings-dialog>
       </v-dialog>
 
       <!-- Top horizontal toolbar -->
@@ -560,7 +560,7 @@ export default {
         order: 'asc',
         chips: [startChip],
       }
-      let queryRequest = { queryString: '*', queryFilter: queryFilter }
+      let queryRequest = { queryString: '*', queryFilter }
       return queryRequest
     },
     updateContextQuery(duration) {
