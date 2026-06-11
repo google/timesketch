@@ -194,7 +194,8 @@ class TelemetryTest(interface.BaseEndToEndTest):
         )
         self.assertions.assertFalse(
             found_secret_leak,
-            "Security Risk: The secret search term leaked into SQLAlchemy span attributes!",
+            "Security Risk: The secret search term leaked into SQLAlchemy "
+            "span attributes!",
         )
 
     def test_celery_telemetry_upload(self):
