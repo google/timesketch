@@ -262,7 +262,8 @@ def instrument_sqlalchemy_engine(engine=None, **kwargs):
         return
     instrumentor = SQLAlchemyInstrumentor()
     if not instrumentor.is_instrumented_by_opentelemetry:
-        # Pass the engine explicitly so that queries are traced on already-created engines
+        # Pass the engine explicitly so that queries are traced
+        # on already-created engines
         if engine is not None:
             kwargs["engine"] = engine
         instrumentor.instrument(**kwargs)
