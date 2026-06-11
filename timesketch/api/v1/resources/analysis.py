@@ -309,8 +309,6 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
             timeline = Timeline.get_by_id(timeline_id)
             if not timeline:
                 continue
-            if timeline.sketch_id != sketch.id:
-                continue
             if not timeline.status[0].status == "ready":
                 continue
             searchindex_id = timeline.searchindex.id

@@ -135,7 +135,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         if aggregation.sketch_id != sketch.id:
             abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
+                HTTP_STATUS_CODE_NOT_FOUND,
                 f"The sketch ID ({aggregation.sketch_id:d}) does not match with "
                 f"the defined sketch in the aggregation ({sketch.id:d})",
             )
