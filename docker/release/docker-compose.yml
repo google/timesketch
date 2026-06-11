@@ -18,6 +18,8 @@ services:
       # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
       - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
       - TIMESKETCH_OTLP_GRPC_ENDPOINT=${TIMESKETCH_OTLP_GRPC_ENDPOINT:-otel-collector:4317}
+      - TIMESKETCH_OTLP_HTTP_ENDPOINT=${TIMESKETCH_OTLP_HTTP_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      - TIMESKETCH_OTLP_INSECURE=${TIMESKETCH_OTLP_INSECURE:-true}
     restart: always
     command: timesketch-web
     volumes:
@@ -36,6 +38,8 @@ services:
       # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
       - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
       - TIMESKETCH_OTLP_GRPC_ENDPOINT=${TIMESKETCH_OTLP_GRPC_ENDPOINT:-otel-collector:4317}
+      - TIMESKETCH_OTLP_HTTP_ENDPOINT=${TIMESKETCH_OTLP_HTTP_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      - TIMESKETCH_OTLP_INSECURE=${TIMESKETCH_OTLP_INSECURE:-true}
     restart: always
     command: timesketch-web-legacy
     profiles:
@@ -56,6 +60,8 @@ services:
       # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
       - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
       - TIMESKETCH_OTLP_GRPC_ENDPOINT=${TIMESKETCH_OTLP_GRPC_ENDPOINT:-otel-collector:4317}
+      - TIMESKETCH_OTLP_HTTP_ENDPOINT=${TIMESKETCH_OTLP_HTTP_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      - TIMESKETCH_OTLP_INSECURE=${TIMESKETCH_OTLP_INSECURE:-true}
     restart: always
     command: timesketch-web-v3
     profiles:
@@ -75,6 +81,8 @@ services:
       # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
       - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
       - TIMESKETCH_OTLP_GRPC_ENDPOINT=${TIMESKETCH_OTLP_GRPC_ENDPOINT:-otel-collector:4317}
+      - TIMESKETCH_OTLP_HTTP_ENDPOINT=${TIMESKETCH_OTLP_HTTP_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      - TIMESKETCH_OTLP_INSECURE=${TIMESKETCH_OTLP_INSECURE:-true}
     restart: always
     command: timesketch-worker
     volumes:
