@@ -32,15 +32,21 @@ try:
     from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.trace import SpanProcessor
 
     HAS_OTEL = True
 except (ImportError, ModuleNotFoundError) as e:
     HAS_OTEL = False
     trace = None
     StatusCode = None
+
+    class SpanProcessor:  # pylint: disable=too-few-public-methods
+        """Dummy class to prevent NameError when opentelemetry is not installed."""
+
     logger = logging.getLogger("timesketch.telemetry")
     logger.info("OpenTelemetry is not installed. Error: %s", e)
 
@@ -137,6 +143,22 @@ def is_enabled() -> bool:
     return otel_mode.startswith("otlp-")
 
 
+class SQLAlchemyRedactingProcessor(SpanProcessor):
+    """Custom span processor to remove raw SQL statements from telemetry spans.
+
+    SQLAlchemyInstrumentor collects raw queries (db.statement) by default, which
+    poses a security risk if those queries contain PII or session tokens. This
+    processor drops the db.statement attribute before the span is exported.
+    """
+
+    def on_end(self, span):
+        """Called when a span ends. We redact the db.statement attribute here."""
+        # pylint: disable=protected-access
+        attributes = getattr(span, "_attributes", None)
+        if attributes and hasattr(attributes, "pop"):
+            attributes.pop("db.statement", None)
+
+
 def setup_telemetry(service_name: str):
     """Configures the OpenTelemetry trace exporter.
 
@@ -201,8 +223,13 @@ def setup_telemetry(service_name: str):
 
     # --- Tracing Setup ---
     trace_provider = TracerProvider(resource=resource)
+    trace_provider.add_span_processor(SQLAlchemyRedactingProcessor())
     trace_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
     trace.set_tracer_provider(trace_provider)
+
+    # Globally instrument SQLAlchemy so all future engine creations are traced.
+    if HAS_OTEL:
+        SQLAlchemyInstrumentor().instrument()
 
 
 def instrument_celery_app(celery_app, **kwargs):
