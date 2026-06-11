@@ -104,6 +104,7 @@ curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/tim
 curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
 curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
+curl -s $GITHUB_BASE_URL/data/otel-collector-config.yaml > timesketch/etc/otel-collector-config.yaml
 curl -s $GITHUB_BASE_URL/data/llm_summarize/prompt.txt > timesketch/etc/timesketch/llm_summarize/prompt.txt
 curl -s $GITHUB_BASE_URL/data/llm_starred_events_report/prompt.txt > timesketch/etc/timesketch/llm_starred_events_report/prompt.txt
 curl -s $GITHUB_BASE_URL/data/nl2q/data_types.csv > timesketch/etc/timesketch/nl2q/data_types.csv
