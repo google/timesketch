@@ -2698,16 +2698,15 @@
 </li>
 <li>
 <p><strong>Start the Telemetry Stack (Optional):</strong>
-   To enable the telemetry services (OTel Collector and Jaeger v2), use the
-   <code>telemetry</code> profile:
+   To enable the telemetry services (OTel Collector and Jaeger v2) AND instruct Timesketch to send traces, use the <code>telemetry</code> profile and set <code>TIMESKETCH_OTEL_MODE</code>:
    <code>bash
-   docker-compose --profile telemetry up -d</code></p>
+   TIMESKETCH_OTEL_MODE=otlp-grpc docker-compose --profile telemetry up -d</code>
+   <em>(Alternatively, you can add <code>TIMESKETCH_OTEL_MODE=otlp-grpc</code> to a <code>.env</code> file in the <code>docker/dev</code> or <code>config.env</code> for release)</em></p>
 </li>
 </ol>
 <p><strong>Note on Dependencies:</strong>
 Since the development image does not yet contain the new OpenTelemetry libraries, you must install them manually whenever the container is recreated:</p>
 <pre><code class="language-bash">docker exec timesketch-dev pip install -r /usr/local/src/timesketch/requirements.txt
-# Ensure environment variables are set (uncomment in docker-compose.yml or set manually)
 docker restart timesketch-dev
 </code></pre>
 <h3 id="option-b-using-tilt">Option B: Using Tilt</h3>
