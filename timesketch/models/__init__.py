@@ -24,7 +24,7 @@ from sqlalchemy import DateTime
 from sqlalchemy import func
 from sqlalchemy import Integer
 
-from timesketch.lib.telemetry import instrument_sqlalchemy_engine
+
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN

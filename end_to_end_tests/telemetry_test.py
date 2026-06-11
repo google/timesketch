@@ -89,12 +89,16 @@ class TelemetryTest(interface.BaseEndToEndTest):
         """Verify that OpenSearch telemetry spans are exported."""
         jaeger_api_url = "http://jaeger:16686/api"
 
+        # Capture the time just before triggering the trace in microseconds
+        start_time = int(time.time() * 1000000)
+
         # 1. Trigger a search to generate OpenSearch telemetry
         self.sketch.explore("hello_opensearch_telemetry")
 
         # 2. Poll Jaeger API for opensearch.search spans
         query_url = (
-            f"{jaeger_api_url}/traces?service=timesketch&operation=opensearch.search"
+            f"{jaeger_api_url}/traces?service=timesketch"
+            f"&operation=opensearch.search&start={start_time}"
         )
         traces = []
         last_error = None
@@ -112,8 +116,11 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         tags = {
                             t.get("key"): t.get("value") for t in span.get("tags", [])
                         }
+                        sketch_id_val = tags.get("timesketch.sketch_id") or tags.get(
+                            "sketch_id"
+                        )
                         if "db.opensearch.took_ms" in tags and str(
-                            tags.get("timesketch.sketch_id")
+                            sketch_id_val
                         ) == str(self.sketch.id):
                             found_took_ms = True
                             break

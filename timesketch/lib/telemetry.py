@@ -226,6 +226,10 @@ def setup_telemetry(service_name: str):
     trace_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
     trace.set_tracer_provider(trace_provider)
 
+    # Globally instrument SQLAlchemy so all future engine creations are traced.
+    if HAS_OTEL:
+        SQLAlchemyInstrumentor().instrument()
+
 
 def instrument_celery_app(celery_app, **kwargs):
     """Instruments a Celery application instance.
@@ -251,22 +255,7 @@ def instrument_flask_app(app, **kwargs):
     FlaskInstrumentor().instrument_app(app, **kwargs)
 
 
-def instrument_sqlalchemy_engine(engine=None, **kwargs):
-    """Instruments a SQLAlchemy engine instance.
 
-    Args:
-        engine (sqlalchemy.engine.Engine): The SQLAlchemy engine to instrument.
-        **kwargs: Additional arguments passed to SQLAlchemyInstrumentor().instrument().
-    """
-    if not is_enabled():
-        return
-    instrumentor = SQLAlchemyInstrumentor()
-    if not instrumentor.is_instrumented_by_opentelemetry:
-        # Pass the engine explicitly so that queries are traced
-        # on already-created engines
-        if engine is not None:
-            kwargs["engine"] = engine
-        instrumentor.instrument(**kwargs)
 
 
 @safe_telemetry_call
