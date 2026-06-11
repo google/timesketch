@@ -13,13 +13,14 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
-import codecs
 from hashlib import sha1
 import io
 import json
 import logging
 import os
+import shutil
 import subprocess
+import sys
 import time
 import traceback
 import uuid
@@ -593,13 +594,16 @@ def build_sketch_analysis_pipeline(
         if isinstance(additional_kwargs, dict):
             additional_kwargs = [additional_kwargs]
 
-        kwargs_list = []
-        for _kwargs in additional_kwargs:
-            combined_kwargs = {**base_kwargs, **_kwargs}
-            kwargs_list.append(combined_kwargs)
+        kwargs_list = list(additional_kwargs) if additional_kwargs else []
+
+        if base_kwargs:
+            if isinstance(base_kwargs, list):
+                kwargs_list.extend(base_kwargs)
+            else:
+                kwargs_list.append(base_kwargs)
 
         if not kwargs_list:
-            kwargs_list = [base_kwargs]
+            kwargs_list = [{}]
 
         # Create a hash of the analyzer arguments to compare with later analyzer
         # executions if the analyzer arguments / config changed.
@@ -965,20 +969,32 @@ def run_plaso(
         psort_path = current_app.config["PSORT_PATH"]
     except KeyError:
         psort_path = "psort.py"
+    resolved_psort_path = shutil.which(psort_path) or psort_path
 
-    cmd = [
-        psort_path,
-        "-o",
-        "opensearch_ts",
-        "--server",
-        opensearch_server,
-        "--port",
-        str(opensearch_port),
-        "--status_view",
-        "none",
-        "--index_name",
-        index_name,
-    ]
+    if resolved_psort_path.endswith(".py"):
+        cmd = [
+            sys.executable,
+            resolved_psort_path,
+        ]
+    else:
+        cmd = [
+            resolved_psort_path,
+        ]
+
+    cmd.extend(
+        [
+            "-o",
+            "opensearch_ts",
+            "--server",
+            opensearch_server,
+            "--port",
+            str(opensearch_port),
+            "--status_view",
+            "none",
+            "--index_name",
+            index_name,
+        ]
+    )
 
     log_file_path = "/dev/null"
     log_dir = current_app.config.get("PLASO_LOG_FOLDER")
@@ -1121,7 +1137,7 @@ def run_csv_jsonl(
         file_handle = io.StringIO(events)
         source_type = "jsonl"
     else:
-        file_handle = codecs.open(  # pylint: disable=consider-using-with
+        file_handle = open(  # pylint: disable=consider-using-with
             file_path, "r", encoding="utf-8", errors="replace"
         )
         METRICS["worker_files_parsed"].labels(source_type=source_type).inc()

@@ -52,6 +52,11 @@ limitations under the License.
             </v-row>
           </div>
         </template>
+        <template v-slot:no-results>
+          <div class="text--secondary font-italic font-weight-light pa-2 pl-5" style="font-size: 0.9em">
+            No matching tags
+          </div>
+        </template>
       </v-data-iterator>
     </div>
   </div>
@@ -61,7 +66,20 @@ limitations under the License.
 import EventBus from '../../event-bus.js'
 
 export default {
-  props: [],
+  props: {
+    searchQuery: {
+      type: String,
+      default: ''
+    }
+  },
+  watch: {
+    searchQuery: {
+      immediate: true,
+      handler(val) {
+        this.search = val || ''
+      }
+    }
+  },
   data: function () {
     return {
       // TODO: Refactor this into a configurable option
@@ -125,7 +143,6 @@ export default {
     applyFilterChip(term, termField='', termType='label') {
       let eventData = {}
       eventData.doSearch = true
-      eventData.queryString = '*'
       let chip = {
         field: termField,
         value: term,
