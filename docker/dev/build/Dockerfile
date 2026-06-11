@@ -1,5 +1,4 @@
-# Use the official Docker Hub Ubuntu base image
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ARG PPA_TRACK=stable
 
@@ -19,7 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-wheel \
     python3-setuptools \
-    python3-psycopg2 \
     tzdata \
     nano \
     vim \
@@ -32,9 +30,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
-# Fix for broken PPA dependency in Ubuntu 24.04: Plaso needs the 'events'
-# library for its opensearch output module.
-RUN pip3 install --no-cache-dir --break-system-packages events
+# Install events library and psycopg2-binary via pip (psycopg2 system package is not in 26.04 apt)
+RUN pip3 install --no-cache-dir --break-system-packages events psycopg2-binary
 
 # Install NodeJS for frontend development
 RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh

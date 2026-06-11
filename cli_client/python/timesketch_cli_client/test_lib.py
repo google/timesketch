@@ -68,3 +68,28 @@ def get_cli_context_no_output():
         return TimesketchCli(
             api_client=api_client, sketch_from_flag=1, conf_file=fw.name
         )
+
+
+TEST_CONFIG_JSON_OUTPUT = """
+[timesketch]
+host_uri = http://127.0.0.1
+username = foobar
+auth_mode = oauth
+client_id = myidfoo
+client_secret = sdfa@$FAsASDF132
+verify = True
+
+[cli]
+sketch = 1
+output_format = json
+"""
+
+
+def get_cli_context_json_output():
+    api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
+    with tempfile.NamedTemporaryFile(mode="w") as fw:
+        fw.write(TEST_CONFIG_JSON_OUTPUT)
+        fw.seek(0)
+        return TimesketchCli(
+            api_client=api_client, sketch_from_flag=1, conf_file=fw.name
+        )

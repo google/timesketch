@@ -34,6 +34,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
@@ -449,8 +450,52 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         data_label = form.get("data_label", "")
 
+        file_permission_config = current_app.config.get("UPLOAD_FILE_PERMISSION", 0o640)
+        file_permission = 0o640
+
+        if isinstance(file_permission_config, str):
+            try:
+                file_permission = int(file_permission_config, 8)
+            except ValueError:
+                logger.warning(
+                    "Invalid UPLOAD_FILE_PERMISSION string '%s', "
+                    "falling back to default 0o640",
+                    file_permission_config,
+                )
+                file_permission = 0o640
+        elif isinstance(file_permission_config, int) and not isinstance(
+            file_permission_config, bool
+        ):
+            file_permission = file_permission_config
+        else:
+            logger.warning(
+                "UPLOAD_FILE_PERMISSION is of invalid type %s, "
+                "falling back to default 0o640",
+                type(file_permission_config),
+            )
+
+        if file_permission < 0 or file_permission > 511:  # 0o777
+            logger.warning(
+                "UPLOAD_FILE_PERMISSION is set to %d (octal %s), "
+                "which is out of range. Falling back to default 0o640. "
+                "If you intended to use octal, make sure to prefix it "
+                "with '0o' in the config file (e.g., 0o640) or use a "
+                "string (e.g., '0640').",
+                file_permission,
+                oct(file_permission),
+            )
+            file_permission = 0o640
+
         if chunk_total_chunks is None:
             file_storage.save(file_path)
+            try:
+                os.chmod(file_path, file_permission)
+            except OSError as e:
+                logger.error("Failed to set permissions on %s: %s", file_path, e)
+                abort(
+                    HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                    f"Unable to set file permissions: {e!s}",
+                )
             return self._upload_and_index(
                 file_path=file_path,
                 file_extension=file_extension,
@@ -486,6 +531,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_path = utils.format_upload_path(upload_folder, uuid.uuid4().hex)
 
         try:
+            # Keep the file private (0o600) while uploading chunks.
+            # Configured permissions are applied once the upload completes.
             fd = os.open(file_path, os.O_RDWR | os.O_CREAT, 0o600)
             try:
                 with os.fdopen(fd, "rb+") as fh:
@@ -523,6 +570,15 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 "({:d} but should have been {:d})".format(
                     os.path.getsize(file_path), file_size
                 ),
+            )
+
+        try:
+            os.chmod(file_path, file_permission)
+        except OSError as e:
+            logger.error("Failed to set permissions on %s: %s", file_path, e)
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                f"Unable to set file permissions: {e!s}",
             )
 
         meta = {

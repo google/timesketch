@@ -67,7 +67,9 @@ class TimesketchCli(object):
         if not api_client:
             try:
                 # TODO: Consider other config sections here as well.
-                self.api = timesketch_config.get_client(load_cli_config=True)
+                self.api = timesketch_config.get_client(
+                    config_path=conf_file, load_cli_config=True
+                )
                 if not self.api:
                     raise RequestConnectionError
             except RequestConnectionError:
@@ -120,16 +122,14 @@ class TimesketchCli(object):
             Output format as a string.
         """
         if self.output_format_from_flag:
-            output_format = self.output_format_from_flag
-            self.config_assistant.set_config("output", output_format)
-            self.config_assistant.save_config()
-            return output_format
+            return self.output_format_from_flag
         try:
-            output_format = self.config_assistant.get_config("output")
+            output_format = self.config_assistant.get_config("output_format")
         except KeyError:  # in case value does not exist in the config file
-            self.config_assistant.set_config("output", DEFAULT_OUTPUT_FORMAT)
-            self.config_assistant.save_config()
-            output_format = DEFAULT_OUTPUT_FORMAT
+            try:
+                output_format = self.config_assistant.get_config("output")
+            except KeyError:
+                output_format = DEFAULT_OUTPUT_FORMAT
         return output_format
 
 
@@ -142,8 +142,14 @@ class TimesketchCli(object):
     required=False,
     help="Set output format [json, text, tabular, csv] (overrides global setting).",
 )
+@click.option(
+    "--config",
+    "config_path",
+    required=False,
+    help="Path to the config file.",
+)
 @click.pass_context
-def cli(ctx, sketch, output):
+def cli(ctx, sketch, output, config_path):
     """Timesketch CLI client.
 
     This tool provides similar features as the web client does.
@@ -157,13 +163,18 @@ def cli(ctx, sketch, output):
 
     For detailed help on each command, run  <command> --help
     """
-    ctx.obj = TimesketchCli(sketch_from_flag=sketch, output_format_from_flag=output)
+    ctx.obj = TimesketchCli(
+        sketch_from_flag=sketch,
+        output_format_from_flag=output,
+        conf_file=config_path,
+    )
 
 
 # Register all commands.
 cli.add_command(config.config_group)
 cli.add_command(timelines.timelines_group)
 cli.add_command(search.search_group)
+cli.add_command(search.search_wildcard)
 cli.add_command(search.saved_searches_group)
 cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
