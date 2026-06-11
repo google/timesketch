@@ -37,6 +37,7 @@ from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.user import User, Group
 from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
@@ -709,6 +710,23 @@ class SearchTemplateResourceTest(BaseTest):
         self.login()
         response = self.client.get("/api/v1/searchtemplates/2/")
         self.assert404(response)
+
+    def test_public_searchtemplate_resource(self):
+        """Public search templates are visible through the API."""
+        template = SearchTemplate(
+            name="Public Template",
+            template_uuid="2f48d67e-18e9-4f03-9ec4-44678a95d85b",
+            query_string="event_id: 4625",
+        )
+        db_session.add(template)
+        db_session.commit()
+        template.grant_permission(permission="read")
+
+        self.login()
+        response = self.client.get("/api/v1/searchtemplates/")
+        self.assert200(response)
+        template_names = [t["name"] for t in response.json["objects"][0]]
+        self.assertIn("Public Template", template_names)
 
 
 class ExploreResourceTest(BaseTest):
