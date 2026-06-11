@@ -231,7 +231,14 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         tags = {
                             tag["key"]: tag["value"] for tag in span.get("tags", [])
                         }
-                        if tags.get("db.system") in ["postgresql", "sqlite"]:
+                        if tags.get("db.system") in [
+                            "postgresql",
+                            "sqlite",
+                            "mysql",
+                            "mariadb",
+                            "oracle",
+                            "mssql",
+                        ]:
                             found_db_system = True
 
                 if found_db_system:
