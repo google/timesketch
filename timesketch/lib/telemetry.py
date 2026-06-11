@@ -43,6 +43,10 @@ except (ImportError, ModuleNotFoundError) as e:
     HAS_OTEL = False
     trace = None
     StatusCode = None
+
+    class SpanProcessor:  # pylint: disable=too-few-public-methods
+        """Dummy class to prevent NameError when opentelemetry is not installed."""
+
     logger = logging.getLogger("timesketch.telemetry")
     logger.info("OpenTelemetry is not installed. Error: %s", e)
 
@@ -151,8 +155,7 @@ class SQLAlchemyRedactingProcessor(SpanProcessor):
         """Called when a span ends. We redact the db.statement attribute here."""
         # pylint: disable=protected-access
         if hasattr(span, "_attributes") and span._attributes:
-            if "db.statement" in span._attributes:
-                del span._attributes["db.statement"]
+            span._attributes.pop("db.statement", None)
 
 
 def setup_telemetry(service_name: str):
@@ -248,20 +251,20 @@ def instrument_flask_app(app, **kwargs):
     FlaskInstrumentor().instrument_app(app, **kwargs)
 
 
-def instrument_sqlalchemy_engine(
-    engine=None, **kwargs
-):  # pylint: disable=unused-argument
+def instrument_sqlalchemy_engine(engine=None, **kwargs):
     """Instruments a SQLAlchemy engine instance.
 
     Args:
-        engine (sqlalchemy.engine.Engine): The SQLAlchemy engine (ignored in favor
-            of global instrumentation).
+        engine (sqlalchemy.engine.Engine): The SQLAlchemy engine to instrument.
         **kwargs: Additional arguments passed to SQLAlchemyInstrumentor().instrument().
     """
     if not is_enabled():
         return
     instrumentor = SQLAlchemyInstrumentor()
     if not instrumentor.is_instrumented_by_opentelemetry:
+        # Pass the engine explicitly so that queries are traced on already-created engines
+        if engine is not None:
+            kwargs["engine"] = engine
         instrumentor.instrument(**kwargs)
 
 
