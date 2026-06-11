@@ -136,6 +136,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
             found_took_ms, "Expected db.opensearch.took_ms tag in OpenSearch spans."
         )
 
+    # pylint: disable=too-many-nested-blocks
     def test_sqlalchemy_telemetry(self):
         """Verify that SQLAlchemy telemetry is exported without db.statement."""
         # 1. Trigger an API request that uses the DB (saves to SearchHistory)
