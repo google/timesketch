@@ -14,6 +14,7 @@
 """Module providing OpenTelemetry capability to Timesketch."""
 
 import json
+import functools
 import logging
 import os
 
@@ -26,7 +27,6 @@ try:
 
     from opentelemetry import trace
     from opentelemetry.trace import StatusCode
-    from opentelemetry.trace.span import INVALID_SPAN
     from opentelemetry.exporter import cloud_trace
     from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
     from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
@@ -37,15 +37,62 @@ try:
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
     HAS_OTEL = True
-except (ImportError, ModuleNotFoundError):
+except (ImportError, ModuleNotFoundError) as e:
     HAS_OTEL = False
     trace = None
     StatusCode = None
-    INVALID_SPAN = None
+    logger = logging.getLogger("timesketch.telemetry")
+    logger.info("OpenTelemetry is not installed. Error: %s", e)
 
 from timesketch.version import get_version
 
 logger = logging.getLogger("timesketch.telemetry")
+
+
+def instrument_search(func):
+    """Decorator to instrument OpenSearch search calls with OpenTelemetry.
+
+    This decorator wraps OpenSearch search methods to automatically create
+    telemetry spans ("opensearch.search") for each query. It extracts useful
+    context from the query, such as the `sketch_id`, and records it as an
+    attribute (`timesketch.sketch_id`) to help correlate backend performance
+    with specific user sketches.
+
+    Additionally, if the OpenSearch client returns a dictionary containing a
+    "took" field, the decorator captures this value and adds it to the span
+    under the attribute `db.opensearch.took_ms`.
+
+    If the query fails and raises an exception, the exception is recorded
+    on the span and the span's status is set to ERROR.
+
+    If OpenTelemetry is not installed or enabled via `TIMESKETCH_OTEL_MODE`,
+    this decorator acts as a no-op and safely runs the function without spans.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not is_enabled():
+            return func(*args, **kwargs)
+
+        tracer = trace.get_tracer("timesketch.lib.datastores.opensearch")
+        with tracer.start_as_current_span("opensearch.search") as span:
+            sketch_id = kwargs.get("sketch_id")
+            if sketch_id is None and len(args) > 1:
+                sketch_id = args[1]
+            if sketch_id is not None:
+                span.set_attribute("timesketch.sketch_id", sketch_id)
+
+            try:
+                result = func(*args, **kwargs)
+                if isinstance(result, dict) and "took" in result:
+                    span.set_attribute("db.opensearch.took_ms", result.get("took", 0))
+                return result
+            except Exception as e:
+                span.set_status(StatusCode.ERROR, str(e))
+                span.record_exception(e)
+                raise
+
+    return wrapper
 
 
 def safe_telemetry_call(func):
@@ -105,6 +152,10 @@ def setup_telemetry(service_name: str):
         service_name (str): The name of the service to identify traces in the backend.
     """
     if not is_enabled():
+        return
+
+    # Prevent overriding if already set (e.g. by Flask auto-reloader)
+    if isinstance(trace.get_tracer_provider(), TracerProvider):
         return
 
     resource = Resource(
@@ -190,7 +241,7 @@ def set_status_on_current_span(status_name: str, description: str = None):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         code = getattr(StatusCode, status_name.upper(), StatusCode.UNSET)
         otel_span.set_status(code, description)
 
@@ -206,7 +257,7 @@ def add_event_to_current_span(event: str):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         otel_span.add_event(event)
 
 
@@ -224,7 +275,7 @@ def add_attribute_to_current_span(name: str, value: object):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         if isinstance(value, (str, bool, int, float)):
             otel_span.set_attribute(name, value)
         else:
