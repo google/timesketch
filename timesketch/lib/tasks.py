@@ -202,7 +202,6 @@ def init_worker(**kwargs):
     if "pool_pre_ping" not in engine_options:
         engine_options["pool_pre_ping"] = True
     engine = create_engine(url, future=True, **engine_options)
-    instrument_sqlalchemy_engine(engine)
     db_session.configure(bind=engine)
 
 
