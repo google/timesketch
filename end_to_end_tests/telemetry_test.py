@@ -138,8 +138,9 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
     def test_sqlalchemy_telemetry(self):
         """Verify that SQLAlchemy telemetry is exported without db.statement."""
-        # 1. Trigger an API request that uses the DB
-        self.api.list_sketches()
+        # 1. Trigger an API request that uses the DB (saves to SearchHistory)
+        secret_term = f"secret_search_term_{uuid.uuid4().hex}"
+        self.sketch.explore(secret_term)
 
         # 2. Poll Jaeger API until a trace with SQLAlchemy spans is received
         jaeger_api_url = "http://jaeger:16686/api"
@@ -147,6 +148,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
         found_db_system = False
         found_db_statement = False
+        found_secret_leak = False
 
         for _ in range(30):
             try:
@@ -172,6 +174,10 @@ class TelemetryTest(interface.BaseEndToEndTest):
                             if "db.statement" in tags:
                                 found_db_statement = True
 
+                            for val in tags.values():
+                                if secret_term in str(val):
+                                    found_secret_leak = True
+
                 if found_db_system:
                     break
             except requests.exceptions.RequestException:
@@ -184,6 +190,10 @@ class TelemetryTest(interface.BaseEndToEndTest):
         self.assertions.assertFalse(
             found_db_statement,
             "Expected db.statement to be redacted in SQLAlchemy spans.",
+        )
+        self.assertions.assertFalse(
+            found_secret_leak,
+            "Security Risk: The secret search term leaked into SQLAlchemy span attributes!",
         )
 
     def test_celery_telemetry_upload(self):
