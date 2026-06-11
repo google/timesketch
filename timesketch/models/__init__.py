@@ -45,7 +45,6 @@ def configure_engine(url, engine_options):
         engine_options["pool_pre_ping"] = True
     global engine, session_maker, db_session
     engine = create_engine(url, future=True, **engine_options)
-    instrument_sqlalchemy_engine(engine)
     # Configure the session
     session_maker.configure(
         autocommit=False, autoflush=False, bind=engine, query_cls=Query
