@@ -140,12 +140,13 @@ class TelemetryTest(interface.BaseEndToEndTest):
     def test_sqlalchemy_telemetry(self):
         """Verify that SQLAlchemy telemetry is exported without db.statement."""
         # 1. Trigger an API request that uses the DB (saves to SearchHistory)
+        start_time = int(time.time() * 1000000)
         secret_term = f"secret_search_term_{uuid.uuid4().hex}"
         self.sketch.explore(secret_term)
 
         # 2. Poll Jaeger API until a trace with SQLAlchemy spans is received
         jaeger_api_url = "http://jaeger:16686/api"
-        query_url = f"{jaeger_api_url}/traces?service=timesketch"
+        query_url = f"{jaeger_api_url}/traces?service=timesketch&start={start_time}"
 
         found_db_system = False
         found_db_statement = False
@@ -201,16 +202,14 @@ class TelemetryTest(interface.BaseEndToEndTest):
     def test_celery_telemetry_upload(self):
         """Verify that telemetry is generated during a file upload (Celery task)."""
         # 1. Trigger an upload which runs a Celery task
+        start_time = int(time.time() * 1000000)
         rand = uuid.uuid4().hex
         sketch = self.api.create_sketch(name=f"test_telemetry_upload_{rand}")
-        file_path = (
-            "/usr/local/src/timesketch/end_to_end_tests/test_data/sigma_events.jsonl"
-        )
-        self.import_timeline(file_path, sketch=sketch)
+        self.import_timeline("sigma_events.jsonl", sketch=sketch)
 
         # 2. Poll Jaeger API to ensure traces were recorded
         jaeger_api_url = "http://jaeger:16686/api"
-        query_url = f"{jaeger_api_url}/traces?service=timesketch"
+        query_url = f"{jaeger_api_url}/traces?service=timesketch&start={start_time}"
 
         found_db_system = False
         for _ in range(30):
