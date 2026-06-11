@@ -52,17 +52,16 @@ Telemetry is controlled entirely via environment variables.
    ```
 
 2. **Start the Telemetry Stack (Optional):**
-   To enable the telemetry services (OTel Collector and Jaeger v2), use the
-   `telemetry` profile:
+   To enable the telemetry services (OTel Collector and Jaeger v2) AND instruct Timesketch to send traces, use the `telemetry` profile and set `TIMESKETCH_OTEL_MODE`:
    ```bash
-   docker-compose --profile telemetry up -d
+   TIMESKETCH_OTEL_MODE=otlp-grpc docker-compose --profile telemetry up -d
    ```
+   *(Alternatively, you can add `TIMESKETCH_OTEL_MODE=otlp-grpc` to a `.env` file in the `docker/dev` or `config.env` for release)*
 
 **Note on Dependencies:**
 Since the development image does not yet contain the new OpenTelemetry libraries, you must install them manually whenever the container is recreated:
 ```bash
 docker exec timesketch-dev pip install -r /usr/local/src/timesketch/requirements.txt
-# Ensure environment variables are set (uncomment in docker-compose.yml or set manually)
 docker restart timesketch-dev
 ```
 
