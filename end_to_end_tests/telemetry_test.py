@@ -15,6 +15,7 @@
 
 import os
 import time
+import uuid
 
 import requests
 
@@ -53,10 +54,10 @@ class TelemetryTest(interface.BaseEndToEndTest):
         """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
         jaeger_api_url = "http://jaeger:16686/api"
 
-        # 2. Trigger a simple API request to generate some telemetry
+        # 1. Trigger a simple API request to generate some telemetry
         self.api.list_sketches()
 
-        # 3. Poll Jaeger API until a trace is received or timeout (30 seconds) is hit
+        # 2. Poll Jaeger API until a trace is received or timeout (30 seconds) is hit
         query_url = f"{jaeger_api_url}/traces?service=timesketch"
         traces = []
         last_error = None
@@ -72,7 +73,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
                 last_error = e
             time.sleep(1)
 
-        # 4. Assert that at least one trace has been received by Jaeger
+        # 3. Assert that at least one trace has been received by Jaeger
         error_msg = "No telemetry traces were found in Jaeger for service 'timesketch'"
         if last_error and not traces:
             error_msg += f" (Last connection error: {last_error})"
@@ -88,12 +89,16 @@ class TelemetryTest(interface.BaseEndToEndTest):
         """Verify that OpenSearch telemetry spans are exported."""
         jaeger_api_url = "http://jaeger:16686/api"
 
+        # Capture the time just before triggering the trace in microseconds
+        start_time = int(time.time() * 1000000)
+
         # 1. Trigger a search to generate OpenSearch telemetry
         self.sketch.explore("hello_opensearch_telemetry")
 
         # 2. Poll Jaeger API for opensearch.search spans
         query_url = (
-            f"{jaeger_api_url}/traces?service=timesketch&operation=opensearch.search"
+            f"{jaeger_api_url}/traces?service=timesketch"
+            f"&operation=opensearch.search&start={start_time}"
         )
         traces = []
         last_error = None
@@ -111,8 +116,11 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         tags = {
                             t.get("key"): t.get("value") for t in span.get("tags", [])
                         }
+                        sketch_id_val = tags.get("timesketch.sketch_id") or tags.get(
+                            "sketch_id"
+                        )
                         if "db.opensearch.took_ms" in tags and str(
-                            tags.get("timesketch.sketch_id")
+                            sketch_id_val
                         ) == str(self.sketch.id):
                             found_took_ms = True
                             break
@@ -133,6 +141,115 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
         self.assertions.assertTrue(
             found_took_ms, "Expected db.opensearch.took_ms tag in OpenSearch spans."
+        )
+
+    # pylint: disable=too-many-nested-blocks
+    def test_sqlalchemy_telemetry(self):
+        """Verify that SQLAlchemy telemetry is exported without db.statement."""
+        # 1. Trigger an API request that uses the DB (saves to SearchHistory)
+        start_time = int(time.time() * 1000000)
+        secret_term = f"secret_search_term_{uuid.uuid4().hex}"
+        self.sketch.explore(secret_term)
+
+        # 2. Poll Jaeger API until a trace with SQLAlchemy spans is received
+        jaeger_api_url = "http://jaeger:16686/api"
+        query_url = f"{jaeger_api_url}/traces?service=timesketch&start={start_time}"
+
+        found_db_system = False
+        found_db_statement = False
+        found_secret_leak = False
+
+        for _ in range(30):
+            try:
+                response = requests.get(query_url, timeout=5)
+                response.raise_for_status()
+                traces_data = response.json()
+                traces = traces_data.get("data", [])
+
+                for trace in traces:
+                    for span in trace.get("spans", []):
+                        tags = {
+                            tag["key"]: tag["value"] for tag in span.get("tags", [])
+                        }
+                        if tags.get("db.system") in [
+                            "postgresql",
+                            "sqlite",
+                            "mysql",
+                            "mariadb",
+                            "oracle",
+                            "mssql",
+                        ]:
+                            found_db_system = True
+                            if "db.statement" in tags:
+                                found_db_statement = True
+
+                            for val in tags.values():
+                                if secret_term in str(val):
+                                    found_secret_leak = True
+
+                if found_db_system:
+                    break
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(1)
+
+        self.assertions.assertTrue(
+            found_db_system, "No SQLAlchemy spans (db.system) found in Jaeger."
+        )
+        self.assertions.assertFalse(
+            found_db_statement,
+            "Expected db.statement to be redacted in SQLAlchemy spans.",
+        )
+        self.assertions.assertFalse(
+            found_secret_leak,
+            "Security Risk: The secret search term leaked into SQLAlchemy "
+            "span attributes!",
+        )
+
+    def test_celery_telemetry_upload(self):
+        """Verify that telemetry is generated during a file upload (Celery task)."""
+        # 1. Trigger an upload which runs a Celery task
+        start_time = int(time.time() * 1000000)
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test_telemetry_upload_{rand}")
+        self.import_timeline("sigma_events.jsonl", sketch=sketch)
+
+        # 2. Poll Jaeger API to ensure traces were recorded
+        jaeger_api_url = "http://jaeger:16686/api"
+        query_url = f"{jaeger_api_url}/traces?service=timesketch&start={start_time}"
+
+        found_db_system = False
+        for _ in range(30):
+            try:
+                response = requests.get(query_url, timeout=5)
+                response.raise_for_status()
+                traces_data = response.json()
+                traces = traces_data.get("data", [])
+
+                for trace in traces:
+                    for span in trace.get("spans", []):
+                        tags = {
+                            tag["key"]: tag["value"] for tag in span.get("tags", [])
+                        }
+                        if tags.get("db.system") in [
+                            "postgresql",
+                            "sqlite",
+                            "mysql",
+                            "mariadb",
+                            "oracle",
+                            "mssql",
+                        ]:
+                            found_db_system = True
+
+                if found_db_system:
+                    break
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(1)
+
+        self.assertions.assertTrue(
+            found_db_system,
+            "No DB telemetry traces found in Jaeger after uploading a file.",
         )
 
 
