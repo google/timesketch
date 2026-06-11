@@ -154,8 +154,9 @@ class SQLAlchemyRedactingProcessor(SpanProcessor):
     def on_end(self, span):
         """Called when a span ends. We redact the db.statement attribute here."""
         # pylint: disable=protected-access
-        if hasattr(span, "_attributes") and span._attributes:
-            span._attributes.pop("db.statement", None)
+        attributes = getattr(span, "_attributes", None)
+        if attributes and hasattr(attributes, "pop"):
+            attributes.pop("db.statement", None)
 
 
 def setup_telemetry(service_name: str):
