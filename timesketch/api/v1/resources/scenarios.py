@@ -1030,6 +1030,12 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
 
+        if conclusion.investigativequestion != question:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "Conclusion does not belong to this question.",
+            )
+
         if conclusion.user != current_user:
             abort(HTTP_STATUS_CODE_FORBIDDEN, "You can only edit your own conclusion.")
 
