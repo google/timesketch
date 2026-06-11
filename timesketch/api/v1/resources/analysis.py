@@ -76,12 +76,6 @@ class AnalysisResource(resources.ResourceMixin, Resource):
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
-        if timeline.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "Timeline does not belong to this sketch.",
-            )
-
         analysis_history = Analysis.query.filter_by(timeline=timeline).all()
 
         return self.to_json(analysis_history)

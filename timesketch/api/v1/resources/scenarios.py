@@ -921,12 +921,6 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        if question.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "Question does not belong to this sketch",
-            )
-
         conclusions = InvestigativeQuestionConclusion.query.filter_by(
             investigativequestion=question
         ).all()
@@ -954,12 +948,6 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
-
-        if question.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "Question does not belong to this sketch",
-            )
 
         form = request.json
         if not form:
@@ -1016,12 +1004,6 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        if question.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "Question does not belong to this sketch",
-            )
-
         conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
@@ -1059,12 +1041,6 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
-
-        if question.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "Question does not belong to this sketch",
-            )
 
         conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
