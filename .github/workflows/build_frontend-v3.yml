@@ -9,6 +9,9 @@ on:
       - '!timesketch/frontend-v3/dist/**' # Exclude changes in the dist folder
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-frontend-v3:
     timeout-minutes: 30

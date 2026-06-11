@@ -101,7 +101,28 @@ if __name__ == "__main__":
         print(f"Timeout: Server did not become active within 120s on {host}:{port}.")
         sys.exit(1)
 
-    for name, cls in manager.get_tests(sort_by_mtime=True):
+    all_tests = list(manager.get_tests(sort_by_mtime=True))
+    tests_to_run = all_tests
+    if len(sys.argv) > 1:
+        # Support running a subset of tests by passing a single test class name
+        # or a comma-separated list of names (e.g., 'client_test,query_test').
+        test_filters = [t.strip().lower() for t in sys.argv[1].split(",")]
+        filtered_tests = [(n, c) for n, c in all_tests if n in test_filters]
+
+        missing_tests = [t for t in test_filters if t not in [n for n, _ in all_tests]]
+        if missing_tests:
+            print(
+                "Error: The following requested tests do not exist: "
+                f"{', '.join(missing_tests)}"
+            )
+            print("Available test classes:")
+            for name, _ in all_tests:
+                print(f"  - {name}")
+            sys.exit(1)
+
+        tests_to_run = filtered_tests
+
+    for name, cls in tests_to_run:
         test_class = cls()
         # Prepare the test environment.
         test_class.setup()
