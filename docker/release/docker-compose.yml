@@ -163,7 +163,7 @@ services:
     user: "0"
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ${TIMESKETCH_OTEL_CONFIG_PATH:-../../data/otel-collector-config.yaml}:/etc/otel-collector-config.yaml
+      - ${TIMESKETCH_OTEL_CONFIG_PATH:-./etc/otel-collector-config.yaml}:/etc/otel-collector-config.yaml
     ports:
       - "127.0.0.1:4317:4317"
       - "127.0.0.1:4318:4318"
