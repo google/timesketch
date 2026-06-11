@@ -36,6 +36,7 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.trace import SpanProcessor
 
     HAS_OTEL = True
 except (ImportError, ModuleNotFoundError) as e:
@@ -138,6 +139,22 @@ def is_enabled() -> bool:
     return otel_mode.startswith("otlp-")
 
 
+class SQLAlchemyRedactingProcessor(SpanProcessor):
+    """Custom span processor to remove raw SQL statements from telemetry spans.
+
+    SQLAlchemyInstrumentor collects raw queries (db.statement) by default, which
+    poses a security risk if those queries contain PII or session tokens. This
+    processor drops the db.statement attribute before the span is exported.
+    """
+
+    def on_end(self, span):
+        """Called when a span ends. We redact the db.statement attribute here."""
+        # pylint: disable=protected-access
+        if hasattr(span, "_attributes") and span._attributes:
+            if "db.statement" in span._attributes:
+                del span._attributes["db.statement"]
+
+
 def setup_telemetry(service_name: str):
     """Configures the OpenTelemetry trace exporter.
 
@@ -202,6 +219,7 @@ def setup_telemetry(service_name: str):
 
     # --- Tracing Setup ---
     trace_provider = TracerProvider(resource=resource)
+    trace_provider.add_span_processor(SQLAlchemyRedactingProcessor())
     trace_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
     trace.set_tracer_provider(trace_provider)
 
