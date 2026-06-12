@@ -1,5 +1,6 @@
 services:
   timesketch:
+    image: e2e-timesketch:latest
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
@@ -26,6 +27,8 @@ services:
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
+      cache_from:
+        - e2e-timesketch:latest
       args:
           UBUNTU_VERSION: ${UBUNTU_VERSION:-26.04}
           PLASO_PPA_TRACK: ${PLASO_PPA_TRACK:-stable}

@@ -21,13 +21,32 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+      - name: Build Timesketch E2E Image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.5.0
+        with:
+          context: .
+          file: docker/e2e/Dockerfile
+          tags: e2e-timesketch:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            UBUNTU_VERSION=26.04
+            PLASO_PPA_TRACK=stable
+      - name: Cache Docker images
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.2.0
+        with:
+          path: /var/lib/docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('docker/e2e/docker-compose.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
       - name: Set up infrastructure with docker compose
-        run: docker compose -f docker/e2e/docker-compose.yml up -d --build
+        run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
-          UBUNTU_VERSION: 26.04
           OPENSEARCH_VERSION: 2.19.5
-          PLASO_PPA_TRACK: stable
       - name: Run e2e tests
         run: |
           docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
@@ -42,13 +61,32 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+      - name: Build Timesketch E2E Image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.5.0
+        with:
+          context: .
+          file: docker/e2e/Dockerfile
+          tags: e2e-timesketch:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            UBUNTU_VERSION=26.04
+            PLASO_PPA_TRACK=staging
+      - name: Cache Docker images
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.2.0
+        with:
+          path: /var/lib/docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('docker/e2e/docker-compose.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
       - name: Set up infrastructure with docker compose
-        run: docker compose -f docker/e2e/docker-compose.yml up -d --build
+        run: docker compose -f docker/e2e/docker-compose.yml up -d
         env:
-          UBUNTU_VERSION: 26.04
           OPENSEARCH_VERSION: 2.19.5
-          PLASO_PPA_TRACK: staging
       - name: Run e2e tests
         run: |
           docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
