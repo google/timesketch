@@ -1143,6 +1143,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                             HTTP_STATUS_CODE_BAD_REQUEST,
                             "Conclusion ID is required to add a fact.",
                         )
+                    # Enforce that the conclusion belongs to the sketch in the
+                    # URL to prevent cross-sketch linkage of facts.
+                    if conclusion.investigativequestion.sketch.id != sketch.id:
+                        abort(
+                            HTTP_STATUS_CODE_NOT_FOUND,
+                            "No conclusion found with this ID.",
+                        )
                     # Adding facts to conclusions
                     if not form.remove.data:
                         event.conclusions.append(conclusion)
