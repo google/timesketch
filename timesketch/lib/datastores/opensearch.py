@@ -925,11 +925,22 @@ class OpenSearchDataStore:
         # 2. Global search across *.wildcard fields
         if not is_field_search:
             clean_value = token.strip('"').strip("'")
+            should_clauses = []
+            for field in wildcard_fields:
+                should_clauses.append(
+                    {
+                        "wildcard": {
+                            f"{field}.wildcard": {
+                                "value": clean_value,
+                                "case_insensitive": True,
+                            }
+                        }
+                    }
+                )
             dsl_node = {
-                "multi_match": {
-                    "query": clean_value,
-                    "fields": ["*.wildcard"],
-                    "type": "most_fields",
+                "bool": {
+                    "should": should_clauses,
+                    "minimum_should_match": 1,
                 }
             }
         return dsl_node
