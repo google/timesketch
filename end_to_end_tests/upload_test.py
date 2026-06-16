@@ -86,7 +86,9 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj.query_string = "data_type:foobarjson"
         search_obj.scrolling_enable()
         search_obj.max_entries = 4123
-        search_obj.query_filter = {"size": 1000}
+        query_filter = search_obj.query_filter
+        query_filter["size"] = 1000
+        search_obj.query_filter = query_filter
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 4123)
 
@@ -94,7 +96,9 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj_pandas = sketch.explore("data_type:foobarjson", as_object=True)
         search_obj_pandas.scrolling_enable()
         search_obj_pandas.max_entries = 4123
-        search_obj_pandas.query_filter = {"size": 1000}
+        query_filter_pandas = search_obj_pandas.query_filter
+        query_filter_pandas["size"] = 1000
+        search_obj_pandas.query_filter = query_filter_pandas
         events = search_obj_pandas.to_pandas()
         self.assertions.assertEqual(len(events), 4123)
 
