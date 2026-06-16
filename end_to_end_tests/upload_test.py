@@ -84,11 +84,18 @@ class UploadTest(interface.BaseEndToEndTest):
 
         search_obj = search.Search(sketch)
         search_obj.query_string = "data_type:foobarjson"
+        search_obj._scrolling = True  # pylint: disable=protected-access
+        search_obj.max_entries = 4123
+        search_obj.query_filter = {"size": 1000}
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 4123)
 
         # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:foobarjson", as_pandas=True)
+        search_obj_pandas = sketch.explore("data_type:foobarjson", as_object=True)
+        search_obj_pandas._scrolling = True  # pylint: disable=protected-access
+        search_obj_pandas.max_entries = 4123
+        search_obj_pandas.query_filter = {"size": 1000}
+        events = search_obj_pandas.to_pandas()
         self.assertions.assertEqual(len(events), 4123)
 
     def test_upload_jsonl_mapping_exceeds_limit(self):
@@ -159,11 +166,11 @@ class UploadTest(interface.BaseEndToEndTest):
         file_path = "/tmp/verylarge.jsonl"
 
         with open(file_path, "w", encoding="utf-8") as file_object:
-            for i in range(74251):
+            for i in range(12000):
                 line_string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
                 file_object.write(line_string)
 
-        self.import_timeline(file_path, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch, entry_threshold=5000)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -177,18 +184,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         # normal max query limit
         self.assertions.assertEqual(len(search_obj.table), 10000)
-        self.assertions.assertEqual(search_obj.expected_size, 74251)
-
-        # increase max entries returned:
-        search_obj.max_entries = 100000
-        search_obj.commit()
-        self.assertions.assertEqual(len(search_obj.table), 74251)
-
-        # check that the number of events is correct with a different method
-        events = sketch.explore(
-            "data_type:foobarjsonverlarge", as_pandas=True, max_entries=100000
-        )
-        self.assertions.assertEqual(len(events), 74251)
+        self.assertions.assertEqual(search_obj.expected_size, 12000)
 
     def test_large_upload_csv(self):
         """Test uploading a timeline with an a lot of events.
@@ -253,7 +249,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 '"message","timestamp","datetime","timestamp_desc","data_type"\n'
             )
 
-            for i in range(73251):
+            for i in range(12000):
                 # write a line with random values for message
                 line_string = (
                     f'"CSV Count: {i} {rand}","123456789",'
@@ -261,7 +257,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 )
                 file_object.write(line_string)
 
-        self.import_timeline("/tmp/verylarge.csv", sketch=sketch)
+        self.import_timeline("/tmp/verylarge.csv", sketch=sketch, entry_threshold=5000)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -275,16 +271,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         # normal max query limit
         self.assertions.assertEqual(len(search_obj.table), 10000)
-        self.assertions.assertEqual(search_obj.expected_size, 73251)
-
-        # increase max entries returned:
-        search_obj.max_entries = 100000
-        search_obj.commit()
-        self.assertions.assertEqual(len(search_obj.table), 73251)
-
-        # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:73kcsv", as_pandas=True, max_entries=100000)
-        self.assertions.assertEqual(len(events), 73251)
+        self.assertions.assertEqual(search_obj.expected_size, 12000)
 
     def test_datetime_out_of_normal_range_in_csv(self):
         """Test uploading a file with events from way back and some

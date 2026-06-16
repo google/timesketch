@@ -14,6 +14,7 @@
 """Interface for end-to-end tests."""
 
 import collections
+import datetime
 import inspect
 import os
 import json
@@ -68,7 +69,9 @@ class BaseEndToEndTest(object):
         self._imported_files = []
         self._imported_sketch_timelines = set()
 
-    def import_timeline(self, filename, index_name=None, sketch=None):
+    def import_timeline(
+        self, filename, index_name=None, sketch=None, entry_threshold=None
+    ):
         """Import a Plaso, CSV or JSONL file.
 
         Args:
@@ -76,6 +79,7 @@ class BaseEndToEndTest(object):
             index_name (str): The OpenSearch index to store the documents in.
             sketch (Sketch): Optional sketch object to add the timeline to.
                         if no sketch is provided, the default sketch is used.
+            entry_threshold (int): Optional chunk size threshold for imports.
 
         Raises:
             TimeoutError if import takes too long.
@@ -95,6 +99,8 @@ class BaseEndToEndTest(object):
             streamer.set_timeline_name(file_path)
             streamer.set_index_name(index_name)
             streamer.set_provider("e2e test interface")
+            if entry_threshold is not None:
+                streamer.set_entry_threshold(entry_threshold)
             streamer.add_file(file_path)
             timeline = streamer.timeline
             if not timeline:
@@ -288,7 +294,15 @@ class BaseEndToEndTest(object):
         print("*** {0:s} ***".format(self.NAME))
         for test_name, test_func in self._get_test_methods():
             self._counter["tests"] += 1
-            print("Running test: {0:s} ...".format(test_name), end="", flush=True)
+            if os.environ.get("GITHUB_ACTIONS"):
+                print("Running test: {0:s} ...".format(test_name), end="", flush=True)
+            else:
+                now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(
+                    "{0:s} Running test: {1:s} ...".format(now, test_name),
+                    end="",
+                    flush=True,
+                )
             try:
                 test_func()
             except Exception:  # pylint: disable=broad-except
