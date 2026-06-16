@@ -212,10 +212,19 @@ class OpenSearchDataStoreTest(BaseTest):
 
         # 1. Simple global term
         bool_query = ds._build_wildcard_query_dsl("*evil*", wildcard_fields)
-        must_clauses = bool_query["must"]
-        self.assertEqual(len(must_clauses), 1)
-        self.assertEqual(must_clauses[0]["multi_match"]["query"], "*evil*")
-        self.assertEqual(must_clauses[0]["multi_match"]["fields"], ["*.wildcard"])
+        should_clauses = bool_query["should"]
+        self.assertEqual(len(should_clauses), 2)
+        self.assertEqual(bool_query["minimum_should_match"], 1)
+
+        fields_queried = {
+            list(clause["wildcard"].keys())[0] for clause in should_clauses
+        }
+        self.assertEqual(fields_queried, {"msg.wildcard", "xml.wildcard"})
+
+        for clause in should_clauses:
+            field = list(clause["wildcard"].keys())[0]
+            self.assertEqual(clause["wildcard"][field]["value"], "*evil*")
+            self.assertTrue(clause["wildcard"][field]["case_insensitive"])
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_field_search(self, mock_client):
@@ -255,7 +264,7 @@ class OpenSearchDataStoreTest(BaseTest):
         bool_query = ds._build_wildcard_query_dsl(query, wildcard_fields)
 
         # The top-level query must be an OR (should)
-        self.assertEqual(len(bool_query["should"]), 2)
+        self.assertEqual(len(bool_query["should"]), 3)
         self.assertEqual(bool_query["minimum_should_match"], 1)
 
         # Left branch of OR: msg:*evil* AND NOT xml:*test*
@@ -274,9 +283,19 @@ class OpenSearchDataStoreTest(BaseTest):
             "*test*",
         )
 
-        # Right branch of OR: *backdoor*
-        right_or = bool_query["should"][1]
-        self.assertEqual(right_or["multi_match"]["query"], "*backdoor*")
+        # Right branch of OR: *backdoor* (flattened into the remaining 2 clauses)
+        backdoor_clauses = bool_query["should"][1:]
+        self.assertEqual(len(backdoor_clauses), 2)
+
+        fields_queried = {
+            list(clause["wildcard"].keys())[0] for clause in backdoor_clauses
+        }
+        self.assertEqual(fields_queried, {"msg.wildcard", "xml.wildcard"})
+
+        for clause in backdoor_clauses:
+            field = list(clause["wildcard"].keys())[0]
+            self.assertEqual(clause["wildcard"][field]["value"], "*backdoor*")
+            self.assertTrue(clause["wildcard"][field]["case_insensitive"])
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_parentheses(self, mock_client):
@@ -302,16 +321,26 @@ class OpenSearchDataStoreTest(BaseTest):
 
         # Right operand: (xml:*test* OR *backdoor*)
         right_or = bool_query["must"][1]
-        self.assertEqual(len(right_or["bool"]["should"]), 2)
+        self.assertEqual(len(right_or["bool"]["should"]), 3)
         self.assertEqual(right_or["bool"]["minimum_should_match"], 1)
         self.assertEqual(
             right_or["bool"]["should"][0]["wildcard"]["xml.wildcard"]["value"],
             "*test*",
         )
-        self.assertEqual(
-            right_or["bool"]["should"][1]["multi_match"]["query"],
-            "*backdoor*",
-        )
+
+        # The flattened *backdoor* clauses
+        backdoor_clauses = right_or["bool"]["should"][1:]
+        self.assertEqual(len(backdoor_clauses), 2)
+
+        fields_queried = {
+            list(clause["wildcard"].keys())[0] for clause in backdoor_clauses
+        }
+        self.assertEqual(fields_queried, {"msg.wildcard", "xml.wildcard"})
+
+        for clause in backdoor_clauses:
+            field = list(clause["wildcard"].keys())[0]
+            self.assertEqual(clause["wildcard"][field]["value"], "*backdoor*")
+            self.assertTrue(clause["wildcard"][field]["case_insensitive"])
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_invalid_field(self, mock_client):
