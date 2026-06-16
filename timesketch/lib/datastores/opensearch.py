@@ -926,7 +926,7 @@ class OpenSearchDataStore:
         if not is_field_search:
             clean_value = token.strip('"').strip("'")
             should_clauses = []
-            for field in wildcard_fields:
+            for field in sorted(wildcard_fields):
                 should_clauses.append(
                     {
                         "wildcard": {
