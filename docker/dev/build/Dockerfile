@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip3 install --no-cache-dir --break-system-packages events psycopg2-binary
 
 # Install NodeJS for frontend development
-RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
+RUN curl -sL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh
 RUN bash nodesource_setup.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
