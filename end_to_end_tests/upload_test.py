@@ -84,7 +84,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         search_obj = search.Search(sketch)
         search_obj.query_string = "data_type:foobarjson"
-        search_obj._scrolling = True  # pylint: disable=protected-access
+        search_obj.scrolling_enable()
         search_obj.max_entries = 4123
         search_obj.query_filter = {"size": 1000}
         search_obj.commit()
@@ -92,7 +92,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         # check that the number of events is correct with a different method
         search_obj_pandas = sketch.explore("data_type:foobarjson", as_object=True)
-        search_obj_pandas._scrolling = True  # pylint: disable=protected-access
+        search_obj_pandas.scrolling_enable()
         search_obj_pandas.max_entries = 4123
         search_obj_pandas.query_filter = {"size": 1000}
         events = search_obj_pandas.to_pandas()
@@ -257,7 +257,7 @@ class UploadTest(interface.BaseEndToEndTest):
                 )
                 file_object.write(line_string)
 
-        self.import_timeline("/tmp/verylarge.csv", sketch=sketch, entry_threshold=5000)
+        self.import_timeline(file_path, sketch=sketch, entry_threshold=5000)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]

@@ -291,18 +291,14 @@ class BaseEndToEndTest(object):
         Returns:
             Counter of number of tests and errors.
         """
-        print("*** {0:s} ***".format(self.NAME))
+        print(f"*** {self.NAME} ***")
         for test_name, test_func in self._get_test_methods():
             self._counter["tests"] += 1
             if os.environ.get("GITHUB_ACTIONS"):
-                print("Running test: {0:s} ...".format(test_name), end="", flush=True)
+                print(f"Running test: {test_name} ...", end="", flush=True)
             else:
                 now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                print(
-                    "{0:s} Running test: {1:s} ...".format(now, test_name),
-                    end="",
-                    flush=True,
-                )
+                print(f"{now} Running test: {test_name} ...", end="", flush=True)
             try:
                 test_func()
             except Exception:  # pylint: disable=broad-except
