@@ -1290,7 +1290,11 @@ class OpenSearchDataStore:
                 )
         except ConnectionTimeout as e:
             wildcard_warning = ""
-            if query_string and query_string.startswith("*") and not use_wildcard_fields:
+            if (
+                query_string
+                and query_string.startswith("*")
+                and not use_wildcard_fields
+            ):
                 wildcard_warning = (
                     " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in "
                     "your search query as these are very resource expensive."
