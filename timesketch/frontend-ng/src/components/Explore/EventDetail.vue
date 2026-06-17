@@ -275,8 +275,8 @@ export default {
     checkContextLinkDisplay(key, value) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['validation_regex'] !== '' && confItem['validation_regex'] !== undefined) {
-          let validationPattern = confItem['validation_regex']
+        if (confItem.validation_regex !== '' && confItem.validation_regex !== undefined) {
+          let validationPattern = confItem.validation_regex
           let regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/') + 1)
           let regexPattern = validationPattern.slice(
             validationPattern.indexOf('/') + 1,
@@ -297,29 +297,29 @@ export default {
     contextLinkRedirect(key, item, value) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['short_name'] === item) {
-          if (confItem['type'] === 'hardcoded_modules') {
-            if (confItem['module'] === 'xml_formatter') {
+        if (confItem.short_name === item) {
+          if (confItem.type === 'hardcoded_modules') {
+            if (confItem.module === 'xml_formatter') {
               this.formatXMLString = true
               this.contextValue = value
               return
             }
-            if (confItem['module'] === 'unfurl_graph') {
+            if (confItem.module === 'unfurl_graph') {
               this.dfirUnfurlDialog = true
               this.contextValue = value
               return
             }
-            if (confItem['module'] === 'threat_intel') {
+            if (confItem.module === 'threat_intel') {
               EventBus.$emit('addIndicator', value)
               return
             }
           } else {
-            if (confItem['redirect_warning']) {
+            if (confItem.redirect_warning) {
               this.redirectWarnDialog = true
               this.contextValue = value
-              this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value))
+              this.contextUrl = confItem.context_link.replace('<ATTR_VALUE>', encodeURIComponent(value))
             } else {
-              window.open(confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
+              window.open(confItem.context_link.replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
               this.redirectWarnDialog = false
             }
           }
@@ -329,17 +329,17 @@ export default {
     getContextLinkType(key, item) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['short_name'] === item) {
-          return confItem['type']
+        if (confItem.short_name === item) {
+          return confItem.type
         }
       }
     },
     getContextLinkRedirectState(key, item) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
-        if (confItem['short_name'] === item) {
-          if (confItem['redirect_warning']) {
-            return confItem['redirect_warning']
+        if (confItem.short_name === item) {
+          if (confItem.redirect_warning) {
+            return confItem.redirect_warning
           } else {
             return false
           }
@@ -365,9 +365,9 @@ export default {
       eventData.doSearch = true
       let chip = {
         field: key,
-        value: value,
+        value,
         type: 'term',
-        operator: operator,
+        operator,
         active: true,
       }
       eventData.chip = chip
