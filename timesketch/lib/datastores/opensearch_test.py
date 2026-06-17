@@ -45,6 +45,7 @@ class OpenSearchDataStoreTest(BaseTest):
 
         # Ensure the client in the datastore is indeed our mock (it should be)
         ds.client = mock_es_instance
+        ds.get_wildcard_fields = mock.Mock(return_value=["message"])
 
         # Test generic timeout message
         with self.assertRaises(DatastoreTimeoutError) as cm:
@@ -59,6 +60,25 @@ class OpenSearchDataStoreTest(BaseTest):
 
         self.assertIn("The search timed out", str(cm.exception))
         self.assertIn("Avoid leading wildcards", str(cm.exception))
+
+        # Test wildcard search mode specific message
+        with self.assertRaises(DatastoreTimeoutError) as cm:
+            ds.search(
+                sketch_id=1,
+                indices=["test"],
+                query_string="*test",
+                use_wildcard_fields=True,
+            )
+
+        self.assertIn("The search timed out", str(cm.exception))
+        self.assertNotIn("Avoid leading wildcards", str(cm.exception))
+
+        # Test timeout message when query_string is None
+        with self.assertRaises(DatastoreTimeoutError) as cm:
+            ds.search(sketch_id=1, indices=["test"], query_string=None)
+
+        self.assertIn("The search timed out", str(cm.exception))
+        self.assertNotIn("Avoid leading wildcards", str(cm.exception))
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_proactive_flush_on_size(self, mock_client):

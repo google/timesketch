@@ -1005,8 +1005,13 @@ export default {
             e.response.data.message.includes('too_many_nested_clauses') ||
             e.response.data.message.includes('query_shard_exception')
           ) {
-            msg =
-              'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
+            if (this.searchMode === 'wildcard') {
+              msg =
+                'Sorry, your query is too complex. Use field-specific search (like "message:*<search term>*") and try again.'
+            } else {
+              msg =
+                'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
+            }
             this.warningSnackBar(msg)
           } else {
             this.errorSnackBar(msg)
