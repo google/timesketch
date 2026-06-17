@@ -73,6 +73,13 @@ class OpenSearchDataStoreTest(BaseTest):
         self.assertIn("The search timed out", str(cm.exception))
         self.assertNotIn("Avoid leading wildcards", str(cm.exception))
 
+        # Test timeout message when query_string is None
+        with self.assertRaises(DatastoreTimeoutError) as cm:
+            ds.search(sketch_id=1, indices=["test"], query_string=None)
+
+        self.assertIn("The search timed out", str(cm.exception))
+        self.assertNotIn("Avoid leading wildcards", str(cm.exception))
+
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_proactive_flush_on_size(self, mock_client):
         """Test that indexing flushes proactively when byte size limit is reached."""

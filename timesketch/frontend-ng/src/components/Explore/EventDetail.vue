@@ -386,8 +386,6 @@ export default {
   flex-direction: column;
 }
 .event-detail-value {
-  word-break: break-all;
-  word-break: break-word;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
