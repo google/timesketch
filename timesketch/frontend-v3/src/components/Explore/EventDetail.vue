@@ -175,7 +175,7 @@ limitations under the License.
                   </td>
 
                   <!-- Event field value -->
-                  <td width="100%" class="pl-0">
+                  <td width="100%" class="pl-0 event-detail-value">
                     {{ value }}
                   </td>
                 </tr>
@@ -444,5 +444,11 @@ export default {
 .flexcard {
   display: flex;
   flex-direction: column;
+}
+.event-detail-value {
+  word-break: break-all;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 </style>

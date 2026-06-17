@@ -170,7 +170,7 @@ limitations under the License.
                         </td>
                       </tr>
                       <tr>
-                        <td>Search for a substring in any string type field (case-sensitive)</td>
+                        <td>Search for a substring in any text based field (case-insensitive)</td>
                         <td>
                           <a href="#" @click.prevent="emitSetQueryAndFilter('*evil*')">
                             <code>*evil*</code>
@@ -237,7 +237,7 @@ limitations under the License.
                       <tr>
                         <td>Search an exact term (no need to escape special characters)</td>
                         <td>
-                          <a href="#" @click.prevent="emitSetQueryAndFilter('url:http://google.com/')">
+                          <a href="#" @click.prevent="emitSetQueryAndFilter('url:\&quot;http://google.com/\&quot;')">
                             <code>url:"http://google.com/"</code>
                           </a>
                         </td>
