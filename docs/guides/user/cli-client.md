@@ -164,6 +164,21 @@ This example returns the field name `domain` and then do a simple sort and uniq.
 timesketch search -q "foobar" --return-fields domain | sort | uniq
 ```
 
+#### Wildcard search
+
+You can perform wildcard searches using the `search-wildcard` command:
+
+```bash
+timesketch search-wildcard -q "message:*Eventlog*"
+```
+
+To compare wildcard search results against standard query string searches (for
+benchmarking/debugging purposes), use the `--compare` flag:
+
+```bash
+timesketch search-wildcard -q "message:*Eventlog*" --compare
+```
+
 ## Saved Searches
 
 ### List saved searches
@@ -456,11 +471,11 @@ timesketch sketch export-only-with-annotations --filename annotated.csv
 
 ## Intelligence
 
-Intelligence is always sketch specific. The same can be achieved using 
-`timesketch attributes` command, but then the ontology type and data needs 
+Intelligence is always sketch specific. The same can be achieved using
+`timesketch attributes` command, but then the ontology type and data needs
 to be provided in the correct format.
 
-Running `timesketch intelligence list` will show the intelligence added to a 
+Running `timesketch intelligence list` will show the intelligence added to a
 sketch (if sketch id is set in the config file)
 
 The output format can also be changed as follows
@@ -513,7 +528,7 @@ To get information about analyzers available in the Timesketch instance the comm
 If no sketch is defined in the config yet, it can also be passed as an argument, e.g.:
 
 ```bash
-timesketch --output-format tabular --sketch 1 analyze list 
+timesketch --output-format tabular --sketch 1 analyze list
 Name	Display Name	Is Multi
 login	Windows logon/logoff events	False
 ntfs_timestomp	NTFS timestomp detection	False
@@ -631,7 +646,7 @@ This new feature makes it easy to add events to Timesketch from the command line
 It can also be called with a output format `json` like following.
 
 ```bash
-timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" 
+timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test"
 {'meta': {}, 'objects': [{'color': 'F37991', 'created_at': '2023-03-08T12:46:24.472587', 'datasources': [], 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 19, 'label_string': '', 'name': 'Manual events', 'searchindex': {'created_at': '2023-03-08T12:46:24.047640', 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 9, 'index_name': '49a318b0ba17867fd71b50903774a0c8', 'label_string': '', 'name': 'Manual events', 'status': [{'created_at': '2023-03-17T09:35:03.202520', 'id': 87, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.202520'}], 'updated_at': '2023-03-08T12:46:24.047640', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}, 'status': [{'created_at': '2023-03-17T09:35:03.233973', 'id': 79, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.233973'}], 'updated_at': '2023-03-08T12:46:24.472587', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}]}
 Event added to sketch: timefocus test
 ```
