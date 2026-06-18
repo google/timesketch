@@ -532,7 +532,7 @@ export default {
           let view = response.data.objects[0]
           this.currentQueryString = view.query_string
           this.currentQueryFilter = JSON.parse(view.query_filter)
-          if (this.currentQueryFilter.use_wildcard_fields) {
+          if (this.currentQueryFilter && this.currentQueryFilter.use_wildcard_fields) {
             this.localSearchMode = 'wildcard'
           } else {
             this.localSearchMode = 'query_string'
@@ -720,7 +720,7 @@ export default {
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string
       this.currentQueryFilter = JSON.parse(node.query_filter)
-      if (this.currentQueryFilter.use_wildcard_fields) {
+      if (this.currentQueryFilter && this.currentQueryFilter.use_wildcard_fields) {
         this.localSearchMode = 'wildcard'
       } else {
         this.localSearchMode = 'query_string'
