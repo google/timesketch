@@ -42,6 +42,10 @@ from timesketch.models.user import User, Group
 from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
 from timesketch.api.v1.resources import upload
+from timesketch.lib.llms.providers import interface as llm_interface
+from timesketch.lib.llms.providers import manager as llm_manager
+from timesketch.lib.llms.features import interface as feature_interface
+from timesketch.api.v1.resources import llm
 
 
 class ResourceMixinTest(BaseTest):
@@ -2111,6 +2115,30 @@ class ScenariosResourceTest(BaseTest):
         self.assertFalse(result)
 
 
+class MockTestProvider(llm_interface.LLMProvider):
+    NAME = "mock_test_provider"
+
+    def generate(self, prompt, response_schema=None):
+        return "mock response"
+
+
+try:
+    llm_manager.LLMManager.register_provider(MockTestProvider)
+except ValueError:
+    pass
+
+
+class MockTestFeature(feature_interface.LLMFeatureInterface):
+    NAME = "mock_test_feature"
+    RESPONSE_SCHEMA = None
+
+    def generate_prompt(self, sketch, **kwargs):
+        return "mock prompt"
+
+    def process_response(self, llm_response, **kwargs):
+        return {"result": "mock result"}
+
+
 @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
 class LLMResourceTest(BaseTest):
     """Test LLMResource."""
@@ -2159,6 +2187,21 @@ class LLMResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertEqual(response_data, {"result": "test result"})
+
+    def test_execute_llm_call_real(self):
+        """Test _execute_llm_call with a dummy provider to test multiprocessing."""
+        # pylint: disable=protected-access
+        # Use the picklable dummy feature instead of MagicMock
+        feature = MockTestFeature()
+
+        resource = llm.LLMResource()
+        provider = MockTestProvider(config={})
+
+        response = resource._execute_llm_call(
+            feature=feature, prompt="test prompt", sketch_id=1, llm_provider=provider
+        )
+
+        self.assertEqual(response, "mock response")
 
     @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
     def test_post_missing_data(self, mock_get_with_acl):
