@@ -1798,6 +1798,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#wildcard-search-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard Search Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#chips" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2904,6 +2915,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#wildcard-search-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard Search Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#chips" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3313,6 +3335,12 @@ always do</p>
 <pre><code>search_obj.*?
 </code></pre>
 <p>To find a list of all the possible configuration options.</p>
+<h4 id="wildcard-search-mode">Wildcard Search Mode</h4>
+<p>To use the optimized wildcard search mode, enable <code>use_wildcard_fields</code> on the
+<code>Search</code> object:</p>
+<pre><code class="language-python">search_obj.query_string = 'message:*Eventlog*'
+search_obj.use_wildcard_fields = True
+</code></pre>
 <h4 id="chips">Chips</h4>
 <p>Chips are the "+ Time filter" or "+ Add label filter", etc elements you can
 see in the UI. There are several chips available:</p>

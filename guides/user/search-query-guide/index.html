@@ -673,6 +673,34 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#wildcard-search-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard Search Mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Wildcard Search Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-syntax-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Syntax &amp; Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#date-related-searches" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2625,6 +2653,34 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#wildcard-search-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard Search Mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Wildcard Search Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-syntax-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Syntax &amp; Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#date-related-searches" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2914,6 +2970,44 @@
   </tr>
 </table>
 
+<h3 id="wildcard-search-mode">Wildcard Search Mode</h3>
+<p>Timesketch includes a dedicated <strong>Wildcard Search Mode</strong> (introduced starting
+with version <code>20260617</code>) designed for case-insensitive substring searching.
+Under the hood, this mode leverages the
+<a href="https://opensearch.org/docs/latest/field-types/supported-field-types/wildcard/">OpenSearch wildcard field type</a>,
+making queries with leading/trailing wildcards (e.g., <code>*malicious*</code>)
+significantly faster and more reliable compared to the classic query string
+search.</p>
+<p>To use Wildcard Search Mode:
+* <strong>In the Web UI:</strong> Select the <strong>WC</strong> (Wildcard) mode from the toggle button
+at the left of the query bar (which otherwise defaults to <strong>QS</strong> for Query
+String).
+* <strong>In Settings:</strong> You can choose to enable <strong>"Use Wildcard Search by default"</strong>
+under your user settings.</p>
+<h4 id="query-syntax-examples">Query Syntax &amp; Examples</h4>
+<p>Wildcard mode tokenizes queries by space and parentheses, supporting standard
+Boolean logic and parenthetical groupings:</p>
+<ul>
+<li><strong>Global substring search:</strong> <code>*evil*</code> searches case-insensitively across all
+fields mapped with wildcard properties (string based fields by default).</li>
+<li><strong>Field-specific search:</strong> <code>message:*evil*</code> searches only within the
+<code>message</code> field.</li>
+<li><strong>Logical operators:</strong> <code>*evil* AND *good*</code> or <code>*evil* OR *good*</code>. The
+operators <code>AND</code>, <code>OR</code>, and <code>NOT</code> must be capitalized.</li>
+<li><strong>Implicit AND:</strong> Multiple terms separated by a space (e.g., <code>*evil* *good*</code>)
+are implicitly combined with <code>AND</code>.</li>
+<li><strong>Exact values with colons:</strong> If your query contains colons (such as paths,
+MAC addresses, or URLs), you <strong>must</strong> wrap it in double quotes (e.g.,
+<code>url:"http://google.com/"</code> or <code>"*count: 1*"</code>), otherwise the colon is
+interpreted as a field separator.</li>
+<li><strong>No Escaping Required:</strong> You do not need to escape special characters like
+<code>.</code> or <code>-</code> with backslashes. Matches are literal, and escaping them (e.g.
+<code>*\.com*</code>) will actually search for a literal backslash.</li>
+</ul>
+<p><em>Note: Wildcard Search Mode requires timeline indices to have
+<a href="../../admin/index-mappings/">wildcard mapping enabled</a>. Older timelines
+imported before this feature was introduced do not support it and will default
+back to Query String mode.</em></p>
 <h3 id="date-related-searches">Date Related Searches</h3>
 <table>
 <thead>

@@ -751,6 +751,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#wildcard-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard search
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3189,6 +3200,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#wildcard-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard search
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3861,6 +3883,14 @@ Options:
 <p>This example returns the field name <code>domain</code> and then do a simple sort and uniq.</p>
 <pre><code>timesketch search -q &quot;foobar&quot; --return-fields domain | sort | uniq
 </code></pre>
+<h4 id="wildcard-search">Wildcard search</h4>
+<p>You can perform wildcard searches using the <code>search-wildcard</code> command:</p>
+<pre><code class="language-bash">timesketch search-wildcard -q &quot;message:*Eventlog*&quot;
+</code></pre>
+<p>To compare wildcard search results against standard query string searches (for
+benchmarking/debugging purposes), use the <code>--compare</code> flag:</p>
+<pre><code class="language-bash">timesketch search-wildcard -q &quot;message:*Eventlog*&quot; --compare
+</code></pre>
 <h2 id="saved-searches">Saved Searches</h2>
 <h3 id="list-saved-searches">List saved searches</h3>
 <p>To list all saved searches in the sketch:</p>
@@ -4057,10 +4087,10 @@ Story created: My new story
 <pre><code class="language-bash">timesketch sketch export-only-with-annotations --filename annotated.csv
 </code></pre>
 <h2 id="intelligence">Intelligence</h2>
-<p>Intelligence is always sketch specific. The same can be achieved using 
-<code>timesketch attributes</code> command, but then the ontology type and data needs 
+<p>Intelligence is always sketch specific. The same can be achieved using
+<code>timesketch attributes</code> command, but then the ontology type and data needs
 to be provided in the correct format.</p>
-<p>Running <code>timesketch intelligence list</code> will show the intelligence added to a 
+<p>Running <code>timesketch intelligence list</code> will show the intelligence added to a
 sketch (if sketch id is set in the config file)</p>
 <p>The output format can also be changed as follows</p>
 <pre><code class="language-bash">timesketch --sketch 2 --output-format text intelligence list --columns ioc,externalURI,tags,type
@@ -4091,7 +4121,7 @@ Attribute removed: Name: intelligence Ontology: intelligence
 </code></pre>
 <p>To get information about analyzers available in the Timesketch instance the command <code>timesketch analyze list</code> can be used.
 If no sketch is defined in the config yet, it can also be passed as an argument, e.g.:</p>
-<pre><code class="language-bash">timesketch --output-format tabular --sketch 1 analyze list 
+<pre><code class="language-bash">timesketch --output-format tabular --sketch 1 analyze list
 Name    Display Name    Is Multi
 login   Windows logon/logoff events False
 ntfs_timestomp  NTFS timestomp detection    False
@@ -4184,7 +4214,7 @@ like:</p>
 <p>For example, the following command would add an event to the Timesketch <code>timesketch events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" --attributes key=value,key2=value2</code>:</p>
 <p>This new feature makes it easy to add events to Timesketch from the command line, which can be helpful for automating tasks or for quickly adding events when you don't have access to the Timesketch web interface.</p>
 <p>It can also be called with a output format <code>json</code> like following.</p>
-<pre><code class="language-bash">timesketch --output-format json events add --message &quot;foobar-message&quot; --date 2023-03-04T11:31:12 --timestamp-desc &quot;test&quot; 
+<pre><code class="language-bash">timesketch --output-format json events add --message &quot;foobar-message&quot; --date 2023-03-04T11:31:12 --timestamp-desc &quot;test&quot;
 {'meta': {}, 'objects': [{'color': 'F37991', 'created_at': '2023-03-08T12:46:24.472587', 'datasources': [], 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 19, 'label_string': '', 'name': 'Manual events', 'searchindex': {'created_at': '2023-03-08T12:46:24.047640', 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 9, 'index_name': '49a318b0ba17867fd71b50903774a0c8', 'label_string': '', 'name': 'Manual events', 'status': [{'created_at': '2023-03-17T09:35:03.202520', 'id': 87, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.202520'}], 'updated_at': '2023-03-08T12:46:24.047640', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}, 'status': [{'created_at': '2023-03-17T09:35:03.233973', 'id': 79, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.233973'}], 'updated_at': '2023-03-08T12:46:24.472587', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}]}
 Event added to sketch: timefocus test
 </code></pre>
