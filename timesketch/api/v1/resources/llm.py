@@ -107,6 +107,7 @@ def _get_content_with_timeout_helper(
                 feature_name,
                 provider_name,
                 e,
+                exc_info=True,
             )
         shared_response.update({"error": error_str})
 
