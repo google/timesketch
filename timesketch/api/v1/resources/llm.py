@@ -49,8 +49,8 @@ _OPERATIONAL_ERROR_SUBSTRINGS = (
 
 
 def _get_content_with_timeout_helper(
-    provider_payload: dict,
-    feature_payload: dict,
+    provider_payload: dict[str, Any],
+    feature_payload: dict[str, Any],
     prompt: str,
     shared_response: multiprocessing.managers.DictProxy,
 ) -> None:
@@ -59,13 +59,32 @@ def _get_content_with_timeout_helper(
     This function is designed to be the target of a `multiprocessing.Process`
     to allow for a timeout on the LLM call. It instantiates the provider
     inside the subprocess to avoid pickling issues.
+
+    Args:
+        provider_payload: A dictionary containing the provider class and its
+            configuration.
+        feature_payload: A dictionary containing the feature name and its
+            response schema.
+        prompt: The prompt string to send to the LLM.
+        shared_response: A multiprocessing manager dictionary to store the
+            response or error.
     """
-    provider_class = provider_payload["provider_class"]
-    provider_config = provider_payload["config"]
-    feature_name = feature_payload["name"]
-    response_schema = feature_payload["response_schema"]
+    # Define fallback variables for logging to prevent NameError in except block
+    feature_name = "Unknown"
+    provider_name = "Unknown"
 
     try:
+        # Safe extraction of payloads
+        provider_class = provider_payload.get("provider_class")
+        provider_config = provider_payload.get("config")
+        feature_name = feature_payload.get("name", "Unknown")
+        response_schema = feature_payload.get("response_schema")
+
+        if not provider_class or provider_config is None:
+            raise ValueError("Malformed provider payload: missing class or config.")
+
+        provider_name = getattr(provider_class, "NAME", "Unknown")
+
         llm_provider = provider_class(config=provider_config)
         api_response = llm_provider.generate(prompt, response_schema=response_schema)
         shared_response.update({"response": api_response})
@@ -79,14 +98,14 @@ def _get_content_with_timeout_helper(
                 "LLM operational error in subprocess for feature '%s' "
                 "(provider '%s'): %s",
                 feature_name,
-                provider_class.NAME,
+                provider_name,
                 error_str,
             )
         else:
             process_logger.error(
                 "Error in LLM call for feature '%s' (provider '%s'): %s",
                 feature_name,
-                provider_class.NAME,
+                provider_name,
                 e,
             )
         shared_response.update({"error": error_str})

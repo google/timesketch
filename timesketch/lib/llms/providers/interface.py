@@ -80,7 +80,11 @@ class LLMProvider:
     def to_dict(self) -> dict[str, Any]:
         """Returns a dictionary representation of the provider's configuration.
 
-        Safe for multiprocessing (contains only picklable primitives and class).
+        This representation is safe for multiprocessing and contains only
+        picklable primitives and class references.
+
+        Returns:
+            A dictionary containing 'provider_class' and 'config'.
         """
         return {
             "provider_class": self.__class__,

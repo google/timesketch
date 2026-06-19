@@ -47,7 +47,11 @@ class LLMFeatureInterface(ABC):
     def get_execution_context(self) -> dict[str, Any]:
         """Returns execution context needed for LLM call in subprocess.
 
-        Safe for multiprocessing (contains only picklable primitives).
+        This context is safe for multiprocessing and contains only picklable
+        primitives.
+
+        Returns:
+            A dictionary containing 'name' and 'response_schema'.
         """
         return {
             "name": self.NAME,
