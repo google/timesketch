@@ -49,6 +49,7 @@ class TelemetryTest(BaseTest):
         self.assertEqual(telemetry._extract_total_hits({}), 0)
         self.assertEqual(telemetry._extract_total_hits({"hits": {}}), 0)
         self.assertEqual(telemetry._extract_total_hits({"hits": None}), 0)
+        self.assertEqual(telemetry._extract_total_hits({"hits": {"total": None}}), 0)
 
     @mock.patch("timesketch.lib.telemetry.is_enabled", return_value=True)
     @mock.patch("timesketch.lib.telemetry.trace")

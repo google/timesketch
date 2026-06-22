@@ -106,7 +106,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         )
                         if str(sketch_id_val) == str(self.sketch.id):
                             return tags
-            except requests.exceptions.RequestException:
+            except (requests.exceptions.RequestException, ValueError):
                 pass
             time.sleep(1)
         return None

@@ -65,9 +65,11 @@ def _extract_total_hits(result) -> int:
     hits = result.get("hits")
     if not isinstance(hits, dict):
         return 0
-    total = hits.get("total", 0)
+    total = hits.get("total")
+    if total is None:
+        return 0
     if isinstance(total, dict):
-        return total.get("value", 0)
+        return total.get("value", 0) or 0
     return total
 
 
