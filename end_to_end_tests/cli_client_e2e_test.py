@@ -239,7 +239,7 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(
             result.exit_code,
             0,
-            f"CLI command 'sketch delete' (dry-run) failed on soft-deleted sketch.\nOutput:\n{result.output}\nException:\n{result.exception}",
+            f"CLI command 'sketch delete' (dry-run) failed on soft-deleted sketch.\nOutput:\n{result.output}\nException:\n{result.exception}",  # pylint: disable=line-too-long
         )
 
         # Force-delete
@@ -249,7 +249,7 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(
             result_force.exit_code,
             1,
-            f"CLI command 'sketch delete --force_delete' unexpectedly succeeded on a soft-deleted sketch for a non-admin.\nOutput:\n{result_force.output}\nException:\n{result_force.exception}",
+            f"CLI command 'sketch delete --force_delete' unexpectedly succeeded on a soft-deleted sketch for a non-admin.\nOutput:\n{result_force.output}\nException:\n{result_force.exception}",  # pylint: disable=line-too-long
         )
         self.assertions.assertIn("Failed to delete sketch", result_force.output)
 
