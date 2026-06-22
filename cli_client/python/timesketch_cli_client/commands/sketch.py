@@ -349,46 +349,57 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         force_delete (bool): If true, delete immediately.
     """
     sketch = ctx.obj.sketch
-    # if sketch is archived, exit
-    if sketch.is_archived():
-        click.echo("Error Sketch is archived")
-        ctx.exit(1)
+
+    try:
+        is_archived = sketch.is_archived()
+    except NotFoundError:
+        click.echo(f"Warning: Sketch {sketch.id} appears to be soft-deleted or inaccessible.")
+        if not force_delete:
+            click.echo("If you want to permanently delete it, use --force_delete")
+            ctx.exit(1)
+        # Proceed with force delete, but we don't know the sketch name.
+        is_archived = False
+        sketch_name = "<Unknown/Deleted>"
+        sketch_desc = "N/A"
+        sketch_status = "N/A"
+        sketch_labels = "N/A"
+        timelines = []
+    else:
+        if is_archived:
+            click.echo("Error Sketch is archived")
+            ctx.exit(1)
+
+        try:
+            sketch_name = sketch.name
+            sketch_desc = sketch.description
+            sketch_status = sketch.status
+            sketch_labels = sketch.labels
+            timelines = sketch.list_timelines()
+        except NotFoundError:
+            sketch_name = "<Unknown/Deleted>"
+            sketch_desc = "N/A"
+            sketch_status = "N/A"
+            sketch_labels = "N/A"
+            timelines = []
 
     # Dryrun:
     if not force_delete:
         click.echo("Would delete the following things (use --force_delete to execute)")
-    try:
-        sketch_name = sketch.name
-        sketch_desc = sketch.description
-        sketch_status = sketch.status
-        sketch_labels = sketch.labels
-    except (RuntimeError, NotFoundError) as e:  # pylint: disable=unused-variable
-        sketch_name = "N/A"
-        sketch_desc = "N/A"
-        sketch_status = "N/A"
-        sketch_labels = "N/A"
 
     click.echo(
-        f"Sketch: {sketch.id} {sketch_name} {sketch_desc} {sketch_status} Labels: {sketch_labels}"  # pylint: disable=line-too-long
+        f"Sketch: {sketch.id} {sketch_name} {sketch_desc} {sketch_status} Labels: {sketch_labels}"
     )
-
-    try:
-        timelines = sketch.list_timelines()
-    except (RuntimeError, NotFoundError) as e:  # pylint: disable=unused-variable
-        timelines = []
 
     for timeline in timelines:
         try:
             # timeline.description and timeline.status lazy-load from the API.
-            # If the sketch is already soft-deleted, the timeline endpoint
-            # returns a 404, which raises a RuntimeError.
             timeline_desc = timeline.description
             timeline_status = timeline.status
-        except (RuntimeError, NotFoundError) as e:  # pylint: disable=unused-variable
+        except NotFoundError:
             timeline_desc = "N/A"
             timeline_status = "N/A"
         click.echo(
-            f"  Timeline: {timeline.id} {timeline.name} {timeline_desc} {timeline_status}"  # pylint: disable=line-too-long
+            f"  Timeline: {timeline.id} {timeline.name} {timeline_desc} {timeline_status}"
         )
 
     if force_delete:
@@ -396,7 +407,12 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         try:
             sketch.delete(force_delete=force_delete)
             click.echo(f"Sketch {sketch.id} '{sketch_name}' successfully deleted.")
-        except (RuntimeError, NotFoundError) as e:
+        except NotFoundError:
+            click.echo(
+                f"Failed to delete sketch {sketch.id} '{sketch_name}'. Error: Sketch was not found (perhaps already permanently deleted?)."
+            )
+            ctx.exit(1)
+        except RuntimeError as e:
             click.echo(
                 f"Failed to delete sketch {sketch.id} '{sketch_name}'. Error: {e}"
             )

@@ -227,10 +227,13 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
         # Soft delete the sketch
         sketch.delete(force_delete=False)
 
+        # Get a fresh instance of the sketch so cached values are cleared
+        fresh_sketch = self.api.get_sketch(sketch.id)
+
         # Now try to delete it via CLI (dry-run first, then force)
         cli_ctx_obj = E2ECliContextObject(
             api_client=self.api,
-            sketch_instance=sketch,
+            sketch_instance=fresh_sketch,
             output_format="text",
         )
 
@@ -238,8 +241,8 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
         result = self.runner.invoke(sketch_group, ["delete"], obj=cli_ctx_obj)
         self.assertions.assertEqual(
             result.exit_code,
-            0,
-            f"CLI command 'sketch delete' (dry-run) failed on soft-deleted sketch.\nOutput:\n{result.output}\nException:\n{result.exception}",  # pylint: disable=line-too-long
+            1,
+            f"CLI command 'sketch delete' (dry-run) failed to exit with 1 on soft-deleted sketch.\nOutput:\n{result.output}\nException:\n{result.exception}",  # pylint: disable=line-too-long
         )
 
         # Force-delete
