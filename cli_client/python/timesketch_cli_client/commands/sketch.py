@@ -367,7 +367,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
             # returns a 404, which raises a RuntimeError.
             timeline_desc = timeline.description
             timeline_status = timeline.status
-        except RuntimeError:
+        except RuntimeError as e:
             timeline_desc = "N/A"
             timeline_status = "N/A"
         click.echo(
