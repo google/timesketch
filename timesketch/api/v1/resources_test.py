@@ -2392,6 +2392,10 @@ class LLMResourceTest(BaseTest):
         self.assertIn("LLM call timed out", response_data["message"])
 
         process_instance.terminate.assert_called_once()
+        process_instance.kill.assert_called_once()
+        process_instance.join.assert_has_calls(
+            [mock.call(timeout=30), mock.call(timeout=2.0), mock.call()]
+        )
 
 
 class ExportStreamListResourceTest(BaseTest):

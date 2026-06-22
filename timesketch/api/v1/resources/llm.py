@@ -511,7 +511,14 @@ class LLMResource(resources.ResourceMixin, Resource):
                     self._LLM_TIMEOUT_WAIT_SECONDS,
                 )
                 process.terminate()
-                process.join()
+                process.join(timeout=2.0)
+                if process.is_alive():
+                    logger.warning(
+                        "LLM subprocess did not terminate after SIGTERM, "
+                        "sending SIGKILL."
+                    )
+                    process.kill()
+                    process.join()
                 self.METRICS["llm_errors_total"].labels(
                     sketch_id=str(sketch_id),
                     feature=feature.NAME,
