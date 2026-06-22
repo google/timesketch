@@ -248,9 +248,10 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
         )
         self.assertions.assertEqual(
             result_force.exit_code,
-            0,
-            f"CLI command 'sketch delete --force_delete' failed on soft-deleted sketch.\nOutput:\n{result_force.output}\nException:\n{result_force.exception}",
+            1,
+            f"CLI command 'sketch delete --force_delete' unexpectedly succeeded on a soft-deleted sketch for a non-admin.\nOutput:\n{result_force.output}\nException:\n{result_force.exception}",
         )
+        self.assertions.assertIn("Failed to delete sketch", result_force.output)
 
 
 # Register the new test class with the test manager

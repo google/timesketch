@@ -358,16 +358,18 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
     if not force_delete:
         click.echo("Would delete the following things (use --force_delete to execute)")
     try:
+        sketch_name = sketch.name
         sketch_desc = sketch.description
         sketch_status = sketch.status
         sketch_labels = sketch.labels
     except (RuntimeError, NotFoundError) as e:  # pylint: disable=unused-variable
+        sketch_name = "N/A"
         sketch_desc = "N/A"
         sketch_status = "N/A"
         sketch_labels = "N/A"
 
     click.echo(
-        f"Sketch: {sketch.id} {sketch.name} {sketch_desc} {sketch_status} Labels: {sketch_labels}"  # pylint: disable=line-too-long
+        f"Sketch: {sketch.id} {sketch_name} {sketch_desc} {sketch_status} Labels: {sketch_labels}"  # pylint: disable=line-too-long
     )
 
     try:
@@ -393,10 +395,10 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         # --- Check the response for success or error ---
         try:
             sketch.delete(force_delete=force_delete)
-            click.echo(f"Sketch {sketch.id} '{sketch.name}' successfully deleted.")
-        except RuntimeError as e:
+            click.echo(f"Sketch {sketch.id} '{sketch_name}' successfully deleted.")
+        except (RuntimeError, NotFoundError) as e:
             click.echo(
-                f"Failed to delete sketch {sketch.id} '{sketch.name}'. Error: {e}"
+                f"Failed to delete sketch {sketch.id} '{sketch_name}'. Error: {e}"
             )
             ctx.exit(1)
 
