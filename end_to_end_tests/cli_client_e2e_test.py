@@ -215,6 +215,41 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
             self.assertions.assertEqual(result.output.strip(), "42")
 
+    def test_cli_sketch_delete_soft_deleted(self):
+        """Tests that a soft-deleted sketch can be deleted via CLI."""
+        # Create a new sketch to be soft-deleted and then hard-deleted
+        sketch_name = f"cli_soft_delete_test_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+        
+        # We need a timeline to trigger the loop in sketch.py
+        self.import_timeline("evtx_part.csv", sketch=sketch)
+        
+        # Soft delete the sketch
+        sketch.delete(force_delete=False)
+        
+        # Now try to delete it via CLI (dry-run first, then force)
+        cli_ctx_obj = E2ECliContextObject(
+            api_client=self.api,
+            sketch_instance=sketch,
+            output_format="text",
+        )
+        
+        # Dry-run
+        result = self.runner.invoke(sketch_group, ["delete"], obj=cli_ctx_obj)
+        self.assertions.assertEqual(
+            result.exit_code,
+            0,
+            f"CLI command 'sketch delete' (dry-run) failed on soft-deleted sketch.\nOutput:\n{result.output}\nException:\n{result.exception}"
+        )
+        
+        # Force-delete
+        result_force = self.runner.invoke(sketch_group, ["delete", "--force_delete"], obj=cli_ctx_obj)
+        self.assertions.assertEqual(
+            result_force.exit_code,
+            0,
+            f"CLI command 'sketch delete --force_delete' failed on soft-deleted sketch.\nOutput:\n{result_force.output}\nException:\n{result_force.exception}"
+        )
+
 
 # Register the new test class with the test manager
 manager.EndToEndTestManager.register_test(CliClientE2ETest)

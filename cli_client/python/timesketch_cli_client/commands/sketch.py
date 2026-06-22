@@ -361,8 +361,17 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
     )
 
     for timeline in sketch.list_timelines():
+        try:
+            # timeline.description and timeline.status lazy-load from the API.
+            # If the sketch is already soft-deleted, the timeline endpoint
+            # returns a 404, which raises a RuntimeError.
+            timeline_desc = timeline.description
+            timeline_status = timeline.status
+        except RuntimeError:
+            timeline_desc = "N/A"
+            timeline_status = "N/A"
         click.echo(
-            f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
+            f"  Timeline: {timeline.id} {timeline.name} {timeline_desc} {timeline_status}"  # pylint: disable=line-too-long
         )
 
     if force_delete:
