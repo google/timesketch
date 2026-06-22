@@ -270,6 +270,21 @@ class OpenSearchDataStoreTest(BaseTest):
             str(cm.exception),
         )
 
+        # Targeted field is '_id' -> exact match (term query)
+        bool_query = ds._build_wildcard_query_dsl(
+            '_id:"ssj9754BaTwMn7aZPTx2"', wildcard_fields
+        )
+        must_clauses = bool_query["must"]
+        self.assertEqual(len(must_clauses), 1)
+        self.assertEqual(must_clauses[0]["term"]["_id"], "ssj9754BaTwMn7aZPTx2")
+
+        # Targeted field is '_id' with wildcard -> wildcard query on '_id'
+        bool_query = ds._build_wildcard_query_dsl("_id:ssj9754*", wildcard_fields)
+        must_clauses = bool_query["must"]
+        self.assertEqual(len(must_clauses), 1)
+        self.assertEqual(must_clauses[0]["wildcard"]["_id"]["value"], "ssj9754*")
+        self.assertTrue(must_clauses[0]["wildcard"]["_id"]["case_insensitive"])
+
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_operators(self, mock_client):
         """Test wildcard query dsl boolean logical operators routing."""

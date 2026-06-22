@@ -919,6 +919,20 @@ class OpenSearchDataStore:
                         }
                     }
                 }
+            elif field == "_id":
+                is_field_search = True
+                clean_value = value.strip('"').strip("'")
+                if any(c in clean_value for c in ("*", "?")):
+                    dsl_node = {
+                        "wildcard": {
+                            "_id": {
+                                "value": clean_value,
+                                "case_insensitive": True,
+                            }
+                        }
+                    }
+                else:
+                    dsl_node = {"term": {"_id": clean_value}}
             else:
                 raise ValueError(f"Field '{field}' does not support wildcard search.")
 
