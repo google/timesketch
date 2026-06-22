@@ -13,6 +13,7 @@
 # limitations under the License.
 """Module providing OpenTelemetry capability to Timesketch."""
 
+import inspect
 import json
 import functools
 import logging
@@ -55,6 +56,18 @@ from timesketch.version import get_version
 logger = logging.getLogger("timesketch.telemetry")
 
 
+def _extract_total_hits(result) -> int:
+    """Helper to extract total hits count from different result formats."""
+    if isinstance(result, int):
+        return result
+    if not isinstance(result, dict):
+        return 0
+    total = result.get("hits", {}).get("total", 0)
+    if isinstance(total, dict):
+        return total.get("value", 0)
+    return total
+
+
 def instrument_search(func):
     """Decorator to instrument OpenSearch search calls with OpenTelemetry.
 
@@ -74,6 +87,15 @@ def instrument_search(func):
     If OpenTelemetry is not installed or enabled via `TIMESKETCH_OTEL_MODE`,
     this decorator acts as a no-op and safely runs the function without spans.
     """
+    try:
+        sig = inspect.signature(func)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.warning(
+            "Telemetry failed to extract signature of %s: %s",
+            func.__name__,
+            e,
+        )
+        sig = None
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -82,21 +104,89 @@ def instrument_search(func):
 
         tracer = trace.get_tracer("timesketch.lib.datastores.opensearch")
         with tracer.start_as_current_span("opensearch.search") as span:
-            sketch_id = kwargs.get("sketch_id")
-            if sketch_id is None and len(args) > 1:
-                sketch_id = args[1]
-            if sketch_id is not None:
-                span.set_attribute("timesketch.sketch_id", sketch_id)
+            # Safely extract parameter values using inspect
+            if sig:
+                try:
+                    bound_args = sig.bind_partial(*args, **kwargs)
+                    bound_args.apply_defaults()
+
+                    # Retrieve args/kwargs
+                    sketch_id = bound_args.arguments.get("sketch_id")
+                    indices = bound_args.arguments.get("indices", [])
+                    query_filter = bound_args.arguments.get("query_filter") or {}
+                    count = bound_args.arguments.get("count", False)
+                    query_dsl = bound_args.arguments.get("query_dsl")
+                    enable_scroll = bound_args.arguments.get("enable_scroll", False)
+                    use_wildcard_fields = bound_args.arguments.get(
+                        "use_wildcard_fields", False
+                    )
+
+                    # Set span attributes for query parameters
+                    if sketch_id is not None:
+                        span.set_attribute("timesketch.sketch_id", sketch_id)
+
+                    span.set_attribute(
+                        "timesketch.search.use_wildcard_fields",
+                        bool(use_wildcard_fields),
+                    )
+                    span.set_attribute("timesketch.search.is_count", bool(count))
+                    span.set_attribute(
+                        "timesketch.search.enable_scroll", bool(enable_scroll)
+                    )
+                    span.set_attribute(
+                        "timesketch.search.is_dsl", query_dsl is not None
+                    )
+
+                    if isinstance(indices, (list, tuple, set)):
+                        span.set_attribute(
+                            "timesketch.search.indices_count", len(indices)
+                        )
+
+                    # Page pagination attributes
+                    if isinstance(query_filter, dict):
+                        if "size" in query_filter:
+                            span.set_attribute(
+                                "timesketch.search.page_size",
+                                int(query_filter["size"]),
+                            )
+                        if "from" in query_filter:
+                            span.set_attribute(
+                                "timesketch.search.page_offset",
+                                int(query_filter["from"]),
+                            )
+
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.warning(
+                        "Telemetry failed to extract signature attributes: %s", e
+                    )
 
             try:
                 result = func(*args, **kwargs)
-                if isinstance(result, dict) and "took" in result:
-                    span.set_attribute("db.opensearch.took_ms", result.get("took", 0))
-                return result
             except Exception as e:
                 span.set_status(StatusCode.ERROR, str(e))
                 span.record_exception(e)
                 raise
+
+            try:
+                # Set post-execution telemetry attributes
+                if isinstance(result, dict):
+                    if "took" in result:
+                        span.set_attribute(
+                            "db.opensearch.took_ms", result.get("took", 0)
+                        )
+
+                    hits = result.get("hits", {}).get("hits", [])
+                    if isinstance(hits, list):
+                        span.set_attribute("timesketch.search.returned_hits", len(hits))
+
+                total_hits = _extract_total_hits(result)
+                span.set_attribute("timesketch.search.total_hits", total_hits)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning(
+                    "Telemetry failed to extract search result attributes: %s", e
+                )
+
+            return result
 
     return wrapper
 
