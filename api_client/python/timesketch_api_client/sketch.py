@@ -512,8 +512,8 @@ class Sketch(resource.BaseResource):
                 response,
                 message=f"Failed to delete sketch {self.id}",
             )
-        else:
-            return True
+
+        return True
 
     def add_to_acl(
         self,
