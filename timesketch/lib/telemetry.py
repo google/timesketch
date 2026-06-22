@@ -62,7 +62,10 @@ def _extract_total_hits(result) -> int:
         return result
     if not isinstance(result, dict):
         return 0
-    total = result.get("hits", {}).get("total", 0)
+    hits = result.get("hits")
+    if not isinstance(hits, dict):
+        return 0
+    total = hits.get("total", 0)
     if isinstance(total, dict):
         return total.get("value", 0)
     return total
@@ -137,23 +140,32 @@ def instrument_search(func):
                         "timesketch.search.is_dsl", query_dsl is not None
                     )
 
-                    if isinstance(indices, (list, tuple, set)):
+                    if isinstance(indices, str):
+                        span.set_attribute("timesketch.search.indices_count", 1)
+                    elif isinstance(indices, (list, tuple, set)):
                         span.set_attribute(
                             "timesketch.search.indices_count", len(indices)
                         )
 
                     # Page pagination attributes
                     if isinstance(query_filter, dict):
-                        if "size" in query_filter:
-                            span.set_attribute(
-                                "timesketch.search.page_size",
-                                int(query_filter["size"]),
-                            )
-                        if "from" in query_filter:
-                            span.set_attribute(
-                                "timesketch.search.page_offset",
-                                int(query_filter["from"]),
-                            )
+                        size = query_filter.get("size")
+                        if size is not None:
+                            try:
+                                span.set_attribute(
+                                    "timesketch.search.page_size", int(size)
+                                )
+                            except (ValueError, TypeError):
+                                pass
+
+                        offset = query_filter.get("from")
+                        if offset is not None:
+                            try:
+                                span.set_attribute(
+                                    "timesketch.search.page_offset", int(offset)
+                                )
+                            except (ValueError, TypeError):
+                                pass
 
                 except Exception as e:  # pylint: disable=broad-except
                     logger.warning(
@@ -175,9 +187,13 @@ def instrument_search(func):
                             "db.opensearch.took_ms", result.get("took", 0)
                         )
 
-                    hits = result.get("hits", {}).get("hits", [])
-                    if isinstance(hits, list):
-                        span.set_attribute("timesketch.search.returned_hits", len(hits))
+                    hits_dict = result.get("hits")
+                    if isinstance(hits_dict, dict):
+                        hits = hits_dict.get("hits", [])
+                        if isinstance(hits, list):
+                            span.set_attribute(
+                                "timesketch.search.returned_hits", len(hits)
+                            )
 
                 total_hits = _extract_total_hits(result)
                 span.set_attribute("timesketch.search.total_hits", total_hits)

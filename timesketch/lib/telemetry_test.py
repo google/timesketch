@@ -48,6 +48,7 @@ class TelemetryTest(BaseTest):
         # Test missing keys
         self.assertEqual(telemetry._extract_total_hits({}), 0)
         self.assertEqual(telemetry._extract_total_hits({"hits": {}}), 0)
+        self.assertEqual(telemetry._extract_total_hits({"hits": None}), 0)
 
     @mock.patch("timesketch.lib.telemetry.is_enabled", return_value=True)
     @mock.patch("timesketch.lib.telemetry.trace")
@@ -113,5 +114,38 @@ class TelemetryTest(BaseTest):
             "timesketch.search.use_wildcard_fields", False
         )
         mock_span.set_attribute.assert_any_call("timesketch.search.is_count", True)
-        mock_span.set_attribute.assert_any_call("timesketch.search.enable_scroll", True)
-        mock_span.set_attribute.assert_any_call("timesketch.search.total_hits", 42)
+        mock_span.set_attribute("timesketch.search.enable_scroll", True)
+        mock_span.set_attribute("timesketch.search.total_hits", 42)
+
+        # 3. Test string indices and None pagination parameters
+        mock_span.reset_mock()
+        res_none_page = dummy_search(
+            sketch_id=7,
+            indices="string_index",
+            query_filter={"size": None, "from": None},
+        )
+        self.assertIsNotNone(res_none_page)
+        mock_span.set_attribute.assert_any_call("timesketch.search.indices_count", 1)
+        # Check that page_size and page_offset were NOT set (no call made for them)
+        for call_arg in mock_span.set_attribute.call_args_list:
+            attr_name = call_arg[0][0]
+            self.assertNotIn(
+                attr_name,
+                ["timesketch.search.page_size", "timesketch.search.page_offset"],
+            )
+
+        # 4. Test dict result with hits set to None
+        @telemetry.instrument_search
+        def dummy_search_null_hits(sketch_id, indices):
+            return {"took": 5, "hits": None}
+
+        mock_span.reset_mock()
+        res_null_hits = dummy_search_null_hits(7, ["index"])
+        self.assertEqual(res_null_hits["hits"], None)
+        # Should record took_ms, but returned_hits should not be set
+        # (or should be skipped without exception)
+        mock_span.set_attribute.assert_any_call("db.opensearch.took_ms", 5)
+        # Verify returned_hits was not set
+        for call_arg in mock_span.set_attribute.call_args_list:
+            attr_name = call_arg[0][0]
+            self.assertNotEqual(attr_name, "timesketch.search.returned_hits")
