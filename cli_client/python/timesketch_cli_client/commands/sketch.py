@@ -21,6 +21,7 @@ import pandas as pd
 
 from timesketch_cli_client.commands import attribute as attribute_command
 from timesketch_api_client import search
+from timesketch_api_client.error import NotFoundError
 
 
 @click.group("sketch")
@@ -356,18 +357,32 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
     # Dryrun:
     if not force_delete:
         click.echo("Would delete the following things (use --force_delete to execute)")
+    try:
+        sketch_desc = sketch.description
+        sketch_status = sketch.status
+        sketch_labels = sketch.labels
+    except (RuntimeError, NotFoundError) as e:  # pylint: disable=unused-variable
+        sketch_desc = "N/A"
+        sketch_status = "N/A"
+        sketch_labels = "N/A"
+
     click.echo(
-        f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
+        f"Sketch: {sketch.id} {sketch.name} {sketch_desc} {sketch_status} Labels: {sketch_labels}"  # pylint: disable=line-too-long
     )
 
-    for timeline in sketch.list_timelines():
+    try:
+        timelines = sketch.list_timelines()
+    except (RuntimeError, NotFoundError) as e:  # pylint: disable=unused-variable
+        timelines = []
+
+    for timeline in timelines:
         try:
             # timeline.description and timeline.status lazy-load from the API.
             # If the sketch is already soft-deleted, the timeline endpoint
             # returns a 404, which raises a RuntimeError.
             timeline_desc = timeline.description
             timeline_status = timeline.status
-        except RuntimeError as e:
+        except (RuntimeError, NotFoundError) as e:  # pylint: disable=unused-variable
             timeline_desc = "N/A"
             timeline_status = "N/A"
         click.echo(
