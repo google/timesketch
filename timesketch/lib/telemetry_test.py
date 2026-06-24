@@ -115,8 +115,8 @@ class TelemetryTest(BaseTest):
             "timesketch.search.use_wildcard_fields", False
         )
         mock_span.set_attribute.assert_any_call("timesketch.search.is_count", True)
-        mock_span.set_attribute("timesketch.search.enable_scroll", True)
-        mock_span.set_attribute("timesketch.search.total_hits", 42)
+        mock_span.set_attribute.assert_any_call("timesketch.search.enable_scroll", True)
+        mock_span.set_attribute.assert_any_call("timesketch.search.total_hits", 42)
 
         # 3. Test string indices and None pagination parameters
         mock_span.reset_mock()
