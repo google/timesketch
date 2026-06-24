@@ -16,7 +16,7 @@
 from __future__ import unicode_literals
 
 import unittest
-import mock
+from unittest import mock
 
 from . import client
 from . import sketch as sketch_lib
@@ -140,4 +140,72 @@ class TimesketchApiRetryTest(unittest.TestCase):
             str(context.exception),
             "Unable to connect to server, error: Authentication failed: "
             "Invalid username or password.",
+        )
+
+    @mock.patch("timesketch_api_client.client.googleauth_flow.InstalledAppFlow")
+    def test_oauth_timeout_error(self, mock_flow_class):
+        """Test reproduction of b/446157404 where AttributeError is raised."""
+        mock_flow = mock.MagicMock()
+        mock_flow_class.from_client_config.return_value = mock_flow
+
+        # Simulate the bug in google_auth_oauthlib where run_local_server
+        # raises AttributeError when wsgi_app.last_request_uri is None
+        def mock_run_local_server(**unused_kwargs):
+            # This is what happens in google_auth_oauthlib/flow.py
+            last_request_uri = None
+            last_request_uri.replace("http", "https")
+
+        mock_flow.run_local_server.side_effect = mock_run_local_server
+
+        api = client.TimesketchApi(
+            "http://localhost", "user", auth_mode="oauth", create_session=False
+        )
+
+        with self.assertRaises(RuntimeError) as cm:
+            api._create_oauth_session(client_id="abc", client_secret="def")
+
+        self.assertIn(
+            "Authentication failed: No authorization response received",
+            str(cm.exception),
+        )
+
+    @mock.patch("timesketch_api_client.client.googleauth_flow.InstalledAppFlow")
+    def test_oauth_timeout_parameter(self, mock_flow_class):
+        """Test that timeout_seconds is passed to run_local_server."""
+        mock_flow = mock.MagicMock()
+        mock_flow_class.from_client_config.return_value = mock_flow
+
+        api = client.TimesketchApi(
+            "http://localhost", "user", auth_mode="oauth", create_session=False
+        )
+
+        with mock.patch.object(api, "authenticate_oauth_session") as mock_auth:
+            api._create_oauth_session(
+                client_id="abc", client_secret="def", timeout_seconds=42
+            )
+            mock_auth.assert_called_once()
+
+        mock_flow.run_local_server.assert_called_once_with(
+            host="localhost",
+            port=8080,
+            open_browser=False,
+            timeout_seconds=42,
+        )
+
+    @mock.patch("timesketch_api_client.client.googleauth_flow.InstalledAppFlow")
+    def test_constructor_auth_timeout(self, mock_flow_class):
+        """Test that auth_timeout in constructor is passed down."""
+        mock_flow = mock.MagicMock()
+        mock_flow_class.from_client_config.return_value = mock_flow
+
+        with mock.patch.object(client.TimesketchApi, "authenticate_oauth_session"):
+            client.TimesketchApi(
+                "http://localhost", "user", auth_mode="oauth", auth_timeout=123
+            )
+
+        mock_flow.run_local_server.assert_called_once_with(
+            host="localhost",
+            port=8080,
+            open_browser=False,
+            timeout_seconds=123,
         )
