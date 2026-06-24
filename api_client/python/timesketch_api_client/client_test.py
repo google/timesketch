@@ -162,7 +162,9 @@ class TimesketchApiRetryTest(unittest.TestCase):
         )
 
         with self.assertRaises(RuntimeError) as cm:
-            api._create_oauth_session(client_id="abc", client_secret="def")  # pylint: disable=protected-access
+            api._create_oauth_session(
+                client_id="abc", client_secret="def"
+            )  # pylint: disable=protected-access
 
         self.assertIn(
             "Authentication failed: No authorization response received",
