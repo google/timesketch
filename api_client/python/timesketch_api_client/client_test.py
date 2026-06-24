@@ -162,9 +162,10 @@ class TimesketchApiRetryTest(unittest.TestCase):
         )
 
         with self.assertRaises(RuntimeError) as cm:
+            # pylint: disable=protected-access
             api._create_oauth_session(
                 client_id="abc", client_secret="def"
-            )  # pylint: disable=protected-access
+            )
 
         self.assertIn(
             "Authentication failed: No authorization response received",
@@ -182,7 +183,8 @@ class TimesketchApiRetryTest(unittest.TestCase):
         )
 
         with mock.patch.object(api, "authenticate_oauth_session") as mock_auth:
-            api._create_oauth_session(  # pylint: disable=protected-access
+            # pylint: disable=protected-access
+            api._create_oauth_session(
                 client_id="abc", client_secret="def", timeout_seconds=42
             )
             mock_auth.assert_called_once()
