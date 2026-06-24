@@ -291,33 +291,34 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     )
 
     # Refresh the index so it is searchable for the analyzers right away.
-    datastore = OpenSearchDataStore()
-    # Retry refreshing the index a few times if it fails.
-    index_name = timeline.searchindex.index_name
-    for i in range(5):
-        try:
-            datastore.client.indices.refresh(index=index_name)
-            break  # Success
-        except Exception as e:  # pylint: disable=broad-except
-            if i == 4:  # Last attempt
-                logger.error(
-                    "Unable to refresh index: %s in sketch (ID: %d). "
-                    "Gave up after 5 attempts. Error: %s",
-                    index_name,
-                    sketch_id,
-                    str(e),
-                    exc_info=True,
-                )
-            else:
-                # Show error message for attempts 0-4 only if debug is enabled
-                logger.debug(
-                    "Attempt %d to refresh index %s in sketch (ID: %d)failed: %s",
-                    i + 1,
-                    index_name,
-                    sketch_id,
-                    str(e),
-                )
-                time.sleep(1)  # Wait a second before retrying
+    if status == "ready":
+        datastore = OpenSearchDataStore()
+        # Retry refreshing the index a few times if it fails.
+        index_name = timeline.searchindex.index_name
+        for i in range(5):
+            try:
+                datastore.client.indices.refresh(index=index_name)
+                break  # Success
+            except Exception as e:  # pylint: disable=broad-except
+                if i == 4:  # Last attempt
+                    logger.error(
+                        "Unable to refresh index: %s in sketch (ID: %d). "
+                        "Gave up after 5 attempts. Error: %s",
+                        index_name,
+                        sketch_id,
+                        str(e),
+                        exc_info=True,
+                    )
+                else:
+                    # Show error message for attempts 0-4 only if debug is enabled
+                    logger.debug(
+                        "Attempt %d to refresh index %s in sketch (ID: %d)failed: %s",
+                        i + 1,
+                        index_name,
+                        sketch_id,
+                        str(e),
+                    )
+                    time.sleep(1)  # Wait a second before retrying
 
     # If status is set to ready, check for analyzers to execute.
     if timeline.get_status.status == "ready":
