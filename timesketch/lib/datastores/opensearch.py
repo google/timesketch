@@ -919,6 +919,10 @@ class OpenSearchDataStore:
                         }
                     }
                 }
+            elif field == "_id":
+                is_field_search = True
+                clean_value = value.strip('"').strip("'")
+                dsl_node = {"term": {"_id": clean_value}}
             else:
                 raise ValueError(f"Field '{field}' does not support wildcard search.")
 
