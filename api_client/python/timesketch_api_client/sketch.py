@@ -1627,7 +1627,7 @@ class Sketch(resource.BaseResource):
         To remove a list of tags from a list of tags, use a different method.
 
         Args:
-            event_id (int): id of the event
+            event_id (str): id of the event
             index (str): The OpenSearch index name
             tag (str): tag to remove
 
