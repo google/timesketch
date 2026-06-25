@@ -129,7 +129,7 @@ class ConfigTest(unittest.TestCase):
             result.output,
         )
 
-    @mock.patch("timesketch_cli_client.cli.timesketch_config.get_client")
+    @mock.patch("timesketch_cli_client.cli.timesketch_config.get_client", autospec=True)
     def test_custom_config_section(self, mock_get_client):
         """Test the TimesketchCli loads a custom config section."""
         mock_get_client.return_value = mock.MagicMock()
