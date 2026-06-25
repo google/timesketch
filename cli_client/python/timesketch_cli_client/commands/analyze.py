@@ -47,7 +47,6 @@ def run_analyzer(ctx: click.Context, analyzer_name: str, timeline_id: int):
     """Run an analyzer on one or more timelines.
 
     Args:
-        ctx (click.Context) (required): Click CLI context object.
         analyzer_name (str) (required): Name of the analyzer to run.
         timeline_id (int) (required): Timeline ID of the timeline to analyze.
     """
@@ -92,7 +91,6 @@ def list_analyzers(ctx: click.Context):
     """List all available analyzers.
 
     Args:
-        ctx (click.Context) (required): Click CLI context object.
         output-format: Output format to use. Available values:
             'json','text' or 'tabular'
     """
@@ -150,7 +148,6 @@ def analyzer_results(
     """Show the results of an analyzer run on one or more timelines.
 
     Args:
-        ctx (click.Context) (required): Click CLI context object.
         analyzer_name (str) (required): Name of the analyzer that was run.
         timeline_id (int) (required): Timeline ID of the timeline to analyze.
         show_dependent (bool) (optional): Show dependent analyzers. (default: False)

@@ -27,7 +27,6 @@ def list_timelines(ctx: click.Context):
     """List all timelines in the sketch.
 
     Args:
-        ctx (click.Context): Click CLI context object.
     """
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
@@ -47,9 +46,7 @@ def describe_timeline(ctx: click.Context, timeline_id: int):
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch
-            and output format.
-        timeline_id (int): The ID of the timeline to describe.
+        timeline_id: The ID of the timeline to describe.
 
     Outputs:
         JSON: If the output format is 'json', the timeline's resource data
@@ -112,10 +109,8 @@ def rename_timeline(ctx: click.Context, timeline_id: int, new_name: str):
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the
-            sketch and output format.
-        timeline_id (int): The ID of the timeline to rename.
-        new_name (str): The new name for the timeline.
+        timeline_id: The ID of the timeline to rename.
+        new_name: The new name for the timeline.
 
     Outputs:
         JSON: If the output format is 'json', the timeline's resource data is
@@ -156,7 +151,6 @@ def delete_timeline(ctx: click.Context, timeline_id: int):
     (Will mark a timeline as deleted, but the Opensearch Index will remain)
 
     Args:
-        ctx (click.Context) (required): Click CLI context object.
         timeline_id (int) (required): Timeline ID from argument to be deleted.
     """
     sketch = ctx.obj.sketch
@@ -185,9 +179,8 @@ def timeline_change_color(ctx: click.Context, timeline_id: int, color: str):
     The timeline is identified by its integer ID.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        timeline_id (int): The ID of the timeline to modify.
-        color (str): The hexadecimal color code (e.g., "AAAA" or "AABB11").
+        timeline_id: The ID of the timeline to modify.
+        color: The hexadecimal color code (e.g., "AAAA" or "AABB11").
 
     Example:
         timeline color 1 AABBCC  # Changes the color of timeline 1 to AABBCC.

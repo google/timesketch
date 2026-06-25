@@ -39,7 +39,6 @@ def sigma_group():
 def list_sigmarules(ctx, header, columns):
     """List all sigma rules.
     Args:
-        ctx (click.Context): Click CLI context object.
         header (bool): Boolean indicating if header should be included.
         columns (str): Comma separated list of columns.
     """
@@ -82,7 +81,6 @@ def list_sigmarules(ctx, header, columns):
 def describe_sigmarule(ctx, rule_uuid):
     """Describe a sigma rule.
     Args:
-        ctx (click.Context): Click CLI context object.
         rule_uuid (str): UUID of the sigma rule.
     """
     api_client = ctx.obj.api

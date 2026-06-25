@@ -13,6 +13,7 @@
 # limitations under the License.
 """Timesketch CLI client."""
 
+import inspect
 import sys
 import click
 
@@ -72,11 +73,18 @@ class TimesketchCli:
 
         if not api_client:
             try:
-                self.api = timesketch_config.get_client(
-                    config_path=conf_file,
-                    config_section=config_section,
-                    load_cli_config=True,
-                )
+                sig = inspect.signature(timesketch_config.get_client)
+                if "config_section" in sig.parameters:
+                    self.api = timesketch_config.get_client(
+                        config_path=conf_file,
+                        config_section=config_section,
+                        load_cli_config=True,
+                    )
+                else:
+                    self.api = timesketch_config.get_client(
+                        config_path=conf_file,
+                        load_cli_config=True,
+                    )
                 if not self.api:
                     raise RequestConnectionError
             except RequestConnectionError:
@@ -84,9 +92,15 @@ class TimesketchCli:
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
-        self.config_assistant.load_config_file(
-            conf_file, section=config_section, load_cli_config=True
-        )
+        sig = inspect.signature(self.config_assistant.load_config_file)
+        if "section" in sig.parameters:
+            self.config_assistant.load_config_file(
+                conf_file, section=config_section, load_cli_config=True
+            )
+        else:
+            self.config_assistant.load_config_file(
+                conf_file, load_cli_config=True
+            )
 
     @property
     def sketch(self):
@@ -181,7 +195,6 @@ def cli(ctx, sketch, output, config_path, config_section):
     For detailed help on each command, run  <command> --help
 
     Args:
-        ctx (click.Context): Click CLI context object.
         sketch (int): Sketch ID to operate on.
         output (str): Output format to use (e.g., text, json, tabular).
         config_path (str): Path to the timesketch configuration file.

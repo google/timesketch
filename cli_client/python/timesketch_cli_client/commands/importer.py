@@ -30,7 +30,6 @@ def importer(ctx: click.Context, name: str, timeout: Optional[int], file_path: s
     """Import timeline.
 
     Args:
-        ctx (click.Context) (required): Click CLI context object.
         name (str) (required): Name of the timeline to create.
         timeout (int) (optional): Seconds to wait for indexing.
         file_path (str) (required): File path to the file to import.

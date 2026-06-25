@@ -42,10 +42,9 @@ def annotate(ctx, timeline_id, event_id, tag, comment):
     current annotations for the event.
 
     Args:
-        ctx (click.Context): Click CLI context object.
-        timeline_id (int): ID of the timeline.
-        event_id (int): ID of the event.
-        tag (str): Tag to add.
+        timeline_id: ID of the timeline.
+        event_id: ID of the event.
+        tag: Tag to add.
         comment (str): Comment to add.
     """
     sketch = ctx.obj.sketch
@@ -111,7 +110,6 @@ def add_event(ctx, message, date, attributes, timestamp_desc):
     """Add an event to the sketch.
 
     Args:
-        ctx (click.Context): Click CLI context object.
         message (str): Message of the event.
         date (str): Date of the event.
         attributes (str): Attributes of the event.
@@ -164,10 +162,9 @@ def tag_mod(
     the command lists the event's current tags.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        timeline_id (int): The ID of the timeline containing the event.
-        event_id (str): The ID of the event to modify.
-        tag (Optional[str]): The tag to remove from the event, or a comma-separated
+        timeline_id: The ID of the timeline containing the event.
+        event_id: The ID of the event to modify.
+        tag: The tag to remove from the event, or a comma-separated
             list of tags. If None, lists the event's tags.
     """
     sketch = ctx.obj.sketch

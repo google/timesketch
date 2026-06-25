@@ -33,7 +33,6 @@ def list_attributes(ctx: click.Context):
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch and
         output format.
 
     Outputs:
@@ -74,9 +73,8 @@ def remove_attribute(ctx: click.Context, name: str, ontology: str):
     The output format is forced to 'text' for this command.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        name (str): The name of the attribute to remove.
-        ontology (str): The ontology of the attribute to remove.
+        name: The name of the attribute to remove.
+        ontology: The ontology of the attribute to remove.
 
     Errors:
         * If the specified attribute is not found in the sketch.
@@ -114,10 +112,9 @@ def add_attribute(ctx: click.Context, name: str, ontology: str, value: str):
     The output format is forced to 'text' for this command.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        name (str): The name of the attribute to add.
-        ontology (str): The ontology of the attribute to add.
-        value (str): The value of the attribute to add.
+        name: The name of the attribute to add.
+        ontology: The ontology of the attribute to add.
+        value: The value of the attribute to add.
 
     Outputs:
         Text: A message confirming the attribute was added, including its name,

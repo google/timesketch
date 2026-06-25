@@ -71,9 +71,6 @@ class SketchTest(unittest.TestCase):
         self, mock_search_class, mock_file_open_func
     ):
         """Test successful export of annotated events to CSV.
-        Args:
-            mock_search_class (mock.MagicMock): Mock for search_class.
-            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
         """
         runner = CliRunner()
 
@@ -175,9 +172,6 @@ class SketchTest(unittest.TestCase):
         self, mock_search_class, mock_file_open_func
     ):
         """Test successful export to JSONL with a limit.
-        Args:
-            mock_search_class (mock.MagicMock): Mock for search_class.
-            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
         """
         runner = CliRunner()
 
@@ -239,9 +233,6 @@ class SketchTest(unittest.TestCase):
         self, mock_search_class, mock_file_open_func
     ):
         """Test export when no annotated events are found.
-        Args:
-            mock_search_class (mock.MagicMock): Mock for search_class.
-            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
         """
         runner = CliRunner()
 
@@ -273,9 +264,6 @@ class SketchTest(unittest.TestCase):
         self, mock_search_class, mock_file_open_func
     ):
         """Test export when one of the searches fails.
-        Args:
-            mock_search_class (mock.MagicMock): Mock for search_class.
-            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
         """
         runner = CliRunner()
 
@@ -324,8 +312,6 @@ class SketchTest(unittest.TestCase):
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
     def test_export_only_with_annotations_id_column_missing(self, mock_search_class):
         """Test export fails if _id column is missing from results.
-        Args:
-            mock_search_class (mock.MagicMock): Mock for search_class.
         """
         runner = CliRunner()
 

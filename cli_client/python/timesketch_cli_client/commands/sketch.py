@@ -43,7 +43,6 @@ def list_sketches(ctx: click.Context):
     Supported output formats are 'json' and 'text'.
 
     Args:
-        ctx (click.Context): The Click context object, containing the API
         client and output format.
 
     Raises:
@@ -83,7 +82,6 @@ def describe_sketch(ctx: click.Context) -> None:
     If the output format is 'json', all sketch attributes are displayed.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch
         and output format.
 
     Raises:
@@ -129,10 +127,8 @@ def create_sketch(
     description.
 
     Args:
-        ctx (click.Context): The Click context object, containing the API
-            client.
-        name (str): The name of the new sketch.
-        description (Optional[str]): The description of the new sketch
+        name: The name of the new sketch.
+        description: The description of the new sketch
             (defaults to the name if not provided).
 
     Outputs:
@@ -175,11 +171,10 @@ def export_sketch(
     The export process can take a significant amount of time depending on the
     sketch size.
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        filename (str): The name of the file to export the sketch data to.
-        stream (bool): Whether to stream the download (recommended for large
+        filename: The name of the file to export the sketch data to.
+        stream: Whether to stream the download (recommended for large
             exports to avoid memory issues).
-        use_sketch_export (bool): Whether to use the full sketch export
+        use_sketch_export: Whether to use the full sketch export
             functionality instead of the default search-based event export.
 
     Raises:
@@ -219,7 +214,6 @@ def archive_sketch(ctx: click.Context) -> None:
     modifications.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
 
     Raises:
         click.exceptions.Exit: If the sketch is already archived or the user
@@ -252,7 +246,6 @@ def unarchive_sketch(ctx: click.Context) -> None:
     Unarchives a previously archived sketch, allowing modifications to be made again.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
 
     Raises:
         click.exceptions.Exit: If the sketch is not archived.
@@ -281,8 +274,7 @@ def add_label(ctx: click.Context, label: str) -> None:
     categorize and organize sketches.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        label (str): The label to add.
+        label: The label to add.
 
     Outputs:
         Text: A message indicating that the label was added.
@@ -300,7 +292,6 @@ def list_label(ctx: click.Context) -> None:
     Lists all labels currently associated with the active sketch.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
 
     Outputs:
         Text: A list of labels associated with the sketch.
@@ -318,8 +309,7 @@ def remove_label(ctx: click.Context, label: str) -> None:
     Removes a specified label from the active sketch.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        label (str): The label to remove.
+        label: The label to remove.
 
     Outputs:
         Text: A message indicating that the label was removed.
@@ -344,8 +334,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
     flag --force_delete.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        force_delete (bool): If true, delete immediately.
+        force_delete: If true, delete immediately.
     """
     sketch = ctx.obj.sketch
     # if sketch is archived, exit
@@ -384,8 +373,7 @@ def create_story(ctx: click.Context, title: str) -> None:
     """Creates a new story in the active sketch.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        title (str): The title of the new story.
+        title: The title of the new story.
     """
     sketch = ctx.obj.sketch
     story = sketch.create_story(title=title)
@@ -397,7 +385,6 @@ def create_story(ctx: click.Context, title: str) -> None:
 def list_stories(ctx: click.Context):
     """List all stories in the sketch.
     Args:
-        ctx (click.Context): Click CLI context object.
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
@@ -451,10 +438,9 @@ def export_only_with_annotations(
     can take longer and consume more memory.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        filename (str): The name of the file to export the annotated events to.
-        output_format (str): The desired output format ('csv' or 'jsonl').
-        limit (int): Maximum number of unique annotated events to export (0 for all).
+        filename: The name of the file to export the annotated events to.
+        output_format: The desired output format ('csv' or 'jsonl').
+        limit: Maximum number of unique annotated events to export (0 for all).
 
     Raises:
         click.exceptions.Exit: If an error occurs during the export process.
