@@ -33,7 +33,13 @@ def events_group():
 )
 @click.option("--comment", required=False, help="Comment to add to the event.")
 @click.pass_context
-def annotate(ctx, timeline_id, event_id, tag, comment):
+def annotate(
+    ctx: click.Context,
+    timeline_id: int,
+    event_id: str,
+    tag: Optional[str],
+    comment: Optional[str],
+) -> None:
     """Annotate to an event.
 
     This can be used to add tags and comments to an event.
@@ -45,7 +51,7 @@ def annotate(ctx, timeline_id, event_id, tag, comment):
         timeline_id: ID of the timeline.
         event_id: ID of the event.
         tag: Tag to add.
-        comment (str): Comment to add.
+        comment: Comment to add.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)
@@ -106,14 +112,20 @@ def annotate(ctx, timeline_id, event_id, tag, comment):
     help="Timestamp description of the event.",
 )
 @click.pass_context
-def add_event(ctx, message, date, attributes, timestamp_desc):
+def add_event(
+    ctx: click.Context,
+    message: str,
+    date: str,
+    attributes: Optional[str],
+    timestamp_desc: str,
+) -> None:
     """Add an event to the sketch.
 
     Args:
-        message (str): Message of the event.
-        date (str): Date of the event.
-        attributes (str): Attributes of the event.
-        timestamp_desc (str): Description of the timestamp.
+        message: Message of the event.
+        date: Date of the event.
+        attributes: Attributes of the event.
+        timestamp_desc: Description of the timestamp.
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
