@@ -357,8 +357,9 @@ class Aggregation(resource.SketchResource):
         """
         if "meta" not in self.resource_data:
             return
-        meta = self.resource_data.get("meta")
+        meta = self.resource_data.get("meta") or {}
         meta["name"] = name
+        self.resource_data["meta"] = meta
 
     @property
     def aggregator_name(self) -> str:
@@ -499,7 +500,7 @@ class AggregationGroup(resource.SketchResource):
 
     def __str__(self) -> str:
         """Return a string representation of the group."""
-            return f"[{self._resource_id}] {self._name} - {self._description}"
+        return f"[{self._resource_id}] {self._name} - {self._description}"
 
     @property
     def aggregations(self) -> List[Aggregation]:
