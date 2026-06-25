@@ -23,8 +23,8 @@ from timesketch_api_client import test_lib as api_test_lib
 
 # pylint: enable=import-error
 
-from .. import test_lib
-from .sigma import sigma_group
+from timesketch_cli_client import test_lib
+from timesketch_cli_client.commands.sigma import sigma_group
 
 
 class SigmaTest(unittest.TestCase):

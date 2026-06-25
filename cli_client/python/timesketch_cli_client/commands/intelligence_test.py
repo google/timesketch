@@ -23,8 +23,8 @@ from timesketch_api_client import test_lib as api_test_lib
 
 # pylint: enable=import-error
 
-from .. import test_lib
-from .intelligence import intelligence_group
+from timesketch_cli_client import test_lib
+from timesketch_cli_client.commands.intelligence import intelligence_group
 
 
 class IntelligenceTest(unittest.TestCase):

@@ -33,8 +33,8 @@ from timesketch_cli_client.commands import timelines
 from timesketch_cli_client.commands import events
 from timesketch_cli_client.commands import sigma
 
-from .definitions import DEFAULT_OUTPUT_FORMAT
-from .version import get_version
+from timesketch_cli_client.definitions import DEFAULT_OUTPUT_FORMAT
+from timesketch_cli_client.version import get_version
 
 
 class TimesketchCli(object):
@@ -52,13 +52,16 @@ class TimesketchCli(object):
         sketch_from_flag=None,
         conf_file="",
         output_format_from_flag=None,
+        config_section="timesketch",
     ):
         """Initialize the state object.
 
         Args:
+            api_client: An instance of TimesketchApi object.
             sketch_from_flag: Sketch ID if provided by flag.
             conf_file: Path to the config file.
             output_format_from_flag: Output format to use.
+            config_section: The config section to use.
         """
         self.api = api_client
         self.sketch_from_flag = sketch_from_flag
@@ -66,9 +69,10 @@ class TimesketchCli(object):
 
         if not api_client:
             try:
-                # TODO: Consider other config sections here as well.
                 self.api = timesketch_config.get_client(
-                    config_path=conf_file, load_cli_config=True
+                    config_path=conf_file,
+                    config_section=config_section,
+                    load_cli_config=True,
                 )
                 if not self.api:
                     raise RequestConnectionError
@@ -77,7 +81,9 @@ class TimesketchCli(object):
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
-        self.config_assistant.load_config_file(conf_file, load_cli_config=True)
+        self.config_assistant.load_config_file(
+            conf_file, section=config_section, load_cli_config=True
+        )
 
     @property
     def sketch(self):

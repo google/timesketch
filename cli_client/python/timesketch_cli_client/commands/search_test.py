@@ -21,10 +21,10 @@ import pandas as pd
 from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
-from .. import test_lib
-from .search import saved_searches_group
-from .search import search_group
-from .search import search_wildcard
+from timesketch_cli_client import test_lib
+from timesketch_cli_client.commands.search import saved_searches_group
+from timesketch_cli_client.commands.search import search_group
+from timesketch_cli_client.commands.search import search_wildcard
 
 EXPECTED_OUTPUT = """query_string: test:"foobar"
 query_filter: {
