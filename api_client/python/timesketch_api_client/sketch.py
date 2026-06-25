@@ -197,8 +197,6 @@ class Sketch(resource.BaseResource):
         if not self._sketch_name:
             sketch_data = self.lazyload_data()
             self._sketch_name = sketch_data["objects"][0]["name"]
-            sketch_data = self.lazyload_data()
-            self._sketch_name = sketch_data["objects"][0]["name"]
         return self._sketch_name
 
     @name.setter
