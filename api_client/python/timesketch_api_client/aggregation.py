@@ -499,9 +499,7 @@ class AggregationGroup(resource.SketchResource):
 
     def __str__(self) -> str:
         """Return a string representation of the group."""
-        return "[{0:d}] {1:s} - {2:s}".format(
-            self._resource_id, self._name, self._description
-        )
+            return f"[{self._resource_id}] {self._name} - {self._description}"
 
     @property
     def aggregations(self) -> List[Aggregation]:
