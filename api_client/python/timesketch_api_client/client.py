@@ -113,7 +113,7 @@ class TimesketchApi:
             username (str): User username.
             password (str): User password.
             verify (bool): Verify server SSL certificate.
-            client_id (int): The client ID if OAUTH auth is used.
+            client_id (str): The client ID if OAUTH auth is used.
             client_secret (str): The OAUTH client secret if OAUTH is used.
             auth_mode (str): The authentication mode to use. Defaults to 'userpass'
                 Supported values are 'userpass' (username/password combo),
