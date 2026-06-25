@@ -585,7 +585,7 @@ class AggregationGroup(resource.SketchResource):
         """Sets the group parameters.
 
         Args:
-            parameters (dict): Aggregation group parameters.
+            parameters (Dict[str, Any]): Aggregation group parameters.
         """
         self._parameters = parameters
         self.save()
