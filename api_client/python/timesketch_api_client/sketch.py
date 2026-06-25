@@ -2140,9 +2140,12 @@ class Sketch(resource.BaseResource):
         if not (query_string or query_filter or query_dsl):
             query_string = "*"
 
-        fields_string = ""
-        if return_fields and isinstance(return_fields, list):
-            fields_string = ",".join(return_fields)
+        fields_string = None
+        if return_fields:
+            if isinstance(return_fields, list):
+                fields_string = ",".join(return_fields)
+            else:
+                fields_string = return_fields
 
         form_data = {
             "query": query_string,
