@@ -1507,8 +1507,8 @@ class Sketch(resource.BaseResource):
         """Gets information about an event, including raw event and meta data.
 
         Args:
-            event_id (int): id of the event.
-            index_id (int): The OpenSearch index identifier.
+            event_id (str): id of the event.
+            index_id (str): The OpenSearch index identifier.
 
         Returns:
             a json data containing the event details.
