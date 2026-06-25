@@ -34,6 +34,7 @@ from timesketch_cli_client.commands import events
 from timesketch_cli_client.commands import sigma
 
 from timesketch_cli_client.definitions import DEFAULT_OUTPUT_FORMAT
+from timesketch_cli_client.definitions import DEFAULT_CONFIG_SECTION
 from timesketch_cli_client.version import get_version
 
 
@@ -53,7 +54,7 @@ class TimesketchCli:
         sketch_from_flag=None,
         conf_file="",
         output_format_from_flag=None,
-        config_section="timesketch",
+        config_section=DEFAULT_CONFIG_SECTION,
     ):
         """Initialize the state object.
 
@@ -159,7 +160,7 @@ class TimesketchCli:
 @click.option(
     "--config-section",
     "config_section",
-    default="timesketch",
+    default=DEFAULT_CONFIG_SECTION,
     show_default=True,
     required=False,
     help="The config section to use.",
