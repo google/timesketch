@@ -109,6 +109,7 @@ def annotate(ctx, timeline_id, event_id, tag, comment):
 @click.pass_context
 def add_event(ctx, message, date, attributes, timestamp_desc):
     """Add an event to the sketch.
+
     Args:
         ctx (click.Context): Click CLI context object.
         message (str): Message of the event.
