@@ -281,7 +281,6 @@ class TimesketchApi:
     def _create_oauth_session(
         self,
         client_id: str = "",
-        client_id: str = "",
         *,
         client_secret: str = "",
         client_secrets_file: Optional[str] = None,
@@ -420,8 +419,6 @@ class TimesketchApi:
 
     def _create_session(
         self,
-        username: str,
-        password: str,
         username: str,
         password: str,
         *,

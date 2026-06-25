@@ -125,8 +125,6 @@ class Sketch(resource.BaseResource):
         """
         sketch_data = self.lazyload_data()
         return sketch_data["objects"][0]["description"]
-        sketch_data = self.lazyload_data()
-        return sketch_data["objects"][0]["description"]
 
     @description.setter
     def description(self, description_value: str) -> None:
@@ -544,11 +542,6 @@ class Sketch(resource.BaseResource):
 
     def add_to_acl(
         self,
-        user_list: Optional[List[str]] = None,
-        group_list: Optional[List[str]] = None,
-        make_public: bool = False,
-        permissions: Optional[List[str]] = None,
-    ) -> bool:
         user_list: Optional[List[str]] = None,
         group_list: Optional[List[str]] = None,
         make_public: bool = False,
@@ -1083,17 +1076,7 @@ class Sketch(resource.BaseResource):
         max_entries: Optional[int] = None,
         file_name: str = "",
         as_object: bool = False,
-        query_string: Optional[str] = None,
-        query_dsl: Optional[str] = None,
-        query_filter: Optional[Dict[str, Any]] = None,
-        view: Optional[search.Search] = None,
-        return_fields: Optional[str] = None,
-        as_pandas: bool = False,
-        max_entries: Optional[int] = None,
-        file_name: str = "",
-        as_object: bool = False,
         use_wildcard_fields: bool = False,
-    ) -> Union[Dict[str, Any], pandas.DataFrame, search.Search, None]:
     ) -> Union[Dict[str, Any], pandas.DataFrame, search.Search, None]:
         """Explore the sketch.
 
@@ -1167,8 +1150,6 @@ class Sketch(resource.BaseResource):
         if file_name:
             search_obj.to_file(file_name)
             return None
-            search_obj.to_file(file_name)
-            return None
 
         if as_pandas:
             return search_obj.to_pandas()
@@ -1179,7 +1160,6 @@ class Sketch(resource.BaseResource):
         self,
         query_string: str,
         limit: Optional[int] = None,
-    ) -> Dict[str, Union[Dict[str, Any], List[Any]]]:
     ) -> Dict[str, Union[Dict[str, Any], List[Any]]]:
         """Explore the sketch with raw wildcard queries (Deprecated).
 
@@ -1219,11 +1199,6 @@ class Sketch(resource.BaseResource):
 
     def run_analyzer(
         self,
-        analyzer_name: str,
-        analyzer_kwargs: Optional[Dict[str, Any]] = None,
-        timeline_id: Optional[int] = None,
-        timeline_name: Optional[str] = None,
-    ) -> Union[analyzer.AnalyzerResult, str]:
         analyzer_name: str,
         analyzer_kwargs: Optional[Dict[str, Any]] = None,
         timeline_id: Optional[int] = None,
@@ -1271,7 +1246,6 @@ class Sketch(resource.BaseResource):
             sketch_data = self.lazyload_data(refresh_cache=True)
             timelines = []
             for timeline_dict in sketch_data["objects"][0]["timelines"]:
-            for timeline_dict in sketch_data["objects"][0]["timelines"]:
                 name = timeline_dict.get("name", "")
                 if timeline_name.lower() == name.lower():
                     timelines.append(timeline_dict.get("id"))
@@ -1305,11 +1279,6 @@ class Sketch(resource.BaseResource):
 
     def remove_acl(
         self,
-        user_list: Optional[List[str]] = None,
-        group_list: Optional[List[str]] = None,
-        remove_public: bool = False,
-        permissions: Optional[List[str]] = None,
-    ) -> bool:
         user_list: Optional[List[str]] = None,
         group_list: Optional[List[str]] = None,
         remove_public: bool = False,
@@ -1456,12 +1425,6 @@ class Sketch(resource.BaseResource):
         aggregator_parameters: Dict[str, Any],
         chart_type: str = "",
     ) -> Optional[aggregation.Aggregation]:
-        name: str,
-        description: str,
-        aggregator_name: str,
-        aggregator_parameters: Dict[str, Any],
-        chart_type: str = "",
-    ) -> Optional[aggregation.Aggregation]:
         """Store an aggregation in the sketch.
 
         Args:
@@ -1568,7 +1531,6 @@ class Sketch(resource.BaseResource):
         )
 
         resource_url_params = "?searchindex_id={0:s}&event_id={1:s}".format(
-            str(index_id), str(event_id)
             str(index_id), str(event_id)
         )
 
@@ -1750,12 +1712,6 @@ class Sketch(resource.BaseResource):
         return meta
 
     def search_by_label(
-        self,
-        label_name: str,
-        return_fields: Optional[str] = None,
-        max_entries: Optional[int] = None,
-        as_pandas: bool = False,
-    ) -> Union[Dict[str, Any], pandas.DataFrame, search.Search, None]:
         self,
         label_name: str,
         return_fields: Optional[str] = None,
@@ -2169,9 +2125,7 @@ class Sketch(resource.BaseResource):
         query_string: Optional[str] = None,
         query_dsl: Optional[str] = None,
         query_filter: Optional[Dict[str, Any]] = None,
-        query_filter: Optional[Dict[str, Any]] = None,
         return_fields: Optional[List[str]] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
     ) -> Generator[Dict[str, Any], None, None]:
         """Exports all events from the sketch matching the query.
 
@@ -2205,7 +2159,6 @@ class Sketch(resource.BaseResource):
             "query": query_string,
             "filter": query_filter,
             "dsl": query_dsl,
-            "fields": fields_string,
             "fields": fields_string,
         }
 
@@ -2349,7 +2302,6 @@ class Sketch(resource.BaseResource):
     def create_datasource(
         self, timeline_id: int, provider: str, context: str, data_label: str
     ) -> Dict[str, Any]:
-    ) -> Dict[str, Any]:
         """Creates a datasource
 
         Args:
@@ -2384,15 +2336,6 @@ class Sketch(resource.BaseResource):
 
     def generate_timeline_from_es_index(
         self,
-        es_index_name: str,
-        name: str,
-        index_name: str = "",
-        description: str = "",
-        provider: str = "Manually added to OpenSearch",
-        context: str = "Added via API client",
-        data_label: str = "OpenSearch",
-        status: str = "ready",
-    ) -> timeline.Timeline:
         es_index_name: str,
         name: str,
         index_name: str = "",
