@@ -149,6 +149,16 @@ def tag_mod(
     the command lists the event's current tags.
 
     Args:
+        ctx: Click CLI context object.
+        message: Event message.
+        date: Event date.
+        attributes: Event attributes.
+        timestamp_desc: Timestamp description.
+        ctx: Click CLI context object.
+        timeline_id: ID of the timeline.
+        event_id: ID of the event.
+        tag: Tag to add.
+        comment: Comment to add.
         ctx (click.Context): The Click context object, containing the sketch.
         timeline_id (int): The ID of the timeline containing the event.
         event_id (str): The ID of the event to modify.
