@@ -40,8 +40,8 @@ class Scenario(resource.BaseResource):
         """Initializes the Scenario object.
 
         Args:
-            sketch_id: ID of a sketch.
-            scenario_id: Primary key ID of the scenario.
+            sketch_id (int): ID of a sketch.
+            scenario_id (int): Primary key ID of the scenario.
             uuid: UUID of the scenario.
             api: An instance of the TimesketchApi object.
         """
@@ -206,8 +206,8 @@ class Question(resource.BaseResource):
         """Initializes the Question object.
 
         Args:
-            sketch_id: ID of a sketch.
-            question_id: Primary key ID of the question.
+            sketch_id (int): ID of a sketch.
+            question_id (int): Primary key ID of the question.
             uuid: UUID of the question.
             api: An instance of the TimesketchApi object.
         """

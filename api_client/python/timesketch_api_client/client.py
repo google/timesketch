@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API client."""
 
-from __future__ import unicode_literals
 
 
 import os
@@ -99,21 +98,21 @@ class TimesketchApi:
         """Initializes the TimesketchApi object.
 
         Args:
-            host_uri: URI to the Timesketch server (https://<server>/).
-            username: User username.
-            password: User password.
-            verify: Verify server SSL certificate.
-            client_id: The client ID if OAUTH auth is used.
-            client_secret: The OAUTH client secret if OAUTH is used.
-            auth_mode: The authentication mode to use. Defaults to 'userpass'
+            host_uri (str): URI to the Timesketch server (https://<server>/).
+            username (str): User username.
+            password (str): User password.
+            verify (bool): Verify server SSL certificate.
+            client_id (int): The client ID if OAUTH auth is used.
+            client_secret (str): The OAUTH client secret if OAUTH is used.
+            auth_mode (str): The authentication mode to use. Defaults to 'userpass'
                 Supported values are 'userpass' (username/password combo),
                 'http-basic' (HTTP Basic authentication) and oauth.
-            create_session: Boolean indicating whether the client object
+            create_session (bool): Boolean indicating whether the client object
                 should create a session object. If set to False the
                 function "set_session" needs to be called before proceeding.
-            retry_count: Number of retries for HTTP requests and internal API
+            retry_count (int): Number of retries for HTTP requests and internal API
                 request retries. Defaults to DEFAULT_RETRY_COUNT.
-            backoff_factor: The backoff factor to use for retries. Defaults to 0.5.
+            backoff_factor (float): The backoff factor to use for retries. Defaults to 0.5.
 
         Raises:
             ConnectionError: If the Timesketch server is unreachable.
@@ -181,11 +180,19 @@ class TimesketchApi:
         return self._session
 
     def set_credentials(self, credential_object):
-        """Sets the credential object."""
+        """Sets the credential object.
+
+        Args:
+            credential_object (credentials.AuthCredentials): Credential object.
+        """
         self.credentials = credential_object
 
     def set_session(self, session_object):
-        """Sets the session object."""
+        """Sets the session object.
+
+        Args:
+            session_object (requests.Session): Instance of requests.Session.
+        """
         self._session = session_object
 
     def _authenticate_session(self, session, username, password):
@@ -456,7 +463,7 @@ class TimesketchApi:
         Args:
             method (str): HTTP method (e.g., 'GET', 'POST').
             resource_uri (str): The URI for the resource.
-            **kwargs: Keyword arguments passed to the request.
+            **kwargs: Optional arguments to send with the request.
 
         Returns:
             dict: The JSON response data.
@@ -635,7 +642,7 @@ class TimesketchApi:
         """Get a user.
 
         Args:
-            user_id: Primary key ID of the user.
+            user_id (int): Primary key ID of the user.
 
         Returns:
             Instance of a User object.
@@ -655,7 +662,7 @@ class TimesketchApi:
         """Get a sketch.
 
         Args:
-            sketch_id: Primary key ID of the sketch.
+            sketch_id (int): Primary key ID of the sketch.
 
         Returns:
             Instance of a Sketch object.
@@ -756,7 +763,7 @@ class TimesketchApi:
         """Get a searchindex.
 
         Args:
-            searchindex_id: Primary key ID of the searchindex.
+            searchindex_id (int): Primary key ID of the searchindex.
 
         Returns:
             Instance of a SearchIndex object.
@@ -940,7 +947,7 @@ class TimesketchApi:
         Fetches a single Sigma rule selected by the `UUID`
 
         Args:
-            rule_uuid: UUID of the Sigma rule.
+            rule_uuid (str): UUID of the Sigma rule.
 
         Returns:
             Instance of a SigmaRule object.
@@ -989,6 +996,10 @@ class VerboseRetry(Retry):
         This method is called by urllib3 before each retry attempt. It's overridden
         here to add custom logging for 5xx errors and to enhance the final
         MaxRetryError message with server response details and attempt count.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
         """
         response = kwargs.get("response")
         decoded_body = None

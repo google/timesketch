@@ -32,7 +32,7 @@ def ask_question(
     Args:
         question (str): the text that the user will be prompted.
         input_type (type): the type of the input data.
-        default (object): default value for the question, optional.
+        default: default value for the question, optional.
         hide_input (bool): whether the input should be hidden, eg. when asking
             for a password.
 

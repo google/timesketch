@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API crypto storage library for OAUTH client."""
 
-from __future__ import unicode_literals
 
 import base64
 import os
@@ -41,7 +40,11 @@ class CredentialStorage:
     SALT_LENGTH = 16
 
     def __init__(self, file_path=""):
-        """Initialize the class."""
+        """Initialize the class.
+
+        Args:
+            file_path (str): Path to the credential file.
+        """
         self._user = getpass.getuser()
         if file_path:
             self._filepath = file_path
@@ -70,7 +73,11 @@ class CredentialStorage:
         return base64.urlsafe_b64encode(kdf.derive(password))
 
     def set_filepath(self, file_path):
-        """Set the filepath to the credential file."""
+        """Set the filepath to the credential file.
+
+        Args:
+            file_path (str): Path to the credential file.
+        """
         if os.path.isfile(file_path):
             self._filepath = file_path
 

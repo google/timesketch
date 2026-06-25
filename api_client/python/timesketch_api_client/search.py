@@ -53,7 +53,11 @@ class Chip:
 
     @active.setter
     def active(self, active):
-        """Decide whether the chip is active or disabled."""
+        """Decide whether the chip is active or disabled.
+
+        Args:
+            active (bool): Boolean indicating if the chip is active.
+        """
         self._active = bool(active)
 
     @property
@@ -68,7 +72,11 @@ class Chip:
         }
 
     def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict (dict): Dictionary with chip configuration.
+        """
         raise NotImplementedError
 
     def set_include(self):
@@ -140,7 +148,11 @@ class DateIntervalChip(Chip):
 
     @after.setter
     def after(self, after):
-        """Make changes to the time interval after the date."""
+        """Make changes to the time interval after the date.
+
+        Args:
+            after (int): Time interval after the date.
+        """
         self._after = after
 
     @property
@@ -150,7 +162,11 @@ class DateIntervalChip(Chip):
 
     @before.setter
     def before(self, before):
-        """Make changes to the time interval before the date."""
+        """Make changes to the time interval before the date.
+
+        Args:
+            before (int): Time interval before the date.
+        """
         self._before = before
 
     @property
@@ -164,7 +180,11 @@ class DateIntervalChip(Chip):
 
     @date.setter
     def date(self, date):
-        """Make changes to the date."""
+        """Make changes to the date.
+
+        Args:
+            date (str): Date string.
+        """
         try:
             dt = datetime.datetime.strptime(date, self._DATE_FORMAT_MICROSECONDS)
         except ValueError:
@@ -181,7 +201,11 @@ class DateIntervalChip(Chip):
         self._date = dt
 
     def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict (dict): Dictionary with chip configuration.
+        """
         value = chip_dict.get("value")
         if not value:
             return
@@ -215,7 +239,11 @@ class DateIntervalChip(Chip):
 
     @unit.setter
     def unit(self, unit):
-        """Make changes to the unit."""
+        """Make changes to the unit.
+
+        Args:
+            unit (str): Unit of interval.
+        """
         if unit not in ("s", "m", "d", "h"):
             raise ValueError(
                 "Unable to add interval, needs to be one of: "
@@ -309,7 +337,11 @@ class DateRangeChip(Chip):
 
     @end_time.setter
     def end_time(self, end_time):
-        """Sets the new end time."""
+        """Sets the new end time.
+
+        Args:
+            end_time (str): New end time.
+        """
         self.add_end_time(end_time)
 
     @property
@@ -319,13 +351,21 @@ class DateRangeChip(Chip):
 
     @date_range.setter
     def date_range(self, date_range):
-        """Sets the new range of the date range chip."""
+        """Sets the new range of the date range chip.
+
+        Args:
+            date_range (str): Comma separated string with start and end time.
+        """
         start_time, end_time = date_range.split(",")
         self.add_start_time(start_time)
         self.add_end_time(end_time)
 
     def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict (dict): Dictionary with chip configuration.
+        """
         chip_value = chip_dict.get("value")
         if not chip_value:
             return
@@ -344,7 +384,11 @@ class DateRangeChip(Chip):
 
     @start_time.setter
     def start_time(self, start_time):
-        """Sets the new start time of a range."""
+        """Sets the new start time of a range.
+
+        Args:
+            start_time (str): New start time.
+        """
         self.add_start_time(start_time)
 
 
@@ -360,7 +404,11 @@ class LabelChip(Chip):
         self._label = ""
 
     def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict (dict): Dictionary with chip configuration.
+        """
         chip_value = chip_dict.get("value")
         if not chip_value:
             return
@@ -374,7 +422,11 @@ class LabelChip(Chip):
 
     @label.setter
     def label(self, label):
-        """Make changes to the label."""
+        """Make changes to the label.
+
+        Args:
+            label (str): Label string.
+        """
         self._label = label
 
     def use_comment_label(self):
@@ -404,11 +456,19 @@ class TermChip(Chip):
 
     @field.setter
     def field(self, field):
-        """Make changes to the field used to match against."""
+        """Make changes to the field used to match against.
+
+        Args:
+            field (str): Field name.
+        """
         self._chip_field = field
 
     def from_dict(self, chip_dict):
-        """Configure the term chip from a dictionary."""
+        """Configure the term chip from a dictionary.
+
+        Args:
+            chip_dict (dict): Dictionary with chip configuration.
+        """
         chip_value = chip_dict.get("value")
         if not chip_value:
             return
@@ -423,7 +483,11 @@ class TermChip(Chip):
 
     @query.setter
     def query(self, query):
-        """Make changes to the query."""
+        """Make changes to the query.
+
+        Args:
+            query (str): Query string.
+        """
         self._query = query
 
 
@@ -433,6 +497,11 @@ class Search(resource.SketchResource):
     DEFAULT_SIZE_LIMIT = 10000
 
     def __init__(self, sketch):
+        """Initialize the Search object.
+
+        Args:
+            sketch (Sketch): An instance of Sketch object.
+        """
         resource_uri = f"sketches/{sketch.id}/explore/"
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
@@ -455,7 +524,11 @@ class Search(resource.SketchResource):
         self._use_wildcard_fields = False
 
     def _extract_chips(self, query_filter):
-        """Extract chips from a query_filter."""
+        """Extract chips from a query_filter.
+
+        Args:
+            query_filter (dict): Query filter dictionary.
+        """
         self._chips = []
         chips = query_filter.get("chips", [])
         if not chips:
@@ -600,7 +673,11 @@ class Search(resource.SketchResource):
         return response_json
 
     def add_chip(self, chip):
-        """Add a chip to the ..."""
+        """Add a chip to the search object.
+
+        Args:
+            chip (BaseChip): A chip object.
+        """
         self._chips.append(chip)
         self.commit()
 
@@ -656,7 +733,11 @@ class Search(resource.SketchResource):
 
     @description.setter
     def description(self, description):
-        """Make changes to the saved search description field."""
+        """Make changes to the saved search description field.
+
+        Args:
+            description (str): Description of the saved search.
+        """
         self._description = description
         self.commit()
 
@@ -781,13 +862,25 @@ class Search(resource.SketchResource):
 
     @indices.setter
     def indices(self, indices):
-        """Make changes to the current set of indices."""
+        """Make changes to the current set of indices.
+
+        Args:
+            indices (list): List of indices to search.
+        """
         if indices == "_all":
             self._indices = "_all"
             self.commit()
             return
 
         def _is_string_or_int(item):
+            """Returns whether the item is a string or an int.
+
+            Args:
+                item: The item to check.
+
+            Returns:
+                True if the item is a string or an int, False otherwise.
+            """
             return isinstance(item, (str, int))
 
         if not isinstance(indices, list):
@@ -859,7 +952,11 @@ class Search(resource.SketchResource):
 
     @max_entries.setter
     def max_entries(self, max_entries):
-        """Make changes to the max entries of return values."""
+        """Make changes to the max entries of return values.
+
+        Args:
+            max_entries (int): The maximum number of entries to return.
+        """
         self._max_entries = max_entries
         if max_entries < self.DEFAULT_SIZE_LIMIT:
             _ = self.query_filter
@@ -874,7 +971,11 @@ class Search(resource.SketchResource):
 
     @name.setter
     def name(self, name):
-        """Make changes to the saved search name."""
+        """Make changes to the saved search name.
+
+        Args:
+            name (str): Name of the saved search.
+        """
         self._name = name
         self.commit()
 
@@ -899,7 +1000,11 @@ class Search(resource.SketchResource):
 
     @query_dsl.setter
     def query_dsl(self, query_dsl):
-        """Make changes to the query DSL of the search."""
+        """Make changes to the query DSL of the search.
+
+        Args:
+            query_dsl (str): OpenSearch query DSL as JSON string.
+        """
         if query_dsl and isinstance(query_dsl, str):
             query_dsl = json.loads(query_dsl)
 
@@ -931,7 +1036,11 @@ class Search(resource.SketchResource):
 
     @query_filter.setter
     def query_filter(self, query_filter):
-        """Make changes to the query filter."""
+        """Make changes to the query filter.
+
+        Args:
+            query_filter (dict): Filter for the query as a dict.
+        """
         if isinstance(query_filter, str):
             try:
                 query_filter = json.loads(query_filter)
@@ -952,7 +1061,12 @@ class Search(resource.SketchResource):
 
     @use_wildcard_fields.setter
     def use_wildcard_fields(self, enabled: bool) -> None:
-        """Enable or disable wildcard fields search mode. Defaults to False."""
+        """Enable or disable wildcard fields search mode. Defaults to False.
+
+        Args:
+            enabled (bool): Boolean indicating if wildcard fields search
+                mode should be enabled.
+        """
         self._use_wildcard_fields = bool(enabled)
         # Sync to query_filter dictionary immediately on change
         _ = self.query_filter
@@ -966,12 +1080,20 @@ class Search(resource.SketchResource):
 
     @query_string.setter
     def query_string(self, query_string):
-        """Make changes to the query string of a saved search."""
+        """Make changes to the query string of a saved search.
+
+        Args:
+            query_string (str): OpenSearch query string.
+        """
         self._query_string = query_string
         self.commit()
 
     def remove_chip(self, chip_index):
-        """Remove a chip from the saved search."""
+        """Remove a chip from the saved search.
+
+        Args:
+            chip_index (int): Index of the chip to remove.
+        """
         chip_len = len(self._chips)
         if chip_index > (chip_len + 1):
             raise ValueError(
@@ -1000,7 +1122,12 @@ class Search(resource.SketchResource):
 
     @return_fields.setter
     def return_fields(self, return_fields):
-        """Make changes to the return fields."""
+        """Make changes to the return fields.
+
+        Args:
+            return_fields (str): A comma separated string with a list of fields
+                that should be included in the response.
+        """
         self._return_fields = return_fields
         self.commit()
 
@@ -1011,7 +1138,11 @@ class Search(resource.SketchResource):
 
     @return_size.setter
     def return_size(self, return_size):
-        """Make changes to the maximum number of entries in the return."""
+        """Make changes to the maximum number of entries in the return.
+
+        Args:
+            return_size (int): Maximum number of entries to return.
+        """
         self._max_entries = return_size
         self.commit()
 

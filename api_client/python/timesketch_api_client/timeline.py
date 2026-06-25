@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
 
 import json
 import logging
@@ -37,8 +36,8 @@ class Timeline(resource.BaseResource):
         """Initializes the Timeline object.
 
         Args:
-            timeline_id: The primary key ID of the timeline.
-            sketch_id: ID of a sketch.
+            timeline_id (int): The primary key ID of the timeline.
+            sketch_id (int): ID of a sketch.
             api: Instance of a TimesketchApi object.
             name: Name of the timeline (optional)
             searchindex: The OpenSearch index name (optional)
@@ -81,7 +80,11 @@ class Timeline(resource.BaseResource):
 
     @color.setter
     def color(self, color):
-        """Change the color of the timeline."""
+        """Change the color of the timeline.
+
+        Args:
+            color (str): The new color of the timeline.
+        """
         self._color = color
         self._commit()
 
@@ -110,7 +113,11 @@ class Timeline(resource.BaseResource):
 
     @description.setter
     def description(self, description):
-        """Change the timeline description."""
+        """Change the timeline description.
+
+        Args:
+            description (str): The new description of the timeline.
+        """
         self._description = description
         self._commit()
 
@@ -128,7 +135,11 @@ class Timeline(resource.BaseResource):
 
     @name.setter
     def name(self, name):
-        """Change the name of the timeline."""
+        """Change the name of the timeline.
+
+        Args:
+            name (str): The new name of the timeline.
+        """
         self._name = name
         self._commit()
 

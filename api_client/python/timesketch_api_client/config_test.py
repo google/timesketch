@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the Timesketch config library for the API client."""
 
-from __future__ import unicode_literals
 
 import unittest
 import tempfile

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API sigma library."""
 
-from __future__ import unicode_literals
 
 import logging
 
@@ -49,7 +48,11 @@ class SigmaRule(resource.BaseResource):
         return list(self._attr_dict.keys())
 
     def get_attribute(self, key):
-        """Get a value for a given key in case it has no dedicated property"""
+        """Get a value for a given key in case it has no dedicated property.
+
+        Args:
+            key (str): Key of the attribute to get.
+        """
         if not self._attr_dict:
             return ""
         return self._attr_dict.get(key, "")
@@ -135,7 +138,11 @@ class SigmaRule(resource.BaseResource):
         self._attr_dict[key] = value
 
     def _load_rule_dict(self, rule_dict):
-        """Load a dict into a rule"""
+        """Load a dict into a rule.
+
+        Args:
+            rule_dict (dict): Dictionary with rule data.
+        """
         for key, value in rule_dict.items():
             self.set_value(key, value)
 
@@ -143,7 +150,7 @@ class SigmaRule(resource.BaseResource):
         """Get a SigmaRule object from a rule UUID.
 
         Args:
-            rule_uuid: Id of the sigma rule.
+            rule_uuid (str): Id of the sigma rule.
 
         """
         self.resource_uri = f"sigmarules/{rule_uuid}"

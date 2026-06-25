@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
 
 import json
 import logging
@@ -35,9 +34,9 @@ class View(resource.BaseResource):
         """Initializes the View object.
 
         Args:
-            view_id: Primary key ID for the view.
+            view_id (int): Primary key ID for the view.
             view_name: The name of the view.
-            sketch_id: ID of a sketch.
+            sketch_id (int): ID of a sketch.
             api: Instance of a TimesketchApi object.
         """
         logger.info(

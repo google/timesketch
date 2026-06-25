@@ -31,6 +31,7 @@ from . import client
 from . import cli_input
 from . import credentials as ts_credentials
 from . import crypto
+from . import definitions
 
 logger = logging.getLogger("timesketch_api.config_assistance")
 
@@ -221,7 +222,7 @@ class ConfigAssistant:
     def load_config_file(
         self,
         config_file_path: Optional[Text] = "",
-        section: Optional[Text] = "timesketch",
+        section: Optional[Text] = definitions.DEFAULT_CONFIG_SECTION,
         load_cli_config: Optional[bool] = False,
     ):
         """Load the config from file.
@@ -271,7 +272,7 @@ class ConfigAssistant:
             return
 
         if not section:
-            section = "timesketch"
+            section = definitions.DEFAULT_CONFIG_SECTION
 
         if section not in config.sections():
             logger.warning("No %s section in the config", section)
@@ -322,7 +323,7 @@ class ConfigAssistant:
     def save_config(
         self,
         file_path: Optional[Text] = "",
-        section: Optional[Text] = "timesketch",
+        section: Optional[Text] = definitions.DEFAULT_CONFIG_SECTION,
         token_file_path: Optional[Text] = "",
     ):
         """Save the current config to a file.
@@ -364,7 +365,7 @@ class ConfigAssistant:
             auth_mode = "userpass"
 
         if not section:
-            section = "timesketch"
+            section = definitions.DEFAULT_CONFIG_SECTION
 
         config[section] = {
             "host_uri": self._config.get("host_uri"),
@@ -404,7 +405,7 @@ class ConfigAssistant:
 
         Args:
           name (str): the name of the configuration value to be set.
-          value (object): the value of the configuration object.
+          value: the value of the configuration object.
         """
         self._config[name.lower()] = value
 
@@ -412,7 +413,7 @@ class ConfigAssistant:
 def get_client(
     config_dict: Optional[Dict[Text, Any]] = None,
     config_path: Optional[Text] = "",
-    config_section: Optional[Text] = "timesketch",
+    config_section: Optional[Text] = definitions.DEFAULT_CONFIG_SECTION,
     token_password: Optional[Text] = "",
     confirm_choices: Optional[bool] = False,
     load_cli_config: Optional[bool] = False,
@@ -487,7 +488,7 @@ def configure_missing_parameters(
     config_assistant: ConfigAssistant,
     token_password: Optional[Text] = "",
     confirm_choices: Optional[bool] = False,
-    config_section: Optional[Text] = "timesketch",
+    config_section: Optional[Text] = definitions.DEFAULT_CONFIG_SECTION,
 ):
     """Fill in missing configuration for a config assistant.
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
 
 import json
 

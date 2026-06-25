@@ -70,7 +70,7 @@ class SketchResource(BaseResource):
 
         Args:
             resource_uri: The URI part of the API resource to call.
-            sketch: The sketch object of the sketch this resource is tied to.
+            sketch (timesketch_api_client.sketch.Sketch): The sketch object of the sketch this resource is tied to.
         """
         super().__init__(sketch.api, resource_uri)
 
@@ -152,7 +152,7 @@ class SketchResource(BaseResource):
         """Initialize the resource object from a saved resource.
 
         Args:
-            resource_id: integer value for the saved resource (primary key).
+            resource_id (int): integer value for the saved resource (primary key).
         """
         raise NotImplementedError
 

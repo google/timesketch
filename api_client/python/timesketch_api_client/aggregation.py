@@ -45,6 +45,11 @@ class Aggregation(resource.SketchResource):
     resource_data: dict[str, Any]
 
     def __init__(self, sketch):
+        """Initializes the Aggregation object.
+
+        Args:
+            sketch (Sketch): An instance of Sketch object.
+        """
         self._created_at = ""
         self._name = ""
         self._parameters = {}
@@ -288,7 +293,11 @@ class Aggregation(resource.SketchResource):
 
     @title.setter
     def title(self, new_title):
-        """Set the chart title of an aggregation."""
+        """Set the chart title of an aggregation.
+
+        Args:
+            new_title (str): Chart title.
+        """
         self.chart_title = new_title
 
     @property
@@ -307,7 +316,11 @@ class Aggregation(resource.SketchResource):
 
     @description.setter
     def description(self, description):
-        """Set the description of an aggregation."""
+        """Set the description of an aggregation.
+
+        Args:
+            description (str): Description string.
+        """
         if "meta" not in self.resource_data:
             return
         meta = self.resource_data.get("meta", {})
@@ -320,7 +333,11 @@ class Aggregation(resource.SketchResource):
 
     @name.setter
     def name(self, name):
-        """Set the name of the aggregation."""
+        """Set the name of the aggregation.
+
+        Args:
+            name (str): Name of the aggregation.
+        """
         if "meta" not in self.resource_data:
             return
         meta = self.resource_data.get("meta")
@@ -447,7 +464,11 @@ class AggregationGroup(resource.SketchResource):
     """Aggregation Group object."""
 
     def __init__(self, sketch):
-        """Initialize the aggregation group."""
+        """Initialize the aggregation group.
+
+        Args:
+            sketch (Sketch): An instance of Sketch object.
+        """
         resource_uri = "sketches/{0:d}/aggregation/group/".format(sketch.id)
         super().__init__(resource_uri=resource_uri, sketch=sketch)
 
@@ -499,7 +520,11 @@ class AggregationGroup(resource.SketchResource):
 
     @description.setter
     def description(self, description):
-        """Sets the description of the aggregation group."""
+        """Sets the description of the aggregation group.
+
+        Args:
+            description (str): Description of the aggregation group.
+        """
         self._description = description
         self.save()
 
@@ -510,7 +535,11 @@ class AggregationGroup(resource.SketchResource):
 
     @name.setter
     def name(self, name):
-        """Sets the name of the aggregation group."""
+        """Sets the name of the aggregation group.
+
+        Args:
+            name (str): Name of the aggregation group.
+        """
         self._name = name
         self.save()
 
@@ -521,7 +550,11 @@ class AggregationGroup(resource.SketchResource):
 
     @orientation.setter
     def orientation(self, orientation):
-        """Sets the chart orientation."""
+        """Sets the chart orientation.
+
+        Args:
+            orientation (str): Chart orientation.
+        """
         self._orientation = orientation
         self.save()
 
@@ -532,7 +565,11 @@ class AggregationGroup(resource.SketchResource):
 
     @parameters.setter
     def parameters(self, parameters):
-        """Sets the group parameters."""
+        """Sets the group parameters.
+
+        Args:
+            parameters (dict): Aggregation group parameters.
+        """
         self._parameters = parameters
         self.save()
 

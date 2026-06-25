@@ -17,7 +17,6 @@ This library contains classes that define how to serialize the different
 credential objects Timesketch supports.
 """
 
-from __future__ import unicode_literals
 
 import json
 
@@ -41,7 +40,11 @@ class TimesketchCredentials:
 
     @credential.setter
     def credential(self, credential_obj):
-        """Sets the credential object."""
+        """Sets the credential object.
+
+        Args:
+            credential_obj (object): The credential object.
+        """
         self._credential = credential_obj
 
     def serialize(self):

@@ -25,7 +25,12 @@ class User(resource.BaseResource):
     """User object."""
 
     def __init__(self, api, user_id=None):
-        """Initializes the user object."""
+        """Initializes the user object.
+
+        Args:
+            api (TimesketchApi): An instance of TimesketchApi object.
+            user_id (int): Primary key ID of the user (optional).
+        """
         self._object_data = None
         if not user_id:
             resource_uri = "users/me/"

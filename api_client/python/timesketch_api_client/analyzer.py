@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API analyzer result object."""
 
-from __future__ import unicode_literals
 
 import datetime
 import json
@@ -29,7 +28,14 @@ class AnalyzerResult(resource.BaseResource):
     """Class to store and retrieve session information for an analyzer."""
 
     def __init__(self, timeline_id, session_id, sketch_id, api):
-        """Initialize the class."""
+        """Initialize the class.
+
+        Args:
+            timeline_id (int): The ID of the timeline.
+            session_id (int): The ID of the analyzer session.
+            sketch_id (int): The ID of the sketch.
+            api (TimesketchApi): An instance of TimesketchApi.
+        """
         self._session_id = session_id
         self._sketch_id = sketch_id
         self._timeline_id = timeline_id

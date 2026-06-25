@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
 
 import copy
 import os
@@ -50,8 +49,8 @@ class Sketch(resource.BaseResource):
     access control and its own namespace for things like labels and comments.
 
     Attributes:
-        id: The ID of the sketch.
-        api: An instance of TimesketchApi object.
+        id (int): The ID of the sketch.
+        api (timesketch_api_client.api.TimesketchApi): An instance of TimesketchApi object.
     """
 
     # Add in necessary fields in data ingested via a different mechanism.
@@ -61,9 +60,9 @@ class Sketch(resource.BaseResource):
         """Initializes the Sketch object.
 
         Args:
-            sketch_id: Primary key ID of the sketch.
-            api: An instance of TimesketchApi object.
-            sketch_name: Name of the sketch (optional).
+            sketch_id (int): Primary key ID of the sketch.
+            api (timesketch_api_client.api.TimesketchApi): An instance of TimesketchApi object.
+            sketch_name (Optional[str]): Name of the sketch (optional).
         """
         self.id = sketch_id
         self.api = api
@@ -119,7 +118,11 @@ class Sketch(resource.BaseResource):
 
     @description.setter
     def description(self, description_value):
-        """Change the sketch description to a new value."""
+        """Change the sketch description to a new value.
+
+        Args:
+            description_value (str): The new value for the sketch description.
+        """
         if not isinstance(description_value, str):
             logger.error("Unable to change the name to a non string value")
             return
@@ -188,7 +191,11 @@ class Sketch(resource.BaseResource):
 
     @name.setter
     def name(self, name_value):
-        """Change the name of the sketch to a new value."""
+        """Change the name of the sketch to a new value.
+
+        Args:
+            name_value (str): The new name of the sketch.
+        """
         if not isinstance(name_value, str):
             logger.error("Unable to change the name to a non string value")
             return
@@ -727,7 +734,7 @@ class Sketch(resource.BaseResource):
         """Return a stored aggregation.
 
         Args:
-            aggregation_id: id of the stored aggregation.
+            aggregation_id (int): id of the stored aggregation.
 
         Returns:
             An aggregation object, if stored (instance of Aggregation),
@@ -744,7 +751,7 @@ class Sketch(resource.BaseResource):
         """Return a stored aggregation group.
 
         Args:
-            group_id: id of the stored aggregation group.
+            group_id (int): id of the stored aggregation group.
 
         Returns:
             An aggregation group object (instance of AggregationGroup)
@@ -793,7 +800,7 @@ class Sketch(resource.BaseResource):
         """Returns a saved search object that is stored in the sketch.
 
         Args:
-            view_id: an integer indicating the ID of the saved search to
+            view_id (int): an integer indicating the ID of the saved search to
                 be fetched. Defaults to None.
             view_name: a string with the name of the saved search. Optional
                 and defaults to None.
@@ -1465,8 +1472,8 @@ class Sketch(resource.BaseResource):
         """Gets information about an event, including raw event and meta data.
 
         Args:
-            event_id: id of the event.
-            index_id: The OpenSearch index identifier.
+            event_id (int): id of the event.
+            index_id (int): The OpenSearch index identifier.
 
         Returns:
             a json data containing the event details.
@@ -1575,9 +1582,9 @@ class Sketch(resource.BaseResource):
         To remove a list of tags from a list of tags, use a different method.
 
         Args:
-            event_id: id of the event
+            event_id (int): id of the event
             index (str): The OpenSearch index name
-            tag: tag to remove
+            tag (str): tag to remove
 
         Returns:
             HTTP response object.
