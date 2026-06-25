@@ -27,7 +27,7 @@ from typing import Dict
 from timesketch_api_client import cli_input
 from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
-from timesketch_api_client import config, client
+from timesketch_api_client import config
 from timesketch_api_client import sketch
 from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
@@ -367,9 +367,9 @@ def main(args=None):
         help=(
             "Strategy to use when a sketch name is provided and a sketch "
             "with the same name already exists. Supported strategies are: "
-            "'ask' (default) which will raise an error, 'newest' which will "
-            "use the most recently created sketch, and 'oldest' which will "
-            "use the earliest created sketch."
+            "'ask' (default) which will ask the user for input, 'newest' "
+            "which will use the most recently created sketch, and 'oldest' "
+            "which will use the earliest created sketch."
         ),
     )
 

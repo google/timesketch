@@ -688,11 +688,13 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
-    def get_sketches_by_name(self, sketch_name) -> list[sketch.Sketch]:
+    def get_sketches_by_name(self, sketch_name: str) -> list[sketch.Sketch]:
         """Get a sketch by name.
 
         Args:
-            sketch_name (str): The name of the sketch to find.
+            sketch_name (str): The name of the sketch to find. 
+                Warning: Timesketch allows multiple sketches with the same name. 
+                The client library should therefore handle this potential conflict.
 
         Raises:
             KeyError: If no sketch with the specified name is found.
