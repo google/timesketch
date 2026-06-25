@@ -33,6 +33,8 @@ class IntelligenceTest(unittest.TestCase):
     @mock.patch("requests.Session", api_test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
+
+        super().setUp()
         self.ctx = test_lib.get_cli_context()
 
     def test_list_intelligence(self):
