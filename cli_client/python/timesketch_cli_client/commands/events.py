@@ -166,6 +166,14 @@ def tag_mod(
         event_id: The ID of the event to modify.
         tag: The tag to remove from the event, or a comma-separated
             list of tags. If None, lists the event's tags.
+
+    Errors:
+        * If the specified timeline or event does not exist.
+        * If the specified event does not exist.
+
+    Outputs:
+        Text: If a tag is specified, a message indicating the tag was removed.
+              If no tag is specified, the event's current tags are printed.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)
