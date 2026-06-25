@@ -97,8 +97,13 @@ class TimesketchCli:
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
-        sig = inspect.signature(self.config_assistant.load_config_file)
-        if "section" in sig.parameters:
+        try:
+            sig = inspect.signature(self.config_assistant.load_config_file)
+            has_section = "section" in sig.parameters
+        except (ValueError, TypeError):
+            has_section = False
+
+        if has_section:
             self.config_assistant.load_config_file(
                 conf_file, section=config_section, load_cli_config=True
             )
