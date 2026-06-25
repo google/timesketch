@@ -44,6 +44,20 @@ class LLMFeatureInterface(ABC):
     NAME: str = "llm_feature_interface"  # Must be overridden in subclasses
     RESPONSE_SCHEMA: Optional[dict[str, Any]] = None
 
+    def get_execution_context(self) -> dict[str, Any]:
+        """Returns execution context needed for LLM call in subprocess.
+
+        This context is safe for multiprocessing and contains only picklable
+        primitives.
+
+        Returns:
+            A dictionary containing 'name' and 'response_schema'.
+        """
+        return {
+            "name": self.NAME,
+            "response_schema": self.RESPONSE_SCHEMA,
+        }
+
     @abstractmethod
     def generate_prompt(self, sketch: Sketch, **kwargs: Any) -> str:
         """Generates a prompt for the LLM.
