@@ -52,9 +52,9 @@ def describe_timeline(ctx: click.Context, timeline_id: int):
         timeline_id (int): The ID of the timeline to describe.
 
     Outputs:
-        JSON (object): If the output format is 'json', the timeline's resource data
+        JSON: If the output format is 'json', the timeline's resource data
             is printed as JSON.
-        Text (object): If the output format is 'text' (or an unsupported format),
+        Text: If the output format is 'text' (or an unsupported format),
             detailed information about the timeline is printed in a
             human-readable format.
         Error message: if the timeline id is not found.
@@ -118,9 +118,9 @@ def rename_timeline(ctx: click.Context, timeline_id: int, new_name: str):
         new_name (str): The new name for the timeline.
 
     Outputs:
-        JSON (object): If the output format is 'json', the timeline's resource data is
+        JSON: If the output format is 'json', the timeline's resource data is
             printed as JSON.
-        Text (object): If the output format is 'text' (or an unsupported format),
+        Text: If the output format is 'text' (or an unsupported format),
             the new timeline name is printed.
         Error message: if the timeline id is not found.
 

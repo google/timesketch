@@ -50,8 +50,8 @@ def list_sketches(ctx: click.Context):
         click.exceptions.Exit: If an unsupported output format is specified.
 
     Outputs:
-        JSON (object): If the output format is 'json', a JSON representation is printed.
-        Text (object): If the output format is 'text', a formatted table is printed.
+        JSON: If the output format is 'json', a JSON representation is printed.
+        Text: If the output format is 'text', a formatted table is printed.
         Error message: If an unsupported output format is specified
     """
     api_client = ctx.obj.api
@@ -90,8 +90,8 @@ def describe_sketch(ctx: click.Context) -> None:
         * If an unsupported output format is specified.
 
     Outputs:
-        Text (object): The name, description, and status of the sketch.
-        JSON (object): All attributes of the sketch object.
+        Text: The name, description, and status of the sketch.
+        JSON: All attributes of the sketch object.
         Error message: if the output format is not text or json.
 
     Example:
@@ -136,7 +136,7 @@ def create_sketch(
             (defaults to the name if not provided).
 
     Outputs:
-        Text (object): A message confirming the sketch creation and its name.
+        Text: A message confirming the sketch creation and its name.
 
     Example:
         sketch create --name "My New Sketch" --description "Analysis of incident X"
@@ -186,7 +186,7 @@ def export_sketch(
         click.exceptions.Exit: If an error occurs during the export process.
 
     Outputs:
-        Text (object): Messages indicating the start, progress, and completion of the
+        Text: Messages indicating the start, progress, and completion of the
             export process, including the time taken.
         Error message: If an error occurs during export.
     """
@@ -285,7 +285,7 @@ def add_label(ctx: click.Context, label: str) -> None:
         label (str): The label to add.
 
     Outputs:
-        Text (object): A message indicating that the label was added.
+        Text: A message indicating that the label was added.
     """
     sketch = ctx.obj.sketch
     sketch.add_sketch_label(label)
@@ -303,7 +303,7 @@ def list_label(ctx: click.Context) -> None:
         ctx (click.Context): The Click context object, containing the sketch.
 
     Outputs:
-        Text (object): A list of labels associated with the sketch.
+        Text: A list of labels associated with the sketch.
     """
     sketch = ctx.obj.sketch
     click.echo(sketch.labels)
@@ -322,7 +322,7 @@ def remove_label(ctx: click.Context, label: str) -> None:
         label (str): The label to remove.
 
     Outputs:
-        Text (object): A message indicating that the label was removed.
+        Text: A message indicating that the label was removed.
     """
     sketch = ctx.obj.sketch
     sketch.remove_sketch_label(label)
@@ -460,9 +460,9 @@ def export_only_with_annotations(
         click.exceptions.Exit: If an error occurs during the export process.
 
     Outputs:
-        Text (object): Messages indicating the start, progress, and completion of the
+        Text: Messages indicating the start, progress, and completion of the
             export process, including the time taken and number of events.
-        File (object): The specified output file containing the exported event data.
+        File: The specified output file containing the exported event data.
     """
     sketch = ctx.obj.sketch
     click.echo(f"Exporting events with comments, stars, OR labels to {filename}...")

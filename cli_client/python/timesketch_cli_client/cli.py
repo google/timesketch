@@ -37,7 +37,7 @@ from timesketch_cli_client.definitions import DEFAULT_OUTPUT_FORMAT
 from timesketch_cli_client.version import get_version
 
 
-class TimesketchCli(object):
+class TimesketchCli:
     """Timesketch CLI state object.
 
     Attributes:

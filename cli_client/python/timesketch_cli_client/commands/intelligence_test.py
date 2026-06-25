@@ -14,7 +14,7 @@
 """Tests for intelligence command."""
 
 import unittest
-import mock
+from unittest import mock
 
 from click.testing import CliRunner
 

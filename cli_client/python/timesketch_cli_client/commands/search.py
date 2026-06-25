@@ -49,7 +49,7 @@ def format_output(
         Returns None if the search_obj.to_pandas() returns an empty data frame.
 
     Raises:
-        ImportError (object): If the 'tabulate' library is not installed and 'tabular'
+        ImportError: If the 'tabulate' library is not installed and 'tabular'
         format is selected.
 
     Example:
@@ -99,7 +99,7 @@ def describe_query(search_obj: search.Search):
         search_obj (search.Search): The search object to describe.
 
     Outputs:
-        Text (object): The query string, return fields, and a formatted JSON
+        Text: The query string, return fields, and a formatted JSON
         representation of the query filter.
 
     Example:
@@ -398,10 +398,10 @@ def search_wildcard(ctx: click.Context, query: str, limit: int, compare: bool) -
     Args:
         ctx (click.Context): Click Context object holding global settings and
                              active sketch.
-        query (object): The raw wildcard search pattern string (e.g. '*evil*' or
+        query (str): The raw wildcard search pattern string (e.g. '*evil*' or
             'message:*evil*').
-        limit (object): Max integer limit of matching event hits to return.
-        compare (object): Boolean flag to request comparative search metrics.
+        limit (int): Max integer limit of matching event hits to return.
+        compare (bool): Boolean flag to request comparative search metrics.
     """
     sketch = ctx.obj.sketch
     try:

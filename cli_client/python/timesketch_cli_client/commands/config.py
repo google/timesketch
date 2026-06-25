@@ -38,7 +38,7 @@ def get_config_parameter(ctx: click.Context, name: str) -> None:
 
     Args:
         ctx (click.Context): Click CLI context object.
-        name (object): Name of the configuration parameter to get.
+        name (str): Name of the configuration parameter to get.
     """
     try:
         # Normalize name for output format settings
@@ -60,7 +60,8 @@ def set_sketch(ctx: click.Context, sketch_id: str) -> None:
 
     Args:
         ctx (click.Context): Click CLI context object.
-        sketch_id (int): ID of the sketch to save to config (pass an empty string to clear).
+        sketch_id (str): ID of the sketch to save to config (pass an empty
+            string to clear).
     """
     if sketch_id:
         if not sketch_id.isdigit():
@@ -77,7 +78,7 @@ def _set_output_format(ctx: click.Context, output_format: str) -> None:
 
     Args:
         ctx (click.Context): Click CLI context object.
-        output_format (object): Format to use for output text.
+        output_format (str): Format to use for output text.
     """
     if output_format not in SUPPORTED_OUTPUT_FORMATS:
         supported_formats = " ".join(SUPPORTED_OUTPUT_FORMATS)
@@ -96,7 +97,7 @@ def set_output_format(ctx: click.Context, output_format: str) -> None:
 
     Args:
         ctx (click.Context): Click CLI context object.
-        output_format (object): Format to use for output text.
+        output_format (str): Format to use for output text.
     """
     _set_output_format(ctx, output_format)
 
@@ -109,6 +110,6 @@ def set_output_format_alias(ctx: click.Context, output_format: str) -> None:
 
     Args:
         ctx (click.Context): Click CLI context object.
-        output_format (object): Format to use for output text.
+        output_format (str): Format to use for output text.
     """
     _set_output_format(ctx, output_format)

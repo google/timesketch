@@ -37,9 +37,9 @@ def list_attributes(ctx: click.Context):
         output format.
 
     Outputs:
-        JSON (object): If the output format is 'json', the attributes are printed as a
+        JSON: If the output format is 'json', the attributes are printed as a
         JSON object.
-        Text (object): If the output format is 'text' (or an unsupported format), the
+        Text: If the output format is 'text' (or an unsupported format), the
         attributes are printed in a human-readable format, showing the name,
         ontology, and value of each attribute.
         Error message: if no attributes are found, or an unsupported output
@@ -83,7 +83,7 @@ def remove_attribute(ctx: click.Context, name: str, ontology: str):
         * If an unsupported output format is used.
 
     Outputs:
-        Text (object): A message indicating whether the attribute was successfully
+        Text: A message indicating whether the attribute was successfully
         removed or not.
 
     Example:
@@ -120,7 +120,7 @@ def add_attribute(ctx: click.Context, name: str, ontology: str, value: str):
         value (str): The value of the attribute to add.
 
     Outputs:
-        Text (object): A message confirming the attribute was added, including its name,
+        Text: A message confirming the attribute was added, including its name,
         ontology, and value.
 
     Example:

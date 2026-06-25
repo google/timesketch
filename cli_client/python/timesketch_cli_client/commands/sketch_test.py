@@ -14,7 +14,7 @@
 """Tests for sketch command."""
 
 import unittest
-import mock
+from unittest import mock
 import pandas as pd
 
 from click.testing import CliRunner

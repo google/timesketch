@@ -15,7 +15,7 @@
 
 import tempfile
 import unittest
-import mock
+from unittest import mock
 
 from click.testing import CliRunner
 
@@ -129,9 +129,10 @@ class ConfigTest(unittest.TestCase):
             result.output,
         )
 
-    @mock.patch("requests.Session", api_test_lib.mock_session)
-    def test_custom_config_section(self):
+    @mock.patch("timesketch_cli_client.cli.timesketch_config.get_client")
+    def test_custom_config_section(self, mock_get_client):
         """Test the TimesketchCli loads a custom config section."""
+        mock_get_client.return_value = mock.MagicMock()
 
         custom_config = """
 [timesketch]
