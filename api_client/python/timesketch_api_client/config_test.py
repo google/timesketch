@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the Timesketch config library for the API client."""
 
-
 import unittest
 import tempfile
 

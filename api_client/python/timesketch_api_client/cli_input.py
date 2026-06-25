@@ -13,19 +13,17 @@
 # limitations under the License.
 """CLI assistance for importer tools."""
 
-from typing import Any
-from typing import Callable
-from typing import Optional
-from typing import Text
+from __future__ import annotations
 
 import getpass
+from typing import Any, Callable, Optional
 
 
 def ask_question(
-    question: Text,
-    input_type: Callable[[Text], Any],
+    question: str,
+    input_type: Callable[[str], Any],
     default: Optional[Any] = None,
-    hide_input: Optional[bool] = False,
+    hide_input: bool = False,
 ) -> Any:
     """Presents the user with a prompt with a default return value and a type.
 
@@ -56,9 +54,7 @@ def ask_question(
     return input_type(answer)
 
 
-def confirm_choice(
-    choice: Text, default: Optional[bool] = True, abort: Optional[bool] = True
-) -> bool:
+def confirm_choice(choice: str, default: bool = True, abort: bool = True) -> bool:
     """Returns a bool from a yes/no question presented to the end user.
 
     Args:

@@ -13,8 +13,11 @@
 # limitations under the License.
 """Timesketch API client library."""
 
+from __future__ import annotations
+
 import json
 import logging
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 import pandas as pd
 
@@ -22,6 +25,11 @@ from . import aggregation
 from . import error
 from . import resource
 from . import search
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
+    from .sketch import Sketch
+    from .view import View
 
 logger = logging.getLogger("timesketch_api.story")
 
@@ -32,7 +40,7 @@ class BaseBlock:
     # A string representation of the type of block.
     TYPE = ""
 
-    def __init__(self, story, index):
+    def __init__(self, story: Story, index: int) -> None:
         """Initialize the base block.
 
         Args:
@@ -42,15 +50,15 @@ class BaseBlock:
         self.index = index
         self._story = story
 
-        self._data = None
+        self._data: Any = None
 
     @property
-    def data(self):
+    def data(self) -> Union[Dict[str, Any], str, List[Any], None]:
         """Returns the building block."""
         return self.to_dict()
 
     @data.setter
-    def data(self, data):
+    def data(self, data: Any) -> None:
         """Feeds data to the block.
 
         Args:
@@ -60,11 +68,11 @@ class BaseBlock:
         self._story.commit()
 
     @property
-    def json(self):
+    def json(self) -> Union[Dict[str, Any], str, List[Any], None]:
         """Returns the building block."""
         return self.to_dict()
 
-    def _get_base(self):
+    def _get_base(self) -> Dict[str, Any]:
         """Returns a base building block."""
         return {
             "componentName": "",
@@ -75,11 +83,11 @@ class BaseBlock:
             "isActive": False,
         }
 
-    def delete(self):
+    def delete(self) -> None:
         """Remove block from index."""
         self._story.remove_block(self.index)
 
-    def feed(self, data):
+    def feed(self, data: Any) -> None:
         """Feed data into the block.
 
         Args:
@@ -87,7 +95,7 @@ class BaseBlock:
         """
         self._data = data
 
-    def from_dict(self, data_dict):
+    def from_dict(self, data_dict: Dict[str, Any]) -> None:
         """Feed a block from a block dict.
 
         Args:
@@ -95,19 +103,19 @@ class BaseBlock:
         """
         raise NotImplementedError
 
-    def move_down(self):
+    def move_down(self) -> None:
         """Moves a block down one location in the index."""
         new_index = self.index + 1
         self._story.move_to(self, new_index)
         self.index = new_index
 
-    def move_up(self):
+    def move_up(self) -> None:
         """Moves a block up one location in the index."""
         new_index = self.index - 1
         self._story.move_to(self, new_index)
         self.index = new_index
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict with the block data.
 
         Raises:
@@ -119,7 +127,7 @@ class BaseBlock:
         """
         raise NotImplementedError
 
-    def reset(self):
+    def reset(self) -> None:
         """Resets the data in the block."""
         self._data = None
 
@@ -129,7 +137,7 @@ class ViewBlock(BaseBlock):
 
     TYPE = "view"
 
-    def __init__(self, story, index):
+    def __init__(self, story: Story, index: int) -> None:
         """Initialize the view block.
 
         Args:
@@ -141,12 +149,12 @@ class ViewBlock(BaseBlock):
         self._view_name = ""
 
     @property
-    def view(self):
+    def view(self) -> Any:
         """Returns the view."""
         return self._data
 
     @view.setter
-    def view(self, new_view):
+    def view(self, new_view: View) -> None:
         """Sets a new view to the block.
 
         Args:
@@ -155,20 +163,20 @@ class ViewBlock(BaseBlock):
         self.data = new_view
 
     @property
-    def view_id(self):
+    def view_id(self) -> int:
         """Returns the view ID."""
         if self._data and hasattr(self._data, "id"):
-            return self._data.id
+            return int(self._data.id)
         return self._view_id
 
     @property
-    def view_name(self):
+    def view_name(self) -> str:
         """Returns the view name."""
         if self._data and hasattr(self._data, "name"):
-            return self._data.name
+            return str(self._data.name)
         return self._view_name
 
-    def from_dict(self, data_dict):
+    def from_dict(self, data_dict: Dict[str, Any]) -> None:
         """Feed a block from a block dict.
 
         Args:
@@ -182,7 +190,7 @@ class ViewBlock(BaseBlock):
         self._view_id = view_dict.get("id", 0)
         self._view_name = view_dict.get("name", "")
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict with the block data.
 
         Raises:
@@ -218,14 +226,14 @@ class TextBlock(BaseBlock):
     TYPE = "text"
 
     @property
-    def text(self):
+    def text(self) -> str:
         """Returns the text."""
         if not self._data:
             return ""
-        return self._data
+        return str(self._data)
 
     @text.setter
-    def text(self, new_text):
+    def text(self, new_text: str) -> None:
         """Sets a new text to the block.
 
         Args:
@@ -233,7 +241,7 @@ class TextBlock(BaseBlock):
         """
         self.data = new_text
 
-    def from_dict(self, data_dict):
+    def from_dict(self, data_dict: Dict[str, Any]) -> None:
         """Feed a block from a block dict.
 
         Args:
@@ -242,7 +250,7 @@ class TextBlock(BaseBlock):
         text = data_dict.get("content", "")
         self.feed(text)
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict with the block data.
 
         Raises:
@@ -269,7 +277,7 @@ class AggregationBlock(BaseBlock):
 
     TYPE = "aggregation"
 
-    def __init__(self, story, index):
+    def __init__(self, story: Story, index: int) -> None:
         """Initialize the aggregation block.
 
         Args:
@@ -279,18 +287,18 @@ class AggregationBlock(BaseBlock):
         super().__init__(story, index)
         self._agg_id = 0
         self._agg_name = ""
-        self._agg_dict = {}
+        self._agg_dict: Dict[str, Any] = {}
         self._chart_type = "table"
 
     @property
-    def aggregation(self):
+    def aggregation(self) -> Optional[aggregation.Aggregation]:
         """Returns the aggregation object."""
         if self._data:
             return self._data
         return None
 
     @aggregation.setter
-    def aggregation(self, agg_obj):
+    def aggregation(self, agg_obj: aggregation.Aggregation) -> None:
         """Set the aggregation object.
 
         Args:
@@ -299,22 +307,22 @@ class AggregationBlock(BaseBlock):
         self._data = agg_obj
 
     @property
-    def agg_name(self):
+    def agg_name(self) -> str:
         """Returns the aggregation name."""
         return self._agg_name
 
     @property
-    def agg_id(self):
+    def agg_id(self) -> int:
         """Returns the aggregation ID."""
         return self._agg_id
 
     @property
-    def chart_type(self):
+    def chart_type(self) -> str:
         """Returns the aggregation type."""
         return self._chart_type
 
     @chart_type.setter
-    def chart_type(self, new_type):
+    def chart_type(self, new_type: str) -> None:
         """Sets the aggregation type.
 
         Args:
@@ -323,20 +331,20 @@ class AggregationBlock(BaseBlock):
         self._chart_type = new_type
 
     @property
-    def table(self):
+    def table(self) -> pd.DataFrame:
         """Returns a table view, as a pandas DataFrame."""
         if not self._data:
             return pd.DataFrame()
         return self._data.table
 
     @property
-    def chart(self):
+    def chart(self) -> Any:
         """Returns a chart back from the aggregation."""
         if not self._data:
             return None
         return self._data.chart
 
-    def from_dict(self, data_dict):
+    def from_dict(self, data_dict: Dict[str, Any]) -> None:
         """Feed a block from a block dict.
 
         Args:
@@ -356,7 +364,7 @@ class AggregationBlock(BaseBlock):
         self._chart_type = agg_dict.get("chart_type", "table")
         self._agg_dict = agg_dict
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict with the block data.
 
         Raises:
@@ -417,7 +425,7 @@ class AggregationGroupBlock(BaseBlock):
 
     TYPE = "aggregation_group"
 
-    def __init__(self, story, index):
+    def __init__(self, story: Story, index: int) -> None:
         """Initialize the aggregation group block.
 
         Args:
@@ -429,14 +437,14 @@ class AggregationGroupBlock(BaseBlock):
         self._group_name = ""
 
     @property
-    def group(self):
+    def group(self) -> Optional[aggregation.AggregationGroup]:
         """Returns the aggregation group object."""
         if self._data:
             return self._data
         return None
 
     @group.setter
-    def group(self, group_obj):
+    def group(self, group_obj: aggregation.AggregationGroup) -> None:
         """Set the aggregation group object.
 
         Args:
@@ -445,30 +453,30 @@ class AggregationGroupBlock(BaseBlock):
         self._data = group_obj
 
     @property
-    def group_name(self):
+    def group_name(self) -> str:
         """Returns the aggregation group name."""
         return self._group_name
 
     @property
-    def group_id(self):
+    def group_id(self) -> int:
         """Returns the aggregation group ID."""
         return self._group_id
 
     @property
-    def table(self):
+    def table(self) -> pd.DataFrame:
         """Returns a table view, as a pandas DataFrame."""
         if not self._data:
             return pd.DataFrame()
         return self._data.table
 
     @property
-    def chart(self):
+    def chart(self) -> Any:
         """Returns a chart back from the aggregation."""
         if not self._data:
             return None
         return self._data.chart
 
-    def from_dict(self, data_dict):
+    def from_dict(self, data_dict: Dict[str, Any]) -> None:
         """Feed a block from a block dict.
 
         Args:
@@ -486,7 +494,7 @@ class AggregationGroupBlock(BaseBlock):
         self._group_id = group_dict.get("id", 0)
         self._group_name = group_dict.get("name", "")
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict with the block data.
 
         Raises:
@@ -523,37 +531,37 @@ class Story(resource.BaseResource):
         id: Primary key of the story.
     """
 
-    def __init__(self, story_id, sketch, api):
+    def __init__(self, story_id: int, sketch: Sketch, api: TimesketchApi) -> None:
         """Initializes the Story object.
 
         Args:
             story_id (int): The primary key ID of the story.
-            sketch (timesketch_api_client.sketch.Sketch): The sketch object (instance of Sketch).
+            sketch (Sketch): The sketch object (instance of Sketch).
             api: Instance of a TimesketchApi object.
         """
         self.id = story_id
         self._api = api
         self._title = ""
-        self._blocks = []
+        self._blocks: List[BaseBlock] = []
         self._sketch = sketch
 
         resource_uri = "sketches/{0:d}/stories/{1:d}/".format(sketch.id, self.id)
         super().__init__(api, resource_uri)
 
     @property
-    def blocks(self):
+    def blocks(self) -> List[BaseBlock]:
         """Returns all the blocks of the story."""
         if not self._blocks:
             story_data = self.lazyload_data(refresh_cache=True)
             objects = story_data.get("objects")
             content = ""
             if objects:
-                content = objects[0].get("content", [])
+                content = objects[0].get("content", "[]")
             index = 0
             for content_block in json.loads(content):
                 name = content_block.get("componentName", "")
                 if content_block.get("content"):
-                    block = TextBlock(self, index)
+                    block: BaseBlock = TextBlock(self, index)
                     block.from_dict(content_block)
                 elif name == "TsViewEventList":
                     block = ViewBlock(self, index)
@@ -577,12 +585,15 @@ class Story(resource.BaseResource):
                     group_obj = aggregation.AggregationGroup(self._sketch)
                     group_obj.from_saved(block.group_id)
                     block.feed(group_obj)
+                else:
+                    continue
+
                 self._blocks.append(block)
                 index += 1
         return self._blocks
 
     @property
-    def title(self):
+    def title(self) -> str:
         """Property that returns story title.
 
         Returns:
@@ -596,7 +607,7 @@ class Story(resource.BaseResource):
         return self._title
 
     @property
-    def content(self):
+    def content(self) -> str:
         """Property that returns the content of a story.
 
         Returns:
@@ -606,16 +617,16 @@ class Story(resource.BaseResource):
         return json.dumps(content_list)
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Retiurns the number of blocks stored in the story."""
         return len(self._blocks)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Returns the number of blocks stored in the story."""
         _ = self.blocks
         return len(self._blocks)
 
-    def _add_block(self, block, index):
+    def _add_block(self, block: BaseBlock, index: int) -> bool:
         """Adds a block to the story's content.
 
         Args:
@@ -625,8 +636,14 @@ class Story(resource.BaseResource):
         self._blocks.insert(index, block)
         self.commit()
         self.reset()
+        return True
 
-    def add_aggregation(self, agg_obj, chart_type="table", index=-1):
+    def add_aggregation(
+        self,
+        agg_obj: aggregation.Aggregation,
+        chart_type: str = "table",
+        index: int = -1,
+    ) -> bool:
         """Adds an aggregation object to the story.
 
         Args:
@@ -659,7 +676,7 @@ class Story(resource.BaseResource):
 
         return self._add_block(agg_block, index)
 
-    def add_text(self, text, index=-1):
+    def add_text(self, text: str, index: int = -1) -> bool:
         """Adds a text block to the story.
 
         Args:
@@ -678,7 +695,7 @@ class Story(resource.BaseResource):
 
         return self._add_block(text_block, index)
 
-    def add_view(self, view_obj, index=-1):
+    def add_view(self, view_obj: Any, index: int = -1) -> bool:
         """Add a view to the story.
 
         Args:
@@ -693,9 +710,9 @@ class Story(resource.BaseResource):
         Raises:
             TypeError: if the view object is not of the correct type.
         """
-        self.add_saved_search(view_obj, index)
+        return self.add_saved_search(view_obj, index)
 
-    def add_saved_search(self, search_obj, index=-1):
+    def add_saved_search(self, search_obj: search.Search, index: int = -1) -> bool:
         """Add a saved search to the story.
 
         Args:
@@ -724,7 +741,7 @@ class Story(resource.BaseResource):
 
         return self._add_block(view_block, index)
 
-    def commit(self):
+    def commit(self) -> bool:
         """Commit the story to the server."""
         content_list = [x.to_dict() for x in self._blocks]
         content = json.dumps(content_list)
@@ -739,7 +756,7 @@ class Story(resource.BaseResource):
 
         return error.check_return_status(response, logger)
 
-    def delete(self):
+    def delete(self) -> bool:
         """Delete the story from the sketch.
 
         Returns:
@@ -751,7 +768,7 @@ class Story(resource.BaseResource):
 
         return error.check_return_status(response, logger)
 
-    def move_to(self, block, new_index):
+    def move_to(self, block: BaseBlock, new_index: int) -> None:
         """Moves a block from one index to another.
 
         Args:
@@ -767,7 +784,7 @@ class Story(resource.BaseResource):
         self._blocks.insert(new_index, block)
         self.commit()
 
-    def remove_block(self, index):
+    def remove_block(self, index: int) -> None:
         """Removes a block from the story.
 
         Args:
@@ -777,24 +794,24 @@ class Story(resource.BaseResource):
         self.commit()
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         """Refresh story content."""
         self._title = ""
         self._blocks = []
         _ = self.lazyload_data(refresh_cache=True)
         _ = self.blocks
 
-    def to_html(self):
+    def to_html(self) -> str:
         """Returns HTML formatted string with the content of the story."""
         story_dict = self.to_export_format("html")
-        return story_dict.get("story", "")
+        return str(story_dict.get("story", ""))
 
-    def to_markdown(self):
+    def to_markdown(self) -> str:
         """Returns markdown formatted string with the content of the story."""
         story_dict = self.to_export_format("markdown")
-        return story_dict.get("story", "")
+        return str(story_dict.get("story", ""))
 
-    def to_export_format(self, export_format):
+    def to_export_format(self, export_format: str) -> Dict[str, Any]:
         """Returns exported copy of the story as defined in export_format.
 
         Args:
@@ -809,15 +826,16 @@ class Story(resource.BaseResource):
 
         return error.get_response_json(response, logger)
 
-    def to_string(self):
+    def to_string(self) -> str:
         """Returns a string with the content of all the story."""
         self.reset()
-        string_list = []
+        string_list: List[str] = []
         for block in self.blocks:
             if block.TYPE == "text":
-                string_list.append(block.text)
+                string_list.append(str(block.data))
             elif block.TYPE == "view":
-                search_obj = block.view
+                # Type casting for search_obj as it is expected to be search.Search
+                search_obj: Optional[search.Search] = block.view
                 if search_obj is None:
                     logging.warning("Block has no view. Skipping")
                     continue

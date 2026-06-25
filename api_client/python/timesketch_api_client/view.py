@@ -13,11 +13,16 @@
 # limitations under the License.
 """Timesketch API client library."""
 
+from __future__ import annotations
 
 import json
 import logging
+from typing import Any, Dict, Union, TYPE_CHECKING
 
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.view")
 
@@ -30,14 +35,16 @@ class View(resource.BaseResource):
         name: Name of the view.
     """
 
-    def __init__(self, view_id, view_name, sketch_id, api):
+    def __init__(
+        self, view_id: int, view_name: str, sketch_id: int, api: TimesketchApi
+    ) -> None:
         """Initializes the View object.
 
         Args:
             view_id (int): Primary key ID for the view.
-            view_name: The name of the view.
+            view_name (str): The name of the view.
             sketch_id (int): ID of a sketch.
-            api: Instance of a TimesketchApi object.
+            api (TimesketchApi): Instance of a TimesketchApi object.
         """
         logger.info(
             "View objects will be deprecated soon, consider transitioning "
@@ -48,17 +55,19 @@ class View(resource.BaseResource):
         resource_uri = "sketches/{0:d}/views/{1:d}/".format(sketch_id, self.id)
         super().__init__(api, resource_uri)
 
-    def _get_top_level_attribute(self, name, default_value=None, refresh=False):
+    def _get_top_level_attribute(
+        self, name: str, default_value: Any = None, refresh: bool = False
+    ) -> Any:
         """Returns a top level attribute from a view object.
 
         Args:
-            name: String with the attribute name.
-            default_value: The default value if the attribute does not exit,
+            name (str): String with the attribute name.
+            default_value (Any): The default value if the attribute does not exit,
                 defaults to None.
-            refresh: If set to True then the data will be refreshed.
+            refresh (bool): If set to True then the data will be refreshed.
 
         Returns:
-            The dict value of the key "name".
+            Any: The value of the key "name".
         """
         view = self.lazyload_data(refresh_cache=refresh)
         view_objects = view.get("objects")
@@ -71,42 +80,42 @@ class View(resource.BaseResource):
         return first_object.get(name, default_value)
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns the description value of a view.
 
         Returns:
-            Description of the view as a string.
+            str: Description of the view.
         """
         return self._get_top_level_attribute("description", default_value="")
 
     @property
-    def user(self):
+    def user(self) -> str:
         """Property that returns the username of the view creator.
 
         Returns:
-            A string with the username of the user generating the view.
+            str: The username of the user generating the view.
         """
         user_dict = self._get_top_level_attribute("user", default_value={})
         username = user_dict.get("username")
         if not username:
             return "System"
-        return username
+        return str(username)
 
     @property
-    def query_string(self):
+    def query_string(self) -> str:
         """Property that returns the views query string.
 
         Returns:
-            OpenSearch query as string.
+            str: OpenSearch query as string.
         """
         return self._get_top_level_attribute("query_string", default_value="")
 
     @property
-    def query_filter(self):
+    def query_filter(self) -> Union[Dict[str, Any], str]:
         """Property that returns the views filter.
 
         Returns:
-            OpenSearch filter as a dict.
+            dict: OpenSearch filter as a dict.
         """
         query_filter_string = self._get_top_level_attribute(
             "query_filter", default_value=""
@@ -116,11 +125,11 @@ class View(resource.BaseResource):
         return json.loads(query_filter_string)
 
     @property
-    def query_dsl(self):
+    def query_dsl(self) -> Union[Dict[str, Any], str]:
         """Property that returns the views query DSL.
 
         Returns:
-            OpenSearch DSL as a dict.
+            dict: OpenSearch DSL as a dict.
         """
         dsl_string = self._get_top_level_attribute("query_dsl", default_value="")
         if not dsl_string:

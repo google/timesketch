@@ -13,7 +13,15 @@
 # limitations under the License.
 """Timesketch API client library."""
 
+from __future__ import annotations
+
 import json
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas
+    from .client import TimesketchApi
+    from .sketch import Sketch
 
 
 class BaseResource:
@@ -23,7 +31,7 @@ class BaseResource:
     resources, such as lazy loading of data.
     """
 
-    def __init__(self, api, resource_uri):
+    def __init__(self, api: TimesketchApi, resource_uri: str) -> None:
         """Initializes the BaseResource.
 
         Args:
@@ -33,9 +41,9 @@ class BaseResource:
         """
         self.api = api
         self.resource_uri = resource_uri
-        self.resource_data = None
+        self.resource_data: Optional[Dict[str, Any]] = None
 
-    def lazyload_data(self, refresh_cache=False):
+    def lazyload_data(self, refresh_cache: bool = False) -> Dict[str, Any]:
         """Load resource data once and cache the result.
 
         This method fetches data from the API for this resource if it hasn't
@@ -53,7 +61,7 @@ class BaseResource:
         return self.resource_data
 
     @property
-    def data(self):
+    def data(self) -> Dict[str, Any]:
         """Property to access the resource's data.
 
         Returns:
@@ -65,21 +73,23 @@ class BaseResource:
 class SketchResource(BaseResource):
     """Sketch resource object."""
 
-    def __init__(self, resource_uri, sketch):
+    def __init__(self, resource_uri: str, sketch: Sketch) -> None:
         """Initialize the sketch resource object.
 
         Args:
             resource_uri: The URI part of the API resource to call.
-            sketch (timesketch_api_client.sketch.Sketch): The sketch object of the sketch this resource is tied to.
+            sketch (Sketch): The sketch object of the sketch this resource is tied to.
         """
         super().__init__(sketch.api, resource_uri)
 
-        self._labels = []
+        self._labels: List[str] = []
         self._resource_id = 0
         self._sketch = sketch
         self._username = ""
 
-    def _get_top_level_attribute(self, name, default_value=None, refresh=False):
+    def _get_top_level_attribute(
+        self, name: str, default_value: Any = None, refresh: bool = False
+    ) -> Any:
         """Returns a top level attribute from a resource object.
 
         Args:
@@ -91,8 +101,8 @@ class SketchResource(BaseResource):
         Returns:
             The dict value of the key "name".
         """
-        resource = self.lazyload_data(refresh_cache=refresh)
-        resource_objects = resource.get("objects")
+        resource_data = self.lazyload_data(refresh_cache=refresh)
+        resource_objects = resource_data.get("objects")
         if not resource_objects:
             return default_value
 
@@ -102,7 +112,7 @@ class SketchResource(BaseResource):
         first_object = resource_objects[0]
         return first_object.get(name, default_value)
 
-    def add_label(self, label):
+    def add_label(self, label: str) -> None:
         """Add a label to the resource.
 
         Args:
@@ -113,22 +123,22 @@ class SketchResource(BaseResource):
         self._labels.append(label)
         self.save()
 
-    def commit(self):
+    def commit(self) -> None:
         """Calls the save function if the object has already been saved."""
         if not self._resource_id:
             return
         self.save()
 
-    def delete(self):
+    def delete(self) -> Any:
         """Deletes the resource from the list of stored resources."""
         raise NotImplementedError
 
     @property
-    def dict(self):
+    def dict(self) -> Dict[str, Any]:
         """Property that returns back a Dict with the results."""
         return self.to_dict()
 
-    def from_manual(self, **kwargs):
+    def from_manual(self, **kwargs: Any) -> None:
         """Initialize the resource object by running a raw API request.
 
         The API request functionality should be implemented by other functions
@@ -148,7 +158,7 @@ class SketchResource(BaseResource):
                 "Unused keyword arguments: {0:s}.".format(", ".join(kwargs.keys()))
             )
 
-    def from_saved(self, resource_id):
+    def from_saved(self, resource_id: int) -> None:
         """Initialize the resource object from a saved resource.
 
         Args:
@@ -157,45 +167,45 @@ class SketchResource(BaseResource):
         raise NotImplementedError
 
     @property
-    def id(self):
+    def id(self) -> int:
         """Property that returns back the resource ID."""
         return self._resource_id
 
     @property
-    def json(self):
+    def json(self) -> str:
         """Property that returns back a JSON object with the results."""
         return json.dumps(self.dict)
 
     @property
-    def labels(self):
+    def labels(self) -> List[str]:
         """Property that returns a list of the resource labels."""
         return self._labels
 
     @property
-    def sketch(self):
+    def sketch(self) -> Sketch:
         """Property that returns the sketch object."""
         return self._sketch
 
     @property
-    def table(self):
+    def table(self) -> pandas.DataFrame:
         """Property that returns a pandas DataFrame."""
         return self.to_pandas()
 
     @property
-    def user(self):
+    def user(self) -> str:
         """Property that returns the username of who ran the aggregation."""
         if not self._username:
             return "System"
         return self._username
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict."""
         raise NotImplementedError
 
-    def to_pandas(self):
+    def to_pandas(self) -> pandas.DataFrame:
         """Returns a pandas DataFrame."""
         raise NotImplementedError
 
-    def save(self):
+    def save(self) -> Any:
         """Sends a request to save the resource."""
         raise NotImplementedError

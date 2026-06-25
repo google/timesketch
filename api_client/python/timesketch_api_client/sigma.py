@@ -13,11 +13,16 @@
 # limitations under the License.
 """Timesketch API sigma library."""
 
+from __future__ import annotations
 
 import logging
+from typing import Any, Dict, List, TYPE_CHECKING
 
 from . import resource
 from . import error
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.sigma")
 
@@ -31,23 +36,23 @@ class SigmaRule(resource.BaseResource):
         rule_uuid: The ID of the rule.
     """
 
-    def __init__(self, api):
+    def __init__(self, api: TimesketchApi) -> None:
         """Initializes the Sigma object.
 
         Args:
             api: An instance of TimesketchApi object.
 
         """
-        self._attr_dict = {}
+        self._attr_dict: Dict[str, Any] = {}
         resource_uri = "sigmarules/"
         super().__init__(api=api, resource_uri=resource_uri)
 
     @property
-    def attributes(self):
+    def attributes(self) -> List[str]:
         """Returns a list of all attribute keys for the rule"""
         return list(self._attr_dict.keys())
 
-    def get_attribute(self, key):
+    def get_attribute(self, key: str) -> Any:
         """Get a value for a given key in case it has no dedicated property.
 
         Args:
@@ -58,76 +63,76 @@ class SigmaRule(resource.BaseResource):
         return self._attr_dict.get(key, "")
 
     @property
-    def search_query(self):
+    def search_query(self) -> str:
         """Returns the Search query."""
-        return self.get_attribute("search_query")
+        return str(self.get_attribute("search_query"))
 
     @property
-    def title(self):
+    def title(self) -> str:
         """Returns the Sigma rule title."""
-        return self.get_attribute("title")
+        return str(self.get_attribute("title"))
 
     @property
-    def id(self):
+    def id(self) -> str:
         """Returns the Sigma rule id."""
-        return self.get_attribute("id")
+        return str(self.get_attribute("id"))
 
     @property
-    def rule_uuid(self):
+    def rule_uuid(self) -> str:
         """Returns the rule id."""
-        return self.get_attribute("id")
+        return str(self.get_attribute("id"))
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Returns the rule description."""
-        return self.get_attribute("description")
+        return str(self.get_attribute("description"))
 
     @property
-    def level(self):
+    def level(self) -> str:
         """Returns the rule confidence level."""
-        return self.get_attribute("level")
+        return str(self.get_attribute("level"))
 
     @property
-    def falsepositives(self):
+    def falsepositives(self) -> Any:
         """Returns the rule falsepositives."""
         return self.get_attribute("falsepositives")
 
     @property
-    def author(self):
+    def author(self) -> str:
         """Returns the rule author."""
-        return self.get_attribute("author")
+        return str(self.get_attribute("author"))
 
     @property
-    def date(self):
+    def date(self) -> str:
         """Returns the rule date."""
-        return self.get_attribute("date")
+        return str(self.get_attribute("date"))
 
     @property
-    def modified(self):
+    def modified(self) -> str:
         """Returns the rule modified date."""
-        return self.get_attribute("modified")
+        return str(self.get_attribute("modified"))
 
     @property
-    def logsource(self):
+    def logsource(self) -> Any:
         """Returns the rule logsource."""
         return self.get_attribute("logsource")
 
     @property
-    def detection(self):
+    def detection(self) -> Any:
         """Returns the rule detection."""
         return self.get_attribute("detection")
 
     @property
-    def references(self):
+    def references(self) -> List[str]:
         """Returns the rule references."""
         return self.get_attribute("references")
 
     @property
-    def status(self):
+    def status(self) -> str:
         """Returns the rule status."""
-        return self.get_attribute("status")
+        return str(self.get_attribute("status"))
 
-    def set_value(self, key, value):
+    def set_value(self, key: str, value: Any) -> None:
         """Sets the value for a given key
 
         Args:
@@ -137,7 +142,7 @@ class SigmaRule(resource.BaseResource):
         """
         self._attr_dict[key] = value
 
-    def _load_rule_dict(self, rule_dict):
+    def _load_rule_dict(self, rule_dict: Dict[str, Any]) -> None:
         """Load a dict into a rule.
 
         Args:
@@ -146,7 +151,7 @@ class SigmaRule(resource.BaseResource):
         for key, value in rule_dict.items():
             self.set_value(key, value)
 
-    def from_rule_uuid(self, rule_uuid):
+    def from_rule_uuid(self, rule_uuid: str) -> None:
         """Get a SigmaRule object from a rule UUID.
 
         Args:
@@ -167,7 +172,7 @@ class SigmaRule(resource.BaseResource):
         for key, value in rule_dict.items():
             self.set_value(key, value)
 
-    def from_text(self, rule_text):
+    def from_text(self, rule_text: str) -> None:
         """Obtain a parsed Sigma rule by providing text.
 
         Args:
@@ -191,7 +196,7 @@ class SigmaRule(resource.BaseResource):
         for key, value in rule_dict.items():
             self.set_value(key, value)
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the Sigma rule from Timesketch."""
         if not self.get_attribute("id"):
             logger.warning(

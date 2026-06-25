@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the Timesketch API client error handling."""
 
-
 import unittest
 from unittest import mock
 

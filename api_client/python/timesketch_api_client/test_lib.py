@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the Timesketch API client"""
 
-
 import json
 
 auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'

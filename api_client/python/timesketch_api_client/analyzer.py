@@ -13,13 +13,18 @@
 # limitations under the License.
 """Timesketch API analyzer result object."""
 
+from __future__ import annotations
 
 import datetime
 import json
 import logging
+from typing import Any, Dict, Generator, List, TYPE_CHECKING
 
 from . import error
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.analyzer")
 
@@ -27,7 +32,9 @@ logger = logging.getLogger("timesketch_api.analyzer")
 class AnalyzerResult(resource.BaseResource):
     """Class to store and retrieve session information for an analyzer."""
 
-    def __init__(self, timeline_id, session_id, sketch_id, api):
+    def __init__(
+        self, timeline_id: int, session_id: int, sketch_id: int, api: TimesketchApi
+    ) -> None:
         """Initialize the class.
 
         Args:
@@ -44,21 +51,21 @@ class AnalyzerResult(resource.BaseResource):
         )
         super().__init__(api, resource_uri)
 
-    def _get_status_data(self):
+    def _get_status_data(self) -> Generator[Dict[str, str], None, None]:
         """Yields a dict for each analyzer status."""
         data = self._fetch_data()
         for entry in data.get("analyzers", []):
             yield {
-                "log": entry.get("log", "No recorded logs."),
-                "name": entry.get("name", "No Name"),
-                "results": entry.get("results", ""),
-                "status": entry.get("status", "Unknown"),
-                "date": entry.get(
-                    "status_date", datetime.datetime.utcnow().isoformat()
+                "log": str(entry.get("log", "No recorded logs.")),
+                "name": str(entry.get("name", "No Name")),
+                "results": str(entry.get("results", "")),
+                "status": str(entry.get("status", "Unknown")),
+                "date": str(
+                    entry.get("status_date", datetime.datetime.utcnow().isoformat())
                 ),
             }
 
-    def _fetch_data(self):
+    def _fetch_data(self) -> Dict[str, Any]:
         """Returns a dict with the analyzer results."""
         response = self.api.session.get(self.resource_uri)
         if not error.check_return_status(response, logger):
@@ -70,7 +77,7 @@ class AnalyzerResult(resource.BaseResource):
         if not objects:
             return {}
 
-        result_dict = {}
+        result_dict: Dict[str, Any] = {}
         for result in objects[0]:
             result_id = result.get("analysissession_id")
             if result_id != self._session_id:
@@ -106,14 +113,14 @@ class AnalyzerResult(resource.BaseResource):
         return result_dict
 
     @property
-    def id(self):
+    def id(self) -> int:
         """Returns the session ID."""
         return self._session_id
 
     @property
-    def log(self):
+    def log(self) -> str:
         """Returns back logs from the analyzer session, if there are any."""
-        return_strings = []
+        return_strings: List[str] = []
         for entry in self._get_status_data():
             return_strings.append(
                 "[{0:s}] = {1:s}".format(
@@ -124,9 +131,9 @@ class AnalyzerResult(resource.BaseResource):
         return "\n".join(return_strings)
 
     @property
-    def results(self):
+    def results(self) -> str:
         """Returns the results from the analyzer session."""
-        return_strings = []
+        return_strings: List[str] = []
         for entry in self._get_status_data():
             results = entry.get("results")
             if not results:
@@ -137,9 +144,9 @@ class AnalyzerResult(resource.BaseResource):
         return "\n".join(return_strings)
 
     @property
-    def results_dict(self):
+    def results_dict(self) -> Dict[str, List[str]]:
         """Returns the results from the analyzer session as a dict."""
-        result_dict = {}
+        result_dict: Dict[str, List[str]] = {}
         for entry in self._get_status_data():
             results = entry.get("results")
             if not results:
@@ -150,9 +157,9 @@ class AnalyzerResult(resource.BaseResource):
         return result_dict
 
     @property
-    def status(self):
+    def status(self) -> str:
         """Returns the current status of the analyzer run."""
-        return_strings = []
+        return_strings: List[str] = []
         for entry in self._get_status_data():
             return_strings.append(
                 "[{0:s}] = {1:s}".format(
@@ -163,9 +170,9 @@ class AnalyzerResult(resource.BaseResource):
         return "\n".join(return_strings)
 
     @property
-    def status_dict(self):
+    def status_dict(self) -> Dict[str, List[str]]:
         """Returns the current status of the analyzers run as a dict."""
-        return_dict = {}
+        return_dict: Dict[str, List[str]] = {}
         for entry in self._get_status_data():
             name = entry.get("name", "No Name")
 
@@ -174,9 +181,9 @@ class AnalyzerResult(resource.BaseResource):
         return return_dict
 
     @property
-    def status_string(self):
+    def status_string(self) -> str:
         """Returns a longer version of a status string."""
-        return_strings = []
+        return_strings: List[str] = []
         for entry in self._get_status_data():
             return_strings.append(
                 "{0:s} - {1:s}: {2:s}".format(
