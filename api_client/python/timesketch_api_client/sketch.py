@@ -14,7 +14,6 @@
 """Timesketch API client library."""
 
 from __future__ import annotations
-from __future__ import annotations
 
 import copy
 import os
