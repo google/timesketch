@@ -13,7 +13,6 @@
 # limitations under the License.
 """Form definitions and validators for the forms used in the application."""
 
-
 from flask_wtf import FlaskForm
 from wtforms import widgets
 from wtforms.fields import BooleanField
@@ -205,6 +204,9 @@ class ExploreForm(BaseForm):
     )
     scroll_id = StringField("Scroll ID", default="")
     file_name = StringField("Export to File")
+    use_wildcard_fields = BooleanField(
+        "Search wildcard fields", false_values={False, "false", ""}, default=False
+    )
 
 
 class GraphExploreForm(BaseForm):

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """System settings."""
+
 import logging
 from typing import Any
 
@@ -47,6 +48,9 @@ class SystemSettingsResource(Resource):
             "LOG_ANALYZER_DEFAULT_PROMPT": current_app.config.get(
                 "LLM_LOG_ANALYZER_DEFAULT_PROMPT",
                 "Perform a forensics investigation on the provided logs.",
+            ),
+            "OPENSEARCH_WILDCARD_DEFAULT": current_app.config.get(
+                "OPENSEARCH_WILDCARD_DEFAULT", False
             ),
         }
 

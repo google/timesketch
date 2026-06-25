@@ -300,6 +300,7 @@ Lists sketches in the database.
 
 **Options:**
 *   `--archived`: Show only archived sketches.
+*   `--archived-with-open-indexes`: Show archived sketches that have at least one searchindex with status 'new', 'ready', 'processing', 'fail', 'archived' or 'timeout'. Mutually exclusive with --archived.
 *   `--include-deleted`: Include sketches marked as deleted.
 
 **Example:**
@@ -356,6 +357,20 @@ id status created_at                 user_id
 ...
 ```
 
+#### `event-details`
+
+Display all data for a specific event.
+
+**Options:**
+*   `--sketch-id INTEGER`: (Required) The ID of the sketch.
+*   `--event-id TEXT`: (Required) The ID of the event.
+*   `--searchindex-id TEXT`: The OpenSearch index name for the event.
+
+**Example:**
+```bash
+tsctl event-details --sketch-id 1 --event-id 12345
+```
+
 #### `grant-user`
 
 Grants a user access to a specific sketch.
@@ -397,18 +412,66 @@ tsctl grant-group incident-responders --sketch_id 456 --read-only
 Exports a sketch to a zip archive, including all metadata and event data.
 
 !!! warning "Archive and Re-import"
-    This export is primarily for data archival or external analysis. Re-importing this archive into Timesketch is not natively supported.
+    This export is primarily for forensic data archival, preservation, or external analysis. Re-importing this archive into Timesketch is not natively supported.
 
 **Arguments:**
 *   `SKETCH_ID`: The ID of the sketch to export.
 
 **Options:**
-*   `--filename / -f`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
-*   `--output-format`: Format for event data ('csv' or 'jsonl'). Default: 'csv'.
+*   `--method [api|direct]`: Export method:
+    *   `api`: (Default) Standard export using the API. Supports both CSV and JSONL formats.
+    *   `direct`: High-speed export that scans OpenSearch directly. Best for large datasets. **Only supports JSONL**; if CSV is requested, it will automatically switch to JSONL.
+*   `--filename`: The name for the output zip file. Default: `sketch_{sketch_id}_{output_format}_export.zip`
+*   `--output-format [csv|jsonl]`: Format for event data. Default: 'csv'. Note that `direct` method will always use `jsonl`.
+*   `--default-fields`: Export only the default set of event fields. If not specified, all fields are exported.
+*   `--annotated-only`: Export only events that have annotations (labels, stars, comments, or tags).
+*   `--include-legacy`: Include legacy events that are missing the `__ts_timeline_id` field. Use with caution in shared-index environments to avoid potential data leakage from other sketches.
 
-**Example:**
-```bash
-tsctl export-sketch 1 --filename "project_x_export.zip"
+**Archive Content:**
+The generated ZIP file includes:
+*   `metadata.json`: Comprehensive sketch and timeline metadata.
+*   `events.{csv|jsonl}`: The exported event data.
+*   `manifest.txt`: A manifest containing SHA256 hashes of all files in the archive.
+*   `mappings/`: JSON files containing the OpenSearch index mappings for each timeline.
+*   `stories/`: Sketch stories exported as individual Markdown files.
+
+**Example Output:**
+```text
+Starting DIRECT export of Sketch [1] "Investigation Alpha" to sketch_1_jsonl_export.zip...
+
+WARNING: There is currently no native method to re-import this exported archive back into Timesketch.
+
+Gathering metadata...
+  Processing 2 timeline(s)...
+  Processing 1 story(ies)...
+  Processing comments for 12 event(s)...
+  Processing analysis sessions...
+  Calculating exact event count...
+  Total events expected: 150,000
+  Streaming events to events.jsonl...
+  Export Progress  [####################################]  150000/150000  100%
+  Collecting index mappings...
+  Exporting stories to Markdown...
+  Performing random spot check...
+  SUCCESS: All 5 sampled events found in export.
+  Finalizing manifest and hashing files...
+  Creating compressed archive...
+Sketch exported successfully to sketch_1_jsonl_export.zip
+```
+
+**Sample Manifest (`manifest.txt`):**
+```text
+Timesketch Export Manifest
+==================================
+Sketch ID: 1 | Name: Investigation Alpha
+Date: 2026-03-10T14:30:00.000000+00:00
+Method: direct | Events: 150000
+
+File Hashes (SHA256):
+a1b2c3d4...  events.jsonl
+e5f6g7h8...  metadata.json
+i9j0k1l2...  mappings/index_1.json
+m3n4o5p6...  stories/story_1_summary.md
 ```
 
 #### `sketch-label-stats`
@@ -614,6 +677,29 @@ Validates the syntax of a context links YAML configuration file.
 tsctl validate-context-links-conf data/context_links.yaml
 ```
 
+#### `check-db-orphaned-data`
+
+Checks for various types of orphaned data in the database.
+
+**Options:**
+*   `--verbose-checks`: Show output for all checks, even those that find no orphans.
+
+**Example:**
+```bash
+tsctl check-db-orphaned-data --verbose-checks
+```
+
+#### `find-inconsistent-archives`
+
+Finds sketches that are in an inconsistent archival state.
+
+An inconsistent state is defined as a sketch that has been marked as 'archived', but still contains one or more timelines that are not also archived.
+
+**Example:**
+```bash
+tsctl find-inconsistent-archives
+```
+
 #### `analyzer-stats`
 
 Displays statistics about past analyzer runs.
@@ -622,8 +708,11 @@ Displays statistics about past analyzer runs.
 *   `ANALYZER_NAME`: (Optional) The name of the analyzer to filter by.
 
 **Options:**
+*   `--timeline_id INTEGER`: Timeline ID if the analyzer results should be filtered by timeline.
 *   `--scope [many_hits|long_runtime|recent]`: Sorts the results.
+*   `--result_text_search TEXT`: Search in result text. E.g. for a specific rule_id.
 *   `--limit INTEGER`: Limits the number of results.
+*   `--export_csv TEXT`: Export the results to a CSV file.
 
 **Example:**
 ```shell

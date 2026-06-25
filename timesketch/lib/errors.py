@@ -13,7 +13,6 @@
 # limitations under the License.
 """Error classes."""
 
-
 from flask import jsonify
 
 
@@ -60,3 +59,11 @@ class DatastoreConnectionError(Error):
 
 class DatastoreQueryError(Error):
     """Error with the datastore query."""
+
+
+class DatastoreTimeoutError(Error):
+    """Error with the datastore timeout."""
+
+
+class UnsupportedDatastoreVersionError(Error):
+    """Raised when the connected datastore version is not supported."""

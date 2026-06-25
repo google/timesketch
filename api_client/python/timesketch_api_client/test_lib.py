@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Timesketch API client"""
+
 from __future__ import unicode_literals
 
 import json
@@ -22,14 +23,12 @@ auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
 def mock_session():
     """Mock HTTP requests session."""
 
-    class MockHeaders:
+    class MockHeaders(dict):
         """Mock requests HTTP headers."""
 
-        # pylint: disable=unused-argument
-        @staticmethod
-        def update(*args, **kwargs):
+        def update(self, *args, **kwargs):
             """Mock header update method."""
-            return
+            super().update(*args, **kwargs)
 
     class MockSession:
         """Mock HTTP requests session."""
@@ -81,11 +80,12 @@ def mock_response(*args, **kwargs):
     class MockResponse:
         """Mock HTTP response object."""
 
-        def __init__(self, json_data=None, text_data=None, status_code=200):
+        def __init__(self, json_data=None, text_data=None, status_code=200, url=None):
             """Initializes mock object."""
             self.json_data = json_data
             self.text = text_data
             self.status_code = status_code
+            self.url = url or ""
 
         def json(self):
             """Mock JSON response."""
@@ -877,6 +877,7 @@ def mock_response(*args, **kwargs):
     # Register API endpoints to the correct mock response data for GET requests.
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
+        "http://127.0.0.1/login/?local_auth=1": MockResponse(text_data=auth_text_data),
         "http://127.0.0.1/api/v1/sketches/": MockResponse(json_data=sketch_list_data),
         "http://127.0.0.1/api/v1/sketches/1/": MockResponse(json_data=sketch_data),
         "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long

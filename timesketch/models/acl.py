@@ -148,7 +148,7 @@ class AccessControlMixin:
             ),
             cls.AccessControlEntry.permission == "read",
             cls.AccessControlEntry.parent,
-        )
+        ).distinct()
 
     def _get_ace(
         self,

@@ -27,6 +27,7 @@ from uuid import uuid4
 from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
+from packaging import version
 from opensearchpy import OpenSearch
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
@@ -44,7 +45,7 @@ import prometheus_client
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib import errors
-
+from timesketch.lib import telemetry
 
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
@@ -116,6 +117,7 @@ class OpenSearchDataStore:
     DEFAULT_STREAM_LIMIT = 5000  # Max events to return when streaming results
 
     DEFAULT_FLUSH_RETRY_LIMIT = 3  # Max retries for flushing the queue.
+    DEFAULT_FLUSH_BYTE_SIZE = 52428800
     DEFAULT_EVENT_IMPORT_TIMEOUT = 180  # Timeout value in seconds for importing events.
 
     DEFAULT_INDEX_WAIT_TIMEOUT = 10  # Seconds to wait for an index to become ready
@@ -280,9 +282,24 @@ class OpenSearchDataStore:
         self.flush_interval = current_app.config.get(
             "OPENSEARCH_FLUSH_INTERVAL", self.DEFAULT_FLUSH_INTERVAL
         )
+        # Size limit in bytes for queued events before a flush is forced.
+        self.flush_byte_size = current_app.config.get(
+            "OPENSEARCH_FLUSH_BYTE_SIZE", self.DEFAULT_FLUSH_BYTE_SIZE
+        )
         self.import_counter = Counter()
         self.import_events = []
+        self.import_events_size = 0
         self.version = self.client.info().get("version").get("number")
+
+        # Verify minimum OpenSearch version support (>= 2.19.5)
+        # Skip check if we are running unit tests
+        if isinstance(self.version, str) and not current_app.config.get("TESTING"):
+            if version.parse(self.version) < version.parse("2.19.5"):
+                raise errors.UnsupportedDatastoreVersionError(
+                    f"Connected OpenSearch version {self.version} is not supported. "
+                    f"Timesketch requires OpenSearch version >= 2.19.5."
+                )
+
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
         )
@@ -578,6 +595,8 @@ class OpenSearchDataStore:
         query_dsl: Optional[Dict] = None,
         aggregations: Optional[Dict] = None,
         timeline_ids: Optional[list] = None,
+        use_wildcard_fields: bool = False,
+        wildcard_fields: Optional[set] = None,
     ):
         """Build OpenSearch DSL query.
 
@@ -589,6 +608,10 @@ class OpenSearchDataStore:
             aggregations: Dict of OpenSearch aggregations
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
+            use_wildcard_fields: If True, compiles the query string strictly into
+                case-insensitive native wildcard queries.
+            wildcard_fields: Optional set of active field names mapped with a
+                wildcard type.
 
         Returns:
             OpenSearch DSL query as a dictionary
@@ -645,9 +668,15 @@ class OpenSearchDataStore:
                     query_string = ""
 
         if query_string:
-            query_dsl["query"]["bool"]["must"].append(
-                {"query_string": {"query": query_string, "default_operator": "AND"}}
-            )
+            if use_wildcard_fields:
+                wildcard_bool = self._build_wildcard_query_dsl(
+                    query_string, wildcard_fields or set()
+                )
+                query_dsl["query"]["bool"]["must"].append({"bool": wildcard_bool})
+            else:
+                query_dsl["query"]["bool"]["must"].append(
+                    {"query_string": {"query": query_string, "default_operator": "AND"}}
+                )
 
         if special_char_query:
             query_dsl["query"]["bool"]["must"].append(special_char_query)
@@ -705,9 +734,9 @@ class OpenSearchDataStore:
                         continue
                     datetime_ranges["bool"]["should"].append(range_filter(start, end))
 
-            label_filter = self._build_labels_query(sketch_id, labels)
-            must_filters.append(label_filter)
-            must_filters.append(datetime_ranges)
+                label_filter = self._build_labels_query(sketch_id, labels)
+                must_filters.append(label_filter)
+                must_filters.append(datetime_ranges)
 
         # Pagination
         if query_filter.get("from", None):
@@ -774,7 +803,325 @@ class OpenSearchDataStore:
 
         return query_dsl
 
+    def get_wildcard_fields(
+        self, indices: list[str], mappings: Optional[dict] = None
+    ) -> list[str]:
+        """Gets a list of all fields mapped to a wildcard subfield.
+
+        Args:
+            indices (list): List of active index names to inspect.
+            mappings (dict): Optional pre-fetched OpenSearch mappings.
+
+        Returns:
+            list: A list of field names (e.g. ['message']) that support
+                wildcard searches.
+        """
+        if not indices:
+            return []
+
+        if mappings is None:
+            try:
+                mappings = self.client.indices.get_mapping(index=indices)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                os_logger.warning(
+                    "Failed to query index mappings in get_wildcard_fields: %s", e
+                )
+                return []
+
+        if not isinstance(mappings, dict):
+            return []
+
+        def recurse_properties(props, fields_set, prefix=""):
+            for key, val in props.items():
+                if not isinstance(val, dict):
+                    continue
+                field_name = f"{prefix}{key}"
+                # Direct wildcard type check
+                if val.get("type") == "wildcard":
+                    fields_set.add(field_name)
+                    continue
+                # Check subfields
+                subfields = val.get("fields", {})
+                if isinstance(subfields, dict):
+                    for sub_val in subfields.values():
+                        if (
+                            isinstance(sub_val, dict)
+                            and sub_val.get("type") == "wildcard"
+                        ):
+                            fields_set.add(field_name)
+                            break
+                # Recurse nested objects
+                nested_props = val.get("properties")
+                if isinstance(nested_props, dict):
+                    recurse_properties(
+                        nested_props, fields_set, prefix=f"{field_name}."
+                    )
+
+        # Extract field mapping properties across indices
+        wildcard_fields = None
+
+        for index_name in indices:
+            properties = (
+                mappings.get(index_name, {}).get("mappings", {}).get("properties")
+            )
+            if not isinstance(properties, dict):
+                properties = next(
+                    iter(mappings.get(index_name, {}).get("mappings", {}).values()),
+                    {},
+                ).get("properties")
+
+            if not isinstance(properties, dict):
+                continue
+
+            current_wildcard_fields = set()
+            recurse_properties(properties, current_wildcard_fields)
+
+            if wildcard_fields is None:
+                wildcard_fields = current_wildcard_fields
+            else:
+                wildcard_fields.update(current_wildcard_fields)
+
+        return list(wildcard_fields) if wildcard_fields else []
+
+    def _compile_term_to_dsl(self, token: str, wildcard_fields: set) -> dict:
+        """Compiles a single search token into a native OpenSearch query node.
+
+        This method parses a single token. If the token contains a colon ':'
+        and the left-hand side is a recognized wildcard-capable field, it is
+        compiled into a field-specific 'wildcard' query targeting the field's
+        '.wildcard' subfield. Otherwise, the token is compiled into a
+        'multi_match' query that searches across all '*.wildcard' subfields.
+
+        Args:
+            token: The raw search token string (e.g. 'message:*evil*' or
+                '*backdoor*').
+            wildcard_fields: A set of mapped field names that support wildcard
+                matching.
+
+        Returns:
+            A dictionary representing the OpenSearch query node (e.g.
+            a 'wildcard' or 'multi_match' query block).
+        """
+        is_field_search = False
+        dsl_node = None
+
+        # 1. Field-specific search (e.g., message:*example*)
+        if ":" in token and not token.startswith('"'):
+            field, value = token.split(":", 1)
+            if field in wildcard_fields:
+                is_field_search = True
+                clean_value = value.strip('"').strip("'")
+                dsl_node = {
+                    "wildcard": {
+                        f"{field}.wildcard": {
+                            "value": clean_value,
+                            "case_insensitive": True,
+                        }
+                    }
+                }
+            elif field == "_id":
+                is_field_search = True
+                clean_value = value.strip('"').strip("'")
+                dsl_node = {"term": {"_id": clean_value}}
+            else:
+                raise ValueError(f"Field '{field}' does not support wildcard search.")
+
+        # 2. Global search across *.wildcard fields
+        if not is_field_search:
+            clean_value = token.strip('"').strip("'")
+            should_clauses = []
+            for field in sorted(wildcard_fields):
+                should_clauses.append(
+                    {
+                        "wildcard": {
+                            f"{field}.wildcard": {
+                                "value": clean_value,
+                                "case_insensitive": True,
+                            }
+                        }
+                    }
+                )
+            dsl_node = {
+                "bool": {
+                    "should": should_clauses,
+                    "minimum_should_match": 1,
+                }
+            }
+        return dsl_node
+
+    def _build_wildcard_query_dsl(
+        self, raw_query_string: str, wildcard_fields: set
+    ) -> dict:
+        """Compiles a raw search query string into a native OpenSearch bool query.
+
+        This method tokenizes the input query string, inserts implicit 'AND'
+        operators, and uses the Shunting-Yard algorithm to parse the boolean logic
+        while strictly respecting standard operator precedence (NOT > AND > OR)
+        and parenthetical groupings '()'.
+
+        The resulting postfix queue is then compiled into a nested OpenSearch
+        'bool' query tree, utilizing optimizations to flatten adjacent identical
+        logical blocks (like nested 'must' or 'should' clauses).
+
+        Args:
+            raw_query_string: The raw query string entered by the user (e.g.
+                'msg:*evil* NOT xml:*test* OR *backdoor*').
+            wildcard_fields: A set of mapped field names that support wildcard
+                matching.
+
+        Returns:
+            A dictionary representing the compiled OpenSearch search query DSL
+            with 'must', 'must_not', and/or 'should' arrays.
+
+        Raises:
+            ValueError: If no wildcard mappings exist, if there is a mismatched
+                parenthesis, or if the query contains unbalanced operands and
+                operators.
+        """
+        if not raw_query_string:
+
+            return {"must": [], "must_not": [], "filter": []}
+
+        if not wildcard_fields:
+            raise ValueError(
+                "No wildcard-capable fields are mapped in the selected timelines."
+            )
+
+        # 1. Tokenize: Splits by space and parentheses, keeping quotes intact.
+        token_pattern = re.compile(r'\(|\)|(?:[^\s"()]+|"[^"]*")+')
+        tokens = token_pattern.findall(raw_query_string)
+
+        # 2. Insert Implicit ANDs (e.g., "A B" -> "A AND B", "A NOT B" -> "A AND NOT B")
+        def is_operand_like_left(t):
+            return t not in ("AND", "OR", "NOT", "(")
+
+        def is_operand_like_right(t):
+            return t not in ("AND", "OR", ")")
+
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if i > 0:
+                prev = processed_tokens[-1]
+                if is_operand_like_left(prev) and is_operand_like_right(token):
+                    processed_tokens.append("AND")
+            processed_tokens.append(token)
+
+        # 3. Shunting-Yard Algorithm: Convert Infix to Postfix (RPN)
+        precedence = {"NOT": 3, "AND": 2, "OR": 1}
+        output_queue = []
+        operator_stack = []
+
+        for token in processed_tokens:
+            if token in precedence:
+                while (
+                    operator_stack
+                    and operator_stack[-1] in precedence
+                    and precedence[operator_stack[-1]] >= precedence[token]
+                ):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            elif token == "(":
+                operator_stack.append(token)
+            elif token == ")":
+                while operator_stack and operator_stack[-1] != "(":
+                    output_queue.append(operator_stack.pop())
+                if operator_stack and operator_stack[-1] == "(":
+                    operator_stack.pop()
+                else:
+                    raise ValueError("Mismatched parentheses in query.")
+            else:
+                output_queue.append(token)
+
+        while operator_stack:
+            op = operator_stack.pop()
+            if op in ("(", ")"):
+                raise ValueError("Mismatched parentheses in query.")
+            output_queue.append(op)
+
+        # 4. RPN Evaluator: Build OpenSearch DSL Tree from Postfix Queue
+        dsl_stack = []
+
+        for token in output_queue:
+            if token == "NOT":
+                if not dsl_stack:
+                    raise ValueError("Invalid query: NOT operator missing operand.")
+                operand = dsl_stack.pop()
+                dsl_node = {"bool": {"must_not": [operand]}}
+                dsl_stack.append(dsl_node)
+
+            elif token == "AND":
+                if len(dsl_stack) < 2:
+                    raise ValueError("Invalid query: AND operator missing operands.")
+                right = dsl_stack.pop()
+                left = dsl_stack.pop()
+
+                # Flatten nested must clauses to keep the DSL clean
+                must_clauses = []
+                for op in (left, right):
+                    if (
+                        isinstance(op, dict)
+                        and "bool" in op
+                        and "must" in op["bool"]
+                        and len(op["bool"]) == 1
+                    ):
+                        must_clauses.extend(op["bool"]["must"])
+                    else:
+                        must_clauses.append(op)
+
+                dsl_stack.append({"bool": {"must": must_clauses}})
+
+            elif token == "OR":
+                if len(dsl_stack) < 2:
+                    raise ValueError("Invalid query: OR operator missing operands.")
+                right = dsl_stack.pop()
+                left = dsl_stack.pop()
+
+                # Flatten nested should clauses to keep the DSL clean
+                should_clauses = []
+                for op in (left, right):
+                    if (
+                        isinstance(op, dict)
+                        and "bool" in op
+                        and "should" in op["bool"]
+                        and op["bool"].get("minimum_should_match") == 1
+                        and len(op["bool"]) <= 2
+                    ):
+                        should_clauses.extend(op["bool"]["should"])
+                    else:
+                        should_clauses.append(op)
+
+                dsl_stack.append(
+                    {
+                        "bool": {
+                            "should": should_clauses,
+                            "minimum_should_match": 1,
+                        }
+                    }
+                )
+
+            else:
+                dsl_stack.append(self._compile_term_to_dsl(token, wildcard_fields))
+
+        if len(dsl_stack) != 1:
+            raise ValueError("Invalid query: unbalanced operands and operators.")
+
+        # Ensure the top-level node is formatted with must/must_not/filter arrays
+        # to match the rest of the Timesketch codebase's expectations
+        final_node = dsl_stack[0]
+        if isinstance(final_node, dict) and "bool" in final_node:
+            bool_content = final_node["bool"]
+            return {
+                "must": bool_content.get("must", []),
+                "must_not": bool_content.get("must_not", []),
+                "should": bool_content.get("should", []),
+                "filter": bool_content.get("filter", []),
+                "minimum_should_match": bool_content.get("minimum_should_match"),
+            }
+
+        return {"must": [final_node], "must_not": [], "filter": []}
+
     # pylint: disable=too-many-arguments
+    @telemetry.instrument_search
     def search(
         self,
         sketch_id: int,
@@ -787,6 +1134,7 @@ class OpenSearchDataStore:
         return_fields: Optional[list] = None,
         enable_scroll: bool = False,
         timeline_ids: Optional[list] = None,
+        use_wildcard_fields: bool = False,
     ) -> Union[Dict, int]:
         """Executes a search query against OpenSearch indices.
 
@@ -798,7 +1146,8 @@ class OpenSearchDataStore:
         Args:
             sketch_id: The ID of the sketch the search is performed within. Used
                 for building label filters.
-            indices: A list of OpenSearch index names to query.
+            indices: A list of OpenSearch index names (or a single index name
+                string) to query.
             query_string: The query string to search for (e.g., "hostname:evil.com").
                 Defaults to an empty string.
             query_filter: An optional dictionary containing filters to apply to
@@ -819,6 +1168,8 @@ class OpenSearchDataStore:
                 retrieving large result sets. Defaults to False.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
+            use_wildcard_fields: If True, compiles the query_string strictly into
+                case-insensitive native wildcard queries. Defaults to False.
 
         Returns:
             A dictionary containing the raw response from the OpenSearch search
@@ -829,8 +1180,14 @@ class OpenSearchDataStore:
         Raises:
             ValueError: If there is a RequestError or TransportError from
                 OpenSearch during the search execution, indicating an issue
-                with the query or connection.
+                with the query or connection. Also raised if wildcard search
+                mode is requested but the indices lack wildcard mappings,
+                or if the query targets a non-wildcard field.
+            DatastoreTimeoutError: If querying OpenSearch times out.
         """
+        if isinstance(indices, str):
+            indices = [indices]
+
         scroll_timeout = None
         if enable_scroll:
             scroll_timeout = "1m"  # Default to 1 minute scroll timeout
@@ -853,6 +1210,15 @@ class OpenSearchDataStore:
                 if event["index"] in indices
             }
 
+        wildcard_fields = None
+        if use_wildcard_fields:
+            wildcard_fields = set(self.get_wildcard_fields(list(indices)))
+            if not wildcard_fields:
+                raise ValueError(
+                    "The selected timelines do not support wildcard search mode. "
+                    "Please use the classic search for this sketch!"
+                )
+
         query_dsl = self.build_query(
             sketch_id=sketch_id,
             query_string=query_string,
@@ -860,6 +1226,8 @@ class OpenSearchDataStore:
             query_dsl=query_dsl,
             aggregations=aggregations,
             timeline_ids=timeline_ids,
+            use_wildcard_fields=use_wildcard_fields,
+            wildcard_fields=wildcard_fields,
         )
 
         # Default search type for OpenSearch is query_then_fetch.
@@ -890,22 +1258,22 @@ class OpenSearchDataStore:
             METRICS["search_requests"].labels(type="count").inc()
             return count_result.get("count", 0)
 
-        if not return_fields:
-            # Suppress the lint error because opensearchpy adds parameters
-            # to the function with a decorator and this makes pylint sad.
-            # pylint: disable=unexpected-keyword-arg
-            return self.client.search(
-                body=query_dsl,
-                index=list(indices),
-                search_type=search_type,
-                scroll=scroll_timeout,
-                params={"ignore_unavailable": "true"},
-            )
-
-        # The argument " _source_include" changed to "_source_includes" in
-        # ES version 7. This check add support for both version 6 and 7 clients.
-        # pylint: disable=unexpected-keyword-arg
         try:
+            if not return_fields:
+                # Suppress the lint error because opensearchpy adds parameters
+                # to the function with a decorator and this makes pylint sad.
+                # pylint: disable=unexpected-keyword-arg
+                return self.client.search(
+                    body=query_dsl,
+                    index=list(indices),
+                    search_type=search_type,
+                    scroll=scroll_timeout,
+                    params={"ignore_unavailable": "true"},
+                )
+
+            # The argument " _source_include" changed to "_source_includes" in
+            # ES version 7. This check add support for both version 6 and 7 clients.
+            # pylint: disable=unexpected-keyword-arg
             if self.version.startswith("6"):
                 _search_result = self.client.search(
                     body=query_dsl,
@@ -924,6 +1292,31 @@ class OpenSearchDataStore:
                     scroll=scroll_timeout,
                     params={"ignore_unavailable": "true"},
                 )
+        except ConnectionTimeout as e:
+            wildcard_warning = ""
+            if (
+                query_string
+                and query_string.startswith("*")
+                and not use_wildcard_fields
+            ):
+                wildcard_warning = (
+                    " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in "
+                    "your search query as these are very resource expensive."
+                )
+            error_message = (
+                "The search timed out. Try to search a specific field or narrow "
+                f"down the time range.{wildcard_warning}"
+            )
+            os_logger.error(
+                "Search timeout for user [%s]. Query: [%s]. Sketch ID: [%s]. "
+                "Indices: [%s].",
+                current_user.username,
+                query_string,
+                sketch_id,
+                indices,
+            )
+            raise errors.DatastoreTimeoutError(error_message) from e
+
         except (RequestError, TransportError) as e:
             root_cause = e.info.get("error", {}).get("root_cause")
             if root_cause:
@@ -1168,7 +1561,8 @@ class OpenSearchDataStore:
         total size on disk for the provided list of indices.
 
         Args:
-            indices (list[str]): A list of OpenSearch index names to count.
+            indices: A list of OpenSearch index names (or a single index name
+                string) to count.
 
         Returns:
             tuple[int, int]: A tuple containing two integers:
@@ -1177,6 +1571,9 @@ class OpenSearchDataStore:
             Returns (0, 0) if the indices are not found or if there is a
             request error.
         """
+        if isinstance(indices, str):
+            indices = [indices]
+
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
@@ -1217,7 +1614,7 @@ class OpenSearchDataStore:
             )
             return 0, 0
 
-        except RequestError:
+        except RequestError as e:
             os_logger.error(
                 "Unable to count indices (request error) %s. Error: %s",  # pylint: disable=line-too-long
                 ", ".join(indices),
@@ -1374,17 +1771,20 @@ class OpenSearchDataStore:
         event_id: Optional[str] = None,
         flush_interval: Optional[int] = None,
         timeline_id: Optional[int] = None,
-    ):
+    ) -> int:
         """Add event to OpenSearch.
 
         Args:
-            index_name: Name of the index in OpenSearch
-            event: Event dictionary
-            event_id: Event OpenSearch ID
-            flush_interval: Number of events to queue up before indexing
+            index_name: Name of the index in OpenSearch.
+            event: Event dictionary.
+            event_id: Event OpenSearch ID.
+            flush_interval: Number of events to queue up before indexing.
             timeline_id: Optional ID number of a Timeline object this event
                 belongs to. If supplied an additional field will be added to
                 the store indicating the timeline this belongs to.
+
+        Returns:
+            The total number of events processed so far in the current session.
         """
         if event:
             for k, v in event.items():
@@ -1416,32 +1816,128 @@ class OpenSearchDataStore:
             if timeline_id:
                 event["__ts_timeline_id"] = timeline_id
 
+            # Estimate event byte size to avoid hitting OpenSearch HTTP limits.
+            estimated_size = len(str(header).encode("utf-8")) + len(
+                str(event).encode("utf-8")
+            )
+
+            # Proactive flush: If adding this event would exceed the byte limit,
+            # flush the existing queue first.
+            if self.import_events and (
+                self.import_events_size + estimated_size >= self.flush_byte_size
+            ):
+                _ = self.flush_queued_events()
+                self.import_events = []
+                self.import_events_size = 0
+
             self.import_events.append(header)
             self.import_events.append(event)
             self.import_counter["events"] += 1
+            self.import_events_size += estimated_size
 
             if not flush_interval:
                 flush_interval = self.flush_interval
 
-            if self.import_counter["events"] % int(flush_interval) == 0:
+            if (
+                self.import_counter["events"] % int(flush_interval) == 0
+                or self.import_events_size >= self.flush_byte_size
+            ):
                 _ = self.flush_queued_events()
                 self.import_events = []
+                self.import_events_size = 0
         else:
             # Import the remaining events in the queue.
             if self.import_events:
                 _ = self.flush_queued_events()
+                self.import_events_size = 0
 
         return self.import_counter["events"]
 
-    def flush_queued_events(self, retry_count=0):
-        """Flush all queued events.
+    def _handle_payload_too_large(self, retry_count: int) -> Dict[str, Any]:
+        """Handles HTTP 413 Payload Too Large errors by splitting the batch.
+
+        This method implements a reactive batch halving strategy. If a batch
+        is too large, it is split into two halves which are then processed
+        recursively. If a single event is still too large, it is skipped and
+        recorded in the error container.
+
+        Args:
+            retry_count: Current retry iteration.
 
         Returns:
-            dict: A dict object that contains the number of events
-                that were sent to OpenSearch as well as information
-                on whether there were any errors, and what the
-                details of these errors if any.
-            retry_count: optional int indicating whether this is a retry.
+            A dictionary containing the combined results of the flushed chunks,
+            including 'errors_in_upload' and 'error_container'.
+        """
+        return_dict = {
+            "number_of_events": len(self.import_events) / 2,
+            "total_events": self.import_counter["events"],
+        }
+
+        if len(self.import_events) > 2:
+            os_logger.warning(
+                "Payload too large (HTTP 413). Splitting batch of "
+                "%d events and retrying.",
+                len(self.import_events) // 2,
+            )
+            # Split in half, ensuring we cut at an even index to keep
+            # header/event paired.
+            midpoint = (len(self.import_events) // 4) * 2
+            first_half = self.import_events[:midpoint]
+            second_half = self.import_events[midpoint:]
+
+            self.import_events = first_half
+            self.import_events_size = 0
+            res1 = self.flush_queued_events(retry_count)
+
+            self.import_events = second_half
+            self.import_events_size = 0
+            res2 = self.flush_queued_events(retry_count)
+
+            return_dict["errors_in_upload"] = res1.get(
+                "errors_in_upload", False
+            ) or res2.get("errors_in_upload", False)
+            return_dict["error_container"] = self._error_container
+            return return_dict
+
+        # Single event is too large for OpenSearch
+        index_name = "N/A"
+        if self.import_events:
+            header = self.import_events[0]
+            index_name = header.get("index", header.get("update", {})).get(
+                "_index", "N/A"
+            )
+
+        error_msg = (
+            "A single event exceeds OpenSearch's maximum request size "
+            f"limit and will be skipped. Index: {index_name}"
+        )
+        os_logger.error(error_msg)
+
+        _ = self._error_container.setdefault(
+            index_name, {"errors": [], "types": Counter(), "details": Counter()}
+        )
+        self._error_container[index_name]["errors"].append(error_msg)
+        self._error_container[index_name]["types"]["RequestEntityTooLarge"] += 1
+        self._error_container[index_name]["details"]["SingleEventTooLarge"] += 1
+
+        return_dict["errors_in_upload"] = True
+        return_dict["error_container"] = self._error_container
+        self.import_events = []
+        return return_dict
+
+    def flush_queued_events(self, retry_count: int = 0) -> Dict[str, Any]:
+        """Flush all queued events to OpenSearch.
+
+        This method uses the bulk API to index or update all currently queued
+        events. It includes retry logic for timeouts and specific handling for
+        payload size issues.
+
+        Args:
+            retry_count: Current retry iteration.
+
+        Returns:
+            A dictionary containing the number of events sent, the total
+            number of events processed, and any error information.
         """
         if not self.import_events:
             return {}
@@ -1458,10 +1954,38 @@ class OpenSearchDataStore:
             )
         except (ConnectionTimeout, socket.timeout):
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
-                os_logger.error(
-                    "Unable to add events, reached recount max.", exc_info=True
+                error_msg = "Unable to add events, reached recount max."
+                os_logger.error(error_msg, exc_info=True)
+                return_dict["errors_in_upload"] = True
+                _ = self._error_container.setdefault(
+                    "N/A", {"errors": [], "types": Counter(), "details": Counter()}
                 )
-                return {}
+                self._error_container["N/A"]["errors"].append(error_msg)
+                self._error_container["N/A"]["types"]["MaxRetriesReached"] += 1
+                return_dict["error_container"] = self._error_container
+                return return_dict
+
+            os_logger.error(
+                "Unable to add events (retry {:d}/{:d})".format(
+                    retry_count, self.DEFAULT_FLUSH_RETRY_LIMIT
+                )
+            )
+            return self.flush_queued_events(retry_count + 1)
+        except TransportError as e:
+            if e.status_code == 413:
+                return self._handle_payload_too_large(retry_count)
+
+            if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
+                error_msg = "Unable to add events, reached recount max."
+                os_logger.error(error_msg, exc_info=True)
+                return_dict["errors_in_upload"] = True
+                _ = self._error_container.setdefault(
+                    "N/A", {"errors": [], "types": Counter(), "details": Counter()}
+                )
+                self._error_container["N/A"]["errors"].append(error_msg)
+                self._error_container["N/A"]["types"]["MaxRetriesReached"] += 1
+                return_dict["error_container"] = self._error_container
+                return return_dict
 
             os_logger.error(
                 "Unable to add events (retry {:d}/{:d})".format(

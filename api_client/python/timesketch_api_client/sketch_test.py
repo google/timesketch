@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Timesketch API client"""
+
 from __future__ import unicode_literals
 
 import unittest
@@ -229,3 +230,40 @@ class SketchTest(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 generator = self.sketch.export_events_stream()
                 list(generator)
+
+    def test_explore_wildcard(self):
+        """Test explore_wildcard method."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"meta": {}, "objects": []}
+
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=mock_response
+        ) as mock_post:
+            response = self.sketch.explore_wildcard(query_string="*evil*", limit=10)
+            self.assertEqual(response["objects"], [])
+
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            expected_url = (
+                f"http://127.0.0.1/api/v1/sketches/{self.sketch.id}/explore_wildcard/"
+            )
+            self.assertEqual(call_args.args[0], expected_url)
+            self.assertEqual(call_args.kwargs["json"]["query"], "*evil*")
+            self.assertEqual(call_args.kwargs["json"]["filter"]["size"], 10)
+
+    def test_explore_wildcard_limit_zero(self):
+        """Test explore_wildcard method with limit=0 parameter."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"meta": {}, "objects": []}
+
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=mock_response
+        ) as mock_post:
+            response = self.sketch.explore_wildcard(query_string="*evil*", limit=0)
+            self.assertEqual(response["objects"], [])
+
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            self.assertEqual(call_args.kwargs["json"]["filter"]["size"], 0)

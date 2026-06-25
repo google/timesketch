@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 import datetime
 import getpass
 import json
@@ -23,7 +24,6 @@ import pandas
 
 from . import error
 from . import resource
-
 
 logger = logging.getLogger("timesketch_api.aggregation")
 
@@ -84,8 +84,7 @@ class Aggregation(resource.SketchResource):
             for key, value in iter(entry.items()):
                 if not isinstance(value, dict):
                     continue
-                for bucket in self._get_aggregation_buckets(value, name=key):
-                    yield bucket
+                yield from self._get_aggregation_buckets(value, name=key)
 
     def _run_aggregator(
         self, aggregator_name, parameters, search_id=None, chart_type=None

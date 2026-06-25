@@ -14,7 +14,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 
-
 logger = logging.getLogger("timesketch.analyzers.phishy_domains")
 
 

@@ -13,14 +13,14 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
-
-import codecs
 from hashlib import sha1
 import io
 import json
 import logging
 import os
+import shutil
 import subprocess
+import sys
 import time
 import traceback
 import uuid
@@ -56,7 +56,6 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
 from timesketch.models.user import User
-
 
 # Metrics definitions
 METRICS = {
@@ -198,6 +197,9 @@ def init_worker(**kwargs):
     """Create new database engine per worker process."""
     url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
     engine_options = celery.conf.get("SQLALCHEMY_ENGINE_OPTIONS", {})
+    # Ensure pool_pre_ping is enabled by default.
+    if "pool_pre_ping" not in engine_options:
+        engine_options["pool_pre_ping"] = True
     engine = create_engine(url, future=True, **engine_options)
     db_session.configure(bind=engine)
 
@@ -260,6 +262,11 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     ]
 
     if not status:
+        logger.debug(
+            "Calculating status for timeline %d based on datasources: %s",
+            timeline_id,
+            str(list_datasources_status),
+        )
         status = ""
         if len(set(list_datasources_status)) == 1 and "fail" in list_datasources_status:
             status = "fail"
@@ -274,20 +281,42 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     db_session.add(timeline)
     db_session.commit()
 
+    sketch_id = timeline.sketch.id if timeline.sketch else 0
+
+    logger.debug(
+        "Status for timeline (ID: %d) in sketch (ID: %d) set to %s",
+        timeline.id,
+        sketch_id,
+        status,
+    )
+
     # Refresh the index so it is searchable for the analyzers right away.
     datastore = OpenSearchDataStore()
     # Retry refreshing the index a few times if it fails.
+    index_name = timeline.searchindex.index_name
     for i in range(5):
         try:
-            datastore.client.indices.refresh(index=timeline.searchindex.index_name)
+            datastore.client.indices.refresh(index=index_name)
             break  # Success
-        except NotFoundError:
+        except Exception as e:  # pylint: disable=broad-except
             if i == 4:  # Last attempt
                 logger.error(
-                    "Unable to refresh index: %s, not found after 5 attempts.",
-                    timeline.searchindex.index_name,
+                    "Unable to refresh index: %s in sketch (ID: %d). "
+                    "Gave up after 5 attempts. Error: %s",
+                    index_name,
+                    sketch_id,
+                    str(e),
+                    exc_info=True,
                 )
             else:
+                # Show error message for attempts 0-4 only if debug is enabled
+                logger.debug(
+                    "Attempt %d to refresh index %s in sketch (ID: %d)failed: %s",
+                    i + 1,
+                    index_name,
+                    sketch_id,
+                    str(e),
+                )
                 time.sleep(1)  # Wait a second before retrying
 
     # If status is set to ready, check for analyzers to execute.
@@ -298,9 +327,11 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
         )
         if sessions:
             logger.info(
-                "Executed %d analyzers on the new timeline (ID: %d)",
+                "Executed %d analyzers on the new timeline (ID: %d) "
+                "in sketch (ID: %d)",
                 len(sessions),
                 timeline.id,
+                sketch_id,
             )
 
 
@@ -349,6 +380,7 @@ def _get_index_task_class(file_extension):
     return index_class
 
 
+# pylint: disable=too-many-arguments
 def build_index_pipeline(
     file_path: str = "",
     events: str = "",
@@ -360,6 +392,7 @@ def build_index_pipeline(
     timeline_id: Optional[int] = None,
     headers_mapping: Optional[dict] = None,
     delimiter: str = ",",
+    plaso_event_filter: str = "",
 ):
     """Build a pipeline for index and analysis.
 
@@ -382,6 +415,7 @@ def build_index_pipeline(
                          (ii) source header we want to insert [key=source], and
                          (iii) def. value if we add a new column [key=default_value]
         delimiter: Delimiter to use. Default uses ","
+        plaso_event_filter: filter string for Plaso files.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -390,6 +424,7 @@ def build_index_pipeline(
     if not (file_path or events):
         raise RuntimeError("Unable to upload data, missing either a file or events.")
     index_task_class = _get_index_task_class(file_extension)
+    index_task = None
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
@@ -405,10 +440,20 @@ def build_index_pipeline(
             headers_mapping,
             delimiter,
         )
-    else:
+    elif file_extension == "plaso":
         index_task = index_task_class.s(
-            file_path, events, timeline_name, index_name, file_extension, timeline_id
+            file_path,
+            events,
+            timeline_name,
+            index_name,
+            file_extension,
+            timeline_id,
+            plaso_event_filter,
         )
+    else:
+        # This should have been caught by _get_index_task_class. But adding this
+        # here again to make the linter happy.
+        raise KeyError(f"No task that supports {file_extension:s}")
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly
@@ -549,13 +594,16 @@ def build_sketch_analysis_pipeline(
         if isinstance(additional_kwargs, dict):
             additional_kwargs = [additional_kwargs]
 
-        kwargs_list = []
-        for _kwargs in additional_kwargs:
-            combined_kwargs = {**base_kwargs, **_kwargs}
-            kwargs_list.append(combined_kwargs)
+        kwargs_list = list(additional_kwargs) if additional_kwargs else []
+
+        if base_kwargs:
+            if isinstance(base_kwargs, list):
+                kwargs_list.extend(base_kwargs)
+            else:
+                kwargs_list.append(base_kwargs)
 
         if not kwargs_list:
-            kwargs_list = [base_kwargs]
+            kwargs_list = [{}]
 
         # Create a hash of the analyzer arguments to compare with later analyzer
         # executions if the analyzer arguments / config changed.
@@ -750,6 +798,7 @@ def run_plaso(
     index_name: str,
     source_type: str,
     timeline_id: int,
+    plaso_event_filter: str = "",
 ):
     """Create a Celery task for processing Plaso storage file.
 
@@ -760,6 +809,7 @@ def run_plaso(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
+        plaso_event_filter: filter string for Plaso files.
 
     Raises:
         RuntimeError: If the function is called using events, plaso
@@ -876,8 +926,24 @@ def run_plaso(
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
         logger.error("Error (%s): %s\n%s", file_path, str(e), error_msg)
+        try:
+            # Closing the db session here ensures we use a fresh connection from
+            # the pool when we try to write the fail status into the DB!
+            db_session.remove()
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If the db is so broken we can't even close the session, log it!
+            logger.error(
+                "Failed to remove broken db_session: %s", db_err, exc_info=True
+            )
+
+        try:
+            _set_datasource_status(
+                timeline_id, file_path, "fail", error_message=error_msg
+            )
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If we still can't write to DB (e.g. DB server is down), log it!
+            logger.critical("Could not update timeline status to failed: %s", db_err)
         return None
 
     if not opensearch.client.indices.exists(index=index_name):
@@ -903,21 +969,32 @@ def run_plaso(
         psort_path = current_app.config["PSORT_PATH"]
     except KeyError:
         psort_path = "psort.py"
+    resolved_psort_path = shutil.which(psort_path) or psort_path
 
-    cmd = [
-        psort_path,
-        "-o",
-        "opensearch_ts",
-        file_path,
-        "--server",
-        opensearch_server,
-        "--port",
-        str(opensearch_port),
-        "--status_view",
-        "none",
-        "--index_name",
-        index_name,
-    ]
+    if resolved_psort_path.endswith(".py"):
+        cmd = [
+            sys.executable,
+            resolved_psort_path,
+        ]
+    else:
+        cmd = [
+            resolved_psort_path,
+        ]
+
+    cmd.extend(
+        [
+            "-o",
+            "opensearch_ts",
+            "--server",
+            opensearch_server,
+            "--port",
+            str(opensearch_port),
+            "--status_view",
+            "none",
+            "--index_name",
+            index_name,
+        ]
+    )
 
     log_file_path = "/dev/null"
     log_dir = current_app.config.get("PLASO_LOG_FOLDER")
@@ -960,8 +1037,6 @@ def run_plaso(
         cmd.extend(["--opensearch_user", opensearch_username])
 
     opensearch_password = current_app.config.get("OPENSEARCH_PASSWORD", "")
-    if opensearch_password:
-        cmd.extend(["--opensearch_password", opensearch_password])
 
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
@@ -984,10 +1059,26 @@ def run_plaso(
     if plaso_formatters_file_path:
         cmd.extend(["--custom_formatter_definitions", plaso_formatters_file_path])
 
+    cmd.append("--")
+
+    cmd.append(file_path)
+
+    if plaso_event_filter:
+        cmd.append(plaso_event_filter)
+
     # Run psort.py
     try:
+        # Prepare the environment for the subprocess. We pass the OpenSearch
+        # password via an environment variable to avoid exposing it in the
+        # process list.
+        subprocess_env = os.environ.copy()
+        if opensearch_password:
+            subprocess_env["PLASO_OPENSEARCH_PASSWORD"] = opensearch_password
+
         logger.info("Plaso cmd line: %s start", cmd)
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
+        subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT, encoding="utf-8", env=subprocess_env
+        )
         logger.info("Plaso cmd line: %s finish", cmd)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
@@ -1046,7 +1137,7 @@ def run_csv_jsonl(
         file_handle = io.StringIO(events)
         source_type = "jsonl"
     else:
-        file_handle = codecs.open(  # pylint: disable=consider-using-with
+        file_handle = open(  # pylint: disable=consider-using-with
             file_path, "r", encoding="utf-8", errors="replace"
         )
         METRICS["worker_files_parsed"].labels(source_type=source_type).inc()
@@ -1215,10 +1306,28 @@ def run_csv_jsonl(
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_datasource_status(
-            timeline_id, file_path, "fail", error_message=str(error_msg)
-        )
         logger.error("Error: %s\n%s", str(e), error_msg)
+        try:
+            # Closing the db session here ensures we use a fresh connection from
+            # the pool when we try to write the fail status into the DB!
+            db_session.remove()
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If the db is so broken we can't even close the session, log it!
+            logger.error(
+                "Failed to remove db_session during error handling. DB Error: %s",
+                db_err,
+                exc_info=True,
+            )
+        try:
+            _set_datasource_status(
+                timeline_id, file_path, "fail", error_message=str(error_msg)
+            )
+        except Exception as db_err:  # pylint: disable=broad-except
+            # If we still can't write to DB (e.g. DB server is down), log it!
+            logger.critical(
+                "CRITICAL: Could not update timeline status to failed. DB Error: %s",
+                db_err,
+            )
         return None
 
     METRICS["worker_events_added"].labels(

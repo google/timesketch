@@ -13,7 +13,7 @@
 # limitations under the License.
 """Entry point for the application."""
 
-
+import json
 import logging
 import os
 import sys
@@ -29,6 +29,12 @@ from flask_login import login_required
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
+
+try:
+    from opentelemetry import trace
+except ImportError:
+    trace = None
+from timesketch.lib import telemetry
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
@@ -68,6 +74,8 @@ def create_app(
         static_folder = "frontend-ng/dist"
 
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+    telemetry.setup_telemetry("timesketch")
+    telemetry.instrument_flask_app(app)
 
     # Apply ProxyFix middleware to handle proxy headers for HTTPS redirects
     # This ensures Flask generates HTTPS URLs when behind a reverse proxy.
@@ -113,8 +121,9 @@ def create_app(
 
     # Configure Werkzeug 3.1+ form memory limit
     # This is needed to support large form uploads (e.g. from import client)
-    if "MAX_FORM_MEMORY_SIZE" in app.config:
-        app.request_class.max_form_memory_size = app.config["MAX_FORM_MEMORY_SIZE"]
+    app.request_class.max_form_memory_size = app.config.get(
+        "MAX_FORM_MEMORY_SIZE", 209715200
+    )
 
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:
@@ -232,7 +241,7 @@ def create_app(
 
 
 def configure_logger():
-    """Configure the logger."""
+    """Configure the logger with optional Structured JSON logging."""
 
     class NoESFilter(logging.Filter):
         """Custom filter to filter out ES logs"""
@@ -241,15 +250,71 @@ def configure_logger():
             """Filter out records."""
             return not record.name.lower() == "opensearch"
 
-    logger_formatter = logging.Formatter(
-        "[%(asctime)s] %(name)s/%(levelname)s %(message)s"
-    )
-    logger_filter = NoESFilter()
-    logger_object = logging.getLogger("timesketch")
+    class JSONLogFormatter(logging.Formatter):
+        """Formats logs as JSON for Kubernetes/Cloud environments."""
 
-    for handler in logger_object.parent.handlers:
-        handler.setFormatter(logger_formatter)
+        def format(self, record):
+            level_name = record.levelname.upper()
+            std_level = "WARNING" if level_name == "WARN" else level_name
+
+            log_record = {
+                "message": record.getMessage(),
+                "severity": std_level,
+                "level": std_level,
+                "timestamp": self.formatTime(record, self.datefmt),
+                "logger": record.name,
+                "pid": record.process,
+                "module": record.module,
+            }
+
+            if trace:
+                span_context = trace.get_current_span().get_span_context()
+                if span_context.is_valid:
+                    t_id = trace.format_trace_id(span_context.trace_id)
+                    s_id = trace.format_span_id(span_context.span_id)
+                    log_record["trace_id"] = t_id
+                    log_record["span_id"] = s_id
+                    # GCP specific correlation fields
+                    project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+                    if project_id:
+                        log_record["logging.googleapis.com/trace"] = (
+                            f"projects/{project_id}/traces/{t_id}"
+                        )
+                        log_record["logging.googleapis.com/spanId"] = s_id
+
+            if record.exc_info:
+                formatted_trace = self.formatException(record.exc_info)
+                log_record["stack_trace"] = formatted_trace
+
+            return json.dumps(log_record, default=str)
+
+    logger_object = logging.getLogger("timesketch")
+    logger_filter = NoESFilter()
+
+    use_structured_logging = (
+        os.environ.get("ENABLE_STRUCTURED_LOGGING", "false").lower() == "true"
+    )
+
+    if use_structured_logging:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(JSONLogFormatter(datefmt="%Y-%m-%dT%H:%M:%S%z"))
         handler.addFilter(logger_filter)
+
+        root = logging.getLogger()
+        for h in root.handlers[:]:
+            if isinstance(h, logging.StreamHandler):
+                root.removeHandler(h)
+
+        root.addHandler(handler)
+        logger_object.propagate = True
+
+    else:
+        logger_formatter = logging.Formatter(
+            "[%(asctime)s] %(name)s/%(levelname)s %(message)s"
+        )
+        for handler in logger_object.parent.handlers:
+            handler.setFormatter(logger_formatter)
+            handler.addFilter(logger_filter)
 
 
 def create_celery_app():
@@ -257,6 +322,7 @@ def create_celery_app():
     app = create_app()
     celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
     celery.conf.update(app.config)
+    telemetry.instrument_celery_app(celery)
     TaskBase = celery.Task
 
     class ContextTask(TaskBase):

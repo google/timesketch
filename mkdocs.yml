@@ -33,17 +33,21 @@ nav:
       - Install: guides/admin/install.md
       - Upgrade: guides/admin/upgrade.md
       - Scaling and limits: guides/admin/scaling-and-limits.md
+      - Index Mappings: guides/admin/index-mappings.md
       - Troubleshooting: guides/admin/troubleshooting.md
       - Admin CLI: guides/admin/admin-cli.md
       - Context Links: guides/admin/context-links.md
       - LLM Features: guides/admin/llm-features.md
       - Investigation View: guides/admin/investigation-view-setup.md
       - DFIQ Templates: guides/admin/load-dfiq.md
-      - Performance Monitoring: guides/admin/performance-monitoring.md
+      - Performance Monitoring: guides/admin/performance_monitoring.md
+      - OpenTelemetry: guides/admin/OpenTelemetry.md
   - Developers:
       - Getting started: developers/getting-started.md
       - Frontend development: developers/frontend-development.md
       - Writing and running tests: developers/testing.md
+      - Development with Tilt: developers/tilt-development.md
+      - Local GitHub Actions (act): developers/local_github_actions_with_act.md
       - Interactive notebook: developers/notebook.md
       - API client:
           - Introduction: developers/api-client.md
@@ -69,8 +73,6 @@ nav:
           - Black Hat & defcon 2025: community/2025-blackhat.md
           - 2021 Summit: community/2021-timesketch-summit.md
   - Blog: https://osdfir.blogspot.com/search/label/timesketch
-  - Black Hat & defcon 2025:
-      - community/2025-blackhat.md
 plugins:
   - redirects:
       redirect_maps:

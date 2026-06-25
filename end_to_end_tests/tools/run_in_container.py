@@ -13,11 +13,28 @@
 # limitations under the License.
 """Script to run all end to end tests."""
 
+import logging
+import os
 import sys
 import time
 from collections import Counter
+from datetime import datetime
 
+# Configure logging
+LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
+
+# Ensure the latest source code is used by adding the project root to sys.path
+# This must happen before importing end_to_end_tests
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# pylint: disable=wrong-import-position
 from end_to_end_tests import manager as test_manager
+
+# pylint: enable=wrong-import-position
 
 manager = test_manager.EndToEndTestManager()
 counter = Counter()
@@ -28,14 +45,84 @@ if __name__ == "__main__":
     # which ones run
 
     print("--- Registered Test Classes ---")
-    for name, _ in manager.get_tests():
-        print(f"- {name}")
+
+    git_root = manager.get_git_root()
+    for name, cls in manager.get_tests(sort_by_mtime=True):
+        mtime = manager.get_last_modified(cls, git_root=git_root)
+        time_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+        print(f"- {name} (last modified: {time_str})")
+
     print("-------------------------------")
 
     # Sleep to make sure all containers are operational
-    time.sleep(30)  # seconds
+    import socket
+    from urllib.parse import urlparse
 
-    for name, cls in manager.get_tests():
+    # Dynamically resolve target host and port from configuration settings
+    server_url = os.environ.get("TIMESKETCH_SERVER_URL", "http://127.0.0.1")
+    parsed = urlparse(server_url)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or (80 if parsed.scheme == "http" else 443)
+
+    # Print dynamic diagnostics variables for GitHub Actions debugging
+    print("--- wait-for-it Diagnostics ---")
+    print(f"TIMESKETCH_SERVER_URL: {os.environ.get('TIMESKETCH_SERVER_URL')}")
+    print(f"Parsed Hostname: {host}")
+    print(f"Parsed Port: {port}")
+    try:
+        resolved_ip = socket.gethostbyname(host)
+        print(f"DNS Resolution: {host} -> {resolved_ip}")
+    except socket.gaierror as e:
+        print(f"DNS Resolution FAILED for {host}: {e}")
+    print("--------------------------------")
+
+    # Poll target server socket up to a safe maximum duration of 120 seconds
+    start_time = time.monotonic()
+    print(f"Waiting for Timesketch server to become active on {host}:{port}...")
+    server_is_active = False
+
+    while True:
+        try:
+            with socket.create_connection((host, port), timeout=2):
+                print("Timesketch server is active! Starting E2E tests...")
+                server_is_active = True
+                break
+        except OSError as e:
+            elapsed = time.monotonic() - start_time
+            print(
+                f"[{elapsed:.1f}s] Connection to {host}:{port} failed: {e!r}. "
+                "Retrying in 2 seconds..."
+            )
+            if elapsed >= 120:
+                break
+            time.sleep(2)
+
+    if not server_is_active:
+        print(f"Timeout: Server did not become active within 120s on {host}:{port}.")
+        sys.exit(1)
+
+    all_tests = list(manager.get_tests(sort_by_mtime=True))
+    tests_to_run = all_tests
+    if len(sys.argv) > 1:
+        # Support running a subset of tests by passing a single test class name
+        # or a comma-separated list of names (e.g., 'client_test,query_test').
+        test_filters = [t.strip().lower() for t in sys.argv[1].split(",")]
+        filtered_tests = [(n, c) for n, c in all_tests if n in test_filters]
+
+        missing_tests = [t for t in test_filters if t not in [n for n, _ in all_tests]]
+        if missing_tests:
+            print(
+                "Error: The following requested tests do not exist: "
+                f"{', '.join(missing_tests)}"
+            )
+            print("Available test classes:")
+            for name, _ in all_tests:
+                print(f"  - {name}")
+            sys.exit(1)
+
+        tests_to_run = filtered_tests
+
+    for name, cls in tests_to_run:
         test_class = cls()
         # Prepare the test environment.
         test_class.setup()

@@ -25,6 +25,10 @@ Please follow the Style Guide and make your changes. Once you're ready for revie
 
 Commit your changes to your personal fork and then use the GitHub Web UI to create and send the pull request. We'll review and merge the change.
 
+#### Note for Automated Agents
+
+We value transparency and clarity in our contribution history. If you are an automated agent to generate a pull request or issue, please self-identify by adding 🤖🤖🤖 to the end of the PR title. Agent-generated contributions are subject to the same rigorous human review, testing requirements, and style guidelines as all other submissions. This attribution simply helps our maintainers understand the context and origin of the code.
+
 #### Code review
 
 All submissions, including submissions by project members, require review. To keep the code base maintainable and readable all code is developed using a similar coding style. It ensures:

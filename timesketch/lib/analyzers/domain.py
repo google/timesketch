@@ -8,7 +8,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 
-
 logger = logging.getLogger("timesketch.analyzers.domain")
 
 
@@ -22,7 +21,7 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
         "domains as well as mark known CDNs"
     )
 
-    DEPENDENCIES = frozenset()
+    DEPENDENCIES = frozenset(["feature_extraction"])
 
     def run(self):
         """Entry point for the analyzer.

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Circle chart class.."""
 
-
 import altair as alt
 
 from timesketch.lib.charts import manager

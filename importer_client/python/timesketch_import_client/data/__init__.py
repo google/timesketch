@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch data import configuration."""
+
 from __future__ import unicode_literals
 
-import codecs
 import logging
 import os
 
 import yaml
-
 
 logger = logging.getLogger("timesketch_importer.config_loader")
 
@@ -50,7 +49,7 @@ def load_config(file_path=""):
         logger.error("File path does not exist, unable to load YAML config.")
         return {}
 
-    with codecs.open(file_path, "r") as fh:
+    with open(file_path, "r", encoding="utf-8") as fh:
         try:
             data = yaml.safe_load(fh)
             return data

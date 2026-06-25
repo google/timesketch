@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 from __future__ import unicode_literals
 
 import json
@@ -32,14 +33,20 @@ def _get_message(response):
         str: a string with the message field extracted from the
             response.text.
     """
-    soup = bs4.BeautifulSoup(response.text, features="html.parser")
+    if response is None:
+        return "n/a"
+    response_text_raw = getattr(response, "text", None)
+    if response_text_raw is None:
+        return "n/a"
+
+    soup = bs4.BeautifulSoup(response_text_raw, features="html.parser")
     if soup.p:
         return soup.p.string  # pytype: disable=attribute-error
 
-    if isinstance(response.text, bytes):
-        response_text = response.text.decode("utf-8")
+    if isinstance(response_text_raw, bytes):
+        response_text = response_text_raw.decode("utf-8")
     else:
-        response_text = response.text
+        response_text = response_text_raw
 
     try:
         response_dict = json.loads(response_text)
@@ -63,7 +70,9 @@ def _get_reason(response):
         str: a string with the reason field extracted from the
             response.reason.
     """
-    reason = response.reason
+    if response is None:
+        return "n/a"
+    reason = getattr(response, "reason", "n/a")
     if isinstance(reason, bytes):
         return reason.decode("utf-8")
 
@@ -111,15 +120,25 @@ def get_response_json(response, logger):
 
 
 def error_message(response, message=None, error=RuntimeError):
-    """Raise an error using error message extracted from response."""
+    """Raise an error using error message extracted from response.
+
+    Args:
+        response (requests.Response): a response object from a HTTP request.
+        message (str): Optional message to prepend to the error string.
+        error (Exception): The exception class to raise. Defaults to RuntimeError.
+
+    Raises:
+        error: The exception specified by the error argument.
+    """
     if not message:
-        message = "Unknown error, with error: "
+        message = "Unknown error"
     text = _get_message(response)
+    request = getattr(response, "request", None)
+    url = getattr(response, "url", getattr(request, "url", "n/a") if request else "n/a")
 
     raise error(
-        "{0:s}, with error [{1:d}] {2:s} {3:s}".format(
-            message, response.status_code, _get_reason(response), text
-        )
+        f"{message}, with error [{getattr(response, 'status_code', 'n/a')}] "
+        f"{_get_reason(response)} {text} ({url})"
     )
 
 

@@ -1,5 +1,5 @@
 <!--
-Copyright 2025 Google Inc. All rights reserved.
+Copyright 2026 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,25 @@ limitations under the License.
       <v-card flat class="pa-5">
         <v-progress-circular indeterminate size="20" width="1"></v-progress-circular>
         <span class="ml-5">Exporting {{ totalHits }} events</span>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="showExportLimitDialog" width="500">
+      <v-card class="pa-4">
+        <h3 class="mb-4">Export limit reached</h3>
+        <p>
+          Downloading more than 10,000 events is not supported in the UI due to database limitations. Please use the
+          Timesketch CLI client to export larger datasets.
+        </p>
+        <p>
+          <a href="https://timesketch.org/guides/user/cli-client/#search" target="_blank" rel="noopener noreferrer">
+            Timesketch CLI Client Documentation
+          </a>
+        </p>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="showExportLimitDialog = false"> Close </v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
 
@@ -62,11 +81,18 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
-      <ts-explore-welcome-card></ts-explore-welcome-card>
+    <div v-if="searchError && !searchInProgress" class="ml-3">
+      <ts-search-error-card
+        :error-text="searchError"
+        :search-mode="searchMode"
+      ></ts-search-error-card>
     </div>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString" class="ml-3">
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
+      <ts-explore-welcome-card :search-mode="searchMode"></ts-explore-welcome-card>
+    </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError" class="ml-3">
       <ts-search-not-found-card
         :currentQueryString="currentQueryString"
         :filterChips="filterChips"
@@ -216,6 +242,14 @@ limitations under the License.
                   <v-icon title="Download current view as CSV">mdi-download</v-icon>
                 </v-btn>
 
+                <v-btn 
+                  icon 
+                  @click="generateStarredEventsReport()" 
+                  :loading="isGeneratingReport"
+                  v-if="isStarredEventsFilterActive && (systemSettings.LLM_FEATURES_AVAILABLE && (systemSettings.LLM_FEATURES_AVAILABLE.llm_starred_events_report || systemSettings.LLM_FEATURES_AVAILABLE.default))">
+                    <v-icon v-if="!isGeneratingReport" title="Generate report from starred events">mdi-file-star-four-points</v-icon>
+                </v-btn>
+
                 <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                   <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on">
@@ -302,9 +336,13 @@ limitations under the License.
               </div>
               <div v-else class="actions">
                 <small class="mr-2">Actions:</small>
-                <v-btn x-small outlined @click="toggleMultipleStars()">
+                <v-btn x-small outlined @click="starAll()">
                   <v-icon left color="amber">mdi-star</v-icon>
-                  Toggle star
+                  Star all
+                </v-btn>
+                <v-btn x-small outlined @click="unstarAll()">
+                  <v-icon left>mdi-star-outline</v-icon>
+                  Unstar all
                 </v-btn>
 
                 <v-menu v-model="showEventTagMenu" offset-x :close-on-content-click="false">
@@ -498,6 +536,7 @@ import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'
 import TsExploreWelcomeCard from './ExploreWelcomeCard.vue'
 import TsSearchNotFoundCard from './SearchNotFoundCard.vue'
+import TsSearchErrorCard from './SearchErrorCard.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -509,6 +548,8 @@ const defaultQueryFilter = () => {
     chips: [],
   }
 }
+
+const STARRED_EVENTS_REPORT_LIMIT = 1000
 
 const emptyEventList = () => {
   return {
@@ -530,6 +571,7 @@ export default {
     TsEventTags,
     TsExploreWelcomeCard,
     TsSearchNotFoundCard,
+    TsSearchErrorCard,
   },
   mixins: [EventMixin],
   props: {
@@ -565,6 +607,10 @@ export default {
       type: Object,
       default: () => {},
     },
+    searchMode: {
+      type: String,
+      default: 'query_string',
+    },
   },
   data() {
     return {
@@ -584,6 +630,7 @@ export default {
         itemsPerPage: this.itemsPerPage,
       },
       isSummaryLoading: false,
+      isGeneratingReport: false,
       currentItemsPerPage: this.itemsPerPage,
       expandedRows: [],
       selectedFields: [{ field: 'message', type: 'text' }],
@@ -620,9 +667,21 @@ export default {
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
+      showExportLimitDialog: false,
+      searchError: '',
     }
   },
   computed: {
+    isStarredEventsFilterActive() {
+      if (!this.currentQueryFilter || !this.currentQueryFilter.chips) {
+        return false
+      }
+      const hasStarChip = this.currentQueryFilter.chips.some(
+        (chip) => chip.type === 'label' && chip.value === '__ts_star'
+      )
+      const hasStarQuery = this.currentQueryString.includes('label:__ts_star')
+      return hasStarChip || hasStarQuery
+    },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count
       const uniqueEvents = this.eventList.meta.summary_unique_event_count
@@ -670,6 +729,9 @@ export default {
     },
     userSettings() {
       return this.$store.state.settings
+    },
+    systemSettings() {
+      return this.$store.state.systemSettings
     },
     headers() {
       let baseHeaders = [
@@ -755,11 +817,11 @@ export default {
       let index = this.expandedRows.findIndex((x) => x._id === row._id)
       if (this.expandedRows.some((event) => event._id === row._id)) {
         if (row.showDetails) {
-          row['showDetails'] = false
+          row.showDetails = false
           this.expandedRows.splice(index, 1)
           this.$set(row, 'showComments', false)
         } else {
-          row['showDetails'] = true
+          row.showDetails = true
           this.expandedRows.splice(index, 1)
           this.expandedRows.push(row)
           return
@@ -770,7 +832,7 @@ export default {
           this.expandedRows.push(row)
         }
       } else {
-        row['showDetails'] = true
+        row.showDetails = true
         this.expandedRows.push(row)
       }
     },
@@ -799,7 +861,7 @@ export default {
         }
         let deltaDays = Math.floor(delta / 60 / 60 / 24)
         if (deltaDays > 0) {
-          prevEvent['deltaDays'] = deltaDays
+          prevEvent.deltaDays = deltaDays
           this.expandedRows.push(prevEvent)
         }
       })
@@ -866,6 +928,7 @@ export default {
       this.searchInProgress = true
       this.selectedEvents = []
       this.eventList = emptyEventList()
+      this.searchError = ''
 
       if (resetPagination) {
         this.tableOptions.page = 1
@@ -891,11 +954,11 @@ export default {
 
       // Search history
       if (incognito) {
-        formData['incognito'] = true
+        formData.incognito = true
       }
 
       if (parent) {
-        formData['parent'] = parent
+        formData.parent = parent
       }
 
       if (parent && incognito) {
@@ -903,15 +966,15 @@ export default {
       }
 
       if (this.branchParent) {
-        formData['parent'] = this.branchParent
+        formData.parent = this.branchParent
       }
 
       // Get DFIQ context
-      formData['scenario'] = this.activeContext.scenarioId
-      formData['facet'] = this.activeContext.facetId
-      formData['question'] = this.activeContext.questionId
+      formData.scenario = this.activeContext.scenarioId
+      formData.facet = this.activeContext.facetId
+      formData.question = this.activeContext.questionId
 
-      formData['include_processing_timelines'] = this.settings.showProcessingTimelineEvents
+      formData.include_processing_timelines = this.settings.showProcessingTimelineEvents
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {
@@ -936,17 +999,24 @@ export default {
           }
         })
         .catch((e) => {
+          this.searchInProgress = false
           let msg = 'Sorry, there was a problem fetching your search results. Error: "' + e.response.data.message + '"'
           if (
             e.response.data.message.includes('too_many_nested_clauses') ||
             e.response.data.message.includes('query_shard_exception')
           ) {
-            msg =
-              'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
+            if (this.searchMode === 'wildcard') {
+              msg =
+                'Sorry, your query is too complex. Use field-specific search (like "message:*<search term>*") and try again.'
+            } else {
+              msg =
+                'Sorry, your query is too complex. Use field-specific search (like "message:(<query terms>)") and try again.'
+            }
             this.warningSnackBar(msg)
           } else {
             this.errorSnackBar(msg)
           }
+          this.searchError = msg
           console.error('Error message: ' + msg)
           console.error(e)
         })
@@ -969,7 +1039,39 @@ export default {
           this.isSummaryLoading = false
         })
     },
+    generateStarredEventsReport() {
+      if (this.totalHits > STARRED_EVENTS_REPORT_LIMIT) {
+        this.warningSnackBar(`This feature is currently limited to ${STARRED_EVENTS_REPORT_LIMIT} starred events, try setting a timerange filter.`, 10000);
+        return;
+      }
+
+      this.isGeneratingReport = true;
+      const requestData = {
+        filter: this.currentQueryFilter
+      };
+      
+      ApiClient.llmRequest(this.sketch.id, 'llm_starred_events_report', requestData)
+        .then((response) => {
+          this.isGeneratingReport = false;
+          if (response.data && response.data.story_id) {
+            this.$store.dispatch('updateSketch', this.sketch.id);
+            this.successSnackBar('Report generated! You can find it in the "Stories" section.');
+          } else {
+            this.errorSnackBar('Error generating report. No story was created.');
+          }
+        })
+        .catch((error) => {
+          this.isGeneratingReport = false;
+          const errorMessage = (error.response && error.response.data && error.response.data.message) || 'Unknown error occurred';
+          this.errorSnackBar(`Error generating report: ${errorMessage}`);
+          console.error('Error generating starred events report:', error);
+        });
+    },
     exportSearchResult: function () {
+      if (this.totalHits > 10000) {
+        this.showExportLimitDialog = true
+        return
+      }
       this.exportDialog = true
       const now = new Date()
       const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'
@@ -1078,20 +1180,34 @@ export default {
           console.error(e)
         })
     },
-    toggleMultipleStars: function () {
-      let netStarCountChange = 0
+    starAll: function () {
+      const toUpdate = [];
+      this.selectedEvents.forEach((event) => {
+        if (!event._source.label.includes('__ts_star')) {
+          event._source.label.push('__ts_star')
+          toUpdate.push(event);
+        }
+      })
+      if (toUpdate.length === 0) return;
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
+        .then((response) => {
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: toUpdate.length })
+          this.selectedEvents = []
+        })
+        .catch((e) => {})
+    },
+    unstarAll: function () {
+      const toUpdate = [];
       this.selectedEvents.forEach((event) => {
         if (event._source.label.includes('__ts_star')) {
           event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
-          netStarCountChange--
-        } else {
-          event._source.label.push('__ts_star')
-          netStarCountChange++
+          toUpdate.push(event);
         }
       })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
+      if (toUpdate.length === 0) return;
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
         .then((response) => {
-          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: netStarCountChange })
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: -toUpdate.length })
           this.selectedEvents = []
         })
         .catch((e) => {})
@@ -1137,9 +1253,9 @@ export default {
         this.currentQueryString = newQueryRequest.queryString || ''
         this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
         this.currentQueryDsl = newQueryRequest.queryDsl || null
-        let resetPagination = newQueryRequest['resetPagination'] || false
-        let incognito = newQueryRequest['incognito'] || false
-        let parent = newQueryRequest['parent'] || false
+        let resetPagination = newQueryRequest.resetPagination || false
+        let incognito = newQueryRequest.incognito || false
+        let parent = newQueryRequest.parent || false
         // Set additional fields. This is used when loading filter from a saved search.
         if (this.currentQueryFilter.fields) {
           this.selectedFields = this.currentQueryFilter.fields
@@ -1263,20 +1379,19 @@ th:first-child {
   padding: 0 0 0 10px !important;
 }
 
+.ts-event-list-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%; 
+  gap: 20px;  
+}
 .ts-ai-summary-card {
   border: 1px solid transparent !important;
   border-radius: 8px;
   background-color: #fafafa;
   background-image:
-      linear-gradient(white, white),
-      linear-gradient(90deg,
-          #8ab4f8 0%,
-          #81c995 20%,
-          #f8c665 40%,
-          #ec7764 60%,
-          #b39ddb 80%,
-          #8ab4f8 100%
-      );
+      linear-gradient(white, white), 
+      var(--llm-gradient);
   background-origin: border-box;
   background-clip: content-box, border-box;
   background-size: 300% 100%;
@@ -1285,12 +1400,10 @@ th:first-child {
   display: block;
   margin-bottom: 20px;
 }
-
 .v-data-table {
   display: block; /* Ensure block display for data table */
 }
-
-@keyframes borderBeamIridescent-subtle {
+@keyframes borderBeamIridescent-subtle { 
     0% {
         background-position: 0% 50%;
     }
@@ -1298,25 +1411,16 @@ th:first-child {
         background-position: 100% 50%;
     }
 }
-
 .theme--dark.ts-ai-summary-card {
   background-color: #1e1e1e;
   border-color: hsla(0,0%,100%,.12) !important;
   background-image:
-      linear-gradient(#1e1e1e, #1e1e1e),
-      linear-gradient(90deg,
-          #8ab4f8 0%,
-          #81c995 20%,
-          #f8c665 40%,
-          #ec7764 60%,
-          #b39ddb 80%,
-          #8ab4f8 100%
-      );
-      box-shadow: 0 2px 5px rgba(255, 255, 255, 0.08);
+      linear-gradient(#1e1e1e, #1e1e1e), 
+      var(--llm-gradient);
+  box-shadow: 0 2px 5px rgba(255, 255, 255, 0.08);
   display: block;
   margin-bottom: 20px;
 }
-
 .ts-ai-summary-text {
   white-space: pre-line;
   word-wrap: break-word;
@@ -1325,15 +1429,12 @@ th:first-child {
   padding-left: 10px;
   padding-right: 10px;
 }
-
 .ts-ai-summary-card .v-btn--icon {
   cursor: pointer;
 }
-
 .ts-ai-summary-card .v-btn--icon:hover {
   opacity: 0.8;
 }
-
 .ts-summary-placeholder-line {
   height: 1em;
   background-color: #e0e0e0;
@@ -1341,21 +1442,17 @@ th:first-child {
   border-radius: 4px;
   width: 100%;
 }
-
 .ts-summary-placeholder-line.short {
   width: 60%;
 }
-
 .ts-summary-placeholder-line.long {
   width: 80%;
 }
-
 .shimmer {
   background: linear-gradient(to right, #e0e0e0 8%, #f0f0f0 18%, #e0e0e0 33%);
   background-size: 800px 100%;
   animation: shimmer-animation 1.5s infinite linear forwards;
 }
-
 @keyframes shimmer-animation {
   0% {
     background-position: -468px 0;
@@ -1364,28 +1461,23 @@ th:first-child {
     background-position: 468px 0;
   }
 }
-
 .ts-event-list-container {
   display: flex;
   flex-direction: column;
   width: 100%;
   gap: 20px;
 }
-
 ::v-deep .no-transition {
   transition: none !important;
 }
-
 .ts-ai-summary-card-title {
   display: flex;
   align-items: baseline;
 }
-
 .ts-ai-summary-title {
   margin-right: 8px;
   font-weight: normal;
 }
-
 .ts-ai-summary-subtitle {
   font-size: 0.7em;
   color: grey;

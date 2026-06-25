@@ -1,9 +1,25 @@
-# /usr/local/google/home/jaegeral/dev/timesketch/end_to_end_tests/cli_client_e2e_test.py
+# Copyright 2026 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """End to end tests for Timesketch CLI client commands."""
 
+import os
+import tempfile
+import uuid
 from click.testing import CliRunner
 
 from timesketch_cli_client.commands.sketch import sketch_group
+from timesketch_cli_client.cli import cli
 
 from . import interface
 from . import manager
@@ -96,6 +112,108 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             result.output,
             "Sketch description not found or incorrect in 'sketch describe' output.",
         )
+
+    def test_cli_sketch_export(self):
+        """Tests 'timesketch sketch export'."""
+        sketch_name = f"cli_client_e2e_test_export_{uuid.uuid4().hex}"
+        active_sketch = self.api.create_sketch(name=sketch_name)
+        self.import_timeline("evtx_part.csv", sketch=active_sketch)  # ensure some data
+
+        cli_ctx_obj = E2ECliContextObject(
+            api_client=self.api,
+            sketch_instance=active_sketch,
+            output_format="text",
+        )
+
+        # Test default export
+        with self.runner.isolated_filesystem():
+            filename = "export.zip"
+            result = self.runner.invoke(
+                sketch_group, ["export", "--filename", filename], obj=cli_ctx_obj
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Output: {result.output}")
+            self.assertions.assertTrue(os.path.exists(filename))
+
+            # Test streaming export
+            filename_stream = "export_stream.zip"
+            result_stream = self.runner.invoke(
+                sketch_group,
+                ["export", "--filename", filename_stream, "--stream"],
+                obj=cli_ctx_obj,
+            )
+            self.assertions.assertEqual(
+                result_stream.exit_code, 0, f"Output: {result_stream.output}"
+            )
+            self.assertions.assertTrue(os.path.exists(filename_stream))
+
+            # Test use_sketch_export
+            filename_full = "export_full.zip"
+            result_full = self.runner.invoke(
+                sketch_group,
+                ["export", "--filename", filename_full, "--use_sketch_export"],
+                obj=cli_ctx_obj,
+            )
+            self.assertions.assertEqual(
+                result_full.exit_code, 0, f"Output: {result_full.output}"
+            )
+            self.assertions.assertTrue(os.path.exists(filename_full))
+
+    def test_cli_integration(self):
+        """Tests the full CLI tool integration against the E2E server."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            rc_path = os.path.join(temp_dir, ".timesketchrc")
+            token_path = os.path.join(temp_dir, ".timesketch.token")
+
+            with open(rc_path, "w", encoding="utf-8") as f:
+                f.write(
+                    "[timesketch]\n"
+                    "host_uri = http://127.0.0.1:80\n"
+                    "username = test\n"
+                    "auth_mode = userpass\n"
+                    "verify = False\n"
+                    f"token_file_path = {token_path}\n"
+                )
+
+            # Run sketch list first, overriding output format to text, and
+            # providing the password. This logs in, caches the token, and
+            # lists the sketches.
+            result = self.runner.invoke(
+                cli,
+                ["--config", rc_path, "--output-format", "text", "sketch", "list"],
+                input="test\n",
+            )
+            self.assertions.assertEqual(
+                result.exit_code,
+                0,
+                f"CLI command failed. Output: {result.output}",
+            )
+            self.assertions.assertIn("cli_client_e2e_test", result.output)
+
+            # Test config set output-format json
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "set", "output-format", "json"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+
+            # Test config get output-format
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "get", "output-format"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+            self.assertions.assertEqual(result.output.strip(), "json")
+
+            # Test config set sketch
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "set", "sketch", "42"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+
+            # Test config get sketch
+            result = self.runner.invoke(
+                cli, ["--config", rc_path, "config", "get", "sketch"]
+            )
+            self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
+            self.assertions.assertEqual(result.output.strip(), "42")
 
 
 # Register the new test class with the test manager

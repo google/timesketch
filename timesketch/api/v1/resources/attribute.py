@@ -35,7 +35,6 @@ from timesketch.models.sketch import Attribute
 from timesketch.models.sketch import AttributeValue
 from timesketch.models.sketch import Sketch
 
-
 logger = logging.getLogger("timesketch.sketch_api")
 
 

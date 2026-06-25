@@ -1,7 +1,4 @@
 # Timesketch
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google/timesketch/blob/main/notebooks/colab-timesketch-demo.ipynb)
-[![Open In Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/google/timesketch/main?urlpath=%2Flab)
-
 [![Version](https://img.shields.io/pypi/v/timesketch?label=timesketch&style=plastic)](https://pypi.python.org/pypi/timesketch)
 [![Version API](https://img.shields.io/pypi/v/timesketch_api_client?label=api_client&style=plastic)](https://pypi.python.org/pypi/timesketch_api_client)
 [![Version Import](https://img.shields.io/pypi/v/timesketch_import_client?label=import_client&style=plastic)](https://pypi.python.org/pypi/timesketch_import_client)
@@ -36,29 +33,6 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 
 #### Using Timesketch
 * [Users guide](https://timesketch.org/guides/user/basic-concepts/)
-
-#### Using Timesketch
-* [Users guide](https://timesketch.org/guides/user/basic-concepts/)
-
-#### Running GitHub Actions Locally with `act`
-To run GitHub Actions jobs locally using `act`, follow these steps:
-
-1.  **Install `act`**: Ensure you have `act` installed. Refer to the official `act` documentation for installation instructions.
-
-2.  **Navigate to the project root**: Open your terminal and navigate to the root directory of the Timesketch project.
-
-3.  **Simulate a Pull Request event**: Most of our e2e tests run on `pull_request` events. To simulate this, use:
-    ```bash
-    act pull_request -j <job-name> --container-options "-m 4g --privileged"
-    ```
-    Replace `<job-name>` with the name of the job you want to run (e.g., `PyPi-plaso-stable-opensearch-v2`).
-
-    *   `--container-options "-m 4g --privileged"`: This allocates 4GB of memory to the container and grants extended privileges, which can resolve memory-related (`exit code 137`) and container runtime issues respectively.
-
-4.  **Troubleshooting**: If you encounter `permission denied` errors related to `metadata.json`, you might need to manually adjust the file ownership on your host system:
-    ```bash
-    sudo chown $(whoami) metadata.json
-    ```
 
 #### Adding a Notebook Container
 * [Installation](https://timesketch.org/guides/user/notebook/)

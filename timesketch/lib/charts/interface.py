@@ -13,13 +13,11 @@
 # limitations under the License.
 """Interface for charts."""
 
-
 import logging
 from typing import Any, Dict, List, Optional, Union
 
 import altair as alt
 import pandas as pd
-
 
 logger = logging.getLogger(__name__)
 
@@ -105,11 +103,24 @@ class BaseChart:
             A LayerChart object, either with added transform or not, depending
             on whether sketch URL and field are set.
         """
-        chart = alt.Chart(self.values)
-        if not self._sketch_url:
-            return chart
+        data = self.values
+        # We need to convert the dataframe to a dict to avoid issues with
+        # newer versions of pandas and older versions of altair.
+        # See https://github.com/altair-viz/altair/issues/2763
+        if isinstance(data, pd.DataFrame):
+            data = data.to_dict(orient="records")
 
-        if not self._field:
+        if not isinstance(data, list):
+            logger.error(
+                "Chart data is not in a supported format. "
+                "Expected pandas DataFrame or list, got %s",
+                type(data),
+            )
+            data = []
+
+        chart = alt.Chart(data)
+
+        if not self._sketch_url or not self._field:
             return chart
 
         datum = getattr(alt.datum, self._field)
@@ -117,6 +128,9 @@ class BaseChart:
             agg_string = f"a={self._aggregation_id:d}&"
         else:
             agg_string = ""
+
+        # Construct Vega-Lite expression
+        # usage: url + datum.field + '" ' + extra
         url = f'{self._sketch_url:s}?{agg_string:s}q={self._field:s}:"'
         return chart.transform_calculate(
             url=url + datum + '" ' + self._extra_query_url

@@ -52,15 +52,15 @@ limitations under the License.
       disable-sort
       :loading="loading"
     >
-      <template v-slot:item.name="{ item }">
+      <template v-slot:[`item.name`]="{ item }">
         <router-link style="text-decoration: none" :to="{ name: 'Overview', params: { sketchId: item.id } }">{{
           item.name
         }}</router-link>
       </template>
-      <template v-slot:item.created_at="{ item }">
+      <template v-slot:[`item.created_at`]="{ item }">
         {{ item.created_at | shortDateTime }} <small>({{ item.created_at | timeSince }})</small>
       </template>
-      <template v-slot:item.last_activity="{ item }">
+      <template v-slot:[`item.last_activity`]="{ item }">
         {{ item.last_activity | timeSince }}
       </template>
     </v-data-table>

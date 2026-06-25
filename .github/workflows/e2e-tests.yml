@@ -7,45 +7,73 @@ on:
       - '.gitignore'
       - 'README.md'
       - '*.md'
+      - 'timesketch/frontend/**'
+      - 'timesketch/frontend-ng/**'
+      - 'timesketch/frontend-v3/**'
+
+permissions:
+  contents: read
 
 jobs:
-  # Ubuntu 24.04
-  PyPi-plaso-stable-opensearch-v2-ubuntu2404:
-    runs-on: ubuntu-24.04
+  PyPi-plaso-stable-opensearch-v2-ubuntu2604:
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ubuntu-24.04]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d --build
         env:
-          UBUNTU_VERSION: 24.04
-          OPENSEARCH_VERSION: 2.15.0
+          UBUNTU_VERSION: 26.04
+          OPENSEARCH_VERSION: 2.19.5
           PLASO_PPA_TRACK: stable
       - name: Run e2e tests
-        run: docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+        run: |
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
-  PyPi-plaso-staging-opensearch-v2-ubuntu2404:
+  PyPi-plaso-staging-opensearch-v2-ubuntu2604:
     continue-on-error: true
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ubuntu-24.04]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Set up infrastructure with docker compose
         run: docker compose -f docker/e2e/docker-compose.yml up -d --build
         env:
-          UBUNTU_VERSION: 24.04
-          OPENSEARCH_VERSION: 2.15.0
+          UBUNTU_VERSION: 26.04
+          OPENSEARCH_VERSION: 2.19.5
           PLASO_PPA_TRACK: staging
       - name: Run e2e tests
-        run: docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+        run: |
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
+  PyPi-plaso-stable-opensearch-v2-ubuntu2604-telemetry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Set up infrastructure with docker compose (telemetry enabled)
+        run: docker compose -f docker/e2e/docker-compose.yml --profile telemetry up -d --build
+        env:
+          UBUNTU_VERSION: 26.04
+          OPENSEARCH_VERSION: 2.19.5
+          PLASO_PPA_TRACK: stable
+          TIMESKETCH_OTEL_MODE: otlp-grpc
+      - name: Run e2e tests
+        run: |
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
+          docker compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py telemetry_test
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2

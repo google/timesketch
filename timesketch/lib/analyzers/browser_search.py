@@ -11,7 +11,6 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 from timesketch.lib import emojis
 
-
 logger = logging.getLogger("timesketch.analyzers.browser_search")
 
 

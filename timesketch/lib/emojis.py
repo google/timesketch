@@ -16,9 +16,7 @@
 See https://emojipedia.org for list of available unicode emojis.
 """
 
-
 import collections
-
 
 emoji = collections.namedtuple("emoji", "code help")
 

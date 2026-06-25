@@ -15,6 +15,7 @@ services:
       redis:
         condition: service_healthy
     environment:
+      - PYTHONUNBUFFERED=1
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
@@ -27,13 +28,20 @@ services:
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
       - PROMETHEUS_MULTIPROC_DIR=/tmp/
+      # - ENABLE_STRUCTURED_LOGGING=true
+      # To enable telemetry locally, set TIMESKETCH_OTEL_MODE=otlp-grpc when running with '--profile telemetry'
+      # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
+      - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
+      - TIMESKETCH_OTLP_GRPC_ENDPOINT=${TIMESKETCH_OTLP_GRPC_ENDPOINT:-otel-collector:4317}
+      - TIMESKETCH_OTLP_HTTP_ENDPOINT=${TIMESKETCH_OTLP_HTTP_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      - TIMESKETCH_OTLP_INSECURE=${TIMESKETCH_OTLP_INSECURE:-true}
     restart: always
     volumes:
       - ../../:/usr/local/src/timesketch/
 
   opensearch:
     container_name: opensearch
-    image: opensearchproject/opensearch:2.15.0
+    image: opensearchproject/opensearch:2.19.5
     restart: always
     environment:
       - discovery.type=single-node
@@ -42,6 +50,8 @@ services:
       - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
       - "DISABLE_INSTALL_DEMO_CONFIG=true"
       - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "logger.level=WARN"
     ulimits:
       memlock:
         soft: -1
@@ -84,11 +94,12 @@ services:
   prometheus:
     container_name: prometheus
     image: prom/prometheus:v2.24.1
+    user: root
     volumes:
       - ./prometheus:/etc/prometheus
     ports:
       - 127.0.0.1:9090:9090
-    command: --config.file=/etc/prometheus/prometheus.yml
+    command: --config.file=/etc/prometheus/prometheus.yml --log.level=warn
 
   # notebook:
   #   container_name: notebook
@@ -101,3 +112,36 @@ services:
   #   volumes:
   #     - ../../:/usr/local/src/timesketch/:ro
   #     - /tmp/:/usr/local/src/picadata/
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector:0.100.0
+    user: "0"
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../../data/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    depends_on:
+      - jaeger
+    profiles:
+      - telemetry
+
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/jaeger:2.17.0
+    restart: always
+    command: #security settings to enable otel from outside
+      - "--set"
+      - "receivers.otlp.protocols.grpc.endpoint=0.0.0.0:4317"
+      - "--set"
+      - "receivers.otlp.protocols.http.endpoint=0.0.0.0:4318"
+    ports:
+      - "127.0.0.1:16686:16686"
+    profiles:
+      - telemetry
+
+networks:
+  default:
+    name: timesketch-network

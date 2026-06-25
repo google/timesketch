@@ -14,6 +14,7 @@
 """Tests for search command."""
 
 import unittest
+import json
 import mock
 import pandas as pd
 
@@ -23,7 +24,7 @@ from timesketch_api_client import test_lib as api_test_lib
 from .. import test_lib
 from .search import saved_searches_group
 from .search import search_group
-
+from .search import search_wildcard
 
 EXPECTED_OUTPUT = """query_string: test:"foobar"
 query_filter: {
@@ -31,7 +32,8 @@ query_filter: {
   "terminate_after": 10000,
   "indices": "_all",
   "order": "asc",
-  "chips": []
+  "chips": [],
+  "use_wildcard_fields": false
 }
 """
 
@@ -126,3 +128,81 @@ class SearchTest(unittest.TestCase):
         self.assertIn("event1 1234567890123 2023-01-01T00:00:00", normalized_output)
         self.assertIn("event2 4567890123456 2023-01-02T00:00:00", normalized_output)
         mock_search_instance.to_pandas.assert_called_once()
+
+    @mock.patch("timesketch_api_client.sketch.Sketch.explore")
+    @mock.patch("timesketch_api_client.sketch.Sketch.explore_wildcard")
+    def test_search_wildcard(self, mock_explore_wildcard, mock_explore):
+        """Test the 'search-wildcard' command."""
+        mock_explore_wildcard.return_value = {"meta": {}, "objects": []}
+        mock_explore.return_value = {"meta": {}, "objects": []}
+
+        runner = CliRunner()
+        result = runner.invoke(
+            search_wildcard,
+            ["--query", "*evil*", "--limit", "10", "--compare"],
+            obj=self.ctx,
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("[]", result.output)
+        self.assertIn("--- Comparison Diagnostics ---", result.output)
+        mock_explore_wildcard.assert_called_once_with(
+            query_string="*evil*",
+            limit=10,
+        )
+        mock_explore.assert_called_once_with(
+            query_string="*evil*",
+            max_entries=10,
+            as_pandas=False,
+        )
+
+    @mock.patch("requests.Session", api_test_lib.mock_session)
+    @mock.patch("timesketch_cli_client.commands.search.search.Search")
+    def test_search_with_no_output_format_in_config(self, MockSearchClient):
+        """Test the 'search' command when no output format is specified in config."""
+        mock_search_instance = MockSearchClient.return_value
+        mock_df = pd.DataFrame(
+            {
+                "message": ["event1", "event2"],
+                "timestamp": [1234567890123, 4567890123456],
+                "datetime": ["2023-01-01T00:00:00", "2023-01-02T00:00:00"],
+            }
+        )
+        mock_search_instance.to_pandas.return_value = mock_df
+        mock_search_instance.return_fields = "message,timestamp,datetime"
+
+        ctx = test_lib.get_cli_context_no_output()
+        runner = CliRunner()
+        result = runner.invoke(search_group, ["--query", "some query"], obj=ctx)
+
+        self.assertEqual(result.exit_code, 0)
+        # By default, it should fallback to DEFAULT_OUTPUT_FORMAT (tabular)
+        self.assertIn("message", result.output)
+        self.assertIn("| event1", result.output)
+
+    @mock.patch("requests.Session", api_test_lib.mock_session)
+    @mock.patch("timesketch_cli_client.commands.search.search.Search")
+    def test_search_with_configured_json_output_format(self, MockSearchClient):
+        """Test search command uses output format configured in config file."""
+        mock_search_instance = MockSearchClient.return_value
+        mock_df = pd.DataFrame(
+            {
+                "message": ["event1", "event2"],
+                "timestamp": [1234567890123, 4567890123456],
+                "datetime": ["2023-01-01T00:00:00", "2023-01-02T00:00:00"],
+            }
+        )
+        mock_search_instance.to_pandas.return_value = mock_df
+        mock_search_instance.return_fields = "message,timestamp,datetime"
+
+        ctx = test_lib.get_cli_context_json_output()
+        runner = CliRunner()
+        result = runner.invoke(search_group, ["--query", "some query"], obj=ctx)
+
+        self.assertEqual(result.exit_code, 0)
+        # If the output format is json, the result output should be valid JSON
+        try:
+            parsed = json.loads(result.output)
+            self.assertEqual(len(parsed), 2)
+            self.assertEqual(parsed[0]["message"], "event1")
+        except json.JSONDecodeError as e:
+            self.fail(f"Output was not valid JSON: {e}")

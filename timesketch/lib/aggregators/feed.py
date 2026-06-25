@@ -23,7 +23,6 @@ insights. This analyzer is not useful for UI and therefore is "hidden" from
 views.
 """
 
-
 from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 

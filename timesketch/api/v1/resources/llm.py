@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API endpoint for interacting with LLM features."""
+
 import logging
 import multiprocessing
 import multiprocessing.managers
@@ -45,6 +46,70 @@ _OPERATIONAL_ERROR_SUBSTRINGS = (
     "invalid authentication credentials",
     "Invalid private key",
 )
+
+
+def _get_content_with_timeout_helper(
+    provider_payload: dict[str, Any],
+    feature_payload: dict[str, Any],
+    prompt: str,
+    shared_response: multiprocessing.managers.DictProxy,
+) -> None:
+    """Runs the LLM generation in a separate process and stores the result.
+
+    This function is designed to be the target of a `multiprocessing.Process`
+    to allow for a timeout on the LLM call. It instantiates the provider
+    inside the subprocess to avoid pickling issues.
+
+    Args:
+        provider_payload: A dictionary containing the provider class and its
+            configuration.
+        feature_payload: A dictionary containing the feature name and its
+            response schema.
+        prompt: The prompt string to send to the LLM.
+        shared_response: A multiprocessing manager dictionary to store the
+            response or error.
+    """
+    # Define fallback variables for logging to prevent NameError in except block
+    feature_name = "Unknown"
+    provider_name = "Unknown"
+
+    try:
+        # Safe extraction of payloads
+        provider_class = provider_payload.get("provider_class")
+        provider_config = provider_payload.get("config")
+        feature_name = feature_payload.get("name", "Unknown")
+        response_schema = feature_payload.get("response_schema")
+
+        if not provider_class or provider_config is None:
+            raise ValueError("Malformed provider payload: missing class or config.")
+
+        provider_name = getattr(provider_class, "NAME", "Unknown")
+
+        llm_provider = provider_class(config=provider_config)
+        api_response = llm_provider.generate(prompt, response_schema=response_schema)
+        shared_response.update({"response": api_response})
+    except Exception as e:  # pylint: disable=broad-except
+        process_logger = logging.getLogger("timesketch.api.llm.subprocess")
+        error_str = str(e)
+
+        # Reduce log noise for expected operational errors
+        if any(x in error_str for x in _OPERATIONAL_ERROR_SUBSTRINGS):
+            process_logger.warning(
+                "LLM operational error in subprocess for feature '%s' "
+                "(provider '%s'): %s",
+                feature_name,
+                provider_name,
+                error_str,
+            )
+        else:
+            process_logger.error(
+                "Error in LLM call for feature '%s' (provider '%s'): %s",
+                feature_name,
+                provider_name,
+                e,
+                exc_info=True,
+            )
+        shared_response.update({"error": error_str})
 
 
 class LLMResource(resources.ResourceMixin, Resource):
@@ -420,11 +485,19 @@ class LLMResource(resources.ResourceMixin, Resource):
             sketch_id,
             llm_provider.NAME,
         )
+        provider_payload = llm_provider.to_dict()
+        feature_payload = feature.get_execution_context()
+
         with multiprocessing.Manager() as manager_mp:
             shared_response = manager_mp.dict()
             process = multiprocessing.Process(
-                target=self._get_content_with_timeout,
-                args=(feature, prompt, shared_response, llm_provider),
+                target=_get_content_with_timeout_helper,
+                args=(
+                    provider_payload,
+                    feature_payload,
+                    prompt,
+                    shared_response,
+                ),
             )
             process.start()
             process.join(timeout=self._LLM_TIMEOUT_WAIT_SECONDS)
@@ -438,7 +511,14 @@ class LLMResource(resources.ResourceMixin, Resource):
                     self._LLM_TIMEOUT_WAIT_SECONDS,
                 )
                 process.terminate()
-                process.join()
+                process.join(timeout=2.0)
+                if process.is_alive():
+                    logger.warning(
+                        "LLM subprocess did not terminate after SIGTERM, "
+                        "sending SIGKILL."
+                    )
+                    process.kill()
+                    process.join()
                 self.METRICS["llm_errors_total"].labels(
                     sketch_id=str(sketch_id),
                     feature=feature.NAME,
@@ -501,48 +581,3 @@ class LLMResource(resources.ResourceMixin, Resource):
         self.METRICS["llm_duration_seconds"].labels(
             sketch_id=str(sketch_id), feature=feature_name
         ).observe(duration)
-
-    def _get_content_with_timeout(
-        self,
-        feature: feature_manager.LLMFeatureInterface,
-        prompt: str,
-        shared_response: multiprocessing.managers.DictProxy,
-        llm_provider: llm_provider_manager.LLMProvider,
-    ) -> None:
-        """Runs the LLM generation in a separate process and stores the result.
-
-        This function is designed to be the target of a `multiprocessing.Process`
-        to allow for a timeout on the LLM call. It calls the provider's
-        `generate` method and places the result or an error message into the
-        shared dictionary.
-
-        Args:
-            feature: The LLM feature instance, used for logging.
-            prompt: The prompt string to send to the LLM.
-            shared_response: A multiprocessing manager dictionary to store the
-                response or error.
-            llm_provider: The instantiated LLM provider to use for the call.
-        """
-        try:
-            api_response = llm_provider.generate(
-                prompt, response_schema=feature.RESPONSE_SCHEMA
-            )
-            shared_response.update({"response": api_response})
-        except Exception as e:  # pylint: disable=broad-except
-            process_logger = logging.getLogger("timesketch.api.llm.subprocess")
-            error_str = str(e)
-
-            # Reduce log noise for expected operational errors
-            if any(x in error_str for x in _OPERATIONAL_ERROR_SUBSTRINGS):
-                process_logger.warning(
-                    "LLM operational error in subprocess for feature '%s': %s",
-                    feature.NAME,
-                    error_str,
-                )
-            else:
-                process_logger.error(
-                    "Error in LLM call for feature '%s': %s",
-                    feature.NAME,
-                    e,
-                )
-            shared_response.update({"error": error_str})

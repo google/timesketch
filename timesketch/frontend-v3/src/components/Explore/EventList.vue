@@ -30,11 +30,17 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString">
+    <div v-if="searchError && !searchInProgress" class="ml-3">
+      <TsSearchErrorCard
+        :error-text="searchError"
+      ></TsSearchErrorCard>
+    </div>
+
+    <div v-if="!eventList.objects.length && !searchInProgress && !currentQueryString && !searchError">
       <ExploreWelcomeCard></ExploreWelcomeCard>
     </div>
 
-    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString">
+    <div v-if="!eventList.objects.length && !searchInProgress && currentQueryString && !searchError">
       <SearchNotFoundCard
         :current-query-string="currentQueryString"
         :filter-chips="filterChips"
@@ -322,9 +328,13 @@ limitations under the License.
             </div>
             <div v-else>
               <small class="mr-2">Actions:</small>
-              <v-btn v-if="!disableStarring" x-small outlined @click="toggleMultipleStars()">
+              <v-btn v-if="!disableStarring" x-small outlined @click="starAll()">
                 <v-icon left color="amber">mdi-star</v-icon>
-                Toggle star
+                Star all
+              </v-btn>
+              <v-btn x-small outlined @click="unstarAll()">
+                <v-icon left>mdi-star-outline</v-icon>
+                Unstar all
               </v-btn>
 
                 <v-menu v-model="showEventTagMenu" offset-x :close-on-content-click="false">
@@ -408,7 +418,7 @@ limitations under the License.
         </template>
 
         <!-- Actions field -->
-        <template v-slot:item.actions="{ item }">
+        <template v-slot:[`item.actions`]="{ item }">
           <span v-if="!disableStarring">
             <v-icon
               v-if="item._source.label.includes('__ts_star')"
@@ -444,7 +454,7 @@ limitations under the License.
         </template>
 
         <!-- Datetime field with action buttons -->
-        <template v-slot:item._source.timestamp="{ item }">
+        <template v-slot:[`item._source.timestamp`]="{ item }">
           <div
             v-bind:style="getTimelineColor(item)"
             class="datetime-table-cell"
@@ -505,7 +515,7 @@ limitations under the License.
         </template>
 
         <!-- Timeline name field -->
-        <template v-slot:item.timeline_name="{ item }">
+        <template v-slot:[`item.timeline_name`]="{ item }">
           <v-chip
             label
             style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em"
@@ -519,7 +529,7 @@ limitations under the License.
         </template>
 
         <!-- Comment field -->
-        <template v-slot:item._source.comment="{ item }">
+        <template v-slot:[`item._source.comment`]="{ item }">
           <div class="d-inline-block">
             <v-btn
               icon
@@ -591,6 +601,7 @@ import TsEventTagMenu from "./EventTagMenu.vue";
 import TsEventTags from "./EventTags.vue";
 import TsEventActionMenu from "./EventActionMenu.vue";
 import TsEventTagDialog from "./EventTagDialog.vue";
+import TsSearchErrorCard from "./SearchErrorCard.vue";
 
 const defaultQueryFilter = () => {
   return {
@@ -622,6 +633,7 @@ export default {
     TsEventActionMenu,
     TsBarChart,
     TsEventTagDialog,
+    TsSearchErrorCard,
   },
   props: {
     queryRequest: {
@@ -730,6 +742,7 @@ export default {
       sortOrderAsc: true,
       summaryCollapsed: false,
       showBanner: false,
+      searchError: '',
     }
   },
   computed: {
@@ -1036,6 +1049,7 @@ export default {
       this.searchInProgress = true
       this.selectedEventIds = []
       this.eventList = emptyEventList()
+      this.searchError = ''
 
       if (resetPagination) {
         this.currentPage = 1
@@ -1110,6 +1124,7 @@ export default {
         })
         .catch((e) => {
           console.log("Error fetching search results:", e)
+          this.searchInProgress = false
           let msg =
             'Sorry, there was a problem fetching your search results. Error: "' +
             e.response.data.message +
@@ -1124,6 +1139,7 @@ export default {
           } else {
             this.errorSnackBar(msg)
           }
+          this.searchError = msg
           console.error("Error message: " + msg)
           console.error(e)
         })
@@ -1298,33 +1314,35 @@ export default {
           console.error(e)
         })
     },
-    toggleMultipleStars: function () {
-      let netStarCountChange = 0
+    starAll: function () {
+      const toUpdate = [];
       this.selectedEvents.forEach((event) => {
-        if (event._source.label.includes("__ts_star")) {
-          event._source.label.splice(
-            event._source.label.indexOf("__ts_star"),
-            1
-          )
-          netStarCountChange--
-        } else {
-          event._source.label.push("__ts_star")
-          netStarCountChange++
+        if (!event._source.label.includes('__ts_star')) {
+          event._source.label.push('__ts_star')
+          toUpdate.push(event);
         }
       })
-      ApiClient.saveEventAnnotation(
-        this.sketch.id,
-        "label",
-        "__ts_star",
-        this.selectedEvents,
-        this.currentSearchNode
-      )
+      if (toUpdate.length === 0) return;
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
         .then((response) => {
-          this.appStore.updateEventLabels({
-            label: "__ts_star",
-            num: netStarCountChange,
-          })
-          this.selectedEventIds = []
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: toUpdate.length })
+          this.selectedEvents = []
+        })
+        .catch((e) => {})
+    },
+    unstarAll: function () {
+      const toUpdate = [];
+      this.selectedEvents.forEach((event) => {
+        if (event._source.label.includes('__ts_star')) {
+          event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
+          toUpdate.push(event);
+        }
+      })
+      if (toUpdate.length === 0) return;
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', toUpdate, this.currentSearchNode)
+        .then((response) => {
+          this.$store.dispatch('updateEventLabels', { label: '__ts_star', num: -toUpdate.length })
+          this.selectedEvents = []
         })
         .catch((e) => {})
     },

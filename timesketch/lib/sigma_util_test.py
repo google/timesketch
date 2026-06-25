@@ -13,14 +13,12 @@
 # limitations under the License.
 """Tests for sigma_util score."""
 
-
 import datetime
 
 from sigma.parser import exceptions as sigma_exceptions
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib import sigma_util
-
 
 SIGMA_MOCK_RULE_TEST4 = r"""
 title: Login with WMI
@@ -156,8 +154,7 @@ class TestSigmaUtilLib(BaseTest):
     def test_get_rule_by_text_zmap_rule(self):
         """Test getting sigma rule by text with endswith in detection."""
 
-        rule = sigma_util.parse_sigma_rule_by_text(
-            """
+        rule = sigma_util.parse_sigma_rule_by_text("""
 title: Suspicious Installation of ZMap
 id: 5266a592-b793-11ea-b3de-0242ac130004
 description: Detects suspicious installation of zmap
@@ -177,8 +174,7 @@ detection:
 falsepositives:
     - Unknown
 level: high
-"""
-        )
+""")
 
         self.assertIsNotNone(rule)
         self.assertIn("zmap", rule.get("search_query"))
@@ -236,8 +232,7 @@ level: high
     def test_get_rule_by_text_parsing_error(self):
         """Test getting sigma rule by text with a rule causing parsing error."""
         with self.assertRaises(sigma_exceptions.SigmaParseError):
-            sigma_util.parse_sigma_rule_by_text(
-                """
+            sigma_util.parse_sigma_rule_by_text("""
 title: Suspicious Foobar
 description: Detects suspicious installation of zmap
 references:
@@ -245,13 +240,11 @@ references:
 author: Alexander Jaeger
 date: 2020/06/26
 modified: 2020/06/26
-"""
-            )
+""")
 
     def test_get_rule_by_text_whitespaces_in_detection(self):
         """Test getting sigma rule by text."""
-        rule = sigma_util.parse_sigma_rule_by_text(
-            """
+        rule = sigma_util.parse_sigma_rule_by_text("""
 title: This rule is full of test edge cases
 id: aaa-3-34444-45-5-5-555
 description: Various edge cases in a rule
@@ -269,8 +262,7 @@ detection:
 falsepositives:
     - Unknown
 level: high
-"""
-        )
+""")
         self.assertIsNotNone(rule)
         self.assertEqual(
             '("Whitespace at" OR " beginning " OR " and extra text ")',
@@ -279,8 +271,7 @@ level: high
 
     def test_get_rule_by_text_minimal_rule(self):
         """Test getting sigma rule by text."""
-        rule = sigma_util.parse_sigma_rule_by_text(
-            """
+        rule = sigma_util.parse_sigma_rule_by_text("""
 title: foo
 description: bar
 id: aaaa-aaa-aaaa-aaaa
@@ -290,8 +281,7 @@ detection:
     keywords:
         - ' lorem '
     condition: keywords
-"""
-        )
+""")
 
         self.assertIsNotNone(rule)
         self.assertEqual(
@@ -303,8 +293,7 @@ detection:
         """Test getting sigma rule by text with count in condition which is not
         implemented so it will cause an exception."""
         with self.assertRaises(NotImplementedError):
-            sigma_util.parse_sigma_rule_by_text(
-                """
+            sigma_util.parse_sigma_rule_by_text("""
 title: count in detection
 description: rule that has count in the condition to error out
 id: aaaaa-aaaa-aaa-aaa-aaa
@@ -317,13 +306,11 @@ fields:
   - foo
   - bar
   - user
-"""
-            )
+""")
 
     def test_get_rule_by_text_date_error(self):
         """Test getting sigma rule by text with problematic value in date"""
-        rule = sigma_util.parse_sigma_rule_by_text(
-            """
+        rule = sigma_util.parse_sigma_rule_by_text("""
 title: Wrong dateformat
 id: 67b9a11a-03ae-490a-9156-9be9900f86b0
 description: Does nothing useful
@@ -336,8 +323,7 @@ detection:
     keywords:
         - 'foobar'
     condition: keywords
-"""
-        )
+""")
         # it is actually: 'date': datetime.date(2022, 1, 10)
         self.assertIsInstance(rule.get("date"), datetime.date)
         self.assertIsNot("2022-01-10", rule.get("date"))
@@ -345,8 +331,7 @@ detection:
 
     def test_get_rule_by_text_dots_in_keywords(self):
         """Test getting sigma rule by text with `:`in detection"""
-        rule = sigma_util.parse_sigma_rule_by_text(
-            """
+        rule = sigma_util.parse_sigma_rule_by_text("""
 title: Two dots
 id: 67b9a11a-03ae-490a-9156-9be9900aaaaa
 description: Similar to a mimikatz rule
@@ -360,8 +345,7 @@ detection:
         - 'aaa:bbb'
         - 'ccc::ddd'
     condition: keywords
-"""
-        )
+""")
         self.assertIsNotNone(rule)
         self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
@@ -372,8 +356,7 @@ detection:
     def test_get_rule_by_text_startswith_endswith_mixed(self):
         """Test getting sigma rule by text with startswith and endswith
         in detection"""
-        rule = sigma_util.parse_sigma_rule_by_text(
-            r"""
+        rule = sigma_util.parse_sigma_rule_by_text(r"""
 title: MIXED LSASS Mock rule to test various combinations
 id: 5d2c62fe-3cbb-47c3-88e1-88ef73503a9f
 description: rule to make a complex test case
@@ -459,8 +442,7 @@ fields:
 falsepositives:
     - Legitimate software accessing LSASS process for legitimate reason
 level: medium
-"""
-        )
+""")
 
         self.assertIsNotNone(rule)
         self.assertEqual("5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id"))
@@ -496,8 +478,7 @@ detection:
 
     def test_get_sigmarule_by_text_first_term(self):
         """Test getting sigma rule by text"""
-        rule = sigma_util.parse_sigma_rule_by_text(
-            r"""
+        rule = sigma_util.parse_sigma_rule_by_text(r"""
 title: WMI Login
 id: 5af54681-df95-4c26-854f-2565e13cfab0
 status: stable
@@ -511,8 +492,7 @@ detection:
             - 'quote'
     condition:
         (1 of star) and (1 of quote)
-"""
-        )
+""")
         self.assertIsNotNone(rule)
 
     def test_sigmarule_by_text_three_words(self):
@@ -520,8 +500,7 @@ detection:
         Testing the different terms in a Sigma rule and how each is treated.
         Reference: https://github.com/google/timesketch/issues/2550
         """
-        rule = sigma_util.parse_sigma_rule_by_text(
-            r"""
+        rule = sigma_util.parse_sigma_rule_by_text(r"""
 title: test terms
 id: 6d8ca9f2-79e2-44bd-957d-b4d810374972
 description: Rule to test combination of three words and how they are parsed
@@ -539,8 +518,7 @@ detection:
         - '*onlyoneterm*'
         - '*two words*'
         - '*completely new term*'
-    condition: keywords"""
-        )
+    condition: keywords""")
         self.assertIsNotNone(rule)
         self.assertEqual(
             '("onlyoneterm" OR "two words" OR "completely new term")',
@@ -551,8 +529,7 @@ detection:
         """
         Testing rules, that contain special characters (like "'") in their description
         """
-        rule = sigma_util.parse_sigma_rule_by_text(
-            r"""
+        rule = sigma_util.parse_sigma_rule_by_text(r"""
 title: Vim GTFOBin Abuse - Linux
 id: 7ab8f73a-fcff-428b-84aa-6a5ff7877dea
 status: test
@@ -592,6 +569,5 @@ detection:
 falsepositives:
     - Unknown
 level: high
-"""
-        )
+""")
         self.assertIsNotNone(rule)

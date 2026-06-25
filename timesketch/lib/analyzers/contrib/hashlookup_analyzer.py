@@ -9,7 +9,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib import emojis
 
-
 logger = logging.getLogger("timesketch.analyzers.hashlookup")
 
 

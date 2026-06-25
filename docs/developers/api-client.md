@@ -48,14 +48,15 @@ If the token file does not exist, it will be generated and encrypted using the s
 
 ### Directly passing username / password
 
-Another option to create a connection to the Timesketch server is by creating an `TimesketchApi` object and passing `
+Another option to create a connection to the Timesketch server is by creating an
+`TimesketchApi` object and passing the username and password directly:
 
 ```python
 from timesketch_api_client import client as timesketch_client
 client = timesketch_client.TimesketchApi(host_uri='https://demo.timesketch.org', username='demo', password='demo')
 ```
 
-> Careful with storing credentials in code that you intend to publish or make available to others. 
+> Careful with storing credentials in code that you intend to publish or make available to others.
 
 ## Client Config
 
@@ -116,6 +117,12 @@ Each of the additional sections needs to define a separate token file using the
 `token_file_path`, otherwise the config will attempt to read the default token
 file.
 
+**Note on Service Accounts and OAuth:** Even if the Timesketch server is globally
+configured to use OAuth (`auth_mode = oauth`), service accounts and automated
+scripts can still be configured to use `auth_mode = userpass` in their `.timesketchrc`
+file. This requires the Timesketch administrator to add the service account's
+username to the `LOCAL_AUTH_ALLOWED_USERS` list in the server's `timesketch.conf`
+configuration file.
 
 ## Using the Timesketch Client
 
@@ -311,6 +318,16 @@ search_obj.*?
 
 To find a list of all the possible configuration options.
 
+#### Wildcard Search Mode
+
+To use the optimized wildcard search mode, enable `use_wildcard_fields` on the
+`Search` object:
+
+```python
+search_obj.query_string = 'message:*Eventlog*'
+search_obj.use_wildcard_fields = True
+```
+
 #### Chips
 
 Chips are the "+ Time filter" or "+ Add label filter", etc elements you can
@@ -395,8 +412,14 @@ To get the results as:
 
 Or if you want to store the results as a file:
 
-```
+```python
 search_obj.to_file('/tmp/myresults.zip')
+```
+
+For large results, you can use the `stream` parameter to avoid loading the whole result into memory:
+
+```python
+search_obj.to_file('/tmp/myresults.zip', stream=True)
 ```
 
 (use the ZIP ending, since the resulting file will be a ZIP file with both the

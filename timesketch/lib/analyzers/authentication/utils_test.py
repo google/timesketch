@@ -503,8 +503,7 @@ class TestBruteForceAnalyzer(BaseTest):
         output.result_priority = "HIGH"
         output.result_status = "SUCCESS"
         output.result_summary = "1 brute force from 192.168.140.67"
-        output.result_markdown = textwrap.dedent(
-            """
+        output.result_markdown = textwrap.dedent("""
                 ### Brute Force Analyzer
 
                 ### Brute Force Summary for 192.168.140.67
@@ -518,8 +517,7 @@ class TestBruteForceAnalyzer(BaseTest):
                 - First successful login as admin
 
                 #### Top Usernames
-                - admin: 202"""
-        )
+                - admin: 202""")
 
         return output
 

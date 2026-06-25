@@ -13,6 +13,9 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
+import logging
+from typing import Optional
+from urllib.parse import urlparse
 
 import requests
 
@@ -50,6 +53,8 @@ from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
 
+logger = logging.getLogger("timesketch.views.auth")
+
 # Register flask blueprint
 auth_views = Blueprint("user_views", __name__)
 
@@ -59,6 +64,57 @@ SCOPES = [
     "openid",
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
+
+
+def is_safe_url(target: Optional[str]) -> bool:
+    """Check if a redirect target is safe (relative and internal).
+
+    Args:
+        target (str): The URL string to validate.
+
+    Returns:
+        bool: True if the URL is safe, False otherwise.
+    """
+    if not target:
+        return False
+
+    # Reject control characters that browsers might strip
+    if any(c in target for c in "\t\r\n\x0b\x0c"):
+        logger.warning(
+            "URL redirect blocked: contains control characters. Target: [%r]", target
+        )
+        return False
+
+    # Replace backslashes with forward slashes to emulate browser behavior
+    sanitized_target = target.replace("\\", "/")
+
+    # Must start with a single '/' and not '//'
+    if not sanitized_target.startswith("/") or sanitized_target.startswith("//"):
+        logger.warning(
+            "URL redirect blocked: not relative or is protocol-relative. Target: [%r]",
+            target,
+        )
+        return False
+
+    try:
+        parsed = urlparse(sanitized_target)
+    except ValueError as e:
+        logger.warning(
+            "URL redirect blocked: urlparse failed. Error: %s. Target: [%r]", e, target
+        )
+        return False
+
+    # Ensure it doesn't have a scheme or netloc
+    if parsed.scheme or parsed.netloc:
+        logger.warning(
+            "URL redirect blocked: contains scheme (%s) or host (%s). Target: [%r]",
+            parsed.scheme,
+            parsed.netloc,
+            target,
+        )
+        return False
+
+    return True
 
 
 @auth_views.route("/login/", methods=["GET", "POST"])
@@ -78,12 +134,60 @@ def login():
         Redirect if authentication is successful or template with context
         otherwise.
     """
+
+    # Strict validation: A safe relative URL MUST start with a single '/'
+    next_url = request.args.get("next", "/")
+    if not is_safe_url(next_url):
+        current_app.logger.warning(
+            "Invalid next_url in login attempt: %s (from IP: %s)",
+            next_url,
+            request.remote_addr,
+        )
+        next_url = "/"
+
+    oauth_enabled = current_app.config.get("GOOGLE_OIDC_ENABLED", False)
+
+    # Check for API/Local UserPass POST payload
+    form = UsernamePasswordForm()
+    if request.method == "POST":
+        # If OAuth is enabled, strictly enforce the allowlist
+        if oauth_enabled:
+            bypass_allowlist = set(
+                current_app.config.get("LOCAL_AUTH_ALLOWED_USERS", [])
+            )
+            username = request.form.get("username")
+
+            if username not in bypass_allowlist:
+                current_app.logger.warning(
+                    "Unauthorized local login attempt for user: [%s] (OAuth "
+                    "enabled, not in allowlist)",
+                    username,
+                )
+                abort(
+                    HTTP_STATUS_CODE_UNAUTHORIZED,
+                    "Local authentication is disabled for this user. Please use"
+                    " OAuth.",
+                )
+
+        # If the user is on the allowlist (or if OAuth is disabled globally),
+        # process local login
+        if form.validate_on_submit():
+            user = User.query.filter_by(username=form.username.data).first()
+            if user and user.check_password(plaintext=form.password.data):
+                login_user(user)
+                if current_user.is_authenticated:
+                    return redirect(next_url)
+
     # Google OpenID Connect authentication.
-    if current_app.config.get("GOOGLE_OIDC_ENABLED", False):
-        hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
-        # Save the next URL parameter in the session for redirect after login.
-        session["next"] = request.args.get("next", "/")
-        return redirect(get_oauth2_authorize_url(hosted_domain))
+    if oauth_enabled:
+        # Check if the client explicitly requested the local login form
+        explicit_local_auth = request.args.get("local_auth") == "1"
+
+        if not explicit_local_auth:
+            hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
+            # Save the next URL parameter in the session for redirect after login.
+            session["next"] = next_url
+            return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
     if current_app.config.get("GOOGLE_IAP_ENABLED", False):
@@ -151,17 +255,9 @@ def login():
             db_session.add(group)
             db_session.commit()
 
-    # Login form POST
-    form = UsernamePasswordForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user:
-            if user.check_password(plaintext=form.password.data):
-                login_user(user)
-
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get("next") or "/")
+        return redirect(next_url)
 
     return render_template("login.html", form=form)
 
@@ -287,11 +383,20 @@ def validate_api_token():
         )
 
     read_scopes = bearer_token_json.get("scope", "").split()
-    if not set(read_scopes) == set(SCOPES):
+    if not set(SCOPES).issubset(set(read_scopes)):
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Client scopes differ from what they should be (email, openid, "
             "profile) = {} VS {}".format(SCOPES, read_scopes),
+        )
+
+    if set(read_scopes) != set(SCOPES):
+        current_app.logger.warning(
+            "Client scopes differ from what they should be for user [%s]: "
+            "server-[%s] VS token-[%s]",
+            token_json.get("email"),
+            SCOPES,
+            read_scopes,
         )
 
     validated_email = token_json.get("email")
@@ -317,15 +422,6 @@ def validate_api_token():
             )
 
     allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
-    # TODO: Remove that after a 6 months, this following check is to ensure
-    # compatibility of config file
-    if not allowed_users:
-        current_app.logger.warning(
-            "Warning, GOOGLE_OIDC_USER_WHITELIST has "
-            "been deprecated. Please update "
-            "timesketch.conf."
-        )
-        allowed_users = current_app.config.get("GOOGLE_OIDC_USER_WHITELIST", [])
 
     # Check if the authenticating user is on the allow list.
     if allowed_users:
@@ -419,6 +515,9 @@ def google_openid_connect():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(session.get("next", "/"))
+        next_url = session.get("next", "/")
+        if not is_safe_url(next_url):
+            next_url = "/"
+        return redirect(next_url)
 
     return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")

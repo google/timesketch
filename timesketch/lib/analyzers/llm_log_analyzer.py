@@ -21,7 +21,6 @@ from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.llms.features import manager as feature_manager
 from timesketch.lib.llms.providers import manager as llm_provider_manager
 
-
 logger = logging.getLogger("timesketch.analyzers.dfiq.llm_log_analyzer")
 
 

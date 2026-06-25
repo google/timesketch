@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API search object."""
+
 import datetime
 import json
 import logging
@@ -22,7 +23,6 @@ import pandas
 from . import error
 from . import resource
 from . import searchtemplate
-
 
 logger = logging.getLogger("timesketch_api.search")
 
@@ -452,9 +452,11 @@ class Search(resource.SketchResource):
         self._searchtemplate = ""
         self._total_elastic_size = 0
         self._updated_at = ""
+        self._use_wildcard_fields = False
 
     def _extract_chips(self, query_filter):
         """Extract chips from a query_filter."""
+        self._chips = []
         chips = query_filter.get("chips", [])
         if not chips:
             return
@@ -487,9 +489,9 @@ class Search(resource.SketchResource):
             elif operator == "must_not":
                 chip.set_exclude()
 
-            self.add_chip(chip)
+            self._chips.append(chip)
 
-    def _execute_query(self, file_name="", count=False):
+    def _execute_query(self, file_name="", count=False, stream=False):
         """Execute a search request and store the results.
 
         Args:
@@ -502,6 +504,9 @@ class Search(resource.SketchResource):
                 set to True, the results will be stored in the
                 search object, and the number of events will be
                 returned.
+            stream (bool): Optional boolean that determines whether
+                we want to stream the results to a file. This is
+                useful for large exports.
 
         Returns:
             A dict with the search results or the total number of events
@@ -528,7 +533,7 @@ class Search(resource.SketchResource):
         }
 
         response = self.api.session.post(
-            f"{self.api.api_root}/{self.resource_uri}", json=form_data
+            f"{self.api.api_root}/{self.resource_uri}", json=form_data, stream=stream
         )
         if not error.check_return_status(response, logger):
             error.error_message(
@@ -537,7 +542,11 @@ class Search(resource.SketchResource):
 
         if file_name:
             with open(file_name, "wb") as fw:
-                fw.write(response.content)
+                if stream:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        fw.write(chunk)
+                else:
+                    fw.write(response.content)
             return None
 
         response_json = error.get_response_json(response, logger)
@@ -911,11 +920,13 @@ class Search(resource.SketchResource):
                 "indices": self.indices,
                 "order": "asc",
                 "chips": [],
+                "use_wildcard_fields": self.use_wildcard_fields,
             }
 
         query_filter = self._query_filter
         query_filter["chips"] = [x.chip for x in self._chips]
         query_filter["indices"] = self.indices
+        query_filter["use_wildcard_fields"] = self.use_wildcard_fields
         return query_filter
 
     @query_filter.setter
@@ -930,7 +941,22 @@ class Search(resource.SketchResource):
         if not isinstance(query_filter, dict):
             raise ValueError("Query filter needs to be a dict.")
         self._query_filter = query_filter
+        self._use_wildcard_fields = bool(query_filter.get("use_wildcard_fields", False))
         self._extract_chips(query_filter)
+        self.commit()
+
+    @property
+    def use_wildcard_fields(self):
+        """Return whether wildcard fields search mode is enabled."""
+        return self._use_wildcard_fields
+
+    @use_wildcard_fields.setter
+    def use_wildcard_fields(self, enabled: bool) -> None:
+        """Enable or disable wildcard fields search mode. Defaults to False."""
+        self._use_wildcard_fields = bool(enabled)
+        # Sync to query_filter dictionary immediately on change
+        _ = self.query_filter
+        self._query_filter["use_wildcard_fields"] = self._use_wildcard_fields
         self.commit()
 
     @property
@@ -1091,20 +1117,23 @@ class Search(resource.SketchResource):
 
         return self._raw_response
 
-    def to_file(self, file_name):
+    def to_file(self, file_name, stream=False):
         """Saves the content of the query to a file.
 
         Args:
             file_name (str): Full path to a file that will store the results
                 of the query to as a ZIP file. The ZIP file will contain a
                 METADATA file and a CSV with the results from the query.
+            stream (bool): Optional boolean that determines whether
+                we want to stream the results to a file. This is
+                useful for large exports.
 
         Returns:
             Boolean that determines if it was successful.
         """
         old_scrolling = self.scrolling
         self._scrolling = True
-        self._execute_query(file_name=file_name)
+        self._execute_query(file_name=file_name, stream=stream)
         self._scrolling = old_scrolling
         return True
 

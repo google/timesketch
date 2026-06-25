@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+
 from __future__ import unicode_literals
 
 import copy
@@ -19,7 +20,7 @@ import os
 import json
 import time
 import logging
-from typing import Dict, Generator, List, Optional
+from typing import Dict, Generator, List, Optional, Union
 
 import pandas
 
@@ -38,7 +39,6 @@ from . import searchtemplate
 from . import story
 from . import timeline
 from . import scenario as scenario_lib
-
 
 logger = logging.getLogger("timesketch_api.sketch")
 
@@ -507,10 +507,12 @@ class Sketch(resource.BaseResource):
         Args:
             force_delete (bool): If True, a hard delete is performed, which
                 permanently removes the sketch and all its associated data
-                (timelines, events, views, etc.) from the Timesketch database.
-                If False (default), the sketch is soft-deleted, typically by
-                marking it as deleted for admins to pick it up e.g. in a
-                cron job.
+                (timelines, events, views, etc.) from the Timesketch database
+                and OpenSearch. Administrators can use this to permanently
+                remove sketches that have already been soft-deleted.
+                If False (default), the sketch is soft-deleted by marking it
+                as deleted in the database and closing associated OpenSearch
+                indices to free up cluster resources.
 
         Returns:
             bool: True if the sketch was successfully deleted (either soft or hard).
@@ -1053,6 +1055,7 @@ class Sketch(resource.BaseResource):
         logger.error(message)
         raise RuntimeError(message)
 
+    # pylint: disable=too-many-arguments
     def explore(
         self,
         query_string=None,
@@ -1064,6 +1067,7 @@ class Sketch(resource.BaseResource):
         max_entries=None,
         file_name="",
         as_object=False,
+        use_wildcard_fields: bool = False,
     ):
         """Explore the sketch.
 
@@ -1089,6 +1093,8 @@ class Sketch(resource.BaseResource):
             as_object (bool): Optional bool that determines whether the
                 function will return a search object back instead of raw
                 results.
+            use_wildcard_fields (bool): Optional bool, if set to True compiles
+                the search query using native wildcard fields mapping.
 
         Returns:
             Dictionary with query results, a pandas DataFrame if as_pandas
@@ -1117,6 +1123,11 @@ class Sketch(resource.BaseResource):
             search_obj.from_saved(view.id)
 
         else:
+            if not query_filter:
+                query_filter = {}
+            if isinstance(query_filter, dict):
+                query_filter["use_wildcard_fields"] = use_wildcard_fields
+
             search_obj.from_manual(
                 query_string=query_string,
                 query_dsl=query_dsl,
@@ -1134,6 +1145,37 @@ class Sketch(resource.BaseResource):
             return search_obj.to_pandas()
 
         return search_obj.to_dict()
+
+    def explore_wildcard(
+        self,
+        query_string: str,
+        limit: Optional[int] = None,
+    ) -> Dict[str, Union[Dict, List]]:
+        """Explore the sketch with raw wildcard queries (Deprecated).
+
+        This method is maintained for backward-compatibility. Newer scripts should
+        use explore(query_string, use_wildcard_fields=True) instead.
+        TODO: (issue#3820) Refactor / Remove this method
+
+        Args:
+            query_string: String representation of the raw wildcard query
+                (e.g. '*evil*' or 'message:*evil*').
+            limit: Optional integer representing maximum entries to return.
+
+        Returns:
+            A dictionary containing the parsed search result schema.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to query an archived sketch.")
+
+        resource_url = f"{self.api.api_root}/sketches/{self.id}/explore_wildcard/"
+        form_data = {
+            "query": query_string,
+        }
+        if limit is not None:
+            form_data["filter"] = {"size": limit}
+        response = self.api.session.post(resource_url, json=form_data)
+        return error.get_response_json(response, logger)
 
     def list_available_analyzers(self):
         """Returns a list of available analyzers."""
@@ -1974,35 +2016,45 @@ class Sketch(resource.BaseResource):
         self._archived = not return_status
         return return_status
 
-    def export(self, file_path):
+    def export(self, file_path, stream=False):
         """Exports the content of the sketch to a ZIP file.
 
         Args:
             file_path (str): a file path where the ZIP file will be saved.
+            stream (bool): whether to stream the download.
 
         Raises:
             RuntimeError: if sketch cannot be exported.
         """
-        directory = os.path.dirname(file_path)
-        if not os.path.isdir(directory):
-            raise RuntimeError(
-                "The directory needs to exist, please create: "
-                "{0:s} first".format(directory)
-            )
+        # Expand ~ to home directory if present
+        file_path = os.path.expanduser(file_path)
 
+        # Ensure we have a .zip extension
         if not file_path.lower().endswith(".zip"):
             logger.warning("File does not end with a .zip, adding it.")
-            file_path = "{0:s}.zip".format(file_path)
+            file_path = f"{file_path}.zip"
+
+        directory = os.path.dirname(file_path) or "."
+        if not os.path.isdir(directory):
+            raise RuntimeError(
+                "The directory needs to exist and be a directory: "
+                f"{os.path.abspath(directory)} first"
+            )
+
+        if not os.access(directory, os.W_OK):
+            raise RuntimeError(
+                f"The directory is not writable: {os.path.abspath(directory)}"
+            )
 
         if os.path.isfile(file_path):
-            raise RuntimeError("File [{0:s}] already exists.".format(file_path))
+            raise RuntimeError(f"File [{file_path}] already exists.")
 
         form_data = {"action": "export"}
         resource_url = "{0:s}/sketches/{1:d}/archive/".format(
             self.api.api_root, self.id
         )
 
-        response = self.api.session.post(resource_url, json=form_data)
+        response = self.api.session.post(resource_url, json=form_data, stream=stream)
         status = error.check_return_status(response, logger)
         if not status:
             error.error_message(
@@ -2012,7 +2064,12 @@ class Sketch(resource.BaseResource):
             )
 
         with open(file_path, "wb") as fw:
-            fw.write(response.content)
+            if stream:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        fw.write(chunk)
+            else:
+                fw.write(response.content)
 
     def export_events_stream(
         self,

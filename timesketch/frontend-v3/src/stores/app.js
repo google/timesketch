@@ -62,10 +62,11 @@ export const useAppStore = defineStore("app", {
     activeAnalyses: [],
     analyzerResults: [],
     enabledTimelines: [],
-    notification: null
+    notification: null,
+    sketchAccessDenied: false,
   }),
   actions: {
-    async setAppStore() {},
+    async setAppStore() { },
 
     resetState() {
       ApiClient.getLoggedInUser().then((response) => {
@@ -106,6 +107,7 @@ export const useAppStore = defineStore("app", {
     },
 
     async updateSketch(sketchId) {
+      this.sketchAccessDenied = false;
       try {
         const response = await ApiClient.getSketch(sketchId);
         this.sketch = response.data.objects[0];
@@ -115,7 +117,13 @@ export const useAppStore = defineStore("app", {
         this.currentUser = currentUser;
         await this.updateTimelineTags(sketchId);
         await this.updateDataTypes(sketchId);
-      } catch (e) {}
+      } catch (e) {
+        if (e.response && e.response.status === 403) {
+          this.sketchAccessDenied = true;
+        } else {
+          console.error(e);
+        }
+      }
     },
 
     async updateTimelineTags(sketchId) {
@@ -138,7 +146,7 @@ export const useAppStore = defineStore("app", {
       try {
         const response = await ApiClient.runAggregator(sketchId, formData);
         this.tags = response.data.objects[0]["field_bucket"]["buckets"];
-      } catch (e) {}
+      } catch (e) { }
     },
 
     async updateDataTypes(sketchId) {
@@ -161,7 +169,7 @@ export const useAppStore = defineStore("app", {
       try {
         const response = await ApiClient.runAggregator(sketchId, formData);
         this.dataTypes = response.data.objects[0]["field_bucket"]["buckets"];
-      } catch (e) {}
+      } catch (e) { }
     },
 
     async updateEventLabels({ label: inputLabel, num }) {
@@ -185,7 +193,7 @@ export const useAppStore = defineStore("app", {
       try {
         const response = await ApiClient.getSearchHistory(sketchId);
         this.getSearchHistory = response.data.objects;
-      } catch (e) {}
+      } catch (e) { }
     },
 
     async updateTimeFilters(sketchId) {
@@ -234,7 +242,7 @@ export const useAppStore = defineStore("app", {
       try {
         const response = await ApiClient.getScenarioTemplates(sketchId);
         this.scenarioTemplates = response.data.objects;
-      } catch (e) {}
+      } catch (e) { }
     },
 
     async updateSavedGraphs(sketchId) {
@@ -253,14 +261,14 @@ export const useAppStore = defineStore("app", {
       try {
         const response = await ApiClient.getGraphPluginList();
         this.graphPlugins = response.data;
-      } catch (e) {}
+      } catch (e) { }
     },
 
     async updateContextLinks() {
       try {
         const response = await ApiClient.getContextLinkConfig();
         this.contextLinkConf = response.data;
-      } catch (e) {}
+      } catch (e) { }
     },
 
     async updateAnalyzerList(sketchId) {

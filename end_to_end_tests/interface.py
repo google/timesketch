@@ -14,6 +14,7 @@
 """Interface for end-to-end tests."""
 
 import collections
+import datetime
 import inspect
 import os
 import json
@@ -31,7 +32,7 @@ from timesketch_import_client import importer
 
 # Default values based on Docker config.
 TEST_DATA_DIR = "/usr/local/src/timesketch/end_to_end_tests/test_data"
-HOST_URI = "http://127.0.0.1"
+HOST_URI = os.environ.get("TIMESKETCH_SERVER_URL", "http://127.0.0.1")
 OPENSEARCH_HOST = "opensearch"
 OPENSEARCH_PORT = 9200
 OPENSEARCH_MAPPINGS_FILE = "/etc/timesketch/plaso.mappings"
@@ -68,7 +69,9 @@ class BaseEndToEndTest(object):
         self._imported_files = []
         self._imported_sketch_timelines = set()
 
-    def import_timeline(self, filename, index_name=None, sketch=None):
+    def import_timeline(
+        self, filename, index_name=None, sketch=None, entry_threshold=None
+    ):
         """Import a Plaso, CSV or JSONL file.
 
         Args:
@@ -76,6 +79,7 @@ class BaseEndToEndTest(object):
             index_name (str): The OpenSearch index to store the documents in.
             sketch (Sketch): Optional sketch object to add the timeline to.
                         if no sketch is provided, the default sketch is used.
+            entry_threshold (int): Optional chunk size threshold for imports.
 
         Raises:
             TimeoutError if import takes too long.
@@ -95,10 +99,12 @@ class BaseEndToEndTest(object):
             streamer.set_timeline_name(file_path)
             streamer.set_index_name(index_name)
             streamer.set_provider("e2e test interface")
+            if entry_threshold is not None:
+                streamer.set_entry_threshold(entry_threshold)
             streamer.add_file(file_path)
             timeline = streamer.timeline
             if not timeline:
-                print("Error creating timeline, please try again.")
+                print("Info: Timeline object not yet created by streamer.")
 
         # Poll the timeline status and wait for the timeline to be ready
         max_time_seconds = 600  # Timeout after 10min
@@ -107,22 +113,32 @@ class BaseEndToEndTest(object):
         retry_count = 0
         while True:
             if retry_count >= max_retries:
-                raise TimeoutError
+                raise RuntimeError(
+                    f"Timeout: Timeline for {filename} (Sketch {sketch.id}) "
+                    "did not become ready within 10 minutes."
+                )
 
             try:
                 if not timeline:
-                    print("Error no timeline yet, trying to get the new one")
+                    print(f"Waiting for timeline object for {filename}...")
                     timeline = streamer.timeline
-                _ = timeline.lazyload_data(refresh_cache=True)
-                status = timeline.status
+
+                if timeline:
+                    _ = timeline.lazyload_data(refresh_cache=True)
+                    status = timeline.status
+                else:
+                    # Object not yet created by the asynchronous streamer
+                    retry_count += 1
+                    time.sleep(sleep_time_seconds)
+                    continue
+
             except AttributeError:
-                # The timeline is not ready yet, so we need to wait
+                # The timeline object exists but is not fully initialized yet
                 retry_count += 1
                 time.sleep(sleep_time_seconds)
                 continue
             except OSError as e:
                 # This can happen if the file is not found or permissions are wrong.
-                # It's better to raise a more specific error here.
                 raise RuntimeError(
                     f"Unable to import timeline {timeline.index.id}"
                     f" sketch: {sketch.id}, got an OS Error for importing "
@@ -137,15 +153,21 @@ class BaseEndToEndTest(object):
             if status == "fail" or timeline.index.status == "fail":
                 if retry_count > 3:
                     raise RuntimeError(
-                        f"Unable to import {filename}"
-                        f" into timeline {timeline.index.id}"
-                        f" part of sketch: {sketch.id}."
+                        f"Failed to import {filename} into sketch {sketch.id}. "
+                        "Timeline or Index status is 'fail'."
                     )
 
             if status == "ready" and timeline.index.status == "ready":
                 break
             retry_count += 1
             time.sleep(sleep_time_seconds)
+
+        # Final safety check
+        if not timeline:
+            raise RuntimeError(
+                f"Critical Error: import_timeline finished for {filename} "
+                "but no timeline object was ever created."
+            )
 
         # Adding in one more sleep for good measure (preventing flaky tests).
         time.sleep(sleep_time_seconds)
@@ -269,10 +291,14 @@ class BaseEndToEndTest(object):
         Returns:
             Counter of number of tests and errors.
         """
-        print("*** {0:s} ***".format(self.NAME))
+        print(f"*** {self.NAME} ***")
         for test_name, test_func in self._get_test_methods():
             self._counter["tests"] += 1
-            print("Running test: {0:s} ...".format(test_name), end="", flush=True)
+            if os.environ.get("GITHUB_ACTIONS"):
+                print(f"Running test: {test_name} ...", end="", flush=True)
+            else:
+                now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(f"{now} Running test: {test_name} ...", end="", flush=True)
             try:
                 test_func()
             except Exception:  # pylint: disable=broad-except

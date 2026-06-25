@@ -13,11 +13,12 @@
 # limitations under the License.
 """Tests for the auth views."""
 
-
+from unittest import mock
 from flask import current_app
 from flask_login import current_user
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.testlib import BaseTest
 
 
@@ -59,3 +60,99 @@ class AuthViewTest(BaseTest):
         self.login()
         response = self.client.get("/logout/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+    @mock.patch("flask.current_app.logger")
+    def test_login_invalid_next_url(self, mock_logger):
+        """Test the login view handler with an invalid next_url."""
+        invalid_next_urls = [
+            "//example.com",
+            "/\\example.com",
+            "http://example.com",
+            "///example.com",
+            "/\t/example.com",
+            "/\n/example.com",
+            "/\r/example.com",
+            "/\x0b/example.com",
+            "/\x0c/example.com",
+            "javascript:alert(1)",
+            "file:///etc/passwd",
+        ]
+        for url in invalid_next_urls:
+            response = self.client.get(f"/login/?next={url}")
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+            mock_logger.warning.assert_called()
+            mock_logger.warning.reset_mock()
+
+    def test_login_authenticated_invalid_next_url(self):
+        """Test authenticated user redirect to '/' if 'next' is unsafe."""
+        self.login()
+        response = self.client.get("/login/?next=//example.com")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertTrue(response.headers.get("Location").endswith("/"))
+
+    def test_login_authenticated_valid_next_url(self):
+        """Test authenticated user redirect to safe 'next' URL."""
+        self.login()
+        response = self.client.get("/login/?next=/sketch/1/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertTrue(response.headers.get("Location").endswith("/sketch/1/"))
+
+
+class AuthApiViewTest(BaseTest):
+    """Test the auth API view."""
+
+    @mock.patch("timesketch.views.auth.requests.post")
+    @mock.patch("timesketch.views.auth.get_oauth2_discovery_document")
+    @mock.patch("timesketch.views.auth.validate_jwt")
+    def test_validate_api_token_scope_superset(self, _, mock_discovery, mock_post):
+        """Test validate_api_token with superset of scopes."""
+        # Setup config
+        self.app.config["GOOGLE_OIDC_CLIENT_ID"] = "test_client_id"
+        self.app.config["GOOGLE_OIDC_API_CLIENT_ID"] = "test_api_client_id"
+
+        # Mock responses
+        mock_discovery.return_value = {"issuer": "https://accounts.google.com"}
+
+        # Mock requests.post
+        def side_effect(*_, **kwargs):
+            data = kwargs.get("data", {})
+            if "access_token" in data:
+                return mock.Mock(
+                    status_code=200,
+                    json=lambda: {
+                        # This includes extra scopes (short forms) that caused
+                        # the failure previously.
+                        "scope": (
+                            "email profile openid "
+                            "https://www.googleapis.com/auth/userinfo.profile "
+                            "https://www.googleapis.com/auth/userinfo.email"
+                        ),
+                        "azp": "test_client_id",
+                        "email": "test@example.com",
+                    },
+                )
+            if "id_token" in data:
+                return mock.Mock(
+                    status_code=200,
+                    json=lambda: {
+                        "email_verified": True,
+                        "azp": "test_client_id",
+                        "email": "test@example.com",
+                        "aud": "test_client_id",
+                    },
+                )
+            return mock.Mock(status_code=400)
+
+        mock_post.side_effect = side_effect
+
+        # Headers and Args
+        headers = {"Authorization": "Bearer test_access_token"}
+
+        with mock.patch.object(self.app.logger, "warning") as mock_warning:
+            response = self.client.get(
+                "/login/api_callback/?id_token=test_id_token", headers=headers
+            )
+            mock_warning.assert_called()
+        # We expect 200 because scope mismatch is now relaxed
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn(b"Authenticated", response.data)

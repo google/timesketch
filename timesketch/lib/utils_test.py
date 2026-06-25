@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for utils."""
 
-
 import io
 import re
 import pandas as pd
@@ -26,7 +25,6 @@ from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _convert_timestamp_to_datetime
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
-
 
 TEST_CSV = "tests/test_events/sigma_events.csv"
 ISO8601_REGEX = (

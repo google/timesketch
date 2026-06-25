@@ -221,8 +221,7 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
         output.result_summary = (
             "1 brute force from 192.168.40.25, 1 brute force from 192.168.100.112"
         )
-        output.result_markdown = textwrap.dedent(
-            """
+        output.result_markdown = textwrap.dedent("""
             ### Brute Force Analyzer
 
             ### Brute Force Summary for 192.168.40.25
@@ -249,8 +248,7 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
             - First successful login as Administrator
 
             #### Top Usernames
-            - Administrator: 201"""
-        )
+            - Administrator: 201""")
         output.platform_meta_data["created_tags"] = ["windows_bruteforce"]
 
         return str(output)
@@ -273,10 +271,8 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
         output.result_priority = "NOTE"
         output.result_status = "SUCCESS"
         output.result_summary = "No bruteforce activity"
-        output.result_markdown = textwrap.dedent(
-            """
+        output.result_markdown = textwrap.dedent("""
             ### Brute Force Analyzer
-            Brute force not detected"""
-        )
+            Brute force not detected""")
 
         return str(output)

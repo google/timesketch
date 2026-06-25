@@ -367,7 +367,7 @@ export default {
               return
             }
             // check if the timeout of the interval has been reached.
-            // This prevents the analyzer frontend from checking stuck anayzers indefinetly.
+            // This prevents the analyzer frontend from checking stuck anayzers indefinitely.
             if (
               this.activeAnalyzerTimerStart !== null &&
               Date.now() - this.activeAnalyzerTimerStart > this.activeAnalyzerTimeout

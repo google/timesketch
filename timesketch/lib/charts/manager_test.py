@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for chart manager."""
 
-
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.charts import manager
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 """URL routes for API resources."""
 
-
 from .resources.aggregation import AggregationGroupResource
 from .resources.aggregation import AggregationGroupListResource
 from .resources.aggregation import AggregationListResource
@@ -28,6 +27,7 @@ from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
 from .resources.explore import SearchHistoryResource
 from .resources.explore import SearchHistoryTreeResource
+from .resources.explore import ExploreWildcardResource
 from .resources.exportstream import ExportStreamListResource
 from .resources.datafinder import DataFinderResource
 from .resources.datasource import DataSourceResource
@@ -93,7 +93,6 @@ from .resources.scenarios import QuestionResource
 from .resources.scenarios import QuestionConclusionListResource
 from .resources.scenarios import QuestionConclusionResource
 
-
 # Disable error for long line. Readability is more important than line
 # length in this case.
 # pylint: disable=line-too-long
@@ -133,6 +132,10 @@ API_ROUTES = [
         "/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>/",
     ),
     (ExploreResource, "/sketches/<int:sketch_id>/explore/"),
+    (
+        ExploreWildcardResource,
+        "/sketches/<int:sketch_id>/explore_wildcard/",
+    ),
     (SearchHistoryResource, "/sketches/<int:sketch_id>/searchhistory/"),
     (
         SearchHistoryTreeResource,

@@ -14,6 +14,8 @@
 """View resources for version 1 of the Timesketch API."""
 
 import json
+import jinja2
+import jinja2.sandbox
 
 from flask import jsonify
 from flask import request
@@ -99,6 +101,26 @@ class ViewListResource(resources.ResourceMixin, Resource):
         # Create a new search template based on this view (only if requested by
         # the user).
         if form.new_searchtemplate.data:
+            if not current_user.admin:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    "Only admins can create search templates.",
+                )
+
+            if len(query_string) > 10000:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Search template query string too long.",
+                )
+
+            try:
+                env = jinja2.sandbox.SandboxedEnvironment()
+                env.from_string(query_string)
+            except jinja2.exceptions.TemplateSyntaxError as e:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, f"Search template syntax error: {e}"
+                )
+
             query_filter_dict = json.loads(query_filter)
             if query_filter_dict.get("indices", None):
                 query_filter_dict["indices"] = "_all"

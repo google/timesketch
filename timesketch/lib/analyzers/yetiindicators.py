@@ -37,6 +37,8 @@ TYPE_TO_EMOJI = {
 # Maps Yeti indicator locations to a Timesketch intelligence type
 INDICATOR_LOCATION_MAPPING = {"filesystem": "fs_path"}
 
+# Items tagged with this tag in Yeti will be ignored by the analyzers.
+TIMESKETCH_MUTE_TAG = "timesketch:mute"
 
 # Maps Yeti observable types to Timesketch observable types
 OBSERVABLE_INTEL_MAPPING = {
@@ -140,11 +142,13 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             event: a Timesketch sketch Event object.
             neighbors: a list of Yeti entities related to the indicator.
         """
+        tags = set()
+        msg = ""
         if indicator["root_type"] == "indicator":
             tags = {slugify(tag) for tag in indicator["relevant_tags"]}
             msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
         if indicator["root_type"] == "observable":
-            tags = {slugify(tag) for tag in indicator["tags"].keys()}
+            tags = {slugify(tag["name"]) for tag in indicator["tags"]}
             msg = f'Observable match: "{indicator["value"]}" (ID: {indicator["id"]})\n'
         for neighbor in neighbors:
             tags.add(slugify(neighbor["name"]))
@@ -179,6 +183,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         """
         intel_type = "other"
         match_in_sketch = None
+        uri = ""
 
         if indicator["type"] == "regex":
             if "compiled_regexp" not in indicator:
@@ -198,7 +203,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             match_in_sketch = indicator["value"]
             intel_type = OBSERVABLE_INTEL_MAPPING.get(indicator["type"], "other")
             uri = f"{self.yeti_web_root}/observables/{indicator['id']}"
-            tags = list(indicator["tags"].keys())
+            tags = [tag["name"] for tag in indicator["tags"]]
 
         if not match_in_sketch:
             return
@@ -488,6 +493,13 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
 
         entities = self.get_entities(type_selector=self._TYPE_SELECTOR)
         for entity in entities.values():
+            if TIMESKETCH_MUTE_TAG in entity.get("tags", []):
+                logging.debug(
+                    "Skipping entity %s because it is tagged with %s",
+                    entity["name"],
+                    TIMESKETCH_MUTE_TAG,
+                )
+                continue
             indicators = self.get_neighbors(
                 entity,
                 max_hops=self._MAX_HOPS,
@@ -500,6 +512,13 @@ class YetiGraphAnalyzer(YetiBaseAnalyzer):
             )
 
             for indicator in indicators.values():
+                if TIMESKETCH_MUTE_TAG in indicator.get("tags", []):
+                    logging.debug(
+                        "Skipping indicator %s because it is tagged with %s",
+                        indicator["name"],
+                        TIMESKETCH_MUTE_TAG,
+                    )
+                    continue
                 query_dsl = None
                 if indicator["root_type"] == "observable":
                     query_dsl = self.build_query_from_observable(indicator)
@@ -603,8 +622,8 @@ class YetiTriageIndicators(YetiGraphAnalyzer):
 
     DEPENDENCIES = frozenset(["domain"])
 
-    _TYPE_SELECTOR = ["attack-pattern:insider"]
-    _TARGET_NEIGHBOR_TYPE = ["observable"]
+    _TYPE_SELECTOR = ["attack-pattern:triage"]
+    _TARGET_NEIGHBOR_TYPE = ["regex", "query"]
     _DIRECTION = "inbound"
     _SAVE_INTELLIGENCE = False
 
@@ -671,10 +690,10 @@ class YetiKeywords(YetiGraphAnalyzer):
     """Analyzer for Yeti investigation-related indicators."""
 
     NAME = "yetikeywords"
-    DISPLAY_NAME = "Yeti Investigations intelligence"
+    DISPLAY_NAME = "Yeti Keyword matching"
     DESCRIPTION = (
-        "Mark events that match Yeti investigation indicators and observables."
-        " {investigation} ← {indicators, observables}"
+        "Mark events that match Yeti keywords linked to attack patterns."
+        " {attack-pattern:keywords} ← {observable}"
     )
 
     _TYPE_SELECTOR = ["attack-pattern:keywords"]
@@ -775,8 +794,9 @@ class YetiBloomChecker(YetiBaseAnalyzer):
         return str(self.output)
 
 
-manager.AnalysisManager.register_analyzer(YetiTriageIndicators)
 manager.AnalysisManager.register_analyzer(YetiBadnessIndicators)
-manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
-manager.AnalysisManager.register_analyzer(YetiInvestigations)
 manager.AnalysisManager.register_analyzer(YetiBloomChecker)
+manager.AnalysisManager.register_analyzer(YetiInvestigations)
+manager.AnalysisManager.register_analyzer(YetiKeywords)
+manager.AnalysisManager.register_analyzer(YetiLOLBASIndicators)
+manager.AnalysisManager.register_analyzer(YetiTriageIndicators)

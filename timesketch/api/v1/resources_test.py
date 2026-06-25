@@ -13,6 +13,9 @@
 # limitations under the License.
 """Tests for v1 of the Timesketch API."""
 
+import os
+import shutil
+import tempfile
 import json
 from unittest import mock
 
@@ -22,6 +25,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
+from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.dfiq import DFIQCatalog
@@ -30,7 +34,18 @@ from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
+from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import SearchTemplate
+from timesketch.models.user import User, Group
+from timesketch.models import db_session
 from timesketch.api.v1.resources import ResourceMixin
+from timesketch.api.v1.resources import upload
+from timesketch.lib.llms.providers import interface as llm_interface
+from timesketch.lib.llms.providers import manager as llm_manager
+from timesketch.lib.llms.features import interface as feature_interface
+from timesketch.api.v1.resources import llm
 
 
 class ResourceMixinTest(BaseTest):
@@ -133,6 +148,46 @@ class SketchListResourceTest(BaseTest):
         expected_names = {sketch_name_by_user1, sketch_name_by_user2}
         self.assertSetEqual(names, expected_names)
 
+    def test_sketch_list_no_duplicates(self):
+        """Test that users in multiple shared groups don't see duplicate counts."""
+        # 1. Use user2
+        user = self.user2
+
+        # 2. Create two groups and add the user to both
+        group1 = Group(name="repro_group1", display_name="repro_group1")
+        group2 = Group(name="repro_group2", display_name="repro_group2")
+        db_session.add(group1)
+        db_session.add(group2)
+        db_session.commit()
+
+        user.groups.append(group1)
+        user.groups.append(group2)
+        db_session.add(user)
+        db_session.commit()
+
+        # 3. Create a sketch owned by user1
+        sketch = self._create_sketch(name="Repro Sketch", user=self.user1)
+
+        # 4. Share the sketch with both groups
+        sketch.grant_permission(permission="read", group=group1)
+        sketch.grant_permission(permission="read", group=group2)
+        db_session.add(sketch)
+        db_session.commit()
+
+        # 5. Login as test2
+        self.login(username="test2", password="test")
+
+        # 6. Call the /api/v1/sketches/ endpoint
+        response = self.client.get(self.resource_url, query_string={"scope": "all"})
+
+        # 7. Check total_items
+        total_items = response.json["meta"]["total_items"]
+        objects = response.json["objects"]
+        objects_count = len(objects)
+
+        self.assertEqual(objects_count, 1, "Expected exactly 1 sketch in objects list")
+        self.assertEqual(total_items, 1, "Expected total_items to be exactly 1")
+
     def test_sketch_list_user_scope(self):
         """Authenticated request to get a list of the user's own sketches."""
         # user2 has access to sketch1 from user1 via setUp.
@@ -167,7 +222,8 @@ class SketchListResourceTest(BaseTest):
         objects = response.json["objects"]
 
         self.assertEqual(len(objects), 1)
-        self.assertEqual(objects[0]["name"], "Test 1")
+        name1 = objects[0]["name"]
+        self.assertIn(name1, ["Test 1", "Test 3"])
         self.assertEqual(meta["total_pages"], 2)
         self.assertTrue(meta["has_next"])
         self.assertFalse(meta["has_prev"])
@@ -181,7 +237,9 @@ class SketchListResourceTest(BaseTest):
         objects = response.json["objects"]
 
         self.assertEqual(len(objects), 1)
-        self.assertEqual(objects[0]["name"], "Test 3")
+        name2 = objects[0]["name"]
+        self.assertIn(name2, ["Test 1", "Test 3"])
+        self.assertNotEqual(name1, name2)
         self.assertFalse(meta["has_next"])
         self.assertTrue(meta["has_prev"])
 
@@ -200,6 +258,8 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(len(response.json["objects"][0]["timelines"]), 1)
         self.assertEqual(response.json["objects"][0]["name"], "Test 1")
         self.assertIsInstance(response.json["meta"]["emojis"], dict)
+        self.assertIn("supports_wildcard", response.json["meta"])
+        self.assertTrue(response.json["meta"]["supports_wildcard"])
         self.assert200(response)
 
     def test_sketch_acl(self):
@@ -292,6 +352,144 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
+    def test_unarchive_sketch_with_failed_timeline(self):
+        """Tests that a sketch can be successfully unarchived even if it contains
+        a timeline in a 'fail' state. This ensures that users can recover
+        sketches with problematic timelines and fix them (e.g., by deleting
+        the failed timeline) after unarchiving.
+        """
+        self.login()
+
+        # Create sketch to test with
+        data = {"name": "test_unarchive_fail", "description": "desc"}
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        sketch = Sketch.get_by_id(created_id)
+
+        # Create a dummy search index
+        searchindex = SearchIndex(
+            name="failed_index",
+            description="failed_index",
+            user=sketch.user,
+            index_name="failed_index",
+        )
+        searchindex.set_status("fail")
+        db_session.add(searchindex)
+
+        timeline = Timeline(
+            name="failed_timeline",
+            description="failed_timeline",
+            sketch=sketch,
+            user=sketch.user,
+            searchindex=searchindex,
+        )
+        timeline.set_status("fail")
+        db_session.add(timeline)
+        db_session.commit()
+
+        # Manually archive the sketch (bypass API check for failed timeline
+        # during archive if any). Actually, archive API might block it too
+        # if we don't fix archive API. But we are testing UNARCHIVE here.
+        # So let's force the state.
+        sketch.set_status("archived")
+        timeline.set_status("fail")
+        db_session.commit()
+
+        # Try to unarchive
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "unarchive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        # This should now succeed with 200 OK instead of 500
+        self.assert200(response)
+
+        # Verify sketch is ready
+        sketch = Sketch.get_by_id(created_id)
+        self.assertEqual(sketch.get_status.status, "ready")
+
+        # Verify failed timeline is still failed (or whatever the logic does)
+        self.assertEqual(timeline.get_status.status, "fail")
+
+    def test_unarchive_sketch_with_mixed_states(self):
+        """Tests that a sketch can be successfully unarchived even if it contains
+        both 'fail' and 'processing' timelines. This confirms that the
+        unarchive operation is robust against various non-ready timeline
+        states, allowing users to regain access to the sketch and address
+        each problematic timeline individually.
+        """
+        self.login()
+
+        # Create sketch
+        data = {"name": "test_unarchive_mixed", "description": "desc"}
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        created_id = response.json["objects"][0]["id"]
+
+        sketch = Sketch.get_by_id(created_id)
+
+        # Create a failed timeline
+        idx_fail = SearchIndex(name="idx_fail", user=sketch.user, index_name="idx_fail")
+        idx_fail.set_status("fail")
+        db_session.add(idx_fail)
+        tl_fail = Timeline(
+            name="tl_fail",
+            sketch=sketch,
+            user=sketch.user,
+            searchindex=idx_fail,
+        )
+        tl_fail.set_status("fail")
+        db_session.add(tl_fail)
+
+        # Create a processing timeline
+        idx_proc = SearchIndex(name="idx_proc", user=sketch.user, index_name="idx_proc")
+        idx_proc.set_status("processing")
+        db_session.add(idx_proc)
+        tl_proc = Timeline(
+            name="tl_proc",
+            sketch=sketch,
+            user=sketch.user,
+            searchindex=idx_proc,
+        )
+        tl_proc.set_status("processing")
+        db_session.add(tl_proc)
+
+        # Set sketch to archived to simulate the stuck state
+        sketch.set_status("archived")
+        db_session.commit()
+
+        # Try to unarchive
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "unarchive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+        # Should succeed
+        self.assert200(response)
+
+        # Verify sketch is ready
+        sketch = Sketch.get_by_id(created_id)
+        self.assertEqual(sketch.get_status.status, "ready")
+
+        # Verify timelines retained their stuck states (so user can see/fix
+        # them)
+        self.assertEqual(tl_fail.get_status.status, "fail")
+        self.assertEqual(tl_proc.get_status.status, "processing")
+
     def test_sketch_delete_not_existant_sketch(self):
         """Authenticated request to delete a sketch that does not exist."""
         self.login()
@@ -376,10 +574,57 @@ class SketchResourceTest(BaseTest):
             "test_delete_archive_sketch",
         )
         self.assert200(response)
-        self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
+        status_list = response.json["objects"][0]["status"]
+        self.assertIn("archived", status_list[0]["status"])
 
+        # Soft delete should fail
         response = self.client.delete(f"/api/v1/sketches/{created_id}/")
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertEqual(
+            "Unable to delete a sketch that is already archived.",
+            response.json["message"],
+        )
+
+        # Force delete should also fail because the sketch is archived
+        # We need to give the admin permission to delete the sketch first
+
+        sketch = Sketch.get_by_id(created_id)
+        user_admin = User.query.filter_by(username="testadmin").first()
+
+        for permission in ["read", "write", "delete"]:
+            sketch.grant_permission(permission=permission, user=user_admin)
+
+        db_session.commit()
+
+        # Check that the admin user now has delete permission.
+        self.assertTrue(sketch.has_permission(user_admin, "delete"))
+
+        self.login_admin()
+        resource_url = f"/api/v1/sketches/{created_id}/?force=true"
+        response = self.client.delete(resource_url)
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertEqual(
+            "Unable to delete a sketch that is already archived.",
+            response.json["message"],
+        )
+
+        # Unarchive the sketch (should succeed now even if we had failed
+        # timelines, though this test sketch has no timelines)
+        self.login()
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        data = {"action": "unarchive"}
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        # Or force delete (admin)
+        self.login_admin()
+        resource_url = f"/api/v1/sketches/{created_id}/?force=true"
+        response = self.client.delete(resource_url)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
 
 
 class ViewListResourceTest(BaseTest):
@@ -470,6 +715,23 @@ class SearchTemplateResourceTest(BaseTest):
         response = self.client.get("/api/v1/searchtemplates/2/")
         self.assert404(response)
 
+    def test_public_searchtemplate_resource(self):
+        """Public search templates are visible through the API."""
+        template = SearchTemplate(
+            name="Public Template",
+            template_uuid="2f48d67e-18e9-4f03-9ec4-44678a95d85b",
+            query_string="event_id: 4625",
+        )
+        db_session.add(template)
+        db_session.commit()
+        template.grant_permission(permission="read")
+
+        self.login()
+        response = self.client.get("/api/v1/searchtemplates/")
+        self.assert200(response)
+        template_names = [t["name"] for t in response.json["objects"][0]]
+        self.assertIn("Public Template", template_names)
+
 
 class ExploreResourceTest(BaseTest):
     """Test ExploreResource."""
@@ -493,7 +755,7 @@ class ExploreResourceTest(BaseTest):
                 "labels": [],
                 "parent": None,
                 "query_dsl": None,
-                "query_filter": "{}",
+                "query_filter": '{"use_wildcard_fields": false}',
                 "query_result_count": 0,
                 "query_string": "test",
                 "scenario": None,
@@ -538,6 +800,126 @@ class ExploreResourceTest(BaseTest):
         del response_json["meta"]["search_node"]["query_time"]
         self.assertDictEqual(response_json, self.expected_response)
         self.assert200(response)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_search_timeout(self):
+        """Test search timeout handling."""
+        self.login()
+        data = {"query": "test", "filter": {}}
+
+        # Mock the search method to raise DatastoreTimeoutError
+        with mock.patch.object(
+            MockDataStore, "search", side_effect=DatastoreTimeoutError("Timeout")
+        ):
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(data, ensure_ascii=False),
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_GATEWAY_TIMEOUT)
+            self.assertIn("Timeout", response.json["message"])
+
+
+class ExploreWildcardResourceTest(BaseTest):
+    """Test ExploreWildcardResource."""
+
+    resource_url = "/api/v1/sketches/1/explore_wildcard/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_search_skeleton(self):
+        """Authenticated request to query the skeleton datastore."""
+        self.login()
+        data = {"query": "test"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        response_json = response.json
+        self.assertIn("meta", response_json)
+        self.assertIn("objects", response_json)
+        self.assertEqual(len(response_json["objects"]), 1)
+        self.assertEqual(response_json["objects"][0]["_id"], "test")
+        self.assertEqual(
+            response_json["objects"][0]["_source"]["message"], "Test event"
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_archived_sketch(self):
+        """Authenticated request to query an archived sketch."""
+        self.login()
+
+        # Create a dedicated sketch for this test to prevent test pollution
+        sketch = self._create_sketch(
+            name="archived_test_sketch", user=self.user1, acl=True
+        )
+        sketch.set_status("archived")
+        db_session.commit()
+
+        data = {"query": "test"}
+        resource_url = f"/api/v1/sketches/{sketch.id}/explore_wildcard/"
+        response = self.client.post(
+            resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn(
+            "Unable to query on an archived sketch.", response.json["message"]
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_non_existent_sketch(self):
+        """Authenticated request to query a non-existent sketch."""
+        self.login()
+        data = {"query": "test"}
+        response = self.client.post(
+            "/api/v1/sketches/999/explore_wildcard/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert404(response)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.testlib.MockDataStore.search")
+    def test_explore_wildcard_delegation(self, mock_search):
+        """Test that explore_wildcard endpoint delegates correctly to explore logic."""
+        self.login()
+        mock_search.return_value = {
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "event_1",
+                        "_source": {
+                            "message": "Found evil payload",
+                            "timesketch_label": [],
+                        },
+                        "_index": "test",
+                    }
+                ],
+                "total": 1,
+            },
+            "took": 10,
+        }
+
+        data = {"query": "xml_string:*evil*"}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        response_json = response.json
+        self.assertIn("meta", response_json)
+        self.assertIn("objects", response_json)
+        self.assertEqual(len(response_json["objects"]), 1)
+        self.assertEqual(response_json["objects"][0]["_id"], "event_1")
+
+        # Assert explore logic is called with use_wildcard_fields=True
+        mock_search.assert_called_once()
+        call_kwargs = mock_search.call_args[1]
+        self.assertTrue(call_kwargs.get("use_wildcard_fields"))
 
 
 class AggregationExploreResourceTest(BaseTest):
@@ -624,13 +1006,13 @@ class EventAddAttributeResourceTest(BaseTest):
                 {
                     "_id": "1",
                     "_type": "_doc",
-                    "_index": "1",
+                    "_index": self.searchindex.index_name,
                     "attributes": attrs,
                 },
                 {
                     "_id": "2",
                     "_type": "_doc",
-                    "_index": "1",
+                    "_index": self.searchindex.index_name,
                     "attributes": attrs,
                 },
             ]
@@ -639,7 +1021,7 @@ class EventAddAttributeResourceTest(BaseTest):
         expected_response = {
             "meta": {
                 "attributes_added": 2,
-                "chunks_per_index": {"1": 1},
+                "chunks_per_index": {self.searchindex.index_name: 1},
                 "error_count": 0,
                 "last_10_errors": [],
                 "events_modified": 2,
@@ -772,14 +1154,16 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     }
                 ]
                 * 1000
             },
         )
-        self.assertEqual({"1": 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 1}, response.json["meta"]["chunks_per_index"]
+        )
 
         # Two chunks when event count is chunk size + 1.
         response = self.client.post(
@@ -789,16 +1173,25 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     }
                 ]
                 * 1001
             },
         )
-        self.assertEqual({"1": 2}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 2}, response.json["meta"]["chunks_per_index"]
+        )
 
         # Chunk per index with multiple indexes.
+        self._create_timeline(
+            name="Timeline 2",
+            sketch=self.sketch1,
+            searchindex=self.searchindex2,
+            user=self.user1,
+        )
+
         response = self.client.post(
             self.resource_url,
             json={
@@ -806,19 +1199,22 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": attrs,
                     },
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "2",
+                        "_index": self.searchindex2.index_name,
                         "attributes": attrs,
                     },
                 ]
             },
         )
-        self.assertEqual({"1": 1, "2": 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {self.searchindex.index_name: 1, self.searchindex2.index_name: 1},
+            response.json["meta"]["chunks_per_index"],
+        )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_existing_attributes(self):
@@ -832,7 +1228,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "exists", "attr_value": "yes"}],
                     }
                 ]
@@ -855,7 +1251,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "_invalid", "attr_value": "yes"}],
                     }
                 ]
@@ -878,7 +1274,7 @@ class EventAddAttributeResourceTest(BaseTest):
                     {
                         "_id": "1",
                         "_type": "_doc",
-                        "_index": "1",
+                        "_index": self.searchindex.index_name,
                         "attributes": [{"attr_name": "message", "attr_value": "yes"}],
                     }
                 ]
@@ -888,6 +1284,99 @@ class EventAddAttributeResourceTest(BaseTest):
             "Cannot add 'message' for event_id '1', name not allowed.",
             response.json["meta"]["last_10_errors"],
         )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_attributes_forbidden(self):
+        """Test that adding attributes to an event in an index that does not
+        belong to the sketch returns a 403 Forbidden error. This is a security
+        check to prevent modifying events in unauthorized indices.
+        """
+        self.login()
+
+        # searchindex2 is NOT associated with sketch 1 by default.
+        events = {
+            "events": [
+                {
+                    "_id": "1",
+                    "_type": "_doc",
+                    "_index": self.searchindex2.index_name,
+                    "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
+                }
+            ]
+        }
+
+        response = self.client.post(self.resource_url, json=events)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
+
+
+class EventTaggingResourceTest(BaseTest):
+    """Test EventTaggingResource."""
+
+    resource_url = "/api/v1/sketches/1/event/tagging/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_tagging(self):
+        """Test that tagging an event with a valid request succeeds with an
+        HTTP 200 OK response and the correct number of tags applied.
+        """
+        self.login()
+
+        data = {
+            "tag_string": '["foo", "bar"]',
+            "events": [{"_id": "1", "_index": self.searchindex.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+        self.assertEqual(response.json["meta"]["tags_applied"], 2)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_tagging_forbidden(self):
+        """Test that attempting to tag an event in an index not associated with
+        the current sketch returns a 403 Forbidden error.
+        """
+        self.login()
+
+        data = {
+            "tag_string": '["foo"]',
+            "events": [{"_id": "1", "_index": self.searchindex2.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
+
+
+class EventUnTagResourceTest(BaseTest):
+    """Test EventUnTagResource."""
+
+    resource_url = "/api/v1/sketches/1/event/untag/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_untagging(self):
+        """Test untagging events."""
+        self.login()
+
+        data = {
+            "tags_to_remove": ["foo"],
+            "events": [{"_id": "1", "_index": self.searchindex.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_untagging_forbidden(self):
+        """Test that untagging an event in an index that does not belong to the
+        sketch returns 403 Forbidden.
+        """
+        self.login()
+
+        data = {
+            "tags_to_remove": ["foo"],
+            "events": [{"_id": "1", "_index": self.searchindex2.index_name}],
+        }
+        response = self.client.post(self.resource_url, json=data)
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+        self.assertIn(b"does not belong to the sketch", response.data)
 
 
 class EventAnnotationResourceTest(BaseTest):
@@ -1497,6 +1986,7 @@ class SystemSettingsResourceTest(BaseTest):
             "ENABLE_V3_INVESTIGATION_VIEW": False,
             "LLM_FEATURES_AVAILABLE": {"default": False},
             "LOG_ANALYZER_DEFAULT_PROMPT": "another prompt",
+            "OPENSEARCH_WILDCARD_DEFAULT": False,
         }
 
         self.assertDictEqual(response.json, expected_response)
@@ -1625,6 +2115,30 @@ class ScenariosResourceTest(BaseTest):
         self.assertFalse(result)
 
 
+class MockTestProvider(llm_interface.LLMProvider):
+    NAME = "mock_test_provider"
+
+    def generate(self, prompt, response_schema=None):
+        return "mock response"
+
+
+try:
+    llm_manager.LLMManager.register_provider(MockTestProvider)
+except ValueError:
+    pass
+
+
+class MockTestFeature(feature_interface.LLMFeatureInterface):
+    NAME = "mock_test_feature"
+    RESPONSE_SCHEMA = None
+
+    def generate_prompt(self, sketch, **kwargs):
+        return "mock prompt"
+
+    def process_response(self, llm_response, **kwargs):
+        return {"result": "mock result"}
+
+
 @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
 class LLMResourceTest(BaseTest):
     """Test LLMResource."""
@@ -1673,6 +2187,21 @@ class LLMResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         response_data = json.loads(response.get_data(as_text=True))
         self.assertEqual(response_data, {"result": "test result"})
+
+    def test_execute_llm_call_real(self):
+        """Test _execute_llm_call with a dummy provider to test multiprocessing."""
+        # pylint: disable=protected-access
+        # Use the picklable dummy feature instead of MagicMock
+        feature = MockTestFeature()
+
+        resource = llm.LLMResource()
+        provider = MockTestProvider(config={})
+
+        response = resource._execute_llm_call(
+            feature=feature, prompt="test prompt", sketch_id=1, llm_provider=provider
+        )
+
+        self.assertEqual(response, "mock response")
 
     @mock.patch("timesketch.models.sketch.Sketch.get_with_acl")
     def test_post_missing_data(self, mock_get_with_acl):
@@ -1863,6 +2392,10 @@ class LLMResourceTest(BaseTest):
         self.assertIn("LLM call timed out", response_data["message"])
 
         process_instance.terminate.assert_called_once()
+        process_instance.kill.assert_called_once()
+        process_instance.join.assert_has_calls(
+            [mock.call(timeout=30), mock.call(timeout=2.0), mock.call()]
+        )
 
 
 class ExportStreamListResourceTest(BaseTest):
@@ -1963,3 +2496,550 @@ class ExportStreamListResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
         # Verify we hit the specific abort for empty indices_for_pit
         self.assertIn("No valid search indices", response.json["message"])
+
+
+class UploadFileResourceTest(BaseTest):
+    """Test UploadFileResource."""
+
+    def setUp(self):
+        super().setUp()
+        self.upload_folder = tempfile.mkdtemp()
+        self.app.config["UPLOAD_FOLDER"] = self.upload_folder
+        self.app.config["UPLOAD_ENABLED"] = True
+
+    def tearDown(self):
+        super().tearDown()
+        if os.path.exists(self.upload_folder):
+            shutil.rmtree(self.upload_folder)
+
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    def test_out_of_order_chunks(self, mock_current_app, mock_format_upload_path):
+        """Test chunks uploaded out of order are written to correct file offsets."""
+        mock_current_app.config = self.app.config
+
+        # Setup mock behavior
+        chunk_index_name = "00000000000000000000000000000001"
+        file_path = os.path.join(self.upload_folder, chunk_index_name)
+        mock_format_upload_path.return_value = file_path
+
+        # Simulate two chunks of a file: "Hello" and "World"
+        # Total size = 10 bytes
+        chunk1 = b"Hello"
+        chunk2 = b"World"
+        total_file_size = len(chunk1) + len(chunk2)
+
+        # Create resource instance
+        resource = upload.UploadFileResource()
+
+        # Mock request file storage
+        file_storage_mock = mock.MagicMock()
+
+        # 1. Upload chunk 2 (World) first - offset 5
+        file_storage_mock.read.return_value = chunk2
+        form_data = {
+            "chunk_index": "1",
+            "chunk_byte_offset": "5",
+            "chunk_total_chunks": "2",
+            "total_file_size": str(total_file_size),
+            "chunk_index_name": chunk_index_name,
+            "name": "test_timeline",
+            "sketch_id": "1",
+        }
+
+        # We need to mock request.files and request.form
+        with mock.patch("timesketch.api.v1.resources.upload.request") as mock_request:
+            mock_request.files = {"file": file_storage_mock}
+            mock_request.form = form_data
+
+            # Call the internal method directly or via post()
+            sketch_mock = mock.MagicMock()
+            sketch_mock.id = 1
+
+            # Call _upload_file
+            # Mock _upload_and_index for the first chunk as well to avoid DB calls
+            # pylint: disable=protected-access, unused-variable
+            with mock.patch.object(resource, "_upload_and_index") as mock_process:
+                resource._upload_file(
+                    file_storage=file_storage_mock,
+                    form=form_data,
+                    sketch=sketch_mock,
+                    index_name="",
+                    chunk_index_name=chunk_index_name,
+                )
+
+        # 2. Upload chunk 1 (Hello) second - offset 0
+        file_storage_mock.read.return_value = chunk1
+        form_data["chunk_index"] = "0"
+        form_data["chunk_byte_offset"] = "0"
+
+        # Mock successful upload of last chunk triggers processing
+        # We mock _upload_and_index because size check passes now with r+b
+        # pylint: disable=protected-access, unused-variable
+        with mock.patch.object(resource, "_upload_and_index") as mock_process:
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+                chunk_index_name=chunk_index_name,
+            )
+
+        # Verify final file content
+        with open(file_path, "rb") as f:
+            content = f.read()
+
+        # Verify content matches full file
+        self.assertEqual(
+            content,
+            b"HelloWorld",
+            "Content mismatch: chunks not assembled correctly",
+        )
+
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    def test_chunk_retry_idempotency(self, mock_current_app, mock_format_upload_path):
+        """Test that retrying a chunk upload overwrites idempotently."""
+        mock_current_app.config = self.app.config
+
+        # Setup mock behavior
+        chunk_index_name = "00000000000000000000000000000002"
+        file_path = os.path.join(self.upload_folder, chunk_index_name)
+        mock_format_upload_path.return_value = file_path
+
+        chunk1 = b"Hello"
+        total_file_size = len(chunk1)
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        # 1. Upload chunk 0
+        file_storage_mock.read.return_value = chunk1
+        form_data = {
+            "chunk_index": "0",
+            "chunk_byte_offset": "0",
+            "chunk_total_chunks": "1",
+            "total_file_size": str(total_file_size),
+            "chunk_index_name": chunk_index_name,
+            "name": "test_timeline",
+            "sketch_id": "1",
+        }
+
+        # Mock _upload_and_index
+        # pylint: disable=protected-access, unused-variable
+        with mock.patch.object(resource, "_upload_and_index") as mock_process:
+            # First upload
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+                chunk_index_name=chunk_index_name,
+            )
+
+        # 2. Retry upload chunk 0 (simulate client retry)
+        file_storage_mock.read.return_value = chunk1
+
+        # Retry upload
+        try:
+            # pylint: disable=protected-access, unused-variable
+            with mock.patch.object(resource, "_upload_and_index") as mock_process:
+                resource._upload_file(
+                    file_storage=file_storage_mock,
+                    form=form_data,
+                    sketch=sketch_mock,
+                    index_name="",
+                    chunk_index_name=chunk_index_name,
+                )
+        except Exception:  # pylint: disable=broad-exception-caught
+            # We expect an abort(400) here usually if size was wrong
+            pass
+
+        # Verify file size
+        final_size = os.path.getsize(file_path)
+
+        # Verify size matches single chunk (not doubled)
+        self.assertEqual(
+            final_size,
+            5,
+            "File size mismatch: retry should overwrite, not append",
+        )
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.os.open")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission(
+        self, mock_format_upload_path, mock_current_app, mock_os_open, mock_os_chmod
+    ):
+        """Test that uploaded files use the configured file permission."""
+        # Set config to a different permission (644 instead of default 640)
+        self.app.config["UPLOAD_FILE_PERMISSION"] = 0o644
+        mock_current_app.config = self.app.config
+
+        # Setup mock behavior
+        chunk_index_name = "00000000000000000000000000000003"
+        file_path = os.path.join(self.upload_folder, chunk_index_name)
+        mock_format_upload_path.return_value = file_path
+
+        called_with_args = {}
+
+        # Need to keep a reference to avoid GC closing the file
+        # pylint: disable=consider-using-with
+        f = open(file_path, "wb+")
+
+        # pylint: disable=unused-argument
+        def mock_open(path, flags, mode=0o777, **_):
+            called_with_args["args"] = (path, flags, mode)
+            return f.fileno()
+
+        mock_os_open.side_effect = mock_open
+
+        chunk1 = b"Hello"
+        total_file_size = len(chunk1)
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.read.return_value = chunk1
+        form_data = {
+            "chunk_index": "0",
+            "chunk_byte_offset": "0",
+            "chunk_total_chunks": "1",
+            "total_file_size": str(total_file_size),
+            "chunk_index_name": chunk_index_name,
+            "name": "test_timeline",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+                chunk_index_name=chunk_index_name,
+            )
+
+        # Verify that os.open was called with 0o600 (kept private during upload)
+        self.assertEqual(
+            called_with_args["args"], (file_path, os.O_RDWR | os.O_CREAT, 0o600)
+        )
+        # Verify that os.chmod was called with 0o644 at the end of the upload
+        mock_os_chmod.assert_called_once_with(file_path, 0o644)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_single(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that single uploaded files use the configured file permission."""
+        # Set config to a different permission (644 instead of default 640)
+        self.app.config["UPLOAD_FILE_PERMISSION"] = 0o644
+        mock_current_app.config = self.app.config
+
+        # Setup mock behavior
+        filename = "00000000000000000000000000000004"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        # Verify that os.chmod was called with 0o644
+        mock_os_chmod.assert_called_once_with(file_path, 0o644)
+        file_storage_mock.save.assert_called_once_with(file_path)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_default(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that single uploaded files use the default permission (0o640)."""
+        # Ensure UPLOAD_FILE_PERMISSION is NOT set in config
+        if "UPLOAD_FILE_PERMISSION" in self.app.config:
+            del self.app.config["UPLOAD_FILE_PERMISSION"]
+        mock_current_app.config = self.app.config
+
+        # Setup mock behavior
+        filename = "00000000000000000000000000000005"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_default.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_default",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        # Verify that os.chmod was called with the default 0o640
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_invalid_decimal_fallback(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that invalid decimal permissions fall back to default (0o640)."""
+        # Set config to a decimal integer that is a common mistake
+        # (640 instead of 0o640)
+        self.app.config["UPLOAD_FILE_PERMISSION"] = 640
+        mock_current_app.config = self.app.config
+
+        # Setup mock behavior
+        filename = "00000000000000000000000000000006"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_fallback.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_fallback",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        # Verify that os.chmod was called with the default 0o640 (fallback)
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_string_0o_prefix(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that string permissions with 0o prefix are correctly parsed."""
+        self.app.config["UPLOAD_FILE_PERMISSION"] = "0o644"
+        mock_current_app.config = self.app.config
+
+        filename = "00000000000000000000000000000007"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_string_0o.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_string_0o",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        # Verify that os.chmod was called with 0o644
+        mock_os_chmod.assert_called_once_with(file_path, 0o644)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_invalid_type_fallback(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that invalid types (like float or None) fall back to 0o640."""
+        # Test float
+        self.app.config["UPLOAD_FILE_PERMISSION"] = 640.0
+        mock_current_app.config = self.app.config
+
+        filename = "00000000000000000000000000000008"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_float_fallback.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_float",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+        # Test None
+        mock_os_chmod.reset_mock()
+        self.app.config["UPLOAD_FILE_PERMISSION"] = None
+        mock_current_app.config = self.app.config
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+    @mock.patch("timesketch.api.v1.resources.upload.os.chmod")
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
+    def test_upload_file_permission_bool_fallback(
+        self, mock_format_upload_path, mock_current_app, mock_os_chmod
+    ):
+        """Test that boolean values fall back to default 0o640."""
+        self.app.config["UPLOAD_FILE_PERMISSION"] = True
+        mock_current_app.config = self.app.config
+
+        filename = "00000000000000000000000000000009"
+        file_path = os.path.join(self.upload_folder, filename)
+        mock_format_upload_path.return_value = file_path
+
+        resource = upload.UploadFileResource()
+        file_storage_mock = mock.MagicMock()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.id = 1
+
+        file_storage_mock.filename = "test_bool_fallback.txt"
+        form_data = {
+            "total_file_size": "5",
+            "name": "test_timeline_bool",
+            "sketch_id": "1",
+        }
+
+        # pylint: disable=protected-access
+        with mock.patch.object(resource, "_upload_and_index"):
+            resource._upload_file(
+                file_storage=file_storage_mock,
+                form=form_data,
+                sketch=sketch_mock,
+                index_name="",
+            )
+
+        mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+
+class UserSettingsResourceTest(BaseTest):
+    """Test UserSettingsResource."""
+
+    resource_url = "/api/v1/users/me/settings/"
+
+    def test_get_settings_fallback_default(self):
+        """Test GET settings gets default config value when empty."""
+        self.login()
+
+        # Mock configuration setting to check fallback behavior
+        self.app.config["OPENSEARCH_WILDCARD_DEFAULT"] = True
+
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        self.assertEqual(len(response.json["objects"]), 1)
+
+        # Assert setting dynamically loads our default mock config value
+        self.assertEqual(response.json["objects"][0]["defaultSearchMethod"], "wildcard")
+
+    def test_get_settings_user_preference(self):
+        """Test GET settings returns saved user preference over default config."""
+        self.login()
+        self.app.config["OPENSEARCH_WILDCARD_DEFAULT"] = False
+
+        # Save custom settings first via POST
+        data = {"settings": {"defaultSearchMethod": "query_string"}}
+        post_response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assert200(post_response)
+
+        # Assert saved preference is successfully returned
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        self.assertEqual(
+            response.json["objects"][0]["defaultSearchMethod"], "query_string"
+        )
+
+    def test_post_settings_update(self):
+        """Test POST settings saves and returns updated user settings."""
+        self.login()
+        data = {
+            "settings": {"defaultSearchMethod": "query_string", "customSetting": "test"}
+        }
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        self.assertEqual(len(response.json["objects"]), 1)
+        self.assertEqual(
+            response.json["objects"][0]["defaultSearchMethod"], "query_string"
+        )
+        self.assertEqual(response.json["objects"][0]["customSetting"], "test")

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Analysis resources for version 1 of the Timesketch API."""
+
 import fnmatch
 import collections
 import logging
@@ -73,6 +74,11 @@ class AnalysisResource(resources.ResourceMixin, Resource):
 
         timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
+
+        # Reject a timeline that belongs to a different sketch
+        # (cf. AggregationResource).
+        if timeline.sketch_id != sketch.id:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
         analysis_history = Analysis.query.filter_by(timeline=timeline).all()
@@ -164,6 +170,13 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
             )
 
         analysis_session = AnalysisSession.get_by_id(session_id)
+
+        # Reject a session that belongs to a different sketch (cf. AggregationResource).
+        if not analysis_session or analysis_session.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No analyzer session found with this ID.",
+            )
 
         return self.to_json(analysis_session)
 

@@ -36,14 +36,12 @@ class TestTaggerPlugin(BaseTest):
     # TODO: Add tests for the tagger.
     def test_config(self):
         """Tests that the config is valid."""
-        test_config = yaml.safe_load(
-            """
+        test_config = yaml.safe_load("""
         place_holder:
           query_string: '*'
           tags: ['place-holder']
           emojis: ['ID_BUTTON']
-          """
-        )
+          """)
 
         self.assertIsInstance(test_config, dict)
 
@@ -55,13 +53,11 @@ class TestTaggerPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_event_tagging(self):
         """Tests that events are tagged as expected."""
-        config = yaml.safe_load(
-            """dummy_tagger:
+        config = yaml.safe_load("""dummy_tagger:
             query_string: '*'
             tags: ['dummyTag']
             save_search: true
-            search_name: 'Random test tagging'"""
-        )
+            search_name: 'Random test tagging'""")
         analyzer = tagger.TaggerSketchPlugin(
             "test_index", 1, tag_config=config["dummy_tagger"], tag="dummy_tagger"
         )
@@ -89,15 +85,13 @@ class TestTaggerPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_regex_tagging(self):
         """Tests that regexes matches filter out events to tag."""
-        config = yaml.safe_load(
-            """regex_tagger:
+        config = yaml.safe_load("""regex_tagger:
             query_string: '*'
             tags: ['regexTag']
             save_search: true
             regular_expression: 'exist[0-9]'
             re_attribute: 'message'
-            search_name: 'Regex tagging'"""
-        )
+            search_name: 'Regex tagging'""")
         analyzer = tagger.TaggerSketchPlugin(
             "test_index", 1, tag_config=config["regex_tagger"], tag="regex_tagger"
         )
@@ -129,14 +123,12 @@ class TestTaggerPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_dynamic_tag_extraction(self):
         """Tests that dynamic tags are extracted and converted."""
-        config = yaml.safe_load(
-            """yara_match_tagger:
+        config = yaml.safe_load("""yara_match_tagger:
             query_string: '_exists_:yara_match AND NOT yara_match.keyword:"-"'
             tags: ['yara', '$yara_match']
             modifiers: ['split']
             save_search: true
-            search_name: 'Yara rule matches'"""
-        )
+            search_name: 'Yara rule matches'""")
         analyzer = tagger.TaggerSketchPlugin(
             "test_index",
             1,

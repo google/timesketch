@@ -35,7 +35,6 @@ from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Sketch
 
-
 logger = logging.getLogger("timesketch.api.exportstream")
 
 DEFAULT_POOL_MAXSIZE = 60

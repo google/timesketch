@@ -53,7 +53,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchHistory
 
-
 logger = logging.getLogger("timesketch.event_api")
 
 
@@ -304,11 +303,11 @@ class EventResource(resources.ResourceMixin, Resource):
             "SEARCH_PROCESSING_TIMELINES", False
         ):
             allowed_statuses.append("processing")
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() in allowed_statuses
-        ]
+        }
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
@@ -461,7 +460,23 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
         events_by_index = self._parse_request(request)
         info_dict["chunks_per_index"] = {index: [] for index in list(events_by_index)}
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
+        indices = {
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() in allowed_statuses
+        }
+
         for index, events in events_by_index.items():
+            if index not in indices:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Search index ID ({index!s}) does not belong to the sketch",
+                )
+
             chunks = []
             for i in range(0, len(events), self.EVENT_CHUNK_SIZE):
                 chunks.append(events[i : i + self.EVENT_CHUNK_SIZE])
@@ -648,7 +663,23 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             tag_dict["number_of_indices"] = len(event_df["_index"].unique())
             time_tag_gathering_start = time.time()
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
+        indices = {
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() in allowed_statuses
+        }
+
         for _index in event_df["_index"].unique():
+            if _index not in indices:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Search index ID ({_index!s}) does not belong to the sketch",
+                )
+
             index_slice = event_df[event_df["_index"] == _index]
             index_size = index_slice.shape[0]
 
@@ -929,8 +960,9 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 f"Error while searching for event [{event_id}] to determine its index.",
             )
-        if isinstance(result, dict):
-            hits = result.get("hits", {}).get("hits", [])
+        hits = (
+            result.get("hits", {}).get("hits", []) if isinstance(result, dict) else []
+        )
 
         if not hits:
             logger.error(
@@ -1002,11 +1034,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
             allowed_statuses.append("processing")
 
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() in allowed_statuses
-        ]
+        }
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
 
@@ -1111,6 +1143,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                             HTTP_STATUS_CODE_BAD_REQUEST,
                             "Conclusion ID is required to add a fact.",
                         )
+                    # Enforce that the conclusion belongs to the sketch in the
+                    # URL to prevent cross-sketch linkage of facts.
+                    if conclusion.investigativequestion.sketch.id != sketch.id:
+                        abort(
+                            HTTP_STATUS_CODE_NOT_FOUND,
+                            "No conclusion found with this ID.",
+                        )
                     # Adding facts to conclusions
                     if not form.remove.data:
                         event.conclusions.append(conclusion)
@@ -1152,11 +1191,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         updated_annotations = []
         sketch = self._get_sketch(sketch_id)
 
-        indices = [
+        indices = {
             t.searchindex.index_name
             for t in sketch.timelines
             if t.get_status.status.lower() == "ready"
-        ]
+        }
 
         # Retrieving events list submitted in the request
         events = form.events.raw_data
@@ -1427,6 +1466,16 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 f"sketch ID ({timeline.sketch.id:d})",
             )
 
+        # Check that the supplied search index belongs to the validated timeline
+        # (and therefore to this sketch) to prevent relabeling events on an
+        # arbitrary search index.
+        if timeline.searchindex_id != searchindex.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The search index ID ({searchindex.id:d}) does not match with "
+                f"the timeline search index ID ({timeline.searchindex_id:d})",
+            )
+
         query_dsl = {
             "script": {
                 "source": (
@@ -1549,6 +1598,16 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
 
         datastore = self.datastore
 
+        allowed_statuses = ["ready"]
+        if current_app.config.get("SEARCH_PROCESSING_TIMELINES", False):
+            allowed_statuses.append("processing")
+
+        indices = {
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() in allowed_statuses
+        }
+
         for _event in events:
             # every event entry can have a dedicated searchindex_id or searchindex_name
             searchindex_id = _event.get("searchindex_id", None)
@@ -1579,6 +1638,13 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to query event on a closed search index.",
+                )
+
+            if searchindex.index_name not in indices:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Search index ID ({searchindex.index_name!s}) "
+                    "does not belong to the sketch",
                 )
 
             result = self.datastore.get_event(searchindex.index_name, _event.get("_id"))

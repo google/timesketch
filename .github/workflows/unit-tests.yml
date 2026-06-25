@@ -8,6 +8,9 @@ on:
       - '.gitignore'
       - 'README.md'
 
+permissions:
+  contents: read
+
 jobs:
   # Backend tests (Python/Flask)
   Python:
@@ -15,10 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-24.04]
-        python-version: ['3.10']
+        python-version: ['3.14']
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
@@ -34,6 +36,7 @@ jobs:
         run: |
           pip install pipenv
           pipenv install -d
+          pipenv run pip install -r requirements.txt
           pipenv run pip install -r test_requirements.txt
           pipenv run pip install -e ./api_client/python
           pipenv run pip install -e ./importer_client/python
@@ -54,10 +57,9 @@ jobs:
         working-directory: timesketch/frontend-ng
     strategy:
       matrix:
-        os: [ubuntu-24.04]
-        node-version: ["20"]
+        node-version: ["24"]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - name: Set up Node ${{ matrix.node-version }}
         uses: actions/setup-node@v6
         with:

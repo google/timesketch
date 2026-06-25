@@ -15,7 +15,6 @@
 This module implements annotations that can be use on other database models.
 """
 
-
 import json
 import logging
 
@@ -28,6 +27,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import subqueryload
+from sqlalchemy.orm import object_session
 
 from timesketch.models import BaseModel
 from timesketch.models import db_session
@@ -359,33 +359,13 @@ class StatusMixin:
         )
         return relationship(self.Status, cascade="all, delete-orphan")
 
-    def set_status(self, status):
+    def _log_duplicate_status_warning(self) -> None:
+        """Checks if more than one status record is available and logs a warning.
+
+        This is a diagnostic helper used by get_status and set_status to provide
+        observability into database inconsistencies where multiple status entries
+        exist for an object that should only have one.
         """
-        Set status on object. Although this is a many-to-many relationship
-        this makes sure that the parent object only has one status set.
-
-        Args:
-            status: Name of the status
-        """
-        self.status = []  # replace the list with an empty list.
-        self.status.append(self.Status(user=None, status=status))
-        db_session.add(self)
-        db_session.commit()
-
-    @property
-    def get_status(self):
-        """Get the current status.
-
-        Only one status should be in the database at a time.
-
-        Raises:
-            RuntimeError: If more than one status is available.
-
-        Returns:
-            The status as a string
-        """
-        if not self.status:
-            self.status.append(self.Status(user=None, status="new"))
         if len(self.status) > 1:
             self_id = getattr(self, "id", "N/A")
             object_type_name = str(type(self).__name__)
@@ -398,14 +378,62 @@ class StatusMixin:
                 if sketch_id_val is not None:
                     log_details = f"ID: [{self_id}], Sketch ID: [{sketch_id_val}]"
 
-            # TODO: Change from warning to raising an exception once we ensured
-            # it won't affect the deployment.
-            # raise RuntimeError(
-            logging.warning(
+            logger.warning(
                 "More than one status available for object [%s] (%s)",
                 object_type_name,
                 log_details,
             )
+
+    def set_status(self, status: str) -> None:
+        """Sets the status of the object.
+
+        Although status is a many-to-many relationship, this method ensures
+        that the parent object has exactly one status record at any given time.
+
+        For existing objects (those with an ID), it uses database-level locking
+        (SELECT FOR UPDATE) to serialize concurrent updates and prevent race
+        conditions. For new objects, it handles the initial status assignment
+        safely within the ORM session.
+
+        If multiple statuses are detected during an update, a warning is logged
+        and the state is repaired by replacing them with the new single status.
+
+        Args:
+            status: Name of the status (e.g. 'ready', 'processing', 'fail').
+        """
+        session = object_session(self) or db_session
+        session.add(self)
+
+        # If the object exists in the database, lock the row to serialize updates.
+        if self.id:
+            session.query(type(self)).filter_by(id=self.id).with_for_update().first()
+
+        self._log_duplicate_status_warning()
+        # Use the relationship to ensure consistency and correct FK handling.
+        # This also handles the case where the object is new (self.id is None).
+        self.status = [self.Status(user=None, status=status)]
+        session.commit()
+
+    @property
+    def get_status(self) -> Status:
+        """Returns the current status of the object.
+
+        If no status is set, it defaults to creating a 'new' status record.
+        This property also performs a health check: if more than one status
+        record is found in the database, it logs a warning and returns the
+        latest one (based on its ID).
+
+        Returns:
+            The current status record (instance of
+            timesketch.models.annotations.Status).
+        """
+        if not self.status:
+            self.status.append(self.Status(user=None, status="new"))
+
+        if len(self.status) > 1:
+            self._log_duplicate_status_warning()
+            return max(self.status, key=lambda x: (x.id is None, x.id or 0))
+
         return self.status[0]
 
 

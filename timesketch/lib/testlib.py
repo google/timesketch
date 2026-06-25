@@ -13,20 +13,18 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
-
 import codecs
 import json
 
 from typing import Optional, Dict
 from flask_testing import TestCase
-from sqlalchemy import create_engine
 
 
 from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
-from timesketch.models import db_session, BaseModel
+from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
@@ -77,6 +75,7 @@ class TestConfig:
     OPENSEARCH_VERIFY_CERTS = True
     LABELS_TO_PREVENT_DELETION = ["protected", "magic"]
     UPLOAD_ENABLED = False
+    UPLOAD_FOLDER = "/tmp"
     AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
@@ -98,7 +97,7 @@ class MockOpenSearchClient:
         self.indices = MockOpenSearchIndices()
 
     def search(
-        self, index, body, size=0, search_type=None
+        self, index, body, size=0, search_type=None, **kwargs
     ):  # pylint: disable=unused-argument
         """Mock a client search.
 
@@ -162,10 +161,36 @@ class MockOpenSearchClient:
 
 
 class MockOpenSearchIndices:
+    """Mock implementation of OpenSearch indices client for unit testing."""
+
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
-        return {}
+        index_param = kwargs.get("index", "test")
+        if isinstance(index_param, str):
+            indices = [index_param]
+        elif isinstance(index_param, list):
+            indices = index_param
+        else:
+            indices = ["test"]
+
+        properties = {
+            "message": {
+                "type": "text",
+                "fields": {
+                    "keyword": {"type": "keyword"},
+                    "wildcard": {"type": "wildcard"},
+                },
+            },
+            "xml_string": {
+                "type": "text",
+                "fields": {
+                    "keyword": {"type": "keyword"},
+                    "wildcard": {"type": "wildcard"},
+                },
+            },
+        }
+        return {idx: {"mappings": {"properties": properties}} for idx in indices}
 
     def stats(self, *args, **kwargs):
         return {"indices": {}}
@@ -179,6 +204,8 @@ class MockOpenSearchIndices:
 
 class MockDataStore:
     """A mock implementation of a Datastore."""
+
+    DEFAULT_FLUSH_INTERVAL = 1000
 
     event_dict = {
         "_index": [],
@@ -240,6 +267,20 @@ class MockDataStore:
         self.port = port
         # Dictionary containing event dictionaries.
         self.event_store = {}
+
+    def verify_wildcard_mappings(self, indices, fields_list):
+        """Mock wildcard mapping helper. Delegates to Gunicorn's real logic!"""
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+
+        return OpenSearchDataStore.verify_wildcard_mappings(self, indices, fields_list)
+
+    def get_wildcard_fields(self, indices, mappings=None):
+        """Mock get_wildcard_fields. Delegates to real logic!"""
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib.datastores.opensearch import OpenSearchDataStore
+
+        return OpenSearchDataStore.get_wildcard_fields(self, indices, mappings=mappings)
 
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
@@ -603,6 +644,7 @@ class BaseTest(TestCase):
             name=name, query_string=name, query_filter=json.dumps({}), user=user
         )
         self._commit_to_database(searchtemplate)
+        searchtemplate.grant_permission(permission="read", user=user)
         return searchtemplate
 
     def _create_sigma(self, user, rule_yaml, rule_uuid, title, description):
@@ -733,12 +775,6 @@ class ModelBaseTest(BaseTest):
 
     def setUp(self):
         super().setUp()  # Call parent setUp if it exists
-        # Configure an in-memory SQLite database for testing
-        self.engine = create_engine("sqlite:///:memory:")
-        # Bind the engine to the session
-        db_session.configure(bind=self.engine)
-        # Create all tables defined in BaseModel.metadata
-        BaseModel.metadata.create_all(self.engine)
         self.db_session = db_session
 
     def _test_db_object(self, expected_result=None, model_cls=None):

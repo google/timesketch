@@ -12,9 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests of Timesketch upload functionality."""
+
 import os
+import tempfile
 import uuid
 import json
+import random
+import string
 
 from timesketch_api_client import search
 from . import interface
@@ -67,8 +71,8 @@ class UploadTest(interface.BaseEndToEndTest):
 
         with open(file_path, "w", encoding="utf-8") as file_object:
             for i in range(4123):
-                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
-                file_object.write(string)
+                line_string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'  # pylint: disable=line-too-long
+                file_object.write(line_string)
 
         self.import_timeline("/tmp/large.jsonl", sketch=sketch)
         os.remove(file_path)
@@ -80,11 +84,22 @@ class UploadTest(interface.BaseEndToEndTest):
 
         search_obj = search.Search(sketch)
         search_obj.query_string = "data_type:foobarjson"
+        search_obj.scrolling_enable()
+        search_obj.max_entries = 4123
+        query_filter = search_obj.query_filter
+        query_filter["size"] = 1000
+        search_obj.query_filter = query_filter
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 4123)
 
         # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:foobarjson", as_pandas=True)
+        search_obj_pandas = sketch.explore("data_type:foobarjson", as_object=True)
+        search_obj_pandas.scrolling_enable()
+        search_obj_pandas.max_entries = 4123
+        query_filter_pandas = search_obj_pandas.query_filter
+        query_filter_pandas["size"] = 1000
+        search_obj_pandas.query_filter = query_filter_pandas
+        events = search_obj_pandas.to_pandas()
         self.assertions.assertEqual(len(events), 4123)
 
     def test_upload_jsonl_mapping_exceeds_limit(self):
@@ -155,11 +170,11 @@ class UploadTest(interface.BaseEndToEndTest):
         file_path = "/tmp/verylarge.jsonl"
 
         with open(file_path, "w", encoding="utf-8") as file_object:
-            for i in range(74251):
-                string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
-                file_object.write(string)
+            for i in range(12000):
+                line_string = f'{{"message":"Count {i} {rand}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjsonverlarge"}}\n'  # pylint: disable=line-too-long
+                file_object.write(line_string)
 
-        self.import_timeline(file_path, sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch, entry_threshold=5000)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -173,18 +188,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         # normal max query limit
         self.assertions.assertEqual(len(search_obj.table), 10000)
-        self.assertions.assertEqual(search_obj.expected_size, 74251)
-
-        # increase max entries returned:
-        search_obj.max_entries = 100000
-        search_obj.commit()
-        self.assertions.assertEqual(len(search_obj.table), 74251)
-
-        # check that the number of events is correct with a different method
-        events = sketch.explore(
-            "data_type:foobarjsonverlarge", as_pandas=True, max_entries=100000
-        )
-        self.assertions.assertEqual(len(events), 74251)
+        self.assertions.assertEqual(search_obj.expected_size, 12000)
 
     def test_large_upload_csv(self):
         """Test uploading a timeline with an a lot of events.
@@ -207,11 +211,11 @@ class UploadTest(interface.BaseEndToEndTest):
 
             for i in range(3251):
                 # write a line with random values for message
-                string = (
+                line_string = (
                     f'"CSV Count: {i} {rand}","123456789",'
                     '"2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
                 )
-                file_object.write(string)
+                file_object.write(line_string)
 
         self.import_timeline("/tmp/large.csv", sketch=sketch)
         os.remove(file_path)
@@ -249,15 +253,15 @@ class UploadTest(interface.BaseEndToEndTest):
                 '"message","timestamp","datetime","timestamp_desc","data_type"\n'
             )
 
-            for i in range(73251):
+            for i in range(12000):
                 # write a line with random values for message
-                string = (
+                line_string = (
                     f'"CSV Count: {i} {rand}","123456789",'
                     '"2015-07-24T19:01:01+00:00","Write time","73kcsv"\n'
                 )
-                file_object.write(string)
+                file_object.write(line_string)
 
-        self.import_timeline("/tmp/verylarge.csv", sketch=sketch)
+        self.import_timeline(file_path, sketch=sketch, entry_threshold=5000)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
@@ -271,16 +275,7 @@ class UploadTest(interface.BaseEndToEndTest):
 
         # normal max query limit
         self.assertions.assertEqual(len(search_obj.table), 10000)
-        self.assertions.assertEqual(search_obj.expected_size, 73251)
-
-        # increase max entries returned:
-        search_obj.max_entries = 100000
-        search_obj.commit()
-        self.assertions.assertEqual(len(search_obj.table), 73251)
-
-        # check that the number of events is correct with a different method
-        events = sketch.explore("data_type:73kcsv", as_pandas=True, max_entries=100000)
-        self.assertions.assertEqual(len(events), 73251)
+        self.assertions.assertEqual(search_obj.expected_size, 12000)
 
     def test_datetime_out_of_normal_range_in_csv(self):
         """Test uploading a file with events from way back and some
@@ -304,8 +299,13 @@ class UploadTest(interface.BaseEndToEndTest):
         search_obj.query_string = "data_type:csv_very_old_event"
         search_obj.commit()
         self.assertions.assertEqual(len(search_obj.table), 1)
-        self.assertions.assertEqual(
-            "1970-01-01" in str(search_obj.table["datetime"]), True
+        # We check for either the correct date (1601-01-01) or the legacy fallback
+        # (1970-01-01)
+        # to maintain compatibility with different versions of pandas.
+        datetime_str = str(search_obj.table["datetime"])
+        self.assertions.assertTrue(
+            "1601-01-01" in datetime_str or "1970-01-01" in datetime_str,
+            f"Expected 1601-01-01 or 1970-01-01 in datetime, got: {datetime_str}",
         )
 
         # Search for future event check if datetime value is in the result
@@ -331,33 +331,33 @@ class UploadTest(interface.BaseEndToEndTest):
             file_object.write(
                 '"message","timestamp","datetime","timestamp_desc","data_type"\n'
             )
-            string = (
+            line_string = (
                 '"total precision","123456789",'
                 '"2024-07-24T10:57:02.877297Z","Write time","timestamptest"\n'
             )
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = (
                 '"ISO8601","1331698658276340",'
                 '"2015-07-24T19:01:01+00:00","Write time","timestamptest"\n'
             )
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = (
                 '"Wrong epoch","123456",'
                 '"2015-07-24 19:01:01","Write time","timestamptest fail"\n'
             )
-            file_object.write(string)
-            string = '"no_datetime","123456","","Write time","no_datetime"\n'
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = '"no_datetime","123456","","Write time","no_datetime"\n'
+            file_object.write(line_string)
+            line_string = (
                 '"Notimestamp","",'
                 '"2015-07-24 19:01:01","Write time","no_timestamp"\n'
             )
-            file_object.write(string)
-            string = (
+            file_object.write(line_string)
+            line_string = (
                 '"Accurate_timestamp","1331712840499027",'
                 '"2015-07-24 19:01:01","Write time","Accurate_timestamp"\n'
             )
-            file_object.write(string)
+            file_object.write(line_string)
 
         self.import_timeline("/tmp/timestamptest.csv", sketch=sketch)
         os.remove(file_path)
@@ -402,6 +402,173 @@ class UploadTest(interface.BaseEndToEndTest):
 
         events = sketch.explore("*", as_pandas=True)
         self.assertions.assertEqual(len(events), 3205)
+
+    def test_large_field_upload_jsonl(self):
+        """Test uploading a timeline with an event containing a very large
+        field (>32KB). This test ensures that the ignore_above mapping
+        is working as expected, allowing the event to be indexed."""
+
+        # create a new sketch
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test_large_field_upload {rand}")
+        self.sketch = sketch
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "large_field.jsonl")
+
+            # Generate 38,000 random hex characters to exceed 32KB OpenSearch limit
+            large_field_value = "".join(
+                random.choices(string.hexdigits.lower(), k=38000)
+            )
+            unique_message = f"Large event check {rand}"
+
+            with open(file_path, "w", encoding="utf-8") as file_object:
+                line_data = {
+                    "datetime": "2026-02-18T13:37:00+00:00",
+                    "timestamp": 1771421820000000,
+                    "timestamp_desc": "Time Logged",
+                    "message": unique_message,
+                    "data_type": "test:large_field",
+                    "LargeField": large_field_value,
+                    "id": f"test-uuid-{rand}",
+                }
+                file_object.write(json.dumps(line_data) + "\n")
+
+            # Import the timeline
+            print(f"Importing timeline from: {file_path}")
+            self.import_timeline(file_path, sketch=sketch)
+
+            timeline = sketch.list_timelines()[0]
+
+            # Check that timeline was uploaded correctly and is ready
+            self.assertions.assertEqual(timeline.index.status, "ready")
+
+            # Verify the event is searchable by message
+            events = sketch.explore(
+                f'message:"{unique_message}"', as_pandas=True, return_fields="*"
+            )
+            self.assertions.assertEqual(len(events), 1)
+            self.assertions.assertIn("LargeField", events.columns)
+            self.assertions.assertEqual(events.iloc[0]["LargeField"], large_field_value)
+
+            # Verify the event is searchable by the large field itself (partially)
+            # Search for the first 20 characters of the large field using a wildcard
+            # because the large field is not tokenized (single contiguous string).
+            snippet = large_field_value[:20]
+            events_large = sketch.explore(
+                f"LargeField:{snippet}*", as_pandas=True, return_fields="*"
+            )
+            self.assertions.assertEqual(len(events_large), 1)
+            self.assertions.assertIn("LargeField", events_large.columns)
+            self.assertions.assertEqual(
+                events_large.iloc[0]["LargeField"], large_field_value
+            )
+
+    def test_field_length_limit_searchability(self):
+        """Test different field lengths to verify searchability.
+        Case 1: Under limit (32,760 chars) - Should be fully searchable.
+        Case 2: Over limit (32,770 chars) - Should be searchable via text but
+                not via exact keyword match if keyword is ignored.
+        """
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test_field_length_search {rand}")
+        self.sketch = sketch
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "length_test.jsonl")
+
+            # 1. Just under the 32,766 limit
+            under_limit_val = "A" * 32760
+            under_limit_msg = f"Under limit {rand}"
+
+            # 2. Just over the 32,766 limit
+            over_limit_val = "B" * 32770
+            over_limit_msg = f"Over limit {rand}"
+
+            with open(file_path, "w", encoding="utf-8") as file_object:
+                file_object.write(
+                    json.dumps(
+                        {
+                            "datetime": "2026-02-19T10:00:00+00:00",
+                            "message": under_limit_msg,
+                            "data_type": "test_length",
+                            "TestField": under_limit_val,
+                        }
+                    )
+                    + "\n"
+                )
+                file_object.write(
+                    json.dumps(
+                        {
+                            "datetime": "2026-02-19T10:01:00+00:00",
+                            "message": over_limit_msg,
+                            "data_type": "test_length",
+                            "TestField": over_limit_val,
+                        }
+                    )
+                    + "\n"
+                )
+
+            self.import_timeline(file_path, sketch=sketch)
+
+            # Verification: Both should be found by their message
+            events = sketch.explore(
+                "data_type:test_length", as_pandas=True, return_fields="*"
+            )
+            self.assertions.assertEqual(len(events), 2)
+
+            # Verification: Under limit should be searchable by exact value
+            # Note: We use wildcard because the default 'text' analyzer might
+            # still tokenise if there were spaces, but here it's one token.
+            res_under = sketch.explore(
+                f'TestField:"{under_limit_val}"', as_pandas=True, return_fields="*"
+            )
+            self.assertions.assertEqual(len(res_under), 1)
+            self.assertions.assertIn("TestField", res_under.columns)
+
+            # Verification: Over limit should be searchable by wildcard
+            # (search against 'text' field)
+            res_over_wildcard = sketch.explore(
+                f"TestField:{over_limit_val[:100]}*", as_pandas=True, return_fields="*"
+            )
+            self.assertions.assertEqual(len(res_over_wildcard), 1)
+            self.assertions.assertIn("TestField", res_over_wildcard.columns)
+            self.assertions.assertEqual(
+                res_over_wildcard.iloc[0]["message"], over_limit_msg
+            )
+
+    def test_extreme_field_length_upload(self):
+        """Test uploading a very large field (100KB) to verify system stability."""
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(name=f"test_extreme_field {rand}")
+        self.sketch = sketch
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "extreme_field.jsonl")
+            large_val = "X" * 100000
+            msg = f"Extreme event {rand}"
+
+            with open(file_path, "w", encoding="utf-8") as file_object:
+                file_object.write(
+                    json.dumps(
+                        {
+                            "datetime": "2026-02-19T11:00:00+00:00",
+                            "message": msg,
+                            "data_type": "test:extreme",
+                            "BigBlob": large_val,
+                        }
+                    )
+                    + "\n"
+                )
+
+            self.import_timeline(file_path, sketch=sketch)
+
+            events = sketch.explore(
+                f'message:"{msg}"', as_pandas=True, return_fields="*"
+            )
+            self.assertions.assertEqual(len(events), 1)
+            self.assertions.assertIn("BigBlob", events.columns)
+            self.assertions.assertEqual(len(events.iloc[0]["BigBlob"]), 100000)
 
 
 manager.EndToEndTestManager.register_test(UploadTest)

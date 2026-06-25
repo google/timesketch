@@ -6,7 +6,7 @@ hide:
 
 When upgrading Timesketch you might need to migrate the database to use the latest database schema. This will be made clear within any release notifications.
 
-If a databse migration is required, then the following guide is how you do so:
+If a database migration is required, then the following guide is how you do so:
 
 ## Backup you database (!)
 First you should backup your current database in case something goes wrong in the upgrade process. For PostgreSQL you do the following (Ref: https://www.postgresql.org/docs/9.1/static/backup.html):
