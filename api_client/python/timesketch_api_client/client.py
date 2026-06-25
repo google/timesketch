@@ -95,6 +95,7 @@ class TimesketchApi:
         create_session=True,
         retry_count=DEFAULT_RETRY_COUNT,
         backoff_factor=0.5,
+        auth_timeout=None,
     ):
         """Initializes the TimesketchApi object.
 
@@ -114,6 +115,7 @@ class TimesketchApi:
             retry_count: Number of retries for HTTP requests and internal API
                 request retries. Defaults to DEFAULT_RETRY_COUNT.
             backoff_factor: The backoff factor to use for retries. Defaults to 0.5.
+            auth_timeout: Optional timeout in seconds for the authentication.
 
         Raises:
             ConnectionError: If the Timesketch server is unreachable.
@@ -145,6 +147,7 @@ class TimesketchApi:
                 auth_mode=auth_mode,
                 retry_count=self._retry_count,
                 backoff_factor=self._backoff_factor,
+                auth_timeout=auth_timeout,
             )
         except ConnectionError as exc:
             raise ConnectionError("Timesketch server unreachable") from exc
@@ -256,6 +259,7 @@ class TimesketchApi:
         open_browser=False,
         run_server=True,
         skip_open=False,
+        timeout_seconds=None,
     ):
         """Return an OAuth session.
 
@@ -273,6 +277,8 @@ class TimesketchApi:
             skip_open (bool): A booelan, if set to True (defaults to False) an
                 authorization URL is printed on the screen to visit. This is
                 only valid if run_server is set to False.
+            timeout_seconds (int): Optional timeout in seconds for the authentication.
+                If set to None (default), it will wait indefinitely.
 
         Return:
             session: Instance of requests.Session.
@@ -312,7 +318,22 @@ class TimesketchApi:
             flow.redirect_uri = self.DEFAULT_OAUTH_LOCALHOST_URL
 
         if run_server:
-            _ = flow.run_local_server(host=host, port=port, open_browser=open_browser)
+            try:
+                _ = flow.run_local_server(
+                    host=host,
+                    port=port,
+                    open_browser=open_browser,
+                    timeout_seconds=timeout_seconds,
+                )
+            except AttributeError as e:
+                # Handle cases where run_local_server returns without a request
+                # being made, e.g. on timeout.
+                if "NoneType" in str(e) and "replace" in str(e):
+                    raise RuntimeError(
+                        "Authentication failed: No authorization response received. "
+                        "Did you authorize the application in the browser?"
+                    ) from e
+                raise
         else:
             if not sys.stdout.isatty() or not sys.stdin.isatty():
                 msg = (
@@ -377,6 +398,7 @@ class TimesketchApi:
         auth_mode,
         retry_count,
         backoff_factor,
+        auth_timeout,
     ):
         """Create authenticated HTTP session for server communication.
 
@@ -391,13 +413,16 @@ class TimesketchApi:
                 (HTTP Basic authentication) and oauth
             retry_count (int): Number of retries for HTTP requests.
             backoff_factor (float): The backoff factor to use for retries.
+            auth_timeout (int): Optional timeout in seconds for the authentication.
 
         Returns:
             Instance of requests.Session.
         """
         if auth_mode == "oauth":
             return self._create_oauth_session(
-                client_id=client_id, client_secret=client_secret
+                client_id=client_id,
+                client_secret=client_secret,
+                timeout_seconds=auth_timeout,
             )
 
         if auth_mode == "oauth_local":
@@ -406,6 +431,7 @@ class TimesketchApi:
                 client_secret=client_secret,
                 run_server=False,
                 skip_open=True,
+                timeout_seconds=auth_timeout,
             )
 
         session = requests.Session()
