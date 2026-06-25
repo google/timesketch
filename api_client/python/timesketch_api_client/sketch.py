@@ -63,12 +63,9 @@ class Sketch(resource.BaseResource):
 
     def __init__(
         self, sketch_id: int, api: TimesketchApi, sketch_name: Optional[str] = None
-    ) -> None:
-        """Initializes the Sketch object.
-
         Args:
             sketch_id (int): Primary key ID of the sketch.
-            api (TimesketchApi): An instance of TimesketchApi object.
+            api (timesketch_api_client.client.TimesketchApi): An instance of TimesketchApi object.
             sketch_name (Optional[str]): Name of the sketch (optional).
         """
         self.id = sketch_id
