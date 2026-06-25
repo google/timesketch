@@ -338,7 +338,7 @@ class Aggregation(resource.SketchResource):
         Args:
             description (str): Description string.
         """
-        if "meta" not in self.resource_data:
+        if not self.resource_data or "meta" not in self.resource_data:
             return
         meta = self.resource_data.get("meta", {})
         meta["description"] = description
