@@ -89,11 +89,11 @@ class Scenario(resource.BaseResource):
         True.
 
         Args:
-            refresh_cache (bool): If True, forces a refresh of the cached data
+            refresh_cache: If True, forces a refresh of the cached data
                 from the API.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         if not self._is_populated or refresh_cache:
             super().lazyload_data(refresh_cache=refresh_cache)
@@ -150,7 +150,7 @@ class Scenario(resource.BaseResource):
         """Lists all facets for the scenario.
 
         Returns:
-            list[dict]: A list of dictionaries, each representing a facet.
+            A list of dictionaries, each representing a facet.
         """
         resource_url = (
             f"{self.api.api_root}/sketches/{self.sketch_id}/"
@@ -257,11 +257,11 @@ class Question(resource.BaseResource):
         True.
 
         Args:
-            refresh_cache (bool): If True, forces a refresh of the cached data
+            refresh_cache: If True, forces a refresh of the cached data
                 from the API.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         if not self._is_populated or refresh_cache:
             super().lazyload_data(refresh_cache=refresh_cache)

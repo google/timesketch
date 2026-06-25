@@ -38,10 +38,10 @@ class AnalyzerResult(resource.BaseResource):
         """Initialize the class.
 
         Args:
-            timeline_id (int): The ID of the timeline.
-            session_id (int): The ID of the analyzer session.
-            sketch_id (int): The ID of the sketch.
-            api (TimesketchApi): An instance of TimesketchApi.
+            timeline_id: The ID of the timeline.
+            session_id: The ID of the analyzer session.
+            sketch_id: The ID of the sketch.
+            api: An instance of TimesketchApi.
         """
         self._session_id = session_id
         self._sketch_id = sketch_id

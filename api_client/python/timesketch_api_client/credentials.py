@@ -45,7 +45,7 @@ class TimesketchCredentials:
         """Sets the credential object.
 
         Args:
-            credential_obj (object): The credential object.
+            credential_obj: The credential object.
         """
         self._credential = credential_obj
 
@@ -60,7 +60,7 @@ class TimesketchCredentials:
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
         """
         type_data = data[:10]
         type_string = type_data.decode("utf-8").strip()
@@ -77,7 +77,7 @@ class TimesketchCredentials:
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
         """
         raise NotImplementedError
 
@@ -91,7 +91,7 @@ class TimesketchPwdCredentials(TimesketchCredentials):
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
 
         Raises:
             TypeError: if the data is not in bytes.
@@ -128,7 +128,7 @@ class TimesketchOAuthCredentials(TimesketchCredentials):
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
 
         Raises:
             TypeError: if the data is not in bytes.

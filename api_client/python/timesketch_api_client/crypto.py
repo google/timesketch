@@ -45,7 +45,7 @@ class CredentialStorage:
         """Initialize the class.
 
         Args:
-            file_path (str): Path to the credential file.
+            file_path: Path to the credential file.
         """
         self._user = getpass.getuser()
         if file_path:
@@ -58,8 +58,8 @@ class CredentialStorage:
         """Returns an encryption key.
 
         Args:
-            salt (bytes): a salt used during the encryption.
-            password (bytes): the password used to decrypt/encrypt
+            salt: a salt used during the encryption.
+            password: the password used to decrypt/encrypt
                 the message.
 
         Returns:
@@ -78,7 +78,7 @@ class CredentialStorage:
         """Set the filepath to the credential file.
 
         Args:
-            file_path (str): Path to the credential file.
+            file_path: Path to the credential file.
         """
         if os.path.isfile(file_path):
             self._filepath = file_path
@@ -97,14 +97,14 @@ class CredentialStorage:
         that contains a stored copy of the credential object.
 
         Args:
-            cred_obj (credentials.TimesketchCredentials): the credential
+            cred_obj: the credential
                 object that is to be stored on disk.
-            file_path (str): full path to the file storing the saved
+            file_path: full path to the file storing the saved
                 credentials.
-            password (str): optional password to encrypt the
+            password: optional password to encrypt the
                 credential file with. If not supplied a password
                 will be generated.
-            config_assistant (ConfigAssistant): optional configuration
+            config_assistant: optional configuration
                 assistant object. Can be used to store the password to the
                 credential file.
         """
@@ -148,12 +148,12 @@ class CredentialStorage:
         """Load credentials from a file and return a credential object.
 
         Args:
-            file_path (str): Full path to the file storing the saved
+            file_path: Full path to the file storing the saved
                 credentials.
-            password (str): optional password to encrypt the
+            password: optional password to encrypt the
                 credential file with. If not supplied a password
                 will be generated.
-            config_assistant (ConfigAssistant): optional configuration
+            config_assistant: optional configuration
                 assistant object. Can be used to store the password to the
                 credential file.
 

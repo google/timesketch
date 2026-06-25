@@ -111,7 +111,7 @@ class ConfigAssistant:
         """Returns a value for a given config.
 
         Args:
-            name (str): the name of the config value to retrieve.
+            name: the name of the config value to retrieve.
 
         Raises:
             KeyError: if the config does not exist.
@@ -124,7 +124,7 @@ class ConfigAssistant:
         """Returns a Timesketch API client if possible.
 
         Args:
-            token_password (str): an optional password to decrypt
+            token_password: an optional password to decrypt
                 the credential token file.
         """
         if self.missing:
@@ -212,10 +212,10 @@ class ConfigAssistant:
         """Returns a boolean indicating whether a config parameter is set.
 
         Args:
-            name (str): the name of the configuration.
+            name: the name of the configuration.
 
         Returns:
-            bool: whether the object has been set or not.
+            whether the object has been set or not.
         """
         return name.lower() in self._config
 
@@ -228,15 +228,15 @@ class ConfigAssistant:
         """Load the config from file.
 
         Args:
-            config_file_path (str): Full path to the configuration file,
+            config_file_path: Full path to the configuration file,
                 if not supplied the default path will be used, which is
                 the file RC_FILENAME inside the user's home directory.
-            section (str): The configuration section to read from. This
+            section: The configuration section to read from. This
                 is optional and defaults to timesketch. This can be
                 useful if you have multiple Timesketch servers to connect to,
                 with each one of them having a separate section in the config
                 file.
-            load_cli_config (bool): Determine if the CLI config section should
+            load_cli_config: Determine if the CLI config section should
                 be loaded. This is optional and defaults to False.
 
         Raises:
@@ -305,7 +305,7 @@ class ConfigAssistant:
         other keys are ignored in the dict object.
 
         Args:
-            config_dict (dict): dict object with configuration.
+            config_dict: dict object with configuration.
         """
         fields = list(self.CLIENT_NEEDED)
         fields.extend(list(self.OAUTH_CLIENT_NEEDED))
@@ -329,15 +329,15 @@ class ConfigAssistant:
         """Save the current config to a file.
 
         Args:
-            file_path (str): A full path to the location where the
+            file_path: A full path to the location where the
                 configuration file is to be stored. If not provided the
                 default location will be used.
-            section (str): The configuration section to write to. This
+            section: The configuration section to write to. This
                 is optional and defaults to timesketch. This can be
                 useful if you have multiple Timesketch servers to connect to,
                 with each one of them having a separate section in the config
                 file.
-            token_file_path (str): Optional path to the location of the token
+            token_file_path: Optional path to the location of the token
                 file.
         """
         if not file_path:
@@ -404,7 +404,7 @@ class ConfigAssistant:
         """Sets a given config item with a value.
 
         Args:
-          name (str): the name of the configuration value to be set.
+          name: the name of the configuration value to be set.
           value: the value of the configuration object.
         """
         self._config[name.lower()] = value
@@ -421,21 +421,21 @@ def get_client(
     """Returns a Timesketch API client using the configuration assistant.
 
     Args:
-        config_dict (dict): optional dict that will be used to configure
+        config_dict: optional dict that will be used to configure
             the client.
-        config_path (str): optional path to the configuration file, if
+        config_path: optional path to the configuration file, if
             not supplied a default path will be used.
-        config_section (str): The configuration section to read from. This
+        config_section: The configuration section to read from. This
             is optional and defaults to timesketch. This can be
             useful if you have multiple Timesketch servers to connect to,
             with each one of them having a separate section in the config
             file.
-        token_password (str): an optional password to decrypt
+        token_password: an optional password to decrypt
             the credential token file.
-        confirm_choices (bool): an optional bool. if set to the user is given
+        confirm_choices: an optional bool. if set to the user is given
             a choice to change the value for all already configured parameters.
             This defaults to False.
-        load_cli_config (bool): Determine if the CLI config section should
+        load_cli_config: Determine if the CLI config section should
             be loaded. This is optional and defaults to False.
 
     Returns:
@@ -500,14 +500,14 @@ def configure_missing_parameters(
     is username/password and ask for a password to store credentials.
 
     Args:
-        config_assistant (ConfigAssistant): a config assistant that might
+        config_assistant: a config assistant that might
             not be fully configured.
-        token_password (str): an optional password to decrypt
+        token_password: an optional password to decrypt
             the credential token file.
-        confirm_choices (bool): an optional bool. if set to the user is given
+        confirm_choices: an optional bool. if set to the user is given
             a choice to change the value for all already configured parameters.
             This defaults to False.
-        config_section (str): The configuration section to read from. This
+        config_section: The configuration section to read from. This
             is optional and defaults to timesketch. This can be
             useful if you have multiple Timesketch servers to connect to,
             with each one of them having a separate section in the config

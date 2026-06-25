@@ -41,7 +41,6 @@ class SigmaRule(resource.BaseResource):
 
         Args:
             api: An instance of TimesketchApi object.
-
         """
         self._attr_dict: Dict[str, Any] = {}
         resource_uri = "sigmarules/"
@@ -56,7 +55,7 @@ class SigmaRule(resource.BaseResource):
         """Get a value for a given key in case it has no dedicated property.
 
         Args:
-            key (str): Key of the attribute to get.
+            key: Key of the attribute to get.
         """
         if not self._attr_dict:
             return ""
@@ -138,7 +137,6 @@ class SigmaRule(resource.BaseResource):
         Args:
             key: key to set the value
             value: value to set
-
         """
         self._attr_dict[key] = value
 
@@ -146,7 +144,7 @@ class SigmaRule(resource.BaseResource):
         """Load a dict into a rule.
 
         Args:
-            rule_dict (dict): Dictionary with rule data.
+            rule_dict: Dictionary with rule data.
         """
         for key, value in rule_dict.items():
             self.set_value(key, value)
@@ -155,8 +153,7 @@ class SigmaRule(resource.BaseResource):
         """Get a SigmaRule object from a rule UUID.
 
         Args:
-            rule_uuid (str): Id of the sigma rule.
-
+            rule_uuid: Id of the sigma rule.
         """
         self.resource_uri = f"sigmarules/{rule_uuid}"
 

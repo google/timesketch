@@ -109,23 +109,23 @@ class TimesketchApi:
         """Initializes the TimesketchApi object.
 
         Args:
-            host_uri (str): URI to the Timesketch server (https://<server>/).
-            username (str): User username.
-            password (str): User password.
-            verify (bool): Verify server SSL certificate.
-            client_id (str): The client ID if OAUTH auth is used.
-            client_secret (str): The OAUTH client secret if OAUTH is used.
-            auth_mode (str): The authentication mode to use. Defaults to 'userpass'
+            host_uri: URI to the Timesketch server (https://<server>/).
+            username: User username.
+            password: User password.
+            verify: Verify server SSL certificate.
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
+            auth_mode: The authentication mode to use. Defaults to 'userpass'
                 Supported values are 'userpass' (username/password combo),
                 'http-basic' (HTTP Basic authentication) and oauth.
-            create_session (bool): Boolean indicating whether the client object
+            create_session: Boolean indicating whether the client object
                 should create a session object. If set to False the
                 function "set_session" needs to be called before proceeding.
-            retry_count (int): Number of retries for HTTP requests and internal API
+            retry_count: Number of retries for HTTP requests and internal API
                 request retries. Defaults to DEFAULT_RETRY_COUNT.
-            backoff_factor (float): The backoff factor to use for retries.
+            backoff_factor: The backoff factor to use for retries.
                 Defaults to 0.5.
-            auth_timeout (int): Optional timeout in seconds for the authentication.
+            auth_timeout: Optional timeout in seconds for the authentication.
 
         Raises:
             ConnectionError: If the Timesketch server is unreachable.
@@ -197,7 +197,7 @@ class TimesketchApi:
         """Sets the credential object.
 
         Args:
-            credential_object (credentials.AuthCredentials): Credential object.
+            credential_object: Credential object.
         """
         self.credentials = credential_object
 
@@ -205,7 +205,7 @@ class TimesketchApi:
         """Sets the session object.
 
         Args:
-            session_object (requests.Session): Instance of requests.Session.
+            session_object: Instance of requests.Session.
         """
         self._session = session_object
 
@@ -215,9 +215,9 @@ class TimesketchApi:
         """Post username/password to authenticate the HTTP session.
 
         Args:
-            session (requests.Session): Instance of requests.Session.
-            username (str): User username.
-            password (str): User password.
+            session: Instance of requests.Session.
+            username: User username.
+            password: User password.
         """
         # Do a POST to the login handler to set up the session cookies
         data = {
@@ -244,8 +244,8 @@ class TimesketchApi:
         """Retrieve CSRF token from the server and append to HTTP headers.
 
         Args:
-            session (requests.Session): Instance of requests.Session.
-            bypass_oauth (bool): Whether to bypass OAuth.
+            session: Instance of requests.Session.
+            bypass_oauth: Whether to bypass OAuth.
         """
         # Scrape the CSRF token from the response
         if bypass_oauth:
@@ -286,20 +286,20 @@ class TimesketchApi:
         """Return an OAuth session.
 
         Args:
-            client_id (str): The client ID if OAUTH auth is used.
-            client_secret (str): The OAUTH client secret if OAUTH is used.
-            client_secrets_file (str): Path to the JSON file that contains the client
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
+            client_secrets_file: Path to the JSON file that contains the client
                 secrets, in the client_secrets format.
-            host (str): Host address the OAUTH web server will bind to.
-            port (int): Port the OAUTH web server will bind to.
-            open_browser (bool): A boolean, if set to false (default) a browser window
+            host: Host address the OAUTH web server will bind to.
+            port: Port the OAUTH web server will bind to.
+            open_browser: A boolean, if set to false (default) a browser window
                 will not be automatically opened.
-            run_server (bool): A boolean, if set to true (default) a web server is
+            run_server: A boolean, if set to true (default) a web server is
                 run to catch the OAUTH request and response.
-            skip_open (bool): A booelan, if set to True (defaults to False) an
+            skip_open: A booelan, if set to True (defaults to False) an
                 authorization URL is printed on the screen to visit. This is
                 only valid if run_server is set to False.
-            timeout_seconds (int): Optional timeout in seconds for the authentication.
+            timeout_seconds: Optional timeout in seconds for the authentication.
                 If set to None (default), it will wait indefinitely.
 
         Return:
@@ -425,17 +425,17 @@ class TimesketchApi:
         """Create authenticated HTTP session for server communication.
 
         Args:
-            username (str): User to authenticate as.
-            password (str): User password.
-            verify (bool): Verify server SSL certificate.
-            client_id (str): The client ID if OAUTH auth is used.
-            client_secret (str): The OAUTH client secret if OAUTH is used.
-            auth_mode (str): The authentication mode to use. Supported values are
+            username: User to authenticate as.
+            password: User password.
+            verify: Verify server SSL certificate.
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
+            auth_mode: The authentication mode to use. Supported values are
                 'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth
-            retry_count (int): Number of retries for HTTP requests.
-            backoff_factor (float): The backoff factor to use for retries.
-            auth_timeout (int): Optional timeout in seconds for the authentication.
+            retry_count: Number of retries for HTTP requests.
+            backoff_factor: The backoff factor to use for retries.
+            auth_timeout: Optional timeout in seconds for the authentication.
 
         Returns:
             Instance of requests.Session.
@@ -504,12 +504,12 @@ class TimesketchApi:
         `GET`.
 
         Args:
-            method (str): HTTP method (e.g., 'GET', 'POST').
-            resource_uri (str): The URI for the resource.
+            method: HTTP method (e.g., 'GET', 'POST').
+            resource_uri: The URI for the resource.
             **kwargs: Optional arguments to send with the request.
 
         Returns:
-            dict: The JSON response data.
+            The JSON response data.
 
         Raises:
             ValueError: If JSON decoding fails after all retries.
@@ -574,12 +574,12 @@ class TimesketchApi:
         JSON responses.
 
         Args:
-            resource_uri (str): The URI to the resource to be fetched.
-            params (dict, optional): A dictionary of URL parameters to send
+            resource_uri: The URI to the resource to be fetched.
+            params: A dictionary of URL parameters to send
                 in the GET request. Defaults to None.
 
         Returns:
-            dict: A dictionary containing the JSON response data from the API.
+            A dictionary containing the JSON response data from the API.
         """
         return self._send_request_with_retry("GET", resource_uri, params=params)
 
@@ -591,8 +591,8 @@ class TimesketchApi:
         handle transient network errors or server-side issues.
 
         Args:
-            name (str): Name of the sketch. Cannot be empty.
-            description (str): Optional description of the sketch. If not
+            name: Name of the sketch. Cannot be empty.
+            description: Optional description of the sketch. If not
                 provided, the sketch name will be used as the description.
 
         Returns:
@@ -645,8 +645,8 @@ class TimesketchApi:
         handle transient network errors or server-side issues.
 
         Args:
-            username (str): Name of the user
-            password (str): Password of the user
+            username: Name of the user
+            password: Password of the user
 
         Returns:
             True if user created successfully.
@@ -687,7 +687,7 @@ class TimesketchApi:
         """Get a user.
 
         Args:
-            user_id (int): Primary key ID of the user.
+            user_id: Primary key ID of the user.
 
         Returns:
             Instance of a User object.
@@ -707,7 +707,7 @@ class TimesketchApi:
         """Get a sketch.
 
         Args:
-            sketch_id (int): Primary key ID of the sketch.
+            sketch_id: Primary key ID of the sketch.
 
         Returns:
             Instance of a Sketch object.
@@ -720,9 +720,9 @@ class TimesketchApi:
         """Returns information about available aggregators.
 
         Args:
-            name (str): String with the name of an aggregator. If the name is not
+            name: String with the name of an aggregator. If the name is not
                 provided, a list with all aggregators is returned.
-            as_pandas (bool): Boolean indicating that the results will be returned
+            as_pandas: Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of dicts.
 
         Returns:
@@ -768,8 +768,8 @@ class TimesketchApi:
         """Get a list of all open sketches that the user has access to.
 
         Args:
-            per_page (int): Number of items per page when paginating. Default is 50.
-            scope (str): What scope to get sketches as. Default to user.
+            per_page: Number of items per page when paginating. Default is 50.
+            scope: What scope to get sketches as. Default to user.
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in
                 shared: sketches shared with the user (but not owned by them)
@@ -777,7 +777,7 @@ class TimesketchApi:
                 archived: get archived sketches
                 search: pass additional search query
                 all: all sketches the user has access to (owned and shared)
-            include_archived (bool): If archived sketches should be returned.
+            include_archived: If archived sketches should be returned.
 
         Yields:
             Sketch objects instances.
@@ -812,7 +812,7 @@ class TimesketchApi:
         """Get a searchindex.
 
         Args:
-            searchindex_id (int): Primary key ID of the searchindex.
+            searchindex_id: Primary key ID of the searchindex.
 
         Returns:
             Instance of a SearchIndex object.
@@ -873,7 +873,7 @@ class TimesketchApi:
         """Return information about outstanding celery tasks or a specific one.
 
         Args:
-            job_id (str): Optional Celery job identification string. If
+            job_id: Optional Celery job identification string. If
                 provided that specific job ID is queried, otherwise
                 a check for all outstanding jobs is checked.
 
@@ -922,7 +922,7 @@ class TimesketchApi:
         and returns a list of SigmaRule objects of the rules.
 
         Args:
-            as_pandas (bool): Boolean indicating that the results will be returned
+            as_pandas: Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of SigmaRuleObjects.
 
         Returns:
@@ -968,7 +968,7 @@ class TimesketchApi:
         to handle transient network errors or server-side issues.
 
         Args:
-            rule_yaml (str): YAML of the Sigma Rule.
+            rule_yaml: YAML of the Sigma Rule.
 
         Returns:
             Instance of a Sigma object.
@@ -999,7 +999,7 @@ class TimesketchApi:
         Fetches a single Sigma rule selected by the `UUID`
 
         Args:
-            rule_uuid (str): UUID of the Sigma rule.
+            rule_uuid: UUID of the Sigma rule.
 
         Returns:
             Instance of a SigmaRule object.

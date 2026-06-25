@@ -44,8 +44,8 @@ class BaseBlock:
         """Initialize the base block.
 
         Args:
-            story (Story): Story object.
-            index (int): Index of the block.
+            story: Story object.
+            index: Index of the block.
         """
         self.index = index
         self._story = story
@@ -62,7 +62,7 @@ class BaseBlock:
         """Feeds data to the block.
 
         Args:
-            data (str): Data to feed to the block.
+            data: Data to feed to the block.
         """
         self._data = data
         self._story.commit()
@@ -91,7 +91,7 @@ class BaseBlock:
         """Feed data into the block.
 
         Args:
-            data (list): Data to feed into the block.
+            data: Data to feed into the block.
         """
         self._data = data
 
@@ -99,7 +99,7 @@ class BaseBlock:
         """Feed a block from a block dict.
 
         Args:
-            data_dict (dict): Dictionary with block data.
+            data_dict: Dictionary with block data.
         """
         raise NotImplementedError
 
@@ -141,8 +141,8 @@ class ViewBlock(BaseBlock):
         """Initialize the view block.
 
         Args:
-            story (Story): Story object.
-            index (int): Index of the block.
+            story: Story object.
+            index: Index of the block.
         """
         super().__init__(story, index)
         self._view_id = 0
@@ -158,7 +158,7 @@ class ViewBlock(BaseBlock):
         """Sets a new view to the block.
 
         Args:
-            new_view (View): View object.
+            new_view: View object.
         """
         self.data = new_view
 
@@ -180,7 +180,7 @@ class ViewBlock(BaseBlock):
         """Feed a block from a block dict.
 
         Args:
-            data_dict (dict): Dictionary with block data.
+            data_dict: Dictionary with block data.
         """
         props = data_dict.get("componentProps", {})
         view_dict = props.get("view")
@@ -237,7 +237,7 @@ class TextBlock(BaseBlock):
         """Sets a new text to the block.
 
         Args:
-            new_text (str): New text to set.
+            new_text: New text to set.
         """
         self.data = new_text
 
@@ -245,7 +245,7 @@ class TextBlock(BaseBlock):
         """Feed a block from a block dict.
 
         Args:
-            data_dict (dict): Dictionary with block data.
+            data_dict: Dictionary with block data.
         """
         text = data_dict.get("content", "")
         self.feed(text)
@@ -281,8 +281,8 @@ class AggregationBlock(BaseBlock):
         """Initialize the aggregation block.
 
         Args:
-            story (Story): Story object.
-            index (int): Index of the block.
+            story: Story object.
+            index: Index of the block.
         """
         super().__init__(story, index)
         self._agg_id = 0
@@ -302,7 +302,7 @@ class AggregationBlock(BaseBlock):
         """Set the aggregation object.
 
         Args:
-            agg_obj (Aggregation): Aggregation object.
+            agg_obj: Aggregation object.
         """
         self._data = agg_obj
 
@@ -326,7 +326,7 @@ class AggregationBlock(BaseBlock):
         """Sets the aggregation type.
 
         Args:
-            new_type (str): Type of the chart.
+            new_type: Type of the chart.
         """
         self._chart_type = new_type
 
@@ -348,7 +348,7 @@ class AggregationBlock(BaseBlock):
         """Feed a block from a block dict.
 
         Args:
-            data_dict (dict): Dictionary with block data.
+            data_dict: Dictionary with block data.
         """
         component = data_dict.get("componentName", "N/A")
         if component != "TsAggregationCompact":
@@ -429,8 +429,8 @@ class AggregationGroupBlock(BaseBlock):
         """Initialize the aggregation group block.
 
         Args:
-            story (Story): Story object.
-            index (int): Index of the block.
+            story: Story object.
+            index: Index of the block.
         """
         super().__init__(story, index)
         self._group_id = 0
@@ -448,7 +448,7 @@ class AggregationGroupBlock(BaseBlock):
         """Set the aggregation group object.
 
         Args:
-            group_obj (AggregationGroup): AggregationGroup object.
+            group_obj: AggregationGroup object.
         """
         self._data = group_obj
 
@@ -480,7 +480,7 @@ class AggregationGroupBlock(BaseBlock):
         """Feed a block from a block dict.
 
         Args:
-            data_dict (dict): Dictionary with block data.
+            data_dict: Dictionary with block data.
         """
         component = data_dict.get("componentName", "N/A")
         if component != "TsAggregationGroupCompact":
@@ -535,8 +535,8 @@ class Story(resource.BaseResource):
         """Initializes the Story object.
 
         Args:
-            story_id (int): The primary key ID of the story.
-            sketch (Sketch): The sketch object (instance of Sketch).
+            story_id: The primary key ID of the story.
+            sketch: The sketch object (instance of Sketch).
             api: Instance of a TimesketchApi object.
         """
         self.id = story_id
@@ -630,8 +630,8 @@ class Story(resource.BaseResource):
         """Adds a block to the story's content.
 
         Args:
-            block (StoryBlock): Story block object.
-            index (int): Index to add the block at.
+            block: Story block object.
+            index: Index to add the block at.
         """
         self._blocks.insert(index, block)
         self.commit()
@@ -647,11 +647,11 @@ class Story(resource.BaseResource):
         """Adds an aggregation object to the story.
 
         Args:
-            agg_obj (aggregation.Aggregation): an aggregation object
-            chart_type (str): string indicating the type of aggregation, can be:
+            agg_obj: an aggregation object
+            chart_type: string indicating the type of aggregation, can be:
                 "table" or the name of the chart to be used, eg "barcharct",
                 "hbarchart". Defaults to "table".
-            index (int): an integer, if supplied determines where the new
+            index: an integer, if supplied determines where the new
                 block will be added. If not supplied it will be
                 appended at the end.
 
@@ -716,8 +716,8 @@ class Story(resource.BaseResource):
         """Add a saved search to the story.
 
         Args:
-            search_obj (search.Search): a search object
-            index (int): an integer, if supplied determines where the new
+            search_obj: a search object
+            index: an integer, if supplied determines where the new
                 block will be added. If not supplied it will be
                 appended at the end.
 
@@ -772,8 +772,8 @@ class Story(resource.BaseResource):
         """Moves a block from one index to another.
 
         Args:
-            block (StoryBlock): Story block object.
-            new_index (int): Index to move the block to.
+            block: Story block object.
+            new_index: Index to move the block to.
         """
         if new_index < 0:
             return
@@ -788,7 +788,7 @@ class Story(resource.BaseResource):
         """Removes a block from the story.
 
         Args:
-            index (int): Index of the block to remove.
+            index: Index of the block to remove.
         """
         _ = self._blocks.pop(index)
         self.commit()
@@ -815,7 +815,7 @@ class Story(resource.BaseResource):
         """Returns exported copy of the story as defined in export_format.
 
         Args:
-            export_format (str): The format to export the story as.
+            export_format: The format to export the story as.
         """
         resource_url = "{0:s}/sketches/{1:d}/stories/{2:d}/".format(
             self._api.api_root, self._sketch.id, self.id

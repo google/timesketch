@@ -41,10 +41,10 @@ class View(resource.BaseResource):
         """Initializes the View object.
 
         Args:
-            view_id (int): Primary key ID for the view.
-            view_name (str): The name of the view.
-            sketch_id (int): ID of a sketch.
-            api (TimesketchApi): Instance of a TimesketchApi object.
+            view_id: Primary key ID for the view.
+            view_name: The name of the view.
+            sketch_id: ID of a sketch.
+            api: Instance of a TimesketchApi object.
         """
         logger.info(
             "View objects will be deprecated soon, consider transitioning "
@@ -61,13 +61,13 @@ class View(resource.BaseResource):
         """Returns a top level attribute from a view object.
 
         Args:
-            name (str): String with the attribute name.
-            default_value (Any): The default value if the attribute does not exit,
+            name: String with the attribute name.
+            default_value: The default value if the attribute does not exit,
                 defaults to None.
-            refresh (bool): If set to True then the data will be refreshed.
+            refresh: If set to True then the data will be refreshed.
 
         Returns:
-            Any: The value of the key "name".
+            The value of the key "name".
         """
         view = self.lazyload_data(refresh_cache=refresh)
         view_objects = view.get("objects")
@@ -84,7 +84,7 @@ class View(resource.BaseResource):
         """Property that returns the description value of a view.
 
         Returns:
-            str: Description of the view.
+            Description of the view.
         """
         return self._get_top_level_attribute("description", default_value="")
 
@@ -93,7 +93,7 @@ class View(resource.BaseResource):
         """Property that returns the username of the view creator.
 
         Returns:
-            str: The username of the user generating the view.
+            The username of the user generating the view.
         """
         user_dict = self._get_top_level_attribute("user", default_value={})
         username = user_dict.get("username")
@@ -106,7 +106,7 @@ class View(resource.BaseResource):
         """Property that returns the views query string.
 
         Returns:
-            str: OpenSearch query as string.
+            OpenSearch query as string.
         """
         return self._get_top_level_attribute("query_string", default_value="")
 
@@ -115,7 +115,7 @@ class View(resource.BaseResource):
         """Property that returns the views filter.
 
         Returns:
-            dict: OpenSearch filter as a dict.
+            OpenSearch filter as a dict.
         """
         query_filter_string = self._get_top_level_attribute(
             "query_filter", default_value=""
@@ -129,7 +129,7 @@ class View(resource.BaseResource):
         """Property that returns the views query DSL.
 
         Returns:
-            dict: OpenSearch DSL as a dict.
+            OpenSearch DSL as a dict.
         """
         dsl_string = self._get_top_level_attribute("query_dsl", default_value="")
         if not dsl_string:

@@ -51,10 +51,10 @@ class BaseResource:
         data is stored in `self.resource_data`.
 
         Args:
-            refresh_cache (bool): If True, forces a refresh of the cached data.
+            refresh_cache: If True, forces a refresh of the cached data.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         if not self.resource_data or refresh_cache:
             self.resource_data = self.api.fetch_resource_data(self.resource_uri)
@@ -65,7 +65,7 @@ class BaseResource:
         """Property to access the resource's data.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         return self.lazyload_data()
 
@@ -78,7 +78,7 @@ class SketchResource(BaseResource):
 
         Args:
             resource_uri: The URI part of the API resource to call.
-            sketch (Sketch): The sketch object of the sketch this resource is tied to.
+            sketch: The sketch object of the sketch this resource is tied to.
         """
         super().__init__(sketch.api, resource_uri)
 
@@ -116,7 +116,7 @@ class SketchResource(BaseResource):
         """Add a label to the resource.
 
         Args:
-            label (str): string with the label information.
+            label: string with the label information.
         """
         if label in self._labels:
             return
@@ -145,7 +145,7 @@ class SketchResource(BaseResource):
         that inherit this as a base class.
 
         Args:
-            kwargs (dict[str, object]): Depending on the resource they may
+            kwargs: Depending on the resource they may
                 require different sets of arguments to be able to run a raw
                 API request.
 
@@ -162,7 +162,7 @@ class SketchResource(BaseResource):
         """Initialize the resource object from a saved resource.
 
         Args:
-            resource_id (int): integer value for the saved resource (primary key).
+            resource_id: integer value for the saved resource (primary key).
         """
         raise NotImplementedError
 

@@ -59,7 +59,7 @@ class Aggregation(resource.SketchResource):
         """Initializes the Aggregation object.
 
         Args:
-            sketch (Sketch): An instance of Sketch object.
+            sketch: An instance of Sketch object.
         """
         self._created_at = ""
         self._name = ""
@@ -114,11 +114,11 @@ class Aggregation(resource.SketchResource):
         """Run an aggregator class.
 
         Args:
-            aggregator_name (str): the name of the aggregator class.
-            parameters (dict): a dict with the parameters for the aggregation class.
-            search_id (int): an optional integer value with a primary key to a
+            aggregator_name: the name of the aggregator class.
+            parameters: a dict with the parameters for the aggregation class.
+            search_id: an optional integer value with a primary key to a
                 saved search.
-            chart_type (str): string with the chart type.
+            chart_type: string with the chart type.
 
         Returns:
             A dict with the aggregation results.
@@ -162,7 +162,7 @@ class Aggregation(resource.SketchResource):
         """Initialize the aggregation object from a saved aggregation.
 
         Args:
-            aggregation_id (int): integer value for the stored
+            aggregation_id: integer value for the stored
                                   aggregation (primary key).
         """
         resource_uri = "sketches/{0:d}/aggregation/{1:d}/".format(
@@ -209,7 +209,7 @@ class Aggregation(resource.SketchResource):
         """Initialize the aggregation object by running an aggregation DSL.
 
         Args:
-            aggregate_dsl (str): OpenSearch aggregation query DSL string.
+            aggregate_dsl: OpenSearch aggregation query DSL string.
             kwargs: Optional arguments
         """
         super().from_manual(**kwargs)
@@ -247,12 +247,12 @@ class Aggregation(resource.SketchResource):
         """Initialize the aggregation object by running an aggregator class.
 
         Args:
-            aggregator_name (str): name of the aggregator class to run.
-            aggregator_parameters (dict): a dict with the parameters of the aggregator
+            aggregator_name: name of the aggregator class to run.
+            aggregator_parameters: a dict with the parameters of the aggregator
                 class.
-            search_id (int): an optional integer value with a primary key to a saved
+            search_id: an optional integer value with a primary key to a saved
                 search.
-            chart_type (str): optional string with the chart type.
+            chart_type: optional string with the chart type.
         """
         self.type = "aggregator_run"
         self._parameters = aggregator_parameters
@@ -313,7 +313,7 @@ class Aggregation(resource.SketchResource):
         """Set the chart title of an aggregation.
 
         Args:
-            new_title (str): Chart title.
+            new_title: Chart title.
         """
         self.chart_title = new_title
 
@@ -336,7 +336,7 @@ class Aggregation(resource.SketchResource):
         """Set the description of an aggregation.
 
         Args:
-            description (str): Description string.
+            description: Description string.
         """
         if not self.resource_data or "meta" not in self.resource_data:
             return
@@ -353,7 +353,7 @@ class Aggregation(resource.SketchResource):
         """Set the name of the aggregation.
 
         Args:
-            name (str): Name of the aggregation.
+            name: Name of the aggregation.
         """
         if not self.resource_data or "meta" not in self.resource_data:
             return
@@ -377,7 +377,7 @@ class Aggregation(resource.SketchResource):
         """Add a label to the aggregation.
 
         Args:
-            label (str): string with the label information.
+            label: string with the label information.
         """
         if label in self._labels:
             return
@@ -485,7 +485,7 @@ class AggregationGroup(resource.SketchResource):
         """Initialize the aggregation group.
 
         Args:
-            sketch (Sketch): An instance of Sketch object.
+            sketch: An instance of Sketch object.
         """
         resource_uri = f"sketches/{sketch.id}/aggregation/group/"
         super().__init__(resource_uri=resource_uri, sketch=sketch)
@@ -539,7 +539,7 @@ class AggregationGroup(resource.SketchResource):
         """Sets the description of the aggregation group.
 
         Args:
-            description (str): Description of the aggregation group.
+            description: Description of the aggregation group.
         """
         self._description = description
         self.save()
@@ -554,7 +554,7 @@ class AggregationGroup(resource.SketchResource):
         """Sets the name of the aggregation group.
 
         Args:
-            name (str): Name of the aggregation group.
+            name: Name of the aggregation group.
         """
         self._name = name
         self.save()
@@ -569,7 +569,7 @@ class AggregationGroup(resource.SketchResource):
         """Sets the chart orientation.
 
         Args:
-            orientation (str): Chart orientation.
+            orientation: Chart orientation.
         """
         self._orientation = orientation
         self.save()
@@ -584,7 +584,7 @@ class AggregationGroup(resource.SketchResource):
         """Sets the group parameters.
 
         Args:
-            parameters (Dict[str, Any]): Aggregation group parameters.
+            parameters: Aggregation group parameters.
         """
         self._parameters = parameters
         self.save()
@@ -608,7 +608,7 @@ class AggregationGroup(resource.SketchResource):
         """Feed group data from a dictionary.
 
         Args:
-            group_dict (dict): a dictionary with the aggregation group
+            group_dict: a dictionary with the aggregation group
                 information.
 
         Raises:
@@ -658,7 +658,7 @@ class AggregationGroup(resource.SketchResource):
         """Feed group data from a group ID.
 
         Args:
-            group_id (int): the group ID to fetch from the store.
+            group_id: the group ID to fetch from the store.
 
         Raises:
             TypeError: if the group ID does not exist.

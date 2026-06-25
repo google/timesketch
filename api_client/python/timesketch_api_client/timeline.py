@@ -53,8 +53,8 @@ class Timeline(resource.BaseResource):
         """Initializes the Timeline object.
 
         Args:
-            timeline_id (int): The primary key ID of the timeline.
-            sketch_id (int): ID of a sketch.
+            timeline_id: The primary key ID of the timeline.
+            sketch_id: ID of a sketch.
             api: Instance of a TimesketchApi object.
             name: Name of the timeline (optional)
             searchindex: The OpenSearch index name (optional)
@@ -100,7 +100,7 @@ class Timeline(resource.BaseResource):
         """Change the color of the timeline.
 
         Args:
-            color (str): The new color of the timeline.
+            color: The new color of the timeline.
         """
         self._color = color
         self._commit()
@@ -133,7 +133,7 @@ class Timeline(resource.BaseResource):
         """Change the timeline description.
 
         Args:
-            description (str): The new description of the timeline.
+            description: The new description of the timeline.
         """
         self._description = description
         self._commit()
@@ -155,7 +155,7 @@ class Timeline(resource.BaseResource):
         """Change the name of the timeline.
 
         Args:
-            name (str): The new name of the timeline.
+            name: The new name of the timeline.
         """
         self._name = name
         self._commit()
@@ -215,12 +215,12 @@ class Timeline(resource.BaseResource):
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_name (str): a name of an analyzer class to run against the
+            analyzer_name: a name of an analyzer class to run against the
                 timeline.
-            analyzer_kwargs (dict): optional dict with parameters for the analyzer.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters.
-            ignore_previous (bool): an optional bool, if set to True then
+            ignore_previous: an optional bool, if set to True then
                 analyzer is run irrelevant on whether it has been previously
                 been run.
 
@@ -264,14 +264,14 @@ class Timeline(resource.BaseResource):
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_names (list): a list of analyzer class names to run against the
+            analyzer_names: a list of analyzer class names to run against the
                 timeline.
-            analyzer_kwargs (dict): optional dict with parameters for the analyzer.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters. It is expected that this is a dict with
                 the key value being the analyzer name, and the value being
                 another key/value dict with the parameters for that analyzer.
-            ignore_previous (bool): an optional bool, if set to True then
+            ignore_previous: an optional bool, if set to True then
                 analyzer is run irrelevant on whether it has been previously
                 been run.
 
@@ -376,10 +376,10 @@ class Timeline(resource.BaseResource):
         """Add a label to the timeline.
 
         Args:
-            label (str): A string with the label to add to the timeline.
+            label: A string with the label to add to the timeline.
 
         Returns:
-            bool: A boolean to indicate whether the label was successfully
+            A boolean to indicate whether the label was successfully
                   added to the timeline.
         """
         if label in self.labels:
@@ -407,10 +407,10 @@ class Timeline(resource.BaseResource):
         """Remove a label from the timeline.
 
         Args:
-            label (str): A string with the label to remove from the timeline.
+            label: A string with the label to remove from the timeline.
 
         Returns:
-            bool: A boolean to indicate whether the label was successfully
+            A boolean to indicate whether the label was successfully
                   removed from the timeline.
         """
         if label not in self.labels:

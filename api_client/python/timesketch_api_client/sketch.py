@@ -65,9 +65,9 @@ class Sketch(resource.BaseResource):
         """Initializes the Sketch object.
 
         Args:
-            sketch_id (int): Primary key ID of the sketch.
-            api (TimesketchApi): An instance of TimesketchApi object.
-            sketch_name (Optional[str]): Name of the sketch (optional).
+            sketch_id: Primary key ID of the sketch.
+            api: An instance of TimesketchApi object.
+            sketch_name: Name of the sketch (optional).
         """
 
         self.id = sketch_id
@@ -102,7 +102,8 @@ class Sketch(resource.BaseResource):
         as a data frame.
 
         Given the fluid setup of attributes, this is not a good way to
-        represent the data. Use the attributes property instead."""
+        represent the data. Use the attributes property instead.
+        """
         data = self.lazyload_data(refresh_cache=True)
         meta = data.get("meta", {})
         attributes = meta.get("attributes", [])
@@ -127,7 +128,7 @@ class Sketch(resource.BaseResource):
         """Change the sketch description to a new value.
 
         Args:
-            description_value (str): The new value for the sketch description.
+            description_value: The new value for the sketch description.
         """
         if not isinstance(description_value, str):
             logger.error("Unable to change the name to a non string value")
@@ -200,7 +201,7 @@ class Sketch(resource.BaseResource):
         """Change the name of the sketch to a new value.
 
         Args:
-            name_value (str): The new name of the sketch.
+            name_value: The new name of the sketch.
         """
         if not isinstance(name_value, str):
             logger.error("Unable to change the name to a non string value")
@@ -250,10 +251,10 @@ class Sketch(resource.BaseResource):
         """Adds or modifies attributes to the sketch.
 
         Args:
-            name (str): The name of the attribute.
-            values (list): A list of values (in their correct type according
+            name: The name of the attribute.
+            values: A list of values (in their correct type according
                 to the ontology).
-            ontology (str): The ontology (matches with
+            ontology: The ontology (matches with
                 /data/ontology.yaml), which defines how the attribute
                 is interpreted.
 
@@ -292,9 +293,9 @@ class Sketch(resource.BaseResource):
         """Adds or modifies an attribute to the sketch.
 
         Args:
-            name (str): The name of the attribute.
-            value (str): Value of the attribute, stored as a string.
-            ontology (str): The ontology (matches with
+            name: The name of the attribute.
+            value: Value of the attribute, stored as a string.
+            ontology: The ontology (matches with
                 /data/ontology.yaml), which defines
                 how the attribute is interpreted.
 
@@ -313,10 +314,10 @@ class Sketch(resource.BaseResource):
         """Add a label to the sketch.
 
         Args:
-            label (str): A string with the label to add to the sketch.
+            label: A string with the label to add to the sketch.
 
         Returns:
-            bool: A boolean to indicate whether the label was successfully
+            A boolean to indicate whether the label was successfully
                   added to the sketch.
         """
         if label in self.labels:
@@ -341,8 +342,8 @@ class Sketch(resource.BaseResource):
         """Remove an attribute from the sketch.
 
         Args:
-            name (str): The name of the attribute.
-            ontology (str): The ontology (matches with
+            name: The name of the attribute.
+            ontology: The ontology (matches with
                 /data/ontology.yaml), which defines how the attribute
                 is interpreted.
 
@@ -376,10 +377,10 @@ class Sketch(resource.BaseResource):
         """Remove a label from the sketch.
 
         Args:
-            label (str): A string with the label to remove from the sketch.
+            label: A string with the label to remove from the sketch.
 
         Returns:
-            bool: A boolean to indicate whether the label was successfully
+            A boolean to indicate whether the label was successfully
                   removed from the sketch.
         """
         if label not in self.labels:
@@ -413,12 +414,12 @@ class Sketch(resource.BaseResource):
         """Create a view object.
 
         Args:
-            name (str): the name of the view.
-            query_string (str): OpenSearch query string. This is optional
+            name: the name of the view.
+            query_string: OpenSearch query string. This is optional
                 yet either a query string or a query DSL is required.
-            query_dsl (str): OpenSearch query DSL as JSON string. This is
+            query_dsl: OpenSearch query DSL as JSON string. This is
                 optional yet either a query string or a query DSL is required.
-            query_filter (dict): Filter for the query as a dict.
+            query_filter: Filter for the query as a dict.
 
         Raises:
             ValueError: if neither query_string nor query_dsl is provided or
@@ -453,7 +454,7 @@ class Sketch(resource.BaseResource):
         """Create a story object.
 
         Args:
-            title (str): the title of the story.
+            title: the title of the story.
 
         Raises:
             RuntimeError: if a story wasn't created for some reason.
@@ -492,7 +493,7 @@ class Sketch(resource.BaseResource):
         first be unarchived before a delete operation can be performed.
 
         Args:
-            force_delete (bool): If True, a hard delete is performed, which
+            force_delete: If True, a hard delete is performed, which
                 permanently removes the sketch and all its associated data
                 (timelines, events, views, etc.) from the Timesketch database
                 and OpenSearch. Administrators can use this to permanently
@@ -502,7 +503,7 @@ class Sketch(resource.BaseResource):
                 indices to free up cluster resources.
 
         Returns:
-            bool: True if the sketch was successfully deleted (either soft or hard).
+            True if the sketch was successfully deleted (either soft or hard).
 
         Raises:
             RuntimeError:
@@ -544,13 +545,13 @@ class Sketch(resource.BaseResource):
         """Add users or groups to the sketch ACL.
 
         Args:
-            user_list (list[str]): optional list of users to add to the ACL
+            user_list: optional list of users to add to the ACL
                 of the sketch. Each user is a string.
-            group_list (list[str]): optional list of groups to add to the ACL
+            group_list: optional list of groups to add to the ACL
                 of the sketch. Each user is a string.
-            make_public (bool): Optional boolean indicating the sketch should be
+            make_public: Optional boolean indicating the sketch should be
                 marked as public.
-            permissions (list[str]): optional list of permissions (read, write, delete).
+            permissions: optional list of permissions (read, write, delete).
                 If not the default set of permissions are applied (read, write)
 
           Returns:
@@ -630,9 +631,9 @@ class Sketch(resource.BaseResource):
         """List all saved aggregations for this sketch.
 
         Args:
-            include_labels (list): list of strings with labels. If defined
+            include_labels: list of strings with labels. If defined
                 then only return aggregations that have the label in the list.
-            exclude_labels (list): list of strings with labels. If defined
+            exclude_labels: list of strings with labels. If defined
                 then only return aggregations that don't have a label in the
                 list. include_labels will be processed first in case both are
                 defined.
@@ -708,7 +709,7 @@ class Sketch(resource.BaseResource):
         """Returns a list of started analyzers and their status.
 
         Args:
-            as_sessions (bool): optional, if set to True then a list of
+            as_sessions: optional, if set to True then a list of
                 AnalyzerResult objects will be returned. Defaults to
                 returning a list of dicts.
         Returns:
@@ -756,7 +757,7 @@ class Sketch(resource.BaseResource):
         """Return a stored aggregation.
 
         Args:
-            aggregation_id (int): id of the stored aggregation.
+            aggregation_id: id of the stored aggregation.
 
         Returns:
             An aggregation object, if stored (instance of Aggregation),
@@ -775,7 +776,7 @@ class Sketch(resource.BaseResource):
         """Return a stored aggregation group.
 
         Args:
-            group_id (int): id of the stored aggregation group.
+            group_id: id of the stored aggregation group.
 
         Returns:
             An aggregation group object (instance of AggregationGroup)
@@ -797,9 +798,9 @@ class Sketch(resource.BaseResource):
         """Returns a story object that is stored in the sketch.
 
         Args:
-            story_id (int): an integer indicating the ID of the story to
+            story_id: an integer indicating the ID of the story to
                 be fetched. Defaults to None.
-            story_title (str): a string with the title of the story. Optional
+            story_title: a string with the title of the story. Optional
                 and defaults to None.
 
         Returns:
@@ -828,7 +829,7 @@ class Sketch(resource.BaseResource):
         """Returns a saved search object that is stored in the sketch.
 
         Args:
-            view_id (int): an integer indicating the ID of the saved search to
+            view_id: an integer indicating the ID of the saved search to
                 be fetched. Defaults to None.
             view_name: a string with the name of the saved search. Optional
                 and defaults to None.
@@ -851,9 +852,9 @@ class Sketch(resource.BaseResource):
         """Returns a saved search object that is stored in the sketch.
 
         Args:
-            search_id (int): an integer indicating the ID of the saved search to
+            search_id: an integer indicating the ID of the saved search to
                 be fetched. Defaults to None.
-            search_name (str): a string with the name of the saved search. Optional
+            search_name: a string with the name of the saved search. Optional
                 and defaults to None.
 
         Returns:
@@ -880,9 +881,9 @@ class Sketch(resource.BaseResource):
         """Returns a timeline object that is stored in the sketch.
 
         Args:
-            timeline_id (int): an integer indicating the ID of the timeline to
+            timeline_id: an integer indicating the ID of the timeline to
                 be fetched. Defaults to None.
-            timeline_name (str): a string with the name of the timeline. Optional
+            timeline_name: a string with the name of the timeline. Optional
                 and defaults to None.
 
         Returns:
@@ -1075,28 +1076,28 @@ class Sketch(resource.BaseResource):
         """Explore the sketch.
 
         Args:
-            query_string (str): OpenSearch query string.
-            query_dsl (str): OpenSearch query DSL as JSON string.
-            query_filter (dict): Filter for the query as a dict.
-            view (search.Search): View object instance (optional).
-            return_fields (str): A comma separated string with a list of fields
+            query_string: OpenSearch query string.
+            query_dsl: OpenSearch query DSL as JSON string.
+            query_filter: Filter for the query as a dict.
+            view: View object instance (optional).
+            return_fields: A comma separated string with a list of fields
                 that should be included in the response. Optional and defaults
                 to None.
-            as_pandas (bool): Optional bool that determines if the results
+            as_pandas: Optional bool that determines if the results
                 should be returned back as a dictionary or a Pandas DataFrame.
-            max_entries (int): Optional integer denoting a best effort to limit
+            max_entries: Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
-            file_name (str): Optional filename, if provided the results of
+            file_name: Optional filename, if provided the results of
                 the query will be exported to a ZIP file instead of being
                 returned back as a dict or a pandas DataFrame. The ZIP file
                 will contain a METADATA file and a CSV with the results from
                 the query.
-            as_object (bool): Optional bool that determines whether the
+            as_object: Optional bool that determines whether the
                 function will return a search object back instead of raw
                 results.
-            use_wildcard_fields (bool): Optional bool, if set to True compiles
+            use_wildcard_fields: Optional bool, if set to True compiles
                 the search query using native wildcard fields mapping.
 
         Returns:
@@ -1201,14 +1202,14 @@ class Sketch(resource.BaseResource):
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_name (str): the name of the analyzer class to run against the
+            analyzer_name: the name of the analyzer class to run against the
                 timeline.
-            analyzer_kwargs (dict): optional dict with parameters for the analyzer.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters.
-            timeline_id (int): the ID of the timeline. This is optional and only
+            timeline_id: the ID of the timeline. This is optional and only
                 required if timeline_name is not set.
-            timeline_name (str): the name of the timeline in the timesketch UI. This
+            timeline_name: the name of the timeline in the timesketch UI. This
                 is optional and only required if timeline_id is not set. If
                 there are more than a single timeline with the same name a
                 timeline_id is required.
@@ -1281,13 +1282,13 @@ class Sketch(resource.BaseResource):
         """Remove users or groups to the sketch ACL.
 
         Args:
-            user_list (list[str]): optional list of users to remove from the ACL
+            user_list: optional list of users to remove from the ACL
                 of the sketch. Each user is a string.
-            group_list (list[str]): optional list of groups to remove from the ACL
+            group_list: optional list of groups to remove from the ACL
                 of the sketch. Each user is a string.
-            remove_public (bool): Optional boolean indicating the sketch should be
+            remove_public: Optional boolean indicating the sketch should be
                 no longer marked as public.
-            permissions (list[str]): optional list of permissions (read, write, delete).
+            permissions: optional list of permissions (read, write, delete).
                 If not the default set of permissions are applied (read, write)
 
         Returns:
@@ -1329,7 +1330,7 @@ class Sketch(resource.BaseResource):
         """Run an aggregation request on the sketch.
 
         Args:
-            aggregate_dsl (str): OpenSearch aggregation query DSL string.
+            aggregate_dsl: OpenSearch aggregation query DSL string.
 
         Returns:
             An aggregation object (instance of Aggregation).
@@ -1420,11 +1421,11 @@ class Sketch(resource.BaseResource):
         """Store an aggregation in the sketch.
 
         Args:
-            name (str): a name that will be associated with the aggregation.
-            description (str): description of the aggregation, visible in the UI.
-            aggregator_name (str): name of the aggregator class.
-            aggregator_parameters (dict): parameters of the aggregator.
-            chart_type (str): string representing the chart type.
+            name: a name that will be associated with the aggregation.
+            description: description of the aggregation, visible in the UI.
+            aggregator_name: name of the aggregator class.
+            aggregator_parameters: parameters of the aggregator.
+            chart_type: string representing the chart type.
 
         Raises:
             RuntimeError: if the client is unable to store the aggregation.
@@ -1458,9 +1459,9 @@ class Sketch(resource.BaseResource):
         """Adds a comment to a single event.
 
         Args:
-            event_id (str): id of the event
-            index (str): The OpenSearch index name
-            comment_text (str): text to add as a comment
+            event_id: id of the event
+            index: The OpenSearch index name
+            comment_text: text to add as a comment
         Returns:
             a json data of the query.
         """
@@ -1509,8 +1510,8 @@ class Sketch(resource.BaseResource):
         """Gets information about an event, including raw event and meta data.
 
         Args:
-            event_id (str): id of the event.
-            index_id (str): The OpenSearch index identifier.
+            event_id: id of the event.
+            index_id: The OpenSearch index identifier.
 
         Returns:
             a json data containing the event details.
@@ -1539,10 +1540,10 @@ class Sketch(resource.BaseResource):
         """Labels one or more events with label_name.
 
         Args:
-            events (json): Array of JSON objects representing events.
-            label_name (string): String to label the event with.
-            remove (bool): If true, the label will be removed instead of added.
-            conclusion_id (int): Optional. ID of a conclusion to link the
+            events: Array of JSON objects representing events.
+            label_name: String to label the event with.
+            remove: If true, the label will be removed instead of added.
+            conclusion_id: Optional. ID of a conclusion to link the
                 event to.
 
         Returns:
@@ -1573,8 +1574,8 @@ class Sketch(resource.BaseResource):
 
         Args:
             events: Array of JSON objects representing events.
-            conclusion_id (int): ID of the conclusion to link the event to.
-            unlink (bool): If true, the link will be removed.
+            conclusion_id: ID of the conclusion to link the event to.
+            unlink: If true, the link will be removed.
 
         Returns:
             Dictionary with query results.
@@ -1594,7 +1595,7 @@ class Sketch(resource.BaseResource):
         The upper limit is 500 (events or tags) based on the API.
 
         Args:
-            events (list): events dict. Must have the structure:
+            events: events dict. Must have the structure:
                 "events": [
                 {
                     "_id": event_id,
@@ -1629,9 +1630,9 @@ class Sketch(resource.BaseResource):
         To remove a list of tags from a list of tags, use a different method.
 
         Args:
-            event_id (str): id of the event
-            index (str): The OpenSearch index name
-            tag (str): tag to remove
+            event_id: id of the event
+            index: The OpenSearch index name
+            tag: tag to remove
 
         Returns:
             HTTP response object.
@@ -1660,9 +1661,9 @@ class Sketch(resource.BaseResource):
         """Tags one or more events with a list of tags.
 
         Args:
-            events (list): Array of JSON objects representing events.
-            tags (list[str]): List of tags (str) to add to the events.
-            verbose (bool): Bool that determines whether extra information
+            events: Array of JSON objects representing events.
+            tags: List of tags (str) to add to the events.
+            verbose: Bool that determines whether extra information
                 is added to the meta dict that gets returned.
 
         Raises:
@@ -1713,15 +1714,15 @@ class Sketch(resource.BaseResource):
         """Searches for all events containing a given label.
 
         Args:
-            label_name (str): A string representing the label to search for.
-            return_fields (str): A comma separated string with a list of fields
+            label_name: A string representing the label to search for.
+            return_fields: A comma separated string with a list of fields
                 that should be included in the response. Optional and defaults
                 to None.
-            max_entries (int): Optional integer denoting a best effort to limit
+            max_entries: Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
-            as_pandas (bool): Optional bool that determines if the results should
+            as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
 
         Returns:
@@ -1764,9 +1765,9 @@ class Sketch(resource.BaseResource):
         """Adds an investigative scenario to the sketch.
 
         Args:
-            uuid (str): [Optional] UUID of the DFIQ scenario template to add.
-            dfiq_id (str): [Optional] ID of the DFIQ scenario template to add.
-            name (str): [Optional] Name of the scenario to add.
+            uuid: [Optional] UUID of the DFIQ scenario template to add.
+            dfiq_id: [Optional] ID of the DFIQ scenario template to add.
+            name: [Optional] Name of the scenario to add.
 
         Raises:
             ValueError: If none or more than one of uuid, dfiq_id, or name are provided.
@@ -1856,9 +1857,9 @@ class Sketch(resource.BaseResource):
         """Adds an investigative question to the sketch.
 
         Args:
-            dfiq_id (str): [Optional] ID of the DFIQ question template to add.
-            uuid (str): [Optional] UUID of the DFIQ question template to add.
-            question_text (str): [Optional] Question text to add.
+            dfiq_id: [Optional] ID of the DFIQ question template to add.
+            uuid: [Optional] UUID of the DFIQ question template to add.
+            question_text: [Optional] Question text to add.
 
         Raises:
             ValueError: If none or more than one of dfiq_id, uuid, or
@@ -1952,12 +1953,12 @@ class Sketch(resource.BaseResource):
         """Adds an event to the sketch specific timeline.
 
         Args:
-            message (str): A string that will be used as the message string.
-            date (str): A string with the timestamp of the message. This should be
+            message: A string that will be used as the message string.
+            date: A string with the timestamp of the message. This should be
                 in a human readable format, eg: "2020-09-03T22:52:21".
-            timestamp_desc (str): Description of the timestamp.
-            attributes (dict): A dict of extra attributes to add to the event.
-            tags (list[str]): A list of strings to include as tags.
+            timestamp_desc: Description of the timestamp.
+            attributes: A dict of extra attributes to add to the event.
+            tags: A list of strings to include as tags.
 
         Raises:
             ValueError: If tags is not a list of strings or attributes
@@ -2061,8 +2062,8 @@ class Sketch(resource.BaseResource):
         """Exports the content of the sketch to a ZIP file.
 
         Args:
-            file_path (str): a file path where the ZIP file will be saved.
-            stream (bool): whether to stream the download.
+            file_path: a file path where the ZIP file will be saved.
+            stream: whether to stream the download.
 
         Raises:
             RuntimeError: if sketch cannot be exported.
@@ -2124,13 +2125,13 @@ class Sketch(resource.BaseResource):
         This uses the high-performance sliced export API endpoint.
 
         Args:
-            query_string (str): OpenSearch query string.
-            query_dsl (str): OpenSearch query DSL as JSON string.
-            query_filter (dict): Filter for the query as a dict.
-            return_fields (list): List of strings with fields to return.
+            query_string: OpenSearch query string.
+            query_dsl: OpenSearch query DSL as JSON string.
+            query_filter: Filter for the query as a dict.
+            return_fields: List of strings with fields to return.
 
         Yields:
-            dict: A dictionary representing an event.
+            A dictionary representing an event.
         """
         if return_fields is None:
             return_fields = ["datetime", "message", "timestamp_desc"]
@@ -2181,9 +2182,9 @@ class Sketch(resource.BaseResource):
         API errors, or unexpected response formats.
 
         Args:
-            searchindex_id (int): The ID of the SearchIndex that holds the data
+            searchindex_id: The ID of the SearchIndex that holds the data
                 for this timeline.
-            timeline_name (str): The name of the timeline
+            timeline_name: The name of the timeline
 
         Returns:
             An instance of a Timeline object representing the newly created
@@ -2297,10 +2298,10 @@ class Sketch(resource.BaseResource):
         """Creates a datasource
 
         Args:
-            timeline_id (int): id of the Timeline that this datasource is part of.
-            provider (str): Name of the application that collected the data.
-            context (str): Context on how the data was collected.
-            data_label (str): Data label for the uploaded data.
+            timeline_id: id of the Timeline that this datasource is part of.
+            provider: Name of the application that collected the data.
+            context: Context on how the data was collected.
+            data_label: Data label for the uploaded data.
 
         Raises:
             ValueError: If the datasource object fails to create
@@ -2346,19 +2347,19 @@ class Sketch(resource.BaseResource):
         Timeline) for Timesketch to be able to properly support it.
 
         Args:
-            es_index_name (str): name of the index in OpenSearch.
-            name (str): string with the name of the timeline.
-            index_name (str): optional string for the SearchIndex name, defaults
+            es_index_name: name of the index in OpenSearch.
+            name: string with the name of the timeline.
+            index_name: optional string for the SearchIndex name, defaults
                 to the same as the es_index_name.
-            description (str): optional string with a description of the timeline.
-            provider (str): optional string with the provider name for the data
+            description: optional string with a description of the timeline.
+            provider: optional string with the provider name for the data
                 source of the imported data. Defaults to "Manually added
                 to OpenSearch".
-            context (str): optional string with the context for the data upload,
+            context: optional string with the context for the data upload,
                 defaults to "Added via API client".
-            data_label (str): optional string with the data label of the OpenSearch
+            data_label: optional string with the data label of the OpenSearch
                 data, defaults to "OpenSearch".
-            status (str): Optional string, if provided will be used as a status
+            status: Optional string, if provided will be used as a status
                 for the searchindex, valid options are: "ready", "fail",
                 "processing", "timeout". Defaults to "ready".
 
@@ -2437,11 +2438,11 @@ class Sketch(resource.BaseResource):
         """Runs the data finder .
 
         Args:
-            start_date (str): Start date as a ISO 8601 formatted string.
-            end_date (str): End date as a ISO 8601 formatted string.
-            rule_names (list): A list of strings with rule names to run
+            start_date: Start date as a ISO 8601 formatted string.
+            end_date: End date as a ISO 8601 formatted string.
+            rule_names: A list of strings with rule names to run
                 against the dataset in the sketch.
-            timelines (list): Optional list of timeline identifiers or
+            timelines: Optional list of timeline identifiers or
                 timeline names to limit the data search to certain
                 timelines within the sketch. Defaults to search all
                 timelines.

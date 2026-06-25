@@ -31,11 +31,11 @@ def _get_message(response: Optional[requests.Response]) -> str:
     """Return a formatted message string from the response text.
 
     Args:
-        response (requests.Response): a response object from a HTTP
+        response: a response object from a HTTP
             request.
 
     Returns:
-        str: a string with the message field extracted from the
+        a string with the message field extracted from the
             response.text.
     """
     if response is None:
@@ -68,11 +68,11 @@ def _get_reason(response: Optional[requests.Response]) -> str:
     """Return the reason from a response.
 
     Args:
-        response (requests.Response): a response object from a HTTP
+        response: a response object from a HTTP
             request.
 
     Returns:
-        str: a string with the reason field extracted from the
+        a string with the reason field extracted from the
             response.reason.
     """
     if response is None:
@@ -90,12 +90,12 @@ def get_response_json(
     """Return the JSON object from a response, logging any errors.
 
     Args:
-        response (requests.Response): a response object from a HTTP request.
-        logger (logging.Logger): a logger object that can be used to write log
+        response: a response object from a HTTP request.
+        logger: a logger object that can be used to write log
           messages.
 
     Returns:
-        dict: a dict with the decoded JSON object within the HTTP
+        a dict with the decoded JSON object within the HTTP
             response object.
 
     Raises:
@@ -134,9 +134,9 @@ def error_message(
     """Raise an error using error message extracted from response.
 
     Args:
-        response (requests.Response): a response object from a HTTP request.
-        message (str): Optional message to prepend to the error string.
-        error (Exception): The exception class to raise. Defaults to RuntimeError.
+        response: a response object from a HTTP request.
+        message: Optional message to prepend to the error string.
+        error: The exception class to raise. Defaults to RuntimeError.
 
     Raises:
         error: The exception specified by the error argument.
@@ -157,13 +157,13 @@ def check_return_status(response: requests.Response, logger: logging.Logger) -> 
     """Check return status and return a boolean.
 
     Args:
-        response (requests.Response): a response object from a HTTP
+        response: a response object from a HTTP
             request.
-        logger (logging.Logger): a logger object that can be used to
+        logger: a logger object that can be used to
             write log messages.
 
     Returns:
-        bool: a boolean indicating whether the return status was in
+        a boolean indicating whether the return status was in
             the 20X range of HTTP responses.
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X

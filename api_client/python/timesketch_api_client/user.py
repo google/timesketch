@@ -34,8 +34,8 @@ class User(resource.BaseResource):
         """Initializes the user object.
 
         Args:
-            api (TimesketchApi): An instance of TimesketchApi object.
-            user_id (int): Primary key ID of the user (optional).
+            api: An instance of TimesketchApi object.
+            user_id: Primary key ID of the user (optional).
         """
         self._object_data: Optional[Dict[str, Any]] = None
         if not user_id:
@@ -64,13 +64,13 @@ class User(resource.BaseResource):
         """Change the password for the user.
 
         Args:
-            new_password (str): String with the password.
+            new_password: String with the password.
 
         Raises:
             ValueError: If there was an error.
 
         Returns:
-            Boolean: Whether the password was successfully modified.
+            Whether the password was successfully modified.
         """
         if not new_password:
             raise ValueError("No new password supplied.")

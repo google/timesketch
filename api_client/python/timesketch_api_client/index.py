@@ -50,9 +50,9 @@ class SearchIndex(resource.BaseResource):
         """Initializes the SearchIndex object.
 
         Args:
-            searchindex_id (int): Primary key ID of the searchindex.
-            api (TimesketchApi): An instance of TimesketchApi object.
-            searchindex_name (str): Name of the searchindex (optional).
+            searchindex_id: Primary key ID of the searchindex.
+            api: An instance of TimesketchApi object.
+            searchindex_name: Name of the searchindex (optional).
         """
         self.id = searchindex_id
         self._labels: List[str] = []
@@ -81,7 +81,7 @@ class SearchIndex(resource.BaseResource):
         """Property that returns back whether a __ts_timeline_id field is set.
 
         Returns:
-            bool: True if the data uses __timeline_id field to distinguish
+            True if the data uses __timeline_id field to distinguish
                 different data sets in an index, False if the entire index
                 is the data set.
         """
@@ -149,7 +149,7 @@ class SearchIndex(resource.BaseResource):
         """Set the SearchIndex status.
 
         Args:
-            status (str): The status to set.
+            status: The status to set.
         """
         resource_url = f"{self.api.api_root}/searchindices/{self.id}/"
         data = {"status": status}

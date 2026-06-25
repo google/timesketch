@@ -68,7 +68,7 @@ class Chip:
         """Decide whether the chip is active or disabled.
 
         Args:
-            active (bool): Boolean indicating if the chip is active.
+            active: Boolean indicating if the chip is active.
         """
         self._active = bool(active)
 
@@ -87,7 +87,7 @@ class Chip:
         """Configure the chip from a dictionary.
 
         Args:
-            chip_dict (dict): Dictionary with chip configuration.
+            chip_dict: Dictionary with chip configuration.
         """
         raise NotImplementedError
 
@@ -136,11 +136,11 @@ class DateIntervalChip(Chip):
         """Set the interval of the chip.
 
         Args:
-            before (int): the number of units that should be included
+            before: the number of units that should be included
                 before the date.
-            after (int): optional number of units after the date. If not
+            after: optional number of units after the date. If not
                 provided the value of before is used.
-            unit (str): optional string with the unit of interval. This can
+            unit: optional string with the unit of interval. This can
                 be s for seconds, m for minutes, d for days and h for hours.
                 The default value is m (minutes).
 
@@ -165,7 +165,7 @@ class DateIntervalChip(Chip):
         """Make changes to the time interval after the date.
 
         Args:
-            after (int): Time interval after the date.
+            after: Time interval after the date.
         """
         self._after = after
 
@@ -179,7 +179,7 @@ class DateIntervalChip(Chip):
         """Make changes to the time interval before the date.
 
         Args:
-            before (int): Time interval before the date.
+            before: Time interval before the date.
         """
         self._before = before
 
@@ -197,7 +197,7 @@ class DateIntervalChip(Chip):
         """Make changes to the date.
 
         Args:
-            date (str): Date string.
+            date: Date string.
         """
         try:
             dt = datetime.datetime.strptime(date, self._DATE_FORMAT_MICROSECONDS)
@@ -218,7 +218,7 @@ class DateIntervalChip(Chip):
         """Configure the chip from a dictionary.
 
         Args:
-            chip_dict (dict): Dictionary with chip configuration.
+            chip_dict: Dictionary with chip configuration.
         """
         value = chip_dict.get("value")
         if not value:
@@ -256,7 +256,7 @@ class DateIntervalChip(Chip):
         """Make changes to the unit.
 
         Args:
-            unit (str): Unit of interval.
+            unit: Unit of interval.
         """
         if unit not in ("s", "m", "d", "h"):
             raise ValueError(
@@ -288,7 +288,7 @@ class DateRangeChip(Chip):
         """Add an end time to the range.
 
         Args:
-            end_time (str): date string using the format '%Y-%m-%dT%H:%M:%s'
+            end_time: date string using the format '%Y-%m-%dT%H:%M:%s'
 
         Raises:
             ValueError: if the date format is incorrectly formatted.
@@ -316,7 +316,7 @@ class DateRangeChip(Chip):
         """Add a start time to the range.
 
         Args:
-            start_time (str): date string using the format '%Y-%m-%dT%H:%M:%s'
+            start_time: date string using the format '%Y-%m-%dT%H:%M:%s'
 
         Raises:
             ValueError: if the date format is incorrectly formatted.
@@ -354,7 +354,7 @@ class DateRangeChip(Chip):
         """Sets the new end time.
 
         Args:
-            end_time (str): New end time.
+            end_time: New end time.
         """
         self.add_end_time(end_time)
 
@@ -368,7 +368,7 @@ class DateRangeChip(Chip):
         """Sets the new range of the date range chip.
 
         Args:
-            date_range (str): Comma separated string with start and end time.
+            date_range: Comma separated string with start and end time.
         """
         start_time, end_time = date_range.split(",")
         self.add_start_time(start_time)
@@ -378,7 +378,7 @@ class DateRangeChip(Chip):
         """Configure the chip from a dictionary.
 
         Args:
-            chip_dict (dict): Dictionary with chip configuration.
+            chip_dict: Dictionary with chip configuration.
         """
         chip_value = chip_dict.get("value")
         if not chip_value:
@@ -401,7 +401,7 @@ class DateRangeChip(Chip):
         """Sets the new start time of a range.
 
         Args:
-            start_time (str): New start time.
+            start_time: New start time.
         """
         self.add_start_time(start_time)
 
@@ -421,7 +421,7 @@ class LabelChip(Chip):
         """Configure the chip from a dictionary.
 
         Args:
-            chip_dict (dict): Dictionary with chip configuration.
+            chip_dict: Dictionary with chip configuration.
         """
         chip_value = chip_dict.get("value")
         if not chip_value:
@@ -439,7 +439,7 @@ class LabelChip(Chip):
         """Make changes to the label.
 
         Args:
-            label (str): Label string.
+            label: Label string.
         """
         self._label = label
 
@@ -473,7 +473,7 @@ class TermChip(Chip):
         """Make changes to the field used to match against.
 
         Args:
-            field (str): Field name.
+            field: Field name.
         """
         self._chip_field = field
 
@@ -481,7 +481,7 @@ class TermChip(Chip):
         """Configure the term chip from a dictionary.
 
         Args:
-            chip_dict (dict): Dictionary with chip configuration.
+            chip_dict: Dictionary with chip configuration.
         """
         chip_value = chip_dict.get("value")
         if not chip_value:
@@ -500,7 +500,7 @@ class TermChip(Chip):
         """Make changes to the query.
 
         Args:
-            query (str): Query string.
+            query: Query string.
         """
         self._query = query
 
@@ -514,7 +514,7 @@ class Search(resource.SketchResource):
         """Initialize the Search object.
 
         Args:
-            sketch (Sketch): An instance of Sketch object.
+            sketch: An instance of Sketch object.
         """
         resource_uri = f"sketches/{sketch.id}/explore/"
         super().__init__(sketch=sketch, resource_uri=resource_uri)
@@ -541,7 +541,7 @@ class Search(resource.SketchResource):
         """Extract chips from a query_filter.
 
         Args:
-            query_filter (dict): Query filter dictionary.
+            query_filter: Query filter dictionary.
         """
         self._chips = []
         chips = query_filter.get("chips", [])
@@ -584,16 +584,16 @@ class Search(resource.SketchResource):
         """Execute a search request and store the results.
 
         Args:
-            file_name (str): Optional file path to a filename that
+            file_name: Optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
-            count (bool): Optional boolean that determines whether
+            count: Optional boolean that determines whether
                 we want to execute the query or only count the
                 number of events that the query would produce. If
                 set to True, the results will be stored in the
                 search object, and the number of events will be
                 returned.
-            stream (bool): Optional boolean that determines whether
+            stream: Optional boolean that determines whether
                 we want to stream the results to a file. This is
                 useful for large exports.
 
@@ -692,7 +692,7 @@ class Search(resource.SketchResource):
         """Add a chip to the search object.
 
         Args:
-            chip (BaseChip): A chip object.
+            chip: A chip object.
         """
         self._chips.append(chip)
         self.commit()
@@ -701,9 +701,9 @@ class Search(resource.SketchResource):
         """Add a date range chip to the search query.
 
         Args:
-            start_time (str): a string with the start time of the range,
+            start_time: a string with the start time of the range,
                 the format should be '%Y-%m-%dT%H:%M:%S'
-            end_time (str): a string with the end time of the range,
+            end_time: a string with the end time of the range,
                 the format should be '%Y-%m-%dT%H:%M:%S'
         """
         chip = DateRangeChip()
@@ -752,7 +752,7 @@ class Search(resource.SketchResource):
         """Make changes to the saved search description field.
 
         Args:
-            description (str): Description of the saved search.
+            description: Description of the saved search.
         """
         self._description = description
         self.commit()
@@ -778,17 +778,17 @@ class Search(resource.SketchResource):
         """Explore the sketch.
 
         Args:
-            query_string (str): OpenSearch query string.
-            query_dsl (str): OpenSearch query DSL as JSON string.
-            query_filter (dict): Filter for the query as a dict.
-            return_fields (str): A comma separated string with a list of fields
+            query_string: OpenSearch query string.
+            query_dsl: OpenSearch query DSL as JSON string.
+            query_filter: Filter for the query as a dict.
+            return_fields: A comma separated string with a list of fields
                 that should be included in the response. Optional and defaults
                 to None.
-            max_entries (int): Optional integer denoting a best effort to limit
+            max_entries: Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
-            kwargs (dict[str, object]): Depending on the resource they may
+            kwargs: Depending on the resource they may
                 require different sets of arguments to be able to run a raw
                 API request.
 
@@ -828,7 +828,7 @@ class Search(resource.SketchResource):
         """Initialize the search object from a saved search.
 
         Args:
-            search_id (int): integer value for the saved
+            search_id: integer value for the saved
                 search (primary key).
         """
         resource_uri = f"sketches/{self._sketch.id}/views/{search_id}/"
@@ -881,7 +881,7 @@ class Search(resource.SketchResource):
         """Make changes to the current set of indices.
 
         Args:
-            indices (list): List of indices to search.
+            indices: List of indices to search.
         """
         if indices == "_all":
             self._indices = "_all"
@@ -971,7 +971,7 @@ class Search(resource.SketchResource):
         """Make changes to the max entries of return values.
 
         Args:
-            max_entries (int): The maximum number of entries to return.
+            max_entries: The maximum number of entries to return.
         """
         self._max_entries = max_entries
         if max_entries < self.DEFAULT_SIZE_LIMIT:
@@ -990,7 +990,7 @@ class Search(resource.SketchResource):
         """Make changes to the saved search name.
 
         Args:
-            name (str): Name of the saved search.
+            name: Name of the saved search.
         """
         self._name = name
         self.commit()
@@ -1019,7 +1019,7 @@ class Search(resource.SketchResource):
         """Make changes to the query DSL of the search.
 
         Args:
-            query_dsl (str): OpenSearch query DSL as JSON string.
+            query_dsl: OpenSearch query DSL as JSON string.
         """
         if query_dsl and isinstance(query_dsl, str):
             query_dsl = json.loads(query_dsl)
@@ -1055,7 +1055,7 @@ class Search(resource.SketchResource):
         """Make changes to the query filter.
 
         Args:
-            query_filter (dict): Filter for the query as a dict.
+            query_filter: Filter for the query as a dict.
         """
         if isinstance(query_filter, str):
             try:
@@ -1080,7 +1080,7 @@ class Search(resource.SketchResource):
         """Enable or disable wildcard fields search mode. Defaults to False.
 
         Args:
-            enabled (bool): Boolean indicating if wildcard fields search
+            enabled: Boolean indicating if wildcard fields search
                 mode should be enabled.
         """
         self._use_wildcard_fields = bool(enabled)
@@ -1099,7 +1099,7 @@ class Search(resource.SketchResource):
         """Make changes to the query string of a saved search.
 
         Args:
-            query_string (str): OpenSearch query string.
+            query_string: OpenSearch query string.
         """
         self._query_string = query_string
         self.commit()
@@ -1108,7 +1108,7 @@ class Search(resource.SketchResource):
         """Remove a chip from the saved search.
 
         Args:
-            chip_index (int): Index of the chip to remove.
+            chip_index: Index of the chip to remove.
         """
         chip_len = len(self._chips)
         if chip_index > (chip_len + 1):
@@ -1141,7 +1141,7 @@ class Search(resource.SketchResource):
         """Make changes to the return fields.
 
         Args:
-            return_fields (str): A comma separated string with a list of fields
+            return_fields: A comma separated string with a list of fields
                 that should be included in the response.
         """
         self._return_fields = return_fields
@@ -1157,7 +1157,7 @@ class Search(resource.SketchResource):
         """Make changes to the maximum number of entries in the return.
 
         Args:
-            return_size (int): Maximum number of entries to return.
+            return_size: Maximum number of entries to return.
         """
         self._max_entries = return_size
         self.commit()
@@ -1268,10 +1268,10 @@ class Search(resource.SketchResource):
         """Saves the content of the query to a file.
 
         Args:
-            file_name (str): Full path to a file that will store the results
+            file_name: Full path to a file that will store the results
                 of the query to as a ZIP file. The ZIP file will contain a
                 METADATA file and a CSV with the results from the query.
-            stream (bool): Optional boolean that determines whether
+            stream: Optional boolean that determines whether
                 we want to stream the results to a file. This is
                 useful for large exports.
 
