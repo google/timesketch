@@ -154,8 +154,16 @@ class TimesketchCli(object):
     required=False,
     help="Path to the config file.",
 )
+@click.option(
+    "--config-section",
+    "config_section",
+    default="timesketch",
+    show_default=True,
+    required=False,
+    help="The config section to use.",
+)
 @click.pass_context
-def cli(ctx, sketch, output, config_path):
+def cli(ctx, sketch, output, config_path, config_section):
     """Timesketch CLI client.
 
     This tool provides similar features as the web client does.
@@ -173,6 +181,7 @@ def cli(ctx, sketch, output, config_path):
         sketch_from_flag=sketch,
         output_format_from_flag=output,
         conf_file=config_path,
+        config_section=config_section,
     )
 
 

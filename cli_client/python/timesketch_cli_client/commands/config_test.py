@@ -126,3 +126,40 @@ class ConfigTest(unittest.TestCase):
             "No such configuration parameter: output_format (error: 'output_format')",
             result.output,
         )
+
+    @mock.patch("requests.Session", api_test_lib.mock_session)
+    def test_custom_config_section(self):
+        """Test the TimesketchCli loads a custom config section."""
+        import tempfile
+        from timesketch_cli_client.cli import TimesketchCli
+        
+        custom_config = """
+[timesketch]
+host_uri = http://127.0.0.1
+username = default_user
+
+[custom_section]
+host_uri = http://custom.example.com
+username = custom_user
+
+[cli]
+output_format = tabular
+"""
+        with tempfile.NamedTemporaryFile(mode="w") as fw:
+            fw.write(custom_config)
+            fw.seek(0)
+            
+            cli_context = TimesketchCli(
+                api_client=None,
+                conf_file=fw.name,
+                config_section="custom_section"
+            )
+            
+            self.assertEqual(
+                cli_context.config_assistant.get_config("host_uri"),
+                "http://custom.example.com"
+            )
+            self.assertEqual(
+                cli_context.config_assistant.get_config("username"),
+                "custom_user"
+            )
