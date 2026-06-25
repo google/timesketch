@@ -53,7 +53,7 @@ class Sketch(resource.BaseResource):
     A sketch in Timesketch is a collection of one or more timelines. It has
     Attributes:
         id (int): The ID of the sketch.
-        api (timesketch_api_client.client.TimesketchApi): An instance of TimesketchApi object.
+        api (TimesketchApi): An instance of TimesketchApi object.
     """
 
     # Add in necessary fields in data ingested via a different mechanism.
