@@ -73,8 +73,13 @@ class TimesketchCli:
 
         if not api_client:
             try:
-                sig = inspect.signature(timesketch_config.get_client)
-                if "config_section" in sig.parameters:
+                try:
+                    sig = inspect.signature(timesketch_config.get_client)
+                    has_config_section = "config_section" in sig.parameters
+                except (ValueError, TypeError):
+                    has_config_section = False
+
+                if has_config_section:
                     self.api = timesketch_config.get_client(
                         config_path=conf_file,
                         config_section=config_section,
