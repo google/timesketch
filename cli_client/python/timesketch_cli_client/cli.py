@@ -108,9 +108,7 @@ class TimesketchCli:
                 conf_file, section=config_section, load_cli_config=True
             )
         else:
-            self.config_assistant.load_config_file(
-                conf_file, load_cli_config=True
-            )
+            self.config_assistant.load_config_file(conf_file, load_cli_config=True)
 
     @property
     def sketch(self):
