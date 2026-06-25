@@ -1320,8 +1320,6 @@ class Sketch(resource.BaseResource):
             allowed_permissions = set(["read", "write", "delete"])
             permissions_list = list(allowed_permissions.intersection(set(permissions)))
             data["permissions"] = json.dumps(permissions_list)
-            permissions_list = list(allowed_permissions.intersection(set(permissions)))
-            data["permissions"] = json.dumps(permissions_list)
 
         if not data:
             return True
