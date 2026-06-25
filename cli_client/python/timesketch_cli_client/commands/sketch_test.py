@@ -70,7 +70,11 @@ class SketchTest(unittest.TestCase):
     def test_export_only_with_annotations_csv_success(
         self, mock_search_class, mock_file_open_func
     ):
-        """Test successful export of annotated events to CSV."""
+        """Test successful export of annotated events to CSV.
+        Args:
+            mock_search_class (mock.MagicMock): Mock for search_class.
+            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
+        """
         runner = CliRunner()
 
         df_comments = pd.DataFrame(
@@ -170,7 +174,11 @@ class SketchTest(unittest.TestCase):
     def test_export_only_with_annotations_jsonl_with_limit(
         self, mock_search_class, mock_file_open_func
     ):
-        """Test successful export to JSONL with a limit."""
+        """Test successful export to JSONL with a limit.
+        Args:
+            mock_search_class (mock.MagicMock): Mock for search_class.
+            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
+        """
         runner = CliRunner()
 
         df_comments = pd.DataFrame({"_id": ["event1"], "message": ["comment_msg1"]})
@@ -230,7 +238,11 @@ class SketchTest(unittest.TestCase):
     def test_export_only_with_annotations_no_results(
         self, mock_search_class, mock_file_open_func
     ):
-        """Test export when no annotated events are found."""
+        """Test export when no annotated events are found.
+        Args:
+            mock_search_class (mock.MagicMock): Mock for search_class.
+            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
+        """
         runner = CliRunner()
 
         empty_df = pd.DataFrame(
@@ -260,7 +272,11 @@ class SketchTest(unittest.TestCase):
     def test_export_only_with_annotations_search_error(
         self, mock_search_class, mock_file_open_func
     ):
-        """Test export when one of the searches fails."""
+        """Test export when one of the searches fails.
+        Args:
+            mock_search_class (mock.MagicMock): Mock for search_class.
+            mock_file_open_func (mock.MagicMock): Mock for file_open_func.
+        """
         runner = CliRunner()
 
         df_comments = pd.DataFrame({"_id": ["event1"], "message": ["comment_msg1"]})
@@ -307,7 +323,10 @@ class SketchTest(unittest.TestCase):
 
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
     def test_export_only_with_annotations_id_column_missing(self, mock_search_class):
-        """Test export fails if _id column is missing from results."""
+        """Test export fails if _id column is missing from results.
+        Args:
+            mock_search_class (mock.MagicMock): Mock for search_class.
+        """
         runner = CliRunner()
 
         df_no_id = pd.DataFrame({"message": ["some_message"]})

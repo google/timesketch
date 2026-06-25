@@ -129,12 +129,12 @@ def add_intelligence(
     Reference: https://timesketch.org/guides/user/intelligence/
 
     Args:
-        ctx:  (click.Context) (required) Click context object.
-        ioc: IOC value.
-        ioc_type: Type of the intelligence. This is defined in the ontology file.
+        ctx (click.Context): Click CLI context object.
+        ioc (str): IOC value.
+        ioc_type (str): Type of the intelligence. Defined in the ontology file.
             If a string doesn't match any of the aforementioned IOC types,
             the type will fall back to other.
-        tags: Comma separated list of tags.
+        tags (str): Comma separated list of tags.
     """
     sketch = ctx.obj.sketch
 

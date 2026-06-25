@@ -40,6 +40,13 @@ def annotate(ctx, timeline_id, event_id, tag, comment):
 
     If neither tag or comment are specified, the command will return the
     current annotations for the event.
+
+    Args:
+        ctx (click.Context): Click CLI context object.
+        timeline_id (int): ID of the timeline.
+        event_id (int): ID of the event.
+        tag (str): Tag to add.
+        comment (str): Comment to add.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)
@@ -101,7 +108,14 @@ def annotate(ctx, timeline_id, event_id, tag, comment):
 )
 @click.pass_context
 def add_event(ctx, message, date, attributes, timestamp_desc):
-    """Add an event to the sketch."""
+    """Add an event to the sketch.
+    Args:
+        ctx (click.Context): Click CLI context object.
+        message (str): Message of the event.
+        date (str): Date of the event.
+        attributes (str): Attributes of the event.
+        timestamp_desc (str): Description of the timestamp.
+    """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
 
@@ -149,29 +163,11 @@ def tag_mod(
     the command lists the event's current tags.
 
     Args:
-        ctx: Click CLI context object.
-        message: Event message.
-        date: Event date.
-        attributes: Event attributes.
-        timestamp_desc: Timestamp description.
-        ctx: Click CLI context object.
-        timeline_id: ID of the timeline.
-        event_id: ID of the event.
-        tag: Tag to add.
-        comment: Comment to add.
         ctx (click.Context): The Click context object, containing the sketch.
         timeline_id (int): The ID of the timeline containing the event.
         event_id (str): The ID of the event to modify.
         tag (Optional[str]): The tag to remove from the event, or a comma-separated
-                             list of tags. If None, lists the event's tags.
-
-    Errors:
-        * If the specified timeline or event does not exist.
-        * If the specified event does not exist.
-
-    Outputs:
-        Text: If a tag is specified, a message indicating the tag was removed.
-              If no tag is specified, the event's current tags are printed.
+            list of tags. If None, lists the event's tags.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)

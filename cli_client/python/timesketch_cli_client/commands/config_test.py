@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for config command."""
 
+import tempfile
 import unittest
 import mock
 
@@ -20,6 +21,7 @@ from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
 from timesketch_cli_client import test_lib
+from timesketch_cli_client.cli import TimesketchCli
 from timesketch_cli_client.commands.config import config_group
 
 
@@ -130,17 +132,21 @@ class ConfigTest(unittest.TestCase):
     @mock.patch("requests.Session", api_test_lib.mock_session)
     def test_custom_config_section(self):
         """Test the TimesketchCli loads a custom config section."""
-        import tempfile
-        from timesketch_cli_client.cli import TimesketchCli
-        
+
         custom_config = """
 [timesketch]
 host_uri = http://127.0.0.1
 username = default_user
+auth_mode = oauth
+verify = True
 
 [custom_section]
 host_uri = http://custom.example.com
 username = custom_user
+auth_mode = oauth
+client_id = myid
+client_secret = secret
+verify = True
 
 [cli]
 output_format = tabular
@@ -148,18 +154,15 @@ output_format = tabular
         with tempfile.NamedTemporaryFile(mode="w") as fw:
             fw.write(custom_config)
             fw.seek(0)
-            
+
             cli_context = TimesketchCli(
-                api_client=None,
-                conf_file=fw.name,
-                config_section="custom_section"
+                api_client=None, conf_file=fw.name, config_section="custom_section"
             )
-            
+
             self.assertEqual(
                 cli_context.config_assistant.get_config("host_uri"),
-                "http://custom.example.com"
+                "http://custom.example.com",
             )
             self.assertEqual(
-                cli_context.config_assistant.get_config("username"),
-                "custom_user"
+                cli_context.config_assistant.get_config("username"), "custom_user"
             )

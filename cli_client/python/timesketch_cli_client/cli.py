@@ -41,9 +41,10 @@ class TimesketchCli(object):
     """Timesketch CLI state object.
 
     Attributes:
-        sketch_from_flag: Sketch ID if provided by flag
-        config_assistant: Instance of ConfigAssistant
-        output_format_from_flag: Output format to use
+        api: Instance of TimesketchApi object.
+        sketch_from_flag: Sketch ID if provided by flag.
+        config_assistant: Instance of ConfigAssistant.
+        output_format_from_flag: Output format to use.
     """
 
     def __init__(
@@ -57,11 +58,12 @@ class TimesketchCli(object):
         """Initialize the state object.
 
         Args:
-            api_client: An instance of TimesketchApi object.
-            sketch_from_flag: Sketch ID if provided by flag.
-            conf_file: Path to the config file.
-            output_format_from_flag: Output format to use.
-            config_section: The config section to use.
+            api_client (timesketch_api_client.api.TimesketchApi): An instance of
+                TimesketchApi object.
+            sketch_from_flag (int): Sketch ID if provided by flag.
+            conf_file (str): Path to the config file.
+            output_format_from_flag (str): Output format to use.
+            config_section (str): The config section to use.
         """
         self.api = api_client
         self.sketch_from_flag = sketch_from_flag
@@ -176,6 +178,13 @@ def cli(ctx, sketch, output, config_path, config_section):
     used.
 
     For detailed help on each command, run  <command> --help
+
+    Args:
+        ctx (click.Context): Click CLI context object.
+        sketch (int): Sketch ID to operate on.
+        output (str): Output format to use (e.g., text, json, tabular).
+        config_path (str): Path to the timesketch configuration file.
+        config_section (str): The section in the configuration file to use.
     """
     ctx.obj = TimesketchCli(
         sketch_from_flag=sketch,

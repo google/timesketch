@@ -68,7 +68,10 @@ class SearchTest(unittest.TestCase):
 
     @mock.patch("timesketch_cli_client.commands.search.search.Search")
     def test_search_describe_flag(self, MockSearchClient):
-        """Test the 'search --describe' command."""
+        """Test the 'search --describe' command.
+        Args:
+            MockSearchClient (object): MockSearchClient parameter.
+        """
         # MockSearchClient is the mock for the Search class.
         # MockSearchClient.return_value is the mock instance returned by Search().
         mock_search_instance = MockSearchClient.return_value
@@ -102,7 +105,10 @@ class SearchTest(unittest.TestCase):
 
     @mock.patch("timesketch_cli_client.commands.search.search.Search")
     def test_search_with_results_text_output(self, MockSearchClient):
-        """Test the 'search' command with text output."""
+        """Test the 'search' command with text output.
+        Args:
+            MockSearchClient (object): MockSearchClient parameter.
+        """
         # MockSearchClient is the mock for the Search class.
         # MockSearchClient.return_value is the mock instance returned by Search().
         mock_search_instance = MockSearchClient.return_value
@@ -132,7 +138,11 @@ class SearchTest(unittest.TestCase):
     @mock.patch("timesketch_api_client.sketch.Sketch.explore")
     @mock.patch("timesketch_api_client.sketch.Sketch.explore_wildcard")
     def test_search_wildcard(self, mock_explore_wildcard, mock_explore):
-        """Test the 'search-wildcard' command."""
+        """Test the 'search-wildcard' command.
+        Args:
+            mock_explore_wildcard (mock.MagicMock): Mock for explore_wildcard.
+            mock_explore (mock.MagicMock): Mock for explore.
+        """
         mock_explore_wildcard.return_value = {"meta": {}, "objects": []}
         mock_explore.return_value = {"meta": {}, "objects": []}
 
@@ -158,7 +168,10 @@ class SearchTest(unittest.TestCase):
     @mock.patch("requests.Session", api_test_lib.mock_session)
     @mock.patch("timesketch_cli_client.commands.search.search.Search")
     def test_search_with_no_output_format_in_config(self, MockSearchClient):
-        """Test the 'search' command when no output format is specified in config."""
+        """Test the 'search' command when no output format is specified in config.
+        Args:
+            MockSearchClient (object): MockSearchClient parameter.
+        """
         mock_search_instance = MockSearchClient.return_value
         mock_df = pd.DataFrame(
             {
@@ -182,7 +195,10 @@ class SearchTest(unittest.TestCase):
     @mock.patch("requests.Session", api_test_lib.mock_session)
     @mock.patch("timesketch_cli_client.commands.search.search.Search")
     def test_search_with_configured_json_output_format(self, MockSearchClient):
-        """Test search command uses output format configured in config file."""
+        """Test search command uses output format configured in config file.
+        Args:
+            MockSearchClient (object): MockSearchClient parameter.
+        """
         mock_search_instance = MockSearchClient.return_value
         mock_df = pd.DataFrame(
             {

@@ -37,7 +37,12 @@ def sigma_group():
 )
 @click.pass_context
 def list_sigmarules(ctx, header, columns):
-    """List all sigma rules."""
+    """List all sigma rules.
+    Args:
+        ctx (click.Context): Click CLI context object.
+        header (bool): Boolean indicating if header should be included.
+        columns (str): Comma separated list of columns.
+    """
     api_client = ctx.obj.api
 
     if not columns:
@@ -75,7 +80,11 @@ def list_sigmarules(ctx, header, columns):
 )
 @click.pass_context
 def describe_sigmarule(ctx, rule_uuid):
-    """Describe a sigma rule."""
+    """Describe a sigma rule.
+    Args:
+        ctx (click.Context): Click CLI context object.
+        rule_uuid (str): UUID of the sigma rule.
+    """
     api_client = ctx.obj.api
     output = ctx.obj.output_format
     try:
