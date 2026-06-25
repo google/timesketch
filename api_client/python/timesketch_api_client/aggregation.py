@@ -459,7 +459,7 @@ class Aggregation(resource.SketchResource):
             return "Unable to determine ID of saved object."
         agg_data = objects[0]
         self._resource_id = agg_data.get("id", 0)
-        return "Saved aggregation to ID: {0:d}".format(self._resource_id)
+        return f"Saved aggregation to ID: {self._resource_id}"
 
     def delete(self) -> bool:
         """Deletes the aggregation from the store."""
