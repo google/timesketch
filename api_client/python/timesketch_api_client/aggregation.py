@@ -486,7 +486,7 @@ class AggregationGroup(resource.SketchResource):
         Args:
             sketch (Sketch): An instance of Sketch object.
         """
-        resource_uri = "sketches/{0:d}/aggregation/group/".format(sketch.id)
+        resource_uri = f"sketches/{sketch.id}/aggregation/group/"
         super().__init__(resource_uri=resource_uri, sketch=sketch)
 
         self._name = "N/A"
