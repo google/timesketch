@@ -176,12 +176,10 @@ class TimesketchApi:
 
     @property
     def current_user(self) -> User:
-    def current_user(self) -> User:
         """Property that returns the user object of the logged in user."""
         return user.User(self)
 
     @property
-    def version(self) -> str:
     def version(self) -> str:
         """Property that returns back the API client version."""
         version_dict = self.fetch_resource_data("version/")
@@ -198,13 +196,11 @@ class TimesketchApi:
 
     @property
     def session(self) -> requests.Session:
-    def session(self) -> requests.Session:
         """Property that returns the session object."""
         if self._session is None:
             raise ValueError("Session is not set.")
         return self._session
 
-    def set_credentials(self, credential_object: AuthCredentials) -> None:
     def set_credentials(self, credential_object: AuthCredentials) -> None:
         """Sets the credential object.
 
@@ -213,7 +209,6 @@ class TimesketchApi:
         """
         self.credentials = credential_object
 
-    def set_session(self, session_object: requests.Session) -> None:
     def set_session(self, session_object: requests.Session) -> None:
         """Sets the session object.
 
@@ -407,7 +402,6 @@ class TimesketchApi:
         self.credentials.credential = flow.credentials
         return self.authenticate_oauth_session(session)
 
-    def authenticate_oauth_session(self, session: requests.Session) -> requests.Session:
     def authenticate_oauth_session(self, session: requests.Session) -> requests.Session:
         """Authenticate an OAUTH session.
 
@@ -613,7 +607,6 @@ class TimesketchApi:
         return self._send_request_with_retry("GET", resource_uri, params=params)
 
     def create_sketch(self, name: str, description: Optional[str] = None) -> Sketch:
-    def create_sketch(self, name: str, description: Optional[str] = None) -> Sketch:
         """Create a new sketch.
 
         This method attempts to create a new sketch on the Timesketch server.
@@ -668,7 +661,6 @@ class TimesketchApi:
         raise ValueError(error_message_detail)
 
     def create_user(self, username: str, password: str) -> User:
-    def create_user(self, username: str, password: str) -> User:
         """Create a new user.
 
         This method attempts to create a new user on the Timesketch server.
@@ -702,7 +694,6 @@ class TimesketchApi:
         return user.User(user_id=objects[0]["id"], api=self)
 
     def list_users(self) -> Generator[User, None, None]:
-    def list_users(self) -> Generator[User, None, None]:
         """Get a list of all users.
 
         Yields:
@@ -716,7 +707,6 @@ class TimesketchApi:
             yield user_obj
 
     def get_user(self, user_id: int) -> User:
-    def get_user(self, user_id: int) -> User:
         """Get a user.
 
         Args:
@@ -728,7 +718,6 @@ class TimesketchApi:
         return user.User(user_id=user_id, api=self)
 
     def get_oauth_token_status(self) -> Dict[str, Any]:
-    def get_oauth_token_status(self) -> Dict[str, Any]:
         """Return a dict with OAuth token status, if one exists."""
         if not self.credentials:
             return {"status": "No stored credentials."}
@@ -737,7 +726,6 @@ class TimesketchApi:
             "expiry_time": self.credentials.credential.expiry.isoformat(),
         }
 
-    def get_sketch(self, sketch_id: int) -> Sketch:
     def get_sketch(self, sketch_id: int) -> Sketch:
         """Get a sketch.
 
@@ -850,7 +838,6 @@ class TimesketchApi:
                 yield sketch_obj
 
     def get_searchindex(self, searchindex_id: int) -> SearchIndex:
-    def get_searchindex(self, searchindex_id: int) -> SearchIndex:
         """Get a searchindex.
 
         Args:
@@ -915,7 +902,6 @@ class TimesketchApi:
         raise ValueError(error_message_detail)
 
     def check_celery_status(self, job_id: str = "") -> List[Dict[str, Any]]:
-    def check_celery_status(self, job_id: str = "") -> List[Dict[str, Any]]:
         """Return information about outstanding celery tasks or a specific one.
 
         Args:
@@ -935,7 +921,6 @@ class TimesketchApi:
         return response.get("objects", [])
 
     def list_searchindices(self) -> Generator[SearchIndex, None, None]:
-    def list_searchindices(self) -> Generator[SearchIndex, None, None]:
         """Yields all searchindices that the user has access to.
 
         Yields:
@@ -954,7 +939,6 @@ class TimesketchApi:
             )
             yield index_obj
 
-    def refresh_oauth_token(self) -> None:
     def refresh_oauth_token(self) -> None:
         """Refresh an OAUTH token if one is defined."""
         if not self.credentials:
@@ -1004,7 +988,6 @@ class TimesketchApi:
         return rules
 
     def create_sigmarule(self, rule_yaml: str) -> SigmaRule:
-    def create_sigmarule(self, rule_yaml: str) -> SigmaRule:
         """Adds a single Sigma rule to the database.
 
         Adds a single Sigma rule to the database when `/sigmarules/` is called
@@ -1047,7 +1030,6 @@ class TimesketchApi:
         return self.get_sigmarule(rule_uuid)
 
     def get_sigmarule(self, rule_uuid: str) -> SigmaRule:
-    def get_sigmarule(self, rule_uuid: str) -> SigmaRule:
         """Fetches a single Sigma rule from the database.
         Fetches a single Sigma rule selected by the `UUID`
 
@@ -1062,7 +1044,6 @@ class TimesketchApi:
 
         return sigma_obj
 
-    def parse_sigmarule_by_text(self, rule_text: str) -> Sigma:
     def parse_sigmarule_by_text(self, rule_text: str) -> Sigma:
         """Obtain a parsed Sigma rule by providing text.
 
