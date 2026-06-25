@@ -66,9 +66,6 @@ class Sketch(resource.BaseResource):
     def __init__(
         self, sketch_id: int, api: TimesketchApi, sketch_name: Optional[str] = None
     ) -> None:
-    def __init__(
-        self, sketch_id: int, api: TimesketchApi, sketch_name: Optional[str] = None
-    ) -> None:
         """Initializes the Sketch object.
 
         Args:
@@ -258,9 +255,6 @@ class Sketch(resource.BaseResource):
     def add_attribute_list(
         self, name: str, values: List[Any], ontology: str = "text"
     ) -> Dict[str, Any]:
-    def add_attribute_list(
-        self, name: str, values: List[Any], ontology: str = "text"
-    ) -> Dict[str, Any]:
         """Adds or modifies attributes to the sketch.
 
         Args:
@@ -300,9 +294,6 @@ class Sketch(resource.BaseResource):
 
         return error.get_response_json(response, logger)
 
-    def add_attribute(
-        self, name: str, value: Any, ontology: str = "text"
-    ) -> Dict[str, Any]:
     def add_attribute(
         self, name: str, value: Any, ontology: str = "text"
     ) -> Dict[str, Any]:
@@ -420,13 +411,6 @@ class Sketch(resource.BaseResource):
 
         return status
 
-    def create_view(
-        self,
-        name: str,
-        query_string: str = "",
-        query_dsl: str = "",
-        query_filter: Optional[Dict[str, Any]] = None,
-    ) -> search.Search:
     def create_view(
         self,
         name: str,
@@ -656,11 +640,6 @@ class Sketch(resource.BaseResource):
         include_labels: Optional[List[str]] = None,
         exclude_labels: Optional[List[str]] = None,
     ) -> List[aggregation.Aggregation]:
-    def list_aggregations(
-        self,
-        include_labels: Optional[List[str]] = None,
-        exclude_labels: Optional[List[str]] = None,
-    ) -> List[aggregation.Aggregation]:
         """List all saved aggregations for this sketch.
 
         Args:
@@ -739,9 +718,6 @@ class Sketch(resource.BaseResource):
     def get_analyzer_status(
         self, as_sessions: bool = False
     ) -> Union[List[analyzer.AnalyzerResult], List[Dict[str, Any]]]:
-    def get_analyzer_status(
-        self, as_sessions: bool = False
-    ) -> Union[List[analyzer.AnalyzerResult], List[Dict[str, Any]]]:
         """Returns a list of started analyzers and their status.
 
         Args:
@@ -809,9 +785,6 @@ class Sketch(resource.BaseResource):
     def get_aggregation_group(
         self, group_id: int
     ) -> Optional[aggregation.AggregationGroup]:
-    def get_aggregation_group(
-        self, group_id: int
-    ) -> Optional[aggregation.AggregationGroup]:
         """Return a stored aggregation group.
 
         Args:
@@ -831,9 +804,6 @@ class Sketch(resource.BaseResource):
                 return group_obj
         return None
 
-    def get_story(
-        self, story_id: Optional[int] = None, story_title: Optional[str] = None
-    ) -> Optional[story.Story]:
     def get_story(
         self, story_id: Optional[int] = None, story_title: Optional[str] = None
     ) -> Optional[story.Story]:
@@ -868,9 +838,6 @@ class Sketch(resource.BaseResource):
     def get_view(
         self, view_id: Optional[int] = None, view_name: Optional[str] = None
     ) -> Optional[search.Search]:
-    def get_view(
-        self, view_id: Optional[int] = None, view_name: Optional[str] = None
-    ) -> Optional[search.Search]:
         """Returns a saved search object that is stored in the sketch.
 
         Args:
@@ -891,9 +858,6 @@ class Sketch(resource.BaseResource):
 
         return self.get_saved_search(search_id=view_id, search_name=view_name)
 
-    def get_saved_search(
-        self, search_id: Optional[int] = None, search_name: Optional[str] = None
-    ) -> Optional[search.Search]:
     def get_saved_search(
         self, search_id: Optional[int] = None, search_name: Optional[str] = None
     ) -> Optional[search.Search]:
@@ -923,9 +887,6 @@ class Sketch(resource.BaseResource):
                 return search_obj
         return None
 
-    def get_timeline(
-        self, timeline_id: Optional[int] = None, timeline_name: Optional[str] = None
-    ) -> Optional[timeline.Timeline]:
     def get_timeline(
         self, timeline_id: Optional[int] = None, timeline_name: Optional[str] = None
     ) -> Optional[timeline.Timeline]:
@@ -1466,9 +1427,6 @@ class Sketch(resource.BaseResource):
     def run_aggregator(
         self, aggregator_name: str, aggregator_parameters: Dict[str, Any]
     ) -> aggregation.Aggregation:
-    def run_aggregator(
-        self, aggregator_name: str, aggregator_parameters: Dict[str, Any]
-    ) -> aggregation.Aggregation:
         """Run an aggregator class.
 
         Args:
@@ -1539,9 +1497,6 @@ class Sketch(resource.BaseResource):
 
         return None
 
-    def comment_event(
-        self, event_id: str, index: str, comment_text: str
-    ) -> Dict[str, Any]:
     def comment_event(
         self, event_id: str, index: str, comment_text: str
     ) -> Dict[str, Any]:
@@ -1627,13 +1582,6 @@ class Sketch(resource.BaseResource):
         remove: bool = False,
         conclusion_id: Optional[int] = None,
     ) -> Dict[str, Any]:
-    def label_events(
-        self,
-        events: List[Dict[str, Any]],
-        label_name: str,
-        remove: bool = False,
-        conclusion_id: Optional[int] = None,
-    ) -> Dict[str, Any]:
         """Labels one or more events with label_name.
 
         Args:
@@ -1667,9 +1615,6 @@ class Sketch(resource.BaseResource):
     def link_event_to_conclusion(
         self, events: List[Dict[str, Any]], conclusion_id: int, unlink: bool = False
     ) -> Dict[str, Any]:
-    def link_event_to_conclusion(
-        self, events: List[Dict[str, Any]], conclusion_id: int, unlink: bool = False
-    ) -> Dict[str, Any]:
         """Links one or more events to a conclusion as a fact.
 
         Args:
@@ -1687,9 +1632,6 @@ class Sketch(resource.BaseResource):
             conclusion_id=conclusion_id,
         )
 
-    def untag_events(
-        self, events: List[Dict[str, Any]], tags_to_remove: List[str]
-    ) -> Dict[str, Any]:
     def untag_events(
         self, events: List[Dict[str, Any]], tags_to_remove: List[str]
     ) -> Dict[str, Any]:
@@ -1758,9 +1700,6 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
-    def tag_events(
-        self, events: List[Dict[str, Any]], tags: List[str], verbose: bool = False
-    ) -> Dict[str, Any]:
     def tag_events(
         self, events: List[Dict[str, Any]], tags: List[str], verbose: bool = False
     ) -> Dict[str, Any]:
@@ -1874,12 +1813,6 @@ class Sketch(resource.BaseResource):
         dfiq_id: Optional[str] = None,
         name: Optional[str] = None,
     ) -> scenario_lib.Scenario:
-    def add_scenario(
-        self,
-        uuid: Optional[str] = None,
-        dfiq_id: Optional[str] = None,
-        name: Optional[str] = None,
-    ) -> scenario_lib.Scenario:
         """Adds an investigative scenario to the sketch.
 
         Args:
@@ -1966,12 +1899,6 @@ class Sketch(resource.BaseResource):
             for scenario_data in scenario_objects
         ]
 
-    def add_question(
-        self,
-        dfiq_id: Optional[str] = None,
-        uuid: Optional[str] = None,
-        question_text: Optional[str] = None,
-    ) -> scenario_lib.Question:
     def add_question(
         self,
         dfiq_id: Optional[str] = None,
@@ -2066,14 +1993,6 @@ class Sketch(resource.BaseResource):
             for question_data in question_objects
         ]
 
-    def add_event(
-        self,
-        message: str,
-        date: str,
-        timestamp_desc: str,
-        attributes: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
     def add_event(
         self,
         message: str,
@@ -2305,9 +2224,6 @@ class Sketch(resource.BaseResource):
                     logger.warning("Received invalid JSON line during export")
                     continue
 
-    def create_timeline(
-        self, searchindex_id: int, timeline_name: str
-    ) -> timeline.Timeline:
     def create_timeline(
         self, searchindex_id: int, timeline_name: str
     ) -> timeline.Timeline:
@@ -2576,13 +2492,6 @@ class Sketch(resource.BaseResource):
 
         return created_timeline
 
-    def run_data_finder(
-        self,
-        start_date: str,
-        end_date: str,
-        rule_names: List[str],
-        timelines: Optional[List[Union[int, str]]] = None,
-    ) -> List[Dict[str, Any]]:
     def run_data_finder(
         self,
         start_date: str,

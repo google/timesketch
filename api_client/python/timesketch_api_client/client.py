@@ -220,9 +220,6 @@ class TimesketchApi:
     def _authenticate_session(
         self, session: requests.Session, username: str, password: str
     ) -> None:
-    def _authenticate_session(
-        self, session: requests.Session, username: str, password: str
-    ) -> None:
         """Post username/password to authenticate the HTTP session.
 
         Args:
@@ -249,9 +246,6 @@ class TimesketchApi:
         if response.url.split("?")[0].rstrip("/").endswith("/login"):
             raise RuntimeError("Authentication failed: Invalid username or password.")
 
-    def _set_csrf_token(
-        self, session: requests.Session, bypass_oauth: bool = False
-    ) -> None:
     def _set_csrf_token(
         self, session: requests.Session, bypass_oauth: bool = False
     ) -> None:
@@ -509,9 +503,6 @@ class TimesketchApi:
     def _send_request_with_retry(
         self, method: str, resource_uri: str, **kwargs: Any
     ) -> Dict[str, Any]:
-    def _send_request_with_retry(
-        self, method: str, resource_uri: str, **kwargs: Any
-    ) -> Dict[str, Any]:
         """Makes an HTTP request with manual retries for application-level errors.
 
         This is the core private helper for all API requests. It wraps the
@@ -579,9 +570,6 @@ class TimesketchApi:
         )
         raise RuntimeError(error_msg)
 
-    def fetch_resource_data(
-        self, resource_uri: str, params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
     def fetch_resource_data(
         self, resource_uri: str, params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -740,9 +728,6 @@ class TimesketchApi:
     def get_aggregator_info(
         self, name: str = "", as_pandas: bool = False
     ) -> Union[List[Dict[str, Any]], Dict[str, Any], pandas.DataFrame]:
-    def get_aggregator_info(
-        self, name: str = "", as_pandas: bool = False
-    ) -> Union[List[Dict[str, Any]], Dict[str, Any], pandas.DataFrame]:
         """Returns information about available aggregators.
 
         Args:
@@ -788,9 +773,6 @@ class TimesketchApi:
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(
-        self, per_page: int = 50, scope: str = "user", include_archived: bool = True
-    ) -> Generator[Sketch, None, None]:
     def list_sketches(
         self, per_page: int = 50, scope: str = "user", include_archived: bool = True
     ) -> Generator[Sketch, None, None]:
@@ -848,9 +830,6 @@ class TimesketchApi:
         """
         return index.SearchIndex(searchindex_id, api=self)
 
-    def create_searchindex(
-        self, searchindex_name: str, opensearch_index_name: str
-    ) -> SearchIndex:
     def create_searchindex(
         self, searchindex_name: str, opensearch_index_name: str
     ) -> SearchIndex:
@@ -946,9 +925,6 @@ class TimesketchApi:
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
 
-    def list_sigmarules(
-        self, as_pandas: bool = False
-    ) -> Union[List[SigmaRule], pandas.DataFrame]:
     def list_sigmarules(
         self, as_pandas: bool = False
     ) -> Union[List[SigmaRule], pandas.DataFrame]:
