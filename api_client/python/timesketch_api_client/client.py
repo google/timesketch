@@ -55,14 +55,6 @@ if TYPE_CHECKING:
     from .sigma import SigmaRule, Sigma
 
 
-if TYPE_CHECKING:
-    from .credentials import AuthCredentials
-    from .sketch import Sketch
-    from .user import User
-    from .index import SearchIndex
-    from .sigma import SigmaRule, Sigma
-
-
 logger = logging.getLogger("timesketch_api.client")
 
 
