@@ -160,6 +160,11 @@ output_format = tabular
                 api_client=None, conf_file=fw.name, config_section="custom_section"
             )
 
+            mock_get_client.assert_called_once_with(
+                config_path=fw.name,
+                config_section="custom_section",
+                load_cli_config=True,
+            )
             self.assertEqual(
                 cli_context.config_assistant.get_config("host_uri"),
                 "http://custom.example.com",
