@@ -20,8 +20,8 @@ from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
 
-from .. import test_lib
-from .timelines import timelines_group
+from timesketch_cli_client import test_lib
+from timesketch_cli_client.commands.timelines import timelines_group
 
 
 class TimelinesTest(unittest.TestCase):
