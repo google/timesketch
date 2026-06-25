@@ -44,10 +44,6 @@ if TYPE_CHECKING:
     from .client import TimesketchApi
 
 
-if TYPE_CHECKING:
-    from .client import TimesketchApi
-
-
 logger = logging.getLogger("timesketch_api.sketch")
 
 
