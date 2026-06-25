@@ -554,7 +554,7 @@ class Story(resource.BaseResource):
         if not self._blocks:
             story_data = self.lazyload_data(refresh_cache=True)
             objects = story_data.get("objects")
-            content = ""
+            content = "[]"
             if objects:
                 content = objects[0].get("content", "[]")
             index = 0
