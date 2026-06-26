@@ -114,6 +114,12 @@ class TimesketchCli:
                 conf_file, section=config_section, load_cli_config=True
             )
         else:
+            if config_section != DEFAULT_CONFIG_SECTION:
+                click.echo(
+                    f"WARNING: The installed timesketch-api-client does not "
+                    f"support custom config sections for ConfigAssistant. "
+                    f"Falling back to default."
+                )
             self.config_assistant.load_config_file(conf_file, load_cli_config=True)
 
     @property
