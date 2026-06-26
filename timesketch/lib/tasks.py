@@ -312,7 +312,7 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
                 else:
                     # Show error message for attempts 0-4 only if debug is enabled
                     logger.debug(
-                        "Attempt %d to refresh index %s in sketch (ID: %d)failed: %s",
+                        "Attempt %d to refresh index %s in sketch (ID: %d) failed: %s",
                         i + 1,
                         index_name,
                         sketch_id,
