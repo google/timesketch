@@ -42,9 +42,6 @@ def list_sketches(ctx: click.Context):
     context's object.
     Supported output formats are 'json' and 'text'.
 
-    Args:
-        client and output format.
-
     Raises:
         click.exceptions.Exit: If an unsupported output format is specified.
 
@@ -80,9 +77,6 @@ def describe_sketch(ctx: click.Context) -> None:
 
     Displays the name, description, and status of the active sketch.
     If the output format is 'json', all sketch attributes are displayed.
-
-    Args:
-        and output format.
 
     Raises:
         * If an unsupported output format is specified.
@@ -213,8 +207,6 @@ def archive_sketch(ctx: click.Context) -> None:
     Archives the active sketch, making it read-only and preventing further
     modifications.
 
-    Args:
-
     Raises:
         click.exceptions.Exit: If the sketch is already archived or the user
         lacks permissions to archive it.
@@ -244,8 +236,6 @@ def unarchive_sketch(ctx: click.Context) -> None:
     """Unarchive a sketch.
 
     Unarchives a previously archived sketch, allowing modifications to be made again.
-
-    Args:
 
     Raises:
         click.exceptions.Exit: If the sketch is not archived.
@@ -290,8 +280,6 @@ def list_label(ctx: click.Context) -> None:
     """List labels of a sketch.
 
     Lists all labels currently associated with the active sketch.
-
-    Args:
 
     Outputs:
         Text: A list of labels associated with the sketch.
@@ -384,7 +372,6 @@ def create_story(ctx: click.Context, title: str) -> None:
 @click.pass_context
 def list_stories(ctx: click.Context):
     """List all stories in the sketch.
-    Args:
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format

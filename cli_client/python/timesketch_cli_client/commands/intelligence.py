@@ -42,8 +42,8 @@ def list_intelligence(
     """List all intelligence.
 
     Args:
-        header (bool) (optional): Include header in output. (default is to show header)
-        columns (str) (optional): Comma separated list of columns to show.
+        header: Include header in output. (default is to show header)
+        columns: Comma separated list of columns to show.
             (default: ioc,type)
                 Other options: externalURI, tags
     """

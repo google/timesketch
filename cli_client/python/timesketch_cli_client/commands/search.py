@@ -170,7 +170,6 @@ def describe_query(search_obj: search.Search):
 @click.pass_context
 # pylint: disable=too-many-arguments
 def search_group(
-    ctx: click.Context,
     query: str,
     times: Tuple[str, ...] = (),
     time_ranges: Tuple[Tuple[str, str], ...] = (),
@@ -318,7 +317,6 @@ def list_saved_searches(ctx: click.Context):
     Retrieves and displays a list of saved searches from the sketch, showing
     their IDs and names.
 
-    Args:
 
     Outputs:
         Text: A list of saved searches, with each line showing the search ID

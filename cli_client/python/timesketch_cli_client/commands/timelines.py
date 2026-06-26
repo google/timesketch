@@ -26,7 +26,7 @@ def timelines_group():
 def list_timelines(ctx: click.Context):
     """List all timelines in the sketch.
 
-    Args:
+
     """
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
