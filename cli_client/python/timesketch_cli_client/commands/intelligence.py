@@ -46,6 +46,10 @@ def list_intelligence(
         columns: Comma separated list of columns to show.
             (default: ioc,type)
                 Other options: externalURI, tags
+
+    Outputs:
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
     """
 
     if not columns:

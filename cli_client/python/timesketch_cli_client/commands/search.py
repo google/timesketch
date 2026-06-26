@@ -170,6 +170,7 @@ def describe_query(search_obj: search.Search):
 @click.pass_context
 # pylint: disable=too-many-arguments
 def search_group(
+    ctx: click.Context,
     query: str,
     times: Tuple[str, ...] = (),
     time_ranges: Tuple[Tuple[str, str], ...] = (),
@@ -188,8 +189,7 @@ def search_group(
     filters and formatting the output.
     Supports queries using OpenSearch query string syntax, date/time filtering,
     label filtering, and saved searches.
-    The output can be formatted as text, CSV, JSON, JSONL, or tabular,
-    depending on the context's 'output_format' setting.
+    Supported output formats are 'text', 'csv', 'json', 'jsonl', and 'tabular'.
 
     Args:
         query: The search query in OpenSearch query string format
@@ -215,6 +215,8 @@ def search_group(
     Outputs:
         Formatted search results in the specified output format
             (text, CSV, JSON, JSONL, or tabular).
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
         If '--describe' is used, query details are printed instead.
 
     Example:
@@ -317,10 +319,11 @@ def list_saved_searches(ctx: click.Context):
     Retrieves and displays a list of saved searches from the sketch, showing
     their IDs and names.
 
-
     Outputs:
         Text: A list of saved searches, with each line showing the search ID
               and name.
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
 
     Example:
         saved-searches list  # Lists all saved searches in the current sketch.

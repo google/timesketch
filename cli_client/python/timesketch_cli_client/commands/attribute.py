@@ -32,15 +32,14 @@ def list_attributes(ctx: click.Context):
     The output format is determined by the context's 'output_format' setting.
     Supported output formats are 'json' and 'text'.
 
-    Args:
-        output format.
-
     Outputs:
         JSON: If the output format is 'json', the attributes are printed as a
         JSON object.
         Text: If the output format is 'text' (or an unsupported format), the
         attributes are printed in a human-readable format, showing the name,
         ontology, and value of each attribute.
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
         Error message: if no attributes are found, or an unsupported output
         type is selected.
 

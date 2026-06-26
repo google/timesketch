@@ -30,9 +30,9 @@ def importer(ctx: click.Context, name: str, timeout: Optional[int], file_path: s
     """Import timeline.
 
     Args:
-        name (str) (required): Name of the timeline to create.
-        timeout (int) (optional): Seconds to wait for indexing.
-        file_path (str) (required): File path to the file to import.
+        name: Name of the timeline to create.
+        timeout: Seconds to wait for indexing.
+        file_path: File path to the file to import.
     """
     sketch = ctx.obj.sketch
     if not name:

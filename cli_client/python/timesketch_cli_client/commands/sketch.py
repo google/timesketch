@@ -38,8 +38,6 @@ def list_sketches(ctx: click.Context):
     """List all sketches from the API.
 
     Retrieves a list of sketches from the API associated with the given context.
-    The output is formatted based on the 'output_format' setting within the
-    context's object.
     Supported output formats are 'json' and 'text'.
 
     Raises:
@@ -48,6 +46,8 @@ def list_sketches(ctx: click.Context):
     Outputs:
         JSON: If the output format is 'json', a JSON representation is printed.
         Text: If the output format is 'text', a formatted table is printed.
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
         Error message: If an unsupported output format is specified
     """
     api_client = ctx.obj.api
@@ -76,7 +76,6 @@ def describe_sketch(ctx: click.Context) -> None:
     """Displays details of the active sketch.
 
     Displays the name, description, and status of the active sketch.
-    If the output format is 'json', all sketch attributes are displayed.
 
     Raises:
         * If an unsupported output format is specified.
@@ -84,6 +83,8 @@ def describe_sketch(ctx: click.Context) -> None:
     Outputs:
         Text: The name, description, and status of the sketch.
         JSON: All attributes of the sketch object.
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
         Error message: if the output format is not text or json.
 
     Example:
@@ -372,6 +373,12 @@ def create_story(ctx: click.Context, title: str) -> None:
 @click.pass_context
 def list_stories(ctx: click.Context):
     """List all stories in the sketch.
+
+    Outputs:
+        JSON: If the output format is 'json', a JSON representation is printed.
+        Text: If the output format is 'text', a formatted table is printed.
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format

@@ -36,11 +36,12 @@ def sigma_group():
     help="Comma separated list of columns to show. (default: rule_uuid,title)",
 )
 @click.pass_context
-def list_sigmarules(ctx, header, columns):
+def list_sigmarules(ctx: click.Context, header: bool, columns: str):
     """List all sigma rules.
+
     Args:
-        header (bool): Boolean indicating if header should be included.
-        columns (str): Comma separated list of columns.
+        header: Boolean indicating if header should be included.
+        columns: Comma separated list of columns.
     """
     api_client = ctx.obj.api
 
@@ -78,10 +79,11 @@ def list_sigmarules(ctx, header, columns):
     help="UUID of the sigma rule.",
 )
 @click.pass_context
-def describe_sigmarule(ctx, rule_uuid):
+def describe_sigmarule(ctx: click.Context, rule_uuid: str):
     """Describe a sigma rule.
+
     Args:
-        rule_uuid (str): UUID of the sigma rule.
+        rule_uuid: UUID of the sigma rule.
     """
     api_client = ctx.obj.api
     output = ctx.obj.output_format
