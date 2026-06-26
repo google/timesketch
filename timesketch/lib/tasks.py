@@ -292,6 +292,11 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
 
     # Refresh the index so it is searchable for the analyzers right away.
     if status == "ready":
+        if not timeline.searchindex:
+            logger.error(
+                "Timeline (ID: %d) has no associated search index.", timeline_id
+            )
+            return
         datastore = OpenSearchDataStore()
         # Retry refreshing the index a few times if it fails.
         index_name = timeline.searchindex.index_name
