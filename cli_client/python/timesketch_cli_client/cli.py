@@ -87,6 +87,11 @@ class TimesketchCli:
                         load_cli_config=True,
                     )
                 else:
+                    if config_section != DEFAULT_CONFIG_SECTION:
+                        click.echo(
+                            f"WARNING: The installed timesketch-api-client does not "
+                            f"support custom config sections. Falling back to default."
+                        )
                     self.api = timesketch_config.get_client(
                         config_path=conf_file,
                         load_cli_config=True,
