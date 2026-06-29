@@ -36,9 +36,9 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-CONCLUSION_LOG_RECORDS_HEADER = "**What the selected log records are:**\n"
+CONCLUSION_LOG_RECORDS_HEADER = "**What the selected log records are:**\n\n"
 CONCLUSION_RELEVANCE_HEADER = (
-    "**How the selected log records are related to the finding:**\n"
+    "**How the selected log records are related to the finding:**\n\n"
 )
 
 
@@ -190,14 +190,16 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                         ]
                                         desc = f.get("description", "")
                                         relevance = f.get("relevance", "")
-                                        c1 = f"{CONCLUSION_LOG_RECORDS_HEADER}{desc}\n"
-                                        c2 = f"{CONCLUSION_RELEVANCE_HEADER}{relevance}"
+                                        combined_conclusion = (
+                                            f"{CONCLUSION_LOG_RECORDS_HEADER}{desc}\n\n<br>\n\n"
+                                            f"{CONCLUSION_RELEVANCE_HEADER}{relevance}"
+                                        )
                                         annotations = [
                                             {
                                                 "investigative_question": f.get(
                                                     "finding", ""
                                                 ),
-                                                "conclusions": [c1, c2],
+                                                "conclusions": [combined_conclusion],
                                                 "priority": f.get("severity", "notice"),
                                             }
                                         ]
