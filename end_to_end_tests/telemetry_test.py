@@ -85,33 +85,18 @@ class TelemetryTest(interface.BaseEndToEndTest):
         )
         print("Telemetry infrastructure E2E connectivity verified successfully!")
 
-    def test_opensearch_telemetry(self):
-        """Verify that OpenSearch telemetry spans are exported."""
-        jaeger_api_url = "http://jaeger:16686/api"
-
-        # Capture the time just before triggering the trace in microseconds
-        start_time = int(time.time() * 1000000)
-
-        # 1. Trigger a search to generate OpenSearch telemetry
-        self.sketch.explore("hello_opensearch_telemetry")
-
-        # 2. Poll Jaeger API for opensearch.search spans
+    def _fetch_opensearch_span_tags(self, start_time, jaeger_api_url):
+        """Poll Jaeger and return tags for the opensearch.search span."""
         query_url = (
             f"{jaeger_api_url}/traces?service=timesketch"
             f"&operation=opensearch.search&start={start_time}"
         )
-        traces = []
-        last_error = None
-        found_took_ms = False
         for _ in range(30):
             try:
                 response = requests.get(query_url, timeout=5)
                 response.raise_for_status()
                 traces_data = response.json()
-                traces = traces_data.get("data", [])
-
-                # Check if we found the took_ms tag in any span
-                for trace in traces:
+                for trace in traces_data.get("data", []):
                     for span in trace.get("spans", []):
                         tags = {
                             t.get("key"): t.get("value") for t in span.get("tags", [])
@@ -119,28 +104,48 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         sketch_id_val = tags.get("timesketch.sketch_id") or tags.get(
                             "sketch_id"
                         )
-                        if "db.opensearch.took_ms" in tags and str(
-                            sketch_id_val
-                        ) == str(self.sketch.id):
-                            found_took_ms = True
-                            break
-                    if found_took_ms:
-                        break
-
-                if found_took_ms:
-                    break
-            except requests.exceptions.RequestException as e:
-                last_error = e
+                        if str(sketch_id_val) == str(self.sketch.id):
+                            return tags
+            except (requests.exceptions.RequestException, ValueError):
+                pass
             time.sleep(1)
+        return None
 
-        # 3. Assert trace exists and has the attribute
-        error_msg = "No opensearch.search telemetry traces found in Jaeger"
-        if last_error and not traces:
-            error_msg += f" (Last connection error: {last_error})"
-        self.assertions.assertGreater(len(traces), 0, error_msg)
+    def test_opensearch_telemetry(self):
+        """Verify that OpenSearch telemetry spans are exported correctly."""
+        jaeger_api_url = "http://jaeger:16686/api"
 
+        # 1. Trigger a normal search
+        start_time_normal = int(time.time() * 1000000)
+        self.sketch.explore("hello_opensearch_telemetry")
+
+        normal_tags = self._fetch_opensearch_span_tags(
+            start_time_normal, jaeger_api_url
+        )
+        self.assertions.assertIsNotNone(
+            normal_tags, "No normal search trace found in Jaeger."
+        )
+        self.assertions.assertIn("db.opensearch.took_ms", normal_tags)
+        self.assertions.assertIn("timesketch.search.use_wildcard_fields", normal_tags)
+        self.assertions.assertFalse(
+            normal_tags["timesketch.search.use_wildcard_fields"]
+        )
+        self.assertions.assertIn("timesketch.search.total_hits", normal_tags)
+
+        # 2. Trigger a wildcard search
+        start_time_wildcard = int(time.time() * 1000000)
+        self.sketch.explore("hello_opensearch_telemetry*", use_wildcard_fields=True)
+
+        wildcard_tags = self._fetch_opensearch_span_tags(
+            start_time_wildcard, jaeger_api_url
+        )
+        self.assertions.assertIsNotNone(
+            wildcard_tags, "No wildcard search trace found in Jaeger."
+        )
+        self.assertions.assertIn("db.opensearch.took_ms", wildcard_tags)
+        self.assertions.assertIn("timesketch.search.use_wildcard_fields", wildcard_tags)
         self.assertions.assertTrue(
-            found_took_ms, "Expected db.opensearch.took_ms tag in OpenSearch spans."
+            wildcard_tags["timesketch.search.use_wildcard_fields"]
         )
 
     # pylint: disable=too-many-nested-blocks
