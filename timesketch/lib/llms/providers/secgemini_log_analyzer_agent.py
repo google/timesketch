@@ -177,7 +177,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     if msg_type == "MESSAGE_TYPE_RESPONSE":
                         start_marker = "\n## Investigation Findings\n\n"
                         if start_marker in content:
-                            json_str = content.split(start_marker)[1].strip()
+                            parts = content.rsplit(start_marker, 1)
+                            report_summary_text = parts[0].strip()
+                            json_str = parts[1].strip()
                             try:
                                 findings_list = json.loads(json_str)
                                 if isinstance(findings_list, list):
@@ -212,7 +214,10 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                             }
                                         )
                                     json_str = json.dumps(
-                                        {"findings": translated_findings}
+                                        {
+                                            "findings": translated_findings,
+                                            "report_summary": report_summary_text,
+                                        }
                                     )
                             except Exception as e:  # pylint: disable=broad-except
                                 logger.error(
@@ -220,7 +225,12 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                     e,
                                     exc_info=True,
                                 )
-                                json_str = json.dumps({"findings": []})
+                                json_str = json.dumps(
+                                    {
+                                        "findings": [],
+                                        "report_summary": report_summary_text,
+                                    }
+                                )
                             yield json_str
                             # force termination to avoid back2back runs
                             break
