@@ -13,14 +13,16 @@
 # limitations under the License.
 """Tests for config command."""
 
+import tempfile
 import unittest
-import mock
+from unittest import mock
 
 from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
-from .. import test_lib
-from .config import config_group
+from timesketch_cli_client import test_lib
+from timesketch_cli_client.cli import TimesketchCli
+from timesketch_cli_client.commands.config import config_group
 
 
 class ConfigTest(unittest.TestCase):
@@ -126,3 +128,47 @@ class ConfigTest(unittest.TestCase):
             "No such configuration parameter: output_format (error: 'output_format')",
             result.output,
         )
+
+    @mock.patch("timesketch_cli_client.cli.timesketch_config.get_client", autospec=True)
+    def test_custom_config_section(self, mock_get_client):
+        """Test the TimesketchCli loads a custom config section."""
+        mock_get_client.return_value = mock.MagicMock()
+
+        custom_config = """
+[timesketch]
+host_uri = http://127.0.0.1
+username = default_user
+auth_mode = oauth
+verify = True
+
+[custom_section]
+host_uri = http://custom.example.com
+username = custom_user
+auth_mode = oauth
+client_id = myid
+client_secret = secret
+verify = True
+
+[cli]
+output_format = tabular
+"""
+        with tempfile.NamedTemporaryFile(mode="w") as fw:
+            fw.write(custom_config)
+            fw.seek(0)
+
+            cli_context = TimesketchCli(
+                api_client=None, conf_file=fw.name, config_section="custom_section"
+            )
+
+            mock_get_client.assert_called_once_with(
+                config_path=fw.name,
+                config_section="custom_section",
+                load_cli_config=True,
+            )
+            self.assertEqual(
+                cli_context.config_assistant.get_config("host_uri"),
+                "http://custom.example.com",
+            )
+            self.assertEqual(
+                cli_context.config_assistant.get_config("username"), "custom_user"
+            )

@@ -32,16 +32,14 @@ def list_attributes(ctx: click.Context):
     The output format is determined by the context's 'output_format' setting.
     Supported output formats are 'json' and 'text'.
 
-    Args:
-        ctx (click.Context): The Click context object, containing the sketch and
-        output format.
-
     Outputs:
         JSON: If the output format is 'json', the attributes are printed as a
         JSON object.
         Text: If the output format is 'text' (or an unsupported format), the
         attributes are printed in a human-readable format, showing the name,
         ontology, and value of each attribute.
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
         Error message: if no attributes are found, or an unsupported output
         type is selected.
 
@@ -74,9 +72,8 @@ def remove_attribute(ctx: click.Context, name: str, ontology: str):
     The output format is forced to 'text' for this command.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        name (str): The name of the attribute to remove.
-        ontology (str): The ontology of the attribute to remove.
+        name: The name of the attribute to remove.
+        ontology: The ontology of the attribute to remove.
 
     Errors:
         * If the specified attribute is not found in the sketch.
@@ -114,10 +111,9 @@ def add_attribute(ctx: click.Context, name: str, ontology: str, value: str):
     The output format is forced to 'text' for this command.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        name (str): The name of the attribute to add.
-        ontology (str): The ontology of the attribute to add.
-        value (str): The value of the attribute to add.
+        name: The name of the attribute to add.
+        ontology: The ontology of the attribute to add.
+        value: The value of the attribute to add.
 
     Outputs:
         Text: A message confirming the attribute was added, including its name,

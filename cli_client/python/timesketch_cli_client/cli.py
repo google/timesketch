@@ -13,7 +13,9 @@
 # limitations under the License.
 """Timesketch CLI client."""
 
+import inspect
 import sys
+
 import click
 
 from requests.exceptions import ConnectionError as RequestConnectionError
@@ -33,17 +35,19 @@ from timesketch_cli_client.commands import timelines
 from timesketch_cli_client.commands import events
 from timesketch_cli_client.commands import sigma
 
-from .definitions import DEFAULT_OUTPUT_FORMAT
-from .version import get_version
+from timesketch_cli_client.definitions import DEFAULT_OUTPUT_FORMAT
+from timesketch_cli_client.definitions import DEFAULT_CONFIG_SECTION
+from timesketch_cli_client.version import get_version
 
 
-class TimesketchCli(object):
+class TimesketchCli:
     """Timesketch CLI state object.
 
     Attributes:
-        sketch_from_flag: Sketch ID if provided by flag
-        config_assistant: Instance of ConfigAssistant
-        output_format_from_flag: Output format to use
+        api: Instance of TimesketchApi object.
+        sketch_from_flag: Sketch ID if provided by flag.
+        config_assistant: Instance of ConfigAssistant.
+        output_format_from_flag: Output format to use.
     """
 
     def __init__(
@@ -52,13 +56,17 @@ class TimesketchCli(object):
         sketch_from_flag=None,
         conf_file="",
         output_format_from_flag=None,
+        config_section=DEFAULT_CONFIG_SECTION,
     ):
         """Initialize the state object.
 
         Args:
-            sketch_from_flag: Sketch ID if provided by flag.
-            conf_file: Path to the config file.
-            output_format_from_flag: Output format to use.
+            api_client (timesketch_api_client.api.TimesketchApi): An instance of
+                TimesketchApi object.
+            sketch_from_flag (int): Sketch ID if provided by flag.
+            conf_file (str): Path to the config file.
+            output_format_from_flag (str): Output format to use.
+            config_section (str): The config section to use.
         """
         self.api = api_client
         self.sketch_from_flag = sketch_from_flag
@@ -66,10 +74,28 @@ class TimesketchCli(object):
 
         if not api_client:
             try:
-                # TODO: Consider other config sections here as well.
-                self.api = timesketch_config.get_client(
-                    config_path=conf_file, load_cli_config=True
-                )
+                try:
+                    sig = inspect.signature(timesketch_config.get_client)
+                    has_config_section = "config_section" in sig.parameters
+                except (ValueError, TypeError):
+                    has_config_section = False
+
+                if has_config_section:
+                    self.api = timesketch_config.get_client(
+                        config_path=conf_file,
+                        config_section=config_section,
+                        load_cli_config=True,
+                    )
+                else:
+                    if config_section != DEFAULT_CONFIG_SECTION:
+                        click.echo(
+                            "WARNING: The installed timesketch-api-client does not "
+                            "support custom config sections. Falling back to default."
+                        )
+                    self.api = timesketch_config.get_client(
+                        config_path=conf_file,
+                        load_cli_config=True,
+                    )
                 if not self.api:
                     raise RequestConnectionError
             except RequestConnectionError:
@@ -77,7 +103,24 @@ class TimesketchCli(object):
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
-        self.config_assistant.load_config_file(conf_file, load_cli_config=True)
+        try:
+            sig = inspect.signature(self.config_assistant.load_config_file)
+            has_section = "section" in sig.parameters
+        except (ValueError, TypeError):
+            has_section = False
+
+        if has_section:
+            self.config_assistant.load_config_file(
+                conf_file, section=config_section, load_cli_config=True
+            )
+        else:
+            if config_section != DEFAULT_CONFIG_SECTION:
+                click.echo(
+                    "WARNING: The installed timesketch-api-client does not "
+                    "support custom config sections for ConfigAssistant. "
+                    "Falling back to default."
+                )
+            self.config_assistant.load_config_file(conf_file, load_cli_config=True)
 
     @property
     def sketch(self):
@@ -148,8 +191,16 @@ class TimesketchCli(object):
     required=False,
     help="Path to the config file.",
 )
+@click.option(
+    "--config-section",
+    "config_section",
+    default=DEFAULT_CONFIG_SECTION,
+    show_default=True,
+    required=False,
+    help="The config section to use.",
+)
 @click.pass_context
-def cli(ctx, sketch, output, config_path):
+def cli(ctx, sketch, output, config_path, config_section):
     """Timesketch CLI client.
 
     This tool provides similar features as the web client does.
@@ -162,11 +213,18 @@ def cli(ctx, sketch, output, config_path):
     used.
 
     For detailed help on each command, run  <command> --help
+
+    Args:
+        sketch (int): Sketch ID to operate on.
+        output (str): Output format to use (e.g., text, json, tabular).
+        config_path (str): Path to the timesketch configuration file.
+        config_section (str): The section in the configuration file to use.
     """
     ctx.obj = TimesketchCli(
         sketch_from_flag=sketch,
         output_format_from_flag=output,
         conf_file=config_path,
+        config_section=config_section,
     )
 
 
