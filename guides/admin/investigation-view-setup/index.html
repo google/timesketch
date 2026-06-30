@@ -2716,8 +2716,8 @@ LLM_PROVIDER_CONFIGS = {
 <pre><code>'log_analyzer':
 {
     # This feature requires a dedicated log analyzer agent service.
-    '&lt;PROVIDER&gt;_log_analyzer_agent': {
-        'server_url': '&lt;YOUR_AGENT_API_ENDPOINT&gt;',
+    'secgemini_log_analyzer_agent': {
+        'host': '&lt;YOUR_SEC_GEMINI_ENDPOINT_HOST&gt;',
         'api_key': '&lt;YOUR_AGENT_API_KEY&gt;',
     }
 },
@@ -2725,8 +2725,8 @@ LLM_PROVIDER_CONFIGS = {
 <p>}
 ```</p>
 <ul>
-<li><strong><code>server_url</code></strong>: This is the API endpoint URL of your deployed AI agent.</li>
-<li><strong><code>api_key</code></strong>: If your agent requires an API key for authentication, provide it here.</li>
+<li><strong><code>host</code></strong>: (Optional) This is the custom endpoint host/address of your deployed agent. If omitted, the default SecGemini cloud endpoint will be used.</li>
+<li><strong><code>api_key</code></strong>: The API key required to authenticate with the SecGemini service.</li>
 <li>Those values can vary depending on the provider you are using.</li>
 </ul>
 </li>
